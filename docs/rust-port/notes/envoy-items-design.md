@@ -33,7 +33,7 @@ is today, with a digest hashed into the run record.
 | `tags` | what it produces, read by modifiers: `projectile`, `burst`, `trail`, `orbital`, `spark`, `status`, `launch` |
 | `mods` | for modifiers only: which tags it changes and how |
 | `stack` | what a second copy does (see below) |
-| `price` | devil / curse items: `stock`, `maxhp`, `curse:<id>`; shop: coins from quality |
+| `price` | devil / curse items: `slot:1`, `slot:2`, `curse:<id>`; shop: coins from quality |
 
 **Stacking.** No slots, no levels. Picking an item you have adds a copy. Each item states its stack rule in one line,
 from a small set: `more` (one more projectile / orbital per copy), `bigger` (radius or length +50% per copy, capped),
@@ -98,15 +98,28 @@ Most rooms are fights with **no item**. Items come only from these rooms.
 | item room | gold star | walk in, one item on a pedestal, take it (co-op: one each) | `item` | 1, always |
 | shop | coin | 3 items for coins, plus a stock / a reroll | `shop` | 1 on floors 2+ |
 | boss | skull | the boss drops one from a choice of 2 | `boss` | 1 (floor end) |
-| devil deal | red door | after the boss, sometimes: 1-2 items, each costs a stock or max HP (a lower KO ceiling, see below) | `devil` | chance |
+| devil deal | red door | after the boss, sometimes: 1-2 items, each costs 1-2 stock slots (see below) | `devil` | chance |
 | angel room | white door | replaces the devil door if you took no devil deal this run: one free strong item | `angel` | chance |
 | secret room | none (hidden) | revealed by a technique on a marked wall-ledge, e.g. waveshine into the wall, or 3 ledge grabs in 2 s | `secret` | 0-1 |
+| campfire | orange flame | no item: refills stocks to the stock limit | none | 0-1 |
 | curse room | purple | an item plus a curse (a run-long drawback item) | `curse` | 0-1 |
 | challenge (optional) | crossed swords | a harder fight; win for an `item`-pool item | `item` | 0-1 |
 
 Devil chance: 35% after floor 1's boss, +15% if you lost no stock on the floor, -20% per devil deal taken; an angel
-roll replaces it when you have taken none. Max HP in a stock fight means a **KO ceiling**: you are KO'd at a
-percent that starts at 999% and a devil deal drops it by 40% (to 120% at worst). Honest, visible, Melee-native.
+roll replaces it when you have taken none.
+
+**Stocks work like Isaac's hearts (owner's call, 2026-11-13).** Two numbers per run:
+- **Stock limit** (heart containers): the most stocks you can hold. Starts at 4.
+- **Stocks** (red hearts): what you have now. Dying costs one; 0 stocks ends the run. Stocks carry between fights.
+
+A devil deal costs **stock slots**: the limit drops by 1 (2 for the strongest items), and stocks above the new limit
+are lost. You can't pay with your last slot. Ways back up:
+- **Campfire** (new map room, orange flame, 0-1 per floor): refills stocks to the limit for free. Never raises it.
+- Shop: buy one stock (refill, up to the limit); rarely a stock slot for a high price.
+- Items and events that add a slot: e.g. a "Spare Heart" item (+1 limit, +1 stock), an angel room's prize,
+  a boss drop on later floors, a no-hit floor bonus. Hard cap 8.
+The HUD shows stocks as full icons and empty slots as outlines, so a deal's cost is visible. The KO-ceiling idea
+is dropped. Co-op: each player has their own limit and stocks; a devil deal costs only the buyer.
 
 **Pacing (one loop = 3 floors, the endless NG+ loop kept):**
 
@@ -151,7 +164,7 @@ A floor is a small branching map shown on a map screen (the road screen grows in
 - **Pedestal rooms:** the item floats above a pedestal with its icon; walk into it to take it (the current drop
   pickup code). Shop items show the price under them; walking in with enough coins buys.
 - **Co-op: per-player items.** Each player has their own strip; item rooms and the boss give one item per player
-  (two pedestals); shop items are bought by whoever walks in, from the shared purse; a devil deal's stock comes out of
+  (two pedestals); shop items are bought by whoever walks in, from the shared purse; a devil deal costs only the buyer's stock slots (was: out of
   the shared pool as stocks already do, the KO ceiling only on the buyer. A few items have a co-op line ("also on
   your partner's hits"). The existing `MELEE_ENVOY_SHARED_DRIVES` knob becomes a shared-inventory knob.
 
@@ -200,7 +213,7 @@ Effects are integer and capped; numbers are starting points for the balance harn
 | 25 | Meteor Heel | spike (down-angle hit) | spiked foes trail fire and explode on the blast line or the stage | stronger |
 | 26 | Perfect Guard | powershield | a powershield reflects a gold beam back at the attacker | stronger |
 
-### Devil pool (`devil`, costs a stock or a KO-ceiling cut)
+### Devil pool (`devil`, costs 1-2 stock slots)
 
 | # | name | trigger | what you see and feel | stack |
 |---|---|---|---|---|
@@ -295,6 +308,6 @@ generator, special-room scenes (pedestal, devil door), the pause strip, item ico
 
 ## Open questions for the owner
 
-1. KO ceiling as "max HP" for devil deals, or stocks only?
+1. Decided (owner, 2026-11-13): devil deals cost stock slots; Isaac-style stock limit + campfire refills.
 2. Secret room trigger: waveshine into a marked wall, or something per stage?
 3. Does Heat stay as a look only, or go entirely?

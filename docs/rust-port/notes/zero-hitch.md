@@ -442,3 +442,45 @@ Merge branch:
 - Gate OK (goldens, synctest d4 0 mismatches, audio = C, snapguard 0.255 / 0.413 / 5.639).
 - Synctest d7 0 mismatches. Hero replay SLPCHECK match.
 - The integrator still has to run the three replay sets on port/zerolag-merge1 before packaging.
+
+## Slice 6 fix: synctest stall (2026-11-12, port/zerolag-assets1 4ca019dc0; merge port/zerolag-merge2)
+Symptom: on port/zerolag-merge1 (80db1856b), fight 3 of `envoy/switch_torture.sh` (elite room, depth-0 synctest,
+14,400 frames) froze in 2 of 5 integrator runs, burning CPU.
+- Repro, exe of 80db1856b, 10 runs: 6 pass, 4 stall. `MELEE_ARENA_KEEP=off`: 5 of 8 pass, 3 stall.
+  `MELEE_ARENA_PREFAULT=off`: 8 of 8 pass. So the cause is the pre-faulter THREAD. KEEP is only involved because its
+  zeroer (`keep::zero_some`) runs on that thread and takes the arena lock every 2 ms, with KEEP off too (it checks
+  `BYTES == 0` under the lock).
+- Real stacks of 3 stalled processes, sampled externally twice 5 s apart (all identical): the main thread spins in
+  `arena::alloc` -> `Lock::take` (`pause; lock cmpxchg; jne` on the LOCK byte) under `melee_modhost::frame_hook` /
+  `Engine::tick` / `run_frame`. The pre-faulter spins on the SAME byte in `keep::zero_some`'s `Lock::take`. The third
+  thread sleeps. Nobody holds the lock.
+- Cause: LOCK, COMMITTED and the kept table are statics. A rollback snapshot saves the statics and a load writes them
+  back. A save taken while the pre-faulter held the lock recorded LOCK = true. Loading that save left the lock "held"
+  with no holder, so the next allocation spun forever. (A load while it held the lock also released it under it.)
+  Before slice 6 the thread took the lock only to commit ahead (rare), so the window was hit almost never.
+- Fix (`arena::BgPause`): snapshot capture / save / load raise `BG_PAUSE` and wait until the background thread is
+  outside its critical part (`BG_BUSY` false). Every saved state then holds an idle lock and `BG_PAUSE = true`. The
+  pause's drop clears it after a load. The page-touch and zeroing loops stop early when a pause is raised. Runs that
+  never snapshot (`melee play`) never enter a pause: their behaviour is unchanged. Both features stay ON by default.
+- Tool fixes: `switch_torture.sh` FAILS a run with no synctest result line (depth 0 printed "ok" for a run that never
+  finished). The hang watchdog's counter moves on every rollback-engine tick (`hang::pulse`), so `MELEE_HANG_DUMP` no
+  longer fires after N s of a healthy synctest (verified: 10 runs of 46-57 s with `MELEE_HANG_DUMP=30`, no dump).
+  Not verified: the watchdog firing on a real synctest stall (no stall left to test on).
+
+### Proof (port/zerolag-merge2)
+- Fight 3, defaults: 22 of 22 pass (assets1 build: 10 of 10 more). Full torture (fights 1 2 3c 5): PASS.
+- Gate OK (4 goldens, synctest d4 0 mismatches, audio = C, snapguard 0.259 / 0.406 / 5.415). Synctest d7 1638
+  checks, 0 mismatches.
+- NHV1 armed Envoy fight 7000 ticks, `MELEE_ARENA_PREFAULT` on vs off: EQUAL.
+
+### Table (merge2, worker off, worst of 3 runs; others in brackets; light-slot runs during other agents' load)
+| scene | merge1 | merge2 |
+| title | 40.9/26.9 | 56.4/42.4 (37.3, 35.9) |
+| CSS enter | 9.5/8.6 | 12.3/11.3 (9.2, 9.4) |
+| VS scene change | 24.9/23.5 | 32.2/30.7 (23.7, 27.9) |
+| match setup | 11.5/10.7 | 14.0/12.4 (10.3, 11.6) |
+| FoD no lead | 43.5/38.9 | 41.7/37.0 (38.1, 40.5) |
+| Envoy no lead | 57.0/55.8 | 65.5/64.6 (59.4, 56.8) |
+The fix runs no code on these paths (no snapshot, so no pause; the pre-faulter only gains two atomic stores per 2 ms
+loop). The worst-of-3 spread is run-to-run noise (first run of the batch each time, machine shared); the other runs
+match merge1.

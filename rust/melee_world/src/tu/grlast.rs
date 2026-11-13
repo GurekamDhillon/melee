@@ -411,7 +411,15 @@ pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
     Ground_StartMapAnim(gobj);
 }
 
-pub unsafe extern "C" fn grLast_8021A914(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A914");}
+/// Envoy exploration rooms (melee_modes::tu::explore): once per logic frame of a Final Destination match. Unset
+/// unless `MELEE_ENVOY_EXPLORE=1`.
+pub static mut EXPLORE_FRAME: Option<unsafe fn()> = None;
+pub unsafe extern "C" fn grLast_8021A914(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021A914");
+    if let Some(f) = EXPLORE_FRAME {
+        f();
+    }
+}
 
 pub unsafe extern "C" fn grLast_8021A918(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A918");}
 

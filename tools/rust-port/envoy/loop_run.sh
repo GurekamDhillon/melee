@@ -20,7 +20,7 @@ mkdir -p "$out"
 unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP
 play() { # name save frames title
   rm -rf "$out/$1.card"; cp -r "$card" "$out/$1.card"; mkdir -p "$2"
-  (cd "$out" && env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="v3g agent: loop_run $1 ($4)" MELEE_WASM_MODS="$mods" \
+  (cd "$out" && env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="${LOOP_TITLE:-v3g agent}: loop_run $1 ($4)" MELEE_WASM_MODS="$mods" \
     MELEE_ENVOY_DIR="$2" MELEE_CARD_PATH="$out/$1.card" MELEE_PAD_SCRIPT="$here/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
     MELEE_ENVOY_TEST_P1CPU=1 MELEE_PAD_NO_PAUSE=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_TEST_DRIVES="$drives" MELEE_TURBO=1 \
     MELEE_CRASH_STACK=200 MELEE_RECLAIM_LEAK=1 MELEE_HANG_DUMP=60 \
@@ -39,6 +39,8 @@ if [ "${RUN_A:-1}" = 1 ]; then
   grep -q "envoy: RUN OVER" "$out/a.log" && ok "the run ended in RUN OVER ($(grep -o 'RUN OVER at fight [0-9]*' "$out/a.log" | head -1))" || bad "no RUN OVER inside FRAMES"
   [ -f "$out/a.save/best.bin" ] && ok "best loop saved: $(od -An -i "$out/a.save/best.bin" | tr -d ' ')" || bad "no best.bin"
   grep -q "crash\|panicked" "$out/a.log" && bad "a crash or panic in run a"
+  # room lengths per loop (report only: the CPU pilot with the strong row is not a human; the owner's target is 1-2 min)
+  python "$here/room_lengths.py" "$out/a.log" | sed 's/^/     /'
 fi
 if [ "${SAVE_TEST:-0}" = 1 ]; then
   rm -rf "$out/b.save"

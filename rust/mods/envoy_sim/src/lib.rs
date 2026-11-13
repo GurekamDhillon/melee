@@ -4429,6 +4429,9 @@ unsafe fn fight_won() {
     log(b"envoy: fight length, live frames\0", S.play);
     S.outcome = 1;
     S.pool = me;
+    // room length (loop*10 + fight, then the live frames it took): loop_run.sh's room-length table
+    log(b"envoy: room cleared, loop*10 + fight ", lp() * 10 + S.fight + 1);
+    log(b"envoy: room time, live frames ", S.play);
     if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
         S.bosses += 1;
         log(b"envoy: boss beaten, keystone due; bosses ", S.bosses);

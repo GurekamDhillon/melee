@@ -259,6 +259,69 @@ fn arena_blast(d: &[u8]) -> Option<[f32; 4]> {
     (z[0] < -50.0 && z[1] > 50.0 && z[2] > 50.0 && z[3] < -50.0).then_some(z)
 }
 
+/// The generic form of [`load`] (Subspace enemies, `subspace_model.rs`): the MDL0s named in `wants` from one local
+/// archive `rel` (path parts under `disc/files`), each as a rig with the CHR0s named `<anim prefix><Suffix>` kept by
+/// suffix and its extent taken in the first frame of `idle` (the bind pose without it). `wants` = (model name,
+/// animation prefix). Call it on a helper thread, as `get` does: the rigs must live on the system heap.
+pub fn load_rigs(rel: &[&str], wants: &[(&str, &str, &str)]) -> Result<Vec<Option<Rig>>, String> {
+    let root = local_root().ok_or("no local Brawl folder")?;
+    let mut f = root.join("disc").join("files");
+    for p in rel {
+        f = f.join(p);
+    }
+    let raw = std::fs::read(&f).map_err(|e| format!("archive not readable ({})", e.kind()))?;
+    let mut leaves = vec![];
+    walk(&unwrap(raw), 0, &mut leaves);
+    let mut tex_at: Vec<(String, usize, usize)> = vec![];
+    let mut plt_at: Vec<(String, usize, usize)> = vec![];
+    let mut mdls: Vec<(String, usize, usize)> = vec![];
+    let mut chrs: Vec<(String, usize, usize)> = vec![];
+    for (li, b) in leaves.iter().enumerate() {
+        if b.len() < 0x10 || &b[..4] != b"bres" {
+            continue;
+        }
+        let Some(entries) = brres_entries(b) else { continue };
+        for (name, off) in entries {
+            let list = match b.get(off..off + 4) {
+                Some(b"TEX0") => &mut tex_at,
+                Some(b"PLT0") => &mut plt_at,
+                Some(b"CHR0") => &mut chrs,
+                Some(b"MDL0") => &mut mdls,
+                _ => continue,
+            };
+            if !list.iter().any(|(n, _, _)| *n == name) {
+                list.push((name, li, off));
+            }
+        }
+    }
+    let texs: Vec<(String, std::sync::Arc<Tex>)> = tex_at
+        .iter()
+        .filter_map(|(n, li, o)| {
+            let plt = plt_at.iter().find(|(pn, _, _)| pn == n).map(|(_, pl, po)| (leaves[*pl].as_slice(), *po));
+            tex0(&leaves[*li], *o, plt).map(|t| (n.clone(), std::sync::Arc::new(t)))
+        })
+        .collect();
+    Ok(wants
+        .iter()
+        .map(|(want, prefix, idle)| {
+            let (_, li, off) = mdls.iter().find(|(n, _, _)| n == want)?;
+            let mut r = mdl0(&leaves[*li], *off, &texs)?;
+            for (n, cl, co) in &chrs {
+                if let Some(suf) = n.strip_prefix(prefix) {
+                    if !suf.is_empty() {
+                        r.anims.push((suf.to_string(), chr0(&leaves[*cl], *co)));
+                    }
+                }
+            }
+            r.strip_root_motion();
+            let mut tris = vec![];
+            r.skin(r.anim(idle), 0.0, &mut tris);
+            (r.min, r.max) = extent(&tris);
+            Some(r)
+        })
+        .collect())
+}
+
 // ---------------------------------------------------------------- containers
 
 fn be16(d: &[u8], o: usize) -> u16 {
@@ -677,6 +740,44 @@ pub struct Anim {
     tracks: Vec<(String, [Option<Track>; 9])>,
 }
 
+impl Anim {
+    /// The (min, max) of `bone`'s translation per axis over the clip, or None when it has no translation channel.
+    pub fn trans_range(&self, bone: &str) -> Option<[(f32, f32); 3]> {
+        let (_, v) = self.tracks.iter().find(|(n, _)| n == bone)?;
+        let mut r = [(0.0f32, 0.0f32); 3];
+        let mut any = false;
+        for a in 0..3 {
+            if let Some(t) = &v[6 + a] {
+                any = true;
+                let (mut lo, mut hi) = (f32::MAX, f32::MIN);
+                let mut f = 0.0;
+                while f <= self.frames {
+                    let x = t.at(f);
+                    lo = lo.min(x);
+                    hi = hi.max(x);
+                    f += 1.0;
+                }
+                r[a] = (lo, hi);
+            }
+        }
+        any.then_some(r)
+    }
+    /// Root-motion strip (the halberd `transn_policy` 'strip' rule): `bone`'s translation on the chosen axes holds
+    /// its frame-0 value for the whole clip, for a body whose travel the game moves itself (Subspace enemies).
+    pub fn hold_translation(&mut self, bone: &str, axes: [bool; 3]) {
+        if let Some((_, v)) = self.tracks.iter_mut().find(|(n, _)| n == bone) {
+            for a in 0..3 {
+                if axes[a] {
+                    if let Some(t) = &v[6 + a] {
+                        let x0 = t.at(0.0);
+                        v[6 + a] = Some(Track::Fixed(x0));
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn chr0(d: &[u8], c: usize) -> Anim {
     let ver = be32(d, c + 8);
     let frames = be16(d, c + if ver >= 5 { 0x20 } else { 0x1C }) as usize;
@@ -827,6 +928,8 @@ pub struct Rig {
     /// Extent in the first frame of `Wait1` (size and depth centre stay fixed while animating; the ground is y 0).
     pub min: [f32; 3],
     pub max: [f32; 3],
+    /// What [`Rig::strip_root_motion`] removed (one line per clip with travel), for the load log.
+    pub motion_log: String,
 }
 
 impl Rig {
@@ -841,6 +944,50 @@ impl Rig {
     /// Bone slot whose name ends with `suffix` (arm bones carry the model name as a prefix).
     pub fn bone_named(&self, suffix: &str) -> Option<usize> {
         self.bones.iter().position(|b| b.name.ends_with(suffix))
+    }
+    /// Brawl clips carry the body's travel on the top bones' translation (TopN / TransN): Brawl's own code consumes it
+    /// as movement. A game that moves the body itself (the Subspace enemies' sim velocities) draws that travel twice:
+    /// the body slides off its collision position through a walk / charge / turn and snaps back when the clip loops.
+    /// Same rule as the other ports (`ports/halberd/anim/transn_policy.json` 'strip', `ports/ir/tools/
+    /// convert_ultimate_anim.py strip_root`): the horizontal translation (x, z) of TopN / TransN (within two levels of
+    /// the root) holds its frame-0 value for the whole clip. y stays (hops and bobs are the look; the game's y is the
+    /// ground). Applied by [`load_rigs`] to every rig it loads; Petey's own [`load`] does not (his hit / land points
+    /// are read from the posed bones, so his clip travel is gameplay there).
+    pub fn strip_root_motion(&mut self) {
+        // the travel carriers only (TopN, TransN, near the root): RotN / XRotN translations are body sway (leans,
+        // wind-ups) and stay part of the look
+        let tops: Vec<String> = self
+            .bone_depths()
+            .into_iter()
+            .filter(|(n, d)| *d <= 2 && (n.ends_with("TransN") || n.ends_with("TopN")))
+            .map(|(n, _)| n)
+            .collect();
+        let mut log = String::new();
+        for (clip, a) in self.anims.iter_mut() {
+            for b in &tops {
+                if let Some(r) = a.trans_range(b) {
+                    let (dx, dy, dz) = (r[0].1 - r[0].0, r[1].1 - r[1].0, r[2].1 - r[2].0);
+                    if dx > 0.5 || dz > 0.5 {
+                        log.push_str(&format!("
+  root motion stripped: {clip} {b} x {dx:.1} z {dz:.1} (y {dy:.1} kept)"));
+                    }
+                    a.hold_translation(b, [true, false, true]);
+                }
+            }
+        }
+        self.motion_log = log;
+    }
+    /// Bone names with their depth below the root (0 = root), in skeleton order.
+    pub fn bone_depths(&self) -> Vec<(String, usize)> {
+        let mut d: Vec<usize> = Vec::with_capacity(self.bones.len());
+        for b in &self.bones {
+            let x = match b.parent {
+                Some(p) if p < d.len() => d[p] + 1,
+                _ => 0,
+            };
+            d.push(x);
+        }
+        self.bones.iter().zip(d).map(|(b, x)| (b.name.clone(), x)).collect()
     }
     pub fn bone_name(&self, slot: usize) -> &str {
         self.bones.get(slot).map(|b| b.name.as_str()).unwrap_or("")
@@ -1191,7 +1338,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Option<Ri
     if tris.is_empty() {
         return None;
     }
-    Some(Rig { bones, srcs, verts: tris, batches, anims: vec![], min: [0.0; 3], max: [0.0; 3] })
+    Some(Rig { bones, srcs, verts: tris, batches, anims: vec![], min: [0.0; 3], max: [0.0; 3], motion_log: String::new() })
 }
 
 /// Extent of a posed triangle list; y from the 1st..99th percentile (a few far-off vertices must not set the feet

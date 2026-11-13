@@ -4383,7 +4383,7 @@ unsafe fn test_waves_read() -> i32 {
     s.split(|c| c == ',' || c == '/' || c == '|' || c == ';')
         .find_map(|t| t.trim().strip_prefix('~').and_then(|x| x.parse::<i32>().ok()))
         .unwrap_or(-1)
-        .clamp(-1, 6)
+        .clamp(-1, 1023) // 100 and up: a Subspace enemy (kind + 32 x tier)
 }
 
 /// Per live frame of a wave fight: spawn the three once the fight is on, then read each enemy's damage taken (its
@@ -4453,12 +4453,55 @@ unsafe fn room_frame() {
     stage_request(SH_WAVE);
 }
 
+/// Subspace enemies in the rooms (docs/rust-port/notes/envoy-subspace.md "Where they appear"): beside the room's
+/// foe fighters, not needed for the win (the fighters still decide it). Per fight: the kinds that may come (Subspace
+/// kind: 0 Goomba, 1 Primid, 2 Bullet Bill, 3 Giant Goomba) and how many in loop 1; every loop past the first adds
+/// one (to EN_MAX) and raises their tier (Brawl's difficulty scalar). The boss room has none. Test flag `noenemies`
+/// turns them off.
+const ROOM_ENEMIES: [(&[i32], i32); FIGHTS] = [(&[0], 2), (&[0, 1], 2), (&[1, 2, 0], 3), (&[], 0)];
+/// Loop 2 on: the elite room's last enemy is a Giant Goomba.
+const ROOM_GIANT_FROM_LX: i32 = 1;
+
+/// Room enemies for the current wave: spawned once the wave is on (each wave of the room brings its own set when
+/// the last set is gone). Seeded from the fight key and the wave: the same run gives the same rooms.
+unsafe fn room_enemies_frame() {
+    let (kinds, base) = ROOM_ENEMIES[S.fight.clamp(0, FIGHTS as i32 - 1) as usize];
+    if kinds.is_empty() || base <= 0 || test_flag("noenemies") || S.play < 60 || S.en_spawned == S.wave {
+        return;
+    }
+    if S.en_h.iter().any(|&h| h > 0) {
+        return;
+    }
+    S.en_spawned = S.wave;
+    let n = (base + lx()).clamp(1, EN_MAX as i32) as usize;
+    let tier = lx().clamp(0, 4);
+    let mut r = mix(fkey() ^ (S.wave as u32).wrapping_mul(0x9E37_79B9) ^ 0x5B5A_CE00);
+    for i in 0..n {
+        r = mix(r.wrapping_add(i as u32));
+        let mut kind = kinds[(r % kinds.len() as u32) as usize];
+        if sched().kind == FK_ELITE && lx() >= ROOM_GIANT_FROM_LX && i == n - 1 {
+            kind = 3;
+        }
+        // spread across the stage, alternating sides; a Bullet Bill comes in from the edge it faces away from
+        let side = if i % 2 == 0 { -1.0 } else { 1.0 };
+        let x = side * (25.0 + 22.0 * (i / 2) as f32);
+        let facing = if x < 0.0 { 1 } else { -1 };
+        let (x, y) = if kind == 2 { (side * 150.0, 25.0 + 15.0 * (i % 3) as f32) } else { (x, 40.0) };
+        let h = (S.seq & 0xFFFF) << 8 | (0x40 + i as i32);
+        let got = gd_envoy_enemy_spawn(100 + kind + 32 * tier, x, y, facing, h);
+        S.en_h[i] = if got == h { h } else { 0 };
+        log(b"envoy: room enemy spawned, kind*1000 + handle low (-1: refused) ", if got == h { kind * 1000 + (h & 0xFF) } else { -1 });
+    }
+}
+
 unsafe fn waves_frame() {
     let k = test_waves();
     if k < 0 {
-        return;
-    }
-    if S.en_spawned == 0 {
+        room_enemies_frame();
+        if S.en_spawned == 0 {
+            return;
+        }
+    } else if S.en_spawned == 0 {
         if S.play < 30 {
             return;
         }
@@ -4541,6 +4584,8 @@ unsafe fn begin_stop() {
 
 /// The fight is won (the last foe fell; `S.won_pool` is the pool left): sweep the drops, pay the clear, advance.
 unsafe fn fight_won() {
+    // the room's Subspace enemies go with it (99: clear them all)
+    gd_envoy_enemy_spawn(99, 0.0, 0.0, 1, 1);
     let me = S.won_pool.max(1);
     for p in 0..nh() as usize {
         for k in 0..DROPS {

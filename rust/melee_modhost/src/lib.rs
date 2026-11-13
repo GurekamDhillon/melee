@@ -731,11 +731,21 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_enemy_spawn", |which: i32, x: f32, y: f32, facing: i32, handle: i32| -> i32 {
         unsafe {
             if melee_modes::tu::envoy::armed() == 0 || melee_modes::tu::stage_hop::check(-1) == melee_modes::tu::stage_hop::HOP_NOT_GAMEPLAY { return -1 }
+            // 100 and up: a Subspace enemy (melee_modes::tu::subspace; kind + 32 x tier)
+// 99: remove every Subspace enemy (the room is won)
+if which == melee_modes::tu::subspace::SPAWN_BASE - 1 { melee_modes::tu::subspace::clear_all(); return 0 }
+            if which >= melee_modes::tu::subspace::SPAWN_BASE { return melee_modes::tu::subspace::sub_spawn(which, canon(x), canon(y), facing, handle) }
             melee_modes::tu::script_game::ScriptGame_SpawnEnemy(which, canon(x).to_bits() as i32, canon(y).to_bits() as i32, facing, handle)
         }
     });
-    w!("gd_envoy_enemy_i", |handle: i32, field: i32| -> i32 { unsafe { melee_modes::tu::script_game::ScriptGame_EnemyI(handle, field) } });
-    w!("gd_envoy_enemy_status", |handle: i32| -> i32 { unsafe { melee_modes::tu::script_game::ScriptGame_EnemyStatus(handle) } });
+    w!("gd_envoy_enemy_i", |handle: i32, field: i32| -> i32 {
+        if melee_modes::tu::subspace::owns(handle) { return melee_modes::tu::subspace::sub_enemy_i(handle, field) }
+        unsafe { melee_modes::tu::script_game::ScriptGame_EnemyI(handle, field) }
+    });
+    w!("gd_envoy_enemy_status", |handle: i32| -> i32 {
+        if melee_modes::tu::subspace::owns(handle) { return melee_modes::tu::subspace::sub_status(handle) }
+        unsafe { melee_modes::tu::script_game::ScriptGame_EnemyStatus(handle) }
+    });
     // Envoy sessions: hold the retail match end (the stop runs after the win), and end the held match
     w!("gd_envoy_end_hold", |on: i32| -> i32 { unsafe { if melee_modes::tu::envoy::armed() == 0 { return -1 } melee_modes::tu::gmvs::gmVs_SetEndHold(on) } 0 });
     w!("gd_envoy_end_match", || -> i32 {

@@ -466,6 +466,7 @@ fn ratio(v: i32) -> f32 {
 pub unsafe fn match_begin(d: *mut StartMeleeData) {
     melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("match setup"));
     crate::tu::petey::disarm();
+    crate::tu::subspace::begin_match(0x5B5A_CE01 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
     // Envoy sessions: the match-end hold is the sim's, per match (gd_envoy_end_hold); never left on for a retail match
     crate::tu::gmvs::gmVs_SetEndHold(0);
     melee_fighter::hooks::ENVOY_TAG_MASK = [0; 4];
@@ -491,6 +492,17 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         if PICK[2] >= 0 {
             css_m2 = PICK[2];
             css_p2 = PICK[3];
+        }
+    }
+    // test knob (headless checks, e.g. an m-ex fighter on the ACE disc): MELEE_ENVOY_TEST_MAIN=main[,partner]
+    // (character kinds) replaces player 1's picks for a new run
+    if let Ok(v) = std::env::var("MELEE_ENVOY_TEST_MAIN") {
+        let mut it = v.split(',').filter_map(|t| t.trim().parse::<i32>().ok());
+        if let Some(m) = it.next() {
+            css_main = m;
+            if let Some(p) = it.next() {
+                css_partner = p;
+            }
         }
     }
     let pair = |want_main: i32, want_partner: i32, cm: i32, cp: i32| -> (i32, i32) {
@@ -990,6 +1002,7 @@ unsafe fn d_team(slot: i32) -> i32 {
 /// Per logic frame (after the post chain, next to `petey::tick`): keep each blast on its capsule for its life (put
 /// back if the owner's own state change cleared it and its move left the slot free), then switch it off.
 pub unsafe fn tick() {
+    crate::tu::subspace::sub_tick();
     if ARMED != 0 && hud_off() {
         hide_retail_hud();
     }

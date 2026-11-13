@@ -553,6 +553,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     // Brawl map section, carried by Final Destination
     let explore = !petey && crate::tu::explore::enabled() && crate::tu::explore::map().is_some();
     crate::tu::explore::WANT = explore;
+    crate::tu::explore::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it
     let stage = if petey || explore { GR_FD } else { PLAN[P_STAGE] };
     if stage > 0 && crate::tu::stage_hop::supported(stage) {
         r.stkind = melee_world::tu::stage::Stage_StageSlotSelect(stage) as u16;

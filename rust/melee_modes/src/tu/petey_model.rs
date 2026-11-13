@@ -230,7 +230,7 @@ fn load() -> Result<Model, String> {
 
 /// A bone's bind translation by name in an MDL0 inside `d`: the bone record whose name offset (+8, relative to the
 /// record) points at the name; translation at +0x38.
-fn bone_trans(d: &[u8], name: &[u8]) -> Option<[f32; 2]> {
+pub fn bone_trans(d: &[u8], name: &[u8]) -> Option<[f32; 2]> {
     let mut want = name.to_vec();
     want.push(0);
     let locs: Vec<usize> = d.windows(want.len()).enumerate().filter(|(_, w)| *w == want.as_slice()).map(|(i, _)| i).collect();
@@ -249,7 +249,7 @@ fn bone_trans(d: &[u8], name: &[u8]) -> Option<[f32; 2]> {
 }
 
 /// The stage's blast zones from Dead0N (left, top) and Dead1N (right, bottom), if this leaf holds them.
-fn arena_blast(d: &[u8]) -> Option<[f32; 4]> {
+pub fn arena_blast(d: &[u8]) -> Option<[f32; 4]> {
     if d.len() < 0x10 || &d[..4] != b"bres" {
         return None;
     }

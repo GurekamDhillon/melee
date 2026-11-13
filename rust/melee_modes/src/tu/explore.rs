@@ -36,6 +36,8 @@ const SECS: [SecDef; 2] = [
 /// Door links by (section, GDOR index) -> (section, GDOR index). The arrow door (type 2) is the exit: it returns the
 /// party to the start of section 0 (in an Envoy run, the room's end).
 const LINKS: [((usize, usize), (usize, usize)); 2] = [((0, 1), (1, 0)), ((1, 0), (0, 1))];
+/// Petey's arena (the boss fight, `ARENA_WANT`): the adventure stage of his fight, one section at the origin.
+const ARENA_SECS: [SecDef; 1] = [SecDef { file: "030101.pac", off: [0.0, 0.0], model: "030vAdvStadium" }];
 /// Script enemy kind used for every Brawl spawn point (the Subspace enemy lane is not merged: Goomba, see notes).
 const STUB_ENEMY: i32 = 0;
 
@@ -63,6 +65,11 @@ pub struct Map {
     /// per section: (rig, posed triangles, offset); presentation only
     models: Vec<(pm::Rig, Vec<pm::Vert>, [f32; 2])>,
     door_models: Vec<(pm::Rig, Vec<pm::Vert>)>,
+    /// From the stage position model (arena only): camera limit and blast zones (left, right, top, bottom) and the
+    /// player spawn points.
+    pub cam: Option<[f32; 4]>,
+    pub blast: Option<[f32; 4]>,
+    pub players: Vec<[f32; 2]>,
 }
 
 fn be16(d: &[u8], o: usize) -> u16 {
@@ -108,6 +115,11 @@ struct RawLine {
 }
 
 fn load() -> Result<Map, String> {
+    load_secs(&SECS, &LINKS, false)
+}
+
+/// `whole`: every collision file of a section, welded (the arena's centre floor is its own file); else the largest only.
+fn load_secs(secs: &[SecDef], links: &[((usize, usize), (usize, usize))], whole: bool) -> Result<Map, String> {
     let mut verts: Vec<[f32; 2]> = vec![];
     let mut raw: Vec<RawLine> = vec![];
     let mut ext = vec![];
@@ -116,21 +128,31 @@ fn load() -> Result<Map, String> {
     let mut spawns = vec![];
     let mut models = vec![];
     let mut door_models = vec![];
-    for (si, s) in SECS.iter().enumerate() {
+    let mut cam = None;
+    let mut blast = None;
+    let mut players = vec![];
+    for (si, s) in secs.iter().enumerate() {
         let leaves = pm::pac_leaves(s.file).ok_or("map archive not readable")?;
         // the section's main collision: the largest collision file (others are props bound to moving bones)
-        let c = leaves.iter().filter(|d| is_coll(d)).max_by_key(|d| be16(d, 2)).ok_or("no collision")?;
+        let mut colls: Vec<&Vec<u8>> = leaves.iter().filter(|d| is_coll(d)).collect();
+        colls.sort_by_key(|d| core::cmp::Reverse(be16(d, 2)));
+        if colls.is_empty() {
+            return Err("no collision".into());
+        }
+        if !whole {
+            colls.truncate(1);
+        }
+        let mut e = [f32::MAX, f32::MIN, f32::MIN, f32::MAX];
+        for c in colls {
         let (np, npl) = (be16(c, 0) as usize, be16(c, 2) as usize);
         let (po, pl) = (be32(c, 8) as usize, be32(c, 12) as usize);
         let v0 = verts.len();
         let l0 = raw.len() as i32;
-        let mut e = [f32::MAX, f32::MIN, f32::MIN, f32::MAX];
         for i in 0..np {
             let p = [bef(c, po + 8 * i) + s.off[0], bef(c, po + 8 * i + 4) + s.off[1]];
             e = [fmin(e[0], p[0]), fmax(e[1], p[0]), fmax(e[2], p[1]), fmin(e[3], p[1])];
             verts.push(p);
         }
-        ext.push(e);
         for i in 0..npl {
             let o = pl + 16 * i;
             let link = |k: usize| -> i32 {
@@ -146,6 +168,23 @@ fn load() -> Result<Map, String> {
                 prev: link(4),
                 next: link(6),
             });
+        }
+        }
+        ext.push(e);
+        if whole {
+            for b in leaves.iter() {
+                if let (Some(a), Some(z)) = (pm::bone_trans(b, b"CamLimit0N"), pm::bone_trans(b, b"CamLimit1N")) {
+                    cam = Some([fmin(a[0], z[0]) + s.off[0], fmax(a[0], z[0]) + s.off[0], fmax(a[1], z[1]) + s.off[1], fmin(a[1], z[1]) + s.off[1]]);
+                    for k in 1..=4 {
+                        if let Some(p) = pm::bone_trans(b, format!("Player{k}N").as_bytes()) {
+                            players.push([p[0] + s.off[0], p[1] + s.off[1]]);
+                        }
+                    }
+                }
+                if blast.is_none() {
+                    blast = pm::arena_blast(b);
+                }
+            }
         }
         // doors (GDOR) and enemy spawn points (GEG1)
         for b in leaves.iter().filter(|d| d.get(..4) == Some(b"BLOC")) {
@@ -166,11 +205,37 @@ fn load() -> Result<Map, String> {
             }
         }
     }
-    for ((fs, fi), (ts, ti)) in LINKS {
+    for &((fs, fi), (ts, ti)) in links {
         let from = door_at.iter().position(|&d| d == (fs, fi));
         let to = door_at.iter().position(|&d| d == (ts, ti));
         if let (Some(f), Some(t)) = (from, to) {
             doors[f].to = t as i32;
+        }
+    }
+    if whole {
+        // weld: one vertex per position, and each line's neighbours by shared vertices (the files' own links stop at
+        // their file's edge, which would leave mid-floor ledges where two files meet)
+        let mut uniq: Vec<[f32; 2]> = vec![];
+        let mut map_v = vec![0usize; verts.len()];
+        for (i, p) in verts.iter().enumerate() {
+            map_v[i] = match uniq.iter().position(|q| q[0] == p[0] && q[1] == p[1]) {
+                Some(k) => k,
+                None => {
+                    uniq.push(*p);
+                    uniq.len() - 1
+                }
+            };
+        }
+        verts = uniq;
+        for l in raw.iter_mut() {
+            l.a = map_v[l.a];
+            l.b = map_v[l.b];
+        }
+        let n = raw.len();
+        for i in 0..n {
+            let (a, b, k) = (raw[i].a, raw[i].b, raw[i].kind & 0xF);
+            raw[i].next = (0..n).find(|&j| j != i && raw[j].a == b && raw[j].kind & 0xF == k).or_else(|| (0..n).find(|&j| j != i && raw[j].a == b)).map(|j| j as i32).unwrap_or(-1);
+            raw[i].prev = (0..n).find(|&j| j != i && raw[j].b == a && raw[j].kind & 0xF == k).or_else(|| (0..n).find(|&j| j != i && raw[j].b == a)).map(|j| j as i32).unwrap_or(-1);
         }
     }
     // group the lines the way the retail format wants them (floor, ceiling, right wall, left wall), links remapped
@@ -203,7 +268,8 @@ fn load() -> Result<Map, String> {
         .map(|&i| {
             let l = &raw[i];
             let drop = l.mat_flags & 0x01 != 0;
-            let ledge = l.mat_flags & 0x60 != 0;
+            // a ledge flag on a line that meets another floor at both ends is not a ledge (welded arena floors)
+            let ledge = l.mat_flags & 0x60 != 0 && !(whole && l.prev >= 0 && l.next >= 0);
             let kind: u16 = match group(l.kind).unwrap_or(0) {
                 0 => 1,
                 1 => 2,
@@ -238,6 +304,9 @@ fn load() -> Result<Map, String> {
         spawns,
         models,
         door_models,
+        cam,
+        blast,
+        players,
     })
 }
 
@@ -274,6 +343,28 @@ pub fn map() -> Option<&'static Map> {
     .as_ref()
 }
 
+/// Petey's arena, loaded once on a helper thread; `None` without the owner's files.
+pub fn arena() -> Option<&'static Map> {
+    static M: std::sync::OnceLock<Option<Map>> = std::sync::OnceLock::new();
+    M.get_or_init(|| {
+        let r = std::thread::spawn(|| load_secs(&ARENA_SECS, &[], true)).join().unwrap_or_else(|_| Err("loader panicked".into()));
+        match &r {
+            Ok(m) => eprintln!(
+                "explore: Petey arena loaded ({} verts, {} lines, {} players, camera {}, blast {})",
+                m.verts.len(), m.lines.len(), m.players.len(), m.cam.is_some(), m.blast.is_some()
+            ),
+            Err(e) => eprintln!("explore: no Petey arena ({e}); Final Destination"),
+        }
+        r.ok()
+    })
+    .as_ref()
+}
+
+/// The map of the current stage: the arena in the Petey fight, else the exploration room.
+fn cur() -> Option<&'static Map> {
+    if unsafe { ARENA } { arena() } else { map() }
+}
+
 // ---------------------------------------------------------------- sim state (statics: snapshot covered)
 
 /// Envoy's plan for the coming fight wants the room (set by `envoy::match_begin`; outside an Envoy run any Final
@@ -281,6 +372,10 @@ pub fn map() -> Option<&'static Map> {
 pub static mut WANT: bool = false;
 /// Whether the current stage is the exploration room (set at each stage load).
 pub static mut ACTIVE: bool = false;
+/// Envoy's coming fight is Petey's: play it in his arena (set by `envoy::match_begin`).
+pub static mut ARENA_WANT: bool = false;
+/// The current stage is Petey's arena (set at each stage load; implies `ACTIVE`).
+pub static mut ARENA: bool = false;
 /// The party's section.
 pub static mut SEC: i32 = 0;
 /// Door transition clock (0 idle); the move happens at `FADE / 2`.
@@ -310,10 +405,21 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     UP_PREV = [false; 6];
     CLOCK = 0;
     DOORS_USED = 0;
-    if sg::stage_info.grkind as i32 != 37 || (crate::tu::envoy::armed() != 0 && !WANT) {
+    ARENA = false;
+    if sg::stage_info.grkind as i32 != 37 {
         return core::ptr::null_mut();
     }
-    let Some(m) = map() else { return core::ptr::null_mut() };
+    let m = if ARENA_WANT && crate::tu::envoy::armed() != 0 {
+        let Some(a) = arena() else { return core::ptr::null_mut() };
+        ARENA = true;
+        a
+    } else {
+        if !enabled() || (crate::tu::envoy::armed() != 0 && !WANT) {
+            return core::ptr::null_mut();
+        }
+        let Some(m) = map() else { return core::ptr::null_mut() };
+        m
+    };
     let alloc = |n: usize| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(n as _) };
     let cd = alloc(core::mem::size_of::<MapCollData>()) as *mut MapCollData;
     let vs = alloc(core::mem::size_of::<Vec2>() * m.verts.len()) as *mut Vec2;
@@ -321,6 +427,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     let js = alloc(core::mem::size_of::<MapJoint>()) as *mut MapJoint;
     if cd.is_null() || vs.is_null() || ls.is_null() || js.is_null() {
         eprintln!("explore: no heap for the collision; Final Destination as usual");
+        ARENA = false;
         return core::ptr::null_mut();
     }
     core::ptr::copy_nonoverlapping(m.verts.as_ptr(), vs, m.verts.len());
@@ -345,13 +452,32 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     *cd = c;
     ACTIVE = true;
     set_bounds(0);
-    eprintln!("explore: room collision in place ({} lines)", m.lines.len());
+    eprintln!("explore: {} collision in place ({} lines)", if ARENA { "Petey arena" } else { "room" }, m.lines.len());
     cd
 }
 
 /// The camera and blast bounds of section `s` (camera: the section's extent; blast: 120 units outside it).
 unsafe fn set_bounds(s: usize) {
-    let Some(m) = map() else { return };
+    let Some(m) = cur() else { return };
+    if ARENA {
+        // the arena's own camera limit and blast zones (stage position model)
+        let ci = &mut sg::stage_info.cam_info;
+        let (ox, oy) = (ci.cam_x_offset, ci.cam_y_offset);
+        if let Some(c) = m.cam {
+            ci.cam_bounds.left = c[0] - ox;
+            ci.cam_bounds.right = c[1] - ox;
+            ci.cam_bounds.top = c[2] - oy;
+            ci.cam_bounds.bottom = c[3] - oy;
+        }
+        if let Some(b) = m.blast {
+            let bz = &mut sg::stage_info.blast_zone;
+            bz.left = b[0] - ox;
+            bz.right = b[1] - ox;
+            bz.top = b[2] - oy;
+            bz.bottom = b[3] - oy;
+        }
+        return;
+    }
     let Some(e) = m.ext.get(s) else { return };
     let ci = &mut sg::stage_info.cam_info;
     let (ox, oy) = (ci.cam_x_offset, ci.cam_y_offset);
@@ -398,6 +524,23 @@ unsafe fn place(g: *mut HSD_GObj, fp: *mut Fighter, x: f32, y: f32) {
 /// `grlast::EXPLORE_FRAME`: once per logic frame of the room (Final Destination's stage proc).
 pub unsafe fn room_tick() {
     if !ACTIVE {
+        return;
+    }
+    if ARENA {
+        CLOCK += 1;
+        if CLOCK == 1 {
+            set_bounds(0);
+            // the party at the arena's player spawn points
+            if let Some(m) = arena() {
+                let mut k = 0;
+                each_fighter(|g, fp| {
+                    if let Some(p) = m.players.get(k) {
+                        place(g, fp, p[0], p[1]);
+                    }
+                    k += 1;
+                });
+            }
+        }
         return;
     }
     let Some(m) = map() else { return };
@@ -517,7 +660,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     if first != g {
         return;
     }
-    let Some(m) = map() else { return };
+    let Some(m) = cur() else { return };
     let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("explore map draw"));
     for (r, t, off) in &m.models {
         pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);
@@ -541,7 +684,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
 
 /// Install the hooks (the engine start). Nothing is hooked unless the mode is on.
 pub fn install() {
-    if !enabled() {
+    if !enabled() && !crate::tu::petey::selected() {
         return;
     }
     unsafe {
@@ -552,6 +695,9 @@ pub fn install() {
     }
     // load now, before the first match (the loader is a helper thread; the first stage load must not wait on it)
     let _ = map();
+    if crate::tu::petey::selected() {
+        let _ = arena();
+    }
 }
 
 fn fmin(a: f32, b: f32) -> f32 {

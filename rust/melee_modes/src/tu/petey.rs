@@ -520,7 +520,12 @@ pub unsafe fn tick() {
     B.last_frame = frame;
     if ARMED {
         ARMED = false;
-        B.px = 0.0;
+        // in his arena: the arena's enemy spawn point (its GEG1 record); on Final Destination the centre
+        B.px = if crate::tu::explore::ARENA {
+            crate::tu::explore::arena().and_then(|m| m.spawns.first()).map(|s| s.1).unwrap_or(0.0)
+        } else {
+            0.0
+        };
         // Envoy endless loops: the plan's cage HP x1000 (0 / no plan: retail's)
         let hp = crate::tu::envoy::PLAN[crate::tu::envoy::P_BOSS_HP];
         let base = CAGE_HP_LIVE; // the file's tun().cage_hp (999) is the unscaled spawn value
@@ -535,6 +540,7 @@ pub unsafe fn tick() {
         // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
         enter(ST_WAIT_A);
         eprintln!("petey: fight begins, cages {} difficulty {} L {:.1}", B.cage_max, B.diff, level());
+        eprintln!("petey: stage {}", if crate::tu::explore::ARENA { "his arena" } else { "Final Destination" });
         match crate::tu::petey_model::get().and_then(|m| m.arena_blast) {
             Some(z) => eprintln!("petey: arena blast zones {:.0} {:.0} {:.0} {:.0}, knockback x{}", z[0], z[1], z[2], z[3], kb_scale_pm()),
             None => eprintln!("petey: no arena blast zones (stage's own), knockback x{}", kb_scale_pm()),
@@ -703,8 +709,14 @@ unsafe fn follow_camera() {
     let hh = B.cam[2] * melee_runtime::gekko::tanf(0.5 * CAM_FOV * 0.017453292);
     let hw = hh * cm::cm_803BCB64.aspect;
     let clamp = |v: f32, lo: f32, hi: f32| if lo > hi { 0.5 * (lo + hi) } else { fmin(fmax(v, lo), hi) };
-    B.cam[0] = clamp(B.cam[0], CAM_LIMIT[0] + CAM_MARGIN + hw, CAM_LIMIT[1] - CAM_MARGIN - hw);
-    B.cam[1] = clamp(B.cam[1], CAM_LIMIT[2] + CAM_MARGIN + hh, CAM_LIMIT[3] - CAM_MARGIN - hh);
+    // in his arena the camera limit is the arena's own (stage position model, CamLimit0N / CamLimit1N)
+    let lim = if crate::tu::explore::ARENA {
+        crate::tu::explore::arena().and_then(|m| m.cam).map(|c| [c[0], c[1], c[3], c[2]]).unwrap_or(CAM_LIMIT)
+    } else {
+        CAM_LIMIT
+    };
+    B.cam[0] = clamp(B.cam[0], lim[0] + CAM_MARGIN + hw, lim[1] - CAM_MARGIN - hw);
+    B.cam[1] = clamp(B.cam[1], lim[2] + CAM_MARGIN + hh, lim[3] - CAM_MARGIN - hh);
     let t = CAM_TILT_DEG * 0.017453292;
     let (ts, tc) = (melee_runtime::gekko::sinf(t), melee_runtime::gekko::cosf(t));
     let interest = Vec3 { x: B.cam[0], y: B.cam[1], z: 0.0 };

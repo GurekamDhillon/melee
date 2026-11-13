@@ -1251,6 +1251,9 @@ fn libm_sin(a: f32) -> f32 {
 
 // ---------------------------------------------------------------- hitboxes (§8)
 
+/// Petey's knockback scale for Melee fighters, per mille (growth and base; see `hitboxes`).
+pub const KB_SCALE_PM: u32 = 800;
+
 #[derive(Clone, Copy, Default)]
 struct HitDef {
     x: f32,
@@ -1382,9 +1385,14 @@ unsafe fn hitboxes(cf: &mut Fighter) {
             h.damage = d.dmg as f32;
             h.unk_count = d.dmg;
             h.kb_angle = d.angle;
-            h.x24 = d.kbg;
+            // Melee conversion (owner feedback: "one-shot"): Brawl's launch speeds are reproduced exactly (measured
+            // basket 3.41 in Brawl vs 3.36 here), but a Melee stage's blast zones sit much closer to Petey's +-68
+            // landing spots than his Brawl arena's, so the same speed KOs light fighters at ~50%. Rule: growth and
+            // base knockback x0.8 (knockback x0.8, travel x0.64), the largest 0.05 step at which no Petey attack KOs
+            // a light or fast-falling fighter from 0-100% in the FD launch model. Set knockback (contact) unchanged.
+            h.x24 = d.kbg * KB_SCALE_PM / 1000;
             h.x28 = d.wkb;
-            h.x2C = d.bkb;
+            h.x2C = d.bkb * KB_SCALE_PM / 1000;
             h.element = 0;
             h.x34 = 0;
             h.sfx_severity = 1;

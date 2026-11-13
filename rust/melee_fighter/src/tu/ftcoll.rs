@@ -584,6 +584,10 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
     melee_core::ct!("ftcoll_80076ed8");
     unsafe {
         let mut dmg = inline_b3(fp0, hit0, fp1);
+        // Envoy (TARGET_PC): a drive blast's capsule lands at most its cap; None until an Envoy run begins a match
+        if let Some(f) = crate::hooks::ENVOY_BLAST_LAND {
+            dmg = f(&*fp0, hit0, &*fp1, dmg);
+        }
         if inline_b1(hit0) {
             if log0_idx() == 0 && (*fp1).dmg.x189C_unk_num_frames == 0.0 && check_tip_log(fp1 as *mut c_void, hit0) == HitCapsule_Disabled as u32 {
                 let mut temp_dmg = 0.5 * dmg;
@@ -2026,6 +2030,12 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
         }
         if best.x0 as i32 == 1 {
             ext::Geno_Autolink(fpg(best.gobj), best.xC.hit0, &mut dir, &mut angle, &mut best_kb);
+        }
+        // Envoy (TARGET_PC): which capsule launches (logs only); None until an Envoy run begins a match
+        if best.x0 as i32 == 1 && arg4 != 0 {
+            if let Some(f) = crate::hooks::ENVOY_BLAST_BEST {
+                f(&*fp, &*fpg(best.gobj), best.xC.hit0, best_kb);
+            }
         }
         out.dir = dir;
         out.angle = melee_core::ppc::fctiwz_f32(angle);

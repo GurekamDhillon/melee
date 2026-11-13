@@ -18,6 +18,12 @@ pub static mut ENVOY_TAG_MASK: [u32; 4] = [0; 4];
 /// Envoy Assist Strike: per player slot, 1 while the pair's partner (the sub-fighter) is out on a strike: its own
 /// input is zeroed so the player's pad never drives it (melee_modes::tu::tag_swap::assist). 0 = retail.
 pub static mut ENVOY_ASSIST: [u8; 4] = [0; 4];
+/// Envoy drive blasts (melee_modes::tu::envoy): a fighter capsule's damage on a victim, right before it is added to
+/// the victim's damage of the frame; returns the damage that lands (a foe's blast is capped here, after every
+/// multiplier). None until an armed Envoy run begins a match; any capsule that is not a live blast passes unchanged.
+pub static mut ENVOY_BLAST_LAND: Option<fn(attacker: &Fighter, hit: *const crate::types::HitCapsule, victim: &Fighter, dmg: f32) -> f32> = None;
+/// Envoy drive blasts: the capsule whose knockback won the victim's damage log this frame (the hit that launches).
+pub static mut ENVOY_BLAST_BEST: Option<fn(victim: &Fighter, attacker: &Fighter, hit: *const crate::types::HitCapsule, kb: f32)> = None;
 /// `Geno_FallLimit(fp, terminal)` (ftCommon_Fall, TARGET_PC).
 pub static mut GENO_FALL_LIMIT: Option<fn(fp: &Fighter, terminal: f32) -> f32> = None;
 /// Override for `ft_PlaySFX(fp, id, volume, pan)`; unset = `crate::ft0877::play_sfx` (round 5).

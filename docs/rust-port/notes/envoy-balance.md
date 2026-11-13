@@ -39,8 +39,9 @@ toughness (unchanged, uncapped), CPU level 9, +1 elite / boss stock every second
 a third wave from loop 2, and Petey's HP.
 
 Test knobs (`MELEE_ENVOY_TEST_DRIVES`): `oldscale` restores the old numbers for an A/B, and `kblog` logs every hit
-a player takes from a foe (damage, percent, launch speed^2 on the next frame) and the percent of every stock lost.
-Both are logs or test-only. Without the knobs, nothing that is hashed changes besides the new rules.
+a player takes from a foe (damage, percent, launch speed^2 on the next frame) and the percent of every stock lost
+(its exact lines: round 3 below). Both are logs or test-only. Without the knobs, nothing that is hashed changes
+besides the new rules.
 
 ## Before / after: model (Melee's formula, Mario weight 100, centre of FD, KO knockback 167)
 
@@ -106,6 +107,78 @@ intended per-loop rise. The headless runs are too short to show the loop-3+ blas
   continue in the loop run b last reached, whichever loop that is. The host's "saved run loaded" line masks the loop
   word to its low byte (it printed 520 = 0x208, which is loop 8 plus the stop-done bit).
 
+## Round 3 (the laptop still saw "blast" hits of up to 32% on b990e17df)
+
+The laptop's run (`loop_run` run a, `ember:3,nova:3,bolt:3,*4000,@3,kblog|grand_finale`, 300000 frames, from loop 3)
+was repeated on the desktop on the same build and gave the same numbers: 325 hits flagged as blasts, 0.9-32.0%, and
+stocks lost at 43.6, 53.3, 57.6 and 63.2%.
+
+**The cap had not leaked. The log was wrong, in two ways, and round 2's reading of the engine was wrong too.**
+
+1. **The blast flag went stale between fights.** `kblog` kept the play frame of the last foe blast in a static, and
+   the play counter starts again at 0 in every fight. "Within 4 frames of the blast" was `play - blast_at <= 4`, which
+   is true for every frame of every later fight until its counter passes the old blast's frame. So after one foe
+   blast, every hit from that foe slot was flagged, for whole fights. In that run only 21 foe blasts were armed (13
+   Nova, 8 Comet). 18 flagged hits were real blasts and every one landed **9.0%**; the other 307 were ordinary moves
+   and Petey's attacks. The desktop's round-2 measurement started every fight in a fresh process
+   (`MELEE_ENVOY_START_FIGHT`), so its static was always fresh: that is the whole desktop / laptop difference.
+2. **The logged damage was the frame's sum.** The engine adds every hit a fighter takes in a frame and applies the
+   sum once (`dmg.x1838_percentTemp`), and the take-damage hook sees only the sum and the source of the hit whose
+   knockback won. A blast and a move landing on the same frame were one line.
+3. **The engine never scaled a blast's damage by the attack ratio.** The attack ratio, and the victim's defense
+   ratio, scale *knockback* only (`ftColl_80079AB0`). A move's damage grows with the fighter's size where the
+   hitbox is made (`ftColl_8007ABD0`: an elite of size 1.15 deals x1.0375), and a blast capsule does not go through
+   that. Round 2's "a capped 12% Nova landed up to 18%" was the same stale flag.
+
+**Every way a foe drive's damage reaches a player, and where each is capped now:**
+
+| path | drives | cap |
+|---|---|---|
+| a blast capsule on the engine's hit path | Nova, Comet (Spire, not in the foe pool) | **in the engine, where it lands**: `ftColl_80076ED8` clamps that capsule's damage on the victim to the blast's cap after staling and the victim's own multipliers, right before it joins the frame's damage (`hooks::ENVOY_BLAST_LAND` -> `envoy::blast_land`). The sim gives every foe blast the cap with `gd_envoy_blast_cap(slot, 12000, tag)`. Whatever multiplies the armed number on the way can no longer pass 12% |
+| a blast that found no free capsule | Nova, Comet | percent through `hurt`, below |
+| a percent fire (`hurt` -> `gd_envoy_percent`) | Ember, Bolt and its chain, Frost, Hex | in `hurt`, at the call that adds the percent: a foe's fire lands at most `FOE_FIRE_CAP` whoever set the fire context (it used to trust the cap the last fire left behind) |
+| Mark: a marked player takes +30% of every hit as extra percent | Hex | the extra, together with the blast part of the same hit, is at most `FOE_FIRE_CAP` (it was uncapped) |
+| Burning | Ember | 1.5% a second per stack; a foe's Ember holds one stack |
+
+A foe's blast is still armed at 12% / its attack ratio (9% at x1.25-x1.3, 8% at x1.5). Since the ratio scales the
+blast's knockback, that keeps a later loop's blast from launching much harder. It is a balance choice, not the cap:
+the cap is the engine's.
+
+**`kblog` now logs what was applied, per source.** A hit's `dmg` is the percent the fighter gained (read before and
+after the hit lands). The engine records each blast capsule's part of the frame (`gd_envoy_landed`), so a frame with
+a foe blast in it is logged as two records: the blast (flagged, then `kblog blast <drive>` = owner slot x1000 +
+level x100 + capsule x10 + capsules landed, `kblog blast raw` = before the cap, `kblog blast launches` = its
+knockback won the frame) and the rest. Percent fires log `kblog fire <drive>`, Mark `kblog mark extra`, Burning
+`kblog burn tick`. A KO adds `kblog KO last blast`. Each hit also logs the knockback that won the frame.
+The test knob `blastover` arms every foe blast at 30%, to show the engine's cap holding it.
+`tools/rust-port/envoy/kblog_summary.py a.log` prints the per-source table and the KO split from a run's log.
+
+**Measured** (the laptop's setup, 300000 frames from loop 3, Petey as the boss, two seeds; seed 1 is `#1`):
+
+| run | loops | foe blasts landed | percent fires | Mark extra | foe-drive hits over 12% |
+|---|---|---|---|---|---|
+| seed 0 | 3-4 | 18 (12 Nova, 6 Comet): all 9.0% | 46: Ember / Bolt 12.0%, Frost / Hex 7.2% | 25, max 4.7% | **0** |
+| seed 1 | 3-5 | 26 (16 Nova, 10 Comet): all 9.0% | 44: Ember / Bolt / a capsule-less Nova and Comet 12.0%, Frost / Hex 7.2% | 26, max 4.5% | **0** |
+| `blastover` (armed at 30%), 150000 frames | 3-5 | 24: armed 30.0%, **landed 12.0%** every time | 37, max 12.0% | 28, max 5.1% | **0** |
+
+Stocks lost (a fall: launch speed^2 under 100k in the log's units, so the player was not launched off):
+
+| run | falls | launches | lost to a blast |
+|---|---|---|---|
+| seed 0 | 19: 39-141%, median 77% | 30: 44-177%, median 106%; four under 60% (44, 46, 53, 58%) | 2: a launch at 88%, a fall at 63% |
+| seed 1 | 11: 10-145%, median 77% | 25: 44-212%, median 127%; one under 60% (44%) | 1: a launch at 212% |
+
+No stock is lost early to a foe drive. The early launches that remain (44-58%) are ordinary CPU moves, mostly an
+elite's 14.7-16.6% hit with knockback 185-237 (the attack ratio scales a move's knockback, the elite's size its
+damage). The hits of 30% and more are Petey's (30-40%), which is the Petey lane's. Those are rule 1's numbers, not rule 2's; if the
+owner still finds loop 3+ too deadly, the lever is `foe_atk` or the elite size, not the drives.
+
 ## Checks
 
 See the branch's commit message for results: v2_drives d4/d7, loop_run, switch_torture (RUN_TIMEOUT 6000), gate.sh.
+
+Round 3, on the round-3 build (vanilla disc): `v2_drives` every row at depth 4 and 7 with 0 mismatches; `loop_run`
+with `SAVE_TEST=1` on a per-run copy of the test card (run a to loop 8 and RUN OVER, run c continued run b's loop);
+`switch_torture` (RUN_TIMEOUT 6000) fights 1, 2, 3c, 5 with 0 switch KOs and 0 misplaced; `gate.sh` OK (the four
+goldens match at their recorded counts, so vanilla is bit-identical: the two new hooks in `ftcoll.rs` are `None`
+until an Envoy run begins a match).

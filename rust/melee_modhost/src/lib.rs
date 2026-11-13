@@ -705,6 +705,14 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_blast", |slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32| -> i32 {
         unsafe { melee_modes::tu::envoy::blast(slot, canon(x), canon(y), canon(r), dmg, angle, kbg, bkb) }
     });
+    // a blast's landing cap (x1000, 0 none) and log tag, on the blast `slot` armed this frame; what blasts landed on
+    // a victim slot this frame (9 words: envoy::landed)
+    w!("gd_envoy_blast_cap", |slot: i32, cap_milli: i32, tag: i32| -> i32 { unsafe { melee_modes::tu::envoy::blast_cap(slot, cap_milli, tag) } });
+    w!("gd_envoy_landed", |mut c: Caller<'_, HostData>, slot: i32, out: u32| -> i32 {
+        let l = unsafe { melee_modes::tu::envoy::landed(slot) };
+        write_words(&mut c, out, &l.map(|x| x as u32));
+        l[0]
+    });
     // the boss carrier slot of a Petey fight (-1 none) and Petey's body position (x, y as f32 bits in out[0..2]), the hits each slot landed on him (out[2..6])
     w!("gd_envoy_boss", |mut c: Caller<'_, HostData>, out: u32| -> i32 {
         let s = melee_modes::tu::petey::carrier();

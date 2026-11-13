@@ -71,7 +71,9 @@ for (w, i, s), d in sorted(snap.items()):
     x, y, m = d.get('x10', 0) / 10, d.get('y10', 0) / 10, d['motion']
     if 0 <= m <= 10 or abs(x) >= 200 or y <= -5 or y >= 180:
         bad.append(f'switch {i} slot {s}: motion {m} at ({x:.1f},{y:.1f})')
-ok = (not sync and not tag.endswith(tuple('d%d' % i for i in range(1, 10)))) or ' 0 MISMATCHES' in sync
+# every run is a synctest (depth 0 too): no result line means it never finished (a stall, a crash, the timeout)
+ok = ' 0 MISMATCHES' in sync
+if not sync: sync = 'NO SYNCTEST RESULT LINE (the run did not finish)'
 res = 'ok  ' if not kos and not bad and ok else 'FAIL'
 print(f'{res} {tag}: {len(sw)} switches, {len(kos)} switch KOs, {len(bad)} misplaced, {combat} combat KOs (hit after the switch: allowed); {sync.strip()}')
 print('     states at the switches: ' + ', '.join(f'{k} {v}' for k, v in cov.most_common()))

@@ -5,7 +5,8 @@
 #   then, each as a synctest at every depth of DEPTHS (default "4 7") over FRAMES (default 3600) frames, 0 mismatches:
 #   1. pad: tools/rust-port/envoy/drives_pad.txt in fight 1 (a duel: the level-3 CPU leaves the pad player free to
 #      tag) with time, landing, jump and tag drives (MELEE_ENVOY_TEST_DRIVES; Echo Oath given, so no keystone pick):
-#      Bolt, Nova, Comet, Relay, Slipstream (tag-in) fired, a blast armed, an echo, a tag;
+#      Bolt, Nova, Comet, Relay, Slipstream (tag-in) fired, a blast armed, an echo, a tag. The pad script tags with
+#      D-pad down, so the row sets MELEE_ENVOY_TAG_BUTTON=dpad (Quick Tag made Y the default; without it no tag fires);
 #   2. cpu: MELEE_ENVOY_TEST_P1CPU=1 (the player is a level-9 CPU, so hits and KOs happen) with the hit drives and
 #      Plague Bearer + Winter Oath: a hit drive fired, Shatter on a Chilled foe, a drop taken;
 #   3. twin: the CPU run with Twin Soul + Glass Core and Spire, Wildfire, Echo, Updraft / Tailwind, Thorns, Leech, Hex:
@@ -67,7 +68,7 @@ check() { # n name depth line missing
 owner_fired() { grep -Eq "envoy: drive fire [a-z_]+ $3[1-3]$" "$(L "$1" "$2")" || { [ "$3" = 0 ] && grep -Eq "envoy: drive fire [a-z_]+ [1-3]$" "$(L "$1" "$2")"; }; }
 for d in $depths; do
   if on pad; then
-    line=$(run pad "$d" "bolt,nova,comet/relay,slipstream,feather_storm|echo_oath" MELEE_ENVOY_START_FIGHT=1)
+    line=$(run pad "$d" "bolt,nova,comet,noshop/relay,slipstream,feather_storm|echo_oath" MELEE_ENVOY_START_FIGHT=1 MELEE_ENVOY_TAG_BUTTON=dpad)
     miss=""; for k in nova comet relay slipstream; do fired pad "$d" $k || miss="$miss $k"; done
     seen pad "$d" "envoy: drive echo" || miss="$miss (no echo)"
     seen pad "$d" "envoy: blast armed" || miss="$miss (no blast)"

@@ -189,11 +189,12 @@ fn list_row(e: &mut E, i: usize, x: f32, y: f32, w: f32, h: f32, on: bool, t: i3
 
 /// A fighter card (72 x 94): head, name; dashed "Pick" when not chosen yet.
 fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: &[i32], lvs: &[i32]) {
-    let known = (0..26).contains(&ck);
+    // any real fighter (retail or an m-ex slot); only an unset seat or an unrolled Random is the "?" card
+    let known = ck >= 0 && ck != crate::picker::RANDOM;
     sticker(e, if known { S_FACE_WHITE } else { S_FACE_CREAM }, x, y, 72.0, 94.0, deg, WHITE, |e| {
         if known {
             spr_c(e, S_HEAD, x + 36.0, y + 26.0, 1.6, WHITE);
-            e.text_ex(x + 36.0, y + 46.0, d(13), INK, ALIGN_CENTER, 66.0, ck_name(ck));
+            e.text_ex(x + 36.0, y + 46.0, d(13), INK, ALIGN_CENTER, 66.0, if (0..26).contains(&ck) { ck_name(ck) } else { crate::picker::short(ck) });
             let mut n = 0;
             for k in 0..ids.len() {
                 if (1..=POOL_LEN as i32).contains(&ids[k]) && n < 4 {

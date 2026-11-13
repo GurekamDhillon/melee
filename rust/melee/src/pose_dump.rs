@@ -1,4 +1,4 @@
-//! `melee pose-dump --fighter NAME (--row N | --symbol S | --all) --out DIR [--iso ISO] [--raw]`: headless dump of a
+//! `melee pose-dump --fighter NAME (--row N | --symbol S | --all) --out DIR [--iso ISO] [--raw] [--mods DIR [--enable a,b]]`: headless dump of a
 //! fighter's animation clips as per-frame joint poses (format: docs/rust-port/notes/pose-dump.md, schema `pose-dump/1`).
 //!
 //! The reference evaluator is the booted engine's own path: a VS match on Final Destination is booted with idle pads,
@@ -173,7 +173,7 @@ pub fn pose_dump(args: &[String]) -> ExitCode {
     let arg = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let has = |k: &str| args.iter().any(|a| a == k);
     let (Some(fighter), Some(out)) = (arg("--fighter"), arg("--out")) else {
-        eprintln!("usage: melee pose-dump --fighter NAME (--row N | --symbol S | --all) --out DIR [--iso ISO] [--raw]");
+        eprintln!("usage: melee pose-dump --fighter NAME (--row N | --symbol S | --all) --out DIR [--iso ISO] [--raw] [--mods DIR [--enable a,b]]");
         return ExitCode::from(2);
     };
     let Some(iso) = arg("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()) else {
@@ -192,6 +192,13 @@ pub fn pose_dump(args: &[String]) -> ExitCode {
     }
     let other = if fighter == "fox" { "falco" } else { "fox" };
     let scene = format!("mode=vs;at=match;p1={fighter}/human;p2={other}/human;p3=none;p4=none;stage=fd;match=time;minutes=0;items=off");
+    // --mods DIR [--enable a,b]: mount a mods folder (its anim_overrides too, notes/anim-overrides.md) over the disc
+    if arg("--mods").is_some() {
+        if let Err(er) = crate::set_engine_mods(args) {
+            eprintln!("pose-dump: mods: {er}");
+            return ExitCode::FAILURE;
+        }
+    }
     let disc = match crate::engine_disc(&iso) { Ok(d) => d, Err(e) => { eprintln!("pose-dump: {e}"); return ExitCode::FAILURE; } };
     let scn = melee_engine::scenario::Scenario::parse(&scene).expect("scene");
     let mut e = match melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn) {

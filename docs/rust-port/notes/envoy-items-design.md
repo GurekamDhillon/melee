@@ -164,8 +164,8 @@ A floor is a small branching map shown on a map screen (the road screen grows in
 - **Pedestal rooms:** the item floats above a pedestal with its icon; walk into it to take it (the current drop
   pickup code). Shop items show the price under them; walking in with enough coins buys.
 - **Co-op: per-player items.** Each player has their own strip; item rooms and the boss give one item per player
-  (two pedestals); shop items are bought by whoever walks in, from the shared purse; a devil deal costs only the buyer's stock slots (was: out of
-  the shared pool as stocks already do, the KO ceiling only on the buyer. A few items have a co-op line ("also on
+  (two pedestals); shop items are bought by whoever walks in, from the shared purse; each player has their own stock limit and stocks, and a devil deal costs only
+  the buyer's stock slots. A few items have a co-op line ("also on
   your partner's hits"). The existing `MELEE_ENVOY_SHARED_DRIVES` knob becomes a shared-inventory knob.
 
 ## 7. The first 40 items

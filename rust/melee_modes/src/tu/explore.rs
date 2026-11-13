@@ -294,7 +294,11 @@ pub static mut CLOCK: i32 = 0;
 /// Doors used (logs, checks).
 pub static mut DOORS_USED: i32 = 0;
 
-const FADE_LEN: i32 = 24;
+/// door transition: FADE_IN frames to black, the party moves, HOLD frames of black while Melee's camera travels to the
+/// new section (it eases, it does not cut), then FADE_IN frames back
+const FADE_IN: i32 = 12;
+const HOLD: i32 = 40;
+const FADE_LEN: i32 = 2 * FADE_IN + HOLD;
 
 /// `ground::EXPLORE_COLL`: at every stage load, before the script layer and `mpLibLoad`. Returns the exploration
 /// collision (a fresh copy in the game heap) for Final Destination with the mode on, else null (the stage's own).
@@ -401,7 +405,10 @@ pub unsafe fn room_tick() {
     if CLOCK == 1 {
         set_bounds(SEC as usize); // after the stage's own camera data has been read
     }
-    if CLOCK == 2 {
+    // enemies only inside an Envoy run: the run loads the enemy articles. Outside one (a plain VS match on FD) the
+    // Goomba's article data is not loaded and its attribute pointer is garbage (a guest address): a CPU fighter's
+    // item check (ftCo_800B5AB0) read it and crashed.
+    if CLOCK == 2 && crate::tu::envoy::armed() != 0 {
         let mut n = 0;
         for (si, x, y, face) in m.spawns.iter().copied() {
             if si == 0 && n < 4 {
@@ -421,14 +428,14 @@ pub unsafe fn room_tick() {
     if FADE > 0 {
         FADE += 1;
         // the up tilt that opened the door is also a tap jump: a fighter still in jump squat on the way in stands
-        if FADE < FADE_LEN / 2 {
+        if FADE < FADE_IN {
             each_fighter(|g, fp| {
                 if (*fp).motion_id == ftCo_MS_KneeBend as i32 && (*fp).ground_or_air as i32 == GA_Ground as i32 {
                     melee_fighter::tu::ft_08a1::ft_8008A2BC(g as _);
                 }
             });
         }
-        if FADE == FADE_LEN / 2 && DEST >= 0 {
+        if FADE == FADE_IN && DEST >= 0 {
             let d = m.doors[DEST as usize];
             let mut k = 0;
             each_fighter(|g, fp| {
@@ -521,9 +528,13 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
         }
     }
     if FADE > 0 {
-        let h = (FADE_LEN / 2) as i32;
-        let d = (FADE as i32 - h).abs();
-        let a = if d >= h { 0 } else { (h - d) * 255 / h };
+        let a = if FADE < FADE_IN {
+            FADE * 255 / FADE_IN
+        } else if FADE <= FADE_IN + HOLD {
+            255
+        } else {
+            (FADE_LEN - FADE).max(0) * 255 / FADE_IN
+        };
         pm::draw_fade(a as u8);
     }
 }

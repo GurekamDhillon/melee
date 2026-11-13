@@ -780,6 +780,8 @@ pub struct Batch {
     /// light channel 0 ambient (grey level) and whether the channel is lit
     amb: f32,
     lit: bool,
+    /// BP 0x41 blend (src factor, dst factor) when the material blends (shadow decals, light shafts); None: opaque
+    blend: Option<(u8, u8)>,
 }
 
 pub struct Rig {
@@ -920,6 +922,12 @@ impl Rig {
 /// The material state Petey's materials use (see [`Batch`]), from a v9 MDL0 material header at `mo`.
 fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mut Batch) {
     // texture 0 of the material's texture references (name, then wrap S / T)
+    if std::env::var_os("MELEE_MDL_LOG").is_some() {
+        let n = be32(d, mo + 0x2C) as usize;
+        let e0 = at(mo, bei(d, mo + 0x30));
+        let names: Vec<String> = (0..n.min(8)).map(|k| cstr(d, at(e0 + 0x34 * k, bei(d, e0 + 0x34 * k)))).collect();
+        eprintln!("mdl0: material {} texrefs {:?} found {:?}", cstr(d, at(mo, bei(d, mo + 8))), names, names.iter().map(|nm| texs.iter().any(|(t, _)| t == nm)).collect::<Vec<_>>());
+    }
     if be32(d, mo + 0x2C) > 0 {
         let e = at(mo, bei(d, mo + 0x30));
         let name = cstr(d, at(e, bei(d, e)));
@@ -932,6 +940,9 @@ fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mu
     let mut p = dl;
     while p + 5 <= end && d.get(p) == Some(&0x61) {
         let v = be32(d, p + 1);
+        if v >> 24 == 0x41 && v & 1 != 0 && v & 0x800 == 0 {
+            bt.blend = Some((((v >> 8) & 7) as u8, ((v >> 5) & 7) as u8));
+        }
         if v >> 24 == 0xF3 {
             bt.alpha = [((v >> 16) & 7) as u8, v as u8, ((v >> 22) & 3) as u8, ((v >> 19) & 7) as u8, (v >> 8) as u8];
         }
@@ -1031,7 +1042,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Option<Ri
         let clr = idx_of(id(2), &cols);
         let uv = idx_of(id(4), &uvs).map(|a| arr(d, a));
         let Some(pos) = pos else { continue };
-        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false };
+        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None };
         if let Some((_, mo)) = obj_mat.iter().find(|(i, _)| *i == oi) {
             material(d, *mo, texs, &mut bt);
         }
@@ -1232,6 +1243,17 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
             continue;
         }
         let textured = !flash && bt.tex.is_some();
+        // blending materials (Brawl stage shadows, light shafts) blend and keep the depth buffer as it is
+        match bt.blend {
+            Some((sf, df)) if !flash => {
+                gx::GXSetBlendMode(GX_BM_BLEND as _, sf as _, df as _, GX_LO_NOOP as _);
+                gx::GXSetZMode(1, GX_LEQUAL as _, 0);
+            }
+            _ => {
+                gx::GXSetBlendMode(GX_BM_NONE as _, GX_BL_ONE as _, GX_BL_ZERO as _, GX_LO_NOOP as _);
+                gx::GXSetZMode(1, GX_LEQUAL as _, 1);
+            }
+        }
         if let (Some(t), false) = (&bt.tex, flash) {
             let o = t.obj.as_ptr() as *mut _GXTexObj;
             gs::GXInitTexObj(o, t.data.as_ptr() as *mut _, t.w, t.h, t.fmt, bt.wrap[0], bt.wrap[1], (t.levels > 1) as u8);

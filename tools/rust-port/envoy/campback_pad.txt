@@ -1,0 +1,16 @@
+# Envoy camp B check (campback.sh): boot -> title (Start) -> main menu (Start) -> Down, Down (the Envoy row) -> A (the
+# camp) -> wait -> B (held 3 frames) -> wait. After B the game must be on the main menu (or still in the camp), never the
+# title. A second B press later checks that the main menu's own B still works normally (it goes to the title then).
+300 0000 0 0
+3 1000 0 0
+200 0000 0 0
+3 1000 0 0
+60 0000 0 0
+3 0004 0 0
+20 0000 0 0
+3 0004 0 0
+60 0000 0 0
+3 0100 0 0
+120 0000 0 0
+3 0200 0 0
+400 0000 0 0

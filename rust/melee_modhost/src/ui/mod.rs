@@ -967,9 +967,11 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
     f!("gd_ui_envoy_party", |_c: Caller<'_, PresData>, m1: i32, p1: i32, m2: i32, p2: i32| -> i32 {
         let ok = |k: i32| k == -1 || melee_modes::tu::envoy::taggable(k);
         if !(ok(m1) && ok(p1) && ok(m2) && ok(p2)) {
+            eprintln!("envoy: party refused (not taggable) m1 {m1} p1 {p1} m2 {m2} p2 {p2}");
             return GD_EINVAL;
         }
         unsafe { melee_modes::tu::envoy::PICK = [m1, p1, m2, p2] };
+        eprintln!("envoy: party m1 {m1} p1 {p1} m2 {m2} p2 {p2}");
         GD_OK
     });
     // the picker's roster: every fighter the build can load as one half of a tag pair, retail (0-25) then m-ex
@@ -1490,6 +1492,7 @@ impl PresHost {
                 let mut sh = self.shared.borrow_mut();
                 if sh.door != 0 && sh.pending.is_none() && !sh.stack.contains(&sh.door) {
                     sh.pending = Some(sh.door as i64);
+                    eprintln!("envoy: camp opened");
                 }
             }
         }
@@ -1503,6 +1506,9 @@ impl PresHost {
             }
         };
         for s in leave {
+            if s == self.shared.borrow().door {
+                eprintln!("envoy: camp closed");
+            }
             let m = self.shared.borrow().scenes[s as usize - 1].module as usize;
             self.shared.borrow_mut().stack.pop();
             if let Some(f) = self.mods[m].leave {

@@ -462,13 +462,20 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     }
     let step1 = (0..v[V_HUMANS].clamp(1, 2) as usize).any(|p| v[V_P0 + p * V_PW + P_STEP] == 1);
     let step2 = (0..v[V_HUMANS].clamp(1, 2) as usize).any(|p| v[V_P0 + p * V_PW + P_STEP] == 2);
-    if step2 {
+    if confirm_up(v) {
+        // the replace confirm draws its own hint line over this screen: one footer, never two
+    } else if step2 {
         hints(e, &[("Left / Right", "Choose a slot"), ("A", "Replace"), ("B", "Back")]);
     } else if step1 {
         hints(e, &[("Left / Right", "Choose a fighter"), ("A", "Take"), ("B", "Back")]);
     } else {
         hints(e, &[(if keys && !coop { "Left / Right" } else { "Up / Down" }, "Choose"), ("A", "Take it")]);
     }
+}
+
+/// A replace / scrap confirm is waiting for some player (`confirm` draws it and the only hint line).
+pub fn confirm_up(v: &[i32; VW]) -> bool {
+    (0..v[V_HUMANS].clamp(1, 2) as usize).any(|p| v[V_P0 + p * V_PW + P_CONFIRM] != 0)
 }
 
 /// The replace confirm (any screen that overwrites a slot: the pick, the shop, a level-up token): "Replace X with Y
@@ -517,8 +524,7 @@ pub unsafe fn confirm(e: &mut E, v: &[i32; VW]) {
             e.text_ex(x + 10.0, y - 8.0, d(12), WHITE, ALIGN_CENTER, 0.0, if p == 0 { "P1" } else { "P2" });
         }
     }
-    let any = (0..humans).any(|p| v[V_P0 + p * V_PW + P_CONFIRM] != 0);
-    if any {
+    if confirm_up(v) {
         hints(e, &[("Stick", "Choose"), ("A", "Confirm"), ("B", "Keep")]);
     }
 }

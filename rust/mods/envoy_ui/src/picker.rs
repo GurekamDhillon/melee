@@ -48,7 +48,8 @@ static mut SAY: [&str; 2] = [""; 2];
 
 pub fn short(k: i32) -> &'static str {
     unsafe {
-        if k >= 0x22 {
+        // Random (99) is not an m-ex slot: it took the m-ex branch and drew an empty name in the seat
+        if k >= 0x22 && k != RANDOM {
             if let Some(i) = (0..NG).find(|&i| GRID[i] == k) {
                 if let Ok(t) = core::str::from_utf8(&NAMES[i][..NAMEL[i]]) {
                     // a long m-ex name keeps its first word on the 60-wide card ("Diddy Kong" -> "Diddy")
@@ -164,22 +165,31 @@ pub unsafe fn open(coop: bool) {
     }
 }
 
-/// The party for a new run, Random rolled now, sent to the engine.
-pub unsafe fn send(coop: bool) {
+/// Random seats rolled to real fighters (a partner never equals its own main). Done when the picker closes, so the
+/// camp shows the fighter the run will get (it showed "Random" before), and again at send for an older LAST.
+unsafe fn roll(q: &mut [i32; 4]) {
     let mut seed = (T as u32).wrapping_mul(2654435761).wrapping_add(12345);
-    let mut q = LAST;
     for i in 0..4 {
         if q[i] == RANDOM {
             let avoid = if i % 2 == 1 { q[i - 1] } else { -1 };
-            loop {
+            for _ in 0..256 {
                 seed = seed.wrapping_mul(1103515245).wrapping_add(12345);
                 let k = GRID[(seed >> 16) as usize % (NG - 1).max(1)];
-                if k != avoid && !locked(k) {
+                if k != avoid && k != RANDOM && !locked(k) {
                     q[i] = k;
                     break;
                 }
             }
         }
+    }
+}
+
+/// The party for a new run (any Random left rolled now), sent to the engine.
+pub unsafe fn send(coop: bool) {
+    let mut q = LAST;
+    if q.contains(&RANDOM) {
+        fill_grid();
+        roll(&mut q);
     }
     if !coop {
         q[2] = -1;
@@ -264,6 +274,7 @@ pub unsafe fn frame(e: &mut E) -> bool {
             LAST[p * 2] = SEAT[p][0];
             LAST[p * 2 + 1] = SEAT[p][1];
         }
+        roll(&mut *core::ptr::addr_of_mut!(LAST));
         OPEN = false;
         return false;
     }

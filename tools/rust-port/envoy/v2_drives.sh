@@ -5,7 +5,8 @@
 #   then, each as a synctest at every depth of DEPTHS (default "4 7") over FRAMES (default 3600) frames, 0 mismatches:
 #   1. pad: tools/rust-port/envoy/drives_pad.txt in fight 1 (a duel: the level-3 CPU leaves the pad player free to
 #      tag) with time, landing, jump and tag drives (MELEE_ENVOY_TEST_DRIVES; Echo Oath given, so no keystone pick):
-#      Bolt, Nova, Comet, Relay, Slipstream (tag-in) fired, a blast armed, an echo, a tag;
+#      Bolt, Nova, Comet, Relay, Slipstream (tag-in) fired, a blast armed, an echo, a tag. The pad script tags with
+#      D-pad down, so the row sets MELEE_ENVOY_TAG_BUTTON=dpad (Quick Tag made Y the default; without it no tag fires);
 #   2. cpu: MELEE_ENVOY_TEST_P1CPU=1 (the player is a level-9 CPU, so hits and KOs happen) with the hit drives and
 #      Plague Bearer + Winter Oath: a hit drive fired, Shatter on a Chilled foe, a drop taken;
 #   3. twin: the CPU run with Twin Soul + Glass Core and Spire, Wildfire, Echo, Updraft / Tailwind, Thorns, Leech, Hex:
@@ -14,7 +15,7 @@
 #   5. coop: MELEE_ENVOY_COOP=1, both players level-9 CPUs (MELEE_ENVOY_TEST_P1CPU) in fight 3 (the pack that ends
 #      the first session, so the stop opens): two players, each with their own drives firing (owners 0-1 and 2-3),
 #      each took a card at the stop (picks are banked to the stop since sessions; fight 2 has none). Foe drives are
-#      checked by v3_slice (loop3, roadstop). The row runs at least 6000 frames (the pack takes about 5000);
+#      checked by v3_slice (loop3, roadstop). The row runs at least 9000 frames (the pack took about 5300 frames; 7300 since wave two brings new faces);
 #   6. petey: MELEE_ENVOY_BOSS=petey at fight 5 on the CPU run: drives fire on Petey (damage(amount)).
 #   Every run prints its fire count (the loud-start band, envoy-core-v2.md 3.3).
 #   V3 (port/v3sim): the same six on the Heat rules: charge is by damage (the pad run no longer needs Bolt, which
@@ -67,7 +68,7 @@ check() { # n name depth line missing
 owner_fired() { grep -Eq "envoy: drive fire [a-z_]+ $3[1-3]$" "$(L "$1" "$2")" || { [ "$3" = 0 ] && grep -Eq "envoy: drive fire [a-z_]+ [1-3]$" "$(L "$1" "$2")"; }; }
 for d in $depths; do
   if on pad; then
-    line=$(run pad "$d" "bolt,nova,comet/relay,slipstream,feather_storm|echo_oath" MELEE_ENVOY_START_FIGHT=1)
+    line=$(run pad "$d" "bolt,nova,comet,noshop/relay,slipstream,feather_storm|echo_oath" MELEE_ENVOY_START_FIGHT=1 MELEE_ENVOY_TAG_BUTTON=dpad)
     miss=""; for k in nova comet relay slipstream; do fired pad "$d" $k || miss="$miss $k"; done
     seen pad "$d" "envoy: drive echo" || miss="$miss (no echo)"
     seen pad "$d" "envoy: blast armed" || miss="$miss (no blast)"
@@ -92,7 +93,7 @@ for d in $depths; do
     check 4 shared "$d" "$line" "$miss"
   fi
   if on coop; then
-    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run coop "$d" "bolt,nova,comet,noshop/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run coop "$d" "bolt,nova,comet,noshop/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
     miss=""; seen coop "$d" "envoy: run start, players 2" || miss="$miss (not co-op)"
     { owner_fired coop "$d" 0 || owner_fired coop "$d" 1; } || miss="$miss (player 1 never fired)"
     { owner_fired coop "$d" 2 || owner_fired coop "$d" 3; } || miss="$miss (player 2 never fired)"

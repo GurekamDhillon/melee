@@ -70,6 +70,8 @@ pub struct PadSystem {
     /// Keep the adapter read while the window is in the background (`backgroundinput 1`).
     pub background_input: bool,
     pub script: Option<PadScript>,
+    /// `MELEE_PAD_SCRIPT2` (other ports than the first script; test runs only).
+    pub script2: Option<PadScript>,
     /// gd-ui-v1 keyboard capture (GAP-14): Some while a UI mod holds a KEYBOARD capture. Key events then go here
     /// (`kind << 24 | value`, see melee_modhost::ui::KEY_*) instead of to the pads. None: the keys drive the pads.
     pub ui_keys: Option<Vec<u32>>,
@@ -188,6 +190,7 @@ impl PadSystem {
             profile_state: Default::default(),
             background_input: false,
             script,
+            script2: PadScript::from_env_second(),
             ui_keys: None,
             focused: true,
             sources: [Source::None; PAD_CHANMAX],
@@ -318,7 +321,7 @@ impl PadSystem {
                 src[i] = if st[i].err == 0 { Source::Gamepad } else { Source::None };
             }
         }
-        if let Some(s) = self.script.as_mut() {
+        for s in self.script.iter_mut().chain(self.script2.iter_mut()) {
             let driven = s.apply(st);
             for i in 0..PAD_CHANMAX {
                 if driven & (1 << i) != 0 {

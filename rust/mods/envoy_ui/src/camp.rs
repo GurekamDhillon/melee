@@ -12,6 +12,7 @@ use gd_ui_enc::*;
 #[link(wasm_import_module = "gd_ui")]
 extern "C" {
     fn gd_ui_envoy_coop(on: i32) -> i32;
+    fn gd_ui_pass(buttons: u32) -> i32;
     fn gd_ui_pad_present(port: u32) -> i32;
 }
 
@@ -223,6 +224,8 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
 pub const DO_NOTHING: i32 = 0;
 pub const DO_CLOSE: i32 = 1;
 pub const DO_ARM: i32 = 2; // + op << 8
+/// gd_ui_pass: D-pad left / right and the main stick's X (the host's PASS_STICK_X).
+const PASS_LR: u32 = 0x0001 | 0x0002 | 0x1_0000;
 
 pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec: Option<[i32; REC_WORDS]>, no_brawl: bool) -> i32 {
     let u = &mut UI;
@@ -232,6 +235,10 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         TAG_BUTTON = gd_ui_envoy_set_tag_button(-1).clamp(0, 2);
     }
     let ended = view.is_some_and(|v| v[V_STATE] == 2 || v[V_STATE] == 3);
+    // the forked road: the cursor is the sim's (synced input, so co-op and netplay agree), but this scene holds the
+    // game's pads; left / right (D-pad and the main stick) are handed through while the fork is on screen
+    let fork_up = after_fight && view.is_some_and(|v| v[V_ROAD_N] > 1 && v[V_SESS_NEXT] != 1) && !ended && !crate::picker::is_open();
+    gd_ui_pass(if fork_up { PASS_LR } else { 0 });
     // sessions: the fight was won and the next is in the same session: no road, the banner, then on at once
     if after_fight {
         if let Some(v) = view.filter(|v| v[V_SESS_NEXT] == 1) {
@@ -723,6 +730,9 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
         loop_fight(&mut title, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
     }
     text_edge(e, 20.0, 64.0, d(16), WHITE, ALIGN_LEFT, 1.6, title.str());
+    // how to choose: P1's left / right moves the pointer (A takes it); in co-op P2's left / right plants the flag
+    let hint = if v[V_HUMANS] > 1 { "P1 Left / Right picks, A takes it. P2 Left / Right flags a wish." } else { "Left / Right picks the road, A takes it." };
+    text_edge(e, 624.0, 66.0, bs(12), WHITE, ALIGN_RIGHT, 1.4, hint);
     for r in 0..n {
         let b = V_ROAD0 + r * V_ROADW;
         let on = r == cur;

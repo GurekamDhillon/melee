@@ -82,6 +82,9 @@ pub struct SceneDef {
     pub name: String,
 }
 
+/// `gd_ui_pass`: also hand the game the main stick's X.
+pub const PASS_STICK_X: u32 = 0x1_0000;
+
 /// Host state the `gd_ui` imports of every presentation store share.
 pub struct Shared {
     /// A host-native modal (the settings overlay) owns the pads: gd_ui_pad answers GD_ESTATE.
@@ -103,6 +106,10 @@ pub struct Shared {
     pub prev_buttons: [u16; 4],
     pub edges: [u16; 4],
     pub inject: [Option<PADStatus>; 4],
+    /// `gd_ui_pass`: the buttons (PAD bits; PASS_STICK_X also the main stick's X) a masked port still hands the game
+    /// this present. Set every frame by the scene that wants it (the Envoy road's fork: the sim's synced road
+    /// cursor reads D-pad / stick left and right), cleared on every custom-scene switch.
+    pub pass: u32,
     /// Keyboard events of this present (only filled while a KEYBOARD capture exists).
     pub keys: Vec<u32>,
     pub scenes: Vec<SceneDef>,
@@ -210,6 +217,7 @@ impl Shared {
             prev_buttons: [0; 4],
             edges: [0; 4],
             inject: [None; 4],
+            pass: 0,
             keys: Vec::with_capacity(64),
             scenes: Vec::new(),
             replace: Vec::new(),
@@ -912,6 +920,12 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
                 | ((main && melee_modes::tu::mnmain::ENVOY_ROW_OK != 0) as i32) << 8
         }
     });
+    // the buttons a masked port still hands the game this present (PAD bits; PASS_STICK_X adds the main stick's X):
+    // a scene that draws over a held retail scene asks for it each frame (the Envoy road's fork cursor is the sim's)
+    f!("gd_ui_pass", |c: Caller<'_, PresData>, buttons: u32| -> i32 {
+        c.data().ui().borrow_mut().pass = buttons & (0xFFFF | PASS_STICK_X);
+        GD_OK
+    });
     // Envoy V3: player 2 joined (1) or left (0) at the camp; a new run started after this is co-op. Offline only.
     f!("gd_ui_envoy_coop", |c: Caller<'_, PresData>, on: i32| -> i32 {
         if c.data().ui().borrow().session != Session::Offline {
@@ -1497,11 +1511,16 @@ impl PresHost {
                 sh.inject = [None; 4];
             }
             let m = sh.masked_ports();
+            let pass = sh.pass;
             for p in 0..4 {
                 if m >> p & 1 != 0 {
-                    let err = pads[p].err;
+                    let (err, button, sx) = (pads[p].err, pads[p].button, pads[p].stickX);
                     pads[p] = PADStatus::zeroed();
                     pads[p].err = err;
+                    pads[p].button = button & pass as u16;
+                    if pass & PASS_STICK_X != 0 {
+                        pads[p].stickX = sx;
+                    }
                 }
             }
         }
@@ -1527,6 +1546,7 @@ impl PresHost {
             }
         }
         let Some(p) = self.shared.borrow_mut().pending.take() else { return };
+        self.shared.borrow_mut().pass = 0;
         let leave: Vec<u32> = {
             let sh = self.shared.borrow();
             match p {

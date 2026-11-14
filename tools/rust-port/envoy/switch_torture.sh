@@ -71,7 +71,8 @@ def cls(d):
 cov = collections.Counter(cls(d) for (w, i, s), d in snap.items() if w == 'at')
 bad = []
 for (w, i, s), d in sorted(snap.items()):
-    if w != 'after' or 'motion' not in d: continue
+    # Sleep (11) is not in play: a benched tag partner or a parked wave foe keeps its old spot off screen
+    if w != 'after' or 'motion' not in d or d['motion'] == 11: continue
     x, y, m = d.get('x10', 0) / 10, d.get('y10', 0) / 10, d['motion']
     if 0 <= m <= 10 or abs(x) >= 200 or y <= -5 or y >= 180:
         bad.append(f'switch {i} slot {s}: motion {m} at ({x:.1f},{y:.1f})')

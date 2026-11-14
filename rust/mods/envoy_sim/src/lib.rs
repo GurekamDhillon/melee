@@ -84,6 +84,7 @@ extern "C" {
     fn gd_envoy_speed(slot: i32, active: i32, bench: i32) -> i32;
     fn gd_envoy_absorb(slot: i32) -> i32;
     fn gd_envoy_attacker(slot: i32) -> i32;
+    fn gd_envoy_combo_break(slot: i32, frames: i32) -> i32;
     fn gd_envoy_jumps(slot: i32) -> i32;
     fn gd_envoy_air_jump(slot: i32) -> i32;
     fn gd_envoy_blast(slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32) -> i32;
@@ -283,6 +284,24 @@ const CM_NONE: i32 = 3;
 const FX_FIRE: i32 = 0;
 const FX_FLARE: i32 = 1;
 const FX_FOE: i32 = 2;
+
+// ---- the combo breaker: a player a foe (a CPU or an enemy) keeps hitting bursts free. Players hit by foes only:
+// never the other way round, and never in VS (the sim only acts in an armed run). One tunable block.
+/// The foe hit that would make the combo this many hits fires the breaker instead of landing.
+const CB_HITS: i32 = 4;
+/// ... or the hit that would take the combo's damage to this much (percent x1000).
+const CB_DAMAGE: i32 = 35_000;
+/// The combo ends after this many frames without a foe hit (or when the player is actionable on the ground).
+const CB_GAP: i32 = 60;
+/// Intangible frames after a break (the game's white intangibility flash shows them).
+const CB_INTANGIBLE: i32 = 45;
+/// Frames before the breaker can fire again (3 s).
+const CB_COOLDOWN: i32 = 180;
+/// The push on the foes nearby: a no-damage blast from the player, radius, angle (361: the Sakurai angle), growth, base.
+const CB_PUSH_R: f32 = 24.0;
+const CB_PUSH_ANGLE: i32 = 361;
+const CB_PUSH_KBG: i32 = 0;
+const CB_PUSH_BKB: i32 = 50;
 
 /// The whole sim state: i32 words only (no padding), so the FNV digest over its bytes is well defined.
 #[repr(C)]
@@ -539,6 +558,14 @@ struct St {
     sw_ko: [i32; 4],
     /// Whether the slot was hit or grabbed since the last switch.
     sw_hit: [i32; 4],
+    /// The combo breaker per player: foe hits in the running combo, its damage (x1000), the frame of its last hit,
+    /// the cooldown left, a break waiting for the frame end; breaks fired since load.
+    cb_hits: [i32; NP],
+    cb_dmg: [i32; NP],
+    cb_last: [i32; NP],
+    cb_cd: [i32; NP],
+    cb_due: [i32; NP],
+    cb_n: i32,
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -1395,6 +1422,10 @@ unsafe fn on_new_match(seq: i32) {
     S.won_pool = 0;
     S.tag_cd = [0; NP];
     S.tag_buf = [0; NP];
+    S.cb_hits = [0; NP];
+    S.cb_dmg = [0; NP];
+    S.cb_cd = [0; NP];
+    S.cb_due = [0; NP];
     S.dmg_win = [0; NP];
     S.tag_btn = gd_envoy_tag_button().clamp(0, 2);
     S.active = [0; NP];
@@ -3205,6 +3236,12 @@ extern "C" fn on_damage(h: u32, d: f32) {
                 log(b"envoy: finale knockback x1000 ", 1000 + bonus);
             }
         }
+        // the combo breaker: the hit that would make it CB_HITS (or take the combo to CB_DAMAGE) does not land
+        if (0..nh()).contains(&v) && cb_foe_hit(a) && cb_hit(v as usize, dmg) {
+            gd_envoy_absorb(v);
+            gd_envoy_percent(v, 0, -dmg);
+            return;
+        }
         if kb_log() && (0..nh()).contains(&v) && is_foe(a) {
             KB_W[v as usize] = [S.play, dmg, a, (S.play - FOE_BLAST_AT <= 4 && a == FOE_BLAST_SLOT) as i32];
         }
@@ -3217,6 +3254,73 @@ extern "C" fn on_damage(h: u32, d: f32) {
                 gd_envoy_percent(v, 0, extra);
                 push_rec(a, v, extra, T_WORD, -1);
             }
+        }
+    }
+}
+
+// ---- the combo breaker (CB_*)
+
+/// A hit from attacker slot `a` counts toward a combo: a foe CPU, or no fighter while an enemy wave is out.
+unsafe fn cb_foe_hit(a: i32) -> bool {
+    is_foe(a) || (a < 0 && S.en_h.iter().any(|&h| h > 0))
+}
+
+/// Player `p` takes a foe hit of `dmg` (x1000): count it; true when this hit fires the breaker instead of landing.
+unsafe fn cb_hit(p: usize, dmg: i32) -> bool {
+    if S.cb_due[p] != 0 {
+        return true; // a break is already on its way this frame: the hit is swallowed too
+    }
+    if S.cb_hits[p] > 0 && S.play - S.cb_last[p] >= CB_GAP {
+        S.cb_hits[p] = 0;
+        S.cb_dmg[p] = 0;
+    }
+    S.cb_last[p] = S.play;
+    if S.cb_cd[p] <= 0 && (S.cb_hits[p] + 1 >= CB_HITS || S.cb_dmg[p] + dmg >= CB_DAMAGE) {
+        S.cb_due[p] = 1;
+        return true;
+    }
+    S.cb_hits[p] += 1;
+    S.cb_dmg[p] = S.cb_dmg[p].saturating_add(dmg);
+    false
+}
+
+/// Per live unfrozen frame: a due break bursts the player free (the host: no launch, out of hitstun, intangible
+/// with its flash; a no-damage blast pushes the foes near back; the event rings and sounds in envoy_ui); the cooldown
+/// steps; a combo ends when the player is actionable on the ground or after CB_GAP frames without a foe hit.
+unsafe fn combo_frame() {
+    for p in 0..nh() as usize {
+        let ps = p as i32;
+        if S.cb_cd[p] > 0 {
+            S.cb_cd[p] -= 1;
+        }
+        if S.cb_due[p] != 0 {
+            S.cb_due[p] = 0;
+            let hits = S.cb_hits[p] + 1;
+            let pct = S.cb_dmg[p] / 1000;
+            S.cb_hits[p] = 0;
+            S.cb_dmg[p] = 0;
+            S.cb_cd[p] = CB_COOLDOWN;
+            S.cb_n += 1;
+            let r = gd_envoy_combo_break(ps, CB_INTANGIBLE);
+            if let Some(at) = pos(ps) {
+                gd_envoy_blast(ps, at.x, at.y + 8.0, CB_PUSH_R, 0, CB_PUSH_ANGLE, CB_PUSH_KBG, CB_PUSH_BKB);
+            }
+            ev(EV_COMBOBREAK, ps, hits << 16 | pct.clamp(0, 0xFFFF));
+            log(b"envoy: combo break, player*10000 + hits*1000 + combo percent ", ps * 10000 + hits * 1000 + pct.clamp(0, 999));
+            log(b"envoy: combo break at live frame ", S.play);
+            log(b"envoy: combo breaks so far (+1000000: the host refused) ", S.cb_n + if r == 0 { 0 } else { 1_000_000 });
+            continue;
+        }
+        if S.cb_hits[p] == 0 {
+            continue;
+        }
+        let h = gd_fighter_from_slot(ps);
+        let m = if h != 0 { gd_fighter_get_action_state(h) } else { 0 };
+        // actionable on the ground: Wait, walk, dash, run, turn, jump squat; squat; or dead (a stock lost)
+        let free = (14..=24).contains(&m) || (39..=41).contains(&m) || (0..=10).contains(&m);
+        if free || S.play - S.cb_last[p] >= CB_GAP {
+            S.cb_hits[p] = 0;
+            S.cb_dmg[p] = 0;
         }
     }
 }
@@ -4755,6 +4859,8 @@ unsafe fn publish() {
         }
         v[b + P_ACTIVE] = S.active[p];
         v[b + P_TAG_CD] = S.tag_cd[p];
+        v[b + P_BREAK_CD] = S.cb_cd[p];
+        v[b + P_BREAK_MAX] = CB_COOLDOWN;
         v[b + P_TAG_MAX] = tag_cooldown(p);
         v[b + P_TAG_BUF] = S.tag_buf[p];
         v[b + P_TAG_WINDOW] = S.dmg_win[p];
@@ -4976,6 +5082,7 @@ extern "C" fn on_frame_end() {
                     kb_frame();
                     tech_frame();
                     records_frame();
+                    combo_frame();
                     moments_frame();
                     room_frame();
                     waves_frame();

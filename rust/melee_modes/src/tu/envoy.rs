@@ -818,6 +818,31 @@ pub unsafe fn absorb(slot: i32) -> i32 {
     0
 }
 
+/// Envoy's combo breaker (the sim decides when; envoy_sim `CB_*`): `slot`'s fighter in play bursts out of the combo.
+/// Its launch goes (knockback velocity zeroed, the reaction to the hit now skipped), it leaves hitstun into Fall in
+/// the air or Wait on the ground, and it is intangible for `frames` with the game's own white intangibility flash
+/// (`ftColl_8007B760`). Game state, rolled back with the game. 0 done; -1 no fighter / not in gameplay.
+pub unsafe fn combo_break(slot: i32, frames: i32) -> i32 {
+    if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return -1;
+    }
+    let f = active_fighter(slot);
+    if f.is_null() || (*f).gobj.is_null() {
+        return -1;
+    }
+    let g = (*f).gobj;
+    (*f).dmg.kb_applied = 0.0;
+    (*f).x8c_kb_vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+    (*f).self_vel.y = (*f).self_vel.y.max(0.0);
+    if (*f).ground_or_air == GA_Ground {
+        melee_fighter::tu::ft_08a1::ft_8008A2BC(g);
+    } else {
+        melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(g);
+    }
+    melee_fighter::tu::ftcoll::ftcoll_8007b760(g, frames.clamp(0, 600));
+    0
+}
+
 /// The slot whose hit `slot`'s fighter in play took last (its damage source: a fighter, or an item's owner), or -1.
 pub unsafe fn attacker(slot: i32) -> i32 {
     let f = active_fighter(slot);

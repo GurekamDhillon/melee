@@ -73,7 +73,7 @@ pub fn moments(v: &[i32; VW]) {
     let now = v[V_PLAY];
     for i in 0..EV.min(n) {
         let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
-        if !(0..6).contains(&(now - ev[0])) || !(ev[1] == EV_CASHOUT || ev[1] == EV_BREAK) {
+        if !(0..6).contains(&(now - ev[0])) || !(ev[1] == EV_CASHOUT || ev[1] == EV_BREAK || ev[1] == EV_COMBOBREAK) {
             continue;
         }
         let key = ev[0].wrapping_mul(64) ^ (ev[1] << 3) ^ ev[2];
@@ -85,7 +85,7 @@ pub fn moments(v: &[i32; VW]) {
             seen[SEEN_N % 16] = key;
             SEEN_N += 1;
         }
-        let (x, y, world) = if ev[1] == EV_CASHOUT {
+        let (x, y, world) = if ev[1] == EV_CASHOUT || ev[1] == EV_COMBOBREAK {
             let b = V_P0 + ev[2].clamp(0, 1) as usize * V_PW;
             if v[b + P_HAVE_POS] != 0 { (f32::from_bits(v[b + P_X] as u32), f32::from_bits(v[b + P_Y] as u32) + 10.0, true) } else { (320.0, 240.0, false) }
         } else {
@@ -94,7 +94,12 @@ pub fn moments(v: &[i32; VW]) {
         };
         let w = if world { POST_WORLD } else { 0 };
         unsafe {
-            if ev[1] == EV_CASHOUT {
+            if ev[1] == EV_COMBOBREAK {
+                // the combo breaker: a white shockwave ring from the player, a short white flash, its sound
+                gd_fx_post(POST_SHOCKWAVE | w, 1.0, x, y, 0xFFFF_FFFF);
+                gd_fx_post(POST_FLASH, 0.6, 0.0, 0.0, 0xFFFF_FFFF);
+                crate::sfx("combobreak");
+            } else if ev[1] == EV_CASHOUT {
                 gd_fx_post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFD8_4AFF);
                 gd_fx_post(POST_FLASH, 0.8, 0.0, 0.0, 0xFFF4_D0FF);
             } else {

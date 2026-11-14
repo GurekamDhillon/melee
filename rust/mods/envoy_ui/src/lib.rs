@@ -62,6 +62,7 @@ extern "C" {
     fn gd_ui_fight_hud(out: *mut i32, n: u32) -> i32;
     fn gd_ui_world_model(model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32, alpha: f32) -> i32;
     fn gd_ui_model_tex(model: i32) -> u32;
+    pub(crate) fn gd_ui_body_tint(port: i32, mask: u32, rgb: u32, strength: f32) -> i32;
     fn gd_ui_brawl_sfx(s: *const u8, len: u32) -> i32;
 }
 
@@ -1271,6 +1272,7 @@ unsafe fn world(v: &[i32; VW]) {
     if v[V_ITEMS_ON] == 1 {
         items_ui::pedestals(v);
         items_ui::world(v);
+        items_ui::body(v);
     }
     // the drops: the model in its glass shell with a beam in the owner's colour (co-op), else the family's
     let mut drops_seen = [0u32; 2];

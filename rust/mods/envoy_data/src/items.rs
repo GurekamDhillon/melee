@@ -260,3 +260,28 @@ pub fn stack_mul(id: i32, copies: i32) -> i32 {
         _ => c * 1000,
     }
 }
+
+/// Body groups (the host's melee_modes::tu::envoy_tint G_* bits): which part of the fighter an item lights.
+pub const BG_HEAD: u32 = 1 << 0;
+pub const BG_TORSO: u32 = 1 << 1;
+pub const BG_ARMS: u32 = 1 << 2 | 1 << 3; // arms and hands
+pub const BG_LEGS: u32 = 1 << 4 | 1 << 5; // legs and feet
+
+/// The body group an item lights (notes/envoy-tints.md): hits and shots from the hands on the arms, movement on
+/// the legs, defence and the rest on the torso; a devil deal also marks the head.
+pub fn body_groups(id: i32) -> u32 {
+    let Some(it) = item(id) else { return 0 };
+    let base = match it.trigger {
+        _ if id == IT_HALO => BG_TORSO, // the angel's halo: a guard look
+        TR_NAIR_HIT | TR_JAB_HIT | TR_LASER | TR_SMASH_HIT | TR_WHIFF | TR_WHILE_NAIR => BG_ARMS,
+        TR_WAVEDASH | TR_SHORT_HOP | TR_LEDGE_GRAB | TR_ROLL | TR_WHILE_AIRDODGE | TR_WHILE_DASH => BG_LEGS,
+        TR_SHINE | TR_POWERSHIELD | TR_WHILE_SHIELD | TR_TAKE_HIT | TR_CC | TR_PICKUP | TR_KO => BG_TORSO,
+        // modifiers: shot modifiers ride the hands, burst / trail modifiers the body
+        TR_MODIFIER if it.mods & (TG_PROJECTILE | TG_SPARK) != 0 && it.mods & (TG_BURST | TG_TRAIL) == 0 => BG_ARMS,
+        _ => match id {
+            IT_DEMON_WINGS => BG_LEGS,
+            _ => BG_TORSO,
+        },
+    };
+    base | if it.pools & PL_DEVIL != 0 { BG_HEAD } else { 0 }
+}

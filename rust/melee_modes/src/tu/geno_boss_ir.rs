@@ -753,7 +753,9 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
         };
         let pool = pools.arr().iter().find(|h| h.get("id").str() == p.get("hp_pool").str());
         let hp = pool.map(|h| lx.num(h.get("max"))).unwrap_or(Num::K(0.0));
-        let mut part = Part { name: p.get("name").str().to_string(), role, hp, on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: p.get("own_level").str().contains("trunc") };
+        let mut part = Part { name: p.get("name").str().to_string(), role, hp, on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: p.get("own_level").str().contains("trunc"), coll: None };
+        // boss-carried collision (geno_boss_coll): the IR's platform on this part
+        part.coll = super::geno_boss_coll::platform_of(boss, p.get("id").str());
         for h in p.get("hurtboxes").arr() {
             for s in h.get("intangible_in").arr() {
                 if let Some(ix) = Lx::status_ix(s.str()) {

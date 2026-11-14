@@ -513,6 +513,7 @@ fn main_inner() -> ExitCode {
     }
     sys_live(); // the counter's cell exists before any snapshot base is captured
     melee_modes::tu::explore::install(); // Envoy exploration rooms: hooks only with MELEE_ENVOY_EXPLORE=1
+    melee_modes::tu::geno_boss_coll::install(); // boss-carried collision harness: only with MELEE_BOSS_PLATFORM
     controls_store::install(); // fighter-controls preferences: fighter_controls.cfg (YOUGAME_DATA or beside settings.cfg)
     #[cfg(windows)]
     melee_engine::arena::set_misuse_hook(arena_misuse);

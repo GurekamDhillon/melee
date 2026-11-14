@@ -220,6 +220,8 @@ pub struct Part {
     pub intangible_in: u64,
     /// trunc(L) instead of L for this part's attacks
     pub int_level: bool,
+    /// a line set players stand on, following this part's joints (geno_boss_coll)
+    pub coll: Option<super::geno_boss_coll::PartColl>,
 }
 
 #[derive(Clone, Debug)]
@@ -362,7 +364,16 @@ pub struct State {
     pub inst: u32,
     /// live attack boxes: (attack index, part) per slot, 0xFF = none
     pub atk: [(u8, u8); 4],
+    /// boss-carried collision (geno_boss_coll): the moving line set's points in world x y this frame (`coll_n` of
+    /// them; 0 = none), and the platform harness's clock and x (`MELEE_BOSS_PLATFORM`)
+    pub coll_n: u8,
+    pub coll_pts: [[f32; 2]; MAX_COLL_PTS],
+    pub coll_clock: i32,
+    pub coll_x: f32,
 }
+
+/// Points of one boss-carried line set (geno_boss_coll).
+pub const MAX_COLL_PTS: usize = 16;
 
 pub const OFF: State = State {
     live: false, status: -1, prev_status: -1, sf: 0, motion: 0, mf: 0, tl_mf: -1, x: 0.0, vx: 0.0, kinetic: -1, aim: 1.0,
@@ -370,6 +381,7 @@ pub const OFF: State = State {
     hp_max: [1; MAX_PARTS], counter: [0; MAX_PARTS], zero_sent: 0, intangible: 0, hit: false, hit_part: 0, dmg_core: 0,
     damaged: 0, locked: -1, last_slot: -1, rng: 1, frame: 0, cause: 0, despawned: false, ev_n: 0,
     ev: [(0, 0); MAX_EVENTS], inst: 1, atk: [(0xFF, 0xFF); 4],
+    coll_n: 0, coll_pts: [[0.0; 2]; MAX_COLL_PTS], coll_clock: 0, coll_x: 0.0,
 };
 
 pub static mut S: State = OFF;
@@ -432,6 +444,13 @@ pub fn state_hash() -> Option<u32> {
     mix(s.last_slot as u32);
     mix(s.rng);
     mix(s.cause as u32);
+    if s.coll_n != 0 {
+        mix(s.coll_n as u32);
+        for p in &s.coll_pts[..(s.coll_n as usize).min(MAX_COLL_PTS)] {
+            mix(p[0].to_bits());
+            mix(p[1].to_bits());
+        }
+    }
     Some(h)
 }
 
@@ -1082,8 +1101,8 @@ mod tests {
         Define {
             name: "tiny".into(),
             parts: vec![
-                Part { name: "core".into(), role: Role::Core, hp: Num::K(100.0), on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: false },
-                Part { name: "wp".into(), role: Role::WeakPoint, hp: Num::Lin(5.0, 2.0), on_damaged: Some(1), thresholds: vec![(0, 50.0, 2)], on_zero: None, intangible_in: 0, int_level: true },
+                Part { name: "core".into(), role: Role::Core, hp: Num::K(100.0), on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: false, coll: None },
+                Part { name: "wp".into(), role: Role::WeakPoint, hp: Num::Lin(5.0, 2.0), on_damaged: Some(1), thresholds: vec![(0, 50.0, 2)], on_zero: None, intangible_in: 0, int_level: true, coll: None },
             ],
             vars: vec![("T".into(), 0.0), ("hit".into(), 0.0)],
             statuses: vec![

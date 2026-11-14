@@ -700,7 +700,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         *V.get_or_init(|| std::env::var("MELEE_ENVOY_START_FIGHT").ok().and_then(|v| v.parse::<i32>().ok()).map_or(0, |n| (n - 1).clamp(0, 4)))
     });
     // the salt of a new run's seed (menu-time, set by the camp's New run; 0 under MELEE_ENVOY_ARM and in scripted runs)
-    w!("gd_envoy_salt", || -> i32 { unsafe { melee_modes::tu::envoy::RUN_SALT } });
+    w!("gd_envoy_salt", || -> i32 { melee_modes::tu::envoy::salt_now() });
     // test knob: MELEE_ENVOY_TEST_DRIVES="key[:level],key/key|keystone" (main / partner | keystones), fixed per process
     w!("gd_envoy_test_drives", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
         static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();

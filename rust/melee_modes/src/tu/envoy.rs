@@ -184,6 +184,18 @@ pub fn armed() -> i32 {
 /// starts, `gd_envoy_salt`; the seed it gives lives in the sim state from then on). 0 with `MELEE_ENVOY_ARM` and in
 /// scripted runs (`MELEE_PAD_SCRIPT` without `MELEE_ENVOY_SEED`): those keep the fixed seed sequence.
 pub static mut RUN_SALT: i32 = 0;
+/// Netplay: the salt both peers use, from the session's agreed seed (set when the netplay match opens). A local
+/// clock salt would differ per machine and split the run on the first frame; with this set, `new_run_salt` and the
+/// sim's `gd_envoy_salt` read the shared value, and each new run still differs through the sim's run counter.
+pub static mut NET_SALT: Option<i32> = None;
+/// The salt the sim reads (`gd_envoy_salt`): the netplay session's shared one when there is a session.
+pub fn salt_now() -> i32 {
+    unsafe { NET_SALT.unwrap_or(RUN_SALT) }
+}
+/// Called by the netplay match setup with the agreed seed.
+pub fn set_net_salt(seed: u32) {
+    unsafe { NET_SALT = Some(((seed ^ (seed >> 15)).wrapping_mul(0x2C1B_3C6D) & 0x3FFF_FFFF).max(1) as i32) };
+}
 
 /// The camp starts a new run: pick its salt. `MELEE_ENVOY_SEED=<n>` fixes it (a reproducible run; 0 = the old fixed
 /// sequence); a scripted run without it keeps 0; otherwise the clock and a per-process counter (every launch and
@@ -191,9 +203,15 @@ pub static mut RUN_SALT: i32 = 0;
 pub fn new_run_salt() -> i32 {
     static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
     let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    if let Some(v) = unsafe { NET_SALT } {
+        unsafe { RUN_SALT = v };
+        eprintln!("envoy: new run salt {v} (netplay: the session's shared salt)");
+        return v;
+    }
     let salt = match std::env::var("MELEE_ENVOY_SEED").ok().and_then(|v| v.trim().parse::<u32>().ok()) {
         Some(v) => v & 0x3FFF_FFFF,
-        None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) => 0,
+        // MELEE_ENVOY_SALT_LIVE=1: a scripted run rolls the clock salt as a player's would (ready_checks `fresh`)
+        None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) && std::env::var_os("MELEE_ENVOY_SALT_LIVE").is_none() => 0,
         None => {
             let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos() as u64);
             let mut x = (t ^ (t >> 29)).wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(n as u64);

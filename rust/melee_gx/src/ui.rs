@@ -421,9 +421,10 @@ pub struct UiSs {
     pub factor: u32,
 }
 
-/// The supersampling factor for a `tw` x `th` window: the smallest whole factor that reaches 2160 lines, at least 2
-/// (720p: 3, 1080p: 2, 1440p and 4K: 2), no more than 4, and never past the device's largest texture. 1: off.
-/// `MELEE_UI_SS`: `0` / `off` never, a number 1..4 that factor, anything else (and unset) the rule above.
+/// The supersampling factor for a `tw` x `th` window: the largest whole factor up to the one that reaches 2160
+/// lines whose target stays within 3840 x 2160 (720p: 3, 900p and 1080p: 2, 1440p and 4K: 1, off), and never past
+/// the device's largest texture. 1: off. `MELEE_UI_SS`: `0` / `off` never, a number 1..4 that factor at any size,
+/// anything else (and unset) the rule above.
 pub fn ss_factor(tw: u32, th: u32, max_dim: u32) -> u32 {
     static MODE: std::sync::OnceLock<Option<u32>> = std::sync::OnceLock::new();
     let forced = *MODE.get_or_init(|| match std::env::var("MELEE_UI_SS").ok().as_deref() {
@@ -431,7 +432,16 @@ pub fn ss_factor(tw: u32, th: u32, max_dim: u32) -> u32 {
         Some(v) => v.parse::<u32>().ok().filter(|n| (1..=4).contains(n)),
         None => None,
     });
-    let mut f = forced.unwrap_or_else(|| 2160u32.div_ceil(th.max(1)).clamp(2, 4));
+    let mut f = forced.unwrap_or_else(|| {
+        // on by itself only where it is cheap: a target of at most 3840 x 2160 (windows up to 1080p: 32 MB, about
+        // 0.1 ms a frame on the machine it was measured on). A 1440p or 4K window would need 56 to 127 MB and
+        // 0.35 ms, for edges its own pixel density already resolves: there it is off unless asked for.
+        let mut f = 2160u32.div_ceil(th.max(1)).clamp(2, 4);
+        while f > 1 && (tw * f > 3840 || th * f > 2160) {
+            f -= 1;
+        }
+        f
+    });
     while f > 1 && (tw * f > max_dim || th * f > max_dim) {
         f -= 1;
     }

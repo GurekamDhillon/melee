@@ -38,7 +38,7 @@ run() { # name extra-env...
   (cd "$d" && env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="itemlab agent: lab_check $name $size (port/envoy-itemlab)" \
     MELEE_WASM_MODS="$mods" MELEE_ENVOY_DIR="$d/save" MELEE_CARD_PATH="$d/card" \
     MELEE_PAD_SCRIPT="$out/lab_pad.txt" MELEE_PAD_IGNORE_ADAPTER=1 MELEE_PAD_CHANNELS=01 MELEE_WIDESCREEN=1 MELEE_FULLSCREEN=off \
-    MELEE_WINDOW="$size" MELEE_UI_LOG=1 "$@" \
+    MELEE_WINDOW="$size" MELEE_UI_LOG=1 MELEE_UI_ASPECT=1 "$@" \
     timeout 1800 "$exe" play --iso "$GW_ISO_VANILLA" --max-frames $((frames + 200)) ${XARGS:-} >"$d/run.log" 2>&1)
   echo "$name: exit $? ($(ls "$d/shots" 2>/dev/null | wc -l) shots)"
 }
@@ -51,6 +51,9 @@ if on flow; then
   has flow "envoy lab: setup open" || miss="$miss (setup never opened from the menu cell)"
   has flow "envoy: lab session armed" || miss="$miss (no lab session)"
   has flow "envoy lab: panel open" || miss="$miss (panel never opened)"
+  # the aspect audit (ui_aspect.sh; notes/ui-remake.md): nothing in the Lab out of proportion, cut or overlapping
+  bad=$(grep -a "ui_aspect:.* BAD" "$out/flow/run.log" | sed 's/.*ui_aspect: //' | sort -u | grep -v -F -f <(grep -v '^#' "$here/ui_aspect_allow.txt" | sed '/^$/d') | wc -l)
+  [ "$bad" = 0 ] || miss="$miss ($bad UI pieces out of proportion, cut or overlapping: grep ui_aspect)"
   for page in Items Loadout Triggers Effects Sandbox Synergy; do has flow "envoy lab: page $page" || [ $page = Items ] || miss="$miss (page $page)"; done
   n=$(python -c "import re,sys;print(len(re.findall(r'Item \{ id:', open(sys.argv[1],encoding='utf-8').read())))" "$repo/rust/mods/envoy_data/src/items.rs")
   fired=$(grep -aoE "envoy: item demo fires [a-z_]+" "$out/flow/run.log" | sort -u | wc -l)

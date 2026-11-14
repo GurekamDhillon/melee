@@ -56,7 +56,7 @@ run() { # config scenario
     envs=(MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=1 "MELEE_ENVOY_TEST_DRIVES=spark_ring,hop_shot,hop_shot,moon_drops,coin_magnet,fire_lace,ember_seed,static_coil,frost_bud,brimstone_jab,chain_spark,big_bang,noshop") ;;
   lab) marks lab; args=(); envs=(MELEE_PAD_CHANNELS=01)
     need="envoy lab: setup open|envoy lab: panel open|envoy lab: page Loadout|envoy lab: page Triggers|envoy lab: page Effects|envoy lab: page Sandbox|envoy lab: page Synergy" ;;
-  camp) marks camp; args=(); envs=(MELEE_PAD_CHANNELS=01); need="envoy: armed" ;;
+  camp) marks camp; args=(); envs=(MELEE_PAD_CHANNELS=01); need="ui_aspect: tex bg_camp.png|ui_aspect: tex fighter art" ;;
   room)    shots=$(every 150 4200 75); need="envoy: map room choice open|envoy: item room open|envoy: item taken"
     envs+=(MELEE_ENVOY_START_FIGHT=2 "MELEE_ENVOY_TEST_DRIVES=forkitem,autotake,*4000") ;;
   shop)    shots=$(every 150 4200 75); need="envoy: shop open|envoy: shop bought"

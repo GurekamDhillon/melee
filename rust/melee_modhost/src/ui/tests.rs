@@ -544,7 +544,7 @@ fn aspect_audit_flags_squished_draws() {
     b.shape(&p, melee_gx::ui::SHAPE_BOX, 0.0, 0.0, 20.0, 18.0, 20.0, 0.0, 0.0, !0, 0);
     // text cut at its width
     b.text(&p, &a, 0.0, 0.0, 2, !0, ALIGN_LEFT, 20.0, "a long line that cannot fit");
-    b.text(&p, &a, 0.0, 0.0, 2, !0, ALIGN_LEFT, 0.0, "a long line with no limit");
+    b.text(&p, &a, 0.0, 40.0, 2, !0, ALIGN_LEFT, 0.0, "a long line with no limit");
     let out = &b.audit.as_ref().unwrap().out;
     assert_eq!(out.iter().filter(|l| l.contains("BAD")).count(), 3, "{out:?}");
     assert!(out.iter().any(|l| l.contains("shape round")) && out.iter().any(|l| l.contains("text cut")));
@@ -631,7 +631,7 @@ fn layout_request_lays_out() {
     req.extend(words("Words"));
     req.extend(node(0, 0.0, 0.0, (0, 0.0), (0, 0.0), 1.0, 0, 0)); // 2: a spring
     req.extend(node(0, 0.0, 0.0, (1, 60.0), (0, 0.0), 0.0, 0, 1)); // 3: a paragraph in a 60-wide box
-    req.extend([role as u32, 6, f(17.0), 29]);
+    req.extend([role as u32, 6, f(17.0), 28]);
     req.extend(words("several words that must wrap"));
     req.extend(node(4 << 2, 5.0, 10.0, (1, 300.0), (0, 0.0), 0.0, 4, 0)); // 4: the row (align stretch)
     req.extend([0, 1, 2, 3]);

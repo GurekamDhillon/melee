@@ -35,6 +35,8 @@ pub mod gmboot;
 pub mod gmcamera;
 pub mod tag_swap;
 pub mod envoy;
+pub mod geno_boss;
+pub mod geno_boss_ir;
 pub mod petey;
 pub mod petey_file;
 pub mod petey_model;

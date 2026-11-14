@@ -219,6 +219,12 @@ pub fn selected() -> bool {
     *V.get_or_init(|| std::env::var("MELEE_ENVOY_BOSS").map(|v| v.eq_ignore_ascii_case("petey")).unwrap_or(false))
 }
 
+/// VS boss: `MELEE_VS_BOSS=petey` (fixed for the process) puts Petey on the first CPU slot of a VS match.
+pub fn vs_selected() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var("MELEE_VS_BOSS").map(|v| v.eq_ignore_ascii_case("petey")).unwrap_or(false))
+}
+
 pub fn active() -> bool {
     unsafe { B.st != ST_OFF || ARMED }
 }
@@ -234,6 +240,9 @@ pub fn partner_caged() -> bool {
 /// rule); it is kept in the signature for the caller.
 pub unsafe fn arm(_humans: i32, carrier_slot: i32, seed: u32) {
     B = OFF;
+    crate::tu::geno_boss::stop();
+    let _ = geno();
+    melee_fighter::tu::fighter::BOSS_HASH = Some(crate::tu::geno_boss::state_hash);
     B.carrier_slot = carrier_slot;
     HITS = [0; 4];
     DMG = [0; 4];
@@ -270,14 +279,19 @@ pub unsafe fn damage(amount: f32) {
         return;
     }
     let d = round_i(amount).max(1);
+    B.flash[0] = 8;
+    if let Some(g) = geno() {
+        crate::tu::geno_boss::damage(g, 0, d);
+        return;
+    }
     B.cage[0] -= d;
     B.cage[1] -= d;
-    B.flash[0] = 8;
     cage_events(true, [false; 2]);
 }
 
 /// Not a Petey match: everything off.
 pub unsafe fn disarm() {
+    crate::tu::geno_boss::stop();
     B = OFF;
     ARMED = false;
 }
@@ -338,6 +352,9 @@ fn range(min: f32, min_s: f32, max: f32, max_s: f32) -> f32 {
 
 /// The difficulty scalar L for the current phase (§3).
 pub fn level() -> f32 {
+    if let Some(g) = geno() {
+        return crate::tu::geno_boss::level(g);
+    }
     let s = tun().strength[unsafe { B.phase }.clamp(0, 2) as usize];
     L_TABLE[s - 1][unsafe { B.diff }.clamp(0, 14) as usize]
 }
@@ -539,8 +556,22 @@ pub unsafe fn tick() {
         B.jump_count = 0;
         B.jumps_wanted = 1;
         B.cage = [B.cage_max; 2];
-        // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
-        enter(ST_WAIT_A);
+        if let Some(g) = geno() {
+            // the Geno actor: the define's own start status, HP and init; the plan scales the weak points' HP
+            // cage HP is trunc(base + slope L) in the define: Envoy's loops scale it through the difficulty (B.diff)
+            let scale = 1000;
+            let px = B.px;
+            crate::tu::geno_boss::begin(g, world(), B.diff, scale, B.rng);
+            B.cage_max = crate::tu::geno_boss::S.hp_max[1];
+            if crate::tu::explore::ARENA {
+                crate::tu::geno_boss::S.x = px;
+            }
+            mirror(g);
+            eprintln!("petey: geno actor ({} statuses, {} rules from the IR)", g.statuses.len(), g.rules.len());
+        } else {
+            // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
+            enter(ST_WAIT_A);
+        }
         eprintln!("petey: fight begins, cages {} difficulty {} L {:.1}", B.cage_max, B.diff, level());
         eprintln!("petey: stage {}", if crate::tu::explore::ARENA { "his arena" } else { "Final Destination" });
         match crate::tu::petey_model::get().and_then(|m| m.arena_blast) {
@@ -582,6 +613,11 @@ pub unsafe fn tick() {
         for &(f, t, d) in test_hits().iter() {
             if f == B.age {
                 hit_any = true;
+                if let Some(g) = geno() {
+                    crate::tu::geno_boss::damage(g, match t { b'l' => 1, b'r' => 2, _ => 0 }, d);
+                    eprintln!("petey: f{} test hit {} {}", B.last_frame, t as char, d);
+                    continue;
+                }
                 match t {
                     b'l' => {
                         B.cage[0] -= d;
@@ -600,7 +636,7 @@ pub unsafe fn tick() {
             }
         }
     }
-    if B.cause == 0 {
+    if B.cause == 0 && geno().is_none() {
         cage_events(hit_any, cage_hit);
     }
     // hitlag: when one of Petey's boxes connects the carrier (the attacker) gets Melee's hitlag; Petey's motion and
@@ -640,9 +676,13 @@ pub unsafe fn tick() {
     }
     B.lag_prev = cf.dmg.x195c_hitlag_frames;
     if cf.dmg.x195c_hitlag_frames <= 0.0 || B.cause != 0 {
-        rules();
-        advance();
-        timeline();
+        if let Some(g) = geno() {
+            geno_frame(g);
+        } else {
+            rules();
+            advance();
+            timeline();
+        }
     }
     hitboxes(cf);
     follow_camera();
@@ -1534,7 +1574,12 @@ unsafe fn hit_test_n(hs: &[Option<[f32; 5]>; 3], a: (f32, f32), b: (f32, f32), r
             *latch |= bit;
             any = true;
             B.flash[k] = 8;
-            if k == 0 {
+            if let Some(g) = geno() {
+                crate::tu::geno_boss::damage(g, k, d);
+                if k > 0 {
+                    cages |= 1u8.pshl(k as i64 - 1);
+                }
+            } else if k == 0 {
                 B.cage[0] -= d;
                 B.cage[1] -= d;
             } else {
@@ -1793,4 +1838,134 @@ mod probe {
         let c = &t.mots[M_JUMP_LANDING][3];
         eprintln!("landing f3 centre ({:.1},{:.1}) L ({:.1},{:.1}) R ({:.1},{:.1})", c[P_LAND_C][0], c[P_LAND_C][1], c[P_LAND_L][0], c[P_LAND_L][1], c[P_LAND_R][0], c[P_LAND_R][1]);
     }
+}
+
+// ---------------------------------------------------------------- the Geno actor (docs/specs/geno-v5.2-boss.md)
+
+/// The host's motions in `MOTIONS` order (lengths from the model's CHR0s; JumpLoop loops), for the IR lowering.
+pub fn host_motions() -> std::vec::Vec<crate::tu::geno_boss_ir::HostMotion<'static>> {
+    MOTIONS.iter().zip(MOT_LEN.iter()).enumerate().map(|(i, (n, l))| crate::tu::geno_boss_ir::HostMotion { name: n, len: *l, looping: i == M_JUMP_LOOP }).collect()
+}
+
+/// Petey's Geno define, lowered from the local IR once per process. `MELEE_PETEY_IMPL=hand` keeps the hand-coded
+/// Petey (comparison only); without the IR the hand-coded one runs and the log says why.
+pub fn geno() -> Option<&'static crate::tu::geno_boss::Define> {
+    static D: std::sync::OnceLock<Option<crate::tu::geno_boss::Define>> = std::sync::OnceLock::new();
+    D.get_or_init(|| {
+        if std::env::var("MELEE_PETEY_IMPL").is_ok_and(|v| v.eq_ignore_ascii_case("hand")) {
+            eprintln!("petey: hand-coded (MELEE_PETEY_IMPL=hand)");
+            return None;
+        }
+        // lowered on a helper thread: its allocations stay on the system heap, outside the game arena
+        let r = std::thread::spawn(|| crate::tu::geno_boss_ir::load("petey.brawl.ir.json", &host_motions())).join().unwrap_or_else(|_| Err("lowering panicked".into()));
+        match r {
+            Ok(d) => {
+                eprintln!("petey: Geno boss define from the local IR");
+                Some(d)
+            }
+            Err(e) => {
+                eprintln!("petey: no Geno define ({e}); hand-coded Petey");
+                None
+            }
+        }
+    })
+    .as_ref()
+}
+
+unsafe fn world() -> crate::tu::geno_boss::World {
+    let mut w = crate::tu::geno_boss::World::default();
+    for s in 0..4i32 {
+        if s == B.carrier_slot {
+            continue;
+        }
+        let f = fighter_of(s, 0);
+        if !f.is_null() {
+            w.slots[s as usize] = Some((*f).cur_pos.x);
+        }
+    }
+    w.airborne = B.mot == M_JUMP_LOOP as i32 || B.mot == M_JUMP_ATTACK as i32;
+    w
+}
+
+/// Copy the actor's state into the host's view (draw, hit shapes, HUD and Envoy read `B`).
+unsafe fn mirror(g: &crate::tu::geno_boss::Define) {
+    use crate::tu::geno_boss::S;
+    let var = |n: &str| g.vars.iter().position(|(k, _)| k == n).map(|i| S.vars[i]).unwrap_or(0.0);
+    B.prev_st = S.prev_status;
+    B.st = S.status;
+    B.sf = S.sf;
+    B.mot = S.motion;
+    B.mf = S.mf;
+    B.tl_mf = S.tl_mf;
+    B.px = S.x;
+    B.vx = S.vx;
+    B.aim = S.aim;
+    B.cage = [S.hp[1], S.hp[2]];
+    B.locked = S.locked;
+    B.inst = S.inst;
+    let ph = var("phase") as i32;
+    if ph != B.phase {
+        eprintln!("petey: phase {} (L {:.1})", ph, level());
+    }
+    B.phase = ph;
+    B.t_out = var("T");
+    B.cage_broken = var("cageBroken") != 0.0;
+    if B.cause == 0 && S.cause != 0 {
+        if S.cause == 1 {
+            B.freed = if var("lowerSideIsLeft") != 0.0 { 0 } else { 1 };
+            eprintln!("petey: f{} dying (lower cage {} at {:.1}%)", B.last_frame, B.freed, fmin(cage_pct(0), cage_pct(1)));
+        } else {
+            eprintln!("petey: f{} cage broken: Down", B.last_frame);
+        }
+        B.cause = S.cause;
+    }
+}
+
+/// One Geno frame: the actor ticks, its events go to the presentation (sounds, shakes, stage events).
+unsafe fn geno_frame(g: &crate::tu::geno_boss::Define) {
+    use crate::tu::geno_boss as gb;
+    let mut last = B.st;
+    gb::tick(g, world());
+    let ev = gb::S.ev;
+    let n = gb::S.ev_n as usize;
+    for &(k, v) in ev.iter().take(n) {
+        match k {
+            gb::EV_STATUS => {
+                if log_on() {
+                    eprintln!("petey: f{} status {} -> {} px {:.1} cages {} {}", B.last_frame, last, v, gb::S.x, gb::S.hp[1], gb::S.hp[2]);
+                }
+                last = v;
+            }
+            gb::EV_SOUND => {
+                let f = gb::S.mf;
+                let id = if v >= 0 {
+                    Some(v as u16)
+                } else {
+                    // the IR leaves most timeline sounds without an id: the host's table for this motion frame
+                    SOUNDS.iter().find(|s| s.0 as i32 == gb::S.motion && s.1 == f).map(|s| s.2)
+                };
+                if let Some(id) = id {
+                    B.mot = gb::S.motion;
+                    push_snd(id, f);
+                }
+            }
+            gb::EV_SHAKE => {
+                let kind = [QuakeKind_Small, QuakeKind_Medium, QuakeKind_Large][(v as usize).min(2)];
+                if log_on() {
+                    eprintln!("petey: f{} shake {} (motion {} frame {})", B.last_frame, v, gb::S.motion, gb::S.mf);
+                }
+                melee_world::tu::camera::Camera_RequestQuake(kind, core::ptr::null_mut());
+            }
+            gb::EV_STAGE => {
+                eprintln!("petey: f{} stage event {}", B.last_frame, v);
+                match v {
+                    1000 => B.freed = 0,
+                    1001 => B.freed = 1,
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+    mirror(g);
 }

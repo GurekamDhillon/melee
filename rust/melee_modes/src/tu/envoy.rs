@@ -658,6 +658,27 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     WAVE_NO = 1;
     WAVE_PARK = [0; 4];
     WAVE_PENDING = [0; 4];
+    // VS (no Envoy run): `MELEE_VS_BOSS=petey` makes the first CPU slot Petey's carrier, in his arena when the files
+    // have it (geno-boss.md): the same boss as Envoy's fight 5
+    if PLAN[P_ACTIVE] == 0 && !d.is_null() && crate::tu::petey::vs_selected() && crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 == GM_VS as u32 {
+        let d = &mut *d;
+        if let Some(c) = (0..4).find(|&i| d.players[i].slot_type == 1) {
+            let p = &mut d.players[c];
+            p.cpu_kind = 0;
+            p.cpu_level = 1;
+            p.stocks = 1;
+            crate::tu::explore::ARENA_WANT = true;
+            if crate::tu::stage_hop::supported(GR_FD) {
+                d.rules.stkind = melee_world::tu::stage::Stage_StageSlotSelect(GR_FD) as u16;
+            }
+            d.rules.set_timer_enabled(0);
+            d.rules.time_limit = 0;
+            crate::tu::petey::arm(1, c as i32, 0x5E7E_u32 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
+            melee_fighter::tu::ftdrawcommon::BOSS_DRAW = Some(crate::tu::petey::draw);
+            SEQ = SEQ.wrapping_add(1);
+        }
+        return;
+    }
     if PLAN[P_ACTIVE] == 0 || armed() == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
         return;
     }

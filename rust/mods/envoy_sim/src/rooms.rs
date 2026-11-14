@@ -406,7 +406,22 @@ pub(crate) unsafe fn fork_wait() -> bool {
             S.fork_cur = l as i32;
         }
     }
-    let auto = (test_flag("autotake") || want != 0) && S.fork_left > 60;
+    // test knob `mapwalk` (the mapcheck repro: win, the map's room choice opens, P1 holds left): P1's place every 30
+    // frames the choice is open, and the cursor's room taken after 600; `mapko` with it: a stock of P1's taken at
+    // frame 30 (a KO arriving while the choice is open)
+    let walk = test_flag("mapwalk");
+    if walk && S.fork_left % 30 == 0 {
+        let h = gd_fighter_from_slot(0);
+        let (x, y) = if h != 0 { (gd_fighter_get_pos_x(h) as i32, gd_fighter_get_pos_y(h) as i32) } else { (0, 0) };
+        log(b"envoy: mapwalk P1 x\0", x);
+        log(b"envoy: mapwalk P1 y\0", y);
+        log(b"envoy: mapwalk P1 stocks\0", gd_player_stocks(0));
+    }
+    if walk && test_flag("mapko") && S.fork_left == 30 {
+        gd_envoy_apply(0, AP_STOCKS, (gd_player_stocks(0) - 1).max(0));
+        log(b"envoy: mapko P1 stock taken, now\0", gd_player_stocks(0));
+    }
+    let auto = ((test_flag("autotake") || want != 0) && S.fork_left > 60) || (walk && S.fork_left > 600);
     if pad & BTN_A == 0 && !auto {
         return true;
     }

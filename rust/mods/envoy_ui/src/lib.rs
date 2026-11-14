@@ -26,6 +26,7 @@ mod kit;
 mod party;
 mod picker;
 mod fx;
+mod help;
 mod items_ui;
 mod pause;
 

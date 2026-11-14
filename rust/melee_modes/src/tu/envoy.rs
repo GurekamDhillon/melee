@@ -140,6 +140,32 @@ pub fn armed() -> i32 {
     static KNOB: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     if unsafe { ARMED } != 0 || *KNOB.get_or_init(|| std::env::var_os("MELEE_ENVOY_ARM").is_some()) { 1 } else { 0 }
 }
+/// The salt of the next new run's seed (menu-time: set by the camp's New run, read by the sim mod when the run
+/// starts, `gd_envoy_salt`; the seed it gives lives in the sim state from then on). 0 with `MELEE_ENVOY_ARM` and in
+/// scripted runs (`MELEE_PAD_SCRIPT` without `MELEE_ENVOY_SEED`): those keep the fixed seed sequence.
+pub static mut RUN_SALT: i32 = 0;
+
+/// The camp starts a new run: pick its salt. `MELEE_ENVOY_SEED=<n>` fixes it (a reproducible run; 0 = the old fixed
+/// sequence); a scripted run without it keeps 0; otherwise the clock and a per-process counter (every launch and
+/// every new run rolls different foes, offers and drops).
+pub fn new_run_salt() -> i32 {
+    static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let salt = match std::env::var("MELEE_ENVOY_SEED").ok().and_then(|v| v.trim().parse::<u32>().ok()) {
+        Some(v) => v & 0x3FFF_FFFF,
+        None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) => 0,
+        None => {
+            let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos() as u64);
+            let mut x = (t ^ (t >> 29)).wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(n as u64);
+            x ^= x >> 32;
+            ((x as u32) & 0x3FFF_FFFF).max(1)
+        }
+    } as i32;
+    unsafe { RUN_SALT = salt };
+    eprintln!("envoy: new run salt {salt}");
+    salt
+}
+
 /// A rewritten fight has started since the run was armed: the camp replaces the VS CSS (the results land in it).
 pub static mut CAMP_DUE: i32 = 0;
 /// The main menu's extra Envoy row exists (a presentation mod registered the camp scene with `gd_ui_envoy_door`).
@@ -229,6 +255,18 @@ pub unsafe extern "C" fn enemy_removed(kind: i32, handle: i32, reason: i32) {
     if std::env::var_os("MELEE_ENVOY_ENEMY_LOG").is_some() {
         eprintln!("envoy: enemy {handle} (kind {kind}) removed, reason {reason}");
     }
+}
+
+/// The armed run's match was left from the pause (L+R+A+Start: the retail No Contest). The sim keeps the run (the
+/// fight starts over, as after closing the game mid-fight) instead of reading the torn-down stocks as a loss.
+pub unsafe fn quit_pending() -> i32 {
+    (armed() != 0 && crate::tu::gmvs::controller.state.match_result as u32 == OUTCOME_NO_CONTEST as u32) as i32
+}
+
+/// The sim took a quit (view word 24 `V_OUTCOME` 3) and the run is live: the VS mode skips the No Contest results
+/// screen, straight back to the select the camp replaces (gmvsmode `onExitVs`).
+pub unsafe fn quit_to_camp() -> bool {
+    armed() != 0 && VIEW[0] == 0x454E_5633 && VIEW[1] == 1 && VIEW[24] == 3
 }
 
 pub unsafe fn session_continue() -> bool {
@@ -614,7 +652,10 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     LANDED = [Landed::NONE; 4];
     SEQ = SEQ.wrapping_add(1);
     CAMP_DUE = 1;
-    eprintln!("envoy: match {} rewritten: main {main} partner {partner} co-op {} stocks {} cpus {n} stage {}", SEQ, coop as i32, me_stocks(d), PLAN[P_STAGE]);
+    eprintln!(
+        "envoy: match {} rewritten: main {main} partner {partner} co-op {} stocks {} cpus {n} stage {} foes {:?}",
+        SEQ, coop as i32, me_stocks(d), PLAN[P_STAGE], (0..n).map(|i| d.players[humans + i].ckind as i32).collect::<std::vec::Vec<_>>()
+    );
 }
 
 /// A character a wave can bring in (no sub-fighter characters: the respawn refuses them).

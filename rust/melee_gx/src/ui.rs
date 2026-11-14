@@ -387,7 +387,10 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
             px = c + (px - c) * 1.4;
             os = 1.4;
         }
-        let z = (1.0 - f32(ii) / max(u.tilt2.x, 1.0)) * u.tilt.w;
+        // the pieces of one shape (a 9-slice, a sliced sticker) share their first piece's depth (flags bits 8..15:
+        // instances back to it), so their shared sides stay shared under the perspective (uiseams2)
+        let gi = f32(ii) - f32((flags >> 8u) & 255u);
+        let z = (1.0 - gi / max(u.tilt2.x, 1.0)) * u.tilt.w;
         let q = vec3<f32>(px.x - c.x, c.y - px.y, z);
         let sa = sin(u.tilt.x);
         let ca = cos(u.tilt.x);

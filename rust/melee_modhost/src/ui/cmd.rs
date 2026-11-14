@@ -82,9 +82,11 @@ pub const CLIP_DEPTH: usize = 8;
 /// How many earlier quads a slanted or rotated quad is checked against for shared sides (a 9-slice is 9 pieces).
 const JOIN_LOOKBACK: usize = 12;
 
-fn rot_or_shear(q: &UiQuad) -> bool {
-    q.rot != 0.0 || q.shear != 0.0
-}
+/// Bits 8..15 of a quad's flags: how many instances back the first piece of its shape is (0: it is the first). The
+/// menu tilt puts each instance at its own parallax depth; the pieces of one shape take their first piece's depth so
+/// the shared sides stay shared under the perspective (uiseams2).
+const GROUP_SHIFT: u32 = 8;
+const GROUP_MASK: u32 = 0xFF << GROUP_SHIFT;
 
 /// Why a buffer was refused: the byte offset of the record and the check.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -186,7 +188,7 @@ impl Batch {
         let s = p.scale;
         self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, rot: p.rot, piv: [p.piv[0] * s, p.piv[1] * s], fx: if self.extra_flags & Q_SDF != 0 { [0; 2] } else { p.fx } });
         self.runs.last_mut().unwrap().len += 1;
-        if rot_or_shear(self.staging.last().unwrap()) {
+        if self.extra_flags & Q_SDF == 0 {
             self.join_last();
         }
     }
@@ -200,7 +202,9 @@ impl Batch {
         let start = self.runs.last().map_or(n, |r| r.start as usize).max(n.saturating_sub(JOIN_LOOKBACK + 1));
         let (head, tail) = self.staging.split_at_mut(n - 1);
         let q = &mut tail[0];
-        for o in head[start..].iter_mut().rev() {
+        let mut root = 0usize;
+        for (k, o) in head[start..].iter_mut().enumerate().rev() {
+            let back = n - 1 - (start + k);
             if o.rot != q.rot || o.piv != q.piv || o.shear != q.shear || o.clip != q.clip || (o.flags ^ q.flags) & (Q_WINDOW | Q_SDF) != 0 || q.flags & Q_SDF != 0 {
                 continue;
             }
@@ -212,16 +216,23 @@ impl Batch {
             if same_rows && near(a[0] + a[2], b[0]) {
                 o.flags |= Q_IN_R;
                 q.flags |= Q_IN_L;
+                root = root.max(back + ((o.flags & GROUP_MASK) >> GROUP_SHIFT) as usize);
             } else if same_rows && near(b[0] + b[2], a[0]) {
                 o.flags |= Q_IN_L;
                 q.flags |= Q_IN_R;
+                root = root.max(back + ((o.flags & GROUP_MASK) >> GROUP_SHIFT) as usize);
             } else if near(a[1] + a[3], b[1]) && same_cols(b, a) {
                 o.flags |= Q_IN_B;
                 q.flags |= Q_IN_T;
+                root = root.max(back + ((o.flags & GROUP_MASK) >> GROUP_SHIFT) as usize);
             } else if near(b[1] + b[3], a[1]) && same_cols(a, b) {
                 o.flags |= Q_IN_T;
                 q.flags |= Q_IN_B;
+                root = root.max(back + ((o.flags & GROUP_MASK) >> GROUP_SHIFT) as usize);
             }
+        }
+        if root > 0 && root <= 0xFF {
+            q.flags = (q.flags & !GROUP_MASK) | ((root as u32) << GROUP_SHIFT);
         }
     }
 

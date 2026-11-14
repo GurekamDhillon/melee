@@ -21,6 +21,7 @@ pub const OP_EFFECT: u16 = 12;
 /// gd-ui-v1.4: an analytic shape (exact at every size and resolution, one quad) and a text outline.
 pub const OP_SHAPE: u16 = 13;
 pub const OP_OUTLINE: u16 = 14;
+pub const OP_SHADOW: u16 = 15;
 pub const SHAPE_BOX: u32 = 1;
 pub const SHAPE_DIAMOND: u32 = 2;
 pub const SHAPE_GLOW: u32 = 3;
@@ -211,6 +212,17 @@ impl<const N: usize> Enc<N> {
     /// A disc of diameter `d` centred on (cx, cy).
     pub fn circle(&mut self, cx: f32, cy: f32, d: f32, fill: u32) -> &mut Self {
         self.shape(SHAPE_BOX, cx - d * 0.5, cy - d * 0.5, d, d, d, 0.0, 0.0, fill, 0)
+    }
+    /// The boxes that follow carry a hard shadow in the same quad: their outline shrunk by `inset`, moved by
+    /// (dx, dy), in `rgba` (it fades with the box). `shadow(0.0, 0.0, 0.0, 0)` ends it.
+    pub fn shadow(&mut self, dx: f32, dy: f32, inset: f32, rgba: u32) -> &mut Self {
+        if self.head(OP_SHADOW, 4) {
+            for v in [dx, dy, inset] {
+                self.f(v);
+            }
+            self.put(rgba);
+        }
+        self
     }
     /// The text that follows is outlined `width` units in `rgba` (0 ends it).
     pub fn outline(&mut self, width: f32, rgba: u32) -> &mut Self {

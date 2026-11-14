@@ -43,6 +43,10 @@ pub const Q_SHAPE_SHIFT: u32 = 16;
 pub const Q_SHAPE_MASK: u32 = 15 << Q_SHAPE_SHIFT;
 /// A rounded box (a circle or a pill when the radius reaches half the short side); with a border and a clear fill,
 /// a ring. `shape[2]` > 0 dashes the border: that long on, 0.8 of it off (the period is fitted to the perimeter).
+/// `uv` = [dx, dy, inset, 0xRRGGBB as a number] gives the box a hard shadow in the same quad: the outline shrunk by
+/// `inset`, moved by (dx, dy), in that colour, drawn only where the box does not cover it. Shape and shadow are
+/// composed per pixel before the blend, so a fading sticker fades as one piece (two overlapping translucent quads
+/// would show the shadow through the face).
 pub const SHAPE_BOX: u32 = 1;
 /// A diamond inscribed in the rect.
 pub const SHAPE_DIAMOND: u32 = 2;
@@ -457,6 +461,12 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     var grow = aa;
     let full = (flags & 64u) != 0u;
     if (kind != 0u || full) { grow = vec4<f32>(1.0); aa = vec4<f32>(0.0); }
+    // a shape's hard shadow (uv = dx, dy, inset, colour): the quad also reaches as far as the shadow does
+    var shd = vec4<f32>(0.0);
+    if (kind == 1u) {
+        shd = vec4<f32>(uvr.xyz * s, uvr.w);
+        grow = grow + vec4<f32>(max(-shd.x, 0.0), max(-shd.y, 0.0), max(shd.x, 0.0), max(shd.y, 0.0));
+    }
     let sz = max(abs(rect.zw) * s, vec2<f32>(1.0e-3, 1.0e-3));
     let e0 = grow.xy / sz;
     let e1 = grow.zw / sz;
@@ -505,6 +515,7 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     o.uvc = vec4<f32>(min(uvr.xy, uvr.zw) + h, max(uvr.xy, uvr.zw) - h);
     // a whole entry may be filtered into its gutter (half a cell of clear texels on every side)
     if (full) { o.uvc = vec4<f32>(o.uvc.xy - 8.0 * h, o.uvc.zw + 8.0 * h); }
+    if (kind != 0u) { o.uvc = shd; }
     let c = unpack4x8unorm(rgba);
     o.c = vec4<f32>(c.w, c.z, c.y, c.x);
     let c2 = unpack4x8unorm(rgba2);
@@ -604,16 +615,20 @@ fn dash(p: vec2<f32>, hs: vec2<f32>, r: f32, bw: f32, dl: f32, w: f32) -> f32 {
     let u = fract(t / period) * period;
     return clamp(min(u, on - u) / w + 0.5, 0.0, 1.0);
 }
-// an analytic shape (ui.rs SHAPE_*): premultiplied colour from the signed distance in device pixels
-fn shape(v: VsOut) -> vec4<f32> {
+// an analytic shape (ui.rs SHAPE_*): premultiplied colour from the signed distance in device pixels. `f` is the shape,
+// `s` its hard shadow where the shape does not cover it (added after the effects: they are for the face).
+struct Shp { f: vec4<f32>, s: vec4<f32> };
+fn shape(v: VsOut) -> Shp {
+    var out: Shp;
+    out.s = vec4<f32>(0.0);
     let kind = v.kind.y;
     var hs = v.hs;
     if (kind == 3u) { hs = max(hs - vec2<f32>(v.shp.z), vec2<f32>(0.5)); }
     var d = 0.0;
+    let r = min(v.shp.x, min(hs.x, hs.y));
     if (kind == 2u) {
         d = (abs(v.sp.x) / hs.x + abs(v.sp.y) / hs.y - 1.0) * min(hs.x, hs.y) * 0.70710678;
     } else {
-        let r = min(v.shp.x, min(hs.x, hs.y));
         let q = abs(v.sp) - hs + vec2<f32>(r);
         d = length(max(q, vec2<f32>(0.0))) + min(max(q.x, q.y), 0.0) - r;
     }
@@ -624,14 +639,30 @@ fn shape(v: VsOut) -> vec4<f32> {
     if (kind == 3u) {
         var a = 1.0;
         if (d > 0.0) { let t = d / max(v.shp.z * 0.5, 1.0e-3); a = exp(-t * t) * 0.9; }
-        return fill * a;
+        out.f = fill * a;
+        return out;
     }
     let co = clamp(0.5 - d / w, 0.0, 1.0);
-    if (v.shp.y <= 0.0) { return fill * co; }
+    if (kind == 1u && (v.uvc.x != 0.0 || v.uvc.y != 0.0)) {
+        // the shadow: the same outline shrunk by uvc.z, moved by uvc.xy, under the shape, fading with it
+        let hs2 = max(hs - vec2<f32>(v.uvc.z), vec2<f32>(0.5));
+        let r2 = min(max(r - v.uvc.z, 0.0), min(hs2.x, hs2.y));
+        let q2 = abs(v.sp - v.uvc.xy) - hs2 + vec2<f32>(r2);
+        let d2 = length(max(q2, vec2<f32>(0.0))) + min(max(q2.x, q2.y), 0.0) - r2;
+        let cs = clamp(0.5 - d2 / w, 0.0, 1.0);
+        let rgb = vec3<f32>(floor(v.uvc.w / 65536.0), floor(v.uvc.w / 256.0) % 256.0, v.uvc.w % 256.0) / 255.0;
+        let a = max(v.c.a, v.c2.a);
+        out.s = vec4<f32>(rgb * a, a) * (cs * (1.0 - co));
+    }
+    if (v.shp.y <= 0.0) {
+        out.f = fill * co;
+        return out;
+    }
     let ci = clamp(0.5 - (d + v.shp.y) / w, 0.0, 1.0);
     var line = vec4<f32>(v.c2.rgb * v.c2.a, v.c2.a);
-    if (v.shp.z > 0.0) { line = line * dash(v.sp, hs, min(v.shp.x, min(hs.x, hs.y)), v.shp.y, v.shp.z, w); }
-    return fill * ci + line * (co - ci);
+    if (v.shp.z > 0.0) { line = line * dash(v.sp, hs, r, v.shp.y, v.shp.z, w); }
+    out.f = fill * ci + line * (co - ci);
+    return out;
 }
 @fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
     // The atlas is premultiplied and mipmapped; art is baked above its drawn size and minified through the chain
@@ -659,15 +690,15 @@ fn shape(v: VsOut) -> vec4<f32> {
         return c * clamp((d - 0.5) * pxr + 0.5, 0.0, 1.0);
     }
     var b = n * c;
-    if (v.kind.y != 0u) { b = sh; }
+    if (v.kind.y != 0u) { b = sh.f; }
     if (v.fx.x != 0u && u.tgt.w > 0.0) {
         // effects work on straight alpha; the atlas and the blend are premultiplied (kitaa)
         var un = vec4<f32>(0.0);
         if (b.a > 0.0) { un = vec4<f32>(b.rgb / b.a, b.a); }
         let e = effect(v, un);
-        return vec4<f32>(e.rgb * e.a, e.a);
+        return vec4<f32>(e.rgb * e.a, e.a) + sh.s;
     }
-    return b;
+    return b + sh.s;
 }
 ";
 

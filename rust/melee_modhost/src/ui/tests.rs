@@ -206,6 +206,19 @@ fn shape_and_outline_records() {
     assert!(q[1].shape[1] > 0.0 && q[2].shape[1] > 0.0 && q[1].rgba == 0x2A1A6EFF);
     assert!(q[3..].iter().all(|g| g.shape == [0.0; 3]));
     assert_eq!(q[1].rect, q[3].rect);
+    // OP_SHADOW: the next box carries its shadow in the same quad (uv = dx, dy, inset, 0xRRGGBB); 0, 0 ends it
+    let mut e = Enc::default();
+    e.rec(OP_SHADOW, &[f(3.0), f(4.0), f(1.5), 0x2A1A6EFF]);
+    e.rec(OP_SHAPE, &[1, f(5.0), f(6.0), f(40.0), f(20.0), f(10.0), f(3.0), f(0.0), 0xFFFFFFFF, 0x2A1A6EFF]);
+    e.rec(OP_SHADOW, &[f(0.0), f(0.0), f(0.0), 0]);
+    e.rec(OP_SHAPE, &[1, f(5.0), f(6.0), f(40.0), f(20.0), f(10.0), f(3.0), f(0.0), 0xFFFFFFFF, 0x2A1A6EFF]);
+    b.begin();
+    b.submit(&e.0, 0, &a, &[], false).unwrap();
+    b.finish(false);
+    assert_eq!(b.frame.quads.len(), 2, "a shadowed sticker is still one quad");
+    assert_eq!(b.frame.quads[0].uv, [3.0, 4.0, 1.5, 0x2A1A6E as f32]);
+    assert_eq!(b.frame.quads[0].rect, [5.0, 6.0, 40.0, 20.0]);
+    assert_eq!(b.frame.quads[1].uv, [0.0; 4]);
     for bad in [[9u32, f(0.0), f(0.0), f(1.0), f(1.0), f(0.0), f(0.0), f(0.0), 0xFF, 0xFF], [1, f(f32::NAN), f(0.0), f(1.0), f(1.0), f(0.0), f(0.0), f(0.0), 0xFF, 0xFF]] {
         let mut e = Enc::default();
         e.rec(OP_SHAPE, &bad);

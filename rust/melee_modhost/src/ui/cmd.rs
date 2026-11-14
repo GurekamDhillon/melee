@@ -29,6 +29,10 @@ pub const OP_SHAPE: u16 = 13;
 /// gd-ui-v1.4: the text that follows gets an outline of `width` canvas units in `rgba` (drawn from the glyphs' own
 /// distance field, under the fill); width 0 ends it. Payload width, rgba.
 pub const OP_OUTLINE: u16 = 14;
+/// gd-ui-v1.4: the BOX shapes that follow carry a hard shadow in the same quad: their outline shrunk by `inset`,
+/// moved by (dx, dy), in `rgba` (its alpha is the shape's: they fade as one). Payload dx, dy, inset, rgba; dx = dy = 0
+/// ends it.
+pub const OP_SHADOW: u16 = 15;
 
 pub const LAYER_SCENE: i32 = 0;
 pub const LAYER_HUD_UNDER: i32 = 1;
@@ -125,13 +129,15 @@ pub struct Pen {
     pub fx: [u32; 2],
     /// OP_OUTLINE: (width in canvas units, colour) for the text that follows; width 0: none
     pub outline: (f32, u32),
+    /// OP_SHADOW: (dx, dy, inset, colour) for the BOX shapes that follow; dx = dy = 0: none
+    pub shadow: (f32, f32, f32, u32),
     clips: [[f32; 4]; CLIP_DEPTH],
     depth: usize,
 }
 
 impl Pen {
     pub fn new(module: u16) -> Pen {
-        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, rot: 0.0, piv: [0.0; 2], fx: [0; 2], outline: (0.0, 0), clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
+        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, rot: 0.0, piv: [0.0; 2], fx: [0; 2], outline: (0.0, 0), shadow: (0.0, 0.0, 0.0, 0), clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
     }
     fn clip(&self) -> [f32; 4] {
         if self.depth == 0 { NO_CLIP } else { self.clips[self.depth - 1] }
@@ -279,7 +285,10 @@ impl Batch {
         self.extra_flags |= kind << Q_SHAPE_SHIFT;
         // shape[2]: a glow's spread, a box's dash length
         self.extra_shape = ([radius.max(0.0) * s, border.max(0.0) * s, spread.max(0.0) * s], rgba2);
-        self.push(p, [x - g, y - g, w + 2.0 * g, h + 2.0 * g], [0.0; 4], rgba, 0.0);
+        // a box's hard shadow rides in the quad's unused uv: dx, dy, inset, 0xRRGGBB as a number (exact in an f32)
+        let sh = p.shadow;
+        let uv = if kind == gu::SHAPE_BOX && (sh.0 != 0.0 || sh.1 != 0.0) { [sh.0 * s, sh.1 * s, sh.2.max(0.0) * s, (sh.3 >> 8) as f32] } else { [0.0; 4] };
+        self.push(p, [x - g, y - g, w + 2.0 * g, h + 2.0 * g], uv, rgba, 0.0);
         (self.extra_flags, self.extra_shape) = save;
     }
 
@@ -419,6 +428,13 @@ impl Batch {
                         return err(at, "shape: non-finite");
                     }
                     self.shape(&pen, kind, f(p + 4), f(p + 8), f(p + 12), f(p + 16), f(p + 20), f(p + 24), f(p + 28), w(p + 32), w(p + 36));
+                }
+                OP_SHADOW => {
+                    need(4)?;
+                    if !fs(3) {
+                        return err(at, "shadow: non-finite");
+                    }
+                    pen.shadow = (f(p), f(p + 4), f(p + 8), w(p + 12));
                 }
                 OP_OUTLINE => {
                     need(2)?;

@@ -31,6 +31,9 @@ its own colour; a clear fill with a border is a ring; a dashed border is measure
 whole shape at any size, so:
 
 - there are no pieces, and so no seams, by construction, at rest, rotated and under the menu tilt;
+- a sticker's hard shadow is part of the same quad (`OP_SHADOW`): face and shadow are composed per pixel before the
+  blend, so a sticker that fades in is one translucent piece (two overlapping translucent quads would show the
+  shadow through the face);
 - corners are true arcs at every resolution; nothing is magnified;
 - a sticker smaller than its corner radius is a pill, not two corners overlapping.
 
@@ -72,6 +75,7 @@ stem keeps the same ink wherever it falls on the pixel grid.
   - seams: no partly covered pixel between fully covered ones, for a panel, a pill, a sticker (shadow under face)
     and a three-piece flat bar, at rest, rotated 0.6 and 8 degrees, tilted, rotated and tilted;
   - a 128-texel sprite disc drawn down to 18 px stays round (the mip chain covers 8x minification);
+  - a sticker with its shadow at half opacity reads the same value over the face, the overlap and the shadow;
   - small text (10 to 15 px) keeps its ink within 4% at sixteen sub-pixel positions (measured: 2.3%; the old edge
     swung 9.6%).
 - `cargo test -p melee_modhost --lib ui::`: a slice is one shape quad at any size; `OP_SHAPE` / `OP_OUTLINE` records.

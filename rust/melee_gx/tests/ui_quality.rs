@@ -321,3 +321,30 @@ fn small_text_keeps_its_stems() {
     }
     println!("{report}");
 }
+
+/// A sticker that fades is one translucent piece: face and shadow are composed in the shader before the blend, so
+/// at half opacity every pixel inside the face-or-shadow outline has the same value (two overlapping translucent
+/// quads would be darker, or lighter, where they overlap).
+#[test]
+fn fading_sticker_is_one_piece() {
+    let Some(mut g) = gpu() else { return };
+    for s in SCALES {
+        let (w, h) = ((200.0 * s) as u32, (120.0 * s) as u32);
+        // white face, white edge and white shadow at half opacity on black: the union must read 127 or 128 all over
+        let (x, y, pw, ph) = (20.0f32, 20.0f32, 120.0f32, 60.0f32);
+        let mut q = shape(SHAPE_BOX, x, y, pw, ph, 11.5, 3.0);
+        q.rgba = 0xFFFF_FF80;
+        q.rgba2 = 0xFFFF_FF80;
+        q.uv = [3.0, 4.0, 1.5, 0xFFFFFF as f32];
+        let img = render(&mut g, vec![q], w, h, [0.0, 0.0, 640.0 * s, 480.0 * s], [0.0; 2]);
+        let at = |ux: f32, uy: f32| img[((uy * s) as u32 * w + (ux * s) as u32) as usize];
+        // the face alone, the overlap, and the shadow alone (right of and below the face)
+        for (ux, uy, what) in [(30.0, 28.0, "face"), (80.0, 50.0, "overlap"), (140.8, 60.0, "shadow right"), (90.0, 81.5, "shadow below")] {
+            let v = at(ux, uy);
+            assert!((127..=129).contains(&v), "{what} at scale {s}: {v}, expected 128");
+        }
+        // nothing past the shadow
+        assert_eq!(at(150.0, 60.0), 0);
+        assert_eq!(at(90.0, 90.0), 0);
+    }
+}

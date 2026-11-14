@@ -163,6 +163,7 @@ offered. The buffer is little-endian and 4-byte aligned. Each record is `u16 op,
 | `VECTOR` | `u32 path_id, f32 affine[6], u32 rgba` (`UI_VECTOR` only) |
 | `SHAPE` (v1.4) | `u32 kind, f32 x,y,w,h, f32 radius, f32 border, f32 spread, u32 fill, u32 line`: one analytic shape (`GD_UI_SHAPE_BOX` rounded box / pill / circle, a ring with a clear fill, a dashed border with `spread` > 0; `DIAMOND`; `GLOW`). Evaluated per device pixel: exact at every size, resolution, rotation and tilt, always one quad. Prefer it to textures for any round or rounded piece |
 | `OUTLINE` (v1.4) | `f32 width, u32 rgba`: the `TEXT` that follows is outlined from its glyphs' distance field (one pass under the fill); width 0 ends it |
+| `SHADOW` (v1.4) | `f32 dx, dy, inset, u32 rgba`: the `BOX` shapes that follow carry a hard shadow in the same quad (the outline shrunk by `inset`, moved by `dx, dy`). Shape and shadow are composed per pixel before the blend, so a fading sticker is one translucent piece; `dx = dy = 0` ends it |
 
 Setup calls are made once or rarely, not every frame:
 

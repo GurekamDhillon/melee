@@ -157,8 +157,10 @@ pub fn spr(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32) {
         // stock dot: r 7 with a 2.5 ink edge and a hard ink shadow at (1.5, 2.5), in an 18 box
         S_STOCK | S_STOCK_LAST => {
             let k = w / 18.0;
-            disc(e, cx + 1.5 * k, cy + 2.5 * k, 14.0 * k, mulc(INK, rgba), 0.0, 0);
-            return disc(e, cx, cy, 16.5 * k, mulc(if id == S_STOCK { WHITE } else { CORAL }, rgba), 2.5 * k, mulc(INK, rgba));
+            e.shadow(1.5 * k, 2.5 * k, 1.25 * k, INK);
+            disc(e, cx, cy, 16.5 * k, mulc(if id == S_STOCK { WHITE } else { CORAL }, rgba), 2.5 * k, mulc(INK, rgba));
+            e.shadow(0.0, 0.0, 0.0, 0);
+            return;
         }
         // spent stock: ink r 4.2 with a 1.5 white edge
         S_STOCK_SPENT => {
@@ -227,6 +229,8 @@ fn face_fx(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32, fx: 
             e.effect(FX_NONE, 0);
         }
     };
+    // Each sticker's shadow is part of its own quad (`Enc::shadow`): face and shadow are composed per pixel, so a
+    // sticker that fades in is one translucent piece, never a face with its shadow showing through.
     match id {
         S_FACE_CREAM => {
             // the dashed seat: cream, a 2.5 dashed ink edge (5 on, 4 off), no shadow
@@ -235,21 +239,23 @@ fn face_fx(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32, fx: 
             fx_off(e);
         }
         S_FACE_HOVER => {
-            // hovered: a sunny face with a white ring outside its edge, shadow (4, 6)
-            e.shape(SHAPE_BOX, x + 4.0 * k, y + 5.0 * k, w - 2.0, h - 2.0, 11.0, 0.0, 0.0, ink, 0);
-            e.shape(SHAPE_BOX, x - 1.0, y - 1.0, w, h, 12.0, 0.0, 0.0, rgba, 0);
+            // hovered: a white ring outside the sunny face's edge, shadow (4, 6) under both
+            e.shadow(4.0 * k, 5.0 * k, 1.0, INK);
+            e.shape(SHAPE_BOX, x - 1.0, y - 1.0, w, h, 12.0, 2.0, 0.0, rgba & !0xFF, rgba);
+            e.shadow(0.0, 0.0, 0.0, 0);
             fx_on(e);
             e.shape(SHAPE_BOX, x, y, w - 2.0, h - 2.0, 10.5, edge, 0.0, mulc(SUNNY, rgba), ink);
             fx_off(e);
         }
         S_FACE_INK => {
-            // the ink sticker: an ink face with a white line just inside its rim
-            e.shape(SHAPE_BOX, x + 3.0 * k, y + 4.0 * k, w, h, 10.0, 0.0, 0.0, ink, 0);
-            fx_on(e);
-            e.shape(SHAPE_BOX, x, y, w, h, 10.0, 0.0, 0.0, ink, 0);
-            fx_off(e);
+            // the ink sticker: an ink rim, then a white line, then the ink face (rim and face meet under the line)
             let (inset, line) = ((m * 0.06).min(1.25), (m * 0.12).min(2.5));
-            e.shape(SHAPE_BOX, x + inset, y + inset, w - 2.0 * inset, h - 2.0 * inset, 10.0 - inset, line, 0.0, 0, rgba);
+            e.shadow(3.0 * k, 4.0 * k, 0.0, INK);
+            e.shape(SHAPE_BOX, x, y, w, h, 10.0, inset + line * 0.5, 0.0, ink & !0xFF, ink);
+            e.shadow(0.0, 0.0, 0.0, 0);
+            fx_on(e);
+            e.shape(SHAPE_BOX, x + inset, y + inset, w - 2.0 * inset, h - 2.0 * inset, 10.0 - inset, line, 0.0, ink, rgba);
+            fx_off(e);
         }
         _ => {
             let fill = match id {
@@ -260,10 +266,12 @@ fn face_fx(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32, fx: 
                 S_FACE_LILAC => PALE,
                 _ => WHITE,
             };
-            e.shape(SHAPE_BOX, x + 3.0 * k, y + 4.0 * k, w, h, 10.0, 0.0, 0.0, ink, 0);
+            // the shadow is the face rectangle itself (the outline less half the edge) moved by (3, 4)
+            e.shadow(3.0 * k, 4.0 * k, edge * 0.5, INK);
             fx_on(e);
             e.shape(SHAPE_BOX, x - edge * 0.5, y - edge * 0.5, w + edge, h + edge, 10.0 + edge * 0.5, edge, 0.0, mulc(fill, rgba), ink);
             fx_off(e);
+            e.shadow(0.0, 0.0, 0.0, 0);
         }
     }
 }

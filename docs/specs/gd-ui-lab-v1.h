@@ -59,7 +59,9 @@ enum {
     /* gd-ui-v1.4 (uiquality): analytic shapes and text outlines. A shape is evaluated per device pixel by the host:
        exact and antialiased at every size, resolution, rotation and menu tilt, and always one quad (no seams). */
     GD_UI_OP_SHAPE  = 13, /* u32 kind (GD_UI_SHAPE_*), f32 x,y,w,h, f32 radius, f32 border, f32 spread, u32 fill rgba, u32 border rgba */
-    GD_UI_OP_OUTLINE = 14 /* f32 width, u32 rgba: the text that follows is outlined (from the glyph distance field, under the fill); width 0 ends it */
+    GD_UI_OP_OUTLINE = 14,/* f32 width, u32 rgba: the text that follows is outlined (from the glyph distance field, under the fill); width 0 ends it */
+    GD_UI_OP_SHADOW = 15  /* f32 dx, dy, inset, u32 rgba: the BOX shapes that follow carry a hard shadow in the same quad (their outline
+                             shrunk by inset, moved by dx, dy; it fades with the shape as one piece); dx = dy = 0 ends it */
 };
 enum { GD_UI_SPACE_BAND = 0, GD_UI_SPACE_WINDOW = 1 };
 /* layers, drawn in this order; within a layer by z, then mod load order, then submission order (a total order) */

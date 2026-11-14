@@ -192,3 +192,4 @@ pub fn from_file(bf: &brawl_boss::BossFile) -> Option<Tuning> {
         land_decay_l: -bits(k15[4]),
     })
 }
+

@@ -1030,6 +1030,10 @@ impl Rig {
         }
         self.bones.iter().zip(d).map(|(b, x)| (b.name.clone(), x)).collect()
     }
+    /// A bone's own MDL0 index.
+    pub fn bone_index(&self, slot: usize) -> u32 {
+        self.bones.get(slot).map(|b| b.index).unwrap_or(u32::MAX)
+    }
     pub fn bone_name(&self, slot: usize) -> &str {
         self.bones.get(slot).map(|b| b.name.as_str()).unwrap_or("")
     }

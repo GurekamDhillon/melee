@@ -29,6 +29,17 @@ pub const MAT_TRAIL: i32 = 0x80;
 /// The ink edge (`melee_gx::fx::MAT_OUTLINE`): drive bodies only, never tier rings, the ascended overlay or glass.
 pub const MAT_OUTLINE: i32 = 0x40;
 
+/// Every screen post through the Envoy settings (pause overlay, Options): the effect intensity scales the strength;
+/// with screen shake off the distortions (shockwave, radial wave) are skipped.
+unsafe fn post(effect: u32, strength: f32, x: f32, y: f32, rgba: u32) -> i32 {
+    let k = crate::pause::fx_scale();
+    let kind = effect & 0xFF;
+    if k <= 0.0 || (!crate::pause::shake_on() && (kind == POST_SHOCKWAVE || kind == POST_RADIAL_WAVE)) {
+        return 0;
+    }
+    gd_fx_post(effect, strength * k, x, y, rgba)
+}
+
 const HEAT_RGBA: [u32; 4] = [0, 0xFFBE_2EFF, 0xFF8A_1FFF, 0xFF4A_1CFF];
 
 /// A drive model with a material (see `gd_ui_world_model_ex`).
@@ -49,14 +60,14 @@ pub fn heat_screen(v: &[i32; VW]) {
     let c = HEAT_RGBA[st];
     unsafe {
         match st {
-            1 => { gd_fx_post(POST_VIGNETTE, 0.5, 0.0, 0.0, c); }
+            1 => { post(POST_VIGNETTE, 0.5, 0.0, 0.0, c); }
             2 => {
-                gd_fx_post(POST_VIGNETTE, 0.7, 0.0, 0.0, c);
-                gd_fx_post(POST_EMBER, 0.6, 0.0, 0.0, c);
+                post(POST_VIGNETTE, 0.7, 0.0, 0.0, c);
+                post(POST_EMBER, 0.6, 0.0, 0.0, c);
             }
             3 => {
-                gd_fx_post(POST_EMBER, 0.8, 0.0, 0.0, c);
-                gd_fx_post(POST_HEAT_HAZE, 1.0, 0.0, 0.0, c);
+                post(POST_EMBER, 0.8, 0.0, 0.0, c);
+                post(POST_HEAT_HAZE, 1.0, 0.0, 0.0, c);
             }
             _ => {}
         }
@@ -106,16 +117,16 @@ pub fn moments(v: &[i32; VW]) {
                 // the combo breaker: a big white shockwave ring from the player (strength 2.6: the host's large
                 // ring), a white wave, a full white flash, the Brawl sound as a layer (the Melee disc's
                 // shield-break sound plays from the sim's host call)
-                gd_fx_post(POST_SHOCKWAVE | w, 2.6, x, y, 0xFFFF_FFFF);
-                gd_fx_post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFFF_FFFF);
-                gd_fx_post(POST_FLASH, 1.0, 0.0, 0.0, 0xFFFF_FFFF);
+                post(POST_SHOCKWAVE | w, 2.6, x, y, 0xFFFF_FFFF);
+                post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFFF_FFFF);
+                post(POST_FLASH, 1.0, 0.0, 0.0, 0xFFFF_FFFF);
                 crate::sfx("combobreak");
             } else if ev[1] == EV_CASHOUT {
-                gd_fx_post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFD8_4AFF);
-                gd_fx_post(POST_FLASH, 0.8, 0.0, 0.0, 0xFFF4_D0FF);
+                post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFD8_4AFF);
+                post(POST_FLASH, 0.8, 0.0, 0.0, 0xFFF4_D0FF);
             } else {
-                gd_fx_post(POST_SHOCKWAVE | w, 1.0, x, y, 0xFF4D_6DFF);
-                gd_fx_post(POST_FLASH, 1.0, 0.0, 0.0, 0xFFFF_FFFF);
+                post(POST_SHOCKWAVE | w, 1.0, x, y, 0xFF4D_6DFF);
+                post(POST_FLASH, 1.0, 0.0, 0.0, 0xFFFF_FFFF);
             }
         }
     }

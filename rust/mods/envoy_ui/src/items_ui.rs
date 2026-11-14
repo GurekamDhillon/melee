@@ -19,7 +19,12 @@ const INK_COL: u32 = 0xB04A_FFFF;
 const EMBER: u32 = 0xFF7A_20FF;
 
 unsafe fn fx(kind: i32, x: f32, y: f32, a: f32, b: f32, c: f32, rgba: u32) {
-    crate::gd_ui_world_fx(kind, x, y, 0.0, a, b, c, rgba);
+    // the Envoy settings' effect intensity (pause overlay, Options) fades every item effect in the world
+    let k = crate::pause::fx_scale();
+    if k <= 0.0 {
+        return;
+    }
+    crate::gd_ui_world_fx(kind, x, y, 0.0, a, b, c, alpha(rgba, k));
 }
 
 fn col(id: i32) -> u32 {

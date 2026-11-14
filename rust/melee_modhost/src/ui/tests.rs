@@ -429,3 +429,32 @@ fn host_catalogs_and_requests_v1_2() {
     assert_eq!(s.list_gen[LIST_MODES], 1);
     assert_eq!(s.lists[LIST_MODES].len(), 2);
 }
+
+#[test]
+fn strip_and_sim_signal() {
+    // the Envoy pause overlay: the D-pad is taken off the pad, the rest (A, Start, the sticks) still reaches the game
+    let mut s = shared();
+    s.strip[0] = 0x000F;
+    let mut pad = PADStatus::zeroed();
+    pad.button = 0x1109;
+    pad.stickX = 40;
+    s.strip_and_signal(0, &mut pad);
+    assert_eq!(pad.button, 0x1100);
+    assert_eq!(pad.stickX, 40);
+    // Abandon: the reserved bit held for exactly the asked logic inputs, on that port only
+    s.strip[0] = 0;
+    s.sim_signal[1] = SIM_SIGNAL_BITS as u16;
+    s.sim_left[1] = 2;
+    let mut seen = 0;
+    for _ in 0..4 {
+        let mut a = PADStatus::zeroed();
+        let mut b = PADStatus::zeroed();
+        s.strip_and_signal(0, &mut a);
+        s.strip_and_signal(1, &mut b);
+        assert_eq!(a.button, 0);
+        if b.button & SIM_SIGNAL_BITS as u16 != 0 {
+            seen += 1;
+        }
+    }
+    assert_eq!(seen, 2);
+}

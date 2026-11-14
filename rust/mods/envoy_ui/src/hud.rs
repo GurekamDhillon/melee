@@ -280,7 +280,7 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
     if let Some(h) = heat_of(v, p).filter(|_| !items_on) {
         // a tap with too little Heat shakes the bar (EV_HEAT_SHORT)
         let sh = tag_age(v, p, EV_HEAT_SHORT);
-        let dx = if (0..12).contains(&sh) { 3.0 * sin(sh as f32 * 2.2) * (1.0 - sh as f32 / 12.0) } else { 0.0 };
+        let dx = if (0..12).contains(&sh) && crate::pause::shake_on() { 3.0 * sin(sh as f32 * 2.2) * (1.0 - sh as f32 / 12.0) } else { 0.0 };
         heat_bar(e, x + 18.0 + dx, hy, 132.0, &h, p);
         // the strike's cost: a notch with the Tag glyph
         let cost = v[pbk + P_ASSIST_COST];

@@ -27,6 +27,7 @@ mod party;
 mod picker;
 mod fx;
 mod items_ui;
+mod pause;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -683,6 +684,11 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 hud::FH = [0; 16];
             }
             hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
+            // the Envoy pause overlay over Melee's own pause (pause.rs): D-pad only, its own panel per player
+            let paused = hud::FH[12] != 0;
+            if pause::input(&v, paused) {
+                pause::draw(e, &v, ex, st & (1 << 9) != 0);
+            }
             e.space(SPACE_WINDOW, sc);
             if v[V_RW] == RW_SHOP {
                 shop::draw(e, &v, ex, vw, vh, sc);
@@ -711,6 +717,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 stage_rift(e, &l, vw, vh);
             }
         } else {
+            pause::input(&v, false);
             between(e, &v, vw, vh);
         }
         e.submit();

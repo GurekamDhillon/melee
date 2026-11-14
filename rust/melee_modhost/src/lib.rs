@@ -699,6 +699,8 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         static V: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         *V.get_or_init(|| std::env::var("MELEE_ENVOY_START_FIGHT").ok().and_then(|v| v.parse::<i32>().ok()).map_or(0, |n| (n - 1).clamp(0, 4)))
     });
+    // the salt of a new run's seed (menu-time, set by the camp's New run; 0 under MELEE_ENVOY_ARM and in scripted runs)
+    w!("gd_envoy_salt", || -> i32 { unsafe { melee_modes::tu::envoy::RUN_SALT } });
     // test knob: MELEE_ENVOY_TEST_DRIVES="key[:level],key/key|keystone" (main / partner | keystones), fixed per process
     w!("gd_envoy_test_drives", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
         static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();
@@ -784,6 +786,8 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         }
         0
     });
+    // the armed run's match was left from the pause (No Contest): the sim keeps the run instead of losing it
+    w!("gd_envoy_quit", || -> i32 { unsafe { melee_modes::tu::envoy::quit_pending() } });
     // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
     // plan only while armed, so VS stays retail with the mods loaded
     w!("gd_envoy_armed", || -> i32 { melee_modes::tu::envoy::armed() });
@@ -1111,6 +1115,21 @@ unsafe fn call_hook(host: *mut Host, e: Entry, args: &[Val], nres: usize) -> Opt
     let mut c = ctx(host);
     c.data_mut().cur_module = prev;
     let id = (&(*host).mods)[e.module].id.clone();
+    // the fuel this hook used: a new peak is logged when it enters another eighth of the budget (a mod that runs out
+    // traps and is disabled for the session, so the margin is worth knowing; MELEE_MOD_FUEL_LOG=1 logs every new peak)
+    {
+        static PEAK: [std::sync::atomic::AtomicU64; MAX_MODS] = [const { std::sync::atomic::AtomicU64::new(0) }; MAX_MODS];
+        let used = HOOK_FUEL.saturating_sub(c.get_fuel().unwrap_or(HOOK_FUEL));
+        let slot = &PEAK[e.module.min(MAX_MODS - 1)];
+        let prev_peak = slot.load(std::sync::atomic::Ordering::Relaxed);
+        if used > prev_peak {
+            slot.store(used, std::sync::atomic::Ordering::Relaxed);
+            static ALL: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+            if used * 8 / HOOK_FUEL != prev_peak * 8 / HOOK_FUEL || *ALL.get_or_init(|| std::env::var_os("MELEE_MOD_FUEL_LOG").is_some()) {
+                eprintln!("modhost: {id}: hook fuel peak {used} of {HOOK_FUEL}");
+            }
+        }
+    }
     for l in c.data_mut().log.drain(..) {
         eprintln!("modhost: {id}: {l}");
     }
@@ -1360,9 +1379,23 @@ pub fn dispatch_for_test(addr: u32, args: &[Arg], orig: &mut dyn FnMut() -> Ret)
 }
 
 /// `MELEE_WASM_MODS`: the mods directory, None when unset / empty / `0` (off by default).
+/// A relative dir is made absolute against the working directory, else (when it is not there) against the exe's
+/// folder, so a game started from another folder still finds its mods and their art.
 pub fn dir_from_env() -> Option<std::path::PathBuf> {
     let v = std::env::var("MELEE_WASM_MODS").ok()?;
-    (!v.is_empty() && v != "0").then(|| v.into())
+    if v.is_empty() || v == "0" {
+        return None;
+    }
+    let p = std::path::PathBuf::from(v);
+    if p.is_absolute() {
+        return Some(p);
+    }
+    let from_exe = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join(&p)));
+    Some(match (std::path::absolute(&p).ok(), from_exe) {
+        (Some(a), _) if a.is_dir() => a,
+        (_, Some(e)) if e.is_dir() => e,
+        (a, _) => a.unwrap_or(p),
+    })
 }
 
 /// Load every `*.wasm` of `dir` and install the hook pointers the loaded set needs. Call on the game thread inside the

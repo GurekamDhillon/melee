@@ -28,6 +28,7 @@ mod picker;
 mod fx;
 mod items_ui;
 mod pause;
+mod help;
 
 use envoy_data::view::*;
 use envoy_data::*;

@@ -37,10 +37,14 @@ pub const TR_WHILE_AIRDODGE: u8 = 17;
 pub const TR_WHILE_NAIR: u8 = 18;
 pub const TR_WHILE_DASH: u8 = 19;
 pub const TR_WHILE_SHIELD: u8 = 20;
-pub const TR_LAST: u8 = TR_WHILE_SHIELD;
-pub const TRIGGER_TEXT: [&str; 21] = [
+/// Synergy lane: an item that fires off another item's hit (a proc; envoy-synergy.md), and a co-op item (2P only).
+pub const TR_ITEM_HIT: u8 = 21;
+pub const TR_COOP: u8 = 22;
+pub const TR_LAST: u8 = TR_COOP;
+pub const TRIGGER_TEXT: [&str; 23] = [
     "always on", "nair hit", "wavedash", "shine", "short hop", "ledge grab", "whiff", "roll", "smash hit", "KO", "modifies", "jab hit", "taking a hit",
     "laser hit", "crouch cancel", "powershield", "on pickup", "while airdodging", "while in nair", "while dashing", "while shielding",
+    "item hit", "co-op",
 ];
 
 /// Stack rules: what a second copy does.
@@ -93,6 +97,14 @@ pub const IT_DODGE_ORB: i32 = 44;
 pub const IT_NAIR_RING: i32 = 45;
 pub const IT_DASH_ORB: i32 = 46;
 pub const IT_SHIELD_ORBS: i32 = 47;
+// synergy lane (envoy-synergy.md): proc items (ON <KIND> HIT) and co-op items (2P only). Ids 48-55 are stored two bits
+// a copy in the record (cap 3, never repeatable).
+pub const IT_EMBER_SEED: i32 = 48;
+pub const IT_STATIC_COIL: i32 = 49;
+pub const IT_FROST_BUD: i32 = 50;
+pub const IT_KIN_TETHER: i32 = 51;
+pub const IT_RALLY_BANNER: i32 = 52;
+pub const IT_KINDRED_SPARK: i32 = 53;
 
 #[derive(Clone, Copy)]
 pub struct Item {
@@ -121,7 +133,7 @@ pub struct Item {
     pub slots: u8,
 }
 
-pub const ITEMS: [Item; 32] = [
+pub const ITEMS: [Item; 38] = [
     Item { id: IT_SPARK_RING, key: "spark_ring", name: "Spark Ring", line: "Nair hits pop a ring of sparks", pools: PL_ITEM, quality: 1, trigger: TR_NAIR_HIT, visual: "sparks", tags: TG_SPARK | TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFFF0_70FF, slots: 0 },
     Item { id: IT_GLIDE_WAKE, key: "glide_wake", name: "Glide Wake", line: "Wavedashes leave a burning streak", pools: PL_ITEM, quality: 1, trigger: TR_WAVEDASH, visual: "wake", tags: TG_TRAIL, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xFF8A_2AFF, slots: 0 },
     Item { id: IT_SHINE_BELL, key: "shine_bell", name: "Shine Bell", line: "Each shine rings a shock ring", pools: PL_ITEM, quality: 2, trigger: TR_SHINE, visual: "bell", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0x7AD8_FFFF, slots: 0 },
@@ -155,10 +167,20 @@ pub const ITEMS: [Item; 32] = [
     Item { id: IT_NAIR_RING, key: "nair_ring", name: "Nair Ring", line: "A ring of orbs circles your nair", pools: PL_ITEM, quality: 2, trigger: TR_WHILE_NAIR, visual: "orb_ring", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xFFB0_4AFF, slots: 0 },
     Item { id: IT_DASH_ORB, key: "dash_orb", name: "Dash Orb", line: "An orb leads your dash and run", pools: PL_ITEM | PL_SHOP, quality: 1, trigger: TR_WHILE_DASH, visual: "orb_dash", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x9AFF_7AFF, slots: 0 },
     Item { id: IT_SHIELD_ORBS, key: "shield_orbs", name: "Shield Orbs", line: "Orbs circle your shield and break on blocks", pools: PL_SHOP | PL_SECRET, quality: 2, trigger: TR_WHILE_SHIELD, visual: "orb_shield", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xC0A0_FFFF, slots: 0 },
+    // ---- synergy lane: proc items (their keyword text is procs::keyword) and co-op items
+    Item { id: IT_EMBER_SEED, key: "ember_seed", name: "Ember Seed", line: "ON BURST HIT: may bloom a fire seed", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_ITEM_HIT, visual: "seed", tags: TG_BURST, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xFF7A_3AFF, slots: 0 },
+    Item { id: IT_STATIC_COIL, key: "static_coil", name: "Static Coil", line: "ON SHOT HIT: may arc to another foe", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_ITEM_HIT, visual: "coil", tags: TG_SPARK, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0x7AE8_FFFF, slots: 0 },
+    Item { id: IT_FROST_BUD, key: "frost_bud", name: "Frost Bud", line: "ON SPARK HIT: may burst into frost", pools: PL_ITEM | PL_BOSS, quality: 2, trigger: TR_ITEM_HIT, visual: "frost", tags: TG_BURST, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xB8D8_FFFF, slots: 0 },
+    Item { id: IT_KIN_TETHER, key: "kin_tether", name: "Kin Tether", line: "2P: a tether to your partner nicks foes", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_COOP, visual: "tether", tags: TG_TRAIL, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0x8AFF_C8FF, slots: 0 },
+    Item { id: IT_RALLY_BANNER, key: "rally_banner", name: "Rally Banner", line: "2P: your KOs rally your partner for 5 s", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_COOP, visual: "banner", tags: 0, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xFFB8_3AFF, slots: 0 },
+    Item { id: IT_KINDRED_SPARK, key: "kindred_spark", name: "Kindred Spark", line: "2P: your hits near your partner proc theirs", pools: PL_ITEM | PL_BOSS, quality: 3, trigger: TR_COOP, visual: "kindred", tags: TG_SPARK, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xF0A0_FFFF, slots: 0 },
 ];
 pub const ITEMS_LEN: usize = ITEMS.len();
 /// Highest item id + 1 (the inventory arrays are indexed by id).
-pub const ITEM_IDS: usize = 48;
+pub const ITEM_IDS: usize = 56;
+/// The view's and the record's first block holds ids 0-47 (V_INV's stride); ids 48-55 are in V_INV2 and the record's
+/// spare high halves (two bits a copy).
+pub const INV_STRIDE: usize = 48;
 
 /// The table's lint (design section 9): every item has a trigger or is a modifier with tags to change, a visual, a
 /// stack rule and a cap; ids are unique, in range and never 0; a modifier makes nothing; quality 0-4.
@@ -176,6 +198,7 @@ const fn lint() -> bool {
         assert!((it.slots > 0) == (it.pools & PL_DEVIL != 0), "a devil item has a slot price; only a devil item");
         assert!(it.slots <= 2, "a deal costs 1-2 stock slots");
         assert!((it.trigger == TR_MODIFIER) == (it.mods != 0), "a modifier must change tags; only a modifier may");
+        assert!(it.id < INV_STRIDE as i32 || (it.cap <= 3 && !it.repeatable), "ids 48+ are stored two bits a copy");
         let mut j = i + 1;
         while j < ITEMS.len() {
             assert!(ITEMS[j].id != it.id, "duplicate item id");

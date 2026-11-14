@@ -19,6 +19,7 @@
 use crate::kit::*;
 use crate::{ck_name, Buf, VW};
 use envoy_data::items::*;
+use envoy_data::procs;
 use envoy_data::view::*;
 use gd_ui_enc::*;
 
@@ -30,11 +31,15 @@ extern "C" {
 
 const DPAD: u32 = 0x000F;
 const ABANDON_BIT: u32 = 0x2000;
-const PAGES: [&str; 4] = ["Items", "Run", "Fight", "Options"];
+const PAGES: [&str; 5] = ["Items", "Combos", "Run", "Fight", "Options"];
 const PG_ITEMS: usize = 0;
-const PG_RUN: usize = 1;
-const PG_FIGHT: usize = 2;
-const PG_OPTIONS: usize = 3;
+const PG_COMBOS: usize = 1;
+const PG_RUN: usize = 2;
+const PG_FIGHT: usize = 3;
+const PG_OPTIONS: usize = 4;
+/// The Combos page's entries: the synergies, the evolutions, then the keyword glossary.
+const COMBOS: usize = procs::SYNERGIES.len() + procs::EVOLUTIONS.len();
+const COMBO_ROWS: usize = COMBOS + procs::KEYWORDS.len();
 const OPT_ROWS: usize = 4;
 
 // ------------------------------------------------------------------ Envoy settings (presentation only)
@@ -151,7 +156,7 @@ fn held_items(v: &[i32; VW], p: usize) -> ([usize; ITEMS_LEN], usize) {
     let mut out = [0usize; ITEMS_LEN];
     let mut n = 0;
     for (i, it) in ITEMS.iter().enumerate() {
-        if v[V_INV + p * ITEM_IDS + it.id as usize] > 0 {
+        if v[inv_word(p, it.id as usize)] > 0 {
             out[n] = i;
             n += 1;
         }
@@ -168,9 +173,11 @@ unsafe fn nav(pn: &mut Panel, v: &[i32; VW], p: usize, e: u32) {
     if pn.row == 0 {
         if left {
             pn.page = (pn.page + PAGES.len() - 1) % PAGES.len();
+            pn.opt = 0;
             log("page ", PAGES[pn.page]);
         } else if right {
             pn.page = (pn.page + 1) % PAGES.len();
+            pn.opt = 0;
             log("page ", PAGES[pn.page]);
         } else if down {
             pn.row = 1;
@@ -186,6 +193,15 @@ unsafe fn nav(pn: &mut Panel, v: &[i32; VW], p: usize, e: u32) {
                 pn.item = (pn.item + n - 1) % n;
             } else if n > 0 && right {
                 pn.item = (pn.item + 1) % n;
+            }
+        }
+        PG_COMBOS => {
+            if up {
+                pn.row = 0;
+            } else if left {
+                pn.opt = (pn.opt + COMBO_ROWS - 1) % COMBO_ROWS;
+            } else if right || down {
+                pn.opt = (pn.opt + 1) % COMBO_ROWS;
             }
         }
         PG_OPTIONS => {
@@ -275,6 +291,7 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
         let cy = y + 116.0;
         match pn.page {
             PG_ITEMS => items_page(e, v, p, &pn, x + 10.0, cy),
+            PG_COMBOS => combos_page(e, v, p, &pn, x + 10.0, cy),
             PG_RUN => run_page(e, v, x + 10.0, cy, petey),
             PG_FIGHT => fight_page(e, v, x + 10.0, cy),
             _ => options_page(e, &pn, x + 10.0, cy),
@@ -288,6 +305,8 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
             "D-pad: up / down row, left / right set"
         } else if pn.page == PG_ITEMS {
             "D-pad: left / right item, up to the tabs"
+        } else if pn.page == PG_COMBOS {
+            "D-pad: left / right entry, up to the tabs"
         } else {
             "D-pad up: back to the tabs"
         };
@@ -323,7 +342,7 @@ unsafe fn header(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32) {
 }
 
 unsafe fn tabs(e: &mut E, pn: &Panel, x: f32, y: f32, col: u32) {
-    let w = (PW - 16.0) / 4.0;
+    let w = (PW - 16.0) / PAGES.len() as f32;
     for (i, name) in PAGES.iter().enumerate() {
         let on = i == pn.page;
         let tx = x + i as f32 * w;
@@ -361,7 +380,7 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
         }
         spr_c(e, S_DISC, cx, cy, 24.0 / 32.0, INK);
         spr_c(e, S_DISC, cx, cy, 19.0 / 32.0, it.rgba);
-        let cnt = v[V_INV + p * ITEM_IDS + it.id as usize];
+        let cnt = v[inv_word(p, it.id as usize)];
         if cnt > 1 {
             let mut s = Buf::new();
             s.s("x").i(cnt);
@@ -371,9 +390,9 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
     }
     // the card of the hovered item (the first one while the tab bar has the cursor)
     let it = &ITEMS[list[sel]];
-    let cnt = v[V_INV + p * ITEM_IDS + it.id as usize];
+    let cnt = v[inv_word(p, it.id as usize)];
     let cy = y + 16.0 + ((n + 6) / 7) as f32 * 30.0;
-    let ch = 128.0;
+    let ch = 140.0;
     sticker(e, S_FACE_WHITE, x, cy, w, ch, 0.6, WHITE, |e| {
         e.rect(x + 6.0, cy + 6.0, 6.0, ch - 12.0, it.rgba);
         e.text_ex(x + 20.0, cy + 8.0, td(17), INK, ALIGN_LEFT, w - 28.0, it.name);
@@ -382,6 +401,20 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
         face(e, S_FACE_INK, x + 20.0, cy + 34.0, tw(t.str(), tb(11)) + 14.0, 18.0, WHITE);
         e.text_ex(x + 27.0, cy + 36.0, tb(11), SUNNY, ALIGN_LEFT, 0.0, t.str());
         line_wrap(e, x + 20.0, cy + 58.0, tb(12), INK, w - 30.0, it.line);
+        // the item language's combos: the synergies and evolutions it is part of
+        let mut names = [""; 6];
+        let k = procs::partners(it.id, &mut names);
+        if k > 0 {
+            let mut c = Buf::new();
+            c.s("Combos: ");
+            for (i, nm) in names[..k].iter().enumerate() {
+                if i > 0 {
+                    c.s(", ");
+                }
+                c.s(nm);
+            }
+            e.text_ex(x + 20.0, cy + ch - 58.0, tb(10), CORAL, ALIGN_LEFT, w - 28.0, c.str());
+        }
         let mut s = Buf::new();
         s.s("Stack ").i(cnt).s(" / ").i(it.cap as i32);
         e.text_ex(x + 20.0, cy + ch - 40.0, td(13), INK, ALIGN_LEFT, 0.0, s.str());
@@ -624,4 +657,58 @@ unsafe fn options_page(e: &mut E, pn: &Panel, x: f32, y: f32) {
         });
     }
     let _ = ck_name;
+}
+
+fn item_name(id: i32) -> &'static str {
+    item(id).map_or("?", |it| it.name)
+}
+
+/// The Combos page: every synergy and evolution (lit when the player holds it), the selected one's card, then the
+/// keyword glossary of the item language.
+unsafe fn combos_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: f32) {
+    let w = PW - 20.0;
+    let bits = v[V_SYN + p];
+    let sel = pn.opt.min(COMBO_ROWS - 1);
+    for k in 0..COMBOS {
+        let (name, rgba, on) = if k < procs::SYNERGIES.len() {
+            let sy = &procs::SYNERGIES[k];
+            (sy.name, sy.rgba, bits >> k & 1 != 0)
+        } else {
+            let j = k - procs::SYNERGIES.len();
+            (procs::EVOLUTIONS[j].name, procs::EVOLUTIONS[j].rgba, bits >> (16 + j) & 1 != 0)
+        };
+        let cx = x + (k % 2) as f32 * (w * 0.5);
+        let cy = y + (k / 2) as f32 * 15.0;
+        if k == sel && pn.row == 1 {
+            e.rect(cx - 2.0, cy - 1.0, w * 0.5 - 2.0, 14.0, alpha(SUNNY, 0.35));
+        }
+        spr_c(e, S_DISC, cx + 5.0, cy + 6.0, 9.0 / 32.0, if on { rgba } else { alpha(PALE, 0.5) });
+        let evo = k >= procs::SYNERGIES.len();
+        e.text_ex(cx + 13.0, cy, tb(10), if on { WHITE } else if evo { alpha(SUNNY, 0.6) } else { PALE }, ALIGN_LEFT, w * 0.5 - 16.0, name);
+    }
+    let cy = y + ((COMBOS + 1) / 2) as f32 * 15.0 + 6.0;
+    let (title, recipe_a, recipe_b, line, rgba) = if sel < procs::SYNERGIES.len() {
+        let sy = &procs::SYNERGIES[sel];
+        (sy.name, item_name(sy.a), item_name(sy.b), sy.line, sy.rgba)
+    } else if sel < COMBOS {
+        let ev = &procs::EVOLUTIONS[sel - procs::SYNERGIES.len()];
+        (ev.name, item_name(ev.base), item_name(ev.partner), ev.line, ev.rgba)
+    } else {
+        let (kw, gl) = procs::KEYWORDS[sel - COMBOS];
+        (kw, "", "", gl, SUNNY)
+    };
+    sticker(e, S_FACE_WHITE, x, cy, w, 64.0, -0.4, WHITE, |e| {
+        e.rect(x + 5.0, cy + 5.0, 5.0, 54.0, rgba);
+        e.text_ex(x + 16.0, cy + 4.0, td(13), INK, ALIGN_LEFT, w - 22.0, title);
+        if !recipe_a.is_empty() {
+            let mut r = Buf::new();
+            r.s(recipe_a);
+            if sel >= procs::SYNERGIES.len() {
+                r.s(" (at cap)");
+            }
+            r.s(" + ").s(recipe_b);
+            e.text_ex(x + 16.0, cy + 20.0, tb(10), LILAC, ALIGN_LEFT, w - 22.0, r.str());
+        }
+        line_wrap(e, x + 16.0, cy + if recipe_a.is_empty() { 22.0 } else { 34.0 }, tb(10), INK, w - 24.0, line);
+    });
 }

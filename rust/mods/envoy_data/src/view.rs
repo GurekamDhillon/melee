@@ -245,6 +245,7 @@ pub const EV_DOOR: i32 = 26; // who = 0; amount = DOOR_*: the door after the bos
 pub const EV_GUARD: i32 = 27; // who = player; amount = the copies left: the Guardian Feather ate a KO hit
 pub const EV_ORB_BREAK: i32 = 29; // who = player; amount = item id: one of the player's orbs shattered (a foe's attack or projectile)
 pub const EV_ORB_BLOCK: i32 = 30; // who = player; amount = item id: an orb blocked a foe projectile
+pub const EV_SYNERGY: i32 = 31; // who = player; amount = kind << 8 | index (BANNER_*): a synergy fired / an evolution formed the first time
 pub const EV_CAMPFIRE: i32 = 28; // who = player; amount = stocks given back
 /// Why the stage switched (EV_SHIFT's who).
 pub const SH_BREAK: i32 = 1; // an elite or a stock-based boss lost a stock it can spare (Petey's arena never switches)
@@ -440,6 +441,7 @@ pub const PJ_THORNS: i32 = 19; // thorns growing out of the owner's back (Crouch
 pub const PJ_PRISM: i32 = 20; // a thin laser bolt (Laser Prism); velocity in a, b x100 when published
 pub const PJ_ORB: i32 = 21; // published only: an orbital (Moon Drops and the stance orbs): a = index, b = item id;
                             // life = 1 while it is shattered (respawning: draw it as shards / a ghost or not at all)
+pub const PJ_TETHER: i32 = 22; // published only: Kin Tether's line between partners; a, b = the far end x100
 pub const BEAM_BRIMSTONE: i32 = 0;
 pub const BEAM_GOLD: i32 = 1;
 pub const BEAM_LASER: i32 = 2;
@@ -510,6 +512,18 @@ pub const V_FLOURISH: usize = 1505; // [2] per player: frames left of the build 
 pub const V_AURA: usize = 1507; // [2] per player: the rarest item held (id; 0 none): the UI's subtle aura tint
 pub const V_PROC_AGE: usize = 1509; // [2] per player: frames since that player's last item proc (capped 255)
 pub const FLOURISH_LEN: i32 = 60;
+// ---- the synergy lane (envoy-synergy.md): ids 48-55, the first-trigger banner, the live synergies, the rally
+pub const V_INV2: usize = 1511; // [2 players][8] copies of item ids 48..56 (1511..1527)
+pub const V_BANNER: usize = 1527; // [2] per player: kind << 8 | index (kind 1 synergy, 2 evolution; 0 none) of the last first-trigger
+pub const V_BANNER_AT: usize = 1529; // [2] per player: the play frame that banner began
+pub const V_SYN: usize = 1531; // [2] per player: bit k = synergy k held (both items) | bit 16 + j = evolution j formed
+pub const V_RALLY: usize = 1533; // [2] per player: frames left of a partner's Rally Banner
+pub const BANNER_SYN: i32 = 1;
+pub const BANNER_EVO: i32 = 2;
+/// The view word holding player `p`'s copies of item `id`.
+pub const fn inv_word(p: usize, id: usize) -> usize {
+    if id < crate::items::INV_STRIDE { V_INV + p * crate::items::INV_STRIDE + id } else { V_INV2 + p * 8 + (id - crate::items::INV_STRIDE) }
+}
 pub const V_MAP_PICK: usize = 1502; // what P1 picks now: 0 nothing, 1 the next fight (road screen), 2 the room above the fight (held match)
 
 /// An offer that is not a drive: one more shared stock.

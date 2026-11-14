@@ -35,6 +35,11 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   17. map: the act map: a fight node taken, the room choice opened and taken, the next fight on the path;
 #   18. campfire: the room choice steered to a campfire: each player's stocks refilled to their own limit;
 #   19. orbs: Moon Drops and the four stance orbs: orb hits, and an orb shattered by a foe's attack.
+#   Synergy lane (envoy-synergy.md):
+#   20. synergy: player 1 a CPU with the proc items, their synergy partners and two evolutions' recipes: procs fire,
+#       a chain two or more deep, no proc deeper than 4, a synergy's first-trigger banner, the evolutions formed; the
+#       proc sequence is the same at both depths (same seed, same result);
+#   21. coopsyn: co-op, both CPUs, player 1 with the three co-op items: Kin Tether, Kindred Spark fire.
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd
 #   shop devil angel secret whiff triggers coopstock map campfire orbs";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
@@ -45,7 +50,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs synergy coopsyn}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -61,6 +66,8 @@ tmods="$out/mods"; rm -rf "$tmods"; mkdir -p "$tmods"
 cp "$mods/envoy_sim.wasm" "$tmods/" || { echo "items_check: build the mods first (tools/rust-port/modhost/build_mods.sh)"; exit 2; }
 ALL="spark_ring,glide_wake,shine_bell,hop_shot,ledge_spikes,whiff_echo,roll_mines,smash_quake,moon_drops,coin_magnet,homing_ink,fire_lace"
 ORBS="moon_drops,dodge_orb,nair_ring,dash_orb,shield_orbs"
+SYN="ember_seed:3,static_coil:3,frost_bud:3,fire_lace,spark_ring:3,chain_spark,roll_mines,smash_quake,shine_bell,hop_shot,homing_ink,big_bang,moon_drops,crimson_count"
+COOPSYN="kin_tether:2,kindred_spark,rally_banner,spark_ring,smash_quake,roll_mines,*4000;ember_seed:2,static_coil,frost_bud,*4000"
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$tmods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=1 MELEE_PAD_SCRIPT="$here/items_pad.txt"
 run() { # name depth knobs [env...]
   local name=$1 depth=$2 knobs=$3; shift 3
@@ -236,7 +243,34 @@ for d in $depths; do
     check 19 orbs "$d" "$line" "$miss"
     echo "     orbs d$d: stance orbs that hit: ${stance:-none}; projectiles blocked: $blocks"
   fi
+  if on synergy; then
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run synergy "$d" "$SYN,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
+    miss=""; seen synergy "$d" "envoy: item procs" || miss="$miss (no proc)"
+    seen synergy "$d" "envoy: proc chain" || miss="$miss (no chain past depth 1)"
+    grep -aqE "envoy: item procs [a-z_]+ -?[0-9]*[5-9][0-9]{3}$" "$(L synergy "$d")" && miss="$miss (a proc deeper than 4)"
+    seen synergy "$d" "envoy: synergy first" || miss="$miss (no synergy banner)"
+    seen synergy "$d" "envoy: evolution formed storm_crown" || miss="$miss (Storm Crown not formed)"
+    seen synergy "$d" "envoy: evolution formed inferno_seed" || miss="$miss (Inferno Seed not formed)"
+    grep -ao "envoy: item procs .*" "$(L synergy "$d")" > "$out/synergy.procs.d$d"
+    check 20 synergy "$d" "$line" "$miss"
+    echo "     synergy d$d: procs $(wc -l < "$out/synergy.procs.d$d"), chains $(grep -ac 'envoy: proc chain' "$(L synergy "$d")"), synergies first: $(grep -aoE 'envoy: synergy first [a-z_]+' "$(L synergy "$d")" | awk '{print $4}' | sort -u | tr '
+' ' ')"
+  fi
+  if on coopsyn; then
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run coopsyn "$d" "$COOPSYN" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
+    miss=""; seen coopsyn "$d" "envoy: run start, players 2" || miss="$miss (not co-op)"
+    seen coopsyn "$d" "envoy: item fires kin_tether\|envoy: item fires kindred_spark" || miss="$miss (no co-op item fired)"
+    check 21 coopsyn "$d" "$line" "$miss"
+    echo "     coopsyn d$d: tether $(grep -ac 'item fires kin_tether' "$(L coopsyn "$d")"), kindred $(grep -ac 'item fires kindred_spark' "$(L coopsyn "$d")"), rally $(grep -ac 'item fires rally_banner' "$(L coopsyn "$d")")"
+  fi
 done
+if on synergy; then
+  set -- $depths
+  if [ $# -ge 2 ] && [ -s "$out/synergy.procs.d$1" ]; then
+    if cmp -s "$out/synergy.procs.d$1" "$out/synergy.procs.d$2"; then echo "ok   20b. synergy: the proc sequence is identical at d$1 and d$2 ($(wc -l < "$out/synergy.procs.d$1") procs)"
+    else echo "FAIL 20b. synergy: the proc sequence differs between d$1 and d$2"; fail=1; fi
+  fi
+fi
 rm -rf "$tmods"
 [ $fail -eq 0 ] && echo "ITEMS OK" || echo "ITEMS FAILED (logs: $out)"
 exit $fail

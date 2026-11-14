@@ -8,6 +8,7 @@ pub use codes::*;
 pub mod view;
 pub mod heat;
 pub mod items;
+pub mod procs;
 
 /// One drive (one rule, one charge source, one effect, one number) or one keystone (one rule, one price).
 #[derive(Clone, Copy)]
@@ -116,7 +117,7 @@ mod tests {
     fn items_slice() {
         use crate::items::*;
         // slice 1's twelve items plus slice 2's twenty, each with a visual and a capped stack
-        assert_eq!(ITEMS_LEN, 32);
+        assert_eq!(ITEMS_LEN, 38);
         for id in [1, 2, 3, 4, 5, 6, 7, 8, 12, 15, 18, 21, 26, 27, 28, 29, 30, 31, 32, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47] {
             let it = item(id).expect("slice item");
             assert!(!it.visual.is_empty() && it.cap >= 1 && it.stack >= ST_MORE);

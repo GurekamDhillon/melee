@@ -171,7 +171,7 @@ pub fn glyph_char(i: usize) -> char {
 /// The atlas page: a CPU image plus the regions changed since the last upload.
 ///
 /// The page is premultiplied alpha and carries its own mip chain, both built when an entry is written (at load), so
-/// an upload is a plain copy. Rows are allocated as the shelves reach them: an almost empty atlas costs almost nothing.
+/// an upload is a plain copy. The buffers are reserved whole, once, and never reallocated; rows are only touched as the shelves reach them.
 pub struct Atlas {
     /// Level 0, premultiplied RGBA8, `ATLAS` texels wide, `rows()` rows.
     pub px: Vec<u8>,
@@ -213,9 +213,13 @@ impl Atlas {
     /// The page with the host's own content: a white block, the glyphs and the hatch.
     pub fn new() -> Atlas {
         let mut a = Atlas {
-            px: Vec::new(),
-            mips: Default::default(),
-            dirty: Vec::with_capacity(64),
+            // The whole page is reserved here, once (address space; the rows are only touched as the shelves reach
+            // them). The buffers must never be reallocated later: entries are written while the game's own allocator
+            // scopes may be active (mod init, host pictures during a match), and a block allocated there does not
+            // outlive them.
+            px: Vec::with_capacity((ATLAS * ATLAS * 4) as usize),
+            mips: std::array::from_fn(|l| Vec::with_capacity(((ATLAS >> (l + 1)) * (ATLAS >> (l + 1)) * 4) as usize)),
+            dirty: Vec::with_capacity(4096),
             generation: 1,
             shelf: (CELL, CELL, 0),
             white: AtlasRect::default(),
@@ -249,11 +253,13 @@ impl Atlas {
         if rows <= self.rows() {
             return;
         }
+        // within the capacity reserved by `new`: no reallocation
         self.px.resize(rows * ATLAS as usize * 4, 0);
         for (l, m) in self.mips.iter_mut().enumerate() {
             let s = l + 1;
             m.resize((rows >> s) * (ATLAS as usize >> s) * 4, 0);
         }
+        debug_assert!(self.px.capacity() == (ATLAS * ATLAS * 4) as usize);
     }
 
     /// Shelf allocation: the entry starts on a `CELL` boundary and is followed by at least a `CELL` of clear texels,
@@ -337,7 +343,14 @@ impl Atlas {
                 }
             }
         }
-        self.dirty.push(r);
+        // never grow the list in place (see `new`): past its capacity, fold everything into one rect
+        if self.dirty.len() == self.dirty.capacity() {
+            let (x0, y0, x1, y1) = self.dirty.iter().chain([&r]).fold((u16::MAX, u16::MAX, 0u16, 0u16), |a, d| (a.0.min(d.x), a.1.min(d.y), a.2.max(d.x + d.w), a.3.max(d.y + d.h)));
+            self.dirty.clear();
+            self.dirty.push(AtlasRect { x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+        } else {
+            self.dirty.push(r);
+        }
         self.generation += 1;
     }
 }

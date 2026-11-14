@@ -48,8 +48,7 @@ edge ramp with inner sides marked.
 **Atlas.** 4096 x 4096, premultiplied, with 4 mip levels built on the CPU when an entry is written (at load, not at
 present). Every entry starts on an 8-texel boundary and is followed by an 8-texel clear gutter, so no mip texel mixes
 two entries. Sampling is trilinear, half a level sharp. A quad that shows a whole entry (`Q_FULL`) reaches one pixel
-past its rect and may filter into the gutter, so minified art fades out at its edge instead of being cut. The CPU
-page is allocated by rows as the shelves fill.
+past its rect and may filter into the gutter, so minified art fades out at its edge instead of being cut. The CPU page is reserved whole, once, and never reallocated (entries are written while the game's allocator scopes may be active; a block allocated there would not outlive them); its rows are only touched as the shelves fill.
 
 **Art.** `bake_stickers.py` renders at 4x (was 2x): 1:1 or better up to 1440p, 0.9 texel per pixel at 4K. The faces,
 disc and dots are no longer baked.

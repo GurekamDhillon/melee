@@ -22,7 +22,21 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #      freezes, no KO caused by a switch; every fighter mapped (no spawn-point reset, no push past the mapped point beyond a
 #      12-unit step up, or an 80-unit slide out of the new body), with the probe knob forcing a ledge-hang and an under-stage case;
 #   9. crowd: fight 2 (the 1v3 crowd): every foe hit carries the crowd knockback (x1350 at three foes), no player hit.
-#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd";
+#   Slice 2 (envoy-items-design.md section 11; every run carries the test knob `autotake`: the choices have no timer
+#   for players, so the CPU-driven checks take the cursor's choice after a wait):
+#   10. shop: the map's room choice steered to a shop (`forkshop`): the shop opens, an item and a stock are bought;
+#   11. devil: the boss with the red door forced (`door:devil`, `devilbuy`): a deal taken, its stock slots paid;
+#   12. angel: the boss with the white door forced: the angel room's item taken;
+#   13. secret: the cracked wall in fight 1 beside player 1 (`secret:1`, `wallnear`): hit, broken, the secret room
+#       after the fight, its item taken;
+#   14. whiff: player 1 a CPU with Whiff Echo: a true whiff fires it, and an attack that ends on a shield is not one;
+#   15. triggers: the new triggers seen (crouch cancel, powershield, a laser hit) with their items;
+#   16. coopstock: co-op, the devil door: player 1 buys, only player 1's stock limit drops;
+#   17. map: the act map: a fight node taken, the room choice opened and taken, the next fight on the path;
+#   18. campfire: the room choice steered to a campfire: each player's stocks refilled to their own limit;
+#   19. orbs: Moon Drops and the four stance orbs: orb hits, and an orb shattered by a foe's attack.
+#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd
+#   shop devil angel secret whiff triggers coopstock map campfire orbs";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -31,7 +45,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -46,10 +60,12 @@ mods="${MODS_SRC:-$repo/build/mods}"
 tmods="$out/mods"; rm -rf "$tmods"; mkdir -p "$tmods"
 cp "$mods/envoy_sim.wasm" "$tmods/" || { echo "items_check: build the mods first (tools/rust-port/modhost/build_mods.sh)"; exit 2; }
 ALL="spark_ring,glide_wake,shine_bell,hop_shot,ledge_spikes,whiff_echo,roll_mines,smash_quake,moon_drops,coin_magnet,homing_ink,fire_lace"
+ORBS="moon_drops,dodge_orb,nair_ring,dash_orb,shield_orbs"
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$tmods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=1 MELEE_PAD_SCRIPT="$here/items_pad.txt"
 run() { # name depth knobs [env...]
   local name=$1 depth=$2 knobs=$3; shift 3
   exe_banner "items_check $name d$depth" >&2
+  knobs="$knobs,autotake"
   env MELEE_WINDOW_TITLE="${CHECK_TAG:-items1} agent: items_check $name d$depth (${CHECK_BRANCH:-port/envoy-items1})" MELEE_ENVOY_TEST_DRIVES="$knobs" "$@" timeout 2400 "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
     --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" --timeout 2000 >"$out/$name.d$depth.log" 2>&1
   grep 'engine synctest' "$out/$name.d$depth.log"
@@ -79,21 +95,19 @@ for d in $depths; do
     check 2 cpu "$d" "$line" "$miss"
   fi
   if on room; then
-    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run room "$d" "buystock,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run room "$d" "forkitem,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
     miss=""
+    seen room "$d" "envoy: map room choice open" || miss="$miss (no room choice)"
     seen room "$d" "envoy: item room open" || miss="$miss (no item room)"
     seen room "$d" "envoy: item taken" || miss="$miss (no item taken)"
-    seen room "$d" "envoy: shop open" || miss="$miss (no shop)"
-    seen room "$d" "envoy: shop bought" || miss="$miss (no shop item bought)"
     check 3 room "$d" "$line" "$miss"
   fi
   if on boss; then
-    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run boss "$d" "lim:6,pool:2,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=4)
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run boss "$d" "nodoor,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=4)
     miss=""
     seen boss "$d" "envoy: boss drop, choose one" || miss="$miss (no boss drop)"
     seen boss "$d" "envoy: item taken" || miss="$miss (no item taken)"
-    seen boss "$d" "envoy: campfire, stocks refilled to.* 6$" || miss="$miss (campfire not to 6)"
-    seen boss "$d" "envoy: shop open" || miss="$miss (no shop)"
+    seen boss "$d" "envoy: loop now" || miss="$miss (no next loop)"
     check 4 boss "$d" "$line" "$miss"
   fi
   if on coop; then
@@ -145,6 +159,82 @@ for d in $depths; do
     seen crowd "$d" "envoy: crowd knockback, slot" || miss="$miss (no crowd knockback hit)"
     grep -aqE "envoy: crowd knockback, slot\*10000 \+ x1000 0?[0-9]{4}$" "$(L crowd "$d")" && miss="$miss (a player got it)"
     check 9 crowd "$d" "$line" "$miss"
+  fi
+  if on shop; then
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run shop "$d" "forkshop,buystock,slotsale,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
+    miss=""; seen shop "$d" "envoy: map room kind (MN) 7$" || miss="$miss (the shop not taken on the map)"
+    seen shop "$d" "envoy: shop open" || miss="$miss (no shop)"
+    seen shop "$d" "envoy: shop bought" || miss="$miss (no shop item bought)"
+    seen shop "$d" "envoy: shop has a stock slot" || miss="$miss (no stock slot on sale)"
+    check 10 shop "$d" "$line" "$miss"
+  fi
+  if on devil; then
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run devil "$d" "door:devil,devilbuy,lim:5,pool:5,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=4)
+    miss=""; seen devil "$d" "envoy: the red door opens" || miss="$miss (no red door)"
+    seen devil "$d" "envoy: devil deal open" || miss="$miss (no deal)"
+    seen devil "$d" "envoy: devil deal taken" || miss="$miss (no deal taken)"
+    grep -aqE "envoy: stock slots paid, player\*100 \+ limit now [34]$" "$(L devil "$d")" || miss="$miss (the limit did not drop from 5)"
+    check 11 devil "$d" "$line" "$miss"
+  fi
+  if on angel; then
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run angel "$d" "door:angel,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=4)
+    miss=""; seen angel "$d" "envoy: the white door opens" || miss="$miss (no white door)"
+    seen angel "$d" "envoy: angel room open" || miss="$miss (no angel room)"
+    seen angel "$d" "envoy: angel room pedestal" || miss="$miss (no angel item)"
+    [ "$(grep -ac 'envoy: item taken' "$(L angel "$d")")" -ge 2 ] || miss="$miss (the angel item was not taken)"
+    check 12 angel "$d" "$line" "$miss"
+  fi
+  if on secret; then
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run secret "$d" "secret:1,wallnear,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen secret "$d" "envoy: cracked wall stands" || miss="$miss (no wall)"
+    seen secret "$d" "envoy: cracked wall hit" || miss="$miss (the wall never hit)"
+    seen secret "$d" "envoy: secret wall broken" || miss="$miss (the wall never broke)"
+    seen secret "$d" "envoy: secret room open" || miss="$miss (no secret room)"
+    seen secret "$d" "envoy: secret room pedestal" || miss="$miss (no secret item)"
+    check 13 secret "$d" "$line" "$miss"
+  fi
+  if on whiff; then
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run whiff "$d" "whiff_echo,*4000" MELEE_ENVOY_TEST_P1CPU=1)
+    miss=""; seen whiff "$d" "envoy: technique whiff" || miss="$miss (no whiff)"
+    seen whiff "$d" "envoy: item fires whiff_echo" || miss="$miss (Whiff Echo never fired)"
+    seen whiff "$d" "envoy: attack ended on a shield, not a whiff" || miss="$miss (no shielded attack told apart)"
+    check 14 whiff "$d" "$line" "$miss"
+  fi
+  if on triggers; then
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run triggers "$d" "laser_prism,crouch_thorns,perfect_guard,brimstone_jab,bloodlust,*4000" MELEE_ENVOY_TEST_P1CPU=1)
+    miss=""
+    for k in "crouch cancel" "powershield" "laser hit" "jab hit"; do seen triggers "$d" "envoy: technique $k" || miss="$miss (no $k)"; done
+    seen triggers "$d" "envoy: item fires bloodlust" || miss="$miss (Bloodlust never fired)"
+    check 15 triggers "$d" "$line" "$miss"
+  fi
+  if on coopstock; then
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run coopstock "$d" "door:devil,devilbuy,*4000;*4000" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=4)
+    miss=""; seen coopstock "$d" "envoy: run start, players 2" || miss="$miss (not co-op)"
+    seen coopstock "$d" "envoy: devil deal taken" || miss="$miss (no deal)"
+    grep -aqE "envoy: stock limits now, p1\*100 \+ p2 [23]04$" "$(L coopstock "$d")" || miss="$miss (the deal did not cost only player 1)"
+    check 16 coopstock "$d" "$line" "$miss"
+  fi
+  if on map; then
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run map "$d" "*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen map "$d" "envoy: map node taken, row\*10 + lane [0-2]$" || miss="$miss (no fight node taken)"
+    seen map "$d" "envoy: map room choice open, row 1$" || miss="$miss (no room choice)"
+    seen map "$d" "envoy: map room taken, row\*10 + lane 1[0-2]$" || miss="$miss (no room taken)"
+    check 17 map "$d" "$line" "$miss"
+  fi
+  if on campfire; then
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run campfire "$d" "campfire,lim:6,pool:2,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
+    miss=""; seen campfire "$d" "envoy: map room kind (MN) 8$" || miss="$miss (no campfire taken)"
+    seen campfire "$d" "envoy: campfire, player\*100 + stocks refilled to 6$" || miss="$miss (not refilled to 6)"
+    check 18 campfire "$d" "$line" "$miss"
+  fi
+  if on orbs; then
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run orbs "$d" "$ORBS,*4000" MELEE_ENVOY_TEST_P1CPU=1)
+    miss=""; seen orbs "$d" "envoy: orb hit moon_drops" || miss="$miss (no moon hit)"
+    seen orbs "$d" "envoy: orb shattered by an attack" || miss="$miss (no shatter)"
+    stance=$(grep -aoE "envoy: orb hit (dodge_orb|nair_ring|dash_orb|shield_orbs)" "$(L orbs "$d")" | sort -u | awk '{print $4}' | tr '\n' ' ')
+    blocks=$(grep -ac "envoy: orb blocked a projectile" "$(L orbs "$d")")
+    check 19 orbs "$d" "$line" "$miss"
+    echo "     orbs d$d: stance orbs that hit: ${stance:-none}; projectiles blocked: $blocks"
   fi
 done
 rm -rf "$tmods"

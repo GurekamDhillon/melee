@@ -32,10 +32,15 @@ pub const TR_LASER: u8 = 13;
 pub const TR_CC: u8 = 14;
 pub const TR_POWERSHIELD: u8 = 15;
 pub const TR_PICKUP: u8 = 16;
-pub const TR_LAST: u8 = TR_PICKUP;
-pub const TRIGGER_TEXT: [&str; 17] = [
+/// Stance orbs (slice 2): an orb that exists only WHILE the fighter is in this state.
+pub const TR_WHILE_AIRDODGE: u8 = 17;
+pub const TR_WHILE_NAIR: u8 = 18;
+pub const TR_WHILE_DASH: u8 = 19;
+pub const TR_WHILE_SHIELD: u8 = 20;
+pub const TR_LAST: u8 = TR_WHILE_SHIELD;
+pub const TRIGGER_TEXT: [&str; 21] = [
     "always on", "nair hit", "wavedash", "shine", "short hop", "ledge grab", "whiff", "roll", "smash hit", "KO", "modifies", "jab hit", "taking a hit",
-    "laser hit", "crouch cancel", "powershield", "on pickup",
+    "laser hit", "crouch cancel", "powershield", "on pickup", "while airdodging", "while in nair", "while dashing", "while shielding",
 ];
 
 /// Stack rules: what a second copy does.
@@ -83,6 +88,11 @@ pub const IT_GRAVITY_WELL: i32 = 40;
 pub const IT_BIG_BANG: i32 = 41;
 pub const IT_BOUNCY: i32 = 42;
 pub const IT_SPARE_HEART: i32 = 43;
+// stance orbs (orbitals that live only in one movement state)
+pub const IT_DODGE_ORB: i32 = 44;
+pub const IT_NAIR_RING: i32 = 45;
+pub const IT_DASH_ORB: i32 = 46;
+pub const IT_SHIELD_ORBS: i32 = 47;
 
 #[derive(Clone, Copy)]
 pub struct Item {
@@ -111,7 +121,7 @@ pub struct Item {
     pub slots: u8,
 }
 
-pub const ITEMS: [Item; 28] = [
+pub const ITEMS: [Item; 32] = [
     Item { id: IT_SPARK_RING, key: "spark_ring", name: "Spark Ring", line: "Nair hits pop a ring of sparks", pools: PL_ITEM, quality: 1, trigger: TR_NAIR_HIT, visual: "sparks", tags: TG_SPARK | TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFFF0_70FF, slots: 0 },
     Item { id: IT_GLIDE_WAKE, key: "glide_wake", name: "Glide Wake", line: "Wavedashes leave a burning streak", pools: PL_ITEM, quality: 1, trigger: TR_WAVEDASH, visual: "wake", tags: TG_TRAIL, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xFF8A_2AFF, slots: 0 },
     Item { id: IT_SHINE_BELL, key: "shine_bell", name: "Shine Bell", line: "Each shine rings a shock ring", pools: PL_ITEM, quality: 2, trigger: TR_SHINE, visual: "bell", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0x7AD8_FFFF, slots: 0 },
@@ -123,7 +133,7 @@ pub const ITEMS: [Item; 28] = [
     Item { id: IT_MOON_DROPS, key: "moon_drops", name: "Moon Drops", line: "Two moons orbit you and nick foes", pools: PL_SHOP, quality: 2, trigger: TR_PASSIVE, visual: "moons", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 4, repeatable: true, rgba: 0xE8EC_FFFF, slots: 0 },
     Item { id: IT_COIN_MAGNET, key: "coin_magnet", name: "Coin Magnet", line: "KO'd foes burst into coins for you", pools: PL_SHOP, quality: 1, trigger: TR_KO, visual: "coins", tags: 0, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: true, rgba: 0xFFC8_30FF, slots: 0 },
     Item { id: IT_HOMING_INK, key: "homing_ink", name: "Homing Ink", line: "Your projectiles curve to foes", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_MODIFIER, visual: "ink", tags: 0, mods: TG_PROJECTILE, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xC85A_FFFF, slots: 0 },
-    Item { id: IT_FIRE_LACE, key: "fire_lace", name: "Fire Lace", line: "Everything you make leaves embers and burns", pools: PL_ITEM | PL_DEVIL, quality: 3, trigger: TR_MODIFIER, visual: "embers", tags: 0, mods: TG_BURST | TG_TRAIL | TG_PROJECTILE | TG_SPARK, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xFF6A_20FF, slots: 0 },
+    Item { id: IT_FIRE_LACE, key: "fire_lace", name: "Fire Lace", line: "Everything you make leaves embers and burns", pools: PL_ITEM | PL_DEVIL, quality: 3, trigger: TR_MODIFIER, visual: "embers", tags: 0, mods: TG_BURST | TG_TRAIL | TG_PROJECTILE | TG_SPARK, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xFF6A_20FF, slots: 1 },
     // ---- slice 2: the new triggers, the devil / angel / secret pools, the modifiers, Spare Heart
     Item { id: IT_LASER_PRISM, key: "laser_prism", name: "Laser Prism", line: "A laser that hits splits into three", pools: PL_ITEM, quality: 2, trigger: TR_LASER, visual: "prism", tags: TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xFF5A_8AFF, slots: 0 },
     Item { id: IT_CROUCH_THORNS, key: "crouch_thorns", name: "Crouch Thorns", line: "Crouch-cancel a hit: thorns strike back", pools: PL_SHOP, quality: 1, trigger: TR_CC, visual: "thorns", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0x5AD0_6AFF, slots: 0 },
@@ -141,6 +151,10 @@ pub const ITEMS: [Item; 28] = [
     Item { id: IT_BIG_BANG, key: "big_bang", name: "Big Bang", line: "Bursts twice as big, a quake; -20% damage", pools: PL_DEVIL, quality: 3, trigger: TR_MODIFIER, visual: "big_bang", tags: 0, mods: TG_BURST | TG_LAUNCH, stack: ST_BIGGER, cap: 2, repeatable: false, rgba: 0xFF8A_30FF, slots: 1 },
     Item { id: IT_BOUNCY, key: "bouncy", name: "Bouncy", line: "Shots bounce off floors and walls", pools: PL_SECRET, quality: 2, trigger: TR_MODIFIER, visual: "bounce", tags: 0, mods: TG_PROJECTILE, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x6AE0_7AFF, slots: 0 },
     Item { id: IT_SPARE_HEART, key: "spare_heart", name: "Spare Heart", line: "+1 stock limit and +1 stock (to 8)", pools: PL_ANGEL | PL_SECRET, quality: 3, trigger: TR_PICKUP, visual: "heart", tags: 0, mods: 0, stack: ST_MORE, cap: 8, repeatable: true, rgba: 0xFF5A_7AFF, slots: 0 },
+    Item { id: IT_DODGE_ORB, key: "dodge_orb", name: "Dodge Orb", line: "An orb leads every airdodge and wavedash", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_WHILE_AIRDODGE, visual: "orb_dodge", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x7AF0_FFFF, slots: 0 },
+    Item { id: IT_NAIR_RING, key: "nair_ring", name: "Nair Ring", line: "A ring of orbs circles your nair", pools: PL_ITEM, quality: 2, trigger: TR_WHILE_NAIR, visual: "orb_ring", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xFFB0_4AFF, slots: 0 },
+    Item { id: IT_DASH_ORB, key: "dash_orb", name: "Dash Orb", line: "An orb leads your dash and run", pools: PL_ITEM | PL_SHOP, quality: 1, trigger: TR_WHILE_DASH, visual: "orb_dash", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x9AFF_7AFF, slots: 0 },
+    Item { id: IT_SHIELD_ORBS, key: "shield_orbs", name: "Shield Orbs", line: "Orbs circle your shield and break on blocks", pools: PL_SHOP | PL_SECRET, quality: 2, trigger: TR_WHILE_SHIELD, visual: "orb_shield", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xC0A0_FFFF, slots: 0 },
 ];
 pub const ITEMS_LEN: usize = ITEMS.len();
 /// Highest item id + 1 (the inventory arrays are indexed by id).

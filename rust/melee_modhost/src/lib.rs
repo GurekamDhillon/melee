@@ -738,6 +738,15 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     });
     // a blast's landing cap (x1000, 0 none) and log tag, on the blast `slot` armed this frame; what blasts landed on
     // a victim slot this frame (9 words: envoy::landed)
+    // Envoy orbitals: an orb blocked a foe projectile (an item); it is removed the retail way. Armed runs only.
+    w!("gd_envoy_item_block", |c: Caller<'_, HostData>, h: u32| -> i32 {
+        if melee_modes::tu::envoy::armed() == 0 { return -1; }
+        let g = item_gobj(c.data(), h);
+        if g.is_null() { return -1; }
+        unsafe { melee_modes::tu::envoy::item_block(g as *mut core::ffi::c_void) };
+        0
+    });
+    w!("gd_envoy_blast_look", |slot: i32, el: i32, kind: i32, sev: i32| -> i32 { unsafe { melee_modes::tu::envoy::blast_look(slot, el, kind, sev) } });
     w!("gd_envoy_blast_cap", |slot: i32, cap_milli: i32, tag: i32| -> i32 { unsafe { melee_modes::tu::envoy::blast_cap(slot, cap_milli, tag) } });
     w!("gd_envoy_landed", |mut c: Caller<'_, HostData>, slot: i32, out: u32| -> i32 {
         let l = unsafe { melee_modes::tu::envoy::landed(slot) };

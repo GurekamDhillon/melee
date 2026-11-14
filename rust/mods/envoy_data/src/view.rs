@@ -243,6 +243,8 @@ pub const EV_SLOT: i32 = 24; // who = player; amount = the new stock limit (a sl
 pub const EV_SECRET: i32 = 25; // who = the player who broke the wall; amount = the fight (0-based)
 pub const EV_DOOR: i32 = 26; // who = 0; amount = DOOR_*: the door after the boss opened
 pub const EV_GUARD: i32 = 27; // who = player; amount = the copies left: the Guardian Feather ate a KO hit
+pub const EV_ORB_BREAK: i32 = 29; // who = player; amount = item id: one of the player's orbs shattered (a foe's attack or projectile)
+pub const EV_ORB_BLOCK: i32 = 30; // who = player; amount = item id: an orb blocked a foe projectile
 pub const EV_CAMPFIRE: i32 = 28; // who = player; amount = stocks given back
 /// Why the stage switched (EV_SHIFT's who).
 pub const SH_BREAK: i32 = 1; // an elite or a stock-based boss lost a stock it can spare (Petey's arena never switches)
@@ -402,8 +404,8 @@ pub const V_SECRET_Y: usize = 791; // y100
 pub const V_SECRET_HITS: usize = 792; // hits it has taken (it breaks at V_SECRET_HP)
 pub const V_SECRET_HP: usize = 793;
 pub const V_FORK: usize = 794; // the in-match fork after the item room: 0 none, 1 open (Shop or Campfire)
-pub const V_FORK_CUR: usize = 795; // P1's cursor: 0 the shop, 1 the campfire
-pub const V_FORK_LEFT: usize = 796; // frames before the fork takes the cursor's room
+pub const V_FORK_CUR: usize = 795; // P1's cursor: the lane of the room row above the fight (the act map)
+pub const V_FORK_LEFT: usize = 796; // always 0: no timer on any choice (the owner)
 pub const V_SHOP_SLOT_PRICE: usize = 797; // the shop's stock slot (+1 limit, +1 stock) on sale: its price; 0 not today
 pub const V_DOOR_PCT: usize = 798; // the chance the door after this floor's boss opens, percent (the map shows it)
 pub const V_SHAKE: usize = 799; // the play frame of the last Big Bang (screen shake; strength in the burst's size)
@@ -435,6 +437,9 @@ pub const PJ_GUARD: i32 = 16; // published only: the Guardian Feather orbiting i
 pub const PJ_HALO: i32 = 17; // published only: the halo over its owner's head; a: size x100
 pub const PJ_WINGS: i32 = 18; // published only: black wings on its owner; a: facing, b: 1 the extra jump spent
 pub const PJ_THORNS: i32 = 19; // thorns growing out of the owner's back (Crouch Thorns): a = facing, b = size x100
+pub const PJ_PRISM: i32 = 20; // a thin laser bolt (Laser Prism); velocity in a, b x100 when published
+pub const PJ_ORB: i32 = 21; // published only: an orbital (Moon Drops and the stance orbs): a = index, b = item id;
+                            // life = 1 while it is shattered (respawning: draw it as shards / a ghost or not at all)
 pub const BEAM_BRIMSTONE: i32 = 0;
 pub const BEAM_GOLD: i32 = 1;
 pub const BEAM_LASER: i32 = 2;
@@ -466,10 +471,10 @@ pub const V_MAP_AT: usize = 1401; // the node the run is at (the fight in play, 
 pub const V_MAP_LOOP: usize = 1402; // the loop (floor) the map is of
 pub const V_MAP_SECRET: usize = 1403; // the node carrying the cracked wall (-1 none this floor)
 pub const V_MAP0: usize = 1404; // node i: V_MAP0 + i * MAP_W + MP_*
-pub const MAP_N: usize = 14;
-pub const MAP_W: usize = 4; // 1404..1460
+pub const MAP_N: usize = 24;
+pub const MAP_W: usize = 4; // 1404..1500
 pub const MP_KIND: usize = 0; // MN_*
-pub const MP_POS: usize = 1; // column | row << 8 (row 0 the main line; 1 below, 255 above)
+pub const MP_POS: usize = 1; // lane | row << 8 (row 0 the bottom; the boss row 6, the door row 7; the secret room: lane 3, its wall's row, the wall's lane << 16)
 pub const MP_STATE: usize = 2; // MS_* bits
 pub const MP_LINKS: usize = 3; // bit j: this node leads to node j
 pub const MN_START: i32 = 1;
@@ -494,8 +499,18 @@ pub const MS_FOUND: i32 = 64; // its wall was broken
 pub const MS_UNKNOWN: i32 = 128; // not revealed yet
 pub const MS_STEEP: i32 = 256; // the Steep road's twist is on this fight
 pub const MS_SHIFT: i32 = 512; // the Shifting road's twist is on this fight
-pub const MS_CURSOR: i32 = 1024; // P1's fork cursor is on it
-pub const V_MAP_END: usize = V_MAP0 + MAP_N * MAP_W; // 1460
+pub const MS_CURSOR: i32 = 1024; // P1's cursor is on it (the next fight on the road screen, or the room in the held match)
+pub const MS_WISH: i32 = 2048; // P2's wish flag (co-op; no effect)
+pub const MS_PLAN: i32 = 4096; // on the planned path ahead (the cursor's lane carried up the map)
+pub const V_MAP_END: usize = V_MAP0 + MAP_N * MAP_W; // 1500
+pub const V_MAP_ROWS: usize = 1500; // rows (8: six of three lanes, the boss, the door)
+pub const V_MAP_LANES: usize = 1501; // lanes a row (3)
+pub const V_PED_NEAR: usize = 1503; // [2] per player: pedestal k + 1 in pickup range (0 none): the UI's "A" prompt
+pub const V_FLOURISH: usize = 1505; // [2] per player: frames left of the build flourish (fight intro, victory), 0 none
+pub const V_AURA: usize = 1507; // [2] per player: the rarest item held (id; 0 none): the UI's subtle aura tint
+pub const V_PROC_AGE: usize = 1509; // [2] per player: frames since that player's last item proc (capped 255)
+pub const FLOURISH_LEN: i32 = 60;
+pub const V_MAP_PICK: usize = 1502; // what P1 picks now: 0 nothing, 1 the next fight (road screen), 2 the room above the fight (held match)
 
 /// An offer that is not a drive: one more shared stock.
 pub const OFFER_STOCK: i32 = 1000;

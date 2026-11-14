@@ -373,31 +373,24 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         e.text_ex(x + 30.0, 16.0, d(15), INK, ALIGN_LEFT, 0.0, s.str());
         x += w + 10.0;
     }
-    // the pool: white dots bottom centre, the last one coral on a burst
-    let pool = v[V_POOL].max(0);
-    // items: the stock limit (heart containers): full icons for the stocks held, outlines for the empty slots
-    let total = if v[V_ITEMS_ON] == 1 && v[V_POOL_LIM] > 0 { v[V_POOL_LIM] } else if humans == 2 { 5 } else { 4 };
-    let n = total.max(pool);
-    // stocks 21 game px (were 14)
-    let px = 320.0 - (n - 1) as f32 * 12.0;
-    for i in 0..n {
-        let cx = px + i as f32 * 24.0;
-        let cy = 455.0;
-        if v[V_ITEMS_ON] == 1 && unsafe { H_HEART[0] != 0 } {
-            // items: heart containers (envoy-models1.md), full for a stock held; the last one pulses
-            let pulse = if i < pool && pool == 1 { 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0) } else { 1.0 };
-            heart(e, i < pool, cx, cy, 22.0 * pulse, WHITE);
-        } else if i < pool {
-            if pool == 1 {
-                let pulse = 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0);
-                spr_rot(e, S_BURST_SUNNY, cx, cy, 0.6 * pulse, 8.0, WHITE);
-                spr_c(e, S_STOCK_LAST, cx, cy, 1.17, WHITE);
-            } else {
-                spr_c(e, S_STOCK, cx, cy, 1.17, WHITE);
-            }
-        } else {
-            spr_c(e, S_STOCK_SPENT, cx, cy, 1.17, WHITE);
+    // stocks, bottom centre: full icons for the stocks held, outlines for the empty slots up to the limit. Co-op
+    // (items): each player their own stocks and limit, P1 left of centre, P2 right; a paid slot crumbles away.
+    if v[V_ITEMS_ON] == 1 && humans == 2 {
+        for p in 0..2 {
+            let (now, lim) = stocks_of(v, p);
+            let n = lim.max(now).clamp(1, 8);
+            let w = (n - 1) as f32 * 22.0;
+            let px = if p == 0 { 300.0 - w } else { 340.0 };
+            stock_row(e, p, px, 455.0, now, n, 22.0);
+            spr_c(e, S_DISC, if p == 0 { 300.0 + 14.0 } else { 340.0 - 14.0 }, 455.0, 8.0 / 32.0, PCOL[p]);
         }
+    } else {
+        let (pool, lim) = stocks_of(v, 0);
+        let total = if v[V_ITEMS_ON] == 1 && lim > 0 { lim } else if humans == 2 { 5 } else { 4 };
+        let n = total.max(pool);
+        // stocks 21 game px (were 14)
+        let px = 320.0 - (n - 1) as f32 * 12.0;
+        stock_row(e, 0, px, 455.0, pool, n, 24.0);
     }
     // fight label under the pool
     let mut s = Buf::new();
@@ -473,6 +466,8 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     if v[V_ITEMS_ON] == 1 {
         crate::items_ui::flash(e, v);
         crate::items_ui::banners(e, v);
+        crate::items_ui::callouts(e, v);
+        crate::items_ui::fork(e, v);
     }
     // sessions: the fight's banner over its first seconds ("Fight 2 - Pack", the loop and the stocks left)
     let pl = v[V_PLAY];
@@ -484,6 +479,58 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         sticker(e, S_FACE_LAGOON, 180.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
             e.text_ex(320.0, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");
         });
+    }
+}
+
+/// Player `p`'s (stocks, limit): their own words under the item rules (co-op: each their own), else the pool.
+pub fn stocks_of(v: &[i32; VW], p: usize) -> (i32, i32) {
+    if v[V_ITEMS_ON] == 1 && v[V_PLIM + p] > 0 {
+        (v[V_PSTOCK + p].max(0), v[V_PLIM + p])
+    } else {
+        (v[V_POOL].max(0), v[V_POOL_LIM])
+    }
+}
+
+/// The last limit seen per player and when it dropped (a slot paid to the devil: it crumbles away for 50 frames).
+static mut LIM_SEEN: [i32; 2] = [-1; 2];
+static mut PAID_AT: [i32; 2] = [0; 2];
+static mut PAID_I: [i32; 2] = [0; 2];
+
+unsafe fn stock_row(e: &mut E, p: usize, px: f32, cy: f32, now: i32, n: i32, step: f32) {
+    if LIM_SEEN[p] >= 0 && n < LIM_SEEN[p] {
+        PAID_AT[p] = T.max(1);
+        PAID_I[p] = n;
+    }
+    LIM_SEEN[p] = n;
+    for i in 0..n {
+        let cx = px + i as f32 * step;
+        if unsafe { H_HEART[0] != 0 } {
+            // heart containers (envoy-models1.md): full for a stock held, the last one pulsing
+            let pulse = if i < now && now == 1 { 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0) } else { 1.0 };
+            heart(e, i < now, cx, cy, step * pulse, WHITE);
+        } else if i < now {
+            if now == 1 {
+                let pulse = 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0);
+                spr_rot(e, S_BURST_SUNNY, cx, cy, 0.6 * pulse, 8.0, WHITE);
+                spr_c(e, S_STOCK_LAST, cx, cy, 1.17, WHITE);
+            } else {
+                spr_c(e, S_STOCK, cx, cy, 1.17, WHITE);
+            }
+        } else {
+            spr_c(e, S_STOCK_SPENT, cx, cy, 1.17, WHITE);
+        }
+    }
+    // the paid slot: a red flash, the outline cracking in two and falling
+    let age = T - PAID_AT[p];
+    if PAID_AT[p] != 0 && (0..50).contains(&age) {
+        let k = age as f32 / 50.0;
+        let cx = px + PAID_I[p] as f32 * step;
+        if age < 10 {
+            spr_rot(e, S_BURST_CORAL, cx, cy, 0.5 + 0.05 * age as f32, 8.0, alpha(WHITE, 1.0 - age as f32 / 10.0));
+        }
+        let fall = 30.0 * k * k;
+        spr_c(e, S_STOCK_SPENT, cx - 4.0 - 10.0 * k, cy + fall, 1.17 * (1.0 - 0.4 * k), alpha(0xFF6A_6AFF, 1.0 - k));
+        spr_c(e, S_STOCK_SPENT, cx + 4.0 + 10.0 * k, cy + fall * 1.2, 1.17 * (1.0 - 0.4 * k), alpha(0xFF6A_6AFF, 1.0 - k));
     }
 }
 

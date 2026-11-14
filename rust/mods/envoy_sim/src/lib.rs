@@ -915,7 +915,7 @@ unsafe fn take_arm() {
             S.pools[p] = S.pools[p].clamp(1, S.lims[p]);
         }
         log(b"envoy: continued with stock limit\0", S.lims[0]);
-        log(b"envoy: continued on road ", S.road);
+        log(b"envoy: continued on road\0", S.road);
         log(b"envoy: armed, run continued at loop*10 + fight\0", S.lp * 10 + S.fight + 1);
     } else {
         S.state = RUN_NONE;
@@ -1155,12 +1155,19 @@ unsafe fn kb_ko(p: usize) {
 }
 
 /// A MELEE_ENVOY_TEST_DRIVES item given by name (read from the string, so a fresh run's first plan sees it too).
+static mut TF_B: [u8; 256] = [0; 256];
+static mut TF_N: i32 = -1;
+
 unsafe fn test_flag(name: &str) -> bool {
-    let mut b = [0u8; 256];
-    let n = gd_envoy_test_drives(b.as_mut_ptr(), b.len() as u32);
+    // the knobs are fixed per process: read them from the host once (test_flag sits on hot paths)
+    if TF_N < 0 {
+        TF_N = gd_envoy_test_drives(core::ptr::addr_of_mut!(TF_B) as *mut u8, 256).max(0);
+    }
+    let n = TF_N;
     if n <= 0 {
         return false;
     }
+    let b = &*core::ptr::addr_of!(TF_B);
     let s = core::str::from_utf8(&b[..(n as usize).min(b.len())]).unwrap_or("");
     s.split(|c| c == ',' || c == '/' || c == '|' || c == ';').any(|t| t.trim() == name)
 }
@@ -1467,8 +1474,22 @@ unsafe fn test_drives() {
     S.ev_n = 0;
 }
 
-/// The plan of the match the run wants next: the live run's current fight, or a new run's first.
+/// The plan of the match the run wants next: the live run's current fight, or a new run's first. A new run's map
+/// (and so its first fight's kind) comes from the new run's seed: the plan reads it with that seed and a fresh path.
 unsafe fn make_plan() {
+    if S.arm_seen == 0 || S.state == RUN_LIVE {
+        make_plan_with();
+        return;
+    }
+    let keep = (S.seed, S.path, S.map_cur);
+    S.seed = run_seed(S.runs.wrapping_add(1)) as _;
+    S.path = [-1; 8];
+    S.map_cur = 1;
+    make_plan_with();
+    (S.seed, S.path, S.map_cur) = keep;
+}
+
+unsafe fn make_plan_with() {
     if S.arm_seen == 0 {
         PLAN = [0; PLAN_N];
         gd_envoy_plan(PLAN.as_ptr(), PLAN_N as u32);
@@ -1599,7 +1620,7 @@ unsafe fn make_plan() {
             }
         }
         let face = |r: usize| (0..3).fold(0, |a, k| a * 100 + (p[PL_GAUNT + r * 3 + k] + 1));
-        log(b"envoy: gauntlet faces, waves 3-5 ", face(0));
+        log(b"envoy: gauntlet faces, waves 3-5\0", face(0));
     } else {
         for k in 0..6 {
             p[PL_GAUNT + k] = -1;
@@ -1614,8 +1635,8 @@ unsafe fn make_plan() {
     if nw >= 2 && f.kind != FK_BOSS {
         // the room's faces for the checks (wave_faces.sh): per row (ckind + 1), 0 for a row not in play, two digits each
         let face = |w: usize| (0..3).fold(0, |a, r| a * 100 + if (r as i32) < p[7] { p[w + r] + 1 } else { 0 });
-        log(b"envoy: room faces, wave 1 ", face(8));
-        log(b"envoy: room faces, wave 2 ", face(32));
+        log(b"envoy: room faces, wave 1\0", face(8));
+        log(b"envoy: room faces, wave 2\0", face(32));
     }
     if waves {
         // an enemy-wave test fight: no foe fighters, Final Destination
@@ -1648,9 +1669,10 @@ unsafe fn on_new_match(seq: i32) {
         S.lims = [rooms::LIM_START; NP];
         S.deals = [0; NP];
         S.deals_any = 0;
-        if S.path[0] < 0 && S.secret_fight < 0 {
-            rooms::floor_start(); // armed without the road screen (tests): the map now
-        }
+        // the new run's act map (its path empty; the road screen's cursor, when one was shown, is kept)
+        let cur = S.map_cur;
+        rooms::floor_start();
+        S.map_cur = cur.clamp(0, rooms::LANES as i32 - 1);
         S.seen = [-1; SEEN];
         S.seen_n = 0;
         S.inv = [[0; ITEM_IDS]; NP];
@@ -1714,7 +1736,7 @@ unsafe fn on_new_match(seq: i32) {
         let n = roads_offered_at(0);
         S.road = if n > 0 { road_kind(S.road_cur.clamp(0, n - 1)) } else { ROAD_OPEN };
         S.road_flag = 0;
-        log(b"envoy: road taken ", S.road);
+        log(b"envoy: road taken\0", S.road);
     } else if SESSION_START[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] {
         S.road = ROAD_OPEN;
     }
@@ -1877,10 +1899,10 @@ unsafe fn on_new_match(seq: i32) {
     S.crowd_hits = 0;
     S.lv_on = 0;
     if S.crowd > 1000 {
-        log(b"envoy: crowd fight, foes*10000 + knockback x1000 ", ncpu() * 10000 + S.crowd);
+        log(b"envoy: crowd fight, foes*10000 + knockback x1000\0", ncpu() * 10000 + S.crowd);
     }
     if S.waves >= 2 && ncpu() == 1 {
-        log(b"envoy: gauntlet, duels ", S.waves);
+        log(b"envoy: gauntlet, duels\0", S.waves);
     }
     log(b"envoy: fight\0", S.fight + 1);
 }
@@ -2235,10 +2257,10 @@ unsafe fn pick_frame(p: usize) {
             }
             if S.cursor[p] == 3 {
                 if pad & BTN_A != 0 {
-                    log(b"envoy: pick skipped, player ", p as i32);
+                    log(b"envoy: pick skipped, player\0", p as i32);
                     if S.decline[p] > 0 {
                         HH.purse += S.decline[p] as i64 * COIN_UNIT;
-                        log(b"envoy: offer declined, coins ", S.decline[p]);
+                        log(b"envoy: offer declined, coins\0", S.decline[p]);
                     }
                     done_pick(p, -1, 0);
                 } else if S.timer <= 0 {
@@ -3502,7 +3524,7 @@ unsafe fn chain_frame(set: usize) {
         let fl = (link << FL_LINK_SHIFT) | (parent.min(15) << FL_PARENT_SHIFT) | if volley { FL_VOLLEY } else { 0 };
         let li = fire(set, d, S.levels[set][k], S.target[set][k], 1000, fl, coef, k as i32);
         S.chain_n += 1;
-        log(b"envoy: chain link, set*100 + link ", set as i32 * 100 + link);
+        log(b"envoy: chain link, set*100 + link\0", set as i32 * 100 + link);
         if !volley && S.ch_volley[set] != 0 {
             return; // Relay started a volley on this row: it runs from here
         }
@@ -3695,7 +3717,7 @@ extern "C" fn on_damage(h: u32, d: f32) {
             tags |= T_LASER;
         }
         if S.as_log != 0 && player_a {
-            log(b"envoy: hit, victim*1000 + attacker state ", v * 1000 + ast);
+            log(b"envoy: hit, victim*1000 + attacker state\0", v * 1000 + ast);
         }
         if player_a && is_foe(v) && offstage(v) {
             tags |= T_OFFSTAGE;
@@ -3710,7 +3732,7 @@ extern "C" fn on_damage(h: u32, d: f32) {
                 }
                 S.kb_watch = v;
                 S.kb_watch_at = S.play;
-                log(b"envoy: finale knockback x1000 ", 1000 + bonus);
+                log(b"envoy: finale knockback x1000\0", 1000 + bonus);
             }
         }
         // the combo breaker: the hit that would make it CB_HITS (or take the combo to CB_DAMAGE) does not land
@@ -3723,7 +3745,7 @@ extern "C" fn on_damage(h: u32, d: f32) {
         if S.crowd > 1000 && is_foe(v) && !is_boss(v) {
             gd_envoy_kb_scale(v, S.crowd);
             S.crowd_hits += 1;
-            log(b"envoy: crowd knockback, slot*10000 + x1000 ", v * 10000 + S.crowd);
+            log(b"envoy: crowd knockback, slot*10000 + x1000\0", v * 10000 + S.crowd);
         }
         // what foe drive blasts put into this hit (the engine's per-capsule record of the frame, after its cap)
         let human_v = (0..nh()).contains(&v);
@@ -3807,9 +3829,9 @@ unsafe fn combo_frame() {
                 gd_envoy_blast(ps, at.x, at.y + 8.0, CB_PUSH_R, 0, CB_PUSH_ANGLE, CB_PUSH_KBG, CB_PUSH_BKB);
             }
             ev(EV_COMBOBREAK, ps, hits << 16 | pct.clamp(0, 0xFFFF));
-            log(b"envoy: combo break, player*10000 + hits*1000 + combo percent ", ps * 10000 + hits * 1000 + pct.clamp(0, 999));
-            log(b"envoy: combo break at live frame ", S.play);
-            log(b"envoy: combo breaks so far (+1000000: the host refused) ", S.cb_n + if r == 0 { 0 } else { 1_000_000 });
+            log(b"envoy: combo break, player*10000 + hits*1000 + combo percent\0", ps * 10000 + hits * 1000 + pct.clamp(0, 999));
+            log(b"envoy: combo break at live frame\0", S.play);
+            log(b"envoy: combo breaks so far (+1000000: the host refused)\0", S.cb_n + if r == 0 { 0 } else { 1_000_000 });
             continue;
         }
         if S.cb_hits[p] == 0 {
@@ -3884,7 +3906,7 @@ unsafe fn finale_probe() {
         let mut w = [0u32; 20];
         gd_fighter_read(h, w.as_mut_ptr());
         let (x, y) = (f32::from_bits(w[6]), f32::from_bits(w[7]));
-        log(if S.finale_off & 1 != 0 { b"envoy: finale probe (write off), kb speed^2 x10000 " } else { b"envoy: finale probe (write on), kb speed^2 x10000 " }, ((x * x + y * y) * 10000.0) as i32);
+        log(if S.finale_off & 1 != 0 { b"envoy: finale probe (write off), kb speed^2 x10000\0" } else { b"envoy: finale probe (write on), kb speed^2 x10000\0" }, ((x * x + y * y) * 10000.0) as i32);
     }
     S.kb_watch = -1;
 }
@@ -3918,7 +3940,7 @@ unsafe fn tech_frame() {
             S.escape_at[p] = S.play;
         }
         if st != prev && S.as_log != 0 && p == 0 {
-            log(b"envoy: as ", prev * 1000 + st);
+            log(b"envoy: as\0", prev * 1000 + st);
         }
         if st != prev {
             if (AS_LANDING_AIR.0..=AS_LANDING_AIR.1).contains(&st) {
@@ -3997,7 +4019,7 @@ unsafe fn cash_out(p: usize, s: i32, pay: i32, finale: bool) {
             if t != s && is_foe(t) && alive(t) {
                 hurt(t, fl);
                 ev(EV_FLARE, t, fl);
-                log(b"envoy: flare, slot*100000 + percent x1000 ", t * 100_000 + fl);
+                log(b"envoy: flare, slot*100000 + percent x1000\0", t * 100_000 + fl);
                 let at = pos(t).unwrap_or(P { x: 0.0, y: 0.0 });
                 let li = S.log_n as usize % LOG;
                 let first = S.drives[in_set(p)][0];
@@ -4054,7 +4076,7 @@ unsafe fn moments_frame() {
             }
             S.boss_hp = w[4] as i32;
             S.boss_hp_max = w[5] as i32;
-            log(b"envoy: boss carrier, slot ", b);
+            log(b"envoy: boss carrier, slot\0", b);
         }
     }
     let mut foes = 0;
@@ -4517,7 +4539,7 @@ unsafe fn road_frame() {
         }
         if p == 0 {
             S.road_cur = (S.road_cur + d).clamp(0, n - 1);
-            log(b"envoy: road cursor ", S.road_cur);
+            log(b"envoy: road cursor\0", S.road_cur);
         } else {
             S.road_flag = ((S.road_flag - 1).max(0) + d).clamp(0, n - 1) + 1;
         }
@@ -4903,18 +4925,18 @@ unsafe fn stage_frame() {
     let why = S.stage_want;
     S.stage_want = 0;
     if rc != 0 {
-        log(b"envoy: stage transition refused ", rc);
+        log(b"envoy: stage transition refused\0", rc);
         return;
     }
     S.stage_clock = 0;
     if live {
         // the hand-off is LIVE_AT frames on: the switch's KO window counts from there (live_frame resets the clock)
         S.lv_on = 1;
-        log(b"envoy: live stage transition begins, to ", next);
+        log(b"envoy: live stage transition begins, to\0", next);
     }
     S.stage_switches += 1;
     ev(EV_SHIFT, why, next);
-    log(b"envoy: stage transition, reason*100 + to ", why * 100 + next);
+    log(b"envoy: stage transition, reason*100 + to\0", why * 100 + next);
     for p in 0..nh() as usize {
         charge_event(p, C_SHIFT, -1, false);
     }
@@ -4926,7 +4948,7 @@ unsafe fn stage_frame() {
             HH.earned[p] += SHIFT_COINS as i64 * COIN_UNIT / nh() as i64;
             ev(EV_COINS, p as i32, SHIFT_COINS);
         }
-        log(b"envoy: shifting road pays, coins ", SHIFT_COINS);
+        log(b"envoy: shifting road pays, coins\0", SHIFT_COINS);
     }
 }
 
@@ -4942,10 +4964,10 @@ unsafe fn live_frame() {
         S.lv_on = 2;
         S.stage_clock = 0;
         switch_snapshot(b"torture at switch\0");
-        log(b"envoy: live stage hand-off, frame*1000 + to ", l[4] * 1000 + l[3]);
+        log(b"envoy: live stage hand-off, frame*1000 + to\0", l[4] * 1000 + l[3]);
     } else if S.lv_on == 1 && l[1] == 2 {
         S.lv_on = 0;
-        log(b"envoy: live stage hand-off refused, to ", l[3]);
+        log(b"envoy: live stage hand-off refused, to\0", l[3]);
     }
     if l[0] == 0 && S.lv_on == 2 && S.stage_clock > SWITCH_KO_WINDOW {
         S.lv_on = 0;
@@ -5224,7 +5246,7 @@ unsafe fn room_frame() {
     log(b"envoy: wave starts, wave*100 + foes back\0", S.wave * 100 + n);
     if ncpu() == 1 && !old_scale() {
         let face = if S.wave == 2 { PLAN[32] } else { PLAN[PL_GAUNT + (S.wave - 3).clamp(0, 2) as usize] };
-        log(b"envoy: gauntlet duel, wave*100 + character ", S.wave * 100 + face);
+        log(b"envoy: gauntlet duel, wave*100 + character\0", S.wave * 100 + face);
     }
     let f = sched();
     if f.kind == FK_ELITE && S.wave == elite_wave() {
@@ -5353,11 +5375,11 @@ unsafe fn fight_won() {
     }
     let _ = me;
     // room length (loop*10 + fight, then the live frames it took): loop_run.sh's room-length table
-    log(b"envoy: room cleared, loop*10 + fight ", lp() * 10 + S.fight + 1);
-    log(b"envoy: room time, live frames ", S.play);
+    log(b"envoy: room cleared, loop*10 + fight\0", lp() * 10 + S.fight + 1);
+    log(b"envoy: room time, live frames\0", S.play);
     if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
         S.bosses += 1;
-        log(b"envoy: boss beaten, keystone due; bosses ", S.bosses);
+        log(b"envoy: boss beaten, keystone due; bosses\0", S.bosses);
     }
     if S.fight as usize == FIGHTS - 1 {
         // endless loops: the run goes on at fight 1 of the next loop with everything kept, one more stock in the pool
@@ -5368,13 +5390,13 @@ unsafe fn fight_won() {
         // slice 2: the campfire is a room of the map now (the fork after the item room), not the boss's prize
         rooms::floor_start();
         log(b"envoy: loop now\0", S.lp);
-        log(b"envoy: RUN CLEAR, pool left ", me);
+        log(b"envoy: RUN CLEAR, pool left\0", me);
     } else {
         // the road's prize for this fight of its session (the Open road and the elite session: a drive pick)
         // items: a won fight banks nothing (items come from the item room, the shop and the boss)
         let _ = road_prize_at;
         S.fight += 1;
-        log(b"envoy: fight won, next ", S.fight + 1);
+        log(b"envoy: fight won, next\0", S.fight + 1);
     }
     make_plan();
 }
@@ -5728,7 +5750,7 @@ unsafe fn abandon_check() {
             S.outcome = 2;
             S.pools = [0; NP];
             S.state = RUN_OVER;
-            log(b"envoy: run abandoned from the pause overlay, player ", p + 1);
+            log(b"envoy: run abandoned from the pause overlay, player\0", p + 1);
             make_plan();
             gd_envoy_end_match();
             return;

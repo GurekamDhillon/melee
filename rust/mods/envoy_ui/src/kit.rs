@@ -157,7 +157,7 @@ fn frame_of(it: &envoy_data::items::Item) -> u32 {
 }
 
 /// An item's icon centred on (cx, cy), `size` px: its pool frame behind at 4/3 the size, then its sprite; the
-/// coloured disc (ink edge) when the item has no sprite yet.
+/// glyph icon (icons.rs) when the item has no sprite yet.
 pub fn item_icon(e: &mut E, id: i32, cx: f32, cy: f32, size: f32, a: f32) {
     let Some(it) = envoy_data::items::item(id) else { return };
     let f = frame_of(it);
@@ -169,8 +169,8 @@ pub fn item_icon(e: &mut E, id: i32, cx: f32, cy: f32, size: f32, a: f32) {
     if h != 0 {
         e.tex(h, cx - size * 0.5, cy - size * 0.5, size, size, [0.0, 0.0, 1.0, 1.0], alpha(WHITE, a));
     } else {
-        spr_c(e, S_DISC, cx, cy, (size * 0.75 + 4.0) / 32.0, alpha(INK, a));
-        spr_c(e, S_DISC, cx, cy, size * 0.75 / 32.0, alpha(it.rgba, a));
+        // no sprite yet: the slice-2 glyph icon (icons.rs)
+        crate::icons::icon_a(e, id, cx, cy, size * if f != 0 { 0.8 } else { 1.0 }, a);
     }
 }
 
@@ -386,4 +386,49 @@ pub fn sin(x: f32) -> f32 {
 }
 pub fn cos(x: f32) -> f32 {
     sin(x + 1.570_796_3)
+}
+
+/// A card's text in the item keyword language (envoy_data::keywords): plain words in `body` / `rgba`, keywords in
+/// the display face in their category's colour (`dark`: the palette for an ink sticker). Wraps at `w`, `lh` a line,
+/// at most `max_lines`. Returns the lines used.
+#[allow(clippy::too_many_arguments)]
+pub fn rich(e: &mut E, x: f32, y: f32, w: f32, px: u32, lh: f32, rgba: u32, dark: bool, s: &str, max_lines: i32) -> i32 {
+    use envoy_data::keywords::*;
+    let body = bs(px);
+    let key = d(px);
+    let (mut cx, mut line) = (x, 0);
+    let space = tw(" ", body).max(px as f32 * 0.25);
+    let mut put = |e: &mut E, word: &str, role: i32, col: u32, cx: &mut f32, line: &mut i32| {
+        let ww = tw(word, role);
+        if *cx > x && *cx + ww > x + w {
+            *line += 1;
+            *cx = x;
+        }
+        if *line < max_lines {
+            e.text_ex(*cx, y + *line as f32 * lh, role, col, ALIGN_LEFT, 0.0, word);
+        }
+        *cx += ww;
+    };
+    for sp in spans(s) {
+        match sp {
+            Span::Key(k) => {
+                let kw = &KEYWORDS[k];
+                let col = if dark { KC_DARK[kw.cat as usize] } else { KC_LIGHT[kw.cat as usize] };
+                put(e, kw.word, key, alpha(col, (rgba & 0xFF) as f32 / 255.0), &mut cx, &mut line);
+            }
+            Span::Text(t) => {
+                let mut first = true;
+                for word in t.split(' ') {
+                    if !first {
+                        cx += space;
+                    }
+                    first = false;
+                    if !word.is_empty() {
+                        put(e, word, body, rgba, &mut cx, &mut line);
+                    }
+                }
+            }
+        }
+    }
+    (line + 1).min(max_lines)
 }

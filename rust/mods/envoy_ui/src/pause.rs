@@ -353,14 +353,14 @@ unsafe fn header(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32) {
 }
 
 unsafe fn tabs(e: &mut E, pn: &Panel, x: f32, y: f32, col: u32) {
-    let w = (PW - 16.0) / 4.0;
+    let w = (PW - 16.0) / PAGES.len() as f32;
     for (i, name) in PAGES.iter().enumerate() {
         let on = i == pn.page;
         let tx = x + i as f32 * w;
         let id = if on && pn.row == 0 { S_FACE_HOVER } else if on { S_FACE_SUNNY } else { S_FACE_LILAC };
         let ty = if on { y - 2.0 } else { y };
         face(e, id, tx + 1.0, ty, w - 4.0, 24.0, WHITE);
-        e.text_ex(tx + w * 0.5 - 1.0, ty + 5.0, d(11), if on { INK } else { WHITE }, ALIGN_CENTER, w - 6.0, name);
+        e.text_ex(tx + w * 0.5 - 1.0, ty + 5.0, d(10), if on { INK } else { WHITE }, ALIGN_CENTER, w - 6.0, name);
     }
     // the player's colour under the tab bar
     e.rect(x + 2.0, y + 26.0, PW - 20.0, 2.0, alpha(col, 0.9));
@@ -383,13 +383,13 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
     // the icon strip: 7 a row
     for k in 0..n {
         let it = &ITEMS[list[k]];
-        let cx = x + 14.0 + (k % 7) as f32 * 30.0;
-        let cy = y + 14.0 + (k / 7) as f32 * 30.0;
+        let cx = x + 12.0 + (k % 8) as f32 * 26.0;
+        let cy = y + 11.0 + (k / 8) as f32 * 25.0;
         let on = k == sel && pn.row == 1;
         if on {
             spr_rot(e, S_BURST_SUNNY, cx, cy, 0.52, 8.0, WHITE);
         }
-        crate::icons::icon(e, it.id, cx, cy, 24.0);
+        crate::icons::icon(e, it.id, cx, cy, 22.0);
         let cnt = v[V_INV + p * ITEM_IDS + it.id as usize];
         if cnt > 1 {
             let mut s = Buf::new();
@@ -401,26 +401,19 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
     // the card of the hovered item (the first one while the tab bar has the cursor)
     let it = &ITEMS[list[sel]];
     let cnt = v[V_INV + p * ITEM_IDS + it.id as usize];
-    let cy = y + 16.0 + ((n + 6) / 7) as f32 * 30.0;
-    let ch = 140.0;
+    let cy = y + 4.0 + ((n + 7) / 8) as f32 * 25.0;
+    let ch = (PY + PH - 30.0 - cy).clamp(70.0, 130.0);
     sticker(e, S_FACE_WHITE, x, cy, w, ch, 0.6, WHITE, |e| {
         e.rect(x + 6.0, cy + 6.0, 6.0, ch - 12.0, it.rgba);
         e.text_ex(x + 20.0, cy + 8.0, td(17), INK, ALIGN_LEFT, w - 28.0, it.name);
-        let mut t = Buf::new();
-        t.s("Trigger: ").s(trigger_word(it));
-        face(e, S_FACE_INK, x + 20.0, cy + 34.0, tw(t.str(), tb(11)) + 14.0, 18.0, WHITE);
-        e.text_ex(x + 27.0, cy + 36.0, tb(11), SUNNY, ALIGN_LEFT, 0.0, t.str());
-        rich(e, x + 20.0, cy + 56.0, w - 30.0, ts(12), 14.0, INK, false, envoy_data::keywords::card(it.id), 3);
+        // the card in the keyword language (its trigger words lead), then the stack
+        rich(e, x + 20.0, cy + 30.0, w - 30.0, ts(12), 14.0, INK, false, envoy_data::keywords::card(it.id), 4);
         let mut s = Buf::new();
-        s.s("Stack ").i(cnt).s(" / ").i(it.cap as i32);
-        e.text_ex(x + 20.0, cy + ch - 38.0, td(13), INK, ALIGN_LEFT, 0.0, s.str());
-        let mut r = Buf::new();
+        s.s("Stack ").i(cnt).s("/").i(it.cap as i32);
         if cnt >= it.cap as i32 {
-            r.s("At its cap: more copies add nothing");
-        } else {
-            r.s("Each copy: ").s(STACK_TEXT[(it.stack as usize).min(4)]);
+            s.s("  (at its cap)");
         }
-        e.text_ex(x + 20.0, cy + ch - 21.0, tb(11), LILAC, ALIGN_LEFT, w - 28.0, r.str());
+        e.text_ex(x + 20.0, cy + ch - 20.0, tb(11), LILAC, ALIGN_LEFT, w - 28.0, s.str());
         for q in 0..it.quality.min(4) {
             spr_c(e, S_STAR_ON, x + w - 14.0 - q as f32 * 13.0, cy + 16.0, 1.0, WHITE);
         }
@@ -490,8 +483,8 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: b
     let my = y + 58.0;
     if crate::map::has(v) {
         // the act map fills the page (rows up to the boss, as in Slay the Spire)
-        crate::map::draw(e, v, x + 20.0, y + 40.0, w - 40.0, 132.0, 7.0);
-        crate::map::legend(e, v, x, y + 172.0, w);
+        crate::map::draw(e, v, x + 20.0, y + 38.0, w - 40.0, 118.0, 7.0);
+        crate::map::legend(e, v, x, y + 158.0, w);
         return;
     } else {
         let rooms = v[V_ROOMS].clamp(1, 6);

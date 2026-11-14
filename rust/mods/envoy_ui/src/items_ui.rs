@@ -397,12 +397,12 @@ unsafe fn door_last(v: &[i32; VW]) {
     }
     let t = T as f32;
     let (cx, fy) = (DOOR_AT.0, DOOR_AT.1);
-    let (w, h) = (24.0, 38.0);
+    let (w, h) = (18.0, 30.0);
     let devil = kind == PED_DEVIL;
     let (body, edge, glow) = if devil { (0x7A08_18FF, 0xFF30_40FF, 0xFF20_30FF) } else { (0xC8C8_D8FF, WHITE, HOLY) };
-    fx(FX_BEAM, cx, fy - 2.0, h + 22.0, w + 26.0, 0.0, alpha(glow, 0.22 + 0.06 * sin(t * 0.08)));
-    fx(FX_LINE, cx, fy, cx, fy + h, w, alpha(body, 0.85));
-    fx(FX_DISC, cx, fy + h, w * 0.5, 0.0, 0.0, alpha(body, 0.9));
+    fx(FX_BEAM, cx, fy - 2.0, h + 14.0, w + 14.0, 0.0, alpha(glow, 0.12 + 0.04 * sin(t * 0.08)));
+    fx(FX_LINE, cx, fy, cx, fy + h, w, alpha(body, 0.4));
+    fx(FX_DISC, cx, fy + h, w * 0.5, 0.0, 0.0, alpha(body, 0.4));
     fx(FX_LINE, cx - w * 0.5, fy, cx - w * 0.5, fy + h, 1.8, edge);
     fx(FX_LINE, cx + w * 0.5, fy, cx + w * 0.5, fy + h, 1.8, edge);
     fx(FX_RING, cx, fy + h, w * 0.5, 1.8, 0.0, edge);
@@ -410,7 +410,7 @@ unsafe fn door_last(v: &[i32; VW]) {
     if devil {
         fx(FX_LINE, cx - 9.0, fy + h + 8.0, cx - 14.0, fy + h + 17.0, 2.2, edge);
         fx(FX_LINE, cx + 9.0, fy + h + 8.0, cx + 14.0, fy + h + 17.0, 2.2, edge);
-        fx(FX_SPIKES, cx, fy + h * 0.55, 1.5, 7.0, t * 0.01, alpha(0xFF60_70FF, 0.8));
+        
         for j in 0..3 {
             let ph = (t * 0.04 + j as f32 * 2.1) % 1.0;
             fx(FX_DISC, cx - 10.0 + j as f32 * 10.0, fy + ph * 30.0, 2.0, 0.0, 0.0, alpha(0xFF40_20FF, 1.0 - ph));
@@ -628,12 +628,12 @@ pub unsafe fn fork(e: &mut E, v: &[i32; VW]) {
     sticker(e, S_FACE_INK, x, y, w, h, -0.6, WHITE, |e| {
         face(e, S_FACE_INK, x, y, w, h, WHITE);
         text_edge(e, x + 180.0, y + 10.0, d(22), SUNNY, ALIGN_LEFT, 1.8, "Choose the next room");
-        crate::map::draw(e, v, x + 14.0, y + 12.0, 150.0, h - 24.0, 8.0);
+        crate::map::draw(e, v, x + 8.0, y + 8.0, 168.0, h - 16.0, 9.5);
         let cur_kind = crate::map::cursor(v).map_or(0, |c| c.1);
         let (title, say, fid) = match cur_kind {
             MN_SHOP => ("Shop", "Spend coins on items and stocks.", S_FACE_LAGOON),
             MN_CAMPFIRE => ("Campfire", "Rest: stocks back.", S_FACE_CORAL),
-            MN_ITEM => ("Item room", "A free item on a pedestal.", S_FACE_SUNNY),
+            MN_ITEM => ("Item room", "A free item on a pedestal.", S_FACE_WHITE),
             _ => ("", "", S_FACE_WHITE),
         };
         if !title.is_empty() {
@@ -645,8 +645,8 @@ pub unsafe fn fork(e: &mut E, v: &[i32; VW]) {
                 MN_CAMPFIRE => spr_c(e, S_FLAME + 3, bx + 34.0, by + 43.0, 1.3, WHITE),
                 _ => spr_c(e, S_STAR_ON, bx + 34.0, by + 45.0, 3.0, WHITE),
             }
-            e.text_ex(bx + 66.0, by + 14.0, d(22), if fid == S_FACE_SUNNY { INK } else { WHITE }, ALIGN_LEFT, 0.0, title);
-            e.text_ex(bx + 66.0, by + 50.0, bs(13), if fid == S_FACE_SUNNY { INK } else { WHITE }, ALIGN_LEFT, bw - 74.0, say);
+            e.text_ex(bx + 66.0, by + 14.0, d(22), if fid == S_FACE_WHITE { INK } else { WHITE }, ALIGN_LEFT, 0.0, title);
+            e.text_ex(bx + 66.0, by + 50.0, bs(13), if fid == S_FACE_WHITE { INK } else { WHITE }, ALIGN_LEFT, bw - 74.0, say);
         }
         let _ = cur;
         e.text_ex(x + 310.0, y + h - 30.0, bs(13), PALE, ALIGN_CENTER, 0.0, "P1: Left / Right to choose, A to go.");

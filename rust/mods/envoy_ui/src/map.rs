@@ -257,11 +257,11 @@ pub unsafe fn legend(e: &mut E, v: &[i32; VW], x: f32, y: f32, max_w: f32) {
     let at = v[V_MAP_AT];
     if (0..v[V_MAP_N]).contains(&at) {
         let (k, ..) = node(v, at as usize);
-        b.s("  -  at the ").s(kind_word(k));
+        b.s(" - ").s(kind_word(k));
     }
     if v[V_DOOR_PCT] > 0 {
-        b.s("  -  door after the boss: ").i(v[V_DOOR_PCT]).s("%");
+        b.s(" - door ").i(v[V_DOOR_PCT]).s("%");
     }
-    text_edge(e, x, y, bs(12), WHITE, ALIGN_LEFT, 1.3, b.str());
+    text_edge(e, x, y, bs(11), WHITE, ALIGN_LEFT, 1.2, b.str());
     let _ = max_w;
 }

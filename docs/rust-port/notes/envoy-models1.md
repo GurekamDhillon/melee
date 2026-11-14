@@ -1,13 +1,15 @@
-# Envoy models, chunks 1 and 2 (2026-11-13 / 14)
+# Envoy models, chunks 1 to 3 (2026-11-13 / 14)
 
-91 original models for Envoy: every item, the act-map nodes, hearts and HUD bits, pool frames, keyword and status
-glyphs, tag emblems, projectile bodies, map furniture and world pieces. They are made the way the Party drive models
-are: a part list per model, one generator, no hand-drawn or third-party data.
+160 original models for Envoy: every item (the synergy lane's six included), act-map nodes and fight variants, hearts
+and HUD bits, pool frames, keyword, status, tech and move marks, tag emblems, projectile bodies, map furniture,
+world pieces, effect meshes and stance-orb bodies, boss and elite faces, synergy and evolution banner pieces, and
+run-end pieces. They are made the way the Party drive models are: a part list per model, one generator, no
+hand-drawn or third-party data.
 
 - Generator: `pc/scripts/examples/envoy_models/tools/make_models1.py` (helpers, palette, chunk 1's part lists, every
-  writer) and `models2.py` beside it (chunk 2's part lists). It imports the drives' `drive_parts.py` for the
-  primitives and the colour ramp. `--check` compares the files on disk with a fresh run; `--sheet OUT.png` draws
-  the contact sheet.
+  writer) with `models2.py` and `models3.py` beside it (chunks 2 and 3). It imports the drives' `drive_parts.py` for
+  the primitives and the colour ramp. `--check` compares the files on disk with a fresh run; `--sheet OUT.png`
+  draws the contact sheet.
 - Contact sheet (not committed): `E:\Projects\Melee Workspace\scratch\models1\contact-sheet.png`.
 
 ## Files
@@ -17,56 +19,68 @@ Each model `<key>` is two files:
 - `pc/scripts/examples/envoy_models/models/em_<key>.gxmesh`: the mesh, in the drives' format and frame.
 - `rust/mods/envoy_ui/art/em_<key>.png`: the same model as a 96 x 96 sticker sprite with an ink edge.
 
-Shared, in `models/`: `envoy_models_atlas.gxtex` and `.glow.gxtex` (128 x 256 colour ramps, 43 rows),
+Shared, in `models/`: `envoy_models_atlas.gxtex` and `.glow.gxtex` (128 x 256 colour ramps, 45 rows),
 `envoy_models.txt` (the manifest: one key per line, in model order) and `envoy_models.inc.rs` (the same list as the
 host's `include_bytes!` array).
 
 New models are appended: a key's line in the manifest is its model id, so the order never changes. New colour rows
-are appended to the atlas for the same reason.
+are appended to the atlas for the same reason. **The model id is a `u8`: 235 of 256 are used, 21 are left.** The
+next chunk has to widen `drive_draw::Inst::Model::model` (and `melee_gx::fx::WorldDraw::model`) first.
 
 ## Loading
 
 **Sprites.** `camp_run.sh` and the perf gate copy `rust/mods/envoy_ui/art` whole into the mod folder, so
 `gd_ui_tex_load("em_<key>.png")` returns a handle like any other sticker. A sprite is 96 x 96 for 48 game pixels (the
-stickers' 2x rule). An item's sprite is `em_<item.key>.png` (`envoy_data::items::Item::key`); all 32 items have one.
+stickers' 2x rule). An item's sprite is `em_<item.key>.png` (`envoy_data::items::Item::key`); every item has one.
 A pool frame goes behind its item at the same centre, 4/3 the item's size (item 48, frame 64). The frame to pick,
 in the aura's order (design 11.11): devil, angel, secret, then boss, shop, item.
+
+**Synergy lane.** A synergy's emblem is `em_syn_<Synergy::key>.png`, an evolution's `em_evo_<Evolution::key>.png`.
+A banner is `em_banner_plate` (tinted with the synergy's `rgba`) with the two item sprites on it, `em_banner_plus`
+between them (`em_banner_arrow` for an evolution), and `em_banner_ribbon` (tinted) under the name. The plate and
+the ribbon are white so a tint gives the colour.
 
 **Meshes in the world.** The host draws them like drive models: `gd_ui_world_model` / `gd_ui_world_model_ex` with
 model id `75 + line` (`melee_modes::tu::drive_draw::EM_FIRST`, after the 10 legacy and 65 Party models;
 `drive_draw::em_model(key)` on the host, `envoy_ui::fx::em_model(key)` in the UI mod, -1 when there is none).
 `scale` is the frame's width in world units: a model that fills the parts box is about 0.45 of it across, so
 `scale 16` draws an item about 7 units wide. Every model shares the Party frame (no recentring), so a pool frame
-and its item line up at one position, yaw and scale. The host drops the ink edge (`MAT_OUTLINE`) for this set (see
-Verified).
-`gd_ui_model_tex` gives the turning 12-frame sprite sheet for any of them too.
+and its item line up at one position, yaw and scale. `gd_ui_model_tex` gives the turning 12-frame sprite sheet for
+any of them too. The host turns a model about the vertical axis only (`yaw`): the shots and beams that should lie
+along a velocity (`pj_shard`, `pj_bolt`, `fx_beam_*`) need a roll parameter the host does not have yet.
 
-**Wired here.** `items_ui::pedestals` draws the floating item as its model (rocking, on a soft disc of the
+**The ink edge.** `MAT_OUTLINE` works on this set. The ink pass (`melee_gx::fx`, pipeline "fx ink") now pushes the
+hull behind its own body (a slope-scaled depth bias) and widens it with the model's scale (x1 up to scale 5, so
+drives are unchanged, to x3 at scale 15 and over).
+
+**Wired here.** `items_ui::pedestals` draws the floating item as its model (rocking, ink edge, on a soft disc of the
 item's colour) and keeps the old discs for an id with no model. Nothing else is swapped: the item strip, the
-new-item flash, the map nodes and the stock row still draw what they drew, for the pickup, synergy and UI lanes to
-change with the sprites above.
+new-item flash, the map nodes, the stock row and the effect shapes in `items_ui::world` still draw what they drew,
+for the pickup, synergy and UI lanes to change.
 
 ## Verified
 
-Built and run on Windows, 2026-11-14, hidden window (`MELEE_WINDOW_HIDDEN=1`), release exe from this branch:
+Built and run on Windows, 2026-11-14, hidden windows (`MELEE_WINDOW_HIDDEN=1`), release exe from this branch after
+merging `pub/port/envoy-slice2` at `03846fe7b`:
 
 - `cargo test -p melee_modes --lib drive_draw`: 2 passed (`models_decode_and_sprites_cover` checks the include list
-  against the manifest and the files on disk, that all 91 decode, two atlas colours, and a sprite sheet of one).
+  against the manifest and the files on disk, that every model decodes, two atlas colours, and a sprite sheet).
 - `envoy_sim` and `envoy_ui` built for wasm; `melee` built in release.
+- `tools/rust-port/envoy/items_check.sh` at depth 4: `ITEMS OK`, all 20 rows (lint, pad, cpu, room, boss, coop,
+  petey, gauntlet, live, crowd, shop, devil, angel, secret, whiff, triggers, coopstock, map, campfire, orbs), 0
+  mismatches in each. The triggers row did not see a crouch cancel, a powershield or a jab hit this time; the script
+  reports those as CPU-dependent and does not fail on them.
 - A scripted Envoy run to the boss drop (`MELEE_ENVOY_START_FIGHT=4`, knobs `nodoor,*4000`, the player a CPU):
-  the log has `envoy: boss drop, choose one`, no host errors, and the screenshot shows both pedestals with their
-  items drawn as models in the world (Shine Bell and Roll Mines), in their own colours, at the stone.
+  the log has `envoy: boss drop, choose one`, no host errors, and the screenshot shows both pedestal items (Shine
+  Bell, Roll Mines) drawn as models in their own colours with the ink edge, inside the pedestal's shader ring.
   Kept at `E:\Projects\Melee Workspace\scratch\models1\verify-boss-drop.png` (not committed).
-- An item-room run (`MELEE_ENVOY_START_FIGHT=2`, `forkitem`) opened the room and drew its pedestal too; in that run
-  the pedestal stood on a lower floor than the idle CPU, so the camera kept it at the bottom edge of the picture.
-- Found on the way: with `MAT_OUTLINE` at pedestal size the ink hull covers the whole body (the models came out
-  solid ink). `drive_draw::is_drive_body` therefore excludes this set, so the host drops the flag; the pedestal draw
-  uses `MAT_BODY` with no edge. The sprites keep their ink edge (it is drawn by the generator).
-- Not run: the items_check synctests and the zero-lag gate. The change is presentation only (no sim file touched),
-  but 91 more meshes are uploaded when the effects layer arms; the arm took 128 ms in the run's log, once, at run
-  start.
+- The ink edge: before the fix the same screenshot showed the models as solid ink. Cause and fix are under
+  Loading. Drive orbiters go through the same pass with the same width (scale 5 and under); they were not
+  compared before and after in a screenshot.
+- Not run: depth 7 of items_check, the zero-lag gate, 720p / 1080p comparison crops. The model set adds 18,290
+  triangles uploaded once when the effects layer arms.
 
-## Items (32)
+## Items (38)
 
 | key | id | name | concept | where to use it |
 |---|---|---|---|---|
@@ -102,8 +116,14 @@ Built and run on Windows, 2026-11-14, hidden window (`MELEE_WINDOW_HIDDEN=1`), r
 | `nair_ring` | 121 | Nair Ring | Six orbs on a ring around a spinning mark: orbs that circle a nair. | pickup prompt, item strip, build page; item id 45 |
 | `dash_orb` | 122 | Dash Orb | An orb running ahead of three speed lines: it leads the dash. | pickup prompt, item strip, build page; item id 46 |
 | `shield_orbs` | 123 | Shield Orbs | A shield bubble with three small orbs standing guard around it. | pickup prompt, item strip, build page; item id 47 |
+| `ember_seed` | 202 | Ember Seed | A dark seed with a small flame sprouting from its tip. | pickup prompt, item strip, build page; the synergy lane's item `ember_seed` |
+| `static_coil` | 203 | Static Coil | A coil of four rings on a base, a spark at its top. | pickup prompt, item strip, build page; the synergy lane's item `static_coil` |
+| `frost_bud` | 204 | Frost Bud | A closed bud of three ice petals on a short stem. | pickup prompt, item strip, build page; the synergy lane's item `frost_bud` |
+| `kin_tether` | 205 | Kin Tether | Two orbs, coral and lagoon, joined by a taut cord. | pickup prompt, item strip, build page; the synergy lane's item `kin_tether` |
+| `rally_banner` | 206 | Rally Banner | A red banner on a pole with a gold star on it. | pickup prompt, item strip, build page; the synergy lane's item `rally_banner` |
+| `kindred_spark` | 207 | Kindred Spark | Two sparks facing each other, a thread of light between them. | pickup prompt, item strip, build page; the synergy lane's item `kindred_spark` |
 
-## Act-map nodes and room markers (9)
+## Act-map nodes and room markers (12)
 
 | key | id | name | concept | where to use it |
 |---|---|---|---|---|
@@ -116,6 +136,9 @@ Built and run on Windows, 2026-11-14, hidden window (`MELEE_WINDOW_HIDDEN=1`), r
 | `node_devil` | 90 | Devil deal | A red arched door with horns and two burning eyes in its dark: a deal paid in stock slots. | act map door node (row 7) when the red door opens, the devil-deal banner, the door's chance tag |
 | `node_angel` | 91 | Angel room | A pale glowing door with two wings and a halo over it: one free, strong item. | act map door node (row 7) when the white door opens, the angel-room banner |
 | `node_secret` | 92 | Secret room | A brick wall split by a glowing crack: hit it three times. | act map marker on the fight node that holds the cracked wall, the secret-room banner, the wall itself |
+| `node_duel` | 214 | Fight: duel | Two swords meeting point to point, a spark where they touch. | act map MN_DUEL nodes (a gauntlet of duels) |
+| `node_crowd` | 215 | Fight: crowd | Three round heads, the middle one in front: one against three. | act map MN_CROWD nodes (the 1v3 crowd) |
+| `node_start` | 216 | Map: start | A footprint of two chevrons stepping up from a line. | act map MN_START (the foot of the map) |
 
 ## Hearts and HUD bits (7)
 
@@ -141,7 +164,7 @@ Built and run on Windows, 2026-11-14, hidden window (`MELEE_WINDOW_HIDDEN=1`), r
 | `frame_secret` | 100 | Frame: secret | The frame in violet, broken into dashes: found behind a wall. | behind a secret-pool item; the secret room's pedestal |
 | `frame_curse` | 146 | Frame: curse | The frame in purple with a thorn at each corner pointing in: it comes with a drawback. | behind a curse-pool item (design 7, the `curse` pool) when that pool is built |
 
-## Keyword and status glyphs (11)
+## Keyword and status glyphs (29)
 
 | key | id | name | concept | where to use it |
 |---|---|---|---|---|
@@ -156,6 +179,24 @@ Built and run on Windows, 2026-11-14, hidden window (`MELEE_WINDOW_HIDDEN=1`), r
 | `st_burn` | 132 | Status: Burn | A single flame with a hot core. | the BURN keyword, the Burning status tag over a foe |
 | `st_chill` | 133 | Status: Chill | A six-armed ice crystal. | the CHILL keyword, the Chilled status tag over a foe |
 | `st_mark` | 134 | Status: Mark | A crosshair: a ring, four ticks and a centre dot. | the MARK keyword, the Marked status tag over a foe |
+| `kw_wavedash` | 217 | Keyword: wavedash | A step down at a slant, then a long slide along the floor. | the WAVEDASH keyword |
+| `kw_short_hop` | 218 | Keyword: short hop | A low arc over the floor. | the SHORT HOP keyword |
+| `kw_l_cancel` | 219 | Keyword: L-cancel | A letter L on a shoulder tab, landing lines under it. | the L-CANCEL keyword |
+| `kw_ukemi` | 220 | Keyword: tech (the move) | A body bouncing off the floor and away. | the TECH keyword (the ground tech; `kw_tech` is the category mark) |
+| `kw_ledge_grab` | 221 | Keyword: ledge grab | A hook catching the corner of a ledge. | the LEDGE GRAB keyword |
+| `kw_roll` | 222 | Keyword: roll | A wheel turning along the floor. | the ROLL keyword |
+| `kw_airdodge` | 223 | Keyword: airdodge | A body inside a broken ring, sliding off at a slant. | the AIRDODGE keyword |
+| `kw_dash` | 224 | Keyword: dash | An arrowhead ahead of three speed lines. | the DASH keyword |
+| `kw_crouch_cancel` | 225 | Keyword: crouch cancel | A low block braced on the floor under a blow coming down. | the CROUCH CANCEL keyword |
+| `kw_powershield` | 226 | Keyword: powershield | A shield bubble with a flash on its rim. | the POWERSHIELD keyword |
+| `kw_nair` | 227 | Keyword: nair | A body with a ring all the way round it: the neutral air. | the NAIR keyword |
+| `kw_jab` | 228 | Keyword: jab | A short blunt punch with two impact ticks. | the JAB keyword |
+| `kw_smash` | 229 | Keyword: smash | A heavy wedge driven into a burst. | the SMASH keyword |
+| `kw_special` | 230 | Keyword: special | A round red button with a B on it. | the SPECIAL keyword |
+| `kw_grab` | 231 | Keyword: grab | Two brackets closing on a body. | the GRAB keyword |
+| `kw_throw` | 232 | Keyword: throw | A body flung up and away from a cupped hand. | the THROW keyword |
+| `kw_shine` | 233 | Keyword: shine | A hexagon outline with a bright centre. | the SHINE keyword |
+| `kw_laser` | 234 | Keyword: laser | A thin beam leaving a muzzle flash. | the LASER keyword |
 
 ## Tag emblems (synergy banners) (6)
 
@@ -190,7 +231,7 @@ Built and run on Windows, 2026-11-14, hidden window (`MELEE_WINDOW_HIDDEN=1`), r
 | `map_tick` | 157 | Map: visited | A green tick. | a cleared node on the act map |
 | `map_door_unknown` | 158 | Map: unknown door | A stone arch with a question mark in it: the door after the boss, before it is known. | the door node (row 7) until the devil or angel door opens; its chance tag |
 
-## World pieces (7)
+## World pieces (9)
 
 | key | id | name | concept | where to use it |
 |---|---|---|---|---|
@@ -201,18 +242,78 @@ Built and run on Windows, 2026-11-14, hidden window (`MELEE_WINDOW_HIDDEN=1`), r
 | `w_wall_2` | 163 | World: wall, breaking | The wall with a brick knocked out and light pouring through the gap. | the secret wall after two hits (the third breaks it) |
 | `w_door_devil` | 164 | World: devil door | The red door at full height on its step, horned, eyes lit. | the door standing in the held match when the devil deal opens |
 | `w_door_angel` | 165 | World: angel door | The pale door at full height on its step, a halo over it, light in the doorway. | the door standing in the held match when the angel room opens |
+| `w_campfire` | 211 | World: campfire | The campfire at room size: a ring of stones, crossed logs, a tall flame. | standing in the campfire room; the camp screen |
+| `w_shop_stall` | 212 | World: shop stall | The shop stall at room size: awning, posts, a counter with three wares on it. | standing in the shop room behind the wares |
 
-## Chunk 3 proposals
+## Effect meshes and stance-orb bodies (18)
 
-1. **Items still to come** (design section 7's first 40: this set covers the 32 in the table). Each new item gets
-   its model with its table row.
-2. **Per-keyword marks** where a category mark is too coarse: one for each tech (wavedash, short hop, L-cancel,
-   ledge grab, roll, airdodge, dash, crouch cancel, powershield) and each move class (nair, jab, smash, special,
-   grab, throw, shine, laser).
-3. **Boss and elite faces for the map**: a node mark per boss (Petey first), so the boss node shows who it is.
-4. **Fight node variants**: duel, crowd and gauntlet marks (the node kind picks the fight).
-5. **Effect meshes that are fx shapes today**: the gold beam, the brimstone beam, the quake teeth, thorns, the
-   ghost, tendrils, sigils, the stance orbs' bodies.
-6. **Synergy banner frames**: a ribbon and a plate the two item sprites sit on, in the six tag colours.
-7. **Run-end and camp pieces**: a trophy, a tombstone for a lost run, a loop counter, the campfire at room size,
-   a shop stall at room size, a stock-refill sparkle.
+| key | id | name | concept | where to use it |
+|---|---|---|---|---|
+| `fx_beam_gold` | 166 | Effect: gold beam | A length of gold beam with a bright core and a pointed head. | Perfect Guard's beam: lay lengths end to end along the shot, the head last |
+| `fx_beam_brim` | 167 | Effect: brimstone beam | A length of blood-red beam, ragged along both edges, with a hot core. | Brimstone Jab's beam across the stage |
+| `fx_quake_tooth` | 168 | Effect: quake tooth | One leaning tooth of rock on a chip of floor. | Smash Quake's wave: a row of teeth, tallest first, each leaning the way the wave runs |
+| `fx_thorns` | 169 | Effect: thorns | A fan of five green thorns from one root. | Crouch Thorns' strike from the back; Iron Maiden's bigger thorns |
+| `fx_ghost` | 170 | Effect: echo ghost | The pale wisp with two dark eyes and a tail. | Whiff Echo's ghost, where the whiff was |
+| `fx_tendril` | 171 | Effect: tendril | One red tendril curling to a barbed tip. | Bloodlust's lash at the attacker; three or four turned about the fighter |
+| `fx_sigil` | 172 | Effect: sigil | The red diamond sigil with its eye. | Crimson Count's sigils orbiting the fighter, one a KO |
+| `fx_ice_spike` | 173 | Effect: ice spike | One tall ice spike with a short one at its foot. | Ledge Spikes' stab; Frost Bud's burst |
+| `fx_spark` | 174 | Effect: spark | A four-point spark, long up and down. | Spark Ring's sparks, Chain Spark's arc ends, any hit glint |
+| `fx_ember` | 175 | Effect: ember | A small flame with a hot core. | Fire Lace's embers on everything; Glide Wake's line of flames |
+| `fx_shock_hex` | 176 | Effect: shock hexagon | A hexagon outline, bright on its inner edge. | Shine Bell's ring as it grows; Thunder Bell's wider one |
+| `fx_halo` | 177 | Effect: halo | A gold ring lying flat, for over a head. | the worn Halo (45 frames after a proc); the holy tint on shots |
+| `fx_wings` | 178 | Effect: demon wings | The pair of dark bat wings, spread. | the worn Demon Wings behind the fighter on the extra jump |
+| `orb_dodge` | 179 | Orb: dodge | An orb with a swept fin: it leads the airdodge. | the Dodge Orb's body (TR_WHILE_AIRDODGE) |
+| `orb_nair` | 180 | Orb: nair | An orb in a ring of six short spikes. | the Nair Ring's orbs (TR_WHILE_NAIR) |
+| `orb_dash` | 181 | Orb: dash | An orb with a chevron cut ahead of it. | the Dash Orb's body (TR_WHILE_DASH) |
+| `orb_shield` | 182 | Orb: shield | A small faceted bubble with a bright band. | the Shield Orbs round the shield (TR_WHILE_SHIELD); they break on blocks |
+| `fx_refill` | 213 | Effect: stock refill | A heart rising with two chevrons under it and a glint. | the campfire's refill tick over each player; a shop stock bought |
+
+## Boss and elite faces (4)
+
+| key | id | name | concept | where to use it |
+|---|---|---|---|---|
+| `boss_petey` | 183 | Boss: Petey | A flower head: a red spotted bulb in a collar of yellow petals, the mouth wide with white teeth. | the boss node and the boss card when the act's boss is Petey (MELEE_ENVOY_BOSS=petey) |
+| `boss_unknown` | 184 | Boss: unknown | A dark horned shape with a gold question mark. | the boss node before the act's boss is known, and any boss without a face yet |
+| `elite_helm` | 185 | Elite: helm | A steel helm with a dark visor slit and a red crest. | an elite's card and node when the elite is a heavy (the lead foe's weight class) |
+| `elite_mask` | 186 | Elite: mask | A violet mask with slanted bright eyes and two fangs. | an elite's card and node when the elite is a fast one |
+
+## Synergy and evolution banner pieces (15)
+
+| key | id | name | concept | where to use it |
+|---|---|---|---|---|
+| `banner_ribbon` | 187 | Banner: ribbon | A white ribbon with forked tails folded behind it: tint it to the synergy's colour. | the synergy and evolution banners' name strip (tint with Synergy::rgba) |
+| `banner_plate` | 188 | Banner: plate | A white cut-corner plate with a raised rim: the two items sit on it. | behind the two item sprites on a synergy banner (tint with Synergy::rgba, 40% toward white) |
+| `banner_plus` | 189 | Banner: plus | A gold plus: this item and that one. | between the two item sprites on a synergy banner |
+| `banner_arrow` | 190 | Banner: becomes | A gold arrow pointing right: this item becomes that one. | between the base item and its evolved form on an evolution banner |
+| `syn_thunder_bell` | 191 | Synergy: Thunder Bell | The shine's hexagon struck through by a lightning bolt. | the synergy banner and the pause Items page for `thunder_bell` (envoy_data::procs::SYNERGIES) |
+| `syn_spectrum` | 192 | Synergy: Spectrum | A prism throwing five bolts, each a different colour, under a halo. | the synergy banner and the pause Items page for `spectrum` (envoy_data::procs::SYNERGIES) |
+| `syn_wildfire` | 193 | Synergy: Wildfire | A seed split open with three flames leaping from it. | the synergy banner and the pause Items page for `wildfire` (envoy_data::procs::SYNERGIES) |
+| `syn_blood_moon` | 194 | Synergy: Blood Moon | A red crescent moon with one drop falling from its lower horn. | the synergy banner and the pause Items page for `blood_moon` (envoy_data::procs::SYNERGIES) |
+| `syn_iron_maiden` | 195 | Synergy: Iron Maiden | A dark red casket standing upright, thorns out of both sides and a slit of light down it. | the synergy banner and the pause Items page for `iron_maiden` (envoy_data::procs::SYNERGIES) |
+| `syn_tectonic` | 196 | Synergy: Tectonic | The floor broken in two slabs tilted apart, one tall tooth of rock between them. | the synergy banner and the pause Items page for `tectonic` (envoy_data::procs::SYNERGIES) |
+| `syn_superconductor` | 197 | Synergy: Superconductor | A coil of three rings with frost on it and a bolt jumping from its top. | the synergy banner and the pause Items page for `superconductor` (envoy_data::procs::SYNERGIES) |
+| `syn_seeker_stars` | 198 | Synergy: Seeker Stars | Two stars, each on a curling purple trail. | the synergy banner and the pause Items page for `seeker_stars` (envoy_data::procs::SYNERGIES) |
+| `evo_storm_crown` | 199 | Evolution: Storm Crown | A crown whose three points are lightning bolts. | the evolution banner and the evolved item's chip for `storm_crown` (envoy_data::procs::EVOLUTIONS) |
+| `evo_eclipse` | 200 | Evolution: Eclipse | A black moon in a gold rim, a flare breaking over one edge. | the evolution banner and the evolved item's chip for `eclipse` (envoy_data::procs::EVOLUTIONS) |
+| `evo_inferno_seed` | 201 | Evolution: Inferno Seed | The seed wearing a crown of five flames. | the evolution banner and the evolved item's chip for `inferno_seed` (envoy_data::procs::EVOLUTIONS) |
+
+## Run-end pieces (3)
+
+| key | id | name | concept | where to use it |
+|---|---|---|---|---|
+| `run_trophy` | 208 | Run: trophy | A gold cup with two handles on a dark base, a star on its bowl. | the run-end summary for a cleared run; the loop-cleared banner |
+| `run_tomb` | 209 | Run: tombstone | A round-topped stone with a crack and a small heart outline cut in it. | the run-end summary for a lost run (RUN OVER) |
+| `run_loop` | 210 | Run: loop | An arrow running round in a circle with a pip at its centre: one more loop. | the loop counter ("loop now N"), the act banner |
+
+## Chunk 4 proposals
+
+1. **Widen the model id** past `u8` (see Files): nothing else fits without it.
+2. **A roll parameter for world models**, so shots and beams lie along their velocity; then swap the effect shapes
+   in `items_ui::world` for the `fx_*`, `pj_*` and `orb_*` meshes, one item at a time, with before / after crops.
+3. **Animated sprites**: two or three frames for the pieces that should move in 2D (the campfire, the refill, the
+   cursor, the A button being pressed).
+4. **More boss faces** as bosses are added, and a face per elite archetype once the elite kinds are settled.
+5. **Items still to come** from the design's first 40, each with its table row.
+6. **Camp and road scenery** at screen size: the road's signposts, the camp's tent, a notice board for the run
+   record.
+7. **Curse marks**: one mark per drawback kind for the curse pool's cards.

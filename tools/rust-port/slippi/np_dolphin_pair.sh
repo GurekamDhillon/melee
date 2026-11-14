@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # SPDX-License-Identifier: MIT
 # Our engine vs the local-test Slippi Dolphin, paired through the local mock matchmaking server (loopback only).
 #   np_dolphin_pair.sh OUTDIR [--mm-port P] [--lag-ms N] [--loss-pct P] [--frames N] [--pads SEED] [--css X,Y] [-- engine args]

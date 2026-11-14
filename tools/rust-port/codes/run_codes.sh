@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Gameplay-code scenario checks (docs/rust-port/notes/gameplay-codes.md): each row runs one scenario twice headless
 # through `melee golden` (off = no --codes, on = --codes LIST) and compares the per-frame hash CSVs.
 #   expect "diff": on != off (the code changes the match);  "same": on == off (the code must not touch this match).

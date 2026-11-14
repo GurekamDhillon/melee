@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Zero-hitch gate (docs/rust-port/notes/zero-hitch.md): fixed scripted scenarios in REAL TIME (no turbo, windowed,
 # vsync on) with the frame profiler on; FAILS if any frame interval or tick is over 16.7 ms, and prints each offender
 # with its cause (zero_hitch_check.py).

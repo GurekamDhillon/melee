@@ -7,6 +7,7 @@ a batch resumes. Each lane: record.py (one Dolphin), then check.sh (two Dolphin 
 its coverage profiles merged into prof/lN.profdata (llvm-profdata from rustup's llvm-tools) and deleted.
 Default lanes: max(2, cores // 5) (each lane peaks at two Dolphins and one engine; all at Idle priority)."""
 import json, os, subprocess, sys, threading, time
+os.environ.setdefault("MELEE_WINDOW_HIDDEN", "1")  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 
 here = os.path.dirname(os.path.abspath(__file__))
 TOOLS = os.path.expanduser("~/.rustup/toolchains/stable-x86_64-pc-windows-msvc/lib/rustlib/x86_64-pc-windows-msvc/bin")

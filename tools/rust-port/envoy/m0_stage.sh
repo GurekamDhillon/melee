@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy milestone 0, probe (c): stage switching under rollback with items off (pad_falcon_fox_fd: items=off), using the
 # stage_switch mod's C twin (rust/mods/stage_switch/c: clang, no wasm32 Rust target needed; same id and rules):
 #   1. two golden runs with the mod: byte-identical per-frame hash CSVs, 5 switches;

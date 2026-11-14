@@ -142,3 +142,46 @@ sent off the screen in the same way.
   Screenshot frames hitch on FD too (shot capture), so profiles with shots are not evidence.
 - Still open: water-wheel platforms (sfyuka00-03 on st02asuisha), hiding broken bricks' models; the 060003 platform
   is skipped (GBLK bone index unresolved).
+
+## Story table, chaining and the Envoy entry points (Nov 14)
+
+- **Chaining.** `secs_of` lists every section of a GD stage in story order; side rooms follow their main section.
+  The Lake (0x7001): 080103 (+a, b) -> 080104 (+a, b) -> 080105 (+a). The Jungle (0x7002): 060001 -> 060002 (+a,
+  the wheel room) -> 060003 -> 060004 (+a, the climb). Each main section's way on is a door id in the table
+  (`SecDef::exit`; 0 = its GMSJ door): it leads to the next main section's entry (`ENTRY` pseudo door at the
+  section's first player spawn), and past the last one to the story (`STORY_NEXT`). Sections sit 8000 apart on x,
+  side rooms 4000 below. Proof: `MELEE_EXPLORE_OPEN=door@frame` story walks (runs `st_lake_vs|vsace`,
+  `st_jun_vs|vsace`): 080103 -> 080104 -> 080105 -> way on -> scene 4 -> Rayquaza (placeholder) -> scene 5; Jungle
+  060001 -> 060002 -> 060003 -> 060004 -> way on -> scene 2 -> scene 3. Damage carries (same match).
+- **Story table** `explore::STORY`: `Step::Map(id) | Boss(kind) | Scene(slot, kind)` with `Carry::Keep | Rest`.
+  Scene slots found from the level data (Brawl's cutscenes are in `movie/`, never read): 1 Jungle opening, 2 Jungle
+  end (060004's yellow door 06000402), 3 Lake opening, 4 before Rayquaza (080105's GMSJ exit), 5 after Rayquaza.
+  Every slot runs a placeholder card (black, 2 s) for now; `SceneKind` (Card, EnvoyFight, Camp, Results) names what
+  the owner wants there. Carry `Rest` is recorded, not yet applied.
+- **What Envoy can use** (envoy-sse-design "what Envoy asks"):
+  - a map as an expedition room: `explore::enter_section(gd_id)` -> carrier stage; every section loaded before the
+    first frame (one loader per map at engine start); end event `explore::END == END_EXIT` when the party takes the
+    level's way on. Doors and exits are room transitions inside it.
+  - a boss: `explore::boss::start(kind, tier, hp_scale)`; the Geno boss lane sets `boss::BOSS_HOOK` and raises
+    `END_BOSS` itself. With no hook: logged as blocked, placeholder card, `END_BOSS`.
+  - a scene slot: `explore::scene::start(slot)`, `END_SCENE`.
+  - enemies: `explore::ENEMY_HOOK(brawl_kind, x, y, facing, section)` at every map spawn point (the Geno enemies);
+    the hand-made `subspace` kinds stay the stand-in; pool cap and clear-on-door unchanged.
+  - slice 0 primitives: `explore::content_mask()` (bit per GD stage, bit 30 enemy looks; 0 without files) and
+    `explore::digest(gd_id)` (FNV-1a of the map's collision as the game gets it). **Not yet wired** into the plan,
+    the run record, the replay header, the hash or the netplay AND, and the stage pick is not yet in the replay
+    header.
+- **Rollback-safety fixes found on the way.** (1) The map state lived in static `OnceLock`s filled by loader
+  threads and the loaders printed: a snapshot rewrite of the statics / std's stderr state hung the gate synctest one
+  run in three to six. Now one leaked block (thread-local on the game thread), loader notes printed by the game
+  thread; 8/8 synctests pass. (2) `melee_engine::logq`: the asset worker's m-ex decode logs (`mexdata: ...`) panicked
+  in std's stderr ("RefCell already borrowed") after a rollback load and hung an ACE subspace_check; worker lines are
+  now queued and printed by the game thread.
+- **Moving platforms.** 060002a's sfyuka00-03 follow st02asuisha's bone path (600 frames, a circle ~60 across):
+  `movers_tick` keeps prev_pos (`mpLib_80057424`), writes the points, `mpJointUpdateBounding`. Riding not yet
+  checked with a fighter; the wheel model is not drawn (prop rigs carry no textures).
+- **Bricks.** GBLK names its brick by model index, not bone (bytes +0x2C/+0x2D: 0x7c..0x8e / 0x65..0x67), and the
+  main model has one bone, so the Jungle's bricks have no place: left out (they were invisible collision at the
+  origin). Brick models draw until broken where a brick has a place (none on these maps yet).
+- **The ~93 ms map load frame** (for the zero-lag lane): file read+parse 47 ms (GrNLa.dat etc., also on FD), draw
+  15-17 ms and texture upload 12-15 ms (the map's first draw; FD's own load frame is 74.5 ms), fighter create 7 ms.

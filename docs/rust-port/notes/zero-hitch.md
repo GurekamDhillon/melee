@@ -504,3 +504,46 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   fighter create ~9 ms, the envoy_sim match-setup hook ~8 ms (includes host work it calls), all in one tick. The asset
   service (`MELEE_ASSETS=on`, still off by default) takes it to ~29 ms. Getting under 16.7 needs the setup split over
   ticks or the envoy hook's work moved earlier; both change the sim's frame layout and need NHV1/golden proof.
+
+### Round 2 (2026-11-13, port/diverge1 98f8567e2)
+- First Envoy fight setup tick (no lead: camp door -> fight in 3 ticks): 34.7 -> 21.6 ms (shared machine), 19.4 ms quiet.
+  - Petey's boss parameters (Brawl files) were read and decoded inside the first fight's tick (envoy_sim
+    `fight_setup` -> `gd_envoy_boss_dmg` -> `petey_file::get`, 5.7 ms; found with the new `wasm hook` phase and the
+    `gd_prof_mark` host call). Now `petey_file::prefetch` reads them on a thread when the plan is first published.
+  - Asset service worker on by default (`MELEE_ASSETS=off` opts out). Plan hints no longer wait for the arm, and the
+    Fox / Marth defaults are hinted: every first-fight file is an apply hit (ItCo 4.1 ms apply, was 10-12 in place).
+  - wasmi translates mods eagerly at load (no measurable change on this tick; removes first-call translation).
+- Left in that tick (quiet run, 19.4 ms): ItCo apply incl. a 6 MB arena allocation 4.7, players create 8.8 (Marth
+  tag partner 5.0, of which `ft create: data 80085B10` 2.7 with PlMsAJ 1.9 MB and a 28 MB arena allocation), HUD 1.0,
+  the rest of scene on_enter ~2.6, after on_enter ~2.5. Under 16.7 needs ~3 ms more: creating the Envoy tag partner
+  a tick later (an Envoy-only sim change) or pre-faulting/keeping the 28 MB and 6 MB arena blocks.
+- Hidden pacer: `sleep_until` uses a high-resolution waitable timer plus a 0.6 ms spin. `zero_hitch_check.py` judges a
+  frame by its game work (interval minus pacing sleep and display wait): ~5400 "over budget" pacing frames per hidden
+  run -> 0.
+- Quiet confirmation (no other melee/cargo/rustc/link process, 12000 ticks hidden real time, warm list primed):
+  game work over budget: the first-fight tick 722 (19.4 ms) and 3 "unaccounted (OS/loop)" frames at ticks
+  9113-9159 (tick 1.1 ms each: OS stalls, not engine work). No GPU-pipeline frame, no wave-arrival hitch.
+- Proof: gate OK (goldens, synctest d4 3000 frames 0 mismatches, audio = C, snapguard); run_modes_check 9000 ticks
+  equal (tick + NHV1); MELEE_ASSETS on vs off: tick.log and hash.log equal, headless and window.
+
+### Round 3 (2026-11-13, port/diverge1 c587e0c78): quiet 12000-tick hidden run, 0 over budget
+- The "28 MB allocation" in the first fight's tick was the host ARAM `Vec` growing (MELEE_BIG_ALLOC backtrace:
+  `host_dev_com_request` -> realloc): PlMsAJ (1.9 MB) lands at ~26 MB in ARAM, so the Vec reallocated, copied and
+  zero-filled up to 28 MB. ARAM is now its full 32 MB (ARGetSize), zeroed and touched at boot (startup frame 26 -> 38 ms,
+  the exempt first frame). Marth's create 5.0 -> 3.5 ms. The 6 MB block is ItCo's apply (pre-faulted already; its
+  4-5 ms is the allocation replay, not page faults).
+- Envoy only: the tag partner's `Fighter_Create` runs 30 logic frames into the match (during the entry, before GO;
+  `player.rs` TAG_DEFER, `envoy.rs` TAG_DEFER_WAIT; two frames was not enough: the setup tick runs several logic
+  frames). Vanilla and retail transforms never defer.
+- The 3 "unaccounted (OS/loop)" frames (ticks 9113-9159): each followed a "pacing sleep overshoot" hitch record
+  (slept 12.8-14.1 ms, then 13-15 ms unaccounted with a 1 ms tick): the high-resolution waits woke a whole timer tick
+  late. Ours, not the OS's by chance: Windows 11 power-throttles a process with no visible window and ignores its
+  timer resolution. `sleep_until` now opts out (`SetProcessInformation(ProcessPowerThrottling)`, IGNORE_TIMER_RESOLUTION
+  and EXECUTION_SPEED). After: 0 such frames in 12000 ticks. No checker exception was added.
+- Quiet confirmation (no other melee/cargo/rustc/link process; hidden, real time, 12000 ticks, warm list primed):
+  `ZERO-HITCH GATE OK`, 0 over budget (+ the exempt startup frame). Worst game-work frame: the first fight's setup,
+  tick 15.5 ms / 16.03 ms work (was 34.7 at the start of this work); next worst 8.7 ms.
+- Proof: gate OK (goldens, synctest d4 3000 frames 0 mismatches, audio = C, snapguard 0.251/0.399/5.287);
+  run_modes_check 9000 ticks equal (tick log and NHV1; 8144 match frames: the Envoy sim changed by the deferral, the
+  same in both modes); switch_torture at depth 4, 3000 frames per fight (1, 2, 3c, 5): PASS, 0 mismatches;
+  loop_run (camp loop, items) OK.

@@ -467,6 +467,9 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("match setup"));
     crate::tu::petey::disarm();
     crate::tu::subspace::begin_match(0x5B5A_CE01 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
+    melee_fighter::tu::player::TAG_DEFER = false;
+    melee_fighter::tu::player::TAG_DEFERRED = [None; 4];
+    TAG_DEFER_WAIT = 0;
     // Envoy sessions: the match-end hold is the sim's, per match (gd_envoy_end_hold); never left on for a retail match
     crate::tu::gmvs::gmVs_SetEndHold(0);
     melee_fighter::hooks::ENVOY_TAG_MASK = [0; 4];
@@ -477,6 +480,9 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         return;
     }
     let d = &mut *d;
+    // the tag partners are created 30 logic frames into the match (during the entry, before GO), not in its setup tick (player.rs TAG_DEFER)
+    melee_fighter::tu::player::TAG_DEFER = true;
+    TAG_DEFER_WAIT = 30; // logic frames: the setup tick itself runs several; well before GO (no tag possible)
     crate::tu::tag_swap::reset();
     EVENTS = [0; 4];
     melee_fighter::hooks::ENVOY_LCANCEL = Some(on_lcancel);
@@ -1150,8 +1156,18 @@ unsafe fn d_team(slot: i32) -> i32 {
 
 /// Per logic frame (after the post chain, next to `petey::tick`): keep each blast on its capsule for its life (put
 /// back if the owner's own state change cleared it and its move left the slot free), then switch it off.
+/// Logic frames until the deferred tag partners are created (0: none pending).
+pub static mut TAG_DEFER_WAIT: i32 = 0;
+
 pub unsafe fn tick() {
     crate::tu::subspace::sub_tick();
+    if TAG_DEFER_WAIT > 0 {
+        TAG_DEFER_WAIT -= 1;
+        if TAG_DEFER_WAIT == 0 {
+            melee_fighter::tu::player::tag_create_deferred();
+            melee_fighter::tu::player::TAG_DEFER = false;
+        }
+    }
     if ARMED != 0 && hud_off() {
         hide_retail_hud();
     }

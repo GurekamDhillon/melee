@@ -867,7 +867,7 @@ pub fn init(iso: Option<String>) {
     if std::env::var("MELEE_ASSET_SERVICE").is_ok_and(|v| v == "off") || !recheap::init() {
         return;
     }
-    let worker = std::env::var("MELEE_ASSETS").is_ok_and(|v| v == "on") && iso.is_some(); // merge build: off unless MELEE_ASSETS=on
+    let worker = !std::env::var("MELEE_ASSETS").is_ok_and(|v| v == "off") && iso.is_some(); // on by default; MELEE_ASSETS=off
     let s = Box::leak(Box::new(Svc {
         m: Mutex::new(Inner { entries: Vec::new(), jobs: VecDeque::new(), clock: 0, stats: Stats::default(), unplannable: Vec::new() }),
         cv: Condvar::new(),
@@ -1043,7 +1043,9 @@ fn entry_of(name: *const i8) -> i32 {
 /// use unless the CSS pick says otherwise) and animation bank. Reads only immutable name tables.
 pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
     use melee_modes::tu::envoy as ev;
-    if plan[ev::P_ACTIVE] == 0 || svc().is_none_or(|s| !s.worker) {
+    // not only an armed plan: the sim publishes the coming fight's plan from mod load on, and the camp door to that
+    // fight can be a few ticks; prefetching it before the arm gives the first fight its lead (never sim-visible)
+    if svc().is_none_or(|s| !s.worker) {
         return;
     }
     // once per distinct plan (the sim may publish the same plan every frame)
@@ -1059,6 +1061,10 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
     let mut cks: Vec<i32> = Vec::new();
     let _s = crate::arena::SysScope::enter();
     cks.extend([plan[ev::P_MAIN], plan[ev::P_PARTNER], plan[ev::P_MAIN2], plan[ev::P_PARTNER2]]);
+    // an unset main / partner becomes Fox / Marth at match_begin (envoy.rs `pair`): hint those defaults too
+    if plan[ev::P_MAIN] < 0 || plan[ev::P_PARTNER] < 0 {
+        cks.extend([0x02, 0x09]);
+    }
     let ncpu = plan[ev::P_NCPU].clamp(0, 3) as usize;
     cks.extend(&plan[ev::P_CPU_CK..ev::P_CPU_CK + ncpu]);
     cks.extend(&plan[ev::P_WAVE_CK..ev::P_WAVE_CK + 3]);

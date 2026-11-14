@@ -736,6 +736,8 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_combo_break", |slot: i32, frames: i32, freeze: i32| -> i32 { unsafe { melee_modes::tu::envoy::combo_break(slot, frames, freeze) } });
     w!("gd_envoy_jumps", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::jumps(slot) } });
     w!("gd_envoy_air_jump", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::air_jump(slot) } });
+    // an Envoy pickup by button: the grounded fighter takes Melee's item pickup state (no jab off the same A press)
+    w!("gd_envoy_pickup_anim", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::pickup_anim(slot) } });
     w!("gd_envoy_blast", |slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32| -> i32 {
         unsafe { melee_modes::tu::envoy::blast(slot, canon(x), canon(y), canon(r), dmg, angle, kbg, bkb) }
     });

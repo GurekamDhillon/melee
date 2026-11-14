@@ -1133,6 +1133,24 @@ unsafe fn orbiter(v: &[i32; VW], owner: i32, id: i32, lv: i32, charge: i32, (mut
     if ch >= 1.0 || d.charge == C_PASSIVE {
         glow = 1.0 + 0.4 * sin(T as f32 * 0.3);
     }
+    // hidden until it fires (envoy-items-design.md 11.11): out for its dart and return, then fading over FADE
+    // frames; a player's orbiters also show in the build flourish (V_FLOURISH)
+    const FADE: i32 = 20;
+    let mut seen = -1;
+    for e in 0..LOG {
+        let l = log_entry(v, e);
+        let age = play - l[0];
+        if l[1] == id && l[2] == owner && (0..DART + BACK + FADE).contains(&age) && (seen < 0 || age < seen) {
+            seen = age;
+        }
+    }
+    let flourish = if (0..OWNER_FOE).contains(&owner) { v[V_FLOURISH + owner as usize / 2] } else { 0 };
+    let show = if seen >= 0 { 1.0 - ((seen - DART - BACK) as f32 / FADE as f32).clamp(0.0, 1.0) } else { 0.0 };
+    let show = show.max((flourish as f32 / 10.0).min(1.0));
+    if show <= 0.0 {
+        return;
+    }
+    let dim = dim * show;
     for e in 0..LOG {
         let l = log_entry(v, e);
         let age = play - l[0];
@@ -1287,6 +1305,7 @@ unsafe fn world(v: &[i32; VW]) {
     if v[V_ITEMS_ON] == 1 {
         items_ui::pedestals(v);
         items_ui::world(v);
+        items_ui::bling(v);
         items_ui::body(v);
     }
     // the drops: the model in its glass shell with a beam in the owner's colour (co-op), else the family's

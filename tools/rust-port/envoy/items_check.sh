@@ -41,8 +41,14 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #       a chain two or more deep, no proc deeper than 4, a synergy's first-trigger banner, the evolutions formed; the
 #       proc sequence is the same at both depths (same seed, same result);
 #   21. coopsyn: co-op, both CPUs, player 1 with the three co-op items: Kin Tether, Kindred Spark fire.
+#   Pickup (11.11):
+#   23. pickup: knob `pedfloor` puts an item-room pedestal on the floor; pickup_pad.txt walks player 1 past it with no
+#       button (in range, then out of range, nothing taken), then back with A presses: taken by the button, and the
+#       fighter in Melee's pickup motion (LightGet) instead of a jab;
+#   24. air: pickup_air_z_pad.txt / pickup_air_l_pad.txt: knob `pedair` puts the pedestal under player 1 as a hop leaves the floor; Z / L taps in the air: taken
+#       by the button from an airborne state (jumps, falls, EscapeAir).
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd
-#   shop devil angel secret whiff triggers coopstock map campfire orbs synergy coopsyn shiftko";
+#   shop devil angel secret whiff triggers coopstock map campfire orbs synergy coopsyn shiftko pickup air";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -51,7 +57,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs synergy coopsyn shiftko}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs synergy coopsyn shiftko pickup air}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -275,6 +281,30 @@ for d in $depths; do
     seen coopsyn "$d" "envoy: item fires kin_tether\|envoy: item fires kindred_spark" || miss="$miss (no co-op item fired)"
     check 21 coopsyn "$d" "$line" "$miss"
     echo "     coopsyn d$d: tether $(grep -ac 'item fires kin_tether' "$(L coopsyn "$d")"), kindred $(grep -ac 'item fires kindred_spark' "$(L coopsyn "$d")"), rally $(grep -ac 'item fires rally_banner' "$(L coopsyn "$d")")"
+  fi
+  if on pickup; then
+    line=$(run pickup "$d" "pedfloor,noshop" MELEE_PAD_SCRIPT="$here/pickup_pad.txt")
+    f="$(L pickup "$d")"; miss=""
+    seen pickup "$d" "envoy: item room open" || miss="$miss (no pedestal)"
+    # first in range, then out again with the item still there (walking past takes nothing), then the A press takes it
+    a=$(grep -an "envoy: pickup range entered" "$f" | head -1 | cut -d: -f1)
+    b=$(grep -an "envoy: pickup range left, item untaken" "$f" | head -1 | cut -d: -f1)
+    c=$(grep -an "envoy: pickup by button" "$f" | head -1 | cut -d: -f1)
+    [ -n "$a" ] || miss="$miss (never in range)"
+    [ -n "$b" ] && [ -n "$a" ] && [ "$b" -gt "$a" ] || miss="$miss (walking past never left the item behind)"
+    [ -n "$c" ] && [ -n "$b" ] && [ "$c" -gt "$b" ] || miss="$miss (no take by the button after the walk past)"
+    seen pickup "$d" "envoy: item taken" || miss="$miss (no item taken)"
+    seen pickup "$d" "envoy: pickup motion (LightGet)" || miss="$miss (no pickup motion: the A press jabbed)"
+    check 23 pickup "$d" "$line" "$miss"
+  fi
+  if on air; then
+    for b in z l; do
+      line=$(run "air$b" "$d" "pedair,noshop" MELEE_PAD_SCRIPT="$here/pickup_air_${b}_pad.txt")
+      miss=""
+      grep -aqE "envoy: pickup by button, state (2[5-9]|3[0-4]|236)$" "$(L "air$b" "$d")" || miss="$miss (no airborne take with ${b})"
+      seen "air$b" "$d" "envoy: item taken" || miss="$miss (no item taken)"
+      check 24 "air$b" "$d" "$line" "$miss"
+    done
   fi
 done
 if on synergy; then

@@ -64,7 +64,8 @@ pub fn stocks(e: &mut E, x: f32, y: f32, w: f32, left: i32, total: i32, label: &
         spr_c(e, S_DISC, x + 10.0 + cw, y + 34.0, 18.0 / 32.0, INK);
         for i in 0..n {
             let cx = x + 18.0 + i as f32 * 16.0;
-            if i < left {
+            if heart(e, i < left, cx, y + 34.0, 16.0, WHITE) {
+            } else if i < left {
                 spr_c(e, S_DISC, cx, y + 34.0, 12.0 / 32.0, WHITE);
             } else {
                 spr_c(e, S_DISC, cx, y + 34.0, 12.0 / 32.0, alpha(PALE, 0.35));
@@ -122,6 +123,8 @@ pub struct Party {
     pub lvs: [[i32; SLOTS]; 4],
     pub keys: [[i32; KEYSTONES]; 2],
     pub shared: bool,
+    /// Each player's item copies by id (the build the cards show off; envoy-items-design.md 11.11)
+    pub items: [[u8; envoy_data::items::ITEM_IDS]; 2],
 }
 
 /// A fight kind's word (FK_*).
@@ -178,7 +181,7 @@ pub fn loop_fight(b: &mut Buf, lp: i32, fight: i32, fights: i32) {
 
 pub fn party_from_record(r: &[i32]) -> Party {
     let mut p = Party { have: true, players: if r[R_COOP] != 0 { 2 } else { 1 }, fight: r[R_FIGHT], fights: 4, lp: rec_loop(r[R_LOOP]).max(1), pool: r[R_POOL], pairs: [-1; 4],
-        ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: r[R_SHARED] != 0 };
+        ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: r[R_SHARED] != 0, items: [[0; envoy_data::items::ITEM_IDS]; 2] };
     for set in 0..4 {
         for k in 0..SLOTS {
             (p.ids[set][k], p.lvs[set][k]) = rec_drive(r[R_DRIVES + set * SLOTS + k], r[1]);
@@ -188,13 +191,24 @@ pub fn party_from_record(r: &[i32]) -> Party {
         p.keys[q].copy_from_slice(&r[R_KEYS + q * KEYSTONES..R_KEYS + (q + 1) * KEYSTONES]);
     }
     p.pairs.copy_from_slice(&r[R_PAIRS..R_PAIRS + 4]);
+    // version 9: R_DRIVES holds item copies, a byte per id (envoy_sim items::rec_put), not drives
+    if r[1] >= 9 {
+        p.ids = [[0; SLOTS]; 4];
+        p.keys = [[0; KEYSTONES]; 2];
+        for q in 0..2 {
+            for id in 1..envoy_data::items::ITEM_IDS {
+                let w = if id < 40 { R_DRIVES + q * 10 + id / 4 } else { R_KEYS + 1 + q * 2 + (id - 40) / 4 };
+                p.items[q][id] = (r[w] as u32 >> (8 * (id % 4)) & 0xFF) as u8;
+            }
+        }
+    }
     p
 }
 
 pub fn party_from_view(v: &[i32; VW]) -> Party {
     let pb = |p: usize| V_P0 + p * V_PW;
     let mut q = Party { have: true, players: v[V_HUMANS].clamp(1, 2) as usize, fight: v[V_FIGHT], fights: v[V_FIGHTS].max(1), lp: v[V_LOOP].max(1), pool: v[V_POOL],
-        pairs: [-1; 4], ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: v[V_SHARED] != 0 };
+        pairs: [-1; 4], ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: v[V_SHARED] != 0, items: [[0; envoy_data::items::ITEM_IDS]; 2] };
     for set in 0..4 {
         let b = pb(set / 2) + (set % 2) * SLOTS;
         q.ids[set].copy_from_slice(&v[b + P_DRIVES..b + P_DRIVES + SLOTS]);
@@ -204,8 +218,42 @@ pub fn party_from_view(v: &[i32; VW]) -> Party {
         q.keys[p].copy_from_slice(&v[pb(p) + P_KEYS..pb(p) + P_KEYS + KEYSTONES]);
         q.pairs[p * 2] = v[pb(p) + P_MAIN];
         q.pairs[p * 2 + 1] = v[pb(p) + P_PARTNER];
+        for id in 1..envoy_data::items::ITEM_IDS {
+            q.items[p][id] = v[V_INV + p * envoy_data::items::ITEM_IDS + id].clamp(0, 255) as u8;
+        }
     }
     q
+}
+
+/// A build row: each item held as a chip of its colour (x2 on a stack), left to right from (x, cy), at most `w` wide.
+/// The camp cards, the run-end summary and the pause header all show a build with it.
+pub fn build_row(e: &mut E, items: &[u8; envoy_data::items::ITEM_IDS], x: f32, cy: f32, w: f32, size: f32) -> usize {
+    let step = size + 4.0;
+    let mut cx = x + size * 0.5;
+    let mut n = 0;
+    for it in envoy_data::items::ITEMS.iter() {
+        let c = items[it.id as usize];
+        if c == 0 {
+            continue;
+        }
+        if cx > x + w - size * 0.5 {
+            // no room left: a "+n" for the rest
+            let more = envoy_data::items::ITEMS.iter().filter(|j| items[j.id as usize] > 0).count() - n;
+            let mut s = Buf::new();
+            s.s("+").i(more as i32);
+            e.text_ex(cx - size * 0.4, cy - 6.0, bs(11), INK, ALIGN_LEFT, 0.0, s.str());
+            break;
+        }
+        item_icon(e, it.id, cx, cy, size, 1.0);
+        if c > 1 {
+            let mut s = Buf::new();
+            s.s("x").i(c as i32);
+            e.text_ex(cx + size * 0.45, cy + size * 0.1, bs(9), INK, ALIGN_CENTER, 0.0, s.str());
+        }
+        cx += step;
+        n += 1;
+    }
+    n
 }
 
 /// The held keystones of the party (pool indices), deduplicated, at most 3.

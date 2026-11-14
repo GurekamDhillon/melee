@@ -1681,6 +1681,7 @@ unsafe fn proj_end(i: usize) {
 pub(crate) unsafe fn reset_match() {
     S.proc_at = [0; NP];
     S.ped_near = [0; NP];
+    S.pick_prev = [-1; NP];
     flourish();
     S.proj = [[0; PJ_W]; PROJ];
     S.pv = [[0; 2]; PROJ];

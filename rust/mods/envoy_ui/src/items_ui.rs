@@ -366,6 +366,84 @@ pub unsafe fn pedestals(v: &[i32; VW]) {
                 vfx::fx(vfx::RING, bx, fy, 17.0, 17.0).cols(c, c).p(0.8, 0.03, 8.0, 0.8).age(t).a(0.8).emit();
                 vfx::fx(vfx::STAR, bx - 2.4, fy + 2.6, 7.0, 7.0).cols(WHITE, c).p(1.5, 0.0, 0.0, 0.0).age(t).seed(sd).a(0.6 + 0.4 * sin(t * 0.2 + sd)).emit();
             }
+            // in pickup range (V_PED_NEAR, the sim's own range test): a highlight ring and a floating A button,
+            // GameCube green, over the item; the take itself is the sim's (A on the ground, Z / L / R in the air)
+            if !moving && v[V_PED_NEAR + p] == k as i32 + 1 {
+                let pulse = 0.5 + 0.5 * sin(t * 0.25);
+                fx(FX_RING, bx, fy, 8.5 + 1.2 * pulse, 1.2, 0.0, alpha(WHITE, 0.6 + 0.4 * pulse));
+                let ay = fy + 14.0 + 1.0 * sin(t * 0.12);
+                let a_btn = crate::fx::em_model("hud_a_button");
+                if a_btn >= 0 {
+                    // envoy-models1.md: the A button model, facing the camera
+                    crate::fx::model(a_btn, bx, ay, 0.0, 0.0, 8.0, 1.0, crate::fx::MAT_BODY, [0.4, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
+                } else {
+                    fx(FX_DISC, bx, ay, 4.2, 0.0, 0.0, alpha(0x1A12_2CFF, 0.9));
+                    fx(FX_DISC, bx, ay, 3.5, 0.0, 0.0, 0x2FC4_5AFF);
+                    fx(FX_LINE, bx - 1.5, ay - 1.8, bx, ay + 2.0, 0.7, WHITE);
+                    fx(FX_LINE, bx, ay + 2.0, bx + 1.5, ay - 1.8, 0.7, WHITE);
+                    fx(FX_LINE, bx - 0.8, ay - 0.2, bx + 0.8, ay - 0.2, 0.6, WHITE);
+                }
+            }
+        }
+    }
+}
+
+/// Showing off a build (11.11): the flourish (V_FLOURISH: each held item flashes round the fighter in its colour,
+/// fight intro and the room after a win, about a second) and the aura (V_AURA: a faint glow of the rarest item's
+/// colour at the fighter's feet). Presentation only; nothing here is read back by the sim.
+pub unsafe fn bling(v: &[i32; VW]) {
+    if v[V_ITEMS_ON] != 1 || crate::pause::fx_scale() <= 0.0 {
+        return;
+    }
+    let t = T as f32;
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    for p in 0..humans {
+        let b = pb(p);
+        if v[b + P_HAVE_POS] == 0 {
+            continue;
+        }
+        let (mx, my) = (f32::from_bits(v[b + P_X] as u32), f32::from_bits(v[b + P_Y] as u32));
+        let aura = v[V_AURA + p];
+        if let Some(it) = item(aura) {
+            // subtle: a low whole-body tint of the rarest item's colour (gd_ui_body_tint, every group 0x3F; it stacks
+            // under the per-group item tints of `body`) and a thin floor ring, breathing slowly; a moment brighter
+            // after a proc. The earlier soft light column read as a spawn beam and is gone.
+            let age = v[V_PROC_AGE + p].clamp(0, 255) as f32;
+            let lift = (1.0 - age / 30.0).max(0.0) * 0.12;
+            let k = 0.10 + 0.03 * sin(t * 0.05) + lift;
+            crate::gd_ui_body_tint(p as i32, 0x3F, it.rgba >> 8, (0.08 + 0.6 * lift + 0.02 * sin(t * 0.05)) * crate::pause::fx_scale());
+            fx(FX_RING, mx, my + 0.6, 7.5, 0.7, 0.0, alpha(it.rgba, k * 2.2));
+        }
+        let left = v[V_FLOURISH + p];
+        if left <= 0 {
+            continue;
+        }
+        let n = ITEMS.iter().filter(|it| v[V_INV + p * ITEM_IDS + it.id as usize] > 0).count();
+        if n == 0 {
+            continue;
+        }
+        // 60 frames: out from the body (0-12), a turn round it, back in with a flash (48-60)
+        let age = (60 - left).clamp(0, 60) as f32;
+        let out = ease((age / 12.0).min(1.0)) * (1.0 - ease(((age - 48.0) / 12.0).clamp(0.0, 1.0)));
+        let a = (age / 6.0).min(1.0) * (1.0 - ((age - 50.0) / 10.0).clamp(0.0, 1.0));
+        let r = 6.0 + 9.0 * out;
+        let mut i = 0;
+        for it in ITEMS.iter() {
+            if v[V_INV + p * ITEM_IDS + it.id as usize] <= 0 {
+                continue;
+            }
+            let ang = age * 0.09 + i as f32 * TAU / n as f32 + p as f32 * 0.5;
+            let (x, y) = (mx + cos(ang) * r, my + 10.0 + sin(ang) * r * 0.75);
+            fx(FX_DISC, x, y, 2.6, 0.0, 0.0, alpha(it.rgba, a));
+            fx(FX_RING, x, y, 3.2, 0.6, 0.0, alpha(WHITE, 0.8 * a));
+            if (i as i32 * 7 + age as i32) % 20 < 3 {
+                fx(FX_SPIKES, x, y, 1.0, 4.0, ang, alpha(WHITE, a));
+            }
+            i += 1;
+        }
+        if age >= 48.0 {
+            let k = (age - 48.0) / 12.0;
+            fx(FX_RING, mx, my + 10.0, 4.0 + 14.0 * ease(k), 1.4, 0.0, alpha(WHITE, 0.7 * (1.0 - k)));
         }
     }
 }
@@ -381,7 +459,7 @@ pub unsafe fn strip(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32, w: f32) 
             continue;
         }
         any = true;
-        crate::icons::icon(e, it.id, cx, row_y, 22.0);
+        item_icon(e, it.id, cx, row_y, 22.0, 1.0);
         if n > 1 {
             let mut s = Buf::new();
             s.s("x").i(n);
@@ -437,7 +515,7 @@ pub unsafe fn flash(e: &mut E, v: &[i32; VW]) {
         let (sc, _) = enter(age);
         let _ = sc;
         sticker(e, S_FACE_WHITE, x, y, w, 64.0, if p == 0 { -1.2 } else { 1.2 }, alpha(WHITE, a), |e| {
-            crate::icons::icon_a(e, it.id, x + 26.0, y + 25.0, 36.0, a);
+            item_icon(e, it.id, x + 26.0, y + 25.0, 36.0, a);
             e.text_ex(x + 52.0, y + 5.0, d(18), alpha(INK, a), ALIGN_LEFT, 0.0, s.str());
             rich(e, x + 52.0, y + 27.0, w - 62.0, 13, 16.0, alpha(INK, a), false, card, 2);
         });
@@ -491,12 +569,13 @@ pub unsafe fn banners(e: &mut E, v: &[i32; VW]) {
     let kind = v[V_PED_KIND];
     if (kind == PED_ITEM_ROOM || kind == PED_BOSS) && v[V_RW] == 0 {
         let title = if kind == PED_BOSS { "Boss drop: take one" } else { "Item room" };
-        let say = if kind == PED_BOSS { "Walk into the item you want. The other one stays behind." } else { "Walk to the pedestal to take the item." };
+        let say = if kind == PED_BOSS { "Press A by the item you want (Z in the air). The other one stays behind." } else { "Press A by the pedestal to take the item (Z in the air)." };
         let w = tw(say, bs(13)).max(tw(title, d(22))) + 40.0;
         sticker(e, S_FACE_SUNNY, 320.0 - w * 0.5, 120.0, w, 58.0, -1.0, WHITE, |e| {
             e.text_ex(320.0, 124.0, d(22), INK, ALIGN_CENTER, 0.0, title);
             e.text_ex(320.0, 154.0, bs(13), INK, ALIGN_CENTER, 0.0, say);
         });
+        // no timer (11.10): the room waits for every player's take, so no countdown is drawn
     }
     let at = v[V_CAMP_AT];
     let age = v[V_PLAY] - at;

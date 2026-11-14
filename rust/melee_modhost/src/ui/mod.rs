@@ -1831,6 +1831,7 @@ impl PresHost {
         let pno = self.shared.borrow().present_no;
         let t1 = std::time::Instant::now();
         melee_modes::tu::drive_draw::begin();
+        melee_modes::tu::envoy_tint::begin();
         melee_gx::vfx::begin();
         melee_modes::tu::envoy_tint::begin();
         self.shared.borrow_mut().submit_ns = 0;
@@ -1843,6 +1844,7 @@ impl PresHost {
             }
         }
         melee_modes::tu::drive_draw::commit();
+        melee_modes::tu::envoy_tint::commit();
         melee_gx::vfx::commit();
         if melee_gx::vfx::shown() > 0 {
             melee_modes::tu::drive_draw::want_camera();

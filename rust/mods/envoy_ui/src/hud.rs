@@ -514,7 +514,11 @@ unsafe fn stock_row(e: &mut E, p: usize, px: f32, cy: f32, now: i32, n: i32, ste
     LIM_SEEN[p] = n;
     for i in 0..n {
         let cx = px + i as f32 * step;
-        if i < now {
+        if unsafe { H_HEART[0] != 0 } {
+            // heart containers (envoy-models1.md): full for a stock held, the last one pulsing
+            let pulse = if i < now && now == 1 { 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0) } else { 1.0 };
+            heart(e, i < now, cx, cy, step * pulse, WHITE);
+        } else if i < now {
             if now == 1 {
                 let pulse = 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0);
                 spr_rot(e, S_BURST_SUNNY, cx, cy, 0.6 * pulse, 8.0, WHITE);

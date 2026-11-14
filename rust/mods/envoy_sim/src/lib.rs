@@ -49,6 +49,7 @@ extern "C" {
     fn gd_fighter_get_pos_y(h: u32) -> f32;
     fn gd_fighter_get_action_state(h: u32) -> i32;
     fn gd_fighter_get_facing(h: u32) -> f32;
+    fn gd_envoy_pickup_anim(slot: i32) -> i32;
     fn gd_fighter_read(h: u32, out: *mut u32);
     fn gd_player_present(slot: i32) -> i32;
     fn gd_player_stocks(slot: i32) -> i32;
@@ -759,6 +760,9 @@ struct St {
     rally_until: [i32; NP],
     tether_cd: [[i32; 4]; NP],
     kin_cd: [i32; NP],
+    /// each player's motion state on the frame before (the pickup reads the state the press was made in: by the
+    /// sim's turn this frame the press has already moved the fighter, A into Attack11, Z into AttackAirN)
+    pick_prev: [i32; NP],
 }
 
 /// The engine's event bits this stepped frame (read once in tech_frame, used by the items the same frame).
@@ -4268,14 +4272,52 @@ unsafe fn roll_drop(p: usize) {
 }
 
 unsafe fn drop_frame() {
-    // a button press picks an item up, as in Melee: A on the ground, Z (or the airdodge's grab) in the air. Walking
-    // past only shows the prompt (V_PED_NEAR). CPU-driven checks (`autotake`) still take on touch.
-    let auto = test_flag("autotake");
+    // a button press picks an item up, as in Melee (ftCo_Wait's A -> ftCo_MS_LightGet; ftCo_Fall's Z, and the
+    // airdodge's grab, -> the aerial catch): A in an actionable ground state, Z / L / R while airborne. Walking past
+    // only shows the prompt (V_PED_NEAR); nothing takes on touch, not even under `autotake` (whose checks let the
+    // pedestal wait run out into the fly-in instead). The pad edge is the sim's own, so the take is deterministic
+    // and rolls back with the rest.
+    // test knob `pedfloor` (the pickup check): an item-room pedestal on the floor mid-fight at frame 150, so a pad
+    // script can walk past it and then take it
+    if test_flag("pedfloor") && S.play == 150 && S.ped_kind == 0 && !drops_on_floor() {
+        items::ped_open(PED_ITEM_ROOM);
+        // on player 1's floor (the scenario's stage floor need not be at y 0)
+        if let Some(me) = pos(0) {
+            for k in 0..DROPS {
+                S.drop[0][k][3] = (me.y * 100.0) as i32;
+            }
+        }
+    }
+    // test knob `pedair` (the air pickup check): the pedestal appears under player 1 as a jump leaves the floor
+    // (frame 240 on), so the Z / L taps of that hop are in range
+    if test_flag("pedair") && S.play >= 240 && S.ped_kind == 0 && !drops_on_floor() && S.drop[0][0][0] == 0 {
+        let h = gd_fighter_from_slot(0);
+        if let (true, Some(me)) = (h != 0 && (25..=26).contains(&gd_fighter_get_action_state(h)), pos(0)) {
+            items::ped_open(PED_ITEM_ROOM);
+            for k in 0..DROPS {
+                S.drop[0][k][2] = (me.x * 100.0) as i32;
+                S.drop[0][k][3] = ((me.y - 2.0) * 100.0) as i32;
+            }
+        }
+    }
     for p in 0..nh() as usize {
+        let was = S.ped_near[p];
         S.ped_near[p] = 0;
+        let h = gd_fighter_from_slot(p as i32);
+        let now = if h != 0 { gd_fighter_get_action_state(h) } else { -1 };
+        let st = S.pick_prev[p];
+        S.pick_prev[p] = now;
         let Some(me) = pos(p as i32) else { continue };
+        if was != 0 && S.drop[p][(was - 1) as usize][0] == 1 {
+            // still on its pedestal: the log line the pickup check reads for "walking past takes nothing"
+            let d = S.drop[p][(was - 1) as usize];
+            let (dx, dy) = (me.x - d[2] as f32 / 100.0, me.y - d[3] as f32 / 100.0);
+            if !(dx.abs() < PICK_DX && dy > -6.0 && dy < PICK_DY) {
+                log(b"envoy: pickup range left, item untaken, dx*1000 + dy (x1) ", dx as i32 * 1000 + dy as i32);
+            }
+        }
         let pad = gd_pad_pressed(p as i32);
-        let press = pad & (BTN_A | BTN_Z | BTN_L | BTN_R) != 0;
+        let press = pick_press(st, pad);
         for k in 0..DROPS {
             let d = S.drop[p][k];
             if d[0] != 1 {
@@ -4283,14 +4325,31 @@ unsafe fn drop_frame() {
             }
             let (dx, dy) = (me.x - d[2] as f32 / 100.0, me.y - d[3] as f32 / 100.0);
             if dx.abs() < PICK_DX && dy > -6.0 && dy < PICK_DY {
+                if was == 0 {
+                    log(b"envoy: pickup range entered, state ", st);
+                }
                 S.ped_near[p] = k as i32 + 1;
-                if press || auto {
+                if press {
+                    log(b"envoy: pickup by button, state ", st);
+                    // the press takes the item, not a jab: Melee's own pickup motion on the ground
+                    if gd_pad_pressed(p as i32) & BTN_A != 0 && gd_envoy_pickup_anim(p as i32) == 0 {
+                        log(b"envoy: pickup motion (LightGet), player ", p as i32);
+                    }
                     take_drop(p, k, G_DROP);
                     break;
                 }
             }
         }
     }
+}
+
+/// The pickup press for a fighter in motion state `st` (ftCommon_MotionState): A from Wait, Walk, Turn, Dash, Run,
+/// RunBrake, Squat and Landing (the states whose A checks the item range in Melee); Z, L or R from the jumps, falls
+/// and the airdodge (EscapeAir 236).
+fn pick_press(st: i32, pad: u32) -> bool {
+    let ground = (14..=23).contains(&st) || (39..=42).contains(&st);
+    let air = (25..=34).contains(&st) || st == 236;
+    (ground && pad & BTN_A != 0) || (air && pad & (BTN_Z | BTN_L | BTN_R) != 0)
 }
 
 unsafe fn take_drop(p: usize, k: usize, how: i32) {

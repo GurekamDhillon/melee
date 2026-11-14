@@ -629,6 +629,18 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             let mut s = Buf::new();
             s.s("Drives fired: ").i(v[V_FIRES]);
             e.text_ex(x + 16.0, y + 110.0, d(17), INK, ALIGN_LEFT, 0.0, s.str());
+            // the build the run ended with, a row a player (11.11)
+            let any = (0..p.players).any(|q| p.items[q].iter().any(|&c| c > 0));
+            if any {
+                e.text_ex(x + 16.0, y + 136.0, d(13), LILAC, ALIGN_LEFT, 0.0, "Build");
+                for q in 0..p.players {
+                    let ry = y + 150.0 + q as f32 * 24.0;
+                    if p.players == 2 {
+                        e.text_ex(x + 16.0, ry - 5.0, d(11), if q == 0 { CORAL } else { LAGOON }, ALIGN_LEFT, 0.0, if q == 0 { "P1" } else { "P2" });
+                    }
+                    build_row(e, &p.items[q], x + 40.0, ry + 2.0, 250.0, 18.0);
+                }
+            }
         });
         if won {
             spr_rot(e, S_RAYS, 170.0, 160.0, 1.6, (t as f32) * 0.07, alpha(WHITE, 0.13));
@@ -700,13 +712,20 @@ pub fn fighter_sticker(e: &mut E, x: f32, y: f32, deg: f32, p: &Party, set: usiz
             spr_c(e, S_HEAD, x + 16.0, y + 14.0, 1.0, WHITE);
         }
         e.text_ex(x + 33.0, y + 6.0, d(15), INK, ALIGN_LEFT, 104.0, crate::picker::short(p.pairs[set]));
-        for k in 0..SLOTS {
-            let cx = x + 17.0 + k as f32 * 26.0;
-            let id = p.ids[set][k];
-            if (1..=POOL_LEN as i32).contains(&id) {
-                chip(e, cx, y + 48.0, id as usize - 1, p.lvs[set][k], 22.0);
-            } else {
-                spr_c(e, S_DISC, cx, y + 48.0, 19.0 / 32.0, alpha(PALE, 0.5));
+        let drives = p.ids[set].iter().any(|&id| (1..=POOL_LEN as i32).contains(&id));
+        let pl = (set / 2).min(1);
+        if !drives && p.items[pl].iter().any(|&c| c > 0) {
+            // envoy items: the player's build, in their colours (11.11, showing off a build)
+            build_row(e, &p.items[pl], x + 6.0, y + 48.0, 128.0, 18.0);
+        } else {
+            for k in 0..SLOTS {
+                let cx = x + 17.0 + k as f32 * 26.0;
+                let id = p.ids[set][k];
+                if (1..=POOL_LEN as i32).contains(&id) {
+                    chip(e, cx, y + 48.0, id as usize - 1, p.lvs[set][k], 22.0);
+                } else {
+                    spr_c(e, S_DISC, cx, y + 48.0, 19.0 / 32.0, alpha(PALE, 0.5));
+                }
             }
         }
         if first && p.players == 2 {

@@ -359,12 +359,25 @@ has no second stage scene to split the screen with), so a true two-stage split w
 in melee_gx; the rift gives the same read (one stage giving way to the other across the screen, over seconds) with
 one honest swap frame hidden under the brightest moment, and it never takes control away.
 
-**Fighters at the hand-off** (`stage_hop::safe_place(live)`): grabs are cut; a fighter the carry left standing on a
-floor of the new stage, or in the air over one with room inside the blast box, keeps its place, action and
-momentum and is intangible for 20 frames; a fighter over a pit, outside the box or inside the new geometry gets the
-safety float (its spawn point, falling from just above it, every velocity cleared, intangible 60 frames). Sleeping,
-KO'd and respawning fighters are left alone. If a fighter is mid-grab or respawning at the hand-off, the rift holds
-its core a frame at a time (at most 90) before giving up (logged "live stage hand-off refused").
+**Fighters at the hand-off (Fights 3, owner: "try harder to maintain player positions ... rather than resetting them";
+"have fallbacks if a player's position is ... between, or lower than the main platform").** `stage_hop::live_place`:
+nobody is sent to a spawn point. Before the teardown every fighter's place and the old main floor (its y under x = 0
+and how far it runs each way, probed with `mpCheckFloor`) are recorded; after the install:
+- on or above the main floor and within its span: proportional x across the span, the same height over the floor;
+  action, facing and momentum kept; a grounded fighter is set on the new floor under it (same action);
+- beside the stage (past a ledge) or under the main floor's height: re-anchored to the nearest ledge of the new stage
+  with the same offset (dx outward, dy below), so a recovery stays the same recovery;
+- hanging on a ledge (the cliff states): the same offset from the same side's ledge, facing in, still, falling into
+  the grab box (it re-grabs or gets up at once);
+- a mapped point inside the new geometry (a floor top above it with no ceiling between: the body, not the pit under
+  it): a step of at most 12 up onto a floor when that is the shorter way (never for an under-stage or ledge case:
+  never up through the stage), else slid outward horizontally until free (at most 80);
+- the point is kept inside the new blast box; everyone is intangible for 20 frames; no forced float, no reset.
+The live check (items_check row 8) fails on any spawn-point reset, a push past the mapped point over 12 (80 for a
+slide out of the body), or a run without a ledge-hang and an under-stage case (the test knob
+`MELEE_ENVOY_LIVE_PROBE=1` takes P1 as hanging on the right ledge and P2 as under the stage at every other hand-off).
+The rift platform under a fighter over a pit was not needed: proportional mapping never moves an onstage fighter
+over a pit, and an offstage one keeps the recovery it had.
 
 **Rollback and zero lag.** The transition is game state: `tag_swap::LIVE` (a plain static the snapshot covers),
 advanced in `tag_swap::tick` between logic frames; the hand-off frame is a pure function of the record, so a
@@ -380,14 +393,10 @@ outlives a match (retail never clears it): after a match on a stage with a zako 
 pointer into the dead scene's heap. The release now frees only the table the live stage made (`ZAKO_LIVE`, set by
 `grZakoGenerator_801CAE04`, cleared by every stage init `Ground_801BFFB0`); retail state is untouched.
 
-**Measured (2026-11-13, quiet machine, hidden window, MELEE_PROFILE=1, three live hand-offs BF->YS->DL->FoD).**
-The sim's switch is 2-4 ms and the stage file decodes in place (0-3 ms: the plan hint works), but each hand-off frame
-is still 59-65 ms, 32-43 ms of it GPU pipeline creation for the new stage's materials on first draw. The wave
-respawn of a new gauntlet character is 46 ms (GPU pipelines 13 ms, fighter create 4 ms, files 2 ms). So the zero-lag
-rule is NOT met at the hand-off yet. Next step: warm the destination's pipelines during the 96 frames before the
-hand-off (record each stage's pipeline configs once, or a persisted pipeline cache in melee_gx, then create them on a
-worker with `PipeFactory::get`), and the same for queued gauntlet characters. Separately the hidden-window run shows
-~17 ms pacing-sleep frames throughout (not this feature).
+**Measured (2026-11-13 20:31, quiet machine, hidden window, MELEE_PROFILE=1, four-five live hand-offs (hand-off ticks 2.4-4.4 ms on 85a02a1b2), after merging
+port/diverge1's pipeline warm list and running `pipe_seed.sh`).** Hand-off ticks 1.9-7.0 ms with 0 pipelines created
+on them; no hand-off frame over 16.7 ms (the only over-budget frames were the first frames of the match and the CSS
+after it). Before the warm list (fights2): 59-65 ms per hand-off, 32-43 ms of it GPU pipeline creation.
 
 ### 10.3 Crowd knockback
 

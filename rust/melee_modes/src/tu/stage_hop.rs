@@ -448,6 +448,8 @@ unsafe fn main_span() -> Option<(f32, f32, f32)> {
 /// Whether (x, y) is inside the solid stage: the nearest floor top above it (within 60, not a pass-through platform)
 /// is under no ceiling between them (under the stage's body a ceiling comes first).
 unsafe fn inside(x: f32, y: f32) -> bool {
+    // a fighter's feet rest ON a floor: test a point just above them
+    let y = y + 1.0;
     let (mut p, mut n): (Vec, Vec) = (core::mem::zeroed(), core::mem::zeroed());
     let (mut line, mut flags) = (-1i32, 0u32);
     // scan down from above: the lowest floor top above the point
@@ -513,7 +515,8 @@ fn probe() -> bool {
 unsafe fn in_box(x: f32, y: f32) -> (f32, f32) {
     let bz = &sg::stage_info.blast_zone;
     let cam = &sg::stage_info.cam_info;
-    (x.clamp(bz.left + cam.cam_x_offset + 20.0, bz.right + cam.cam_x_offset - 20.0), y.clamp(bz.bottom + cam.cam_y_offset + 20.0, bz.top + cam.cam_y_offset - 40.0))
+    let c = |v: f32, lo: f32, hi: f32| if v < lo { lo } else if v > hi { hi } else { v };
+    (c(x, bz.left + cam.cam_x_offset + 20.0, bz.right + cam.cam_x_offset - 20.0), c(y, bz.bottom + cam.cam_y_offset + 20.0, bz.top + cam.cam_y_offset - 40.0))
 }
 
 /// The live hand-off's placement (after the carry): see the block comment above.
@@ -581,7 +584,8 @@ unsafe fn live_place() {
         let (bx, by) = in_box(fx, fy2);
         fx = bx;
         fy2 = by;
-        let push = ((fx - mx) * (fx - mx) + (fy2 - my) * (fy2 - my)).sqrt();
+        // the push past the mapped point (L1: a slide or a step is along one axis)
+        let push = (fx - mx).abs() + (fy2 - my).abs();
         if push > LIVE_PUSH_MAX {
             LIVE_PUSH_MAX = push;
         }

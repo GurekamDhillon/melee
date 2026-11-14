@@ -5,6 +5,7 @@
 # landed, every enemy was beaten, the room was won, and the synctest reports 0 mismatches.
 #   bash tools/rust-port/envoy/subspace_check.sh            (EXE, MODS, OUT; DISC=vanilla|ace; KINDS; DEPTHS; FRAMES)
 # DISC=ace uses GW_ISO_ACE and an m-ex fighter (character kind MAIN, default 34: the first added slot) as the player.
+# TAGAUTO=1 adds tagauto (a tag every 150 frames): the tag partner, created 30 frames in, must tag in beside the enemies.
 # No disc path is ever printed.
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -31,7 +32,7 @@ for d in $depths; do
     name=${names[$k]}
     case " $kinds " in *" $name "*) ;; *) continue ;; esac
     log="$out/$name.d$d.log"
-    MELEE_WINDOW_TITLE="subspace1 check $name $disc d$d" MELEE_ENVOY_TEST_DRIVES="~$((100 + k + 32 * ${TIER:-0})),noshop" \
+    MELEE_WINDOW_TITLE="subspace1 check $name $disc d$d" MELEE_ENVOY_TEST_DRIVES="~$((100 + k + 32 * ${TIER:-0}))${TAGAUTO:+,tagauto},noshop" \
       timeout 2400 "$exe" synctest --engine tu --iso "$iso" --scenario pad_falcon_fox_fd --depth "$d" --frames "$frames" --timeout 1800 >"$log" 2>&1
     line=$(grep -a 'engine synctest' "$log" | tail -1)
     c() { grep -a -c "$1" "$log"; }
@@ -45,6 +46,8 @@ for d in $depths; do
     [ "$got" -ge 1 ] || [ "$name" = bill ] || miss="$miss (no player hit landed)"
     [ "$gone" -ge 3 ] || miss="$miss (beaten $gone of 3)"
     [ "$won" -ge 1 ] || miss="$miss (room not won)"
+    # TAGAUTO=1: the player tags every 150 frames; the tag partner (created 30 frames into the fight) must come in
+    [ -z "${TAGAUTO:-}" ] || [ "$(c 'envoy: quick tag')" -ge 1 ] || miss="$miss (no tag beside the enemies)"
     grep -a -q 'panicked\|ARENA MISUSE\|crash' "$log" && miss="$miss (panic / crash line in the log)"
     [ "$disc" = ace ] && [ "$main" != "rewritten: main ${MELEE_ENVOY_TEST_MAIN}" ] && miss="$miss (player is not the m-ex fighter: $main)"
     case "$line" in

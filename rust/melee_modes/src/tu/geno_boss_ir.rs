@@ -1043,8 +1043,14 @@ fn status_has_motion(s: &J, motion: &str) -> bool {
 /// status is not N: CommonCatchProcExit" exit's N, transitively.
 fn hold_mask(ir: &J, motion: &str) -> u64 {
     let sts = ir.get("boss").get("statuses").arr();
+    hold_mask_from(ir, sts.iter().filter(|s| status_has_motion(s, motion)).filter_map(|s| s.get("index").num()).map(|v| v as u8).collect())
+}
+
+/// The hold chain from the given statuses (see [`hold_mask`]); also for a catch whose native event enters another
+/// status (Bucculus: Bites1's catch -> Absorption).
+pub fn hold_mask_from(ir: &J, mut todo: Vec<u8>) -> u64 {
+    let sts = ir.get("boss").get("statuses").arr();
     let mut m = 0u64;
-    let mut todo: Vec<u8> = sts.iter().filter(|s| status_has_motion(s, motion)).filter_map(|s| s.get("index").num()).map(|v| v as u8).collect();
     while let Some(ix) = todo.pop() {
         if ix >= 64 || m >> ix & 1 != 0 {
             continue;
@@ -1053,6 +1059,13 @@ fn hold_mask(ir: &J, motion: &str) -> u64 {
         let Some(s) = sts.iter().find(|s| s.get("index").num() == Some(ix as f64)) else { continue };
         for e in s.get("on_exit").arr() {
             let t = e.get("text").str().to_ascii_lowercase();
+            if e.get("op").str() == "if" && e.get("then").arr().iter().any(|o| o.get("text").str().to_ascii_lowercase().contains("commoncatchprocexit")) {
+                for part in t.split(" and ") {
+                    if let Some(n) = part.trim().strip_prefix("status != ").and_then(|w| w.trim().parse::<f32>().ok()) {
+                        todo.push(n as u8);
+                    }
+                }
+            }
             if let Some(rest) = t.strip_prefix("if the next status is not ") {
                 if let Some(n) = rest.split(':').next().and_then(|w| w.trim().parse::<u8>().ok()) {
                     todo.push(n);
@@ -1064,6 +1077,10 @@ fn hold_mask(ir: &J, motion: &str) -> u64 {
 }
 
 /// An attack's first box from the IR's `attacks` block (the throw of a release that has no 061A of its own).
+pub fn grab_attack_box(ir: &J, name: &str) -> Option<HitboxDef> {
+    ir_attack_box(ir, name)
+}
+
 fn ir_attack_box(ir: &J, name: &str) -> Option<HitboxDef> {
     let a = ir.get("boss").get("attacks").arr().iter().find(|a| a.get("name").str() == name)?;
     let h = a.get("hitboxes").arr().first()?;
@@ -1176,14 +1193,39 @@ pub fn grab_timeline(ir: &J, motion: &str, attacks: &mut Vec<Attack>) -> Result<
     Ok(out)
 }
 
-/// A status's per-frame ops, grab phrases only (the grab test define); any other phrase is an error.
-pub fn grab_status_frame(ir: &J, ix: u8) -> Result<Vec<Op>, String> {
+/// The catch approach gates (Tabuu's ChainStart @0x3edc and ChainThrow @0x3e1c), traced 2026-11-14:
+/// * 6604 n / 6605 n / 660E n are the enemy kinetic-unit module (command kind 0x66, handler 0x81A18414, 8 units):
+///   6604 = unit n active (flag +0x48 := 1, 0x81A16360 -> 0x81A1BF64), 6605 = unit n paused (0x81A163E4 ->
+///   0x81A1C038), 660E = unit n reversed (speed +0x7C negated, direction +0x4C negated; 0x81A178D0 -> 0x81A1F060).
+///   So these gate his *approach movement* (slot 5: kin 23 in ChainStart, kin 24 in ChainThrow), not the catch box.
+/// * R10024..R10063 share 0x81A145F0: the target's position against the enemy's, with an axis mask per id
+///   (10026 / 10032 drop z), compared with the R7 compare op given as an argument [I: the compare tail not read].
+/// Lowered as: lock the target, face it (the 660E side switch), run the status's slot-5 kinetic while the target is
+/// farther than the catch reach, else pause it.
+fn approach_gate(ir: &J, ix: u8, kin: &mut Vec<Kinetic>) -> Result<Vec<Op>, String> {
+    let boss = ir.get("boss");
+    let st = boss.get("statuses").arr().iter().find(|s| s.get("index").num() == Some(ix as f64)).ok_or("no status")?;
+    let kind = st.get("on_enter").arr().iter().find(|o| o.get("op").str() == "set_movement" && o.get("args").get("slot").num() == Some(5.0)).map(|o| o.get("args").get("kind").str().to_string()).ok_or_else(|| format!("status {ix}: approach gate without a slot-5 kinetic"))?;
+    let speed = boss.get("movement_kinds").arr().iter().find(|k| k.get("id").str() == kind).and_then(|k| k.get("raw").arr().get(1).and_then(|v| v.num())).ok_or_else(|| format!("{kind}: no speed"))? as f32;
+    // the reach: the radius of the catch box of the grab that holds through this status
+    let mask = 1u64 << ix;
+    let reach = boss.get("grabs").arr().iter().find(|g| hold_mask_of_grab(ir, g) & mask != 0).and_then(|g| g.get("catch_box").get("size").num()).ok_or_else(|| format!("status {ix}: approach gate outside a grab"))? as f32;
+    let k = kin.len() as u8;
+    kin.push(Kinetic::Accel { start: speed, acc: Num::K(0.0), max: Num::K(speed) });
+    Ok(vec![Op::LockTarget, Op::Aim, Op::If(Cond::TargetDx(Cmp::Gt, reach), vec![Op::Kinetic(k, true)], vec![Op::StopMove])])
+}
+
+/// A status's per-frame ops, grab phrases only (the grab test define); any other phrase is an error. Approach gates
+/// add their kinetics to `kin`.
+pub fn grab_status_frame(ir: &J, ix: u8, kin: &mut Vec<Kinetic>) -> Result<Vec<Op>, String> {
     let Some(s) = ir.get("boss").get("statuses").arr().iter().find(|s| s.get("index").num() == Some(ix as f64)) else { return Err(format!("no status {ix}")) };
     let mut out = vec![];
     for o in s.get("per_frame").arr() {
         let text = o.get("text").str();
         let tl = text.to_ascii_lowercase();
-        if o.get("op").str() == "other" && is_grab_text(&tl) {
+        if o.get("op").str() == "other" && (tl.contains("catch box on/off") || tl.contains("keep the held player in range")) {
+            out.extend(approach_gate(ir, ix, kin)?);
+        } else if o.get("op").str() == "other" && is_grab_text(&tl) {
             out.extend(grab_phrase(text, &tl)?.into_iter().filter(|o| *o != Op::Nop));
         } else {
             return Err(format!("status {ix}: per-frame op not part of a grab '{text}'"));

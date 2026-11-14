@@ -90,6 +90,8 @@ pub enum Cond {
     OutOfArea,
     /// the actor holds a caught fighter (geno_boss_grab)
     Holding,
+    /// |locked target x - actor x| compared with k (no locked target: false) (geno_boss_grab: catch approach gates)
+    TargetDx(Cmp, f32),
     And(Box<Cond>, Box<Cond>),
     Not(Box<Cond>),
 }
@@ -160,6 +162,8 @@ pub enum Op {
     Grab { part: u8, joint: i32, radius: f32, frames: (i32, i32), release: u64 },
     /// release the held fighter now: thrown with `attacks[i].boxes[0]` (Melee's throw release), or dropped (None)
     GrabRelease(Option<u8>),
+    /// a hit on the held fighter with `attacks[i].boxes[0]` (damage only; Melee's CaptureDamage reaction): a chew
+    GrabHit(u8),
 }
 
 #[derive(Clone, Debug)]
@@ -537,6 +541,7 @@ impl<'a> Rt<'a> {
             Cond::AtGoal => s.has_goal && s.x == s.goal,
             Cond::OutOfArea => self.w.out_of_area,
             Cond::Holding => s.grab.victim >= 0,
+            Cond::TargetDx(op, k) => self.target_x().is_some_and(|tx| op.test((tx - s.x).abs(), *k)),
             Cond::Target(unlocked) => self.any_target() && (!*unlocked || s.locked < 0),
             Cond::And(a, b) => self.cond(a) && self.cond(b),
             Cond::Not(a) => !self.cond(a),
@@ -813,6 +818,11 @@ impl<'a> Rt<'a> {
             Op::Grab { part, joint, radius, frames, release } => {
                 crate::tu::geno_boss_grab::arm(&mut s.grab, *part, *joint, *radius, *frames, *release, s.status);
                 self.push_ev(EV_GRAB, crate::tu::geno_boss_grab::GRAB_ARMED);
+            }
+            Op::GrabHit(a) => {
+                if crate::tu::geno_boss_grab::request_hit(&mut s.grab, *a) {
+                    self.push_ev(EV_GRAB, crate::tu::geno_boss_grab::GRAB_HIT);
+                }
             }
             Op::GrabRelease(throw) => {
                 if crate::tu::geno_boss_grab::request_release(&mut s.grab, *throw) {

@@ -26,6 +26,7 @@ use std::vec::Vec;
 pub const GRAB_ARMED: i32 = 1;
 pub const GRAB_THROW: i32 = 2;
 pub const GRAB_DROP: i32 = 3;
+pub const GRAB_HIT: i32 = 4;
 
 /// The grab block of the actor state (plain data, fixed size).
 #[derive(Clone, Copy, Debug)]
@@ -48,11 +49,13 @@ pub struct GrabState {
     pub throw: i32,
     pub catches: u32,
     pub escapes: u32,
+    /// a hit on the held fighter requested this frame (attack index, -1 none)
+    pub hit: i32,
 }
 
-pub const OFF: GrabState = GrabState { armed: false, part: 0, status: -1, joint: 0, radius: 0.0, frames: (0, -1), hold: 0, victim: -1, pending: 0, throw: -1, catches: 0, escapes: 0 };
+pub const OFF: GrabState = GrabState { armed: false, part: 0, status: -1, joint: 0, radius: 0.0, frames: (0, -1), hold: 0, victim: -1, pending: 0, throw: -1, catches: 0, escapes: 0, hit: -1 };
 
-pub fn hash_words(g: &GrabState) -> [u32; 12] {
+pub fn hash_words(g: &GrabState) -> [u32; 13] {
     [
         g.armed as u32 | (g.part as u32) << 8,
         g.status as u32,
@@ -66,6 +69,7 @@ pub fn hash_words(g: &GrabState) -> [u32; 12] {
         g.pending as u32 | (g.throw as u32) << 8,
         g.catches,
         g.escapes,
+        g.hit as u32,
     ]
 }
 
@@ -104,6 +108,15 @@ pub fn request_release(g: &mut GrabState, throw: Option<u8>) -> bool {
     }
     g.pending = if throw.is_some() { GRAB_THROW } else { GRAB_DROP };
     g.throw = throw.map_or(-1, |t| t as i32);
+    true
+}
+
+/// `Op::GrabHit`: true when a fighter is held.
+pub fn request_hit(g: &mut GrabState, attack: u8) -> bool {
+    if g.victim < 0 || g.pending != 0 {
+        return false;
+    }
+    g.hit = attack as i32;
     true
 }
 
@@ -182,11 +195,28 @@ pub unsafe fn host_frame(d: &Define, slot: i32, frame: u32) {
             cf.mv.co.capturedamage.x18 = hold_joint(cf);
             // a boss hold ends by its release or by mashing: the passive per-frame decay of Melee's grab timer
             // (CaptureWait, `grab_timer_decrement`) is given back, so the timer moves with the victim's mash only
-            if matches!((*v).motion_id, m if m == ftCo_MS_CaptureWaitHi as i32 || m == ftCo_MS_CaptureWaitLw as i32) {
+            // (CaptureDamage decays it too: a chew bite must not run the timer out)
+            if matches!((*v).motion_id, m if m == ftCo_MS_CaptureWaitHi as i32 || m == ftCo_MS_CaptureWaitLw as i32 || m == ftCo_MS_CaptureDamageHi as i32 || m == ftCo_MS_CaptureDamageLw as i32) {
                 (*v).grab_timer += melee_fighter::hooks::common_data().grab_timer_decrement;
             }
         }
     }
+    if g.victim >= 0 && g.hit >= 0 {
+        // a chew: the attack's damage on the held fighter and Melee's capture-damage reaction (ftCo_800DC284 / 3A4)
+        let v = &mut *fighter_of(g.victim);
+        if let Some(b) = d.attacks.get(g.hit as usize).and_then(|a| a.boxes.first()).copied() {
+            let dmg = melee_core::ppc::fctiwz_f32(gb::num(d, b.damage)) as f32;
+            melee_fighter::tu::fighter::Fighter_TakeDamage_8006CC7C(v, dmg);
+            if v.ground_or_air == GA_Ground {
+                melee_fighter::tu::ftco_0dc2::ftco_800dc3a4(v.gobj);
+            } else {
+                melee_fighter::tu::ftco_0dc2::ftco_800dc284(v.gobj);
+            }
+            eprintln!("geno_grab: f{frame} chew: slot {} with {} ({dmg} dmg) -> {:.0}%", g.victim, d.attacks[g.hit as usize].name, v.dmg.x1830_percent);
+        }
+        g.hit = -1;
+    }
+    g.hit = -1;
     if g.victim >= 0 && g.pending != 0 {
         let v = &mut *fighter_of(g.victim);
         let (vg, cg) = (v.gobj, cf.gobj);
@@ -283,7 +313,7 @@ fn h_x2c(b: HitboxDef, d: &Define) -> i32 {
 /// `MELEE_VS_BOSS=tabuu` (fixed for the process).
 pub fn vs_selected() -> bool {
     static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *V.get_or_init(|| std::env::var("MELEE_VS_BOSS").map(|v| v.eq_ignore_ascii_case("tabuu")).unwrap_or(false))
+    *V.get_or_init(|| std::env::var("MELEE_VS_BOSS").map(|v| v.eq_ignore_ascii_case("tabuu") || v.eq_ignore_ascii_case("bucculus")).unwrap_or(false))
 }
 
 /// `MELEE_VS_BOSS_SLOT`: the carrier slot (else the first CPU slot).
@@ -306,7 +336,7 @@ pub fn active() -> bool {
 
 pub unsafe fn arm_vs(slot: i32, seed: u32) {
     gb::stop();
-    let _ = tabuu();
+    let _ = actor();
     melee_fighter::tu::fighter::BOSS_HASH = Some(gb::state_hash);
     H = Host { armed: true, slot, seed: seed | 1, last_frame: u32::MAX };
 }
@@ -324,7 +354,7 @@ pub unsafe fn tick() {
     if !active() {
         return;
     }
-    let Some(d) = tabuu() else { return };
+    let Some(d) = actor() else { return };
     let cf = fighter_of(H.slot);
     if cf.is_null() {
         return;
@@ -344,10 +374,14 @@ pub unsafe fn tick() {
     if H.armed {
         H.armed = false;
         gb::begin(d, w, 5, 1000, H.seed);
-        eprintln!("geno_grab: tabuu actor ({} statuses, {} rules, grabs from the IR) on slot {}", d.statuses.len(), d.rules.len(), H.slot);
+        gb::S.x = (*cf).cur_pos.x;
+        eprintln!("geno_grab: {} actor ({} statuses, {} rules, grabs from the IR) on slot {}", d.name, d.statuses.len(), d.rules.len(), H.slot);
     }
-    // the actor stands where its body is
-    gb::S.x = (*cf).cur_pos.x;
+    // the actor's movement drives its body on the ground; otherwise the actor stands where its body is
+    let driving = gb::S.vx != 0.0 && (*cf).ground_or_air == GA_Ground;
+    if !driving {
+        gb::S.x = (*cf).cur_pos.x;
+    }
     if (*cf).dmg.x195c_hitlag_frames > 0.0 {
         return;
     }
@@ -362,30 +396,52 @@ pub unsafe fn tick() {
             eprintln!("geno_grab: f{frame} event grab {v}");
         }
     }
+    if gb::S.vx != 0.0 && (*cf).ground_or_air == GA_Ground {
+        if !driving && log_on() {
+            eprintln!("geno_grab: f{frame} approach: x {:.1} speed {:.2} (status {})", gb::S.x, gb::S.vx, gb::S.status);
+        }
+        (*cf).cur_pos.x = gb::S.x;
+        (*cf).facing_dir = gb::S.aim;
+    }
     host_frame(d, H.slot, frame);
+}
+
+/// The VS test actor (`MELEE_VS_BOSS`): Tabuu's grab define or Bucculus's chew define.
+pub fn actor() -> Option<&'static Define> {
+    if std::env::var("MELEE_VS_BOSS").is_ok_and(|v| v.eq_ignore_ascii_case("bucculus")) {
+        bucculus()
+    } else {
+        tabuu()
+    }
+}
+
+fn load_ir(file: &'static str, build: fn(&J) -> Result<Define, String>) -> Option<Define> {
+    // built on a helper thread: its allocations stay outside the game arena
+    let r = std::thread::spawn(move || {
+        let dir = crate::tu::geno_boss_ir::ir_dir().ok_or_else(|| "no boss IR directory".to_string())?;
+        let text = std::fs::read_to_string(dir.join(file)).map_err(|_| format!("{file}: not readable"))?;
+        let j = crate::tu::geno_boss_ir::parse_json(&text)?;
+        build(&j)
+    })
+    .join()
+    .unwrap_or_else(|_| Err("panicked".into()));
+    match r {
+        Ok(d) => Some(d),
+        Err(e) => {
+            eprintln!("geno_grab: no define from {file} ({e})");
+            None
+        }
+    }
 }
 
 pub fn tabuu() -> Option<&'static Define> {
     static D: std::sync::OnceLock<Option<Define>> = std::sync::OnceLock::new();
-    D.get_or_init(|| {
-        // built on a helper thread: its allocations stay outside the game arena
-        let r = std::thread::spawn(|| {
-            let dir = crate::tu::geno_boss_ir::ir_dir().ok_or_else(|| "no boss IR directory".to_string())?;
-            let text = std::fs::read_to_string(dir.join("tabuu.brawl.ir.json")).map_err(|_| "tabuu.brawl.ir.json: not readable".to_string())?;
-            let j = crate::tu::geno_boss_ir::parse_json(&text)?;
-            tabuu_define(&j)
-        })
-        .join()
-        .unwrap_or_else(|_| Err("panicked".into()));
-        match r {
-            Ok(d) => Some(d),
-            Err(e) => {
-                eprintln!("geno_grab: no Tabuu define ({e})");
-                None
-            }
-        }
-    })
-    .as_ref()
+    D.get_or_init(|| load_ir("tabuu.brawl.ir.json", tabuu_define)).as_ref()
+}
+
+pub fn bucculus() -> Option<&'static Define> {
+    static D: std::sync::OnceLock<Option<Define>> = std::sync::OnceLock::new();
+    D.get_or_init(|| load_ir("enemies/bucculus.brawl.ir.json", bucculus_define)).as_ref()
 }
 
 fn timeline_len(ir: &J, motion: &str) -> Option<i32> {
@@ -410,13 +466,14 @@ pub fn tabuu_define(ir: &J) -> Result<Define, String> {
     let (st_wait, st_dive, st_tele, st_slam, st_cs, st_ct) = (11u8, 19u8, 20u8, 21u8, 36u8, 37u8);
     let bit = |s: u8| 1u64 << s;
     let name = |ix: u8| ir.get("boss").get("statuses").arr().iter().find(|s| s.get("index").num() == Some(ix as f64)).map(|s| s.get("name").str().to_string()).unwrap_or_default();
-    let status = |ix: u8, m: &str, extra: Vec<Op>| -> Result<Status, String> {
-        let mut frame = gi::grab_status_frame(ir, ix)?;
+    let mut kinetics = vec![];
+    let mut status = |ix: u8, m: &str, extra: Vec<Op>| -> Result<Status, String> {
+        let mut frame = gi::grab_status_frame(ir, ix, &mut kinetics)?;
         frame.extend(extra);
-        Ok(Status { index: ix, name: name(ix), enter: vec![Op::Motion(mi(m))], frame, frame_once: false, intangible: false })
+        Ok(Status { index: ix, name: name(ix), enter: vec![Op::Motion(mi(m)), Op::StopMove], frame, frame_once: false, intangible: false })
     };
     let mut statuses = vec![
-        Status { index: st_wait, name: name(st_wait), enter: vec![Op::Motion(mi("Wait")), Op::SetVar(0, Num::K(0.0))], frame: vec![], frame_once: false, intangible: false },
+        Status { index: st_wait, name: name(st_wait), enter: vec![Op::Motion(mi("Wait")), Op::StopMove, Op::SetVar(0, Num::K(0.0))], frame: vec![], frame_once: false, intangible: false },
         status(st_cs, "ChainStart", vec![])?,
         status(st_ct, "ChainAttack", vec![])?,
         status(st_dive, "DiveStart2", vec![])?,
@@ -449,9 +506,109 @@ pub fn tabuu_define(ir: &J) -> Result<Define, String> {
     let tab = lv.get("tables").arr().iter().find(|t| t.get("selected_when").str() == "default").or(lv.get("tables").arr().first());
     let level_rows: Vec<Vec<f32>> = tab.map(|t| t.get("rows").arr().iter().map(|r| r.arr().iter().map(|x| x.num().unwrap_or(0.0) as f32).collect()).collect()).unwrap_or_default();
     Ok(Define {
-        name: "tabuu-grab".into(),
+        name: "tabuu".into(),
         parts,
         vars: vec![("waitFrames".into(), 0.0), ("chainNext".into(), 0.0)],
+        statuses,
+        rules,
+        tables: vec![],
+        kinetics,
+        motions,
+        attacks,
+        messages: vec![],
+        level_rows,
+        strength0: lv.get("initial").get("strength").num().unwrap_or(1.0) as u8,
+        start_status: st_wait,
+        slot_w: [1.0; 4],
+        slot_repeat: 1.0,
+        route_mask: 0,
+        route_factor: 1.0,
+        defeat_status: [None, None],
+        goal_snap: false,
+        spawn_x: 0.0,
+        camera: None,
+        window: (-50, 250),
+        passes: vec![(-50, 250, false)],
+    })
+}
+
+/// Bucculus's chew (VS test, `MELEE_VS_BOSS=bucculus`), from his enemy IR: WaitBuried (7) -> Bites1 (11, the lunge:
+/// catch boxes 060A f14 / f20 / f28 on joint 6, r 1 / 2 / 7, until the 060D at f42) -> on a catch Absorption (10: the
+/// bite, `GrabHit` with the Absorption box, 10 + 0.7 L trunc, on its timeline's hitbox frame) -> Bites2 (12) -> every
+/// param 4003 (33) frames Absorption again (R21) -> param 4002 (240) frames after the catch RollingJump (14, R23:
+/// released with the spit-out box 2 + 0.4 L at 70). The hold chain 10 <-> 12 comes from the statuses'
+/// CommonCatchProcExit exits; the catch -> Absorption hand-over is the native catch event the IR could not read [L]
+/// (here: `Holding` in Bites1). The search area (a 30-wide box above him) is read as |dx| <= 15; the lunge's
+/// steering and the burrowing are not modelled.
+pub fn bucculus_define(ir: &J) -> Result<Define, String> {
+    use crate::tu::geno_boss_ir as gi;
+    let boss = ir.get("boss");
+    let param = |id: f64| boss.get("parameters").arr().iter().find(|p| p.get("raw_id").num() == Some(id)).and_then(|p| p.get("value").num()).map(|v| v as f32);
+    let (limit, cadence) = (param(4002.0).ok_or("no param 4002")?, param(4003.0).ok_or("no param 4003")?);
+    let mut attacks: Vec<Attack> = vec![];
+    let motions_wanted = ["Wait", "Bites1", "Absorption", "Bites2", "RollingJump"];
+    let mut motions = vec![];
+    for m in motions_wanted {
+        let len = timeline_len(ir, m).ok_or_else(|| format!("motion {m}: no length"))?;
+        let mut tl = gi::grab_timeline(ir, m, &mut attacks)?;
+        // Bites1's catch hands over to Absorption natively: the hold runs through Absorption / Bites2 as well
+        for e in tl.iter_mut() {
+            if let Op::Grab { release, .. } = &mut e.op {
+                *release |= gi::hold_mask_from(ir, vec![10]);
+            }
+        }
+        motions.push(Motion { name: m.into(), len, looping: m == "Wait" || m == "Bites2", timeline: tl });
+    }
+    let bite = gi::grab_attack_box(ir, "Absorption bite").ok_or("no Absorption bite box")?;
+    let spit = gi::grab_attack_box(ir, "Spit-out roll").ok_or("no spit-out box")?;
+    attacks.push(Attack { name: "Absorption bite".into(), boxes: vec![bite] });
+    attacks.push(Attack { name: "Spit-out roll".into(), boxes: vec![spit] });
+    let (a_bite, a_spit) = ((attacks.len() - 2) as u8, (attacks.len() - 1) as u8);
+    // the bite on Absorption's hitbox frame
+    let hit_f = boss.get("timelines").arr().iter().find(|t| t.get("motion").str() == "Absorption").and_then(|t| t.get("events").arr().iter().find(|e| e.get("op").get("op").str() == "hitbox").and_then(|e| e.get("frame").num())).ok_or("Absorption: no hitbox frame")? as i32;
+    let mi = |n: &str| motions_wanted.iter().position(|m| *m == n).unwrap() as u8;
+    motions[mi("Absorption") as usize].timeline.push(TimelineEvent { frame: hit_f, count: 1, every: 0, op: Op::GrabHit(a_bite) });
+    let name = |ix: u8| boss.get("statuses").arr().iter().find(|s| s.get("index").num() == Some(ix as f64)).map(|s| s.get("name").str().to_string()).unwrap_or_default();
+    let (st_wait, st_abs, st_b1, st_b2, st_roll) = (7u8, 10u8, 11u8, 12u8, 14u8);
+    let bit = |s: u8| 1u64 << s;
+    let st = |ix: u8, m: &str, mut enter: Vec<Op>, frame: Vec<Op>| {
+        enter.insert(0, Op::Motion(mi(m)));
+        Status { index: ix, name: name(ix), enter, frame, frame_once: false, intangible: false }
+    };
+    // vars: 0 frames in Wait, 1 frames since the catch, 2 frames since the last Bites2 entry
+    let statuses = vec![
+        st(st_wait, "Wait", vec![Op::SetVar(0, Num::K(0.0)), Op::ResetTarget], vec![Op::AddVar(0, 1.0), Op::LockTarget]),
+        st(st_b1, "Bites1", vec![Op::SetVar(1, Num::K(0.0))], vec![]),
+        st(st_abs, "Absorption", vec![], vec![Op::AddVar(1, 1.0)]),
+        st(st_b2, "Bites2", vec![Op::SetVar(2, Num::K(0.0))], vec![Op::AddVar(1, 1.0), Op::AddVar(2, 1.0)]),
+        st(st_roll, "RollingJump", vec![], vec![]),
+    ];
+    let wait = std::env::var("MELEE_TABUU_WAIT").ok().and_then(|v| v.parse().ok()).unwrap_or(60.0f32);
+    let and = |a: Cond, b: Cond| Cond::And(Box::new(a), Box::new(b));
+    let r = |index: u16, cond: Cond, ops: Vec<Op>, to: u8| Rule { index, priority: 200, default_on: true, cond, ops, to: Some(to), per_target: false };
+    let rules = vec![
+        // R19: a player in the search area -> Bites1 (after the test's Wait)
+        r(19, and(Cond::StatusIn(bit(st_wait)), and(Cond::Var(0, gb::Cmp::Ge, wait), Cond::TargetDx(gb::Cmp::Le, 15.0))), vec![], st_b1),
+        // the native catch event: caught in Bites1 -> Absorption
+        r(24, and(Cond::StatusIn(bit(st_b1)), Cond::Holding), vec![], st_abs),
+        r(16, and(Cond::StatusIn(bit(st_b1)), Cond::MotionEnd), vec![], st_wait),
+        // R22: Absorption's end -> Bites2
+        r(22, and(Cond::StatusIn(bit(st_abs)), Cond::MotionEnd), vec![], st_b2),
+        // R23: 4002 frames since the catch -> RollingJump, spat out
+        r(23, and(Cond::StatusIn(bit(st_b2)), Cond::Var(1, gb::Cmp::Ge, limit)), vec![Op::GrabRelease(Some(a_spit))], st_roll),
+        // R21: every 4003 frames in Bites2 -> Absorption (another bite)
+        r(21, and(Cond::StatusIn(bit(st_b2)), Cond::Var(2, gb::Cmp::Ge, cadence)), vec![], st_abs),
+        // a hold that ended (mashed out) leaves the chew
+        r(25, and(Cond::StatusIn(bit(st_abs) | bit(st_b2)), Cond::Not(Box::new(Cond::Holding))), vec![], st_wait),
+        r(15, and(Cond::StatusIn(bit(st_roll)), Cond::MotionEnd), vec![], st_wait),
+    ];
+    let lv = boss.get("level");
+    let tab = lv.get("tables").arr().iter().find(|t| t.get("selected_when").str() == "default").or(lv.get("tables").arr().first());
+    let level_rows: Vec<Vec<f32>> = tab.map(|t| t.get("rows").arr().iter().map(|r| r.arr().iter().map(|x| x.num().unwrap_or(0.0) as f32).collect()).collect()).unwrap_or_default();
+    Ok(Define {
+        name: "bucculus".into(),
+        parts: vec![Part { name: "body".into(), role: Role::Core, hp: Num::K(1000.0), on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: false }],
+        vars: vec![("waitFrames".into(), 0.0), ("sinceCatch".into(), 0.0), ("sinceBites2".into(), 0.0)],
         statuses,
         rules,
         tables: vec![],
@@ -529,9 +686,11 @@ mod tests {
             live.push(catch_live().is_some());
             gb::tick(&d, w);
         }
-        assert_eq!(live, [false, false, true, true, true, false]);
+        // checked after a tick, on the motion frame whose timeline ran (tl_mf): frames 2..4 are the 3rd..5th checks
+        assert_eq!(live, [false, false, false, true, true, true]);
         // not caught: the status's motion ends and nothing is held
         gb::begin(&d, w, 5, 1000, 3);
+        gb::tick(&d, w);
         gb::tick(&d, w);
         gb::tick(&d, w);
         assert!(catch_live().is_some());
@@ -560,6 +719,41 @@ mod tests {
         let h0 = hash_words(&g);
         g.pending = 0;
         assert_ne!(h0, hash_words(&g));
+    }
+
+    /// Bucculus's chew define from the local enemy IR (skipped without it): catch, bites on a cadence, spit.
+    #[test]
+    fn bucculus_chew_from_ir() {
+        let Some(dir) = crate::tu::geno_boss_ir::ir_dir() else { return };
+        let Ok(text) = std::fs::read_to_string(dir.join("enemies/bucculus.brawl.ir.json")) else { return };
+        let d = bucculus_define(&crate::tu::geno_boss_ir::parse_json(&text).unwrap()).unwrap();
+        let w = World { slots: [Some(5.0), None, None, None], airborne: false, out_of_area: false };
+        gb::begin(&d, w, 5, 1000, 9);
+        let (mut bites, mut caught, mut spat) = (0, false, false);
+        for f in 0..800 {
+            if !caught && catch_live().is_some() {
+                unsafe { gb::S.grab.victim = 0 };
+                caught = true;
+                eprintln!("chew: caught at {f}");
+            }
+            gb::tick(&d, w);
+            unsafe {
+                if gb::S.grab.hit >= 0 {
+                    bites += 1;
+                    gb::S.grab.hit = -1;
+                }
+                if gb::S.grab.pending == GRAB_THROW {
+                    eprintln!("chew: spat out at {f} after {bites} bites");
+                    gb::S.grab.victim = -1;
+                    gb::S.grab.pending = 0;
+                    spat = true;
+                    break;
+                }
+            }
+        }
+        assert!(caught && spat);
+        // 240 frames of Absorption (46) + Bites2 (33) cycles: 4 bites
+        assert!(bites >= 3, "{bites}");
     }
 
     /// The local IR, when present: the grab define lowers (skipped otherwise).

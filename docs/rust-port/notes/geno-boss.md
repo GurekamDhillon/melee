@@ -95,10 +95,27 @@ Check: `tools/rust-port/envoy/geno_grab_check.sh [hold mash sync nhv1 perf]`.
 
 Also: the IR reader accepts `NaN` / `Infinity` (Tabuu's and Rayquaza's files have them; they failed to parse before).
 
-Not done: Bucculus chew (designed: a hold whose status runs a periodic damage op on the victim through Melee's
-CaptureDamage; needs an `Op::GrabHit` and the enemy's IR lowered), Tabuu's side/range catch gates (660E / 6604 / 6605)
-and the 6502 hold-range keeper (the catch test and Melee's capture states stand in), the 061A base knockback word is
-inferred [I].
+Second round (same day):
+
+- **Tabuu's "catch gates" are approach-movement gates** (traced; addresses in the local engine-ops.md, third pass):
+  6604 n / 6605 n / 660E n are the enemy kinetic-unit module (command kind 0x66): unit n resume / pause / reverse. In
+  ChainStart (@0x3edc) and ChainThrow (@0x3e1c) they run his slot-5 approach kinetic (kin 23 / 24) by the target's side
+  and range (R10026 / R10032: one handler for R10024..R10063, target vs enemy position through a per-id axis mask; the
+  compare tail is [I]). The catch box is only 060A / 060D. Lowered (`approach_gate`, from the per-frame phrases) as lock,
+  aim, `If(TargetDx > catch radius, Kinetic(slot speed), StopMove)`; new `Cond::TargetDx(Cmp, k)`. The host lets the
+  actor's movement drive the carrier on the ground.
+- **Bucculus's chew** (`bucculus_define`, `MELEE_VS_BOSS=bucculus`): Bites1 catch boxes (060A f14 / 20 / 28, r 1 / 2 / 7)
+  -> Absorption (bite on its hitbox frame) -> Bites2 -> R21 every param 4003 (33) frames -> R23 at param 4002 (240) frames
+  since the catch -> RollingJump, spat out with the spit-out box. New `Op::GrabHit(attack)` (`EV_GRAB` 4): the host
+  applies the box's damage (`Fighter_TakeDamage_8006CC7C`) and Melee's CaptureDamage reaction. The hold chain 10 <-> 12
+  comes from the enemy-style exits (`if status != N: CommonCatchProcExit`, now read by `hold_mask_from`); the catch ->
+  Absorption hand-over is native in Brawl (unread [L]) and is `Holding` in Bites1 here. The passive grab-timer decay is
+  given back in CaptureDamage too (a bite let the timer run out).
+- `GrabState` gained `hit` (end of the block; hashed).
+
+Still not done: the R10026 compare tail (thresholds 4003 -30 / 4004 65 not used; the catch radius stands in), Tabuu's
+warp to x +-128 before ChainStart, Bucculus's lunge steering / burrowing / search box (|dx| <= 15 stands in), the 061A
+base knockback word [I]. `port/geno-vm` had not landed: nothing to hook yet.
 
 ### Proof (2026-11-14, release exe of this branch)
 
@@ -110,3 +127,15 @@ inferred [I].
 | synctest (hold schedule, 3000 frames) | depth 4: 11988 checks, 0 mismatches; depth 7: 20958 checks, 0 mismatches; grabs and throws inside both |
 | NHV1 (`golden`, hold schedule, 3000 frames) | identical over two runs; last row frame 2999 hash `ED7C78E4` |
 | frame times (real time, `play`, Falcon vs CPU Fox carrier, profiler, 2999 frames) | 0 over 16.7 ms (+1 startup frame, the match load) |
+
+Second round (release exe of this branch, `geno_grab_check.sh` all rows OK):
+
+| check | result |
+|---|---|
+| unit tests | 8/8 (adds `bucculus_chew_from_ir`: caught, 4 bites, spat out) |
+| `chase` (Falcon idle) | Tabuu walks to him in ChainStart (slot-5 kinetic) and catches |
+| `chew` | Bites1 catch -> 4 bites of 10 (10 + 0.7 L, L 0) 78 frames apart -> spat out 281 frames after the catch (R23 is live in Bites2 only) |
+| `chewmash` | caught, mashed out, Bucculus back to WaitBuried |
+| synctest 3000 frames | Tabuu depth 4 / 7 and Bucculus depth 4 / 7: 0 mismatches each, grabs and releases inside |
+| NHV1 | identical over two runs: Tabuu last `F4B351BC`, Bucculus last `88E9D1E8` |
+| frame times (real time, 2999 frames each) | Tabuu and Bucculus: 0 over 16.7 ms (+1 startup frame) |

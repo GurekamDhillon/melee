@@ -28,6 +28,8 @@ mod picker;
 mod fx;
 mod items_ui;
 mod pause;
+mod icons;
+mod map;
 mod help;
 
 use envoy_data::view::*;
@@ -247,6 +249,7 @@ pub extern "C" fn gd_ui_scene_enter(scene: u32) {
         u.msg = "";
         if !c.after_fight {
             u.p2 = false;
+            u.pre_road = false;
             camp::coop(0);
         }
     }
@@ -632,6 +635,23 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                             gd_ui_envoy_arm(ARM_NEW | launch);
                         }
                         2 => { gd_ui_envoy_arm(ARM_CONTINUE | launch); }
+                        // a new run from the camp: armed now (no launch), the camp stays on its road (the map and
+                        // the fork before fight 1; the sim reads P1 left / right); A launches it, B disarms it
+                        5 => {
+                            picker::send(camp::p2_in());
+                            if gd_ui_envoy_arm(ARM_NEW) == 0 {
+                                camp::UI.pre_road = true;
+                                camp::UI.pre_at = camp::UI.age;
+                                camp::UI.cur = 0;
+                            } else {
+                                gd_ui_envoy_arm(ARM_NEW | launch);
+                            }
+                        }
+                        6 => {
+                            camp::UI.pre_road = false;
+                            gd_ui_envoy_arm(ARM_NEW | launch);
+                        }
+                        7 => { gd_ui_envoy_arm(ARM_OFF); }
                         3 => { gd_ui_envoy_arm(ARM_ABANDON); }
                         4 => {
                             gd_ui_envoy_arm(4);
@@ -642,7 +662,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                         }
                         _ => { gd_ui_envoy_arm(ARM_OFF); }
                     }
-                    if !CAMP.closing {
+                    if !CAMP.closing && camp::UI.pre_road == false && op != 7 {
                         camp_close();
                     }
                 }
@@ -675,6 +695,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             world(&v);
             fx::heat_screen(&v);
             fx::moments(&v);
+            fx::big_shake(&v);
             sounds(&v);
             items_ui::sounds(&v);
             let mut pv = [0i32; 12];

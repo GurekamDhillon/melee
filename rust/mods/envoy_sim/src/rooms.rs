@@ -223,9 +223,18 @@ pub(crate) unsafe fn reachable(r: usize, l: usize) -> bool {
 }
 
 /// The template (SCHEDULE / ROOM_MIX index) of fight `f` (0-3): the chosen (or the cursor's) fight node's kind.
+static mut T_NODE: i32 = -2;
+
 pub(crate) unsafe fn template(f: usize) -> usize {
     if f >= 3 {
         return 3;
+    }
+    // test knobs (scripted checks): every fight node of the act one kind (read once: sched() is hot)
+    if T_NODE == -2 {
+        T_NODE = if test_flag("duelnode") { 0 } else if test_flag("crowdnode") { 1 } else if test_flag("elitenode") { 2 } else { -1 };
+    }
+    if T_NODE >= 0 {
+        return T_NODE as usize;
     }
     let r = f * 2;
     let l = if S.path[r] >= 0 { S.path[r] } else { cursor_lane(r) };
@@ -267,7 +276,7 @@ pub(crate) unsafe fn map_road_frame(f: usize) {
                 }
             }
             S.map_cur = c;
-            log(b"envoy: map cursor, row*10 + lane\\0", r as i32 * 10 + c);
+            log(b"envoy: map cursor, row*10 + lane\0", r as i32 * 10 + c);
             make_plan();
         } else {
             S.map_wish = (S.map_wish.max(0) + d).rem_euclid(LANES as i32);
@@ -282,8 +291,8 @@ pub(crate) unsafe fn take_fight_node() {
         let r = f * 2;
         if S.path[r] < 0 {
             S.path[r] = cursor_lane(r);
-            log(b"envoy: map node taken, row*10 + lane\\0", r as i32 * 10 + S.path[r]);
-            log(b"envoy: map fight kind (MN)\\0", node_kind(r, S.path[r] as usize));
+            log(b"envoy: map node taken, row*10 + lane\0", r as i32 * 10 + S.path[r]);
+            log(b"envoy: map fight kind (MN)\0", node_kind(r, S.path[r] as usize));
         }
     }
 }
@@ -316,7 +325,7 @@ pub(crate) unsafe fn advance() -> bool {
                     if S.door != 0 {
                         S.door_at = S.play.max(1);
                         ev(EV_DOOR, 0, S.door);
-                        log(if S.door == DOOR_DEVIL { b"envoy: the red door opens (devil deal)\\0" } else { b"envoy: the white door opens (angel room)\\0" }, door_pct());
+                        log(if S.door == DOOR_DEVIL { b"envoy: the red door opens (devil deal)\0" } else { b"envoy: the white door opens (angel room)\0" }, door_pct());
                         items::ped_open(if S.door == DOOR_DEVIL { PED_DEVIL } else { PED_ANGEL });
                     }
                     S.door != 0
@@ -328,7 +337,7 @@ pub(crate) unsafe fn advance() -> bool {
                 S.ped_done = 3;
                 if S.secret_state == 2 {
                     S.secret_state = 3;
-                    log(b"envoy: secret room open, fight\\0", S.fight + 1);
+                    log(b"envoy: secret room open, fight\0", S.fight + 1);
                     items::ped_open(PED_SECRET);
                     true
                 } else {
@@ -354,7 +363,7 @@ pub(crate) unsafe fn fork_open() {
     S.fork = 1;
     S.fork_cur = cursor_lane(r);
     S.fork_left = 0;
-    log(b"envoy: map room choice open, row\\0", r as i32);
+    log(b"envoy: map room choice open, row\0", r as i32);
 }
 
 /// One frame of the room choice (no timer: the owner's "we shouldn't be rushed on making our build"): P1 walks the
@@ -388,7 +397,8 @@ pub(crate) unsafe fn fork_wait() -> bool {
         0
     };
     if want != 0 {
-        if let Some(l) = (0..LANES).find(|&l| reachable(r, l) && node_kind(r, l) == want) {
+        // test knobs: the wanted kind's lane, reachable first, else any (the scripted checks)
+        if let Some(l) = (0..LANES).find(|&l| reachable(r, l) && node_kind(r, l) == want).or_else(|| (0..LANES).find(|&l| node_kind(r, l) == want)) {
             S.fork_cur = l as i32;
         }
     }
@@ -401,8 +411,8 @@ pub(crate) unsafe fn fork_wait() -> bool {
     S.map_cur = S.fork_cur;
     let k = node_kind(r, S.fork_cur as usize);
     S.fork_pick = k;
-    log(b"envoy: map room taken, row*10 + lane\\0", r as i32 * 10 + S.fork_cur);
-    log(b"envoy: map room kind (MN)\\0", k);
+    log(b"envoy: map room taken, row*10 + lane\0", r as i32 * 10 + S.fork_cur);
+    log(b"envoy: map room kind (MN)\0", k);
     false
 }
 

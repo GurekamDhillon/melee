@@ -357,6 +357,12 @@ pub fn commit() {
     }
 }
 
+/// Install the fight-camera recorder (the shader effect quads, melee_gx::vfx, are placed with the same camera as
+/// the drives; a present that queues only quads still needs it).
+pub fn want_camera() {
+    unsafe { melee_fighter::tu::ftdrawcommon::WORLD_DRAW = Some(record_camera) };
+}
+
 /// Draws presented so far (tests, logs).
 pub fn shown() -> usize {
     SHOW.lock().map_or(0, |s| s.len())

@@ -504,3 +504,24 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   fighter create ~9 ms, the envoy_sim match-setup hook ~8 ms (includes host work it calls), all in one tick. The asset
   service (`MELEE_ASSETS=on`, still off by default) takes it to ~29 ms. Getting under 16.7 needs the setup split over
   ticks or the envoy hook's work moved earlier; both change the sim's frame layout and need NHV1/golden proof.
+
+### Round 2 (2026-11-13, port/diverge1 98f8567e2)
+- First Envoy fight setup tick (no lead: camp door -> fight in 3 ticks): 34.7 -> 21.6 ms (shared machine), 19.4 ms quiet.
+  - Petey's boss parameters (Brawl files) were read and decoded inside the first fight's tick (envoy_sim
+    `fight_setup` -> `gd_envoy_boss_dmg` -> `petey_file::get`, 5.7 ms; found with the new `wasm hook` phase and the
+    `gd_prof_mark` host call). Now `petey_file::prefetch` reads them on a thread when the plan is first published.
+  - Asset service worker on by default (`MELEE_ASSETS=off` opts out). Plan hints no longer wait for the arm, and the
+    Fox / Marth defaults are hinted: every first-fight file is an apply hit (ItCo 4.1 ms apply, was 10-12 in place).
+  - wasmi translates mods eagerly at load (no measurable change on this tick; removes first-call translation).
+- Left in that tick (quiet run, 19.4 ms): ItCo apply incl. a 6 MB arena allocation 4.7, players create 8.8 (Marth
+  tag partner 5.0, of which `ft create: data 80085B10` 2.7 with PlMsAJ 1.9 MB and a 28 MB arena allocation), HUD 1.0,
+  the rest of scene on_enter ~2.6, after on_enter ~2.5. Under 16.7 needs ~3 ms more: creating the Envoy tag partner
+  a tick later (an Envoy-only sim change) or pre-faulting/keeping the 28 MB and 6 MB arena blocks.
+- Hidden pacer: `sleep_until` uses a high-resolution waitable timer plus a 0.6 ms spin. `zero_hitch_check.py` judges a
+  frame by its game work (interval minus pacing sleep and display wait): ~5400 "over budget" pacing frames per hidden
+  run -> 0.
+- Quiet confirmation (no other melee/cargo/rustc/link process, 12000 ticks hidden real time, warm list primed):
+  game work over budget: the first-fight tick 722 (19.4 ms) and 3 "unaccounted (OS/loop)" frames at ticks
+  9113-9159 (tick 1.1 ms each: OS stalls, not engine work). No GPU-pipeline frame, no wave-arrival hitch.
+- Proof: gate OK (goldens, synctest d4 3000 frames 0 mismatches, audio = C, snapguard); run_modes_check 9000 ticks
+  equal (tick + NHV1); MELEE_ASSETS on vs off: tick.log and hash.log equal, headless and window.

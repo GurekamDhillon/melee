@@ -33,8 +33,6 @@ unsafe fn post(effect: u32, strength: f32, x: f32, y: f32, rgba: u32) -> i32 {
     gd_fx_post(effect, strength * k, x, y, rgba)
 }
 
-const HEAT_RGBA: [u32; 4] = [0, 0xFFBE_2EFF, 0xFF8A_1FFF, 0xFF4A_1CFF];
-
 /// The Envoy model set (docs/rust-port/notes/envoy-models1.md): one key per line; the host's model id is
 /// `EM_FIRST` + the line (`melee_modes::tu::drive_draw::EM_FIRST`, after the 10 legacy and 65 Party models).
 const EM_KEYS: &str = include_str!("../../../../pc/scripts/examples/envoy_models/models/envoy_models.txt");

@@ -72,6 +72,7 @@ PALETTE2 = [
     ("magenta", (84, 22, 130), (200, 90, 255), (246, 214, 255)),     # Homing Ink 0xC85AFF, the curse pool
     ("dusk",    (36, 20, 58), (90, 58, 122), (196, 156, 236)),       # Demon Wings 0x5A3A7A
     ("lilac",   (70, 50, 140), (192, 160, 255), (244, 236, 255)),    # Shield Orbs 0xC0A0FF
+    ("white",   (150, 150, 164), (244, 244, 250), (255, 255, 255)),  # chunk 3: banner pieces the UI tints
 ]
 for _n, _dk, _mn, _hot in PALETTE2:
     DP.row(_n, _dk, _mn, _mn); DP.row(_n + "_hot", DP.mix(_mn, _hot, .6), _hot, _hot)
@@ -154,11 +155,12 @@ def frame_ring(keep=lambda i: True, sub=1, s=.84, **kw):
 
 
 # ---------------------------------------------------------------------------------------------- the models
-def M(key, name, kind, concept, use, groups):
+def M(key, name, kind, concept, use, groups, spin=0.0):
+    """`spin`: degrees the SPRITE is rolled (a long thin shot reads better on the diagonal); the mesh is not turned."""
     flat = []
     for g in groups:
         flat += g if isinstance(g, list) else [g]
-    return dict(key=key, name=name, kind=kind, concept=concept, use=use, groups=flat)
+    return dict(key=key, name=name, kind=kind, concept=concept, use=use, groups=flat, spin=spin)
 
 _DART = [(-.26, -.62), (.26, -.62), (.26, .34), (0, .92), (-.26, .34)]
 _C45 = [(math.cos(math.radians(a)), math.sin(math.radians(a)), a) for a in range(0, 360, 45)]
@@ -289,6 +291,8 @@ MODELS = [
 ]
 import models2  # noqa: E402  (chunk 2's part lists; it takes the helpers above)
 MODELS += models2.models(sys.modules[__name__])
+import models3  # noqa: E402  (chunk 3's part lists)
+MODELS += models3.models(sys.modules[__name__])
 KEYS = [m["key"] for m in MODELS]
 BY_KEY = {m["key"]: m for m in MODELS}
 def span_of(model): return FRAME_SPAN if model["kind"] == "frame" else SPAN
@@ -336,7 +340,8 @@ def self_test(meshes):
             if not 0 <= t <= 1.0001:
                 bad.append("%s: ramp %.2f" % (k, t)); break
         lim = span_of(model) - .1      # the sprite keeps a margin for the ink edge
-        far = max(max(abs(p[0]), abs(p[1]*math.cos(PITCH) - p[2]*math.sin(PITCH))) for t3 in m.tris for p in t3[:3])
+        _c, _s = math.cos(math.radians(model["spin"])), math.sin(math.radians(model["spin"]))
+        far = max(max(abs(p[0]*_c - p[1]*_s), abs((p[0]*_s + p[1]*_c)*math.cos(PITCH) - p[2]*math.sin(PITCH))) for t3 in m.tris for p in t3[:3])
         if far > lim:
             bad.append("%s: reaches %.2f, the sprite shows %.2f" % (k, far, lim))
         vol = sum(DP.dot(p0, DP.cross(p1, p2)) for p0, p1, p2, _, _ in m.tris) / 6
@@ -401,7 +406,7 @@ LIGHT = (0.35, 0.6, 0.72)      # drive_draw's light; shade = base x (0.42 + 0.7 
 PITCH = 0.35                   # drive_draw's sprite pitch
 
 
-def raster(mesh, size, ss=4, span=SPAN, yaw=0.0, edge=0.03):
+def raster(mesh, size, ss=4, span=SPAN, yaw=0.0, edge=0.03, spin=0.0):
     """The model as an RGBA image: z-buffered flat triangles shaded as drive_draw shades them, then an ink edge
     (`edge` of the image width) around the silhouette, as a Party sticker has."""
     import numpy as np
@@ -409,7 +414,9 @@ def raster(mesh, size, ss=4, span=SPAN, yaw=0.0, edge=0.03):
     S = size*ss
     col = np.zeros((S, S, 3), np.float32); zb = np.full((S, S), -1e9, np.float32); hit = np.zeros((S, S), bool)
     cp, sp, cy, sy = math.cos(PITCH), math.sin(PITCH), math.cos(yaw), math.sin(yaw)
+    cr, sr = math.cos(math.radians(spin)), math.sin(math.radians(spin))
     def xf(p):
+        p = (p[0]*cr - p[1]*sr, p[0]*sr + p[1]*cr, p[2])
         x, y, z = p[0]*cy + p[2]*sy, p[1], -p[0]*sy + p[2]*cy
         return (x, y*cp - z*sp, y*sp + z*cp)
     k = S / (2*span)
@@ -458,7 +465,8 @@ def png_bytes(im):
 
 SECTIONS = [("item", "Items"), ("node", "Act-map nodes and room markers"), ("hud", "Hearts and HUD bits"), ("frame", "Pool frames"),
             ("kw", "Keyword and status glyphs"), ("tag", "Tag emblems (synergy banners)"), ("pj", "Projectile bodies"),
-            ("map", "Map furniture"), ("world", "World pieces")]
+            ("map", "Map furniture"), ("world", "World pieces"), ("fx", "Effect meshes and stance-orb bodies"),
+            ("face", "Boss and elite faces"), ("syn", "Synergy and evolution banner pieces"), ("run", "Run-end pieces")]
 
 
 def contact_sheet(meshes, path):
@@ -475,7 +483,7 @@ def contact_sheet(meshes, path):
         f1 = ImageFont.truetype("arialbd.ttf", 15); f2 = ImageFont.truetype("arial.ttf", 11); f0 = ImageFont.truetype("arialbd.ttf", 22)
     except OSError:
         f1 = f2 = f0 = ImageFont.load_default()
-    d.text((16, 10), "ENVOY MODELS, chunks 1 and 2", font=f0, fill=(255, 216, 74))
+    d.text((16, 10), "ENVOY MODELS, chunks 1 to 3", font=f0, fill=(255, 216, 74))
     d.text((16, 40), "%d models from make_models1.py.  Each cell: 3/4 view of the mesh, the shipped 96 px sprite, the sprite at game size (48 and 24 px) on dark and on a card." % len(MODELS), font=f2, fill=(220, 214, 255))
     y = 64
     for title, group in groups:
@@ -486,8 +494,8 @@ def contact_sheet(meshes, path):
             mesh = meshes[model["key"]]
             sp = span_of(model)
             d.rounded_rectangle([x + 3, cy + 3, x + cw - 5, cy + ch - 5], 10, fill=(48, 36, 120, 255))
-            sheet.alpha_composite(raster(mesh, 150, span=sp*1.08, yaw=-0.5, edge=0.0), (x + 6, cy + 30))
-            spr = raster(mesh, SPRITE, span=sp)
+            sheet.alpha_composite(raster(mesh, 150, span=sp*1.08, yaw=-0.5, edge=0.0, spin=model["spin"]), (x + 6, cy + 30))
+            spr = raster(mesh, SPRITE, span=sp, spin=model["spin"])
             sheet.alpha_composite(spr, (x + 160, cy + 30))
             small = spr.resize((48, 48), Image.LANCZOS)
             sheet.alpha_composite(small, (x + 262, cy + 30))
@@ -530,7 +538,7 @@ def outputs(sprites=True):
         + "".join('    include_bytes!("em_%s.gxmesh") as &[u8],\n' % k for k in KEYS) + "]\n").encode()
     if sprites:
         for k in KEYS:
-            out[OUT_ART / ("em_%s.png" % k)] = png_bytes(raster(meshes[k], SPRITE, span=span_of(BY_KEY[k])))
+            out[OUT_ART / ("em_%s.png" % k)] = png_bytes(raster(meshes[k], SPRITE, span=span_of(BY_KEY[k]), spin=BY_KEY[k]["spin"]))
     return meshes, out
 
 

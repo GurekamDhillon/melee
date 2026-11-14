@@ -269,14 +269,12 @@ pub unsafe fn pedestals(v: &[i32; VW]) {
                 DOOR_SUM.2 += 1.0;
                 ped_cost(v, p, k, bx, by + 22.0);
             }
-            let fy = by + 12.0 + 1.5 * sin(t * 0.07 + k as f32 * 1.3);
             let m = item(id).map_or(-1, |it| crate::fx::em_model(it.key));
             if m >= 0 {
-                // the item's own model (envoy-models1.md) rocking over the stone, on a soft disc of its colour (no ink
-                // edge: the host drops MAT_OUTLINE for this set)
-                fx(FX_DISC, bx, fy, 8.5, 0.0, 0.0, alpha(c, 0.3));
+                // the item's own model (envoy-models1.md) rocking in the ring, ink edged
+                vfx::fx(vfx::RING, bx, fy, 17.0, 17.0).cols(c, c).p(0.8, 0.03, 8.0, 0.8).age(t).a(0.8).emit();
                 let yaw = 0.35 * sin(t * 0.045 + k as f32 * 1.3);
-                crate::fx::model(m, bx, fy, 0.0, yaw, 16.0, 1.0, crate::fx::MAT_BODY, [0.3, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
+                crate::fx::model(m, bx, fy, 0.0, yaw, 16.0, 1.0, crate::fx::MAT_BODY | crate::fx::MAT_OUTLINE, [0.3, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
             } else {
                 vfx::fx(vfx::ORB, bx, fy, 15.0, 15.0).cols(vfx::pale(c, 0.15), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
                 vfx::fx(vfx::RING, bx, fy, 17.0, 17.0).cols(c, c).p(0.8, 0.03, 8.0, 0.8).age(t).a(0.8).emit();

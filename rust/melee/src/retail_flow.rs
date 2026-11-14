@@ -731,6 +731,10 @@ impl RetailPlay {
         let t_step = std::time::Instant::now();
         let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
+        if self.cur.1 == melee_types::GS_SSS as u8 {
+            // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
+            melee_engine::asset::sss_hover(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() });
+        }
         if melee_core::frameprof::on() {
             self.profile_test_stage();
         }

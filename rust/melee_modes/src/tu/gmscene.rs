@@ -905,6 +905,13 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
         return false;
     }
 
+    // TARGET_PC (zero-hitch.md): on the stage select the match commons (ItCo, IfAll: preloaded since the character
+    // select) are parsed, once, instead of at their first use in the match's setup tick, where their decode was a
+    // quarter of the tick. `lbDvd_ParseAhead` acts only on an entry that is loaded and not parsed yet.
+    if !info.is_null() && (*info).scene_kind as u32 == melee_types::GS_SSS as u32 && (*temp_r25).unk_0 >= 2 && pad_queue_count > 0 {
+        melee_runtime::tu::lbdvd::lbDvd_ParseAhead();
+    }
+
     i = 0;
     while i < pad_queue_count {
         let mut held: i32 = 0; // the loading screen is holding this frame

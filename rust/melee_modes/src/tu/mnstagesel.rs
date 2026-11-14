@@ -3597,6 +3597,16 @@ unsafe extern "C" fn mnStageSel_MexChangePage() -> i32 {
     mnStageSel_804D6CA4 = 15;
     return 1;
 }
+/// TARGET_PC (zero-hitch.md): the stage kind of the icon under the cursor (-1: none, Random, or an icon that is
+/// not a stage), for the asset service's hover hint (melee_engine asset.rs `sss_hover`). Reads only.
+pub unsafe fn mnStageSel_HoverStKind() -> i32 {
+    let i = mnStageSel_804D6CAE;
+    if i >= 0 && i < mnStageSel_IconCount && i < SSS_ICON_MAX && mnStageSel_803F06D0[i as usize].x8 as i32 >= 2 {
+        mnStageSel_803F06D0[i as usize].stkind
+    } else {
+        -1
+    }
+}
 pub unsafe extern "C" fn mnStageSel_802599EC() -> i32 {
     melee_core::ct!("mnStageSel_802599EC");
     let mut var_r0: i32 = 0;

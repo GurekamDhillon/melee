@@ -338,6 +338,9 @@ pub struct Renderer {
     tex_alias: FxMap<TexAddr, TexAlias>,
     /// Sum of `textures`' `bytes`.
     tex_bytes: u64,
+    /// Textures of the frame being prepared, converted ahead on several threads ([`Renderer::convert_ahead`]);
+    /// `texture_view` takes its texture from here instead of converting it.
+    tex_ready: FxMap<TexKey, texture::Converted>,
     /// `tex_override::generation()` the decoded textures were made under.
     ovr_gen: u64,
     /// [`Renderer::prepare`] calls so far (texture eviction clock).
@@ -1347,6 +1350,7 @@ impl Renderer {
             textures: FxMap::default(),
             tex_alias: FxMap::default(),
             tex_bytes: 0,
+            tex_ready: FxMap::default(),
             ovr_gen: crate::tex_override::generation(),
             prepared: 0,
             packed: None,
@@ -1565,6 +1569,92 @@ impl Renderer {
         self.zcopy_pipe = Some((pipe, bgl));
     }
 
+    /// A frame that brings many new textures at once (a match's first frame, a stage switch, a wave's new fighter, a
+    /// big custom map: 50-67 textures / 15-18 MB on the SSE maps, 12-14 ms converted one after the other inside that
+    /// one present) has them converted here first, on several threads: the conversion (GX tiles, CMPR, palettes to
+    /// RGBA8) is nearly all of a new texture's cost and each one is independent. `texture_view` then finds its texture
+    /// in `tex_ready` and only creates and uploads it. Same bytes, same cache keys, same order of GPU calls; a frame
+    /// with few or small new textures converts them in place as before.
+    fn convert_ahead(&mut self, draws: &[DrawCmd]) {
+        self.tex_ready.clear();
+        if crate::tex_override::active() {
+            return; // a registered override replaces a texture by its key's bytes: left to the one path that looks it up
+        }
+        struct Job<'a> {
+            key: TexKey,
+            fmt: u32,
+            w: u32,
+            h: u32,
+            mips: u32,
+            data: &'a [u8],
+            tlut: Option<(u32, u16, &'a [u8])>,
+        }
+        let t0 = melee_core::frameprof::on().then(std::time::Instant::now);
+        let mut jobs: Vec<Job<'_>> = Vec::new();
+        let mut bytes = 0usize;
+        let mut prev: Option<usize> = None;
+        for (di, d) in draws.iter().enumerate() {
+            if prev.is_some_and(|j| same_textures(&draws[j], d)) {
+                continue;
+            }
+            prev = Some(di);
+            for i in 0..MAX_TEXTURES {
+                if d.info.sampled_textures & (1 << i) == 0 && d.info.sampled_ind_textures & (1 << i) == 0 {
+                    continue;
+                }
+                let o = &d.textures[i];
+                if o.width() == 0 || o.height() == 0 || self.copy_view(o).is_some() {
+                    continue;
+                }
+                let Some(data) = o.data.as_ref() else { continue };
+                let fmt = o.format();
+                let tlut = if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
+                    let Some(t) = d.tluts.get(o.tlut as usize) else { continue };
+                    let Some(td) = t.data.as_deref() else { continue };
+                    Some((t.format, t.num_entries, td))
+                } else {
+                    None
+                };
+                let Some(key) = self.tex_key(d, i) else { continue };
+                if self.textures.contains_key(&key) || jobs.iter().any(|j| j.key == key) {
+                    continue;
+                }
+                bytes += data.len();
+                jobs.push(Job { key, fmt, w: o.width(), h: o.height(), mips: o.mip_count(), data: &data[..], tlut });
+            }
+        }
+        // worth the threads only for a real burst
+        if jobs.len() < 6 || bytes < 256 << 10 {
+            return;
+        }
+        let n = std::thread::available_parallelism().map_or(4, |n| n.get()).saturating_sub(2).clamp(2, 6).min(jobs.len());
+        let next = std::sync::atomic::AtomicUsize::new(0);
+        let out: Vec<std::sync::Mutex<Option<texture::Converted>>> = (0..jobs.len()).map(|_| std::sync::Mutex::new(None)).collect();
+        let work = || loop {
+            let k = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let Some(j) = jobs.get(k) else { break };
+            let c = match j.tlut {
+                Some((tf, tn, td)) => texture::convert_texture_palette(j.fmt, j.w, j.h, j.mips, j.data, tf, tn, td),
+                None => texture::convert_texture(j.fmt, j.w, j.h, j.mips, j.data),
+            };
+            *out[k].lock().unwrap() = Some(c);
+        };
+        std::thread::scope(|s| {
+            for _ in 1..n {
+                s.spawn(work);
+            }
+            work();
+        });
+        for (j, c) in jobs.iter().zip(out) {
+            if let Some(c) = c.into_inner().unwrap() {
+                self.tex_ready.insert(j.key, c);
+            }
+        }
+        if let Some(t) = t0 {
+            melee_core::frameprof::add(melee_core::frameprof::C::TexNs, t.elapsed().as_nanos() as u64);
+        }
+    }
+
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
         let o = &d.textures[map];
         let data = o.data.as_ref()?;
@@ -1594,7 +1684,9 @@ impl Renderer {
         let conv: &[u8] = if let Some(p) = ovr.as_ref() {
             &p.rgba
         } else {
-            conv_data = if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
+            conv_data = if let Some(c) = self.tex_ready.remove(&key) {
+                c // converted ahead (convert_ahead), from the same bytes
+            } else if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
                 let t = &d.tluts[o.tlut as usize];
                 texture::convert_texture_palette(fmt, w, h, mips, data, t.format, t.num_entries, t.data.as_deref()?)
             } else {
@@ -1756,6 +1848,7 @@ impl Renderer {
             self.tex_bytes = 0;
         }
         self.evict_textures();
+        self.convert_ahead(draws);
         if self.prepared % 600 == 0 && std::env::var_os("MELEE_GX_CACHE_LOG").is_some() {
             let f = &self.frames[self.fc];
             eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipes.len(), self.efb_copies.len(), self.pipes.wgsl_hashes.lock().unwrap().len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubytes, f.draws.capacity());

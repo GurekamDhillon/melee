@@ -944,6 +944,8 @@ pub fn init(iso: Option<String>) {
 /// never competes with the decodes of the same load burst (Envoy's no-lead fight start decodes ~10 files in a frame).
 static GAME_DECODE_AT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 const BYTES_QUIET_MS: u64 = 150;
+/// The longest a load waits for the worker to finish preparing the same file (see [`load`]).
+const WAIT_MAX: std::time::Duration = std::time::Duration::from_micros(1500);
 /// A disc hint (a coming load, or a boot file) waits until the game thread has neither decoded nor read a file for
 /// this long: it must never compete with a load burst in progress (the title's first frame reads the demo match's
 /// files; a no-lead fight start decodes ~10 files in a frame). The service is started with the clock stamped, so boot
@@ -1110,6 +1112,32 @@ pub fn hint_stage(gr: i32) {
             }
         }
     }
+}
+
+/// The stage select, once per tick (the play loop): `stkind` is the stage of the icon under the cursor (-1: none or
+/// Random). Once the cursor has rested on a stage for [`HOVER_TICKS`] its file is hinted, so the worker has the
+/// plan before the player confirms (the retail flow registers the stage with the preload cache only at the confirm,
+/// in the tick that loads it: no lead). Host state only; never sim-visible.
+pub fn sss_hover(stkind: i32) {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    const HOVER_TICKS: i32 = 12;
+    static LAST: AtomicI32 = AtomicI32::new(-1);
+    static SINCE: AtomicI32 = AtomicI32::new(0);
+    if LAST.swap(stkind, Relaxed) != stkind {
+        SINCE.store(0, Relaxed);
+        return;
+    }
+    if stkind < 0 || SINCE.fetch_add(1, Relaxed) + 1 != HOVER_TICKS {
+        return;
+    }
+    let gr = unsafe {
+        let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+        if stkind as usize >= map.len() {
+            return;
+        }
+        map[stkind as usize].grkind as i32
+    };
+    hint_stage(gr);
 }
 
 pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
@@ -1302,10 +1330,16 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
             if hit.is_some() {
                 break hit;
             }
-            // a hinted file of this length being prepared right now: wait for it (a readiness miss, counted)
-            if g.entries.iter().any(|e| e.pending && e.started && e.len == len) {
+            // a hinted file of this length being prepared right now: wait for it (a readiness miss, counted), but only
+            // for a moment. The wait had no bound: a stage picked on the stage select is hinted in the tick that loads
+            // it, and the game thread then sat out the worker's whole prepare (35 ms of the VS match's setup tick on
+            // Final Destination, a file that decodes in place in a few ms). Past the bound the file is decoded in
+            // place, which gives the same arena sequence as the replay (the service's rule), and the worker's plan
+            // serves the next load.
+            let left = WAIT_MAX.saturating_sub(t0.elapsed());
+            if !left.is_zero() && g.entries.iter().any(|e| e.pending && e.started && e.len == len) {
                 waited = true;
-                g = s.cv.wait(g).unwrap();
+                g = s.cv.wait_timeout(g, left).unwrap().0;
                 continue;
             }
             break None;

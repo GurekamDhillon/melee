@@ -14,6 +14,11 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   buildlock.sh run port/zerolag runlight.sh zerolag bash tools/rust-port/perf/zero_hitch_gate.sh
 # Each scenario is killed after GATE_TIMEOUT seconds (default 540) so a slow run cannot hold the locks; run the
 # scenarios as separate short holds (one scenario per lock hold) on a shared machine.
+# Two more scenarios, not in the default set (name them): lab (the Item Lab's whole pad script, lab_pad.py: every item
+# fired, equipped, stacked, then "Add all"; ~34400 ticks, its own 900 s timeout) and items (the envoy route with every
+# item of envoy_data's table held from fight 1).
+# The pipeline warm list (melee_gx render.rs) is kept in $OUT/gpucache across runs, as a player's stays beside the
+# exe: a first run on a machine fills it, later runs compile at start-up, off the frame path.
 # GW_ISO_VANILLA must be set (never printed). CARD: a memory card folder with a save (default: the exe's card/).
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
@@ -41,12 +46,14 @@ run() {  # name, frames, env..., -- , args...
   [ -n "${NEED_MODS:-}" ] && cp "$mods_src/envoy_sim.wasm" "$mods_src/envoy_ui.wasm" "$m/" && cp -r "$repo/rust/mods/envoy_ui/art" "$m/envoy_ui"
   echo "-- $name (${frames} ticks, real time)"
   ( cd "$d/bin" && env MELEE_VOLUME=3 MELEE_PROFILE=1 MELEE_FULLSCREEN=off MELEE_RECLAIM_LEAK=1 \
-      MELEE_WINDOW_TITLE="zerolag agent: gate $name ($build)" MELEE_CARD_PATH="$d/card" MELEE_ENVOY_DIR="$d/save" \
+      MELEE_WINDOW_TITLE="${GATE_TITLE:-zerolag agent: gate} $name ($build)" MELEE_CARD_PATH="$d/card" MELEE_ENVOY_DIR="$d/save" \
+      MELEE_GPUCACHE="$out/gpucache" \
       MELEE_WASM_MODS="$m" ${INTERP:+MELEE_INTERP=$INTERP} ${FPS:+MELEE_FPS_CAP=$FPS} "${envs[@]}" \
-      timeout "${GATE_TIMEOUT:-540}" ./melee.exe play --iso "$GW_ISO_VANILLA" --max-frames "$frames" "$@" >"$d/run.log" 2>&1 )
+      timeout "${TIMEOUT1:-${GATE_TIMEOUT:-540}}" ./melee.exe play --iso "$GW_ISO_VANILLA" --max-frames "$frames" "$@" >"$d/run.log" 2>&1 )
   local p; p=$(ls -t "$d/bin/profiles/"profile-*.csv 2>/dev/null | head -1)
   [ -n "$p" ] || { echo "FAIL $name: no profile written (see $d/run.log)"; fail=1; return; }
-  python "$here/zero_hitch_check.py" "$p" --label "$name" || fail=1
+  python "$here/zero_hitch_check.py" "$p" --label "$name" ${BUDGET:+--budget $BUDGET} || fail=1
+  [ -n "${GATE_KEEP_EXE:-}" ] || rm -f "$d/bin/melee.exe"
 }
 
 for s in "${scen[@]}"; do
@@ -55,6 +62,13 @@ for s in "${scen[@]}"; do
     vanilla_fod) NEED_MODS= run vanilla_fod 3000 -- --match "fox/cpu9,falco/cpu9,FOUNTAIN OF DREAMS" --time-secs 30 --quit-at-results;;
     envoy)       NEED_MODS=1 run envoy ${ENVOY_TICKS:-9000} MELEE_PAD_SCRIPT="$repo/tools/rust-port/envoy/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
                    MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey "MELEE_ENVOY_TEST_DRIVES=ember,bolt,tagauto,wave2,shift,dropall/ember,bolt" --;;
+    items)       all=$(python -c "import re,sys;print(','.join(re.findall(r'Item \{ id: \w+, key: \"([a-z_]+)\"',open(sys.argv[1],encoding='utf-8').read())))" "$repo/rust/mods/envoy_data/src/items.rs")
+                 NEED_MODS=1 run items ${ENVOY_TICKS:-9000} MELEE_PAD_SCRIPT="$repo/tools/rust-port/envoy/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
+                   MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_MOD_FUEL_LOG=1 "MELEE_ENVOY_TEST_DRIVES=$all,tagauto,wave2,shift,dropall/ember,bolt" --;;
+    lab)         mkdir -p "$out/lab.pad"; python "$repo/tools/rust-port/envoy/lab_pad.py" > "$out/lab.pad/lab_pad.txt"
+                 lf=$(head -1 "$out/lab.pad/lab_pad.txt" | grep -oE "[0-9]+ frames" | grep -oE "[0-9]+")
+                 TIMEOUT1=900 NEED_MODS=1 run lab $((lf + 200)) MELEE_PAD_SCRIPT="$out/lab.pad/lab_pad.txt" MELEE_PAD_IGNORE_ADAPTER=1 MELEE_PAD_CHANNELS=01 \
+                   MELEE_WIDESCREEN=1 MELEE_WINDOW=1280x720 --;;
     *) echo "gate: unknown scenario $s"; fail=1;;
   esac
 done

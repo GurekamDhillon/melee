@@ -15,7 +15,13 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #      one taken, the campfire refills to 6 (`campfire, stocks refilled to 6`), the shop opens;
 #   5. coop: MELEE_ENVOY_COOP=1, both players level-9 CPUs, fight 2: two item-room pedestals, both players take one;
 #   6. petey: MELEE_ENVOY_BOSS=petey at fight 4: items hit Petey; the boss drop follows his defeat.
-#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey";
+#   Fights 2 (envoy-items-design.md section 10):
+#   7. gauntlet: fight 1 (the opening gauntlet), the player a level-9 CPU: the next duel comes in after the KO with a
+#      new character (two different faces, no repeat), no results screen between;
+#   8. live: the torture knob's stage switches as live transitions: the rift runs, the hand-off lands, the fight never
+#      freezes, no KO caused by a switch;
+#   9. crowd: fight 2 (the 1v3 crowd): every foe hit carries the crowd knockback (x1350 at three foes), no player hit.
+#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -24,7 +30,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -43,7 +49,7 @@ export MELEE_VOLUME=3 MELEE_WASM_MODS="$tmods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_STA
 run() { # name depth knobs [env...]
   local name=$1 depth=$2 knobs=$3; shift 3
   exe_banner "items_check $name d$depth" >&2
-  env MELEE_WINDOW_TITLE="items1 agent: items_check $name d$depth (port/envoy-items1)" MELEE_ENVOY_TEST_DRIVES="$knobs" "$@" timeout 2400 "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
+  env MELEE_WINDOW_TITLE="${CHECK_TAG:-items1} agent: items_check $name d$depth (${CHECK_BRANCH:-port/envoy-items1})" MELEE_ENVOY_TEST_DRIVES="$knobs" "$@" timeout 2400 "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
     --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" --timeout 2000 >"$out/$name.d$depth.log" 2>&1
   grep 'engine synctest' "$out/$name.d$depth.log"
 }
@@ -100,6 +106,36 @@ for d in $depths; do
     line=$(frames=$(( frames < 6000 ? 6000 : frames )) run petey "$d" "$ALL,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=4)
     miss=""; seen petey "$d" "envoy: item fires" || miss="$miss (no item fired on Petey)"
     check 6 petey "$d" "$line" "$miss"
+  fi
+  if on gauntlet; then
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run gauntlet "$d" "*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen gauntlet "$d" "envoy: gauntlet, duels" || miss="$miss (not a gauntlet)"
+    seen gauntlet "$d" "envoy: gauntlet duel, wave" || miss="$miss (no second duel)"
+    seen gauntlet "$d" "envoy: wave new character" || miss="$miss (no new character)"
+    seen gauntlet "$d" "refused; it comes back as itself" && miss="$miss (a repeat face)"
+    # every duel's face differs from wave 1's and from each other (a rollback replays the same respawn: count distinct)
+    w1=$(grep -aoE "room faces, wave 1 [0-9]+" "$(L gauntlet "$d")" | head -1 | grep -oE "[0-9]+$")
+    duels=$(grep -aoE "gauntlet duel, wave\*100 \+ character [0-9]+" "$(L gauntlet "$d")" | grep -oE "[0-9]+$" | sort -u)
+    faces=$( { [ -n "$w1" ] && echo $(( w1 / 10000 - 1 )); for x in $duels; do echo $(( x % 100 )); done; } | sort | uniq -d)
+    [ "$(echo "$duels" | grep -c .)" = "$(echo "$duels" | awk '{print int($1/100)}' | sort -u | grep -c .)" ] || faces="$faces (a wave with two faces)"
+    [ -n "$faces" ] && miss="$miss (repeated:$faces)"
+    check 7 gauntlet "$d" "$line" "$miss"
+  fi
+  if on live; then
+    line=$(run live "$d" "torture,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen live "$d" "envoy: live stage transition begins" || miss="$miss (no live transition)"
+    seen live "$d" "envoy: live stage hand-off, frame" || miss="$miss (no hand-off)"
+    seen live "$d" "stage switch: live keep\|stage switch: safe place" || miss="$miss (no carry)"
+    seen live "$d" "envoy: KO right after a stage switch" && miss="$miss (a switch caused a KO)"
+    seen live "$d" "freeze kind 2" && miss="$miss (a freeze switch ran)"
+    check 8 live "$d" "$line" "$miss"
+  fi
+  if on crowd; then
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run crowd "$d" "*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
+    miss=""; seen crowd "$d" "envoy: crowd fight, foes\*10000 + knockback x1000 31350" || miss="$miss (not a 1v3 crowd at x1350)"
+    seen crowd "$d" "envoy: crowd knockback, slot" || miss="$miss (no crowd knockback hit)"
+    grep -aqE "envoy: crowd knockback, slot\*10000 \+ x1000 0?[0-9]{4}$" "$(L crowd "$d")" && miss="$miss (a player got it)"
+    check 9 crowd "$d" "$line" "$miss"
   fi
 done
 rm -rf "$tmods"

@@ -306,6 +306,104 @@ Laser hit (#8) waits for the item-hit hook.
 New: the item effect functions, the projectile pool, five engine event bits and the last-move read, the floor map
 generator, special-room scenes (pedestal, devil door), the pause strip, item icons.
 
+## 10. Fights 2: gauntlets, live stage transitions, crowd knockback (2026-11-13, built)
+
+Owner, after playing the items slice: "Maybe more 1v1s, they can be back to back. Different characters are good. We
+gotta find a better way to do stage switches. They should be less instant and have more of a effect live while we
+are fighting transitioning across the stages maybe over a few seconds. If we are doing a multienemy fight (1v3 or
+more ...), the 3+ enemies should have higher knockback scaling so they get knocked out and KOd easier."
+
+### 10.1 The room mix and gauntlets
+
+One table, `ROOM_MIX` in `envoy_sim` (per fight of a loop, per loop 1 / 2 / 3+: foes on the field, waves):
+
+| room | loop 1 | loop 2 | loop 3+ | what it is |
+|---|---|---|---|---|
+| 1 | 1 foe x 2 | 1 x 3 | 1 x 3 | the opening gauntlet |
+| 2 | 3 foes x 1 | 3 x 1 | 3 x 2 | the crowd (1v3, crowd knockback) |
+| 3 | 1 foe x 3 | 1 x 3 | 1 x 4 | the elite gauntlet: plain duels, the elite in the last |
+| boss | 1 | 1 | 1 | Petey / the stand-in |
+
+So a loop is 6-8 duels and one crowd fight before the boss (it was 1 duel, 2 two-foe waves, 2 elite-room waves).
+Co-op adds one foe to a duel or pack room, as before (a gauntlet of 2v2 duels; the crowd is 2v2).
+
+- **A gauntlet** is a 1-foe room with more than one wave. The KO'd foe is parked (its stocks set back) and, when its
+  KO countdown ends, comes back as the next character on the respawn platform: no results screen, no menu, the
+  next duel is on about two seconds after the KO (the retail rebirth). Each duel is a different character.
+- **Faces.** Wave 1 and wave 2 characters ride the plan as before (P_CPU_CK, P_WAVE_CK); waves 3-5 of foe rows 0-1
+  ride a new queue (plan words 44-49, `P_GAUNT_CK`). The engine preloads every queued character with the match's
+  files (`Player_80031CB0`) and pops the next one into `ENVOY_WAVE_CK` after each respawn, so no character file is
+  read mid-match. The sim's `pick_face` never repeats a face within a room and prefers characters not among the
+  run's last ten foes (`S.seen`, hashed state); it falls back to any unused face once the cast runs out.
+- **The elite** arrives in the elite room's last wave (plan word 50, `P_ELITE_WAVE`); the duels before it are plain
+  foes with their own stocks and numbers.
+
+### 10.2 Live stage transitions
+
+The freeze-and-cut (a 90-frame freeze, a wipe covering the screen, the switch under it) is replaced in Envoy by a
+**rift sweep** with the fight running:
+
+1. **Request** (frame 0): the same triggers as before (a new wave, an elite break, the Shifting road), the same caps.
+   No freeze, no pause: tags, strikes and attacks carry on.
+2. **The sweep** (frames 0-96): a bright sheared band in the destination stage's colour crosses the screen from the
+   left. The side it has passed is veiled in the destination's colour (<= 20% alpha); a small caption reads
+   "SHIFTING TO <stage>". The player sees the new stage coming and where it has "reached".
+3. **The hand-off** (frame 96, the band's core over the middle): the engine swaps stage visuals and collision in one
+   step between logic frames (`stage_hop::switch_to_ex(.., live)`). The core flares wide for ~8 frames with one
+   soft flash and a ring (one flash, under the 3-a-second rule), which covers the one-frame swap.
+4. **The settle** (frames 96-180): the band runs on off the right edge; the side it has not yet reached carries the
+   old stage's colour veil, thinning out, so the old stage reads as being wiped away. Caption: "NOW ON <stage>".
+
+Total 3 s (LIVE_LEN 180, LIVE_AT 96 in the sim). Why this one: a single live stage is rendered at a time (the engine
+has no second stage scene to split the screen with), so a true two-stage split would need a render-target capture
+in melee_gx; the rift gives the same read (one stage giving way to the other across the screen, over seconds) with
+one honest swap frame hidden under the brightest moment, and it never takes control away.
+
+**Fighters at the hand-off** (`stage_hop::safe_place(live)`): grabs are cut; a fighter the carry left standing on a
+floor of the new stage, or in the air over one with room inside the blast box, keeps its place, action and
+momentum and is intangible for 20 frames; a fighter over a pit, outside the box or inside the new geometry gets the
+safety float (its spawn point, falling from just above it, every velocity cleared, intangible 60 frames). Sleeping,
+KO'd and respawning fighters are left alone. If a fighter is mid-grab or respawning at the hand-off, the rift holds
+its core a frame at a time (at most 90) before giving up (logged "live stage hand-off refused").
+
+**Rollback and zero lag.** The transition is game state: `tag_swap::LIVE` (a plain static the snapshot covers),
+advanced in `tag_swap::tick` between logic frames; the hand-off frame is a pure function of the record, so a
+rollback across any frame of it resimulates the same frames. The destination is known when the fight is planned
+(plan word 51, `P_STAGE_NEXT`), and the plan hint sends its stage file to the asset worker then, and again at the
+request (`STAGE_HINT`), so the hand-off reads a prepared file and never touches the disc. The presentation only
+reads `gd_ui_stage_live`.
+
+The freeze path stays for the stage_switch mod and behind the test knob `freezeshift`.
+
+**Stale free fixed.** `grZakoGenerator_StageSlotRelease` freed `lbl_8049F030.x4` on every hop, but that static
+outlives a match (retail never clears it): after a match on a stage with a zako generator, a later hop freed a
+pointer into the dead scene's heap. The release now frees only the table the live stage made (`ZAKO_LIVE`, set by
+`grZakoGenerator_801CAE04`, cleared by every stage init `Ground_801BFFB0`); retail state is untouched.
+
+**Measured (2026-11-13, quiet machine, hidden window, MELEE_PROFILE=1, three live hand-offs BF->YS->DL->FoD).**
+The sim's switch is 2-4 ms and the stage file decodes in place (0-3 ms: the plan hint works), but each hand-off frame
+is still 59-65 ms, 32-43 ms of it GPU pipeline creation for the new stage's materials on first draw. The wave
+respawn of a new gauntlet character is 46 ms (GPU pipelines 13 ms, fighter create 4 ms, files 2 ms). So the zero-lag
+rule is NOT met at the hand-off yet. Next step: warm the destination's pipelines during the 96 frames before the
+hand-off (record each stage's pipeline configs once, or a persisted pipeline cache in melee_gx, then create them on a
+worker with `PipeFactory::get`), and the same for queued gauntlet characters. Separately the hidden-window run shows
+~17 ms pacing-sleep frames throughout (not this feature).
+
+### 10.3 Crowd knockback
+
+In a fight with 3 or more foes (`CROWD_FROM`), every foe hit is scaled by `CROWD_KB` = x1.35 knockback, +0.10 for
+each foe past three (`CROWD_KB_STEP`), at most x1.5 (`CROWD_KB_CAP`, also the engine's clamp in `gd_envoy_kb_scale`).
+Applied in the sim's take-damage post hook to foes only (never a player, never the boss), Envoy only. Logged once a
+fight (`envoy: crowd fight, foes*10000 + knockback x1000`) and per hit (`envoy: crowd knockback, slot*10000 + x1000`);
+the HUD's room line says "Crowd". With four ports and a human, 1v3 is the most today; the Subspace enemies are not
+fighters (they have their own HP), so they do not count toward the crowd.
+
+### 10.4 Checks
+
+`tools/rust-port/envoy/items_check.sh` rows 7-9: `gauntlet` (fight 1: a second duel with a new face, no repeat),
+`live` (the torture knob's switches as live transitions: hand-off, carry, no KO caused, no freeze), `crowd` (fight 2:
+x1350 on foe hits, none on a player); each a synctest at depth 4 and 7 with 0 mismatches.
+
 ## Open questions for the owner
 
 1. Decided (owner, 2026-11-13): devil deals cost stock slots; Isaac-style stock limit + campfire refills.

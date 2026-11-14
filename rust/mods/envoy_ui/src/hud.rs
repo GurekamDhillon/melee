@@ -397,7 +397,11 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         s.s("Room ").i(v[V_ROOM]).s(" of ").i(v[V_ROOMS]);
     }
     if v[V_WAVES] > 1 && v[V_ROOM] != 0 {
-        s.s(" - Wave ").i(v[V_WAVE].clamp(1, v[V_WAVES])).s(" of ").i(v[V_WAVES]);
+        // a gauntlet (one foe at a time) counts duels
+        s.s(if v[V_FOES] == 1 { " - Duel " } else { " - Wave " }).i(v[V_WAVE].clamp(1, v[V_WAVES])).s(" of ").i(v[V_WAVES]);
+    }
+    if v[V_CROWD] > 1000 {
+        s.s(" - Crowd");
     }
     e.text_ex(14.0 - ex, 40.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
     // foes, top right: an elite or boss plate with its drives
@@ -588,7 +592,7 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
             }
             EV_WAVE => {
                 let mut s = Buf::new();
-                s.s("Wave ").i(ev[2]);
+                s.s(if v[V_FOES] == 1 { "Next duel " } else { "Wave " }).i(ev[2]);
                 burst(e, S_BURST_SUNNY, 320.0, 70.0, 76.0, age, s.str(), 12);
             }
             EV_BREAK => {

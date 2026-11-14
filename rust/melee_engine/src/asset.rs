@@ -1041,6 +1041,19 @@ fn entry_of(name: *const i8) -> i32 {
 /// Hints for a fight decided ahead (Envoy: the sim publishes the coming room's plan at the camp / stop screens): the
 /// stage file (prepared for that stage's grkind) and every fighter's data, costume (color 0, the one Envoy fights
 /// use unless the CSS pick says otherwise) and animation bank. Reads only immutable name tables.
+/// Hint ground kind `gr`'s stage file (no-op for 0 / an unknown kind).
+pub fn hint_stage(gr: i32) {
+    unsafe {
+        let sd = &*core::ptr::addr_of!(melee_world::tu::ground::stage_datas);
+        if gr > 0 && (gr as usize) < sd.len() && !sd[gr as usize].is_null() {
+            let e = entry_of((*sd[gr as usize]).data1 as *const i8);
+            if e > 0 {
+                hint_entry_gr(e, -1, Some(gr));
+            }
+        }
+    }
+}
+
 pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
     use melee_modes::tu::envoy as ev;
     if plan[ev::P_ACTIVE] == 0 || svc().is_none_or(|s| !s.worker) {
@@ -1062,15 +1075,12 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
     let ncpu = plan[ev::P_NCPU].clamp(0, 3) as usize;
     cks.extend(&plan[ev::P_CPU_CK..ev::P_CPU_CK + ncpu]);
     cks.extend(&plan[ev::P_WAVE_CK..ev::P_WAVE_CK + 3]);
+    cks.extend(&plan[ev::P_GAUNT_CK..ev::P_GAUNT_CK + 6]);
     let gr = plan[ev::P_STAGE];
     unsafe {
-        let sd = &*core::ptr::addr_of!(melee_world::tu::ground::stage_datas);
-        if gr > 0 && (gr as usize) < sd.len() && !sd[gr as usize].is_null() {
-            let e = entry_of((*sd[gr as usize]).data1 as *const i8);
-            if e > 0 {
-                hint_entry_gr(e, -1, Some(gr));
-            }
-        }
+        // the fight's stage and the one a live stage transition goes to (its file in memory before the hand-off)
+        hint_stage(gr);
+        hint_stage(plan[ev::P_STAGE_NEXT]);
         let mapping = &*core::ptr::addr_of!(melee_world::pl::ftMapping_list);
         let names = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C1F40);
         let costumes = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C2360);

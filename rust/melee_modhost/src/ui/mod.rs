@@ -746,6 +746,15 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         for (i, x) in w.iter().enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
         if write_bytes(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
     });
+    // read-only view of the live stage transition (melee_modes::tu::tag_swap::LIVE): 8 i32 words, phase, done, from,
+    // to, frame, len, at (the hand-off frame), finished count
+    f!("gd_ui_stage_live", |mut c: Caller<'_, PresData>, out: u32| -> i32 {
+        let l = unsafe { melee_modes::tu::tag_swap::LIVE };
+        let w = [l.phase as i32, l.done as i32, l.from as i32, l.to as i32, l.frame as i32, l.len as i32, l.at as i32, l.count as i32];
+        let mut b = [0u8; 32];
+        for (i, x) in w.iter().enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
+    });
     // read-only view of the Envoy run (melee_modes::tu::envoy::VIEW, published by the envoy sim mod): n i32 words
     f!("gd_ui_envoy", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
         let v = unsafe { melee_modes::tu::envoy::VIEW };

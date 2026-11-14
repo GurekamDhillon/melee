@@ -303,6 +303,10 @@ pub static mut TAG_PARTNER_CK: [i8; 4] = [-1; 4];
 /// (-1 none). Preloaded with the match's files (Player_80031CB0) so the respawn never reads the disc mid-match. Set by
 /// melee_modes::tu::envoy at match begin; -1 for every retail match.
 pub static mut ENVOY_WAVE_CK: [i8; 4] = [-1; 4];
+/// TARGET_PC, Envoy gauntlets (back-to-back duels, envoy-items-design.md "Fights 2"): per slot, the characters that
+/// follow ENVOY_WAVE_CK, in order (-1 ends the queue). Preloaded with ENVOY_WAVE_CK; melee_modes pops one into
+/// ENVOY_WAVE_CK after each respawn, so every duel of a gauntlet is a new face. -1 for every retail match.
+pub static mut ENVOY_WAVE_Q: [[i8; 3]; 4] = [[-1; 3]; 4];
 /// The heap-1 gap a wave respawn needs for a new character's animation bank (the largest PlxxAJ.dat is under
 /// 0x280000; Marth's is 0x1EEEC0) plus room for the fighter's other allocations.
 const ENVOY_WAVE_BANK_ROOM: u32 = 0x30_0000;
@@ -466,7 +470,8 @@ pub fn Player_80031CB0(kind: CharacterKind, color: u8) {
     // TARGET_PC, the in-place tag prototype: preload every configured partner with the match's files, so the swap's
     // Fighter_Create never reads the disc mid-match (the partner kinds are fixed for the match)
     // TARGET_PC, Envoy rooms: the next waves' characters (none outside a run)
-    for wk in unsafe { ENVOY_WAVE_CK } {
+    let queued = unsafe { ENVOY_WAVE_Q }.into_iter().flatten();
+    for wk in unsafe { ENVOY_WAVE_CK }.into_iter().chain(queued) {
         if wk >= 0 && wk as i32 != kind as i32 && map(wk as CharacterKind).internal_id != -1 {
             ext::ftData_800855C8(map(wk as CharacterKind).internal_id as i32 as FighterKind, color);
         }

@@ -365,6 +365,8 @@ pub const V_CAMP_AT: usize = 771; // the play frame the campfire refilled the st
 pub const V_CAMP_GAIN: usize = 772; // stocks the campfire gave back
 pub const V_ITEMS_ON: usize = 773; // 1: the item rules (no drives, no Heat meter)
 pub const V_STOCK_PRICE: usize = 774; // the shop's stock refill price now
+pub const V_FOES: usize = 775; // foes on the field at once this room (1 with V_WAVES > 1: a gauntlet of duels)
+pub const V_CROWD: usize = 776; // the crowd knockback foes take this fight (x1000; 1000 none)
 pub const PED_ITEM_ROOM: i32 = 1;
 pub const PED_BOSS: i32 = 2;
 /// The item projectiles / orbitals / ground effects, every frame: PROJ entries of PJ_W words.

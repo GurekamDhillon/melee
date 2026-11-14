@@ -156,3 +156,11 @@ pub fn drop_ghosts(t: u32, seen: [u32; 2]) {
         }
     }
 }
+
+/// The live stage transition's hand-off (lib.rs `stage_rift`): a soft flash and a ring in the destination's colour
+/// from the middle of the screen. Presentation only.
+pub unsafe fn handoff(vw: f32, vh: f32, rgba: u32) {
+    let _ = (vw, vh);
+    gd_fx_post(POST_FLASH, 0.35, 0.5, 0.5, 0xFFFF_FFFF);
+    gd_fx_post(POST_RADIAL_WAVE, 0.8, 0.5, 0.5, rgba);
+}

@@ -572,6 +572,7 @@ pub unsafe extern "C" fn Ground_801BFFAC(_arg0: i32) { melee_core::ct!("Ground_8
 
 pub unsafe extern "C" fn Ground_801BFFB0() {
     melee_core::ct!("Ground_801BFFB0");
+    crate::tu::grzakogenerator::grZakoGenerator_StageInit();
     ext::grDatFiles_801C6288();
     stage_info.flags = 0;
     stage_info.x6D0 = -1;

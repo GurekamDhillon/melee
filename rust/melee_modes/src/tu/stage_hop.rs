@@ -124,6 +124,11 @@ unsafe fn prepare(src: *mut MapCollData) -> *mut MapCollData {
 /// `HSD_GObj_RunProcs`): the mod host applies it after the `frame.run_procs` post chain.
 /// Returns 0 on success; on a refusal nothing has changed.
 pub unsafe fn switch_to(kind: i32) -> i32 {
+    switch_to_ex(kind, false)
+}
+
+/// `switch_to`; `live`: the Envoy live transition's hand-off (the fight is running: see `safe_place`).
+pub unsafe fn switch_to_ex(kind: i32, live: bool) -> i32 {
     let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Stage, || melee_core::frameprof::Text::new().s("stage switch to ground kind ").n(kind as i64));
     let rc = check(kind);
     if rc != 0 {
@@ -231,7 +236,7 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     sg::script_retail_capture = 0;
     { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: carry")); sg::script_retail_carry(); }
     if crate::tu::envoy::armed() != 0 && !old_switch() {
-        safe_place();
+        safe_place(live);
     }
     sg::script_retail_items(0);
     sg::script_switch.epoch += 1;
@@ -247,6 +252,8 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
 pub const SAFE_INTANGIBLE: i32 = 60;
 /// How far above its spawn point a placed fighter starts (it lands within a few frames).
 const SAFE_LIFT: f32 = 4.0;
+/// Frames a fighter the live hand-off kept in place cannot be hit (the hand-off frame is never a free hit).
+pub const LIVE_INTANGIBLE: i32 = 20;
 /// Sideways step between fighters that would share a spawn point (a stage with fewer points than fighters).
 const SAFE_STEP: f32 = 14.0;
 
@@ -282,7 +289,12 @@ unsafe fn safe_point(x: f32, y: f32) -> bool {
 /// or counted twice) and the respawn platform (11-13: its physics steers to the new stage's own rebirth point every
 /// frame). An Assist Strike in flight ends (the partner goes back to the bench). Statics and heaps only:
 /// deterministic under rollback.
-unsafe fn safe_place() {
+///
+/// `live` (the live transition's hand-off, the fight running on): a fighter the carry left standing on a floor of the
+/// new stage, or in the air over one (inside the blast box with room), keeps its place, motion and momentum and is
+/// intangible for LIVE_INTANGIBLE frames; only one over a pit, outside the box or inside the new geometry gets the
+/// spawn-point placement above (the safety float).
+unsafe fn safe_place(live: bool) {
     if sg::HSD_GObjPLinkHead.is_null() {
         return;
     }
@@ -304,6 +316,25 @@ unsafe fn safe_place() {
     while !g.is_null() {
         let next = (*g).next as *mut HSD_GObj;
         let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
+        if live && in_play(fp) && (*fp).victim_gobj.is_null() && (*fp).x1A5C.is_null() {
+            let at = (*fp).cur_pos;
+            let grounded = (*fp).ground_or_air == GA_Ground && (*fp).coll_data.floor.index >= 0;
+            if grounded || safe_point(at.x, at.y) {
+                melee_fighter::tu::ftcoll::ftColl_8007B760(g as _, LIVE_INTANGIBLE);
+                if nused < used.len() && (*fp).is_sub_fighter() == 0 {
+                    used[nused] = (at.x, at.y);
+                    nused += 1;
+                }
+                if std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
+                    eprintln!(
+                        "stage switch: live keep player {} grounded {} motion {} at ({:.1},{:.1})",
+                        (*fp).player_idx, grounded as i32, (*fp).motion_id, at.x, at.y
+                    );
+                }
+                g = next;
+                continue;
+            }
+        }
         if in_play(fp) {
             let sub = (*fp).is_sub_fighter() != 0;
             let mut at: Vec = core::mem::zeroed();

@@ -17,7 +17,7 @@
 use melee_fighter::tu::player as pl;
 use melee_types::*;
 
-pub const PLAN_WORDS: usize = 44;
+pub const PLAN_WORDS: usize = 52;
 pub const VIEW_WORDS: usize = 1536;
 
 // plan layout (i32 words)
@@ -52,6 +52,14 @@ pub const P_WAVE_ATK: usize = 38;
 pub const P_WAVE_DEF: usize = 39;
 pub const P_WAVE_SCALE: usize = 40;
 pub const P_WAVE_LV: usize = 41;
+/// Envoy gauntlets (back-to-back duels): foe rows 0-1, the characters of waves 3, 4 and 5 (-1: none; three words a
+/// row). Every one is preloaded at match begin; wave 2 is P_WAVE_CK.
+pub const P_GAUNT_CK: usize = 44;
+/// The wave the elite arrives in (foe row 0 of an elite room; 0: none, read as 2 for an old plan with P_WAVE_SCALE).
+pub const P_ELITE_WAVE: usize = 50;
+/// The stage a live stage transition will go to next (Gr_Kind; 0 none): hinted to the asset worker with the plan, so
+/// its file is in memory long before the hand-off frame.
+pub const P_STAGE_NEXT: usize = 51;
 /// Final Destination (Gr_Kind): the Petey arena for now (an original stage is later work).
 const GR_FD: i32 = 37;
 
@@ -446,6 +454,8 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     crate::tu::gmvs::gmVs_SetEndHold(0);
     melee_fighter::hooks::ENVOY_TAG_MASK = [0; 4];
     pl::ENVOY_WAVE_CK = [-1; 4];
+    pl::ENVOY_WAVE_Q = [[-1; 3]; 4];
+    WAVE_NO = 1;
     WAVE_PARK = [0; 4];
     WAVE_PENDING = [0; 4];
     if PLAN[P_ACTIVE] == 0 || armed() == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
@@ -550,8 +560,17 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         p.defense_ratio = ratio(PLAN[P_CPU_DEF + i]);
         p.model_scale = ratio(PLAN[P_CPU_SCALE + i]);
         let wk = PLAN[P_WAVE_CK + i];
-        if (0..=0x19).contains(&wk) && wk != CK_ICS && wk != CK_ZELDA && wk != CK_SHEIK {
+        if wave_ck_ok(wk) {
             pl::ENVOY_WAVE_CK[humans + i] = wk as i8;
+            if i < 2 {
+                for k in 0..3 {
+                    let g = PLAN[P_GAUNT_CK + i * 3 + k];
+                    if !wave_ck_ok(g) {
+                        break;
+                    }
+                    pl::ENVOY_WAVE_Q[humans + i][k] = g as i8;
+                }
+            }
         }
     }
     // 4-player rows past the first four are never used by VS
@@ -592,6 +611,11 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     eprintln!("envoy: match {} rewritten: main {main} partner {partner} co-op {} stocks {} cpus {n} stage {}", SEQ, coop as i32, me_stocks(d), PLAN[P_STAGE]);
 }
 
+/// A character a wave can bring in (no sub-fighter characters: the respawn refuses them).
+fn wave_ck_ok(k: i32) -> bool {
+    (0..=0x19).contains(&k) && k != CK_ICS && k != CK_ZELDA && k != CK_SHEIK
+}
+
 fn me_stocks(d: &StartMeleeData) -> i32 {
     d.players[0].stocks as i32
 }
@@ -610,6 +634,24 @@ unsafe fn fighters(slot: i32) -> [*mut Fighter; 2] {
 pub static mut WAVE_PARK: [u8; 4] = [0; 4];
 /// Parked and asleep (the KO countdown has ended): waiting for `wave_start`.
 pub static mut WAVE_PENDING: [u8; 4] = [0; 4];
+/// The wave in play (1-based; set at match begin, +1 per `wave_start`).
+pub static mut WAVE_NO: i32 = 1;
+
+/// Whether the wave starting now is foe row 0's elite (an elite room's last wave).
+unsafe fn elite_now(s: usize) -> bool {
+    let at = if PLAN[P_ELITE_WAVE] > 0 { PLAN[P_ELITE_WAVE] } else { 2 };
+    s == 1 + (PLAN[P_COOP] != 0) as usize && PLAN[P_WAVE_SCALE] > 0 && WAVE_NO + 1 == at
+}
+
+/// Gauntlets: after a slot's swap, its next duel's character comes off the queue (the old flip-back is the
+/// fallback once the queue is empty).
+unsafe fn wave_queue_pop(s: usize) {
+    let q = pl::ENVOY_WAVE_Q[s];
+    if q[0] >= 0 {
+        pl::ENVOY_WAVE_CK[s] = q[0];
+        pl::ENVOY_WAVE_Q[s] = [q[1], q[2], -1];
+    }
+}
 
 /// The sim parks `slot` (0 ok, -1 not in a run / not a slot).
 pub unsafe fn wave_park(slot: i32) -> i32 {
@@ -640,7 +682,9 @@ pub unsafe fn wave_start() -> i32 {
             continue;
         }
         let ck = pl::ENVOY_WAVE_CK[s];
-        if ck >= 0 && !swap_in(s, ck) {
+        if ck >= 0 && swap_in(s, ck) {
+            wave_queue_pop(s);
+        } else if ck >= 0 {
             if pl::envoy_wave_old_way() {
                 eprintln!("envoy: wave respawn of slot {s} as {ck} refused; it comes back as itself");
             } else {
@@ -656,13 +700,17 @@ pub unsafe fn wave_start() -> i32 {
         WAVE_PARK[s] = 0;
         WAVE_PENDING[s] = 0;
         // foe row 0 of an elite room: the elite's numbers before the new fighter is built (it reads the scale)
-        let elite = s == 1 + (PLAN[P_COOP] != 0) as usize && PLAN[P_WAVE_SCALE] > 0;
+        let elite = elite_now(s);
         if elite {
             pl::Player_SetModelScale(s as i32, ratio(PLAN[P_WAVE_SCALE]));
         }
         let ck = pl::ENVOY_WAVE_CK[s];
-        if ck >= 0 && later[s] && !swap_in(s, ck) {
-            eprintln!("envoy: wave respawn of slot {s} as {ck} refused; it comes back as itself");
+        if ck >= 0 && later[s] {
+            if swap_in(s, ck) {
+                wave_queue_pop(s);
+            } else {
+                eprintln!("envoy: wave respawn of slot {s} as {ck} refused; it comes back as itself");
+            }
         }
         if elite {
             pl::Player_SetAttackRatio(s as i32, ratio(PLAN[P_WAVE_ATK]));
@@ -673,12 +721,15 @@ pub unsafe fn wave_start() -> i32 {
         crate::tu::gm_1601::fn_8016719C(s as i32, 0);
         n += 1;
     }
+    if n > 0 {
+        WAVE_NO += 1;
+    }
     n
 }
 
 /// One slot's swap to its next-wave character (the elite's scale set first: the new fighter reads it).
 unsafe fn swap_in(s: usize, ck: i8) -> bool {
-    if s == 1 + (PLAN[P_COOP] != 0) as usize && PLAN[P_WAVE_SCALE] > 0 {
+    if elite_now(s) {
         pl::Player_SetModelScale(s as i32, ratio(PLAN[P_WAVE_SCALE]));
     }
     let ok = pl::envoy_wave_respawn(s as i32, ck as CharacterKind);

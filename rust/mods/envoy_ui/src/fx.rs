@@ -33,6 +33,16 @@ unsafe fn post(effect: u32, strength: f32, x: f32, y: f32, rgba: u32) -> i32 {
     gd_fx_post(effect, strength * k, x, y, rgba)
 }
 
+/// The Envoy model set (docs/rust-port/notes/envoy-models1.md): one key per line; the host's model id is
+/// `EM_FIRST` + the line (`melee_modes::tu::drive_draw::EM_FIRST`, after the 10 legacy and 65 Party models).
+const EM_KEYS: &str = include_str!("../../../../pc/scripts/examples/envoy_models/models/envoy_models.txt");
+const EM_FIRST: i32 = 75;
+
+/// The model id of Envoy model `key` (an item's key, "node_boss", "frame_devil"...), -1 if there is none.
+pub fn em_model(key: &str) -> i32 {
+    EM_KEYS.lines().position(|k| k == key).map_or(-1, |n| EM_FIRST + n as i32)
+}
+
 /// A drive model with a material (see `gd_ui_world_model_ex`).
 pub fn model(m: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, alpha: f32, mat: i32, p: [f32; 4], rgba: u32) {
     unsafe { gd_ui_world_model_ex(m, x, y, z, yaw, scale, alpha, mat, p[0], p[1], p[2], p[3], rgba) };

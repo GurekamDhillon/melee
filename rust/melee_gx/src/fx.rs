@@ -424,7 +424,9 @@ fn vnoise(p: vec3f) -> f32 {
     var c = proj(vp);
     let nv = vec2f(dot(g.v0.xyz, nw), dot(g.v1.xyz, nw));
     let d = select(vec2f(0.0), normalize(nv), dot(nv, nv) > 1e-8);
-    c = vec4f(c.xy + d * g.misc.zw * c.w, c.zw);
+    // a model drawn large (a pedestal item at scale 16) takes a wider edge, up to x3; drives (scale <= 5) are unchanged
+    let wide = clamp(length(m0.xyz) / 5.0, 1.0, 3.0);
+    c = vec4f(c.xy + d * g.misc.zw * wide * c.w, c.zw);
     return c;
 }
 @fragment fn fs_ink() -> FO {
@@ -686,7 +688,15 @@ impl FxGpu {
                     // reversed z (state::USE_REVERSED_Z): GX LEQUAL
                     depth_compare: if crate::state::USE_REVERSED_Z { wgpu::CompareFunction::GreaterEqual } else { wgpu::CompareFunction::LessEqual },
                     stencil: Default::default(),
-                    bias: Default::default(),
+                    // the ink hull is the body's own triangles slid sideways at the body's depth: on a face tilted to
+                    // the camera the slid copy is nearer than the face under it and covered it with ink (pedestal
+                    // items came out solid ink, 2026-11-14). Push the hull back by the face's depth slope.
+                    bias: if label == "fx ink" {
+                        let s = if crate::state::USE_REVERSED_Z { -1 } else { 1 };
+                        wgpu::DepthBiasState { constant: 2 * s, slope_scale: 8.0 * s as f32, clamp: 0.0 }
+                    } else {
+                        Default::default()
+                    },
                 }),
                 multisample: wgpu::MultisampleState { count: samples, ..Default::default() },
                 fragment: Some(wgpu::FragmentState {

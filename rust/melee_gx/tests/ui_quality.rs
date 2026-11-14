@@ -293,6 +293,8 @@ fn small_text_keeps_its_stems() {
     use melee_gx::ui_font::{emit, fit, TextStyle};
     let Some(mut g) = gpu() else { return };
     let mut report = String::new();
+    // a clear atlas entry (never written)
+    let empty = g.atlas.alloc(40, 60).unwrap();
     for (s, size) in [(1.5f32, 7.0f32), (1.5, 9.0), (2.25, 6.0), (1.0, 11.0), (3.0, 5.0)] {
         let st = TextStyle::new(size, false, false);
         let word = "Illtuj1";
@@ -312,6 +314,26 @@ fn small_text_keeps_its_stems() {
             let img = render(&mut g, quads, w, h, [0.0, 0.0, 640.0 * s, 480.0 * s], [0.0; 2]);
             inks.push(img.iter().map(|&v| v as f32 / 255.0).sum::<f32>());
         }
+        // the outline pass (the glyphs widened in their field) is wider than the fill ..
+        let mut quads = Vec::new();
+        emit(&g.atlas.faces, st, word, n, 8.0, 6.3, |r, uv| {
+            let mut q = quad(r[0], r[1], r[2], r[3]);
+            q.uv = uv;
+            q.flags = Q_SDF;
+            q.shape = [0.0, 0.42, 0.0];
+            quads.push(q);
+        });
+        let (w, h) = ((120.0 * s) as u32, (30.0 * s) as u32);
+        let img = render(&mut g, quads, w, h, [0.0, 0.0, 640.0 * s, 480.0 * s], [0.0; 2]);
+        assert!(img.iter().map(|&v| v as f32 / 255.0).sum::<f32>() > inks[0] * 1.2, "the outline pass is not wider than the fill");
+        // .. and leaves the empty part of a tile empty: a widened quad over clear texels, minified like this text,
+        // draws nothing (not a faint box the size of the glyph quad)
+        let mut q = quad(8.0, 6.0, size * 0.6, size);
+        q.uv = empty.sub_uv(4.0, 4.0, 28.8, 48.0);
+        q.flags = Q_SDF;
+        q.shape = [0.0, 0.42, 0.0];
+        let img = render(&mut g, vec![q], w, h, [0.0, 0.0, 640.0 * s, 480.0 * s], [0.0; 2]);
+        assert_eq!(img.iter().copied().max().unwrap(), 0, "the outline pass tints an empty tile at scale {s} size {size}");
         let mean = inks.iter().sum::<f32>() / inks.len() as f32;
         let (lo, hi) = inks.iter().fold((f32::MAX, 0.0f32), |a, &v| (a.0.min(v), a.1.max(v)));
         report += &format!("scale {s} size {size} ({:.1} px): ink {mean:.1} px, min {:+.1}% max {:+.1}%\n", size * s, (lo / mean - 1.0) * 100.0, (hi / mean - 1.0) * 100.0);

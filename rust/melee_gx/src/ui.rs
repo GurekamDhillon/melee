@@ -686,7 +686,9 @@ fn shape(v: VsOut) -> Shp {
     let c = vec4<f32>(v.c.rgb * v.c.a, v.c.a) * ea;
     if (v.kind.x != 0u) {
         // a glyph: coverage of the distance field, one pixel wide; shp.y widens it (the outline pass)
-        let d = n.a + v.shp.y;
+        // (never by more than keeps the empty part of the tile at zero coverage: small text gets a thinner outline,
+        // not a faint box the size of its quad)
+        let d = n.a + min(v.shp.y, 0.5 - 0.5 / pxr);
         return c * clamp((d - 0.5) * pxr + 0.5, 0.0, 1.0);
     }
     var b = n * c;

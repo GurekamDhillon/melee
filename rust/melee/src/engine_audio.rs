@@ -203,6 +203,20 @@ pub fn ax_8002785C() {
             ck.push(pl::Player_GetPlayerCharacter(i) as i32);
         }
     }
+    // TARGET_PC: the characters that join this match later (the slot list only has the ones at the start): the tag
+    // partners (TAG_PARTNER_CK, created asleep 30 frames in, Envoy or MELEE_TAG_PARTNER) and the Envoy waves' next
+    // characters (ENVOY_WAVE_CK). Their own SSM banks were never loaded, so every sound of theirs that is not in
+    // main.ssm (Falco's blaster, voices, special moves) keyed no voice. -1 in every retail match: no change there.
+    for i in 0..4 {
+        if pl::Player_GetPlayerSlotType(i) as i32 == melee_types::Gm_PKind_NA as i32 {
+            continue;
+        }
+        for extra in unsafe { [pl::TAG_PARTNER_CK[i as usize], pl::ENVOY_WAVE_CK[i as usize]] } {
+            if extra >= 0 && !ck.contains(&(extra as i32)) {
+                ck.push(extra as i32);
+            }
+        }
+    }
     let (stkind, grkind) = unsafe {
         let st = melee_world::tu::stage::Stage_80225194();
         (st as i32, melee_world::tu::stage::Stage_8022519C(st) as i32)

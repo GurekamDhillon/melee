@@ -30,6 +30,7 @@ mod items_ui;
 mod pause;
 mod icons;
 mod map;
+mod help;
 
 use envoy_data::view::*;
 use envoy_data::*;

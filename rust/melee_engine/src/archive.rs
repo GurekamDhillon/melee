@@ -76,6 +76,9 @@ pub static PARSE_N: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU6
 
 pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
     let t0 = std::time::Instant::now();
+    // stray-write audit C4: the deferred fix-up lists must be empty when a parse starts (a stale entry would be
+    // applied against an object of a reclaimed image)
+    crate::dat_custom::check_deferred_empty();
     let r = host_parse_timed(archive, src, file_size);
     PARSE_NS.fetch_add(t0.elapsed().as_nanos() as u64, core::sync::atomic::Ordering::Relaxed);
     PARSE_N.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
@@ -320,6 +323,12 @@ fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
             continue;
         }
         if poison {
+            // the image's name (its first public) and its roots by address, so a POISON WRITTEN line names the image
+            // and the root object the written block sits after
+            let img = im.dat.publics.first().map_or_else(|| format!("raw {:#x}", im.raw), |s| s.name.clone());
+            let mut roots: Vec<(usize, String)> = im.dat.publics.iter()
+                .filter_map(|s| im.native_root(&s.name).map(|p| (p as usize, s.name.clone()))).collect();
+            roots.sort_unstable();
             if let Some(a) = im._arena.take() {
                 let v = a.poison_and_leak(0xDD);
                 if let Some(f) = unsafe { POISON_HOOK } {
@@ -327,7 +336,11 @@ fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
                         f(p, n);
                     }
                 }
-                unsafe { (*core::ptr::addr_of_mut!(POISONED)).extend(v) };
+                let named = v.into_iter().map(|(p, n, ty)| {
+                    let root = roots.iter().rev().find(|(a, _)| *a <= p).map_or_else(|| "?".to_string(), |r| r.1.clone());
+                    (p, n, ty, img.clone(), root)
+                });
+                unsafe { (*core::ptr::addr_of_mut!(POISONED)).extend(named) };
             }
         }
     }
@@ -398,20 +411,31 @@ pub fn untyped_public(archive: *mut HSD_Archive, name: &str) -> Option<(usize, u
     Some((image.raw + HEADER_BYTES, image.dat.data.len() as u32, off))
 }
 
+/// Stray-write audit: which archive image's raw bytes hold `addr`, and whether that image is live (not retired).
+pub fn image_of(addr: usize) -> Option<(String, bool)> {
+    let h = Host::get();
+    let name = |im: &ArchiveImage| im.dat.publics.first().map_or_else(|| format!("raw {:#x}", im.raw), |s| s.name.clone());
+    if let Some(im) = h.archives.values().find(|im| (im.raw..im.raw + im.raw_len).contains(&addr)) {
+        return Some((name(im), true));
+    }
+    h.retired.iter().find(|im| (im.raw..im.raw + im.raw_len).contains(&addr)).map(|im| (name(im), false))
+}
+
 /// The objects `MELEE_RECLAIM_POISON` filled with 0xDD: (address, bytes, type).
-static mut POISONED: Vec<(usize, usize, &'static str)> = Vec::new();
+static mut POISONED: Vec<(usize, usize, &'static str, String, String)> = Vec::new();
 
 /// `MELEE_RECLAIM_POISON`: report (once each) a poisoned object something wrote into after its image was dropped: the
 /// type and the first changed offset name the stale holder's target. Call once per frame; a no-op without the knob.
 pub fn check_poison(frame: u64) {
     let v = unsafe { &mut *core::ptr::addr_of_mut!(POISONED) };
-    v.retain(|&(p, n, ty)| {
+    v.retain(|(p, n, ty, img, root)| {
+        let (p, n, ty) = (*p, *n, *ty);
         // SAFETY: the block was leaked (never freed), so it stays readable.
         let b = unsafe { core::slice::from_raw_parts(p as *const u8, n) };
         match b.iter().position(|&x| x != 0xDD) {
             Some(o) => {
                 let w = &b[o..(o + 16).min(n)];
-                eprintln!("engine: POISON WRITTEN at frame {frame}: {ty} at {p:#x} (+{o:#x} of {n} bytes) now {w:02x?}");
+                eprintln!("engine: POISON WRITTEN at frame {frame}: {ty} at {p:#x} (+{o:#x} of {n} bytes) now {w:02x?}; image {img}, after root {root}");
                 false
             }
             None => true,

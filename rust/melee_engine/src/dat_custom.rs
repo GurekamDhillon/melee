@@ -1162,6 +1162,27 @@ static mut HEIHO_HEALTH: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new
 /// Dynamics blocks to rebuild after the decoder ran: (the `ftDynamics` object, per bone the native word block).
 static mut DYNAMICS_FIX: Vec<(usize, Vec<(usize, Vec<u32>)>)> = Vec::new();
 
+/// Stray-write audit C4: report (stderr) any deferred fix-up list that is not empty when a parse starts.
+pub fn check_deferred_empty() {
+    unsafe {
+        let n = [
+            ("ARTICLE_TABLES", (*core::ptr::addr_of!(ARTICLE_TABLES)).len()),
+            ("ARTICLE_STATES", (*core::ptr::addr_of!(ARTICLE_STATES)).len()),
+            ("ARTICLE_DYNAMICS", (*core::ptr::addr_of!(ARTICLE_DYNAMICS)).len()),
+            ("ARTICLE_HURTBONES", (*core::ptr::addr_of!(ARTICLE_HURTBONES)).len()),
+            ("ARTICLE_JOINT_ROWS", (*core::ptr::addr_of!(ARTICLE_JOINT_ROWS)).len()),
+            ("ARTICLE_TYPED", (*core::ptr::addr_of!(ARTICLE_TYPED)).len()),
+            ("HEIHO_HEALTH", (*core::ptr::addr_of!(HEIHO_HEALTH)).len()),
+            ("DYNAMICS_FIX", (*core::ptr::addr_of!(DYNAMICS_FIX)).len()),
+        ];
+        for (name, len) in n {
+            if len != 0 {
+                eprintln!("engine: DEFERRED NOT EMPTY at parse start: {name} has {len} entr(ies)");
+            }
+        }
+    }
+}
+
 /// `ftData.x2C` (`ftDynamics`): each bone's `dyn_desc.data` points at `count` records of `lb_00F9_UnkDesc1Inner` (15 `f32`,
 /// 0x3C bytes each) that `lb_80011710` reads as an array. The generic decode kept the first `PolymorphicDesc` worth of
 /// raw big-endian bytes (two records, unswapped); [`fix_dynamics`] rebuilds the block native, `count` records long.

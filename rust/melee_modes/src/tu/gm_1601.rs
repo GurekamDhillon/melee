@@ -3568,6 +3568,9 @@ pub fn fn_80160710_fp(arg0: i32) -> u8 {
 /// gm_1601.c `gm_GetChallengerStKind_fp`.
 pub fn gm_GetChallengerStKind_fp(selkind: i32) -> i32 {
     melee_core::ct!("gm_GetChallengerStKind_fp");
+    if std::env::var_os("MELEE_DIAG_STKIND").is_some() {
+        eprintln!("diag: gm_GetChallengerStKind({selkind}) read at logic frame {}", unsafe { crate::tu::tag_swap::LOGIC_FRAMES });
+    }
     for e in &LBL_803B78C8_gm {
         if selkind == e.selkind as i32 {
             return e.stkind as i32;

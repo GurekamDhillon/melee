@@ -400,6 +400,13 @@ pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(state: *mut GameModeSta
     (*start).rules.set_match_kind(MatchKind_Stock as u32);
     (*start).rules.set_x0_3(2);
     (*start).rules.stkind = ext::gm_GetChallengerStKind(ext::gm_CKindToSelKind((*challenger).cpu_ckind) as SelectableCharacterKind) as u16;
+    // stray-write audit C5: the challenger path stores an unlock table stkind (0x113 / 0x11B were the values seen)
+    if std::env::var_os("MELEE_DIAG_STKIND").is_some() {
+        let at = addr_of_mut!((*start).rules.stkind) as usize;
+        let img = crate::tu::tag_swap::DIAG_IMAGE_OF.and_then(|f| f(at));
+        eprintln!("diag: challenger stkind {:#x} stored at {at:#x} (image {img:?}) at logic frame {}", (*start).rules.stkind,
+            crate::tu::tag_swap::LOGIC_FRAMES);
+    }
     ext::gm_SetupHumanPlayer(
         addr_of_mut!((*start).players[0]),
         (*challenger).human_ckind,

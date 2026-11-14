@@ -70,6 +70,8 @@ pub static mut PENDING_SWAP: i8 = -1;
 /// A stage transition's destination (ground kind) and the freeze frame its switch is applied at (KIND_STAGE).
 pub static mut STAGE_TO: i32 = -1;
 pub static mut STAGE_AT: u16 = 0;
+/// Stray-write audit: the engine's "which archive image holds this address, live?" (set by the exe at startup).
+pub static mut DIAG_IMAGE_OF: Option<fn(usize) -> Option<(String, bool)>> = None;
 /// A queued release of a KIND_HOLD freeze.
 pub static mut PENDING_RELEASE: u8 = 0;
 

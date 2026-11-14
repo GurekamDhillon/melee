@@ -24,6 +24,7 @@ pub fn beat() {
 pub fn install() {
     // initialise the quarantine knob outside the arena lock (its first read allocates)
     melee_engine::arena::quarantine_check(0);
+    unsafe { melee_modes::tu::tag_swap::DIAG_IMAGE_OF = Some(melee_engine::archive::image_of) };
     let Some(secs) = std::env::var("MELEE_HANG_DUMP").ok().and_then(|v| v.trim().parse::<u64>().ok()) else { return };
     let secs = secs.max(2);
     #[cfg(windows)]

@@ -347,9 +347,11 @@ unsafe fn report_misuse(what: &str, p: usize, n: usize) {
 /// Return an arena block (the caller checked [`contains`]).
 pub unsafe fn free(p: *mut u8, l: Layout) {
     let (Some((c, _)), Some(ab)) = (class_of(l.size()), bucket(l.align())) else { return };
+    // Read the knobs before the lock: a first env read allocates, and allocating under the lock deadlocks.
+    let q = quarantine_on() && quarantine_from() < u64::MAX;
     let _g = Lock::take();
     LIVE[c] -= 1;
-    if quarantine_on() {
+    if q {
         quarantine(p as usize, class_size(c));
         return;
     }
@@ -574,13 +576,21 @@ const QS: usize = 10;
 static mut Q: [(usize, usize, [usize; QS]); QN] = [(0, 0, [0; QS]); QN];
 static mut QLEN: usize = 0;
 static mut QDONE: usize = 0;
+/// The frame `quarantine_check` last saw, and the first frame frees are recorded from (MELEE_ARENA_QUARANTINE_FROM,
+/// default 0): blocks freed earlier are still poisoned and never reused, but not tracked. The record is a ring, so
+/// late frees are always tracked (the old `QLEN < QN` cap stopped recording after 1 << 20 frees).
+static mut QFRAME: u64 = 0;
+fn quarantine_from() -> u64 {
+    static F: std::sync::OnceLock<u64> = std::sync::OnceLock::new();
+    *F.get_or_init(|| std::env::var("MELEE_ARENA_QUARANTINE_FROM").ok().and_then(|v| v.parse().ok()).unwrap_or(0))
+}
 fn quarantine_on() -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *ON.get_or_init(|| std::env::var_os("MELEE_ARENA_QUARANTINE").is_some())
 }
 unsafe fn quarantine(p: usize, size: usize) {
     core::ptr::write_bytes(p as *mut u8, 0xEE, size);
-    if QLEN < QN {
+    if QFRAME >= quarantine_from() {
         let mut st = [0usize; QS];
         #[cfg(windows)]
         {
@@ -589,7 +599,7 @@ unsafe fn quarantine(p: usize, size: usize) {
             }
             RtlCaptureStackBackTrace(2, QS as u32, st.as_mut_ptr().cast(), core::ptr::null_mut());
         }
-        Q[QLEN] = (p, size, st);
+        Q[QLEN % QN] = (p, size, st);
         QLEN += 1;
     }
 }
@@ -599,12 +609,17 @@ pub fn quarantine_check(frame: u64) -> bool {
     if !quarantine_on() {
         return false;
     }
+    let _ = quarantine_from();
     let found = {
         let _g = Lock::take();
         let mut f = None;
         unsafe {
-            for i in QDONE..QLEN {
-                let (p, n, st) = Q[i];
+            QFRAME = frame;
+            if frame == 1278 {
+                eprintln!("arena: quarantine at frame 1278: {QLEN} frees recorded (ring {QN}), {} unchecked", QLEN - QDONE);
+            }
+            for i in QDONE.max(QLEN.saturating_sub(QN))..QLEN {
+                let (p, n, st) = Q[i % QN];
                 let b = core::slice::from_raw_parts(p as *const u8, n);
                 if let Some(o) = b.iter().position(|&x| x != 0xEE) {
                     let mut w = [0u8; 16];

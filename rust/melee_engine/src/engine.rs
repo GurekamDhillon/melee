@@ -680,6 +680,7 @@ impl Engine {
             melee_runtime::pose_capture::discard();
         }
         self.frames += 1;
+        crate::seams::SIM_FRAMES.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
         if !more {
             self.ended = true;
         }

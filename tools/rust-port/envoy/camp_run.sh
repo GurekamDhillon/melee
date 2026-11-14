@@ -35,11 +35,17 @@ card=${CARD:-$(dirname "$exe")/card}
 [ -d "$card/USA" ] || { echo "camp_run: no memory card at CARD (a folder with USA/Card A)"; exit 2; }
 cp -r "$card" "$out/card"
 log="$out/camp.log"
+# ACE=1: the m-ex disc (GW_ISO_ACE) boots straight to the title, so the pad script loses its second boot Start
+iso=$GW_ISO_VANILLA; pad="$here/camp_pad.txt"
+if [ "${ACE:-0}" = 1 ]; then
+  [ -n "${GW_ISO_ACE:-}" ] || { echo "camp_run: ACE=1 needs GW_ISO_ACE"; exit 2; }
+  . "$here/exe_check.sh"; iso=$GW_ISO_ACE; pad=$(pad_for_disc "$pad" "$out")
+fi
 unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP MELEE_ENVOY_TEST_DRIVES
 env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="${CAMP_TITLE:-v3sim agent: camp_run, Envoy camp door, fights 1-3 (port/v3sim)}" MELEE_WASM_MODS="$mods" \
-  MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="${PAD:-$here/camp_pad.txt}" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
+  MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="${PAD:-$pad}" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
   MELEE_TURBO=1 ${CAMP_ENV:-} \
-  "$exe" play --iso "$GW_ISO_VANILLA" --headless --no-audio --max-frames "$frames" >"$log" 2>&1
+  "$exe" play --iso "$iso" --headless --no-audio --max-frames "$frames" >"$log" 2>&1
 fail=0
 ok() { echo "ok   $*"; }
 bad() { echo "FAIL $*"; fail=1; }
@@ -53,11 +59,21 @@ for n in $(seq 1 "$last"); do
   grep -q "envoy: match $n rewritten" "$log" && ok "fight $n is an Envoy match" || bad "fight $n never started as an Envoy match"
 done
 for n in $(seq 2 "$last"); do
+  # the boss (fight 4) wraps the loop: its win is the campfire that follows it, not a "next 5"
+  if [ "$n" = 5 ]; then grep -q "envoy: campfire, stocks refilled" "$log" && ok "fight 4 (the boss) won" || bad "fight 4 (the boss) not won"; continue; fi
   grep -q "envoy: fight won, next $n" "$log" && ok "fight $((n - 1)) won" || bad "fight $((n - 1)) not won"
 done
-# the picks between fights: a card was taken after every won fight
-picks=$(grep -c "envoy: card taken" "$log")
-[ "$picks" -ge $((last - 1)) ] && ok "$picks picks taken between fights" || bad "only $picks picks taken"
+# items (envoy-items-design.md 8): the item room after the session's last fight (fight 2) gives an item, the shop opens;
+# with MAX_FIGHT >= 5 the boss (fight 4) drops a choice of two and the campfire refills the stocks
+if [ "$last" -ge 3 ]; then
+  grep -q "envoy: item room open" "$log" && ok "the item room opened" || bad "no item room"
+  grep -q "envoy: item taken" "$log" && ok "$(grep -c "envoy: item taken" "$log") item(s) taken" || bad "no item taken"
+  grep -q "envoy: shop open" "$log" && ok "the shop opened" || bad "no shop"
+fi
+if [ "$last" -ge 5 ]; then
+  grep -q "envoy: boss drop, choose one" "$log" && ok "the boss dropped a choice of two" || bad "no boss drop"
+  grep -q "envoy: campfire, stocks refilled to" "$log" && ok "$(grep -m1 -o "campfire, stocks refilled to.*" "$log")" || bad "no campfire"
+fi
 # every VS match up to the third rewrite is a rewritten one (a plain VS match would be a VS with no R before it)
 prefix=${seq%%R$last*}
 if [ "$prefix" != "$seq" ]; then

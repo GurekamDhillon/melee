@@ -663,6 +663,14 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_wave_start", || -> i32 { unsafe { melee_modes::tu::envoy::wave_start() } });
     w!("gd_tag_assist_frames", |slot: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::assist_frames(slot) } });
     w!("gd_stage_transition", |kind: i32, len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_begin(kind, len) } });
+    // Envoy "Fights 2": a live stage transition (no freeze; the hand-off at frame `at`) and its record: phase, done,
+    // from, to, frame, len, at, finished count
+    w!("gd_stage_transition_live", |kind: i32, len: i32, at: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_live_begin(kind, len, at) } });
+    w!("gd_stage_live", |mut c: Caller<'_, HostData>, out: u32| -> i32 {
+        let l = unsafe { melee_modes::tu::tag_swap::LIVE };
+        write_words(&mut c, out, &[l.phase as u32, l.done as u32, l.from as i32 as u32, l.to as i32 as u32, l.frame as u32, l.len as u32, l.at as u32, l.count]);
+        l.phase as i32
+    });
     w!("gd_hold_begin", |len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::hold_begin(len) } });
     w!("gd_hold_release", || -> i32 { unsafe { melee_modes::tu::tag_swap::hold_release() } });
     // Envoy run (melee_modes::tu::envoy): the next match's plan, the presentation view, live upgrades

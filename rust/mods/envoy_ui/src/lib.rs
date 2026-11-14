@@ -27,6 +27,7 @@ mod party;
 mod picker;
 mod fx;
 mod help;
+mod items_ui;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -39,6 +40,7 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
 #[link(wasm_import_module = "gd_ui")]
 extern "C" {
     fn gd_ui_transition(out: *mut i32) -> i32;
+    fn gd_ui_stage_live(out: *mut i32) -> i32;
     fn gd_ui_envoy(out: *mut i32, n: u32) -> i32;
     fn gd_ui_scene_register(s: *const u8, len: u32) -> u32;
     fn gd_ui_scene_replace_when(major: i32, minor: i32, scene: u32, cond: u32) -> i32;
@@ -119,6 +121,8 @@ unsafe fn saved() -> Option<[i32; REC_WORDS]> {
 
 /// envoy_sim's view (envoy_data::view, 512 words) and the run record inside it.
 pub(crate) const VW: usize = VIEW_WORDS;
+/// The view read each present (a static: 6 KiB is too much for the mod's 16 KiB stack).
+static mut VBUF: [i32; VW] = [0; VW];
 
 /// "FOX: Ember 2, Frost" for one fighter's drives (`ids`: id + 1, 0 empty; `lv`: levels).
 fn drive_line(b: &mut Buf, who: &str, ids: &[i32], lv: &[i32]) {
@@ -179,7 +183,7 @@ unsafe fn camp_build() {
     label(root, "ENVOY CAMP");
     gd_ui_node_rect(root, 220.0, 165.0, 200.0, 0.0);
     let list = gd_ui_node(root, NODE_LIST, 2);
-    let mut v = [0i32; VW];
+    let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
     let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC;
     let ended = view && (v[V_STATE] == 2 || v[V_STATE] == 3);
     let has = saved().is_some();
@@ -339,7 +343,7 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
     e.rect(0.0, 0.0, vw, vh, 0x0B0B_12FF);
     let cx = vw * 0.5;
     e.text_ex(cx, 90.0, ROLE_TITLE, WHITE, ALIGN_CENTER, 0.0, "ENVOY");
-    let mut v = [0i32; VW];
+    let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
     let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC;
     let mut l1 = Buf::new();
     let mut l2 = Buf::new();
@@ -610,7 +614,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             } else if CAMP.open {
                 CAMP.age += 1;
                 e.space(SPACE_BAND, 1.0);
-                let mut v = [0i32; VW];
+                let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
                 let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && v[V_STATE] != 0;
                 let act = camp::frame(e, CAMP.after_fight, if view { Some(&v) } else { None }, saved(), st & ST_NO_BRAWL != 0);
                 if act == camp::DO_CLOSE {
@@ -647,7 +651,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             e.submit();
             return;
         }
-        let mut v = [0i32; VW];
+        let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
         // only an armed run has a HUD or a between-fights line: with the mods loaded and no run armed, VS is retail
         if gd_ui_envoy(v.as_mut_ptr(), VW as u32) != 0 || v[V_MAGIC] != VIEW_MAGIC || st & ST_ARMED == 0 {
             return;
@@ -670,6 +674,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             fx::heat_screen(&v);
             fx::moments(&v);
             sounds(&v);
+            items_ui::sounds(&v);
             let mut pv = [0i32; 12];
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
             // V3 HUD in band space (640 x 480; `ex` the extra width each side of the 4:3 band)
@@ -701,6 +706,10 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 tag_cinematic(e, &t, vw, vh);
             } else if t[1] == 2 {
                 stage_shift(e, &t, vw, vh);
+            }
+            let mut l = [0i32; 8];
+            if gd_ui_stage_live(l.as_mut_ptr()) == 0 && l[0] == 1 {
+                stage_rift(e, &l, vw, vh);
             }
         } else {
             between(e, &v, vw, vh);
@@ -1206,9 +1215,14 @@ unsafe fn world(v: &[i32; VW]) {
             }
         }
     }
+    // items: the floor points hold the item room's and the boss's pedestals; every item effect
+    if v[V_ITEMS_ON] == 1 {
+        items_ui::pedestals(v);
+        items_ui::world(v);
+    }
     // the drops: the model in its glass shell with a beam in the owner's colour (co-op), else the family's
     let mut drops_seen = [0u32; 2];
-    for p in 0..humans {
+    for p in 0..if v[V_ITEMS_ON] == 1 { 0 } else { humans } {
         for k in 0..DROPS {
             let d = pb(p) + P_DROPS + k * 4;
             if v[d] != 1 || v[d + 1] <= 0 {
@@ -1725,6 +1739,82 @@ unsafe fn stage_shift(e: &mut kit::E, t: &[i32; 10], vw: f32, vh: f32) {
         e.text_ex(vw * 0.5, vh * 0.5 - 50.0, ROLE_LABEL, alpha(DIM, a), ALIGN_CENTER, 0.0, "STAGE SHIFT");
         e.text_ex(vw * 0.5, vh * 0.5 - 20.0, ROLE_TITLE, alpha(WHITE, a), ALIGN_CENTER, 0.0, stage_name(to));
     }
+}
+
+/// A stage's signature colour (the rift's glow and the tint on its side of the sweep).
+fn stage_col(k: i32) -> u32 {
+    match k {
+        36 => 0x3FD0_C8FF,
+        10 => 0x9BE1_5DFF,
+        28 => 0x7EC8_FFFF,
+        12 => 0xB58C_FFFF,
+        37 => 0xC04B_FFFF,
+        _ => 0xFFFF_FFFF,
+    }
+}
+
+/// The live stage transition (Fights 2, envoy-items-design.md section 10): the fight never stops. A rift (a bright
+/// sheared band in the destination's colour) sweeps across the screen from left to right over the whole record;
+/// the side it has passed is veiled in the destination's colour before the hand-off and the side still ahead in the
+/// old stage's colour after it, so the screen reads as one stage giving way to the other. At the hand-off (record
+/// frame `at`, the rift's core over the middle) the core flares wide for a few frames with a soft flash and a ring,
+/// covering the one-frame swap. Tints stay at or under 22% and clear of the centre's fighters' silhouettes (low alpha,
+/// no blur), the flare is one flash. Reads only the engine record; never writes back.
+unsafe fn stage_rift(e: &mut kit::E, l: &[i32; 8], vw: f32, vh: f32) {
+    let (done, from, to, frame, len, at) = (l[1], l[2], l[3], l[4] as f32, l[5].max(2) as f32, l[6].max(1) as f32);
+    // the rift's x: from off the left edge to the middle at the hand-off, then on off the right edge
+    let x = if frame < at {
+        -0.25 * vw + 0.75 * vw * ease(frame / at)
+    } else {
+        0.5 * vw + 0.75 * vw * ease((frame - at) / (len - at).max(1.0))
+    };
+    let shear = -0.22;
+    let (cf, ct) = (stage_col(from), stage_col(to));
+    let fade_in = (frame / 20.0).min(1.0);
+    let fade_out = ((len - frame) / 20.0).clamp(0.0, 1.0);
+    if done == 0 {
+        // before the hand-off: the passed side carries the destination's veil
+        e.rect_shear(-400.0, 0.0, x + 400.0, vh, alpha(ct, 0.20 * fade_in), shear);
+    } else if done == 1 {
+        // after: the side still ahead holds the old stage's veil, thinning as the rift runs out
+        e.rect_shear(x, 0.0, vw + 400.0 - x, vh, alpha(cf, 0.18 * fade_out), shear);
+    }
+    // the rift: a wide soft glow, a narrower glow, the white core
+    let pulse = 0.85 + 0.15 * kit_sin(frame * 0.35);
+    let near = 1.0 - ((frame - at).abs() / 10.0).min(1.0);
+    let core = 10.0 + 120.0 * near * near;
+    let a = fade_in.min(fade_out.max(if done == 0 { 1.0 } else { 0.0 }));
+    e.rect_shear(x - 110.0, 0.0, 220.0, vh, alpha(ct, 0.16 * a), shear);
+    e.rect_shear(x - 44.0, 0.0, 88.0, vh, alpha(ct, 0.38 * a * pulse), shear);
+    e.rect_shear(x - core * 0.5, 0.0, core, vh, alpha(WHITE, (0.75 + 0.2 * near) * a), shear);
+    // sparks riding the edge (deterministic from the record frame: presentation only)
+    for i in 0..9 {
+        let fi = i as f32;
+        let y = (fi * 83.0 + frame * (5.0 + fi)) % vh;
+        let dx = kit_sin(frame * 0.2 + fi) * 18.0 + shear * -y;
+        e.rect(x + dx - 3.0 + shear * y, y, 6.0, 6.0, alpha(if i % 2 == 0 { WHITE } else { ct }, 0.8 * a));
+    }
+    if (frame - at).abs() < 1.0 && done == 1 {
+        // the hand-off frame: one soft flash and a ring from the middle (fx post; at most one flash)
+        fx::handoff(vw, vh, ct);
+    }
+    if (frame - at).abs() < 8.0 {
+        e.rect(0.0, 0.0, vw, vh, alpha(WHITE, 0.35 * near));
+    }
+    // the caption: where the rift leads
+    let ca = fade_in * fade_out * 0.9;
+    e.text_ex(vw * 0.5, 92.0, ROLE_LABEL, alpha(DIM, ca), ALIGN_CENTER, 0.0, if done == 0 { "SHIFTING TO" } else { "NOW ON" });
+    e.text_ex(vw * 0.5, 118.0, ROLE_TITLE, alpha(ct | 0xFF, ca), ALIGN_CENTER, 0.0, stage_name(to));
+}
+
+/// A cheap sine for presentation (no libm in the mod).
+fn kit_sin(x: f32) -> f32 {
+    let q = x / 6.283_185;
+    let t = q - (q as i32 as f32) + if q < 0.0 { 1.0 } else { 0.0 };
+    let u = t * 2.0 - 1.0;
+    // a parabola through the sine's shape (-1..1), close enough for a shimmer
+    let y = 4.0 * u * (1.0 - u.abs());
+    -y
 }
 
 #[repr(C)]

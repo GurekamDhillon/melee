@@ -124,6 +124,11 @@ unsafe fn prepare(src: *mut MapCollData) -> *mut MapCollData {
 /// `HSD_GObj_RunProcs`): the mod host applies it after the `frame.run_procs` post chain.
 /// Returns 0 on success; on a refusal nothing has changed.
 pub unsafe fn switch_to(kind: i32) -> i32 {
+    switch_to_ex(kind, false)
+}
+
+/// `switch_to`; `live`: the Envoy live transition's hand-off (the fight is running: see `safe_place`).
+pub unsafe fn switch_to_ex(kind: i32, live: bool) -> i32 {
     let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Stage, || melee_core::frameprof::Text::new().s("stage switch to ground kind ").n(kind as i64));
     let rc = check(kind);
     if rc != 0 {
@@ -208,6 +213,10 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
         return HOP_HEAP;
     }
     let from = current();
+    if live {
+        // the live hand-off maps every fighter by its place relative to the OLD stage: read it before the teardown
+        live_snapshot();
+    }
     // commit: from here on the outgoing visit is destroyed (script_retail_visit's order)
     sg::ScriptGame_StageIsolationClear(0);
     sg::script_switch_detach();
@@ -231,7 +240,11 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     sg::script_retail_capture = 0;
     { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: carry")); sg::script_retail_carry(); }
     if crate::tu::envoy::armed() != 0 && !old_switch() {
-        safe_place();
+        if live {
+            live_place();
+        } else {
+            safe_place(false);
+        }
     }
     sg::script_retail_items(0);
     sg::script_switch.epoch += 1;
@@ -247,6 +260,8 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
 pub const SAFE_INTANGIBLE: i32 = 60;
 /// How far above its spawn point a placed fighter starts (it lands within a few frames).
 const SAFE_LIFT: f32 = 4.0;
+/// Frames a fighter the live hand-off kept in place cannot be hit (the hand-off frame is never a free hit).
+pub const LIVE_INTANGIBLE: i32 = 20;
 /// Sideways step between fighters that would share a spawn point (a stage with fewer points than fighters).
 const SAFE_STEP: f32 = 14.0;
 
@@ -282,7 +297,12 @@ unsafe fn safe_point(x: f32, y: f32) -> bool {
 /// or counted twice) and the respawn platform (11-13: its physics steers to the new stage's own rebirth point every
 /// frame). An Assist Strike in flight ends (the partner goes back to the bench). Statics and heaps only:
 /// deterministic under rollback.
-unsafe fn safe_place() {
+///
+/// `live` (the live transition's hand-off, the fight running on): a fighter the carry left standing on a floor of the
+/// new stage, or in the air over one (inside the blast box with room), keeps its place, motion and momentum and is
+/// intangible for LIVE_INTANGIBLE frames; only one over a pit, outside the box or inside the new geometry gets the
+/// spawn-point placement above (the safety float).
+unsafe fn safe_place(live: bool) {
     if sg::HSD_GObjPLinkHead.is_null() {
         return;
     }
@@ -358,5 +378,271 @@ unsafe fn safe_place() {
 pub unsafe fn unlock_ecb(fp: *mut Fighter) {
     if !fp.is_null() {
         melee_fighter::ftcommon2::unlock_ecb(&mut *fp);
+    }
+}
+
+// ---- the live hand-off's mapping (Envoy Fights 3, envoy-items-design.md 10.2). Owner: "try harder to maintain
+// player positions during transitions rather than resetting them"; "have fallbacks if a player's position is ...
+// between, or lower than the main platform". Nobody is sent to a spawn point:
+//   * on or above the main floor, within its span: proportional x across the span, the same height over the floor;
+//     action, momentum and facing kept (a grounded fighter is set on the new floor under it);
+//   * beside the stage (past a ledge) or under the main floor's height: re-anchored to the NEAREST LEDGE of the new
+//     stage with the same offset (dx outward, dy below), so a recovery stays the same recovery;
+//   * hanging on a ledge (the cliff states): put at the same offset from the same side's ledge of the new stage,
+//     facing in, falling into the ledge grab box (it re-grabs on the next frame);
+//   * a mapped point inside the new geometry: pushed out along the shortest axis (up onto the floor for a small step,
+//     else outward horizontally, never up through the stage);
+//   * the final point is kept inside the new blast box (20 units in; 40 at the top);
+//   * a point inside the new body is slid outward at most LIVE_SLIDE_MAX (the body's half width at most).
+// Everyone is intangible for LIVE_INTANGIBLE frames. Statics only (snapshot state), deterministic.
+
+/// A fighter's place before the teardown: x, y, motion, grounded, valid (by player_idx * 2 + sub).
+#[derive(Clone, Copy)]
+struct Pre {
+    x: f32,
+    y: f32,
+    motion: i32,
+    ground: bool,
+    ok: bool,
+}
+static mut LIVE_PRE: [Pre; 8] = [Pre { x: 0.0, y: 0.0, motion: -1, ground: false, ok: false }; 8];
+/// The old stage's main floor (left x, right x, y); valid flag.
+static mut LIVE_SPAN: (f32, f32, f32, bool) = (0.0, 0.0, 0.0, false);
+/// The largest extra push the last hand-off made beyond a mapped point (the live check reads the log).
+pub static mut LIVE_PUSH_MAX: f32 = 0.0;
+/// The most a point is slid outward to leave the new geometry.
+const LIVE_SLIDE_MAX: f32 = 80.0;
+/// A step up onto a floor that counts as "the shortest axis" (a slope, a platform lip).
+const LIVE_STEP_UP: f32 = 12.0;
+
+/// The nearest floor at or under (x, y) within 200 units: its y and flags.
+unsafe fn floor_under(x: f32, y: f32) -> Option<(f32, u32)> {
+    let (mut p, mut n): (Vec, Vec) = (core::mem::zeroed(), core::mem::zeroed());
+    let (mut line, mut flags) = (-1i32, 0u32);
+    if melee_world::tu::mplib::mpCheckFloor(x, y + 0.5, x, y - 200.0, 0.0, &mut p, &mut line, &mut flags, &mut n, -1, -1, -1, None, core::ptr::null_mut()) != 0 {
+        Some((p.y, flags))
+    } else {
+        None
+    }
+}
+
+/// The live stage's main floor: its y under x = 0 (below every platform) and how far it runs each way.
+unsafe fn main_span() -> Option<(f32, f32, f32)> {
+    let (y0, _) = floor_under(0.0, 8.0)?;
+    let edge = |dir: f32| -> f32 {
+        let mut last = 0.0;
+        let mut x = 0.0;
+        while x < 260.0 {
+            x += 1.0;
+            match floor_under(dir * x, y0 + 8.0) {
+                Some((fy, f)) if (fy - y0).abs() < 14.0 && f & LINE_FLAG_PLATFORM as u32 == 0 => last = x,
+                _ => break,
+            }
+        }
+        dir * last
+    };
+    let (l, r) = (edge(-1.0), edge(1.0));
+    if r - l < 20.0 { None } else { Some((l, r, y0)) }
+}
+
+/// Whether (x, y) is inside the solid stage: the nearest floor top above it (within 60, not a pass-through platform)
+/// is under no ceiling between them (under the stage's body a ceiling comes first).
+unsafe fn inside(x: f32, y: f32) -> bool {
+    // a fighter's feet rest ON a floor: test a point just above them
+    let y = y + 1.0;
+    let (mut p, mut n): (Vec, Vec) = (core::mem::zeroed(), core::mem::zeroed());
+    let (mut line, mut flags) = (-1i32, 0u32);
+    // scan down from above: the lowest floor top above the point
+    let mut top = None;
+    let mut from = y + 60.0;
+    for _ in 0..4 {
+        if melee_world::tu::mplib::mpCheckFloor(x, from, x, y, 0.0, &mut p, &mut line, &mut flags, &mut n, -1, -1, -1, None, core::ptr::null_mut()) == 0 {
+            break;
+        }
+        if flags & LINE_FLAG_PLATFORM as u32 == 0 {
+            top = Some(p.y);
+        }
+        from = p.y - 0.25;
+        if from <= y {
+            break;
+        }
+    }
+    let Some(ty) = top else { return false };
+    let mut c: Vec = core::mem::zeroed();
+    let hit = melee_world::tu::mplib::mpCheckCeiling(x, y, x, ty, &mut c, &mut line, &mut flags, &mut n, -1, -1) != 0;
+    !(hit && c.y < ty - 0.25)
+}
+
+/// Record every fighter's place and the old main floor (before the teardown).
+unsafe fn live_snapshot() {
+    LIVE_PRE = [Pre { x: 0.0, y: 0.0, motion: -1, ground: false, ok: false }; 8];
+    LIVE_SPAN = match main_span() {
+        Some((l, r, y)) => (l, r, y, true),
+        None => (0.0, 0.0, 0.0, false),
+    };
+    let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
+    while !g.is_null() {
+        let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
+        if !fp.is_null() {
+            let k = ((*fp).player_idx as usize * 2 + ((*fp).is_sub_fighter() != 0) as usize).min(7);
+            LIVE_PRE[k] = Pre { x: (*fp).cur_pos.x, y: (*fp).cur_pos.y, motion: (*fp).motion_id as i32, ground: (*fp).ground_or_air == GA_Ground, ok: true };
+        }
+        g = (*g).next as *mut HSD_GObj;
+    }
+    // test knob MELEE_ENVOY_LIVE_PROBE=1 (items_check `live`, the GIF): the two first slots are taken as one hanging on
+    // the right ledge and one under the left of the main floor (alternating each hand-off), so both fallbacks run
+    if probe() && LIVE_SPAN.3 {
+        static mut N: u32 = 0;
+        N = N.wrapping_add(1);
+        let (l, r, fy, _) = LIVE_SPAN;
+        // odd hand-offs: P1 on the right ledge, P2 under the stage (and the other way every fourth); even: as they are
+        let (a, b) = if N % 4 == 1 { (0, 2) } else { (2, 0) };
+        if N % 2 == 1 && LIVE_PRE[a].ok {
+            LIVE_PRE[a] = Pre { x: r + 4.0, y: fy - 12.0, motion: ftCo_MS_CliffWait as i32, ground: false, ok: true };
+        }
+        if N % 2 == 1 && LIVE_PRE[b].ok {
+            LIVE_PRE[b] = Pre { x: l + 0.3 * (r - l), y: fy - 30.0, motion: ftCo_MS_Fall as i32, ground: false, ok: true };
+        }
+    }
+}
+
+fn probe() -> bool {
+    static P: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *P.get_or_init(|| std::env::var_os("MELEE_ENVOY_LIVE_PROBE").is_some())
+}
+
+/// Keep (x, y) inside the live blast box with room.
+unsafe fn in_box(x: f32, y: f32) -> (f32, f32) {
+    let bz = &sg::stage_info.blast_zone;
+    let cam = &sg::stage_info.cam_info;
+    let c = |v: f32, lo: f32, hi: f32| if v < lo { lo } else if v > hi { hi } else { v };
+    (c(x, bz.left + cam.cam_x_offset + 20.0, bz.right + cam.cam_x_offset - 20.0), c(y, bz.bottom + cam.cam_y_offset + 20.0, bz.top + cam.cam_y_offset - 40.0))
+}
+
+/// The live hand-off's placement (after the carry): see the block comment above.
+unsafe fn live_place() {
+    if sg::HSD_GObjPLinkHead.is_null() {
+        return;
+    }
+    crate::tu::tag_swap::assist_end_all();
+    LIVE_PUSH_MAX = 0.0;
+    let in_play = |fp: *mut Fighter| -> bool { !fp.is_null() && (*fp).is_sleeping() == 0 && (*fp).motion_id > 13 };
+    // grabs are cut (both sides are bound to each other's state)
+    let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
+    while !g.is_null() {
+        let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
+        if in_play(fp) && !(*fp).victim_gobj.is_null() {
+            melee_fighter::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, (*fp).victim_gobj as _);
+        }
+        g = (*g).next as *mut HSD_GObj;
+    }
+    let new = main_span();
+    let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
+    while !g.is_null() {
+        let next = (*g).next as *mut HSD_GObj;
+        let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
+        if !in_play(fp) {
+            g = next;
+            continue;
+        }
+        let k = ((*fp).player_idx as usize * 2 + ((*fp).is_sub_fighter() != 0) as usize).min(7);
+        let pre = LIVE_PRE[k];
+        let (x, y) = if pre.ok { (pre.x, pre.y) } else { ((*fp).cur_pos.x, (*fp).cur_pos.y) };
+        let hang = (ftCo_MS_CliffCatch as i32..=ftCo_MS_CliffJumpQuick2 as i32).contains(&pre.motion);
+        let (case, mx, my) = match (LIVE_SPAN, new) {
+            ((l, r, fy, true), Some((nl, nr, nfy))) => {
+                let side = if x >= (l + r) * 0.5 { 1.0 } else { -1.0 };
+                let (ledge, nledge) = if side > 0.0 { (r, nr) } else { (l, nl) };
+                if hang || x < l || x > r || y < fy - 2.0 {
+                    // a ledge, beside the stage, or under the main floor: the same offset from the nearest ledge
+                    (if hang { "hang" } else if y < fy - 2.0 && x >= l && x <= r { "under" } else { "ledge" }, nledge + (x - ledge), nfy + (y - fy))
+                } else {
+                    let t = if r > l { (x - l) / (r - l) } else { 0.5 };
+                    ("scale", nl + t * (nr - nl), nfy + (y - fy))
+                }
+            }
+            _ => ("keep", x, y),
+        };
+        let (mut fx, mut fy2) = (mx, my);
+        // out of the new geometry: a small step up onto a floor, else outward (never up through the stage)
+        if inside(fx, fy2) {
+            let up = floor_under(fx, fy2 + LIVE_STEP_UP).map(|(ty, _)| ty).filter(|&ty| ty >= fy2 && ty - fy2 <= LIVE_STEP_UP);
+            if let (Some(ty), false) = (up, case == "under" || case == "hang") {
+                fy2 = ty;
+            } else {
+                let dir = match new {
+                    Some((nl, nr, _)) => if fx >= (nl + nr) * 0.5 { 1.0 } else { -1.0 },
+                    None => if fx >= 0.0 { 1.0 } else { -1.0 },
+                };
+                let mut d = 0.0;
+                while d < LIVE_SLIDE_MAX && inside(fx + dir * d, fy2) {
+                    d += 1.0;
+                }
+                fx += dir * d;
+            }
+        }
+        let (bx, by) = in_box(fx, fy2);
+        fx = bx;
+        fy2 = by;
+        // the push past the mapped point (L1: a slide or a step is along one axis)
+        let push = (fx - mx).abs() + (fy2 - my).abs();
+        if push > LIVE_PUSH_MAX {
+            LIVE_PUSH_MAX = push;
+        }
+        let self_vel = (*fp).self_vel;
+        let kb = (*fp).x8c_kb_vel;
+        let shield = (*fp).x98_atk_shield_kb;
+        let grvel = (*fp).gr_vel;
+        let cpu = (*fp).cpu;
+        let ground_floor = if pre.ground && !hang && case == "scale" { floor_under(fx, fy2 + LIVE_STEP_UP) } else { None };
+        (*fp).cur_pos = Vec { x: fx, y: fy2, z: 0.0 };
+        if hang {
+            // into the ledge grab box, facing the stage, still: the next frame's air collision grabs the ledge
+            (*fp).facing_dir = if fx > 0.0 { -1.0 } else { 1.0 };
+            sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
+            sg::script_switch_contacts(fp);
+            (*fp).self_vel = core::mem::zeroed();
+            (*fp).x8c_kb_vel = core::mem::zeroed();
+        } else if let Some((ty, _)) = ground_floor.filter(|&(ty, _)| (fy2 - ty).abs() <= LIVE_STEP_UP + 2.0) {
+            // grounded: on the new floor under the mapped x, same action (the carry's floor attach)
+            (*fp).cur_pos.y = ty;
+            let (mut p, mut n): (Vec, Vec) = (core::mem::zeroed(), core::mem::zeroed());
+            let (mut line, mut flags) = (-1i32, 0u32);
+            let found = crate::tu::script_game::script_retail_carry_floor(fx, ty + 0.5, &mut p, &mut line, &mut flags, &mut n) != 0;
+            sg::script_switch_contacts(fp);
+            if found {
+                (*fp).cur_pos.y = p.y;
+                (*fp).coll_data.floor.index = line;
+                (*fp).coll_data.floor.flags = flags;
+                (*fp).coll_data.floor.normal = n;
+                (*fp).coll_data.prev_env_flags = Collide_FloorHug as s32;
+                (*fp).coll_data.env_flags = Collide_FloorHug as s32;
+                (*fp).coll_data.contact = p;
+            }
+            (*fp).self_vel = self_vel;
+            (*fp).x8c_kb_vel = kb;
+            (*fp).x98_atk_shield_kb = shield;
+            (*fp).gr_vel = grvel;
+        } else {
+            // in the air (or grounded with no floor under the mapped x: it falls), momentum kept
+            if (*fp).ground_or_air == GA_Ground {
+                sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
+            }
+            sg::script_switch_contacts(fp);
+            (*fp).self_vel = self_vel;
+            (*fp).x8c_kb_vel = kb;
+            (*fp).x98_atk_shield_kb = shield;
+            (*fp).gr_vel = grvel;
+        }
+        (*fp).cpu = cpu;
+        sg::ftCamera_80076064(fp);
+        melee_fighter::tu::ftcoll::ftColl_8007B760(g as _, LIVE_INTANGIBLE);
+        if std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
+            eprintln!(
+                "stage switch: live map player {} sub {} case {case} motion {} from ({x:.1},{y:.1}) mapped ({mx:.1},{my:.1}) to ({:.1},{:.1}) push {push:.1}",
+                (*fp).player_idx, ((*fp).is_sub_fighter() != 0) as i32, pre.motion, (*fp).cur_pos.x, (*fp).cur_pos.y
+            );
+        }
+        g = next;
     }
 }

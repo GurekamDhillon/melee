@@ -2,7 +2,7 @@
 // shared here so the two mods cannot disagree. Positions are f32 bits; ids are pool index + 1 (0: none).
 // V3 (Heat): docs/rust-port/notes/envoy-v3-view.md is the prose contract for every word below.
 
-pub const VIEW_WORDS: usize = 768;
+pub const VIEW_WORDS: usize = 1536;
 pub const VIEW_MAGIC: i32 = 0x454E_5633; // "ENV3"
 
 // ---- the run
@@ -143,13 +143,14 @@ pub const P_GAIN_FROM: usize = 148; // 3: the drop behind the last drop gain (wo
 pub const DROPS: usize = 2;
 
 // shop rows (P_SHOP_CURSOR)
-pub const SHOP_DRIVE0: i32 = 0; // 0-2 the three drives
-pub const SHOP_LEVEL: i32 = 3;
-pub const SHOP_STOCK: i32 = 4;
-pub const SHOP_REROLL: i32 = 5;
-pub const SHOP_REORDER: i32 = 6;
-pub const SHOP_LEAVE: i32 = 7;
-pub const SHOP_ROWS: i32 = 8;
+pub const SHOP_DRIVE0: i32 = 0; // 0-2 the three items (envoy items: no level-ups, no reorder)
+pub const SHOP_STOCK: i32 = 3;
+pub const SHOP_REROLL: i32 = 4;
+pub const SHOP_LEAVE: i32 = 5;
+pub const SHOP_ROWS: i32 = 6;
+/// Retired with the drives (never a row now).
+pub const SHOP_LEVEL: i32 = -10;
+pub const SHOP_REORDER: i32 = -11;
 // shop messages (P_SHOP_MSG)
 pub const SM_NONE: i32 = 0;
 pub const SM_BOUGHT: i32 = 1;
@@ -324,7 +325,7 @@ pub const V_ROOMS: usize = 683; // rooms before the boss (3)
 pub const V_REC: usize = 704;
 pub const REC_WORDS: usize = 48;
 pub const REC_MAGIC: i32 = 0x454E_5652;
-pub const REC_VERSION: i32 = 8; // 8: R_LOOP = loop | stop << 8 | road << 9 | bank tokens << 12; 7: the bank count << 16; 6: drive words << 4, R_LOOP; 5 and 6 still read
+pub const REC_VERSION: i32 = 9; // 9: envoy items (R_DRIVES = item copies, a byte per id, 10 words a player; R_KEYS[0] = the stock limit); older runs are dropped; 8: R_LOOP = loop | stop << 8 | road << 9 | bank tokens << 12; 7: the bank count << 16; 6: drive words << 4, R_LOOP; 5 and 6 still read
 pub const R_SEED: usize = 2;
 pub const R_RUNS: usize = 3;
 pub const R_FIGHT: usize = 4;
@@ -358,6 +359,41 @@ pub fn rec_drive(w: i32, version: i32) -> (i32, i32) {
 pub fn rec_pin(w: i32, version: i32) -> bool {
     version >= 8 && w >> 12 & 1 != 0
 }
+
+// ---- envoy items (envoy-items-design.md, first slice): the stock limit, pedestals, the item effects in the world
+pub const V_POOL_LIM: usize = 768; // the stock limit (Isaac's heart containers: start 4, cap 8); V_POOL = stocks now
+pub const V_PED_KIND: usize = 769; // pedestals out in this held match: 0 none, PED_ITEM_ROOM, PED_BOSS (P_DROPS hold them)
+pub const V_PED_LEFT: usize = 770; // frames before the pedestals fly to their owners
+pub const V_CAMP_AT: usize = 771; // the play frame the campfire refilled the stocks (0: none this match)
+pub const V_CAMP_GAIN: usize = 772; // stocks the campfire gave back
+pub const V_ITEMS_ON: usize = 773; // 1: the item rules (no drives, no Heat meter)
+pub const V_STOCK_PRICE: usize = 774; // the shop's stock refill price now
+pub const V_FOES: usize = 775; // foes on the field at once this room (1 with V_WAVES > 1: a gauntlet of duels)
+pub const V_CROWD: usize = 776; // the crowd knockback foes take this fight (x1000; 1000 none)
+pub const PED_ITEM_ROOM: i32 = 1;
+pub const PED_BOSS: i32 = 2;
+/// The item projectiles / orbitals / ground effects, every frame: PROJ entries of PJ_W words.
+pub const V_PROJ: usize = 800;
+pub const PROJ: usize = 48;
+pub const PJ_W: usize = 8; // kind (PJ_*; 0 free), owner player, x100, y100, age, life, a, b
+pub const PJ_SPARK: i32 = 1;
+pub const PJ_WAKE: i32 = 2; // a: half length x100
+pub const PJ_STAR: i32 = 3;
+pub const PJ_GHOST: i32 = 4; // a: facing (+1 / -1), b: swing done (1)
+pub const PJ_MINE: i32 = 5;
+pub const PJ_QUAKE: i32 = 6; // a: direction (+1 / -1), b: size x100
+pub const PJ_COIN: i32 = 7; // a: target player
+pub const PJ_MOON: i32 = 8; // published only (orbit from the play clock); a: index
+/// Look flags carried in a projectile's or burst's flag word: Homing Ink's trail, Fire Lace's embers.
+pub const PF_INK: i32 = 1 << 20;
+pub const PF_LACE: i32 = 1 << 21;
+pub const PF_MASK: i32 = PF_INK | PF_LACE;
+pub const V_INV: usize = 1184; // [2 players][ITEM_IDS] copies held, by item id
+/// One-shot item visuals (a ring, a spike column, a swing, a pop): BURSTS entries of BU_W words.
+pub const V_BURST: usize = 1280;
+pub const BURSTS: usize = 16;
+pub const BU_W: usize = 7; // frame, item id, owner player, x100, y100, size x100, flags (PF_*; low bits: direction + 1)
+pub const V_BURST_N: usize = 1392;
 
 /// An offer that is not a drive: one more shared stock.
 pub const OFFER_STOCK: i32 = 1000;

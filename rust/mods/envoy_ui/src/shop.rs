@@ -29,25 +29,27 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
         match row {
             0..=2 => {
                 let id = v[pbk + P_SHOP_OFFERS + row as usize];
-                if id >= 0 {
-                    label.s(POOL[id as usize].name);
+                if let Some(it) = envoy_data::items::item(id) {
+                    label.s(it.name);
+                    let held = v[V_INV + p * envoy_data::items::ITEM_IDS + id as usize];
+                    if held > 0 {
+                        label.s("  (x").i(held + 1).s(")");
+                    }
                     price = v[pbk + P_SHOP_PRICE + row as usize];
-                    badge = Some(badge_of(id as usize));
+                    badge = Some(it.rgba);
                 } else {
                     label.s("Sold");
                 }
             }
-            SHOP_LEVEL => {
-                // one per visit: every price 0 once it is used (or nothing can level)
-                let open = (0..SLOTS).any(|k| v[pbk + P_SHOP_LEVEL_PRICE + k] > 0);
-                label.s(if open { "Level up a drive" } else { "Level-up: sold" });
-            }
             SHOP_STOCK => {
-                label.s("Restore a stock");
-                price = v[pbk + P_SHOP_STOCK_PRICE];
+                let (now, lim) = (v[V_POOL], v[V_POOL_LIM]);
+                label.s("Refill a stock  ").i(now).s("/").i(lim);
+                if now < lim {
+                    price = v[V_STOCK_PRICE];
+                }
             }
             SHOP_REROLL => {
-                label.s("Swap the drives on sale");
+                label.s("New items on the counter");
                 price = v[V_REROLL_COST];
             }
             SHOP_REORDER => {
@@ -57,7 +59,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
                 label.s("Back on the road");
             }
         }
-        let gap = if row == SHOP_LEVEL || row == SHOP_REROLL || row == SHOP_LEAVE { 8.0 } else { 0.0 };
+        let gap = if row == SHOP_STOCK || row == SHOP_LEAVE { 8.0 } else { 0.0 };
         y += gap;
         let (_, a) = enter(T - row * 2);
         let a = if done || step != 0 { a * 0.36 } else { a };
@@ -66,8 +68,10 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
         let rw = w - 20.0;
         sticker(e, if on { S_FACE_HOVER } else if row == SHOP_LEAVE { S_FACE_LILAC } else { S_FACE_WHITE }, x, y, rw, 26.0, deg, alpha(WHITE, a), |e| {
             let mut tx = x + 10.0;
-            if let Some(bd) = badge {
-                spr_c(e, bd, x + 16.0, y + 13.0, 18.0 / 28.5, alpha(WHITE, a));
+            if let Some(col) = badge {
+                // the item's icon: its colour in an ink ring
+                spr_c(e, S_DISC, x + 16.0, y + 13.0, 20.0 / 32.0, alpha(INK, a));
+                spr_c(e, S_DISC, x + 16.0, y + 13.0, 15.0 / 32.0, crate::alpha(col, a));
                 tx = x + 30.0;
             }
             e.text_ex(tx, y + 5.0, d(14), alpha(INK, a), ALIGN_LEFT, rw - 90.0, label.str());
@@ -77,8 +81,8 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
                 let mut s = Buf::new();
                 s.i(price);
                 e.text_ex(x + rw - 10.0, y + 5.0, d(14), alpha(if poor { DEEP } else { INK }, a), ALIGN_RIGHT, 0.0, s.str());
-            } else if row == SHOP_REORDER {
-                e.text_ex(x + rw - 10.0, y + 6.0, bs(12), alpha(LILAC, a), ALIGN_RIGHT, 0.0, "free");
+            } else if row == SHOP_STOCK {
+                e.text_ex(x + rw - 10.0, y + 6.0, bs(12), alpha(LILAC, a), ALIGN_RIGHT, 0.0, "full");
             }
         });
         if on {
@@ -86,26 +90,10 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
         }
         y += 31.0;
     }
-    // the fighter the shop acts on, its row (slot cursor in the slot steps)
-    let party = party_from_view(v);
-    let f = v[pbk + P_SHOP_FIGHTER].clamp(0, 1) as usize;
+    // the items this player holds (no slots: a strip, copies as x2)
     let fy = y + 10.0;
-    let set = p * 2 + f;
-    fighter_sticker(e, x0, fy, -0.6, &party, set, false, WHITE);
-    face(e, S_FACE_INK, x0 + 146.0, fy + 26.0, 90.0, 22.0, WHITE);
-    e.text_ex(x0 + 191.0, fy + 29.0, d(11), WHITE, ALIGN_CENTER, 0.0, "X / Y: switch");
-    if step >= 1 && !done {
-        let k = v[pbk + P_SCURSOR].clamp(0, SLOTS as i32 - 1) as f32;
-        let cx = x0 + 17.0 + k * 26.0;
-        ring(e, cx, fy + 48.0, 13.0, 3.0, 1.0, SUNNY, SUNNY);
-        spr(e, S_PTRDOWN + p, cx - 13.0, fy + 12.0, 0.0, 0.0, WHITE);
-        if step == 3 {
-            spr_c(e, S_PTR + p, cx - 20.0, fy + 48.0, 0.6, WHITE);
-        }
-    }
-    if cur == SHOP_REORDER && step >= 2 && !done {
-        reorder(e, v, p, x0, fy - 6.0);
-    }
+    crate::items_ui::strip(e, v, p, x0, fy + 6.0, w - 20.0);
+    let _ = (fighter_sticker as unsafe fn(_, _, _, _, _, _, _, _), reorder as unsafe fn(_, _, _, _, _));
     let msg = v[pbk + P_SHOP_MSG].clamp(0, 12) as usize;
     if msg != 0 && !done {
         let good = matches!(msg, 1 | 3 | 4 | 5 | 6 | 8 | 10 | 11 | 12);
@@ -120,16 +108,16 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
     // the hovered drive's tag (solo: right side)
     if (0..3).contains(&cur) && step == 0 && !done {
         let id = v[pbk + P_SHOP_OFFERS + cur as usize];
-        if id >= 0 && w > 300.0 {
+        if let Some(it) = envoy_data::items::item(id).filter(|_| w > 300.0) {
             let (tx, ty) = (x0 + w + 18.0, 56.0);
-            let dr = &POOL[id as usize];
             sticker(e, S_FACE_WHITE, tx, ty, 260.0, 100.0, 1.0, WHITE, |e| {
-                spr_c(e, badge_of(id as usize), tx + 6.0, ty + 6.0, 44.0 / 28.5, WHITE);
-                e.text_ex(tx + 34.0, ty + 8.0, d(17), INK, ALIGN_LEFT, 0.0, dr.name);
+                spr_c(e, S_DISC, tx + 6.0, ty + 6.0, 34.0 / 32.0, INK);
+                spr_c(e, S_DISC, tx + 6.0, ty + 6.0, 27.0 / 32.0, it.rgba);
+                e.text_ex(tx + 34.0, ty + 8.0, d(17), INK, ALIGN_LEFT, 0.0, it.name);
                 let mut s = Buf::new();
-                s.s(["Common", "Rare", "Epic"][(dr.tier as usize).min(2)]).s(" ").s(FAM_WORD[FAM_BADGE.get(dr.family as usize).copied().unwrap_or(5)]);
+                s.s("on ").s(envoy_data::items::TRIGGER_TEXT[it.trigger as usize]).s(" / stack: ").s(envoy_data::items::STACK_TEXT[it.stack as usize]);
                 e.text_ex(tx + 250.0, ty + 10.0, bs(11), LILAC, ALIGN_RIGHT, 0.0, s.str());
-                wrap(e, tx + 34.0, ty + 34.0, 216.0, bs(13), 16.0, INK, ALIGN_LEFT, dr.rule, 4);
+                wrap(e, tx + 34.0, ty + 34.0, 216.0, bs(13), 16.0, INK, ALIGN_LEFT, it.line, 4);
             });
         }
     }
@@ -164,28 +152,16 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, _vw: f32, _vh: f32, sc: f3
         side(e, v, 0, 40.0, 316.0);
     }
     let step = v[V_P0 + P_SHOP_STEP];
-    let say = match step {
-        1 => "Choose a slot: left / right, then A.",
-        2 => "Pick the drive to move.",
-        3 => "Move it left or right, then put it down.",
-        _ => match v[V_P0 + P_SHOP_CURSOR] {
-            0..=2 => "Buy it, then choose who wears it.",
-            SHOP_LEVEL => "Pick one of your drives to raise a level.",
-            SHOP_STOCK => "One stock back in the shared pool.",
-            SHOP_REROLL => "Three new drives on the counter.",
-            SHOP_REORDER => "Change the order your drives fire in.",
-            _ => "Leave the shop.",
-        },
+    let _ = step;
+    let say = match v[V_P0 + P_SHOP_CURSOR] {
+        0..=2 => "Buy it: it is yours at once. A second copy stacks.",
+        SHOP_STOCK => "One stock back, up to your stock limit.",
+        SHOP_REROLL => "Three new items on the counter.",
+        _ => "Leave the shop.",
     };
     strip(e, 24.0, 590.0, say);
-    let a = match step {
-        1 => "Choose",
-        2 => "Lift",
-        3 => "Put it down",
-        _ => "Buy",
-    };
     if !crate::pick::confirm_up(v) {
-        hints(e, &[("Up / Down", "Choose"), ("A", a), ("B", "Back"), ("X / Y", "Switch fighter")]);
+        hints(e, &[("Up / Down", "Choose"), ("A", "Buy")]);
     }
     let _ = ck_name;
     e.space(SPACE_WINDOW, sc);

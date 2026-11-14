@@ -7,6 +7,7 @@ mod codes;
 pub use codes::*;
 pub mod view;
 pub mod heat;
+pub mod items;
 
 /// One drive (one rule, one charge source, one effect, one number) or one keystone (one rule, one price).
 #[derive(Clone, Copy)]
@@ -109,6 +110,24 @@ mod tests {
         assert!(POOL.iter().filter(|d| d.kind == K_DRIVE && d.family == F_RED).count() >= 3);
         assert_eq!(scaled(6000, 1), 6000);
         assert_eq!(scaled(6000, 3), 14400);
+    }
+
+    #[test]
+    fn items_slice() {
+        use crate::items::*;
+        // the design's first slice: twelve items, ids as in the design's table, each with a visual and a capped stack
+        assert_eq!(ITEMS_LEN, 12);
+        for id in [1, 2, 3, 4, 5, 6, 7, 12, 15, 18, 35, 36] {
+            let it = item(id).expect("slice item");
+            assert!(!it.visual.is_empty() && it.cap >= 1 && it.stack >= ST_MORE);
+        }
+        assert!(ITEMS.iter().filter(|i| i.trigger == TR_MODIFIER).count() == 2);
+        assert_eq!(stack_mul(IT_SMASH_QUAKE, 1), 1000);
+        assert_eq!(stack_mul(IT_SMASH_QUAKE, 2), 1500);
+        assert_eq!(stack_mul(IT_SMASH_QUAKE, 9), 2000); // capped at 3 copies
+        assert_eq!(stack_mul(IT_SPARK_RING, 2), 2000);
+        assert!(item_price(IT_FIRE_LACE) > item_price(IT_SPARK_RING));
+        assert_ne!(ITEMS_DIGEST, 0);
     }
 
     #[test]

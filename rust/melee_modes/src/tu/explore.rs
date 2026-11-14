@@ -752,7 +752,7 @@ pub static mut ALLOW: u32 = u32::MAX;
 /// to Final Destination itself.
 pub fn available(id: i32) -> bool {
     let k = GD_STAGES.iter().position(|g| g.id == id);
-    files_present(id) && k.is_some_and(|k| unsafe { ALLOW } & (1u32 << k) != 0)
+    files_present(id) && k.is_some_and(|k| unsafe { ALLOW } & 1u32.pshl(k as i64) != 0)
 }
 
 pub fn gd_name(id: i32) -> Option<&'static str> {
@@ -1426,9 +1426,9 @@ unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
         let (mut l, mut r) = (f32::MAX, f32::MIN);
         for v in mj.vtx_start as usize..(mj.vtx_start as usize + mj.vtx_count as usize) {
             let p = (*mp::groundCollVtx.add(v)).pos;
-            t = t.max(p.y);
-            l = l.min(p.x);
-            r = r.max(p.x);
+            t = fmax(t, p.y);
+            l = fmin(l, p.x);
+            r = fmax(r, p.x);
         }
         ((l + r) * 0.5, t)
     };
@@ -1462,18 +1462,18 @@ unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
         let ground = (*fp).ground_or_air as i32 == GA_Ground as i32;
         let st = &mut *core::ptr::addr_of_mut!(ST);
         if st.0 > 0 {
-            st.6 = st.6.max((ry - st.7).abs());
+            st.6 = fmax(st.6, (ry - st.7).abs());
         }
         st.7 = ry;
         st.0 += 1;
         if !ground {
             st.1 += 1;
         }
-        st.2 = st.2.min(rx);
-        st.3 = st.3.max(rx);
+        st.2 = fmin(st.2, rx);
+        st.3 = fmax(st.3, rx);
         let _ = ty;
-        st.4 = st.4.min(ry);
-        st.5 = st.5.max(ry);
+        st.4 = fmin(st.4, ry);
+        st.5 = fmax(st.5, ry);
         if CLOCK == AT + 30 + len {
             // the fighter is placed from the platform's previous frame (mpLib_80057424's prev_pos), so its place on the
             // platform swings by about one frame's travel round the loop (~1.3 here); a jitter or a slip is a jump
@@ -1768,7 +1768,7 @@ pub fn content_token() -> String {
     let m = content_mask();
     let mut t = format!("m{m:x}");
     for (k, g) in GD_STAGES.iter().enumerate() {
-        if m & (1 << k) != 0 {
+        if m & 1u32.pshl(k as i64) != 0 {
             // folded to 32 bits: the HELLO's guest info is 64 bytes on the wire
             let d = digest(g.id);
             t += &format!(".{k}:{:x}", (d ^ (d >> 32)) as u32);

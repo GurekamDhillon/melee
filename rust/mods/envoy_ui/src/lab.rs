@@ -16,6 +16,8 @@
 //! and triggers appear here by themselves. Item text goes through `item_text` (the one place the slice-2 keyword
 //! tokens and glossary plug in). No timers anywhere in choosing items.
 use crate::kit::*;
+use crate::ly::*;
+use alloc::vec::Vec;
 use crate::{ck_name, Buf, VW};
 use envoy_data::items::*;
 use envoy_data::lab::*;
@@ -681,16 +683,13 @@ const PX: f32 = 14.0;
 /// The panel's size this present (`draw` sets them): 300 wide on a 4:3 screen, where the six tab names take two
 /// rows; up to 380 on a wide window, where they fit one.
 static mut PWV: f32 = 300.0;
-static mut PHV: f32 = 392.0;
-static mut PYV: f32 = 40.0;
-static mut TABH: f32 = 28.0;
 fn pw() -> f32 {
     unsafe { PWV }
 }
-fn ph() -> f32 {
-    unsafe { PHV }
-}
 const TAB_PX: u32 = 10;
+/// The page box's height: what the tallest page (twelve 22-unit rows, the Items page's six rows and its card)
+/// needs.
+const PAGE_H: f32 = 296.0;
 /// The panel's right edge (band units) while it is open: what the HUD's centred cards keep clear of.
 pub fn right_edge(ex: f32) -> f32 {
     PX - ex + pw() + 8.0
@@ -702,47 +701,69 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     e.layer(LAYER_MENU, 5);
     let (sc, a) = enter(p.age);
     PWV = (300.0 + ex).min(380.0);
-    TABH = tab_h(tab_rows(PWV - 16.0, TAB_PX, &PAGES), 22.0);
-    PHV = 392.0 + TABH - 28.0;
-    PYV = 40.0 - (TABH - 28.0) * 0.5;
     let x = PX - ex;
     claim_left(right_edge(ex));
-    let y = PYV + (1.0 - sc) * 30.0;
-    sticker(e, S_FACE_INK, x, y, pw(), ph(), -0.6, alpha(WHITE, a), |e| {
-        face(e, S_FACE_INK, x, y, pw(), ph(), alpha(WHITE, a));
-        text_edge(e, x + 12.0, y + 8.0, d(18), SUNNY, ALIGN_LEFT, 1.2, "ITEM LAB");
-        let mut hd = Buf::new();
-        hd.i(v[V_POOL]).s(" stocks   ").i(v[V_COINS]).s(" coins");
-        e.text_ex(x + pw() - 12.0, y + 13.0, bs(11), PALE, ALIGN_RIGHT, 0.0, hd.str());
-        tabs(e, &p, x + 8.0, y + 38.0);
-        let cy = y + 42.0 + TABH;
-        match p.page {
-            PG_ITEMS => items_page(e, v, &p, x + 10.0, cy),
-            PG_LOADOUT => loadout_page(e, v, &p, x + 10.0, cy),
-            PG_TRIG => trig_page(e, v, &p, x + 10.0, cy),
-            PG_FX => fx_page(e, v, &p, x + 10.0, cy),
-            PG_SAND => sand_page(e, v, &p, x + 10.0, cy),
-            _ => synergy_page(e, v, x + 10.0, cy),
+    // the panel's frame is a layout tree (ly.rs): the title row, the tab bar (two rows where one cannot hold the
+    // six names), the page, the hint line. The pages are lists that scroll under the cursor while the fight
+    // runs, so they keep drawing their own rows inside the page box: the frame's tree only changes with the
+    // header's numbers and the hint, and is laid out again only then.
+    let mut l = Lay::new(SLOT_LAB);
+    let k_title = l.words("ITEM LAB", d, 18, 1, false, St::row().fixed(), P::TextEdge(SUNNY, ALIGN_LEFT, 1.2));
+    let mut hd = Buf::new();
+    hd.i(v[V_POOL]).s(" stocks   ").i(v[V_COINS]).s(" coins");
+    let k_sp = l.spring();
+    let k_hd = l.text(hd.str(), bs, 11, PALE);
+    let title = l.node(St::row().align(A::Center).fixed(), &[k_title, k_sp, k_hd]);
+    let mut tab_line = |l: &mut Lay, from: usize, to: usize| {
+        let mut ks = Vec::new();
+        for (i, name) in PAGES.iter().enumerate().take(to).skip(from) {
+            let on = i == p.page;
+            let id = if on && p.row == 0 { S_FACE_HOVER } else if on { S_FACE_SUNNY } else { S_FACE_LILAC };
+            let k = l.words(name, d, TAB_PX, 1, false, St::row().fixed(), P::Text(if on { INK } else { WHITE }, ALIGN_CENTER));
+            ks.push(l.boxed(St::row().h(22.0).pad4(7.0, 0.0, 7.0, 0.0).grow(1.0).justify(A::Center).align(A::Center), P::Face(id), &[k]));
         }
-        let hint = if T - p.said_at < 120 && !p.said.is_empty() {
-            p.said
-        } else if p.row == 0 {
-            "D-pad: left / right page, down to open"
-        } else {
-            match p.page {
-                PG_ITEMS => "Up / down: row. Left / right: fewer / more",
-                PG_TRIG => "Up / down: row. Right: fire now",
-                PG_LOADOUT => "Right: do it (presets: left load, right save)",
-                _ => "Up / down: row. Left / right: change",
-            }
-        };
-        text_fit(e, x + pw() * 0.5, y + ph() - 20.0, bs, 11, 8, if T - p.said_at < 120 { SUNNY } else { PALE }, ALIGN_CENTER, pw() - 16.0, hint);
+        l.node(St::row().gap(6.0).fixed(), &ks)
+    };
+    let tab_bar = if tab_rows(PWV - 20.0, TAB_PX, &PAGES) == 1 {
+        tab_line(&mut l, 0, PAGES.len())
+    } else {
+        let (r0, r1) = (tab_line(&mut l, 0, 3), tab_line(&mut l, 3, PAGES.len()));
+        l.node(St::col().gap(7.0).fixed(), &[r0, r1])
+    };
+    let page = l.leaf(St::row().grow(1.0).min_h(PAGE_H), P::None);
+    let hint = if T - p.said_at < 120 && !p.said.is_empty() {
+        p.said
+    } else if p.row == 0 {
+        "D-pad: left / right page, down to open"
+    } else {
+        match p.page {
+            PG_ITEMS => "Up / down: row. Left / right: fewer / more",
+            PG_TRIG => "Up / down: row. Right: fire now",
+            PG_LOADOUT => "Right: do it (presets: left load, right save)",
+            _ => "Up / down: row. Left / right: change",
+        }
+    };
+    let k_hint = l.words(hint, bs, 11, 1, false, St::row().min_w(0.0).fixed(), P::Text(if T - p.said_at < 120 { SUNNY } else { PALE }, ALIGN_CENTER));
+    let root = l.node(St::col().w(PWV).pad4(10.0, 8.0, 10.0, 8.0).gap(8.0), &[title, tab_bar, page, k_hint]);
+    // the panel's top moves up by what a second tab row adds, so its foot stays where it was
+    l.compute(root, x, 0.0, None, None);
+    let r0 = l.rect(root);
+    let y = (40.0 - (r0.h - 392.0) * 0.5).max(6.0) + (1.0 - sc) * 30.0;
+    l.place(x, y);
+    let (r, pr) = (l.rect(root), l.rect(page));
+    panel_shadow(e, r.x, r.y, r.w, r.h, a);
+    sticker(e, S_FACE_INK, r.x, r.y, r.w, r.h, -0.6, alpha(WHITE, a), |e| {
+        face(e, S_FACE_INK, r.x, r.y, r.w, r.h, alpha(WHITE, a));
+        l.draw(e, root, a, &mut |_, _, _, _| {});
+        match p.page {
+            PG_ITEMS => items_page(e, v, &p, pr.x, pr.y),
+            PG_LOADOUT => loadout_page(e, v, &p, pr.x, pr.y),
+            PG_TRIG => trig_page(e, v, &p, pr.x, pr.y),
+            PG_FX => fx_page(e, v, &p, pr.x, pr.y),
+            PG_SAND => sand_page(e, v, &p, pr.x, pr.y),
+            _ => synergy_page(e, v, pr.x, pr.y),
+        }
     });
-}
-
-fn tabs(e: &mut E, p: &Panel, x: f32, y: f32) {
-    // every tab as wide as its word (kit::tab_row): two rows where one cannot hold the six names
-    tab_row(e, x, y, pw() - 16.0, 22.0, TAB_PX, &PAGES, p.page, p.row == 0);
 }
 
 /// A list row: label left, value right; hovered rows move right on the hover face.

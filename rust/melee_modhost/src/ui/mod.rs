@@ -25,7 +25,7 @@ use std::rc::Rc;
 use wasmi::{Caller, Engine, Extern, Linker, Memory, Module, Store, TypedFunc};
 
 /// Fuel per presentation call (a trap or running out disables the mod's presentation instance).
-pub const UI_FUEL: u64 = 4_000_000;
+pub const UI_FUEL: u64 = 16_000_000;
 pub const MAX_UI_MODS: usize = 8;
 
 pub const SESSION_OFFLINE: i32 = 0;

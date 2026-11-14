@@ -16,6 +16,8 @@
 #![no_std]
 #![allow(static_mut_refs)]
 
+extern crate alloc;
+
 use gd_ui_enc::*;
 
 mod camp;
@@ -33,6 +35,11 @@ mod icons;
 mod map;
 mod vfx;
 mod lab;
+mod ly;
+
+/// The mod's heap: a bump arena emptied every frame (ly.rs). Only the layout tree lives in it.
+#[global_allocator]
+static HEAP: ly::Bump = ly::Bump;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -611,6 +618,7 @@ pub extern "C" fn gd_ui_init() -> i32 {
 #[no_mangle]
 pub extern "C" fn gd_ui_frame(_present: u32) {
     unsafe {
+        ly::begin();
         let st = gd_ui_envoy_state();
         // Envoy's select: the retail character select loads and confirms itself under this cover (a few frames)
         if st & ST_BYPASS != 0 && !CAMP.open {

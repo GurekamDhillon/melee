@@ -12,10 +12,16 @@ crate-type = ["cdylib"]
 [dependencies]
 gd_ui_enc = { path = "../gd_ui_enc" }
 envoy_data = { path = "../envoy_data" }
+# layout (src/ly.rs): flexbox only, no_std + alloc (the mod's allocator is a per-frame bump arena)
+taffy = { version = "=0.15.0", default-features = false, features = ["alloc", "flexbox", "taffy_tree"] }
 
 [profile.release]
 opt-level = "s"
 panic = "abort"
 lto = true
+
+# the layout pass runs every frame a panel is up: full optimisation for it (the mod itself is built for size)
+[profile.release.package.taffy]
+opt-level = 3
 
 [workspace]

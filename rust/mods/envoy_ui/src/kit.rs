@@ -467,6 +467,12 @@ fn face_fx(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32, fx: 
     }
 }
 
+/// A large panel's soft shadow on the fight behind it (gd-ui-v1.5 `SHAPE_SHADOW`: a Gaussian-blurred rounded box,
+/// one quad): under the sticker's own hard ink shadow, it lifts the panel off a busy stage. Faded by `a`.
+pub fn panel_shadow(e: &mut E, x: f32, y: f32, w: f32, h: f32, a: f32) {
+    e.soft_shadow(x + 2.0, y + 7.0, w + 3.0, h + 4.0, 12.0, 8.0, alpha(0x0A04_2AFF, 0.5 * a));
+}
+
 /// Host effects (envoy-fx.md): the next sticker's face gets `FACE_FX` (foil / holo), the hovered face a glow.
 static mut FACE_FX: [u32; 2] = [0; 2];
 /// The next `sticker` face shimmers: FX_FOIL (Epic) or FX_HOLO (Unique), in `rgba`.

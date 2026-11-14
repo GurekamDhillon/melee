@@ -40,7 +40,10 @@ if [ "${ACE:-0}" = 1 ]; then
   [ -n "${GW_ISO_ACE:-}" ] || { echo "camp_run: ACE=1 needs GW_ISO_ACE"; exit 2; }
   . "$here/exe_check.sh"; iso=$GW_ISO_ACE; pad=$(pad_for_disc "$pad" "$out")
 fi
-unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP MELEE_ENVOY_TEST_DRIVES
+unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP
+# slice 2: rooms wait for the player (no timers); the pad script does not walk to pedestals or pick rooms, so the
+# test knob takes the cursor's choice after a wait, and the first room choice goes to the shop
+export MELEE_ENVOY_TEST_DRIVES=autotake,forkshop
 env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="${CAMP_TITLE:-v3sim agent: camp_run, Envoy camp door, fights 1-3 (port/v3sim)}" MELEE_WASM_MODS="$mods" \
   MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="$pad" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
   MELEE_TURBO=1 ${CAMP_ENV:-} \

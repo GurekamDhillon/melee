@@ -30,12 +30,12 @@ extern "C" {
 
 const DPAD: u32 = 0x000F;
 const ABANDON_BIT: u32 = 0x2000;
-const PAGES: [&str; 5] = ["Items", "Run", "Fight", "Words", "Options"];
+const PAGES: [&str; 5] = ["Items", "Run", "Fight", "Options", "Words"];
 const PG_ITEMS: usize = 0;
 const PG_RUN: usize = 1;
 const PG_FIGHT: usize = 2;
-const PG_WORDS: usize = 3;
-const PG_OPTIONS: usize = 4;
+const PG_WORDS: usize = 4;
+const PG_OPTIONS: usize = 3;
 const OPT_ROWS: usize = 4;
 
 // ------------------------------------------------------------------ Envoy settings (presentation only)
@@ -167,11 +167,17 @@ unsafe fn nav(pn: &mut Panel, v: &[i32; VW], p: usize, e: u32) {
     let (left, right, down, up) = (e & 1 != 0, e & 2 != 0, e & 4 != 0, e & 8 != 0);
     pn.moved = pn.age;
     if pn.row == 0 {
-        if left {
-            pn.page = (pn.page + PAGES.len() - 1) % PAGES.len();
+        // L / R walk the four main pages (Items, Run, Fight, Options; the order the pad checks rely on); up on the tab
+        // row opens the Words glossary (and up again goes back to Items); from Words, left / right leave it
+        const CYCLE: usize = 4;
+        if up {
+            pn.page = if pn.page == PG_WORDS { PG_ITEMS } else { PG_WORDS };
+            log("page ", PAGES[pn.page]);
+        } else if left {
+            pn.page = if pn.page == PG_WORDS { PG_OPTIONS } else { (pn.page + CYCLE - 1) % CYCLE };
             log("page ", PAGES[pn.page]);
         } else if right {
-            pn.page = (pn.page + 1) % PAGES.len();
+            pn.page = if pn.page == PG_WORDS { PG_ITEMS } else { (pn.page + 1) % CYCLE };
             log("page ", PAGES[pn.page]);
         } else if down {
             pn.row = 1;

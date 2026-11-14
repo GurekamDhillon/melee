@@ -2203,6 +2203,18 @@ impl Renderer {
         }
     }
 
+    /// Where the EFB lands in a `tw` x `th` window (x, y, w, h): its own aspect (640x480 times the render scale)
+    /// fitted inside and centred, or the whole window with `MELEE_ASPECT=stretch`.
+    fn blit_rect(&self, tw: u32, th: u32) -> [f32; 4] {
+        let (tw, th) = (tw.max(1) as f32, th.max(1) as f32);
+        if std::env::var("MELEE_ASPECT").map_or(false, |v| v == "stretch") {
+            return [0.0, 0.0, tw, th];
+        }
+        let aspect = self.width as f32 / self.height as f32;
+        let (w, h) = if tw / th > aspect { (th * aspect, th) } else { (tw, tw / aspect) };
+        [((tw - w) * 0.5).floor(), ((th - h) * 0.5).floor(), w, h]
+    }
+
     /// Scale the EFB colour target onto `target` (a `tw` x `th` swapchain image of `format`). This
     /// is the display half of GXCopyDisp + VI: alpha is forced to 1 (the EFB's alpha is not the
     /// display's), filtering is linear like the XFB scaler. The EFB keeps its 4:3 shape, centred
@@ -2292,6 +2304,13 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
         } else {
             None
         };
+        let mut enc = self.device.create_command_encoder(&Default::default());
+        // gd-ui supersampling (uiremake): the UI batch into its own high-resolution target first; the window's
+        // pass below blends it down over the game's picture instead of drawing the batch straight
+        let ui_ss = self.ui.is_some() && {
+            let band = crate::ui::band_in(self.blit_rect(tw, th));
+            self.ui_ss_record(&mut enc, format, tw.max(1), th.max(1), band)
+        };
         let (pipeline, bgl) = &self.blit[&format];
         let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("EFB blit"),
@@ -2304,7 +2323,6 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
                 },
             ],
         });
-        let mut enc = self.device.create_command_encoder(&Default::default());
         {
             let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("EFB blit"),
@@ -2318,15 +2336,10 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
+            let vp = self.blit_rect(tw, th);
             let (tw, th) = (tw.max(1) as f32, th.max(1) as f32);
-            let stretch = std::env::var("MELEE_ASPECT").map_or(false, |v| v == "stretch");
-            let mut vp = [0.0, 0.0, tw, th];
-            if !stretch {
-                // Fit the EFB's aspect (640x480 times the render scale) inside the target.
-                let aspect = self.width as f32 / self.height as f32;
-                let (w, h) = if tw / th > aspect { (th * aspect, th) } else { (tw, tw / aspect) };
-                vp = [((tw - w) * 0.5).floor(), ((th - h) * 0.5).floor(), w, h];
-                pass.set_viewport(vp[0], vp[1], w, h, 0.0, 1.0);
+            if vp != [0.0, 0.0, tw, th] {
+                pass.set_viewport(vp[0], vp[1], vp[2], vp[3], 0.0, 1.0);
             }
             if !self.ui_hides_gx() {
                 match post.as_ref().and_then(|(i, bg)| Some((self.fx_post_pipe(*i)?, bg))) {
@@ -2345,7 +2358,13 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
             if self.ui.is_some() {
                 // gd-ui-v1: the UI batch inside this same pass (one instanced draw). The band is the 4:3 area centred in the blit rect.
                 let band = crate::ui::band_in(vp);
-                self.ui_record(&mut pass, format, tw, th, band);
+                if ui_ss {
+                    if let Some(g) = self.ui.as_mut() {
+                        g.ss_composite(&mut pass, format, tw, th);
+                    }
+                } else {
+                    self.ui_record(&mut pass, format, tw, th, band);
+                }
             }
         }
         self.queue.submit([enc.finish()]);

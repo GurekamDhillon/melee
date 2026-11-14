@@ -52,6 +52,17 @@ pub const SHAPE_BOX: u32 = 1;
 pub const SHAPE_DIAMOND: u32 = 2;
 /// A rounded box with a soft falloff reaching `shape[2]` outside it (the rect already includes the spread).
 pub const SHAPE_GLOW: u32 = 3;
+/// A soft shadow (uiremake): the box [corner radius `shape[0]`] blurred by a Gaussian of standard deviation
+/// `shape[2]`, in `rgba`. The quad reaches three deviations past the box (the rect already includes them). The
+/// coverage is the closed-form approximation of Raph Levien, "Blurred rounded rectangles" (2020): the blurred
+/// box is a rounded superellipse's distance pushed through an erf, so one quad is the whole shadow at any blur,
+/// with no blur pass and no texture.
+pub const SHAPE_SHADOW: u32 = 4;
+/// A box with a radius for each corner (uiremake): `uv` = [top-left, top-right, bottom-right, bottom-left] radii
+/// in the quad's units; `shape[1]` a border as for `SHAPE_BOX`. No dash and no hard shadow.
+pub const SHAPE_BOX4: u32 = 5;
+/// How many deviations past its box a soft shadow's quad reaches.
+pub const SHADOW_REACH: f32 = 3.0;
 
 /// One UI instance: 96 bytes, uploaded as-is (`#[repr(C)]`, little-endian like the GPU).
 #[repr(C)]
@@ -386,11 +397,75 @@ pub struct UiGpu {
     pub frames: u64,
     /// The render clock the effects animate on (never the tick count).
     clock: std::time::Instant,
+    /// The supersampled target and its downsampling pass, made on the first present that uses them.
+    ss: Option<UiSs>,
+    ss_pipes: Vec<(wgpu::TextureFormat, wgpu::RenderPipeline)>,
+    /// The batch pipeline for the supersampled target (it writes alpha; the window pipelines do not).
+    pipe_off: Option<wgpu::RenderPipeline>,
+    /// The downsampling pass's bind group layout and pipeline layout (one for every window format: the screenshot
+    /// target and the surface share the target's bind group).
+    ss_layout: Option<(wgpu::BindGroupLayout, wgpu::PipelineLayout)>,
 }
+
+/// UI supersampling (uiremake): the batch is drawn into its own offscreen target at `factor` times the window, then
+/// box-filtered down onto the window (premultiplied, `factor` x `factor` taps: an exact area average for a whole
+/// factor) and blended over the game. Every edge, glyph and minified sprite gets `factor`^2 coverage samples
+/// instead of one analytic estimate. It does not move or reshape anything: proportions are the layout's business.
+pub struct UiSs {
+    tex: wgpu::Texture,
+    view: wgpu::TextureView,
+    bind: wgpu::BindGroup,
+    uniform: wgpu::Buffer,
+    pub w: u32,
+    pub h: u32,
+    pub factor: u32,
+}
+
+/// The supersampling factor for a `tw` x `th` window: the smallest whole factor that reaches 2160 lines, at least 2
+/// (720p: 3, 1080p: 2, 1440p and 4K: 2), no more than 4, and never past the device's largest texture. 1: off.
+/// `MELEE_UI_SS`: `0` / `off` never, a number 1..4 that factor, anything else (and unset) the rule above.
+pub fn ss_factor(tw: u32, th: u32, max_dim: u32) -> u32 {
+    static MODE: std::sync::OnceLock<Option<u32>> = std::sync::OnceLock::new();
+    let forced = *MODE.get_or_init(|| match std::env::var("MELEE_UI_SS").ok().as_deref() {
+        Some("0") | Some("off") => Some(1),
+        Some(v) => v.parse::<u32>().ok().filter(|n| (1..=4).contains(n)),
+        None => None,
+    });
+    let mut f = forced.unwrap_or_else(|| 2160u32.div_ceil(th.max(1)).clamp(2, 4));
+    while f > 1 && (tw * f > max_dim || th * f > max_dim) {
+        f -= 1;
+    }
+    f
+}
+
+const SS_WGSL: &str = "
+struct S { f: vec4<u32> };
+@group(0) @binding(0) var t: texture_2d<f32>;
+@group(0) @binding(1) var<uniform> s: S;
+@vertex fn vs_main(@builtin(vertex_index) vi: u32) -> @builtin(position) vec4<f32> {
+    let uv = vec2<f32>(f32((vi << 1u) & 2u), f32(vi & 2u));
+    return vec4<f32>(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, 0.0, 1.0);
+}
+// the box filter: the mean of the f x f target pixels under this window pixel (premultiplied colour and alpha)
+@fragment fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
+    let f = i32(s.f.x);
+    let o = vec2<i32>(floor(pos.xy)) * f;
+    var acc = vec4<f32>(0.0);
+    for (var j = 0; j < f; j = j + 1) {
+        for (var i = 0; i < f; i = i + 1) {
+            acc = acc + textureLoad(t, o + vec2<i32>(i, j), 0);
+        }
+    }
+    return acc / f32(f * f);
+}
+";
 
 const UI_WGSL: &str = "
 struct U { tgt: vec4<f32>, band: vec4<f32>, tilt: vec4<f32>, tilt2: vec4<f32> };
 // tilt: the menu camera (yaw, pitch radians, focal length px, parallax depth px); tilt2.x: instances this present.
+// tilt2.y: the supersampling factor (1 drawing straight into the window; N drawing into the N-times offscreen
+// target, `UiSs`): tgt and band are then in target pixels, window-space quads are scaled by it, and the pixel
+// policy snaps to whole window pixels (N target pixels), so the downsampled result keeps its crisp straight edges.
 // All zero at rest: the transform is skipped and every pixel is the untilted one.
 // tgt.z: render-clock seconds, tgt.w: effects intensity (0 off, 0.5 subtle, 1 full)
 @group(0) @binding(0) var<uniform> u: U;
@@ -412,8 +487,9 @@ struct VsOut {
     @location(11) @interpolate(flat) shp: vec3<f32>,
     @location(12) @interpolate(flat) c2: vec4<f32>,
 };
+fn ssf() -> f32 { return max(u.tilt2.y, 1.0); }
 fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
-    if (win) { return p; }
+    if (win) { return p * ssf(); }
     return u.band.xy + p * u.band.zw / vec2<f32>(640.0, 480.0);
 }
 @vertex fn vs_main(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32,
@@ -426,7 +502,8 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     let win = (flags & 1u) != 0u;
     let kind = (flags >> 16u) & 15u;
     let tilted = u.tilt.x != 0.0 || u.tilt.y != 0.0;
-    var s = 1.0;
+    let ss = ssf();
+    var s = ss;
     if (!win) { s = u.band.w / 480.0; }
     var rect = rect_in;
     var shp = shp_in * s;
@@ -440,10 +517,10 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
         let round_shape = rect.z == rect.w && shp_in.x * 2.0 >= rect.z;
         if (rp.x == 0.0 && !tilted && !round_shape && kind != 2u) {
             // floor(v + 0.5): halves round up on every backend (round() is half-to-even)
-            let a = floor(to_px(rect.xy, win) + vec2<f32>(0.5));
-            let sz = max(floor(rect.zw * s + vec2<f32>(0.5)), vec2<f32>(1.0, 1.0));
-            if (win) { rect = vec4<f32>(a, sz); } else { rect = vec4<f32>((a - u.band.xy) / s, sz / s); }
-            if (shp.y > 0.0) { shp.y = max(floor(shp.y + 0.5), 1.0); }
+            let a = floor(to_px(rect.xy, win) / ss + vec2<f32>(0.5)) * ss;
+            let sz = max(floor(rect.zw * s / ss + vec2<f32>(0.5)), vec2<f32>(1.0, 1.0)) * ss;
+            if (win) { rect = vec4<f32>(a / ss, sz / ss); } else { rect = vec4<f32>((a - u.band.xy) / s, sz / s); }
+            if (shp.y > 0.0) { shp.y = max(floor(shp.y / ss + 0.5), 1.0) * ss; }
         }
     }
     // edge AA (kitaa): a slanted edge (shear: the left and right sides; a rotation off the right angles: all four)
@@ -467,6 +544,8 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
         shd = vec4<f32>(uvr.xyz * s, uvr.w);
         grow = grow + vec4<f32>(max(-shd.x, 0.0), max(-shd.y, 0.0), max(shd.x, 0.0), max(shd.y, 0.0));
     }
+    // a four-radius box: its radii (tl, tr, br, bl) ride in the same slot
+    if (kind == 5u) { shd = uvr * s; }
     let sz = max(abs(rect.zw) * s, vec2<f32>(1.0e-3, 1.0e-3));
     let e0 = grow.xy / sz;
     let e1 = grow.zw / sz;
@@ -615,6 +694,13 @@ fn dash(p: vec2<f32>, hs: vec2<f32>, r: f32, bw: f32, dl: f32, w: f32) -> f32 {
     let u = fract(t / period) * period;
     return clamp(min(u, on - u) / w + 0.5, 0.0, 1.0);
 }
+// the error function, to about 1e-4 (a rational fit in x^2: no table, no exp): the Gaussian's integral
+fn erf7(x0: f32) -> f32 {
+    let x = x0 * 1.1283792;
+    let xx = x * x;
+    let y = x + (0.24295 + (0.03395 + 0.0104 * xx) * xx) * (x * xx);
+    return y / sqrt(1.0 + y * y);
+}
 // an analytic shape (ui.rs SHAPE_*): premultiplied colour from the signed distance in device pixels. `f` is the shape,
 // `s` its hard shadow where the shape does not cover it (added after the effects: they are for the face).
 struct Shp { f: vec4<f32>, s: vec4<f32> };
@@ -624,8 +710,44 @@ fn shape(v: VsOut) -> Shp {
     let kind = v.kind.y;
     var hs = v.hs;
     if (kind == 3u) { hs = max(hs - vec2<f32>(v.shp.z), vec2<f32>(0.5)); }
+    if (kind == 4u) {
+        // the soft shadow: a Gaussian-blurred rounded box in closed form (after Raph Levien, Blurred rounded
+        // rectangles, 2020). The quad reaches SHADOW_REACH deviations past the box; `hs` is the box's half size.
+        let sg = max(v.shp.z, 1.0e-3);
+        let b = max(hs - vec2<f32>(sg * SHADOW_REACH_K), vec2<f32>(0.5));
+        var wd = 2.0 * b.x;
+        var ht = 2.0 * b.y;
+        let rad = min(v.shp.x, min(b.x, b.y));
+        let si = 1.0 / sg;
+        // the blur rounds the corners off further: an effective radius, and a superellipse exponent for its shape
+        let r0 = length(vec2<f32>(rad, sg * 1.15));
+        let r1 = length(vec2<f32>(rad, sg * 2.0));
+        let ex = 2.0 * r1 / r0;
+        // a long thin box blurs towards a shorter one: pull the long end in
+        let dl = 1.25 * sg * (exp(-pow(0.5 * si * wd, 2.0)) - exp(-pow(0.5 * si * ht, 2.0)));
+        wd = wd + min(dl, 0.0);
+        ht = ht - max(dl, 0.0);
+        let p0 = abs(v.sp) - (vec2<f32>(0.5 * wd, 0.5 * ht) - vec2<f32>(r1));
+        let p1 = max(p0, vec2<f32>(0.0));
+        let dp = pow(pow(p1.x, ex) + pow(p1.y, ex), 1.0 / ex);
+        let dn = min(max(p0.x, p0.y), 0.0);
+        let ds = dp + dn - r1;
+        let me = 0.5 * min(wd, ht);
+        let sc = 0.5 * erf7(si * 0.5 * (max(wd, ht) - 0.5 * rad));
+        let z = sc * (erf7(si * (me + ds)) - erf7(si * ds));
+        out.f = vec4<f32>(v.c.rgb * v.c.a, v.c.a) * clamp(z, 0.0, 1.0);
+        return out;
+    }
     var d = 0.0;
-    let r = min(v.shp.x, min(hs.x, hs.y));
+    var r = min(v.shp.x, min(hs.x, hs.y));
+    if (kind == 5u) {
+        // a radius for each corner: the one of the quadrant this pixel is in
+        var rq = v.uvc.x;
+        if (v.sp.x > 0.0 && v.sp.y <= 0.0) { rq = v.uvc.y; }
+        if (v.sp.x > 0.0 && v.sp.y > 0.0) { rq = v.uvc.z; }
+        if (v.sp.x <= 0.0 && v.sp.y > 0.0) { rq = v.uvc.w; }
+        r = min(rq, min(hs.x, hs.y));
+    }
     if (kind == 2u) {
         d = (abs(v.sp.x) / hs.x + abs(v.sp.y) / hs.y - 1.0) * min(hs.x, hs.y) * 0.70710678;
     } else {
@@ -706,7 +828,7 @@ fn shape(v: VsOut) -> Shp {
 
 impl UiGpu {
     pub fn new(device: &wgpu::Device) -> UiGpu {
-        let src = UI_WGSL.replace("ATLAS_SIZE", &format!("{ATLAS}.0")).replace("SDF_RANGE", &format!("{:.1}", crate::ui_font::SDF_RANGE));
+        let src = UI_WGSL.replace("ATLAS_SIZE", &format!("{ATLAS}.0")).replace("SDF_RANGE", &format!("{:.1}", crate::ui_font::SDF_RANGE)).replace("SHADOW_REACH_K", &format!("{SHADOW_REACH:.1}"));
         let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("gd_ui"), source: wgpu::ShaderSource::Wgsl(src.into()) });
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("gd_ui"),
@@ -748,11 +870,21 @@ impl UiGpu {
         });
         let inst_cap = 4096 * std::mem::size_of::<UiQuad>() as u64;
         let inst = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui instances"), size: inst_cap, usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        UiGpu { pipes: Vec::new(), layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0, clock: std::time::Instant::now() }
+        UiGpu { pipes: Vec::new(), layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0, clock: std::time::Instant::now(), ss: None, ss_pipes: Vec::new(), pipe_off: None, ss_layout: None }
     }
 
     fn pipeline(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat) -> usize {
-        if let Some(i) = self.pipes.iter().position(|p| p.0 == format) {
+        self.pipeline_for(device, format, false)
+    }
+
+    /// The batch pipeline for a target of `format`; `offscreen`: the supersampled target (`SS_FORMAT`), which keeps
+    /// the alpha it is blended down with (a window's own alpha is never written), kept apart in `pipe_off`.
+    /// Returns the index in `pipes` (`usize::MAX` for the offscreen one).
+    fn pipeline_for(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat, offscreen: bool) -> usize {
+        if offscreen && self.pipe_off.is_some() {
+            return usize::MAX;
+        }
+        if let Some(i) = self.pipes.iter().position(|p| p.0 == format).filter(|_| !offscreen) {
             return i;
         }
         let attrs = [
@@ -783,13 +915,119 @@ impl UiGpu {
                 module: &self.module,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
+                targets: &[Some(wgpu::ColorTargetState { format, blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING), write_mask: if offscreen { wgpu::ColorWrites::ALL } else { wgpu::ColorWrites::COLOR } })],
+            }),
+            multiview: None,
+            cache: None,
+        });
+        if offscreen {
+            self.pipe_off = Some(p);
+            return usize::MAX;
+        }
+        self.pipes.push((format, p));
+        self.pipes.len() - 1
+    }
+
+    /// The downsampling pipeline for a window of `format`.
+    fn ss_pipeline(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat) -> usize {
+        if let Some(i) = self.ss_pipes.iter().position(|p| p.0 == format) {
+            return i;
+        }
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("gd_ui ss"), source: wgpu::ShaderSource::Wgsl(SS_WGSL.into()) });
+        let (_, layout) = self.ss_layout.get_or_insert_with(|| {
+            let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("gd_ui ss"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Float { filterable: false }, view_dimension: wgpu::TextureViewDimension::D2, multisampled: false }, count: None },
+                    wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                ],
+            });
+            let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("gd_ui ss"), bind_group_layouts: &[&bgl], push_constant_ranges: &[] });
+            (bgl, layout)
+        });
+        let p = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("gd_ui ss"),
+            layout: Some(layout),
+            vertex: wgpu::VertexState { module: &module, entry_point: Some("vs_main"), compilation_options: Default::default(), buffers: &[] },
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
+            fragment: Some(wgpu::FragmentState {
+                module: &module,
+                entry_point: Some("fs_main"),
+                compilation_options: Default::default(),
                 targets: &[Some(wgpu::ColorTargetState { format, blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING), write_mask: wgpu::ColorWrites::COLOR })],
             }),
             multiview: None,
             cache: None,
         });
-        self.pipes.push((format, p));
-        self.pipes.len() - 1
+        self.ss_pipes.push((format, p));
+        self.ss_pipes.len() - 1
+    }
+
+    /// Draw the batch into the supersampled target (its own pass on `enc`, before the window's pass begins).
+    /// Returns whether it did: the window's pass then calls `ss_composite` instead of `record`. `factor` 1 (or an
+    /// empty batch) does nothing.
+    #[allow(clippy::too_many_arguments)]
+    pub fn ss_record(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, enc: &mut wgpu::CommandEncoder, format: wgpu::TextureFormat, tw: u32, th: u32, band: [f32; 4], tilt: [f32; 2], fx: f32, factor: u32) -> bool {
+        if self.count == 0 || factor <= 1 {
+            return false;
+        }
+        let (w, h) = (tw * factor, th * factor);
+        self.ss_pipeline(device, format);
+        if self.ss.as_ref().map_or(true, |s| s.w != w || s.h != h || s.factor != factor) {
+            let tex = device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("gd_ui ss"),
+                size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: SS_FORMAT,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+                view_formats: &[],
+            });
+            let view = tex.create_view(&Default::default());
+            let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui ss"), size: 16, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+            let mut ub = [0u8; 16];
+            ub[..4].copy_from_slice(&factor.to_le_bytes());
+            queue.write_buffer(&uniform, 0, &ub);
+            let bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("gd_ui ss"),
+                layout: &self.ss_layout.as_ref().unwrap().0,
+                entries: &[wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&view) }, wgpu::BindGroupEntry { binding: 1, resource: uniform.as_entire_binding() }],
+            });
+            self.ss = Some(UiSs { tex, view, bind, uniform, w, h, factor });
+        }
+        let k = factor as f32;
+        // the target leaves `self` for the pass (the pass borrows its view while `record_at` borrows `self`)
+        let ss = self.ss.take().unwrap();
+        {
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("gd_ui ss"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment { view: &ss.view, depth_slice: None, resolve_target: None, ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT), store: wgpu::StoreOp::Store } })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+            self.record_at(device, queue, &mut pass, SS_FORMAT, w as f32, h as f32, [band[0] * k, band[1] * k, band[2] * k, band[3] * k], tilt, fx, k, true);
+        }
+        let _ = (&ss.tex, &ss.uniform);
+        self.ss = Some(ss);
+        true
+    }
+
+    /// Blend the supersampled target down onto the window (inside the window's pass, after the game's picture).
+    pub fn ss_composite(&mut self, pass: &mut wgpu::RenderPass<'_>, format: wgpu::TextureFormat, tw: f32, th: f32) {
+        let (Some(ss), Some(pi)) = (self.ss.as_ref(), self.ss_pipes.iter().position(|p| p.0 == format)) else { return };
+        pass.set_viewport(0.0, 0.0, tw, th, 0.0, 1.0);
+        pass.set_pipeline(&self.ss_pipes[pi].1);
+        pass.set_bind_group(0, &ss.bind, &[]);
+        pass.draw(0..3, 0..1);
+    }
+
+    /// The supersampled target's size and factor, when one exists (the cost report).
+    pub fn ss_info(&self) -> Option<(u32, u32, u32)> {
+        self.ss.as_ref().map(|s| (s.w, s.h, s.factor))
     }
 
     /// Upload this present's instances and the atlas regions changed since the last call (every mip level of each:
@@ -846,18 +1084,24 @@ impl UiGpu {
     /// Record the UI batch into `pass` (one instanced draw). `band`: the 4:3 band rect in target pixels; `tilt`: the
     /// menu camera (yaw, pitch radians); `fx`: effects intensity.
     pub fn record(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, pass: &mut wgpu::RenderPass<'_>, format: wgpu::TextureFormat, tw: f32, th: f32, band: [f32; 4], tilt: [f32; 2], fx: f32) {
+        self.record_at(device, queue, pass, format, tw, th, band, tilt, fx, 1.0, false);
+    }
+
+    /// `record` into a target `ss` times the window (`tw`, `th` and `band` in target pixels).
+    #[allow(clippy::too_many_arguments)]
+    fn record_at(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, pass: &mut wgpu::RenderPass<'_>, format: wgpu::TextureFormat, tw: f32, th: f32, band: [f32; 4], tilt: [f32; 2], fx: f32, ss: f32, offscreen: bool) {
         let g = self;
         if g.count == 0 {
             return;
         }
-        let pi = g.pipeline(device, format);
+        let pi = g.pipeline_for(device, format, offscreen);
         // the effects' clock wraps every hour (f32 precision); intensity 0 turns every quad effect off
         let secs = (g.clock.elapsed().as_secs_f64() % 3600.0) as f32;
         // the menu tilt (Renderer::ui_tilt): focal length ~ retail's menu camera (a 30-degree turn reads as a turn,
         // not a smear), parallax depth 5% of the band height
         let [ya, pa] = tilt;
         let tilt = if ya != 0.0 || pa != 0.0 { [ya, pa, band[3] * 1.9, band[3] * 0.05] } else { [0.0; 4] };
-        let u: [f32; 16] = [tw, th, secs, fx, band[0], band[1], band[2], band[3], tilt[0], tilt[1], tilt[2], tilt[3], g.count as f32, 0.0, 0.0, 0.0];
+        let u: [f32; 16] = [tw, th, secs, fx, band[0], band[1], band[2], band[3], tilt[0], tilt[1], tilt[2], tilt[3], g.count as f32, ss, 0.0, 0.0];
         let mut ub = [0u8; 64];
         for (i, v) in u.iter().enumerate() {
             ub[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
@@ -866,12 +1110,16 @@ impl UiGpu {
         g.draw_calls += 1;
         g.frames += 1;
         pass.set_viewport(0.0, 0.0, tw, th, 0.0, 1.0);
-        pass.set_pipeline(&g.pipes[pi].1);
+        pass.set_pipeline(if pi == usize::MAX { g.pipe_off.as_ref().unwrap() } else { &g.pipes[pi].1 });
         pass.set_bind_group(0, &g.bind, &[]);
         pass.set_vertex_buffer(0, g.inst.slice(..g.count as u64 * std::mem::size_of::<UiQuad>() as u64));
         pass.draw(0..6, 0..g.count);
     }
 }
+
+/// The supersampled target's format: premultiplied colour with the alpha it is blended down by, 8 bits a channel
+/// like the window (the batch is blended in the window's own non-linear space, as when it is drawn straight).
+pub const SS_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 
 fn as_bytes(q: &[UiQuad]) -> &[u8] {
     // SAFETY: UiQuad is repr(C), 96 bytes of plain f32/u32 with no padding holes.
@@ -914,6 +1162,21 @@ impl Renderer {
         if let Some(g) = self.ui.as_mut() {
             g.record(&self.device, &self.queue, pass, format, tw, th, band, tilt, fx);
         }
+    }
+
+    /// The supersampled UI pass, before the window's pass (see `UiGpu::ss_record`). Returns whether it ran.
+    pub(crate) fn ui_ss_record(&mut self, enc: &mut wgpu::CommandEncoder, format: wgpu::TextureFormat, tw: u32, th: u32, band: [f32; 4]) -> bool {
+        let (tilt, fx) = (self.ui_tilt, self.fx_intensity);
+        let factor = ss_factor(tw, th, self.device.limits().max_texture_dimension_2d);
+        match self.ui.as_mut() {
+            Some(g) => g.ss_record(&self.device, &self.queue, enc, format, tw, th, band, tilt, fx, factor),
+            None => false,
+        }
+    }
+
+    /// The supersampled UI target (width, height, factor), when it is in use.
+    pub fn ui_ss_info(&self) -> Option<(u32, u32, u32)> {
+        self.ui.as_ref().and_then(|g| g.ss_info())
     }
 
     /// (UI draw calls, presents with UI) so far.

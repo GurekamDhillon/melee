@@ -1181,7 +1181,7 @@ pub unsafe fn room_tick() {
     }
     // checks only (`MELEE_EXPLORE_GOTO=door@frame[,door@frame..]`): the party goes through to `door` at room frame
     // `frame`, as if it had opened the door leading there (screenshots inside the side rooms without a walk)
-    if let Some(&(_, to)) = goto_list().iter().find(|&&(f, to)| f == CLOCK && (to as usize) < m.doors.len()) {
+    if let Some(&(_, to)) = goto_list("MELEE_EXPLORE_GOTO").iter().find(|&&(f, to)| f == CLOCK && (to as usize) < m.doors.len()) {
         DEST = to;
         FADE = 1;
         eprintln!("explore: test goto door {to} at room frame {CLOCK}");
@@ -1217,6 +1217,14 @@ pub unsafe fn room_tick() {
             }
         }
     });
+    // checks only (`MELEE_EXPLORE_OPEN=door@frame,..`): door `door` of the party's section is opened at room frame
+    // `frame`, as a player's up tilt at it would (a story walk takes the way on with it)
+    if let Some(&(_, d)) = goto_list("MELEE_EXPLORE_OPEN").iter().find(|&&(f, d)| f == CLOCK && (d as usize) < m.doors.len()) {
+        if m.doors[d as usize].sec as i32 == SEC {
+            want = d;
+            eprintln!("explore: test open door {d} at room frame {CLOCK}");
+        }
+    }
     if want >= 0 {
         let d = m.doors[want as usize];
         DEST = if d.to >= 0 {
@@ -1241,11 +1249,13 @@ pub unsafe fn room_tick() {
     }
 }
 
-/// `MELEE_EXPLORE_GOTO` as (room frame, door) pairs; empty when unset.
-fn goto_list() -> &'static [(i32, i32)] {
+/// `MELEE_EXPLORE_GOTO` / `MELEE_EXPLORE_OPEN` as (room frame, door) pairs; empty when unset.
+fn goto_list(var: &'static str) -> &'static [(i32, i32)] {
     static G: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
-    G.get_or_init(|| {
-        std::env::var("MELEE_EXPLORE_GOTO")
+    static O: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
+    let cell = if var == "MELEE_EXPLORE_OPEN" { &O } else { &G };
+    cell.get_or_init(|| {
+        std::env::var(var)
             .unwrap_or_default()
             .split(',')
             .filter_map(|p| {

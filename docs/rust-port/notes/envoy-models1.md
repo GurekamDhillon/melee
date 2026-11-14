@@ -1,13 +1,13 @@
-# Envoy models, chunks 1 to 3 (2026-11-13 / 14)
+# Envoy models, chunks 1 to 4 (2026-11-13 / 14)
 
-160 original models for Envoy: every item (the synergy lane's six included), act-map nodes and fight variants, hearts
+182 original models for Envoy: every item (the synergy lane's six included), act-map nodes and fight variants, hearts
 and HUD bits, pool frames, keyword, status, tech and move marks, tag emblems, projectile bodies, map furniture,
-world pieces, effect meshes and stance-orb bodies, boss and elite faces, synergy and evolution banner pieces, and
-run-end pieces. They are made the way the Party drive models are: a part list per model, one generator, no
+world pieces, effect meshes and stance-orb bodies, boss and elite faces, synergy and evolution banner pieces,
+run-end pieces, curse-pool marks, camp and road scenery, and 8 animated sprite strips. They are made the way the Party drive models are: a part list per model, one generator, no
 hand-drawn or third-party data.
 
 - Generator: `pc/scripts/examples/envoy_models/tools/make_models1.py` (helpers, palette, chunk 1's part lists, every
-  writer) with `models2.py` and `models3.py` beside it (chunks 2 and 3). It imports the drives' `drive_parts.py` for
+  writer) with `models2.py`, `models3.py` and `models4.py` beside it (chunks 2 to 4). It imports the drives' `drive_parts.py` for
   the primitives and the colour ramp. `--check` compares the files on disk with a fresh run; `--sheet OUT.png`
   draws the contact sheet.
 - Contact sheet (not committed): `E:\Projects\Melee Workspace\scratch\models1\contact-sheet.png`.
@@ -24,8 +24,12 @@ Shared, in `models/`: `envoy_models_atlas.gxtex` and `.glow.gxtex` (128 x 256 co
 host's `include_bytes!` array).
 
 New models are appended: a key's line in the manifest is its model id, so the order never changes. New colour rows
-are appended to the atlas for the same reason. **The model id is a `u8`: 235 of 256 are used, 21 are left.** The
-next chunk has to widen `drive_draw::Inst::Model::model` (and `melee_gx::fx::WorldDraw::model`) first.
+are appended to the atlas for the same reason. The model id is a `u16` on the host since chunk 4 (257 models in
+all with the drives' 75).
+
+**Animated sprites.** `rust/mods/envoy_ui/art/em_<key>_anim.png` is a strip of frames, each 96 x 96, side by side;
+`models/envoy_models_anim.txt` lists each strip and its frame count. Frame 0 is the still sprite. The meshes are not
+animated.
 
 ## Loading
 
@@ -46,41 +50,62 @@ model id `75 + line` (`melee_modes::tu::drive_draw::EM_FIRST`, after the 10 lega
 `scale` is the frame's width in world units: a model that fills the parts box is about 0.45 of it across, so
 `scale 16` draws an item about 7 units wide. Every model shares the Party frame (no recentring), so a pool frame
 and its item line up at one position, yaw and scale. `gd_ui_model_tex` gives the turning 12-frame sprite sheet for
-any of them too. The host turns a model about the vertical axis only (`yaw`): the shots and beams that should lie
-along a velocity (`pj_shard`, `pj_bolt`, `fx_beam_*`) need a roll parameter the host does not have yet.
+any of them too. `gd_ui_world_model_rot` is `gd_ui_world_model_ex` with a `roll` after the yaw (radians, a turn in
+the model's own plane, applied before the yaw): a shot laid along its velocity is `roll = atan2(vy, vx)`.
 
 **The ink edge.** `MAT_OUTLINE` works on this set. The ink pass (`melee_gx::fx`, pipeline "fx ink") now pushes the
 hull behind its own body (a slope-scaled depth bias) and widens it with the model's scale (x1 up to scale 5, so
 drives are unchanged, to x3 at scale 15 and over).
 
-**Wired here.** `items_ui::pedestals` draws the floating item as its model (rocking, ink edge, on a soft disc of the
-item's colour) and keeps the old discs for an id with no model. Nothing else is swapped: the item strip, the
-new-item flash, the map nodes, the stock row and the effect shapes in `items_ui::world` still draw what they drew,
-for the pickup, synergy and UI lanes to change.
+**Wired here.**
+
+- `items_ui::pedestals` draws the floating item as its model in the pedestal's shader ring, and keeps the shader
+  orb for an id with no model.
+- `items_ui::proj2` draws these effect bodies as models (`fx::mesh`, ink edged), each with its old shapes kept as
+  the fallback when the model is missing: Demon Wings' feathers (`pj_feather`) and worn wings (`fx_wings`), Ice
+  Glass shards (`pj_shard`, along their velocity), Laser Prism's bolts (`pj_bolt`; they had no drawing before),
+  Crimson Count's sigils (`fx_sigil`), the Guardian Feather (`guardian_feather`), the Halo (`fx_halo`), Crouch
+  Thorns (`fx_thorns`), the four stance orbs (`orb_*`) and the Moon Drops orbital (`pj_moon`). Their trails and
+  glows are kept. The first slice's effects (sparks, star, wake, ghost, mine, quake, coin) and every burst are the
+  vfx lane's tuned shader quads and are NOT swapped: a static mesh would be a step back from those. The beams,
+  the tendril and the gravity well are also left as they were (a beam needs a length, which one mesh cannot give).
+- The synergy / evolution banner and the pause Combos card show `em_syn_<key>` / `em_evo_<key>`
+  (`kit::em_spr`, loaded on first use); the campfire banner plays `em_node_campfire_anim` (`kit::em_anim`).
+- Nothing else is swapped: the item strip and Items page keep slice 2's own icons (`icons.rs`), the map nodes and
+  the stock row draw what they drew.
 
 ## Verified
 
-Built and run on Windows, 2026-11-14, hidden windows (`MELEE_WINDOW_HIDDEN=1`), release exe from this branch after
-merging `pub/port/envoy-slice2` at `03846fe7b`:
+**Chunk 4 is only partly verified.** The game runs were being made when the machine ran critically short of memory
+and the session's background job was stopped (2026-11-14). The coordinator then asked for no new builds or game runs
+until candidate10 is packaged, so they were not restarted.
 
-- `cargo test -p melee_modes --lib drive_draw`: 2 passed (`models_decode_and_sprites_cover` checks the include list
-  against the manifest and the files on disk, that every model decodes, two atlas colours, and a sprite sheet).
-- `envoy_sim` and `envoy_ui` built for wasm; `melee` built in release.
-- `tools/rust-port/envoy/items_check.sh` at depth 4: `ITEMS OK`, all 20 rows (lint, pad, cpu, room, boss, coop,
-  petey, gauntlet, live, crowd, shop, devil, angel, secret, whiff, triggers, coopstock, map, campfire, orbs), 0
-  mismatches in each. The triggers row did not see a crouch cancel, a powershield or a jab hit this time; the script
-  reports those as CPU-dependent and does not fail on them.
-- A scripted Envoy run to the boss drop (`MELEE_ENVOY_START_FIGHT=4`, knobs `nodoor,*4000`, the player a CPU):
-  the log has `envoy: boss drop, choose one`, no host errors, and the screenshot shows both pedestal items (Shine
-  Bell, Roll Mines) drawn as models in their own colours with the ink edge, inside the pedestal's shader ring.
-  Kept at `E:\Projects\Melee Workspace\scratch\models1\verify-boss-drop.png` (not committed).
-- The ink edge: before the fix the same screenshot showed the models as solid ink. Cause and fix are under
-  Loading. Drive orbiters go through the same pass with the same width (scale 5 and under); they were not
-  compared before and after in a screenshot.
-- Not run: depth 7 of items_check, the zero-lag gate, 720p / 1080p comparison crops. The model set adds 18,290
-  triangles uploaded once when the effects layer arms.
+Done, on Windows, hidden windows, release exe from this branch after merging `pub/port/envoy-slice2` (`03846fe7b`)
+and `pub/port/envoy-synergy` (`72d52f625`):
 
-## Items (38)
+- `cargo test -p melee_modes --lib drive_draw`: 2 passed.
+- `envoy_sim` and `envoy_ui` built for wasm; `melee` built in release. The two merged lanes did not compile
+  together (`envoy_data::keywords`: "an item has no card" for the synergy lane's six items); cards and trigger
+  words were added.
+- One `itemdemo` run at 1280 x 720 (every item given and fired in turn, 181 screenshots): no host errors in the
+  log; the pictures show the wings, the halo, the feathers and moons as models, and the Blood Moon and Iron Maiden
+  banners with their emblems. An index of that run is kept at
+  `E:\Projects\Melee Workspace\scratch\models1\swap-after720-index.png` (not committed).
+
+NOT done for chunk 4:
+
+- `items_check` at depth 4 and 7 (asked for). The last green run is chunk 3's tree at depth 4 (20 rows, 0
+  mismatches), before the synergy merge, the u16 / roll change and the mesh swaps. This branch's own commits change
+  no sim file, but the merge brings the synergy lane's sim in beside slice 2's, and that combination has not been
+  checked here.
+- The frame-time check (asked for). The script is ready (`scratch/models1/perf.sh`: the itemdemo run in real time
+  with the frame profiler, then `zero_hitch_check.py`).
+- The before / after crops at 720p and 1080p (asked for). Only the "after" 720p run finished; the "before" build of
+  the UI mod and the crop script are ready (`scratch/models1/demo.sh`, `crops.py`).
+- The Combos card's emblem and the campfire strip were not seen on screen (the demo run does not open them).
+- The last change to the wings' size (30 to 24 world units) was built into the UI mod and is in that 720p run.
+
+## Items (40)
 
 | key | id | name | concept | where to use it |
 |---|---|---|---|---|
@@ -122,6 +147,8 @@ merging `pub/port/envoy-slice2` at `03846fe7b`:
 | `kin_tether` | 205 | Kin Tether | Two orbs, coral and lagoon, joined by a taut cord. | pickup prompt, item strip, build page; the synergy lane's item `kin_tether` |
 | `rally_banner` | 206 | Rally Banner | A red banner on a pole with a gold star on it. | pickup prompt, item strip, build page; the synergy lane's item `rally_banner` |
 | `kindred_spark` | 207 | Kindred Spark | Two sparks facing each other, a thread of light between them. | pickup prompt, item strip, build page; the synergy lane's item `kindred_spark` |
+| `haunted_shell` | 243 | Haunted Shell | A skull peering out of a spiral shell, a wisp trailing off it. | pickup prompt, item strip, build page; the curse pool's item 33 |
+| `glass_fist` | 244 | Glass Fist | A fist of clear glass, four knuckles and a thumb, shards coming off it. | pickup prompt, item strip, build page; the curse pool's item 34 |
 
 ## Act-map nodes and room markers (12)
 
@@ -305,15 +332,43 @@ merging `pub/port/envoy-slice2` at `03846fe7b`:
 | `run_tomb` | 209 | Run: tombstone | A round-topped stone with a crack and a small heart outline cut in it. | the run-end summary for a lost run (RUN OVER) |
 | `run_loop` | 210 | Run: loop | An arrow running round in a circle with a pip at its centre: one more loop. | the loop counter ("loop now N"), the act banner |
 
-## Chunk 4 proposals
+## Curse-pool marks (8)
 
-1. **Widen the model id** past `u8` (see Files): nothing else fits without it.
-2. **A roll parameter for world models**, so shots and beams lie along their velocity; then swap the effect shapes
-   in `items_ui::world` for the `fx_*`, `pj_*` and `orb_*` meshes, one item at a time, with before / after crops.
-3. **Animated sprites**: two or three frames for the pieces that should move in 2D (the campfire, the refill, the
-   cursor, the A button being pressed).
-4. **More boss faces** as bosses are added, and a face per elite archetype once the elite kinds are settled.
-5. **Items still to come** from the design's first 40, each with its table row.
-6. **Camp and road scenery** at screen size: the road's signposts, the camp's tent, a notice board for the run
-   record.
-7. **Curse marks**: one mark per drawback kind for the curse pool's cards.
+| key | id | name | concept | where to use it |
+|---|---|---|---|---|
+| `curse_mark` | 235 | Curse: mark | A purple skull under three thorns: this item is cursed. | the corner of a curse-pool item's card and chip; the curse pool's pedestal |
+| `curse_shared` | 236 | Curse: shared | Two arrows passing each other: foes get it too. | the drawback line on a curse-pool card (design 7, the `curse` pool): the effect also works for foes (Haunted Shell) |
+| `curse_fragile` | 237 | Curse: fragile | A heart split by a crack, a chip falling from it: you are launched further. | the drawback line on a curse-pool card (design 7, the `curse` pool): you take more knockback (Glass Fist) |
+| `curse_weak` | 238 | Curse: weak | A sword snapped in two, the point hanging off to one side. | the drawback line on a curse-pool card (design 7, the `curse` pool): you deal less |
+| `curse_slow` | 239 | Curse: slow | A snail: a spiral shell on a low body with two feelers. | the drawback line on a curse-pool card (design 7, the `curse` pool): you move or act slower |
+| `curse_heavy` | 240 | Curse: heavy | An iron weight with a ring on top and a down arrow on its face. | the drawback line on a curse-pool card (design 7, the `curse` pool): you fall faster or jump lower |
+| `curse_costly` | 241 | Curse: costly | A coin with a red arrow falling out of it. | the drawback line on a curse-pool card (design 7, the `curse` pool): it costs coins, or shops cost more |
+| `curse_stock` | 242 | Curse: stock | The heart container with a red minus on its shoulder: a stock slot gone. | the drawback line on a curse-pool card (design 7, the `curse` pool): it takes a stock slot or a stock |
+
+## Camp and road scenery (12)
+
+| key | id | name | concept | where to use it |
+|---|---|---|---|---|
+| `camp_tent` | 245 | Camp: tent | A teal tent with a cream stripe, its door flap open on the dark inside. | the camp screen behind the party cards |
+| `camp_lantern` | 246 | Camp: lantern | A lantern with a lit glass, a cap and a carrying ring. | the camp screen; a road stop at night |
+| `camp_board` | 247 | Camp: notice board | A board on two posts with three notes pinned to it. | the camp's run record (best loop, last run); the pause Run page header |
+| `camp_seat` | 248 | Camp: log seat | A log on its side with a mushroom growing by it. | the camp screen, beside the fire |
+| `camp_pot` | 249 | Camp: cooking pot | A pot hung from a tripod over a small flame, steam curling up. | the campfire room; the camp screen |
+| `road_sign` | 250 | Road: signpost | A post with two arrow boards pointing opposite ways. | the road screen at a fork; the act map's foot |
+| `road_stone` | 251 | Road: milestone | A low round-topped stone with one pip cut in it, grass at its foot. | the road screen: one per fight cleared |
+| `road_pine` | 252 | Road: pine | A pine of three stacked tiers on a short trunk. | the road and camp backdrops |
+| `road_bush` | 253 | Road: bush | A bush of three round lobes with red berries. | the road and camp backdrops |
+| `road_rock` | 254 | Road: rock | A boulder with a smaller stone leaning on it. | the road and camp backdrops; a secret wall's rubble |
+| `road_fence` | 255 | Road: fence | Two posts and two rails. | the road screen's edge; the camp's edge |
+| `road_gate` | 256 | Road: finish gate | Two poles with a string of red and gold pennants between them. | the end of the road (the boss ahead); the loop-cleared banner |
+
+## Chunk 5 proposals
+
+1. **Finish what chunk 4 could not check** (see Verified): the before / after crops, items_check, the frame-time
+   run. Until then the mesh swaps are unproven against the shader bodies they replace.
+2. **Beams as a stretched quad or a tiled mesh** (a length parameter), then the gold and brimstone beams.
+3. **Use the map and HUD pieces**: nodes, cursor, flag and tick on the act map; hearts on the stock row; the A
+   button on the pickup prompt once the pickup lane lands.
+4. **Animated strips for more pieces** (the wish flag, the lantern, the loop arrow, the trophy's glint).
+5. **More boss faces** as bosses are added, and a face per elite archetype.
+6. **Items still to come** from the design's first 40 (two curse items are here already).

@@ -30,11 +30,12 @@ extern "C" {
 
 const DPAD: u32 = 0x000F;
 const ABANDON_BIT: u32 = 0x2000;
-const PAGES: [&str; 4] = ["Items", "Run", "Fight", "Options"];
+const PAGES: [&str; 5] = ["Items", "Run", "Fight", "Words", "Options"];
 const PG_ITEMS: usize = 0;
 const PG_RUN: usize = 1;
 const PG_FIGHT: usize = 2;
-const PG_OPTIONS: usize = 3;
+const PG_WORDS: usize = 3;
+const PG_OPTIONS: usize = 4;
 const OPT_ROWS: usize = 4;
 
 // ------------------------------------------------------------------ Envoy settings (presentation only)
@@ -230,12 +231,43 @@ unsafe fn nav(pn: &mut Panel, v: &[i32; VW], p: usize, e: u32) {
                 }
             }
         }
+        PG_WORDS => {
+            // the glossary scrolls a keyword at a time (pn.item is the top row)
+            if up && pn.item == 0 {
+                pn.row = 0;
+            } else if up {
+                pn.item -= 1;
+            } else if down {
+                pn.item = (pn.item + 1).min(envoy_data::keywords::KEYWORDS.len() - WORDS_ROWS);
+            }
+        }
         _ => {
             if up {
                 pn.row = 0;
             }
         }
     }
+}
+
+const WORDS_ROWS: usize = 6;
+
+/// The glossary: every keyword of the item language, in its colour, and what it means.
+unsafe fn words_page(e: &mut E, pn: &Panel, x: f32, y: f32) {
+    use envoy_data::keywords::*;
+    let w = PW - 20.0;
+    let top = if pn.page == PG_WORDS { pn.item.min(KEYWORDS.len() - WORDS_ROWS) } else { 0 };
+    for (r, kw) in KEYWORDS.iter().enumerate().skip(top).take(WORDS_ROWS) {
+        let ry = y + (r - top) as f32 * 27.0;
+        let col = KC_DARK[kw.cat as usize];
+        e.rect(x, ry + 2.0, 3.0, 22.0, col);
+        e.text_ex(x + 8.0, ry, td(12), col, ALIGN_LEFT, 0.0, kw.word);
+        let cat = KC_NAME[kw.cat as usize];
+        e.text_ex(x + w, ry + 1.0, tb(9), PALE, ALIGN_RIGHT, 0.0, cat);
+        e.text_ex(x + 8.0, ry + 13.0, tb(10), WHITE, ALIGN_LEFT, w - 10.0, kw.def);
+    }
+    let mut b = Buf::new();
+    b.i(top as i32 + 1).s("-").i((top + WORDS_ROWS) as i32).s(" of ").i(KEYWORDS.len() as i32);
+    e.text_ex(x + w, y + WORDS_ROWS as f32 * 27.0 + 2.0, tb(10), PALE, ALIGN_RIGHT, 0.0, b.str());
 }
 
 // ------------------------------------------------------------------ drawing (band space, 640 x 480)
@@ -277,6 +309,7 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
             PG_ITEMS => items_page(e, v, p, &pn, x + 10.0, cy),
             PG_RUN => run_page(e, v, p, x + 10.0, cy, petey),
             PG_FIGHT => fight_page(e, v, x + 10.0, cy),
+            PG_WORDS => words_page(e, &pn, x + 10.0, cy),
             _ => options_page(e, &pn, x + 10.0, cy),
         }
         // the hint line at the panel's foot
@@ -286,6 +319,8 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
             "D-pad: left / right page, down to open"
         } else if pn.page == PG_OPTIONS {
             "D-pad: up / down row, left / right set"
+        } else if pn.page == PG_WORDS {
+            "D-pad: up / down to scroll"
         } else if pn.page == PG_ITEMS {
             "D-pad: left / right item, up to the tabs"
         } else {
@@ -367,7 +402,7 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
     let it = &ITEMS[list[sel]];
     let cnt = v[V_INV + p * ITEM_IDS + it.id as usize];
     let cy = y + 16.0 + ((n + 6) / 7) as f32 * 30.0;
-    let ch = 128.0;
+    let ch = 140.0;
     sticker(e, S_FACE_WHITE, x, cy, w, ch, 0.6, WHITE, |e| {
         e.rect(x + 6.0, cy + 6.0, 6.0, ch - 12.0, it.rgba);
         e.text_ex(x + 20.0, cy + 8.0, td(17), INK, ALIGN_LEFT, w - 28.0, it.name);
@@ -375,10 +410,10 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
         t.s("Trigger: ").s(trigger_word(it));
         face(e, S_FACE_INK, x + 20.0, cy + 34.0, tw(t.str(), tb(11)) + 14.0, 18.0, WHITE);
         e.text_ex(x + 27.0, cy + 36.0, tb(11), SUNNY, ALIGN_LEFT, 0.0, t.str());
-        line_wrap(e, x + 20.0, cy + 58.0, tb(12), INK, w - 30.0, it.line);
+        rich(e, x + 20.0, cy + 56.0, w - 30.0, ts(12), 14.0, INK, false, envoy_data::keywords::card(it.id), 3);
         let mut s = Buf::new();
         s.s("Stack ").i(cnt).s(" / ").i(it.cap as i32);
-        e.text_ex(x + 20.0, cy + ch - 40.0, td(13), INK, ALIGN_LEFT, 0.0, s.str());
+        e.text_ex(x + 20.0, cy + ch - 38.0, td(13), INK, ALIGN_LEFT, 0.0, s.str());
         let mut r = Buf::new();
         if cnt >= it.cap as i32 {
             r.s("At its cap: more copies add nothing");
@@ -454,8 +489,10 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: b
     // the floor map (the sim's map words); the old room dots only when no map is published
     let my = y + 58.0;
     if crate::map::has(v) {
-        face(e, S_FACE_INK, x - 2.0, my - 24.0, w + 4.0, 50.0, WHITE);
-        crate::map::draw(e, v, x, my - 24.0, w, 50.0, 8.5);
+        // the act map fills the page (rows up to the boss, as in Slay the Spire)
+        crate::map::draw(e, v, x + 20.0, y + 40.0, w - 40.0, 132.0, 7.0);
+        crate::map::legend(e, v, x, y + 172.0, w);
+        return;
     } else {
         let rooms = v[V_ROOMS].clamp(1, 6);
         let here = if v[V_ROOM] == 0 { rooms + 1 } else { v[V_ROOM] };

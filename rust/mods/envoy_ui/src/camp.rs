@@ -541,12 +541,38 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
     let looped = v[V_STATE] == 1 && next == 0 && v[V_LOOP] > 1;
     let _ = rec;
     // run strip
-    if crate::map::has(v) {
-        // the floor map (the sim's words): rooms, the fork, the door, the hidden wall
-        sticker(e, S_FACE_INK, 16.0, 4.0, 608.0, 56.0, -0.4, WHITE, |e| {
-            face(e, S_FACE_INK, 16.0, 4.0, 608.0, 56.0, WHITE);
-            crate::map::draw(e, v, 24.0, 4.0, 592.0, 56.0, 9.5);
+    let act = crate::map::has(v) && !ended;
+    if act {
+        // the act map (Slay the Spire style, the sim's words): rows up to the boss, P1's cursor picks the next fight
+        sticker(e, S_FACE_INK, 16.0, 8.0, 300.0, 272.0, -0.4, WHITE, |e| {
+            face(e, S_FACE_INK, 16.0, 8.0, 300.0, 272.0, WHITE);
+            crate::map::draw(e, v, 40.0, 14.0, 236.0, 262.0, 10.0);
         });
+        let picking = v[V_MAP_PICK] == 1;
+        let mut s = Buf::new();
+        if looped {
+            s.s("Act ").i(v[V_LOOP]).s(" begins.");
+        } else {
+            s.s(if picking { "Choose the next fight" } else { "The road ahead" });
+        }
+        text_edge(e, 340.0, 10.0, d(20), SUNNY, ALIGN_LEFT, 1.8, s.str());
+        if let Some((_, k)) = crate::map::cursor(v) {
+            let line = match k {
+                MN_DUEL => "Duels: one foe at a time.",
+                MN_CROWD => "Crowd: three foes at once.",
+                MN_ELITE => "Elite: strong foes, better rewards.",
+                MN_BOSS => "The boss of the act.",
+                _ => crate::map::kind_word(k),
+            };
+            text_edge(e, 340.0, 38.0, bs(14), WHITE, ALIGN_LEFT, 1.4, line);
+        }
+        if picking {
+            let hint = if v[V_HUMANS] > 1 { "P1 Left / Right picks, A goes. P2 Left / Right flags a wish." } else { "Left / Right picks the lane, A goes." };
+            text_edge(e, 340.0, 58.0, bs(12), PALE, ALIGN_LEFT, 1.2, hint);
+        }
+    }
+    if act {
+    } else if crate::map::has(v) {
     } else {
     let (x, y) = (16.0, 8.0);
     sticker(e, S_FACE_SUNNY, x, y, 608.0, 46.0, -0.4, WHITE, |e| {
@@ -558,11 +584,12 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
         }
     });
     }
-    if v[V_ROAD_N] > 1 && !ended {
+    if v[V_ROAD_N] > 1 && !ended && !act {
         fork(e, t, v, looped);
         return;
     }
-    if ended || looped {
+    if act {
+    } else if ended || looped {
         let won = v[V_STATE] == 2 || looped;
         let (x, y) = (20.0, 70.0);
         sticker(e, S_FACE_WHITE, x, y, 300.0, 200.0, -1.0, WHITE, |e| {
@@ -627,7 +654,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
         for f in 0..sets {
             let set = q * 2 + f;
             let fx = 340.0 + (k % 2) as f32 * 146.0;
-            let fy = 72.0 + (k / 2) as f32 * 90.0;
+            let fy = if act { 84.0 } else { 72.0 } + (k / 2) as f32 * 90.0;
             let (_, a) = enter(t - 6 - k as i32 * 3);
             if a > 0.0 {
                 fighter_sticker(e, fx, fy, ROT[k % 4], &p, set, f == 0, alpha(WHITE, a));
@@ -635,7 +662,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             k += 1;
         }
     }
-    let sy = 72.0 + ((k + 1) / 2) as f32 * 90.0;
+    let sy = if act { 84.0 } else { 72.0 } + ((k + 1) / 2) as f32 * 90.0;
     stocks(e, 342.0, sy, 128.0, p.pool, if p.players == 2 { 5 } else { 4 }, "Team stocks", -1.5);
     let (ks, kn) = party_keys(&p);
     for i in 0..kn {

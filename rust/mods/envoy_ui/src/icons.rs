@@ -277,6 +277,37 @@ pub fn icon_a(e: &mut E, id: i32, x: f32, y: f32, size: f32, a: f32) {
             r(e, -1.0, -4.0, 2.0, 6.0, alpha(CORAL, a));
             r(e, -3.0, -2.0, 6.0, 2.0, alpha(CORAL, a));
         }
+        IT_DODGE_ORB => {
+            // a dodging figure's after-images and the orb leading it
+            dd(e, -6.0, 2.0, 5.0, alpha(WHITE, 0.35 * a));
+            dd(e, -2.5, 1.0, 5.5, alpha(WHITE, 0.6 * a));
+            dd(e, 4.0, 0.0, 8.0, w);
+            dd(e, 4.0, 0.0, 3.6, c);
+            l(e, -8.0, 6.0, 8.0, 6.0, 1.4, w);
+        }
+        IT_NAIR_RING => {
+            ringd(e, x, y, 7.0 * s, 1.0 * s, alpha(WHITE, 0.5 * a), 16);
+            for i in 0..4 {
+                let an = i as f32 / 4.0 * 6.283_185 + 0.4;
+                dd(e, 7.0 * cos(an), 7.0 * sin(an), 4.2, w);
+            }
+            dd(e, 0.0, 0.0, 4.0, k);
+        }
+        IT_DASH_ORB => {
+            l(e, -8.0, -3.0, -1.0, -3.0, 1.4, w);
+            l(e, -9.0, 1.0, 0.0, 1.0, 1.4, w);
+            l(e, -8.0, 5.0, -1.0, 5.0, 1.4, w);
+            dd(e, 4.0, 1.0, 9.0, w);
+            dd(e, 4.0, 1.0, 4.0, c);
+        }
+        IT_SHIELD_ORBS => {
+            dd(e, 0.0, 0.0, 11.0, alpha(WHITE, 0.45 * a));
+            ringd(e, x, y, 5.5 * s, 1.4 * s, w, 16);
+            for i in 0..3 {
+                let an = i as f32 / 3.0 * 6.283_185 - 1.57;
+                dd(e, 9.0 * cos(an), 9.0 * sin(an), 3.6, w);
+            }
+        }
         _ => dd(e, 0.0, 0.0, 6.0, w),
     }
 }

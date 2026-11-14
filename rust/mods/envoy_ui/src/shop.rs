@@ -128,7 +128,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
                 let mut s = Buf::new();
                 s.s("on ").s(envoy_data::items::TRIGGER_TEXT[it.trigger as usize]).s(" / stack: ").s(envoy_data::items::STACK_TEXT[it.stack as usize]);
                 e.text_ex(tx + 250.0, ty + 10.0, bs(11), LILAC, ALIGN_RIGHT, 0.0, s.str());
-                wrap(e, tx + 34.0, ty + 34.0, 216.0, bs(13), 16.0, INK, ALIGN_LEFT, it.line, 4);
+                rich(e, tx + 34.0, ty + 34.0, 216.0, 13, 16.0, INK, false, envoy_data::keywords::card(it.id), 4);
             });
         }
     }
@@ -149,11 +149,6 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, _vw: f32, _vh: f32, sc: f3
         e.text_ex(196.0, 11.0, d(20), INK, ALIGN_LEFT, 0.0, s.str());
         e.text_ex(278.0, 16.0, bs(11), LILAC, ALIGN_RIGHT, 0.0, "one purse");
     });
-    if v[V_TIMER] > 0 {
-        let mut s = Buf::new();
-        s.i((v[V_TIMER] + 59) / 60).s(" s");
-        e.text_ex(620.0, 12.0, d(15), WHITE, ALIGN_RIGHT, 0.0, s.str());
-    }
     let coop = v[V_HUMANS] == 2;
     if coop {
         for p in 0..2 {

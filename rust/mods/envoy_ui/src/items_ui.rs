@@ -293,14 +293,15 @@ pub unsafe fn flash(e: &mut E, v: &[i32; VW]) {
         if copies > 1 {
             s.s("  x").i(copies);
         }
-        let w = tw(s.str(), d(18)).max(tw(it.line, bs(13))) + 70.0;
-        let (x, y) = (320.0 - w * 0.5, 64.0 + p as f32 * 58.0);
+        let card = envoy_data::keywords::card(it.id);
+        let w = (tw(s.str(), d(18)) + 70.0).max(400.0);
+        let (x, y) = (320.0 - w * 0.5, 64.0 + p as f32 * 72.0);
         let (sc, _) = enter(age);
         let _ = sc;
-        sticker(e, S_FACE_WHITE, x, y, w, 50.0, if p == 0 { -1.2 } else { 1.2 }, alpha(WHITE, a), |e| {
+        sticker(e, S_FACE_WHITE, x, y, w, 64.0, if p == 0 { -1.2 } else { 1.2 }, alpha(WHITE, a), |e| {
             crate::icons::icon_a(e, it.id, x + 26.0, y + 25.0, 36.0, a);
             e.text_ex(x + 52.0, y + 5.0, d(18), alpha(INK, a), ALIGN_LEFT, 0.0, s.str());
-            e.text_ex(x + 52.0, y + 28.0, bs(13), alpha(LILAC, a), ALIGN_LEFT, 0.0, it.line);
+            rich(e, x + 52.0, y + 27.0, w - 62.0, 13, 16.0, alpha(INK, a), false, card, 2);
         });
         // in the world: rings of the item's colour round the fighter
         if v[pb(p) + P_HAVE_POS] != 0 && age < 40 {
@@ -323,9 +324,6 @@ pub unsafe fn banners(e: &mut E, v: &[i32; VW]) {
             e.text_ex(320.0, 124.0, d(22), INK, ALIGN_CENTER, 0.0, title);
             e.text_ex(320.0, 154.0, bs(13), INK, ALIGN_CENTER, 0.0, say);
         });
-        let mut s = Buf::new();
-        s.i((v[V_PED_LEFT] + 59) / 60).s(" s");
-        e.text_ex(320.0 + w * 0.5 - 8.0, 182.0, bs(12), WHITE, ALIGN_RIGHT, 0.0, s.str());
     }
     let at = v[V_CAMP_AT];
     let age = v[V_PLAY] - at;
@@ -452,6 +450,7 @@ unsafe fn wall(v: &[i32; VW]) {
     if DOOR_SUM.2 > 0.0 {
         DOOR_AT = (DOOR_SUM.0 / DOOR_SUM.2, DOOR_SUM.1, 1.0);
     }
+    orb_events(v);
     let st = v[V_SECRET];
     if st == 2 && WALL_SEEN == 1 {
         WALL_BROKE = T.max(1);
@@ -570,7 +569,7 @@ pub unsafe fn callouts(e: &mut E, v: &[i32; VW]) {
     let kind = v[V_PED_KIND];
     if v[V_RW] == 0 && matches!(kind, PED_DEVIL | PED_ANGEL | PED_SECRET) {
         let (title, say, fid) = match kind {
-            PED_DEVIL => ("Devil deal", "Walk into an item to take it. It costs stock slots, not coins.", S_FACE_CORAL),
+            PED_DEVIL => ("Devil deal", "Walk into an item to take it: it costs stock slots. D-pad down: leave.", S_FACE_CORAL),
             PED_ANGEL => ("Angel room", "A gift. Walk to the pedestal to take it.", S_FACE_WHITE),
             _ => ("Secret room", "Walk to the pedestal to take the item.", S_FACE_SUNNY),
         };
@@ -628,28 +627,29 @@ pub unsafe fn fork(e: &mut E, v: &[i32; VW]) {
     e.rect(-200.0, 0.0, 1040.0, 480.0, 0x1A10_4A90);
     sticker(e, S_FACE_INK, x, y, w, h, -0.6, WHITE, |e| {
         face(e, S_FACE_INK, x, y, w, h, WHITE);
-        text_edge(e, 320.0, y + 10.0, d(24), SUNNY, ALIGN_CENTER, 1.8, "Shop or Campfire?");
-        crate::map::draw(e, v, x + 10.0, y + 46.0, w - 20.0, 66.0, 10.0);
-        for k in 0..2 {
-            let on = k == cur;
-            let bw = 180.0;
-            let bx = 320.0 + if k == 0 { -bw - 10.0 } else { 10.0 };
-            let by = y + 126.0 - if on { 4.0 } else { 0.0 };
-            if on {
-                face(e, S_FACE_HOVER, bx - 3.0, by - 3.0, bw + 6.0, 76.0, WHITE);
+        text_edge(e, x + 180.0, y + 10.0, d(22), SUNNY, ALIGN_LEFT, 1.8, "Choose the next room");
+        crate::map::draw(e, v, x + 14.0, y + 12.0, 150.0, h - 24.0, 8.0);
+        let cur_kind = crate::map::cursor(v).map_or(0, |c| c.1);
+        let (title, say, fid) = match cur_kind {
+            MN_SHOP => ("Shop", "Spend coins on items and stocks.", S_FACE_LAGOON),
+            MN_CAMPFIRE => ("Campfire", "Rest: stocks back.", S_FACE_CORAL),
+            MN_ITEM => ("Item room", "A free item on a pedestal.", S_FACE_SUNNY),
+            _ => ("", "", S_FACE_WHITE),
+        };
+        if !title.is_empty() {
+            let (bx, by, bw) = (x + 180.0, y + 56.0, 260.0);
+            face(e, S_FACE_HOVER, bx - 3.0, by - 3.0, bw + 6.0, 96.0, WHITE);
+            face(e, fid, bx, by, bw, 90.0, WHITE);
+            match cur_kind {
+                MN_SHOP => spr_c(e, S_COIN, bx + 34.0, by + 45.0, 2.4, WHITE),
+                MN_CAMPFIRE => spr_c(e, S_FLAME + 3, bx + 34.0, by + 43.0, 1.3, WHITE),
+                _ => spr_c(e, S_STAR_ON, bx + 34.0, by + 45.0, 3.0, WHITE),
             }
-            face(e, if k == 0 { S_FACE_LAGOON } else { S_FACE_CORAL }, bx, by, bw, 70.0, alpha(WHITE, if on { 1.0 } else { 0.7 }));
-            if k == 0 {
-                spr_c(e, S_COIN, bx + 30.0, by + 35.0, 2.2, WHITE);
-            } else {
-                spr_c(e, S_FLAME + 3, bx + 30.0, by + 33.0, 1.2, WHITE);
-            }
-            e.text_ex(bx + 58.0, by + 10.0, d(20), WHITE, ALIGN_LEFT, 0.0, if k == 0 { "Shop" } else { "Campfire" });
-            e.text_ex(bx + 58.0, by + 40.0, bs(12), WHITE, ALIGN_LEFT, bw - 64.0, if k == 0 { "Spend coins" } else { "Stocks back" });
+            e.text_ex(bx + 66.0, by + 14.0, d(22), if fid == S_FACE_SUNNY { INK } else { WHITE }, ALIGN_LEFT, 0.0, title);
+            e.text_ex(bx + 66.0, by + 50.0, bs(13), if fid == S_FACE_SUNNY { INK } else { WHITE }, ALIGN_LEFT, bw - 74.0, say);
         }
-        let mut s = crate::Buf::new();
-        s.s("P1: Left / Right, A to go    ").i((v[V_FORK_LEFT] + 59) / 60).s(" s");
-        e.text_ex(320.0, y + h - 26.0, bs(13), PALE, ALIGN_CENTER, 0.0, s.str());
+        let _ = cur;
+        e.text_ex(x + 310.0, y + h - 30.0, bs(13), PALE, ALIGN_CENTER, 0.0, "P1: Left / Right to choose, A to go.");
     });
 }
 
@@ -790,6 +790,45 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
                     fx(FX_LINE, bx, by, wx, wy - 4.0 * tt, 2.0 - tt, c);
                 }
                 fx(FX_LINE, bx, by, bx + side * 12.0, by + 5.0 + flap, 0.8, alpha(0xE060_A0FF, 0.8));
+            }
+        }
+        PJ_ORB => {
+            // an orb: each family its own look; shattered (life word 1): faint shards waiting to come back
+            let fam = bb;
+            let c = col(fam);
+            let broken = v[V_PROJ + i * PJ_W + 5] == 1;
+            if broken {
+                for j in 0..3 {
+                    let ang = j as f32 * 2.094 + t * 0.02;
+                    fx(FX_SPIKES, x + cos(ang) * 2.5, y + sin(ang) * 2.5, 0.3, 1.4, ang, alpha(c, 0.3));
+                }
+            } else {
+                match fam {
+                    IT_DODGE_ORB => {
+                        fx(FX_DISC, x, y, 5.0, 0.0, 0.0, alpha(c, 0.55));
+                        fx(FX_RING, x, y, 3.2, 1.0, 0.0, alpha(WHITE, 0.9));
+                        fx(FX_LINE, x, y, x - 6.0, y, 2.0, alpha(c, 0.4));
+                    }
+                    IT_NAIR_RING => {
+                        fx(FX_DISC, x, y, 3.6, 0.0, 0.0, alpha(c, 0.8));
+                        fx(FX_SPIKES, x, y, 1.0, 4.0, t * 0.3 + a as f32, alpha(0xFFE0_A0FF, 0.9));
+                    }
+                    IT_DASH_ORB => {
+                        fx(FX_DISC, x, y, 4.2, 0.0, 0.0, alpha(c, 0.7));
+                        fx(FX_RING, x, y, 2.8, 1.2, 0.0, alpha(WHITE, 0.8));
+                        fx(FX_LINE, x - 3.0, y + 1.5, x - 9.0, y + 1.5, 0.8, alpha(c, 0.6));
+                        fx(FX_LINE, x - 3.0, y - 1.5, x - 8.0, y - 1.5, 0.8, alpha(c, 0.6));
+                    }
+                    IT_SHIELD_ORBS => {
+                        fx(FX_DISC, x, y, 3.4, 0.0, 0.0, alpha(c, 0.7));
+                        fx(FX_RING, x, y, 3.0, 0.8, 0.0, alpha(0xE8D8_FFFF, 0.95));
+                        fx(FX_SPIKES, x, y, 0.6, 2.4, 0.785, alpha(WHITE, 0.7));
+                    }
+                    _ => {
+                        fx(FX_DISC, x, y, 3.0, 0.0, 0.0, alpha(col(IT_MOON_DROPS), 0.95));
+                        fx(FX_RING, x, y, 3.6, 0.7, 0.0, alpha(0xA0B8_FFFF, 0.7));
+                    }
+                }
             }
         }
         PJ_THORNS => {
@@ -935,5 +974,31 @@ unsafe fn burst2(id: i32, x: f32, y: f32, size: f32, fl: i32, age: i32, k: f32, 
     }
     if fl & PF_HALO != 0 {
         fx(FX_DISC, x, y, size * 0.9 * a, 0.0, 0.0, alpha(HOLY, 0.6 * a));
+    }
+}
+
+/// Orb shatter pops and block flashes (EV_ORB_BREAK / EV_ORB_BLOCK) round the owner, in the family's colour.
+unsafe fn orb_events(v: &[i32; VW]) {
+    let n = v[V_EV_N].max(0) as usize;
+    for i in 0..EV.min(n) {
+        let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
+        let age = v[V_PLAY] - ev[0];
+        if !(0..18).contains(&age) || !(ev[1] == EV_ORB_BREAK || ev[1] == EV_ORB_BLOCK) {
+            continue;
+        }
+        let Some((x, y)) = player_pos(v, ev[2].clamp(0, 1) as usize) else { continue };
+        let (y, k) = (y + 10.0, age as f32 / 18.0);
+        let c = col(ev[3]);
+        if ev[1] == EV_ORB_BREAK {
+            for j in 0..6 {
+                let ang = j as f32 * 1.047 + 0.3;
+                let d = 4.0 + 14.0 * ease(k * 2.0);
+                fx(FX_SPIKES, x + cos(ang) * d, y + sin(ang) * d - 6.0 * k * k, 0.3, 2.0 * (1.0 - k) + 0.4, ang, alpha(c, 1.0 - k));
+            }
+            fx(FX_RING, x, y, 4.0 + 10.0 * ease(k * 2.0), 1.4, 0.0, alpha(WHITE, 1.0 - k));
+        } else {
+            fx(FX_DISC, x, y, 12.0 * (1.0 - k) + 2.0, 0.0, 0.0, alpha(WHITE, 0.7 * (1.0 - k)));
+            fx(FX_RING, x, y, 8.0 + 6.0 * k, 2.4, 0.0, alpha(c, 1.0 - k));
+        }
     }
 }

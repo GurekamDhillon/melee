@@ -8,6 +8,7 @@ pub use codes::*;
 pub mod view;
 pub mod heat;
 pub mod items;
+pub mod keywords;
 
 /// One drive (one rule, one charge source, one effect, one number) or one keystone (one rule, one price).
 #[derive(Clone, Copy)]

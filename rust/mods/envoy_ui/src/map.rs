@@ -18,13 +18,14 @@ fn node(v: &[i32; VW], i: usize) -> (i32, i32, i32, i32, i32) {
     (v[b + MP_KIND], pos & 0xFF, (pos >> 8) & 0xFF, v[b + MP_STATE], v[b + MP_LINKS])
 }
 
-/// The centre of node `i` in the box (x, y, w, h).
+/// The centre of node `i` in the box (x, y, w, h): lanes across (a 4th column for the secret room), rows up from
+/// the bottom (row 0 low, the boss and the door at the top), as in Slay the Spire.
 fn at(v: &[i32; VW], i: usize, x: f32, y: f32, w: f32, h: f32, cols: i32) -> (f32, f32) {
-    let (_, c, row, _, _) = node(v, i);
-    let step = w / cols.max(1) as f32;
-    let cx = x + step * (c as f32 + 0.5);
-    let dy = h * 0.32;
-    let cy = y + h * 0.5 + if row == 255 { -dy } else if row == 1 { dy } else { 0.0 };
+    let (_, lane, row, _, _) = node(v, i);
+    let lane = lane & 0xFF;
+    let rows = v[V_MAP_ROWS].clamp(1, 16);
+    let cx = x + w * (lane as f32 + 0.5) / cols.max(1) as f32;
+    let cy = y + h - h * (row as f32 + 0.5) / rows as f32;
     (cx, cy)
 }
 
@@ -33,35 +34,42 @@ pub fn has(v: &[i32; VW]) -> bool {
     v[V_MAP_N] > 1
 }
 
-/// The floor map in the box (x, y, w, h), node radius `r`. Band space; draws nothing without a map.
+/// The node P1's cursor is on (MS_CURSOR), if any.
+pub fn cursor(v: &[i32; VW]) -> Option<(usize, i32)> {
+    let n = (v[V_MAP_N].max(0) as usize).min(MAP_N);
+    (0..n).find(|&i| node(v, i).3 & MS_CURSOR != 0).map(|i| (i, node(v, i).0))
+}
+
+/// The act map in the box (x, y, w, h), node radius `r`. Band space; draws nothing without a map.
 pub unsafe fn draw(e: &mut E, v: &[i32; VW], x: f32, y: f32, w: f32, h: f32, r: f32) {
     if !has(v) {
         return;
     }
     T += 1;
     let n = (v[V_MAP_N] as usize).min(MAP_N);
-    let mut cols = 1;
-    for i in 0..n {
-        cols = cols.max(node(v, i).1 + 1);
-    }
+    let lanes = v[V_MAP_LANES].clamp(1, 6);
+    let secret = (0..n).any(|i| node(v, i).0 == MN_SECRET);
+    let cols = lanes + if secret { 1 } else { 0 };
     // the roads first
     for i in 0..n {
-        let (_, _, _, st, links) = node(v, i);
+        let (ki, _, _, st, links) = node(v, i);
+        if ki == 0 {
+            continue;
+        }
         let (ax, ay) = at(v, i, x, y, w, h, cols);
         for j in 0..n {
-            if links & (1 << j) == 0 {
+            if links & (1 << j) == 0 || node(v, j).0 == 0 {
                 continue;
             }
-            let (_, _, _, sj, _) = node(v, j);
+            let (kj, _, _, sj, _) = node(v, j);
             let (bx, by) = at(v, j, x, y, w, h, cols);
-            let secret = st & MS_WALL != 0 && node(v, j).0 == MN_SECRET;
-            let walked = st & (MS_DONE | MS_HERE) != 0 && sj & (MS_DONE | MS_HERE | MS_CHOSEN) != 0;
-            let skipped = sj & MS_SKIPPED != 0;
-            let col = if walked { SUNNY } else if skipped { alpha(PALE, 0.35) } else { alpha(WHITE, 0.85) };
+            let hidden = kj == MN_SECRET || sj & MS_UNKNOWN != 0;
+            let walked = st & (MS_DONE | MS_HERE | MS_CHOSEN) != 0 && sj & (MS_DONE | MS_HERE | MS_CHOSEN) != 0;
+            let plan = (st & (MS_PLAN | MS_HERE | MS_CURSOR | MS_DONE) != 0) && sj & (MS_PLAN | MS_CURSOR) != 0;
+            let dead = sj & MS_SKIPPED != 0 || st & MS_SKIPPED != 0;
             let (dx, dy) = (bx - ax, by - ay);
             let len = crate::icons::sqrt(dx * dx + dy * dy).max(1.0);
-            if secret || sj & MS_UNKNOWN != 0 {
-                // dashed: a hidden way
+            if hidden {
                 let k = (len / (r * 0.8)) as i32;
                 for s in 0..k {
                     if s % 2 == 0 {
@@ -69,16 +77,30 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], x: f32, y: f32, w: f32, h: f32, r: 
                         ln(e, ax + dx * t0, ay + dy * t0, ax + dx * t1, ay + dy * t1, r * 0.22, alpha(PALE, 0.8));
                     }
                 }
+            } else if walked {
+                ln(e, ax, ay, bx, by, r * 0.55, INK);
+                ln(e, ax, ay, bx, by, r * 0.32, SUNNY);
+            } else if plan {
+                ln(e, ax, ay, bx, by, r * 0.45, INK);
+                ln(e, ax, ay, bx, by, r * 0.24, alpha(SUNNY, 0.75 + 0.25 * sin(T as f32 * 0.15)));
             } else {
-                ln(e, ax, ay, bx, by, r * 0.5, INK);
-                ln(e, ax, ay, bx, by, r * 0.28, col);
+                ln(e, ax, ay, bx, by, r * 0.2, alpha(if dead { PALE } else { WHITE }, if dead { 0.25 } else { 0.6 }));
             }
         }
     }
     for i in 0..n {
         let (kind, _, _, st, _) = node(v, i);
+        if kind == 0 {
+            continue;
+        }
         let (cx, cy) = at(v, i, x, y, w, h, cols);
         node_icon(e, v, kind, st, cx, cy, r);
+        if st & MS_WISH != 0 {
+            // P2's wish: a small lagoon flag
+            let (fx, fy) = (cx + r * 0.6, cy - r * 1.9);
+            e.rect(fx, fy, 1.6, r * 1.3, INK);
+            face(e, S_FACE_LAGOON, fx + 1.5, fy, r * 1.2, r * 0.75, WHITE);
+        }
     }
 }
 

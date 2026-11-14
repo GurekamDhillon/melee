@@ -20,6 +20,12 @@ out=${OUT:-$repo/build/lab-check}; size=${SIZE:-1280x720}; only=${ONLY:-flow per
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "lab_check: GW_ISO_VANILLA is not set"; exit 2; }
 mkdir -p "$out"
 python "$here/lab_pad.py" > "$out/lab_pad.txt"
+# ACE=1 (GW_ISO_VANILLA pointed at an m-ex disc such as ACE, which boots straight to the title): drop the vanilla
+# boot's second "200 idle, Start" (the script's 4th and 5th rows; its 3rd is the first Start's release)
+if [ "${ACE:-0}" = 1 ]; then
+  awk 'BEGIN{n=0} /^#/||NF==0{print;next} {n++; if(n==4||n==5) next; print}' "$out/lab_pad.txt" > "$out/lab_pad_ace.txt"
+  mv "$out/lab_pad_ace.txt" "$out/lab_pad.txt"
+fi
 python "$here/lab_pad.py" --marks > "$out/marks.txt"
 frames=$(head -1 "$out/lab_pad.txt" | grep -oE "[0-9]+ frames" | grep -oE "[0-9]+")
 shots=$(awk '{d = ($1 ~ /^fx_/) ? 44 : 8; printf "%s%d", (NR>1?",":""), $2+d}' "$out/marks.txt")

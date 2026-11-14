@@ -110,7 +110,77 @@ pub fn load() -> u32 {
     }
     one(S_BG_CAMP, "bg_camp");
     one(S_BG_ROAD, "bg_road");
+    n + load_items()
+}
+
+// ---- the item sprites (envoy-models1.md): em_<item.key>.png per item, em_frame_<pool>.png behind it, the hearts
+static mut H_ITEM: [u32; envoy_data::items::ITEM_IDS] = [0; envoy_data::items::ITEM_IDS];
+/// devil, angel, secret, boss, shop, item (the aura's order, design 11.11)
+static mut H_FRAME: [u32; 6] = [0; 6];
+/// heart_container, heart_full
+pub static mut H_HEART: [u32; 2] = [0; 2];
+
+fn tex(key: &str) -> u32 {
+    let mut name = [0u8; 48];
+    let mut n = 0;
+    for part in [b"em_".as_slice(), key.as_bytes(), b".png".as_slice()] {
+        if n + part.len() > name.len() {
+            return 0;
+        }
+        name[n..n + part.len()].copy_from_slice(part);
+        n += part.len();
+    }
+    unsafe { gd_ui_tex_load(name.as_ptr(), n as u32) }
+}
+
+fn load_items() -> u32 {
+    let mut n = 0;
+    unsafe {
+        for it in envoy_data::items::ITEMS.iter() {
+            let h = tex(it.key);
+            H_ITEM[it.id as usize] = h;
+            n += (h != 0) as u32;
+        }
+        for (i, k) in ["frame_devil", "frame_angel", "frame_secret", "frame_boss", "frame_shop", "frame_item"].iter().enumerate() {
+            H_FRAME[i] = tex(k);
+        }
+        H_HEART = [tex("heart_container"), tex("heart_full")];
+    }
     n
+}
+
+/// The frame an item's pool takes (devil, angel, secret, then boss, shop, item).
+fn frame_of(it: &envoy_data::items::Item) -> u32 {
+    use envoy_data::items::*;
+    let i = if it.pools & PL_DEVIL != 0 { 0 } else if it.pools & PL_ANGEL != 0 { 1 } else if it.pools & PL_SECRET != 0 { 2 } else if it.pools & PL_BOSS != 0 { 3 } else if it.pools & PL_SHOP != 0 { 4 } else { 5 };
+    unsafe { H_FRAME[i] }
+}
+
+/// An item's icon centred on (cx, cy), `size` px: its pool frame behind at 4/3 the size, then its sprite; the
+/// coloured disc (ink edge) when the item has no sprite yet.
+pub fn item_icon(e: &mut E, id: i32, cx: f32, cy: f32, size: f32, a: f32) {
+    let Some(it) = envoy_data::items::item(id) else { return };
+    let f = frame_of(it);
+    if f != 0 {
+        let w = size * 4.0 / 3.0;
+        e.tex(f, cx - w * 0.5, cy - w * 0.5, w, w, [0.0, 0.0, 1.0, 1.0], alpha(WHITE, a));
+    }
+    let h = unsafe { H_ITEM.get(id as usize).copied().unwrap_or(0) };
+    if h != 0 {
+        e.tex(h, cx - size * 0.5, cy - size * 0.5, size, size, [0.0, 0.0, 1.0, 1.0], alpha(WHITE, a));
+    } else {
+        spr_c(e, S_DISC, cx, cy, (size * 0.75 + 4.0) / 32.0, alpha(INK, a));
+        spr_c(e, S_DISC, cx, cy, size * 0.75 / 32.0, alpha(it.rgba, a));
+    }
+}
+
+/// A heart sprite (0 container, 1 full) centred, `size` px; false when not loaded (draw the old look).
+pub fn heart(e: &mut E, full: bool, cx: f32, cy: f32, size: f32, rgba: u32) -> bool {
+    let h = unsafe { H_HEART[full as usize] };
+    if h != 0 {
+        e.tex(h, cx - size * 0.5, cy - size * 0.5, size, size, [0.0, 0.0, 1.0, 1.0], rgba);
+    }
+    h != 0
 }
 
 pub fn ready() -> bool {

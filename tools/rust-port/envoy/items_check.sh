@@ -35,8 +35,11 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   17. map: the act map: a fight node taken, the room choice opened and taken, the next fight on the path;
 #   18. campfire: the room choice steered to a campfire: each player's stocks refilled to their own limit;
 #   19. orbs: Moon Drops and the four stance orbs: orb hits, and an orb shattered by a foe's attack.
+#   Pickup (11.11):
+#   20. pickup: knob `pedfloor` puts an item-room pedestal on the floor; pickup_pad.txt walks player 1 past it with no
+#       button (in range, then out of range, nothing taken), then back with A presses: taken by the button.
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd
-#   shop devil angel secret whiff triggers coopstock map campfire orbs";
+#   shop devil angel secret whiff triggers coopstock map campfire orbs pickup";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -45,7 +48,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs pickup}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -235,6 +238,20 @@ for d in $depths; do
     blocks=$(grep -ac "envoy: orb blocked a projectile" "$(L orbs "$d")")
     check 19 orbs "$d" "$line" "$miss"
     echo "     orbs d$d: stance orbs that hit: ${stance:-none}; projectiles blocked: $blocks"
+  fi
+  if on pickup; then
+    line=$(run pickup "$d" "pedfloor,noshop" MELEE_PAD_SCRIPT="$here/pickup_pad.txt")
+    f="$(L pickup "$d")"; miss=""
+    seen pickup "$d" "envoy: item room open" || miss="$miss (no pedestal)"
+    # first in range, then out again with the item still there (walking past takes nothing), then the A press takes it
+    a=$(grep -an "envoy: pickup range entered" "$f" | head -1 | cut -d: -f1)
+    b=$(grep -an "envoy: pickup range left, item untaken" "$f" | head -1 | cut -d: -f1)
+    c=$(grep -an "envoy: pickup by button" "$f" | head -1 | cut -d: -f1)
+    [ -n "$a" ] || miss="$miss (never in range)"
+    [ -n "$b" ] && [ -n "$a" ] && [ "$b" -gt "$a" ] || miss="$miss (walking past never left the item behind)"
+    [ -n "$c" ] && [ -n "$b" ] && [ "$c" -gt "$b" ] || miss="$miss (no take by the button after the walk past)"
+    seen pickup "$d" "envoy: item taken" || miss="$miss (no item taken)"
+    check 20 pickup "$d" "$line" "$miss"
   fi
 done
 rm -rf "$tmods"

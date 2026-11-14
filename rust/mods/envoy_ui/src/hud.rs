@@ -383,7 +383,11 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     for i in 0..n {
         let cx = px + i as f32 * 24.0;
         let cy = 455.0;
-        if i < pool {
+        if v[V_ITEMS_ON] == 1 && unsafe { H_HEART[0] != 0 } {
+            // items: heart containers (envoy-models1.md), full for a stock held; the last one pulses
+            let pulse = if i < pool && pool == 1 { 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0) } else { 1.0 };
+            heart(e, i < pool, cx, cy, 22.0 * pulse, WHITE);
+        } else if i < pool {
             if pool == 1 {
                 let pulse = 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0);
                 spr_rot(e, S_BURST_SUNNY, cx, cy, 0.6 * pulse, 8.0, WHITE);

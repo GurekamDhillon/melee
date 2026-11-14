@@ -13,12 +13,6 @@ extern "C" {
 }
 
 pub const POST_VIGNETTE: u32 = 1;
-pub const POST_EMBER: u32 = 2;
-pub const POST_HEAT_HAZE: u32 = 3;
-pub const POST_FLASH: u32 = 4;
-pub const POST_RADIAL_WAVE: u32 = 5;
-pub const POST_SHOCKWAVE: u32 = 7;
-pub const POST_WORLD: u32 = 0x100;
 
 pub const MAT_BODY: i32 = 0;
 pub const MAT_GLASS: i32 = 1;
@@ -29,18 +23,15 @@ pub const MAT_TRAIL: i32 = 0x80;
 /// The ink edge (`melee_gx::fx::MAT_OUTLINE`): drive bodies only, never tier rings, the ascended overlay or glass.
 pub const MAT_OUTLINE: i32 = 0x40;
 
-/// Every screen post through the Envoy settings (pause overlay, Options): the effect intensity scales the strength;
-/// with screen shake off the distortions (shockwave, radial wave) are skipped.
+/// The one screen post left (the edge vignette), through the Envoy settings (pause overlay, Options): the effect
+/// intensity scales its strength.
 unsafe fn post(effect: u32, strength: f32, x: f32, y: f32, rgba: u32) -> i32 {
     let k = crate::pause::fx_scale();
-    let kind = effect & 0xFF;
-    if k <= 0.0 || (!crate::pause::shake_on() && (kind == POST_SHOCKWAVE || kind == POST_RADIAL_WAVE)) {
+    if k <= 0.0 {
         return 0;
     }
     gd_fx_post(effect, strength * k, x, y, rgba)
 }
-
-const HEAT_RGBA: [u32; 4] = [0, 0xFFBE_2EFF, 0xFF8A_1FFF, 0xFF4A_1CFF];
 
 /// A drive model with a material (see `gd_ui_world_model_ex`).
 pub fn model(m: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, alpha: f32, mat: i32, p: [f32; 4], rgba: u32) {
@@ -52,82 +43,67 @@ pub fn heat_state(v: &[i32; VW], p: usize) -> usize {
     hud::heat_of(v, p).map_or(0, |h| h.state)
 }
 
-/// The Heat screen treatment for the hottest player: nothing at Cold, a warm vignette at Warm, an ember tint at Hot,
-/// edge heat-haze with embers at Blazing. Held effects: posted every present.
-pub fn heat_screen(v: &[i32; VW]) {
-    let humans = v[V_HUMANS].clamp(1, 2) as usize;
-    let st = (0..humans).map(|p| heat_state(v, p)).max().unwrap_or(0);
-    let c = HEAT_RGBA[st];
-    unsafe {
-        match st {
-            1 => { post(POST_VIGNETTE, 0.5, 0.0, 0.0, c); }
-            2 => {
-                post(POST_VIGNETTE, 0.7, 0.0, 0.0, c);
-                post(POST_EMBER, 0.6, 0.0, 0.0, c);
-            }
-            3 => {
-                post(POST_EMBER, 0.8, 0.0, 0.0, c);
-                post(POST_HEAT_HAZE, 1.0, 0.0, 0.0, c);
-            }
-            _ => {}
-        }
-    }
-}
+/// Heat has no screen treatment any more (the owner, 2026-11-13: the full-screen heat effect goes with the flash).
+/// The Heat meter left play with the items, so nothing stands in for it; a fighter-local look is `vfx::AURA`.
+pub fn heat_screen(_v: &[i32; VW]) {}
 
-static mut SEEN: [i32; 16] = [i32::MIN; 16];
-static mut SEEN_N: usize = 0;
-
-/// One-shots from the event ring, each once (a rollback that replays an event does not fire it twice): a cash-out
-/// rings out from the player with a short flash and colour split; a boss break sends a shockwave from the boss.
+/// The moments from the event ring, drawn for as long as each lasts straight from its age (no state: a rollback
+/// that replays an event draws the same frames). All of it happens where the fighter is; nothing covers the
+/// screen. A combo break: a cracking circle under the player, a white shockwave that bends the air, lightning
+/// thrown outward, and one soft pulse of the player's colour at the screen's edge. A cash-out: a gold ring and a
+/// shower of gold. A boss break: a coral shockwave and sparks from the boss.
 pub fn moments(v: &[i32; VW]) {
+    use crate::vfx;
     let n = v[V_EV_N].max(0) as usize;
     let now = v[V_PLAY];
-    // a combo break: a white edge flash held for its first 12 frames (a held effect, posted every present)
     for i in 0..EV.min(n) {
         let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
         let age = now - ev[0];
-        if ev[1] == EV_COMBOBREAK && (0..12).contains(&age) {
-            unsafe { gd_fx_post(POST_VIGNETTE, 1.0 - age as f32 / 12.0, 0.0, 0.0, 0xFFFF_FFFF) };
-        }
-    }
-    for i in 0..EV.min(n) {
-        let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
-        if !(0..6).contains(&(now - ev[0])) || !(ev[1] == EV_CASHOUT || ev[1] == EV_BREAK || ev[1] == EV_COMBOBREAK) {
+        if !(0..48).contains(&age) || !(ev[1] == EV_CASHOUT || ev[1] == EV_BREAK || ev[1] == EV_COMBOBREAK) {
             continue;
         }
-        let key = ev[0].wrapping_mul(64) ^ (ev[1] << 3) ^ ev[2];
-        unsafe {
-            let seen = &mut *core::ptr::addr_of_mut!(SEEN);
-            if seen.contains(&key) {
-                continue;
-            }
-            seen[SEEN_N % 16] = key;
-            SEEN_N += 1;
-        }
-        let (x, y, world) = if ev[1] == EV_CASHOUT || ev[1] == EV_COMBOBREAK {
+        let Some((x, y)) = (if ev[1] == EV_CASHOUT || ev[1] == EV_COMBOBREAK {
             let b = V_P0 + ev[2].clamp(0, 1) as usize * V_PW;
-            if v[b + P_HAVE_POS] != 0 { (f32::from_bits(v[b + P_X] as u32), f32::from_bits(v[b + P_Y] as u32) + 10.0, true) } else { (320.0, 240.0, false) }
+            if v[b + P_HAVE_POS] != 0 { Some((f32::from_bits(v[b + P_X] as u32), f32::from_bits(v[b + P_Y] as u32))) } else { None }
         } else {
             let b = V_S0 + ev[2].clamp(0, 3) as usize * V_SW;
-            if v[b + S_ALIVE] != 0 { (f32::from_bits(v[b + S_X] as u32), f32::from_bits(v[b + S_Y] as u32) + 10.0, true) } else { (320.0, 240.0, false) }
+            if v[b + S_ALIVE] != 0 { Some((f32::from_bits(v[b + S_X] as u32), f32::from_bits(v[b + S_Y] as u32))) } else { None }
+        }) else {
+            continue;
         };
-        let w = if world { POST_WORLD } else { 0 };
-        unsafe {
-            if ev[1] == EV_COMBOBREAK {
-                // the combo breaker: a big white shockwave ring from the player (strength 2.6: the host's large
-                // ring), a white wave, a full white flash, the Brawl sound as a layer (the Melee disc's
-                // shield-break sound plays from the sim's host call)
-                post(POST_SHOCKWAVE | w, 2.6, x, y, 0xFFFF_FFFF);
-                post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFFF_FFFF);
-                post(POST_FLASH, 1.0, 0.0, 0.0, 0xFFFF_FFFF);
+        let af = age as f32;
+        let k = af / 48.0;
+        let sd = (ev[0] % 83) as f32;
+        if ev[1] == EV_COMBOBREAK {
+            let pc = crate::PLAYER_COL[ev[2].clamp(0, 1) as usize];
+            if age == 0 {
                 crate::sfx("combobreak");
-            } else if ev[1] == EV_CASHOUT {
-                post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFD8_4AFF);
-                post(POST_FLASH, 0.8, 0.0, 0.0, 0xFFF4_D0FF);
-            } else {
-                post(POST_SHOCKWAVE | w, 1.0, x, y, 0xFF4D_6DFF);
-                post(POST_FLASH, 1.0, 0.0, 0.0, 0xFFFF_FFFF);
             }
+            // the circle draws itself in at once, then cracks open and dies
+            let fade = 1.0 - ((k - 0.6) / 0.4).clamp(0.0, 1.0);
+            vfx::ground_circle(x, y + 0.8, 30.0 + 6.0 * k, (k * 6.0).min(1.0), ((k - 0.12) * 1.6).clamp(0.0, 1.0), 1.0, af, crate::kit::alpha(pc, fade), sd);
+            // two rings: the white one bends the air, the player's follows it
+            vfx::fx(vfx::SHOCK, x, y + 10.0, 104.0, 104.0).cols(0xFFFF_FFB0, pc).p((k * 2.2).min(1.0), 0.03, 1.0, 2.0).age(af).seed(sd).bend().emit();
+            vfx::fx(vfx::SHOCK, x, y + 10.0, 76.0, 76.0).cols(pc, pc).p(((k - 0.08) * 2.4).clamp(0.0, 1.0), 0.025, 0.0, 0.0).age(af).seed(sd + 1.0).emit();
+            for j in 0..5 {
+                let ang = j as f32 * 1.2566 + sd;
+                let (dx, dy) = (crate::kit::cos(ang), crate::kit::sin(ang));
+                vfx::bolt(x + dx * 5.0, y + 10.0 + dy * 5.0, x + dx * 36.0, y + 10.0 + dy * 28.0, 12.0, af, 14.0, 0xFFFF_FFFF, sd + j as f32 * 5.0);
+            }
+            vfx::fx(vfx::SPARKS, x, y + 10.0, 84.0, 84.0).cols(0xFFFF_FFFF, pc).p((k * 1.6).min(1.0), 34.0, 0.5, 0.0).seed(sd).emit();
+            vfx::pop(x, y + 10.0, 11.0, af, 5.0, 0xFFFF_FFC0);
+            if age < 14 {
+                // the one thing at the screen's edge: a soft pulse in the player's colour, scaled by the setting
+                unsafe { post(POST_VIGNETTE, 0.55 * (1.0 - af / 14.0), 0.0, 0.0, pc) };
+            }
+        } else if ev[1] == EV_CASHOUT {
+            vfx::burst_ring(x, y + 10.0, 34.0, (k * 1.8).min(1.0), 0xFFD8_4AFF, 0.0, af);
+            vfx::fx(vfx::SPARKS, x, y + 12.0, 70.0, 70.0).rot(1.5708).cols(0xFFF4_D0FF, 0xFFD8_4AFF).p((k * 1.4).min(1.0), 26.0, 1.0, 0.6).seed(sd).emit();
+            vfx::fx(vfx::STAR, x, y + 12.0, 30.0 * (1.0 - k) + 4.0, 30.0 * (1.0 - k) + 4.0).cols(0xFFF4_D0FF, 0xFFD8_4AFF).p(1.0, 2.0, 0.7, 0.0).age(af).a(1.0 - k).emit();
+        } else {
+            vfx::fx(vfx::SHOCK, x, y + 10.0, 96.0, 96.0).cols(0xFF4D_6DE0, 0xC020_40FF).p((k * 1.8).min(1.0), 0.035, 0.5, 2.0).age(af).seed(sd).bend().emit();
+            vfx::fx(vfx::SPARKS, x, y + 10.0, 100.0, 100.0).cols(0xFFFF_FFFF, 0xFF4D_6DFF).p((k * 1.5).min(1.0), 32.0, 0.8, 0.0).seed(sd).emit();
+            vfx::pop(x, y + 10.0, 11.0, af, 5.0, 0xFFD0_D8C0);
         }
     }
 }
@@ -184,18 +160,11 @@ pub fn drop_ghosts(t: u32, seen: [u32; 2]) {
     }
 }
 
-/// The live stage transition's hand-off (lib.rs `stage_rift`): a soft flash and a ring in the destination's colour
-/// from the middle of the screen. Presentation only.
-pub unsafe fn handoff(vw: f32, vh: f32, rgba: u32) {
-    let _ = (vw, vh);
-    gd_fx_post(POST_FLASH, 0.35, 0.5, 0.5, 0xFFFF_FFFF);
-    gd_fx_post(POST_RADIAL_WAVE, 0.8, 0.5, 0.5, rgba);
-}
-
-/// Big Bang's screen shake: a shockwave post for a few frames from the newest V_SHAKE frame (the shake setting obeyed).
+/// Big Bang's screen shake: a screen-space shockwave for a few frames from the newest V_SHAKE frame.
 pub fn big_shake(v: &[i32; VW]) {
     let age = v[V_PLAY] - v[V_SHAKE];
     if v[V_SHAKE] > 0 && (0..8).contains(&age) {
-        unsafe { post(POST_SHOCKWAVE, 0.8 * (1.0 - age as f32 / 8.0), 320.0, 240.0, 0xFFA0_40FF) };
+        let k = 1.0 - age as f32 / 8.0;
+        crate::vfx::fx(crate::vfx::SHOCK, 320.0, 240.0, 640.0 * (1.2 - k), 640.0 * (1.2 - k)).cols(0xFFA0_40FF, 0xFFE0_A0FF).a(0.8 * k).age(age as f32).screen().bend().emit();
     }
 }

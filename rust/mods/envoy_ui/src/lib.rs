@@ -31,6 +31,7 @@ mod pause;
 mod icons;
 mod map;
 mod help;
+mod vfx;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -60,7 +61,6 @@ extern "C" {
     fn gd_ui_petey(out: *mut i32, n: u32) -> i32;
     fn gd_ui_fight_hud(out: *mut i32, n: u32) -> i32;
     fn gd_ui_world_model(model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32, alpha: f32) -> i32;
-    fn gd_ui_world_fx(kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, c: f32, rgba: u32) -> i32;
     fn gd_ui_model_tex(model: i32) -> u32;
     fn gd_ui_brawl_sfx(s: *const u8, len: u32) -> i32;
 }
@@ -743,6 +743,8 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             between(e, &v, vw, vh);
         }
         e.submit();
+        // every effect quad of this present, in one call
+        vfx::flush();
     }
 }
 
@@ -1061,8 +1063,23 @@ unsafe fn model(m: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32,
 static mut DROP_LAST: [[(f32, f32); DROPS]; 2] = [[(0.0, 0.0); DROPS]; 2];
 static mut DROP_TRAIL: [[[(f32, f32); 8]; DROPS]; 2] = [[[(0.0, 0.0); 8]; DROPS]; 2];
 
+/// The older shape calls (a ring, a disc, spikes, a bolt, a beam, a line), as shader quads (vfx.rs): nothing is
+/// drawn as flat coloured polygons any more. The numbers keep their old meaning.
 unsafe fn fx(kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, c: f32, rgba: u32) {
-    gd_ui_world_fx(kind, x, y, z, a, b, c, rgba);
+    let zz = if z == 0.0 { vfx::FRONT } else { z };
+    let t = T as f32;
+    match kind {
+        FX_RING => {
+            let half = (a + b) * 1.3;
+            vfx::fx(vfx::RING, x, y, half * 2.0, half * 2.0).cols(rgba, rgba).p(a / half, (b * 0.5 / half).max(0.02), 0.0, 0.0).age(t).z(zz).emit()
+        }
+        FX_DISC => vfx::fx(vfx::GLOW, x, y, a * 2.4, a * 2.4).cols(rgba, rgba).p(3.0, 0.6, 0.0, 0.0).z(zz).emit(),
+        FX_SPIKES => vfx::fx(vfx::STAR, x, y, b * 2.2, b * 2.2).cols(vfx::pale(rgba, 0.4), rgba).p(1.0, 0.0, 0.7, 0.0).seed(c).z(zz).emit(),
+        FX_BOLT => vfx::fx(vfx::BOLT, x, y, 0.0, 0.0).line(a, b, (c * 5.0).max(8.0)).cols(vfx::pale(rgba, 0.3), rgba).p(1.0, 1.0, 0.0, 1.0).age(t).seed(x + y).z(zz).emit(),
+        FX_BEAM => vfx::fx(vfx::BEAM, x, y + a * 0.5, b * 2.4, a).cols(rgba, rgba).p(0.4, 0.6, 0.0, 0.0).age(t).seed(x).back().emit(),
+        FX_LINE => vfx::fx(vfx::TRAIL, a, b, 0.0, 0.0).line(x, y, c * 3.0).cols(vfx::pale(rgba, 0.3), rgba).age(t).seed(x).z(zz).emit(),
+        _ => {}
+    }
 }
 
 /// Where orbiter `k` of `n` sits now around (cx, cy), on a ring of radius `r` (each player its own; Twin Soul's
@@ -1213,13 +1230,19 @@ unsafe fn world(v: &[i32; VW]) {
         }
         let st = v[b + S_BURN];
         if st > 0 {
-            fx(FX_SPIKES, qx, qy + 8.0, 0.0, 3.0, 6.0 + st as f32 * 2.5 + 1.5 * sin(T as f32 * 0.7), T as f32 * 0.1, alpha(0xFF7A_20FF, 0.55));
+            // Burning: fire licking up round the foe (hollow, so the fighter shows), embers off the top
+            let k = (0.45 + st as f32 * 0.18).min(1.0);
+            vfx::fx(vfx::AURA, qx, qy + 9.0, 15.0 + st as f32 * 1.5, 22.0 + st as f32 * 2.0).cols(0xFFA0_30FF, 0xE040_10FF).p(k, 0.0, 0.0, 0.0).age(T as f32).seed(s as f32).emit();
+            vfx::fx(vfx::EMBERS, qx, qy + 18.0, 12.0, 16.0).cols(0xFFB0_40FF, 0xFF7A_20FF).p(4.0, 1.3, 0.0, 0.0).age(T as f32).seed(s as f32).a(k).emit();
         }
         if v[b + S_CHILL] > 0 {
-            fx(FX_RING, qx, qy + 8.0, 0.0, 9.5, 1.2, 0.0, alpha(0x8CE6_FFFF, 0.7));
+            // Chilled: frost shards at the feet inside a ring of cold light
+            vfx::fx(vfx::ICE, qx, qy + 4.0, 14.0, 8.0).cols(0xD8FF_FFFF, 0x8CE6_FFFF).p(1.0, 0.0, 0.0, 0.0).age(T as f32).seed(s as f32 + 2.0).a(0.85).back().emit();
+            vfx::fx(vfx::RING, qx, qy + 0.8, 22.0, 6.5).cols(0x8CE6_FFFF, 0x8CE6_FFFF).p(0.8, 0.05, 10.0, -0.5).age(T as f32).a(0.7).back().emit();
         }
         if v[b + S_MARK] > 0 {
-            fx(FX_RING, qx, qy + 16.0, 0.0, 3.0 + 0.4 * sin(T as f32 * 0.25), 1.0, 0.0, alpha(0xC864_FFFF, 0.8));
+            // Marked: a small sigil turning over the head
+            vfx::fx(vfx::CIRCLE, qx, qy + 19.0, 9.0, 9.0).cols(0xC864_FFFF, 0x7030_C0FF).p(1.0, 0.0, 1.0, 1.2).age(T as f32).seed(s as f32).emit();
         }
     }
     // Assist Strike: a pop outlined in the player's colour as the partner jumps in and as it leaves
@@ -1229,7 +1252,8 @@ unsafe fn world(v: &[i32; VW]) {
             if (0..8).contains(&a) {
                 if let Some((x, y)) = owner_pos(v, (p * 2) as i32) {
                     let k = a as f32 / 8.0;
-                    fx(FX_RING, x, y + 8.0, 0.0, 8.0 + 12.0 * k, 2.4, 0.0, alpha(PLAYER_COL[p], 1.0 - k));
+                    vfx::burst_ring(x, y + 8.0, 22.0, k, PLAYER_COL[p], 0.0, a as f32);
+                    vfx::fx(vfx::SLASH, x, y + 8.0, 34.0, 34.0).rot(if kind == EV_ASSIST { 0.6 } else { 3.7 }).cols(WHITE, PLAYER_COL[p]).p(k, 0.5, 1.0, 0.0).age(a as f32).emit();
                 }
             }
         }
@@ -1238,8 +1262,8 @@ unsafe fn world(v: &[i32; VW]) {
     for p in 0..humans {
         if let Some(k) = hud::tag_pop(v, p) {
             if let Some((x, y)) = owner_pos(v, (p * 2) as i32) {
-                fx(FX_RING, x, y + 8.0, 0.0, 6.0 + 10.0 * k, 2.0, 0.0, alpha(0xFFD8_4AFF, 1.0 - k));
-                fx(FX_DISC, x, y + 8.0, 0.0, 9.0 * (1.0 - k), 0.0, 0.0, alpha(0xFFFF_FFFF, 0.6 * (1.0 - k)));
+                vfx::burst_ring(x, y + 8.0, 17.0, k, 0xFFD8_4AFF, 0.0, k * 6.0);
+                vfx::fx(vfx::STAR, x, y + 8.0, 22.0 * (1.0 - k) + 6.0, 22.0 * (1.0 - k) + 6.0).cols(WHITE, 0xFFD8_4AFF).p(1.0, 0.0, 0.6, 0.0).a(1.0 - k).emit();
             }
         }
     }
@@ -1310,64 +1334,85 @@ unsafe fn world(v: &[i32; VW]) {
         let d = &POOL[l[1] as usize - 1];
         let p = age as f32 / FIRE_LIFE as f32;
         let k = (1.0 - p) * if l[7] & FL_ECHO != 0 { 0.5 } else { 1.0 };
-        let col = alpha(FAM_COL[d.family as usize], k);
         let (tx, ty) = (l[4] as f32 / 100.0, l[5] as f32 / 100.0 + 8.0);
         let big = 1.0 + 0.35 * (l[6] - 1) as f32;
+        let af = age as f32;
+        let fc = FAM_COL[d.family as usize];
+        let sd = (l[0] % 89) as f32 + e as f32;
         match d.effect {
             E_BURST | E_WILDFIRE => {
-                let r = if d.effect == E_WILDFIRE { 20.0 } else { 12.0 };
-                fx(FX_DISC, tx, ty, 0.0, r * big * ease(p * 3.0), 0.0, 0.0, alpha(0xFFB0_40FF, k));
-                fx(FX_SPIKES, tx, ty, 0.0, 2.0, (6.0 + 16.0 * ease(p * 2.0)) * big, 0.3, col);
+                // a fireball at the target: flame, a ring that bends the air, sparks
+                let r = if d.effect == E_WILDFIRE { 20.0 } else { 12.0 } * big;
+                vfx::fx(vfx::FLAME, tx, ty + r * 0.2, r * 1.5, r * 2.0).cols(0xFFB0_40FF, fc).p(1.0, 0.0, 0.7 * k, 0.0).age(af).seed(sd).a(k).emit();
+                vfx::burst_ring(tx, ty, r * 1.2, (p * 1.5).min(1.0), fc, 0.0, af);
+                vfx::sparks(tx, ty, r * 1.6, p, 22.0, fc, sd);
+                vfx::pop(tx, ty, r * 0.9, af, 8.0, 0xFFE0_B0FF);
                 if d.effect == E_WILDFIRE && age < 12 {
-                    fx(FX_LINE, mx, my + 10.0, 0.0, tx, ty, 1.2, alpha(FAM_COL[0], 1.0 - age as f32 / 12.0));
+                    vfx::fx(vfx::TRAIL, mx, my + 10.0, 0.0, 0.0).line(tx, ty, 5.0).cols(0xFFC0_60FF, FAM_COL[0]).a(1.0 - af / 12.0).age(af).seed(sd).emit();
                 }
             }
             E_NOVA => {
-                fx(FX_RING, mx, my + 8.0, 0.0, 4.0 + 34.0 * ease(p * 1.5), 3.0 * big, 0.0, col);
-                if age < 8 {
-                    fx(FX_DISC, mx, my + 8.0, 0.0, 16.0, 0.0, 0.0, alpha(0xFFE0_C0FF, 1.0 - age as f32 / 8.0));
-                }
+                vfx::burst_ring(mx, my + 8.0, 5.0 + 34.0 * big, (p * 1.3).min(1.0), fc, 0.4, af);
+                vfx::pop(mx, my + 8.0, 16.0, af, 8.0, 0xFFE0_C0FF);
+                vfx::sparks(mx, my + 8.0, 30.0, p, 30.0, fc, sd);
             }
             E_SPIRE => {
-                fx(FX_BEAM, tx, ty - 10.0, 0.0, 90.0 * ease(p * 3.0), 9.0 * big, 0.0, alpha(0xFFF0_D0FF, k));
-                fx(FX_SPIKES, tx, ty - 6.0, 0.0, 2.0, 10.0 * big, 0.0, col);
+                // a pillar of light on a circle that draws itself in under the target
+                vfx::ground_circle(tx, ty - 9.4, 13.0 * big, (p * 4.0).min(1.0), 0.0, 1.0, af, alpha(fc, k), sd);
+                vfx::fx(vfx::BEAM, tx, ty - 10.0 + 45.0 * ease(p * 3.0), 18.0 * big, 90.0 * ease(p * 3.0)).cols(0xFFF0_D0FF, fc).p(1.0, 1.0, 0.0, 0.0).age(af).seed(sd).a(k).emit();
+                vfx::sparks(tx, ty - 6.0, 14.0 * big, p, 14.0, fc, sd);
             }
             E_BOLT => {
-                if age < 14 {
-                    fx(FX_BOLT, tx, ty + 70.0, 0.0, tx, ty, 2.4 * big, alpha(0xFFF6_A0FF, k));
-                    fx(FX_BOLT, tx + 2.0, ty + 70.0, 0.0, tx, ty, 0.8, alpha(WHITE, k));
+                // lightning: a branching bolt down onto the target, redrawn every other frame; sparks where it lands
+                vfx::bolt(tx + (sd % 7.0 - 3.0) * 3.0, ty + 78.0, tx, ty, 17.0 * big, af, 16.0, 0xFFF6_A0FF, sd);
+                if age < 16 {
+                    vfx::bolt(tx, ty, tx + (sd % 5.0 - 2.0) * 7.0, ty - 9.0, 6.0, af, 10.0, 0xFFF6_A0FF, sd + 11.0);
                 }
-                fx(FX_SPIKES, tx, ty, 0.0, 1.0, 10.0 * big, T as f32 * 0.4, alpha(0xFFF6_A0FF, k));
+                vfx::sparks(tx, ty, 16.0 * big, p, 20.0, 0xFFF6_A0FF, sd);
+                vfx::fx(vfx::SHOCK, tx, ty - 7.0, 30.0 * big, 8.0 * big).cols(0xFFF6_A0FF, 0xFF9A_20FF).p((p * 1.6).min(1.0), 0.07, 1.0, 1.0).age(af).seed(sd).a(k).bend().emit();
             }
             E_FEATHERS => {
                 for j in 0..5 {
                     let ox = (j as f32 - 2.0) * 4.0;
                     let fall = 40.0 * (1.0 - p) + j as f32 * 3.0;
-                    fx(FX_LINE, tx + ox, ty + fall + 6.0, 0.0, tx + ox + 1.5, ty + fall, 1.4, col);
+                    vfx::fx(vfx::TRAIL, tx + ox + 3.0, ty + fall + 13.0, 0.0, 0.0).line(tx + ox, ty + fall, 3.0).cols(vfx::pale(fc, 0.5), fc).a(k).age(af).seed(sd + j as f32).emit();
                 }
             }
-            E_HASTE | E_HEAL => fx(FX_RING, mx, my + 8.0, 0.0, 9.0 + 8.0 * p, 2.0, 0.0, col),
-            E_SHIELD => fx(FX_RING, mx, my + 8.0, 0.0, 16.0 - 7.0 * ease(p * 2.0), 2.5, 0.0, col),
-            E_AIRJUMP => fx(FX_RING, mx, my + 2.0, 0.0, 4.0 + 10.0 * p, 1.6, 0.0, col),
-            E_SHOCKWAVE => {
-                fx(FX_RING, mx, my + 1.0, 0.0, 4.0 + 30.0 * ease(p * 1.5), 3.0 * big, 0.0, col);
-                fx(FX_SPIKES, mx, my + 1.0, 0.0, 2.0, 8.0 + 10.0 * p, 0.0, col);
+            E_HASTE | E_HEAL => {
+                vfx::fx(vfx::BEAM, mx, my + 16.0, 14.0, 34.0).cols(fc, fc).p(0.3, 1.0, 0.0, 0.0).age(af).seed(sd).a(k * 0.8).back().emit();
+                vfx::fx(vfx::SHOCK, mx, my + 1.0, 26.0, 7.0).cols(fc, fc).p(p, 0.06, 0.0, 0.0).age(af).a(k).back().emit();
             }
-            E_CHILL => fx(FX_SPIKES, tx, ty, 0.0, 3.0, (6.0 + 12.0 * ease(p * 2.0)) * big, 0.4, alpha(0x8CE6_FFFF, k)),
-            E_MARK => fx(FX_RING, tx, ty + 8.0, 0.0, 12.0 - 8.0 * ease(p * 2.0), 1.6, 0.0, alpha(0xC864_FFFF, k)),
+            E_SHIELD => vfx::fx(vfx::DOME, mx, my + 8.0, 34.0, 34.0).cols(fc, vfx::deep(fc, 0.3)).p((p * 1.2).min(1.0), 5.0, 0.0, 1.0).age(af).seed(sd).bend().emit(),
+            E_AIRJUMP => {
+                vfx::fx(vfx::SHOCK, mx, my + 2.0, 26.0, 7.0).cols(fc, fc).p((p * 1.5).min(1.0), 0.07, 0.0, 0.0).age(af).a(k).emit();
+                vfx::fx(vfx::SPARKS, mx, my + 2.0, 18.0, 18.0).rot(-1.5708).cols(WHITE, fc).p(p, 10.0, 0.0, 0.4).seed(sd).emit();
+            }
+            E_SHOCKWAVE => {
+                // along the floor: a low ring that bends the air, the ground cracking under it
+                vfx::fx(vfx::SHOCK, mx, my + 1.0, 70.0 * big, 17.0 * big).cols(fc, vfx::deep(fc, 0.3)).p((p * 1.3).min(1.0), 0.08, 0.3, 1.0).age(af).seed(sd).a(k).bend().emit();
+                vfx::fx(vfx::CRACK, mx, my + 1.6, 44.0 * big, 12.0).cols(fc, 0xC8A8_78FF).p(ease(p * 2.5), k, k, 0.0).age(af).seed(sd).a(k).back().emit();
+            }
+            E_CHILL => {
+                let sz = 22.0 * big;
+                vfx::fx(vfx::ICE, tx, ty - 8.0 + sz * 0.5, sz, sz).cols(0xD8FF_FFFF, 0x8CE6_FFFF).p(ease(p * 4.0), ((p - 0.7) / 0.3).clamp(0.0, 1.0), 0.0, 0.0).age(af).seed(sd).emit();
+                vfx::pop(tx, ty, 8.0, af, 8.0, 0xD8FF_FFFF);
+            }
+            E_MARK => vfx::fx(vfx::CIRCLE, tx, ty + 8.0, 28.0 - 14.0 * ease(p * 2.0), 28.0 - 14.0 * ease(p * 2.0)).cols(alpha(0xC864_FFFF, k), 0x7030_C0FF).p(1.0, p, 1.0, 2.0).age(af).seed(sd).emit(),
             E_SHATTER | E_THORNS => {
-                fx(FX_SPIKES, tx, ty, 0.0, 2.0, (8.0 + 18.0 * ease(p * 2.0)) * big, T as f32 * 0.05, alpha(0xE6FA_FFFF, k));
+                vfx::fx(vfx::SPARKS, tx, ty, 40.0 * big, 40.0 * big).cols(WHITE, 0xB8E8_FFFF).p(p, 24.0, 1.2, 0.0).seed(sd).emit();
+                vfx::pop(tx, ty, 9.0, af, 6.0, WHITE);
+                vfx::fx(vfx::STAR, tx, ty, 26.0 * big * (1.0 - p), 26.0 * big * (1.0 - p)).cols(0xE6FA_FFFF, 0x8CE6_FFFF).p(1.0, 3.0, 0.8, 0.0).age(af).seed(sd).a(k).emit();
                 if l[7] & FL_LINK != 0 && age < 12 {
-                    // the link flash: a short line from the owner to the struck foe
-                    fx(FX_LINE, mx, my + 10.0, 0.0, tx, ty, 1.2, alpha(FAM_COL[d.family as usize], 1.0 - age as f32 / 12.0));
+                    // the link: a short arc from the owner to the struck foe
+                    vfx::bolt(mx, my + 10.0, tx, ty, 7.0, af, 12.0, fc, sd);
                 }
             }
             E_TAILWIND => {
                 if age < 10 {
-                    fx(FX_LINE, mx, my + 10.0, 0.0, tx, ty, 0.8, alpha(FAM_COL[1], 1.0 - age as f32 / 10.0));
+                    vfx::fx(vfx::TRAIL, mx, my + 10.0, 0.0, 0.0).line(tx, ty, 4.0).cols(vfx::pale(FAM_COL[1], 0.4), FAM_COL[1]).a(1.0 - af / 10.0).age(af).seed(sd).emit();
                 }
             }
-            E_RELAY | E_REPEAT | E_SURGE => fx(FX_RING, mx, my + 8.0, 0.0, 6.0 + 26.0 * ease(p * 2.0), 2.0, 0.0, col),
+            E_RELAY | E_REPEAT | E_SURGE => vfx::burst_ring(mx, my + 8.0, 8.0 + 26.0 * big.min(1.3), (p * 1.6).min(1.0), fc, 0.6, af),
             _ => {}
         }
     }
@@ -1740,11 +1785,8 @@ unsafe fn tag_cinematic(e: &mut kit::E, t: &[i32; 10], vw: f32, vh: f32) {
 /// The stage shift: a wipe closes over the first half, a white flash at the switch (the midpoint), the wipe opens
 /// over the second half; the destination's name rides the cover.
 unsafe fn stage_shift(e: &mut kit::E, t: &[i32; 10], vw: f32, vh: f32) {
-    let (phase, frame, len, since, to) = (t[0], t[3] as f32, t[4].max(2) as f32, t[5], t[8]);
+    let (phase, frame, len, to) = (t[0], t[3] as f32, t[4].max(2) as f32, t[8]);
     if phase != 1 {
-        if since < 10 {
-            e.rect(0.0, 0.0, vw, vh, alpha(WHITE, 0.6 * (1.0 - since as f32 / 10.0)));
-        }
         return;
     }
     let mid = len * 0.5;
@@ -1757,11 +1799,7 @@ unsafe fn stage_shift(e: &mut kit::E, t: &[i32; 10], vw: f32, vh: f32) {
         e.rect_shear(vw + 200.0 - w, 0.0, w, vh, 0x1020_40FF, -0.3);
         e.rect_shear(vw + 230.0 - w, 0.0, w - 30.0, vh, 0x0A0A_14FF, -0.3);
     }
-    let d = frame - mid;
-    if (-4.0..14.0).contains(&d) {
-        let a = if d < 0.0 { (d + 4.0) / 4.0 } else { 1.0 - d / 14.0 };
-        e.rect(0.0, 0.0, vw, vh, alpha(WHITE, 0.9 * a));
-    }
+    // (no white flash at the switch: the cover itself hides it)
     if cover > 0.6 {
         let a = (cover - 0.6) / 0.4;
         e.text_ex(vw * 0.5, vh * 0.5 - 50.0, ROLE_LABEL, alpha(DIM, a), ALIGN_CENTER, 0.0, "STAGE SHIFT");
@@ -1796,38 +1834,28 @@ unsafe fn stage_rift(e: &mut kit::E, l: &[i32; 8], vw: f32, vh: f32) {
     } else {
         0.5 * vw + 0.75 * vw * ease((frame - at) / (len - at).max(1.0))
     };
-    let shear = -0.22;
     let (cf, ct) = (stage_col(from), stage_col(to));
+    let _ = cf;
     let fade_in = (frame / 20.0).min(1.0);
     let fade_out = ((len - frame) / 20.0).clamp(0.0, 1.0);
-    if done == 0 {
-        // before the hand-off: the passed side carries the destination's veil
-        e.rect_shear(-400.0, 0.0, x + 400.0, vh, alpha(ct, 0.20 * fade_in), shear);
-    } else if done == 1 {
-        // after: the side still ahead holds the old stage's veil, thinning as the rift runs out
-        e.rect_shear(x, 0.0, vw + 400.0 - x, vh, alpha(cf, 0.18 * fade_out), shear);
-    }
-    // the rift: a wide soft glow, a narrower glow, the white core
-    let pulse = 0.85 + 0.15 * kit_sin(frame * 0.35);
     let near = 1.0 - ((frame - at).abs() / 10.0).min(1.0);
-    let core = 10.0 + 120.0 * near * near;
     let a = fade_in.min(fade_out.max(if done == 0 { 1.0 } else { 0.0 }));
-    e.rect_shear(x - 110.0, 0.0, 220.0, vh, alpha(ct, 0.16 * a), shear);
-    e.rect_shear(x - 44.0, 0.0, 88.0, vh, alpha(ct, 0.38 * a * pulse), shear);
-    e.rect_shear(x - core * 0.5, 0.0, core, vh, alpha(WHITE, (0.75 + 0.2 * near) * a), shear);
-    // sparks riding the edge (deterministic from the record frame: presentation only)
-    for i in 0..9 {
-        let fi = i as f32;
-        let y = (fi * 83.0 + frame * (5.0 + fi)) % vh;
-        let dx = kit_sin(frame * 0.2 + fi) * 18.0 + shear * -y;
-        e.rect(x + dx - 3.0 + shear * y, y, 6.0, 6.0, alpha(if i % 2 == 0 { WHITE } else { ct }, 0.8 * a));
-    }
-    if (frame - at).abs() < 1.0 && done == 1 {
-        // the hand-off frame: one soft flash and a ring from the middle (fx post; at most one flash)
-        fx::handoff(vw, vh, ct);
-    }
-    if (frame - at).abs() < 8.0 {
-        e.rect(0.0, 0.0, vw, vh, alpha(WHITE, 0.35 * near));
+    // the rift, on the canvas (640x480): a tear of lightning from the top of the screen to the bottom in the
+    // destination's colour, its glow, sparks rising along it and the picture bending as it passes. No veil, no
+    // flash: at the hand-off the tear itself swells for a few frames, which covers the one-frame swap where it is.
+    let cx = 320.0 + (x - vw * 0.5) * 480.0 / vh;
+    let lean = 46.0;
+    let w = 46.0 + 110.0 * near * near;
+    vfx::fx(vfx::GLOW, cx, 240.0, 150.0 + 160.0 * near, 760.0).cols(ct, ct).p(2.2, 0.0, 0.0, 0.0).a(0.28 * a).screen().emit();
+    vfx::fx(vfx::BOLT, cx + lean, -30.0, 0.0, 0.0).line(cx - lean, 510.0, w).cols(vfx::pale(ct, 0.2), ct).p(0.8, 1.0, 20.0, 1.6 + 1.6 * near).age(frame).seed(3.0).a(a).screen().emit();
+    vfx::fx(vfx::BOLT, cx + lean, -30.0, 0.0, 0.0).line(cx - lean, 510.0, w * 0.55).cols(WHITE, ct).p(0.5, 0.0, 30.0, 1.0 + near).age(frame).seed(7.0).a(a).screen().emit();
+    vfx::fx(vfx::EMBERS, cx, 240.0, 90.0, 520.0).cols(vfx::pale(ct, 0.4), ct).p(5.0, 2.2, 0.0, 0.0).age(frame).seed(5.0).a(a).screen().emit();
+    vfx::fx(vfx::HAZE, cx, 240.0, 190.0, 560.0).p(1.6 + 2.0 * near, 0.0, 0.0, 0.0).age(frame).seed(2.0).a(a).screen().bend().emit();
+    if (frame - at).abs() < 12.0 {
+        // the hand-off: a ring of the destination's colour out of the tear, sparks
+        let k = ((frame - at + 2.0) / 14.0).clamp(0.0, 1.0);
+        vfx::fx(vfx::SHOCK, cx, 240.0, 520.0, 520.0).cols(ct, ct).p(k, 0.05, 1.0, 1.5).age(frame).seed(1.0).a(0.9).screen().bend().emit();
+        vfx::fx(vfx::SPARKS, cx, 240.0, 420.0, 420.0).cols(WHITE, ct).p(k, 40.0, 0.0, 0.0).seed(4.0).screen().emit();
     }
     // the caption: where the rift leads
     let ca = fade_in * fade_out * 0.9;

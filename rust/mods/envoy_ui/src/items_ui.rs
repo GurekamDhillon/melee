@@ -3,29 +3,21 @@
 //! trail and Fire Lace's embers on everything), the pedestals of the item room and the boss drop, the new-item flash,
 //! the item room / boss drop / campfire banners and the item strip. Presentation only: it reads the sim's view.
 use crate::kit::*;
+use crate::vfx;
+use crate::{FX_BEAM, FX_BOLT, FX_DISC, FX_LINE, FX_RING, FX_SPIKES};
+const TAU: f32 = 6.283_185_3;
+
+/// The older shape calls (slice 2 looks), drawn as shader quads through lib.rs's shim (vfx lane).
+unsafe fn fx(kind: i32, x: f32, y: f32, a: f32, b: f32, c: f32, rgba: u32) {
+    crate::fx(kind, x, y, 0.0, a, b, c, rgba);
+}
 use crate::{Buf, VW};
 use envoy_data::items::*;
 use envoy_data::view::*;
 use gd_ui_enc::*;
 
-const FX_RING: i32 = 1;
-const FX_DISC: i32 = 2;
-const FX_SPIKES: i32 = 3;
-const FX_BOLT: i32 = 4;
-const FX_BEAM: i32 = 5;
-const FX_LINE: i32 = 6;
-const TAU: f32 = 6.283_185_5;
 const INK_COL: u32 = 0xB04A_FFFF;
 const EMBER: u32 = 0xFF7A_20FF;
-
-unsafe fn fx(kind: i32, x: f32, y: f32, a: f32, b: f32, c: f32, rgba: u32) {
-    // the Envoy settings' effect intensity (pause overlay, Options) fades every item effect in the world
-    let k = crate::pause::fx_scale();
-    if k <= 0.0 {
-        return;
-    }
-    crate::gd_ui_world_fx(kind, x, y, 0.0, a, b, c, alpha(rgba, k));
-}
 
 fn col(id: i32) -> u32 {
     item(id).map_or(WHITE, |it| it.rgba)
@@ -36,8 +28,11 @@ fn pb(p: usize) -> usize {
 }
 
 static mut T: u32 = 0;
+/// Where each projectile slot was last present (its kind too): the direction a trail points back along.
+static mut LASTP: [(i32, f32, f32); PROJ] = [(0, 0.0, 0.0); PROJ];
 
-/// Every item effect this frame, from the view's projectile list and burst ring.
+/// Every item effect this frame, from the view's projectile list and burst ring: shader quads (vfx.rs), each item
+/// its own silhouette and colours.
 pub unsafe fn world(v: &[i32; VW]) {
     if v[V_ITEMS_ON] != 1 {
         return;
@@ -45,69 +40,88 @@ pub unsafe fn world(v: &[i32; VW]) {
     T = T.wrapping_add(1);
     let t = T as f32;
     let play = v[V_PLAY];
+    let mut live = true;
     for i in 0..PROJ {
         let b = V_PROJ + i * PJ_W;
-        let kind = v[b];
+        let kind = if live { v[b] } else { 0 };
         if kind == 0 {
-            break;
+            live = false;
+            LASTP[i] = (0, 0.0, 0.0);
+            continue;
         }
         let flags = v[b + 1] & PF_MASK;
         let (x, y) = (v[b + 2] as f32 / 100.0, v[b + 3] as f32 / 100.0);
         let (age, life, a, bb) = (v[b + 4], v[b + 5].max(1), v[b + 6], v[b + 7]);
         let fade = 1.0 - ((age as f32 - life as f32 + 8.0) / 8.0).clamp(0.0, 1.0);
         let (vx, vy) = (a as f32 / 100.0, bb as f32 / 100.0);
+        let sd = i as f32 * 7.3 + 1.0;
+        let af = age as f32;
+        // how it moved since the last present (orbiters and coins carry no velocity in the view)
+        let (lk, lx, ly) = LASTP[i];
+        let (dx, dy) = if lk == kind && (lx - x).abs() + (ly - y).abs() < 30.0 { (x - lx, y - ly) } else { (0.0, 0.0) };
+        LASTP[i] = (kind, x, y);
         match kind {
             PJ_SPARK => {
-                fx(FX_LINE, x, y, x - vx * 3.5, y - vy * 3.5, 0.9, alpha(0xFFF6_B0FF, 0.8 * fade));
-                fx(FX_DISC, x, y, 2.2, 0.0, 0.0, alpha(col(IT_SPARK_RING), fade));
-                fx(FX_SPIKES, x, y, 0.6, 2.6, t * 0.5 + i as f32, alpha(WHITE, 0.8 * fade));
+                // Spark Ring sparks: a spinning electric star on a short hot tail (the look the item had, kept)
+                let c = col(IT_SPARK_RING);
+                let fade = fade * (af / 5.0).min(1.0);
+                vfx::fx(vfx::TRAIL, x - vx * 4.5, y - vy * 4.5, 0.0, 0.0).line(x + vx * 0.6, y + vy * 0.6, 3.4).cols(0xFFF6_B0FF, c).a(0.9 * fade).age(t).seed(sd).emit();
+                vfx::fx(vfx::STAR, x, y, 9.5, 9.5).cols(vfx::pale(c, 0.4), c).p(1.0, 9.0, 0.8, 0.0).age(t).seed(sd).a(fade).emit();
+                vfx::fx(vfx::BOLT, x - 3.2, y + 1.0, 0.0, 0.0).line(x + 3.2, y - 1.0, 3.0).cols(0xFFFF_FFFF, c).p(1.0, 0.0, 30.0, 0.8).age(t).seed(sd).a(0.7 * fade).emit();
             }
             PJ_STAR => {
-                fx(FX_LINE, x, y, x - vx * 5.0, y - vy * 5.0, 1.6, alpha(col(IT_HOP_SHOT), 0.6 * fade));
-                fx(FX_DISC, x, y, 4.2, 0.0, 0.0, alpha(0xFFF0_A0FF, 0.7 * fade));
-                fx(FX_SPIKES, x, y, 1.2, 4.6, t * 0.25, alpha(col(IT_HOP_SHOT), fade));
+                // Hop Shot: a big slow sparkle with a soft comet tail
+                let c = col(IT_HOP_SHOT);
+                vfx::fx(vfx::TRAIL, x - vx * 6.0, y - vy * 6.0, 0.0, 0.0).line(x + vx * 0.5, y + vy * 0.5, 6.0).cols(c, vfx::deep(c, 0.3)).a(0.75 * fade).age(t).seed(sd).emit();
+                vfx::fx(vfx::STAR, x, y, 17.0, 17.0).cols(0xFFF0_A0FF, c).p(0.7, 2.5, 0.6, 0.0).age(t).seed(sd).a(fade).emit();
             }
             PJ_WAKE => {
+                // Glide Wake: a wall of fire along the ground, embers over it, the air above it shimmering
                 let half = a as f32 / 100.0;
                 let k = (life - age) as f32 / life as f32;
-                fx(FX_LINE, x - half, y + 0.4, x + half, y + 0.4, 1.4, alpha(0xFF5A_10FF, 0.8 * k));
-                let n = (half / 3.0) as i32;
-                for j in -n..=n {
-                    let fx_ = x + j as f32 * 3.0;
-                    let flick = 2.5 + 1.8 * sin(t * 0.6 + j as f32 * 1.7);
-                    fx(FX_BEAM, fx_, y, flick * (0.6 + 0.4 * k) * 2.0, 2.4, 0.0, alpha(col(IT_GLIDE_WAKE), 0.75 * k));
-                }
+                let c = col(IT_GLIDE_WAKE);
+                let h = 9.0 * (0.55 + 0.45 * k);
+                vfx::fx(vfx::FLAME, x, y + h * 0.5 - 0.3, half * 2.0 + 5.0, h).cols(0xFFA0_30FF, c).p(1.0, 0.0, 0.3 * k, 0.0).age(t).seed(sd).a(0.95 * k.min(1.0).max(0.25)).emit();
+                vfx::fx(vfx::EMBERS, x, y + 8.0, half * 2.0 + 4.0, 15.0).cols(0xFFB0_40FF, c).p(5.0, 1.2, 0.0, 0.0).age(t).seed(sd).a(k).emit();
+                vfx::fx(vfx::HAZE, x, y + 9.0, half * 2.0 + 10.0, 20.0).p(1.0 * k, 0.0, 0.0, 0.0).age(t).seed(sd).bend().emit();
             }
             PJ_GHOST => {
+                // Whiff Echo: a spectre waiting where the swing missed, flaring as its strike comes due
                 let face = if a < 0 { -1.0 } else { 1.0 };
-                let k = fade * (0.55 + 0.15 * sin(t * 0.4));
-                fx(FX_BEAM, x, y, 16.0, 7.5, 0.0, alpha(col(IT_WHIFF_ECHO), 0.45 * k));
-                fx(FX_DISC, x, y + 15.0, 3.6, 0.0, 0.0, alpha(col(IT_WHIFF_ECHO), 0.6 * k));
-                fx(FX_RING, x, y + 9.0, 7.0, 0.8, 0.0, alpha(col(IT_WHIFF_ECHO), 0.5 * k));
-                // the arm of the swing to come: a line toward where it lands
-                fx(FX_LINE, x, y + 10.0, x + face * 8.0, y + 9.0, 1.2, alpha(WHITE, 0.5 * k));
+                let c = col(IT_WHIFF_ECHO);
+                let due = ((af - life as f32 + 14.0) / 14.0).clamp(0.0, 1.0);
+                vfx::fx(vfx::WISP, x, y + 9.5, 13.0, 21.0).cols(c, vfx::pale(c, 0.3)).p(face, due, 0.0, 0.0).age(t).seed(sd).a(0.85 * fade.max(due)).emit();
+                vfx::fx(vfx::RING, x, y + 0.6, 15.0, 4.6).cols(c, c).p(0.8, 0.05, 12.0, 0.6).age(t).a(0.5 * fade).back().emit();
             }
             PJ_MINE => {
-                let blink = if (age / 6) % 2 == 0 || age > life - 18 && (age / 3) % 2 == 0 { 1.0 } else { 0.35 };
-                fx(FX_DISC, x, y + 1.0, 2.8, 0.0, 0.0, alpha(col(IT_ROLL_MINES), blink));
-                fx(FX_RING, x, y + 1.0, 4.0 + 2.5 * (age as f32 / life as f32), 0.7, 0.0, alpha(0xFFB0_B0FF, 0.7));
-                fx(FX_SPIKES, x, y + 1.0, 1.0, 3.6, 0.0, alpha(0x5020_20FF, 0.9));
+                let blink = if (age / 6) % 2 == 0 || age > life - 18 && (age / 3) % 2 == 0 { 1.0 } else { 0.12 };
+                let armed = if age > life - 18 { 1.0 } else { 0.0 };
+                let ring = (age % 36) as f32 / 36.0;
+                vfx::fx(vfx::MINE, x, y + 3.0, 9.6, 9.6).cols(col(IT_ROLL_MINES), 0xFFB0_B0FF).p(blink, ring, armed, 0.0).age(t).seed(sd).emit();
             }
             PJ_QUAKE => {
+                // Smash Quake: the ground tearing open under a running wall of dust and thrown rock
                 let size = bb as f32 / 100.0;
-                let k = fade;
-                fx(FX_SPIKES, x, y + 1.0, 1.0, size * 1.2, t * 0.2, alpha(col(IT_SMASH_QUAKE), k));
-                fx(FX_BEAM, x, y, size * 1.6, size * 0.9, 0.0, alpha(0xFFE8_A0FF, 0.7 * k));
-                fx(FX_LINE, x - a as f32 * 8.0, y + 0.3, x, y + 0.3, 1.0, alpha(0x8A5A_20FF, 0.9 * k));
+                let dir = if a < 0 { -1.0 } else { 1.0 };
+                let c = col(IT_SMASH_QUAKE);
+                vfx::fx(vfx::CRACK, x - dir * size * 1.2, y + 1.6, size * 4.6, size * 1.9).cols(0xFFA0_40FF, 0xC8A8_78FF).p(1.0, 0.9 * fade, 1.0, 0.0).age(t).seed(sd).a(fade).back().emit();
+                vfx::fx(vfx::SPARKS, x, y + 1.0, size * 3.4, size * 3.4).rot(1.5708).cols(0xE0C8_A0FF, c).p((age % 14) as f32 / 14.0, 14.0, 1.6, 0.4).seed(sd + (age / 14) as f32).a(fade).emit();
             }
             PJ_COIN => {
-                fx(FX_DISC, x, y, 2.0, 0.0, 0.0, alpha(col(IT_COIN_MAGNET), 1.0));
-                fx(FX_RING, x, y, 2.4, 0.6, 0.0, alpha(0xFFF4_C0FF, 0.9));
-                fx(FX_LINE, x, y, x - vx * 2.0, y - vy * 2.0, 0.8, alpha(col(IT_COIN_MAGNET), 0.5));
+                let c = col(IT_COIN_MAGNET);
+                if dx * dx + dy * dy > 0.02 {
+                    vfx::fx(vfx::TRAIL, x - dx * 5.0, y - dy * 5.0, 0.0, 0.0).line(x, y, 2.6).cols(0xFFF4_C0FF, c).a(0.6).age(t).seed(sd).emit();
+                }
+                vfx::fx(vfx::COIN, x, y, 5.6, 5.6).cols(c, 0xFFF4_C0FF).p(1.6, 1.0, 0.0, 0.0).age(t).seed(sd).emit();
             }
             PJ_MOON => {
-                fx(FX_DISC, x, y, 3.0, 0.0, 0.0, alpha(col(IT_MOON_DROPS), 0.95));
-                fx(FX_RING, x, y, 3.6, 0.7, 0.0, alpha(0xA0B8_FFFF, 0.7));
+                // Moon Drops: crescent moons of cold light in orbit, each trailing a wake
+                let c = col(IT_MOON_DROPS);
+                if dx * dx + dy * dy > 0.01 {
+                    vfx::fx(vfx::TRAIL, x - dx * 7.0, y - dy * 7.0, 0.0, 0.0).line(x, y, 4.6).cols(c, 0x6080_FFFF).a(0.55).age(t).seed(sd).emit();
+                }
+                vfx::fx(vfx::ORB, x, y, 10.5, 10.5).cols(vfx::pale(c, 0.25), 0x7090_FFFF).p(0.8, 0.85, 4.0, 0.0).age(t).seed(sd).emit();
+                vfx::fx(vfx::STAR, x - 1.4, y + 1.6, 4.5, 4.5).cols(0xFFFF_FFFF, c).p(1.6, 0.0, 0.0, 0.0).age(t).seed(sd).a(0.7).emit();
             }
             _ => proj2(v, i, kind, flags, x, y, age, life, a, bb, fade),
         }
@@ -115,10 +129,13 @@ pub unsafe fn world(v: &[i32; VW]) {
             look_flags(flags, x, y, vx, vy, fade, kind);
         }
         if flags & PF_INK != 0 && matches!(kind, PJ_SPARK | PJ_STAR) {
-            fx(FX_LINE, x, y, x - vx * 9.0, y - vy * 9.0, 2.4, alpha(INK_COL, 0.55 * fade));
+            // Homing Ink: a long violet ribbon that snakes behind anything it steers
+            vfx::fx(vfx::TRAIL, x - vx * 11.0, y - vy * 11.0, 0.0, 0.0).line(x, y, 5.0).cols(INK_COL, 0x5A20_C0FF).p(1.0, 0.7, 0.0, 0.0).a(0.8 * fade).age(t).seed(sd + 9.0).emit();
         }
         if flags & PF_LACE != 0 && kind != PJ_COIN {
-            fx(FX_SPIKES, x + 1.5 * sin(t * 0.9 + i as f32), y + 2.0 + 1.5 * cos(t * 0.7), 0.4, 2.2, t * 0.3, alpha(EMBER, 0.75));
+            // Fire Lace: everything burns
+            vfx::fx(vfx::FLAME, x, y + 2.6, 4.6, 7.5).cols(0xFFB0_40FF, EMBER).p(1.0, -vx * 0.25, 0.4, 0.0).age(t).seed(sd + 5.0).a(0.9 * fade).emit();
+            vfx::fx(vfx::EMBERS, x, y + 5.0, 6.0, 11.0).cols(0xFFC0_60FF, EMBER).p(3.0, 1.4, 0.0, 0.0).age(t).seed(sd + 5.0).a(0.8 * fade).emit();
         }
     }
     // the one-shot visuals
@@ -130,64 +147,91 @@ pub unsafe fn world(v: &[i32; VW]) {
             continue;
         }
         let (id, x, y, size, fl) = (v[b + 1], v[b + 3] as f32 / 100.0, v[b + 4] as f32 / 100.0, v[b + 5] as f32 / 100.0, v[b + 6]);
-        let k = age as f32 / 32.0;
+        let af = age as f32;
+        let k = af / 32.0;
         let a = 1.0 - k;
         let c = col(id);
+        let sd = (v[b] % 97) as f32 + e as f32 * 3.0;
         match id {
             IT_SPARK_RING => {
-                fx(FX_RING, x, y, 2.0 + size * 1.6 * ease(k * 2.0), 1.6, 0.0, alpha(c, a));
-                if age < 6 {
-                    fx(FX_DISC, x, y, 6.0, 0.0, 0.0, alpha(WHITE, 0.8 * (1.0 - age as f32 / 6.0)));
-                }
+                // the ring and its white pop (kept), now a live wire: arcs ride the ring, sparks fly, the air bends
+                let r = 2.0 + size * 1.6;
+                vfx::burst_ring(x, y, r, (k * 1.5).min(1.0), c, 1.0, af);
+                vfx::pop(x, y, 6.0, af, 6.0, WHITE);
+                vfx::sparks(x, y, r * 1.1, (k * 1.6).min(1.0), 14.0, c, sd);
             }
-            IT_GLIDE_WAKE => fx(FX_DISC, x, y + 2.0, 6.0 * a, 0.0, 0.0, alpha(c, 0.7 * a)),
+            IT_GLIDE_WAKE => {
+                vfx::fx(vfx::FLAME, x, y + 6.0, 9.0, 13.0).cols(0xFFB0_40FF, c).p(0.4 + 0.6 * a, 0.0, 0.6 * a, 0.0).age(af).seed(sd).a(a).emit();
+                vfx::fx(vfx::SPARKS, x, y + 1.5, 16.0, 16.0).rot(1.5708).cols(0xFFD0_70FF, c).p(k, 12.0, 0.6, 0.5).seed(sd).emit();
+            }
             IT_SHINE_BELL => {
-                fx(FX_RING, x, y, size * ease(k * 2.5), 2.4, 0.0, alpha(c, a));
-                fx(FX_RING, x, y, size * 0.7 * ease(k * 1.6), 1.2, 0.0, alpha(WHITE, a));
-                fx(FX_SPIKES, x, y, size * 0.5, size * 1.1 * ease(k * 2.0), T as f32 * 0.05, alpha(c, 0.6 * a));
-            }
-            IT_HOP_SHOT => fx(FX_SPIKES, x, y, 1.0, size * (0.5 + k), 0.4, alpha(c, a)),
-            IT_LEDGE_SPIKES => {
-                let h = size * ease(k * 4.0);
-                for j in 0..4 {
-                    let yy = y + h * j as f32 / 4.0;
-                    fx(FX_SPIKES, x, yy, 1.5, 5.0 + j as f32, 0.785 + j as f32 * 0.3, alpha(c, a));
+                // a hexagonal shield ringing out, a white ring inside it, a glint at the heart
+                vfx::fx(vfx::DOME, x, y, size * 2.3, size * 2.3).cols(c, vfx::deep(c, 0.3)).p((k * 1.3).min(1.0), 5.0, 0.0, 1.0).age(af).seed(sd).bend().emit();
+                vfx::fx(vfx::SHOCK, x, y, size * 1.5, size * 1.5).cols(WHITE, c).p((k * 1.6).min(1.0), 0.05, 0.0, 0.0).age(af).seed(sd).emit();
+                if age < 10 {
+                    vfx::fx(vfx::STAR, x, y, size * 1.6, size * 1.6).cols(WHITE, c).p(1.2, 0.0, 0.5, 0.0).a(1.0 - af / 10.0).emit();
                 }
-                fx(FX_BEAM, x, y, h, 7.0, 0.0, alpha(0xD8FF_FFFF, 0.7 * a));
+            }
+            IT_HOP_SHOT => {
+                vfx::fx(vfx::STAR, x, y, size * (1.0 + 2.0 * k), size * (1.0 + 2.0 * k)).cols(0xFFF0_A0FF, c).p(0.8, 3.0, 0.7, 0.0).age(af).seed(sd).a(a).emit();
+                vfx::fx(vfx::SHOCK, x, y, size * 1.8, size * 0.7).cols(c, c).p((k * 2.0).min(1.0), 0.06, 0.0, 0.0).age(af).a(a).back().emit();
+            }
+            IT_LEDGE_SPIKES => {
+                // ice bursts up the ledge, stands, then shatters
+                let grow = ease(k * 4.0);
+                let shatter = ((k - 0.72) / 0.28).clamp(0.0, 1.0);
+                vfx::fx(vfx::ICE, x, y + size * 0.5, size * 0.95 + 6.0, size).cols(0xD8FF_FFFF, c).p(grow, shatter, 0.0, 0.0).age(af).seed(sd).emit();
+                vfx::pop(x, y + 1.5, 7.0, af, 8.0, 0xD8FF_FFFF);
+                if shatter > 0.0 {
+                    vfx::fx(vfx::SPARKS, x, y + size * 0.55, size * 1.5, size * 1.5).cols(WHITE, c).p(shatter, 22.0, 1.4, 0.0).seed(sd).emit();
+                }
             }
             IT_WHIFF_ECHO => {
+                // the swing of the echo: a crescent the way it faced, and the spectre flaring out
                 let dir = if fl & 3 == 0 { -1.0 } else { 1.0 };
-                fx(FX_RING, x, y, size * (0.5 + 0.6 * ease(k * 3.0)), 2.2, 0.0, alpha(c, a));
-                fx(FX_LINE, x - dir * size * 0.7, y + size * 0.5, x + dir * size * 0.7, y - size * 0.5, 2.0, alpha(WHITE, a));
+                vfx::fx(vfx::SLASH, x, y, size * 2.3, size * 2.3).rot(if dir < 0.0 { 3.14159 } else { 0.0 }).cols(c, vfx::deep(c, 0.3)).p((k * 1.8).min(1.0), 0.42, 1.2, 0.0).age(af).seed(sd).emit();
+                vfx::fx(vfx::WISP, x - dir * size * 0.3, y + 2.0 + k * 5.0, 13.0 * (1.0 + k * 0.4), 21.0 * (1.0 + k * 0.4)).cols(c, WHITE).p(dir, a, 0.0, 0.0).age(af).seed(sd).a(a * a).emit();
+                vfx::sparks(x + dir * size * 0.6, y, size * 0.9, (k * 1.5).min(1.0), 12.0, c, sd);
             }
             IT_ROLL_MINES => {
-                fx(FX_DISC, x, y, size * (0.6 + 0.6 * ease(k * 3.0)), 0.0, 0.0, alpha(0xFFB0_40FF, a));
-                fx(FX_SPIKES, x, y, 2.0, size * 1.5 * ease(k * 2.5), 0.2, alpha(c, a));
+                // the blast: a fireball, a ring that bends the air, shrapnel
+                let r = size * (0.7 + 0.7 * ease(k * 3.0));
+                vfx::fx(vfx::GLOW, x, y, r * 2.4, r * 2.4).cols(0xFFB0_40FF, c).p(2.4, 1.0, 0.0, 0.0).a(a * a).emit();
+                vfx::fx(vfx::EMBERS, x, y + r * 0.6, r * 2.2, r * 2.6).cols(0xFFC0_60FF, c).p(6.0, 1.6, 0.0, 0.0).age(af).seed(sd).a(a).emit();
+                vfx::burst_ring(x, y, size * 1.7, (k * 1.4).min(1.0), 0xFFD0_80FF, 0.0, af);
+                vfx::fx(vfx::SPARKS, x, y, size * 3.4, size * 3.4).cols(0xFFE0_A0FF, c).p(k, 28.0, 1.2, 0.0).seed(sd).emit();
             }
             IT_SMASH_QUAKE => {
-                fx(FX_DISC, x, y + 2.0, size * (0.6 + k), 0.0, 0.0, alpha(0xE0C0_90FF, 0.6 * a));
-                fx(FX_BOLT, x - size * 2.0 * ease(k * 3.0), y + 0.2, x + size * 2.0 * ease(k * 3.0), y + 0.2, 1.0, alpha(0x7A4A_10FF, a));
+                // the slam: the floor splits both ways from the hit, dust and rock jump, a low ring rolls out
+                vfx::fx(vfx::CRACK, x, y + 1.6, size * 5.2, size * 2.0).cols(0xFFA0_40FF, 0xC8A8_78FF).p(ease(k * 3.0), a, a, 0.0).age(af).seed(sd).a((a * 2.0).min(1.0)).back().emit();
+                vfx::fx(vfx::SHOCK, x, y + 0.8, size * 4.4, size * 1.1).cols(0xE8D0_A0FF, 0x8A5A_20FF).p((k * 1.5).min(1.0), 0.07, 0.0, 1.0).age(af).seed(sd).bend().emit();
+                vfx::fx(vfx::SPARKS, x, y + 1.0, size * 3.6, size * 3.6).rot(1.5708).cols(0xE0C8_A0FF, c).p(k, 20.0, 1.8, 0.45).seed(sd).emit();
             }
-            IT_MOON_DROPS => fx(FX_RING, x, y, 3.0 + 6.0 * k, 1.0, 0.0, alpha(c, a)),
+            IT_MOON_DROPS => {
+                // a moon nicks a foe: a cold ripple and a glint
+                vfx::fx(vfx::SHOCK, x, y, 20.0, 20.0).cols(vfx::pale(c, 0.3), 0x6080_FFFF).p(k, 0.05, 0.0, 0.0).age(af).seed(sd).emit();
+                vfx::fx(vfx::STAR, x, y, 11.0 * a + 3.0, 11.0 * a + 3.0).cols(WHITE, c).p(1.2, 4.0, 0.0, 0.0).age(af).a(a).emit();
+                vfx::sparks(x, y, 9.0, k, 9.0, 0xA0B8_FFFF, sd);
+            }
             IT_COIN_MAGNET => {
-                fx(FX_SPIKES, x, y, 2.0, size * (0.6 + k), 0.0, alpha(c, a));
-                fx(FX_DISC, x, y, size * 0.6 * a, 0.0, 0.0, alpha(0xFFF4_C0FF, a));
+                // the payout: gold sparks and a glint
+                vfx::fx(vfx::SPARKS, x, y, size * 2.6, size * 2.6).cols(0xFFF4_C0FF, c).p(k, 18.0, 0.8, 0.0).seed(sd).emit();
+                vfx::fx(vfx::STAR, x, y, size * 1.6 * a + 3.0, size * 1.6 * a + 3.0).cols(0xFFF4_C0FF, c).p(1.0, 2.0, 0.6, 0.0).age(af).a(a).emit();
+                vfx::pop(x, y, size * 0.7, af, 8.0, 0xFFF4_C0FF);
             }
             _ => {}
         }
         burst2(id, x, y, size, fl, age, k, a);
         if fl & PF_LACE != 0 {
-            for j in 0..3 {
-                let ang = j as f32 * TAU / 3.0 + k * 3.0;
-                fx(FX_SPIKES, x + cos(ang) * size * 0.6 * k, y + sin(ang) * size * 0.6 * k + k * 6.0, 0.4, 2.0, 0.0, alpha(EMBER, a));
-            }
+            // Fire Lace on a burst: tongues of fire and embers rising off it
+            vfx::fx(vfx::FLAME, x, y + size * 0.45, size * 0.9, size * 1.5).cols(0xFFB0_40FF, EMBER).p(0.5 + 0.5 * a, 0.0, 0.3, 0.0).age(af).seed(sd + 2.0).a(a).emit();
+            vfx::fx(vfx::EMBERS, x, y + size * 0.7, size * 1.6, size * 2.0).cols(0xFFC0_60FF, EMBER).p(5.0, 1.5, 0.0, 0.0).age(af).seed(sd).a(a).emit();
         }
     }
-    let _ = FX_BOLT;
 }
 
-/// The pedestals (the item room and the boss drop) and their fly-in: a stone, the item floating over it in its own
-/// colour, a light beam in the owner's colour (co-op).
+/// The pedestals (the item room and the boss drop) and their fly-in: a circle of the item colour turning on the
+/// floor, a pillar of light in the owner colour (co-op), the item floating over it as a ball of its own light.
 static mut LAST: [[(f32, f32); DROPS]; 2] = [[(0.0, 0.0); DROPS]; 2];
 static mut DOOR_SUM: (f32, f32, f32) = (0.0, 0.0, 0.0);
 pub unsafe fn pedestals(v: &[i32; VW]) {
@@ -207,14 +251,16 @@ pub unsafe fn pedestals(v: &[i32; VW]) {
             let id = v[d + 1];
             let c = col(id);
             let (bx, by) = (v[d + 2] as f32 / 100.0, v[d + 3] as f32 / 100.0);
+            let sd = (p * 8 + k) as f32 + 1.0;
             let moving = LAST[p][k].0 != 0.0 && ((LAST[p][k].0 - bx).abs() + (LAST[p][k].1 - by).abs()) > 0.3;
+            let fy = by + 12.0 + 1.5 * sin(t * 0.07 + k as f32 * 1.3);
             if moving {
-                fx(FX_LINE, LAST[p][k].0, LAST[p][k].1 + 9.0, bx, by + 9.0, 3.0, alpha(c, 0.9));
+                let (lx, ly) = LAST[p][k];
+                vfx::fx(vfx::TRAIL, lx + (lx - bx) * 4.0, ly + 12.0 + (ly - by) * 4.0, 0.0, 0.0).line(bx, fy, 8.0).cols(vfx::pale(c, 0.3), c).age(t).seed(sd).emit();
             } else {
-                // the stone
-                fx(FX_BEAM, bx, by, 5.0, 11.0, 0.0, alpha(0xB0A8_D0FF, 0.6));
-                fx(FX_LINE, bx - 6.0, by + 5.0, bx + 6.0, by + 5.0, 1.4, alpha(0xE8E0_FFFF, 0.8));
-                fx(FX_BEAM, bx, by + 5.0, 60.0, 9.0, 0.0, alpha(if humans == 2 { crate::PLAYER_COL[p] } else { c }, 0.28));
+                let beam = if humans == 2 { crate::PLAYER_COL[p] } else { c };
+                vfx::ground_circle(bx, by + 0.6, 13.0, 1.0, 0.0, 0.4, t, c, sd);
+                vfx::fx(vfx::BEAM, bx, by + 30.0, 15.0, 60.0).cols(beam, beam).p(0.35, 1.0, 0.0, 0.0).age(t).seed(sd).a(0.55).back().emit();
             }
             LAST[p][k] = (bx, by);
             if !moving {
@@ -223,11 +269,9 @@ pub unsafe fn pedestals(v: &[i32; VW]) {
                 DOOR_SUM.2 += 1.0;
                 ped_cost(v, p, k, bx, by + 22.0);
             }
-            let fy = by + 12.0 + 1.5 * sin(t * 0.07 + k as f32 * 1.3);
-            fx(FX_DISC, bx, fy, 7.5, 0.0, 0.0, alpha(c, 0.55));
-            fx(FX_DISC, bx, fy, 4.0, 0.0, 0.0, alpha(WHITE, 0.8));
-            fx(FX_RING, bx, fy, 6.0, 1.4, 0.0, alpha(c, 1.0));
-            fx(FX_SPIKES, bx, fy, 4.5, 8.5 + sin(t * 0.2), t * 0.02, alpha(c, 0.7));
+            vfx::fx(vfx::ORB, bx, fy, 15.0, 15.0).cols(vfx::pale(c, 0.15), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+            vfx::fx(vfx::RING, bx, fy, 17.0, 17.0).cols(c, c).p(0.8, 0.03, 8.0, 0.8).age(t).a(0.8).emit();
+            vfx::fx(vfx::STAR, bx - 2.4, fy + 2.6, 7.0, 7.0).cols(WHITE, c).p(1.5, 0.0, 0.0, 0.0).age(t).seed(sd).a(0.6 + 0.4 * sin(t * 0.2 + sd)).emit();
         }
     }
 }
@@ -303,12 +347,15 @@ pub unsafe fn flash(e: &mut E, v: &[i32; VW]) {
             e.text_ex(x + 52.0, y + 5.0, d(18), alpha(INK, a), ALIGN_LEFT, 0.0, s.str());
             rich(e, x + 52.0, y + 27.0, w - 62.0, 13, 16.0, alpha(INK, a), false, card, 2);
         });
-        // in the world: rings of the item's colour round the fighter
-        if v[pb(p) + P_HAVE_POS] != 0 && age < 40 {
+        // in the world: a circle in the item colour flares under the fighter, a pillar of its light, sparks going up
+        if v[pb(p) + P_HAVE_POS] != 0 && age < 48 {
             let (fx_, fy) = (f32::from_bits(v[pb(p) + P_X] as u32), f32::from_bits(v[pb(p) + P_Y] as u32));
-            let k = age as f32 / 40.0;
-            fx(FX_RING, fx_, fy + 9.0, 6.0 + 22.0 * ease(k), 2.6, 0.0, alpha(it.rgba, 1.0 - k));
-            fx(FX_BEAM, fx_, fy, 40.0 * (1.0 - k), 12.0, 0.0, alpha(it.rgba, 0.4 * (1.0 - k)));
+            let k = age as f32 / 48.0;
+            let af = age as f32;
+            vfx::ground_circle(fx_, fy + 0.6, 10.0 + 12.0 * ease(k * 2.0), (k * 3.0).min(1.0), 0.0, 1.0, af, alpha(it.rgba, 1.0 - k), p as f32 + 3.0);
+            vfx::fx(vfx::BEAM, fx_, fy + 26.0, 16.0, 52.0 * (1.0 - k * 0.5)).cols(it.rgba, it.rgba).p(0.5, 1.0, 0.0, 0.0).age(af).a(0.7 * (1.0 - k)).back().emit();
+            vfx::burst_ring(fx_, fy + 9.0, 8.0 + 20.0 * ease(k), (k * 1.6).min(1.0), it.rgba, 0.0, af);
+            vfx::fx(vfx::SPARKS, fx_, fy + 6.0, 40.0, 40.0).rot(1.5708).cols(WHITE, it.rgba).p((k * 1.4).min(1.0), 16.0, 0.0, 0.5).seed(p as f32).emit();
         }
     }
 }
@@ -400,12 +447,12 @@ unsafe fn door_last(v: &[i32; VW]) {
     let (w, h) = (18.0, 30.0);
     let devil = kind == PED_DEVIL;
     let (body, edge, glow) = if devil { (0x7A08_18FF, 0xFF30_40FF, 0xFF20_30FF) } else { (0xC8C8_D8FF, WHITE, HOLY) };
-    fx(FX_BEAM, cx, fy - 2.0, h + 14.0, w + 14.0, 0.0, alpha(glow, 0.12 + 0.04 * sin(t * 0.08)));
-    fx(FX_LINE, cx, fy, cx, fy + h, w, alpha(body, 0.4));
-    fx(FX_DISC, cx, fy + h, w * 0.5, 0.0, 0.0, alpha(body, 0.4));
-    fx(FX_LINE, cx - w * 0.5, fy, cx - w * 0.5, fy + h, 1.8, edge);
-    fx(FX_LINE, cx + w * 0.5, fy, cx + w * 0.5, fy + h, 1.8, edge);
-    fx(FX_RING, cx, fy + h, w * 0.5, 1.8, 0.0, edge);
+    // the door (vfx lane quads): a glow column, the doorway's haze, its edges and the arch
+    vfx::fx(vfx::BEAM, cx, fy + h * 0.5, w + 14.0, h + 14.0).cols(glow, glow).p(0.35, 1.0, 0.0, 0.0).age(t).a(0.12 + 0.04 * sin(t * 0.08)).back().emit();
+    vfx::fx(vfx::HAZE, cx, fy + h * 0.5, w, h).cols(body, body).age(t).a(0.4).emit();
+    vfx::fx(vfx::BEAM, cx - w * 0.5, fy + h * 0.5, 1.8, h).cols(edge, edge).p(0.35, 1.0, 0.0, 0.0).age(t).emit();
+    vfx::fx(vfx::BEAM, cx + w * 0.5, fy + h * 0.5, 1.8, h).cols(edge, edge).p(0.35, 1.0, 0.0, 0.0).age(t).emit();
+    vfx::fx(vfx::RING, cx, fy + h, w, w).cols(edge, edge).p(0.8, 0.03, 8.0, 0.8).age(t).emit();
     fx(FX_LINE, cx - w * 0.5 - 3.0, fy, cx + w * 0.5 + 3.0, fy, 2.0, edge);
     if devil {
         fx(FX_LINE, cx - 9.0, fy + h + 8.0, cx - 14.0, fy + h + 17.0, 2.2, edge);
@@ -793,40 +840,34 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
             }
         }
         PJ_ORB => {
-            // an orb: each family its own look; shattered (life word 1): faint shards waiting to come back
+            // an orb (vfx lane shader quads): each family its own look; shattered (life word 1): faint ice shards
             let fam = bb;
             let c = col(fam);
+            let sd = (i as f32) * 1.7 + a as f32;
             let broken = v[V_PROJ + i * PJ_W + 5] == 1;
             if broken {
-                for j in 0..3 {
-                    let ang = j as f32 * 2.094 + t * 0.02;
-                    fx(FX_SPIKES, x + cos(ang) * 2.5, y + sin(ang) * 2.5, 0.3, 1.4, ang, alpha(c, 0.3));
-                }
+                vfx::fx(vfx::ICE, x, y, 7.0, 7.0).cols(vfx::pale(c, 0.4), c).age(t).seed(sd).a(0.3).emit();
             } else {
                 match fam {
                     IT_DODGE_ORB => {
-                        fx(FX_DISC, x, y, 5.0, 0.0, 0.0, alpha(c, 0.55));
-                        fx(FX_RING, x, y, 3.2, 1.0, 0.0, alpha(WHITE, 0.9));
-                        fx(FX_LINE, x, y, x - 6.0, y, 2.0, alpha(c, 0.4));
+                        vfx::fx(vfx::ORB, x, y, 10.0, 10.0).cols(vfx::pale(c, 0.2), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        vfx::fx(vfx::TRAIL, x - 8.0, y, 0.0, 0.0).line(x, y, 5.0).cols(vfx::pale(c, 0.3), c).age(t).seed(sd).a(0.6).emit();
                     }
                     IT_NAIR_RING => {
-                        fx(FX_DISC, x, y, 3.6, 0.0, 0.0, alpha(c, 0.8));
-                        fx(FX_SPIKES, x, y, 1.0, 4.0, t * 0.3 + a as f32, alpha(0xFFE0_A0FF, 0.9));
+                        vfx::fx(vfx::ORB, x, y, 8.0, 8.0).cols(0xFFF0_C0FF, c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        vfx::fx(vfx::SPARKS, x, y, 10.0, 10.0).cols(WHITE, c).p(0.6, 0.0, 0.0, 0.0).age(t).seed(sd).a(0.8).emit();
                     }
                     IT_DASH_ORB => {
-                        fx(FX_DISC, x, y, 4.2, 0.0, 0.0, alpha(c, 0.7));
-                        fx(FX_RING, x, y, 2.8, 1.2, 0.0, alpha(WHITE, 0.8));
-                        fx(FX_LINE, x - 3.0, y + 1.5, x - 9.0, y + 1.5, 0.8, alpha(c, 0.6));
-                        fx(FX_LINE, x - 3.0, y - 1.5, x - 8.0, y - 1.5, 0.8, alpha(c, 0.6));
+                        vfx::fx(vfx::ORB, x, y, 9.0, 9.0).cols(vfx::pale(c, 0.2), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        vfx::fx(vfx::FLAME, x - 5.0, y, 10.0, 6.0).cols(c, vfx::deep(c, 0.4)).age(t).seed(sd).a(0.6).rot(1.571).emit();
                     }
                     IT_SHIELD_ORBS => {
-                        fx(FX_DISC, x, y, 3.4, 0.0, 0.0, alpha(c, 0.7));
-                        fx(FX_RING, x, y, 3.0, 0.8, 0.0, alpha(0xE8D8_FFFF, 0.95));
-                        fx(FX_SPIKES, x, y, 0.6, 2.4, 0.785, alpha(WHITE, 0.7));
+                        vfx::fx(vfx::DOME, x, y, 8.0, 8.0).cols(0xE8D8_FFFF, c).age(t).seed(sd).a(0.85).emit();
                     }
                     _ => {
-                        fx(FX_DISC, x, y, 3.0, 0.0, 0.0, alpha(col(IT_MOON_DROPS), 0.95));
-                        fx(FX_RING, x, y, 3.6, 0.7, 0.0, alpha(0xA0B8_FFFF, 0.7));
+                        let m = col(IT_MOON_DROPS);
+                        vfx::fx(vfx::ORB, x, y, 8.0, 8.0).cols(vfx::pale(m, 0.3), m).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        vfx::fx(vfx::GLOW, x, y, 14.0, 14.0).cols(0xA0B8_FFFF, m).age(t).a(0.5).emit();
                     }
                 }
             }
@@ -990,15 +1031,13 @@ unsafe fn orb_events(v: &[i32; VW]) {
         let (y, k) = (y + 10.0, age as f32 / 18.0);
         let c = col(ev[3]);
         if ev[1] == EV_ORB_BREAK {
-            for j in 0..6 {
-                let ang = j as f32 * 1.047 + 0.3;
-                let d = 4.0 + 14.0 * ease(k * 2.0);
-                fx(FX_SPIKES, x + cos(ang) * d, y + sin(ang) * d - 6.0 * k * k, 0.3, 2.0 * (1.0 - k) + 0.4, ang, alpha(c, 1.0 - k));
-            }
-            fx(FX_RING, x, y, 4.0 + 10.0 * ease(k * 2.0), 1.4, 0.0, alpha(WHITE, 1.0 - k));
+            // the shatter: an impact with ice shards in the family's colour
+            vfx::impact(x, y, 12.0, age as f32, c, ev[2] as f32 + 3.0);
+            vfx::fx(vfx::ICE, x, y, 16.0 * (0.6 + k), 16.0 * (0.6 + k)).cols(WHITE, c).age(age as f32).a(1.0 - k).emit();
         } else {
-            fx(FX_DISC, x, y, 12.0 * (1.0 - k) + 2.0, 0.0, 0.0, alpha(WHITE, 0.7 * (1.0 - k)));
-            fx(FX_RING, x, y, 8.0 + 6.0 * k, 2.4, 0.0, alpha(c, 1.0 - k));
+            // the block: a hex shield flash and a pop
+            vfx::fx(vfx::DOME, x, y, 18.0, 18.0).cols(WHITE, c).age(age as f32).a(0.8 * (1.0 - k)).emit();
+            vfx::pop(x, y, 10.0, age as f32, 18.0, c);
         }
     }
 }

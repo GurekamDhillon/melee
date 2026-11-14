@@ -9,6 +9,7 @@
 //! Nair Ring (circles the fighter for the nair), Dash Orb (leads a dash or run), Shield Orbs (circle the shield).
 //! All of it is sim state inside `St` (hashed, rolled back).
 use super::*;
+const TAU: f32 = 6.283_185_3;
 
 pub(crate) const FAM: [i32; FAMS] = [IT_MOON_DROPS, IT_DODGE_ORB, IT_NAIR_RING, IT_DASH_ORB, IT_SHIELD_ORBS];
 pub(crate) const FAMS: usize = 5;

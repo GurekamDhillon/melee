@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy V3 (Heat, envoy-synergy-v3.md 12.10; docs/rust-port/notes/envoy-v3-rules.md): the slice's checks.
 #   A. envoy_data's lint and tests (the split test: one record against 2 / 7 / 30, bit-identical);
 #   B. sim.py's V3 measures (--v3; exit 1 on a missed band);

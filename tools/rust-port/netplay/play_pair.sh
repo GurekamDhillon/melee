@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Two `melee play --netplay` instances on loopback (127.0.0.1), scripted pads (no OS input), a 60 s match.
 #   bash tools/rust-port/netplay/play_pair.sh NAME LAG_MS LOSS_PCT [--headless] [extra play args]
 # NP_TIME_SECS / NP_MAX_FRAMES: match length (default 60 s) and frame cap (9000).

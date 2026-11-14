@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Rollback snapshot perf guard (docs/rust-port/notes/perf.md "Snapshot perf guard"): depth-7 synctest of cpu_fox_falco_dl,
 # N runs (default 3), the minimum of each of save / load / total ms per tick against snap_baseline.tsv. Fails when one is
 # more than 25% (and more than 0.05 ms) over its baseline. The minimum of N runs keeps it usable on a loaded machine.

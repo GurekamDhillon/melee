@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Tag fighter checks (rust/mods/tag_fighter): a scripted 1v1 with three tags (one skipped).
 #   1. golden run with the mods: the tags happen (log), two runs give identical NHV1 CSVs;
 #   2. synctest (rollback + resimulate every frame, depth 4) across the tags: 0 mismatches;

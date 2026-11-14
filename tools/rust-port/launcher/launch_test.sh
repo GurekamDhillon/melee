@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Start Melee Unlocked's launcher (patched with the Rust engine, ours/rust-engine in the scratch clone) hidden, let it
 # press PLAY itself (MELEE_LAUNCHER_TEST_AUTOPLAY), and check that the Rust engine played one VS match and exited 0.
 # No OS input: the launcher's test mode keeps its window off the desktop; MELEE_PAD_SCRIPT drives port 1.

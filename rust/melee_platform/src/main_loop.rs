@@ -272,6 +272,17 @@ impl Default for WindowConfig {
     }
 }
 
+/// `MELEE_WINDOW_HIDDEN=1` (agents' test runs; `0` opts out): the window is created invisible, never focused, never on
+/// the taskbar, never fullscreen, and nothing shows it later. It still renders every frame (shots, GIFs and frame-time
+/// logs work); the game's audio takes the headless mix (no output device). `MELEE_WINDOW_UNFOCUSED=hidden` is the
+/// older spelling of the same.
+pub fn window_hidden() -> bool {
+    match std::env::var("MELEE_WINDOW_HIDDEN") {
+        Ok(v) => !matches!(v.trim(), "" | "0" | "false" | "off" | "no"),
+        Err(_) => std::env::var("MELEE_WINDOW_UNFOCUSED").is_ok_and(|v| v == "hidden"),
+    }
+}
+
 /// The winit fullscreen value for `mode` on `w`'s current monitor.
 fn winit_fullscreen(w: &Window, mode: FullscreenMode) -> Option<Fullscreen> {
     match mode {
@@ -337,6 +348,8 @@ struct App<G: Game> {
     hud_shown: bool,
     /// Pacing: the user's cap (0: none), vsync, VRR setting and verdict, the monitor's refresh.
     fps_cap: f64,
+    /// MELEE_WINDOW_HIDDEN: the window is invisible (see [`window_hidden`]).
+    hidden: bool,
     vsync: bool,
     vrr_mode: VrrMode,
     vrr: Option<bool>,
@@ -378,6 +391,10 @@ fn env_bool(k: &str) -> Option<bool> {
 impl<G: Game> App<G> {
     /// The present period the pacer holds to (None: present as fast as presentation allows).
     fn cap_period(&self) -> Option<Duration> {
+        if self.hidden {
+            // nothing is shown: present (render, shots, frame-time logs) once per 60 Hz tick, never faster
+            return Some(Duration::from_secs_f64(1.0 / 60.0));
+        }
         let mut cap = self.fps_cap;
         if self.vsync && self.refresh_hz >= 1.0 {
             if self.vrr_probe_until.is_some() {
@@ -448,6 +465,66 @@ impl<G: Game> App<G> {
             }
         }
         plog!("gw: video: pacing (live): fps cap {}, vsync {}, interp {}", if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() }, if self.vsync { "on" } else { "off" }, match self.interp_env { None => "auto", Some(true) => "on", Some(false) => "off" });
+    }
+
+    /// One present (the window's RedrawRequested; a hidden window gets none from Windows, so `ask_redraw` calls it).
+    fn redraw(&mut self, el: &ActiveEventLoop) {
+        if let Some(w) = self.window.clone() {
+            // A tick that came due since the present was scheduled runs first: the in-between pose of the
+            // older pair would be stale (shown after the frame it leads to exists).
+            let before = self.clock.ticks;
+            if !core::mem::take(&mut self.present_first) {
+                self.run_due_ticks();
+            }
+            if self.clock.ticks != before {
+                self.stale += 1;
+            }
+            if self.quit {
+                el.exit();
+                return;
+            }
+            // the phase of the time this present is scheduled for (the tick schedule), not of "now"
+            let at = self.present_at.take().unwrap_or_else(Instant::now);
+            let extra = self.last.map(|l| at.saturating_duration_since(l)).unwrap_or_default();
+            let t = Instant::now();
+            self.presented_tick = self.clock.ticks;
+            self.game.present(&w, self.clock.alpha_after(extra));
+            if !self.game.should_quit() {
+                crate::yougame::presented();
+            }
+            let d = t.elapsed();
+            self.present_time += d;
+            if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
+                use std::io::Write;
+                let _ = writeln!(f, "P,{},{:.3},{:.3}", self.frames, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
+            }
+            if self.show_fps {
+                let now = Instant::now();
+                if let Some(l) = self.last_frame {
+                    self.frame_us.push((now - l).as_micros().min(u32::MAX as u128) as u32);
+                }
+                self.last_frame = Some(now);
+            }
+            if melee_core::frameprof::on() {
+                melee_core::frameprof::end_frame();
+            }
+            self.frames += 1;
+            self.fps_frames += 1;
+            self.fps_tick(&w);
+            if self.hud_on {
+                self.hud_tick();
+            }
+        }
+    }
+
+    /// Ask for a present: the window's redraw request, or under MELEE_WINDOW_HIDDEN the present itself, now (an
+    /// invisible window is never sent RedrawRequested on Windows, which would stall the run at frame 0).
+    fn ask_redraw(&mut self, el: &ActiveEventLoop) {
+        if self.hidden {
+            self.redraw(el);
+        } else if let Some(w) = self.window.as_ref() {
+            w.request_redraw();
+        }
     }
 
     fn run_due_ticks(&mut self) {
@@ -637,7 +714,17 @@ impl<G: Game> ApplicationHandler for App<G> {
         if crate::yougame::embedded() {
             attrs = yougame_box_attrs(attrs);
         }
-        let unattended = std::env::var_os("MELEE_WINDOW_UNFOCUSED").is_some();
+        let hidden = window_hidden();
+        if hidden {
+            attrs = attrs.with_active(false).with_visible(false);
+            #[cfg(windows)]
+            {
+                use winit::platform::windows::WindowAttributesExtWindows;
+                attrs = attrs.with_skip_taskbar(true);
+            }
+            plog!("gw: video: hidden window (MELEE_WINDOW_HIDDEN): renders, never shown");
+        }
+        let unattended = hidden || std::env::var_os("MELEE_WINDOW_UNFOCUSED").is_some();
         if self.cfg.fullscreen != FullscreenMode::Off && unattended {
             plog!("gw: video: fullscreen ignored under MELEE_WINDOW_UNFOCUSED (a test run never takes the screen)");
         }
@@ -659,7 +746,7 @@ impl<G: Game> ApplicationHandler for App<G> {
                     VrrMode::Auto => None,
                 };
                 if self.vrr.is_none() {
-                    if self.vsync && self.refresh_hz >= 75.0 && self.decoupled {
+                    if self.vsync && !self.hidden && self.refresh_hz >= 75.0 && self.decoupled {
                         self.vrr_probe_until = Some(Instant::now() + Duration::from_secs(6));
                     } else {
                         self.vrr = Some(false);
@@ -772,52 +859,7 @@ impl<G: Game> ApplicationHandler for App<G> {
                 }
             }
             WindowEvent::RedrawRequested => {
-                if let Some(w) = self.window.clone() {
-                    // A tick that came due since the present was scheduled runs first: the in-between pose of the
-                    // older pair would be stale (shown after the frame it leads to exists).
-                    let before = self.clock.ticks;
-                    if !core::mem::take(&mut self.present_first) {
-                        self.run_due_ticks();
-                    }
-                    if self.clock.ticks != before {
-                        self.stale += 1;
-                    }
-                    if self.quit {
-                        el.exit();
-                        return;
-                    }
-                    // the phase of the time this present is scheduled for (the tick schedule), not of "now"
-                    let at = self.present_at.take().unwrap_or_else(Instant::now);
-                    let extra = self.last.map(|l| at.saturating_duration_since(l)).unwrap_or_default();
-                    let t = Instant::now();
-                    self.presented_tick = self.clock.ticks;
-                    self.game.present(&w, self.clock.alpha_after(extra));
-                    if !self.game.should_quit() {
-                        crate::yougame::presented();
-                    }
-                    let d = t.elapsed();
-                    self.present_time += d;
-                    if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
-                        use std::io::Write;
-                        let _ = writeln!(f, "P,{},{:.3},{:.3}", self.frames, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
-                    }
-                    if self.show_fps {
-                        let now = Instant::now();
-                        if let Some(l) = self.last_frame {
-                            self.frame_us.push((now - l).as_micros().min(u32::MAX as u128) as u32);
-                        }
-                        self.last_frame = Some(now);
-                    }
-                    if melee_core::frameprof::on() {
-                        melee_core::frameprof::end_frame();
-                    }
-                    self.frames += 1;
-                    self.fps_frames += 1;
-                    self.fps_tick(&w);
-                    if self.hud_on {
-                        self.hud_tick();
-                    }
-                }
+                self.redraw(el);
             }
             _ => {}
         }
@@ -850,7 +892,7 @@ impl<G: Game> ApplicationHandler for App<G> {
                 let next = target + period;
                 self.next_present = Some(if next + period < now { now + period } else { next });
                 self.present_at = Some(target.max(now));
-                self.window.as_ref().unwrap().request_redraw();
+                self.ask_redraw(el);
             } else {
                 let tick_due = self.last.map_or(target, |l| l + self.clock.until_next());
                 if tick_due < target && target - tick_due < period / 2 && !self.game.present_now() {
@@ -876,10 +918,9 @@ impl<G: Game> ApplicationHandler for App<G> {
             el.set_control_flow(ControlFlow::Poll);
             return;
         }
-        if let Some(w) = self.window.as_ref() {
-            if self.decoupled || self.clock.ticks != self.presented_tick || self.game.present_now() {
-                w.request_redraw();
-            }
+        // pacing: present only when a new tick exists (or the game asks / decoupled), one frame per 60 Hz tick
+        if self.decoupled || self.clock.ticks != self.presented_tick || self.game.present_now() {
+            self.ask_redraw(el);
         }
         if self.decoupled {
             // Render as fast as presentation allows (vsync on: blocks in present at the refresh
@@ -926,6 +967,9 @@ fn yougame_box_attrs(mut attrs: winit::window::WindowAttributes) -> winit::windo
 /// The player box's commands, on the window thread: `rect x y w h`, `show` / `hide`, `focus` (`blur`, `view`,
 /// `volume` are logged and ignored).
 fn yougame_box(w: &Window, cmds: Vec<String>) {
+    if window_hidden() {
+        return; // a hidden run is never shown or focused
+    }
     for c in cmds {
         let n: Vec<i32> = c.split_whitespace().skip(1).filter_map(|v| v.parse().ok()).collect();
         match c.split_whitespace().next().unwrap_or("") {
@@ -982,6 +1026,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         hud_last_frame: None,
         hud_n: (0, 0),
         hud_shown: false,
+        hidden: window_hidden(),
         fps_cap: std::env::var("MELEE_FPS_CAP").ok().and_then(|v| v.trim().parse::<f64>().ok()).filter(|v| *v > 0.0).unwrap_or(0.0),
         vsync: crate::gfx::vsync_from_env(),
         vrr_mode: std::env::var("MELEE_VRR").ok().and_then(|v| VrrMode::parse(&v)).unwrap_or(VrrMode::Auto),

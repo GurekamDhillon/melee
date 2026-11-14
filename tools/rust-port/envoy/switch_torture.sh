@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy stage-switch torture (the owner's "died falling through the stage / warped onto the blast zone at a switch"):
 # (log line counts are per log line; golden logs each sim line twice) the envoy_sim test knob `torture` forces a stage switch every 240 live frames, walking every ordered pair of the
 # rotation (36 BF, 10, 28, 12, 37), while CPU fighters on both sides play through the awkward states (grounded,

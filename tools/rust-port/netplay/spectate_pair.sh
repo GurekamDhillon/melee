@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # A headless netplay pair on loopback with one read-only spectator (notes/spectate-replay.md). No OS input, no window.
 #   bash tools/rust-port/netplay/spectate_pair.sh NAME direct|relay JOIN_AFTER_S [LAG_MS LOSS_PCT]
 # direct: the spectator dials the host's spectate port; relay: both go through a local melee_relay (spectate code).

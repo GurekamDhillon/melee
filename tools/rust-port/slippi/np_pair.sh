@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Two engine peers over the Slippi protocol (ENet, loopback), headless. usage: np_pair.sh BASEPORT OUTDIR [extra args...]
 # Extra args go to both peers (--frames N, --delay D, --lag-ms N, --loss-pct P). Checksum CSVs must be identical.
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"

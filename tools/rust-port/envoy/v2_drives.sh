@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy V2 (the full drive core, envoy-core-v2.md 6): drives charge, fire, launch, drop and level under rollback,
 # deterministically, solo and in local co-op.
 #   0. envoy_data's lint (the full-pool rules on) and its tests; the balancing harness's bands (sim.py);

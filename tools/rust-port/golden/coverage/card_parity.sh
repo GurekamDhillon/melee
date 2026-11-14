@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # The 1P records on the memory card, C build vs Rust engine: run one 1P scene launch with `skipmemcard=0` (the boot
 # scene creates the save on a fresh card folder, the mode's saves reach it) in both, compare the NHV1 rows, then load
 # each card in the Rust engine (MELEE_CARD_DUMP) and compare the decoded GameCube images of GmSaveData and the

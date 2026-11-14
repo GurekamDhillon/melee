@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy milestone 0, the stage-switch heap leak check (full-game plan R2): SHIFTS stage switches (default 100) through BF, Yoshi's
 # Story, Kongo Jungle 64, Dream Land, Yoshi's Island 64, Fountain, frozen Pokemon Stadium and FD, PERIOD logic frames apart (default
 # 60), with the stage_switch mod's C twin (ROTATION_EXT). Prints heap0 free after each switch and fails when, after the first full

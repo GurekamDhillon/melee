@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Regression (port/pt-fix): back out of the main menu to the title with B, press B on the title, then Start. Before the fix
 # the title's PC-only B / Y shortcut opened the debug menu, which crashes (DevText_StrLen, read of 0x1800). Runs with the
 # in-repo wasm mods loaded (browser + lab, built by tools/rust-port/modhost/build_mods.sh when present) and MELEE_WIDESCREEN=0,

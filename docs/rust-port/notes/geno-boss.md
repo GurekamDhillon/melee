@@ -62,3 +62,36 @@ KO, draw, camera, knockback scale, sounds the IR lists without an id (looked up 
 | NHV1 (golden, `pad_falcon_fox_fd` + Envoy fight 5, 3000 frames) | identical over two runs; last row frame 2999 hash `1CB3982F`, seed `777F059B` (the boss state word is mixed in while the actor is live) |
 | frame times (real time, profiler, 2199 frames) | 0 frames over 16.7 ms (one startup frame, the match load) |
 | VS (`MELEE_VS_BOSS=petey`, no mods) | his arena, the Geno actor, death at the scripted hits, carrier KO |
+
+## Projectiles: spawn records and the weapon pool (lane B, port/geno-boss-spawn)
+
+Code: `rust/melee_modes/src/tu/geno_boss_spawn.rs` (records, `Op::Spawn`, pool step, hits, removal, hash, IR lowering).
+Core touch points only: `Op::Spawn { record, joint }`, `Define::spawns`, `State::spawn` (8 slots, last field),
+`EV_SPAWN` / `EV_SPAWN_HIT` / `EV_SPAWN_END`, one match arm, one `hash_into` call.
+
+| piece | reading |
+|---|---|
+| record (Brawl's 0x7C-byte weapon spawn record) | from the spawn helper chain (`fn_41_5B574` -> `473DC` record fetch, `47470` placement, `47544` mode, `47D8C` weapon create): +0x08 mode (2 = owner position, else bone), +0x10 life, +0x14 scale, +0x1C default bone, +0x38 five (base, per_level) pairs = speed lo/hi, launch angle lo/hi (deg), then accel (x, y) per frame, +0x60 offset, +0x74 the weapon's own set (>= 44000). The pair meaning is inferred from the values (Hammer Bro: speed 1-2.5, angle 55-0.5L..84, gravity 0.0545 = the familiar arc; Duon's bomb 64..82 deg lob; beams 0 deg, 4.5+0.5L), not from a decompiled proc |
+| IR | `boss.weapon_records`, added locally by `_build/boss-ir/tools/gen_weapons.py` from the param dumps (Galleom 44022 grenade / 44023 missile / 44024 HammerKnuckle; Duon 44014-44017; Hammer Bro 44006). Never committed |
+| lowering | timeline `650E v<rec> 0 [bone]` / `650E param<rec>` -> `Op::Spawn`; `link_i k 5103 p` (proc binding) -> no-op. A spawn op whose record is not in `weapon_records` is a load error |
+| spawn | free slot (pool full: dropped, as the native pool); speed and angle drawn from the actor LCG at the actor's L; the slot keeps that L (Rayquaza Q3); at the actor x + offset, the host may `place()` it at the bone on the `EV_SPAWN` frame |
+| flight | v += accel (x along the flight direction), p += v |
+| removal (owner-side) | life out, a hit (one per target, then removed), a falling record reaching y <= 0 (TouchGround), `clear()` |
+| hits | `tick(d, targets, out)`: circle test against the host's 4 target circles; the host applies (damage, angle, kbg, bkb) at the slot's L |
+| hash | pool words mixed into `state_hash` only while a slot is live (Petey's NHV1 rows unchanged) |
+
+Not read yet (rows for the next pass): each weapon's own box (the +0x74 set: `s_wpnAnmCmdDataSet`, wnemDuonProc
+Laser/Missile/Bomb procs); records use a declared placeholder box `SpawnBox::UNREAD` (8 dmg, 45 deg, r 4 x scale).
+Duon 44018 (homing missile) lies past the dumped param block; its spawn ops are skipped in the test and would be a
+load error in a full Duon lowering. Homing / laser phases (gaps D3, P4) are not modelled. Duon fires up to 8 at
+once (SwordBombAttack), so 8 slots cover every timeline; the native 14-slot pool would need the coordinator's OK
+for a larger `MAX_SPAWN`.
+
+The analyst IRs write unread floats as `NaN`, which `geno_boss_ir::parse_json` rejects: the tests map them to null; a
+real Galleom / Duon load needs the reader (core lane) to take them.
+
+Proof so far: `cargo test -p melee_modes --lib geno_boss` (headless, on the local IRs): Galleom Grenade and Shoot
+fire 4 each, a projectile hits the target, all 4 removed; every Duon spawn timeline fires and removes its shots;
+Hammer Bro's hammer hits; a mid-flight snapshot / restore replays identical hashes. No in-game run: there is no
+Galleom / Duon / Hammer Bro host in Melee yet (Petey is the only host and spawns nothing), so pad-script, synctest,
+NHV1 and frame-time proof for projectiles waits on a host.

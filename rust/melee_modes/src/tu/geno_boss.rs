@@ -168,6 +168,9 @@ pub enum Op {
     Hitbox(u8, u8),
     /// the actor is gone after this status (host handles removal)
     Despawn,
+    /// a projectile from a weapon spawn record (`Define::spawns` index) at a joint (-1 = the record's bone); lane B,
+    /// `geno_boss_spawn`
+    Spawn { record: u8, joint: i16 },
 }
 
 #[derive(Clone, Debug)]
@@ -381,6 +384,8 @@ pub struct Define {
     /// the evaluation passes per frame, in order: (lo, hi, only on a frame the core was hit). The enemy engine's are
     /// -100 first, the damage window -250..-150 during a hit reaction, then the normal window -50..250.
     pub passes: Vec<(i32, i32, bool)>,
+    /// weapon spawn records (`Op::Spawn`), `geno_boss_spawn`
+    pub spawns: Vec<crate::tu::geno_boss_spawn::SpawnRecord>,
 }
 
 impl Define {
@@ -394,21 +399,6 @@ impl Define {
 
 // ------------------------------------------------------------------------------------------------- state
 
-/// One actor-owned spawned object (lane B, port/geno-boss-spawn, fills the behaviour). Plain data.
-#[derive(Clone, Copy, Debug, PartialEq)]
-#[repr(C)]
-pub struct SpawnSlot {
-    pub live: bool,
-    /// the spawn record index in the define
-    pub record: u16,
-    pub age: i32,
-    pub x: f32,
-    pub y: f32,
-    pub vx: f32,
-    pub vy: f32,
-}
-
-pub const SPAWN_OFF: SpawnSlot = SpawnSlot { live: false, record: 0, age: 0, x: 0.0, y: 0.0, vx: 0.0, vy: 0.0 };
 
 /// Everything that changes during a fight. Plain data, fixed size: memory snapshots cover it.
 #[derive(Clone, Copy, Debug)]
@@ -458,8 +448,8 @@ pub struct State {
     pub atk: [(u8, u8); 4],
     /// parts whose contact boxes a timeline cleared since the motion began
     pub cleared: u8,
-    /// spawned objects (lanes add their fields after this one, and to `state_hash`)
-    pub spawn: [SpawnSlot; MAX_SPAWNS],
+    /// the projectile pool (`geno_boss_spawn`)
+    pub spawn: [crate::tu::geno_boss_spawn::SpawnSlot; crate::tu::geno_boss_spawn::MAX_SPAWN],
 }
 
 pub const OFF: State = State {
@@ -467,7 +457,8 @@ pub const OFF: State = State {
     goal: 0.0, has_goal: false, strength: 1, difficulty: 5, rules_on: 0, vars: [0.0; MAX_VARS], hp: [0; MAX_PARTS],
     hp_max: [1; MAX_PARTS], counter: [0; MAX_PARTS], zero_sent: 0, intangible: 0, hit: false, hit_part: 0, dmg_core: 0,
     damaged: 0, locked: -1, last_slot: -1, rng: 1, frame: 0, cause: 0, despawned: false, ev_n: 0,
-    ev: [(0, 0); MAX_EVENTS], inst: 1, atk: [(0xFF, 0xFF); 4], cleared: 0, spawn: [SPAWN_OFF; MAX_SPAWNS],
+    ev: [(0, 0); MAX_EVENTS], inst: 1, atk: [(0xFF, 0xFF); 4], cleared: 0,
+    spawn: [crate::tu::geno_boss_spawn::FREE; crate::tu::geno_boss_spawn::MAX_SPAWN],
 };
 
 pub static mut S: State = OFF;
@@ -477,6 +468,10 @@ pub const EV_SOUND: u8 = 1;
 pub const EV_SHAKE: u8 = 2;
 pub const EV_STAGE: u8 = 3;
 pub const EV_STATUS: u8 = 4;
+/// projectile events (`geno_boss_spawn`): spawned (slot), hit (slot << 8 | target), removed (slot)
+pub const EV_SPAWN: u8 = 5;
+pub const EV_SPAWN_HIT: u8 = 6;
+pub const EV_SPAWN_END: u8 = 7;
 
 /// The host's view of the world each frame: the target candidates' x (None = absent / not selectable) and whether
 /// the actor is airborne.
@@ -531,18 +526,11 @@ pub fn state_hash() -> Option<u32> {
     mix(s.rng);
     mix(s.cause as u32);
     mix(s.cleared as u32);
-    for sp in s.spawn.iter().filter(|sp| sp.live) {
-        mix(sp.record as u32);
-        mix(sp.age as u32);
-        mix(sp.x.to_bits());
-        mix(sp.y.to_bits());
-        mix(sp.vx.to_bits());
-        mix(sp.vy.to_bits());
-    }
+    crate::tu::geno_boss_spawn::hash_into(s, &mut mix);
     Some(h)
 }
 
-fn log_on() -> bool {
+pub(crate) fn log_on() -> bool {
     static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *V.get_or_init(|| std::env::var_os("MELEE_GENO_BOSS_LOG").is_some() || std::env::var_os("MELEE_PETEY_LOG").is_some())
 }
@@ -900,6 +888,11 @@ impl<'a> Rt<'a> {
                 }
             }
             Op::Despawn => s.despawned = true,
+            Op::Spawn { record, joint } => {
+                let (r1, r2) = (self.rnd01(), self.rnd01());
+                let l = self.level();
+                crate::tu::geno_boss_spawn::spawn(d, unsafe { &mut S }, *record, *joint, l, r1, r2);
+            }
         }
         false
     }
@@ -1231,6 +1224,7 @@ mod tests {
             camera: None,
             window: (-50, 250),
             passes: vec![(-100, -100, false), (-250, -150, true), (-50, 250, false)],
+            spawns: vec![],
         }
     }
 

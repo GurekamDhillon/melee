@@ -167,18 +167,19 @@ fn value(b: &[u8], i: &mut usize) -> Result<J, String> {
             *i += 5;
             Ok(J::Bool(false))
         }
-        // Python's json writes NaN / Infinity for non-finite raw words
+        // Python's json writes NaN / Infinity for unread raw words: they read as null (`num()` None), so a field that
+        // an op actually uses falls back or fails where it is read, never silently as a number
         b'N' if b[*i..].starts_with(b"NaN") => {
             *i += 3;
-            Ok(J::Num(f64::NAN))
+            Ok(J::Null)
         }
         b'I' if b[*i..].starts_with(b"Infinity") => {
             *i += 8;
-            Ok(J::Num(f64::INFINITY))
+            Ok(J::Null)
         }
         b'-' if b[*i..].starts_with(b"-Infinity") => {
             *i += 9;
-            Ok(J::Num(f64::NEG_INFINITY))
+            Ok(J::Null)
         }
         b'n' if b[*i..].starts_with(b"null") => {
             *i += 4;
@@ -665,6 +666,18 @@ impl<'a> Lx<'a> {
                     None => one(Op::Nop), // a box of the current attack (by motion), host side
                 }
             }
+            "other" if crate::tu::geno_boss_spawn::parse_spawn_text(text).is_some() => {
+                let (id, joint) = crate::tu::geno_boss_spawn::parse_spawn_text(text).unwrap();
+                match self.ir.get("boss").get("weapon_records").arr().iter().position(|r| r.get("raw_id").num() == Some(id as f64)) {
+                    Some(i) => one(Op::Spawn { record: i as u8, joint }),
+                    None => {
+                        self.err(&format!("spawn record {id} not in weapon_records"), ctx);
+                        vec![]
+                    }
+                }
+            }
+            // the weapon's proc binding (link 5103): the record carries the flight
+            "other" if text.starts_with("link_i ") && text.contains(" 5103 ") => one(Op::Nop),
             "other" => {
                 if tl.contains("commonnoneflydamageproc") || tl.contains("noro") || tl.contains("ground snap") || tl.contains("reply handled") || tl.contains("copy cage motion") || tl.contains("trophy") {
                     one(Op::Nop)
@@ -1023,6 +1036,7 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
         window,
         // the shared enemy engine's passes (enemy-engine IR): -100, the damage window on a hit frame, the default window
         passes: vec![(-100, -100, false), (-250, -150, true), (window.0, window.1, false)],
+        spawns: crate::tu::geno_boss_spawn::lower_records(boss),
     })
 }
 

@@ -130,10 +130,10 @@ fn itmato_matches_c() {
                 match op {
                     0 => {  m::it_802D84F8(&raw mut GO[0]); } // it_802D84F8
                     1 => {  m::it_802D8554(&raw mut GO[0]); } // it_802D8554
-                    2 => {  ret = m::itMato_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itMato_UnkMotion0_Anim
+                    2 => {  ret = ((m::itMato_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMato_UnkMotion0_Anim
                     3 => {  m::itMato_UnkMotion0_Phys(&raw mut GO[0]); } // itMato_UnkMotion0_Phys
-                    4 => {  ret = m::itMato_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itMato_UnkMotion0_Coll
-                    5 => {  ret = m::it_802D85F4(&raw mut GO[0]) as u32; } // it_802D85F4
+                    4 => {  ret = ((m::itMato_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMato_UnkMotion0_Coll
+                    5 => {  ret = ((m::it_802D85F4(&raw mut GO[0])) as i32 != 0) as u32; } // it_802D85F4
                     6 => { for j in 0..1 { let row = &m::it_803F83E0[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

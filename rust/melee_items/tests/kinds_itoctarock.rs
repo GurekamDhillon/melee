@@ -128,44 +128,44 @@ fn itoctarock_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => {  m::it_802E4A44(&raw mut GO[0]); } // it_802E4A44
-                    1 => {  ret = m::it_802E4B00(&raw mut GO[0]) as u32; } // it_802E4B00
+                    1 => {  ret = ((m::it_802E4B00(&raw mut GO[0])) as i32 != 0) as u32; } // it_802E4B00
                     2 => {  m::it_802E4C08(&raw mut GO[0]); } // it_802E4C08
-                    3 => {  ret = m::itOctarock_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion0_Anim
+                    3 => {  ret = ((m::itOctarock_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion0_Anim
                     4 => {  m::itOctarock_UnkMotion0_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion0_Phys
-                    5 => {  ret = m::itOctarock_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion0_Coll
+                    5 => {  ret = ((m::itOctarock_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion0_Coll
                     6 => {  m::it_802E4DB4(&raw mut GO[0]); } // it_802E4DB4
-                    7 => {  ret = m::itOctarock_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion2_Anim
+                    7 => {  ret = ((m::itOctarock_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion2_Anim
                     8 => {  m::itOctarock_UnkMotion2_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion2_Phys
-                    9 => {  ret = m::itOctarock_UnkMotion2_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion2_Coll
+                    9 => {  ret = ((m::itOctarock_UnkMotion2_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion2_Coll
                     10 => {  m::it_802E4E6C(&raw mut GO[0]); } // it_802E4E6C
-                    11 => {  ret = m::itOctarock_UnkMotion3_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion3_Anim
+                    11 => {  ret = ((m::itOctarock_UnkMotion3_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion3_Anim
                     12 => {  m::itOctarock_UnkMotion3_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion3_Phys
-                    13 => {  ret = m::itOctarock_UnkMotion3_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion3_Coll
+                    13 => {  ret = ((m::itOctarock_UnkMotion3_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion3_Coll
                     14 => {  m::it_802E503C(&raw mut GO[0]); } // it_802E503C
-                    15 => {  ret = m::itOctarock_UnkMotion4_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion4_Anim
+                    15 => {  ret = ((m::itOctarock_UnkMotion4_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion4_Anim
                     16 => {  m::itOctarock_UnkMotion4_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion4_Phys
-                    17 => {  ret = m::itOctarock_UnkMotion4_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion4_Coll
+                    17 => {  ret = ((m::itOctarock_UnkMotion4_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion4_Coll
                     18 => {  ret = m::it_802E52E0(&raw mut GO[0]) as u32; } // it_802E52E0
                     19 => {  m::it_802E53C8(&raw mut GO[0]); } // it_802E53C8
-                    20 => {  ret = m::itOctarock_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion1_Anim
+                    20 => {  ret = ((m::itOctarock_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion1_Anim
                     21 => {  m::itOctarock_UnkMotion1_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion1_Phys
-                    22 => {  ret = m::itOctarock_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion1_Coll
+                    22 => {  ret = ((m::itOctarock_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion1_Coll
                     23 => {  m::itOctarock_Logic2_PickedUp(&raw mut GO[0]); } // itOctarock_Logic2_PickedUp
-                    24 => {  ret = m::itOctarock_UnkMotion5_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion5_Anim
+                    24 => {  ret = ((m::itOctarock_UnkMotion5_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion5_Anim
                     25 => {  m::itOctarock_UnkMotion5_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion5_Phys
                     26 => {  m::itOctarock_Logic2_Dropped(&raw mut GO[0]); } // itOctarock_Logic2_Dropped
                     27 => {  m::itOctarock_Logic2_Thrown(&raw mut GO[0]); } // itOctarock_Logic2_Thrown
-                    28 => {  ret = m::itOctarock_UnkMotion6_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion6_Anim
+                    28 => {  ret = ((m::itOctarock_UnkMotion6_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion6_Anim
                     29 => {  m::itOctarock_UnkMotion6_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion6_Phys
-                    30 => {  ret = m::itOctarock_UnkMotion6_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion6_Coll
+                    30 => {  ret = ((m::itOctarock_UnkMotion6_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion6_Coll
                     31 => {  m::it_802E57D4(&raw mut GO[0]); } // it_802E57D4
-                    32 => {  ret = m::itOctarock_UnkMotion7_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion7_Anim
+                    32 => {  ret = ((m::itOctarock_UnkMotion7_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion7_Anim
                     33 => {  m::itOctarock_UnkMotion7_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion7_Phys
-                    34 => {  ret = m::itOctarock_UnkMotion7_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion7_Coll
+                    34 => {  ret = ((m::itOctarock_UnkMotion7_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion7_Coll
                     35 => {  m::it_802E58A0(&raw mut GO[0]); } // it_802E58A0
-                    36 => {  ret = m::itOctarock_UnkMotion8_Anim(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion8_Anim
+                    36 => {  ret = ((m::itOctarock_UnkMotion8_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion8_Anim
                     37 => {  m::itOctarock_UnkMotion8_Phys(&raw mut GO[0]); } // itOctarock_UnkMotion8_Phys
-                    38 => {  ret = m::itOctarock_UnkMotion8_Coll(&raw mut GO[0]) as u32; } // itOctarock_UnkMotion8_Coll
+                    38 => {  ret = ((m::itOctarock_UnkMotion8_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itOctarock_UnkMotion8_Coll
                     39 => {  m::it_802E5944(&raw mut GO[0]); } // it_802E5944
                     40 => {  m::it_802E595C(&raw mut JO[3], &raw mut IT[0]); } // it_802E595C
                     41 => {  m::it_802E5AA4(&raw mut GO[0], &raw mut GO[1]); } // it_802E5AA4

@@ -129,15 +129,15 @@ fn itmewtwodisable_matches_c() {
                     2 => { let v2: f32 = rw() as f32; ret = pi(m::itMewtwoDisable_Logic67_SpawnMewtwoDisable(&raw mut GO[0], &raw mut VA[0], v2)); } // itMewtwoDisable_Logic67_SpawnMewtwoDisable
                     3 => {  m::it_802C4B38(&raw mut GO[0]); } // it_802C4B38
                     4 => {  m::it_802C4BB8(&raw mut GO[0]); } // it_802C4BB8
-                    5 => {  ret = m::itMewtwodisable_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itMewtwodisable_UnkMotion0_Anim
+                    5 => {  ret = ((m::itMewtwodisable_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwodisable_UnkMotion0_Anim
                     6 => {  m::itMewtwodisable_UnkMotion0_Phys(&raw mut GO[0]); } // itMewtwodisable_UnkMotion0_Phys
                     7 => {  ret = m::itMewtwodisable_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itMewtwodisable_UnkMotion0_Coll
-                    8 => {  ret = m::itMewtwoDisable_Logic67_DmgDealt(&raw mut GO[0]) as u32; } // itMewtwoDisable_Logic67_DmgDealt
-                    9 => {  ret = m::itMewtwoDisable_Logic67_Reflected(&raw mut GO[0]) as u32; } // itMewtwoDisable_Logic67_Reflected
-                    10 => {  ret = m::itMewtwoDisable_Logic67_Clanked(&raw mut GO[0]) as u32; } // itMewtwoDisable_Logic67_Clanked
-                    11 => {  ret = m::itMewtwoDisable_Logic67_HitShield(&raw mut GO[0]) as u32; } // itMewtwoDisable_Logic67_HitShield
-                    12 => {  ret = m::itMewtwoDisable_Logic67_Absorbed(&raw mut GO[0]) as u32; } // itMewtwoDisable_Logic67_Absorbed
-                    13 => {  ret = m::itMewtwoDisable_Logic67_ShieldBounced(&raw mut GO[0]) as u32; } // itMewtwoDisable_Logic67_ShieldBounced
+                    8 => {  ret = ((m::itMewtwoDisable_Logic67_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoDisable_Logic67_DmgDealt
+                    9 => {  ret = ((m::itMewtwoDisable_Logic67_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoDisable_Logic67_Reflected
+                    10 => {  ret = ((m::itMewtwoDisable_Logic67_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoDisable_Logic67_Clanked
+                    11 => {  ret = ((m::itMewtwoDisable_Logic67_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoDisable_Logic67_HitShield
+                    12 => {  ret = ((m::itMewtwoDisable_Logic67_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoDisable_Logic67_Absorbed
+                    13 => {  ret = ((m::itMewtwoDisable_Logic67_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoDisable_Logic67_ShieldBounced
                     14 => {  m::itMewtwoDisable_Logic67_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itMewtwoDisable_Logic67_EvtUnk
                     15 => { for j in 0..1 { let row = &m::it_803F7750[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

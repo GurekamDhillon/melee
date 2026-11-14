@@ -253,12 +253,12 @@ fn itsamusgrapple_matches_c() {
                     26 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; ret = m::it_802B9328(v0, &raw mut VA[0], &raw mut AG[0], &raw mut FT[0]) as u32; } // it_802B9328
                     27 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; ret = m::it_802B99A0(v0, &raw mut VA[0], &raw mut AG[0], &raw mut FT[0]) as u32; } // it_802B99A0
                     28 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; m::it_802B9CE8(v0, &raw mut VA[0], &raw mut AG[0], &raw mut FT[0]); } // it_802B9CE8
-                    29 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; ret = m::it_802B9FD4(v0, &raw mut VA[0], &raw mut AG[0]) as u32; } // it_802B9FD4
-                    30 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; let v3: f32 = (rnd() % 40) as f32 / 4.0 as f32; ret = m::it_802BA194(v0, &raw mut VA[0], &raw mut AG[0], v3) as u32; } // it_802BA194
-                    31 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; let v3: f32 = (rnd() % 40) as f32 / 4.0 as f32; ret = m::it_802BA2D8(v0, &raw mut VA[0], &raw mut AG[0], v3) as u32; } // it_802BA2D8
-                    32 => { let v4: f32 = (rnd() % 40) as f32 / 4.0 as f32; ret = m::it_802BA3BC(&raw mut LK[0], &raw mut LK[NL - 1], &raw mut VA[0], &raw mut AG[0], v4) as u32; } // it_802BA3BC
+                    29 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; ret = ((m::it_802B9FD4(v0, &raw mut VA[0], &raw mut AG[0])) as i32 != 0) as u32; } // it_802B9FD4
+                    30 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; let v3: f32 = (rnd() % 40) as f32 / 4.0 as f32; ret = ((m::it_802BA194(v0, &raw mut VA[0], &raw mut AG[0], v3)) as i32 != 0) as u32; } // it_802BA194
+                    31 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; let v3: f32 = (rnd() % 40) as f32 / 4.0 as f32; ret = ((m::it_802BA2D8(v0, &raw mut VA[0], &raw mut AG[0], v3)) as i32 != 0) as u32; } // it_802BA2D8
+                    32 => { let v4: f32 = (rnd() % 40) as f32 / 4.0 as f32; ret = ((m::it_802BA3BC(&raw mut LK[0], &raw mut LK[NL - 1], &raw mut VA[0], &raw mut AG[0], v4)) as i32 != 0) as u32; } // it_802BA3BC
                     33 => {  m::it_802BA5DC(&raw mut LK[0], &raw mut LK[NL - 1], &raw mut VA[0], &raw mut AG[0]); } // it_802BA5DC
-                    34 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; ret = m::it_802BA760(v0, &raw mut VA[0], &raw mut AG[0], &raw mut FT[0]) as u32; } // it_802BA760
+                    34 => { let v0: *mut ItemLink = &raw mut LK[(rnd() % (NL as u32)) as usize]; ret = ((m::it_802BA760(v0, &raw mut VA[0], &raw mut AG[0], &raw mut FT[0])) as i32 != 0) as u32; } // it_802BA760
                     35 => {  m::itSamusGrapple_Logic53_PickedUp(&raw mut GO[0]); } // itSamusGrapple_Logic53_PickedUp
                     36 => {  m::it_802BA9B8(&raw mut GO[0]); } // it_802BA9B8
                     37 => {  m::it_802BAA08(&raw mut GO[0]); } // it_802BAA08

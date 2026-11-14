@@ -127,17 +127,17 @@ fn itmasterhandbullet_matches_c() {
                     1 => {  m::itMasterHandBullet_Logic85_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itMasterHandBullet_Logic85_EvtUnk
                     2 => {  m::it_802F0BE8(&raw mut GO[0]); } // it_802F0BE8
                     3 => {  m::it_802F0D2C(&raw mut GO[0]); } // it_802F0D2C
-                    4 => {  ret = m::itMasterhandbullet_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itMasterhandbullet_UnkMotion1_Anim
+                    4 => {  ret = ((m::itMasterhandbullet_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterhandbullet_UnkMotion1_Anim
                     5 => {  m::itMasterhandbullet_UnkMotion1_Phys(&raw mut GO[0]); } // itMasterhandbullet_UnkMotion1_Phys
-                    6 => {  ret = m::itMasterhandbullet_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itMasterhandbullet_UnkMotion1_Coll
+                    6 => {  ret = ((m::itMasterhandbullet_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterhandbullet_UnkMotion1_Coll
                     7 => {  m::it_802F0F04(&raw mut GO[0]); } // it_802F0F04
                     8 => {  m::it_802F0F08(&raw mut GO[0]); } // it_802F0F08
-                    9 => {  ret = m::itMasterHandBullet_Logic83_DmgDealt(&raw mut GO[0]) as u32; } // itMasterHandBullet_Logic83_DmgDealt
-                    10 => {  ret = m::itMasterHandBullet_Logic83_Reflected(&raw mut GO[0]) as u32; } // itMasterHandBullet_Logic83_Reflected
-                    11 => {  ret = m::itMasterHandBullet_Logic83_Clanked(&raw mut GO[0]) as u32; } // itMasterHandBullet_Logic83_Clanked
-                    12 => {  ret = m::itMasterHandBullet_Logic83_Absorbed(&raw mut GO[0]) as u32; } // itMasterHandBullet_Logic83_Absorbed
-                    13 => {  ret = m::itMasterHandBullet_Logic83_ShieldBounced(&raw mut GO[0]) as u32; } // itMasterHandBullet_Logic83_ShieldBounced
-                    14 => {  ret = m::itMasterHandBullet_Logic83_HitShield(&raw mut GO[0]) as u32; } // itMasterHandBullet_Logic83_HitShield
+                    9 => {  ret = ((m::itMasterHandBullet_Logic83_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterHandBullet_Logic83_DmgDealt
+                    10 => {  ret = ((m::itMasterHandBullet_Logic83_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterHandBullet_Logic83_Reflected
+                    11 => {  ret = ((m::itMasterHandBullet_Logic83_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterHandBullet_Logic83_Clanked
+                    12 => {  ret = ((m::itMasterHandBullet_Logic83_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterHandBullet_Logic83_Absorbed
+                    13 => {  ret = ((m::itMasterHandBullet_Logic83_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterHandBullet_Logic83_ShieldBounced
+                    14 => {  ret = ((m::itMasterHandBullet_Logic83_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterHandBullet_Logic83_HitShield
                     15 => { for j in 0..2 { let row = &m::it_803F9388[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

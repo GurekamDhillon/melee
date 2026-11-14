@@ -134,15 +134,15 @@ fn itzeldadinfire_matches_c() {
                     3 => {  m::itZeldaDinFire_Logic65_Destroyed(&raw mut GO[0]); } // itZeldaDinFire_Logic65_Destroyed
                     4 => {  m::it_802C3D44(&raw mut GO[0]); } // it_802C3D44
                     5 => {  m::it_802C3D74(&raw mut GO[0]); } // it_802C3D74
-                    6 => {  ret = m::itZeldadinfire_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itZeldadinfire_UnkMotion0_Anim
-                    7 => {  ret = m::itZeldadinfire_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itZeldadinfire_UnkMotion1_Anim
+                    6 => {  ret = ((m::itZeldadinfire_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itZeldadinfire_UnkMotion0_Anim
+                    7 => {  ret = ((m::itZeldadinfire_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itZeldadinfire_UnkMotion1_Anim
                     8 => {  m::itZeldadinfire_UnkMotion0_Phys(&raw mut GO[0]); } // itZeldadinfire_UnkMotion0_Phys
                     9 => {  m::itZeldadinfire_UnkMotion1_Phys(&raw mut GO[0]); } // itZeldadinfire_UnkMotion1_Phys
-                    10 => {  ret = m::itZeldadinfire_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itZeldadinfire_UnkMotion0_Coll
-                    11 => {  ret = m::itZeldadinfire_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itZeldadinfire_UnkMotion1_Coll
-                    12 => {  ret = m::itZeldaDinFire_Logic65_Reflected(&raw mut GO[0]) as u32; } // itZeldaDinFire_Logic65_Reflected
-                    13 => {  ret = m::itZeldaDinFire_Logic65_Clanked(&raw mut GO[0]) as u32; } // itZeldaDinFire_Logic65_Clanked
-                    14 => {  ret = m::itZeldaDinFire_Logic65_Absorbed(&raw mut GO[0]) as u32; } // itZeldaDinFire_Logic65_Absorbed
+                    10 => {  ret = ((m::itZeldadinfire_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itZeldadinfire_UnkMotion0_Coll
+                    11 => {  ret = ((m::itZeldadinfire_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itZeldadinfire_UnkMotion1_Coll
+                    12 => {  ret = ((m::itZeldaDinFire_Logic65_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itZeldaDinFire_Logic65_Reflected
+                    13 => {  ret = ((m::itZeldaDinFire_Logic65_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itZeldaDinFire_Logic65_Clanked
+                    14 => {  ret = ((m::itZeldaDinFire_Logic65_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // itZeldaDinFire_Logic65_Absorbed
                     15 => {  m::itZeldaDinFire_Logic65_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itZeldaDinFire_Logic65_EvtUnk
                     16 => { for j in 0..2 { let row = &m::ItemStateTable_ZeldaDinFire[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

@@ -141,9 +141,9 @@ fn itmasterhandlaser_matches_c() {
                     1 => {  m::itMasterHandLaser_Logic84_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itMasterHandLaser_Logic84_EvtUnk
                     2 => {  m::it_802F046C(&raw mut GO[0]); } // it_802F046C
                     3 => {  m::it_802F0484(&raw mut GO[0]); } // it_802F0484
-                    4 => {  ret = m::itMasterhandlaser_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itMasterhandlaser_UnkMotion0_Anim
+                    4 => {  ret = ((m::itMasterhandlaser_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterhandlaser_UnkMotion0_Anim
                     5 => {  m::itMasterhandlaser_UnkMotion0_Phys(&raw mut GO[0]); } // itMasterhandlaser_UnkMotion0_Phys
-                    6 => {  ret = m::itMasterhandlaser_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itMasterhandlaser_UnkMotion0_Coll
+                    6 => {  ret = ((m::itMasterhandlaser_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMasterhandlaser_UnkMotion0_Coll
                     7 => {  m::it_802F05A8(&raw mut GO[0]); } // it_802F05A8
                     8 => {  m::it_802F063C(&raw mut GO[0], &raw mut GO[1]); } // it_802F063C
                     9 => { for j in 0..1 { let row = &m::it_803F9378[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }

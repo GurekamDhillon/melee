@@ -128,9 +128,9 @@ fn itseakneedleheld_matches_c() {
                     0 => {  m::it_802B18B0(&raw mut GO[0]); } // it_802B18B0
                     1 => { let v2: Fighter_Part = fv() as i32 as Fighter_Part; let v3: ItemKind = (if rnd() & 1 != 0 { 80 } else { 153 }) as ItemKind; let v4: f32 = rw() as f32; ret = pi(m::it_802B19AC(&raw mut GO[0], &raw mut VA[0], v2, v3, v4)); } // it_802B19AC
                     2 => {  m::itSeakNeedleHeld_Logic110_PickedUp(&raw mut GO[0]); } // itSeakNeedleHeld_Logic110_PickedUp
-                    3 => {  ret = m::itSeakneedleheld_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itSeakneedleheld_UnkMotion0_Anim
+                    3 => {  ret = ((m::itSeakneedleheld_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedleheld_UnkMotion0_Anim
                     4 => {  m::itSeakneedleheld_UnkMotion0_Phys(&raw mut GO[0]); } // itSeakneedleheld_UnkMotion0_Phys
-                    5 => {  ret = m::itSeakneedleheld_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itSeakneedleheld_UnkMotion0_Coll
+                    5 => {  ret = ((m::itSeakneedleheld_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedleheld_UnkMotion0_Coll
                     6 => {  m::itSeakNeedleHeld_Logic110_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itSeakNeedleHeld_Logic110_EvtUnk
                     7 => { for j in 0..1 { let row = &m::it_803F70A8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

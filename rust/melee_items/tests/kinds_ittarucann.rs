@@ -149,42 +149,42 @@ fn ittarucann_matches_c() {
                     3 => {  ret = m::it_802960CC(&raw mut GO[0]) as u32; } // it_802960CC
                     4 => {  m::it_3F14_Logic5_Destroyed(&raw mut GO[0]); } // it_3F14_Logic5_Destroyed
                     5 => {  m::it_3F14_Logic5_Spawned(&raw mut GO[0]); } // it_3F14_Logic5_Spawned
-                    6 => {  ret = m::it_802961E8(&raw mut GO[0]) as u32; } // it_802961E8
+                    6 => {  ret = ((m::it_802961E8(&raw mut GO[0])) as i32 != 0) as u32; } // it_802961E8
                     7 => {  m::it_802962E0(&raw mut GO[0]); } // it_802962E0
-                    8 => {  ret = m::itTarucann_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion0_Anim
+                    8 => {  ret = ((m::itTarucann_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion0_Anim
                     9 => {  m::itTarucann_UnkMotion0_Phys(&raw mut GO[0]); } // itTarucann_UnkMotion0_Phys
-                    10 => {  ret = m::itTarucann_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion0_Coll
+                    10 => {  ret = ((m::itTarucann_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion0_Coll
                     11 => {  m::it_80296694(&raw mut GO[0]); } // it_80296694
-                    12 => {  ret = m::itTarucann_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion1_Anim
+                    12 => {  ret = ((m::itTarucann_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion1_Anim
                     13 => {  m::itTarucann_UnkMotion1_Phys(&raw mut GO[0]); } // itTarucann_UnkMotion1_Phys
-                    14 => {  ret = m::itTarucann_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion1_Coll
+                    14 => {  ret = ((m::itTarucann_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion1_Coll
                     15 => {  m::itTaruCann_Logic5_PickedUp(&raw mut GO[0]); } // itTaruCann_Logic5_PickedUp
-                    16 => {  ret = m::itTarucann_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion2_Anim
+                    16 => {  ret = ((m::itTarucann_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion2_Anim
                     17 => {  m::itTarucann_UnkMotion2_Phys(&raw mut GO[0]); } // itTarucann_UnkMotion2_Phys
                     18 => {  m::it_3F14_Logic5_Dropped(&raw mut GO[0]); } // it_3F14_Logic5_Dropped
                     19 => {  m::it_3F14_Logic5_Thrown(&raw mut GO[0]); } // it_3F14_Logic5_Thrown
                     20 => {  m::it_802969D8(&raw mut GO[0]); } // it_802969D8
-                    21 => {  ret = m::itTarucann_UnkMotion6_Anim(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion6_Anim
+                    21 => {  ret = ((m::itTarucann_UnkMotion6_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion6_Anim
                     22 => {  m::itTarucann_UnkMotion6_Phys(&raw mut GO[0]); } // itTarucann_UnkMotion6_Phys
-                    23 => {  ret = m::itTarucann_UnkMotion6_Coll(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion6_Coll
+                    23 => {  ret = ((m::itTarucann_UnkMotion6_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion6_Coll
                     24 => {  m::it_80296E88(&raw mut GO[0]); } // it_80296E88
                     25 => {  m::it_80296EA8(&raw mut GO[0]); } // it_80296EA8
                     26 => {  m::it_80296EF0(&raw mut GO[0]); } // it_80296EF0
-                    27 => {  ret = m::itTarucann_UnkMotion8_Anim(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion8_Anim
+                    27 => {  ret = ((m::itTarucann_UnkMotion8_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion8_Anim
                     28 => {  m::itTarucann_UnkMotion8_Phys(&raw mut GO[0]); } // itTarucann_UnkMotion8_Phys
-                    29 => {  ret = m::itTarucann_UnkMotion8_Coll(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion8_Coll
-                    30 => {  ret = m::itTarucann_UnkMotion7_Anim(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion7_Anim
+                    29 => {  ret = ((m::itTarucann_UnkMotion8_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion8_Coll
+                    30 => {  ret = ((m::itTarucann_UnkMotion7_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion7_Anim
                     31 => {  ret = (m::itTarucann_UnkMotion7_Phys(&raw mut GO[0])).to_bits(); } // itTarucann_UnkMotion7_Phys
-                    32 => {  ret = m::itTarucann_UnkMotion7_Coll(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion7_Coll
+                    32 => {  ret = ((m::itTarucann_UnkMotion7_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion7_Coll
                     33 => {  m::it_802975F4(&raw mut GO[0]); } // it_802975F4
-                    34 => {  ret = m::itTarucann_UnkMotion9_Anim(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion9_Anim
+                    34 => {  ret = ((m::itTarucann_UnkMotion9_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion9_Anim
                     35 => {  m::itTarucann_UnkMotion9_Phys(&raw mut GO[0]); } // itTarucann_UnkMotion9_Phys
-                    36 => {  ret = m::itTarucann_UnkMotion9_Coll(&raw mut GO[0]) as u32; } // itTarucann_UnkMotion9_Coll
-                    37 => {  ret = m::it_80297790(&raw mut GO[0]) as u32; } // it_80297790
-                    38 => {  ret = m::itTaruCann_Logic5_DmgDealt(&raw mut GO[0]) as u32; } // itTaruCann_Logic5_DmgDealt
-                    39 => {  ret = m::itTaruCann_Logic5_Clanked(&raw mut GO[0]) as u32; } // itTaruCann_Logic5_Clanked
-                    40 => {  ret = m::itTaruCann_Logic5_HitShield(&raw mut GO[0]) as u32; } // itTaruCann_Logic5_HitShield
-                    41 => {  ret = m::itTaruCann_Logic5_Reflected(&raw mut GO[0]) as u32; } // itTaruCann_Logic5_Reflected
+                    36 => {  ret = ((m::itTarucann_UnkMotion9_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTarucann_UnkMotion9_Coll
+                    37 => {  ret = ((m::it_80297790(&raw mut GO[0])) as i32 != 0) as u32; } // it_80297790
+                    38 => {  ret = ((m::itTaruCann_Logic5_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itTaruCann_Logic5_DmgDealt
+                    39 => {  ret = ((m::itTaruCann_Logic5_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itTaruCann_Logic5_Clanked
+                    40 => {  ret = ((m::itTaruCann_Logic5_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itTaruCann_Logic5_HitShield
+                    41 => {  ret = ((m::itTaruCann_Logic5_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itTaruCann_Logic5_Reflected
                     42 => {  m::itTaruCann_Logic5_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itTaruCann_Logic5_EvtUnk
                     43 => { for j in 0..10 { let row = &m::it_803F63C0[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

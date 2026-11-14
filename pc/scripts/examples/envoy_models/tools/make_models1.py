@@ -510,7 +510,10 @@ def main():
     args = sys.argv[1:]
     meshes, out = outputs(sprites="--no-sprites" not in args)
     if "--check" in args:
-        diff = [str(p) for p, b in out.items() if not p.exists() or p.read_bytes() != b]
+        # git may check the text files out with CRLF; the binaries must match to the byte
+        text = lambda p: p.suffix in (".json", ".txt")
+        same = lambda p, b: (p.read_bytes().replace(b"\r\n", b"\n") if text(p) else p.read_bytes()) == b
+        diff = [str(p) for p, b in out.items() if not p.exists() or not same(p, b)]
         if diff:
             raise SystemExit("out of date:\n  " + "\n  ".join(diff))
         print("check ok: %d files match" % len(out))

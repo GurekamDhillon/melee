@@ -3372,6 +3372,7 @@ unsafe extern "C" fn mnStageSel_MexSetup(mut archive: *mut HSD_Archive) {
     let mut tbl: *mut MexSssIcon = null_mut();
     let mut n: i32 = 0;
     let mut i: i32 = 0;
+    gd_icons_exit();
     mnStageSel_MexMap = null_mut();
     mnStageSel_MexActive = 0;
     mnStageSel_NumStages = NUM_STAGES_RETAIL;
@@ -3828,7 +3829,11 @@ pub unsafe extern "C" fn mnStageSel_80259ED8(mut id: i32) {
     (*temp_r3_2).x0 = id as u16;
     (*temp_r3_2).x4 = 0;
     (*temp_r3_2).x2 = 0;
-    if id < mnStageSel_IconCount
+    gd_label_show(id);
+    if gd_icon(id) {
+        // a GD stage has no retail name plate: its label is the SIS text (gd_label_show)
+        HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
+    } else if id < mnStageSel_IconCount
         && mnStageSel_803F06D0[id as usize].x8 as i32
             >= 2
     {
@@ -4525,6 +4530,7 @@ pub unsafe extern "C" fn mnStageSel_Scene_OnEnter(mut arg0: *mut c_void) {
                 i += 1;
             }
         }
+        gd_icons_add();
         let mut jobj_3: *mut HSD_JObj = null_mut();
         let mut gobj_6: *mut HSD_GObj = null_mut();
         gobj_6 = GObj_Create(4, 5, 0x80);
@@ -4727,7 +4733,7 @@ pub unsafe extern "C" fn mnStageSel_Scene_OnFrame() {
     melee_core::ct!("mnStageSel_Scene_OnFrame");
     if (*sss_data).force_stage_id as i32 >= 0 {
         mnStageSel_804D6CAF = 2;
-        (*sss_data).vs.start.rules.stkind = (*sss_data).force_stage_id as u16;
+        (*sss_data).vs.start.rules.stkind = crate::tu::explore::carrier((*sss_data).force_stage_id as i32) as u16;
         gm_801A4B60();
         return;
     }
@@ -4811,9 +4817,10 @@ pub unsafe extern "C" fn mnStageSel_Scene_OnFrame() {
         gm_801A4B60();
     }
     if mnStageSel_804D6CAF as i32 == 2 {
-        (*sss_data).vs.start.rules.stkind = mnStageSel_803F06D0[mnStageSel_804D6CAE
-                as usize]
-            .stkind as u16;
+        // a GD stage id (explore.rs) leaves as its retail carrier; the pick is noted for the stage load
+        (*sss_data).vs.start.rules.stkind = crate::tu::explore::carrier(
+            mnStageSel_803F06D0[mnStageSel_804D6CAE as usize].stkind,
+        ) as u16;
         super::gmfrontend::Frontend_CaptureIcon(
             1,
             mnStageSel_803F06D0[mnStageSel_804D6CAE as usize].x0,
@@ -4829,6 +4836,7 @@ pub unsafe extern "C" fn mnStageSel_Scene_OnExit(
         lbArchive_80016EFC(mnStageSel_804D6C94);
         mnStageSel_804D6C94 = null_mut();
     }
+    gd_icons_exit();
     mnStageSel_MexMap = null_mut();
     mnStageSel_MexActive = 0;
     mnStageSel_NumStages = NUM_STAGES_RETAIL;
@@ -5144,3 +5152,118 @@ pub unsafe extern "C" fn mnStageSel_PcArtIcon(
     return 1 as i32;
 }
 pub const NULL: i32 = 0;
+
+
+// ---------------------------------------------------------------- GD stage slots (port: explore.rs's stage table)
+//
+// One icon per available GD stage (explore::GD_STAGES), appended after the retail / m-ex rows: the row carries the GD
+// stage id, the icon is a placeholder (the stage select's own "random" plate, in the free corner below the grid), and
+// the label is an SIS text. Random never picks these rows (they sit past `mnStageSel_NumStages`). Without the owner's
+// Brawl files no row is added: the screen is the retail one.
+
+/// Icon rows of the GD stages: (row index, GD stage id); -1 unused.
+static mut GD_ROWS: [(i32, i32); 4] = [(-1, 0); 4];
+static mut GD_CANVAS: i32 = -1;
+static mut GD_TEXT: *mut HSD_Text = null_mut();
+/// World position of the first GD icon (the stage select's cursor space is +-27 x +-19) and its spacing.
+const GD_ICON_X: f32 = 23.5;
+const GD_ICON_Y: f32 = -14.2;
+const GD_ICON_DX: f32 = -7.6;
+
+fn gd_icon(id: i32) -> bool {
+    unsafe { GD_ROWS.iter().any(|r| r.0 >= 0 && r.0 == id) }
+}
+
+unsafe fn gd_icons_add() {
+    GD_ROWS = [(-1, 0); 4];
+    let mut k = 0usize;
+    for g in crate::tu::explore::GD_STAGES.iter() {
+        if k >= GD_ROWS.len() || mnStageSel_IconCount >= SSS_ICON_MAX - 1 || !crate::tu::explore::available(g.id) {
+            continue;
+        }
+        let i = mnStageSel_IconCount;
+        let gobj = GObj_Create(4, 5, 0x80);
+        let j = HSD_JObjLoadJoint((*mnStageSel_804D6C98).x10.joint as *mut HSD_Joint);
+        HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, j as *mut c_void);
+        GObj_SetupGXLink(gobj, Some(HSD_GObj_JObjCallback), 4, 0x83);
+        HSD_GObj_SetupProc(gobj, Some(mn_8022EAE0), 3);
+        HSD_JObjAddAnimAll(
+            j,
+            (*mnStageSel_804D6C98).x10.animjoint,
+            (*mnStageSel_804D6C98).x10.matanim_joint,
+            (*mnStageSel_804D6C98).x10.shapeanim_joint,
+        );
+        do_anim(j, 2);
+        let mut p = Vec3 { x: GD_ICON_X + GD_ICON_DX * k as f32, y: GD_ICON_Y, z: 0.0 };
+        HSD_JObjSetTranslate(j, &raw mut p);
+        mnStageSel_803F06D0[i as usize] = StageListInfo {
+            x0: j,
+            x4: 0,
+            x8: 2,
+            x9: 0xff,
+            xA: 0xff,
+            stkind: g.id,
+            xC: 3.6,
+            x10: 2.7,
+            x14: 1.2,
+            x18: 1.0,
+        };
+        GD_ROWS[k] = (i, g.id);
+        mnStageSel_IconCount += 1;
+        k += 1;
+        eprintln!("sss: GD stage {:#x} ({}) on icon {i}", g.id, g.name);
+    }
+    if k > 0 {
+        // "nothing hovered" is one past the last row
+        mnStageSel_804D6CAE = mnStageSel_IconCount;
+        GD_CANVAS = melee_runtime::tu::sislib::HSD_SisLib_803A611C(0, null_mut(), 9, 0xD, 0, 0xE, 0, 0x13);
+    }
+}
+
+/// The label of the hovered GD stage (hidden on any other icon).
+unsafe fn gd_label_show(id: i32) {
+    if !GD_TEXT.is_null() {
+        melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(GD_TEXT);
+        GD_TEXT = null_mut();
+    }
+    let Some(&(_, sid)) = GD_ROWS.iter().find(|r| r.0 >= 0 && r.0 == id) else { return };
+    if GD_CANVAS < 0 {
+        return;
+    }
+    let t = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(0, GD_CANVAS);
+    if t.is_null() {
+        return;
+    }
+    (*t).pos_x = gd_tune(0, 330.0);
+    (*t).pos_y = gd_tune(1, 392.0);
+    (*t).box_size_x = 300.0;
+    (*t).box_size_y = 40.0;
+    (*t).font_size.x = gd_tune(2, 0.9);
+    (*t).font_size.y = gd_tune(2, 0.9);
+    (*t).default_alignment = 1;
+    (*t).default_kerning = 1;
+    (*t).text_color = _GXColor { r: 0xff, g: 0xff, b: 0xff, a: 0xff };
+    melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(t, 0.0, 0.0, Some(crate::tu::explore::gd_name(sid).unwrap_or("?")));
+    GD_TEXT = t;
+}
+
+/// `MELEE_SSS_GD_LABEL` = "x,y,size" overrides the label placement (checks).
+fn gd_tune(i: usize, d: f32) -> f32 {
+    static V: std::sync::OnceLock<std::vec::Vec<f32>> = std::sync::OnceLock::new();
+    V.get_or_init(|| std::env::var("MELEE_SSS_GD_LABEL").map(|s| s.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default())
+        .get(i)
+        .copied()
+        .unwrap_or(d)
+}
+
+unsafe fn gd_icons_exit() {
+    // the text and its canvas go with the scene's objects (the scene teardown frees them)
+    GD_TEXT = null_mut();
+    for r in GD_ROWS.iter() {
+        if r.0 >= 0 {
+            mnStageSel_803F06D0[r.0 as usize] = StageListInfo::zeroed();
+        }
+    }
+    GD_ROWS = [(-1, 0); 4];
+    GD_CANVAS = -1;
+}

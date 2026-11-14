@@ -605,12 +605,16 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     r.time_limit = 0;
     r.item_freq = -1;
     let petey = PLAN[P_BOSS] == 1 && crate::tu::petey::selected();
-    // the exploration room (explore.rs, MELEE_ENVOY_EXPLORE=1, off by default): every non-boss fight is played in the
-    // Brawl map section, carried by Final Destination
-    let explore = !petey && crate::tu::explore::enabled() && crate::tu::explore::map().is_some();
-    crate::tu::explore::WANT = explore;
-    crate::tu::explore::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it
-    let stage = if petey || explore { GR_FD } else { PLAN[P_STAGE] };
+    // the exploration room (explore.rs, MELEE_ENVOY_EXPLORE=1, off by default): every non-boss fight is played on the
+    // GD stage slot of the Brawl map section (GD_STAGE_SSE_JUNGLE, carried by Final Destination)
+    use crate::tu::explore as ex;
+    let explore = !petey && ex::enabled() && ex::available(ex::GD_STAGE_SSE_JUNGLE) && ex::map().is_some();
+    let room_stage = if explore { ex::GD_STAGE_SSE_JUNGLE } else { 0 };
+    ex::WANT = explore;
+    ex::PICK = false; // a VS pick never leaks into a run
+    ex::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it
+    // a GD stage rides on its carrier (Final Destination's ground kind here)
+    let stage = if petey || ex::is_gd_stage(room_stage) { GR_FD } else { PLAN[P_STAGE] };
     if stage > 0 && crate::tu::stage_hop::supported(stage) {
         r.stkind = melee_world::tu::stage::Stage_StageSlotSelect(stage) as u16;
     }

@@ -1637,6 +1637,11 @@ pub fn play(args: &[String]) -> ExitCode {
                     }
                     n += 1;
                 }
+            } else if part.eq_ignore_ascii_case("sse") || part.eq_ignore_ascii_case("jungle") {
+                // the GD stage slot of the Brawl Jungle (explore.rs), on its Final Destination carrier
+                let id = melee_modes::tu::explore::GD_STAGE_SSE_JUNGLE;
+                let fd = melee_modes::tu::explore::carrier(id);
+                stage = STAGES.iter().position(|s| s.0 == fd).unwrap_or(stage);
             } else if let Some(st) = STAGES.iter().position(|s| s.0.to_string() == part || s.1.eq_ignore_ascii_case(part) || (part == "GrNLa.dat" && s.0 == 32) || (part == "GrNBa.dat" && s.0 == 31)) {
                 stage = st;
             } else {

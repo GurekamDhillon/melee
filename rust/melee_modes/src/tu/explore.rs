@@ -2,8 +2,11 @@
 //! the owner's own files, played in place of Final Destination's geometry, with Brawl-style doors (up on the stick)
 //! that move the party between map sections.
 //!
-//! Off unless `MELEE_ENVOY_EXPLORE=1` (and the owner's Brawl files are present). With it on, any Final Destination
-//! match becomes the exploration room; vanilla play, the goldens and the gate never reach this code.
+//! Its own stage slot (notes/sse-stage.md): the GD stage id `GD_STAGE_SSE_JUNGLE` (the GD range this loader owns,
+//! outside the retail and m-ex external ids). The stage select shows it as an extra icon when the owner's Brawl files
+//! are present (hidden otherwise); picking it plays the room on a Final Destination carrier (`carrier`), so the rest
+//! of the game only ever sees a retail stage id. Final Destination itself is untouched. Envoy rooms ask for the same id
+//! (`envoy::match_begin`, opt-in with `MELEE_ENVOY_EXPLORE=1`). Vanilla play, the goldens and the gate never reach this.
 //!
 //! * Sim side (deterministic, rollback safe): the collision is built once, off the game thread, from the archives'
 //!   collision files into a template; at each stage load (`ground::EXPLORE_COLL`) it is copied into the game heap
@@ -314,6 +317,53 @@ fn load_secs(secs: &[SecDef], links: &[((usize, usize), (usize, usize))], whole:
     })
 }
 
+/// The GD stage id range this loader owns (external stage ids; retail stops at 0x20s, m-ex starts at 288).
+pub const GD_STAGE_FIRST: i32 = 0x7000;
+pub const GD_STAGE_LAST: i32 = 0x70FF;
+/// The Jungle, step 3 (+ the hut room), from the owner's own Brawl files.
+pub const GD_STAGE_SSE_JUNGLE: i32 = 0x7001;
+/// Final Destination's external stage id: the carrier of every GD stage (its stage proc, camera and music).
+pub const FD_STKIND: i32 = 0x20;
+
+/// A GD stage slot: id, name (the stage select's label), the archives it needs.
+pub struct GdStage {
+    pub id: i32,
+    pub name: &'static str,
+    pub files: &'static [&'static str],
+}
+/// The GD stage table (the stage select appends one icon per available row).
+pub const GD_STAGES: [GdStage; 1] = [GdStage { id: GD_STAGE_SSE_JUNGLE, name: "Subspace 08-3", files: &["080103.pac", "080103a.pac"] }];
+
+pub fn is_gd_stage(id: i32) -> bool {
+    (GD_STAGE_FIRST..=GD_STAGE_LAST).contains(&id)
+}
+
+/// Whether GD stage `id` can be played: its archives are in the owner's Brawl folder (`MELEE_BRAWL_ABSENT` hides it).
+pub fn available(id: i32) -> bool {
+    GD_STAGES.iter().any(|g| g.id == id && g.files.iter().all(|f| pm::adventure_present(f)))
+}
+
+pub fn gd_name(id: i32) -> Option<&'static str> {
+    GD_STAGES.iter().find(|g| g.id == id).map(|g| g.name)
+}
+
+/// The VS match about to start asked for the SSE stage (set by the stage select / `--match ...,sse`, read at the
+/// stage load). Plain static: set before the match, constant through it.
+pub static mut PICK: bool = false;
+
+/// The retail stage id that carries stage `id`: a GD stage -> Final Destination (and the pick is noted); any other
+/// id -> itself (and any earlier pick is cleared). An unavailable GD stage falls back to Final Destination itself.
+pub fn carrier(id: i32) -> i32 {
+    unsafe {
+        PICK = is_gd_stage(id) && id == GD_STAGE_SSE_JUNGLE && available(id);
+        if PICK {
+            eprintln!("explore: stage {id:#x} ({}) on the Final Destination carrier", gd_name(id).unwrap_or("?"));
+        }
+    }
+    if is_gd_stage(id) { FD_STKIND } else { id }
+}
+
+/// Envoy's opt-in for its rooms (`MELEE_ENVOY_EXPLORE=1`).
 pub fn enabled() -> bool {
     static E: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *E.get_or_init(|| std::env::var("MELEE_ENVOY_EXPLORE").is_ok_and(|v| v == "1"))
@@ -324,7 +374,7 @@ pub fn enabled() -> bool {
 pub fn map() -> Option<&'static Map> {
     static M: std::sync::OnceLock<Option<Map>> = std::sync::OnceLock::new();
     M.get_or_init(|| {
-        if !enabled() {
+        if !available(GD_STAGE_SSE_JUNGLE) {
             return None;
         }
         let t = std::time::Instant::now();
@@ -371,8 +421,7 @@ fn cur() -> Option<&'static Map> {
 
 // ---------------------------------------------------------------- sim state (statics: snapshot covered)
 
-/// Envoy's plan for the coming fight wants the room (set by `envoy::match_begin`; outside an Envoy run any Final
-/// Destination match is the room).
+/// Envoy's plan for the coming fight wants the room (set by `envoy::match_begin`; outside an Envoy run `PICK`).
 pub static mut WANT: bool = false;
 /// Whether the current stage is the exploration room (set at each stage load).
 pub static mut ACTIVE: bool = false;
@@ -418,7 +467,8 @@ pub unsafe fn coll_override() -> *mut MapCollData {
         ARENA = true;
         a
     } else {
-        if !enabled() || (crate::tu::envoy::armed() != 0 && !WANT) {
+        let want = if crate::tu::envoy::armed() != 0 { WANT } else { PICK };
+        if !want {
             return core::ptr::null_mut();
         }
         let Some(m) = map() else { return core::ptr::null_mut() };
@@ -698,9 +748,9 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
 }
 
-/// Install the hooks (the engine start). Nothing is hooked unless the mode is on.
+/// Install the hooks (the engine start). Nothing is hooked without the owner's Brawl files (or Petey's mode).
 pub fn install() {
-    if !enabled() && !crate::tu::petey::selected() {
+    if !available(GD_STAGE_SSE_JUNGLE) && !crate::tu::petey::selected() {
         return;
     }
     unsafe {
@@ -709,8 +759,12 @@ pub fn install() {
         melee_world::tu::grdisplay::HIDE_GROUND = Some(hide_ground);
         melee_fighter::tu::ftdrawcommon::MAP_DRAW = Some(draw);
     }
-    // load now, before the first match (the loader is a helper thread; the first stage load must not wait on it)
-    let _ = map();
+    // start loading now, in the background (the first stage load that needs it waits for it there)
+    if available(GD_STAGE_SSE_JUNGLE) {
+        std::thread::spawn(|| {
+            let _ = map();
+        });
+    }
     if crate::tu::petey::selected() {
         let _ = arena();
     }

@@ -127,6 +127,12 @@ pub fn brawl_present() -> bool {
     })
 }
 
+/// Whether the owner's Brawl folder has adventure archive `name` (`MELEE_BRAWL_ABSENT`: as if missing).
+pub fn adventure_present(name: &str) -> bool {
+    std::env::var_os("MELEE_BRAWL_ABSENT").is_none()
+        && local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(name).is_file())
+}
+
 fn local_root() -> Option<PathBuf> {
     if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
         return Some(PathBuf::from(p));

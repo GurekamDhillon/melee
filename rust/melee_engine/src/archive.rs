@@ -519,9 +519,14 @@ pub fn reclaim_flags() -> (bool, bool, bool) {
     static F: std::sync::OnceLock<(bool, bool, bool)> = std::sync::OnceLock::new();
     *F.get_or_init(|| {
         let _s = crate::arena::SysScope::enter();
-        let on = |k: &str| std::env::var_os(k).is_some();
-        (on("MELEE_RECLAIM_POISON"), on("MELEE_RECLAIM_LEAK"), on("MELEE_RECLAIM_SORTED"))
+        (env_flag("MELEE_RECLAIM_POISON"), env_flag("MELEE_RECLAIM_LEAK"), env_flag("MELEE_RECLAIM_SORTED"))
     })
+}
+
+/// A boolean env knob: set to anything but "", "0", "false" or "off" (any case). `MELEE_RECLAIM_LEAK=0` used to turn
+/// the mitigation on, since only presence was checked.
+pub fn env_flag(k: &str) -> bool {
+    std::env::var(k).is_ok_and(|v| !matches!(v.trim().to_ascii_lowercase().as_str(), "" | "0" | "false" | "off"))
 }
 
 /// `MELEE_DECODE_PROF=1`: one line per archive decode with its phase times (diagnostics; it drains the fill queue per

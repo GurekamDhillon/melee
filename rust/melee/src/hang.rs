@@ -14,7 +14,7 @@ static BEATS: AtomicU64 = AtomicU64::new(0);
 pub fn beat() {
     let n = BEATS.fetch_add(1, Ordering::Relaxed);
     static POISON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    if *POISON.get_or_init(|| std::env::var_os("MELEE_RECLAIM_POISON").is_some()) {
+    if *POISON.get_or_init(|| melee_engine::archive::env_flag("MELEE_RECLAIM_POISON")) {
         melee_engine::archive::check_poison(n);
     }
 }

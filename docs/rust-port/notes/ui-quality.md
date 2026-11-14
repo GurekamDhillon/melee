@@ -15,6 +15,7 @@ screen at 720p, 1080p, 1440p and 4K, in 4:3 and widescreen, and fixed the causes
 | 5 | Text with an ink edge was nine draws of the string (eight ink copies at offsets). The copies do not make a round outline and their antialiased edges stack. | `kit::text_edge`: titles, percent, names | a soft, lumpy ink edge on text |
 | 6 | Glyph distance fields were 24 texels per em: large text (a 40-unit percent at 4K is 180 px) is built from 24 texels, and small text minified the field without mips. | `ui_font.rs` | rounded corners on large text, uneven stems on small text |
 | 7 | In a window narrower than 4:3 the band took the window's full height but only its width: non-square pixels. | `Renderer::blit_to` band | every shape squeezed sideways (only at such window shapes) |
+| 8 | A glyph's edge was normalised by `fwidth` of the sampled distance value. On the ridge of a thin stem that derivative is zero, so a stem lying between two pixel centres got no coverage at all instead of two half-covered pixels. | `ui.rs` fragment shader, every text quad | small text lost stems depending on where it sat on the pixel grid (the LAB's "FA_CON", "Startup") |
 
 Checked and not a cause: the blit pass is single-sampled and the UI is drawn at window resolution after the EFB
 resolve, so MSAA and the render scale do not touch it; the atlas is premultiplied and the blend state is premultiplied
@@ -55,7 +56,9 @@ disc and dots are no longer baked.
 
 **Text.** 48 texels per em, 6 texels of spread, the same 96 px supersampled raster as before (same build time);
 minified through the mips. `OP_OUTLINE` draws an outline pass from the glyphs' own distance field under the fill:
-two draws of the string instead of nine, a round outline.
+two draws of the string instead of nine, a round outline. A glyph's edge is one screen pixel wide, taken from the
+field's known spread (`2 * SDF_RANGE` texels) and the texels per pixel, not from `fwidth` of the sampled value: a thin
+stem keeps the same ink wherever it falls on the pixel grid.
 
 **Band.** `ui::band_in`: the largest centred 4:3 rect of the blit rect, square pixels at every window shape.
 
@@ -68,7 +71,9 @@ two draws of the string instead of nine, a round outline.
   - small pills: mirror-symmetric within 3% coverage, straight sides exactly on pixel boundaries;
   - seams: no partly covered pixel between fully covered ones, for a panel, a pill, a sticker (shadow under face)
     and a three-piece flat bar, at rest, rotated 0.6 and 8 degrees, tilted, rotated and tilted;
-  - a 128-texel sprite disc drawn down to 18 px stays round (the mip chain covers 8x minification).
+  - a 128-texel sprite disc drawn down to 18 px stays round (the mip chain covers 8x minification);
+  - small text (10 to 15 px) keeps its ink within 4% at sixteen sub-pixel positions (measured: 2.3%; the old edge
+    swung 9.6%).
 - `cargo test -p melee_modhost --lib ui::`: a slice is one shape quad at any size; `OP_SHAPE` / `OP_OUTLINE` records.
 - Screens: `scratch/morning/uiquality/index.md` (local): each defect with a before / after crop.
 

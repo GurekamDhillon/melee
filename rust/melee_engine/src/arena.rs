@@ -749,7 +749,10 @@ pub fn start_prefault() {
         extern "system" {
             fn GetCurrentThread() -> *mut core::ffi::c_void;
             fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
+            fn GetCurrentProcess() -> *mut core::ffi::c_void;
+            fn ReadProcessMemory(h: *mut core::ffi::c_void, base: *const core::ffi::c_void, buf: *mut core::ffi::c_void, n: usize, read: *mut usize) -> i32;
         }
+        let me = unsafe { GetCurrentProcess() };
         unsafe { SetThreadPriority(GetCurrentThread(), -1) }; // below normal: never ahead of the game thread
         let mut touched = 0usize;
         loop {
@@ -780,7 +783,13 @@ pub fn start_prefault() {
             let end = want.min(committed);
             let mut n = 0;
             while p < end && !bg_paused() {
-                unsafe { core::ptr::read_volatile(p as *const u8) };
+                // Touch the page through the kernel, not with a plain load. `bump` above is a moment old: the game
+                // thread can since have handed out a block here and freed it again, and a freed block of 64 KB or
+                // more is decommitted when the keep list is full. A plain load of a decommitted page is an access
+                // violation that ends the game (seen at match starts); this read just fails for that page and
+                // faults the others in the same way.
+                let mut b = 0u8;
+                unsafe { ReadProcessMemory(me, p as *const _, (&raw mut b).cast(), 1, core::ptr::null_mut()) };
                 p += 0x1000;
                 n += 1;
                 if n % 256 == 0 {

@@ -284,3 +284,40 @@ fn minified_sprite_stays_round() {
         assert!((gx - pcx).abs() < 0.15 && (gy - pcy).abs() < 0.15, "sprite disc off centre at scale {s} d {d}");
     }
 }
+
+/// Small text keeps its stems wherever it sits on the pixel grid: the ink of a thin-stemmed word drawn 9 to 14 px
+/// high must not depend on its sub-pixel position (a stem between two pixel centres is two half-covered pixels, not
+/// nothing).
+#[test]
+fn small_text_keeps_its_stems() {
+    use melee_gx::ui_font::{emit, fit, TextStyle};
+    let Some(mut g) = gpu() else { return };
+    let mut report = String::new();
+    for (s, size) in [(1.5f32, 7.0f32), (1.5, 9.0), (2.25, 6.0), (1.0, 11.0), (3.0, 5.0)] {
+        let st = TextStyle::new(size, false, false);
+        let word = "Illtuj1";
+        let (n, _) = fit(&g.atlas.faces, st, word, 0.0);
+        let mut inks = Vec::new();
+        for k in 0..16 {
+            // sixteen sub-pixel positions across one pixel
+            let x = 8.0 + k as f32 / 16.0 / s;
+            let mut quads = Vec::new();
+            emit(&g.atlas.faces, st, word, n, x, 6.3, |r, uv| {
+                let mut q = quad(r[0], r[1], r[2], r[3]);
+                q.uv = uv;
+                q.flags = Q_SDF;
+                quads.push(q);
+            });
+            let (w, h) = ((120.0 * s) as u32, (30.0 * s) as u32);
+            let img = render(&mut g, quads, w, h, [0.0, 0.0, 640.0 * s, 480.0 * s], [0.0; 2]);
+            inks.push(img.iter().map(|&v| v as f32 / 255.0).sum::<f32>());
+        }
+        let mean = inks.iter().sum::<f32>() / inks.len() as f32;
+        let (lo, hi) = inks.iter().fold((f32::MAX, 0.0f32), |a, &v| (a.0.min(v), a.1.max(v)));
+        report += &format!("scale {s} size {size} ({:.1} px): ink {mean:.1} px, min {:+.1}% max {:+.1}%\n", size * s, (lo / mean - 1.0) * 100.0, (hi / mean - 1.0) * 100.0);
+        assert!(mean > 10.0, "no text drawn at scale {s} size {size}");
+        // 4%: the fwidth-normalised edge this replaced swung up to 9.6% here; the range-normalised one stays within 2.3%
+        assert!(lo / mean > 0.96 && hi / mean < 1.04, "ink depends on the sub-pixel position:\n{report}");
+    }
+    println!("{report}");
+}

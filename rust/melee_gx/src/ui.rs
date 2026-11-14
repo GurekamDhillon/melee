@@ -584,14 +584,19 @@ fn dash(p: vec2<f32>, hs: vec2<f32>, r: f32, bw: f32, dl: f32, w: f32) -> f32 {
     let ay = 2.0 * cm.y;
     let arc = 1.5707963 * rc;
     var t = 0.0;
-    if (p.y < -cm.y && abs(p.x) <= cm.x) { t = p.x + cm.x; }
-    else if (p.x > cm.x && p.y < -cm.y) { t = ax + atan2(p.x - cm.x, -(p.y + cm.y)) * rc; }
-    else if (p.x > cm.x && abs(p.y) <= cm.y) { t = ax + arc + p.y + cm.y; }
-    else if (p.x > cm.x) { t = ax + arc + ay + atan2(p.y - cm.y, p.x - cm.x) * rc; }
-    else if (p.y > cm.y && abs(p.x) <= cm.x) { t = ax + 2.0 * arc + ay + cm.x - p.x; }
-    else if (p.y > cm.y) { t = 2.0 * ax + 2.0 * arc + ay + atan2(-(p.x + cm.x), p.y - cm.y) * rc; }
-    else if (p.x < -cm.x && abs(p.y) <= cm.y) { t = 2.0 * ax + 3.0 * arc + ay + cm.y - p.y; }
-    else if (p.x < -cm.x) { t = 2.0 * ax + 3.0 * arc + 2.0 * ay + atan2(-(p.y + cm.y), -(p.x + cm.x)) * rc; }
+    let q = abs(p) - cm;
+    if (q.x <= 0.0) {
+        // the top and bottom sides
+        if (p.y < 0.0) { t = p.x + cm.x; } else { t = ax + 2.0 * arc + ay + cm.x - p.x; }
+    } else if (q.y <= 0.0) {
+        // the right and left sides
+        if (p.x > 0.0) { t = ax + arc + p.y + cm.y; } else { t = 2.0 * ax + 3.0 * arc + ay + cm.y - p.y; }
+    } else if (p.x > 0.0) {
+        // the right corners: the angle from the side the arc starts on
+        if (p.y < 0.0) { t = ax + atan2(q.x, q.y) * rc; } else { t = ax + arc + ay + atan2(q.y, q.x) * rc; }
+    } else {
+        if (p.y > 0.0) { t = 2.0 * ax + 2.0 * arc + ay + atan2(q.x, q.y) * rc; } else { t = 2.0 * ax + 3.0 * arc + 2.0 * ay + atan2(q.y, q.x) * rc; }
+    }
     let per = 2.0 * (ax + ay) + 4.0 * arc;
     let n = max(round(per / (dl * 1.8)), 1.0);
     let period = per / n;
@@ -636,7 +641,13 @@ fn shape(v: VsOut) -> vec4<f32> {
     let dv = dpdy(v.uv) * 0.70710678;
     let n = textureSampleGrad(atlas, lin, clamp(v.uv, v.uvc.xy, v.uvc.zw), du, dv);
     let sh = shape(v);
-    let fw = max(fwidth(n.a), 1.0e-4);
+    // A glyph's coverage: the distance field's spread is SDF_RANGE texels each side of the outline, so one screen
+    // pixel is a known step of the field: (texels per pixel) / (2 * SDF_RANGE). The edge is one pixel wide from
+    // that. (It used to be normalised by fwidth of the sampled value, which is zero on the ridge of a thin stem:
+    // a stem that fell between two pixel centres vanished instead of showing as two half-covered pixels, so small
+    // text lost stems depending on where it sat on the pixel grid.)
+    let tpp = max(max(length(dpdx(v.uv)), length(dpdy(v.uv))) * ATLAS_SIZE, 1.0e-4);
+    let pxr = max(2.0 * SDF_RANGE / tpp, 1.0);
     let ea = edge(v.l.x, v.aa.x, v.aa.z) * edge(v.l.y, v.aa.y, v.aa.w);
     // clipping in the untilted plane (at rest: the fragment position, as before)
     let cp = select(v.pos.xy, v.pp, u.tilt.x != 0.0 || u.tilt.y != 0.0);
@@ -645,7 +656,7 @@ fn shape(v: VsOut) -> vec4<f32> {
     if (v.kind.x != 0u) {
         // a glyph: coverage of the distance field, one pixel wide; shp.y widens it (the outline pass)
         let d = n.a + v.shp.y;
-        return c * clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
+        return c * clamp((d - 0.5) * pxr + 0.5, 0.0, 1.0);
     }
     var b = n * c;
     if (v.kind.y != 0u) { b = sh; }
@@ -662,7 +673,7 @@ fn shape(v: VsOut) -> vec4<f32> {
 
 impl UiGpu {
     pub fn new(device: &wgpu::Device) -> UiGpu {
-        let src = UI_WGSL.replace("ATLAS_SIZE", &format!("{ATLAS}.0"));
+        let src = UI_WGSL.replace("ATLAS_SIZE", &format!("{ATLAS}.0")).replace("SDF_RANGE", &format!("{:.1}", crate::ui_font::SDF_RANGE));
         let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("gd_ui"), source: wgpu::ShaderSource::Wgsl(src.into()) });
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("gd_ui"),

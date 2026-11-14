@@ -353,7 +353,19 @@ fn install_fault_handler() {
             // MELEE_CRASH_STACK=N: list up to N return addresses (default 24), scanning deeper, to reach the caller
             // of a deep recursion (a model load)
             let want = std::env::var("MELEE_CRASH_STACK").ok().and_then(|v| v.parse::<usize>().ok()).unwrap_or(24).clamp(1, 1000);
-            for i in 0..(512usize).max(want * 16) {
+            // only as far as the stack is readable: a fault on a young thread (a helper a few frames deep) has less
+            // than this above its stack pointer, and reading past the stack's top faulted inside this filter, which
+            // ended the process with no report at all
+            let mut words = (512usize).max(want * 16);
+            {
+                extern "system" {
+                    fn VirtualQuery(addr: *const core::ffi::c_void, info: *mut [usize; 6], len: usize) -> usize;
+                }
+                let mut info = [0usize; 6];
+                let top = if VirtualQuery(rsp as *const _, &mut info, 48) != 0 && info[4] as u32 == 0x1000 { info[0] + info[3] } else { rsp };
+                words = words.min(top.saturating_sub(rsp) / 8);
+            }
+            for i in 0..words {
                 let v = *(rsp as *const usize).add(i);
                 if v > base && v < base + 0x400_0000 {
                     fault.push_str(&format!("stack[{i:3}]:      melee.exe+0x{:X}\n", v - base));
@@ -368,6 +380,93 @@ fn install_fault_handler() {
         1 // EXCEPTION_EXECUTE_HANDLER: end the process after the report
     }
     unsafe { SetUnhandledExceptionFilter(Some(filter)) };
+    // MELEE_CRASH_VEH=1 (diagnostics): a first-chance line for every access violation / stack overflow, on whichever
+    // thread it happens, written straight to stderr without allocating: the fault address, the thread and the code
+    // addresses on the top of its stack. For faults that end the process before the unhandled filter can report.
+    if std::env::var_os("MELEE_CRASH_VEH").is_some() {
+        extern "system" {
+            fn AddVectoredExceptionHandler(first: u32, h: Option<unsafe extern "system" fn(*mut ExceptionPointers) -> i32>) -> *mut core::ffi::c_void;
+            fn GetCurrentThreadId() -> u32;
+            fn GetStdHandle(n: u32) -> *mut core::ffi::c_void;
+            fn WriteFile(h: *mut core::ffi::c_void, buf: *const u8, len: u32, written: *mut u32, ov: *mut core::ffi::c_void) -> i32;
+            fn VirtualQuery(addr: *const core::ffi::c_void, info: *mut [usize; 6], len: usize) -> usize;
+        }
+        struct Out([u8; 4096], usize);
+        impl Out {
+            fn s(&mut self, t: &str) {
+                for &b in t.as_bytes() {
+                    if self.1 < self.0.len() {
+                        self.0[self.1] = b;
+                        self.1 += 1;
+                    }
+                }
+            }
+            fn x(&mut self, v: usize) {
+                self.s("0x");
+                let mut started = false;
+                for i in (0..16).rev() {
+                    let d = (v >> (i * 4)) & 15;
+                    if d != 0 || started || i == 0 {
+                        started = true;
+                        let c = [b"0123456789ABCDEF"[d]];
+                        self.s(core::str::from_utf8(&c).unwrap_or("?"));
+                    }
+                }
+            }
+        }
+        unsafe extern "system" fn veh(p: *mut ExceptionPointers) -> i32 {
+            let rec = &*(*p).record;
+            if rec.code != 0xC0000005 && rec.code != 0xC00000FD {
+                return 0;
+            }
+            let base = GetModuleHandleW(core::ptr::null()) as usize;
+            let mut o = Out([0; 4096], 0);
+            o.s("melee: first-chance fault code ");
+            o.x(rec.code as usize);
+            o.s(" at ");
+            o.x(rec.address as usize);
+            o.s(" (melee.exe+");
+            o.x((rec.address as usize).wrapping_sub(base));
+            o.s(") access ");
+            o.x(rec.info[0]);
+            o.s(" of ");
+            o.x(rec.info[1]);
+            o.s(" thread ");
+            o.x(GetCurrentThreadId() as usize);
+            o.s("\n");
+            #[cfg(target_arch = "x86_64")]
+            if !(*p).context.is_null() {
+                let rsp = *((*p).context as *const u8).add(0x98).cast::<usize>();
+                o.s("  rsp ");
+                o.x(rsp);
+                // how much of the stack is readable from rsp up
+                let mut info = [0usize; 6];
+                let mut top = rsp;
+                if VirtualQuery(rsp as *const _, &mut info, 48) != 0 && info[4] as u32 == 0x1000 {
+                    top = info[0] + info[3];
+                }
+                o.s(" readable to ");
+                o.x(top);
+                o.s("\n");
+                let mut n = 0;
+                let mut a = rsp & !7;
+                while a + 8 <= top && n < 48 {
+                    let v = *(a as *const usize);
+                    if v > base && v < base + 0x400_0000 {
+                        o.s("  stack melee.exe+");
+                        o.x(v - base);
+                        o.s("\n");
+                        n += 1;
+                    }
+                    a += 8;
+                }
+            }
+            let mut w = 0u32;
+            WriteFile(GetStdHandle(-12i32 as u32), o.0.as_ptr(), o.1 as u32, &mut w, core::ptr::null_mut());
+            0 // EXCEPTION_CONTINUE_SEARCH
+        }
+        unsafe { AddVectoredExceptionHandler(1, Some(veh)) };
+    }
 }
 
 #[cfg(not(windows))]

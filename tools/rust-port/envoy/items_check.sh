@@ -41,6 +41,9 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #       along real edges, the published edges), the node / room taken the cursor's, the fight's kind the node's,
 #       save / continue keeping the path, no later view word overwriting the map;
 #   25. mapcoop: the same in a co-op run (two players);
+#   26. mapwalk: the owner's walk-off (Nov 14): player 1 (a person, mapwalk_pad.txt) wins fight 1, the map's room
+#       choice opens over the held match and the pad keeps jumping left off the stage: the match is frozen while
+#       it is open (player 1 stays put, no stock lost); `mapko` takes a stock while it is open: given back;
 #   18. campfire: the room choice steered to a campfire: each player's stocks refilled to their own limit;
 #   19. orbs: Moon Drops and the four stance orbs: orb hits, and an orb shattered by a foe's attack.
 #   Synergy lane (envoy-synergy.md):
@@ -55,7 +58,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   24. air: pickup_air_z_pad.txt / pickup_air_l_pad.txt: knob `pedair` puts the pedestal under player 1 as a hop leaves the floor; Z / L taps in the air: taken
 #       by the button from an airborne state (jumps, falls, EscapeAir).
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd
-#   shop devil angel secret whiff triggers coopstock map mapcoop campfire orbs synergy coopsyn shiftko pickup air";
+#   shop devil angel secret whiff triggers coopstock map mapcoop mapwalk campfire orbs synergy coopsyn shiftko pickup air";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -64,7 +67,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map mapcoop campfire orbs synergy coopsyn shiftko pickup air}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map mapcoop mapwalk campfire orbs synergy coopsyn shiftko pickup air}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -256,6 +259,15 @@ for d in $depths; do
     seen map "$d" "envoy: map room taken, row\*10 + lane 1[0-2]$" || miss="$miss (no room taken)"
     seen map "$d" "envoy: item room open" || miss="$miss (the item room taken on the map never opened)"
     check 17 map "$d" "$line" "$miss"
+  fi
+  if on mapwalk; then
+    line=$(MELEE_PAD_SCRIPT="$here/mapwalk_pad.txt" run mapwalk "$d" "*20000,mapwalk,mapko")
+    miss=""; seen mapwalk "$d" "envoy: map room choice frozen" || miss="$miss (the room choice did not freeze the match)"
+    seen mapwalk "$d" "a stock lost while open given back" || miss="$miss (the mapko stock not given back)"
+    seen mapwalk "$d" "envoy: map room taken" || miss="$miss (no room taken)"
+    xs=$(grep -aoE "envoy: mapwalk P1 x -?[0-9]+" "$(L mapwalk "$d")" | sort -u | wc -l)
+    [ "$xs" = 1 ] || miss="$miss (player 1 moved while the room choice was open: $xs places)"
+    check 26 mapwalk "$d" "$line" "$miss"
   fi
   if on mapcoop; then
     # the act map in co-op (two players, P2's wish flag): the same map_check, both players CPUs

@@ -374,7 +374,60 @@ pub(crate) unsafe fn fork_open() {
     S.fork = 1;
     S.fork_cur = cursor_lane(r);
     S.fork_left = 0;
+    S.fork_hold = 0;
+    for p in 0..NP {
+        S.fork_stocks[p] = if (p as i32) < nh() { gd_player_stocks(p as i32).max(0) } else { 0 };
+    }
     log(b"envoy: map room choice open, row\0", r as i32);
+    fork_freeze();
+}
+
+/// The room choice over the held match (after a win) freezes the match with the hold freeze, as the stop's picks and
+/// shop do: the fighters stand still while it is open, so the cursor's left / right cannot walk anyone off the stage.
+/// Retried each frame while another transition runs; the cursor waits for it (fork_wait).
+unsafe fn fork_freeze() {
+    if S.fork != 1 || S.collect == 0 || S.fork_hold != 0 {
+        return;
+    }
+    if gd_hold_begin(HOLD_FOREVER) == 0 {
+        S.fork_hold = 1;
+        log(b"envoy: map room choice frozen, row\0", room_row() as i32);
+    }
+}
+
+/// The room choice is over: the frozen match goes on.
+unsafe fn fork_thaw() {
+    if S.fork_hold != 0 {
+        S.fork_hold = 0;
+        gd_hold_release();
+    }
+}
+
+/// Per frozen frame of the room choice: a player stock lost while it is open (a KO already on its way when the
+/// freeze began) is given back, so the pool, the retail match end and the map stay in step.
+pub(crate) unsafe fn fork_guard() {
+    for p in 0..nh() as usize {
+        let now = gd_player_stocks(p as i32);
+        if now >= 0 && now < S.fork_stocks[p] {
+            gd_envoy_apply(p as i32, AP_STOCKS, S.fork_stocks[p]);
+            log(b"envoy: map room choice, a stock lost while open given back, player\0", p as i32);
+        }
+    }
+}
+
+/// The match ended with the room choice still open (a last stock lost before the freeze took): the cursor's room is
+/// taken, as A would take it, so the path, the map and the road screen agree (no row is left half chosen).
+pub(crate) unsafe fn fork_settle() {
+    if S.fork != 1 {
+        return;
+    }
+    let r = room_row();
+    S.fork_hold = 0; // the match is gone, and its freeze with it (tag_swap::reset at the next match)
+    S.fork = 2;
+    S.path[r] = S.fork_cur;
+    S.map_cur = S.fork_cur;
+    S.fork_pick = node_kind(r, S.fork_cur as usize);
+    log(b"envoy: map room choice settled at the match end, row*10 + lane\0", r as i32 * 10 + S.fork_cur);
 }
 
 /// One frame of the room choice (no timer: the owner's "we shouldn't be rushed on making our build"): P1 walks the
@@ -385,6 +438,13 @@ pub(crate) unsafe fn fork_wait() -> bool {
         return false;
     }
     let r = room_row();
+    if S.collect > 0 && S.fork_hold == 0 {
+        // not frozen yet (another transition is running): no cursor until the fighters stand still
+        fork_freeze();
+        if S.fork_hold == 0 {
+            return true;
+        }
+    }
     let pad = gd_pad_pressed(0);
     let d = (pad & (DPAD_RIGHT | STICK_RIGHT) != 0) as i32 - (pad & (DPAD_LEFT | STICK_LEFT) != 0) as i32;
     if d != 0 {
@@ -421,11 +481,12 @@ pub(crate) unsafe fn fork_wait() -> bool {
         gd_envoy_apply(0, AP_STOCKS, (gd_player_stocks(0) - 1).max(0));
         log(b"envoy: mapko P1 stock taken, now\0", gd_player_stocks(0));
     }
-    let auto = ((test_flag("autotake") || want != 0) && S.fork_left > 60) || (walk && S.fork_left > 600);
+    let auto = if walk { S.fork_left > 600 } else { (test_flag("autotake") || want != 0) && S.fork_left > 60 };
     if pad & BTN_A == 0 && !auto {
         return true;
     }
     S.fork = 2;
+    fork_thaw();
     S.path[r] = S.fork_cur;
     S.map_cur = S.fork_cur;
     let k = node_kind(r, S.fork_cur as usize);

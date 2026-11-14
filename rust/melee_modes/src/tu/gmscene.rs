@@ -979,7 +979,7 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
             }
             // mod host (melee_modhost, hooks-v1 `frame.run_procs`): pre = frame begin, post = frame end, before the NHV1 sample
             if let Some(m) = MOD_FRAME { m(false) }
-            ext::HSD_GObj_RunProcs();
+            { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "frame: gobj procs"); ext::HSD_GObj_RunProcs(); }
             if let Some(m) = MOD_FRAME { m(true) }
             if let Some(f) = ext::AUDIO_PROCS { f() }
             ext::Netplay_Background(); // an online lobby stays connected on the CSS too
@@ -1074,7 +1074,7 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
     if hidden != 0 {
         ext::Gx_SuppressDraws(1);
     }
-    ext::HSD_GObj_80390FC0();
+    { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "frame: render pass (display lists)"); ext::HSD_GObj_80390FC0(); }
     if hidden != 0 {
         ext::Gx_SuppressDraws(0);
     }

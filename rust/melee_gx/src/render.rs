@@ -370,6 +370,8 @@ pub struct Renderer {
     pub(crate) ui: Option<crate::ui::UiGpu>,
     /// The Envoy effects layer (crate::fx): None until a run arms it; disarmed, every pass is skipped.
     pub(crate) fx: Option<Box<crate::fx::FxGpu>>,
+    /// The effects layer being built at start-up (crate::fx `fx_prewarm_start`).
+    pub(crate) fx_build: Option<std::thread::JoinHandle<Box<crate::fx::FxGpu>>>,
     /// Effects intensity (0 off, 0.5 subtle, 1 full): the UI quad effects and the fx layer.
     pub fx_intensity: f32,
     /// The presenter's true-widescreen x factor (interp::Widen; 1 = none): the fx world camera follows it.
@@ -1362,6 +1364,7 @@ impl Renderer {
             zcopy_pipe: None,
             ui: None,
             fx: None,
+            fx_build: None,
             fx_intensity: 1.0,
             fx_widen: 1.0,
             ui_tilt: [0.0; 2],

@@ -596,6 +596,12 @@ pub unsafe extern "C" fn envoy_sel_frame() {
         }
         return;
     }
+    // zero-hitch.md: the match commons (ItCo, IfAll) are parsed here, in the select's own frames under the camp's
+    // cover, instead of in the match's setup tick (their decode was a third of that tick). Envoy only.
+    let ahead = melee_runtime::tu::lbdvd::lbDvd_ParseAhead();
+    if ahead > 0 {
+        melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("select: match commons parsed ahead: ").n(ahead as i64));
+    }
     if SEL_FRAMES == 2 {
         crate::tu::adapt::gm_801A4B60__d469d9();
     }

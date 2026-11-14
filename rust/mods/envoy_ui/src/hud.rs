@@ -487,7 +487,8 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         let a = if pl < 90 { 1.0 } else { (110 - pl) as f32 / 20.0 };
         session_banner(e, v, a, 318.0);
     }
-    if humans == 2 && crate::pad_present(1) == 0 {
+    // (not under the fight's opening banner, which stands in the same place for its two seconds)
+    if humans == 2 && crate::pad_present(1) == 0 && !(v[V_RW] == 0 && pl < 110) {
         let m = mid();
         // low on the screen, clear of the room banners and the cards at the top
         sticker(e, S_FACE_LAGOON, m - 140.0, 330.0, 280.0, 34.0, -1.0, WHITE, |e| {

@@ -93,5 +93,16 @@ silhouette and one colour pair of its own, its own sound, and `vfx::impact` (or 
 
 Effects in front of fighters are light (additive) and short; solid kinds sit behind or beside. A quad's light
 covers what is behind it only where it is bright, which keeps colours true on a bright stage.
-Cost and pre-warm: see the numbers in the branch's report; the pipelines are built when the effects layer arms
-(a run starts: the camp, before any fight), with the drive material pipelines.
+Measured (2026-11-14, this machine, `vfx_cost` in `tests/vfx_gallery.rs`: 168 quads, 8 of every kind, GPU waited):
++0.23 ms a frame at 1280x960 internal, +0.43 ms at 1920x1440 (1080p output), +0.99 ms at 3200x2400 (4K output); that
+is the world pass, the bloom, the refraction pass and the blit together. Real-time 1080p runs with the frame
+profiler (every effect in turn, and an all-items fight): 0 frames over 16.7 ms in 2400 after the match load.
+
+Pre-warm: the effect pipelines (one shader module, two colour pipelines, one refraction pipeline, beside the drive
+material ones) are built on the third present of the process whenever a UI mod is loaded (`envoy_fx.rs`,
+`play: envoy fx: armed (.. ms .., pre-warmed at start-up)`), so a fight never compiles one; 215-250 ms the first
+time on a machine, 15-19 ms once the driver has them cached. `tools/rust-port/perf/pipe_seed.sh` runs every item
+in its Envoy pass and checks that line.
+
+Development aids: `MELEE_VFX_WGSL=<file>` replaces the shader source without a rebuild; `MELEE_VFX_LOG=1` prints
+the effect kinds on screen whenever they change; the gallery test renders a spec of quads over a backdrop to PNGs.

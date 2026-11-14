@@ -79,9 +79,11 @@ for (w, i, s), d in sorted(snap.items()):
     # (same offset from the ledge), so below the floor or on a ledge 45 frames later is its recovery, not misplacement
     a = snap.get(('at', i, s), {})
     ax, ay, am = a.get('x10', 0) / 10, a.get('y10', 0) / 10, a.get('motion', -1)
-    # a fighter flying in knockback near the edge keeps its launch (no reset), so it may carry past the edge too
-    was_off = abs(ax) > 90 or ay < -5 or 252 <= am <= 263 or (75 <= am <= 91 and abs(ax) > 55)
-    if 0 <= m <= 10 or abs(x) >= 200 or y >= 180 or (y <= -5 and not was_off and not 252 <= m <= 263):
+    # a fighter flying in knockback keeps its launch (no reset), so it may carry past an edge too
+    was_off = abs(ax) > 90 or ay < -5 or 252 <= am <= 263 or 75 <= am <= 91
+    # the smallest main floor (Yoshi's Story) ends near |x| 56: below the floor only means misplaced under the centre;
+    # nearer the edge it is a fighter that walked, jumped or was knocked off in the 45 frames
+    if 0 <= m <= 10 or abs(x) >= 200 or y >= 180 or (y <= -5 and abs(x) < 50 and not was_off and not 252 <= m <= 263):
         bad.append(f'switch {i} slot {s}: motion {m} at ({x:.1f},{y:.1f})')
 # every run is a synctest (depth 0 too): no result line means it never finished (a stall, a crash, the timeout)
 ok = ' 0 MISMATCHES' in sync

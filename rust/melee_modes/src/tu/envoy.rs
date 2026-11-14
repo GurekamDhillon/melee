@@ -76,6 +76,46 @@ pub const EVENT_LCANCEL: u32 = 1;
 /// Envoy items: the fighter left its jump squat as a short hop (bit 1) or a full hop (bit 2).
 pub const EVENT_SHORTHOP: u32 = 2;
 pub const EVENT_FULLHOP: u32 = 4;
+/// Envoy slice 2: the fighter's hitbox struck a shield (bit 3; a shielded attack is not a whiff), and the fighter
+/// crouch-cancelled a hit (bit 5: its knockback was cut by crouching).
+pub const EVENT_SHIELDHIT: u32 = 8;
+pub const EVENT_CC: u32 = 32;
+
+/// The shield-hit site (`ftColl_80076CBC`): installed in `melee_fighter::hooks::ENVOY_SHIELD_HIT`.
+pub fn on_shield_hit(a: &Fighter, _d: &Fighter) {
+    if armed() == 0 || a.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = a.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= EVENT_SHIELDHIT };
+    }
+}
+
+/// The crouch-cancel site (`ftCo_Damage_CalcKnockback`, the squat branch): installed in `hooks::ENVOY_CC`.
+pub fn on_cc(f: &Fighter) {
+    if armed() == 0 || f.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = f.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= EVENT_CC };
+    }
+}
+
+/// The item kind behind `slot`'s last hit (`dmg.x1868_source` an item: a Fox / Falco laser is 54 / 55), or -1.
+pub unsafe fn hit_item(slot: i32) -> i32 {
+    let f = active_fighter(slot);
+    if f.is_null() {
+        return -1;
+    }
+    let g = (*f).dmg.x1868_source;
+    if !g.is_null() && (*g).classifier as i32 == HSD_GOBJ_CLASS_ITEM && !(*g).user_data.is_null() {
+        (*((*g).user_data as *mut Item)).kind as i32
+    } else {
+        -1
+    }
+}
 
 /// The jump site (`ftCo_KneeBend_Anim`, before `ftCo_Jump_Enter`): installed in `melee_fighter::hooks::ENVOY_JUMP`.
 pub fn on_jump(f: &Fighter, short_hop: bool) {
@@ -144,6 +184,18 @@ pub fn armed() -> i32 {
 /// starts, `gd_envoy_salt`; the seed it gives lives in the sim state from then on). 0 with `MELEE_ENVOY_ARM` and in
 /// scripted runs (`MELEE_PAD_SCRIPT` without `MELEE_ENVOY_SEED`): those keep the fixed seed sequence.
 pub static mut RUN_SALT: i32 = 0;
+/// Netplay: the salt both peers use, from the session's agreed seed (set when the netplay match opens). A local
+/// clock salt would differ per machine and split the run on the first frame; with this set, `new_run_salt` and the
+/// sim's `gd_envoy_salt` read the shared value, and each new run still differs through the sim's run counter.
+pub static mut NET_SALT: Option<i32> = None;
+/// The salt the sim reads (`gd_envoy_salt`): the netplay session's shared one when there is a session.
+pub fn salt_now() -> i32 {
+    unsafe { NET_SALT.unwrap_or(RUN_SALT) }
+}
+/// Called by the netplay match setup with the agreed seed.
+pub fn set_net_salt(seed: u32) {
+    unsafe { NET_SALT = Some(((seed ^ (seed >> 15)).wrapping_mul(0x2C1B_3C6D) & 0x3FFF_FFFF).max(1) as i32) };
+}
 
 /// The camp starts a new run: pick its salt. `MELEE_ENVOY_SEED=<n>` fixes it (a reproducible run; 0 = the old fixed
 /// sequence); a scripted run without it keeps 0; otherwise the clock and a per-process counter (every launch and
@@ -151,9 +203,15 @@ pub static mut RUN_SALT: i32 = 0;
 pub fn new_run_salt() -> i32 {
     static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
     let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    if let Some(v) = unsafe { NET_SALT } {
+        unsafe { RUN_SALT = v };
+        eprintln!("envoy: new run salt {v} (netplay: the session's shared salt)");
+        return v;
+    }
     let salt = match std::env::var("MELEE_ENVOY_SEED").ok().and_then(|v| v.trim().parse::<u32>().ok()) {
         Some(v) => v & 0x3FFF_FFFF,
-        None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) => 0,
+        // MELEE_ENVOY_SALT_LIVE=1: a scripted run rolls the clock salt as a player's would (ready_checks `fresh`)
+        None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) && std::env::var_os("MELEE_ENVOY_SALT_LIVE").is_none() => 0,
         // a netplay session (mod identity frozen): every peer must roll the same run, and the clock differs per peer.
         // No shared per-session value reaches the camp yet (the envoy= handshake is milestone 6): the fixed sequence.
         None if melee_data::netid::frozen() => 0,
@@ -514,6 +572,8 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     EVENTS = [0; 4];
     melee_fighter::hooks::ENVOY_LCANCEL = Some(on_lcancel);
     melee_fighter::hooks::ENVOY_JUMP = Some(on_jump);
+    melee_fighter::hooks::ENVOY_SHIELD_HIT = Some(on_shield_hit);
+    melee_fighter::hooks::ENVOY_CC = Some(on_cc);
     let coop = PLAN[P_COOP] == 1;
     let css = |i: usize| -> i32 { let p = &d.players[i]; if p.slot_type != Gm_PKind_NA as u8 { p.ckind as i32 } else { -1 } };
     // solo: P1's pick is the main, P2's the partner; co-op: P1 + P3 are player 1's pair, P2 + P4 player 2's
@@ -1138,6 +1198,26 @@ pub unsafe fn blast_cap(slot: i32, cap_milli: i32, tag: i32) -> i32 {
     0
 }
 
+/// The look of the blast `slot` armed last (this frame): its hit element (the engine's hit spark: 0 normal, 1 fire,
+/// 2 electric, 3 slash; ice / sleep and the rest are refused) and its hit sound (`sfx_kind`, the Melee disc's hit
+/// sound family, and `severity` 0-2). Envoy items give every hit its own spark and sound (the Spark Ring bar).
+pub unsafe fn blast_look(slot: i32, element: i32, sfx_kind: i32, severity: i32) -> i32 {
+    if !(0..=3).contains(&element) || !(0..=12).contains(&sfx_kind) {
+        return -1;
+    }
+    let Some(b) = BLASTS.iter_mut().filter(|b| b.left == BLAST_LIFE && b.slot == slot).max_by_key(|b| b.hit.x4 & 0xFFFF) else { return -1 };
+    let f = active_fighter(slot);
+    if f.is_null() || !(0..4).contains(&b.cap) {
+        return -1;
+    }
+    let h = &mut *core::ptr::addr_of_mut!((*f).x914[b.cap as usize]);
+    h.element = element as _;
+    h.sfx_kind = sfx_kind as _;
+    h.sfx_severity = severity.clamp(0, 2) as _;
+    b.hit = *h;
+    0
+}
+
 /// What blasts landed on `slot` this frame (`Landed`, as words): n, landed x1000, before the cap x1000, owner slot,
 /// capsule index, tag, group, 1 if a blast launches, the winning knockback x1000.
 pub unsafe fn landed(slot: i32) -> [i32; 9] {
@@ -1319,4 +1399,11 @@ pub unsafe fn hud_words() -> [i32; 16] {
     // word 12: the retail pause is up (its overlay owns the top of the screen)
     o[12] = (crate::tu::gmscene::gm_GetDbPauseFlag(1) != 0) as i32;
     o
+}
+
+/// Envoy orbitals: an orb blocked a foe projectile; the item (`gobj`) is removed the retail way.
+pub unsafe fn item_block(gobj: *mut core::ffi::c_void) {
+    if !gobj.is_null() {
+        melee_items::tu::item::Item_8026A8EC(gobj as _);
+    }
 }

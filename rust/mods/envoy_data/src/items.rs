@@ -1,12 +1,16 @@
 //! Envoy items (docs/rust-port/notes/envoy-items-design.md): the hand-made item table that replaces the drive rewards.
 //! One record per item: one trigger tied to a Melee action, one effect function in envoy_sim (`item_<name>`), one
-//! visual, one stack rule with its cap. A const table (the slice's 12); `lint` runs at compile time (a broken record
+//! visual, one stack rule with its cap. A const table (slice 1's 12, slice 2's 16); `lint` runs at compile time (a broken record
 //! fails the build of every Envoy mod) and `ITEMS_DIGEST` goes into the sim hash and the run record.
 
 /// Pools an item can come from (bits).
 pub const PL_ITEM: u8 = 1;
 pub const PL_SHOP: u8 = 2;
 pub const PL_BOSS: u8 = 4;
+/// Slice 2 rooms: the devil deal (costs stock slots), the angel room (free, strong), the secret room.
+pub const PL_DEVIL: u8 = 8;
+pub const PL_ANGEL: u8 = 16;
+pub const PL_SECRET: u8 = 32;
 
 /// Triggers (design section 3).
 pub const TR_PASSIVE: u8 = 0;
@@ -20,7 +24,24 @@ pub const TR_ROLL: u8 = 7;
 pub const TR_SMASH_HIT: u8 = 8;
 pub const TR_KO: u8 = 9;
 pub const TR_MODIFIER: u8 = 10;
-pub const TRIGGER_TEXT: [&str; 11] = ["always on", "nair hit", "wavedash", "shine", "short hop", "ledge grab", "whiff", "roll", "smash hit", "KO", "modifies"];
+/// Slice 2 triggers: a jab that hits, taking a hit, a Fox / Falco laser that hits, a crouch cancel, a powershield, and
+/// the pickup itself (Spare Heart).
+pub const TR_JAB_HIT: u8 = 11;
+pub const TR_TAKE_HIT: u8 = 12;
+pub const TR_LASER: u8 = 13;
+pub const TR_CC: u8 = 14;
+pub const TR_POWERSHIELD: u8 = 15;
+pub const TR_PICKUP: u8 = 16;
+/// Stance orbs (slice 2): an orb that exists only WHILE the fighter is in this state.
+pub const TR_WHILE_AIRDODGE: u8 = 17;
+pub const TR_WHILE_NAIR: u8 = 18;
+pub const TR_WHILE_DASH: u8 = 19;
+pub const TR_WHILE_SHIELD: u8 = 20;
+pub const TR_LAST: u8 = TR_WHILE_SHIELD;
+pub const TRIGGER_TEXT: [&str; 21] = [
+    "always on", "nair hit", "wavedash", "shine", "short hop", "ledge grab", "whiff", "roll", "smash hit", "KO", "modifies", "jab hit", "taking a hit",
+    "laser hit", "crouch cancel", "powershield", "on pickup", "while airdodging", "while in nair", "while dashing", "while shielding",
+];
 
 /// Stack rules: what a second copy does.
 pub const ST_MORE: u8 = 1;
@@ -50,6 +71,28 @@ pub const IT_MOON_DROPS: i32 = 15;
 pub const IT_COIN_MAGNET: i32 = 18;
 pub const IT_HOMING_INK: i32 = 35;
 pub const IT_FIRE_LACE: i32 = 36;
+// slice 2 (envoy-items-design.md 7 and 11)
+pub const IT_LASER_PRISM: i32 = 8;
+pub const IT_CROUCH_THORNS: i32 = 21;
+pub const IT_PERFECT_GUARD: i32 = 26;
+pub const IT_BRIMSTONE_JAB: i32 = 27;
+pub const IT_DEMON_WINGS: i32 = 28;
+pub const IT_CRIMSON_COUNT: i32 = 29;
+pub const IT_BLOODLUST: i32 = 30;
+pub const IT_HALO: i32 = 31;
+pub const IT_GUARDIAN_FEATHER: i32 = 32;
+pub const IT_ICE_GLASS: i32 = 37;
+pub const IT_CHAIN_SPARK: i32 = 38;
+pub const IT_TWIN_SHOT: i32 = 39;
+pub const IT_GRAVITY_WELL: i32 = 40;
+pub const IT_BIG_BANG: i32 = 41;
+pub const IT_BOUNCY: i32 = 42;
+pub const IT_SPARE_HEART: i32 = 43;
+// stance orbs (orbitals that live only in one movement state)
+pub const IT_DODGE_ORB: i32 = 44;
+pub const IT_NAIR_RING: i32 = 45;
+pub const IT_DASH_ORB: i32 = 46;
+pub const IT_SHIELD_ORBS: i32 = 47;
 
 #[derive(Clone, Copy)]
 pub struct Item {
@@ -74,25 +117,48 @@ pub struct Item {
     pub repeatable: bool,
     /// RGBA: the item's colour (icon, effects).
     pub rgba: u32,
+    /// A devil deal's price in stock slots (1-2; 0 for an item outside the devil pool).
+    pub slots: u8,
 }
 
-pub const ITEMS: [Item; 12] = [
-    Item { id: IT_SPARK_RING, key: "spark_ring", name: "Spark Ring", line: "Nair hits pop a ring of sparks", pools: PL_ITEM, quality: 1, trigger: TR_NAIR_HIT, visual: "sparks", tags: TG_SPARK | TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFFF0_70FF },
-    Item { id: IT_GLIDE_WAKE, key: "glide_wake", name: "Glide Wake", line: "Wavedashes leave a burning streak", pools: PL_ITEM, quality: 1, trigger: TR_WAVEDASH, visual: "wake", tags: TG_TRAIL, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xFF8A_2AFF },
-    Item { id: IT_SHINE_BELL, key: "shine_bell", name: "Shine Bell", line: "Each shine rings a shock ring", pools: PL_ITEM, quality: 2, trigger: TR_SHINE, visual: "bell", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0x7AD8_FFFF },
-    Item { id: IT_HOP_SHOT, key: "hop_shot", name: "Hop Shot", line: "Short hops spit a star at a foe", pools: PL_ITEM, quality: 1, trigger: TR_SHORT_HOP, visual: "star", tags: TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFFD8_4AFF },
-    Item { id: IT_LEDGE_SPIKES, key: "ledge_spikes", name: "Ledge Spikes", line: "Ledge grabs stab ice spikes up", pools: PL_ITEM, quality: 1, trigger: TR_LEDGE_GRAB, visual: "ice_spikes", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0x9CF0_FFFF },
-    Item { id: IT_WHIFF_ECHO, key: "whiff_echo", name: "Whiff Echo", line: "A whiff leaves a ghost that swings again", pools: PL_ITEM, quality: 2, trigger: TR_WHIFF, visual: "ghost", tags: TG_BURST, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x6AF0_E0FF },
-    Item { id: IT_ROLL_MINES, key: "roll_mines", name: "Roll Mines", line: "Rolls drop a blinking mine", pools: PL_ITEM, quality: 1, trigger: TR_ROLL, visual: "mine", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFF4A_4AFF },
-    Item { id: IT_SMASH_QUAKE, key: "smash_quake", name: "Smash Quake", line: "Smashes send shockwaves along the floor", pools: PL_ITEM, quality: 2, trigger: TR_SMASH_HIT, visual: "quake", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xE0B0_60FF },
-    Item { id: IT_MOON_DROPS, key: "moon_drops", name: "Moon Drops", line: "Two moons orbit you and nick foes", pools: PL_SHOP, quality: 2, trigger: TR_PASSIVE, visual: "moons", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 4, repeatable: true, rgba: 0xE8EC_FFFF },
-    Item { id: IT_COIN_MAGNET, key: "coin_magnet", name: "Coin Magnet", line: "KO'd foes burst into coins for you", pools: PL_SHOP, quality: 1, trigger: TR_KO, visual: "coins", tags: 0, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: true, rgba: 0xFFC8_30FF },
-    Item { id: IT_HOMING_INK, key: "homing_ink", name: "Homing Ink", line: "Your projectiles curve to foes", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_MODIFIER, visual: "ink", tags: 0, mods: TG_PROJECTILE, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xC85A_FFFF },
-    Item { id: IT_FIRE_LACE, key: "fire_lace", name: "Fire Lace", line: "Everything you make leaves embers and burns", pools: PL_ITEM, quality: 3, trigger: TR_MODIFIER, visual: "embers", tags: 0, mods: TG_BURST | TG_TRAIL | TG_PROJECTILE | TG_SPARK, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xFF6A_20FF },
+pub const ITEMS: [Item; 32] = [
+    Item { id: IT_SPARK_RING, key: "spark_ring", name: "Spark Ring", line: "Nair hits pop a ring of sparks", pools: PL_ITEM, quality: 1, trigger: TR_NAIR_HIT, visual: "sparks", tags: TG_SPARK | TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFFF0_70FF, slots: 0 },
+    Item { id: IT_GLIDE_WAKE, key: "glide_wake", name: "Glide Wake", line: "Wavedashes leave a burning streak", pools: PL_ITEM, quality: 1, trigger: TR_WAVEDASH, visual: "wake", tags: TG_TRAIL, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xFF8A_2AFF, slots: 0 },
+    Item { id: IT_SHINE_BELL, key: "shine_bell", name: "Shine Bell", line: "Each shine rings a shock ring", pools: PL_ITEM, quality: 2, trigger: TR_SHINE, visual: "bell", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0x7AD8_FFFF, slots: 0 },
+    Item { id: IT_HOP_SHOT, key: "hop_shot", name: "Hop Shot", line: "Short hops spit a star at a foe", pools: PL_ITEM, quality: 1, trigger: TR_SHORT_HOP, visual: "star", tags: TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFFD8_4AFF, slots: 0 },
+    Item { id: IT_LEDGE_SPIKES, key: "ledge_spikes", name: "Ledge Spikes", line: "Ledge grabs stab ice spikes up", pools: PL_ITEM, quality: 1, trigger: TR_LEDGE_GRAB, visual: "ice_spikes", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0x9CF0_FFFF, slots: 0 },
+    Item { id: IT_WHIFF_ECHO, key: "whiff_echo", name: "Whiff Echo", line: "A whiff leaves a ghost that swings again", pools: PL_ITEM, quality: 2, trigger: TR_WHIFF, visual: "ghost", tags: TG_BURST, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x6AF0_E0FF, slots: 0 },
+    Item { id: IT_ROLL_MINES, key: "roll_mines", name: "Roll Mines", line: "Rolls drop a blinking mine", pools: PL_ITEM, quality: 1, trigger: TR_ROLL, visual: "mine", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_MORE, cap: 3, repeatable: true, rgba: 0xFF4A_4AFF, slots: 0 },
+    Item { id: IT_SMASH_QUAKE, key: "smash_quake", name: "Smash Quake", line: "Smashes send shockwaves along the floor", pools: PL_ITEM, quality: 2, trigger: TR_SMASH_HIT, visual: "quake", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xE0B0_60FF, slots: 0 },
+    Item { id: IT_MOON_DROPS, key: "moon_drops", name: "Moon Drops", line: "Two moons orbit you and nick foes", pools: PL_SHOP, quality: 2, trigger: TR_PASSIVE, visual: "moons", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 4, repeatable: true, rgba: 0xE8EC_FFFF, slots: 0 },
+    Item { id: IT_COIN_MAGNET, key: "coin_magnet", name: "Coin Magnet", line: "KO'd foes burst into coins for you", pools: PL_SHOP, quality: 1, trigger: TR_KO, visual: "coins", tags: 0, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: true, rgba: 0xFFC8_30FF, slots: 0 },
+    Item { id: IT_HOMING_INK, key: "homing_ink", name: "Homing Ink", line: "Your projectiles curve to foes", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_MODIFIER, visual: "ink", tags: 0, mods: TG_PROJECTILE, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xC85A_FFFF, slots: 0 },
+    Item { id: IT_FIRE_LACE, key: "fire_lace", name: "Fire Lace", line: "Everything you make leaves embers and burns", pools: PL_ITEM | PL_DEVIL, quality: 3, trigger: TR_MODIFIER, visual: "embers", tags: 0, mods: TG_BURST | TG_TRAIL | TG_PROJECTILE | TG_SPARK, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xFF6A_20FF, slots: 1 },
+    // ---- slice 2: the new triggers, the devil / angel / secret pools, the modifiers, Spare Heart
+    Item { id: IT_LASER_PRISM, key: "laser_prism", name: "Laser Prism", line: "A laser that hits splits into three", pools: PL_ITEM, quality: 2, trigger: TR_LASER, visual: "prism", tags: TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xFF5A_8AFF, slots: 0 },
+    Item { id: IT_CROUCH_THORNS, key: "crouch_thorns", name: "Crouch Thorns", line: "Crouch-cancel a hit: thorns strike back", pools: PL_SHOP, quality: 1, trigger: TR_CC, visual: "thorns", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0x5AD0_6AFF, slots: 0 },
+    Item { id: IT_PERFECT_GUARD, key: "perfect_guard", name: "Perfect Guard", line: "Powershields fire a gold beam back", pools: PL_BOSS, quality: 3, trigger: TR_POWERSHIELD, visual: "gold_beam", tags: TG_PROJECTILE | TG_LAUNCH, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xFFD0_40FF, slots: 0 },
+    Item { id: IT_BRIMSTONE_JAB, key: "brimstone_jab", name: "Brimstone Jab", line: "Jab hits fire a blood-red beam", pools: PL_DEVIL, quality: 4, trigger: TR_JAB_HIT, visual: "brimstone", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xD01A_2AFF, slots: 2 },
+    Item { id: IT_DEMON_WINGS, key: "demon_wings", name: "Demon Wings", line: "One more air jump; it rains feathers", pools: PL_DEVIL, quality: 3, trigger: TR_PASSIVE, visual: "wings", tags: TG_PROJECTILE, mods: 0, stack: ST_MORE, cap: 2, repeatable: false, rgba: 0x5A3A_7AFF, slots: 1 },
+    Item { id: IT_CRIMSON_COUNT, key: "crimson_count", name: "Crimson Count", line: "Each KO adds a sigil that burns foes", pools: PL_DEVIL, quality: 3, trigger: TR_KO, visual: "sigils", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xE028_48FF, slots: 1 },
+    Item { id: IT_BLOODLUST, key: "bloodlust", name: "Bloodlust", line: "When hit, red tendrils lash back", pools: PL_DEVIL, quality: 2, trigger: TR_TAKE_HIT, visual: "tendrils", tags: TG_BURST | TG_LAUNCH, mods: 0, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xB018_38FF, slots: 1 },
+    Item { id: IT_HALO, key: "halo", name: "Halo", line: "Your shots turn holy and pierce", pools: PL_ANGEL, quality: 4, trigger: TR_MODIFIER, visual: "halo", tags: 0, mods: TG_PROJECTILE | TG_SPARK, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0xFFF4_B8FF, slots: 0 },
+    Item { id: IT_GUARDIAN_FEATHER, key: "guardian_feather", name: "Guardian Feather", line: "Once a stock, eats a KO-strength hit", pools: PL_ANGEL, quality: 4, trigger: TR_PASSIVE, visual: "feather", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xE8F4_FFFF, slots: 0 },
+    Item { id: IT_ICE_GLASS, key: "ice_glass", name: "Ice Glass", line: "Shots turn to ice and shatter in three", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_MODIFIER, visual: "ice", tags: 0, mods: TG_PROJECTILE | TG_SPARK, stack: ST_STRONGER, cap: 3, repeatable: false, rgba: 0xA8E8_FFFF, slots: 0 },
+    Item { id: IT_CHAIN_SPARK, key: "chain_spark", name: "Chain Spark", line: "Each item hit arcs on to the next foe", pools: PL_BOSS | PL_SECRET, quality: 3, trigger: TR_MODIFIER, visual: "chain", tags: 0, mods: TG_SPARK | TG_PROJECTILE, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x80D0_FFFF, slots: 0 },
+    Item { id: IT_TWIN_SHOT, key: "twin_shot", name: "Twin Shot", line: "Doubles shots and orbitals, each at 60%", pools: PL_SHOP | PL_ANGEL, quality: 3, trigger: TR_MODIFIER, visual: "twin", tags: 0, mods: TG_PROJECTILE | TG_ORBITAL, stack: ST_MORE, cap: 2, repeatable: false, rgba: 0xFF9A_E0FF, slots: 0 },
+    Item { id: IT_GRAVITY_WELL, key: "gravity_well", name: "Gravity Well", line: "Bursts pull foes in, then blow out", pools: PL_SECRET, quality: 3, trigger: TR_MODIFIER, visual: "well", tags: 0, mods: TG_BURST | TG_LAUNCH, stack: ST_BIGGER, cap: 3, repeatable: false, rgba: 0x8A5A_F0FF, slots: 0 },
+    Item { id: IT_BIG_BANG, key: "big_bang", name: "Big Bang", line: "Bursts twice as big, a quake; -20% damage", pools: PL_DEVIL, quality: 3, trigger: TR_MODIFIER, visual: "big_bang", tags: 0, mods: TG_BURST | TG_LAUNCH, stack: ST_BIGGER, cap: 2, repeatable: false, rgba: 0xFF8A_30FF, slots: 1 },
+    Item { id: IT_BOUNCY, key: "bouncy", name: "Bouncy", line: "Shots bounce off floors and walls", pools: PL_SECRET, quality: 2, trigger: TR_MODIFIER, visual: "bounce", tags: 0, mods: TG_PROJECTILE, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x6AE0_7AFF, slots: 0 },
+    Item { id: IT_SPARE_HEART, key: "spare_heart", name: "Spare Heart", line: "+1 stock limit and +1 stock (to 8)", pools: PL_ANGEL | PL_SECRET, quality: 3, trigger: TR_PICKUP, visual: "heart", tags: 0, mods: 0, stack: ST_MORE, cap: 8, repeatable: true, rgba: 0xFF5A_7AFF, slots: 0 },
+    Item { id: IT_DODGE_ORB, key: "dodge_orb", name: "Dodge Orb", line: "An orb leads every airdodge and wavedash", pools: PL_ITEM | PL_SHOP, quality: 2, trigger: TR_WHILE_AIRDODGE, visual: "orb_dodge", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x7AF0_FFFF, slots: 0 },
+    Item { id: IT_NAIR_RING, key: "nair_ring", name: "Nair Ring", line: "A ring of orbs circles your nair", pools: PL_ITEM, quality: 2, trigger: TR_WHILE_NAIR, visual: "orb_ring", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xFFB0_4AFF, slots: 0 },
+    Item { id: IT_DASH_ORB, key: "dash_orb", name: "Dash Orb", line: "An orb leads your dash and run", pools: PL_ITEM | PL_SHOP, quality: 1, trigger: TR_WHILE_DASH, visual: "orb_dash", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0x9AFF_7AFF, slots: 0 },
+    Item { id: IT_SHIELD_ORBS, key: "shield_orbs", name: "Shield Orbs", line: "Orbs circle your shield and break on blocks", pools: PL_SHOP | PL_SECRET, quality: 2, trigger: TR_WHILE_SHIELD, visual: "orb_shield", tags: TG_ORBITAL, mods: 0, stack: ST_MORE, cap: 3, repeatable: false, rgba: 0xC0A0_FFFF, slots: 0 },
 ];
 pub const ITEMS_LEN: usize = ITEMS.len();
 /// Highest item id + 1 (the inventory arrays are indexed by id).
-pub const ITEM_IDS: usize = 40;
+pub const ITEM_IDS: usize = 48;
 
 /// The table's lint (design section 9): every item has a trigger or is a modifier with tags to change, a visual, a
 /// stack rule and a cap; ids are unique, in range and never 0; a modifier makes nothing; quality 0-4.
@@ -106,7 +172,9 @@ const fn lint() -> bool {
         assert!(!it.visual.is_empty(), "item has no visual");
         assert!(it.quality <= 4, "item quality past 4");
         assert!(it.pools != 0, "item is in no pool");
-        assert!(it.trigger <= TR_MODIFIER, "item trigger unknown");
+        assert!(it.trigger <= TR_LAST, "item trigger unknown");
+        assert!((it.slots > 0) == (it.pools & PL_DEVIL != 0), "a devil item has a slot price; only a devil item");
+        assert!(it.slots <= 2, "a deal costs 1-2 stock slots");
         assert!((it.trigger == TR_MODIFIER) == (it.mods != 0), "a modifier must change tags; only a modifier may");
         let mut j = i + 1;
         while j < ITEMS.len() {
@@ -136,7 +204,7 @@ const fn digest() -> u32 {
         let it = &ITEMS[i];
         h = fnv_bytes(h, &it.id.to_le_bytes());
         h = fnv_bytes(h, it.key.as_bytes());
-        h = fnv_bytes(h, &[it.pools, it.quality, it.trigger, it.tags, it.mods, it.stack, it.cap, it.repeatable as u8]);
+        h = fnv_bytes(h, &[it.pools, it.quality, it.trigger, it.tags, it.mods, it.stack, it.cap, it.repeatable as u8, it.slots]);
         i += 1;
     }
     h

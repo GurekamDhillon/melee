@@ -100,6 +100,12 @@ pub static mut ENVOY_LCANCEL: Option<fn(fp: &Fighter)> = None;
 /// Envoy items: the jump squat ended and the jump begins (`ftCo_KneeBend_Anim`, before `ftCo_Jump_Enter`); the flag is
 /// `is_short_hop`. Set by `melee_modes::tu::envoy`; None = nothing (vanilla).
 pub static mut ENVOY_JUMP: Option<fn(fp: &Fighter, short_hop: bool)> = None;
+/// Envoy items: `attacker`'s hitbox struck `defender`'s shield (`ftColl_80076CBC`), so the attack is not a whiff. Set by
+/// `melee_modes::tu::envoy`; None = nothing (vanilla).
+pub static mut ENVOY_SHIELD_HIT: Option<fn(attacker: &Fighter, defender: &Fighter)> = None;
+/// Envoy items: a hit's knockback is being cut by crouching (`ftCo_Damage_CalcKnockback`, the Squat / SquatWait
+/// branch): a crouch cancel. Set by `melee_modes::tu::envoy`; None = nothing (vanilla).
+pub static mut ENVOY_CC: Option<fn(fp: &Fighter)> = None;
 /// `Geno_GroundEdge(fp, landing)` (pc/geno, TARGET_PC). Vanilla: returns at once (no Geno fighter).
 pub static mut GENO_GROUND_EDGE: Option<fn(fp: &mut Fighter, landing: i32)> = None;
 /// `pl_8003FC44(slot, is_sub)` override; unset = `crate::plbonus` port (round 4).

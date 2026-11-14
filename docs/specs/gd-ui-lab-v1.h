@@ -337,12 +337,22 @@ int gd_controls_set(unsigned port, unsigned choice);      /* queued for the host
    with p1 = charge 0..1, brighter with p2 = the wearer's Heat 0..3), 3 foil (p3 1 Epic, 2 Unique), 4 dissolve
    (p3 0 whole .. 1 gone), 5 unlit additive; | 0x80 a light trail. p0 = glow 0..2. Same 96-instance cap as
    gd_ui_world_model. Emissive output blooms (the drives only).
-   gd_fx_post: a full-screen effect, at most 4 a present (GD_EFULL), host-clamped, never over the screen's centre:
+   gd_fx_post: (only 1, the edge vignette, is still drawn; see gd_vfx_batch) a full-screen effect, at most 4 a present (GD_EFULL), host-clamped, never over the screen's centre:
    held (post every present) 1 vignette, 2 ember tint, 3 heat-haze + embers; one-shots 4 flash (max 3 a second),
    5 radial ring, 6 colour split, 7 shockwave; | 0x100 (x, y) is a world position, else 640x480 canvas units.
    All of it follows the player's intensity (MELEE_FX = off | subtle | full). */
 int      gd_ui_world_model_ex(int model, float x, float y, float z, float yaw, float scale, float alpha, int material,
                               float p0, float p1, float p2, float p3, unsigned rgba);
 int      gd_fx_post(unsigned effect, float strength, float x, float y, unsigned rgba);
+
+/* envoy-vfx.md: shader effect quads. `count` records of 64 bytes at `ptr`, little-endian:
+   float x, y, z, rot, w, h, t (age in seconds), seed, p0, p1, p2, p3; unsigned col0, col1 (0xRRGGBBAA), kind, flags.
+   kind 1 glow, 2 shock ring, 3 bolt, 4 magic circle, 5 flame, 6 embers, 7 ice, 8 trail, 9 sparks, 10 star, 11 wisp,
+   12 slash, 13 crack, 14 beam, 15 orb, 16 dome, 17 mine, 18 coin, 19 haze, 20 aura, 21 ring (p0..p3 per kind: the
+   table in envoy-vfx.md). flags: 1 (x, y) on the 640x480 canvas, 2 over the scene whatever its depth, 4 also bends
+   the picture behind it, 8 a segment (x, y) to (w, h) of width rot. Returns how many were queued (768 a present).
+   Since gd_fx_post's flash, ember, heat-haze and ring effects are retired (accepted, not drawn), this is how a mod
+   draws an effect. Presentation only; follows MELEE_FX. */
+int      gd_vfx_batch(const void *ptr, unsigned count);
 
 #endif

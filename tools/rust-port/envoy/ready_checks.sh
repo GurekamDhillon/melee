@@ -6,6 +6,7 @@
 # Rows (default: all that can run):
 #   quit    pause + L+R+A+Start in room 1 keeps the run (no RUN OVER); the next boot continues it at that room
 #   seed    MELEE_ENVOY_SEED=1 / 2 / 1 from the camp: runs 1 and 3 roll the same, run 2 differs
+#   fresh   two New runs with no pinned seed (MELEE_ENVOY_SALT_LIVE=1): different salts and different room-1 foes
 #   acecss  the ACE disc (GW_ISO_ACE): the retail VS character select opens and a match starts (no panic)
 # GW_ISO_VANILLA must be set (never printed); acecss is skipped without GW_ISO_ACE. CARD: a memory card folder with
 # a save (default: the exe's card/). MODS: a folder with envoy_sim.wasm, envoy_ui.wasm and envoy_ui/ (the art).
@@ -21,7 +22,7 @@ card=${CARD:-$(dirname "$exe")/card}
 [ -d "$card/USA" ] || { echo "ready_checks: no memory card at CARD (a folder with USA/Card A)"; exit 2; }
 [ -f "$mods/envoy_sim.wasm" ] || { echo "ready_checks: no envoy_sim.wasm in MODS"; exit 2; }
 command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
-rows=("$@"); [ ${#rows[@]} -gt 0 ] || rows=(quit seed acecss)
+rows=("$@"); [ ${#rows[@]} -gt 0 ] || rows=(quit seed fresh acecss)
 mkdir -p "$out"
 exe_banner ready_checks
 fail=0
@@ -34,7 +35,7 @@ play() {
   local d="$out/$name"
   [ "$keep" = 1 ] || rm -rf "$d"
   mkdir -p "$d/save"; [ -d "$d/card" ] || cp -r "$card" "$d/card"
-  (cd "$d" && env -u MELEE_ENVOY_ARM -u MELEE_ENVOY_START_FIGHT -u MELEE_ENVOY_COOP -u MELEE_ENVOY_TEST_DRIVES -u MELEE_ENVOY_SEED \
+  (cd "$d" && env -u MELEE_ENVOY_ARM -u MELEE_ENVOY_START_FIGHT -u MELEE_ENVOY_COOP -u MELEE_ENVOY_SEED MELEE_ENVOY_TEST_DRIVES=autotake \
     MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WINDOW_TITLE="ready_checks $name (${BRANCH_TAG:-envoy})" MELEE_WASM_MODS="$mods" \
     MELEE_ENVOY_DIR="$d/save" MELEE_CARD_PATH="$d/card" MELEE_PAD_SCRIPT="$pad" MELEE_PAD_CHANNELS=03 MELEE_TURBO=1 \
     MELEE_CRASH_STACK=200 MELEE_RECLAIM_LEAK=1 MELEE_HANG_DUMP=60 MELEE_PAD_IGNORE_ADAPTER=1 "${envs[@]}" \
@@ -70,6 +71,16 @@ for r in "${rows[@]}"; do
     a=$(sig seed-a); b=$(sig seed-b); c=$(sig seed-c)
     [ "$a" = "$c" ] && ok "seed: the same seed rolls the same run ($a)" || bad "seed: seed 1 twice rolled differently ($a vs $c)"
     [ "$a" != "$b" ] && ok "seed: another seed rolls another run ($a vs $b)" || bad "seed: seeds 1 and 2 rolled the same run ($a): the run seed is fixed"
+    ;;
+  fresh)
+    # two consecutive New runs with no pinned seed (the clock salt, as a player gets it): different salts, different
+    # room-1 foes (the owner saw every run identical before the salt)
+    python "$here/ready_pad.py" "$pads/def.txt" 10 21 --nopick
+    for k in a b; do play "fresh-$k" 3000 "$pads/def.txt" "$GW_ISO_VANILLA" 0 MELEE_ENVOY_TEST_P1CPU=1 MELEE_PAD_NO_PAUSE=1 MELEE_ENVOY_SALT_LIVE=1; done
+    sa=$(grep -aoE "envoy: new run salt [0-9]+" "$out/fresh-a/run.log" | head -1 | grep -oE "[0-9]+$"); sb=$(grep -aoE "envoy: new run salt [0-9]+" "$out/fresh-b/run.log" | head -1 | grep -oE "[0-9]+$")
+    fa=$(grep -aoE "rewritten: .* foes \[[0-9, ]*\]" "$out/fresh-a/run.log" | head -1 | grep -oE "foes .*"); fb=$(grep -aoE "rewritten: .* foes \[[0-9, ]*\]" "$out/fresh-b/run.log" | head -1 | grep -oE "foes .*")
+    [ -n "$sa" ] && [ -n "$sb" ] && [ "$sa" != "$sb" ] && [ "$sa" != 0 ] && ok "fresh: two New runs rolled different salts ($sa, $sb)" || bad "fresh: salts '$sa' and '$sb' (want two different non-zero)"
+    [ -n "$fa" ] && [ "$fa" != "$fb" ] && ok "fresh: room 1 foes differ ($fa / $fb)" || bad "fresh: room 1 foes '$fa' and '$fb' (want different)"
     ;;
   acecss)
     if [ -z "${GW_ISO_ACE:-}" ]; then echo "skip acecss: GW_ISO_ACE is not set"; continue; fi

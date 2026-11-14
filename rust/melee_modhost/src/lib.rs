@@ -700,7 +700,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         *V.get_or_init(|| std::env::var("MELEE_ENVOY_START_FIGHT").ok().and_then(|v| v.parse::<i32>().ok()).map_or(0, |n| (n - 1).clamp(0, 4)))
     });
     // the salt of a new run's seed (menu-time, set by the camp's New run; 0 under MELEE_ENVOY_ARM and in scripted runs)
-    w!("gd_envoy_salt", || -> i32 { unsafe { melee_modes::tu::envoy::RUN_SALT } });
+    w!("gd_envoy_salt", || -> i32 { melee_modes::tu::envoy::salt_now() });
     // test knob: MELEE_ENVOY_TEST_DRIVES="key[:level],key/key|keystone" (main / partner | keystones), fixed per process
     w!("gd_envoy_test_drives", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
         static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();
@@ -727,6 +727,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_speed", |slot: i32, active: i32, bench: i32| -> i32 { unsafe { melee_modes::tu::envoy::speed(slot, active, bench) } });
     w!("gd_envoy_absorb", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::absorb(slot) } });
     w!("gd_envoy_attacker", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::attacker(slot) } });
+    w!("gd_envoy_hit_item", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::hit_item(slot) } });
     // the combo breaker: the slot's fighter bursts out of the combo (no launch, out of hitstun, intangible `frames`;
     // the shield-break sound, a quake, every fighter frozen `freeze` frames)
     w!("gd_envoy_combo_break", |slot: i32, frames: i32, freeze: i32| -> i32 { unsafe { melee_modes::tu::envoy::combo_break(slot, frames, freeze) } });
@@ -737,6 +738,15 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     });
     // a blast's landing cap (x1000, 0 none) and log tag, on the blast `slot` armed this frame; what blasts landed on
     // a victim slot this frame (9 words: envoy::landed)
+    // Envoy orbitals: an orb blocked a foe projectile (an item); it is removed the retail way. Armed runs only.
+    w!("gd_envoy_item_block", |c: Caller<'_, HostData>, h: u32| -> i32 {
+        if melee_modes::tu::envoy::armed() == 0 { return -1; }
+        let g = item_gobj(c.data(), h);
+        if g.is_null() { return -1; }
+        unsafe { melee_modes::tu::envoy::item_block(g as *mut core::ffi::c_void) };
+        0
+    });
+    w!("gd_envoy_blast_look", |slot: i32, el: i32, kind: i32, sev: i32| -> i32 { unsafe { melee_modes::tu::envoy::blast_look(slot, el, kind, sev) } });
     w!("gd_envoy_blast_cap", |slot: i32, cap_milli: i32, tag: i32| -> i32 { unsafe { melee_modes::tu::envoy::blast_cap(slot, cap_milli, tag) } });
     w!("gd_envoy_landed", |mut c: Caller<'_, HostData>, slot: i32, out: u32| -> i32 {
         let l = unsafe { melee_modes::tu::envoy::landed(slot) };

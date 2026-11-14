@@ -1363,7 +1363,7 @@ impl RetailPlay {
             }
         }
         // the Envoy effects layer (envoy-fx.md): nothing unless a run or a queued drive / post arms it
-        self.envoy_fx.present(&mut p.renderer, self.net.is_some());
+        self.envoy_fx.present(&mut p.renderer, self.net.is_some(), self.ui.is_some());
         p.renderer.ui_tilt = self.menu_cam.update(self.ui.as_ref(), melee_gx::fx::intensity_from_env(self.net.is_some()));
         p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, packed, a);
         // MELEE_PRESENT_DUMP="TICK,N": the window as shown for N consecutive presents from tick TICK, in-between

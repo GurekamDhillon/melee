@@ -240,6 +240,9 @@ pub fn ftCo_Damage_CalcKnockback(f: &mut Fighter) {
     let m = f.motion_id as i32;
     if m == ftCo_MS_Squat || m == ftCo_MS_SquatWait {
         f.dmg.kb_applied *= c.kb_squat_mul;
+        if let Some(h) = unsafe { crate::hooks::ENVOY_CC } {
+            h(f);
+        }
     }
     if f.motion_id as i32 == ftCo_MS_DamageIce {
         f.dmg.kb_applied *= c.kb_ice_mul;

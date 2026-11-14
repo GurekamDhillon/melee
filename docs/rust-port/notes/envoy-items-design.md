@@ -413,6 +413,199 @@ fighters (they have their own HP), so they do not count toward the crowd.
 `live` (the torture knob's switches as live transitions: hand-off, carry, no KO caused, no freeze), `crowd` (fight 2:
 x1350 on foe hits, none on a player); each a synctest at depth 4 and 7 with 0 mismatches.
 
+## 11. Slice 2: rooms, 20 more items, new triggers, co-op stocks, the act map (2026-11-13/14, built)
+
+Code: `envoy_sim/src/rooms.rs` (stocks, doors, the secret wall, the act map), `orbs.rs` (orbitals), `items.rs` (the
+effects), `envoy_data/src/items.rs` (the table: 32 items), `envoy_data/src/view.rs` ("slice 2" words). Checks:
+`items_check.sh` rows 10-19 (below).
+
+### 11.1 Stocks, per player (co-op too)
+
+Each player has their own stock limit (start 4, hard cap 8) and stocks (`St::lims`, `St::pools`; the run record keeps
+both as P1 | P2 << 8, so a slice-1 record still loads: both players take its one limit). Co-op was a shared pool of 5
+(a stock lost by one was lost by both); now each player loses their own, the fight goes on while either has a stock,
+and a co-op player who ran out comes back with one stock in the next fight (the partner carried it). A devil deal,
+the shop's stock and stock slot and Spare Heart act on that one player. The campfire refills each to their own limit.
+
+### 11.2 Rooms
+
+- **Devil deal** (red door, after the boss, sometimes). Chance: 35%, +15% with no player stock lost on the floor,
+  -20% per deal taken in the run (`rooms::door_pct`; the map shows it on the door node). It offers 1 or 2 devil-pool
+  items per player (seeded). Each costs its item's `slots` (1 or 2) of the buyer's stock limit: the limit drops, stocks
+  above it are lost, and a pedestal that would take the last slot is locked (drawn crossed). Walking in buys. The room
+  is optional: D-pad down leaves it (or it ends when every remaining deal is locked); unbought deals never fly in.
+- **Angel room** (white door). It replaces the devil door when no deal has been taken this run, half the time a door
+  opens (`ANGEL_PCT`). One free item from the angel pool (strong: Halo, Guardian Feather, Spare Heart, Twin Shot).
+- **Secret room.** One per act: a cracked wall stands in one fight node (seeded node; marked on the map). Any attack
+  of a player's that reaches it (within 18 of it, 26 high) cracks it; 3 hits break it. After that fight the secret room
+  opens in the held match: one secret-pool item, or a choice of two (seeded).
+- **Campfire**: a room node (orange flame). Refills each player's stocks to their own limit; never raises it.
+- **Shop**: a room node. The stock refill as before (the buyer only) and, in 30% of shops, a **stock slot** (+1 limit,
+  +1 stock) for 160 coins (+40 a loop): the SHOP_SLOT row.
+- **Spare Heart** (item 43, angel and secret pools): on pickup +1 stock limit and +1 stock, to 8.
+
+### 11.3 No timers on any choice
+
+Owner: "We shouldn't be rushed on making our build." No countdown anywhere: pedestals (item room, boss drop, devil,
+angel, secret), the room choice on the map, the shop. The held match waits (`HOLD_FOREVER`) until every player has
+taken their item or left; the shop until each player picks Leave. All foes are already KO'd while a room is open, so
+the players are safe while they walk to a pedestal. A pedestal whose owner is out of stocks flies to them at once.
+The CPU-driven checks use the test knob `autotake` (the old wait, then the cursor's choice); it is never on in play.
+
+### 11.4 The act map (Slay the Spire style; replaces road1's three roads and the first floor map)
+
+Owner: "the map/path choice ... more like the map on slay the spire ... preplanning your path across the map, a few
+map tiles in advance."
+
+- One map per loop (an act), made only from the run seed and the loop (`rooms::node_kind`, `rooms::links`): the
+  same on both co-op screens, both netplay peers and on replay.
+- Rows from the bottom, three lanes each: fight rows 0, 2, 4 (the act's fights 1-3), room rows 1, 3, 5, then the
+  boss (row 6) and the door after it (row 7). Each node leads to the same lane above and, seeded, to one neighbour;
+  two edges never cross.
+- Generation rules (StS's, sized to this act): the first fights are duels or a crowd, never an elite; the first room
+  row is item rooms only (no shop or campfire that early); elites in the middle and late fight rows; the middle room
+  row is one shop, one campfire, one item room (so never two shops on a path); the row before the boss is all
+  campfires. The fight node's kind picks the fight (duel gauntlet / crowd / elite gauntlet: `rooms::template`).
+- Choosing: the next fight node on the road screen (camp, between fights, and before loop 1's first fight): P1's
+  left / right walks the reachable nodes (road1's pass-through of the stick and D-pad is kept), P2 plants a wish flag
+  (no effect). The planned path ahead (the cursor's lane carried up) is marked, so the route is planned rows ahead.
+  The room above a won fight is chosen in the held match the same way (A takes it): the item room's pedestals, the
+  campfire, or the shop at the stop.
+- The pause Run page, the camp and the in-match room choice draw the same map from the view (V_MAP*).
+- Road1's Steep / Shifting roads are retired with the map (their foe-drive and stage-shift twists may come back as
+  node modifiers).
+
+### 11.5 New triggers
+
+| trigger | how it is read |
+|---|---|
+| whiff (fixed) | an attack state ends with no hit **and no shield contact**: the engine's new shield-hit bit (`EVENT_SHIELDHIT`, set in `ftColl_80076CBC` on the attacker) marks the attack as connected; the log tells a shielded attack apart |
+| crouch cancel | `EVENT_CC`, set where `ftCo_Damage_CalcKnockback` cuts a crouching fighter's knockback |
+| powershield | the fighter enters GuardReflect (only a powershield does) |
+| laser hit | the victim's damage source is a Fox / Falco laser item (`gd_envoy_hit_item`: kinds 54, 55) |
+| jab hit, taking a hit | the attacker's Attack11-13 state at the hit; the take-damage records |
+| while airdodge / nair / dash / shield | the stance orbs' states (11.7) |
+
+### 11.6 The Spark Ring bar (a rule for every item)
+
+Owner: "the spark with the effect on nair is so sick, and visually distinct, and it has a sound effect ... The moon
+balls ... dont play a sound or do knockback so its hard to tell if they are working." So every item hit must have
+(a) a visually distinct effect, (b) its own sound from the Melee disc (so it works without Brawl), and (c) readable
+impact: a hit spark on the foe, and a flinch or knockback where it fits.
+
+How: every item hit now lands as an engine hit (`gd_envoy_blast`) whose capsule carries the item's own hit element
+(the engine's spark: normal, fire, electric, slash) and Melee hit-sound family and severity (`gd_envoy_blast_look`,
+table `items::hit_look`). Light hits (sparks, moons, arcs, shards, feathers) use a small blast with a light flinch
+(`TAP_KBG` 18, `TAP_BKB` 22) instead of a silent percent nick (the nick stays only as the fallback when no hit capsule
+is free). Audit of the first 12: Spark Ring's sparks were silent nicks with a Brawl-only sound (fixed: electric
+spark, Melee sound, flinch); Moon Drops were silent nicks (fixed, see 11.7); Glide Wake, Shine Bell, Hop Shot, Ledge
+Spikes, Whiff Echo, Roll Mines and Smash Quake were real hits but all with the same punch sound and spark (each has
+its own now); Coin Magnet hits nothing (its coin shower and pickup sound stay); Homing Ink and Fire Lace are modifiers.
+
+### 11.7 Orbitals and stance orbs
+
+Owner-approved rework of every orbital: each orb is a real small hit (light knockback, hitstun and hitlag, its spark
+and sound). A foe's attack that comes within 11 of an orb, or a foe projectile that touches it, shatters it (the
+projectile is removed: the orb blocked it); it respawns after 4 s (`ORB_RESPAWN` 240) or at once when its owner lands
+a hit. Stacks add orbs and widen the orbit a little. One family hits a given foe at most every 30 frames.
+
+Stance orbs exist only while the fighter is in one movement state and take their shape from it:
+
+| # | item | while | shape |
+|---|---|---|---|
+| 44 | Dodge Orb | airdodge (and the wavedash slide after it, 14 frames) | leads in the dodge's direction, side by side per copy |
+| 45 | Nair Ring | nair | 3 + copies orbs ringing the fighter, spinning fast |
+| 46 | Dash Orb | dash / run | leads in front, one more ahead per copy |
+| 47 | Shield Orbs | shield (incl. powershield) | 2 + copies orbs circling the shield; they shatter on blocks |
+
+### 11.8 The new items (20)
+
+| # | item | pool | does | stack |
+|---|---|---|---|---|
+| 8 | Laser Prism | item (Fox/Falco pairs) | a laser that hits splits into three thin bolts fanning past the target | more |
+| 21 | Crouch Thorns | shop | a crouch-cancelled hit grows thorns from the back that launch everyone close | stronger |
+| 26 | Perfect Guard | boss | a powershield fires a gold beam toward the nearest foe | stronger |
+| 27 | Brimstone Jab | devil (2 slots) | a jab that hits fires a blood-red beam across the stage | bigger |
+| 28 | Demon Wings | devil (1) | one more air jump per copy; using it rains a fan of feathers | more |
+| 29 | Crimson Count | devil (1) | each KO adds a red sigil for the fight (3 a copy); every item hit burns more per sigil | more |
+| 30 | Bloodlust | devil (1) | when hit, red tendrils lash the attacker 6 frames later | stronger |
+| 31 | Halo | angel | modifier: shots turn holy white and pierce (Hop Shot's star flies on) | bigger |
+| 32 | Guardian Feather | angel | once a stock per copy, a hit that would take you past 100% (8%+) is eaten whole | more |
+| 37 | Ice Glass | item, shop | modifier: shots shatter into three ice shards on hit and chill | stronger |
+| 38 | Chain Spark | boss, secret | modifier: every item hit arcs to the next foe (a lightning line; one more arc a copy) | more |
+| 39 | Twin Shot | shop, angel | modifier: every shot comes with a twin (60%); moons doubled | more |
+| 40 | Gravity Well | secret | modifier: bursts pull foes in for 16 frames, then burst | bigger |
+| 41 | Big Bang | devil (1) | modifier: bursts twice as big with a screen quake, damage -20% | bigger |
+| 42 | Bouncy | secret | modifier: shots bounce off the floor and its edges, 3 times a copy | more |
+| 43 | Spare Heart | angel, secret | +1 stock limit, +1 stock (to 8) | more |
+| 44-47 | stance orbs | item / shop / secret | see 11.7 | more |
+
+Fire Lace joins the devil pool (1 slot). Items stack without limit (each item's own growth is capped).
+
+### 11.9 Item language (keywords)
+
+Owner: "a really distinct item language so certain words or phrases are reserved and bolded or coloured ... like
+pokemon or magic the gathering". Item text is data: tokens in `envoy_data` with a fixed keyword vocabulary in
+categories (timing ON / WHEN / WHILE / AFTER; conditions IF; moves NAIR ... JAB, SMASH, SPECIAL, GRAB, THROW, SHINE,
+LASER; tech WAVEDASH, SHORT HOP, L-CANCEL, TECH, LEDGE GRAB, ROLL, AIRDODGE, DASH, CROUCH CANCEL, POWERSHIELD;
+outcomes HIT, WHIFF, SHIELD, KO, TAKE HIT; effects PROJECTILE, BURST, TRAIL, AURA, ORB/ORBIT, BEAM; statuses BURN,
+CHILL, MARK; stacking STACK, PER STACK), each category its own style and colour, one card template for every item,
+and a glossary page. Each trigger id maps 1:1 to its keyword words in `envoy_data`, so the mechanics and the words
+cannot drift. (Built in the UI lane, port/envoy-slice2-ui.)
+
+### 11.10 Checks (items_check.sh, synctest at depth 4 and 7, 0 mismatches)
+
+10 shop (map shop, item + stock slot), 11 devil (deal paid in slots), 12 angel, 13 secret (wall hit, broken, room),
+14 whiff (true whiff vs shielded), 15 triggers (crouch cancel, powershield, laser, jab, Bloodlust), 16 coopstock (the
+deal costs only the buyer), 17 map (fight node and room taken), 18 campfire (refill to each limit), 19 orbs (hits,
+shatter; stance-orb hits and blocks reported). ready_checks.sh `fresh`: two New runs roll different salts and foes.
+
+### 11.11 Pickups take a button; items show only when used (owner, Nov 13)
+
+- **Pickups as in Melee.** Walking past an item never takes it. In range (16 across, 28 up) the UI shows an "A"
+  prompt over the pedestal (`V_PED_NEAR`, per player); A on the ground, Z / L / R (the airdodge-grab) in the air takes
+  it. Every pedestal (item room, boss drop, devil, angel, secret) and so Spare Heart and every drop follows it. The
+  read is the sim's pad edge, so it is deterministic and rolled back with the rest. Test knob `autotake` (CPU checks)
+  still takes on touch.
+- **Items reveal themselves during their use** ("We gotta have some ways to show off our bling"). In a fight an
+  item is invisible until it procs; then its hit look and sound play (11.6). Moon Drops are out only during the
+  owner's attack (their hit window) and 40 frames after any proc; the stance orbs only in their state. The worn looks
+  (sigils, Guardian Feather, Halo, Demon Wings) show for 45 frames after a proc. `V_PROC_AGE` lets the UI fade them.
+- **Showing off a build**: the camp party cards and the pause build page (every item, icon and card); the build
+  flourish (`V_FLOURISH`, 60 frames) at each fight's start and when a room opens after a win: the held items flash
+  round the fighter; a subtle per-player aura tint from the rarest item held (`V_AURA`: devil/angel/secret, then
+  boss, then quality); the run-end summary lists the build. All are view words drawn by the UI: no sim cost.
+
+### 11.12 Body-group glow (spec; follow-up, not in slice 2)
+
+The C-build roguelite (pc/scripts/examples/roguelite/visuals.lua, bindings.lua) tinted fighter draw objects by role:
+an offline "part lab" measured each costume's DObjs over several poses and bound them to three body roles (assault:
+arms and hands, traversal: legs and feet, guard: torso and head), and `gd.dobj_tint(port, dobj, colour)` set a solid
+colour per role in three phases (equipped, charging, ready). Envoy's version, in spirit:
+
+- Each item family owns a body group: hits from the hands (Spark Ring, Brimstone Jab, Chain Spark, Laser Prism) the
+  arms and fists; movement (Glide Wake, Hop Shot, Dash Orb, Dodge Orb, Demon Wings) the legs; defence (Shine Bell,
+  Perfect Guard, Shield Orbs, Guardian Feather, Halo) the torso; devil items a faint red at the head.
+- In play it is a subtle tint (10-15% toward the item colour, the player's colour kept); while the item procs, its
+  group flares for 12 frames (an additive glow).
+- Groups come from the joint tree, not from guessed mesh names: each DObj takes the body group of its joint's
+  nearest named ancestor in the fighter's bone table (hands/arms, legs/feet, spine/chest, head), cached per costume
+  at load, so it costs nothing a frame.
+- The Rust renderer has no per-DObj tint yet (`gd.dobj_tint` was a C-build script host call). Needed: a per-player
+  per-group colour multiply + add in the fighter material path, fed from the view (`V_AURA` / `V_PROC_AGE` plus a
+  group mask), deterministic (presentation only, never read by the sim). Estimated well under 0.1 ms a frame.
+
+### 11.13 Effects, check notes (Nov 14)
+
+- The vfx lane (port/envoy-vfx, notes/envoy-vfx.md) is merged: orbs (each family its own shader look; shattered as
+  faint ice), orb shatter (impact + ice) and block (hex dome + pop), and the devil / angel doors are vfx quads; the
+  other slice 2 shapes go through lib.rs's shim onto the same quads. Big Bang's shake is a screen-space shockwave.
+- Scripted flows (camp_run, ready_checks) carry the test knob `autotake` now: rooms wait for the player, and the pad
+  scripts do not walk to pedestals or pick rooms.
+- items_check row 15: crouch cancel, powershield and jab hits depend on what the CPUs do and are reported, not
+  required (a pad script forcing each is a follow-up); Bloodlust and the laser hit are required/seen.
+- The pause Words glossary is off the L / R cycle (up on the tab row opens it), so the four main pages keep their order.
+
 ## Open questions for the owner
 
 1. Decided (owner, 2026-11-13): devil deals cost stock slots; Isaac-style stock limit + campfire refills.

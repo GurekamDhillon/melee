@@ -30,6 +30,8 @@ use envoy_data::view::*;
 use envoy_data::*;
 
 mod items;
+mod rooms;
+mod orbs;
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -92,6 +94,12 @@ extern "C" {
     fn gd_envoy_speed(slot: i32, active: i32, bench: i32) -> i32;
     fn gd_envoy_absorb(slot: i32) -> i32;
     fn gd_envoy_attacker(slot: i32) -> i32;
+    fn gd_envoy_hit_item(slot: i32) -> i32;
+    fn gd_item_count() -> i32;
+    fn gd_item_at(i: i32) -> u32;
+    fn gd_item_read(h: u32, out: *mut u32);
+    fn gd_envoy_item_block(h: u32) -> i32;
+    fn gd_envoy_blast_look(slot: i32, element: i32, sfx_kind: i32, severity: i32) -> i32;
     fn gd_envoy_combo_break(slot: i32, frames: i32, freeze: i32) -> i32;
     fn gd_envoy_jumps(slot: i32) -> i32;
     fn gd_envoy_air_jump(slot: i32) -> i32;
@@ -146,6 +154,8 @@ const TORTURE_GAP: i32 = 240;
 const SWITCH_KO_WINDOW: i32 = 120;
 const SWITCH_CHECK: i32 = 45;
 const REWARD_TIME: i32 = 1200;
+/// A choice's hold: no timer (the owner: "we shouldn't be rushed on making our build"); ends when every player is done.
+const HOLD_FOREVER: i32 = 1 << 30;
 /// The shop's timer (it leaves on its own at 0).
 const SHOP_TIME: i32 = 1800;
 /// Frames into a fight before its reward screen opens (after the fighters are placed).
@@ -158,6 +168,9 @@ const DPAD_RIGHT: u32 = 0x0002;
 const DPAD_DOWN: u32 = 0x0004;
 const DPAD_UP: u32 = 0x0008;
 const BTN_A: u32 = 0x0100;
+const BTN_Z: u32 = 0x0010;
+const BTN_L: u32 = 0x0040;
+const BTN_R: u32 = 0x0020;
 const BTN_B: u32 = 0x0200;
 const BTN_X: u32 = 0x0400;
 const BTN_Y: u32 = 0x0800;
@@ -270,7 +283,7 @@ const WAVES_MAX: i32 = 4;
 const SHOP_AT: [bool; FIGHTS] = [false, false, true, false];
 /// Sessions (v3g): the fights that open one. Rooms 1-2 are one session, room 3 and the boss the next, in every loop;
 /// inside a session the next fight follows at once (no picks, no shop, no road), the picks are banked for the stop.
-const SESSION_START: [bool; FIGHTS] = [true, false, true, false];
+const SESSION_START: [bool; FIGHTS] = [true, true, true, true]; // the act map: a choice after every fight
 /// The drives a foe may carry: the ones that read as an attack on the players.
 const FOE_POOL: [&str; 8] = ["ember", "nova", "bolt", "frost", "rush", "bulwark", "hex", "comet"];
 
@@ -331,6 +344,8 @@ const T_SMASH: i32 = 2;
 const T_OFFSTAGE: i32 = 4;
 const T_FIRE: i32 = 8;
 const T_WORD: i32 = 16;
+/// Slice 2: the hit came from a Fox / Falco laser (the item behind the victim's damage source).
+const T_LASER: i32 = 32;
 // how a record charges: a move (every matching source), a fire (only to the right of its slot), word damage
 // (nothing; under Plague Bearer the damage sources except Burning's own drives), nothing
 const CM_MOVE: i32 = 0;
@@ -673,6 +688,66 @@ struct St {
     cb_cd: [i32; NP],
     cb_due: [i32; NP],
     cb_n: i32,
+    // ---- slice 2 (rooms.rs; envoy-items-design.md section 11)
+    /// Each player's stocks (red hearts) and stock limit (heart containers): co-op players have their own.
+    pools: [i32; NP],
+    lims: [i32; NP],
+    /// Stocks each player held when the fight's last foe fell.
+    won_each: [i32; NP],
+    /// Devil deals taken per player and in all (the door chance falls per deal; the angel needs none).
+    deals: [i32; NP],
+    deals_any: i32,
+    /// The door after this boss (DOOR_*), the play frame it opened; each pedestal's stock-slot price (| COST_LOCKED).
+    door: i32,
+    door_at: i32,
+    ped_cost: [[i32; DROPS]; NP],
+    /// The cracked wall: this floor's fight with it (-1 none), its state (0 none, 1 standing, 2 broken, 3 room
+    /// done), its foot (x100), hits taken, each player's hit cooldown.
+    secret_fight: i32,
+    secret_state: i32,
+    secret_x: i32,
+    secret_y: i32,
+    secret_hits: i32,
+    secret_cd: [i32; NP],
+    /// The fork after the item room: 0 none, 1 open, 2 taken; P1's cursor; frames left; the room taken this floor (1
+    /// shop, 2 campfire); this stop skips the shop (the campfire was taken).
+    fork: i32,
+    fork_cur: i32,
+    fork_left: i32,
+    fork_pick: i32,
+    skip_shop: i32,
+    /// The shop's stock slot on sale now (its price; 0 none).
+    slot_sale: i32,
+    /// A player stock was lost on this floor (the door's clean bonus is gone).
+    floor_lost: i32,
+    /// Big Bang's last quake (play frame).
+    shake: i32,
+    /// Per player: Guardian Feather uses this stock, Crimson Count's sigils, Demon Wings' state this airtime, the
+    /// slice-2 item cooldowns (frame each is ready).
+    guard_used: [i32; NP],
+    sigils: [i32; NP],
+    wings: [i32; NP],
+    it_cd: [[i32; 8]; NP],
+    /// Bouncy: bounces each projectile made.
+    pj_bounce: [i32; PROJ],
+    /// The act map: the lane taken on each row (-1 not yet), P1's cursor, P2's wish, the cracked wall's lane (-1:
+    /// every lane of its row, a test knob).
+    path: [i32; 8],
+    map_cur: i32,
+    map_wish: i32,
+    secret_lane: i32,
+    /// Orbitals (orbs.rs): per player and family, the frame each orb comes back (0 whole); each family's next hit on
+    /// each foe slot; the action state last frame; the airdodge's direction (x100) and the frame it last ran.
+    orb_broken: [[[i32; orbs::ORB_MAX]; orbs::FAMS]; NP],
+    orb_cd: [[[i32; 4]; orbs::FAMS]; NP],
+    orb_prev: [i32; NP],
+    orb_dir: [[i32; 2]; NP],
+    orb_dodge_at: [i32; NP],
+    /// The bling rules: the frame of each player's last item proc (worn looks show only after one), the frame their
+    /// build flourish began (fight intro, victory), the pedestal in pickup range (k + 1).
+    proc_at: [i32; NP],
+    flourish_at: [i32; NP],
+    ped_near: [i32; NP],
 }
 
 /// The engine's event bits this stepped frame (read once in tech_frame, used by the items the same frame).
@@ -721,7 +796,7 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_SEED] = S.seed;
     r[R_RUNS] = S.runs;
     r[R_FIGHT] = S.fight;
-    r[R_POOL] = S.pool;
+    r[R_POOL] = S.pools[0] & 0xFF | (S.pools[1] & 0xFF) << 8;
     r[R_SHARED] = S.shared;
     r[R_COOP] = (S.nh == 2) as i32;
     r[R_BOSSES] = S.bosses;
@@ -774,7 +849,8 @@ unsafe fn take_arm() {
         S.seed = r[R_SEED];
         S.runs = r[R_RUNS];
         S.fight = r[R_FIGHT];
-        S.pool = r[R_POOL].max(1);
+        let (p0, p1) = (r[R_POOL] & 0xFF, r[R_POOL] >> 8 & 0xFF);
+        S.pools = [p0.max(1), if p1 > 0 { p1 } else { p0.max(1) }];
         S.shared = (r[R_SHARED] != 0) as i32;
         S.nh = if r[R_COOP] != 0 { 2 } else { 1 };
         S.bosses = r[R_BOSSES].clamp(0, 2);
@@ -837,12 +913,17 @@ unsafe fn take_arm() {
         S.act_id = [0; NP];
         HH.pips = [0; NP];
         items::rec_get(&r);
-        S.pool = S.pool.clamp(1, S.lim);
-        log(b"envoy: continued with stock limit\0", S.lim);
-        log(b"envoy: continued on road ", S.road);
+        for p in 0..NP {
+            S.pools[p] = S.pools[p].clamp(1, S.lims[p]);
+        }
+        log(b"envoy: continued with stock limit\0", S.lims[0]);
+        log(b"envoy: continued on road\0", S.road);
         log(b"envoy: armed, run continued at loop*10 + fight\0", S.lp * 10 + S.fight + 1);
     } else {
         S.state = RUN_NONE;
+        // the new run's seed and act map now, so the road screen before fight 1 shows the map the run will play
+        S.seed = run_seed(S.runs.wrapping_add(1)) as i32;
+        rooms::floor_start();
         log(b"envoy: armed, new run\0", 0);
     }
     S.outcome = 0;
@@ -876,7 +957,7 @@ fn log_drive(what: &[u8], id: usize, v: i32) {
 }
 
 fn sched() -> &'static Fight {
-    unsafe { &SCHEDULE[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] }
+    unsafe { &SCHEDULE[rooms::template(S.fight.clamp(0, FIGHTS as i32 - 1) as usize)] }
 }
 
 // ---- endless loops (NG+; envoy-v3-rules.md "Endless loops"): everything scales from the one loop number
@@ -1076,12 +1157,19 @@ unsafe fn kb_ko(p: usize) {
 }
 
 /// A MELEE_ENVOY_TEST_DRIVES item given by name (read from the string, so a fresh run's first plan sees it too).
+static mut TF_B: [u8; 256] = [0; 256];
+static mut TF_N: i32 = -1;
+
 unsafe fn test_flag(name: &str) -> bool {
-    let mut b = [0u8; 256];
-    let n = gd_envoy_test_drives(b.as_mut_ptr(), b.len() as u32);
+    // the knobs are fixed per process: read them from the host once (test_flag sits on hot paths)
+    if TF_N < 0 {
+        TF_N = gd_envoy_test_drives(core::ptr::addr_of_mut!(TF_B) as *mut u8, 256).max(0);
+    }
+    let n = TF_N;
     if n <= 0 {
         return false;
     }
+    let b = &*core::ptr::addr_of!(TF_B);
     let s = core::str::from_utf8(&b[..(n as usize).min(b.len())]).unwrap_or("");
     s.split(|c| c == ',' || c == '/' || c == '|' || c == ';').any(|t| t.trim() == name)
 }
@@ -1368,10 +1456,10 @@ unsafe fn test_drives() {
                 // no longer worn by the players (the drives are cut)
                 match key.trim() {
                     "lim" => {
-                        S.lim = n.clamp(1, items::LIM_CAP);
-                        S.pool = S.pool.min(S.lim);
+                        S.lims[p] = n.clamp(1, items::LIM_CAP);
+                        S.pools[p] = S.pools[p].min(S.lims[p]);
                     }
-                    "pool" => S.pool = n.clamp(1, S.lim.max(1)),
+                    "pool" => S.pools[p] = n.clamp(1, S.lims[p].max(1)),
                     k => {
                         let _ = f;
                         items::test_item(p, k, n);
@@ -1388,8 +1476,22 @@ unsafe fn test_drives() {
     S.ev_n = 0;
 }
 
-/// The plan of the match the run wants next: the live run's current fight, or a new run's first.
+/// The plan of the match the run wants next: the live run's current fight, or a new run's first. A new run's map
+/// (and so its first fight's kind) comes from the new run's seed: the plan reads it with that seed and a fresh path.
 unsafe fn make_plan() {
+    if S.arm_seen == 0 || S.state == RUN_LIVE {
+        make_plan_with();
+        return;
+    }
+    let keep = (S.seed, S.path, S.map_cur);
+    S.seed = run_seed(S.runs.wrapping_add(1)) as _;
+    S.path = [-1; 8];
+    S.map_cur = 1;
+    make_plan_with();
+    (S.seed, S.path, S.map_cur) = keep;
+}
+
+unsafe fn make_plan_with() {
     if S.arm_seen == 0 {
         PLAN = [0; PLAN_N];
         gd_envoy_plan(PLAN.as_ptr(), PLAN_N as u32);
@@ -1398,11 +1500,11 @@ unsafe fn make_plan() {
     let fresh = S.state != RUN_LIVE;
     let coop = if fresh { gd_envoy_coop() != 0 } else { S.nh == 2 };
     let (fight, pool, seed) = if fresh {
-        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), START_POOL[coop as usize], run_seed(S.runs.wrapping_add(1)))
+        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), rooms::LIM_START, run_seed(S.runs.wrapping_add(1)))
     } else {
-        (S.fight as usize, S.pool, S.seed as u32)
+        (S.fight as usize, S.pools[0].max(if S.nh == 2 { S.pools[1] } else { 0 }).max(1), S.seed as u32)
     };
-    let f = &SCHEDULE[fight];
+    let f = &SCHEDULE[if fresh || S.state == RUN_LIVE { rooms::template(fight) } else { fight }];
     let e = if fresh { test_loop() - 1 } else { lx() };
     let waves = test_waves() >= 0;
     let n = if old_scale() {
@@ -1520,7 +1622,7 @@ unsafe fn make_plan() {
             }
         }
         let face = |r: usize| (0..3).fold(0, |a, k| a * 100 + (p[PL_GAUNT + r * 3 + k] + 1));
-        log(b"envoy: gauntlet faces, waves 3-5 ", face(0));
+        log(b"envoy: gauntlet faces, waves 3-5\0", face(0));
     } else {
         for k in 0..6 {
             p[PL_GAUNT + k] = -1;
@@ -1535,8 +1637,8 @@ unsafe fn make_plan() {
     if nw >= 2 && f.kind != FK_BOSS {
         // the room's faces for the checks (wave_faces.sh): per row (ckind + 1), 0 for a row not in play, two digits each
         let face = |w: usize| (0..3).fold(0, |a, r| a * 100 + if (r as i32) < p[7] { p[w + r] + 1 } else { 0 });
-        log(b"envoy: room faces, wave 1 ", face(8));
-        log(b"envoy: room faces, wave 2 ", face(32));
+        log(b"envoy: room faces, wave 1\0", face(8));
+        log(b"envoy: room faces, wave 2\0", face(32));
     }
     if waves {
         // an enemy-wave test fight: no foe fighters, Final Destination
@@ -1563,9 +1665,16 @@ unsafe fn on_new_match(seq: i32) {
         S.seed = run_seed(S.runs) as i32;
         S.fight = gd_envoy_start_fight().clamp(0, FIGHTS as i32 - 1);
         S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
-        S.pool = START_POOL[(S.nh == 2) as usize];
-        // items: the stock limit starts where the stocks do; no item held
-        S.lim = items::LIM_START[(S.nh == 2) as usize];
+        // slice 2: each player has their own stock limit and stocks (co-op too); no item held, no deal taken
+        let _ = START_POOL;
+        S.pools = [rooms::LIM_START; NP];
+        S.lims = [rooms::LIM_START; NP];
+        S.deals = [0; NP];
+        S.deals_any = 0;
+        // the new run's act map (its path empty; the road screen's cursor, when one was shown, is kept)
+        let cur = S.map_cur;
+        rooms::floor_start();
+        S.map_cur = cur.clamp(0, rooms::LANES as i32 - 1);
         S.seen = [-1; SEEN];
         S.seen_n = 0;
         S.inv = [[0; ITEM_IDS]; NP];
@@ -1620,13 +1729,16 @@ unsafe fn on_new_match(seq: i32) {
             log(b"envoy: interest, coins\0", i);
         }
     }
+    if S.state == RUN_LIVE {
+        rooms::take_fight_node();
+    }
     S.seq = seq;
     // the forked road: a three-fight session's first fight takes the road P1's cursor is on
     if S.fight == 0 {
         let n = roads_offered_at(0);
         S.road = if n > 0 { road_kind(S.road_cur.clamp(0, n - 1)) } else { ROAD_OPEN };
         S.road_flag = 0;
-        log(b"envoy: road taken ", S.road);
+        log(b"envoy: road taken\0", S.road);
     } else if SESSION_START[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] {
         S.road = ROAD_OPEN;
     }
@@ -1789,10 +1901,10 @@ unsafe fn on_new_match(seq: i32) {
     S.crowd_hits = 0;
     S.lv_on = 0;
     if S.crowd > 1000 {
-        log(b"envoy: crowd fight, foes*10000 + knockback x1000 ", ncpu() * 10000 + S.crowd);
+        log(b"envoy: crowd fight, foes*10000 + knockback x1000\0", ncpu() * 10000 + S.crowd);
     }
     if S.waves >= 2 && ncpu() == 1 {
-        log(b"envoy: gauntlet, duels ", S.waves);
+        log(b"envoy: gauntlet, duels\0", S.waves);
     }
     log(b"envoy: fight\0", S.fight + 1);
 }
@@ -1936,16 +2048,14 @@ unsafe fn roll_offers(p: usize) {
 }
 
 /// The shop's extra stock: coins for one more stock in the shared pool (and on the players in the held match).
-unsafe fn buy_stock() -> bool {
-    // items: a refill, up to the stock limit (never past it)
-    if S.pool >= S.lim || !spend(stock_price()) {
+unsafe fn buy_stock(p: usize) -> bool {
+    // items: a refill for the buyer, up to their own stock limit (never past it)
+    if S.pools[p] >= S.lims[p] || !spend(stock_price()) {
         return false;
     }
-    S.pool += 1;
-    for h in 0..nh() {
-        gd_envoy_apply(h, AP_STOCKS, gd_player_stocks(h) + 1);
-    }
-    log(b"envoy: shop stock, pool\0", S.pool);
+    S.pools[p] += 1;
+    gd_envoy_apply(p as i32, AP_STOCKS, (gd_player_stocks(p as i32) + 1).min(S.lims[p]));
+    log(b"envoy: shop stock, pool\0", S.pools[p]);
     // the next match takes its stocks from the plan, which fight_won already sent: send it again with this stock
     make_plan();
     log(b"envoy: shop stock, plan stocks now\0", PLAN[4]);
@@ -1958,7 +2068,10 @@ unsafe fn open_reward(kind: i32) {
         if HH.purse < stock_price() as i64 * COIN_UNIT {
             HH.purse = stock_price() as i64 * COIN_UNIT;
         }
-        buy_stock();
+        buy_stock(0);
+    }
+    if kind == RW_SHOP {
+        rooms::roll_slot_sale();
     }
     S.rw_active = kind;
     S.timer = if kind == RW_SHOP { SHOP_TIME } else { REWARD_TIME };
@@ -2016,10 +2129,8 @@ unsafe fn default_fighter(p: usize, id: i32) -> i32 {
 
 unsafe fn finish_pick(p: usize, id: i32, f: i32) {
     if id == OFFER_STOCK {
-        S.pool += 1;
-        for h in 0..nh() {
-            gd_envoy_apply(h, AP_STOCKS, gd_player_stocks(h) + 1);
-        }
+        S.pools[p] = (S.pools[p] + 1).min(S.lims[p]);
+        gd_envoy_apply(p as i32, AP_STOCKS, S.pools[p]);
         log(b"envoy: took +1 stock, player\0", p as i32);
         make_plan(); // the next match takes its stocks from the plan
     } else if (0..POOL_LEN as i32).contains(&id) {
@@ -2148,10 +2259,10 @@ unsafe fn pick_frame(p: usize) {
             }
             if S.cursor[p] == 3 {
                 if pad & BTN_A != 0 {
-                    log(b"envoy: pick skipped, player ", p as i32);
+                    log(b"envoy: pick skipped, player\0", p as i32);
                     if S.decline[p] > 0 {
                         HH.purse += S.decline[p] as i64 * COIN_UNIT;
-                        log(b"envoy: offer declined, coins ", S.decline[p]);
+                        log(b"envoy: offer declined, coins\0", S.decline[p]);
                     }
                     done_pick(p, -1, 0);
                 } else if S.timer <= 0 {
@@ -2290,8 +2401,8 @@ unsafe fn shop_frame() {
         if S.rw_done[p] != 0 {
             continue;
         }
-        if S.timer <= 0 {
-            S.rw_done[p] = 1;
+        if S.timer <= 0 && test_flag("autotake") {
+            S.rw_done[p] = 1; // CPU-driven checks only: the shop has no timer for players
             continue;
         }
         let pad = gd_pad_pressed(p as i32);
@@ -2320,10 +2431,11 @@ unsafe fn shop_frame() {
                     SM_POOR
                 }
             }
+            SHOP_SLOT => rooms::buy_slot(p),
             SHOP_STOCK => {
-                if S.pool >= S.lim {
+                if S.pools[p] >= S.lims[p] {
                     SM_CANT
-                } else if buy_stock() {
+                } else if buy_stock(p) {
                     SM_STOCK
                 } else {
                     SM_POOR
@@ -2456,7 +2568,7 @@ unsafe fn shop_frame_drives() {
                         SM_NONE
                     }
                     SHOP_STOCK => {
-                        if buy_stock() {
+                        if buy_stock(p) {
                             SM_STOCK
                         } else {
                             SM_POOR
@@ -3414,7 +3526,7 @@ unsafe fn chain_frame(set: usize) {
         let fl = (link << FL_LINK_SHIFT) | (parent.min(15) << FL_PARENT_SHIFT) | if volley { FL_VOLLEY } else { 0 };
         let li = fire(set, d, S.levels[set][k], S.target[set][k], 1000, fl, coef, k as i32);
         S.chain_n += 1;
-        log(b"envoy: chain link, set*100 + link ", set as i32 * 100 + link);
+        log(b"envoy: chain link, set*100 + link\0", set as i32 * 100 + link);
         if !volley && S.ch_volley[set] != 0 {
             return; // Relay started a volley on this row: it runs from here
         }
@@ -3547,6 +3659,10 @@ extern "C" fn on_damage_pre(h: u32, d: f32) -> i32 {
         if kb_log() && (0..nh()).contains(&s) {
             KB_PRE[s as usize] = kb_percent(h);
         }
+        if (0..nh()).contains(&s) && items::guard_eats(s as usize, h, d) {
+            gd_envoy_absorb(s);
+            return 1; // GD_SKIP: the Guardian Feather ate it
+        }
         let o = owner_at(s);
         if S.shield[o] != 0 {
             S.shield[o] = 0;
@@ -3599,8 +3715,11 @@ extern "C" fn on_damage(h: u32, d: f32) {
             }
         }
         let player_a = (0..nh()).contains(&a);
+        if player_a && items::IK_LASERS.contains(&gd_envoy_hit_item(v)) {
+            tags |= T_LASER;
+        }
         if S.as_log != 0 && player_a {
-            log(b"envoy: hit, victim*1000 + attacker state ", v * 1000 + ast);
+            log(b"envoy: hit, victim*1000 + attacker state\0", v * 1000 + ast);
         }
         if player_a && is_foe(v) && offstage(v) {
             tags |= T_OFFSTAGE;
@@ -3615,7 +3734,7 @@ extern "C" fn on_damage(h: u32, d: f32) {
                 }
                 S.kb_watch = v;
                 S.kb_watch_at = S.play;
-                log(b"envoy: finale knockback x1000 ", 1000 + bonus);
+                log(b"envoy: finale knockback x1000\0", 1000 + bonus);
             }
         }
         // the combo breaker: the hit that would make it CB_HITS (or take the combo to CB_DAMAGE) does not land
@@ -3629,7 +3748,7 @@ extern "C" fn on_damage(h: u32, d: f32) {
         if S.crowd > 1000 && is_foe(v) && !is_boss(v) {
             gd_envoy_kb_scale(v, S.crowd);
             S.crowd_hits += 1;
-            log(b"envoy: crowd knockback, slot*10000 + x1000 ", v * 10000 + S.crowd);
+            log(b"envoy: crowd knockback, slot*10000 + x1000\0", v * 10000 + S.crowd);
         }
         // what foe drive blasts put into this hit (the engine's per-capsule record of the frame, after its cap)
         let human_v = (0..nh()).contains(&v);
@@ -3713,9 +3832,9 @@ unsafe fn combo_frame() {
                 gd_envoy_blast(ps, at.x, at.y + 8.0, CB_PUSH_R, 0, CB_PUSH_ANGLE, CB_PUSH_KBG, CB_PUSH_BKB);
             }
             ev(EV_COMBOBREAK, ps, hits << 16 | pct.clamp(0, 0xFFFF));
-            log(b"envoy: combo break, player*10000 + hits*1000 + combo percent ", ps * 10000 + hits * 1000 + pct.clamp(0, 999));
-            log(b"envoy: combo break at live frame ", S.play);
-            log(b"envoy: combo breaks so far (+1000000: the host refused) ", S.cb_n + if r == 0 { 0 } else { 1_000_000 });
+            log(b"envoy: combo break, player*10000 + hits*1000 + combo percent\0", ps * 10000 + hits * 1000 + pct.clamp(0, 999));
+            log(b"envoy: combo break at live frame\0", S.play);
+            log(b"envoy: combo breaks so far (+1000000: the host refused)\0", S.cb_n + if r == 0 { 0 } else { 1_000_000 });
             continue;
         }
         if S.cb_hits[p] == 0 {
@@ -3743,6 +3862,7 @@ unsafe fn records_frame() {
             }
             take(v as usize, dmg, 1000, a);
             if is_foe(a) {
+                items::on_taken(v as usize, a);
                 foe_charge(a, dmg);
                 for k in 0..2 {
                     S.ftarget[a as usize][k] = v;
@@ -3789,7 +3909,7 @@ unsafe fn finale_probe() {
         let mut w = [0u32; 20];
         gd_fighter_read(h, w.as_mut_ptr());
         let (x, y) = (f32::from_bits(w[6]), f32::from_bits(w[7]));
-        log(if S.finale_off & 1 != 0 { b"envoy: finale probe (write off), kb speed^2 x10000 " } else { b"envoy: finale probe (write on), kb speed^2 x10000 " }, ((x * x + y * y) * 10000.0) as i32);
+        log(if S.finale_off & 1 != 0 { b"envoy: finale probe (write off), kb speed^2 x10000\0" } else { b"envoy: finale probe (write on), kb speed^2 x10000\0" }, ((x * x + y * y) * 10000.0) as i32);
     }
     S.kb_watch = -1;
 }
@@ -3823,7 +3943,7 @@ unsafe fn tech_frame() {
             S.escape_at[p] = S.play;
         }
         if st != prev && S.as_log != 0 && p == 0 {
-            log(b"envoy: as ", prev * 1000 + st);
+            log(b"envoy: as\0", prev * 1000 + st);
         }
         if st != prev {
             if (AS_LANDING_AIR.0..=AS_LANDING_AIR.1).contains(&st) {
@@ -3902,7 +4022,7 @@ unsafe fn cash_out(p: usize, s: i32, pay: i32, finale: bool) {
             if t != s && is_foe(t) && alive(t) {
                 hurt(t, fl);
                 ev(EV_FLARE, t, fl);
-                log(b"envoy: flare, slot*100000 + percent x1000 ", t * 100_000 + fl);
+                log(b"envoy: flare, slot*100000 + percent x1000\0", t * 100_000 + fl);
                 let at = pos(t).unwrap_or(P { x: 0.0, y: 0.0 });
                 let li = S.log_n as usize % LOG;
                 let first = S.drives[in_set(p)][0];
@@ -3959,7 +4079,7 @@ unsafe fn moments_frame() {
             }
             S.boss_hp = w[4] as i32;
             S.boss_hp_max = w[5] as i32;
-            log(b"envoy: boss carrier, slot ", b);
+            log(b"envoy: boss carrier, slot\0", b);
         }
     }
     let mut foes = 0;
@@ -3996,6 +4116,8 @@ unsafe fn moments_frame() {
                 }
             } else if (0..nh()).contains(&s) {
                 kb_ko(i);
+                S.floor_lost = 1;
+                items::on_stock_lost(i);
                 // a lost stock costs a quarter of Heat (rooms; was half)
                 HH.heat[i] -= HH.heat[i] / 4;
                 S.stock_lost = 1;
@@ -4009,17 +4131,13 @@ unsafe fn moments_frame() {
         }
         S.stocks_each[i] = n;
     }
-    // the shared pool: a stock lost by one player is lost by both
-    let low = (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0);
+    // slice 2: each player's own stocks (co-op: a stock lost by one player is theirs alone)
     for p in 0..nh() as usize {
         let me = gd_player_stocks(p as i32);
-        if low < S.my_stocks[p] && low > 0 {
-            log(b"envoy: moment stock lost, player*100 + pool\0", p as i32 * 100 + low);
+        if me < S.my_stocks[p] && me >= 0 {
+            log(b"envoy: moment stock lost, player*100 + stocks\0", p as i32 * 100 + me);
         }
-        if me > low {
-            gd_envoy_apply(p as i32, AP_STOCKS, low);
-        }
-        S.my_stocks[p] = low;
+        S.my_stocks[p] = me;
     }
     if foes < S.foe_stocks {
         log(b"envoy: moment KO dealt, foes left\0", foes);
@@ -4124,8 +4242,14 @@ unsafe fn roll_drop(p: usize) {
 }
 
 unsafe fn drop_frame() {
+    // a button press picks an item up, as in Melee: A on the ground, Z (or the airdodge's grab) in the air. Walking
+    // past only shows the prompt (V_PED_NEAR). CPU-driven checks (`autotake`) still take on touch.
+    let auto = test_flag("autotake");
     for p in 0..nh() as usize {
+        S.ped_near[p] = 0;
         let Some(me) = pos(p as i32) else { continue };
+        let pad = gd_pad_pressed(p as i32);
+        let press = pad & (BTN_A | BTN_Z | BTN_L | BTN_R) != 0;
         for k in 0..DROPS {
             let d = S.drop[p][k];
             if d[0] != 1 {
@@ -4133,7 +4257,11 @@ unsafe fn drop_frame() {
             }
             let (dx, dy) = (me.x - d[2] as f32 / 100.0, me.y - d[3] as f32 / 100.0);
             if dx.abs() < PICK_DX && dy > -6.0 && dy < PICK_DY {
-                take_drop(p, k, G_DROP);
+                S.ped_near[p] = k as i32 + 1;
+                if press || auto {
+                    take_drop(p, k, G_DROP);
+                    break;
+                }
             }
         }
     }
@@ -4297,7 +4425,8 @@ unsafe fn bank_pop() {
 
 /// Roads on offer at the road before fight `fight` (0-based): two before a loop's first session, else none.
 fn roads_offered_at(fight: i32) -> i32 {
-    if fight == 0 { 3 } else { 0 }
+    let _ = fight;
+    0 // the act map's fight nodes are the choice now (rooms::map_publish sets V_ROAD_N)
 }
 
 fn road_kind(i: i32) -> i32 {
@@ -4346,7 +4475,9 @@ unsafe fn foe_def(s: i32) -> i32 {
 
 /// The road screen (out of a match, a fork on offer): P1's left / right moves the cursor, P2's plants the flag.
 unsafe fn road_frame() {
-    let n = roads_offered_at(if S.state == RUN_LIVE { S.fight } else { gd_envoy_start_fight() });
+    // the act map replaces road1's three roads (envoy-items-design.md 11.4); the road screen's pass-through stays
+    rooms::map_road_frame((if S.state == RUN_LIVE { S.fight } else { gd_envoy_start_fight() }).clamp(0, 3) as usize);
+    let n = 0;
     if n == 0 {
         return;
     }
@@ -4358,7 +4489,7 @@ unsafe fn road_frame() {
         }
         if p == 0 {
             S.road_cur = (S.road_cur + d).clamp(0, n - 1);
-            log(b"envoy: road cursor ", S.road_cur);
+            log(b"envoy: road cursor\0", S.road_cur);
         } else {
             S.road_flag = ((S.road_flag - 1).max(0) + d).clamp(0, n - 1) + 1;
         }
@@ -4472,11 +4603,12 @@ unsafe fn fight_setup() {
     S.my_stocks = [0; NP];
     for p in 0..nh() as usize {
         // items: the run's stocks are the truth (a test knob or a continued run may differ from the plan's)
-        if S.pool > 0 && gd_player_stocks(p as i32) != S.pool && gd_player_stocks(p as i32) > 0 {
-            gd_envoy_apply(p as i32, AP_STOCKS, S.pool);
+        if S.pools[p] > 0 && gd_player_stocks(p as i32) != S.pools[p] && gd_player_stocks(p as i32) > 0 {
+            gd_envoy_apply(p as i32, AP_STOCKS, S.pools[p]);
         }
         S.my_stocks[p] = gd_player_stocks(p as i32);
     }
+    rooms::fight_start();
     S.foe_stocks = 0;
     for s in 0..4 {
         S.stocks_each[s as usize] = if (0..nh() + ncpu()).contains(&s) { gd_player_stocks(s).max(0) } else { 0 };
@@ -4743,18 +4875,18 @@ unsafe fn stage_frame() {
     let why = S.stage_want;
     S.stage_want = 0;
     if rc != 0 {
-        log(b"envoy: stage transition refused ", rc);
+        log(b"envoy: stage transition refused\0", rc);
         return;
     }
     S.stage_clock = 0;
     if live {
         // the hand-off is LIVE_AT frames on: the switch's KO window counts from there (live_frame resets the clock)
         S.lv_on = 1;
-        log(b"envoy: live stage transition begins, to ", next);
+        log(b"envoy: live stage transition begins, to\0", next);
     }
     S.stage_switches += 1;
     ev(EV_SHIFT, why, next);
-    log(b"envoy: stage transition, reason*100 + to ", why * 100 + next);
+    log(b"envoy: stage transition, reason*100 + to\0", why * 100 + next);
     for p in 0..nh() as usize {
         charge_event(p, C_SHIFT, -1, false);
     }
@@ -4766,7 +4898,7 @@ unsafe fn stage_frame() {
             HH.earned[p] += SHIFT_COINS as i64 * COIN_UNIT / nh() as i64;
             ev(EV_COINS, p as i32, SHIFT_COINS);
         }
-        log(b"envoy: shifting road pays, coins ", SHIFT_COINS);
+        log(b"envoy: shifting road pays, coins\0", SHIFT_COINS);
     }
 }
 
@@ -4782,10 +4914,10 @@ unsafe fn live_frame() {
         S.lv_on = 2;
         S.stage_clock = 0;
         switch_snapshot(b"torture at switch\0");
-        log(b"envoy: live stage hand-off, frame*1000 + to ", l[4] * 1000 + l[3]);
+        log(b"envoy: live stage hand-off, frame*1000 + to\0", l[4] * 1000 + l[3]);
     } else if S.lv_on == 1 && l[1] == 2 {
         S.lv_on = 0;
-        log(b"envoy: live stage hand-off refused, to ", l[3]);
+        log(b"envoy: live stage hand-off refused, to\0", l[3]);
     }
     if l[0] == 0 && S.lv_on == 2 && S.stage_clock > SWITCH_KO_WINDOW {
         S.lv_on = 0;
@@ -4871,11 +5003,12 @@ unsafe fn outcome_frame() {
     // starts over with the pool it began with (the same as closing the game mid-fight and continuing)
     if S.collect == 0 && gd_envoy_quit() != 0 {
         S.outcome = OUT_LEFT;
-        log(b"envoy: fight left from the pause, run kept at fight ", S.fight + 1);
+        log(b"envoy: fight left from the pause, run kept at fight ", S.fight + 1);
         make_plan();
         return;
     }
-    let me = (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0);
+    // co-op: the fight goes on while either player has a stock
+    let me = (0..nh()).map(|p| gd_player_stocks(p)).max().unwrap_or(0);
     let mut foes = 0;
     for s in 0..4 {
         if is_foe(s) {
@@ -4900,24 +5033,28 @@ unsafe fn outcome_frame() {
     if S.collect > 0 {
         if me > 0 {
             S.won_pool = me;
-        }
-        // items: the item room / the boss drop: pedestals on the floor of the held match; the owners walk in
-        if S.ped_done == 0 && S.outcome == 0 {
-            S.ped_done = 1;
-            let k = items::ped_due();
-            if k != 0 {
-                items::ped_open(k);
+            for p in 0..nh() as usize {
+                S.won_each[p] = gd_player_stocks(p as i32).max(0);
             }
         }
-        if items::ped_wait() {
-            return;
-        }
-        // the fly-in: every drop still on the floor flies to its owner's fighter in play, then is worn (the
-        // match end is held for every fight: nothing a fight dropped is lost, nobody chases a drop)
-        if drops_on_floor() && S.collect <= FLY_TIME {
-            fly_frame();
-            S.collect += 1;
-            return;
+        // the rooms of the held match, one after another: the item room / the boss drop, the door after the boss,
+        // the secret room, the fork (rooms.rs). Pedestals on the floor; the owners walk in; then the fly-in: every
+        // pedestal still out flies to its owner's fighter in play (nothing a room offers is lost, nobody chases it)
+        loop {
+            if S.outcome != 0 {
+                break;
+            }
+            if items::ped_wait() || rooms::fork_wait() {
+                return;
+            }
+            if drops_on_floor() && S.collect <= FLY_TIME {
+                fly_frame();
+                S.collect += 1;
+                return;
+            }
+            if !rooms::advance() {
+                break;
+            }
         }
         if S.outcome == 0 {
             let last = session_last(S.fight);
@@ -4932,7 +5069,7 @@ unsafe fn outcome_frame() {
         }
     } else if me <= 0 {
         S.outcome = 2;
-        S.pool = 0;
+        S.pools = [0; NP];
         S.state = RUN_OVER;
         log(b"envoy: RUN OVER at fight\0", S.fight + 1);
         make_plan();
@@ -4980,7 +5117,7 @@ unsafe fn room_waves(fight: usize, kind: i32, e: i32) -> i32 {
     } else if old_scale() {
         if fight == 0 && S.wave2 == 0 && !test_flag("wave2") { 1 + e.clamp(0, 1) } else { (2 + e.max(0)).min(WAVES_MAX) }
     } else {
-        let w = ROOM_MIX[fight.min(FIGHTS - 1)].waves[e.clamp(0, 2) as usize];
+        let w = ROOM_MIX[rooms::template(fight.min(FIGHTS - 1))].waves[e.clamp(0, 2) as usize];
         let w = if S.wave2 != 0 || test_flag("wave2") { w.max(2) } else { w };
         w.clamp(1, GAUNT_MAX)
     }
@@ -4988,11 +5125,11 @@ unsafe fn room_waves(fight: usize, kind: i32, e: i32) -> i32 {
 
 /// Foes on the field at once in fight `fight` of loop index `e` (ROOM_MIX; co-op one more in a duel or a pack room).
 fn room_foes(fight: usize, e: i32, coop: bool) -> i32 {
-    let f = &SCHEDULE[fight.min(FIGHTS - 1)];
+    let f = &SCHEDULE[unsafe { rooms::template(fight.min(FIGHTS - 1)) }];
     if f.kind == FK_BOSS {
         return 1;
     }
-    let base = ROOM_MIX[fight.min(FIGHTS - 1)].foes[e.clamp(0, 2) as usize];
+    let base = ROOM_MIX[unsafe { rooms::template(fight.min(FIGHTS - 1)) }].foes[e.clamp(0, 2) as usize];
     let extra = (coop && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32;
     (base + extra).clamp(1, if coop { 2 } else { 3 })
 }
@@ -5068,7 +5205,7 @@ unsafe fn room_frame() {
     log(b"envoy: wave starts, wave*100 + foes back\0", S.wave * 100 + n);
     if ncpu() == 1 && !old_scale() {
         let face = if S.wave == 2 { PLAN[32] } else { PLAN[PL_GAUNT + (S.wave - 3).clamp(0, 2) as usize] };
-        log(b"envoy: gauntlet duel, wave*100 + character ", S.wave * 100 + face);
+        log(b"envoy: gauntlet duel, wave*100 + character\0", S.wave * 100 + face);
     }
     let f = sched();
     if f.kind == FK_ELITE && S.wave == elite_wave() {
@@ -5183,12 +5320,16 @@ fn session_last(f: i32) -> bool {
 unsafe fn begin_stop() {
     // items: the stop is the shop only (no banked picks, no keystones)
     let due = 0;
-    S.shop_due = (S.no_shop == 0) as i32;
+    S.shop_due = (S.no_shop == 0 && S.skip_shop == 0 && S.fork_pick == MN_SHOP && sched().kind != FK_BOSS) as i32;
+    if S.skip_shop != 0 {
+        log(b"envoy: the stop has no shop (the campfire was taken)\0", S.fight + 1);
+    }
+    S.skip_shop = 0;
     S.stop_done = 1;
     if due == 0 && S.shop_due == 0 {
         return;
     }
-    if gd_hold_begin(REWARD_TIME * (S.bank.max(1) + 3) + SHOP_TIME + 120) != 0 {
+    if gd_hold_begin(HOLD_FOREVER) != 0 {
         S.stop_done = 0;
         S.shop_due = 0;
         return;
@@ -5231,13 +5372,18 @@ unsafe fn fight_won() {
     log(b"envoy: fight cleared, coins\0", c);
     log(b"envoy: fight length, live frames\0", S.play);
     S.outcome = 1;
-    S.pool = me;
+    // each player keeps their own stocks; a co-op player out of stocks comes back with one (the partner carried
+    // the fight)
+    for p in 0..nh() as usize {
+        S.pools[p] = S.won_each[p].clamp(1, S.lims[p].max(1));
+    }
+    let _ = me;
     // room length (loop*10 + fight, then the live frames it took): loop_run.sh's room-length table
-    log(b"envoy: room cleared, loop*10 + fight ", lp() * 10 + S.fight + 1);
-    log(b"envoy: room time, live frames ", S.play);
+    log(b"envoy: room cleared, loop*10 + fight\0", lp() * 10 + S.fight + 1);
+    log(b"envoy: room time, live frames\0", S.play);
     if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
         S.bosses += 1;
-        log(b"envoy: boss beaten, keystone due; bosses ", S.bosses);
+        log(b"envoy: boss beaten, keystone due; bosses\0", S.bosses);
     }
     if S.fight as usize == FIGHTS - 1 {
         // endless loops: the run goes on at fight 1 of the next loop with everything kept, one more stock in the pool
@@ -5245,15 +5391,16 @@ unsafe fn fight_won() {
         S.lp = (lp() + 1).min(LOOP_TOP);
         S.fight = 0;
         let _ = POOL_CAP;
-        items::campfire();
+        // slice 2: the campfire is a room of the map now (the fork after the item room), not the boss's prize
+        rooms::floor_start();
         log(b"envoy: loop now\0", S.lp);
-        log(b"envoy: RUN CLEAR, pool left ", me);
+        log(b"envoy: RUN CLEAR, pool left\0", me);
     } else {
         // the road's prize for this fight of its session (the Open road and the elite session: a drive pick)
         // items: a won fight banks nothing (items come from the item room, the shop and the boss)
         let _ = road_prize_at;
         S.fight += 1;
-        log(b"envoy: fight won, next ", S.fight + 1);
+        log(b"envoy: fight won, next\0", S.fight + 1);
     }
     make_plan();
 }
@@ -5387,7 +5534,7 @@ unsafe fn publish() {
     }
     v[V_SESS_FIGHT] = (fi - s0 + 1) as i32;
     v[V_STOP_DONE] = (S.state == RUN_LIVE && S.outcome == 1 && S.stop_done != 0 && S.stop == 0) as i32;
-    v[V_POOL] = if S.live != 0 { (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0) } else { S.pool };
+    v[V_POOL] = if S.live != 0 { gd_player_stocks(0).max(0) } else { S.pools[0] };
     v[V_LIVE] = S.live;
     v[V_HUMANS] = nh();
     v[V_SHARED] = S.shared;
@@ -5592,6 +5739,7 @@ unsafe fn publish() {
     let r = record();
     v[V_REC..V_REC + REC_WORDS].copy_from_slice(&r);
     items::publish(v);
+    rooms::publish(v);
     v[V_OPEN] = 0; // items: no drive slots
     gd_envoy_publish(v.as_ptr(), VIEW_WORDS as u32);
 }
@@ -5604,9 +5752,9 @@ unsafe fn abandon_check() {
     for p in 0..nh() {
         if gd_pad_held(p) & ABANDON_BIT != 0 {
             S.outcome = 2;
-            S.pool = 0;
+            S.pools = [0; NP];
             S.state = RUN_OVER;
-            log(b"envoy: run abandoned from the pause overlay, player ", p + 1);
+            log(b"envoy: run abandoned from the pause overlay, player\0", p + 1);
             make_plan();
             gd_envoy_end_match();
             return;
@@ -5658,7 +5806,7 @@ extern "C" fn on_frame_end() {
             if S.rw_active != 0 {
                 reward_frame();
             } else if S.reward_due != 0 && S.frames >= REWARD_DELAY && phase == 0 && S.outcome == 0 {
-                if gd_hold_begin(REWARD_TIME * (S.bank.max(1) + 3) + SHOP_TIME + 120) == 0 {
+                if gd_hold_begin(HOLD_FOREVER) == 0 {
                     let due = S.reward_due;
                     S.reward_due = 0;
                     open_reward(due);
@@ -5681,6 +5829,7 @@ extern "C" fn on_frame_end() {
                     combo_frame();
                     moments_frame();
                     items::frame(EVB);
+                    rooms::wall_frame();
                     room_frame();
                     waves_frame();
                     drives_frame();
@@ -5718,8 +5867,9 @@ pub extern "C" fn gd_mod_loaded() {
     unsafe {
         S.seed = 1;
         S.nh = 1;
-        S.pool = START_POOL[0];
-        S.lim = items::LIM_START[0];
+        S.pools = [rooms::LIM_START; NP];
+        S.lims = [rooms::LIM_START; NP];
+        S.secret_fight = -1;
         S.pair = [[-1; 2]; NP];
         S.last_pick = [-1; NP];
         S.last_wearer = [-1; NP];

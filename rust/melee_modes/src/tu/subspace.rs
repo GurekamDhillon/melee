@@ -469,11 +469,14 @@ pub unsafe fn sub_spawn(which: i32, x: f32, y: f32, facing: i32, handle: i32) ->
     e.born = BORN;
     e.cool = 30;
     if d.arch == Arch::Missile {
-        // a missile comes in from the side it flies away from, at a height a player can meet
-        if fabs(e.x) < 140.0 {
-            e.x = -e.face * 150.0;
+        // a missile comes in from the side it flies away from, at a height a player can meet (on Final
+        // Destination; a map room's spawn point is the cannon's own place)
+        if handle < ROOM_HANDLE_BASE {
+            if fabs(e.x) < 140.0 {
+                e.x = -e.face * 150.0;
+            }
+            e.y = fclamp(e.y, 8.0, 40.0);
         }
-        e.y = fclamp(e.y, 8.0, 40.0);
         e.st = ST_FLY;
         e.an = A_RUN as i32;
         e.life = 480;
@@ -516,6 +519,11 @@ pub fn kind_by_name(name: &str) -> Option<usize> {
         "giant" | "giant_goomba" | "giantgoomba" => Some(K_GIANT),
         _ => None,
     }
+}
+
+/// A kind's display name (logs).
+pub fn kind_name(kind: usize) -> &'static str {
+    DEFS.get(kind).map(|d| d.name).unwrap_or("?")
 }
 
 /// The room-side spawn (the Subspace map lane): `kind` (K_*), `tier` (Envoy loops cleared, 0..), world (x, y),
@@ -574,6 +582,15 @@ pub fn alive() -> i32 {
 pub unsafe fn clear_all() {
     for e in E.iter_mut() {
         if e.kind >= 0 {
+            e.kind = -2;
+        }
+    }
+}
+
+/// Remove the map room's own enemies (handles from `spawn`), leaving the Envoy sim's.
+pub unsafe fn clear_room() {
+    for e in E.iter_mut() {
+        if e.kind >= 0 && e.handle >= ROOM_HANDLE_BASE {
             e.kind = -2;
         }
     }
@@ -1218,9 +1235,15 @@ unsafe fn missile(i: usize) {
                 }
             }
             e.vx = e.face * d.run;
+            let (x0, y0) = (e.x, e.y);
             e.x += e.vx;
             e.y += e.vy;
-            if e.hit_mask != 0 || e.life <= 0 {
+            // in a map room it also blows up on the terrain it flies into (Brawl's Killer explodes on any wall);
+            // Final Destination's spawns never meet a wall, so they keep their old path
+            let mut hit = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+            let wall = e.handle >= ROOM_HANDLE_BASE
+                && melee_world::tu::mplib::mpCheckAll(&mut hit, core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), -1, -1, x0, y0 + 4.0, e.x + e.face * 4.0, e.y + 4.0) != 0;
+            if e.hit_mask != 0 || e.life <= 0 || wall {
                 e.atk = 1;
                 e.hit_mask = 0;
                 e.vx = 0.0;
@@ -1301,7 +1324,14 @@ unsafe fn advance(i: usize) {
             }
             physics(e, d);
             if e.dead && (e.sf >= e.stun.min(45) || e.ground) {
-                if d.arch == Arch::Missile {
+                if d.arch == Arch::Missile && e.handle >= ROOM_HANDLE_BASE {
+                    // a beaten map-room Bullet Bill blows up where it comes down
+                    e.atk = 1;
+                    e.hit_mask = 0;
+                    e.vx = 0.0;
+                    e.vy = 0.0;
+                    set(e, ST_BOOM, A_HURT);
+                } else if d.arch == Arch::Missile {
                     e.kind = -2;
                 } else {
                     e.vx = 0.0;

@@ -606,10 +606,10 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     r.item_freq = -1;
     let petey = PLAN[P_BOSS] == 1 && crate::tu::petey::selected();
     // the exploration room (explore.rs, MELEE_ENVOY_EXPLORE=1, off by default): every non-boss fight is played on the
-    // GD stage slot of the Brawl map section (GD_STAGE_SSE_JUNGLE, carried by Final Destination)
+    // GD stage slot of the Brawl map section (GD_STAGE_SSE_LAKE3, carried by Final Destination)
     use crate::tu::explore as ex;
-    let explore = !petey && ex::enabled() && ex::available(ex::GD_STAGE_SSE_JUNGLE) && ex::map().is_some();
-    let room_stage = if explore { ex::GD_STAGE_SSE_JUNGLE } else { 0 };
+    let explore = !petey && ex::enabled() && ex::available(ex::GD_STAGE_SSE_LAKE3) && ex::map().is_some();
+    let room_stage = if explore { ex::GD_STAGE_SSE_LAKE3 } else { 0 };
     ex::WANT = explore;
     ex::PICK = false; // a VS pick never leaks into a run
     ex::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it

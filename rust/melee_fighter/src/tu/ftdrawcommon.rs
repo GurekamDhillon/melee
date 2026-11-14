@@ -128,6 +128,9 @@ pub static mut WORLD_DRAW: Option<unsafe fn(G, i32)> = None;
 /// The Envoy exploration room's map models (melee_modes::tu::explore; presentation only).
 pub static mut MAP_DRAW: Option<unsafe fn(G, i32)> = None;
 
+/// The fighter whose main model pass is drawing now (null otherwise): the body-group tint's owner.
+pub static mut DRAW_FIGHTER: G = core::ptr::null_mut();
+
 /// `ftDrawCommon_800805C8`: debug overlays, then (bit 7) the model itself.
 pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
     melee_core::ct!("ftDrawCommon_800805C8");
@@ -252,7 +255,9 @@ pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
         f.set_x2228_b0(0);
         let mut sp78: Mtx = [[0.0; 4]; 3];
         let mtx = opt(ftDrawCommon_8008051C(g, &mut sp78));
+        unsafe { DRAW_FIGHTER = g };
         ext::HSD_JObjDispAll(unsafe { (*g).hsd_obj } as *mut HSD_JObj, mtx, ext::HSD_GObj_80390EB8(arg1), 0);
+        unsafe { DRAW_FIGHTER = core::ptr::null_mut() };
         ext::Mex_OnModelRenderDispatch_UnkMtxFunc0(f.kind as i32, g, arg1, mtx);
         ext::ftCo_800C8AF0(fpp);
         ext::ftCo_8009F7F8(fpp);

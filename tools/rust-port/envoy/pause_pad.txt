@@ -1,0 +1,68 @@
+# Envoy pause overlay pad (pause_check.sh): pause, every page with the D-pad, the native camera, resume, then the
+# L + R + A + Start quit. Ticks are noted on the right (pause_check.sh shoots those ticks).
+# buttons: 0001 left, 0002 right, 0004 down, 0008 up, 0100 A, 0400 X, 0020 R, 0040 L, 1000 Start
+300 0000 0 0
+# t300: Start pauses
+3 1000 0 0
+40 0000 0 0
+# t343 shot: ITEMS, cursor on the tab bar
+2 0004 0 0
+20 0000 0 0
+2 0002 0 0
+30 0000 0 0
+# t397 shot: ITEMS, the second item hovered (its card)
+2 0008 0 0
+10 0000 0 0
+2 0002 0 0
+30 0000 0 0
+# t441 shot: RUN
+2 0002 0 0
+30 0000 0 0
+# t473 shot: FIGHT
+2 0002 0 0
+20 0000 0 0
+2 0004 0 0
+20 0000 0 0
+2 0002 0 0
+30 0000 0 0
+# t549 shot: OPTIONS, text size Large
+2 0001 0 0
+10 0000 0 0
+2 0004 0 0
+10 0000 0 0
+2 0001 0 0
+10 0000 0 0
+2 0004 0 0
+10 0000 0 0
+2 0002 0 0
+10 0000 0 0
+2 0004 0 0
+10 0000 0 0
+2 0002 0 0
+30 0000 0 0
+# t637 shot: OPTIONS, effects 75%, shake off, Abandon asking to confirm
+2 0001 0 0
+10 0000 0 0
+2 0008 0 0
+4 0000 0 0
+2 0008 0 0
+4 0000 0 0
+2 0008 0 0
+4 0000 0 0
+2 0008 0 0
+4 0000 0 0
+2 0002 0 0
+20 0000 0 0
+# the native pause camera: main stick, C-stick, X zoom (t687..)
+60 0000 100 0
+40 0000 0 0 0 0 0 100
+40 0400 0 0
+20 0000 0 0
+# t847 shot: the camera moved, the overlay still up (back on ITEMS)
+3 1000 0 0
+120 0000 0 0
+# t970: live again; pause and quit with L + R + A + Start
+3 1000 0 0
+40 0000 0 0
+90 1160 0 0 255 255
+600 0000 0 0

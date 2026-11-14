@@ -66,11 +66,15 @@ pub struct Post {
 /// One world draw (a drive model with a material).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct WorldDraw {
-    pub model: u8,
+    /// The model's index in the meshes the layer was armed with (u16: the Envoy model set passed 256).
+    pub model: u16,
     /// MAT_* (| MAT_TRAIL).
     pub mat: u8,
     pub at: [f32; 3],
     pub yaw: f32,
+    /// A turn in the model's own plane (about its Z axis, radians), applied before the yaw: a shot or a beam laid
+    /// along its velocity. 0 for a drive.
+    pub roll: f32,
     /// Diameter in world units.
     pub scale: f32,
     pub alpha: f32,
@@ -109,6 +113,8 @@ pub struct FxFrame {
     pub draws: Vec<WorldDraw>,
     pub tris: Vec<TriVert>,
     pub posts: Vec<Post>,
+    /// The shader effect quads (crate::vfx).
+    pub vfx: Vec<crate::vfx::VfxInst>,
 }
 
 /// One tick's world list, kept with the GX frame it arrived with (the presenter adopts both together, so the
@@ -152,6 +158,11 @@ pub fn post(id: u32, strength: f32, x: f32, y: f32, rgba: u32) -> bool {
     let kind = id & 0xFF;
     if !(1..POST_COUNT).contains(&kind) || id & !(0xFF | POST_WORLD) != 0 || ![strength, x, y].iter().all(|v| v.is_finite() && v.abs() < 1.0e6) {
         return false;
+    }
+    // retired (accepted, never drawn): the flash, the Heat tints and haze, the screen-wide rings. Local effects are
+    // shader quads now (crate::vfx); only the edge vignette is still a post.
+    if kind != POST_VIGNETTE {
+        return true;
     }
     let Ok(mut q) = POSTS.lock() else { return false };
     if q.len() >= MAX_POST {
@@ -265,6 +276,9 @@ pub(crate) struct FxGpu {
     snap: [Option<Box<FxSnap>>; 2],
     eff: Vec<WorldDraw>,
     pub times: FxTimes,
+    /// The shader effect quads (crate::vfx) and whether the last world pass wrote the offset target.
+    vfx: crate::vfx::VfxGpu,
+    distort_live: bool,
 }
 
 struct Targets {
@@ -414,7 +428,9 @@ fn vnoise(p: vec3f) -> f32 {
     var c = proj(vp);
     let nv = vec2f(dot(g.v0.xyz, nw), dot(g.v1.xyz, nw));
     let d = select(vec2f(0.0), normalize(nv), dot(nv, nv) > 1e-8);
-    c = vec4f(c.xy + d * g.misc.zw * c.w, c.zw);
+    // a model drawn large (a pedestal item at scale 16) takes a wider edge, up to x3; drives (scale <= 5) are unchanged
+    let wide = clamp(length(m0.xyz) / 5.0, 1.0, 3.0);
+    c = vec4f(c.xy + d * g.misc.zw * wide * c.w, c.zw);
     return c;
 }
 @fragment fn fs_ink() -> FO {
@@ -485,6 +501,7 @@ struct U {
 @group(0) @binding(1) var smp: sampler;
 @group(0) @binding(2) var bloom: texture_2d<f32>;
 @group(0) @binding(3) var<uniform> u: U;
+@group(0) @binding(4) var distort: texture_2d<f32>;
 struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
 @vertex fn vs_main(@builtin(vertex_index) i: u32) -> VsOut {
     let uv = vec2<f32>(f32((i << 1u) & 2u), f32(i & 2u));
@@ -493,78 +510,18 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
     o.uv = uv;
     return o;
 }
-fn h2(p: vec2<f32>) -> f32 {
-    return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.547);
-}
-fn vn(p: vec2<f32>) -> f32 {
-    let i = floor(p);
-    let f = fract(p);
-    let s = f * f * (3.0 - 2.0 * f);
-    return mix(mix(h2(i), h2(i + vec2<f32>(1.0, 0.0)), s.x), mix(h2(i + vec2<f32>(0.0, 1.0)), h2(i + vec2<f32>(1.0, 1.0)), s.x), s.y);
-}
 @fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
-    let t = u.m.x;
-    let asp = u.m.z;
-    // 0 in the middle, 1 on the edge midpoints: the centre ellipse (60% of each axis) is never touched
+    // 0 in the middle, 1 on the edge midpoints: the centre ellipse (60% of each axis) is never tinted
     let r = length((v.uv - 0.5) * 2.0);
     let edge = smoothstep(0.6, 1.1, r);
-    var uv = v.uv;
-    // heat-haze, edges only
-    if (u.heat.z > 0.0) {
-        let q = v.uv * vec2<f32>(14.0 * asp, 14.0);
-        let n = vec2<f32>(vn(q + vec2<f32>(0.0, t * 1.4)) + 0.5 * vn(q * 2.1 + vec2<f32>(t * 0.7, 0.0)), vn(q * 1.3 + vec2<f32>(t * 0.5, t * 1.9)) + 0.5 * vn(q * 2.3 - vec2<f32>(0.0, t))) - 0.75;
-        uv = uv + n * 0.008 * u.heat.z * edge;
-    }
-    // rings: a displacement band travelling out from each centre
-    var split = 0.0;
-    var glow = vec3<f32>(0.0);
-    let wm = smoothstep(0.45, 0.9, r);
-    for (var i = 0; i < 4; i = i + 1) {
-        let w = u.w[i];
-        if (w.a.w <= 0.0) { continue; }
-        let d = (v.uv - w.a.xy) * vec2<f32>(asp, 1.0);
-        let dist = length(d);
-        let x = (dist - w.a.z) / w.a.w;
-        let band = exp(-x * x);
-        let dir = d / max(dist, 1.0e-4);
-        uv = uv - dir / vec2<f32>(asp, 1.0) * band * w.b.x * wm;
-        split = split + band * w.b.y * wm;
-        glow = glow + u.wc[i].rgb * band * w.b.z * wm;
-    }
-    // the colour split (uniform control flow: always three samples; o is 0 without a ring)
-    let o = (v.uv - 0.5) * split;
-    var col = vec3<f32>(textureSample(efb, smp, uv + o).r, textureSample(efb, smp, uv).g, textureSample(efb, smp, uv - o).b);
+    // local refraction (crate::vfx's offset target: shockwaves, haze), with a slight colour fringe along the bend
+    let d = textureSample(distort, smp, v.uv).rg;
+    var col = vec3<f32>(textureSample(efb, smp, v.uv + d * 1.25).r, textureSample(efb, smp, v.uv + d).g, textureSample(efb, smp, v.uv + d * 0.75).b);
     let bl = textureSample(bloom, smp, v.uv).rgb;
     col = col + bl * u.m.w;
-    // the tints: each weight edge-masked, their sum capped
-    let fm = smoothstep(0.5, 1.2, r);
-    let wv = u.heat.x * edge;
-    let we = u.heat.y * edge * edge;
-    // embers: specks rising in the edge band
-    var sp = 0.0;
-    if (u.heat.w > 0.0) {
-        // embers: glowing specks rising (and swaying) through the edge band; not a tint, so outside the tint cap
-        let g = v.uv * vec2<f32>(16.0 * asp, 16.0) + vec2<f32>(0.0, t * 1.6);
-        let c = floor(g);
-        let h = h2(c);
-        let sway = sin(t * 2.0 + h * 30.0) * 0.18;
-        let jit = vec2<f32>(h2(c + 3.7) * 0.6 + 0.2 + sway, h2(c + 9.1) * 0.6 + 0.2);
-        let dv = (fract(g) - jit) * vec2<f32>(1.0, 0.55);
-        let dd = length(dv);
-        let fl = 0.65 + 0.35 * sin(t * 9.0 + h * 50.0);
-        sp = step(0.78, h) * (1.0 - smoothstep(0.03, 0.13, dd)) * fl * u.heat.w * edge;
-    }
-    let wf = u.flash.w * fm;
-    let gl = length(glow);
-    let sum = wv + we + wf + gl;
-    let cap = 0.15 * u.m.y;
-    let s = select(1.0, cap / sum, sum > cap);
-    col = mix(col, u.tint.rgb, wv * s);
-    col = mix(col, u.tint.rgb, we * s);
-    // embers paint over (not add to) the picture: orange on a bright stage too, a hot yellow core
-    col = mix(col, mix(vec3<f32>(1.0, 0.36, 0.05), vec3<f32>(1.0, 0.78, 0.3), sp * sp), min(sp * 1.4, 0.95));
-    col = col + glow * s;
-    col = mix(col, u.flash.rgb, wf * s);
+    // the one tint left: a soft edge vignette pulse (the combo breaker), capped
+    let wv = min(u.heat.x * edge, 0.15 * u.m.y);
+    col = mix(col, u.tint.rgb, wv);
     return vec4<f32>(col, 1.0);
 }
 ";
@@ -608,7 +565,7 @@ impl FxGpu {
         queue.write_buffer(&vbuf, 0, &v);
         let inst = mk("fx instances", INST_BYTES * MAX_INST as u64, wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST);
         let tri = mk("fx tris", TRI_BYTES * MAX_TRI_VERTS as u64, wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST);
-        let globals = mk("fx globals", 16 * 9, wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST);
+        let globals = mk("fx globals", 16 * 10, wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST);
         let post_ubuf = mk("fx post", POST_UBYTES as u64, wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST);
         let world_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("fx world"),
@@ -638,7 +595,7 @@ impl FxGpu {
         let blur_pipes = [blur("fs_h"), blur("fs_v")];
         let lin = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("fx linear"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, address_mode_u: wgpu::AddressMode::ClampToEdge, address_mode_v: wgpu::AddressMode::ClampToEdge, ..Default::default() });
         let u_entry = wgpu::BindGroupLayoutEntry { binding: 3, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None };
-        let post_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("fx post"), entries: &[tex_entry(0), smp_entry(1), tex_entry(2), u_entry] });
+        let post_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("fx post"), entries: &[tex_entry(0), smp_entry(1), tex_entry(2), u_entry, tex_entry(4)] });
         let post_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("fx post"), bind_group_layouts: &[&post_bgl], push_constant_ranges: &[] });
         let post_module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("fx post"), source: wgpu::ShaderSource::Wgsl(POST_WGSL.into()) });
         let black_t = device.create_texture(&wgpu::TextureDescriptor {
@@ -657,6 +614,7 @@ impl FxGpu {
             wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(4), rows_per_image: Some(1) },
             wgpu::Extent3d { width: 1, height: 1, depth_or_array_layers: 1 },
         );
+        let vfx = crate::vfx::VfxGpu::new(device, &world_layout);
         let mut g = FxGpu {
             armed: true,
             clock: std::time::Instant::now(),
@@ -686,19 +644,22 @@ impl FxGpu {
             shots: [Shot::default(); MAX_POST],
             last_flash: -10.0,
             intensity: 1.0,
-            frame: FxFrame { intensity: 1.0, cam: None, draws: Vec::with_capacity(128), tris: Vec::with_capacity(4096), posts: Vec::with_capacity(MAX_POST) },
+            frame: FxFrame { intensity: 1.0, cam: None, draws: Vec::with_capacity(128), tris: Vec::with_capacity(4096), posts: Vec::with_capacity(MAX_POST), vfx: Vec::with_capacity(crate::vfx::MAX_VFX) },
             inst_scratch: Vec::with_capacity(INST_BYTES as usize * MAX_INST),
             tri_scratch: Vec::with_capacity(TRI_BYTES as usize * 4096),
             trails: Vec::with_capacity(TRAILS),
             snap: [None, None],
             eff: Vec::with_capacity(128),
             times: FxTimes::default(),
+            vfx,
+            distort_live: false,
         };
         g.world_pipelines(device, samples);
         g
     }
 
     fn world_pipelines(&mut self, device: &wgpu::Device, samples: u32) {
+        self.vfx.pipelines(device, &self.world_layout, samples);
         if self.world_samples == samples && !self.world_pipes.is_empty() {
             return;
         }
@@ -731,7 +692,15 @@ impl FxGpu {
                     // reversed z (state::USE_REVERSED_Z): GX LEQUAL
                     depth_compare: if crate::state::USE_REVERSED_Z { wgpu::CompareFunction::GreaterEqual } else { wgpu::CompareFunction::LessEqual },
                     stencil: Default::default(),
-                    bias: Default::default(),
+                    // the ink hull is the body's own triangles slid sideways at the body's depth: on a face tilted to
+                    // the camera the slid copy is nearer than the face under it and covered it with ink (pedestal
+                    // items came out solid ink, 2026-11-14). Push the hull back by the face's depth slope.
+                    bias: if label == "fx ink" {
+                        let s = if crate::state::USE_REVERSED_Z { -1 } else { 1 };
+                        wgpu::DepthBiasState { constant: 2 * s, slope_scale: 8.0 * s as f32, clamp: 0.0 }
+                    } else {
+                        Default::default()
+                    },
                 }),
                 multisample: wgpu::MultisampleState { count: samples, ..Default::default() },
                 fragment: Some(wgpu::FragmentState {
@@ -814,7 +783,7 @@ impl FxGpu {
 
     /// Whether the post pass has anything to show (else the plain blit runs).
     fn post_active(&self) -> bool {
-        self.armed && self.intensity > 0.0 && (self.bloom_live || self.held.iter().any(|h| h.id != 0 && h.cur > 0.002) || self.shots.iter().any(|s| s.id != 0))
+        self.armed && self.intensity > 0.0 && (self.bloom_live || self.distort_live || self.held.iter().any(|h| h.id != 0 && h.cur > 0.002) || self.shots.iter().any(|s| s.id != 0))
     }
 
     /// The post uniform for now (`aspect`: the EFB's width / height).
@@ -920,6 +889,9 @@ fn model_rows(d: &WorldDraw) -> [[f32; 4]; 3] {
     let (sy, cy) = d.yaw.sin_cos();
     let (sp, cp) = 0.35f32.sin_cos();
     let r = [[cy, 0.0, sy], [sy * sp, cp, -cy * sp], [-sy * cp, sp, cy * cp]];
+    // the roll first (model space, about Z): column 0 and 1 of the rotation turn into each other
+    let (sr, cr) = d.roll.sin_cos();
+    let r: [[f32; 3]; 3] = std::array::from_fn(|i| [r[i][0] * cr + r[i][1] * sr, r[i][1] * cr - r[i][0] * sr, r[i][2]]);
     let s = d.scale;
     std::array::from_fn(|i| [r[i][0] * s, r[i][1] * s, r[i][2] * s, d.at[i]])
 }
@@ -938,6 +910,14 @@ impl Renderer {
             f.armed = true;
             return;
         }
+        if let Some(h) = self.fx_build.take() {
+            // the start-up build is still running (a run began within its first moments): wait for it
+            if let Ok(mut f) = h.join() {
+                f.armed = true;
+                self.fx = Some(f);
+                return;
+            }
+        }
         let mut f = FxGpu::new(&self.device, &self.queue, meshes, self.samples);
         let mut fmts: Vec<wgpu::TextureFormat> = self.blit.keys().copied().collect();
         fmts.push(wgpu::TextureFormat::Rgba8Unorm);
@@ -948,11 +928,47 @@ impl Renderer {
         self.fx = Some(Box::new(f));
     }
 
+    /// Build the layer's buffers and pipelines on a background thread (start-up, a UI mod is loaded), DISARMED: the
+    /// shader compiles and the model decode (~20 ms together) then never sit on a present. `meshes` runs on that
+    /// thread. [`Self::fx_prewarm_poll`] installs the result; an arm that comes first waits for it. Returns false
+    /// when the layer exists or is being built already.
+    pub fn fx_prewarm_start(&mut self, meshes: impl FnOnce() -> Vec<FxMesh<'static>> + Send + 'static) -> bool {
+        if self.fx.is_some() || self.fx_build.is_some() {
+            return false;
+        }
+        let (device, queue, samples, w, h) = (self.device.clone(), self.queue.clone(), self.samples, self.width, self.height);
+        let mut fmts: Vec<wgpu::TextureFormat> = self.blit.keys().copied().collect();
+        fmts.push(wgpu::TextureFormat::Rgba8Unorm);
+        let t = std::thread::Builder::new().name("fx-prewarm".into()).spawn(move || {
+            let m = meshes();
+            let mut f = FxGpu::new(&device, &queue, &m, samples);
+            for fmt in fmts {
+                f.post_pipeline(&device, fmt);
+            }
+            f.targets(&device, w, h, samples);
+            f.armed = false;
+            Box::new(f)
+        });
+        self.fx_build = t.ok();
+        self.fx_build.is_some()
+    }
+
+    /// Install a finished [`Self::fx_prewarm_start`] build (never blocks). True once the layer exists.
+    pub fn fx_prewarm_poll(&mut self) -> bool {
+        if self.fx_build.as_ref().is_some_and(|h| h.is_finished()) {
+            if let Ok(f) = self.fx_build.take().unwrap().join() {
+                self.fx = Some(f);
+            }
+        }
+        self.fx.is_some()
+    }
+
     /// Disarm (the run ended): every pass is skipped from the next present; the GPU objects are kept.
     pub fn fx_disarm(&mut self) {
         if let Some(f) = self.fx.as_mut() {
             f.armed = false;
             f.bloom_live = false;
+            f.distort_live = false;
             f.held = [Held::default(); MAX_POST];
             f.shots = [Shot::default(); MAX_POST];
             f.trails.clear();
@@ -987,6 +1003,7 @@ impl Renderer {
             frame.draws.clear();
             frame.tris.clear();
             frame.posts.clear();
+            frame.vfx.clear();
             return;
         };
         let now = f.now();
@@ -996,6 +1013,8 @@ impl Renderer {
         std::mem::swap(&mut f.frame.draws, &mut frame.draws);
         std::mem::swap(&mut f.frame.tris, &mut frame.tris);
         std::mem::swap(&mut f.frame.posts, &mut frame.posts);
+        std::mem::swap(&mut f.frame.vfx, &mut frame.vfx);
+        frame.vfx.clear();
         f.frame.cam = frame.cam;
         frame.draws.clear();
         frame.tris.clear();
@@ -1005,6 +1024,10 @@ impl Renderer {
         for i in 0..f.frame.posts.len() {
             let p = f.frame.posts[i];
             let id = p.id & 0xFF;
+            // only the edge vignette is left: the flash, the Heat tints and haze and the screen-wide rings are retired
+            if id != POST_VIGNETTE {
+                continue;
+            }
             let uv = if p.id & POST_WORLD != 0 {
                 match cam.and_then(|c| project(&c, widen, [p.x, p.y, 0.0])) {
                     Some(uv) => uv,
@@ -1131,8 +1154,13 @@ impl Renderer {
             Some(s) => &mut s.tris,
             None => &mut f.frame.tris,
         });
-        let Some(cam) = cam.filter(|_| !eff.is_empty() || !tris.is_empty()) else {
+        // the shader effect quads: without a fight camera only the canvas ones can be placed
+        let have_cam = cam.is_some();
+        let n_vfx = if f.intensity > 0.0 { f.frame.vfx.iter().filter(|i| have_cam || i.flags & crate::vfx::F_SCREEN != 0).count() } else { 0 };
+        let cam = cam.or_else(|| (n_vfx > 0).then(|| Camera { view: [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]], proj: [1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0], vp: [0.0; 6] }));
+        let Some(cam) = cam.filter(|_| !eff.is_empty() || !tris.is_empty() || n_vfx > 0) else {
             f.bloom_live = false;
+            f.distort_live = false;
             f.eff = eff;
             match f.snap[1].as_mut() {
                 Some(s) => s.tris = tris,
@@ -1157,7 +1185,17 @@ impl Renderer {
         put4(&mut gb, [f.now(), f.intensity, 2.0 * ink_px / vw.max(1.0), 2.0 * ink_px / vh.max(1.0)]);
         let gl = glass_params();
         put4(&mut gb, [gl.0, gl.1, gl.2, 0.0]);
+        put4(&mut gb, [w as f32 / h.max(1) as f32, h as f32, 0.0, 0.0]);
         self.queue.write_buffer(&f.globals, 0, &gb);
+        if n_vfx > 0 {
+            if !have_cam {
+                f.frame.vfx.retain(|i| i.flags & crate::vfx::F_SCREEN != 0);
+            }
+            f.vfx.upload(&self.queue, &f.frame.vfx, true);
+            f.vfx.target(&self.device, w, h);
+        } else {
+            f.vfx.upload(&self.queue, &[], false);
+        }
         // instances: per pipeline class (opaque, blend, add), then the trails as additive ghosts
         let mut lists: [Vec<(u32, u32, u32)>; 3] = [Vec::new(), Vec::new(), Vec::new()];
         let mut ink: Vec<(u32, u32, u32)> = Vec::new();
@@ -1200,7 +1238,7 @@ impl Renderer {
                 // oldest first, shrinking and fading toward the tail
                 let p = tr.0[(tr.1 + j) % TRAIL_LEN];
                 let age = 1.0 - j as f32 / TRAIL_LEN as f32;
-                let ghost = WorldDraw { model: d.model, mat: MAT_UNLIT_ADD, at: p, yaw: d.yaw, scale: d.scale * (0.85 - 0.5 * age), alpha: (1.0 - age) * 0.22, p: [0.0; 4], rgba: d.rgba | 0xFF };
+                let ghost = WorldDraw { model: d.model, mat: MAT_UNLIT_ADD, at: p, yaw: d.yaw, roll: d.roll, scale: d.scale * (0.85 - 0.5 * age), alpha: (1.0 - age) * 0.22, p: [0.0; 4], rgba: d.rgba | 0xFF };
                 push(&mut f.inst_scratch, &ghost, 0.0);
                 lists[2].push((start, count, ni));
                 ni += 1;
@@ -1289,6 +1327,21 @@ impl Renderer {
                 pass.set_vertex_buffer(0, f.tri.slice(..));
                 pass.draw(0..nt as u32, 0..1);
             }
+            f.vfx.draw(&mut pass);
+        }
+        // the offsets the blit refracts the picture by (shockwaves, haze): half resolution, only when one is queued
+        f.distort_live = f.vfx.n_distort > 0;
+        if f.distort_live {
+            let dv = f.vfx.distort.as_ref().unwrap().0.create_view(&Default::default());
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("vfx distort"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment { view: &dv, resolve_target: None, depth_slice: None, ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT), store: wgpu::StoreOp::Store } })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+            pass.set_bind_group(0, &f.world_bg, &[]);
+            f.vfx.draw_distort(&mut pass);
         }
         // bloom: emissive (full) -> half A (horizontal) -> half B (vertical); the blit adds B
         let half_views = [tg.half[0].create_view(&Default::default()), tg.half[1].create_view(&Default::default())];
@@ -1320,6 +1373,7 @@ impl Renderer {
         let ub = f.post_uniform(aspect);
         self.queue.write_buffer(&f.post_ubuf, 0, &ub);
         let bloom = f.emis.as_ref().filter(|_| f.bloom_live).map(|t| t.half[1].create_view(&Default::default()));
+        let distort = f.vfx.distort.as_ref().filter(|_| f.distort_live).map(|t| t.0.create_view(&Default::default()));
         let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("fx post"),
             layout: &f.post_bgl,
@@ -1328,6 +1382,7 @@ impl Renderer {
                 wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(sampler) },
                 wgpu::BindGroupEntry { binding: 2, resource: wgpu::BindingResource::TextureView(bloom.as_ref().unwrap_or(&f.black)) },
                 wgpu::BindGroupEntry { binding: 3, resource: f.post_ubuf.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 4, resource: wgpu::BindingResource::TextureView(distort.as_ref().unwrap_or(&f.black)) },
             ],
         });
         Some((pi, bg))
@@ -1378,11 +1433,16 @@ mod tests {
         take_posts(&mut out);
         assert!(!post(0, 1.0, 0.0, 0.0, 0));
         assert!(!post(POST_COUNT, 1.0, 0.0, 0.0, 0));
-        assert!(!post(POST_FLASH, f32::NAN, 0.0, 0.0, 0));
-        for _ in 0..MAX_POST {
-            assert!(post(POST_RADIAL_WAVE | POST_WORLD, 3.0, 1.0, 2.0, 0xFFFF_FFFF));
+        assert!(!post(POST_VIGNETTE, f32::NAN, 0.0, 0.0, 0));
+        // retired effects are accepted and dropped: no flash, no Heat tint or haze, no screen-wide ring
+        for id in [POST_EMBER, POST_HEAT_HAZE, POST_FLASH, POST_RADIAL_WAVE | POST_WORLD, POST_CHROMA, POST_SHOCKWAVE] {
+            assert!(post(id, 1.0, 0.0, 0.0, 0xFFFF_FFFF));
         }
-        assert!(!post(POST_FLASH, 1.0, 0.0, 0.0, 0));
+        assert!(!posts_pending());
+        for _ in 0..MAX_POST {
+            assert!(post(POST_VIGNETTE, 3.0, 1.0, 2.0, 0xFFFF_FFFF));
+        }
+        assert!(!post(POST_VIGNETTE, 1.0, 0.0, 0.0, 0));
         take_posts(&mut out);
         assert_eq!(out.len(), MAX_POST);
         assert_eq!(out[0].strength, 1.0);

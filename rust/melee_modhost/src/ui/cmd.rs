@@ -6,7 +6,7 @@
 //! the frame the runs are sorted on (layer, z, mod order, submission index), a total order, and copied into the frame.
 //! Every vector here is reused frame to frame: nothing allocates once the high-water mark is reached.
 
-use melee_gx::ui::{self as gu, Atlas, AtlasRect, UiFrame, UiQuad, NO_CLIP, Q_IN_B, Q_IN_L, Q_IN_R, Q_IN_T, Q_SDF, Q_WINDOW};
+use melee_gx::ui::{self as gu, Atlas, AtlasRect, UiFrame, UiQuad, NO_CLIP, Q_IN_B, Q_IN_L, Q_IN_R, Q_IN_T, Q_SDF, Q_SHAPE_MASK, Q_SHAPE_SHIFT, Q_WINDOW};
 use melee_gx::ui_font::{self as gu_font, TextStyle};
 
 pub const OP_LAYER: u16 = 1;
@@ -23,6 +23,16 @@ pub const OP_SPACE: u16 = 10;
 pub const OP_ROT: u16 = 11;
 /// Effect for the quads that follow (envoy-fx.md): effect id (`melee_gx::ui::FX_*`), colour RGBA; `0, 0` ends it.
 pub const OP_EFFECT: u16 = 12;
+/// gd-ui-v1.4 (uiquality): one analytic shape, exact at every size, resolution, rotation and tilt. Payload: kind
+/// (`melee_gx::ui::SHAPE_*`), x, y, w, h, corner radius, border width, glow spread, fill RGBA, border RGBA.
+pub const OP_SHAPE: u16 = 13;
+/// gd-ui-v1.4: the text that follows gets an outline of `width` canvas units in `rgba` (drawn from the glyphs' own
+/// distance field, under the fill); width 0 ends it. Payload width, rgba.
+pub const OP_OUTLINE: u16 = 14;
+/// gd-ui-v1.4: the BOX shapes that follow carry a hard shadow in the same quad: their outline shrunk by `inset`,
+/// moved by (dx, dy), in `rgba` (its alpha is the shape's: they fade as one). Payload dx, dy, inset, rgba; dx = dy = 0
+/// ends it.
+pub const OP_SHADOW: u16 = 15;
 
 pub const LAYER_SCENE: i32 = 0;
 pub const LAYER_HUD_UNDER: i32 = 1;
@@ -117,13 +127,17 @@ pub struct Pen {
     pub piv: [f32; 2],
     /// OP_EFFECT / a node's `gd_ui_node_effect`: [effect id, colour] for the quads that follow
     pub fx: [u32; 2],
+    /// OP_OUTLINE: (width in canvas units, colour) for the text that follows; width 0: none
+    pub outline: (f32, u32),
+    /// OP_SHADOW: (dx, dy, inset, colour) for the BOX shapes that follow; dx = dy = 0: none
+    pub shadow: (f32, f32, f32, u32),
     clips: [[f32; 4]; CLIP_DEPTH],
     depth: usize,
 }
 
 impl Pen {
     pub fn new(module: u16) -> Pen {
-        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, rot: 0.0, piv: [0.0; 2], fx: [0; 2], clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
+        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, rot: 0.0, piv: [0.0; 2], fx: [0; 2], outline: (0.0, 0), shadow: (0.0, 0.0, 0.0, 0), clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
     }
     fn clip(&self) -> [f32; 4] {
         if self.depth == 0 { NO_CLIP } else { self.clips[self.depth - 1] }
@@ -141,6 +155,8 @@ pub struct Batch {
     seq: u32,
     /// Instance flags OR-ed onto every pushed quad (Q_SDF while a text run is emitted).
     extra_flags: u32,
+    /// `shape` / `rgba2` of the quads pushed next (a shape's parameters; a glyph outline pass's widening).
+    extra_shape: ([f32; 3], u32),
     pub frame: UiFrame,
 }
 
@@ -150,7 +166,7 @@ fn f32_ok(v: f32) -> bool {
 
 impl Batch {
     pub fn with_capacity(quads: usize) -> Batch {
-        Batch { staging: Vec::with_capacity(quads), runs: Vec::with_capacity(256), seq: 0, extra_flags: 0, frame: UiFrame { quads: Vec::with_capacity(quads), hide_gx: false } }
+        Batch { staging: Vec::with_capacity(quads), runs: Vec::with_capacity(256), seq: 0, extra_flags: 0, extra_shape: ([0.0; 3], 0), frame: UiFrame { quads: Vec::with_capacity(quads), hide_gx: false } }
     }
 
     pub fn begin(&mut self) {
@@ -186,9 +202,11 @@ impl Batch {
     fn push(&mut self, p: &Pen, rect: [f32; 4], uv: [f32; 4], rgba: u32, shear: f32) {
         self.open(p);
         let s = p.scale;
-        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, rot: p.rot, piv: [p.piv[0] * s, p.piv[1] * s], fx: if self.extra_flags & Q_SDF != 0 { [0; 2] } else { p.fx } });
+        let (shape, rgba2) = self.extra_shape;
+        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, rot: p.rot, piv: [p.piv[0] * s, p.piv[1] * s], fx: if self.extra_flags & Q_SDF != 0 { [0; 2] } else { p.fx }, shape, rgba2 });
         self.runs.last_mut().unwrap().len += 1;
-        if self.extra_flags & Q_SDF == 0 {
+        // glyphs and shapes are whole on their own: only flat and textured pieces are joined
+        if self.extra_flags & (Q_SDF | Q_SHAPE_MASK | gu::Q_FULL) == 0 {
             self.join_last();
         }
     }
@@ -205,7 +223,7 @@ impl Batch {
         let mut root = 0usize;
         for (k, o) in head[start..].iter_mut().enumerate().rev() {
             let back = n - 1 - (start + k);
-            if o.rot != q.rot || o.piv != q.piv || o.shear != q.shear || o.clip != q.clip || (o.flags ^ q.flags) & (Q_WINDOW | Q_SDF) != 0 || q.flags & Q_SDF != 0 {
+            if o.rot != q.rot || o.piv != q.piv || o.shear != q.shear || o.clip != q.clip || (o.flags ^ q.flags) & (Q_WINDOW | Q_SDF) != 0 || (o.flags | q.flags) & (Q_SDF | Q_SHAPE_MASK | gu::Q_FULL) != 0 {
                 continue;
             }
             let (a, b) = (o.rect, q.rect);
@@ -245,45 +263,57 @@ impl Batch {
 
     pub fn tex(&mut self, p: &Pen, r: AtlasRect, x: f32, y: f32, w: f32, h: f32, uv: [f32; 4], rgba: u32) {
         let (tw, th) = (r.w as f32, r.h as f32);
+        // a whole entry (not a cell of a sheet or a slice of it): its edge may fade into the atlas gutter
+        let save = self.extra_flags;
+        if uv == [0.0, 0.0, 1.0, 1.0] {
+            self.extra_flags |= gu::Q_FULL;
+        }
         self.push(p, [x, y, w, h], r.sub_uv(uv[0] * tw, uv[1] * th, (uv[2] - uv[0]) * tw, (uv[3] - uv[1]) * th), rgba, 0.0);
+        self.extra_flags = save;
     }
 
-    /// A 9-slice piece over (x, y, w, h): 4 corners at their texel size, 4 stretched edges, the centre.
-    pub fn slice(&mut self, p: &Pen, a: &Atlas, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32) {
-        let (t, c0) = a.slices[id];
-        let glow = gu::SLICES[id].glow;
-        // a glow tile reaches `glow` outside the shape
-        let (x, y, w, h) = (x - glow, y - glow, w + 2.0 * glow, h + 2.0 * glow);
-        let c = c0.min(w * 0.5).min(h * 0.5);
-        if c <= 0.0 || rgba & 0xFF == 0 {
+    /// One analytic shape (`melee_gx::ui::SHAPE_*`) over (x, y, w, h): `radius`, `border` and `spread` in the pen's
+    /// units, `rgba` the fill, `rgba2` the border. One quad, whatever its size: there are no pieces to come apart.
+    pub fn shape(&mut self, p: &Pen, kind: u32, x: f32, y: f32, w: f32, h: f32, radius: f32, border: f32, spread: f32, rgba: u32, rgba2: u32) {
+        if w <= 0.0 || h <= 0.0 || (rgba & 0xFF == 0 && (border <= 0.0 || rgba2 & 0xFF == 0)) {
             return;
         }
-        let n = t.w as f32; // 2*c0+1
-        let xs = [x, x + c, x + w - c, x + w];
-        let ys = [y, y + c, y + h - c, y + h];
-        let us = [0.0, c, n - c, n];
-        let uc = [0.0, c0, c0 + 1.0, n];
-        let _ = us;
-        for j in 0..3 {
-            for i in 0..3 {
-                let (qw, qh) = (xs[i + 1] - xs[i], ys[j + 1] - ys[j]);
-                if qw <= 0.0 || qh <= 0.0 {
-                    continue;
-                }
-                // corner texels taken from the tile's corners even when the piece is smaller than 2c0
-                let (u0, u1) = match i { 0 => (0.0, c), 1 => (uc[1], uc[2]), _ => (n - c, n) };
-                let (v0, v1) = match j { 0 => (0.0, c), 1 => (uc[1], uc[2]), _ => (n - c, n) };
-                // the 1-texel middle strip is sampled at its centre so nearest filtering never bleeds
-                let (u0, u1) = if i == 1 { (c0 + 0.25, c0 + 0.75) } else { (u0, u1) };
-                let (v0, v1) = if j == 1 { (c0 + 0.25, c0 + 0.75) } else { (v0, v1) };
-                self.push(p, [xs[i], ys[j], qw, qh], t.sub_uv(u0, v0, u1 - u0, v1 - v0), rgba, 0.0);
-            }
+        let s = p.scale;
+        // a glow reaches `spread` outside the shape
+        let g = if kind == gu::SHAPE_GLOW { spread.max(0.0) } else { 0.0 };
+        let save = (self.extra_flags, self.extra_shape);
+        self.extra_flags |= kind << Q_SHAPE_SHIFT;
+        // shape[2]: a glow's spread, a box's dash length
+        self.extra_shape = ([radius.max(0.0) * s, border.max(0.0) * s, spread.max(0.0) * s], rgba2);
+        // a box's hard shadow rides in the quad's unused uv: dx, dy, inset, 0xRRGGBB as a number (exact in an f32)
+        let sh = p.shadow;
+        let uv = if kind == gu::SHAPE_BOX && (sh.0 != 0.0 || sh.1 != 0.0) { [sh.0 * s, sh.1 * s, sh.2.max(0.0) * s, (sh.3 >> 8) as f32] } else { [0.0; 4] };
+        self.push(p, [x - g, y - g, w + 2.0 * g, h + 2.0 * g], uv, rgba, 0.0);
+        (self.extra_flags, self.extra_shape) = save;
+    }
+
+    /// A slice piece over (x, y, w, h) (`GD_UI_SLICE_*`): a rounded fill, a rounded border or the glow, as one shape.
+    pub fn slice(&mut self, p: &Pen, _a: &Atlas, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32) {
+        let d = gu::SLICES[id];
+        if d.glow > 0.0 {
+            self.shape(p, gu::SHAPE_GLOW, x, y, w, h, d.radius, 0.0, d.glow, rgba, 0);
+        } else if d.border > 0.0 {
+            self.shape(p, gu::SHAPE_BOX, x, y, w, h, d.radius, d.border, 0.0, rgba & !0xFF, rgba);
+        } else {
+            self.shape(p, gu::SHAPE_BOX, x, y, w, h, d.radius, 0.0, 0.0, rgba, 0);
         }
     }
 
+    /// A built-in kit piece (`gd_ui_kit_id`): the round ones are shapes, the hatch a bitmap.
     pub fn kit(&mut self, p: &Pen, a: &Atlas, id: usize, x: f32, y: f32, scale: f32, rgba: u32) {
-        let r = a.kit[id];
-        self.push(p, [x, y, r.w as f32 * scale, r.h as f32 * scale], r.uv(), rgba, 0.0);
+        let (name, pw, ph) = gu::KIT_PIECES[id];
+        let (w, h) = (pw as f32 * scale, ph as f32 * scale);
+        match name {
+            "ui.dot" | "ui.knob" => self.shape(p, gu::SHAPE_BOX, x, y, w, h, w, 0.0, 0.0, rgba, 0),
+            "ui.ring" => self.shape(p, gu::SHAPE_BOX, x, y, w, h, w, 2.5 * scale, 0.0, rgba & !0xFF, rgba),
+            "ui.diamond" => self.shape(p, gu::SHAPE_DIAMOND, x, y, w, h, 0.0, 0.0, 0.0, rgba, 0),
+            _ => self.push(p, [x, y, w, h], a.kit[id].uv(), rgba, 0.0),
+        }
     }
 
     /// Text at (x, y) (top of the line; `align` anchors x), cut at `max_w` (0: no limit). `role` carries the
@@ -292,10 +322,19 @@ impl Batch {
         let st = style(role);
         let (n, w) = gu_font::fit(&a.faces, st, s, max_w);
         let x0 = match align { ALIGN_CENTER => x - w * 0.5, ALIGN_RIGHT => x - w, _ => x };
-        let (save, sdf) = (self.extra_flags, Q_SDF);
-        self.extra_flags |= sdf;
+        let save = (self.extra_flags, self.extra_shape);
+        self.extra_flags |= Q_SDF;
+        if p.outline.0 > 0.0 && p.outline.1 & 0xFF != 0 {
+            // the outline pass: the same glyphs, widened in their distance field by the outline width (capped where
+            // the field ends), all under the fill pass so a neighbour's outline never covers a letter
+            let widen = (p.outline.0 * gu_font::SDF_EM / st.size.max(1.0) / (2.0 * gu_font::SDF_RANGE)).min(0.42);
+            self.extra_shape = ([0.0, widen, 0.0], 0);
+            let col = (p.outline.1 & !0xFF) | ((p.outline.1 & 0xFF) * (rgba & 0xFF) / 255);
+            gu_font::emit(&a.faces, st, s, n, x0, y, |r, uv| self.push(p, r, uv, col, 0.0));
+        }
+        self.extra_shape = ([0.0; 3], 0);
         gu_font::emit(&a.faces, st, s, n, x0, y, |r, uv| self.push(p, r, uv, rgba, 0.0));
-        self.extra_flags = save;
+        (self.extra_flags, self.extra_shape) = save;
     }
 
     /// Sort the runs and lay the quads out in draw order in `frame.quads`.
@@ -378,6 +417,31 @@ impl Batch {
                         return err(at, "effect id");
                     }
                     pen.fx = [w(p), w(p + 4)];
+                }
+                OP_SHAPE => {
+                    need(10)?;
+                    let kind = w(p);
+                    if !(gu::SHAPE_BOX..=gu::SHAPE_GLOW).contains(&kind) {
+                        return err(at, "shape: kind");
+                    }
+                    if !(1..8).all(|i| f32_ok(f(p + i * 4))) {
+                        return err(at, "shape: non-finite");
+                    }
+                    self.shape(&pen, kind, f(p + 4), f(p + 8), f(p + 12), f(p + 16), f(p + 20), f(p + 24), f(p + 28), w(p + 32), w(p + 36));
+                }
+                OP_SHADOW => {
+                    need(4)?;
+                    if !fs(3) {
+                        return err(at, "shadow: non-finite");
+                    }
+                    pen.shadow = (f(p), f(p + 4), f(p + 8), w(p + 12));
+                }
+                OP_OUTLINE => {
+                    need(2)?;
+                    if !f32_ok(f(p)) || f(p) < 0.0 {
+                        return err(at, "outline: width");
+                    }
+                    pen.outline = (f(p), w(p + 4));
                 }
                 OP_RECT => {
                     need(6)?;

@@ -58,6 +58,10 @@ impl Sound {
         let mut stolen = None;
         let v = self.ax.acquire_voice(prio, DROP_CALLBACK, 0, |_, s| stolen = Some(s))?;
         if let Some(s) = stolen {
+            if crate::sound::sfx_log_on() {
+                let victim = self.nodes[s.index].sfx_id;
+                self.sfx_log(format_args!("X stolen fid {victim} by prio {prio}"));
+            }
             self.dropcallback(s.index);
         }
         Some(v)
@@ -401,6 +405,11 @@ impl Sound {
 
     /// HSD_SynthSFXPlayWithGroup.
     #[allow(clippy::too_many_arguments)]
+    /// Whether sound `sfx_id`'s sample data is loaded (its SSM bank is in ARAM): `synth_play`'s first test.
+    pub(crate) fn has_sfx_data(&self, sfx_id: i32) -> bool {
+        self.data_hash[(sfx_id & 0x1F) as usize].iter().any(|e| e.id == sfx_id)
+    }
+
     pub fn sfx_play_with_group(
         &mut self,
         sfx_id: i32,

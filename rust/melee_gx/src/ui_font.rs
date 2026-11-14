@@ -2,7 +2,7 @@
 //!
 //! Four faces ship with the host (rust/melee_gx/assets/fonts, SIL OFL 1.1, subset by
 //! tools/rust-port/fonts/subset_fonts.py): Inter Regular/Bold and JetBrains Mono Regular/Bold. Every glyph of the fixed
-//! set (ASCII, Latin-1, the kit symbols) is rasterized once, when the atlas is built, at 4x supersampling and turned
+//! set (ASCII, Latin-1, the kit symbols) is rasterized once, when the atlas is built, at 2x supersampling and turned
 //! into a single-channel SDF tile (`SDF_EM` texels per em, `SDF_RANGE` texels of spread) in the atlas alpha. The
 //! shader decodes it with a linear sampler (instance flag [`crate::ui::Q_SDF`]), so one tile serves every size and DPI
 //! and text stays inside the single UI batch.
@@ -33,9 +33,12 @@ static FONT_FILES: [&[u8]; N_FACES] = [
 ];
 
 /// SDF tile resolution: texels per em, and the distance spread (texels each side of the edge).
-pub const SDF_EM: f32 = 24.0;
-pub const SDF_RANGE: f32 = 3.0;
-const SS: usize = 4;
+/// 48 texels per em (uiquality; it was 24): large text (a 40-unit percent at 4K is 180 px) keeps its corners, and
+/// small text is minified through the atlas mip chain instead of skipping texels. The supersampled raster is the same
+/// 96 px per em as before, so building the faces costs the same.
+pub const SDF_EM: f32 = 48.0;
+pub const SDF_RANGE: f32 = 6.0;
+const SS: usize = 2;
 
 /// ASCII printable chars get pair kerning (index = char - 0x20).
 const KN: usize = 95;
@@ -220,7 +223,9 @@ fn build_face(atlas: &mut Atlas, idx: usize, fallback: Option<&Face>, s: &mut Sc
                 let d = acc / (SS * SS) as f32;
                 let a = (0.5 + d / (2.0 * range_hi)).clamp(0.0, 1.0);
                 let o = (((r.y as usize + ty) * ATLAS as usize) + r.x as usize + tx) * 4;
-                atlas.px[o..o + 4].copy_from_slice(&[255, 255, 255, (a * 255.0 + 0.5) as u8]);
+                // premultiplied white: the page's format
+                let a8 = (a * 255.0 + 0.5) as u8;
+                atlas.px[o..o + 4].copy_from_slice(&[a8, a8, a8, a8]);
             }
         }
         atlas.mark_pub(r);

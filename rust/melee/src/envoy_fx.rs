@@ -13,12 +13,35 @@ pub struct EnvoyFx {
     tris: Vec<drive_draw::Tri>,
     idle: u32,
     demo_n: u32,
+    vfx_sig: u64,
+    presents: u32,
+    /// The effect pipelines were built (pre-warmed at start-up, or by the first run).
+    warmed: bool,
+    /// The background build was requested (`Renderer::fx_prewarm_start`), and when.
+    prewarm_started: bool,
+    prewarm_t: Option<std::time::Instant>,
 }
 
 impl EnvoyFx {
-    pub fn present(&mut self, r: &mut melee_gx::render::Renderer, netplay: bool) {
+    /// `ui_mods`: a UI mod is loaded (Envoy can run): the effect pipelines are then built once, on the third present
+    /// of the process (the swapchain format is known by then), so a fight never waits on a shader compile.
+    pub fn present(&mut self, r: &mut melee_gx::render::Renderer, netplay: bool, ui_mods: bool) {
+        self.presents += 1;
+        if ui_mods && !self.warmed {
+            // start-up: build the layer on a background thread, disarmed (on a present, the model decode and the
+            // shader compiles made one ~25 ms frame a few presents into the process: the zero-hitch gate's tick 8)
+            if self.presents >= 3 && !self.prewarm_started {
+                self.prewarm_started = true;
+                self.prewarm_t = Some(std::time::Instant::now());
+                r.fx_prewarm_start(|| drive_draw::models().iter().map(|m| FxMesh { pos: &m.pos, nrm: &m.nrm, base: &m.base, glow: &m.glow }).collect());
+            }
+            if self.prewarm_started && r.fx_prewarm_poll() {
+                self.warmed = true;
+                eprintln!("play: envoy fx: effect pipelines built off the frame path ({:.1} ms after the request, pre-warmed at start-up)", self.prewarm_t.map_or(0.0, |t| t.elapsed().as_secs_f64() * 1e3));
+            }
+        }
         let posts = melee_gx::fx::posts_pending() || std::env::var_os("MELEE_FX_DEMO").is_some();
-        let want = melee_modes::tu::envoy::armed() != 0 || drive_draw::shown() > 0 || posts;
+        let want = melee_modes::tu::envoy::armed() != 0 || drive_draw::shown() > 0 || melee_gx::vfx::shown() > 0 || posts;
         if !want {
             // a second of nothing: disarm (every pass off; objects kept for the next run)
             if r.fx_armed() {
@@ -38,7 +61,8 @@ impl EnvoyFx {
             let meshes: Vec<FxMesh<'_>> = ms.iter().map(|m| FxMesh { pos: &m.pos, nrm: &m.nrm, base: &m.base, glow: &m.glow }).collect();
             let t = std::time::Instant::now();
             r.fx_arm(&meshes);
-            eprintln!("play: envoy fx: armed ({:.1} ms to build the effect pipelines)", t.elapsed().as_secs_f64() * 1e3);
+            self.warmed = true;
+            eprintln!("play: envoy fx: armed ({:.1} ms on the present path)", t.elapsed().as_secs_f64() * 1e3);
         }
         let f = &mut self.frame;
         f.intensity = melee_gx::fx::intensity_from_env(netplay);
@@ -48,20 +72,42 @@ impl EnvoyFx {
         let glass_a = melee_gx::fx::glass_params().0;
         let draws = &mut f.draws;
         drive_draw::world_frame(
-            |model, at, yaw, scale, alpha, mat, p, rgba| {
+            |model, at, yaw, roll, scale, alpha, mat, p, rgba| {
                 // the old import's glass shell: the glass material at the material json's opacity
                 let (mat, alpha) = if model as usize == drive_draw::M_GLASS && mat & melee_gx::fx::MAT_ID == MAT_BODY { (MAT_GLASS | (mat & MAT_TRAIL), alpha.min(glass_a)) } else { (mat, alpha) };
                 // the ink edge only on drive bodies (never tier rings, the ascended overlay or glass)
                 let mat = if mat & melee_gx::fx::MAT_OUTLINE != 0 && !drive_draw::is_drive_body(model as usize) { mat & !melee_gx::fx::MAT_OUTLINE } else { mat };
-                draws.push(WorldDraw { model, mat, at, yaw, scale, alpha, p, rgba });
+                draws.push(WorldDraw { model, mat, at, yaw, roll, scale, alpha, p, rgba });
             },
             &mut self.tris,
         );
         f.tris.clear();
         f.tris.extend_from_slice(&self.tris);
         melee_gx::fx::take_posts(&mut f.posts);
+        melee_gx::vfx::copy_shown(&mut f.vfx);
+        vfx_log(&f.vfx, &mut self.vfx_sig, self.presents);
         demo(&mut f.posts, &mut self.demo_n);
         r.set_fx(f);
+    }
+}
+
+/// `MELEE_VFX_LOG=1`: a line whenever the set of effect kinds on screen changes (present number, count per kind), so
+/// a capture script can find the frames an effect is up. Diagnostics only.
+fn vfx_log(list: &[melee_gx::vfx::VfxInst], sig: &mut u64, presents: u32) {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if !*ON.get_or_init(|| std::env::var("MELEE_VFX_LOG").is_ok_and(|v| v == "1")) {
+        return;
+    }
+    let mut n = [0u8; melee_gx::vfx::K_COUNT as usize];
+    for i in list {
+        let k = &mut n[(i.kind as usize).min(n.len() - 1)];
+        *k = k.saturating_add(1);
+    }
+    let s = n.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &c| (h ^ c as u64).wrapping_mul(0x100_0000_01b3));
+    if s != *sig {
+        *sig = s;
+        let kinds: Vec<String> = n.iter().enumerate().filter(|(_, &c)| c > 0).map(|(k, c)| format!("{k}x{c}")).collect();
+        eprintln!("vfx: present {presents} quads {} [{}]", list.len(), kinds.join(" "));
     }
 }
 

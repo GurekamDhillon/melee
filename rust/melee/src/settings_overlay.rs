@@ -598,13 +598,26 @@ pub fn raster(frame: &melee_gx::ui::UiFrame, a: &Atlas) -> (u32, u32, Vec<u8>) {
             for xx in x0..x1 {
                 let u = q.uv[0] + (q.uv[2] - q.uv[0]) * ((xx as f32 + 0.5) / s - qx) / qw;
                 let v = q.uv[1] + (q.uv[3] - q.uv[1]) * ((yy as f32 + 0.5) / s - qy) / qh;
-                let (tu, tv) = (((u * at) as usize).min(1023), ((v * at) as usize).min(1023));
-                let tx = &a.px[(tv * 1024 + tu) * 4..][..4];
-                let al = c[3] as f32 / 255.0 * tx[3] as f32 / 255.0;
+                // premultiplied source colour and coverage: an analytic shape, or the atlas texel (premultiplied page)
+                let kind = (q.flags & melee_gx::ui::Q_SHAPE_MASK) >> melee_gx::ui::Q_SHAPE_SHIFT;
+                let (src, al) = if kind != 0 {
+                    let (lx, ly) = ((xx as f32 + 0.5) / s - qx - qw * 0.5, (yy as f32 + 0.5) / s - qy - qh * 0.5);
+                    let g = if kind == melee_gx::ui::SHAPE_GLOW { q.shape[2] } else { 0.0 };
+                    let d = melee_gx::ui::sd_round_box(lx, ly, qw * 0.5 - g, qh * 0.5 - g, q.shape[0]) * s;
+                    let co = (0.5 - d).clamp(0.0, 1.0);
+                    let ci = if q.shape[1] > 0.0 { (0.5 - d - q.shape[1] * s).clamp(0.0, 1.0) } else { co };
+                    let c2 = q.rgba2.to_be_bytes();
+                    let (fa, la) = (c[3] as f32 / 255.0 * ci, c2[3] as f32 / 255.0 * (co - ci));
+                    ([0, 1, 2].map(|k| c[k] as f32 * fa + c2[k] as f32 * la), fa + la)
+                } else {
+                    let (tu, tv) = (((u * at) as usize).min(at as usize - 1), ((v * at) as usize).min(a.rows().saturating_sub(1)));
+                    let tx = &a.px[(tv * at as usize + tu) * 4..][..4];
+                    let ca = c[3] as f32 / 255.0;
+                    ([0, 1, 2].map(|k| c[k] as f32 * tx[k] as f32 / 255.0 * ca), ca * tx[3] as f32 / 255.0)
+                };
                 let o = ((yy as u32 * w + xx as u32) * 4) as usize;
                 for k in 0..3 {
-                    let src = c[k] as f32 * tx[k] as f32 / 255.0;
-                    px[o + k] = (src * al + px[o + k] as f32 * (1.0 - al)) as u8;
+                    px[o + k] = (src[k] + px[o + k] as f32 * (1.0 - al)) as u8;
                 }
             }
         }

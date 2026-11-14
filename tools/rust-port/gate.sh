@@ -81,6 +81,10 @@ if [ "$engine" = tu ] && [ -z "$only" ]; then
   ah=$(python tools/rust-port/wavhash.py "$tmp/a.wav" 2>/dev/null)
   if [ "$ah" = "6106 0xf4956676e79a4037" ]; then echo "ok   audio: 6106 sub-frames, mix hash equal to the C capture"; else echo "FAIL audio: got '$ah', want '6106 0xf4956676e79a4037'"; fail=1; fi
 fi
+# sfx parity on the live play path (tools/rust-port/sfx/sfx_check.sh): no sound requested without a voice or its bank
+if [ "$engine" = tu ] && [ -z "$only" ]; then
+  if EXE="$exe" OUT="$tmp/sfx" bash tools/rust-port/sfx/sfx_check.sh >"$tmp/sfx.log" 2>&1; then echo "ok   sfx: $(grep '^ok' "$tmp/sfx.log" | wc -l) checks (see sfx_check.sh)"; else echo "FAIL sfx (see $tmp/sfx.log)"; grep '^FAIL' "$tmp/sfx.log"; fail=1; fi
+fi
 # baselines may only shrink
 bmax=tools/rust-port/diff/baseline_max.tsv
 # CRLF checkouts: strip CRs so the counts compare; a row that still does not parse FAILs instead of being skipped

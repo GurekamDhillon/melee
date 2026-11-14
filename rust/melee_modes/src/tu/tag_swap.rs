@@ -77,6 +77,33 @@ pub static mut PENDING_RELEASE: u8 = 0;
 pub static mut PENDING_QUICK: u8 = 0;
 pub static mut QUICK_PAUSE: u8 = 0;
 
+/// The live stage transition (Envoy "Fights 2", envoy-items-design.md section 10): no freeze; the fight runs on while
+/// the presentation's rift sweeps across the screen, and the stage hands over on one frame (`at`) under the rift's
+/// bright core. Plain statics: the snapshot covers them, so a rollback across any frame of it resimulates exactly.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Live {
+    /// 0 idle, 1 running.
+    pub phase: u8,
+    /// 0 the hand-off is still to come, 1 handed over, 2 refused (the old stage stays; the rift just closes).
+    pub done: u8,
+    pub from: i16,
+    pub to: i16,
+    pub frame: u16,
+    pub len: u16,
+    /// The hand-off frame (moved on, at most LIVE_WAIT frames, while a fighter is mid-grab or respawning).
+    pub at: u16,
+    pub waited: u16,
+    /// Transitions finished so far this boot (presentation edge detect).
+    pub count: u32,
+}
+pub static mut LIVE: Live = Live { phase: 0, done: 0, from: -1, to: -1, frame: 0, len: 0, at: 0, waited: 0, count: 0 };
+/// The most frames a live hand-off waits for a fighter to be free (a grab, a respawn) before it is refused.
+pub const LIVE_WAIT: u16 = 90;
+/// The engine's asset hint for a stage the live transition is going to (never sim-visible: it only warms the file
+/// cache; the load is the same with or without it). Set at install.
+pub static mut STAGE_HINT: Option<fn(i32)> = None;
+
 /// Envoy Quick Tag (envoy-tag-rethink.md direction 1): queue a swap with no freeze. `any`: the 20-frame window after
 /// the player dealt damage (a tag-cancel on hit): any state but the refused ones. Refused always:
 /// - dead, on the respawn platform, entering (motion 0-13): the fighter is not in play;
@@ -91,7 +118,7 @@ pub static mut QUICK_PAUSE: u8 = 0;
 /// Outside the window: today's list plus jump squat, landing and shield (the study's "free to act").
 pub unsafe fn quick(slot: i32, any: bool, pause: i32) -> i32 {
     melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("quick tag asked, slot ").n(slot as i64));
-    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 || assist_busy(slot) {
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 || assist_busy(slot) || live_handoff_due() {
         return TAG_BUSY;
     }
     if partner_kind(slot) < 0 {
@@ -226,6 +253,7 @@ pub unsafe fn request_swap(skip: bool) -> i32 {
 pub unsafe fn tick() {
     LOGIC_FRAMES = LOGIC_FRAMES.wrapping_add(1);
     assist_tick();
+    live_tick();
     if PENDING_SWAP >= 0 && PENDING_QUICK != 0 {
         // Envoy Quick Tag: no freeze; the newcomer gets a hitlag-style pause of its own (the foe runs on)
         let slot = PENDING_SWAP as i32;
@@ -277,7 +305,7 @@ unsafe fn release() {
 /// A stage switch under the transition freeze: frozen for `len` frames, the switch applied halfway (under the cover),
 /// released at the end. Returns `stage_hop::check`'s code, or TAG_BUSY while another transition runs.
 pub unsafe fn stage_begin(grkind: i32, len: i32) -> i32 {
-    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 || LIVE.phase != 0 {
         return TAG_BUSY;
     }
     if crate::tu::petey::active() {
@@ -294,9 +322,72 @@ pub unsafe fn stage_begin(grkind: i32, len: i32) -> i32 {
     0
 }
 
+/// A live stage transition to `grkind`: `len` frames (60-600) with the fight running, the hand-off at frame `at`
+/// (clamped inside). Returns `stage_hop::check`'s code, or TAG_BUSY while any transition runs.
+pub unsafe fn stage_live_begin(grkind: i32, len: i32, at: i32) -> i32 {
+    if LIVE.phase != 0 || TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
+        return TAG_BUSY;
+    }
+    if crate::tu::petey::active() {
+        return crate::tu::stage_hop::HOP_UNSUPPORTED;
+    }
+    let rc = crate::tu::stage_hop::check(grkind);
+    if rc != 0 {
+        return rc;
+    }
+    let len = len.clamp(60, 600);
+    LIVE = Live {
+        phase: 1,
+        done: 0,
+        from: crate::tu::stage_hop::current() as i16,
+        to: grkind as i16,
+        frame: 0,
+        len: len as u16,
+        at: at.clamp(10, len - 20) as u16,
+        waited: 0,
+        count: LIVE.count,
+    };
+    if let Some(h) = STAGE_HINT {
+        h(grkind);
+    }
+    melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("live stage transition to ").n(grkind as i64));
+    0
+}
+
+/// The hand-off is this frame or waiting: a quick tag must not land on the same frame as the carry.
+unsafe fn live_handoff_due() -> bool {
+    LIVE.phase == 1 && LIVE.done == 0 && LIVE.frame + 1 >= LIVE.at
+}
+
+/// Per logic frame (first in `tick`): advance the live transition; the hand-off runs the switch with the live carry.
+unsafe fn live_tick() {
+    if LIVE.phase == 0 {
+        return;
+    }
+    LIVE.frame = LIVE.frame.saturating_add(1);
+    if LIVE.done == 0 && LIVE.frame >= LIVE.at {
+        let rc = crate::tu::stage_hop::switch_to_ex(LIVE.to as i32, true);
+        if rc == crate::tu::stage_hop::HOP_BUSY && LIVE.waited < LIVE_WAIT {
+            // a fighter is mid-grab or respawning: the rift holds its core over the screen a frame longer
+            LIVE.waited += 1;
+            LIVE.at = LIVE.at.saturating_add(1);
+            LIVE.len = LIVE.len.saturating_add(1);
+        } else if rc != 0 {
+            eprintln!("transition: live stage hand-off to {} refused ({rc})", LIVE.to);
+            LIVE.done = 2;
+        } else {
+            LIVE.done = 1;
+        }
+    }
+    if LIVE.frame >= LIVE.len && LIVE.done != 0 {
+        LIVE.phase = 0;
+        LIVE.count = LIVE.count.wrapping_add(1);
+    }
+}
+
 /// A hold freeze (KIND_HOLD) of at most `len` frames; the mod releases it (`hold_release`).
 pub unsafe fn hold_begin(len: i32) -> i32 {
-    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 || live_handoff_due() {
         return TAG_BUSY;
     }
     if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
@@ -402,6 +493,8 @@ pub unsafe fn reset() {
     PENDING_RELEASE = 0;
     PENDING_QUICK = 0;
     STAGE_TO = -1;
+    LIVE.phase = 0;
+    LIVE.done = 0;
     ASSIST = [Assist { queued: 0, running: 0, frames: 0 }; 4];
     melee_fighter::hooks::ENVOY_ASSIST = [0; 4];
 }

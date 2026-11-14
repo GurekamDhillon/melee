@@ -337,6 +337,12 @@ impl Sound {
         }
     }
 
+    /// `MELEE_SFX_LOG=<file>`: the sfx request log (one line per start request and per key-on, with the
+    /// reason a request or key-on made no sound). Diagnostic only; never part of the mix or the sim.
+    pub(crate) fn sfx_log(&self, line: std::fmt::Arguments) {
+        sfx_log_write(SFX_LOG_FRAME.load(std::sync::atomic::Ordering::Relaxed), line);
+    }
+
     pub fn sub_frame(&mut self) -> [i16; crate::FRAME_SAMPLES * 2] {
         if self.ax_callback_registered {
             self.trace_in_cb = true;
@@ -377,13 +383,19 @@ impl Sound {
         let total: i32 = bank_sizes.iter().sum();
         self.lb.bank_size = bank_sizes;
         self.lb.total_size = total;
-        self.init_multi_pstream(total);
+        // TARGET_PC: bank 2 (the fighters' and the stage's SSMs) gets room for four more of the largest fighter banks
+        // beyond the C's size. Envoy matches load the tag partners and the next waves' characters with the players
+        // (engine_audio::ax_8002785C); without the room their load did not fit and HSD_SynthSFXHeaderLoadCallback's
+        // reclaim wiped every bank loaded before it. Only ARAM addresses move: the bank manager's budget
+        // (`lb.total_size`) and so every retail load and eviction stay the C's.
+        let extra = crate::lbaudio::extra_fighter_bank_room();
+        self.init_multi_pstream(total + extra);
         let rv = crate::sound::default_reverb_std(1.88);
         self.setup_aux(0, 2, &rv);
         let dl = crate::sound::default_delay();
         self.setup_aux(1, 4, &dl);
-        for s in bank_sizes {
-            self.sfx_allocate_bank(s);
+        for (i, s) in bank_sizes.into_iter().enumerate() {
+            self.sfx_allocate_bank(if i == 2 { s + extra } else { s });
         }
         // HSD_SynthInit (synth.c): sound mode = OSGetSoundMode(), which the PC shim (shim_os.c) answers 0 (mono); nothing in a match sets it.
         self.load_sem("/audio/us/smash2.sem")?;
@@ -585,6 +597,10 @@ impl Sound {
                             s.fid as i32, s.x1a, s.volume, pan, s.pri as i32, s.itdflag as i32, s.track as i32, pitch1,
                             pitch2, main, a, b,
                         );
+                        if sfx_log_on() {
+                            let why = if vid != -1 { "keyed" } else if !self.has_sfx_data(s.fid as i32) { "nodata" } else { "novoice" };
+                            self.sfx_log(format_args!("K {} fid {} vol {} pri {} vid {vid} {why}", s.x16, s.fid, s.volume, s.pri));
+                        }
                         self.sm[v].vid = vid;
                         if vid != -1 {
                             self.by_vid[(vid & 0x3F) as usize] = Some(v);
@@ -855,6 +871,20 @@ impl Sound {
         self.tr("START", [sound_id, volume as i32, pan as i32, track, channel]);
         let h = self.audio_sfx_start_param_impl(sound_id, volume, pan, track, channel);
         self.tr("STARTRET", [h, 0, 0, 0, 0]);
+        if sfx_log_on() {
+            let why = if h != -1 {
+                "ok"
+            } else if self.sem.is_none() {
+                "nosem"
+            } else if self.paused_channels & (1u32 << (channel & 31)) != 0 {
+                "paused"
+            } else if self.free_head.is_none() {
+                "nofree"
+            } else {
+                "badid"
+            };
+            self.sfx_log(format_args!("S {sound_id} vol {volume} track {track} ch {channel} h {h} {why}"));
+        }
         h
     }
 
@@ -1221,5 +1251,39 @@ mod tests {
         ] {
             assert_eq!(off::<HSD_SynthSFXNode>(f), o, "HSD_SynthSFXNode.{f}");
         }
+    }
+}
+
+// ---- MELEE_SFX_LOG: the sfx request log (diagnostic, outside the sim state) ----
+
+static SFX_LOG: std::sync::Mutex<Option<std::io::BufWriter<std::fs::File>>> = std::sync::Mutex::new(None);
+/// Game frames seen by the per-frame update (lbAudioAx_80027DF8), for the log only.
+pub static SFX_LOG_FRAME: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+static SFX_LOG_STATE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0); // 0 unknown, 1 off, 2 on
+
+pub(crate) fn sfx_log_on() -> bool {
+    use std::sync::atomic::Ordering::Relaxed;
+    match SFX_LOG_STATE.load(Relaxed) {
+        1 => false,
+        2 => true,
+        _ => {
+            let f = std::env::var_os("MELEE_SFX_LOG").filter(|p| !p.is_empty()).and_then(|p| std::fs::File::create(p).ok());
+            let on = f.is_some();
+            *SFX_LOG.lock().unwrap_or_else(|e| e.into_inner()) = f.map(std::io::BufWriter::new);
+            SFX_LOG_STATE.store(if on { 2 } else { 1 }, Relaxed);
+            on
+        }
+    }
+}
+
+/// One log line, `<game frame> <text>`. Also used by the sim's other sound sources (Brawl sfx).
+pub fn sfx_log_write(frame: u32, line: std::fmt::Arguments) {
+    use std::io::Write;
+    if !sfx_log_on() {
+        return;
+    }
+    if let Some(w) = SFX_LOG.lock().unwrap_or_else(|e| e.into_inner()).as_mut() {
+        let _ = writeln!(w, "{frame} {line}");
+        let _ = w.flush();
     }
 }

@@ -476,6 +476,9 @@ pub fn ftcoll_8007699c(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
 /// `ftColl_80076CBC`: `fp0`'s hitbox struck `fp1`'s shield.
 pub fn ftcoll_80076cbc(fp0: F, hit0: HC, fp1: F) {
     melee_core::ct!("ftcoll_80076cbc");
+    if let Some(h) = unsafe { crate::hooks::ENVOY_SHIELD_HIT } {
+        unsafe { h(&*fp0, &*fp1) };
+    }
     ftcoll_80076808(fp0, hit0, 1, fp1 as *mut c_void, false);
     unsafe {
         ext::ScriptGame_EchoConnected(hit0, fp1);

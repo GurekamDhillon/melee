@@ -85,6 +85,10 @@ pub fn sync() {
             ev::SAVED_DROP = 0;
             drop_file();
         }
+        // an Item Lab session never touches the saved run, the record or the best loop
+        if ev::lab()[0] != 0 {
+            return;
+        }
         let v = ev::VIEW;
         // the V3 view (envoy_data view.rs: V_MAGIC "ENV3", V_STATE 1, V_ARMED 20): v[20] says the sim has taken the arm
         // (its record is this run's, not the one before a New run)

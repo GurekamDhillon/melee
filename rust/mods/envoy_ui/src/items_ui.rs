@@ -211,11 +211,10 @@ pub unsafe fn pedestals(v: &[i32; VW]) {
             let fy = by + 12.0 + 1.5 * sin(t * 0.07 + k as f32 * 1.3);
             let m = item(id).map_or(-1, |it| crate::fx::em_model(it.key));
             if m >= 0 {
-                // the item's own model (envoy-models1.md) rocking over the stone, on a soft disc of its colour (no ink
-                // edge: the host drops MAT_OUTLINE for this set)
+                // the item's own model (envoy-models1.md) rocking over the stone, on a soft disc of its colour
                 fx(FX_DISC, bx, fy, 8.5, 0.0, 0.0, alpha(c, 0.3));
                 let yaw = 0.35 * sin(t * 0.045 + k as f32 * 1.3);
-                crate::fx::model(m, bx, fy, 0.0, yaw, 16.0, 1.0, crate::fx::MAT_BODY, [0.3, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
+                crate::fx::model(m, bx, fy, 0.0, yaw, 16.0, 1.0, crate::fx::MAT_BODY | crate::fx::MAT_OUTLINE, [0.3, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
             } else {
                 fx(FX_DISC, bx, fy, 7.5, 0.0, 0.0, alpha(c, 0.55));
                 fx(FX_DISC, bx, fy, 4.0, 0.0, 0.0, alpha(WHITE, 0.8));

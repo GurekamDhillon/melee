@@ -56,9 +56,10 @@ pub static PARTY_KEYS: &str = include_str!("../../../../pc/scripts/examples/envo
 /// The ink outline is `melee_gx::fx::MAT_OUTLINE` (colour `melee_gx::fx::INK_RGB`): drive BODIES only (not tier
 /// rings, the ascended overlay or the glass); the host drops the flag on any other model.
 /// Whether a model is a drive body the outline pass should edge (legacy family bodies and every Party drive/Unique).
-/// The Envoy model set may take the edge too (its sprites are drawn with one): the caller decides per draw.
+/// Not the Envoy model set: drawn at pedestal size (scale 16) the ink hull swallows those bodies (seen in a boss-drop
+/// screenshot, 2026-11-14), so the host drops the flag for them until the edge is sized for large models.
 pub fn is_drive_body(model: usize) -> bool {
-    model < M_GLASS || (PARTY_FIRST + 3..MODEL_COUNT).contains(&model)
+    model < M_GLASS || (PARTY_FIRST + 3..PARTY_END).contains(&model)
 }
 /// Uniques take a second, white edge outside the ink (DRIVE-MODELS.md 6: ink 0.09, white 0.16).
 pub fn is_unique(model: usize) -> bool {
@@ -597,7 +598,7 @@ mod tests {
             assert!(disk == MESH_FILES[PARTY_FIRST + k], "include list out of order at {key}");
         }
         assert_eq!(PARTY_KEYS.lines().nth(M_ASCENDED - PARTY_FIRST), Some("ascended"));
-        assert!(is_drive_body(PARTY_FIRST + 3) && !is_drive_body(M_RING_EPIC) && is_unique(PARTY_END - 1) && !is_unique(EM_FIRST));
+        assert!(is_drive_body(PARTY_FIRST + 3) && !is_drive_body(M_RING_EPIC) && is_unique(PARTY_END - 1) && !is_unique(EM_FIRST) && !is_drive_body(EM_FIRST));
         // the Envoy model set: the generated include list follows the manifest, every model decodes in the Party
         // frame, and a sprite of one covers its cell
         assert_eq!(EM_KEYS.lines().count(), EM_COUNT);

@@ -652,6 +652,18 @@ impl<'a> Lx<'a> {
                     None => one(Op::Nop), // a box of the current attack (by motion), host side
                 }
             }
+            "other" if crate::tu::geno_boss_spawn::parse_spawn_text(text).is_some() => {
+                let (id, joint) = crate::tu::geno_boss_spawn::parse_spawn_text(text).unwrap();
+                match self.ir.get("boss").get("weapon_records").arr().iter().position(|r| r.get("raw_id").num() == Some(id as f64)) {
+                    Some(i) => one(Op::Spawn { record: i as u8, joint }),
+                    None => {
+                        self.err(&format!("spawn record {id} not in weapon_records"), ctx);
+                        vec![]
+                    }
+                }
+            }
+            // the weapon's proc binding (link 5103): the record carries the flight
+            "other" if text.starts_with("link_i ") && text.contains(" 5103 ") => one(Op::Nop),
             "other" => {
                 if tl.contains("commonnoneflydamageproc") || tl.contains("noro") || tl.contains("ground snap") || tl.contains("reply handled") || tl.contains("copy cage motion") || tl.contains("trophy") {
                     one(Op::Nop)
@@ -978,6 +990,7 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
         window,
         // the shared enemy engine's passes (enemy-engine IR): -100, the damage window on a hit frame, the default window
         passes: vec![(-100, -100, false), (-250, -150, true), (window.0, window.1, false)],
+        spawns: crate::tu::geno_boss_spawn::lower_records(boss),
     })
 }
 

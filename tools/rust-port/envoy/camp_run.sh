@@ -32,11 +32,17 @@ card=${CARD:-$(dirname "$exe")/card}
 [ -d "$card/USA" ] || { echo "camp_run: no memory card at CARD (a folder with USA/Card A)"; exit 2; }
 cp -r "$card" "$out/card"
 log="$out/camp.log"
+# ACE=1: the m-ex disc (GW_ISO_ACE) boots straight to the title, so the pad script loses its second boot Start
+iso=$GW_ISO_VANILLA; pad="$here/camp_pad.txt"
+if [ "${ACE:-0}" = 1 ]; then
+  [ -n "${GW_ISO_ACE:-}" ] || { echo "camp_run: ACE=1 needs GW_ISO_ACE"; exit 2; }
+  . "$here/exe_check.sh"; iso=$GW_ISO_ACE; pad=$(pad_for_disc "$pad" "$out")
+fi
 unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP MELEE_ENVOY_TEST_DRIVES
 env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="${CAMP_TITLE:-v3sim agent: camp_run, Envoy camp door, fights 1-3 (port/v3sim)}" MELEE_WASM_MODS="$mods" \
-  MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="$here/camp_pad.txt" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
+  MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="$pad" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
   MELEE_TURBO=1 ${CAMP_ENV:-} \
-  "$exe" play --iso "$GW_ISO_VANILLA" --headless --no-audio --max-frames "$frames" >"$log" 2>&1
+  "$exe" play --iso "$iso" --headless --no-audio --max-frames "$frames" >"$log" 2>&1
 fail=0
 ok() { echo "ok   $*"; }
 bad() { echo "FAIL $*"; fail=1; }
@@ -50,6 +56,8 @@ for n in $(seq 1 "$last"); do
   grep -q "envoy: match $n rewritten" "$log" && ok "fight $n is an Envoy match" || bad "fight $n never started as an Envoy match"
 done
 for n in $(seq 2 "$last"); do
+  # the boss (fight 4) wraps the loop: its win is the campfire that follows it, not a "next 5"
+  if [ "$n" = 5 ]; then grep -q "envoy: campfire, stocks refilled" "$log" && ok "fight 4 (the boss) won" || bad "fight 4 (the boss) not won"; continue; fi
   grep -q "envoy: fight won, next $n" "$log" && ok "fight $((n - 1)) won" || bad "fight $((n - 1)) not won"
 done
 # items (envoy-items-design.md 8): the item room after the session's last fight (fight 2) gives an item, the shop opens;

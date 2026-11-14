@@ -76,27 +76,38 @@ pub fn case(op: u32, k: u32) {
     }
 }
 /// Compares the per-case lines with tests/data/tu_<stem>.txt.
-pub struct Check { lines: std::str::Lines<'static>, pub n: u32 }
+/// `ORACLE_BLESS=<file>`: no compare. Every line is written to <file> as Rust computes it (ASSERT lines as the data has
+/// them). It re-blesses a file whose only difference from the C is a semantics the C oracle got wrong (the int audit's
+/// Gekko fctiwz / shift / divide rules, notes/int-audit.md), after that difference was shown to be the only one.
+pub struct Check { lines: std::str::Lines<'static>, pub n: u32, bless: Option<std::string::String> }
 impl Check {
-    pub fn new(s: &'static str) -> Self { Check { lines: s.lines(), n: 0 } }
-    pub fn line(&mut self, op: u32, k: u32, ret: u32, hash: u32) {
-        let got = format!("{} {} {:08X} {:08X} {:08X}", op, k, ret, hash, unsafe { TR });
+    pub fn new(s: &'static str) -> Self {
+        Check { lines: s.lines(), n: 0, bless: std::env::var_os("ORACLE_BLESS").map(|_| std::string::String::new()) }
+    }
+    fn cmp(&mut self, got: std::string::String, op: u32, k: u32) {
         let want = self.lines.next().expect("expected file too short");
-        assert_eq!(got, want, "op {op} case {k}");
+        match &mut self.bless {
+            Some(b) => { b.push_str(&got); b.push('\n'); }
+            None => assert_eq!(got, want, "op {op} case {k}"),
+        }
         self.n += 1;
+    }
+    pub fn line(&mut self, op: u32, k: u32, ret: u32, hash: u32) {
+        self.cmp(format!("{} {} {:08X} {:08X} {:08X}", op, k, ret, hash, unsafe { TR }), op, k);
     }
     /// Four-field line `op k H TR` (drivers that print their own state hash H).
     pub fn line2(&mut self, op: u32, k: u32, hash: u32) {
-        let got = format!("{} {} {:08X} {:08X}", op, k, hash, unsafe { TR });
-        let want = self.lines.next().expect("expected file too short");
-        assert_eq!(got, want, "op {op} case {k}");
-        self.n += 1;
+        self.cmp(format!("{} {} {:08X} {:08X}", op, k, hash, unsafe { TR }), op, k);
     }
     /// The C case hit an HSD_ASSERTREPORT: the line is `op k ASSERT`.
     pub fn assert_line(&mut self, op: u32, k: u32) {
-        let want = self.lines.next().expect("expected file too short");
-        assert_eq!(format!("{} {} ASSERT", op, k), want, "op {op} case {k}");
-        self.n += 1;
+        self.cmp(format!("{} {} ASSERT", op, k), op, k);
     }
-    pub fn done(mut self) -> u32 { assert!(self.lines.next().is_none(), "expected file has extra lines"); self.n }
+    pub fn done(mut self) -> u32 {
+        assert!(self.lines.next().is_none(), "expected file has extra lines");
+        if let Some(b) = &self.bless {
+            std::fs::write(std::env::var_os("ORACLE_BLESS").unwrap(), b).expect("ORACLE_BLESS: write");
+        }
+        self.n
+    }
 }

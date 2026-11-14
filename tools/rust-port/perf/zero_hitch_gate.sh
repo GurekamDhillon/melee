@@ -14,6 +14,8 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   buildlock.sh run port/zerolag runlight.sh zerolag bash tools/rust-port/perf/zero_hitch_gate.sh
 # Each scenario is killed after GATE_TIMEOUT seconds (default 540) so a slow run cannot hold the locks; run the
 # scenarios as separate short holds (one scenario per lock hold) on a shared machine.
+# vanilla_walk is the real VS path (opening -> title -> main menu -> VS -> the port's character and stage selects ->
+# Final Destination with 2 CPUs, play/walk_vs_fd_2cpu.txt): its match setup tick has no loading scene before it.
 # Two more scenarios, not in the default set (name them): lab (the Item Lab's whole pad script, lab_pad.py: every item
 # fired, equipped, stacked, then "Add all"; ~34400 ticks, its own 900 s timeout) and items (the envoy route with every
 # item of envoy_data's table held from fight 1).
@@ -30,7 +32,7 @@ build=${BUILD_LABEL:-$(git -C "$repo" rev-parse --short HEAD 2>/dev/null)}
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "gate: GW_ISO_VANILLA is not set"; exit 2; }
 card=${CARD:-$(dirname "$exe")/card}
 [ -d "$card/USA" ] || { echo "gate: no memory card at CARD (a folder with USA/Card A)"; exit 2; }
-scen=("$@"); [ ${#scen[@]} -gt 0 ] || scen=(vanilla_bf vanilla_fod envoy)
+scen=("$@"); [ ${#scen[@]} -gt 0 ] || scen=(vanilla_bf vanilla_walk vanilla_fod envoy)
 mkdir -p "$out"
 # nothing else may run: other melee/cargo/rustc/link processes make the numbers meaningless
 busy=$(powershell.exe -NoProfile -Command "(Get-Process melee*,cargo,rustc,link -ErrorAction SilentlyContinue | Measure-Object).Count" | tr -d '\r')
@@ -59,6 +61,7 @@ run() {  # name, frames, env..., -- , args...
 for s in "${scen[@]}"; do
   case "$s" in
     vanilla_bf)  NEED_MODS= run vanilla_bf 9000 MELEE_PAD_SCRIPT="$repo/tools/rust-port/play/retail_full.txt" -- --skip-intro --time-secs 30;;
+    vanilla_walk) NEED_MODS= run vanilla_walk 2600 MELEE_PAD_SCRIPT="$repo/tools/rust-port/play/walk_vs_fd_2cpu.txt" MELEE_PAD_IGNORE_ADAPTER=1 --;;
     vanilla_fod) NEED_MODS= run vanilla_fod 3000 -- --match "fox/cpu9,falco/cpu9,FOUNTAIN OF DREAMS" --time-secs 30 --quit-at-results;;
     envoy)       NEED_MODS=1 run envoy ${ENVOY_TICKS:-9000} MELEE_PAD_SCRIPT="$repo/tools/rust-port/envoy/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
                    MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey "MELEE_ENVOY_TEST_DRIVES=ember,bolt,tagauto,wave2,shift,dropall/ember,bolt" --;;

@@ -1130,6 +1130,8 @@ pub fn sss_hover(stkind: i32) {
     if stkind < 0 || SINCE.fetch_add(1, Relaxed) + 1 != HOVER_TICKS {
         return;
     }
+    // a GD stage (explore.rs: a custom map) plays on the Final Destination carrier: that is the file its match loads
+    let stkind = if melee_modes::tu::explore::is_gd_stage(stkind) { melee_modes::tu::explore::FD_STKIND } else { stkind };
     let gr = unsafe {
         let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
         if stkind as usize >= map.len() {

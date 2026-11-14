@@ -14,11 +14,29 @@ fn path() -> PathBuf {
     dir.join("run.bin")
 }
 
+/// FNV-1a of this machine's slice-0 content token (mask + map digests).
+fn content_digest() -> u32 {
+    let mut h: u32 = 0x811C_9DC5;
+    for b in melee_modes::tu::explore::content_token().bytes() {
+        h = (h ^ b as u32).wrapping_mul(0x0100_0193);
+    }
+    h
+}
+
 /// Load the saved run once (at the first offline tick).
 fn load() {
     let p = path();
     let Ok(b) = std::fs::read(&p) else { return };
-    if b.len() != ev::REC_WORDS * 4 {
+    // slice 0: a record may carry a trailer (the content mask and its token's digest when the run was saved)
+    if b.len() == ev::REC_WORDS * 4 + 8 {
+        let m = u32::from_le_bytes(b[ev::REC_WORDS * 4..ev::REC_WORDS * 4 + 4].try_into().unwrap());
+        let now = melee_modes::tu::explore::content_mask();
+        let same = u32::from_le_bytes(b[ev::REC_WORDS * 4 + 4..].try_into().unwrap()) == content_digest();
+        if m != now || !same {
+            eprintln!("envoy: the saved run was made with other Brawl content (mask {m:x}, now {now:x}); its rooms play without it");
+            unsafe { melee_modes::tu::explore::ALLOW = m & now & if same { u32::MAX } else { 0 } };
+        }
+    } else if b.len() != ev::REC_WORDS * 4 {
         eprintln!("envoy: the saved run is the wrong size; ignored");
         return;
     }
@@ -42,7 +60,10 @@ fn write(r: &[i32; ev::REC_WORDS]) {
     if let Some(d) = p.parent() {
         let _ = std::fs::create_dir_all(d);
     }
-    let b: Vec<u8> = r.iter().flat_map(|w| w.to_le_bytes()).collect();
+    let mut b: Vec<u8> = r.iter().flat_map(|w| w.to_le_bytes()).collect();
+    // slice 0 trailer: the content mask and the digest of this machine's content token
+    b.extend(melee_modes::tu::explore::content_mask().to_le_bytes());
+    b.extend(content_digest().to_le_bytes());
     let tmp = p.with_extension("tmp");
     if std::fs::write(&tmp, &b).and_then(|_| std::fs::rename(&tmp, &p)).is_err() {
         eprintln!("envoy: could not save the run record");

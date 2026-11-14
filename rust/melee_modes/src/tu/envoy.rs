@@ -60,6 +60,11 @@ pub const P_ELITE_WAVE: usize = 50;
 /// The stage a live stage transition will go to next (Gr_Kind; 0 none): hinted to the asset worker with the plan, so
 /// its file is in memory long before the hand-off frame.
 pub const P_STAGE_NEXT: usize = 51;
+/// Slice 0 (envoy-sse-design): the Brawl content this fight may use, stamped by the host at `match_begin` (the sim
+/// leaves 42-43 zero): the content mask played (`explore::effective_mask`) and the room map's collision digest
+/// (folded to 32 bits; 0 when the fight is not in an SSE room).
+pub const P_SSE_MASK: usize = 42;
+pub const P_SSE_DIGEST: usize = 43;
 /// Final Destination (Gr_Kind): the Petey arena for now (an original stage is later work).
 const GR_FD: i32 = 37;
 
@@ -816,6 +821,8 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     let explore = !petey && ex::enabled() && ex::available(ex::GD_STAGE_SSE_LAKE3) && ex::map().is_some();
     let room_stage = if explore { ex::GD_STAGE_SSE_LAKE3 } else { 0 };
     ex::WANT = explore;
+    PLAN[P_SSE_MASK] = ex::effective_mask() as i32;
+    PLAN[P_SSE_DIGEST] = if explore { let d = ex::digest(room_stage); (d ^ (d >> 32)) as u32 as i32 } else { 0 };
     ex::PICK = 0; // a VS pick never leaks into a run
     ex::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it
     // a GD stage rides on its carrier (Final Destination's ground kind here)

@@ -1674,6 +1674,10 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
         if let Some(f) = feed.as_ref() {
             crate::play_net::apply_controls_meta(&f.r);
+            // slice 0: the recorded pick and content mask (an older replay has none: the args' pick as before)
+            if let Some(t) = f.r.meta("sse") {
+                melee_modes::tu::explore::apply_header_token(t);
+            }
         }
         let mut seed = feed.as_ref().and_then(|f| f.r.meta("seed").and_then(|s| s.parse::<u32>().ok()));
         // the guest plays by the host's rules (sent in the agreed scene): its own --stocks / --time-secs / --items are
@@ -1839,6 +1843,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
                 meta.push(("np_role".into(), "host".into()));
                 meta.extend(crate::play_net::controls_meta());
+            meta.push(crate::play_net::sse_meta());
                 rp.rec = Some((String::new(), crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() }));
             }
         }
@@ -1861,6 +1866,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 meta.push(("np_role".into(), n.tag().into()));
             }
             meta.extend(crate::play_net::controls_meta());
+            meta.push(crate::play_net::sse_meta());
             let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }

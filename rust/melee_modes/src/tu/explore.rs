@@ -728,18 +728,31 @@ pub const GD_STAGES: [GdStage; 2] = [
     GdStage { id: GD_STAGE_SSE_JUNGLE, name: "The Jungle (SSE)", files: &["060002.pac", "060002a.pac"] },
 ];
 
-/// Whether any GD stage can be played.
+/// Whether any GD stage's files are here (the hooks go in at engine start on this, before any netplay agreement).
 fn any_available() -> bool {
-    GD_STAGES.iter().any(|g| available(g.id))
+    GD_STAGES.iter().any(|g| files_present(g.id))
 }
 
 pub fn is_gd_stage(id: i32) -> bool {
     (GD_STAGE_FIRST..=GD_STAGE_LAST).contains(&id)
 }
 
-/// Whether GD stage `id` can be played: its archives are in the owner's Brawl folder (`MELEE_BRAWL_ABSENT` hides it).
-pub fn available(id: i32) -> bool {
+/// Whether GD stage `id`'s archives are in the owner's Brawl folder (`MELEE_BRAWL_ABSENT` hides it).
+pub fn files_present(id: i32) -> bool {
     GD_STAGES.iter().any(|g| g.id == id && g.files.iter().all(|f| pm::adventure_present(f)))
+}
+
+/// The content this session may play (slice 0): `u32::MAX` = whatever this machine's files allow; a netplay session
+/// sets the AND of both peers' masks (a stage whose collision digests differ is dropped), a replay its header's. Set
+/// before the match (at connect / replay load), constant through it.
+pub static mut ALLOW: u32 = u32::MAX;
+
+/// Whether GD stage `id` can be played: its files are here and the session allows it (`ALLOW`). A peer without the
+/// stage (or with other files) makes it unavailable on both sides: the stage select drops the row, a pick falls back
+/// to Final Destination itself.
+pub fn available(id: i32) -> bool {
+    let k = GD_STAGES.iter().position(|g| g.id == id);
+    files_present(id) && k.is_some_and(|k| unsafe { ALLOW } & (1u32 << k) != 0)
 }
 
 pub fn gd_name(id: i32) -> Option<&'static str> {
@@ -926,6 +939,7 @@ const FADE_LEN: i32 = 2 * FADE_IN + HOLD;
 /// `ground::EXPLORE_COLL`: at every stage load, before the script layer and `mpLibLoad`. Returns the exploration
 /// collision (a fresh copy in the game heap) for Final Destination with the mode on, else null (the stage's own).
 pub unsafe fn coll_override() -> *mut MapCollData {
+    melee_core::hash::CONTENT_WORD.store(0, core::sync::atomic::Ordering::Relaxed);
     ACTIVE = false;
     SEC = 0;
     FADE = 0;
@@ -951,6 +965,13 @@ pub unsafe fn coll_override() -> *mut MapCollData {
         }
         CUR_ID = want;
         let Some(m) = map() else { return core::ptr::null_mut() };
+        // the content word the session hash carries (slice 0): pick, mask, digest
+        let mut h = melee_core::hash::StateHasher::new();
+        h.write(&want.to_be_bytes());
+        h.write(&effective_mask().to_be_bytes());
+        h.write(&m.digest.to_be_bytes());
+        let w = (h.finish() as u32 ^ (h.finish() >> 32) as u32) | 1;
+        melee_core::hash::CONTENT_WORD.store(w, core::sync::atomic::Ordering::Relaxed);
         m
     };
     let alloc = |n: usize| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(n as _) };
@@ -1373,11 +1394,94 @@ unsafe fn movers_tick(m: &Map) {
             (*vx).pos.y = base.y + dy;
         }
         mp::mpJointUpdateBounding(j as i32);
+        ride_check(k, mj, path.len() as i32);
         if CLOCK % 100 == 0 && std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
             let v = mp::groundCollVtx.add(mj.vtx_start as usize);
             eprintln!("explore: frame {} platform {k} at ({:.1},{:.1})", CLOCK, (*v).pos.x, (*v).pos.y);
         }
     }
+}
+
+/// Checks only (`MELEE_EXPLORE_RIDE=block@frame`): at that room frame player 1 is set down just above moving block
+/// `block`'s top, then for one full loop of its path the fighter's place relative to the platform is tracked: it must
+/// stay grounded, never fall below the top, and move with the platform (no jitter). One summary line at the end.
+/// The rider is the first fighter in play (player 1 of a `--match`).
+unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
+    use melee_world::tu::mplib as mp;
+    static mut AT: i32 = i32::MIN;
+    // (frames tracked, frames airborne after landing, min/max rel x, min/max rel y, max per-frame step of rel y, last)
+    static mut ST: (i32, i32, f32, f32, f32, f32, f32, f32, bool) = (0, 0, f32::MAX, f32::MIN, f32::MAX, f32::MIN, 0.0, 0.0, false);
+    static SPEC: std::sync::OnceLock<Option<(usize, i32)>> = std::sync::OnceLock::new();
+    let Some((want, at)) = *SPEC.get_or_init(|| {
+        let v = std::env::var("MELEE_EXPLORE_RIDE").ok()?;
+        let (b, f) = v.split_once('@')?;
+        Some((b.trim().parse().ok()?, f.trim().parse().ok()?))
+    }) else { return };
+    if k != want {
+        return;
+    }
+    let top = || {
+        let mut t = f32::MIN;
+        let (mut l, mut r) = (f32::MAX, f32::MIN);
+        for v in mj.vtx_start as usize..(mj.vtx_start as usize + mj.vtx_count as usize) {
+            let p = (*mp::groundCollVtx.add(v)).pos;
+            t = t.max(p.y);
+            l = l.min(p.x);
+            r = r.max(p.x);
+        }
+        ((l + r) * 0.5, t)
+    };
+    if CLOCK == at {
+        let (cx, ty) = top();
+        let mut done = false;
+        each_fighter(|g, fp| {
+            if !done {
+                place(g, fp, cx, ty + 4.0);
+                done = true;
+            }
+        });
+        AT = at;
+        ST = (0, 0, f32::MAX, f32::MIN, f32::MAX, f32::MIN, 0.0, 0.0, false);
+        eprintln!("explore: ride: the first fighter set on platform {k} at ({cx:.1},{:.1}), room frame {CLOCK}", ty + 4.0);
+        return;
+    }
+    // 30 frames to land, then one loop
+    if AT == i32::MIN || CLOCK < AT + 30 || CLOCK > AT + 30 + len {
+        return;
+    }
+    let mut once = false;
+    each_fighter(|_, fp| {
+        if once {
+            return;
+        }
+        once = true;
+        // relative to the platform's first point (it moves rigidly): constant while the fighter rides it
+        let v0 = (*mp::groundCollVtx.add(mj.vtx_start as usize)).pos;
+        let (rx, ry) = ((*fp).cur_pos.x - v0.x, (*fp).cur_pos.y - v0.y);
+        let (_, ty) = top();
+        let ground = (*fp).ground_or_air as i32 == GA_Ground as i32;
+        let st = &mut *core::ptr::addr_of_mut!(ST);
+        if st.0 > 0 {
+            st.6 = st.6.max((ry - st.7).abs());
+        }
+        st.7 = ry;
+        st.0 += 1;
+        if !ground {
+            st.1 += 1;
+        }
+        st.2 = st.2.min(rx);
+        st.3 = st.3.max(rx);
+        let _ = ty;
+        st.4 = st.4.min(ry);
+        st.5 = st.5.max(ry);
+        if CLOCK == AT + 30 + len {
+            let ok = st.1 == 0 && st.5 - st.4 < 0.5 && st.6 < 0.5 && st.3 - st.2 < 0.5;
+            eprintln!(
+                "explore: ride {}: platform {k}, {} frames (one loop), airborne {}, height over the platform's first point {:.2}..{:.2}, x on the platform {:.2}..{:.2}, worst step {:.3}",
+                if ok { "OK" } else { "FAILED" }, st.0, st.1, st.4, st.5, st.2, st.3, st.6
+            );
+        }
+    });
 }
 
 /// The breakable blocks: a live hitbox of any fighter (or a fighter's item) touching an unbroken block breaks it,
@@ -1413,6 +1517,9 @@ pub fn hide_ground() -> bool {
     unsafe { ACTIVE }
 }
 
+/// Room frames between two more section models joining the draw (`draw`).
+const WARM_STEP: usize = 2;
+
 /// `ftdrawcommon::MAP_DRAW`: the section models, the doors and the transition fade, once per frame (player 1's
 /// opaque pass). Presentation only.
 pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
@@ -1421,9 +1528,12 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     // once per frame: in the first in-play fighter's pass
     let mut first: *mut HSD_GObj = core::ptr::null_mut();
-    each_fighter(|fg, _| {
+    let (mut fx, mut fy) = (0.0f32, 0.0f32);
+    each_fighter(|fg, fp| {
         if first.is_null() {
             first = fg;
+            fx = (*fp).cur_pos.x;
+            fy = (*fp).cur_pos.y;
         }
     });
     if first != g {
@@ -1431,7 +1541,26 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     let Some(m) = cur() else { return };
     let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("explore map draw"));
-    for (r, t, off) in &m.models {
+    // The section models come in one at a time over the room's first frames, nearest the party first: every section is
+    // drawn from then on (its textures stay in the renderer's cache, so a door never uploads anything), but no one
+    // frame converts and uploads the whole map's textures (Lake 50 / 14.8 MB, Jungle 67 / 18.5 MB: the setup frame's
+    // biggest part). Counted off the room clock (sim state), so nothing presentation-side is kept.
+    let (px, py) = (fx, fy);
+    let mut order: [(f32, u16); 32] = [(f32::MAX, 0); 32];
+    let n = m.models.len().min(32);
+    for (i, (_, _, off)) in m.models.iter().take(n).enumerate() {
+        order[i] = ((off[0] - px).abs() + (off[1] - py).abs(), i as u16);
+    }
+    order[..n].sort_by(|a, b| a.0.total_cmp(&b.0));
+    // checks only: MELEE_EXPLORE_WARM=all draws every section from the first frame (the old way, for an A/B profile)
+    static ALL: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    let all = *ALL.get_or_init(|| std::env::var("MELEE_EXPLORE_WARM").is_ok_and(|v| v == "all"));
+    let warm = if all { n } else { ((CLOCK.max(0) as usize) / WARM_STEP + 1).min(n) };
+    for &(_, i) in &order[..warm] {
+        let (r, t, off) = &m.models[i as usize];
+        pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);
+    }
+    for (r, t, off) in m.models.iter().skip(32) {
         pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);
     }
     // the bricks still standing in the party's section (a broken one's model goes with its collision)
@@ -1516,12 +1645,12 @@ pub enum Carry {
 pub const STORY: &[(Step, Carry)] = &[
     (Step::Scene(1, SceneKind::Card), Carry::Keep),    // Jungle opening (before 060001)
     (Step::Map(GD_STAGE_SSE_JUNGLE), Carry::Keep),     // 060001 -> 060002 (+a) -> 060003 -> 060004 (+a)
-    (Step::Scene(2, SceneKind::Card), Carry::Keep),    // Jungle end (060004's last door, 06000402)
+    (Step::Scene(2, SceneKind::Camp), Carry::Rest),    // Jungle end (060004's last door, 06000402)
     (Step::Scene(3, SceneKind::Card), Carry::Keep),    // Lake opening (before 080101)
     (Step::Map(GD_STAGE_SSE_LAKE3), Carry::Keep),      // 080103 (+a, b) -> 080104 (+a, b) -> 080105 (+a)
-    (Step::Scene(4, SceneKind::Card), Carry::Keep),    // before Rayquaza (080105's GMSJ exit)
+    (Step::Scene(4, SceneKind::Camp), Carry::Rest),    // before Rayquaza (080105's GMSJ exit)
     (Step::Boss(BossKind::Rayquaza), Carry::Keep),     // 080001
-    (Step::Scene(5, SceneKind::Results), Carry::Rest), // after Rayquaza
+    (Step::Scene(5, SceneKind::Results), Carry::Keep), // after Rayquaza
 ];
 
 /// The story step the party is on (index into `STORY`; -1 outside the story). Snapshot covered.
@@ -1595,12 +1724,16 @@ pub fn enter_section(id: i32) -> i32 {
 pub fn content_mask() -> u32 {
     let mut m = 0u32;
     for (k, g) in GD_STAGES.iter().enumerate() {
-        if available(g.id) {
+        if files_present(g.id) {
             m |= 1u32.pshl(k as i64);
         }
     }
     if m != 0 && pm::adventure_present("060001.pac") {
         m |= 1 << 30;
+    }
+    // checks only: MELEE_SSE_TEST_MASK=<hex> ANDs this machine's mask (a peer "without" a stage, files kept)
+    if let Some(t) = std::env::var("MELEE_SSE_TEST_MASK").ok().and_then(|v| u32::from_str_radix(&v, 16).ok()) {
+        m &= t;
     }
     m
 }
@@ -1608,7 +1741,71 @@ pub fn content_mask() -> u32 {
 /// GD stage `id`'s collision digest (0 when not available). A section set counts in netplay only when both peers'
 /// digests match. Waits for the map's loader (call it before a match, never inside one).
 pub fn digest(id: i32) -> u64 {
+    if !files_present(id) {
+        return 0;
+    }
     map_of(id).map(|m| m.digest).unwrap_or(0)
+}
+
+/// The mask this session plays: this machine's content AND the session's allowance.
+pub fn effective_mask() -> u32 {
+    content_mask() & unsafe { ALLOW }
+}
+
+/// This machine's slice-0 token for a netplay handshake / a record: `m<mask>` then `.k:<digest>` per GD stage it has
+/// (hex). `melee_net::app::room::content_and` combines two of these.
+pub fn content_token() -> String {
+    let m = content_mask();
+    let mut t = format!("m{m:x}");
+    for (k, g) in GD_STAGES.iter().enumerate() {
+        if m & (1 << k) != 0 {
+            // folded to 32 bits: the HELLO's guest info is 64 bytes on the wire
+            let d = digest(g.id);
+            t += &format!(".{k}:{:x}", (d ^ (d >> 32)) as u32);
+        }
+    }
+    t
+}
+
+/// The replay header's / run record's SSE line: the pick, the mask played and the picked map's digest
+/// (`p<pick>.m<mask>.d<digest>`, hex).
+pub fn header_token() -> String {
+    let p = unsafe { PICK };
+    format!("p{p:x}.m{:x}.d{:x}", effective_mask(), if p != 0 { digest(p) } else { 0 })
+}
+
+/// Apply a replay header's SSE line: its mask becomes the allowance and its pick the pick. A pick whose map is not
+/// here, or whose digest differs from this machine's, is dropped (the replay then plays Final Destination, and the
+/// hash, which carries the content word, says so at once).
+pub fn apply_header_token(t: &str) {
+    let mut p = 0i32;
+    let mut m = 0u32;
+    let mut d = 0u64;
+    for f in t.split('.') {
+        let (k, v) = f.split_at(1.min(f.len()));
+        match k {
+            "p" => p = i32::from_str_radix(v, 16).unwrap_or(0),
+            "m" => m = u32::from_str_radix(v, 16).unwrap_or(0),
+            "d" => d = u64::from_str_radix(v, 16).unwrap_or(0),
+            _ => {}
+        }
+    }
+    unsafe {
+        ALLOW = m;
+        PICK = if p != 0 && available(p) && digest(p) == d { p } else { 0 };
+        eprintln!("explore: replay header sse {t}: pick {:#x}, mask {:x}", PICK, effective_mask());
+    }
+}
+
+/// Apply a netplay session's agreed mask (`;sse=` of the agreed scene: the host's pick and the AND of both peers'
+/// masks). `None` (an older host, or a host with no Brawl content): no SSE content on either side.
+pub fn apply_netplay(agreed: Option<(i32, u32)>) {
+    unsafe {
+        let (p, m) = agreed.unwrap_or((0, 0));
+        ALLOW = m;
+        PICK = if p != 0 && available(p) { p } else { 0 };
+        eprintln!("explore: netplay content: mask {:x} (this machine {:x}), pick {:#x}", effective_mask(), content_mask(), PICK);
+    }
 }
 
 /// Boss fights. No boss runs here: the Geno boss lane plugs its actors in through `BOSS_HOOK`; with no hook a boss
@@ -1642,10 +1839,27 @@ pub mod scene {
             END = END_NONE;
             let kind = STORY.iter().find_map(|(s, _)| if let Step::Scene(k, kind) = s { (*k == slot).then_some(*kind) } else { None });
             eprintln!("explore: scene slot {slot} ({kind:?}) started");
+            // a camp is a rest (`Carry::Rest`): every fighter's damage goes to 0 as the slot starts (stocks kept).
+            // The camp itself is still a card until the Envoy camp is wired in; the rest is applied either way.
+            let rest = STORY.iter().any(|(s, c)| matches!(s, Step::Scene(k, _) if *k == slot) && *c == Carry::Rest);
+            if rest {
+                rest_party();
+            }
             CARD = CARD_FRAMES;
             CARD_WHAT = slot as i32;
         }
     }
+}
+
+/// `Carry::Rest`: every fighter's percent (and its HUD number) back to 0.
+unsafe fn rest_party() {
+    let mut n = 0;
+    each_fighter(|_, fp| {
+        (*fp).dmg.x1830_percent = 0.0;
+        melee_fighter::tu::player::Player_SetHUDDamage((*fp).player_idx as i32, 0);
+        n += 1;
+    });
+    eprintln!("explore: rest: {n} fighters at 0% (room frame {CLOCK})");
 }
 
 /// Install the hooks (the engine start). Nothing is hooked without the owner's Brawl files (or Petey's mode).

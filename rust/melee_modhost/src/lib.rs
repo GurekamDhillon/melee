@@ -1382,6 +1382,9 @@ impl HostData {
 
 /// NHV1 word 0 with a mod word mixed in (unchanged for 0).
 fn mix_session(nhv1: u32, word: u32) -> u32 {
+    // the GD content word (melee_core::hash::CONTENT_WORD) first, only when GD content is in play
+    let c = melee_core::hash::CONTENT_WORD.load(core::sync::atomic::Ordering::Relaxed);
+    let nhv1 = if c == 0 { nhv1 } else { hash_mix(nhv1, c) };
     if word == 0 { nhv1 } else { hash_mix(nhv1, word) }
 }
 

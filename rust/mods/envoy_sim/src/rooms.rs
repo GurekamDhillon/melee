@@ -268,20 +268,31 @@ pub(crate) unsafe fn map_road_frame(f: usize) {
             continue;
         }
         if p == 0 {
-            let mut c = cursor_lane(r);
-            for _ in 0..LANES {
-                c = (c + d).rem_euclid(LANES as i32);
-                if reachable(r, c as usize) {
-                    break;
-                }
+            let c = step_lane(r, cursor_lane(r), d);
+            if c != S.map_cur {
+                S.map_cur = c;
+                log(b"envoy: map cursor, row*10 + lane\0", r as i32 * 10 + c);
+                make_plan();
             }
-            S.map_cur = c;
-            log(b"envoy: map cursor, row*10 + lane\0", r as i32 * 10 + c);
-            make_plan();
         } else {
-            S.map_wish = (S.map_wish.max(0) + d).rem_euclid(LANES as i32);
+            // P2's wish flag walks the same reachable nodes (a wish on a node the path cannot reach meant nothing)
+            let from = if S.map_wish >= 0 && reachable(r, S.map_wish as usize) { S.map_wish } else { cursor_lane(r) };
+            S.map_wish = step_lane(r, from, d);
         }
     }
+}
+
+/// The next reachable lane of row `r` from `c` in direction `d` (no wrap: the stick moves along the row the way
+/// the map is drawn, never jumping from the right edge to the left one); `c` when there is none that way.
+pub(crate) unsafe fn step_lane(r: usize, c: i32, d: i32) -> i32 {
+    let mut l = c + d;
+    while (0..LANES as i32).contains(&l) {
+        if reachable(r, l as usize) {
+            return l;
+        }
+        l += d;
+    }
+    c
 }
 
 /// A fight starts: its node is the cursor's (the path takes it).
@@ -377,14 +388,7 @@ pub(crate) unsafe fn fork_wait() -> bool {
     let pad = gd_pad_pressed(0);
     let d = (pad & (DPAD_RIGHT | STICK_RIGHT) != 0) as i32 - (pad & (DPAD_LEFT | STICK_LEFT) != 0) as i32;
     if d != 0 {
-        let mut c = S.fork_cur;
-        for _ in 0..LANES {
-            c = (c + d).rem_euclid(LANES as i32);
-            if reachable(r, c as usize) {
-                break;
-            }
-        }
-        S.fork_cur = c;
+        S.fork_cur = step_lane(r, S.fork_cur, d);
     }
     S.fork_left += 1; // frames open (no countdown)
     let want = if test_flag("campfire") {
@@ -588,8 +592,11 @@ pub(crate) unsafe fn publish(v: &mut [i32; VIEW_WORDS]) {
 unsafe fn map_publish(v: &mut [i32; VIEW_WORDS]) {
     let f = S.fight.clamp(0, 3) as usize;
     let won = S.outcome == 1 || S.collect > 0;
-    // the row the run is on: the fight in play (or next), the room above it while the held match runs it
-    let here_row = if f >= 3 { ROWS } else if won && S.fork >= 1 { f * 2 + 1 } else { f * 2 };
+    // the row the run is on: the fight in play (or next), the room above it while the held match chooses or runs
+    // it. (It was `won && S.fork >= 1`: S.fork stays 2 once a room is taken and the outcome stays 1 out of the
+    // match, so every road screen from fight 2 on put the cursor on the room row above the fight being chosen and
+    // marked that fight row skipped.)
+    let here_row = if f >= 3 { ROWS } else if S.fork == 1 || S.path[f * 2 + 1] >= 0 { f * 2 + 1 } else { f * 2 };
     let picking = if S.live == 0 && S.arm_seen != 0 && f < 3 { 1 } else if S.fork == 1 { 2 } else { 0 };
     let wall_row = if (0..3).contains(&S.secret_fight) { S.secret_fight as usize * 2 } else { 99 };
     v[V_MAP_N] = (N_SECRET + 1) as i32;
@@ -687,7 +694,19 @@ unsafe fn map_publish(v: &mut [i32; VIEW_WORDS]) {
 /// The lane the plan reaches on row `r`, walking up from row `from` along the cursor's lane (the same lane while
 /// linked, else the first linked one).
 unsafe fn planned(from: usize, r: usize) -> i32 {
-    let mut l = if from < ROWS { if S.path[from] >= 0 { S.path[from] } else { cursor_lane(from) } } else { return -1 };
+    // the lane on the row the run is on: taken, else the open room choice's cursor (fork_cur, which the room
+    // cursor moves; map_cur only follows it once the room is taken), else the road cursor
+    let mut l = if from < ROWS {
+        if S.path[from] >= 0 {
+            S.path[from]
+        } else if S.fork == 1 && from == room_row() {
+            S.fork_cur
+        } else {
+            cursor_lane(from)
+        }
+    } else {
+        return -1;
+    };
     for rr in from..r {
         let ls = links(rr, l as usize);
         if ls >> l & 1 == 0 {
@@ -695,4 +714,326 @@ unsafe fn planned(from: usize, r: usize) -> i32 {
         }
     }
     l
+}
+
+// ---- map_check (test knob `mapcheck`; tools/rust-port/envoy/items_check.sh rows 17 map and 25 mapcoop)
+//
+// Every act map of MC_SEEDS seeds in loops 1-3, and every way through each one, through the code the game runs: the
+// graph (edges only to the next row, between neighbours, never crossing, no dead end, every node reachable, the
+// row rules for kinds), the stick (the cursor reaches each reachable lane and stops only on reachable ones), the
+// view the UI draws (the cursor on the row being chosen, that row never marked skipped, one planned node a row up
+// to the boss along real edges, the published edges the graph's), the node taken (the cursor's), the fight's
+// template (the node's kind), the room taken (the cursor's kind, the node "here"), the next road screen (the
+// cursor on the next fight row: the row slice 2 put it on the room above), the record (save / continue keeps the
+// path), and the whole view (no later view word overwrites the map). It runs a few ways a frame (the mod's fuel is
+// per call) from the run's start, and the sim's state is put back after each frame's share.
+
+const MC_SEEDS: u32 = 16;
+
+static mut MC_FAILS: i32 = 0;
+static mut MC_FIRST: i32 = 0;
+/// The sim's state while the check runs (static: the wasm stack is too small for a copy of it), and the view the
+/// checks publish into.
+static mut MC_KEEP: St = unsafe { core::mem::zeroed() };
+static mut MC_TMP: St = unsafe { core::mem::zeroed() };
+static mut MC_V: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
+
+unsafe fn mc_fail(code: i32, seed: u32, detail: i32) {
+    if MC_FAILS == 0 {
+        MC_FIRST = code;
+    }
+    MC_FAILS += 1;
+    if MC_FAILS <= 12 {
+        log(b"envoy: map_check FAIL code*100000 + seed*1000 + detail\0", code * 100_000 + (seed as i32 % 100) * 1000 + detail.clamp(0, 999));
+    }
+}
+
+/// The published state bits of row `r` lane `l`.
+fn mc_st(v: &[i32; VIEW_WORDS], r: usize, l: usize) -> i32 {
+    v[V_MAP0 + (r * LANES + l) * MAP_W + MP_STATE]
+}
+
+/// The publish checks on the row being chosen (`r`, the cursor meant to be on `want`), `pick` the V_MAP_PICK expected.
+unsafe fn mc_view(seed: u32, r: usize, want: i32, pick: i32) {
+    let v = &mut *core::ptr::addr_of_mut!(MC_V);
+    map_publish(v);
+    if v[V_MAP_PICK] != pick {
+        mc_fail(20, seed, r as i32 * 10 + v[V_MAP_PICK]);
+    }
+    for l in 0..LANES {
+        let st = mc_st(v, r, l);
+        if st & MS_SKIPPED != 0 {
+            mc_fail(21, seed, r as i32 * 10 + l as i32); // the row being chosen marked skipped
+        }
+        if (st & MS_CURSOR != 0) != (l as i32 == want) {
+            mc_fail(22, seed, r as i32 * 10 + l as i32); // the cursor drawn elsewhere
+        }
+        if st & MS_CURSOR != 0 && !reachable(r, l) {
+            mc_fail(23, seed, r as i32 * 10 + l as i32);
+        }
+    }
+    for rr in 0..ROWS {
+        for l in 0..LANES {
+            let b = V_MAP0 + (rr * LANES + l) * MAP_W;
+            if v[b + MP_KIND] != node_kind(rr, l) || v[b + MP_POS] != l as i32 | (rr as i32) << 8 {
+                mc_fail(24, seed, rr as i32 * 10 + l as i32);
+            }
+            let want_links = if rr + 1 < ROWS { links(rr, l) << ((rr + 1) * LANES) } else { 1 << N_BOSS };
+            if v[b + MP_LINKS] & !(1 << N_SECRET) != want_links {
+                mc_fail(25, seed, rr as i32 * 10 + l as i32);
+            }
+        }
+    }
+    // the planned path: one node a row above the cursor's, each linked from the one below
+    let mut prev = want as usize;
+    for rr in r + 1..ROWS {
+        let plan: [usize; LANES] = core::array::from_fn(|l| (mc_st(v, rr, l) & MS_PLAN != 0) as usize);
+        if plan.iter().sum::<usize>() != 1 {
+            mc_fail(26, seed, rr as i32);
+            break;
+        }
+        let l = plan.iter().position(|&x| x == 1).unwrap_or(0);
+        if links(rr - 1, prev) >> l & 1 == 0 {
+            mc_fail(27, seed, rr as i32 * 10 + l as i32); // a planned step along no edge
+        }
+        prev = l;
+    }
+    if pick == 1 && v[V_ROAD_CUR] != want {
+        mc_fail(28, seed, r as i32 * 10 + v[V_ROAD_CUR]);
+    }
+}
+
+/// Walk the stick from the cursor to lane `want` on row `r` (`fork`: the room cursor): every step lands on a
+/// reachable lane further along the row; false when `want` cannot be reached.
+unsafe fn mc_walk(seed: u32, r: usize, want: i32, fork: bool) -> bool {
+    for _ in 0..LANES {
+        let c = if fork { S.fork_cur } else { cursor_lane(r) };
+        if c == want {
+            return true;
+        }
+        let d = if want > c { 1 } else { -1 };
+        let n = step_lane(r, c, d);
+        if n == c || !reachable(r, n as usize) || (n - c) * d <= 0 {
+            mc_fail(30, seed, r as i32 * 10 + n);
+            return false;
+        }
+        if fork {
+            S.fork_cur = n;
+        } else {
+            S.map_cur = n;
+        }
+    }
+    (if fork { S.fork_cur } else { cursor_lane(r) }) == want
+}
+
+/// take_fight_node without its log lines (thousands of walks).
+unsafe fn take_fight_node_quiet() {
+    let r = S.fight.clamp(0, 2) as usize * 2;
+    if S.path[r] < 0 {
+        S.path[r] = cursor_lane(r);
+    }
+}
+
+/// One way through the floor (`path`: a lane a row), as the game plays it.
+unsafe fn mc_path(seed: u32, path: &[i32; ROWS]) {
+    floor_start();
+    S.secret_lane = -1;
+    S.state = RUN_LIVE;
+    S.arm_seen = 1;
+    for f in 0..3usize {
+        let (r, rr) = (f * 2, f * 2 + 1);
+        // the road screen: out of the match, the last fight's outcome still standing (as in the game)
+        S.fight = f as i32;
+        S.live = 0;
+        S.outcome = (f > 0) as i32;
+        S.collect = 0;
+        if !mc_walk(seed, r, path[r], false) {
+            return;
+        }
+        mc_view(seed, r, path[r], 1);
+        // the match starts: the node taken is the cursor's, the fight the node's kind
+        S.live = 1;
+        S.outcome = 0;
+        take_fight_node_quiet();
+        if S.path[r] != path[r] {
+            mc_fail(40, seed, r as i32 * 10 + S.path[r]);
+        }
+        let want_t = match node_kind(r, path[r] as usize) {
+            MN_CROWD => 1,
+            MN_ELITE => 2,
+            _ => 0,
+        };
+        if T_NODE < 0 && template(f) != want_t {
+            mc_fail(41, seed, f as i32 * 10 + template(f) as i32);
+        }
+        // won: the room choice above it
+        S.outcome = 1;
+        S.collect = 1;
+        S.fork = 1;
+        S.fork_cur = cursor_lane(rr);
+        if !mc_walk(seed, rr, path[rr], true) {
+            return;
+        }
+        mc_view(seed, rr, path[rr], 2);
+        // A: the room taken is the cursor's
+        S.fork = 2;
+        S.path[rr] = S.fork_cur;
+        S.map_cur = S.fork_cur;
+        S.fork_pick = node_kind(rr, S.fork_cur as usize);
+        if S.path[rr] != path[rr] || S.fork_pick != node_kind(rr, path[rr] as usize) {
+            mc_fail(42, seed, rr as i32 * 10 + S.path[rr]);
+        }
+        let v = &mut *core::ptr::addr_of_mut!(MC_V);
+        map_publish(v);
+        if v[V_MAP_AT] != (rr * LANES) as i32 + path[rr] || mc_st(v, rr, path[rr] as usize) & MS_HERE == 0 {
+            mc_fail(43, seed, rr as i32 * 10 + v[V_MAP_AT].clamp(0, 99));
+        }
+        // save and continue keeps the path (on a scratch copy: a continue starts the floor's other state afresh,
+        // which must not hide the next road screen's state from the walk)
+        core::ptr::copy_nonoverlapping(core::ptr::addr_of!(S), core::ptr::addr_of_mut!(MC_TMP), 1);
+        let keep = S.path;
+        rec_word_get(rec_word());
+        if S.path[..ROWS] != keep[..ROWS] {
+            mc_fail(44, seed, rr as i32);
+        }
+        core::ptr::copy_nonoverlapping(core::ptr::addr_of!(MC_TMP), core::ptr::addr_of_mut!(S), 1);
+        S.collect = 0;
+    }
+    // the boss
+    S.fight = 3;
+    S.live = 1;
+    S.outcome = 0;
+    let v = &mut *core::ptr::addr_of_mut!(MC_V);
+    map_publish(v);
+    if v[V_MAP_AT] != N_BOSS as i32 || v[V_MAP0 + N_BOSS * MAP_W + MP_STATE] & MS_HERE == 0 {
+        mc_fail(45, seed, v[V_MAP_AT].clamp(0, 99));
+    }
+}
+
+/// The graph of the current seed and loop.
+unsafe fn mc_graph(seed: u32) {
+    let mut reach = [[false; LANES]; ROWS];
+    reach[0] = [true; LANES];
+    for r in 0..ROWS {
+        for l in 0..LANES {
+            let k = node_kind(r, l);
+            let ok = match r {
+                0 => k == MN_DUEL || k == MN_CROWD,
+                2 | 4 => k == MN_DUEL || k == MN_CROWD || k == MN_ELITE,
+                1 => k == MN_ITEM,
+                3 => k == MN_SHOP || k == MN_CAMPFIRE || k == MN_ITEM,
+                _ => k == MN_CAMPFIRE,
+            };
+            if !ok {
+                mc_fail(10, seed, r as i32 * 10 + l as i32);
+            }
+            if r + 1 >= ROWS {
+                continue;
+            }
+            let ls = links(r, l);
+            if ls == 0 {
+                mc_fail(11, seed, r as i32 * 10 + l as i32); // a dead end
+            }
+            for j in 0..8 {
+                if ls >> j & 1 != 0 && (j >= LANES || (j as i32 - l as i32).abs() > 1) {
+                    mc_fail(12, seed, r as i32 * 10 + l as i32); // an edge to no neighbour
+                }
+                if ls >> j & 1 != 0 && j < LANES && reach[r][l] {
+                    reach[r + 1][j] = true;
+                }
+            }
+        }
+        for g in 0..LANES - 1 {
+            if r + 1 < ROWS && links(r, g) >> (g + 1) & 1 != 0 && links(r, g + 1) >> g & 1 != 0 {
+                mc_fail(13, seed, r as i32 * 10 + g as i32); // crossing edges
+            }
+        }
+    }
+    for r in 0..ROWS {
+        for l in 0..LANES {
+            if !reach[r][l] {
+                mc_fail(14, seed, r as i32 * 10 + l as i32);
+            }
+        }
+    }
+}
+
+/// The paths a frame (each is a few map publishes; the fuel is per call).
+const MC_PER_FRAME: i32 = 6;
+/// -1 idle; else seed-loop index * 729 + lane vector (base 3, row 0 lowest).
+static mut MC_AT: i32 = -1;
+static mut MC_PATHS: i32 = 0;
+
+/// Start the check (test knob `mapcheck`, at the run's start).
+pub(crate) unsafe fn map_check_start() {
+    MC_AT = 0;
+    MC_PATHS = 0;
+    MC_FAILS = 0;
+    log(b"envoy: map_check started, seeds x loops\0", MC_SEEDS as i32 * 3);
+}
+
+/// One frame's share of the check (on_frame_end); nothing when idle.
+pub(crate) unsafe fn map_check_frame() {
+    if MC_AT < 0 {
+        return;
+    }
+    core::ptr::copy_nonoverlapping(core::ptr::addr_of!(S), core::ptr::addr_of_mut!(MC_KEEP), 1);
+    let total = MC_SEEDS as i32 * 3 * 729;
+    let mut done = 0;
+    while MC_AT < total && done < MC_PER_FRAME {
+        let (sl, mut pv) = (MC_AT / 729, MC_AT % 729);
+        let s = (sl / 3) as u32;
+        S.seed = mix(s.wrapping_mul(0x9E37_79B9) ^ 0x3A9C) as i32;
+        S.lp = sl % 3 + 1;
+        if pv == 0 {
+            mc_graph(s);
+        }
+        let mut path = [0i32; ROWS];
+        for r in 0..ROWS {
+            path[r] = pv % 3;
+            pv /= 3;
+        }
+        let ok = (1..ROWS).all(|r| links(r - 1, path[r - 1] as usize) >> path[r] & 1 != 0);
+        if ok {
+            mc_path(s, &path);
+            MC_PATHS += 1;
+            done += 1;
+        }
+        MC_AT += 1;
+    }
+    let finished = MC_AT >= total;
+    if finished {
+        // the whole view: nothing published after the map writes over its words
+        S.seed = mix(0x51CE) as i32;
+        S.lp = 1;
+        floor_start();
+        S.state = RUN_LIVE;
+        S.arm_seen = 1;
+        S.live = 0;
+        S.fight = 1;
+        S.path[0] = 0;
+        S.path[1] = 0;
+        let v = &mut *core::ptr::addr_of_mut!(MC_V);
+        map_publish(v);
+        crate::publish();
+        let pv = &*core::ptr::addr_of!(crate::VIEW);
+        for i in (V_MAP_N..V_MAP_END).chain(V_MAP_ROWS..V_MAP_PICK + 1) {
+            if pv[i] != v[i] {
+                mc_fail(50, 0, (i - V_MAP_N) as i32);
+                break;
+            }
+        }
+    }
+    core::ptr::copy_nonoverlapping(core::ptr::addr_of!(MC_KEEP), core::ptr::addr_of_mut!(S), 1);
+    if finished {
+        MC_AT = -1;
+        crate::publish();
+        log(b"envoy: map_check paths walked\0", MC_PATHS);
+        if MC_FAILS == 0 {
+            log(b"envoy: map_check OK, seeds x loops\0", MC_SEEDS as i32 * 3);
+        } else {
+            log(b"envoy: map_check FAILED, failures\0", MC_FAILS);
+            log(b"envoy: map_check first failure code\0", MC_FIRST);
+        }
+    }
 }

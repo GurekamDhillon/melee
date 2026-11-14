@@ -33,7 +33,14 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   14. whiff: player 1 a CPU with Whiff Echo: a true whiff fires it, and an attack that ends on a shield is not one;
 #   15. triggers: the new triggers seen (crouch cancel, powershield, a laser hit) with their items;
 #   16. coopstock: co-op, the devil door: player 1 buys, only player 1's stock limit drops;
-#   17. map: the act map: a fight node taken, the room choice opened and taken, the next fight on the path;
+#   17. map: the act map: a fight node taken, the room choice opened and taken (the item room it names opens), the
+#       next fight on the path; and knob `mapcheck` (rooms.rs map_self_check): every map of 24 seeds in loops 1-3
+#       and every way through each, through the sim's own code: the graph (no dead end, no crossing, edges only to
+#       neighbours on the next row, every node reachable, kinds by row), the stick walking only reachable lanes,
+#       the view the UI draws (the cursor on the row being chosen, that row never marked skipped, the planned path
+#       along real edges, the published edges), the node / room taken the cursor's, the fight's kind the node's,
+#       save / continue keeping the path, no later view word overwriting the map;
+#   25. mapcoop: the same in a co-op run (two players);
 #   18. campfire: the room choice steered to a campfire: each player's stocks refilled to their own limit;
 #   19. orbs: Moon Drops and the four stance orbs: orb hits, and an orb shattered by a foe's attack.
 #   Synergy lane (envoy-synergy.md):
@@ -48,7 +55,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   24. air: pickup_air_z_pad.txt / pickup_air_l_pad.txt: knob `pedair` puts the pedestal under player 1 as a hop leaves the floor; Z / L taps in the air: taken
 #       by the button from an airborne state (jumps, falls, EscapeAir).
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd
-#   shop devil angel secret whiff triggers coopstock map campfire orbs synergy coopsyn shiftko pickup air";
+#   shop devil angel secret whiff triggers coopstock map mapcoop campfire orbs synergy coopsyn shiftko pickup air";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -57,7 +64,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs synergy coopsyn shiftko pickup air}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map mapcoop campfire orbs synergy coopsyn shiftko pickup air}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -241,11 +248,23 @@ for d in $depths; do
     check 16 coopstock "$d" "$line" "$miss"
   fi
   if on map; then
-    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run map "$d" "*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
-    miss=""; seen map "$d" "envoy: map node taken, row\*10 + lane [0-2]$" || miss="$miss (no fight node taken)"
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run map "$d" "mapcheck,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen map "$d" "envoy: map_check OK" || miss="$miss (map_check: $(grep -aE 'map_check (FAIL|first)' "$(L map "$d")" | head -3 | tr '
+' ';'))"
+    seen map "$d" "envoy: map node taken, row\*10 + lane [0-2]$" || miss="$miss (no fight node taken)"
     seen map "$d" "envoy: map room choice open, row 1$" || miss="$miss (no room choice)"
     seen map "$d" "envoy: map room taken, row\*10 + lane 1[0-2]$" || miss="$miss (no room taken)"
+    seen map "$d" "envoy: item room open" || miss="$miss (the item room taken on the map never opened)"
     check 17 map "$d" "$line" "$miss"
+  fi
+  if on mapcoop; then
+    # the act map in co-op (two players, P2's wish flag): the same map_check, both players CPUs
+    line=$(frames=$(( frames < 9000 ? 9000 : frames )) run mapcoop "$d" "mapcheck,*4000;*4000" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen mapcoop "$d" "envoy: map_check OK" || miss="$miss (map_check: $(grep -aE 'map_check (FAIL|first)' "$(L mapcoop "$d")" | head -3 | tr '
+' ';'))"
+    seen mapcoop "$d" "envoy: run start, players 2" || miss="$miss (not a co-op run)"
+    seen mapcoop "$d" "envoy: map room taken, row\*10 + lane 1[0-2]$" || miss="$miss (no room taken)"
+    check 25 mapcoop "$d" "$line" "$miss"
   fi
   if on campfire; then
     line=$(frames=$(( frames < 9000 ? 9000 : frames )) run campfire "$d" "campfire,lim:6,pool:2,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)

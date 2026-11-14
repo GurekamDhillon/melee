@@ -53,7 +53,7 @@ float ftYs_SpecialN_8012CDB4(void) { T(26); return rw(); }
 bool ftYs_SpecialN_GetExtAttr38(void) { T(27); return SR(27); }
 bool ftCommon_GrabMash(Fighter* f, float v) { T(28); T(f == &F); T(B(v)); return SR(28); }
 void ft_PlaySFX(Fighter* f, enum_t id, u8 v, u8 p) { T(29); T(f == &F); T(id); T(v); T(p); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 k, u32 gfx, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 k, u32 gfx, HSD_JObj* j, ...)
 {
     va_list ap;
     void* p;

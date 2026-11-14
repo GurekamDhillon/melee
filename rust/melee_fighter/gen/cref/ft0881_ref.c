@@ -136,8 +136,8 @@ int main(void)
                 GO[i].user_data = f;
                 f->gobj = &GO[i];
                 f->kind = KINDS[rnd() % 8];
-                f->x619_costume_id = (u8) (rnd() % 4);
-                f->player_id = (u8) (rnd() % 6);
+                f->costume_id = (u8) (rnd() % 4);
+                f->player_idx = (u8) (rnd() % 6);
                 f->is_sub_fighter = rnd() & 1;
                 f->x2225_b6 = rnd() & 1;
                 f->is_metal = rnd() & 1;

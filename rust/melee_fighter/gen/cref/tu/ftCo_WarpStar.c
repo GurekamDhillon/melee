@@ -46,7 +46,7 @@ void ftCommon_CalcSelfAccel_AccelToVelClampedFrom(Fighter* f, float v, float a, 
 { T(20); T(PI(f)); T(B(v)); T(B(a)); T(B(t)); T(B(fr)); }
 void ft_80083E64(Fighter_GObj* g, ftCollisionBox* e, HSD_GObjEvent cb) { T(21); T(PI(g)); T(PI(e)); T(cb != NULL); if (SR(21)) cb(g); }
 float atan2f(float y, float x) { T(22); T(B(y)); T(B(x)); return rg(); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 id, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 id, HSD_JObj* j, ...)
 {
     __builtin_va_list ap;
     Vec3* pos;

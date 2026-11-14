@@ -20,7 +20,7 @@ int main(void)
     for (k = 0; k < 2000; k++) {
         tu_case(0, k);
         F.x890_cameraBox = &CB;
-        F.x221F_b3 = rnd() & 1; F.x2229_b3 = rnd() & 1; F.x2220_b7 = rnd() & 1; F.x221F_b0 = rnd() & 1;
+        F.is_sleeping = rnd() & 1; F.x2229_b3 = rnd() & 1; F.x2220_b7 = rnd() & 1; F.x221F_b0 = rnd() & 1;
         F.x2188.x = (s32) rnd(); F.x2188.y = (s32) rnd();
         ftLib_UpdateLogicOffCamera(&GO);
         H = 0x811C9DC5u;

@@ -46,7 +46,7 @@ int main(void)
             zero(&FD, sizeof FD);
             FD.x24 = (void*) &IGO;
             F.ft_data = &FD;
-            F.x2224_b2 = rnd() & 1;
+            F.stamina_dead = rnd() & 1;
             switch (op) {
             case 0: ftCo_Wait_Anim(&GO); break;
             case 1: ftCo_Wait_IASA(&GO); break;

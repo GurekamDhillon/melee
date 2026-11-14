@@ -82,7 +82,7 @@ bool un_803224DC(s32 spawn, f32 x, f32 kb) { T(0x180u + (u32) spawn); T(B(x)); T
 void pl_8003FC44(int slot, int sub) { T(0x190u + (u32) slot * 2u + (u32) sub); }
 void efLib_DestroyAll(HSD_GObj* g) { T(0x1A0u + E(g)); }
 int lbAudioAx_80023870(int a, int b, int c, int d) { T(0x1B0u); T((u32) a); T((u32) b); T((u32) c); T((u32) d); return 0; }
-Fighter_Part ftParts_GetBoneIndex(Fighter* fp, Fighter_Part i) { T(0x1C0u + (u32) i); return (Fighter_Part) (fp->player_id % 8); }
+Fighter_Part ftParts_GetBoneIndex(Fighter* fp, Fighter_Part i) { T(0x1C0u + (u32) i); return (Fighter_Part) (fp->player_idx % 8); }
 static void stub_GetTranslation(HSD_JObj* j, Vec3* v)
 {
     T(0x1D0u + E(j));
@@ -154,7 +154,7 @@ int mpLineGetPrev(int l) { T(0x3D8u); T((u32) l); return l - (int) ((g_tr >> 1) 
 bool ftLib_IsSamePlayer(HSD_GObj* a, HSD_GObj* b)
 {
     T(0x3E0u + E(a)); T(E(b));
-    return a == b || ((Fighter*) a->user_data)->player_id == ((Fighter*) b->user_data)->player_id;
+    return a == b || ((Fighter*) a->user_data)->player_idx == ((Fighter*) b->user_data)->player_idx;
 }
 bool Player_8003544C(s32 slot, bool sub) { return ((u32) slot + (u32) sub) & 1; }
 void lb_80014574(u8 port, int id, int a, int b) { T(0x600u + port); T((u32) id); T((u32) a); T((u32) b); }
@@ -252,8 +252,8 @@ int main(void)
                 for (j = 0; j < 8; j++) PB[i][j].joint = (HSD_JObj*) JO[rnd() % 8];
                 f->kind = KINDS[rnd() % 13];
                 f->x8_spawnNum = (int) (rnd() % 8);
-                f->player_id = (u8) (rnd() % 4);
-                f->x618_player_id = (u8) (rnd() % 4);
+                f->player_idx = (u8) (rnd() % 4);
+                f->pad_port = (u8) (rnd() % 4);
                 f->motion_id = (int) (rnd() % 340);
                 f->facing_dir = rf();
                 f->gr_vel = rf(); f->self_vel.x = rf();
@@ -299,14 +299,14 @@ int main(void)
                 f->x2144 = (int) rnd(); f->x2148 = (int) rnd();
                 f->take_dmg_cb = (rnd() & 1) ? cb_dmg : NULL;
                 f->death1_cb = (rnd() & 1) ? cb_death : NULL;
-                f->x594_b0 = rnd() & 1;
+                f->x594.x0.x594_b0 = rnd() & 1;
                 f->is_sub_fighter = rnd() & 1;
                 f->x2219_b0 = rnd() & 1;
                 f->x2219_b1 = (rnd() % 4) == 0; f->x2219_b5 = (rnd() % 4) == 0;
                 f->x221D_b5 = (rnd() % 4) == 0;
                 f->x221E_b3 = rnd() & 1;
-                f->x221F_b3 = (rnd() % 4) == 0;
-                f->x2224_b2 = rnd() & 1;
+                f->is_sleeping = (rnd() % 4) == 0;
+                f->stamina_dead = rnd() & 1;
                 f->x2227_b0 = rnd() & 1;
             }
             cd.x450 = rf(); cd.x454 = rf(); cd.x458 = rf(); cd.x45C = rf(); cd.x460 = rf();

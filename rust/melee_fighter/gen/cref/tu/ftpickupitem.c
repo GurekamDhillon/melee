@@ -54,7 +54,7 @@ void ftCo_800C88D4(Fighter_GObj* g, int v, bool b) { T(19); T(iid(g)); T(v); T(b
 float ftCo_CalcYScaledKnockback(float a, float b, float c) { T(20); T(B(a)); T(B(b)); T(B(c)); return rw(); }
 void Fighter_ChangeMotionState(Fighter_GObj* g, FtMotionId m, MotionFlags fl, float a, float b, float c, Fighter_GObj* o)
 { T(21); T(iid(g)); T(m); T(fl); T(B(a)); T(B(b)); T(B(c)); T(o == NULL); }
-void ftAnim_8006EBA4(Fighter_GObj* g) { T(22); T(iid(g)); if (rnd() % 3 == 0) F.throw_flags_b3 = 1; }
+void ftAnim_8006EBA4(Fighter_GObj* g) { T(22); T(iid(g)); if (rnd() % 3 == 0) F.x2210.x0.throw_flags_b3 = 1; }
 void ftCo_800974C4(Fighter_GObj* g) { T(23); }
 void pl_8003E17C(int s, int sub, Item_GObj* i) { T(24); T(s); T(sub); T(iid(i)); }
 static void pickup_ext(HSD_GObj* g, bool a) { T(25); T(iid(g)); T(a); }
@@ -78,8 +78,8 @@ static u32 state_hash(void)
 {
     H = 0x811C9DC5u;
     HM(iid(F.item_gobj)); HM(iid(F.x1978));
-    HM(F.throw_flags_b0); HM(F.throw_flags_b1); HM(F.throw_flags_b2); HM(F.throw_flags_b3);
-    HM(F.throw_flags_b4); HM(F.throw_flags_b5); HM(F.throw_flags_b6); HM(F.throw_flags_b7);
+    HM(F.x2210.x0.throw_flags_b0); HM(F.x2210.x0.throw_flags_b1); HM(F.x2210.x0.throw_flags_b2); HM(F.x2210.x0.throw_flags_b3);
+    HM(F.x2210.x0.throw_flags_b4); HM(F.x2210.x0.throw_flags_b5); HM(F.x2210.x0.throw_flags_b6); HM(F.x2210.x0.throw_flags_b7);
     HM(F.mv.co.itemget.x0);
     HM(F.take_dmg_cb == NULL ? 0 : F.take_dmg_cb == ftCo_800974C4 ? 1 : F.take_dmg_cb == ftpickupitem_80094DF8 ? 2 : 3);
     return H;
@@ -114,7 +114,7 @@ int main(void)
             SFX.x2C = rnd() % 100000;
             CD.x7CC = rnd() % 100;
             F.kind = rnd() % 4;
-            F.player_id = rnd() % 4;
+            F.player_idx = rnd() % 4;
             F.is_sub_fighter = rnd() & 1;
             F.item_gobj = (rnd() & 1) ? &IG[1] : NULL;
             F.x1978 = (rnd() & 1) ? &IG[2] : NULL;
@@ -127,7 +127,7 @@ int main(void)
             F.motion_id = (rnd() & 1) ? ftCo_MS_LightGet : ftCo_MS_HeavyGet;
             F.x34_scale.y = rw();
             F.mv.co.itemget.x0 = rnd() & 1;
-            F.throw_flags = rnd() & 0xFF;
+            F.x2210.throw_flags = rnd() & 0xFF;
             switch (op) {
             case 0: ret = ftpickupitem_80094150(&GO, &IG[0]); break;
             case 1: ret = iid(ftpickupitem_800942A0(&GO, rnd() % 4)); break;

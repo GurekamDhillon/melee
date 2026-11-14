@@ -24,7 +24,7 @@ static u32 PI(void* p)
 bool ftCo_800C23A0(Fighter_GObj* g) { T(1); T(PI(g)); return SR(1); }
 bool ftCo_800C1D38(Fighter_GObj* g) { T(2); T(PI(g)); return SR(2); }
 void ftKb_SpecialN_800F1F1C(Fighter_GObj* g, Vec3* v) { T(3); T(PI(g)); TV(v); v->z = (float) (SRV[7] % 5); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 id, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 id, HSD_JObj* j, ...)
 {
     __builtin_va_list ap;
     Vec3* v;

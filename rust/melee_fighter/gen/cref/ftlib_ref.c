@@ -62,7 +62,7 @@ HSD_GObj** HSD_GObjPLinkHead;
 bool gm_8016B168(void) { T(0x140u); return (g_tr >> 4) & 1; }
 int Slippi_Codes(void) { T(0x150u); return g_slip; }
 s32 HSD_Randi(s32 n) { T(0x160u + (u32) n); return (s32) ((g_tr >> 7) & 1); }
-Fighter_Part ftParts_GetBoneIndex(Fighter* fp, Fighter_Part i) { T(0x170u + (u32) i); return (Fighter_Part) (fp->player_id % 8); }
+Fighter_Part ftParts_GetBoneIndex(Fighter* fp, Fighter_Part i) { T(0x170u + (u32) i); return (Fighter_Part) (fp->player_idx % 8); }
 void Fighter_UpdateModelScale(Fighter_GObj* g) { T(0x180u + E(g)); }
 void lb_8000B1CC(HSD_JObj* j, Vec3* off, Vec3* out)
 {
@@ -90,11 +90,11 @@ void ftCommon_8007D92C(Fighter_GObj* g) { T(0x240u + E(g)); }
 int Geno_DefineTemplateSkeleton(int k) { T(0x250u + (u32) k); return (g_tr >> 1) & 1; }
 int Geno_DefineBaseKind(int k) { T(0x260u + (u32) k); return k % 27; }
 int Mex_SsmForPortKind(int k) { T(0x270u + (u32) k); return (int) (g_tr % 5u) - 1; }
-void pl_8003E4A4(int slot, bool sub, void* p, int a) { (void) p; T(0x280u + (u32) slot * 2u + (u32) sub); T((u32) a); }
+void pl_8003E4A4(int slot, bool sub, ItemKind* p, int a) { (void) p; T(0x280u + (u32) slot * 2u + (u32) sub); T((u32) a); }
 bool ftAnim_IsFramesRemaining(Fighter_GObj* g) { T(0x290u + E(g)); return true; }
 void ftGw_Init_8014A7F4(HSD_GObj* g, ItemModStruct* d) { (void) d; T(0x2A0u + E(g)); }
 void ftGw_Init_8014A814(HSD_GObj* g, ItemModStruct* d) { (void) d; T(0x2B0u + E(g)); }
-void ftKb_Init_800EEB00(Fighter_GObj* g, ArticleDynamicBones** d) { (void) d; T(0x2C0u + E(g)); }
+void ftKb_Init_800EEB00(Fighter_GObj* g, BoneDynamicsTemplate** d) { (void) d; T(0x2C0u + E(g)); }
 void ftKb_Init_800EEB1C(Fighter_GObj* g, s32* d) { (void) d; T(0x2D0u + E(g)); }
 void it_80294E78(Item_GObj* g, float f) { T(0xA00u + E(g)); T(B(f)); }
 void it_8029A89C(Item_GObj* g, f32 f) { T(0xB00u + E(g)); T(B(f)); }
@@ -160,10 +160,10 @@ int main(void)
                 f->x890_cameraBox = &CS[i];
                 f->kind = KINDS[rnd() % 13];
                 f->x8_spawnNum = (int) (rnd() % 8);
-                f->player_id = (u8) (rnd() % 4);
-                f->x618_player_id = (u8) (rnd() % 4);
-                f->x619_costume_id = (u8) (rnd() % 4);
-                f->x61A_controller_index = (u8) (rnd() % 4);
+                f->player_idx = (u8) (rnd() % 4);
+                f->pad_port = (u8) (rnd() % 4);
+                f->costume_id = (u8) (rnd() % 4);
+                f->sub_color = (u8) (rnd() % 4);
                 f->team = (u8) (rnd() % 3);
                 f->motion_id = (int) (rnd() % 340);
                 f->facing_dir = rf();
@@ -208,22 +208,22 @@ int main(void)
                 f->is_sandbag = rnd() & 1;
                 f->is_sub_fighter = rnd() & 1;
                 f->x221C_b6 = rnd() & 1;
-                f->x221D_b4 = rnd() & 1;
+                f->input_disabled = rnd() & 1;
                 f->x221E_b1 = rnd() & 1; f->x221E_b2 = rnd() & 1; f->x221E_b3 = rnd() & 1;
                 f->x221E_b4 = rnd() & 1; f->x221E_b5 = rnd() & 1;
                 f->x221F_b0 = rnd() & 1; f->x221F_b1 = rnd() & 1; f->x221F_b2 = rnd() & 1;
-                f->x221F_b3 = (rnd() % 4) == 0; f->x221F_b5 = rnd() & 1;
+                f->is_sleeping = (rnd() % 4) == 0; f->x221F_b5 = rnd() & 1;
                 f->x2220_b7 = (rnd() % 4) == 0;
-                f->x2224_b2 = rnd() & 1;
+                f->stamina_dead = rnd() & 1;
                 f->x2226_b4 = rnd() & 1;
                 f->x2229_b3 = (rnd() % 4) == 0;
             }
             cd.x708 = rf(); cd.x70C = rf(); cd.x710 = rf();
             for (i = 0; i < 4; i++) {
-                cd.x6DC_colorsByPlayer[i].r = (u8) rnd(); cd.x6DC_colorsByPlayer[i].g = (u8) rnd();
-                cd.x6DC_colorsByPlayer[i].b = (u8) rnd(); cd.x6DC_colorsByPlayer[i].a = (u8) rnd();
+                cd.sub_colors[i].r = (u8) rnd(); cd.sub_colors[i].g = (u8) rnd();
+                cd.sub_colors[i].b = (u8) rnd(); cd.sub_colors[i].a = (u8) rnd();
             }
-            cd.x6D8[0] = (int) rnd();
+            cd.x6D8 = (int) rnd();
             /* the fighter list: n distinct fighters in random order */
             n = (int) (rnd() % (NF + 1));
             for (i = 0; i < n; i++) {
@@ -337,7 +337,7 @@ int main(void)
                 Fighter* f = &F[i];
                 t = t * 31 + (int) (B(f->cur_pos.x) ^ B(f->cur_pos.y) * 3u ^ B(f->cur_pos.z) * 7u);
                 t = t * 31 + (int) (B(f->x34_scale.y) ^ B(f->dmg.x1958) * 5u ^ B(f->dmg.x1830_percent) * 11u);
-                t = t * 31 + (int) (f->x221D_b4 | f->x221F_b0 << 1) + f->x2188.x;
+                t = t * 31 + (int) (f->input_disabled | f->x221F_b0 << 1) + f->x2188.x;
             }
             o3 = (u32) sv.x;
             printf("%d %d %08X %08X %08X %08X %08X %08X %08X %08X %08X\n", op, k, r, o1, o2, o3,

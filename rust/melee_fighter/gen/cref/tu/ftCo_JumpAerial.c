@@ -85,7 +85,7 @@ int main(void)
             JO.rotate.y = rg();
             YS.x0 = 1 + rnd() % 20; YS.x4 = rg(); YS.x8 = rw(); F.dat_attrs = &YS;
             F.x197C = (rnd() & 1) ? &X197C : NULL;
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             kk = rnd() % 6;
             F.kind = kk == 0 ? Ft_Kind_Ness : kk == 1 ? Ft_Kind_Yoshi : kk == 2 ? Ft_Kind_Peach : kk == 3 ? Ft_Kind_Mewtwo : rnd() % 33;
             F.input.lstick[0].x = rg(); F.input.lstick[0].y = rg();

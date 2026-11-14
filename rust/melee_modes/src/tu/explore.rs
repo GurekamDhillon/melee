@@ -238,6 +238,8 @@ fn load_secs(secs: &[SecDef], links: &[((usize, usize), (usize, usize))], whole:
             raw[i].prev = (0..n).find(|&j| j != i && raw[j].b == a && raw[j].kind & 0xF == k).or_else(|| (0..n).find(|&j| j != i && raw[j].b == a)).map(|j| j as i32).unwrap_or(-1);
         }
     }
+    // whether another floor line than `i` has vertex `v` as an end
+    let floor_at = |v: usize, i: usize| raw.iter().enumerate().any(|(j, o)| j != i && o.kind & 0xF == 1 && (o.a == v || o.b == v));
     // group the lines the way the retail format wants them (floor, ceiling, right wall, left wall), links remapped
     let group = |k: u16| match k & 0xF {
         1 => Some(0usize),
@@ -268,8 +270,10 @@ fn load_secs(secs: &[SecDef], links: &[((usize, usize), (usize, usize))], whole:
         .map(|&i| {
             let l = &raw[i];
             let drop = l.mat_flags & 0x01 != 0;
-            // a ledge flag on a line that meets another floor at both ends is not a ledge (welded arena floors)
-            let ledge = l.mat_flags & 0x60 != 0 && !(whole && l.prev >= 0 && l.next >= 0);
+            // welded arena: a floor line is a ledge where one of its ends meets no other floor (the outer ends of the
+            // main floor, where it turns down into a wall); a weld seam (floor on both sides) never is. Elsewhere the
+            // file's own ledge flag.
+            let ledge = if whole { !drop && group(l.kind) == Some(0) && (!floor_at(l.a, i) || !floor_at(l.b, i)) } else { l.mat_flags & 0x60 != 0 };
             let kind: u16 = match group(l.kind).unwrap_or(0) {
                 0 => 1,
                 1 => 2,
@@ -720,3 +724,28 @@ fn fmax(a: f32, b: f32) -> f32 {
     if b > a { b } else { a }
 }
 
+
+#[cfg(test)]
+mod arena_tests {
+    /// With the owner's Brawl files (skipped otherwise): the welded arena floor has ledges at its two outer ends
+    /// and none at the weld seams.
+    #[test]
+    fn arena_outer_ledges() {
+        let Ok(m) = super::load_secs(&super::ARENA_SECS, &[], true) else { return };
+        let mut ledges = vec![];
+        for l in &m.lines {
+            if l.hi_flags & 1 != 0 {
+                let (a, b) = (m.verts[l.v0_idx as usize], m.verts[l.v1_idx as usize]);
+                let lg = l.lo_flags & 0x200 != 0;
+                eprintln!("floor ({:.1},{:.1})-({:.1},{:.1}) ledge {}", a.x, a.y, b.x, b.y, lg);
+                if lg {
+                    ledges.push(a.x.min(b.x));
+                    ledges.push(a.x.max(b.x));
+                }
+            }
+        }
+        let (lo, hi) = (m.verts.iter().map(|v| v.x).fold(f32::MAX, f32::min), m.verts.iter().map(|v| v.x).fold(f32::MIN, f32::max));
+        assert!(ledges.iter().any(|&x| x == lo) && ledges.iter().any(|&x| x == hi), "outer ends not ledges");
+        assert!(!ledges.contains(&0.0), "weld seam is a ledge");
+    }
+}

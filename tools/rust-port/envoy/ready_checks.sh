@@ -35,7 +35,7 @@ play() {
   local d="$out/$name"
   [ "$keep" = 1 ] || rm -rf "$d"
   mkdir -p "$d/save"; [ -d "$d/card" ] || cp -r "$card" "$d/card"
-  (cd "$d" && env -u MELEE_ENVOY_ARM -u MELEE_ENVOY_START_FIGHT -u MELEE_ENVOY_COOP -u MELEE_ENVOY_TEST_DRIVES -u MELEE_ENVOY_SEED \
+  (cd "$d" && env -u MELEE_ENVOY_ARM -u MELEE_ENVOY_START_FIGHT -u MELEE_ENVOY_COOP -u MELEE_ENVOY_SEED MELEE_ENVOY_TEST_DRIVES=autotake \
     MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WINDOW_TITLE="ready_checks $name (${BRANCH_TAG:-envoy})" MELEE_WASM_MODS="$mods" \
     MELEE_ENVOY_DIR="$d/save" MELEE_CARD_PATH="$d/card" MELEE_PAD_SCRIPT="$pad" MELEE_PAD_CHANNELS=03 MELEE_TURBO=1 \
     MELEE_CRASH_STACK=200 MELEE_RECLAIM_LEAK=1 MELEE_HANG_DUMP=60 MELEE_PAD_IGNORE_ADAPTER=1 "${envs[@]}" \

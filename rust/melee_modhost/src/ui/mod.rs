@@ -550,6 +550,26 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         }
         if melee_gx::fx::post(effect, strength, x, y, rgba) { GD_OK } else { GD_EFULL }
     });
+    // envoy-vfx.md: shader effect quads (melee_gx::vfx): `count` records of 64 bytes at `ptr` (VfxInst: x, y, z, rot,
+    // w, h, t, seed, p0..p3 as f32; col0, col1, kind, flags as u32), queued for this present. Returns how many were
+    // taken (bad records and those past the present's cap are skipped). Presentation only, never read back.
+    f!("gd_vfx_batch", |c: Caller<'_, PresData>, ptr: u32, count: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) {
+            return GD_ECAP;
+        }
+        let n = count.min(melee_gx::vfx::MAX_VFX as u32);
+        let Some(b) = read_bytes(&c, ptr, n * 64) else { return GD_EINVAL };
+        let mut taken = 0;
+        for r in b.chunks_exact(64) {
+            let f = |i: usize| f32::from_le_bytes([r[i * 4], r[i * 4 + 1], r[i * 4 + 2], r[i * 4 + 3]]);
+            let u = |i: usize| u32::from_le_bytes([r[i * 4], r[i * 4 + 1], r[i * 4 + 2], r[i * 4 + 3]]);
+            let i = melee_gx::vfx::VfxInst { pos: [f(0), f(1), f(2)], rot: f(3), size: [f(4), f(5)], t: f(6), seed: f(7), p: [f(8), f(9), f(10), f(11)], col0: u(12), col1: u(13), kind: u(14), flags: u(15) };
+            if melee_gx::vfx::push(i) {
+                taken += 1;
+            }
+        }
+        taken
+    });
     // an additive effect shape in the world: kind (drive_draw::FX_*), centre, three numbers, colour RGBA
     f!("gd_ui_world_fx", |c: Caller<'_, PresData>, kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, cc: f32, rgba: u32| -> i32 {
         if !feat(&c, FEATURE_UI_DRAW) || !(1..=6).contains(&kind) || ![x, y, z, a, b, cc].iter().all(|v| v.is_finite() && v.abs() < 1.0e5) {
@@ -1652,6 +1672,7 @@ impl PresHost {
         let pno = self.shared.borrow().present_no;
         let t1 = std::time::Instant::now();
         melee_modes::tu::drive_draw::begin();
+        melee_gx::vfx::begin();
         self.shared.borrow_mut().submit_ns = 0;
         for i in 0..n {
             if let Some(f) = self.mods[i].frame {
@@ -1662,6 +1683,10 @@ impl PresHost {
             }
         }
         melee_modes::tu::drive_draw::commit();
+        melee_gx::vfx::commit();
+        if melee_gx::vfx::shown() > 0 {
+            melee_modes::tu::drive_draw::want_camera();
+        }
         let t2 = std::time::Instant::now();
         for e in &mut self.exts {
             e.after_logic(frame);

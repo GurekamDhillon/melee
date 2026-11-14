@@ -833,7 +833,9 @@ pub unsafe fn combo_break(slot: i32, frames: i32) -> i32 {
     let g = (*f).gobj;
     (*f).dmg.kb_applied = 0.0;
     (*f).x8c_kb_vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    (*f).self_vel.y = (*f).self_vel.y.max(0.0);
+    if (*f).self_vel.y < 0.0 {
+        (*f).self_vel.y = 0.0;
+    }
     if (*f).ground_or_air == GA_Ground {
         melee_fighter::tu::ft_08a1::ft_8008A2BC(g);
     } else {

@@ -21,6 +21,12 @@ pub const ATLAS: u32 = 2048;
 pub const Q_WINDOW: u32 = 1;
 /// Instance flag: the quad samples a signed-distance glyph tile (linear filtering, alpha = coverage of d > 0.5).
 pub const Q_SDF: u32 = 2;
+/// Instance flags: this side (left, top, right, bottom) is shared with an abutting piece of the same shape (a 9-slice,
+/// a tiled bar). Edge AA on a slanted or rotated quad skips it, so the pieces meet with no coverage ramp and no seam.
+pub const Q_IN_L: u32 = 4;
+pub const Q_IN_T: u32 = 8;
+pub const Q_IN_R: u32 = 16;
+pub const Q_IN_B: u32 = 32;
 
 /// One UI instance: 80 bytes, uploaded as-is (`#[repr(C)]`, little-endian like the GPU).
 #[repr(C)]
@@ -328,7 +334,7 @@ struct VsOut {
     @location(3) @interpolate(flat) sdf: u32,
     @location(4) @interpolate(flat) uvc: vec4<f32>,
     @location(5) l: vec2<f32>,
-    @location(6) @interpolate(flat) aa: vec2<f32>,
+    @location(6) @interpolate(flat) aa: vec4<f32>,
     @location(7) @interpolate(flat) fx: vec2<u32>,
     @location(8) pp: vec2<f32>,
 };
@@ -346,14 +352,20 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     // edge AA (kitaa): a slanted edge (shear: the left and right sides; a rotation off the right angles: all four)
     // gets an analytic coverage ramp, so the quad is grown one target pixel outward on those sides. Axis-aligned
     // edges are left exact, so abutting pieces (9-slices, bars) never show seams.
-    var aa = vec2<f32>(0.0, 0.0);
-    if (shear != 0.0) { aa.x = 1.0; }
+    // aa: left, top, right, bottom. A side shared with an abutting piece (Q_IN_*) gets no ramp and no growth: two
+    // half-covered edges laid over each other leave a see-through seam (uiseams).
+    var aa = vec4<f32>(0.0);
+    if (shear != 0.0) { aa = vec4<f32>(1.0, 0.0, 1.0, 0.0); }
     let q = abs(sin(2.0 * rp.x));
-    if (rp.x != 0.0 && q > 1.0e-3) { aa = vec2<f32>(1.0, 1.0); }
+    if (rp.x != 0.0 && q > 1.0e-3) { aa = vec4<f32>(1.0); }
+    let inner = vec4<f32>(f32((flags >> 2u) & 1u), f32((flags >> 3u) & 1u), f32((flags >> 4u) & 1u), f32((flags >> 5u) & 1u));
+    aa = aa * (vec4<f32>(1.0) - inner);
     var s = 1.0;
     if (!win) { s = u.band.w / 480.0; }
-    let e = aa / max(abs(rect.zw) * s, vec2<f32>(1.0e-3, 1.0e-3));
-    let l = vec2<f32>(cx[vi], cy[vi]) * (1.0 + 2.0 * e) - e;
+    let sz = max(abs(rect.zw) * s, vec2<f32>(1.0e-3, 1.0e-3));
+    let e0 = aa.xy / sz;
+    let e1 = aa.zw / sz;
+    let l = vec2<f32>(cx[vi], cy[vi]) * (1.0 + e0 + e1) - e0;
     var p = rect.xy + vec2<f32>(l.x * rect.z + shear * (1.0 - l.y) * rect.w, l.y * rect.w);
     if (rp.x != 0.0) {
         let d = p - rp.yz;
@@ -375,7 +387,10 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
             px = c + (px - c) * 1.4;
             os = 1.4;
         }
-        let z = (1.0 - f32(ii) / max(u.tilt2.x, 1.0)) * u.tilt.w;
+        // the pieces of one shape (a 9-slice, a sliced sticker) share their first piece's depth (flags bits 8..15:
+        // instances back to it), so their shared sides stay shared under the perspective (uiseams2)
+        let gi = f32(ii) - f32((flags >> 8u) & 255u);
+        let z = (1.0 - gi / max(u.tilt2.x, 1.0)) * u.tilt.w;
         let q = vec3<f32>(px.x - c.x, c.y - px.y, z);
         let sa = sin(u.tilt.x);
         let ca = cos(u.tilt.x);
@@ -407,9 +422,11 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     o.fx = fx;
     return o;
 }
-fn edge(t: f32) -> f32 {
+fn edge(t: f32, lo: f32, hi: f32) -> f32 {
     let g = max(length(vec2<f32>(dpdx(t), dpdy(t))), 1.0e-6);
-    return clamp(min(t, 1.0 - t) / g + 0.5, 0.0, 1.0);
+    let a = clamp(t / g + 0.5, 0.0, 1.0);
+    let b = clamp((1.0 - t) / g + 0.5, 0.0, 1.0);
+    return mix(1.0, a, lo) * mix(1.0, b, hi);
 }
 fn hue(h: f32) -> vec3<f32> {
     return clamp(abs(fract(vec3<f32>(h, h + 0.6667, h + 0.3333)) * 6.0 - 3.0) - 1.0, vec3<f32>(0.0), vec3<f32>(1.0));
@@ -472,9 +489,7 @@ fn effect(v: VsOut, base: vec4<f32>) -> vec4<f32> {
     let d = textureSample(atlas, lin, v.uv).a;
     let fw = max(fwidth(d), 1.0e-4);
     let cov = clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
-    let ex = edge(v.l.x);
-    let ey = edge(v.l.y);
-    let ea = mix(1.0, ex, v.aa.x) * mix(1.0, ey, v.aa.y);
+    let ea = edge(v.l.x, v.aa.x, v.aa.z) * edge(v.l.y, v.aa.y, v.aa.w);
     // clipping in the untilted plane (at rest: the fragment position, as before)
     let cp = select(v.pos.xy, v.pp, u.tilt.x != 0.0 || u.tilt.y != 0.0);
     if (cp.x < v.clip.x || cp.y < v.clip.y || cp.x >= v.clip.z || cp.y >= v.clip.w) { discard; }

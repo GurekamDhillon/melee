@@ -76,6 +76,46 @@ pub const EVENT_LCANCEL: u32 = 1;
 /// Envoy items: the fighter left its jump squat as a short hop (bit 1) or a full hop (bit 2).
 pub const EVENT_SHORTHOP: u32 = 2;
 pub const EVENT_FULLHOP: u32 = 4;
+/// Envoy slice 2: the fighter's hitbox struck a shield (bit 3; a shielded attack is not a whiff), and the fighter
+/// crouch-cancelled a hit (bit 5: its knockback was cut by crouching).
+pub const EVENT_SHIELDHIT: u32 = 8;
+pub const EVENT_CC: u32 = 32;
+
+/// The shield-hit site (`ftColl_80076CBC`): installed in `melee_fighter::hooks::ENVOY_SHIELD_HIT`.
+pub fn on_shield_hit(a: &Fighter, _d: &Fighter) {
+    if armed() == 0 || a.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = a.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= EVENT_SHIELDHIT };
+    }
+}
+
+/// The crouch-cancel site (`ftCo_Damage_CalcKnockback`, the squat branch): installed in `hooks::ENVOY_CC`.
+pub fn on_cc(f: &Fighter) {
+    if armed() == 0 || f.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = f.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= EVENT_CC };
+    }
+}
+
+/// The item kind behind `slot`'s last hit (`dmg.x1868_source` an item: a Fox / Falco laser is 54 / 55), or -1.
+pub unsafe fn hit_item(slot: i32) -> i32 {
+    let f = active_fighter(slot);
+    if f.is_null() {
+        return -1;
+    }
+    let g = (*f).dmg.x1868_source;
+    if !g.is_null() && (*g).classifier as i32 == HSD_GOBJ_CLASS_ITEM && !(*g).user_data.is_null() {
+        (*((*g).user_data as *mut Item)).kind as i32
+    } else {
+        -1
+    }
+}
 
 /// The jump site (`ftCo_KneeBend_Anim`, before `ftCo_Jump_Enter`): installed in `melee_fighter::hooks::ENVOY_JUMP`.
 pub fn on_jump(f: &Fighter, short_hop: bool) {
@@ -472,6 +512,8 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     EVENTS = [0; 4];
     melee_fighter::hooks::ENVOY_LCANCEL = Some(on_lcancel);
     melee_fighter::hooks::ENVOY_JUMP = Some(on_jump);
+    melee_fighter::hooks::ENVOY_SHIELD_HIT = Some(on_shield_hit);
+    melee_fighter::hooks::ENVOY_CC = Some(on_cc);
     let coop = PLAN[P_COOP] == 1;
     let css = |i: usize| -> i32 { let p = &d.players[i]; if p.slot_type != Gm_PKind_NA as u8 { p.ckind as i32 } else { -1 } };
     // solo: P1's pick is the main, P2's the partner; co-op: P1 + P3 are player 1's pair, P2 + P4 player 2's

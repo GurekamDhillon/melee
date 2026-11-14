@@ -145,9 +145,10 @@ pub const DROPS: usize = 2;
 // shop rows (P_SHOP_CURSOR)
 pub const SHOP_DRIVE0: i32 = 0; // 0-2 the three items (envoy items: no level-ups, no reorder)
 pub const SHOP_STOCK: i32 = 3;
-pub const SHOP_REROLL: i32 = 4;
-pub const SHOP_LEAVE: i32 = 5;
-pub const SHOP_ROWS: i32 = 6;
+pub const SHOP_SLOT: i32 = 4; // slice 2: a stock slot (+1 limit, +1 stock) for a high price, some shops (V_SHOP_SLOT_PRICE)
+pub const SHOP_REROLL: i32 = 5;
+pub const SHOP_LEAVE: i32 = 6;
+pub const SHOP_ROWS: i32 = 7;
 /// Retired with the drives (never a row now).
 pub const SHOP_LEVEL: i32 = -10;
 pub const SHOP_REORDER: i32 = -11;
@@ -236,6 +237,13 @@ pub const EV_WAVE: i32 = 21; // who = the wave now starting (2..); amount = the 
 pub const EV_COMBOBREAK: i32 = 22; // who = player; amount = hits << 16 | the combo's percent (whole): the player burst free
 pub const EV_HANDOFF: i32 = 16; // who = player; amount = the fired drive's id + 1 | 0x100 when Relay fired the row
 pub const EV_COINS: i32 = 14; // who = player; amount = coins from a flat award (a fight cleared, interest)
+// slice 2
+pub const EV_DEAL: i32 = 23; // who = player; amount = item id | slots paid << 8: a devil deal taken
+pub const EV_SLOT: i32 = 24; // who = player; amount = the new stock limit (a slot gained or paid)
+pub const EV_SECRET: i32 = 25; // who = the player who broke the wall; amount = the fight (0-based)
+pub const EV_DOOR: i32 = 26; // who = 0; amount = DOOR_*: the door after the boss opened
+pub const EV_GUARD: i32 = 27; // who = player; amount = the copies left: the Guardian Feather ate a KO hit
+pub const EV_CAMPFIRE: i32 = 28; // who = player; amount = stocks given back
 /// Why the stage switched (EV_SHIFT's who).
 pub const SH_BREAK: i32 = 1; // an elite or a stock-based boss lost a stock it can spare (Petey's arena never switches)
 pub const SH_WAVE: i32 = 2; // a wave's last foe fell and the next wave arrives (reserved: waves)
@@ -372,6 +380,37 @@ pub const V_FOES: usize = 775; // foes on the field at once this room (1 with V_
 pub const V_CROWD: usize = 776; // the crowd knockback foes take this fight (x1000; 1000 none)
 pub const PED_ITEM_ROOM: i32 = 1;
 pub const PED_BOSS: i32 = 2;
+/// Slice 2 rooms (V_PED_KIND): the devil deal behind the red door (each pedestal costs V_PED_COST stock slots; walking
+/// in buys it, nothing flies in at the end), the angel room behind the white door (one free item, flies in), the
+/// secret room behind the cracked wall (one item or a choice of two, flies in).
+pub const PED_DEVIL: i32 = 3;
+pub const PED_ANGEL: i32 = 4;
+pub const PED_SECRET: i32 = 5;
+
+// ---- slice 2 (envoy-items-design.md 11): co-op stocks, the doors, the secret wall, the in-match fork
+pub const V_PSTOCK: usize = 777; // [2] each player's stocks now (Isaac's red hearts; co-op: each their own)
+pub const V_PLIM: usize = 779; // [2] each player's stock limit (heart containers: start 4, cap 8)
+pub const V_DOOR: usize = 781; // the door after the boss this match: 0 none, DOOR_DEVIL, DOOR_ANGEL
+pub const V_DOOR_AT: usize = 782; // the play frame it opened (0: not yet)
+pub const V_DEALS: usize = 783; // [2] devil deals each player has taken this run
+pub const V_PED_COST: usize = 785; // [2 players][DROPS] stock slots that pedestal costs (0 free) | 0x100 when the
+                                   // player cannot pay it (it would take their last slot): drawn locked
+pub const V_SECRET: usize = 789; // the cracked wall in this fight: 0 none, 1 standing, 2 broken (the room opens after
+                                 // the fight), 3 the secret room is open / done
+pub const V_SECRET_X: usize = 790; // the wall's foot, x100 (world)
+pub const V_SECRET_Y: usize = 791; // y100
+pub const V_SECRET_HITS: usize = 792; // hits it has taken (it breaks at V_SECRET_HP)
+pub const V_SECRET_HP: usize = 793;
+pub const V_FORK: usize = 794; // the in-match fork after the item room: 0 none, 1 open (Shop or Campfire)
+pub const V_FORK_CUR: usize = 795; // P1's cursor: 0 the shop, 1 the campfire
+pub const V_FORK_LEFT: usize = 796; // frames before the fork takes the cursor's room
+pub const V_SHOP_SLOT_PRICE: usize = 797; // the shop's stock slot (+1 limit, +1 stock) on sale: its price; 0 not today
+pub const V_DOOR_PCT: usize = 798; // the chance the door after this floor's boss opens, percent (the map shows it)
+pub const V_SHAKE: usize = 799; // the play frame of the last Big Bang (screen shake; strength in the burst's size)
+pub const DOOR_DEVIL: i32 = 1;
+pub const DOOR_ANGEL: i32 = 2;
+/// The cost word's lock bit (V_PED_COST).
+pub const COST_LOCKED: i32 = 0x100;
 /// The item projectiles / orbitals / ground effects, every frame: PROJ entries of PJ_W words.
 pub const V_PROJ: usize = 800;
 pub const PROJ: usize = 48;
@@ -384,16 +423,79 @@ pub const PJ_MINE: i32 = 5;
 pub const PJ_QUAKE: i32 = 6; // a: direction (+1 / -1), b: size x100
 pub const PJ_COIN: i32 = 7; // a: target player
 pub const PJ_MOON: i32 = 8; // published only (orbit from the play clock); a: index
+// slice 2
+pub const PJ_BEAM: i32 = 9; // a horizontal beam from (x, y): a = length x100 (signed: the direction), b = BEAM_* look
+pub const PJ_FEATHER: i32 = 10; // a falling feather (Demon Wings); velocity in a, b x100 when published
+pub const PJ_TENDRIL: i32 = 11; // a lash from (x, y) to the slot in a; b: the frame it strikes
+pub const PJ_SHARD: i32 = 12; // an ice shard (Ice Glass); velocity in a, b x100
+pub const PJ_WELL: i32 = 13; // a gravity well pulling in: a = radius x100; it bursts at the end of its life
+pub const PJ_ARC: i32 = 14; // a lightning arc (Chain Spark) from (x, y) to (a, b) x100
+pub const PJ_SIGIL: i32 = 15; // published only: a red sigil orbiting its owner (Crimson Count); a: index, b: count
+pub const PJ_GUARD: i32 = 16; // published only: the Guardian Feather orbiting its owner; a: index, b: 1 spent
+pub const PJ_HALO: i32 = 17; // published only: the halo over its owner's head; a: size x100
+pub const PJ_WINGS: i32 = 18; // published only: black wings on its owner; a: facing, b: 1 the extra jump spent
+pub const PJ_THORNS: i32 = 19; // thorns growing out of the owner's back (Crouch Thorns): a = facing, b = size x100
+pub const BEAM_BRIMSTONE: i32 = 0;
+pub const BEAM_GOLD: i32 = 1;
+pub const BEAM_LASER: i32 = 2;
 /// Look flags carried in a projectile's or burst's flag word: Homing Ink's trail, Fire Lace's embers.
 pub const PF_INK: i32 = 1 << 20;
 pub const PF_LACE: i32 = 1 << 21;
-pub const PF_MASK: i32 = PF_INK | PF_LACE;
-pub const V_INV: usize = 1184; // [2 players][ITEM_IDS] copies held, by item id
+/// Slice 2 modifiers' looks: Ice Glass (ice shots), Chain Spark (crackle), Twin Shot (a twin), Bouncy (squash),
+/// Gravity Well (an inward swirl first), Big Bang (twice the size, a shake), Halo (holy white, pierces).
+pub const PF_ICE: i32 = 1 << 22;
+pub const PF_CHAIN: i32 = 1 << 23;
+pub const PF_TWIN: i32 = 1 << 24;
+pub const PF_BOUNCY: i32 = 1 << 25;
+pub const PF_WELL: i32 = 1 << 26;
+pub const PF_BIG: i32 = 1 << 27;
+pub const PF_HALO: i32 = 1 << 28;
+pub const PF_MASK: i32 = PF_INK | PF_LACE | PF_ICE | PF_CHAIN | PF_TWIN | PF_BOUNCY | PF_WELL | PF_BIG | PF_HALO;
+pub const V_INV: usize = 1184; // [2 players][ITEM_IDS = 48] copies held, by item id (1184..1280)
 /// One-shot item visuals (a ring, a spike column, a swing, a pop): BURSTS entries of BU_W words.
 pub const V_BURST: usize = 1280;
 pub const BURSTS: usize = 16;
 pub const BU_W: usize = 7; // frame, item id, owner player, x100, y100, size x100, flags (PF_*; low bits: direction + 1)
 pub const V_BURST_N: usize = 1392;
+
+// ---- the floor map (envoy-items-design.md 11.4): the loop's rooms as a branching map, made from the run seed and the
+// loop, the same for both co-op players and on replay. MAP_N nodes of MAP_W words; a node's links are the nodes it
+// leads to (bits). The camp's road screen, the in-match fork and the pause Run page all draw it.
+pub const V_MAP_N: usize = 1400; // nodes in use
+pub const V_MAP_AT: usize = 1401; // the node the run is at (the fight in play, or the room just done)
+pub const V_MAP_LOOP: usize = 1402; // the loop (floor) the map is of
+pub const V_MAP_SECRET: usize = 1403; // the node carrying the cracked wall (-1 none this floor)
+pub const V_MAP0: usize = 1404; // node i: V_MAP0 + i * MAP_W + MP_*
+pub const MAP_N: usize = 14;
+pub const MAP_W: usize = 4; // 1404..1460
+pub const MP_KIND: usize = 0; // MN_*
+pub const MP_POS: usize = 1; // column | row << 8 (row 0 the main line; 1 below, 255 above)
+pub const MP_STATE: usize = 2; // MS_* bits
+pub const MP_LINKS: usize = 3; // bit j: this node leads to node j
+pub const MN_START: i32 = 1;
+pub const MN_DUEL: i32 = 2; // a gauntlet of duels
+pub const MN_CROWD: i32 = 3; // the 1v3 crowd
+pub const MN_ELITE: i32 = 4; // the elite gauntlet
+pub const MN_BOSS: i32 = 5;
+pub const MN_ITEM: i32 = 6; // gold star
+pub const MN_SHOP: i32 = 7; // coin
+pub const MN_CAMPFIRE: i32 = 8; // orange flame
+pub const MN_DOOR: i32 = 9; // the door after the boss, not yet rolled ("?"; V_DOOR_PCT the chance)
+pub const MN_DEVIL: i32 = 10; // red door
+pub const MN_ANGEL: i32 = 11; // white door
+pub const MN_SECRET: i32 = 12; // the secret room (shown once its wall is broken)
+pub const MS_DONE: i32 = 1;
+pub const MS_HERE: i32 = 2;
+pub const MS_NEXT: i32 = 4; // can be the next room (a fork shows two)
+pub const MS_CHOSEN: i32 = 8; // the branch taken at a fork
+pub const MS_SKIPPED: i32 = 16; // the branch not taken
+pub const MS_WALL: i32 = 32; // a cracked wall is in this fight (the secret room's entrance)
+pub const MS_FOUND: i32 = 64; // its wall was broken
+pub const MS_UNKNOWN: i32 = 128; // not revealed yet
+pub const MS_STEEP: i32 = 256; // the Steep road's twist is on this fight
+pub const MS_SHIFT: i32 = 512; // the Shifting road's twist is on this fight
+pub const MS_CURSOR: i32 = 1024; // P1's fork cursor is on it
+pub const V_MAP_END: usize = V_MAP0 + MAP_N * MAP_W; // 1460
 
 /// An offer that is not a drive: one more shared stock.
 pub const OFFER_STOCK: i32 = 1000;

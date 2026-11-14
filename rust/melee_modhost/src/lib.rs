@@ -725,6 +725,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_speed", |slot: i32, active: i32, bench: i32| -> i32 { unsafe { melee_modes::tu::envoy::speed(slot, active, bench) } });
     w!("gd_envoy_absorb", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::absorb(slot) } });
     w!("gd_envoy_attacker", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::attacker(slot) } });
+    w!("gd_envoy_hit_item", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::hit_item(slot) } });
     // the combo breaker: the slot's fighter bursts out of the combo (no launch, out of hitstun, intangible `frames`;
     // the shield-break sound, a quake, every fighter frozen `freeze` frames)
     w!("gd_envoy_combo_break", |slot: i32, frames: i32, freeze: i32| -> i32 { unsafe { melee_modes::tu::envoy::combo_break(slot, frames, freeze) } });

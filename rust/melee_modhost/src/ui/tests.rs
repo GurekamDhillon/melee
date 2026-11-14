@@ -148,26 +148,88 @@ fn clip_stack() {
     assert!(b.submit(&sp.0, 0, &a, &[], false).is_err());
 }
 
+/// uiquality: a slice is one analytic shape quad, whatever its size (no pieces, so no seams by construction).
 #[test]
-fn nine_slice_is_nine_quads_and_one_page() {
+fn slice_is_one_shape_quad() {
+    use melee_gx::ui::{Q_SHAPE_MASK, Q_SHAPE_SHIFT, SHAPE_BOX, SHAPE_GLOW};
+    let a = atlas();
+    for (id, kind, rect, shape, fill_alpha, line_alpha) in [
+        (1u32, SHAPE_BOX, [10.0f32, 10.0, 100.0, 40.0], [4.0f32, 0.0, 0.0], 0xFF, 0),
+        (6, SHAPE_BOX, [10.0, 10.0, 100.0, 40.0], [14.0, 3.0, 0.0], 0, 0xFF),
+        (7, SHAPE_GLOW, [-4.0, -4.0, 128.0, 68.0], [6.0, 0.0, 14.0], 0xFF, 0),
+    ] {
+        // tiny, ordinary and huge: always one quad
+        for (w, h) in [(100.0f32, 40.0f32), (3.0, 2.0), (600.0, 400.0)] {
+            let mut b = Batch::with_capacity(64);
+            b.begin();
+            let mut e = Enc::default();
+            e.rec(OP_ROT, &[0.05f32.to_bits(), 60.0f32.to_bits(), 30.0f32.to_bits()]);
+            e.rec(OP_SLICE, &[id, 10.0f32.to_bits(), 10.0f32.to_bits(), w.to_bits(), h.to_bits(), 0xFFFFFFFF]);
+            b.submit(&e.0, 0, &a, &[], false).unwrap();
+            b.finish(false);
+            assert_eq!(b.frame.quads.len(), 1, "slice {id} at {w}x{h}");
+            let q = b.frame.quads[0];
+            assert_eq!((q.flags & Q_SHAPE_MASK) >> Q_SHAPE_SHIFT, kind);
+            assert_eq!(q.flags & (Q_IN_L | Q_IN_T | Q_IN_R | Q_IN_B), 0);
+            if (w, h) == (100.0, 40.0) {
+                assert_eq!(q.rect, rect, "slice {id}");
+                assert_eq!(q.shape, shape, "slice {id}");
+                assert_eq!((q.rgba & 0xFF, q.rgba2 & 0xFF), (fill_alpha, line_alpha), "slice {id}");
+            }
+        }
+    }
+}
+
+/// gd-ui-v1.4: OP_SHAPE validates its kind and numbers; OP_OUTLINE draws an outline pass under the fill.
+#[test]
+fn shape_and_outline_records() {
+    use melee_gx::ui::{Q_SDF, Q_SHAPE_MASK};
     let a = atlas();
     let mut b = Batch::with_capacity(64);
     b.begin();
     let mut e = Enc::default();
-    e.rec(OP_SLICE, &[1, 10.0f32.to_bits(), 10.0f32.to_bits(), 100.0f32.to_bits(), 40.0f32.to_bits(), 0xFFFFFFFF]);
+    let f = |v: f32| v.to_bits();
+    // a box with a dashed border (dash 5): the dash length travels in shape[2] and does not grow the rect
+    e.rec(OP_SHAPE, &[1, f(5.0), f(6.0), f(20.0), f(20.0), f(10.0), f(2.0), f(5.0), 0xFFFFFFFF, 0x000000FF]);
+    e.rec(OP_OUTLINE, &[f(1.5), 0x2A1A6EFF]);
+    e.text(10.0, 40.0, "Ab");
+    e.rec(OP_OUTLINE, &[f(0.0), 0]);
+    e.text(10.0, 60.0, "Ab");
     b.submit(&e.0, 0, &a, &[], false).unwrap();
     b.finish(false);
-    assert_eq!(b.frame.quads.len(), 9);
-    let x1: f32 = b.frame.quads.iter().map(|q| q.rect[0] + q.rect[2]).fold(0.0, f32::max);
-    assert_eq!(x1, 110.0);
-    // every uv is inside the single atlas page
-    assert!(b.frame.quads.iter().all(|q| q.uv.iter().all(|&u| (0.0..=1.0).contains(&u))));
+    let q = &b.frame.quads;
+    // 1 shape + (2 outline + 2 fill) + 2 plain
+    assert_eq!(q.len(), 7);
+    assert!(q[0].flags & Q_SHAPE_MASK != 0 && q[0].shape == [10.0, 2.0, 5.0] && q[0].rect == [5.0, 6.0, 20.0, 20.0] && q[0].rgba2 == 0x000000FF);
+    assert!(q[1..].iter().all(|g| g.flags & Q_SDF != 0));
+    // the outline pass comes first, in the outline colour, widened; the fill and plain text are not widened
+    assert!(q[1].shape[1] > 0.0 && q[2].shape[1] > 0.0 && q[1].rgba == 0x2A1A6EFF);
+    assert!(q[3..].iter().all(|g| g.shape == [0.0; 3]));
+    assert_eq!(q[1].rect, q[3].rect);
+    // OP_SHADOW: the next box carries its shadow in the same quad (uv = dx, dy, inset, 0xRRGGBB); 0, 0 ends it
+    let mut e = Enc::default();
+    e.rec(OP_SHADOW, &[f(3.0), f(4.0), f(1.5), 0x2A1A6EFF]);
+    e.rec(OP_SHAPE, &[1, f(5.0), f(6.0), f(40.0), f(20.0), f(10.0), f(3.0), f(0.0), 0xFFFFFFFF, 0x2A1A6EFF]);
+    e.rec(OP_SHADOW, &[f(0.0), f(0.0), f(0.0), 0]);
+    e.rec(OP_SHAPE, &[1, f(5.0), f(6.0), f(40.0), f(20.0), f(10.0), f(3.0), f(0.0), 0xFFFFFFFF, 0x2A1A6EFF]);
+    b.begin();
+    b.submit(&e.0, 0, &a, &[], false).unwrap();
+    b.finish(false);
+    assert_eq!(b.frame.quads.len(), 2, "a shadowed sticker is still one quad");
+    assert_eq!(b.frame.quads[0].uv, [3.0, 4.0, 1.5, 0x2A1A6E as f32]);
+    assert_eq!(b.frame.quads[0].rect, [5.0, 6.0, 40.0, 20.0]);
+    assert_eq!(b.frame.quads[1].uv, [0.0; 4]);
+    for bad in [[9u32, f(0.0), f(0.0), f(1.0), f(1.0), f(0.0), f(0.0), f(0.0), 0xFF, 0xFF], [1, f(f32::NAN), f(0.0), f(1.0), f(1.0), f(0.0), f(0.0), f(0.0), 0xFF, 0xFF]] {
+        let mut e = Enc::default();
+        e.rec(OP_SHAPE, &bad);
+        assert!(b.submit(&e.0, 0, &a, &[], false).is_err());
+    }
 }
 
-/// uiseams: a rotated 9-slice's pieces mark their shared sides inner (no edge AA there), the outer sides stay AA'd;
-/// unrotated the same (harmless: no AA there); all nine share the first piece's tilt depth.
+/// uiseams: the abutting flat pieces of one rotated bar mark their shared sides inner (no edge AA there) and share
+/// the first piece's tilt depth. (Slices no longer need this: they are one quad.)
 #[test]
-fn rotated_nine_slice_marks_inner_sides() {
+fn rotated_bar_pieces_mark_inner_sides() {
     let a = atlas();
     let ins = Q_IN_L | Q_IN_T | Q_IN_R | Q_IN_B;
     for rot in [0.0f32, 0.05] {
@@ -175,18 +237,13 @@ fn rotated_nine_slice_marks_inner_sides() {
         b.begin();
         let mut e = Enc::default();
         e.rec(OP_ROT, &[rot.to_bits(), 60.0f32.to_bits(), 30.0f32.to_bits()]);
-        e.rec(OP_SLICE, &[2, 10.0f32.to_bits(), 10.0f32.to_bits(), 100.0f32.to_bits(), 40.0f32.to_bits(), 0xFFFFFFFF]);
+        e.rect(10.0, 10.0, 20.0, 8.0, 0xFF).rect(30.0, 10.0, 20.0, 8.0, 0xFF).rect(50.0, 10.0, 20.0, 8.0, 0xFF);
         b.submit(&e.0, 0, &a, &[], false).unwrap();
         b.finish(false);
         let f: Vec<u32> = b.frame.quads.iter().map(|q| q.flags & ins).collect();
-        // every piece points back to the first (the tilt's shared parallax depth)
         let back: Vec<u32> = b.frame.quads.iter().map(|q| (q.flags >> 8) & 0xFF).collect();
-        assert_eq!(back, (0..9).collect::<Vec<u32>>());
-        // row-major 3x3: corners have two inner sides, edges three, the centre four
-        assert_eq!(f[0], Q_IN_R | Q_IN_B);
-        assert_eq!(f[1], Q_IN_L | Q_IN_R | Q_IN_B);
-        assert_eq!(f[4], ins);
-        assert_eq!(f[8], Q_IN_L | Q_IN_T);
+        assert_eq!(back, vec![0, 1, 2]);
+        assert_eq!(f, vec![Q_IN_R, Q_IN_L | Q_IN_R, Q_IN_L]);
     }
 }
 

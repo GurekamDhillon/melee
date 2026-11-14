@@ -14,13 +14,13 @@ interface that lets both halves be built in parallel.
 |---|---|
 | presentation host (one wasmi `Store` per mod, harness-owned, `UI_FUEL`, trap = disable + release + pop) | `rust/melee_modhost/src/ui/mod.rs` (`PresHost`); the sim host skips any module importing `gd_ui` |
 | command buffer (`gd_ui_submit`: LAYER RECT TEX TEXT KIT CLIP UNCLIP SLICE SPACE; VECTOR refused without Vello) and the sort | `ui/cmd.rs` |
-| batched quad + atlas renderer: one 64-byte instance per quad, one 1024x1024 atlas page (glyphs, 9-slices, kit pieces, mod PNGs), per-instance clip, drawn in the EFB blit pass | `rust/melee_gx/src/ui.rs`, `Renderer::blit_to` |
+| batched quad + atlas renderer: one 96-byte instance per quad, one 4096x4096 mipmapped, premultiplied atlas page (glyphs, the hatch, mod PNGs; rows allocated as they fill), analytic shapes for every rounded box, circle, ring and glow (slices and round kit pieces are one shape quad each; see `ui-quality.md`), per-instance clip, drawn in the EFB blit pass | `rust/melee_gx/src/ui.rs`, `Renderer::blit_to` |
 | node tree (focus, wrap, repeat 15/4, A/B/L/R, layout cached until dirty) | `ui/nodes.rs` |
 | theme tokens A C E G | `ui/theme.rs` |
 | input boundary (capture, inject, exclusive masks before `set_pads`) and keyboard (GAP-14) | `PresHost::input`, `melee_platform` `PadSystem::ui_keys`, `retail_flow.rs` |
 | window space (GAP-0): `SPACE` record + `gd_ui_band_rect` | `ui/cmd.rs`, shader `to_px` |
 | scenes: register, replace (on entering the retail scene: custom scene on top, GX hidden, ports held), goto, back | `PresHost::retail_scene`, `scene_switch` |
-| text (gd-ui-v1.1): Inter + JetBrains Mono (OFL, `rust/melee_gx/assets/fonts`, subset by `tools/rust-port/fonts/subset_fonts.py`), regular/bold, rasterized once by `ab_glyph` into single-channel SDF tiles (24 texels/em, 3 texel spread) on the UI atlas when the atlas is built; quads flagged `Q_SDF` are decoded in the same shader with a linear sampler (still one draw call). Style bits in the role word: `GD_UI_TEXT_REGULAR/BOLD/MONO/SIZE(px)`; v1.0 roles unchanged | `rust/melee_gx/src/ui_font.rs`, `ui/cmd.rs` `style` |
+| text (gd-ui-v1.1): Inter + JetBrains Mono (OFL, `rust/melee_gx/assets/fonts`, subset by `tools/rust-port/fonts/subset_fonts.py`), regular/bold, rasterized once by `ab_glyph` into single-channel SDF tiles (48 texels/em, 6 texel spread; minified through the atlas mips) on the UI atlas when the atlas is built; quads flagged `Q_SDF` are decoded in the same shader with a linear sampler (still one draw call). Style bits in the role word: `GD_UI_TEXT_REGULAR/BOLD/MONO/SIZE(px)`; v1.0 roles unchanged | `rust/melee_gx/src/ui_font.rs`, `ui/cmd.rs` `style` |
 | encoder crate, example mod | `rust/mods/gd_ui_enc`, `rust/mods/ui_demo` (Frame data HUD preset, theme A, static data; D-pad left opens a node menu) |
 | bench | `cargo run -p melee_modhost --example ui_bench --profile fast -- ../build/mods/ui_demo.wasm` |
 
@@ -161,6 +161,9 @@ offered. The buffer is little-endian and 4-byte aligned. Each record is `u16 op,
 | `KIT` | `u32 kit_id, f32 x,y, f32 scale, u32 rgba`: a named kit piece or icon |
 | `CLIP` / `UNCLIP` | `f32 x,y,w,h` / no payload; stack depth 8 |
 | `VECTOR` | `u32 path_id, f32 affine[6], u32 rgba` (`UI_VECTOR` only) |
+| `SHAPE` (v1.4) | `u32 kind, f32 x,y,w,h, f32 radius, f32 border, f32 spread, u32 fill, u32 line`: one analytic shape (`GD_UI_SHAPE_BOX` rounded box / pill / circle, a ring with a clear fill, a dashed border with `spread` > 0; `DIAMOND`; `GLOW`). Evaluated per device pixel: exact at every size, resolution, rotation and tilt, always one quad. Prefer it to textures for any round or rounded piece |
+| `OUTLINE` (v1.4) | `f32 width, u32 rgba`: the `TEXT` that follows is outlined from its glyphs' distance field (one pass under the fill); width 0 ends it |
+| `SHADOW` (v1.4) | `f32 dx, dy, inset, u32 rgba`: the `BOX` shapes that follow carry a hard shadow in the same quad (the outline shrunk by `inset`, moved by `dx, dy`). Shape and shadow are composed per pixel before the blend, so a fading sticker is one translucent piece; `dx = dy = 0` ends it |
 
 Setup calls are made once or rarely, not every frame:
 

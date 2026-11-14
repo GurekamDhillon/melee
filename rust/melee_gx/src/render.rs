@@ -2344,8 +2344,7 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
             }
             if self.ui.is_some() {
                 // gd-ui-v1: the UI batch inside this same pass (one instanced draw). The band is the 4:3 area centred in the blit rect.
-                let bw = (vp[3] * 4.0 / 3.0).min(vp[2]);
-                let band = [vp[0] + (vp[2] - bw) * 0.5, vp[1], bw, vp[3]];
+                let band = crate::ui::band_in(vp);
                 self.ui_record(&mut pass, format, tw, th, band);
             }
         }

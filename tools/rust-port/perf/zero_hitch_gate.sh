@@ -47,7 +47,7 @@ run() {  # name, frames, env..., -- , args...
   local m="$d/mods"; mkdir -p "$m"
   [ -n "${NEED_MODS:-}" ] && cp "$mods_src/envoy_sim.wasm" "$mods_src/envoy_ui.wasm" "$m/" && cp -r "$repo/rust/mods/envoy_ui/art" "$m/envoy_ui"
   echo "-- $name (${frames} ticks, real time)"
-  ( cd "$d/bin" && env MELEE_VOLUME=3 MELEE_PROFILE=1 MELEE_FULLSCREEN=off MELEE_RECLAIM_LEAK=1 \
+  ( cd "$d/bin" && env MELEE_VOLUME=3 MELEE_PROFILE=1 MELEE_FULLSCREEN=off \
       MELEE_WINDOW_TITLE="${GATE_TITLE:-zerolag agent: gate} $name ($build)" MELEE_CARD_PATH="$d/card" MELEE_ENVOY_DIR="$d/save" \
       MELEE_GPUCACHE="$out/gpucache" \
       MELEE_WASM_MODS="$m" ${INTERP:+MELEE_INTERP=$INTERP} ${FPS:+MELEE_FPS_CAP=$FPS} "${envs[@]}" \

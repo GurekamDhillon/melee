@@ -16,7 +16,7 @@ if [ "${SHOTS:-1}" = 1 ]; then view=(--widescreen --windowed --window "${WINDOW:
 env MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WINDOW_UNFOCUSED=1 MELEE_WINDOW_TITLE="${TITLE:-envoy coop_picker}" MELEE_WASM_MODS="$mods" \
   MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_IGNORE_ADAPTER=1 \
   MELEE_PAD_SCRIPT="$(pad_for_disc "$here/coop_pick_p1.txt" "$out")" MELEE_PAD_CHANNELS=0 MELEE_PAD_SCRIPT2="$(pad_for_disc "$here/coop_pick_p2.txt" "$out" 203)" MELEE_PAD_CHANNELS2=1 \
-  MELEE_ENVOY_TEST_P1CPU=1 MELEE_RECLAIM_LEAK=1 MELEE_HANG_DUMP=60 ${EXTRA_ENV:-} \
+  MELEE_ENVOY_TEST_P1CPU=1 MELEE_HANG_DUMP=60 ${EXTRA_ENV:-} \
   timeout 900 "$exe" play --iso "$GW_ISO_VANILLA" --no-audio "${view[@]}" --max-frames "${FRAMES:-2400}" >"$out/run.log" 2>&1
 echo "     exit $?"
 fail=0

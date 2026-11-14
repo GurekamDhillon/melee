@@ -20,7 +20,7 @@ for r in $rows; do
   f=${r%%:*}; d=${r#*:}; coop=(); case "$f" in *c) coop=(MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3); f=${f%c};; esac
   tag="f${r%%:*}$(echo "$d" | grep -oE '@[0-9]+' | tr -d @ | sed 's/^/-l/')"
   env "${coop[@]}" MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_TEST_P1CPU=1 \
-    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="$d" MELEE_RECLAIM_LEAK=1 MELEE_PAD_SCRIPT="$here/drives_pad.txt" \
+    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="$d" MELEE_PAD_SCRIPT="$here/drives_pad.txt" \
     MELEE_WINDOW_TITLE="${TITLE:-envoy wave_faces} $tag" \
     timeout 900 "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" --scenario pad_falcon_fox_fd --depth 0 --frames "${FRAMES:-20000}" \
     --timeout 3000 >"$out/$tag.log" 2>&1

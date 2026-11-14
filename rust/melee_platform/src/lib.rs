@@ -25,6 +25,6 @@ pub mod gfx;
 pub mod overlay;
 pub mod yougame;
 
-pub use main_loop::{run_headless, run_windowed, FixedStep, FullscreenMode, Game, WindowConfig};
+pub use main_loop::{run_headless, run_windowed, window_hidden, FixedStep, FullscreenMode, Game, WindowConfig};
 pub use pad::PADStatus;
 pub use pad_read::{InputMode, PadSystem, Source};

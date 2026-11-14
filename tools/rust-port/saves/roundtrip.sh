@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Cross-build memory-card round trip (no OS input: MELEE_PAD_SCRIPT drives port 1, windows never take focus).
 #   C_EXE=<a melee-pc.exe build root with the card shim> bash tools/rust-port/saves/roundtrip.sh [OUT_DIR]
 # Every card is a scratch folder under OUT_DIR (default $TEMP/saves-roundtrip.$$), never the user's.

@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Mod host determinism check (docs/rust-port/notes/modhost.md):
 #   1. mods off: the golden scenario still matches its committed CSV (no hook installed, hashes unchanged);
 #   2. hello_mod loaded: two runs of the same scripted replay give byte-identical NHV1 CSVs;

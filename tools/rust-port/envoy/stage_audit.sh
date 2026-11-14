@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy stage audit (notes/envoy-stage-audit.md): can a stage be started on and shifted into / out of during an Envoy fight?
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/stage_audit.sh GRKIND [EXE] [FRAMES]
 # GRKIND is the ground kind of the stage under test (Kongo Jungle 64 = 30, Yoshi's Island 64 = 29, Pokemon Stadium = 16).

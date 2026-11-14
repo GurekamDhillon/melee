@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # pair.sh SCRIPT TICKS TAG: C vs Rust shots of a `melee play` pad script run from the title at the same timeline ticks.
 # C lane: $C_LANE (a dir holding a working melee-pc.exe + dlls), Rust exe: $RS_EXE (default build/cargo/fast/melee.exe).
 # Shots land in $SHOT_BASE/{c,rs}_TAG; no OS input, windows unfocused/off screen, volume 3.

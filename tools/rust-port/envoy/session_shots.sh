@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy sessions (v3g): one windowed scripted run from the camp door with in-engine screenshots of every screen
 # (the camp, the session banner, the HUD with drops, the batched picks, the shop, the road). Look at them.
 #   GW_ISO_VANILLA=... EXE=... MODS=... CARD=... OUT=... bash tools/rust-port/envoy/session_shots.sh

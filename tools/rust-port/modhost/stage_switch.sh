@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Stage-switch mod check (rust/mods/stage_switch, notes/modhost.md "Stage switching"): pad_falcon_fox_fd with the mod
 # loops FD -> BF -> Yoshi's Story -> Dream Land -> Fountain -> FD (a switch every 600 frames, inside the sim).
 #   1. two golden runs with the mod: byte-identical per-frame hash CSVs, 5 switches logged;

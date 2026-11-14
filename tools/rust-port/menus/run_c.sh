@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # run_c.sh LUA OUTDIR: run the C build (a copy of the baseline exe in _build/agents/plat-menus/run1)
 # with the retail menus (MELEE_ATLAS=0), memory card off, window parked off screen, no OS input.
 set -e

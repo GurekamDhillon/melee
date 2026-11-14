@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Two `melee play --netplay ... --np-css` peers on loopback: the players pick on the retail character select (lockstep
 # menus), two matches on one connection (the second a rematch from the results), scripted pads (no OS input).
 #   bash tools/rust-port/netplay/css_pair.sh NAME LAG_MS LOSS_PCT [extra play args]

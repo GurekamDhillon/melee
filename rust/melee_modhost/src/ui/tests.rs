@@ -534,8 +534,8 @@ fn aspect_audit_flags_squished_draws() {
     b.tex(&p, art, 0.0, 0.0, 20.0, 30.0, [0.0, 0.0, 0.5, 1.0], !0);
     assert!(b.audit.as_ref().unwrap().out.iter().all(|l| !l.contains("BAD")), "{:?}", b.audit.as_ref().unwrap().out);
     // 4:3 art in a square box: squished 25%
-    b.tex(&p, art, 0.0, 0.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
-    b.tex(&p, art, 5.0, 5.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 500.0, 5.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 500.0, 5.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
     let bad: Vec<_> = b.audit.as_ref().unwrap().out.iter().filter(|l| l.contains("BAD")).cloned().collect();
     assert_eq!(bad.len(), 1, "{bad:?}");
     assert!(bad[0].contains("tex wide.png") && bad[0].contains("-25.0%"), "{bad:?}");
@@ -599,4 +599,59 @@ fn shape4_and_soft_shadow_records() {
     let mut bad = Enc::default();
     bad.rec(OP_SHAPE4, &[f(0.0), f(0.0), f(1.0), f(1.0), f(f32::NAN), 0, 0, 0, 0, 0, 0]);
     assert!(b.submit(&bad.0, 0, &a, &[], false).is_err());
+}
+
+/// gd_ui_layout: a row of a fixed box, a text leaf and a spring lays out natively; the text leaf is as wide as
+/// the host's own measure of its words; a wrapping paragraph in a narrow column takes more than one line; a bad
+/// request is refused.
+#[test]
+fn layout_request_lays_out() {
+    use super::layout;
+    let a = atlas();
+    let f = |v: f32| v.to_bits();
+    let nan = f32::NAN.to_bits();
+    // a node: flags, gap, pad x4, five (kind, value) sizes, grow, shrink, aspect, abs x, abs y, kids, text kind
+    let node = |flags: u32, gap: f32, pad: f32, w: (u32, f32), h: (u32, f32), grow: f32, kids: u32, text: u32| {
+        let mut v = vec![flags, f(gap), f(pad), f(pad), f(pad), f(pad), w.0, f(w.1), h.0, f(h.1), 0, 0, 0, 0, 0, 0, f(grow), f(0.0), nan, nan, nan, kids, text];
+        v.shrink_to_fit();
+        v
+    };
+    let words = |s: &str| {
+        let mut b = s.as_bytes().to_vec();
+        while b.len() % 4 != 0 {
+            b.push(0);
+        }
+        b.chunks(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect::<Vec<u32>>()
+    };
+    let role = 2 | (13 << 16);
+    let mut req = vec![layout::MAGIC, 5, 4, f(300.0), nan];
+    req.extend(node(0, 0.0, 0.0, (1, 20.0), (1, 20.0), 0.0, 0, 0)); // 0: a 20 x 20 box
+    req.extend(node(0, 0.0, 0.0, (0, 0.0), (0, 0.0), 0.0, 0, 1)); // 1: one line
+    req.extend([role as u32, 1, f(17.0), 5]);
+    req.extend(words("Words"));
+    req.extend(node(0, 0.0, 0.0, (0, 0.0), (0, 0.0), 1.0, 0, 0)); // 2: a spring
+    req.extend(node(0, 0.0, 0.0, (1, 60.0), (0, 0.0), 0.0, 0, 1)); // 3: a paragraph in a 60-wide box
+    req.extend([role as u32, 6, f(17.0), 29]);
+    req.extend(words("several words that must wrap"));
+    req.extend(node(4 << 2, 5.0, 10.0, (1, 300.0), (0, 0.0), 0.0, 4, 0)); // 4: the row (align stretch)
+    req.extend([0, 1, 2, 3]);
+    let bytes: Vec<u8> = req.iter().flat_map(|w| w.to_le_bytes()).collect();
+    let r = layout::compute(&bytes, &a).unwrap();
+    assert_eq!(r.len(), 20);
+    let rect = |i: usize| [r[i * 4], r[i * 4 + 1], r[i * 4 + 2], r[i * 4 + 3]];
+    assert_eq!(rect(0)[..3], [10.0, 10.0, 20.0]);
+    let tw = a.measure("Words", cmd::style(role));
+    assert!((rect(1)[2] - tw).abs() < 0.01 && rect(1)[0] == 35.0, "{:?} vs {tw}", rect(1));
+    // the spring takes what is left: 300 - 20 (padding) - 20 - words - 60 - 3 gaps of 5
+    assert!((rect(2)[2] - (300.0 - 20.0 - 20.0 - tw - 60.0 - 15.0)).abs() < 0.01, "{:?}", rect(2));
+    assert!(rect(3)[3] >= 34.0 && rect(3)[2] == 60.0, "{:?}", rect(3));
+    assert_eq!(rect(4)[2], 300.0);
+    assert!(rect(4)[3] >= rect(3)[3] + 20.0);
+    // refused: a child that is not before its parent, a truncated request, a bad magic
+    let mut bad = vec![layout::MAGIC, 1, 0, nan, nan];
+    bad.extend(node(0, 0.0, 0.0, (0, 0.0), (0, 0.0), 0.0, 1, 0));
+    bad.push(0);
+    assert!(layout::compute(&bad.iter().flat_map(|w| w.to_le_bytes()).collect::<Vec<u8>>(), &a).is_err());
+    assert!(layout::compute(&bytes[..bytes.len() - 8], &a).is_err());
+    assert!(layout::compute(&[0u8; 20], &a).is_err());
 }

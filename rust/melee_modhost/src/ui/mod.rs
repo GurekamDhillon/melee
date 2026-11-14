@@ -13,6 +13,7 @@
 
 pub mod cmd;
 pub mod fighter_art;
+pub mod layout;
 pub mod nodes;
 pub mod theme;
 
@@ -25,7 +26,7 @@ use std::rc::Rc;
 use wasmi::{Caller, Engine, Extern, Linker, Memory, Module, Store, TypedFunc};
 
 /// Fuel per presentation call (a trap or running out disables the mod's presentation instance).
-pub const UI_FUEL: u64 = 16_000_000;
+pub const UI_FUEL: u64 = 4_000_000;
 pub const MAX_UI_MODS: usize = 8;
 
 pub const SESSION_OFFLINE: i32 = 0;
@@ -597,6 +598,42 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         match sh.texs.get(module).and_then(|t| t.get((h as usize).wrapping_sub(1))) {
             Some(r) => ((r.w as i32) << 16) | r.h as i32,
             None => 0,
+        }
+    });
+    // gd-ui-v1.5: flexbox layout of a mod's boxes, computed natively (ui/layout.rs). The answer is four f32 per node
+    // written to `out`; returns the node count, GD_EFULL when `cap` bytes cannot hold it, GD_EINVAL for a bad request.
+    f!("gd_ui_layout", |mut c: Caller<'_, PresData>, ptr: u32, len: u32, out: u32, cap: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) {
+            return GD_ECAP;
+        }
+        if len > 1 << 18 {
+            return GD_EINVAL;
+        }
+        let Some(req) = read_bytes(&c, ptr, len) else { return GD_EINVAL };
+        let res = {
+            let ui = c.data().ui();
+            let sh = ui.borrow();
+            layout::compute(&req, &sh.atlas)
+        };
+        match res {
+            Ok(v) => {
+                if v.len() * 4 > cap as usize {
+                    return GD_EFULL;
+                }
+                let mut b = Vec::with_capacity(v.len() * 4);
+                for x in &v {
+                    b.extend_from_slice(&x.to_le_bytes());
+                }
+                if write_bytes(&mut c, out, &b) { (v.len() / 4) as i32 } else { GD_EINVAL }
+            }
+            Err(what) => {
+                let ui = c.data().ui();
+                let mut sh = ui.borrow_mut();
+                if sh.log.len() < 16 {
+                    sh.log.push(format!("gd_ui_layout refused: {what}"));
+                }
+                GD_EINVAL
+            }
         }
     });
     // ---- body-group tints (notes/envoy-tints.md): add RGB x strength (0..1) to the groups in `mask` (bit per

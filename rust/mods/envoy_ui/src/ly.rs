@@ -1,25 +1,35 @@
-//! Layout for the kit (uiremake): flexbox boxes computed by Taffy, so a screen says what it holds (a column of
-//! rows, a header, a card as high as its words) and the boxes come out of the words' own sizes instead of typed
-//! coordinates that stop fitting when a word, a font size or the screen's shape changes.
+//! Layout for the kit (uiremake): flexbox boxes, so a screen says what it holds (a column of rows, a header, a
+//! card as high as its words) and the boxes come out of the words' own sizes instead of typed coordinates that
+//! stop fitting when a word, a font size or the screen's shape changes.
 //!
 //! The shape follows gpui's wrapper (zed crates/gpui/src/taffy.rs): the tree is rebuilt every frame, text is a
-//! leaf measured through a callback (here the game's own font metrics, `gd_ui_measure`), and one compute pass gives
-//! every node its rectangle. A screen builds its nodes (`Lay::node`, `Lay::boxed`, `Lay::text`, `Lay::leaf` ..),
-//! each carrying what it draws (`P`: a sticker face, its words, an icon, or a box the screen fills itself), calls
-//! `Lay::compute`, then `Lay::draw` paints the tree, parents first.
+//! leaf measured with the font it is drawn in, and one compute pass gives every node its rectangle. A screen builds
+//! its nodes (`Lay::node`, `Lay::boxed`, `Lay::text`, `Lay::leaf` ..), each carrying what it draws (`P`: a sticker
+//! face, its words, an icon, or a box the screen fills itself), calls `Lay::compute`, then `Lay::draw` paints the
+//! tree, parents first.
 //!
-//! Cost: the mod runs in an interpreter, where Taffy takes milliseconds for a panel, so the tree a screen builds is
-//! hashed (styles, words, shape) and Taffy only runs when the hash differs from the screen's last one (`Slot`); a
-//! present that changes nothing reuses the rectangles. A hover or a colour is paint, not layout, and costs nothing.
+//! The compute itself is the host's (`gd_ui_layout`, melee_modhost ui/layout.rs: Taffy, native). It first ran
+//! here, Taffy compiled into the mod: in the wasm interpreter that was 2.8 ms a present for the pause panel and
+//! 3 to 4.5 ms on any present whose content changed, with four times the presentation fuel. The mod now only
+//! describes the tree. The tree is still hashed (styles, words, shape) and sent only when the hash differs from the
+//! screen's last one (`Slot`): a present that changes nothing reuses its rectangles and makes no call. A hover or a
+//! colour is paint, not layout, and costs nothing.
 //!
-//! Memory: Taffy allocates, and a mod has no heap, so the mod's allocator is a bump arena that is emptied when a
-//! frame's first layout begins (`begin`). Nothing allocated here may be kept past the frame; a `Lay` is made,
-//! used and dropped inside one draw call. Presentation only: no layout value ever reaches the sim.
+//! Memory: the tree and its strings need a heap and a mod has none, so the mod's allocator is a bump arena that is
+//! emptied when a frame begins (`begin`). Nothing allocated here may be kept past the frame; a `Lay` is made, used
+//! and dropped inside one draw call. Presentation only: no layout value ever reaches the sim.
 use crate::kit::*;
 use alloc::string::String;
 use alloc::vec::Vec;
 use gd_ui_enc::*;
-use taffy::prelude::*;
+
+#[link(wasm_import_module = "gd_ui")]
+extern "C" {
+    /// Lay a tree out (the request format: melee_modhost ui/layout.rs). Writes four f32 per node (x, y relative to
+    /// the parent, w, h) to `out`; returns the node count, or a negative error.
+    fn gd_ui_layout(req: *const u32, len: u32, out: *mut f32, cap: u32) -> i32;
+}
+const LAY_MAGIC: u32 = 0x3159_414C;
 
 // ------------------------------------------------------------------ the frame arena
 
@@ -219,61 +229,38 @@ impl St {
         self
     }
 
-    fn dim(d: D) -> Dimension {
-        match d {
-            D::Auto => Dimension::auto(),
-            D::Px(v) => Dimension::length(v),
-            D::Pct(v) => Dimension::percent(v),
+    /// This style as the request's words (ui/layout.rs), followed by the child count and the text kind.
+    fn put(&self, out: &mut Vec<u32>, kids: u32, text_kind: u32) {
+        let al = |a: Option<A>| a.map_or(0u32, |a| a as u32 + 1);
+        out.push(self.col as u32 | (self.wrap as u32) << 1 | al(self.align) << 2 | al(self.justify) << 6 | al(self.this) << 10);
+        for v in [self.gap, self.pad[0], self.pad[1], self.pad[2], self.pad[3]] {
+            out.push(v.to_bits());
         }
-    }
-    fn lpa(d: D) -> LengthPercentageAuto {
-        match d {
-            D::Auto => LengthPercentageAuto::auto(),
-            D::Px(v) => LengthPercentageAuto::length(v),
-            D::Pct(v) => LengthPercentageAuto::percent(v),
-        }
-    }
-    fn style(&self) -> Style {
-        let items = |a: A| match a {
-            A::Start => AlignItems::FLEX_START,
-            A::Center => AlignItems::CENTER,
-            A::End => AlignItems::FLEX_END,
-            _ => AlignItems::STRETCH,
-        };
-        let mut s = Style {
-            display: Display::Flex,
-            flex_direction: if self.col { FlexDirection::Column } else { FlexDirection::Row },
-            flex_wrap: if self.wrap { FlexWrap::Wrap } else { FlexWrap::NoWrap },
-            gap: Size { width: LengthPercentage::length(self.gap), height: LengthPercentage::length(self.gap) },
-            padding: Rect { left: LengthPercentage::length(self.pad[0]), top: LengthPercentage::length(self.pad[1]), right: LengthPercentage::length(self.pad[2]), bottom: LengthPercentage::length(self.pad[3]) },
-            size: Size { width: St::dim(self.w), height: St::dim(self.h) },
-            min_size: Size { width: St::lpa(self.min_w), height: St::lpa(self.min_h) },
-            max_size: Size { width: St::lpa(self.max_w), height: LengthPercentageAuto::auto() },
-            flex_grow: self.grow,
-            flex_shrink: self.shrink,
-            aspect_ratio: self.aspect,
-            ..Style::DEFAULT
-        };
-        if let Some(a) = self.align {
-            s.align_items = items(a);
-        }
-        if let Some(a) = self.this {
-            s.align_self = Some(items(a));
-        }
-        if let Some(a) = self.justify {
-            s.justify_content = match a {
-                A::Start => JustifyContent::FLEX_START,
-                A::Center => JustifyContent::CENTER,
-                A::End => JustifyContent::FLEX_END,
-                A::Between => JustifyContent::SPACE_BETWEEN,
-                A::Stretch => JustifyContent::STRETCH,
+        for d in [self.w, self.h, self.min_w, self.max_w, self.min_h] {
+            let (k, v) = match d {
+                D::Auto => (0u32, 0.0f32),
+                D::Px(v) => (1, v),
+                D::Pct(v) => (2, v),
             };
+            out.push(k);
+            out.push(v.to_bits());
         }
-        if let Some((x, y)) = self.abs {
-            s.position = Position::Absolute;
-            s.inset = Rect { left: St::lpa(D::Px(x)), top: St::lpa(D::Px(y)), right: LengthPercentageAuto::auto(), bottom: LengthPercentageAuto::auto() };
-        }
-        s
+        out.push(self.grow.to_bits());
+        out.push(self.shrink.to_bits());
+        out.push(self.aspect.unwrap_or(f32::NAN).to_bits());
+        out.push(self.abs.map_or(f32::NAN, |a| a.0).to_bits());
+        out.push(self.abs.map_or(f32::NAN, |a| a.1).to_bits());
+        out.push(kids);
+        out.push(text_kind);
+    }
+}
+
+/// `s` appended to the request: its bytes, padded to a word.
+fn put_str(out: &mut Vec<u32>, s: &str) {
+    for c in s.as_bytes().chunks(4) {
+        let mut q = [0u8; 4];
+        q[..c.len()].copy_from_slice(c);
+        out.push(u32::from_le_bytes(q));
     }
 }
 
@@ -356,9 +343,8 @@ struct Node {
 pub const MAX_NODES: usize = 224;
 
 /// One screen's last layout: the hash of everything that decides it and each node's rectangle relative to its
-/// parent. Taffy runs in the wasm interpreter at a few milliseconds a panel, so it only runs when a screen's
-/// words, sizes or structure change; a present whose tree hashes the same takes last present's rectangles
-/// (measured: the pause panel 2.8 ms a present recomputed every time).
+/// parent. The host is asked only when a screen's words, sizes or structure change; a present whose tree hashes
+/// the same takes last present's rectangles.
 struct Slot {
     key: u64,
     n: u32,
@@ -497,39 +483,65 @@ impl Lay {
             return;
         }
         unsafe { STATS.0 += 1 };
-        // band units are not pixels (1.5 px at 720p): no rounding here, the host snaps straight edges itself
-        let mut t: TaffyTree<u32> = TaffyTree::with_capacity(n);
-        t.disable_rounding();
-        // children are always made before their parents: one pass in creation order builds the tree
-        let mut ids: Vec<NodeId> = Vec::with_capacity(n);
-        let mut tmp: Vec<NodeId> = Vec::with_capacity(16);
-        for (i, nd) in self.nodes.iter().enumerate().take(n) {
-            let id = if nd.kids.1 == 0 {
-                t.new_leaf_with_context(nd.st.style(), i as u32).unwrap()
-            } else {
-                tmp.clear();
-                for k in &self.kids[nd.kids.0 as usize..(nd.kids.0 + nd.kids.1) as usize] {
-                    if let Some(c) = ids.get(*k as usize) {
-                        tmp.push(*c);
-                    }
+        // the request: the header, then every node in creation order (children are always made before their
+        // parents, which is the order the host wants them in)
+        let mut req: Vec<u32> = Vec::with_capacity(2048);
+        req.extend_from_slice(&[LAY_MAGIC, n as u32, root.0, w.unwrap_or(f32::NAN).to_bits(), h.unwrap_or(f32::NAN).to_bits()]);
+        for nd in self.nodes.iter().take(n) {
+            match nd.words.as_ref() {
+                None => {
+                    nd.st.put(&mut req, nd.kids.1, 0);
+                    req.extend_from_slice(&self.kids[nd.kids.0 as usize..(nd.kids.0 + nd.kids.1) as usize]);
                 }
-                t.new_with_children(nd.st.style(), &tmp).unwrap()
-            };
-            ids.push(id);
-        }
-        let Some(rid) = ids.get(root.0 as usize).copied() else { return };
-        let space = Size { width: w.map_or(AvailableSpace::MaxContent, AvailableSpace::Definite), height: h.map_or(AvailableSpace::MaxContent, AvailableSpace::Definite) };
-        let nodes = &self.nodes;
-        let _ = t.compute_layout_with_measure(rid, space, |inputs, _, ctx, style| {
-            taffy::compute_leaf_layout(inputs, style, |_, _| 0.0, |known, avail| match ctx.and_then(|i| nodes.get(*i as usize)).and_then(|nd| nd.words.as_ref()) {
-                Some(wd) => measure(wd, known, avail),
-                None => Size::ZERO,
-            })
-        });
-        for (i, id) in ids.iter().enumerate() {
-            if let Ok(l) = t.layout(*id) {
-                slot.r[i] = [l.location.x, l.location.y, l.size.width, l.size.height];
+                Some(wd) if !wd.rich => {
+                    nd.st.put(&mut req, 0, 1);
+                    req.extend_from_slice(&[(wd.role)(wd.px) as u32, wd.lines as u32, wd.lh.to_bits(), wd.s.len() as u32]);
+                    put_str(&mut req, &wd.s);
+                }
+                Some(wd) => {
+                    // a card's text in the keyword language: one run a word, keywords in the display face, the
+                    // spaces between them counted (kit::rich's own wrapping rule, which the host applies)
+                    use envoy_data::keywords::*;
+                    nd.st.put(&mut req, 0, 2);
+                    let (body, key) = (bs(wd.px), d(wd.px));
+                    let space = tw(" ", body).max(wd.px as f32 * 0.25);
+                    let at = req.len();
+                    req.extend_from_slice(&[wd.lines as u32, wd.lh.to_bits(), space.to_bits(), 0]);
+                    let (mut runs, mut spaces) = (0u32, 0u32);
+                    let mut run = |req: &mut Vec<u32>, role: i32, word: &str, spaces: &mut u32| {
+                        let punct = word.starts_with([':', ',', '.', ';', ')']) as u32;
+                        req.extend_from_slice(&[role as u32, *spaces | punct << 16, word.len() as u32]);
+                        put_str(req, word);
+                        *spaces = 0;
+                        runs += 1;
+                    };
+                    for sp in spans(&wd.s) {
+                        match sp {
+                            Span::Key(k) => run(&mut req, key, KEYWORDS[k].word, &mut spaces),
+                            Span::Text(t) => {
+                                let mut first = true;
+                                for word in t.split(' ') {
+                                    if !first {
+                                        spaces += 1;
+                                    }
+                                    first = false;
+                                    if !word.is_empty() {
+                                        run(&mut req, body, word, &mut spaces);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    req[at + 3] = runs;
+                }
             }
+        }
+        let got = unsafe { gd_ui_layout(req.as_ptr(), (req.len() * 4) as u32, slot.r.as_mut_ptr().cast::<f32>(), (MAX_NODES * 16) as u32) };
+        if got != n as i32 {
+            // refused (the host logs why): no rectangles, so nothing of this tree is drawn this present
+            slot.key = 0;
+            slot.n = 0;
+            return;
         }
         slot.key = key;
         slot.n = n as u32;
@@ -623,29 +635,4 @@ fn put_text(e: &mut E, nd: &Node, r: R, rgba: u32, align: i32) {
         let fit = ((r.h + 0.5) / wd.lh) as usize;
         wrap(e, x, top, r.w + 0.5, wd.role, wd.px, wd.lh, rgba, align, &wd.s, fit.clamp(1, wd.lines));
     }
-}
-
-/// A text leaf's size for the room it is offered: the game's own font metrics (`gd_ui_measure`).
-fn measure(wd: &Words, known: Size<Option<f32>>, avail: Size<AvailableSpace>) -> Size<f32> {
-    let role = (wd.role)(wd.px);
-    // a rich line's keywords are in the display face, the wider one: its width is an upper bound
-    let natural = if wd.rich { tw(&wd.s, d(wd.px)).max(tw(&wd.s, role)) } else { tw(&wd.s, role) };
-    let room = known.width.or(match avail.width {
-        AvailableSpace::Definite(w) => Some(w),
-        // the narrowest it can be: wrapping words their longest word, a single line nothing (it is set smaller)
-        AvailableSpace::MinContent => Some(if wd.lines > 1 { wd.s.split(' ').map(|w| tw(w, role)).fold(0.0, f32::max) } else { 0.0 }),
-        AvailableSpace::MaxContent => None,
-    });
-    let w = match room {
-        Some(r) if r < natural => r,
-        _ => natural,
-    };
-    let lines = if wd.lines <= 1 || w >= natural {
-        1
-    } else if wd.rich {
-        (rich_lines(w + 0.5, wd.px, &wd.s).max(1) as usize).min(wd.lines)
-    } else {
-        wrap_lines(&wd.s, w + 0.5, role).clamp(1, wd.lines)
-    };
-    Size { width: known.width.unwrap_or(w), height: known.height.unwrap_or(lines as f32 * wd.lh) }
 }

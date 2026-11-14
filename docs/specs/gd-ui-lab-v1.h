@@ -121,6 +121,10 @@ int      gd_ui_band_rect(float out[6]);                          /* GAP-0: band 
 /* gd-ui-v1.5 records (uiremake): OP_SHAPE kind 4 = a soft (Gaussian) shadow of a rounded box, spread = the blur's
  * standard deviation; OP_SHAPE4 (16) = a box with a radius for each corner: x, y, w, h, r_tl, r_tr, r_br, r_bl,
  * border, fill RGBA, border RGBA. */
+int      gd_ui_layout(const uint32_t* req, unsigned len, float* out, unsigned cap); /* v1.5: flexbox layout of a tree
+                                                                         * of boxes (the request: melee_modhost
+                                                                         * ui/layout.rs); 4 floats per node to out;
+                                                                         * returns the node count or an error */
 int      gd_ui_tex_size(uint32_t tex);                           /* (w << 16) | h in texels of a loaded texture, 0: bad handle */
 int      gd_ui_theme(int theme);
 unsigned gd_ui_token(int tok);

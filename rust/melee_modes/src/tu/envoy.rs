@@ -611,7 +611,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     let explore = !petey && ex::enabled() && ex::available(ex::GD_STAGE_SSE_LAKE3) && ex::map().is_some();
     let room_stage = if explore { ex::GD_STAGE_SSE_LAKE3 } else { 0 };
     ex::WANT = explore;
-    ex::PICK = false; // a VS pick never leaks into a run
+    ex::PICK = 0; // a VS pick never leaks into a run
     ex::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it
     // a GD stage rides on its carrier (Final Destination's ground kind here)
     let stage = if petey || ex::is_gd_stage(room_stage) { GR_FD } else { PLAN[P_STAGE] };

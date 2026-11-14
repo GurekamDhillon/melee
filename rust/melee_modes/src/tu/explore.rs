@@ -41,6 +41,15 @@ const SECS: [SecDef; 3] = [
     SecDef { file: "080103a.pac", off: [1500.0, 0.0], model: "081mAdvJungle03a", room: 1 },
     SecDef { file: "080103b.pac", off: [3000.0, 0.0], model: "081mAdvJungle03b", room: 2 },
 ];
+/// The Jungle, step 2 (`060002`) and its side room (`060002a`, the water wheel), its own GD stage slot.
+const JUNGLE_SECS: [SecDef; 2] = [
+    SecDef { file: "060002.pac", off: [0.0, 0.0], model: "060mAdvJungle02", room: 0 },
+    SecDef { file: "060002a.pac", off: [3000.0, 0.0], model: "060mAdvJungle02a", room: 1 },
+];
+/// The sections of GD stage `id`.
+fn secs_of(id: i32) -> &'static [SecDef] {
+    if id == GD_STAGE_SSE_JUNGLE { &JUNGLE_SECS } else { &SECS }
+}
 /// Petey's arena (the boss fight, `ARENA_WANT`): the adventure stage of his fight, one section at the origin.
 const ARENA_SECS: [SecDef; 1] = [SecDef { file: "030101.pac", off: [0.0, 0.0], model: "030vAdvStadium", room: 0 }];
 
@@ -179,9 +188,10 @@ pub struct Block {
     pub hh: f32,
 }
 
-fn load() -> Result<Map, String> {
-    let mut m = load_secs(&SECS, true, true)?;
-    link_doors(&mut m, &SECS);
+fn load(id: i32) -> Result<Map, String> {
+    let secs = secs_of(id);
+    let mut m = load_secs(secs, true, true)?;
+    link_doors(&mut m, secs);
     Ok(m)
 }
 
@@ -550,6 +560,8 @@ pub const GD_STAGE_FIRST: i32 = 0x7000;
 pub const GD_STAGE_LAST: i32 = 0x70FF;
 /// The Lake, step 3 (+ its side rooms), from the owner's own Brawl files.
 pub const GD_STAGE_SSE_LAKE3: i32 = 0x7001;
+/// The Jungle, step 2 (+ its water-wheel side room).
+pub const GD_STAGE_SSE_JUNGLE: i32 = 0x7002;
 /// Final Destination's external stage id: the carrier of every GD stage (its stage proc, camera and music).
 pub const FD_STKIND: i32 = 0x20;
 
@@ -560,7 +572,15 @@ pub struct GdStage {
     pub files: &'static [&'static str],
 }
 /// The GD stage table (the stage select appends one icon per available row).
-pub const GD_STAGES: [GdStage; 1] = [GdStage { id: GD_STAGE_SSE_LAKE3, name: "The Lake 3 (SSE)", files: &["080103.pac", "080103a.pac"] }];
+pub const GD_STAGES: [GdStage; 2] = [
+    GdStage { id: GD_STAGE_SSE_LAKE3, name: "The Lake 3 (SSE)", files: &["080103.pac", "080103a.pac"] },
+    GdStage { id: GD_STAGE_SSE_JUNGLE, name: "The Jungle (SSE)", files: &["060002.pac", "060002a.pac"] },
+];
+
+/// Whether any GD stage can be played.
+fn any_available() -> bool {
+    GD_STAGES.iter().any(|g| available(g.id))
+}
 
 pub fn is_gd_stage(id: i32) -> bool {
     (GD_STAGE_FIRST..=GD_STAGE_LAST).contains(&id)
@@ -577,14 +597,17 @@ pub fn gd_name(id: i32) -> Option<&'static str> {
 
 /// The VS match about to start asked for the SSE stage (set by the stage select / `--match ...,sse`, read at the
 /// stage load). Plain static: set before the match, constant through it.
-pub static mut PICK: bool = false;
+/// The GD stage id picked (0 none).
+pub static mut PICK: i32 = 0;
+/// The GD stage id of the map in play (set at each stage load; 0 none).
+pub static mut CUR_ID: i32 = 0;
 
 /// The retail stage id that carries stage `id`: a GD stage -> Final Destination (and the pick is noted); any other
 /// id -> itself (and any earlier pick is cleared). An unavailable GD stage falls back to Final Destination itself.
 pub fn carrier(id: i32) -> i32 {
     unsafe {
-        PICK = is_gd_stage(id) && id == GD_STAGE_SSE_LAKE3 && available(id);
-        if PICK {
+        PICK = if is_gd_stage(id) && available(id) { id } else { 0 };
+        if PICK != 0 {
             eprintln!("explore: stage {id:#x} ({}) on the Final Destination carrier", gd_name(id).unwrap_or("?"));
         }
     }
@@ -600,13 +623,20 @@ pub fn enabled() -> bool {
 /// The map, loaded once on a helper thread (system heap, outside the arena rollback rewrites). `None` when off or
 /// without the owner's files.
 pub fn map() -> Option<&'static Map> {
-    static M: std::sync::OnceLock<Option<Map>> = std::sync::OnceLock::new();
-    M.get_or_init(|| {
-        if !available(GD_STAGE_SSE_LAKE3) {
+    let id = unsafe { CUR_ID };
+    map_of(if id != 0 { id } else { GD_STAGE_SSE_LAKE3 })
+}
+
+/// GD stage `id`'s map, loaded once on a helper thread.
+pub fn map_of(id: i32) -> Option<&'static Map> {
+    static M: [std::sync::OnceLock<Option<Map>>; 2] = [const { std::sync::OnceLock::new() }; 2];
+    let k = if id == GD_STAGE_SSE_JUNGLE { 1 } else { 0 };
+    M[k].get_or_init(|| {
+        if !available(id) {
             return None;
         }
         let t = std::time::Instant::now();
-        let r = std::thread::spawn(load).join().unwrap_or_else(|_| Err("loader panicked".into()));
+        let r = std::thread::spawn(move || load(id)).join().unwrap_or_else(|_| Err("loader panicked".into()));
         match &r {
             Ok(m) => eprintln!(
                 "explore: map loaded ({} sections, {} verts, {} lines, {} doors, {} spawns, {} crates, {} blocks, {} tris) in {} ms",
@@ -701,10 +731,11 @@ pub unsafe fn coll_override() -> *mut MapCollData {
         ARENA = true;
         a
     } else {
-        let want = if crate::tu::envoy::armed() != 0 { WANT } else { PICK };
-        if !want {
+        let want = if crate::tu::envoy::armed() != 0 { if WANT { GD_STAGE_SSE_LAKE3 } else { 0 } } else { PICK };
+        if want == 0 {
             return core::ptr::null_mut();
         }
+        CUR_ID = want;
         let Some(m) = map() else { return core::ptr::null_mut() };
         m
     };
@@ -1099,7 +1130,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
 
 /// Install the hooks (the engine start). Nothing is hooked without the owner's Brawl files (or Petey's mode).
 pub fn install() {
-    if !available(GD_STAGE_SSE_LAKE3) && !crate::tu::petey::selected() {
+    if !any_available() && !crate::tu::petey::selected() {
         return;
     }
     unsafe {
@@ -1109,10 +1140,13 @@ pub fn install() {
         melee_fighter::tu::ftdrawcommon::MAP_DRAW = Some(draw);
     }
     // start loading now, in the background (the first stage load that needs it waits for it there)
-    if available(GD_STAGE_SSE_LAKE3) {
-        std::thread::spawn(|| {
-            let _ = map();
-        });
+    for g in GD_STAGES.iter() {
+        if available(g.id) {
+            let id = g.id;
+            std::thread::spawn(move || {
+                let _ = map_of(id);
+            });
+        }
     }
     if crate::tu::petey::selected() {
         let _ = arena();
@@ -1173,6 +1207,24 @@ mod lake3_tests {
         for d in m.doors.iter().filter(|d| d.into_room || d.back) {
             assert!(d.to >= 0, "room door unlinked");
         }
+        assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"));
+    }
+}
+
+#[cfg(test)]
+mod jungle_tests {
+    /// With the owner's Brawl files (skipped otherwise): The Jungle's main section links its room door to the
+    /// water-wheel room and back, and every enemy point has a kind.
+    #[test]
+    fn jungle_links() {
+        let secs = super::secs_of(super::GD_STAGE_SSE_JUNGLE);
+        let Ok(mut m) = super::load_secs(secs, true, true) else { return };
+        super::link_doors(&mut m, secs);
+        for (i, d) in m.doors.iter().enumerate() {
+            eprintln!("door {i} sec {} type {} to {} exit {} back {} room {}", d.sec, d.kind, d.to, d.exit, d.back, d.into_room);
+        }
+        eprintln!("spawns {} crates {} blocks {} lines {}", m.spawns.len(), m.crates.len(), m.blocks.len(), m.lines.len());
+        assert!(m.doors.iter().any(|d| d.sec == 0 && d.into_room && d.to >= 0), "no room door linked");
         assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"));
     }
 }

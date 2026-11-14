@@ -1342,6 +1342,7 @@ dependencies = [
  "brawl_boss",
  "melee_chara",
  "melee_core",
+ "melee_data",
  "melee_fighter",
  "melee_fptrace",
  "melee_items",

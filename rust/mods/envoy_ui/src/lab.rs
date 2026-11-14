@@ -387,7 +387,8 @@ fn rows_of(page: usize) -> usize {
 }
 
 fn inv(v: &[i32; VW], id: i32) -> i32 {
-    if (0..ITEM_IDS as i32).contains(&id) { v[V_INV + id as usize] } else { 0 }
+    // player 1's copies; ids 48+ (the synergy lane) live in V_INV2 (inv_word)
+    if (1..ITEM_IDS as i32).contains(&id) { v[inv_word(0, id as usize)] } else { 0 }
 }
 fn off(v: &[i32; VW], id: i32) -> bool {
     (0..64).contains(&id) && (v[VL_OFF + id as usize / 32] as u32) >> (id % 32) & 1 != 0
@@ -545,8 +546,9 @@ unsafe fn nav(p: &mut Panel, v: &[i32; VW], e: u32) {
                     presets_save();
                     say(p, ["Saved to preset 1", "Saved to preset 2", "Saved to preset 3", "Saved to preset 4"][s]);
                 } else {
-                    apply(s);
+                    // said first: apply logs one command per item, and the host keeps only so many log lines a present
                     say(p, ["Preset 1 loaded", "Preset 2 loaded", "Preset 3 loaded", "Preset 4 loaded"][s]);
+                    apply(s);
                 }
             }
             _ => {

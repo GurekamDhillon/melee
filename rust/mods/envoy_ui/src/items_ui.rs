@@ -418,7 +418,7 @@ pub unsafe fn bling(v: &[i32; VW]) {
         if left <= 0 {
             continue;
         }
-        let n = ITEMS.iter().filter(|it| v[V_INV + p * ITEM_IDS + it.id as usize] > 0).count();
+        let n = ITEMS.iter().filter(|it| v[inv_word(p, it.id as usize)] > 0).count();
         if n == 0 {
             continue;
         }
@@ -429,7 +429,7 @@ pub unsafe fn bling(v: &[i32; VW]) {
         let r = 6.0 + 9.0 * out;
         let mut i = 0;
         for it in ITEMS.iter() {
-            if v[V_INV + p * ITEM_IDS + it.id as usize] <= 0 {
+            if v[inv_word(p, it.id as usize)] <= 0 {
                 continue;
             }
             let ang = age * 0.09 + i as f32 * TAU / n as f32 + p as f32 * 0.5;
@@ -655,7 +655,7 @@ pub unsafe fn body(v: &[i32; VW]) {
         // per group bit: (quality, id) of the best held item
         let mut best = [(0i32, 0i32); 6];
         for id in 1..ITEM_IDS as i32 {
-            if v[V_INV + p * ITEM_IDS + id as usize] <= 0 {
+            if v[inv_word(p, id as usize)] <= 0 {
                 continue;
             }
             let (m, q) = (body_groups(id), item(id).map_or(0, |it| it.quality as i32) + 1);

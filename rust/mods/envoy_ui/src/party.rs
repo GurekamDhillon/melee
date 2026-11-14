@@ -219,7 +219,7 @@ pub fn party_from_view(v: &[i32; VW]) -> Party {
         q.pairs[p * 2] = v[pb(p) + P_MAIN];
         q.pairs[p * 2 + 1] = v[pb(p) + P_PARTNER];
         for id in 1..envoy_data::items::ITEM_IDS {
-            q.items[p][id] = v[V_INV + p * envoy_data::items::ITEM_IDS + id].clamp(0, 255) as u8;
+            q.items[p][id] = v[envoy_data::view::inv_word(p, id)].clamp(0, 255) as u8;
         }
     }
     q

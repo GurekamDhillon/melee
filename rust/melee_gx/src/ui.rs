@@ -15,7 +15,11 @@
 use crate::render::Renderer;
 
 /// Atlas page size (texels, square, RGBA8).
-pub const ATLAS: u32 = 2048;
+pub const ATLAS: u32 = 4096;
+/// Mip levels of the atlas (level 0 included). Every allocation is aligned to `CELL` texels and followed by a `CELL`
+/// gutter, so a texel of the coarsest level never mixes two entries (uiquality).
+pub const ATLAS_MIPS: u32 = 4;
+pub const CELL: u16 = 1 << (ATLAS_MIPS - 1);
 
 /// Instance flag: the quad (and its clip rect) is in window pixels, not band units.
 pub const Q_WINDOW: u32 = 1;
@@ -27,8 +31,25 @@ pub const Q_IN_L: u32 = 4;
 pub const Q_IN_T: u32 = 8;
 pub const Q_IN_R: u32 = 16;
 pub const Q_IN_B: u32 = 32;
+/// Instance flag: the quad shows a whole atlas entry (not a cell of a sheet), so the texels round it are the atlas's
+/// clear gutter. The quad then reaches one pixel past its rect and filtering may read into the gutter: the art's edge
+/// fades out through the filter instead of being cut off at the rect (a minified sprite keeps its outline).
+pub const Q_FULL: u32 = 64;
+/// Instance flags bits 16..19: an analytic shape (uiquality). The quad samples no texture: the fragment shader
+/// evaluates the shape's signed distance in device pixels, so it is exact and antialiased at every size, resolution,
+/// rotation and tilt, and one quad is the whole shape (no pieces, so no seams). `shape` = [corner radius, border
+/// width, glow spread] in the quad's units; `rgba` fills, `rgba2` is the border (drawn inside the outline).
+pub const Q_SHAPE_SHIFT: u32 = 16;
+pub const Q_SHAPE_MASK: u32 = 15 << Q_SHAPE_SHIFT;
+/// A rounded box (a circle or a pill when the radius reaches half the short side); with a border and a clear fill,
+/// a ring. `shape[2]` > 0 dashes the border: that long on, 0.8 of it off (the period is fitted to the perimeter).
+pub const SHAPE_BOX: u32 = 1;
+/// A diamond inscribed in the rect.
+pub const SHAPE_DIAMOND: u32 = 2;
+/// A rounded box with a soft falloff reaching `shape[2]` outside it (the rect already includes the spread).
+pub const SHAPE_GLOW: u32 = 3;
 
-/// One UI instance: 80 bytes, uploaded as-is (`#[repr(C)]`, little-endian like the GPU).
+/// One UI instance: 96 bytes, uploaded as-is (`#[repr(C)]`, little-endian like the GPU).
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct UiQuad {
@@ -48,6 +69,11 @@ pub struct UiQuad {
     pub piv: [f32; 2],
     /// `[effect id, effect colour 0xRRGGBBAA]` ([`FX_NONE`] .. [`FX_GLOW`], envoy-fx.md); 0 draws exactly as before.
     pub fx: [u32; 2],
+    /// Shapes: [corner radius, border width, glow spread] in the quad's units. SDF text: `shape[1]` widens the glyph
+    /// by that much of the distance range (an outline pass under the fill).
+    pub shape: [f32; 3],
+    /// Shapes: the border colour, 0xRRGGBBAA.
+    pub rgba2: u32,
 }
 
 /// UI quad effects (`gd_ui_node_effect`, the `OP_EFFECT` record): presentation only, timed by the render clock.
@@ -85,8 +111,8 @@ impl AtlasRect {
     }
 }
 
-/// Host 9-slice pieces (lab-ui-spec.md 7.3): rounded fills and borders per theme radius, and the pre-blurred glow.
-/// Ids match `GD_UI_SLICE_*` in docs/specs/gd-ui-lab-v1.h.
+/// Host slice pieces (lab-ui-spec.md 7.3): rounded fills and borders per theme radius, and the glow. Each is drawn
+/// as one analytic shape quad (uiquality); ids match `GD_UI_SLICE_*` in docs/specs/gd-ui-lab-v1.h.
 #[derive(Clone, Copy, Debug)]
 pub struct SliceDef {
     pub radius: f32,
@@ -143,8 +169,14 @@ pub fn glyph_char(i: usize) -> char {
 }
 
 /// The atlas page: a CPU image plus the regions changed since the last upload.
+///
+/// The page is premultiplied alpha and carries its own mip chain, both built when an entry is written (at load), so
+/// an upload is a plain copy. Rows are allocated as the shelves reach them: an almost empty atlas costs almost nothing.
 pub struct Atlas {
+    /// Level 0, premultiplied RGBA8, `ATLAS` texels wide, `rows()` rows.
     pub px: Vec<u8>,
+    /// Levels 1.. (each half the width of the one before), covering the same rows.
+    pub mips: [Vec<u8>; (ATLAS_MIPS - 1) as usize],
     /// Changed regions (texels) the renderer uploads at the next present, then clears.
     pub dirty: Vec<AtlasRect>,
     /// Bumped on every change (the renderer re-uploads when it differs from what it last saw).
@@ -153,8 +185,7 @@ pub struct Atlas {
     pub white: AtlasRect,
     /// The UI fonts (Inter, JetBrains Mono; regular and bold) as SDF glyph tiles.
     pub faces: Box<[crate::ui_font::Face; crate::ui_font::N_FACES]>,
-    /// Per slice id: the tile and its corner size in texels.
-    pub slices: [(AtlasRect, f32); SLICES.len()],
+    /// Built-in bitmap kit pieces (only the hatch is a bitmap; the round pieces are analytic shapes).
     pub kit: [AtlasRect; KIT_PIECES.len()],
 }
 
@@ -169,7 +200,8 @@ fn smooth(a: f32) -> u8 {
 }
 
 /// Signed distance from (px, py) to a rounded box of half size (hx, hy) and radius r centred at 0.
-fn sd_round_box(px: f32, py: f32, hx: f32, hy: f32, r: f32) -> f32 {
+pub fn sd_round_box(px: f32, py: f32, hx: f32, hy: f32, r: f32) -> f32 {
+    let r = r.min(hx).min(hy);
     let qx = px.abs() - hx + r;
     let qy = py.abs() - hy + r;
     let ox = qx.max(0.0);
@@ -178,92 +210,85 @@ fn sd_round_box(px: f32, py: f32, hx: f32, hy: f32, r: f32) -> f32 {
 }
 
 impl Atlas {
-    /// The page with the host's own content: a white texel, the glyphs, the 9-slice tiles and the kit pieces.
+    /// The page with the host's own content: a white block, the glyphs and the hatch.
     pub fn new() -> Atlas {
         let mut a = Atlas {
-            px: vec![0u8; (ATLAS * ATLAS * 4) as usize],
+            px: Vec::new(),
+            mips: Default::default(),
             dirty: Vec::with_capacity(64),
             generation: 1,
-            shelf: (0, 0, 0),
+            shelf: (CELL, CELL, 0),
             white: AtlasRect::default(),
             faces: Box::new(crate::ui_font::empty_faces()),
-            slices: [(AtlasRect::default(), 0.0); SLICES.len()],
             kit: [AtlasRect::default(); KIT_PIECES.len()],
         };
-        // white: 4x4, sampled at its centre (nearest) so bleeding never matters
-        let w = a.alloc(4, 4).unwrap();
+        // white: an opaque 16x16 block sampled at its centre, so no filter and no mip level ever reaches its edge
+        let w = a.alloc(16, 16).unwrap();
         a.fill(w, |_, _| [255, 255, 255, 255]);
-        a.white = AtlasRect { x: w.x + 1, y: w.y + 1, w: 2, h: 2 };
-        for (id, s) in SLICES.iter().enumerate().skip(1) {
-            let c = (s.radius + s.glow).ceil().max(1.0);
-            let n = (2.0 * c + 1.0) as u16;
-            let r = a.alloc(n, n).unwrap();
-            let half = c + 0.5; // the shape spans the tile minus the glow
-            let (hx, rad) = (half - s.glow, s.radius);
-            let s2 = *s;
-            a.fill(r, move |x, y| {
-                let (px, py) = (x as f32 + 0.5 - half, y as f32 + 0.5 - half);
-                let d = sd_round_box(px, py, hx, hx, rad);
-                let al = if s2.glow > 0.0 {
-                    if d <= 0.0 { 1.0 } else { (-(d / (s2.glow * 0.5)).powi(2)).exp() * 0.9 }
-                } else if s2.border > 0.0 {
-                    (0.5 - d).clamp(0.0, 1.0) * (0.5 + d + s2.border).clamp(0.0, 1.0)
-                } else {
-                    0.5 - d
-                };
-                [255, 255, 255, smooth(al)]
-            });
-            a.slices[id] = (r, c);
-        }
+        a.white = AtlasRect { x: w.x + 7, y: w.y + 7, w: 2, h: 2 };
         for (id, &(name, w, h)) in KIT_PIECES.iter().enumerate().skip(1) {
+            if name != "ui.hatch" {
+                continue;
+            }
             let r = a.alloc(w, h).unwrap();
-            let (cx, cy) = (w as f32 * 0.5, h as f32 * 0.5);
-            let name = name.to_string();
-            a.fill(r, move |x, y| {
-                let (px, py) = (x as f32 + 0.5 - cx, y as f32 + 0.5 - cy);
-                let d = (px * px + py * py).sqrt();
-                let al = match name.as_str() {
-                    "ui.dot" | "ui.knob" => cx - d + 0.5,
-                    "ui.ring" => (0.5 - (d - (cx - 1.0)).abs() + 1.0).clamp(0.0, 1.0),
-                    "ui.diamond" => cx - (px.abs() + py.abs()) + 0.5,
-                    // two-tone 2 px diagonal stripes (the colour-blind stun hatch)
-                    _ => if ((x + y) / 2) % 2 == 0 { 1.0 } else { 0.45 },
-                };
-                [255, 255, 255, smooth(al)]
-            });
+            // two-tone 2 px diagonal stripes (the colour-blind stun hatch)
+            a.fill(r, move |x, y| [255, 255, 255, smooth(if ((x + y) / 2) % 2 == 0 { 1.0 } else { 0.45 })]);
             a.kit[id] = r;
         }
         a.faces = Box::new(crate::ui_font::build_faces(&mut a));
         a
     }
 
-    /// Shelf allocation with a 1-texel gutter. None when the page is full.
-    pub fn alloc(&mut self, w: u16, h: u16) -> Option<AtlasRect> {
-        let (mut x, mut y, mut sh) = self.shelf;
-        if x as u32 + w as u32 + 1 > ATLAS {
-            x = 0;
-            y += sh + 1;
-            sh = 0;
-        }
-        if y as u32 + h as u32 + 1 > ATLAS || w as u32 > ATLAS {
-            return None;
-        }
-        let r = AtlasRect { x, y, w, h };
-        self.shelf = (x + w + 1, y, sh.max(h));
-        Some(r)
+    /// Rows of level 0 the CPU page holds so far.
+    pub fn rows(&self) -> usize {
+        self.px.len() / (ATLAS as usize * 4)
     }
 
+    fn grow(&mut self, rows: usize) {
+        let rows = rows.next_multiple_of(256).min(ATLAS as usize);
+        if rows <= self.rows() {
+            return;
+        }
+        self.px.resize(rows * ATLAS as usize * 4, 0);
+        for (l, m) in self.mips.iter_mut().enumerate() {
+            let s = l + 1;
+            m.resize((rows >> s) * (ATLAS as usize >> s) * 4, 0);
+        }
+    }
+
+    /// Shelf allocation: the entry starts on a `CELL` boundary and is followed by at least a `CELL` of clear texels,
+    /// so no mip level blends it with a neighbour. None when the page is full.
+    pub fn alloc(&mut self, w: u16, h: u16) -> Option<AtlasRect> {
+        let cell = |v: u16| v.next_multiple_of(CELL) as u32 + CELL as u32;
+        let (cw, ch) = (cell(w), cell(h));
+        let (mut x, mut y, mut sh) = (self.shelf.0 as u32, self.shelf.1 as u32, self.shelf.2 as u32);
+        if x + cw > ATLAS {
+            x = CELL as u32;
+            y += sh;
+            sh = 0;
+        }
+        if y + ch > ATLAS || cw > ATLAS {
+            return None;
+        }
+        self.shelf = ((x + cw) as u16, y as u16, sh.max(ch) as u16);
+        self.grow((y + ch) as usize);
+        Some(AtlasRect { x: x as u16, y: y as u16, w, h })
+    }
+
+    /// Write `r` from straight-alpha texels (stored premultiplied).
     fn fill(&mut self, r: AtlasRect, mut f: impl FnMut(u16, u16) -> [u8; 4]) {
         for y in 0..r.h {
             for x in 0..r.w {
                 let o = (((r.y + y) as usize) * ATLAS as usize + (r.x + x) as usize) * 4;
-                self.px[o..o + 4].copy_from_slice(&f(x, y));
+                let t = f(x, y);
+                let m = |c: u8| ((c as u32 * t[3] as u32 + 127) / 255) as u8;
+                self.px[o..o + 4].copy_from_slice(&[m(t[0]), m(t[1]), m(t[2]), t[3]]);
             }
         }
         self.mark(r);
     }
 
-    /// Copy tight RGBA8 rows into `r` (a mod texture).
+    /// Copy tight straight-alpha RGBA8 rows into `r` (a mod texture).
     pub fn put(&mut self, r: AtlasRect, rgba: &[u8]) {
         let w = r.w as usize;
         self.fill(r, |x, y| {
@@ -272,6 +297,7 @@ impl Atlas {
         });
     }
 
+    /// `r` was written directly into `px` (premultiplied): rebuild its mips and queue the upload.
     pub(crate) fn mark_pub(&mut self, r: AtlasRect) {
         self.mark(r);
     }
@@ -281,7 +307,36 @@ impl Atlas {
         crate::ui_font::fit(&self.faces, st, s, 0.0).1
     }
 
+    /// The level-`l` texels that cover level-0 rect `r`: (x, y, w, h).
+    pub fn mip_rect(r: AtlasRect, l: u32) -> (usize, usize, usize, usize) {
+        let (x0, y0) = (r.x as usize >> l, r.y as usize >> l);
+        let (x1, y1) = ((r.x as usize + r.w as usize + (1 << l) - 1) >> l, (r.y as usize + r.h as usize + (1 << l) - 1) >> l);
+        (x0, y0, x1 - x0, y1 - y0)
+    }
+
     fn mark(&mut self, r: AtlasRect) {
+        // box-filter the premultiplied texels down the chain (the page around an entry is clear, so a partial block
+        // averages with transparent, which is what a premultiplied edge wants)
+        for l in 1..ATLAS_MIPS {
+            let (x, y, w, h) = Atlas::mip_rect(r, l);
+            let (sw, dw) = ((ATLAS >> (l - 1)) as usize, (ATLAS >> l) as usize);
+            let (lo, hi) = self.mips.split_at_mut(l as usize - 1);
+            let src: &[u8] = if l == 1 { &self.px } else { &lo[l as usize - 2] };
+            let dst = &mut hi[0];
+            for yy in y..y + h {
+                for xx in x..x + w {
+                    let s0 = (yy * 2 * sw + xx * 2) * 4;
+                    let s1 = s0 + sw * 4;
+                    let d = (yy * dw + xx) * 4;
+                    if s1 + 8 > src.len() || d + 4 > dst.len() {
+                        continue;
+                    }
+                    for k in 0..4 {
+                        dst[d + k] = ((src[s0 + k] as u32 + src[s0 + 4 + k] as u32 + src[s1 + k] as u32 + src[s1 + 4 + k] as u32 + 2) / 4) as u8;
+                    }
+                }
+            }
+        }
         self.dirty.push(r);
         self.generation += 1;
     }
@@ -298,7 +353,6 @@ pub struct UiFrame {
 /// The GPU half, created on the first present that carries UI quads.
 pub struct UiGpu {
     pipes: Vec<(wgpu::TextureFormat, wgpu::RenderPipeline)>,
-    bgl: wgpu::BindGroupLayout,
     layout: wgpu::PipelineLayout,
     module: wgpu::ShaderModule,
     atlas: wgpu::Texture,
@@ -324,34 +378,60 @@ struct U { tgt: vec4<f32>, band: vec4<f32>, tilt: vec4<f32>, tilt2: vec4<f32> };
 // tgt.z: render-clock seconds, tgt.w: effects intensity (0 off, 0.5 subtle, 1 full)
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var atlas: texture_2d<f32>;
-@group(0) @binding(2) var smp: sampler;
-@group(0) @binding(3) var lin: sampler;
+@group(0) @binding(2) var lin: sampler;
 struct VsOut {
     @builtin(position) pos: vec4<f32>,
     @location(0) uv: vec2<f32>,
     @location(1) c: vec4<f32>,
     @location(2) clip: vec4<f32>,
-    @location(3) @interpolate(flat) sdf: u32,
+    @location(3) @interpolate(flat) kind: vec2<u32>,
     @location(4) @interpolate(flat) uvc: vec4<f32>,
     @location(5) l: vec2<f32>,
     @location(6) @interpolate(flat) aa: vec4<f32>,
     @location(7) @interpolate(flat) fx: vec2<u32>,
     @location(8) pp: vec2<f32>,
+    @location(9) sp: vec2<f32>,
+    @location(10) @interpolate(flat) hs: vec2<f32>,
+    @location(11) @interpolate(flat) shp: vec3<f32>,
+    @location(12) @interpolate(flat) c2: vec4<f32>,
 };
 fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     if (win) { return p; }
     return u.band.xy + p * u.band.zw / vec2<f32>(640.0, 480.0);
 }
 @vertex fn vs_main(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32,
-                   @location(0) rect: vec4<f32>, @location(1) uvr: vec4<f32>, @location(2) clip: vec4<f32>,
+                   @location(0) rect_in: vec4<f32>, @location(1) uvr: vec4<f32>, @location(2) clip: vec4<f32>,
                    @location(3) rgba: u32, @location(4) shear: f32, @location(5) flags: u32,
-                   @location(6) rp: vec3<f32>, @location(7) fx: vec2<u32>) -> VsOut {
+                   @location(6) rp: vec3<f32>, @location(7) fx: vec2<u32>,
+                   @location(8) shp_in: vec3<f32>, @location(9) rgba2: u32) -> VsOut {
     var cx = array<f32, 6>(0.0, 1.0, 1.0, 0.0, 1.0, 0.0);
     var cy = array<f32, 6>(0.0, 0.0, 1.0, 0.0, 1.0, 1.0);
     let win = (flags & 1u) != 0u;
+    let kind = (flags >> 16u) & 15u;
+    let tilted = u.tilt.x != 0.0 || u.tilt.y != 0.0;
+    var s = 1.0;
+    if (!win) { s = u.band.w / 480.0; }
+    var rect = rect_in;
+    var shp = shp_in * s;
+    // Pixel policy (uiquality). An analytic shape with straight sides that is neither rotated nor tilted is snapped:
+    // its origin and its size land on whole device pixels (the size is rounded on its own, so it never changes as
+    // the shape moves) and its border is a whole number of pixels, so straight edges are crisp and every border of
+    // one width is the same number of pixels everywhere. Circles, rotated and tilted shapes are not snapped: their
+    // edges are analytic coverage. Flat and textured quads keep the rasterizer's rule (an edge lands on the nearest
+    // pixel boundary), which is watertight between abutting quads.
+    if (kind != 0u) {
+        let round_shape = rect.z == rect.w && shp_in.x * 2.0 >= rect.z;
+        if (rp.x == 0.0 && !tilted && !round_shape && kind != 2u) {
+            // floor(v + 0.5): halves round up on every backend (round() is half-to-even)
+            let a = floor(to_px(rect.xy, win) + vec2<f32>(0.5));
+            let sz = max(floor(rect.zw * s + vec2<f32>(0.5)), vec2<f32>(1.0, 1.0));
+            if (win) { rect = vec4<f32>(a, sz); } else { rect = vec4<f32>((a - u.band.xy) / s, sz / s); }
+            if (shp.y > 0.0) { shp.y = max(floor(shp.y + 0.5), 1.0); }
+        }
+    }
     // edge AA (kitaa): a slanted edge (shear: the left and right sides; a rotation off the right angles: all four)
     // gets an analytic coverage ramp, so the quad is grown one target pixel outward on those sides. Axis-aligned
-    // edges are left exact, so abutting pieces (9-slices, bars) never show seams.
+    // edges are left exact, so abutting pieces (bars) never show seams.
     // aa: left, top, right, bottom. A side shared with an abutting piece (Q_IN_*) gets no ramp and no growth: two
     // half-covered edges laid over each other leave a see-through seam (uiseams).
     var aa = vec4<f32>(0.0);
@@ -360,11 +440,13 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     if (rp.x != 0.0 && q > 1.0e-3) { aa = vec4<f32>(1.0); }
     let inner = vec4<f32>(f32((flags >> 2u) & 1u), f32((flags >> 3u) & 1u), f32((flags >> 4u) & 1u), f32((flags >> 5u) & 1u));
     aa = aa * (vec4<f32>(1.0) - inner);
-    var s = 1.0;
-    if (!win) { s = u.band.w / 480.0; }
+    // a shape's own distance field does its antialiasing: the quad only has to reach one pixel past the outline
+    var grow = aa;
+    let full = (flags & 64u) != 0u;
+    if (kind != 0u || full) { grow = vec4<f32>(1.0); aa = vec4<f32>(0.0); }
     let sz = max(abs(rect.zw) * s, vec2<f32>(1.0e-3, 1.0e-3));
-    let e0 = aa.xy / sz;
-    let e1 = aa.zw / sz;
+    let e0 = grow.xy / sz;
+    let e1 = grow.zw / sz;
     let l = vec2<f32>(cx[vi], cy[vi]) * (1.0 + e0 + e1) - e0;
     var p = rect.xy + vec2<f32>(l.x * rect.z + shear * (1.0 - l.y) * rect.w, l.y * rect.w);
     if (rp.x != 0.0) {
@@ -377,7 +459,7 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     var o: VsOut;
     o.pp = px;
     var os = 1.0;
-    if (u.tilt.x != 0.0 || u.tilt.y != 0.0) {
+    if (tilted) {
         // the menu camera (retail mn_8022BA1C's C-stick orbit): the batch as a plane seen from a turned eye, later
         // quads nearer (parallax: backdrop, stickers, their shadows, the cursor)
         let c = u.band.xy + u.band.zw * 0.5;
@@ -387,7 +469,7 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
             px = c + (px - c) * 1.4;
             os = 1.4;
         }
-        // the pieces of one shape (a 9-slice, a sliced sticker) share their first piece's depth (flags bits 8..15:
+        // the pieces of one shape (a sliced sprite, a tiled bar) share their first piece's depth (flags bits 8..15:
         // instances back to it), so their shared sides stay shared under the perspective (uiseams2)
         let gi = f32(ii) - f32((flags >> 8u) & 255u);
         let z = (1.0 - gi / max(u.tilt2.x, 1.0)) * u.tilt.w;
@@ -405,21 +487,30 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     }
     o.pos = vec4<f32>(px.x / u.tgt.x * 2.0 - 1.0, 1.0 - px.y / u.tgt.y * 2.0, 0.0, 1.0);
     o.uv = mix(uvr.xy, uvr.zw, l);
-    // bilinear never reads past the sub-rect's own texels (drive sprite-sheet cells abut with no gutter)
-    let h = 0.5 / 2048.0;
+    // bilinear never reads past the sub-rect's own texels (sprite-sheet cells abut with no gutter)
+    let h = 0.5 / ATLAS_SIZE;
     o.uvc = vec4<f32>(min(uvr.xy, uvr.zw) + h, max(uvr.xy, uvr.zw) - h);
+    // a whole entry may be filtered into its gutter (half a cell of clear texels on every side)
+    if (full) { o.uvc = vec4<f32>(o.uvc.xy - 8.0 * h, o.uvc.zw + 8.0 * h); }
     let c = unpack4x8unorm(rgba);
     o.c = vec4<f32>(c.w, c.z, c.y, c.x);
+    let c2 = unpack4x8unorm(rgba2);
+    o.c2 = vec4<f32>(c2.w, c2.z, c2.y, c2.x);
     o.clip = vec4<f32>(to_px(clip.xy, win), to_px(clip.zw, win));
     // an overscanned backdrop's clip grows with it (its untilted pp keeps the unscaled corners)
     if (os != 1.0) {
         let cc = u.band.xy + u.band.zw * 0.5;
         o.clip = vec4<f32>(cc + (o.clip.xy - cc) * os, cc + (o.clip.zw - cc) * os);
     }
-    o.sdf = (flags >> 1u) & 1u;
+    o.kind = vec2<u32>((flags >> 1u) & 1u, kind);
     o.l = l;
     o.aa = aa;
     o.fx = fx;
+    // the shape's frame: device pixels from its centre (unrotated, untilted), half size, [radius, border, spread]
+    o.sp = (l - vec2<f32>(0.5, 0.5)) * sz;
+    o.hs = sz * 0.5;
+    o.shp = shp;
+    if (kind == 0u) { o.shp = shp_in; }
     return o;
 }
 fn edge(t: f32, lo: f32, hi: f32) -> f32 {
@@ -434,7 +525,7 @@ fn hue(h: f32) -> vec3<f32> {
 fn hash2(p: vec2<f32>) -> f32 {
     return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.547);
 }
-// effects 1..3 (ui.rs FX_*): in band units so a 9-slice face shimmers as one piece
+// effects 1..3 (ui.rs FX_*): in band units so a face shimmers as one piece
 fn effect(v: VsOut, base: vec4<f32>) -> vec4<f32> {
     let k = u.tgt.w;
     let t = u.tgt.z;
@@ -470,60 +561,109 @@ fn effect(v: VsOut, base: vec4<f32>) -> vec4<f32> {
     }
     return base;
 }
-@fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
-    // the atlas is premultiplied on upload; linear filtering (the art is 2x and lands at 1.5x..3x per game pixel)
-    // minified art (a 64-texel disc drawn as a 9 px pip) is box-filtered over the pixel's footprint: up to 4x4
-    // bilinear taps, so small sprites neither shimmer nor stair-step without a mip chain on the shared atlas
-    let du = dpdx(v.uv);
-    let dv = dpdy(v.uv);
-    let fp = max(abs(du) + abs(dv), vec2<f32>(0.0, 0.0)) * 2048.0;
-    let k = u32(clamp(ceil(max(fp.x, fp.y)), 1.0, 4.0));
-    var n = vec4<f32>(0.0);
-    for (var j = 0u; j < k; j++) {
-        for (var i = 0u; i < k; i++) {
-            let o = (vec2<f32>(f32(i), f32(j)) + 0.5) / f32(k) - 0.5;
-            n += textureSampleLevel(atlas, lin, clamp(v.uv + du * o.x + dv * o.y, v.uvc.xy, v.uvc.zw), 0.0);
-        }
+// a dashed border: coverage of the dash pattern at `p`, measured along the border's centre line (clockwise from the
+// top-left corner's end). The period is fitted so a whole number of dashes goes round: dash on, 0.8 dash off.
+fn dash(p: vec2<f32>, hs: vec2<f32>, r: f32, bw: f32, dl: f32, w: f32) -> f32 {
+    let h2 = hs - vec2<f32>(bw * 0.5);
+    let rc = max(r - bw * 0.5, 0.0);
+    let cm = max(h2 - vec2<f32>(rc), vec2<f32>(0.0));
+    let ax = 2.0 * cm.x;
+    let ay = 2.0 * cm.y;
+    let arc = 1.5707963 * rc;
+    var t = 0.0;
+    if (p.y < -cm.y && abs(p.x) <= cm.x) { t = p.x + cm.x; }
+    else if (p.x > cm.x && p.y < -cm.y) { t = ax + atan2(p.x - cm.x, -(p.y + cm.y)) * rc; }
+    else if (p.x > cm.x && abs(p.y) <= cm.y) { t = ax + arc + p.y + cm.y; }
+    else if (p.x > cm.x) { t = ax + arc + ay + atan2(p.y - cm.y, p.x - cm.x) * rc; }
+    else if (p.y > cm.y && abs(p.x) <= cm.x) { t = ax + 2.0 * arc + ay + cm.x - p.x; }
+    else if (p.y > cm.y) { t = 2.0 * ax + 2.0 * arc + ay + atan2(-(p.x + cm.x), p.y - cm.y) * rc; }
+    else if (p.x < -cm.x && abs(p.y) <= cm.y) { t = 2.0 * ax + 3.0 * arc + ay + cm.y - p.y; }
+    else if (p.x < -cm.x) { t = 2.0 * ax + 3.0 * arc + 2.0 * ay + atan2(-(p.y + cm.y), -(p.x + cm.x)) * rc; }
+    let per = 2.0 * (ax + ay) + 4.0 * arc;
+    let n = max(round(per / (dl * 1.8)), 1.0);
+    let period = per / n;
+    let on = period / 1.8;
+    let u = fract(t / period) * period;
+    return clamp(min(u, on - u) / w + 0.5, 0.0, 1.0);
+}
+// an analytic shape (ui.rs SHAPE_*): premultiplied colour from the signed distance in device pixels
+fn shape(v: VsOut) -> vec4<f32> {
+    let kind = v.kind.y;
+    var hs = v.hs;
+    if (kind == 3u) { hs = max(hs - vec2<f32>(v.shp.z), vec2<f32>(0.5)); }
+    var d = 0.0;
+    if (kind == 2u) {
+        d = (abs(v.sp.x) / hs.x + abs(v.sp.y) / hs.y - 1.0) * min(hs.x, hs.y) * 0.70710678;
+    } else {
+        let r = min(v.shp.x, min(hs.x, hs.y));
+        let q = abs(v.sp) - hs + vec2<f32>(r);
+        d = length(max(q, vec2<f32>(0.0))) + min(max(q.x, q.y), 0.0) - r;
     }
-    n /= f32(k * k);
-    let d = textureSample(atlas, lin, v.uv).a;
-    let fw = max(fwidth(d), 1.0e-4);
-    let cov = clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
+    // one pixel of the distance field on screen: 1 at rest, the local stretch under the tilt's perspective
+    let m = 0.5 * (length(dpdx(v.sp)) + length(dpdy(v.sp)));
+    let w = clamp(length(vec2<f32>(dpdx(d), dpdy(d))), 0.7 * m, 1.5 * m);
+    let fill = vec4<f32>(v.c.rgb * v.c.a, v.c.a);
+    if (kind == 3u) {
+        var a = 1.0;
+        if (d > 0.0) { let t = d / max(v.shp.z * 0.5, 1.0e-3); a = exp(-t * t) * 0.9; }
+        return fill * a;
+    }
+    let co = clamp(0.5 - d / w, 0.0, 1.0);
+    if (v.shp.y <= 0.0) { return fill * co; }
+    let ci = clamp(0.5 - (d + v.shp.y) / w, 0.0, 1.0);
+    var line = vec4<f32>(v.c2.rgb * v.c2.a, v.c2.a);
+    if (v.shp.z > 0.0) { line = line * dash(v.sp, hs, min(v.shp.x, min(hs.x, hs.y)), v.shp.y, v.shp.z, w); }
+    return fill * ci + line * (co - ci);
+}
+@fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
+    // The atlas is premultiplied and mipmapped; art is baked above its drawn size and minified through the chain
+    // (trilinear), so small sprites and small text neither shimmer nor smear. The level is picked half a level
+    // sharp: art drawn within 1.4x of its texel size stays on level 0.
+    let du = dpdx(v.uv) * 0.70710678;
+    let dv = dpdy(v.uv) * 0.70710678;
+    let n = textureSampleGrad(atlas, lin, clamp(v.uv, v.uvc.xy, v.uvc.zw), du, dv);
+    let sh = shape(v);
+    let fw = max(fwidth(n.a), 1.0e-4);
     let ea = edge(v.l.x, v.aa.x, v.aa.z) * edge(v.l.y, v.aa.y, v.aa.w);
     // clipping in the untilted plane (at rest: the fragment position, as before)
     let cp = select(v.pos.xy, v.pp, u.tilt.x != 0.0 || u.tilt.y != 0.0);
     if (cp.x < v.clip.x || cp.y < v.clip.y || cp.x >= v.clip.z || cp.y >= v.clip.w) { discard; }
     let c = vec4<f32>(v.c.rgb * v.c.a, v.c.a) * ea;
-    if (v.sdf != 0u) { return c * cov; }
+    if (v.kind.x != 0u) {
+        // a glyph: coverage of the distance field, one pixel wide; shp.y widens it (the outline pass)
+        let d = n.a + v.shp.y;
+        return c * clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
+    }
+    var b = n * c;
+    if (v.kind.y != 0u) { b = sh; }
     if (v.fx.x != 0u && u.tgt.w > 0.0) {
         // effects work on straight alpha; the atlas and the blend are premultiplied (kitaa)
-        let b = n * c;
         var un = vec4<f32>(0.0);
         if (b.a > 0.0) { un = vec4<f32>(b.rgb / b.a, b.a); }
         let e = effect(v, un);
         return vec4<f32>(e.rgb * e.a, e.a);
     }
-    return n * c;
+    return b;
 }
 ";
 
 impl UiGpu {
-    fn new(device: &wgpu::Device) -> UiGpu {
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("gd_ui"), source: wgpu::ShaderSource::Wgsl(UI_WGSL.into()) });
+    pub fn new(device: &wgpu::Device) -> UiGpu {
+        let src = UI_WGSL.replace("ATLAS_SIZE", &format!("{ATLAS}.0"));
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("gd_ui"), source: wgpu::ShaderSource::Wgsl(src.into()) });
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("gd_ui"),
             entries: &[
                 wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::VERTEX_FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Float { filterable: true }, view_dimension: wgpu::TextureViewDimension::D2, multisampled: false }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 2, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
-                wgpu::BindGroupLayoutEntry { binding: 3, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
             ],
         });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("gd_ui"), bind_group_layouts: &[&bgl], push_constant_ranges: &[] });
         let atlas = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("gd_ui atlas"),
             size: wgpu::Extent3d { width: ATLAS, height: ATLAS, depth_or_array_layers: 1 },
-            mip_level_count: 1,
+            mip_level_count: ATLAS_MIPS,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba8Unorm,
@@ -531,8 +671,14 @@ impl UiGpu {
             view_formats: &[],
         });
         let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui"), size: 64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
-        let linear = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui sdf"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
+        let linear = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("gd_ui"),
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Linear,
+            lod_max_clamp: (ATLAS_MIPS - 1) as f32,
+            ..Default::default()
+        });
         let view = atlas.create_view(&Default::default());
         let bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("gd_ui"),
@@ -540,20 +686,18 @@ impl UiGpu {
             entries: &[
                 wgpu::BindGroupEntry { binding: 0, resource: uniform.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::TextureView(&view) },
-                wgpu::BindGroupEntry { binding: 2, resource: wgpu::BindingResource::Sampler(&sampler) },
-                wgpu::BindGroupEntry { binding: 3, resource: wgpu::BindingResource::Sampler(&linear) },
+                wgpu::BindGroupEntry { binding: 2, resource: wgpu::BindingResource::Sampler(&linear) },
             ],
         });
         let inst_cap = 4096 * std::mem::size_of::<UiQuad>() as u64;
         let inst = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui instances"), size: inst_cap, usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        UiGpu { pipes: Vec::new(), bgl, layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0, clock: std::time::Instant::now() }
+        UiGpu { pipes: Vec::new(), layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0, clock: std::time::Instant::now() }
     }
 
     fn pipeline(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat) -> usize {
         if let Some(i) = self.pipes.iter().position(|p| p.0 == format) {
             return i;
         }
-        let _ = &self.bgl;
         let attrs = [
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 0, shader_location: 0 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 16, shader_location: 1 },
@@ -563,6 +707,8 @@ impl UiGpu {
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32, offset: 56, shader_location: 5 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x3, offset: 60, shader_location: 6 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32x2, offset: 72, shader_location: 7 },
+            wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x3, offset: 80, shader_location: 8 },
+            wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32, offset: 92, shader_location: 9 },
         ];
         let p = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("gd_ui"),
@@ -588,11 +734,100 @@ impl UiGpu {
         self.pipes.push((format, p));
         self.pipes.len() - 1
     }
+
+    /// Upload this present's instances and the atlas regions changed since the last call (every mip level of each:
+    /// plain copies out of the CPU page, which is already premultiplied and filtered).
+    pub fn upload(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, f: &UiFrame, atlas: &mut Atlas) {
+        let g = self;
+        if g.atlas_gen != atlas.generation {
+            // many small regions (the first upload: every glyph) go up as the rows they span
+            let all;
+            let rects: &[AtlasRect] = if atlas.dirty.len() > 48 {
+                let (y0, y1) = atlas.dirty.iter().fold((u16::MAX, 0u16), |(a, b), r| (a.min(r.y), b.max(r.y + r.h)));
+                all = [AtlasRect { x: 0, y: y0, w: ATLAS as u16, h: y1 - y0 }];
+                &all
+            } else {
+                &atlas.dirty
+            };
+            for r in rects {
+                for l in 0..ATLAS_MIPS {
+                    let (x, y, w, h) = Atlas::mip_rect(*r, l);
+                    let lw = (ATLAS >> l) as usize;
+                    let page: &[u8] = if l == 0 { &atlas.px } else { &atlas.mips[l as usize - 1] };
+                    let rows = page.len() / (lw * 4);
+                    let h = h.min(rows.saturating_sub(y));
+                    if w == 0 || h == 0 {
+                        continue;
+                    }
+                    let o = (y * lw + x) * 4;
+                    queue.write_texture(
+                        wgpu::TexelCopyTextureInfo { texture: &g.atlas, mip_level: l, origin: wgpu::Origin3d { x: x as u32, y: y as u32, z: 0 }, aspect: wgpu::TextureAspect::All },
+                        &page[o..o + ((h - 1) * lw + w) * 4],
+                        wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(lw as u32 * 4), rows_per_image: Some(h as u32) },
+                        wgpu::Extent3d { width: w as u32, height: h as u32, depth_or_array_layers: 1 },
+                    );
+                }
+            }
+            atlas.dirty.clear();
+            g.atlas_gen = atlas.generation;
+        }
+        let bytes = as_bytes(&f.quads);
+        if bytes.len() as u64 > g.inst_cap {
+            g.inst_cap = (bytes.len() as u64).next_power_of_two();
+            g.inst = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui instances"), size: g.inst_cap, usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+            if cfg!(debug_assertions) {
+                eprintln!("gd_ui: instance buffer grown to {} quads", g.inst_cap / std::mem::size_of::<UiQuad>() as u64);
+            }
+        }
+        if !bytes.is_empty() {
+            queue.write_buffer(&g.inst, 0, bytes);
+        }
+        g.count = f.quads.len() as u32;
+        g.hide_gx = f.hide_gx;
+    }
+
+    /// Record the UI batch into `pass` (one instanced draw). `band`: the 4:3 band rect in target pixels; `tilt`: the
+    /// menu camera (yaw, pitch radians); `fx`: effects intensity.
+    pub fn record(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, pass: &mut wgpu::RenderPass<'_>, format: wgpu::TextureFormat, tw: f32, th: f32, band: [f32; 4], tilt: [f32; 2], fx: f32) {
+        let g = self;
+        if g.count == 0 {
+            return;
+        }
+        let pi = g.pipeline(device, format);
+        // the effects' clock wraps every hour (f32 precision); intensity 0 turns every quad effect off
+        let secs = (g.clock.elapsed().as_secs_f64() % 3600.0) as f32;
+        // the menu tilt (Renderer::ui_tilt): focal length ~ retail's menu camera (a 30-degree turn reads as a turn,
+        // not a smear), parallax depth 5% of the band height
+        let [ya, pa] = tilt;
+        let tilt = if ya != 0.0 || pa != 0.0 { [ya, pa, band[3] * 1.9, band[3] * 0.05] } else { [0.0; 4] };
+        let u: [f32; 16] = [tw, th, secs, fx, band[0], band[1], band[2], band[3], tilt[0], tilt[1], tilt[2], tilt[3], g.count as f32, 0.0, 0.0, 0.0];
+        let mut ub = [0u8; 64];
+        for (i, v) in u.iter().enumerate() {
+            ub[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
+        }
+        queue.write_buffer(&g.uniform, 0, &ub);
+        g.draw_calls += 1;
+        g.frames += 1;
+        pass.set_viewport(0.0, 0.0, tw, th, 0.0, 1.0);
+        pass.set_pipeline(&g.pipes[pi].1);
+        pass.set_bind_group(0, &g.bind, &[]);
+        pass.set_vertex_buffer(0, g.inst.slice(..g.count as u64 * std::mem::size_of::<UiQuad>() as u64));
+        pass.draw(0..6, 0..g.count);
+    }
 }
 
 fn as_bytes(q: &[UiQuad]) -> &[u8] {
-    // SAFETY: UiQuad is repr(C), 64 bytes of plain f32/u32 with no padding holes.
+    // SAFETY: UiQuad is repr(C), 96 bytes of plain f32/u32 with no padding holes.
     unsafe { std::slice::from_raw_parts(q.as_ptr() as *const u8, std::mem::size_of_val(q)) }
+}
+
+/// The 4:3 band inside blit rect `vp` (x, y, w, h): the largest 4:3 rect, centred. Its pixels are square at every
+/// window shape, a window narrower than 4:3 included (uiquality: the band used to take the full height there, which
+/// squeezed every shape sideways).
+pub fn band_in(vp: [f32; 4]) -> [f32; 4] {
+    let bw = (vp[3] * 4.0 / 3.0).min(vp[2]);
+    let bh = bw * 0.75;
+    [vp[0] + (vp[2] - bw) * 0.5, vp[1] + (vp[3] - bh) * 0.5, bw, bh]
 }
 
 impl Renderer {
@@ -608,43 +843,7 @@ impl Renderer {
             return;
         };
         let g = self.ui.get_or_insert_with(|| UiGpu::new(&self.device));
-        if g.atlas_gen != atlas.generation {
-            let full = g.atlas_gen == 0;
-            let rects: &[AtlasRect] = if full { &[AtlasRect { x: 0, y: 0, w: ATLAS as u16, h: ATLAS as u16 }] } else { &atlas.dirty };
-            for r in rects {
-                // premultiplied copy: bilinear then blends a sprite's edge into its transparent gutter without the
-                // dark fringe straight alpha gives (the CPU page stays straight alpha)
-                let mut pm = Vec::with_capacity(r.w as usize * r.h as usize * 4);
-                for y in r.y as usize..r.y as usize + r.h as usize {
-                    let o = (y * ATLAS as usize + r.x as usize) * 4;
-                    for t in atlas.px[o..o + r.w as usize * 4].chunks_exact(4) {
-                        let m = |c: u8| ((c as u32 * t[3] as u32 + 127) / 255) as u8;
-                        pm.extend_from_slice(&[m(t[0]), m(t[1]), m(t[2]), t[3]]);
-                    }
-                }
-                self.queue.write_texture(
-                    wgpu::TexelCopyTextureInfo { texture: &g.atlas, mip_level: 0, origin: wgpu::Origin3d { x: r.x as u32, y: r.y as u32, z: 0 }, aspect: wgpu::TextureAspect::All },
-                    &pm,
-                    wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(r.w as u32 * 4), rows_per_image: Some(r.h as u32) },
-                    wgpu::Extent3d { width: r.w as u32, height: r.h as u32, depth_or_array_layers: 1 },
-                );
-            }
-            atlas.dirty.clear();
-            g.atlas_gen = atlas.generation;
-        }
-        let bytes = as_bytes(&f.quads);
-        if bytes.len() as u64 > g.inst_cap {
-            g.inst_cap = (bytes.len() as u64).next_power_of_two();
-            g.inst = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui instances"), size: g.inst_cap, usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-            if cfg!(debug_assertions) {
-                eprintln!("gd_ui: instance buffer grown to {} quads", g.inst_cap / 64);
-            }
-        }
-        if !bytes.is_empty() {
-            self.queue.write_buffer(&g.inst, 0, bytes);
-        }
-        g.count = f.quads.len() as u32;
-        g.hide_gx = f.hide_gx;
+        g.upload(&self.device, &self.queue, f, atlas);
     }
 
     /// Whether a custom scene hides the EFB this present.
@@ -654,32 +853,10 @@ impl Renderer {
 
     /// Record the UI batch into the blit pass (one instanced draw). `band`: the 4:3 band rect in target pixels.
     pub(crate) fn ui_record(&mut self, pass: &mut wgpu::RenderPass<'_>, format: wgpu::TextureFormat, tw: f32, th: f32, band: [f32; 4]) {
-        let device = &self.device;
-        let Some(g) = self.ui.as_mut() else { return };
-        if g.count == 0 {
-            return;
+        let (tilt, fx) = (self.ui_tilt, self.fx_intensity);
+        if let Some(g) = self.ui.as_mut() {
+            g.record(&self.device, &self.queue, pass, format, tw, th, band, tilt, fx);
         }
-        let pi = g.pipeline(device, format);
-        // the effects' clock wraps every hour (f32 precision); intensity 0 turns every quad effect off
-        let secs = (g.clock.elapsed().as_secs_f64() % 3600.0) as f32;
-        // the menu tilt (Renderer::ui_tilt): focal length ~ retail's menu camera (a 30-degree turn reads as a turn,
-        // not a smear), parallax depth 5% of the band height
-        let [ya, pa] = self.ui_tilt;
-        let tilt = if ya != 0.0 || pa != 0.0 { [ya, pa, band[3] * 1.9, band[3] * 0.05] } else { [0.0; 4] };
-        let u: [f32; 16] = [tw, th, secs, self.fx_intensity, band[0], band[1], band[2], band[3], tilt[0], tilt[1], tilt[2], tilt[3], g.count as f32, 0.0, 0.0, 0.0];
-        let mut ub = [0u8; 64];
-        for (i, v) in u.iter().enumerate() {
-            ub[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
-        }
-        self.queue.write_buffer(&g.uniform, 0, &ub);
-        g.draw_calls += 1;
-        g.frames += 1;
-        let g = self.ui.as_ref().unwrap();
-        pass.set_viewport(0.0, 0.0, tw, th, 0.0, 1.0);
-        pass.set_pipeline(&g.pipes[pi].1);
-        pass.set_bind_group(0, &g.bind, &[]);
-        pass.set_vertex_buffer(0, g.inst.slice(..g.count as u64 * std::mem::size_of::<UiQuad>() as u64));
-        pass.draw(0..6, 0..g.count);
     }
 
     /// (UI draw calls, presents with UI) so far.
@@ -692,8 +869,8 @@ impl Renderer {
 mod tests {
     use super::*;
     #[test]
-    fn quad_is_64_bytes() {
-        assert_eq!(std::mem::size_of::<UiQuad>(), 80);
+    fn quad_is_96_bytes() {
+        assert_eq!(std::mem::size_of::<UiQuad>(), 96);
     }
     #[test]
     fn atlas_builtins_fit() {
@@ -701,10 +878,33 @@ mod tests {
         assert!(a.white.w > 0);
         assert_eq!(glyph_index('A'), 0x21);
         assert_eq!(glyph_index('▶'), 193);
-        assert!(a.slices[3].1 >= 14.0);
-        assert!(a.kit[2].w == 56);
-        // the white texel is opaque white
+        assert!(a.kit[5].w == 9);
+        // the white block is opaque white at every mip level under its sample point
         let o = ((a.white.y as usize * ATLAS as usize) + a.white.x as usize) * 4;
         assert_eq!(&a.px[o..o + 4], &[255, 255, 255, 255]);
+        for l in 1..ATLAS_MIPS {
+            let (x, y, _, _) = Atlas::mip_rect(a.white, l);
+            let o = (y * (ATLAS >> l) as usize + x) * 4;
+            assert_eq!(&a.mips[l as usize - 1][o..o + 4], &[255, 255, 255, 255], "white at mip {l}");
+        }
+    }
+    #[test]
+    fn entries_never_share_a_coarse_texel() {
+        let mut a = Atlas::new();
+        let r1 = a.alloc(13, 21).unwrap();
+        let r2 = a.alloc(30, 9).unwrap();
+        for r in [r1, r2] {
+            assert_eq!(r.x % CELL, 0);
+            assert_eq!(r.y % CELL, 0);
+        }
+        assert!(r2.x >= r1.x + r1.w.next_multiple_of(CELL) + CELL || r2.y >= r1.y + r1.h.next_multiple_of(CELL) + CELL);
+    }
+    #[test]
+    fn band_is_square_pixels_at_every_window_shape() {
+        for vp in [[0.0, 0.0, 1920.0, 1080.0], [0.0, 0.0, 1280.0, 1024.0], [0.0, 0.0, 1080.0, 1920.0], [10.0, 5.0, 960.0, 720.0]] {
+            let b = band_in(vp);
+            assert!((b[2] / 640.0 - b[3] / 480.0).abs() < 1.0e-4, "{vp:?} -> {b:?}");
+            assert!(b[2] <= vp[2] + 1.0e-3 && b[3] <= vp[3] + 1.0e-3);
+        }
     }
 }

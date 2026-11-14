@@ -18,6 +18,12 @@ pub const OP_SPACE: u16 = 10;
 pub const OP_ROT: u16 = 11;
 /// A built-in effect for the quads that follow (host fx, envoy-fx.md): `effect(0, 0)` ends it.
 pub const OP_EFFECT: u16 = 12;
+/// gd-ui-v1.4: an analytic shape (exact at every size and resolution, one quad) and a text outline.
+pub const OP_SHAPE: u16 = 13;
+pub const OP_OUTLINE: u16 = 14;
+pub const SHAPE_BOX: u32 = 1;
+pub const SHAPE_DIAMOND: u32 = 2;
+pub const SHAPE_GLOW: u32 = 3;
 pub const FX_NONE: u32 = 0;
 pub const FX_FOIL: u32 = 1;
 pub const FX_HOLO: u32 = 2;
@@ -183,6 +189,34 @@ impl<const N: usize> Enc<N> {
             }
             self.put(rgba);
             self.f(shear);
+        }
+        self
+    }
+    /// A rounded box (a pill or a circle once `radius` reaches half the short side): `fill`, and a border of
+    /// `border` units in `line` drawn inside the outline (0: none). A clear fill with a border is a ring.
+    pub fn shape(&mut self, kind: u32, x: f32, y: f32, w: f32, h: f32, radius: f32, border: f32, spread: f32, fill: u32, line: u32) -> &mut Self {
+        if self.head(OP_SHAPE, 10) {
+            self.put(kind);
+            for v in [x, y, w, h, radius, border, spread] {
+                self.f(v);
+            }
+            self.put(fill);
+            self.put(line);
+        }
+        self
+    }
+    pub fn round_rect(&mut self, x: f32, y: f32, w: f32, h: f32, radius: f32, fill: u32) -> &mut Self {
+        self.shape(SHAPE_BOX, x, y, w, h, radius, 0.0, 0.0, fill, 0)
+    }
+    /// A disc of diameter `d` centred on (cx, cy).
+    pub fn circle(&mut self, cx: f32, cy: f32, d: f32, fill: u32) -> &mut Self {
+        self.shape(SHAPE_BOX, cx - d * 0.5, cy - d * 0.5, d, d, d, 0.0, 0.0, fill, 0)
+    }
+    /// The text that follows is outlined `width` units in `rgba` (0 ends it).
+    pub fn outline(&mut self, width: f32, rgba: u32) -> &mut Self {
+        if self.head(OP_OUTLINE, 2) {
+            self.f(width);
+            self.put(rgba);
         }
         self
     }

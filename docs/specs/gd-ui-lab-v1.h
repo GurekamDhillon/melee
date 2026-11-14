@@ -53,8 +53,13 @@ enum {
     GD_UI_OP_CLIP   = 6,  /* f32 x,y,w,h (intersected with the enclosing clip; depth 8) */
     GD_UI_OP_UNCLIP = 7,  /* no payload */
     GD_UI_OP_VECTOR = 8,  /* u32 path_id, f32 affine[6], u32 rgba: UI_VECTOR only (no Vello in this build) */
-    GD_UI_OP_SLICE  = 9,  /* u32 slice_id, f32 x,y,w,h, u32 rgba: a host 9-slice piece (theme radius/border/glow) */
-    GD_UI_OP_SPACE  = 10  /* i32 space, f32 scale: GAP-0; following coordinates and sizes times scale; not inside a CLIP */
+    GD_UI_OP_SLICE  = 9,  /* u32 slice_id, f32 x,y,w,h, u32 rgba: a host slice piece (theme radius/border/glow), drawn as one shape */
+    GD_UI_OP_SPACE  = 10, /* i32 space, f32 scale: GAP-0; following coordinates and sizes times scale; not inside a CLIP */
+    /* 11 ROT (f32 angle, x, y) and 12 EFFECT (u32 effect, u32 rgba): see below */
+    /* gd-ui-v1.4 (uiquality): analytic shapes and text outlines. A shape is evaluated per device pixel by the host:
+       exact and antialiased at every size, resolution, rotation and menu tilt, and always one quad (no seams). */
+    GD_UI_OP_SHAPE  = 13, /* u32 kind (GD_UI_SHAPE_*), f32 x,y,w,h, f32 radius, f32 border, f32 spread, u32 fill rgba, u32 border rgba */
+    GD_UI_OP_OUTLINE = 14 /* f32 width, u32 rgba: the text that follows is outlined (from the glyph distance field, under the fill); width 0 ends it */
 };
 enum { GD_UI_SPACE_BAND = 0, GD_UI_SPACE_WINDOW = 1 };
 /* layers, drawn in this order; within a layer by z, then mod load order, then submission order (a total order) */
@@ -70,6 +75,12 @@ enum { GD_UI_ROLE_LABEL = 0, GD_UI_ROLE_VALUE, GD_UI_ROLE_BODY, GD_UI_ROLE_BIG, 
 #define GD_UI_TEXT_MONO    (1 << 10)         /* JetBrains Mono instead of Inter */
 #define GD_UI_TEXT_SIZE(px) (((px) & 0xFF) << 16) /* line height in canvas units, 1..255 (0: the role's size) */
 enum { GD_UI_ALIGN_LEFT = 0, GD_UI_ALIGN_CENTER = 1, GD_UI_ALIGN_RIGHT = 2 };
+/* Shapes. BOX: a rounded box; radius >= half the short side makes a pill or a circle; border > 0 draws that width in
+   the border colour inside the outline (a clear fill leaves a ring); spread > 0 dashes the border (that long on, 0.8
+   of it off). DIAMOND: inscribed in the rect. GLOW: a rounded box with a soft falloff reaching `spread` outside it.
+   Pixel policy: an unrotated, untilted box with straight sides lands on whole device pixels (origin and size, and a
+   whole-pixel border); circles, rotated and tilted shapes are pure coverage. */
+enum { GD_UI_SHAPE_BOX = 1, GD_UI_SHAPE_DIAMOND = 2, GD_UI_SHAPE_GLOW = 3 };
 enum { GD_UI_SLICE_FILL_R4 = 1, GD_UI_SLICE_FILL_R6, GD_UI_SLICE_FILL_R14, GD_UI_SLICE_LINE_R4, GD_UI_SLICE_LINE_R6,
        GD_UI_SLICE_LINE_R14_3, GD_UI_SLICE_GLOW_R6, GD_UI_SLICE_FILL_R1 };
 /* kit pieces by name (gd_ui_kit_id): "ui.dot" 10x10, "ui.ring" 56x56, "ui.diamond" 9x9, "ui.knob" 32x32, "ui.hatch" 9x14 */

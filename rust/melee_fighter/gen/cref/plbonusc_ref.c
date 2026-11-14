@@ -102,7 +102,7 @@ static void init_slot(int slot)
     StaleMoveTable* s = &x->x0_staleMoveTable;
     int i;
     for (i = 0; i < 215; i++) s->x904[i] = rnd() % 2 ? rnd() % 3 : rnd();
-    for (i = 0; i < 65; i++) s->total_attack_count_struct.by_attack_hi[i] = rnd();
+    for (i = 0; i < 65; i++) s->total_attack_count_struct.x358.x0.by_attack_hi[i] = rnd();
     s->xCAC = rnd() % 8; x->xD50 = rnd(); x->xD54 = rnd(); x->xD60 = rnd();
     x->xD64 = (int) (rnd() % 8); x->xD6C = (int) (rnd() % 8);
 }

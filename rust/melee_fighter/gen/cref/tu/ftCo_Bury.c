@@ -17,12 +17,12 @@ VSTUB(ftCo_800DD168, 3)
 VSTUB(ftCo_8009EB18, 4)
 float ftColl_800765F0(Fighter* f, Fighter_GObj* v, float x) { T(5); T(f == &F); T(v == NULL); T(B(x)); return rw(); }
 bool ftColl_80076640(Fighter* f, float* x) { T(6); T(f == &F); T(B(*x)); *x = rg(); return SR(6); }
-void ftColl_80076764(int a, enum_t b, Fighter_GObj* g, DynamicsDesc* d, Fighter* f, FighterHurtCapsule* h)
-{ T(7); T(a); T(b); T(g == &GO2); T(g == NULL); T(d == &DD); T(f == &F); T(h == &F.hurt_capsules[0]); }
+void ftColl_80076764(int a, enum_t b, Fighter_GObj* g, lbColl_80008D30_arg1* d, Fighter* f, FighterHurtCapsule* h)
+{ T(7); T(a); T(b); T(g == &GO2); T(g == NULL); T((void*) d == (void*) &DD); T(f == &F); T(h == &F.hurt_capsules[0]); }
 void lbColl_80008D30(HitCapsule* h, lbColl_80008D30_arg1* a) { T(8); T(a == (void*) &DD); }
 void ftColl_80078384(Fighter* f, FighterHurtCapsule* h, HitCapsule* hit) { T(9); T(f == &F); T(h == &F.hurt_capsules[0]); }
 void pl_8003EC30(int s, int sub, int k, float x) { T(10); T(s); T(sub); T(k); T(B(x)); }
-DynamicsDesc* Ground_801C5700(int i) { T(11); T(i); return SR(11 + (i & 7) * 16) ? &DD : NULL; }
+lbColl_80008D30_arg1* Ground_801C5700(int i) { T(11); T(i); return SR(11 + (i & 7) * 16) ? (lbColl_80008D30_arg1*) &DD : NULL; }
 void ftCo_8008DCE0(Fighter_GObj* g, int a, float d) { T(12); T(g == &GO); T(a); T(B(d)); }
 void ftCommon_8007D7FC(Fighter* f) { T(13); T(f == &F); }
 void Fighter_ChangeMotionState(Fighter_GObj* g, FtMotionId m, MotionFlags fl, float a, float b, float c, Fighter_GObj* o)
@@ -122,10 +122,10 @@ int main(void)
             F.bury_timer_1 = rnd() % 3; F.bury_timer_2 = rnd() % 3; F.bury_grkind = KINDS[rnd() % 8];
             F.motion_id = (rnd() & 1) ? ftCo_MS_BarrelWait : (FtMotionId) (rnd() % 400);
             F.x1A6A = rnd() & 0xFFFF;
-            F.x2224_b2 = rnd() & 1; F.x2227_b6 = rnd() & 1; F.is_sub_fighter = rnd() & 1;
+            F.stamina_dead = rnd() & 1; F.x2227_b6 = rnd() & 1; F.is_sub_fighter = rnd() & 1;
             F.dmg.x1860_element = rnd() % 12; F.ground_or_air = rnd() & 1;
             F.dmg.x1830_percent = rw();
-            F.player_id = rnd() % 4;
+            F.player_idx = rnd() % 4;
             F.coll_data.env_flags = (rnd() & 1) ? 0 : (int) (rnd() & 0x1FFFF);
             F.coll_data.floor.index = rnd() % 8; F.coll_data.ceiling.index = rnd() % 8;
             F.coll_data.right_facing_wall.index = rnd() % 8; F.coll_data.left_facing_wall.index = rnd() % 8;

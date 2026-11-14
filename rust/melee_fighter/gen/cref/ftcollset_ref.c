@@ -99,7 +99,7 @@ static u32 state(void)
         H(hc->height); H(hc->is_grabbable);
     }
     H(F.x221A_b5); H(F.x221A_b6); H(F.x2219_b3);
-    H(F.x221B_b0); H(F.x221B_b1); H(F.x221B_b2); H(F.x221B_b3); H(F.x221B_b4);
+    H(F.x221B.x221B_b0); H(F.x221B.x221B_b1); H(F.x221B.x221B_b2); H(F.x221B.x221B_b3); H(F.x221B.x221B_b4);
     H((u32) (uintptr_t) F.shield_hit_cb); H(jid(F.shield_hit.bone)); H(B(F.shield_hit.size)); HV3(F.shield_hit.offset);
     H(F.x1988); H(F.x198C); H(F.x1990);
     H(F.x2218_b4); H(F.x2218_b5); H(F.x2218_b6); H(F.x2218_b7); H(F.reflecting);
@@ -200,7 +200,7 @@ int main(void)
             {
                 u32 b[12]; int n = 0;
                 b[n++] = F.x221A_b5; b[n++] = F.x221A_b6; b[n++] = F.x2219_b3;
-                b[n++] = F.x221B_b0; b[n++] = F.x221B_b1; b[n++] = F.x221B_b2; b[n++] = F.x221B_b3; b[n++] = F.x221B_b4;
+                b[n++] = F.x221B.x221B_b0; b[n++] = F.x221B.x221B_b1; b[n++] = F.x221B.x221B_b2; b[n++] = F.x221B.x221B_b3; b[n++] = F.x221B.x221B_b4;
                 b[n++] = F.x2218_b4; b[n++] = F.x2218_b5; b[n++] = F.x2218_b6; b[n++] = F.x2218_b7;
                 ret = 0; for (i = 0; i < n; i++) ret = ret * 31u + b[i];
                 ret = ret * 31u + F.reflecting;

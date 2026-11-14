@@ -86,7 +86,7 @@ int main(void)
             fp.active_timer.lstick.y = (u8) rnd();
             fp.facing_dir = rf();
             fp.facing_dir1 = rf();
-            fp.x594_b0 = rnd() & 1;
+            fp.x594.x0.x594_b0 = rnd() & 1;
             fp.x6A4_transNOffset.y = rf();
             fp.x6A4_transNOffset.z = rf();
             fp.lstick_angle = rf();

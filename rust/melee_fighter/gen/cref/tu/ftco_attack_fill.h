@@ -37,7 +37,7 @@ static void af_fill(void)
     F.unk_msid = 43 + rnd() % 4;
     F.cmd_vars[0] = rnd() & 1;
     F.mv.co.attack100.x0 = rnd() & 1; F.mv.co.attack100.x4 = rnd() & 1;
-    F.throw_flags = (rnd() & 0xFF) << 8; F.throw_flags_b3 = rnd() & 1; F.throw_flags_b0 = rnd() & 1;
+    F.x2210.throw_flags = (rnd() & 0xFF) << 8; F.x2210.x0.throw_flags_b3 = rnd() & 1; F.x2210.x0.throw_flags_b0 = rnd() & 1;
     F.x1A54 = rnd() % 6; F.co_attrs.rapid_jab_window = rnd() % 6;
     F.co_attrs.jab_2_input_window = rw(); F.co_attrs.jab_3_input_window = rw();
     F.x209C = rnd() % 3; F.x683 = rnd() % 8; F.x686 = rnd() & 1; F.x687 = rnd() & 1; F.x689 = rnd() & 1;
@@ -45,7 +45,7 @@ static void af_fill(void)
     F.cur_anim_frame = rg(); F.frame_speed_mul = rg();
     if (rnd() % 3 == 0) F.facing_dir = rg(); else if (rnd() & 1) F.facing_dir = 1.0f; else F.facing_dir = -1.0f;
     F.co_attrs.ground_friction = rw();
-    F.player_id = rnd() % 4; F.is_sub_fighter = rnd() & 1;
+    F.player_idx = rnd() % 4; F.is_sub_fighter = rnd() & 1;
     F.x18 = (rnd() & 1) ? 200 : 300;
     F.x1C_actionStateList = AF_MS1; F.x20_actionStateList = AF_MS2;
     F.ft_data = &AF_FD; AF_FDX8.x10 = rnd() % 4;
@@ -58,9 +58,9 @@ static void af_hash(void)
     HM(F.allow_interrupt); HM(F.x2218_b1); HM(F.x2218_b2); HM(F.x2224_b1);
     HM(B(F.hitlag_mul)); HM(F.unk_msid); HM(F.cmd_vars[0]);
     HM(F.mv.co.attack100.x0); HM(F.mv.co.attack100.x4);
-    HM(F.throw_flags >> 8);
-    HM(F.throw_flags_b0); HM(F.throw_flags_b1); HM(F.throw_flags_b2); HM(F.throw_flags_b3);
-    HM(F.throw_flags_b4); HM(F.throw_flags_b5); HM(F.throw_flags_b6); HM(F.throw_flags_b7);
+    HM(F.x2210.throw_flags >> 8);
+    HM(F.x2210.x0.throw_flags_b0); HM(F.x2210.x0.throw_flags_b1); HM(F.x2210.x0.throw_flags_b2); HM(F.x2210.x0.throw_flags_b3);
+    HM(F.x2210.x0.throw_flags_b4); HM(F.x2210.x0.throw_flags_b5); HM(F.x2210.x0.throw_flags_b6); HM(F.x2210.x0.throw_flags_b7);
     HM(F.x1A54); HM(F.x209C); HM(B(F.facing_dir));
     HM(af_item(F.item_gobj)); HM(af_item(F.x1978));
 }

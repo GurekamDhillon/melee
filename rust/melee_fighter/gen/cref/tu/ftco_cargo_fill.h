@@ -75,8 +75,8 @@ static u32 state_hash(void)
     HM(F.accessory1_cb != NULL);
     HM(F.x2226_b2);
     HM(F.invisible);
-    HM(F.x221B_b5);
-    HM(F.x221B_b7);
+    HM(F.x221B.x221B_b5);
+    HM(F.x221B.x221B_b7);
     HM(PI(F.x1A5C));
     HM(PI(F.victim_gobj));
     HM(F.ground_or_air);

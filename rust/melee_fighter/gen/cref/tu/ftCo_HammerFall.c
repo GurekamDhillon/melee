@@ -39,7 +39,7 @@ int main(void)
             FR = rw(); FL = rnd();
             F.input.pressed_buttons = rnd(); F.input.held_buttons[0] = rnd();
             F.x2338.y = rnd() & 1; F.x683 = rnd() & 0xFF; CD.x1C = rnd() % 256;
-            F.ground_or_air = rnd() & 1; F.item_gobj = &IGO; F.player_id = rnd() % 6;
+            F.ground_or_air = rnd() & 1; F.item_gobj = &IGO; F.player_idx = rnd() % 6;
             F.is_sub_fighter = rnd() & 1;
             switch (op) {
             case 0: ret = ftCo_800C5CD4(&GO); break;

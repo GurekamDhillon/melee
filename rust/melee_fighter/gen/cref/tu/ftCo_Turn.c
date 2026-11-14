@@ -60,8 +60,8 @@ int main(void)
             F.input.pressed_buttons = rnd() & 0x3FF;
             F.facing_dir = rg();
             F.active_timer.lstick.x = rnd() % 4;
-            F.player_id = rnd() % 6;
-            F.x618_player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
+            F.pad_port = rnd() % 6;
             F.is_sub_fighter = rnd() & 1;
             F.x3E4_fighterCmdScript.frame_count = (rnd() & 1) ? 2.0f : rg();
             F.co_attrs.standing_turn_frames = rw();

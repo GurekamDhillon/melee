@@ -31,7 +31,7 @@ int main(void)
             u32 ret = 0;
             tu_case(op, k);
             F.dmg.x1860_element = (rnd() & 1) ? HitElement_Scball : rnd() % 16;
-            F.x2070.x2071_b0_3 = rnd() & 15;
+            F.x2070.x0.x2071_b0_3 = rnd() & 15;
             F.cmd_vars[0] = rnd() & 1;
             F.ground_or_air = rnd() & 1;
             F.co_attrs.screw_attack_launch_velocity = rw();

@@ -60,7 +60,7 @@ int main(void)
             F.cur_anim_frame = rg(); F.frame_speed_mul = rg();
             F.item_gobj = (rnd() & 1) ? (Item_GObj*) &IGO : NULL;
             F.ground_or_air = rnd() & 1;
-            F.player_id = rnd() % 6; F.is_sub_fighter = rnd() & 1;
+            F.player_idx = rnd() % 6; F.is_sub_fighter = rnd() & 1;
             F.x2219_b4 = rnd() & 1;
             CD.x6AC = (int) (rnd() % 1000) - 5; CD.x6B8 = (int) (rnd() % 1000) - 5;
             switch (op) {

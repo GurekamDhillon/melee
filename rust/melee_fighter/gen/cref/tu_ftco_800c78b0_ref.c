@@ -104,7 +104,7 @@ int main(void)
             rs = 0x78B0u + (u32) op * 7919u + (u32) k * 104729u;
             CD.x740 = rw(); CD.x744 = rw(); CD.x748 = rw(); CD.x74C = rw(); CD.x750 = rw(); CD.x754 = rw();
             CD.x758 = rw(); CD.x75C = rw();
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.dmg.x1830_percent = rw();
             F.mv.co.capturelikelike.x0 = &ITEM;
             F.mv.co.capturelikelike.x4 = rnd() % 2;

@@ -21,7 +21,7 @@ Vec3* lbVector_Sub(Vec3* a, Vec3* b) { T(6); TV(a); TV(b); a->x -= b->x; a->y -=
 void ftCommon_UnlockECB(Fighter* f) { T(7); T(f == &F); }
 bool ft_80082638(Fighter_GObj* g, ftCollisionBox* b) { T(8); T(g == &GO); T(b == &F.mv.co.damageice.ice_coll); return SR(3); }
 bool ft_80082888(Fighter_GObj* g, ftCollisionBox* b) { T(9); T(g == &GO); T(b == &F.mv.co.damageice.ice_coll); return SR(4); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 id, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 id, HSD_JObj* j, ...)
 {
     __builtin_va_list ap;
     __builtin_va_start(ap, j);
@@ -145,7 +145,7 @@ int main(void)
             F.dmg.x1838_percentTemp = rw();
             F.dmg.x1860_element = (rnd() & 1) ? HitElement_Fire : rnd() % 16;
             F.grab_timer = rw();
-            F.x2224_b2 = rnd() & 1;
+            F.stamina_dead = rnd() & 1;
             F.mv.co.damageice.rot_speed = rw();
             F.mv.co.damageice.wall_hit_dir = rnd() % 4;
             F.cur_anim_frame = (float) (rnd() % 7);

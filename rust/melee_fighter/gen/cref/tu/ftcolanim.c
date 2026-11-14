@@ -62,11 +62,11 @@ int main(void)
             F.kind = rnd() % Ft_Kind_Max;
             ftData_UnkMotionStates4[F.kind] = (HSD_GObjEvent) (void*) &VAN;
             F.gobj = &GO;
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.is_sub_fighter = rnd() & 1;
             F.x2222_b5 = rnd() & 1;
             F.x2226_b4 = rnd() & 1;
-            F.x2224_b2 = rnd() & 1;
+            F.stamina_dead = rnd() & 1;
             F.x221D_b6 = rnd() & 1;
             F.x2221_b0 = rnd() & 1;
             F.dmg.x18F0 = rnd() % 2;
@@ -92,7 +92,7 @@ int main(void)
             case 8: ftCo_800BFFAC(&F); ftCo_800C0074(&F); ftCo_Sleep_Anim(&GO); ftCo_Sleep_IASA(&GO); break;
             }
             H = 0x811C9DC5u;
-            HM(F.invisible); HM(F.x221E_b1); HM(F.x221E_b2); HM(F.x2219_b1); HM(F.x221F_b3);
+            HM(F.invisible); HM(F.x221E_b1); HM(F.x221E_b2); HM(F.x2219_b1); HM(F.is_sleeping);
             HM(F.x221F_b1); HM(F.x2221_b3); HM(CB.state); HM(F2.x408.x0_timer); HM(F2.x488.x0_timer);
             printf("%d %d %08X %08X\n", op, k, H, TR);
         }

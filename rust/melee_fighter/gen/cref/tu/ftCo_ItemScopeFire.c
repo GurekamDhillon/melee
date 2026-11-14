@@ -48,8 +48,8 @@ static u32 state_hash(void)
     HM(F.accessory4_cb == NULL ? 0 : F.accessory4_cb == fn_800D86B8 ? 1 : 9);
     HM(F.take_dmg_cb == NULL ? 0 : F.take_dmg_cb == fn_800D8378 ? 2 : 9);
     HM(F.mv.co.common.x0);
-    HM(F.throw_flags_b0); HM(F.throw_flags_b1); HM(F.throw_flags_b2); HM(F.throw_flags_b3);
-    HM(F.throw_flags_b4); HM(F.throw_flags_b5); HM(F.throw_flags_b6); HM(F.throw_flags_b7);
+    HM(F.x2210.x0.throw_flags_b0); HM(F.x2210.x0.throw_flags_b1); HM(F.x2210.x0.throw_flags_b2); HM(F.x2210.x0.throw_flags_b3);
+    HM(F.x2210.x0.throw_flags_b4); HM(F.x2210.x0.throw_flags_b5); HM(F.x2210.x0.throw_flags_b6); HM(F.x2210.x0.throw_flags_b7);
     return H;
 }
 
@@ -66,7 +66,7 @@ int main(void)
             F.motion_id = 158 + rnd() % 16;
             F.cur_anim_frame = rw(); F.frame_speed_mul = rw();
             F.facing_dir = rg();
-            F.throw_flags = rnd() & 0xFF;
+            F.x2210.throw_flags = rnd() & 0xFF;
             F.mv.co.common.x0 = (int) (rnd() % 14) - 2;
             switch (op) {
             case 0: fn_800D8140(&GO, (int) (rnd() % 14) - 2); break;

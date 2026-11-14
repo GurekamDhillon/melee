@@ -35,7 +35,7 @@ void Fighter_ChangeMotionState(Fighter_GObj* g, FtMotionId m, MotionFlags fl, fl
 { T(4); T(EP(g)); T((u32) m); T((u32) fl); T(B(a)); T(B(b)); T(B(c)); T(EP(o)); }
 void HSD_JObjSetMtxDirtySub(HSD_JObj* j) { T(5); T(EP(j)); }
 void ftCommon_SetAccessory(Fighter* fp, HSD_Joint* j) { T(6); T(EP(fp)); T(j == &JOINT); fp->x20A0_accessory = &A; }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 id, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 id, HSD_JObj* j, ...)
 {
     __builtin_va_list ap; void* v;
     __builtin_va_start(ap, j); v = __builtin_va_arg(ap, void*); __builtin_va_end(ap);
@@ -92,7 +92,7 @@ int main(void)
             A.translate.x = rw(); A.rotate.y = rw();
             CD.x6BC = (s32) (rnd() % 9) - 1; CD.x6C0 = (s32) (rnd() % 9); CD.x6C4 = rw(); CD.x6C8 = (s32) (rnd() % 50);
             g_u4c = (int) (rnd() % 5); g_bit4 = (int) (rnd() & 1);
-            F.player_id = (u8) (rnd() % 3);
+            F.player_idx = (u8) (rnd() % 3);
             F.cur_pos.x = rw(); F.cur_pos.y = rw(); F.cur_pos.z = rw();
             F.facing_dir = rg(); F.x34_scale.y = rg(); F.x34_scale.x = rg(); F.x40 = rw();
             F.co_attrs.trophy_scale = rw();
@@ -110,7 +110,7 @@ int main(void)
             F.mv.co.entry.x2C.top = rw(); F.mv.co.entry.x2C.bottom = rw();
             F.mv.co.entry.x2C.right.x = rw(); F.mv.co.entry.x2C.right.y = rw();
             F.mv.co.entry.x2C.left.x = rw(); F.mv.co.entry.x2C.left.y = rw();
-            F2.cur_pos.y = rw(); F2.mv.co.entry.x28 = rw(); F2.x221F_b3 = rnd() & 1;
+            F2.cur_pos.y = rw(); F2.mv.co.entry.x28 = rw(); F2.is_sleeping = rnd() & 1;
             g_ent[0] = &GO2; g_ent[1] = (rnd() & 1) ? &GO2 : NULL;
             GO.hsd_obj = &J;
             {

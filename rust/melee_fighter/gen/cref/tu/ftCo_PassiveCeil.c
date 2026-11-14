@@ -9,7 +9,7 @@ BSTUB(ftCo_800986B0, 1)
 VSTUB(ftCommon_8007E2FC, 2)
 void ftKb_SpecialN_800F1F1C(Fighter_GObj* g, Vec3* v) { T(3); T(PI(g)); T(B(v->x)); T(B(v->y)); T(B(v->z)); v->y = rw(); v->x = rg(); }
 CMS(4)
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 gfx, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 gfx, HSD_JObj* j, ...)
 {
     __builtin_va_list ap;
     Vec3* p;

@@ -49,10 +49,10 @@ int main(void)
             tu_case(op, k);
             F.dmg.x1860_element = rnd() % 12;
             F.is_sandbag = rnd() & 1;
-            F.x2070.x2071_b0_3 = rnd() % 16;
+            F.x2070.x0.x2071_b0_3 = rnd() % 16;
             F.ground_or_air = rnd() & 1;
             F.dmg.x1830_percent = rw();
-            F.player_id = rnd() % 4;
+            F.player_idx = rnd() % 4;
             F.grab_timer = rw();
             CD.x658 = rw();
             CD.x65C = rg();

@@ -65,6 +65,17 @@ for _n, _dk, _mn, _hot in PALETTE:
     ROW_ORDER += [_n, _n + "_hot"]
 DP.row("ink", (20, 12, 51), INK)        # already in drive_parts; restated so this file reads alone
 ROW_ORDER.append("ink")
+# chunk 2 rows go AFTER the rows above: a row's place in the atlas is fixed once a mesh has been written against it
+PALETTE2 = [
+    ("red",     (130, 16, 24), (255, 74, 74), (255, 214, 190)),      # Roll Mines 0xFF4A4A, crosses, the launch tag
+    ("sand",    (110, 72, 24), (224, 176, 96), (255, 240, 200)),     # Smash Quake 0xE0B060
+    ("magenta", (84, 22, 130), (200, 90, 255), (246, 214, 255)),     # Homing Ink 0xC85AFF, the curse pool
+    ("dusk",    (36, 20, 58), (90, 58, 122), (196, 156, 236)),       # Demon Wings 0x5A3A7A
+    ("lilac",   (70, 50, 140), (192, 160, 255), (244, 236, 255)),    # Shield Orbs 0xC0A0FF
+]
+for _n, _dk, _mn, _hot in PALETTE2:
+    DP.row(_n, _dk, _mn, _mn); DP.row(_n + "_hot", DP.mix(_mn, _hot, .6), _hot, _hot)
+    ROW_ORDER += [_n, _n + "_hot"]
 assert len(ROW_ORDER) * ARH <= AH
 
 
@@ -276,6 +287,8 @@ MODELS = [
       "behind a secret-pool item; the secret room's pedestal",
       [G("violet", frame_ring(keep=lambda i: i % 6 not in (1, 3), sub=5))]),
 ]
+import models2  # noqa: E402  (chunk 2's part lists; it takes the helpers above)
+MODELS += models2.models(sys.modules[__name__])
 KEYS = [m["key"] for m in MODELS]
 BY_KEY = {m["key"]: m for m in MODELS}
 def span_of(model): return FRAME_SPAN if model["kind"] == "frame" else SPAN
@@ -443,44 +456,56 @@ def png_bytes(im):
     return b.getvalue()
 
 
+SECTIONS = [("item", "Items"), ("node", "Act-map nodes and room markers"), ("hud", "Hearts and HUD bits"), ("frame", "Pool frames"),
+            ("kw", "Keyword and status glyphs"), ("tag", "Tag emblems (synergy banners)"), ("pj", "Projectile bodies"),
+            ("map", "Map furniture"), ("world", "World pieces")]
+
+
 def contact_sheet(meshes, path):
-    """Each model four ways: 3/4 view at 176 px, the shipped sprite at 96 px, and the sprite at game size (48 px) on
-    the dark camp colour and on the cream card colour."""
+    """Each model: a 3/4 view at 150 px, the shipped sprite at 96 px, and the sprite at game size (48 px, and 24 px)
+    on the dark camp colour and on the cream card colour."""
     from PIL import Image, ImageDraw, ImageFont
-    cols, cw, ch = 4, 440, 236
-    rows = (len(MODELS) + cols - 1) // cols
-    sheet = Image.new("RGBA", (cols*cw + 16, rows*ch + 64), (36, 26, 94, 255))
+    cols, cw, ch, head = 5, 372, 206, 40
+    groups = [(title, [m for m in MODELS if m["kind"] == kind]) for kind, title in SECTIONS]
+    assert sum(len(g) for _, g in groups) == len(MODELS)
+    height = 70 + sum(head + ((len(g) + cols - 1) // cols)*ch for _, g in groups)
+    sheet = Image.new("RGBA", (cols*cw + 16, height), (36, 26, 94, 255))
     d = ImageDraw.Draw(sheet)
     try:
-        f1 = ImageFont.truetype("arialbd.ttf", 17); f2 = ImageFont.truetype("arial.ttf", 12); f0 = ImageFont.truetype("arialbd.ttf", 22)
+        f1 = ImageFont.truetype("arialbd.ttf", 15); f2 = ImageFont.truetype("arial.ttf", 11); f0 = ImageFont.truetype("arialbd.ttf", 22)
     except OSError:
         f1 = f2 = f0 = ImageFont.load_default()
-    d.text((16, 14), "Envoy models, chunk 1  (%d models; make_models1.py)   left: 3/4 view   middle: the shipped sprite   right: at game size on dark and on a card" % len(MODELS), font=f2, fill=(220, 214, 255))
-    d.text((16, 30), "ENVOY MODELS 1", font=f0, fill=(255, 216, 74))
-    for i, model in enumerate(MODELS):
-        x, y = 8 + (i % cols)*cw, 64 + (i // cols)*ch
-        mesh = meshes[model["key"]]
-        d.rounded_rectangle([x + 4, y + 4, x + cw - 6, y + ch - 6], 12, fill=(48, 36, 120, 255))
-        sp = span_of(model)
-        sheet.alpha_composite(raster(mesh, 176, span=sp*1.08, yaw=-0.5, edge=0.0), (x + 10, y + 34))
-        spr = raster(mesh, SPRITE, span=sp)
-        sheet.alpha_composite(spr, (x + 196, y + 46))
-        small = spr.resize((48, 48), Image.LANCZOS)
-        sheet.alpha_composite(small, (x + 312, y + 46))
-        d.rounded_rectangle([x + 370, y + 40, x + 428, y + 98], 8, fill=(251, 246, 221, 255))
-        sheet.alpha_composite(small, (x + 375, y + 45))
-        tiny = spr.resize((24, 24), Image.LANCZOS)
-        sheet.alpha_composite(tiny, (x + 324, y + 112))
-        sheet.alpha_composite(tiny, (x + 387, y + 112))
-        d.text((x + 16, y + 10), model["name"], font=f1, fill=(255, 255, 255))
-        d.text((x + 196, y + 14), "em_%s  %s  %d tris" % (model["key"], model["kind"], len(mesh.tris)), font=f2, fill=(190, 182, 240))
-        words, line, ty = model["concept"].split(), "", y + 150
-        for w in words:
-            if d.textlength(line + " " + w, font=f2) > 228:
-                d.text((x + 196, ty), line, font=f2, fill=(220, 214, 255)); ty += 15; line = w
-            else:
-                line = (line + " " + w).strip()
-        d.text((x + 196, ty), line, font=f2, fill=(220, 214, 255))
+    d.text((16, 10), "ENVOY MODELS, chunks 1 and 2", font=f0, fill=(255, 216, 74))
+    d.text((16, 40), "%d models from make_models1.py.  Each cell: 3/4 view of the mesh, the shipped 96 px sprite, the sprite at game size (48 and 24 px) on dark and on a card." % len(MODELS), font=f2, fill=(220, 214, 255))
+    y = 64
+    for title, group in groups:
+        d.text((16, y + 10), "%s  (%d)" % (title, len(group)), font=f1, fill=(255, 216, 74))
+        y += head
+        for i, model in enumerate(group):
+            x, cy = 8 + (i % cols)*cw, y + (i // cols)*ch
+            mesh = meshes[model["key"]]
+            sp = span_of(model)
+            d.rounded_rectangle([x + 3, cy + 3, x + cw - 5, cy + ch - 5], 10, fill=(48, 36, 120, 255))
+            sheet.alpha_composite(raster(mesh, 150, span=sp*1.08, yaw=-0.5, edge=0.0), (x + 6, cy + 30))
+            spr = raster(mesh, SPRITE, span=sp)
+            sheet.alpha_composite(spr, (x + 160, cy + 30))
+            small = spr.resize((48, 48), Image.LANCZOS)
+            sheet.alpha_composite(small, (x + 262, cy + 30))
+            d.rounded_rectangle([x + 312, cy + 26, x + 364, cy + 82], 7, fill=(251, 246, 221, 255))
+            sheet.alpha_composite(small, (x + 314, cy + 30))
+            tiny = spr.resize((24, 24), Image.LANCZOS)
+            sheet.alpha_composite(tiny, (x + 274, cy + 90))
+            sheet.alpha_composite(tiny, (x + 326, cy + 90))
+            d.text((x + 12, cy + 8), model["name"], font=f1, fill=(255, 255, 255))
+            d.text((x + 12, cy + ch - 24), "em_%s  %d tris" % (model["key"], len(mesh.tris)), font=f2, fill=(190, 182, 240))
+            words, line, ty = model["concept"].split(), "", cy + 130
+            for w in words:
+                if d.textlength(line + " " + w, font=f2) > 200:
+                    d.text((x + 160, ty), line, font=f2, fill=(220, 214, 255)); ty += 13; line = w
+                else:
+                    line = (line + " " + w).strip()
+            d.text((x + 160, ty), line, font=f2, fill=(220, 214, 255))
+        y += ((len(group) + cols - 1) // cols)*ch
     path.parent.mkdir(parents=True, exist_ok=True)
     sheet.convert("RGB").save(path, "PNG")
     print("contact sheet: %s (%d x %d)" % (path, sheet.width, sheet.height))
@@ -500,6 +525,9 @@ def outputs(sprites=True):
         out[OUT_MODELS / ("em_%s.coll.json" % k)] = b'{"version":1,"atlas":"envoy_models_atlas","alpha":0,"lines":[]}\n'
         out[OUT_MODELS / ("em_%s.material.json" % k)] = b'{"builtin": "lit", "emission": 1.0}\n'
     out[OUT_MODELS / "envoy_models.txt"] = "".join(k + "\n" for k in KEYS).encode()
+    # the host's include list (rust/melee_modes/src/tu/drive_draw.rs `EM_FILES`): the manifest's order, by construction
+    out[OUT_MODELS / "envoy_models.inc.rs"] = ("// Generated by tools/make_models1.py: the meshes in envoy_models.txt order. Do not edit.\n[\n"
+        + "".join('    include_bytes!("em_%s.gxmesh") as &[u8],\n' % k for k in KEYS) + "]\n").encode()
     if sprites:
         for k in KEYS:
             out[OUT_ART / ("em_%s.png" % k)] = png_bytes(raster(meshes[k], SPRITE, span=span_of(BY_KEY[k])))
@@ -511,7 +539,7 @@ def main():
     meshes, out = outputs(sprites="--no-sprites" not in args)
     if "--check" in args:
         # git may check the text files out with CRLF; the binaries must match to the byte
-        text = lambda p: p.suffix in (".json", ".txt")
+        text = lambda p: p.suffix in (".json", ".txt", ".rs")
         same = lambda p, b: (p.read_bytes().replace(b"\r\n", b"\n") if text(p) else p.read_bytes()) == b
         diff = [str(p) for p, b in out.items() if not p.exists() or not same(p, b)]
         if diff:

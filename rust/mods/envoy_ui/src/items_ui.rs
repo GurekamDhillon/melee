@@ -209,22 +209,36 @@ pub unsafe fn pedestals(v: &[i32; VW]) {
             }
             LAST[p][k] = (bx, by);
             let fy = by + 12.0 + 1.5 * sin(t * 0.07 + k as f32 * 1.3);
-            fx(FX_DISC, bx, fy, 7.5, 0.0, 0.0, alpha(c, 0.55));
-            fx(FX_DISC, bx, fy, 4.0, 0.0, 0.0, alpha(WHITE, 0.8));
-            fx(FX_RING, bx, fy, 6.0, 1.4, 0.0, alpha(c, 1.0));
-            fx(FX_SPIKES, bx, fy, 4.5, 8.5 + sin(t * 0.2), t * 0.02, alpha(c, 0.7));
+            let m = item(id).map_or(-1, |it| crate::fx::em_model(it.key));
+            if m >= 0 {
+                // the item's own model (envoy-models1.md) rocking over the stone, on a soft disc of its colour (no ink
+                // edge: the host drops MAT_OUTLINE for this set)
+                fx(FX_DISC, bx, fy, 8.5, 0.0, 0.0, alpha(c, 0.3));
+                let yaw = 0.35 * sin(t * 0.045 + k as f32 * 1.3);
+                crate::fx::model(m, bx, fy, 0.0, yaw, 16.0, 1.0, crate::fx::MAT_BODY, [0.3, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
+            } else {
+                fx(FX_DISC, bx, fy, 7.5, 0.0, 0.0, alpha(c, 0.55));
+                fx(FX_DISC, bx, fy, 4.0, 0.0, 0.0, alpha(WHITE, 0.8));
+                fx(FX_RING, bx, fy, 6.0, 1.4, 0.0, alpha(c, 1.0));
+                fx(FX_SPIKES, bx, fy, 4.5, 8.5 + sin(t * 0.2), t * 0.02, alpha(c, 0.7));
+            }
             // in pickup range (V_PED_NEAR, the sim's own range test): a highlight ring and a floating A button,
             // GameCube green, over the item; the take itself is the sim's (A on the ground, Z / L / R in the air)
             if !moving && v[V_PED_NEAR + p] == k as i32 + 1 {
                 let pulse = 0.5 + 0.5 * sin(t * 0.25);
                 fx(FX_RING, bx, fy, 8.5 + 1.2 * pulse, 1.2, 0.0, alpha(WHITE, 0.6 + 0.4 * pulse));
-                let ay = fy + 13.0 + 1.0 * sin(t * 0.12);
-                fx(FX_DISC, bx, ay, 4.2, 0.0, 0.0, alpha(0x1A12_2CFF, 0.9));
-                fx(FX_DISC, bx, ay, 3.5, 0.0, 0.0, 0x2FC4_5AFF);
-                // the letter A, three strokes
-                fx(FX_LINE, bx - 1.5, ay - 1.8, bx, ay + 2.0, 0.7, WHITE);
-                fx(FX_LINE, bx, ay + 2.0, bx + 1.5, ay - 1.8, 0.7, WHITE);
-                fx(FX_LINE, bx - 0.8, ay - 0.2, bx + 0.8, ay - 0.2, 0.6, WHITE);
+                let ay = fy + 14.0 + 1.0 * sin(t * 0.12);
+                let a_btn = crate::fx::em_model("hud_a_button");
+                if a_btn >= 0 {
+                    // envoy-models1.md: the A button model, facing the camera
+                    crate::fx::model(a_btn, bx, ay, 0.0, 0.0, 8.0, 1.0, crate::fx::MAT_BODY, [0.4, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
+                } else {
+                    fx(FX_DISC, bx, ay, 4.2, 0.0, 0.0, alpha(0x1A12_2CFF, 0.9));
+                    fx(FX_DISC, bx, ay, 3.5, 0.0, 0.0, 0x2FC4_5AFF);
+                    fx(FX_LINE, bx - 1.5, ay - 1.8, bx, ay + 2.0, 0.7, WHITE);
+                    fx(FX_LINE, bx, ay + 2.0, bx + 1.5, ay - 1.8, 0.7, WHITE);
+                    fx(FX_LINE, bx - 0.8, ay - 0.2, bx + 0.8, ay - 0.2, 0.6, WHITE);
+                }
             }
         }
     }

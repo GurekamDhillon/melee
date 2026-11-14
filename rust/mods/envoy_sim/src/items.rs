@@ -1024,6 +1024,8 @@ unsafe fn run_chain(p: usize, s: i32, chain: &[Proc]) {
         let from = if q.parent == 255 { s } else { tgt[q.parent as usize] };
         tgt[i] = proc_fire(p, q, from);
         log_item(b"item procs", q.item, p as i32 * 10_000 + q.depth as i32 * 1000 + q.coef as i32);
+        // frame-tagged (a resimulated frame logs the same line again: the checks compare the unique set)
+        log_item(b"proc at", q.item, S.play * 100 + p as i32 * 10 + q.depth as i32);
     }
     let deep = chain.iter().map(|q| q.depth).max().unwrap_or(0);
     if deep >= 2 {

@@ -66,7 +66,7 @@ tmods="$out/mods"; rm -rf "$tmods"; mkdir -p "$tmods"
 cp "$mods/envoy_sim.wasm" "$tmods/" || { echo "items_check: build the mods first (tools/rust-port/modhost/build_mods.sh)"; exit 2; }
 ALL="spark_ring,glide_wake,shine_bell,hop_shot,ledge_spikes,whiff_echo,roll_mines,smash_quake,moon_drops,coin_magnet,homing_ink,fire_lace"
 ORBS="moon_drops,dodge_orb,nair_ring,dash_orb,shield_orbs"
-SYN="ember_seed:3,static_coil:3,frost_bud:3,fire_lace,spark_ring:3,chain_spark,roll_mines,smash_quake,shine_bell,hop_shot,homing_ink,big_bang,moon_drops,crimson_count"
+SYN="brimstone_jab,ember_seed:3,static_coil:3,frost_bud:3,fire_lace,spark_ring:3,chain_spark,roll_mines,smash_quake,shine_bell,hop_shot,homing_ink,big_bang,moon_drops,crimson_count"
 COOPSYN="kin_tether:2,kindred_spark,rally_banner,spark_ring,smash_quake,roll_mines,*4000;ember_seed:2,static_coil,frost_bud,*4000"
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$tmods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=1 MELEE_PAD_SCRIPT="$here/items_pad.txt"
 run() { # name depth knobs [env...]
@@ -251,7 +251,7 @@ for d in $depths; do
     seen synergy "$d" "envoy: synergy first" || miss="$miss (no synergy banner)"
     seen synergy "$d" "envoy: evolution formed storm_crown" || miss="$miss (Storm Crown not formed)"
     seen synergy "$d" "envoy: evolution formed inferno_seed" || miss="$miss (Inferno Seed not formed)"
-    grep -ao "envoy: item procs .*" "$(L synergy "$d")" > "$out/synergy.procs.d$d"
+    grep -ao "envoy: proc at .*" "$(L synergy "$d")" | sort -u > "$out/synergy.procs.d$d"
     check 20 synergy "$d" "$line" "$miss"
     echo "     synergy d$d: procs $(wc -l < "$out/synergy.procs.d$d"), chains $(grep -ac 'envoy: proc chain' "$(L synergy "$d")"), synergies first: $(grep -aoE 'envoy: synergy first [a-z_]+' "$(L synergy "$d")" | awk '{print $4}' | sort -u | tr '
 ' ' ')"
@@ -267,8 +267,8 @@ done
 if on synergy; then
   set -- $depths
   if [ $# -ge 2 ] && [ -s "$out/synergy.procs.d$1" ]; then
-    if cmp -s "$out/synergy.procs.d$1" "$out/synergy.procs.d$2"; then echo "ok   20b. synergy: the proc sequence is identical at d$1 and d$2 ($(wc -l < "$out/synergy.procs.d$1") procs)"
-    else echo "FAIL 20b. synergy: the proc sequence differs between d$1 and d$2"; fail=1; fi
+    if cmp -s "$out/synergy.procs.d$1" "$out/synergy.procs.d$2"; then echo "ok   20b. synergy: the frame-tagged proc set is identical at d$1 and d$2 ($(wc -l < "$out/synergy.procs.d$1") procs)"
+    else echo "FAIL 20b. synergy: the frame-tagged proc set differs between d$1 and d$2"; fail=1; fi
   fi
 fi
 rm -rf "$tmods"

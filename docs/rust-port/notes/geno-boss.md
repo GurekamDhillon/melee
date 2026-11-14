@@ -62,3 +62,51 @@ KO, draw, camera, knockback scale, sounds the IR lists without an id (looked up 
 | NHV1 (golden, `pad_falcon_fox_fd` + Envoy fight 5, 3000 frames) | identical over two runs; last row frame 2999 hash `1CB3982F`, seed `777F059B` (the boss state word is mixed in while the actor is live) |
 | frame times (real time, profiler, 2199 frames) | 0 frames over 16.7 ms (one startup frame, the match load) |
 | VS (`MELEE_VS_BOSS=petey`, no mods) | his arena, the Geno actor, death at the scripted hits, carrier KO |
+
+## Grabs (lane A, port/geno-boss-grab)
+
+Code: `rust/melee_modes/src/tu/geno_boss_grab.rs` (grab state, host, the Tabuu grab test define), lowering arms in
+`geno_boss_ir.rs` (`grab_timeline`, `grab_status_frame`, grab phrases in `Lx::op`), variants in `geno_boss.rs`.
+
+| piece | what |
+|---|---|
+| `Op::Grab { part, joint, radius, frames, release }` | a catch box (060A) for a motion-frame window (060A .. next 060D - 1; one frame without a 060D); `release` = the hold-status mask |
+| `Op::GrabRelease(Option<attack>)` | 6528: throw with the attack's first box (a 061A of the same frame: the grab's `throw` block; else the box the motion's attack opens then), or drop |
+| `Cond::Holding` | a fighter is held; "if caught (flag 6) -> ... N" lowers to `If(Holding, ChangeStatus(N))` |
+| `EV_GRAB` | 1 armed, 2 throw, 3 drop |
+| hold mask | the statuses playing the catch motion plus, transitively, each "if the next status is not N: CommonCatchProcExit" exit's N (Tabuu: Chain 36\|37, Dive 19\|20\|21); `enter` drops the victim on leaving it |
+| State | `State::grab` (`GrabState`, appended last), all of it in `state_hash` |
+
+Host (`host_frame`, after `geno_boss::tick`): the catch box is a sphere on the carrier's Melee catch joint (`ft_data
+x8.x11`; Brawl bone numbers mean nothing on a Melee body) tested against the other fighters' grabbable hurt capsules on
+the motion frame whose timeline ran (`tl_mf`). A catch is Melee's own capture: `fn_800DAADC` + `fn_800DB6C8`
+(CapturePulled -> CaptureWait) with the carrier as grabber (`victim_gobj`, `capturedamage.x18` set every frame), so
+mashing, CaptureCut / CaptureJump and hits on the held fighter are the game's code. The host gives back CaptureWait's
+passive per-frame timer decay: a boss hold ends by its release or by mashing (Brawl's bosses throw before the common
+catch timer matters; Melee's 75-frame passive expiry dropped every Chain hold before ChainThrow). Throw = Melee's throw
+release (`ftCo_800DE2A8` with the box in the carrier's `xDF4[0]`, then `ftCo_800DE7C0`); drop = `ftCo_CaptureCut_Enter`.
+An escape is any frame the victim is no longer in a capture state of the carrier.
+
+Test host: `MELEE_VS_BOSS=tabuu` (+ `MELEE_VS_BOSS_SLOT=n` for an all-human scenario): a minimal Tabuu define
+(Wait 60 frames, Chain and Dive alternating; `MELEE_TABUU_GRAB=chain|dive`, `MELEE_TABUU_WAIT`) whose catch boxes, hold
+masks and throws are lowered from `tabuu.brawl.ir.json`; motion lengths are the IR's timelines; the carrier is the
+visible fighter (no Tabuu model, no teleports, no other attacks). Logs `MELEE_GRAB_LOG=1` (`geno_grab:` lines).
+Check: `tools/rust-port/envoy/geno_grab_check.sh [hold mash sync nhv1 perf]`.
+
+Also: the IR reader accepts `NaN` / `Infinity` (Tabuu's and Rayquaza's files have them; they failed to parse before).
+
+Not done: Bucculus chew (designed: a hold whose status runs a periodic damage op on the victim through Melee's
+CaptureDamage; needs an `Op::GrabHit` and the enemy's IR lowered), Tabuu's side/range catch gates (660E / 6604 / 6605)
+and the 6502 hold-range keeper (the catch test and Melee's capture states stand in), the 061A base knockback word is
+inferred [I].
+
+### Proof (2026-11-14, release exe of this branch)
+
+| check | result |
+|---|---|
+| unit tests | `geno_boss` 7/7 incl. `geno_boss_grab` (catch window, hold, throw request, drop on leaving the hold, the local Tabuu IR lowers to Chain r13.5 f89-106 hold 36\|37 and Dive r14 f119 hold 19\|20\|21, throws ChainAttack 20+2.5L @361 kbg 68 bkb 90-1.5L and Dive 30+2.8L @22 kbg 75) |
+| `geno_grab_check.sh hold` | Chain catch at ChainStart f89 -> ChainThrow -> thrown at f135 (26.2 at L 2.5); Dive catch at f119 -> DiveTeleport -> DiveSlam -> thrown (37.0); no escape without a mash |
+| `mash` | caught at f89, mashed out (CaptureCut) before the throw |
+| synctest (hold schedule, 3000 frames) | depth 4: 11988 checks, 0 mismatches; depth 7: 20958 checks, 0 mismatches; grabs and throws inside both |
+| NHV1 (`golden`, hold schedule, 3000 frames) | identical over two runs; last row frame 2999 hash `ED7C78E4` |
+| frame times (real time, `play`, Falcon vs CPU Fox carrier, profiler, 2999 frames) | 0 over 16.7 ms (+1 startup frame, the match load) |

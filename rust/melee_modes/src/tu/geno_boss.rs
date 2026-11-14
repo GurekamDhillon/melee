@@ -88,6 +88,8 @@ pub enum Cond {
     AtGoal,
     /// the host reports the actor outside the area (blast zones)
     OutOfArea,
+    /// the actor holds a caught fighter (geno_boss_grab)
+    Holding,
     And(Box<Cond>, Box<Cond>),
     Not(Box<Cond>),
 }
@@ -153,6 +155,11 @@ pub enum Op {
     Hitbox(u8, u8),
     /// the actor is gone after this status (host handles removal)
     Despawn,
+    /// grab (geno_boss_grab): a catch box on `part`'s `joint` (radius, motion frames); a fighter it touches is held on
+    /// that joint while the status is in `release` (a status mask: leaving it releases, Brawl's CommonCatchProcExit)
+    Grab { part: u8, joint: i32, radius: f32, frames: (i32, i32), release: u64 },
+    /// release the held fighter now: thrown with `attacks[i].boxes[0]` (Melee's throw release), or dropped (None)
+    GrabRelease(Option<u8>),
 }
 
 #[derive(Clone, Debug)]
@@ -362,6 +369,8 @@ pub struct State {
     pub inst: u32,
     /// live attack boxes: (attack index, part) per slot, 0xFF = none
     pub atk: [(u8, u8); 4],
+    /// grabs (geno_boss_grab; appended last: the layout is hashed)
+    pub grab: crate::tu::geno_boss_grab::GrabState,
 }
 
 pub const OFF: State = State {
@@ -369,7 +378,7 @@ pub const OFF: State = State {
     goal: 0.0, has_goal: false, strength: 1, difficulty: 5, rules_on: 0, vars: [0.0; MAX_VARS], hp: [0; MAX_PARTS],
     hp_max: [1; MAX_PARTS], counter: [0; MAX_PARTS], zero_sent: 0, intangible: 0, hit: false, hit_part: 0, dmg_core: 0,
     damaged: 0, locked: -1, last_slot: -1, rng: 1, frame: 0, cause: 0, despawned: false, ev_n: 0,
-    ev: [(0, 0); MAX_EVENTS], inst: 1, atk: [(0xFF, 0xFF); 4],
+    ev: [(0, 0); MAX_EVENTS], inst: 1, atk: [(0xFF, 0xFF); 4], grab: crate::tu::geno_boss_grab::OFF,
 };
 
 pub static mut S: State = OFF;
@@ -379,6 +388,8 @@ pub const EV_SOUND: u8 = 1;
 pub const EV_SHAKE: u8 = 2;
 pub const EV_STAGE: u8 = 3;
 pub const EV_STATUS: u8 = 4;
+/// grab events (geno_boss_grab): `GRAB_ARMED`, `GRAB_THROW`, `GRAB_DROP`
+pub const EV_GRAB: u8 = 5;
 
 /// The host's view of the world each frame: the target candidates' x (None = absent / not selectable) and whether
 /// the actor is airborne.
@@ -432,6 +443,9 @@ pub fn state_hash() -> Option<u32> {
     mix(s.last_slot as u32);
     mix(s.rng);
     mix(s.cause as u32);
+    for w in crate::tu::geno_boss_grab::hash_words(&s.grab) {
+        mix(w);
+    }
     Some(h)
 }
 
@@ -522,6 +536,7 @@ impl<'a> Rt<'a> {
             Cond::PartPctLe(p, x) => self.pct(*p as usize) <= *x,
             Cond::AtGoal => s.has_goal && s.x == s.goal,
             Cond::OutOfArea => self.w.out_of_area,
+            Cond::Holding => s.grab.victim >= 0,
             Cond::Target(unlocked) => self.any_target() && (!*unlocked || s.locked < 0),
             Cond::And(a, b) => self.cond(a) && self.cond(b),
             Cond::Not(a) => !self.cond(a),
@@ -610,6 +625,10 @@ impl<'a> Rt<'a> {
 
     pub fn enter(&self, st: u8) {
         let Some(sd) = self.d.status(st) else { return };
+        // leaving the hold statuses releases the held fighter (CommonCatchProcExit); the catch box is the status's own
+        if unsafe { crate::tu::geno_boss_grab::on_status(&mut S.grab, st) } {
+            self.push_ev(EV_GRAB, crate::tu::geno_boss_grab::GRAB_DROP);
+        }
         unsafe {
             if log_on() {
                 eprintln!("geno_boss: f{} status {} -> {} ({}) x {:.1} hp {:?}", S.frame, S.status, st, sd.name, S.x, &S.hp[..self.d.parts.len().min(MAX_PARTS)]);
@@ -791,6 +810,15 @@ impl<'a> Rt<'a> {
                 }
             }
             Op::Despawn => s.despawned = true,
+            Op::Grab { part, joint, radius, frames, release } => {
+                crate::tu::geno_boss_grab::arm(&mut s.grab, *part, *joint, *radius, *frames, *release, s.status);
+                self.push_ev(EV_GRAB, crate::tu::geno_boss_grab::GRAB_ARMED);
+            }
+            Op::GrabRelease(throw) => {
+                if crate::tu::geno_boss_grab::request_release(&mut s.grab, *throw) {
+                    self.push_ev(EV_GRAB, if throw.is_some() { crate::tu::geno_boss_grab::GRAB_THROW } else { crate::tu::geno_boss_grab::GRAB_DROP });
+                }
+            }
         }
         false
     }

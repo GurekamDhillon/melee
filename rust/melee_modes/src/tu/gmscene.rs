@@ -983,6 +983,8 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
             if let Some(m) = MOD_FRAME { m(true) } else if crate::tu::petey::vs_selected() {
                 // a VS boss without any mod mounted: the actor still ticks at frame end (the mod host's post chain does it otherwise)
                 crate::tu::petey::tick();
+            } else if crate::tu::geno_boss_grab::vs_selected() {
+                crate::tu::geno_boss_grab::tick();
             }
             if let Some(f) = ext::AUDIO_PROCS { f() }
             ext::Netplay_Background(); // an online lobby stays connected on the CSS too

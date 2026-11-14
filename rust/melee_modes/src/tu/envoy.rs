@@ -646,6 +646,7 @@ fn ratio(v: i32) -> f32 {
 pub unsafe fn match_begin(d: *mut StartMeleeData) {
     melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("match setup"));
     crate::tu::petey::disarm();
+    crate::tu::geno_boss_grab::disarm();
     crate::tu::subspace::begin_match(0x5B5A_CE01 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
     melee_fighter::tu::player::TAG_DEFER = false;
     melee_fighter::tu::player::TAG_DEFERRED = [None; 4];
@@ -658,6 +659,23 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     WAVE_NO = 1;
     WAVE_PARK = [0; 4];
     WAVE_PENDING = [0; 4];
+    // VS grab test (no Envoy run): `MELEE_VS_BOSS=tabuu` makes the first CPU slot (or MELEE_VS_BOSS_SLOT) the carrier of
+    // a minimal Tabuu actor whose grabs come from his local IR (geno_boss_grab, notes geno-boss.md "Grabs")
+    if PLAN[P_ACTIVE] == 0 && !d.is_null() && crate::tu::geno_boss_grab::vs_selected() && crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 == GM_VS as u32 {
+        let d = &mut *d;
+        let slot = crate::tu::geno_boss_grab::slot_override().or_else(|| (0..4).find(|&i| d.players[i].slot_type == 1));
+        if let Some(c) = slot {
+            if d.players[c].slot_type == 1 {
+                d.players[c].cpu_kind = 0;
+                d.players[c].cpu_level = 1;
+            }
+            d.rules.set_timer_enabled(0);
+            d.rules.time_limit = 0;
+            crate::tu::geno_boss_grab::arm_vs(c as i32, 0x7AB0_u32 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
+            SEQ = SEQ.wrapping_add(1);
+        }
+        return;
+    }
     // VS (no Envoy run): `MELEE_VS_BOSS=petey` makes the first CPU slot Petey's carrier, in his arena when the files
     // have it (geno-boss.md): the same boss as Envoy's fight 5
     if PLAN[P_ACTIVE] == 0 && !d.is_null() && crate::tu::petey::vs_selected() && crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 == GM_VS as u32 {

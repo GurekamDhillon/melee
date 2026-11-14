@@ -171,6 +171,16 @@ fn value(b: &[u8], i: &mut usize) -> Result<J, String> {
             *i += 4;
             Ok(J::Null)
         }
+        // the analyst's writer emits Python's non-finite floats (Tabuu's, Rayquaza's parameter tables)
+        b'N' if b[*i..].starts_with(b"NaN") => {
+            *i += 3;
+            Ok(J::Num(f64::NAN))
+        }
+        b'I' | b'-' if b[*i..].starts_with(b"Infinity") || b[*i..].starts_with(b"-Infinity") => {
+            let neg = c == b'-';
+            *i += if neg { 9 } else { 8 };
+            Ok(J::Num(if neg { f64::NEG_INFINITY } else { f64::INFINITY }))
+        }
         _ => {
             let st = *i;
             while *i < b.len() && matches!(b[*i], b'-' | b'+' | b'.' | b'e' | b'E' | b'0'..=b'9') {
@@ -652,6 +662,10 @@ impl<'a> Lx<'a> {
                     None => one(Op::Nop), // a box of the current attack (by motion), host side
                 }
             }
+            "other" if is_grab_text(&tl) => grab_phrase(text, &tl).unwrap_or_else(|e| {
+                self.err(&e, ctx);
+                vec![]
+            }),
             "other" => {
                 if tl.contains("commonnoneflydamageproc") || tl.contains("noro") || tl.contains("ground snap") || tl.contains("reply handled") || tl.contains("copy cage motion") || tl.contains("trophy") {
                     one(Op::Nop)
@@ -794,10 +808,19 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
     }
     // motions + timelines
     let mut mlist = vec![];
+    let mut grab_attacks: Vec<Attack> = boss.get("attacks").arr().iter().map(|a| Attack { name: a.get("name").str().to_string(), boxes: vec![] }).collect();
     for m in motions {
         let mut tl = vec![];
         if let Some(t) = boss.get("timelines").arr().iter().find(|t| t.get("motion").str() == m.name) {
+            // catch / release commands (geno_boss_grab): lowered together, they span events
+            match grab_timeline(ir, m.name, &mut grab_attacks) {
+                Ok(g) => tl.extend(g),
+                Err(e) => lx.err(&e, &format!("timeline {}", m.name)),
+            }
             for e in t.get("events").arr() {
+                if e.get("op").get("op").str() == "other" && is_grab_cmd(&e.get("op").get("text").str().to_ascii_lowercase()) {
+                    continue;
+                }
                 let ops = lx.op(e.get("op"), &format!("timeline {}", m.name), false, None);
                 let part = e.get("part").str();
                 for mut op in ops {
@@ -949,7 +972,8 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
     };
     let win = boss.get("rule_engine").get("default_window").arr();
     let window = (win.first().and_then(|v| v.num()).unwrap_or(-50.0) as i32, win.get(1).and_then(|v| v.num()).unwrap_or(250.0) as i32);
-    let attacks = boss.get("attacks").arr().iter().map(|a| Attack { name: a.get("name").str().to_string(), boxes: vec![] }).collect();
+    // the IR's attacks by name (boxes host side), plus the grabs' throws with their boxes
+    let attacks = grab_attacks;
     if !lx.errors.is_empty() {
         return Err(lx.errors.join("; "));
     }
@@ -979,6 +1003,193 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
         // the shared enemy engine's passes (enemy-engine IR): -100, the damage window on a hit frame, the default window
         passes: vec![(-100, -100, false), (-250, -150, true), (window.0, window.1, false)],
     })
+}
+
+// ------------------------------------------------------------------------------------------------- grabs
+
+/// Timeline commands of a catch (060A box on, 060D off, 060F / 6528 release, 061A throw box) and the shared catch
+/// exit; lowered together by [`grab_timeline`], not one by one.
+fn is_grab_cmd(tl: &str) -> bool {
+    let w = tl.split_whitespace().next().unwrap_or("");
+    matches!(w, "060a" | "060d" | "060f" | "061a" | "6528") || tl.contains("commoncatchprocexit") || tl == "setflag v12000006"
+}
+
+/// Status-level grab phrases (exit releases, the caught check, catch-range gates).
+fn is_grab_text(tl: &str) -> bool {
+    tl.contains("commoncatchprocexit") || tl.contains("if caught") || tl.contains("catch box on/off") || tl.contains("keep the held player in range")
+}
+
+/// One status-level grab phrase.
+/// * "if the next status is not N: CommonCatchProcExit": the release is the grab's hold mask (`Op::Grab::release`,
+///   built from these phrases by [`grab_timeline`]), so nothing here
+/// * "if caught (flag 6) -> 0006 [I: jumps to <Name> N ...]": `If(Holding, ChangeStatus(N))`
+/// * the catch box's side / range gates and the hold-range keeper: the host's catch test and Melee's capture states
+fn grab_phrase(text: &str, tl: &str) -> Result<Vec<Op>, String> {
+    if tl.contains("if caught") {
+        let n = tl.split("jumps to").nth(1).and_then(|r| r.split_whitespace().nth(1)).and_then(|w| w.trim_matches(|c: char| !c.is_ascii_digit()).parse::<u8>().ok());
+        return match n {
+            Some(n) => Ok(vec![Op::If(Cond::Holding, vec![Op::ChangeStatus(n)], vec![])]),
+            None => Err(format!("caught check without a target status '{text}'")),
+        };
+    }
+    Ok(vec![Op::Nop])
+}
+
+fn status_has_motion(s: &J, motion: &str) -> bool {
+    s.get("motion").str().split('|').any(|m| m == motion)
+}
+
+/// The statuses a grab made in `motion` keeps its victim through: the statuses playing it, then each "if the next
+/// status is not N: CommonCatchProcExit" exit's N, transitively.
+fn hold_mask(ir: &J, motion: &str) -> u64 {
+    let sts = ir.get("boss").get("statuses").arr();
+    let mut m = 0u64;
+    let mut todo: Vec<u8> = sts.iter().filter(|s| status_has_motion(s, motion)).filter_map(|s| s.get("index").num()).map(|v| v as u8).collect();
+    while let Some(ix) = todo.pop() {
+        if ix >= 64 || m >> ix & 1 != 0 {
+            continue;
+        }
+        m |= 1 << ix;
+        let Some(s) = sts.iter().find(|s| s.get("index").num() == Some(ix as f64)) else { continue };
+        for e in s.get("on_exit").arr() {
+            let t = e.get("text").str().to_ascii_lowercase();
+            if let Some(rest) = t.strip_prefix("if the next status is not ") {
+                if let Some(n) = rest.split(':').next().and_then(|w| w.trim().parse::<u8>().ok()) {
+                    todo.push(n);
+                }
+            }
+        }
+    }
+    m
+}
+
+/// An attack's first box from the IR's `attacks` block (the throw of a release that has no 061A of its own).
+fn ir_attack_box(ir: &J, name: &str) -> Option<HitboxDef> {
+    let a = ir.get("boss").get("attacks").arr().iter().find(|a| a.get("name").str() == name)?;
+    let h = a.get("hitboxes").arr().first()?;
+    let n = |j: &J| match j {
+        J::Num(v) => Num::K(*v as f32),
+        J::Obj(_) => Num::Lin(j.get("base").num().unwrap_or(0.0) as f32, j.get("per_level").num().unwrap_or(0.0) as f32),
+        _ => Num::K(0.0),
+    };
+    let fr = h.get("frames").arr();
+    Some(HitboxDef {
+        part: 0,
+        joint: h.get("joint").num().unwrap_or(0.0) as i32,
+        offset: [0.0; 3],
+        frames: (fr.first().and_then(|v| v.num()).unwrap_or(0.0) as i32, fr.get(1).and_then(|v| v.num()).unwrap_or(0.0) as i32),
+        damage: n(h.get("damage")),
+        angle: h.get("angle").num().unwrap_or(0.0) as i32,
+        kbg: n(h.get("knockback_growth")),
+        wkb: h.get("set_knockback").num().unwrap_or(0.0) as f32,
+        bkb: n(h.get("base_knockback")),
+        size: n(h.get("size")),
+        group: 0,
+        rehit: 0,
+    })
+}
+
+fn put_attack(attacks: &mut Vec<Attack>, name: &str, b: HitboxDef) -> u8 {
+    if let Some(i) = attacks.iter().position(|a| a.name == name) {
+        if attacks[i].boxes.is_empty() {
+            attacks[i].boxes.push(b);
+        }
+        return i as u8;
+    }
+    attacks.push(Attack { name: name.to_string(), boxes: vec![b] });
+    (attacks.len() - 1) as u8
+}
+
+/// The hold mask of a `boss.grabs` entry: the statuses of the motions whose catch box opens on its first frame.
+fn hold_mask_of_grab(ir: &J, g: &J) -> u64 {
+    let f0 = g.get("catch_box").get("frames").arr().first().and_then(|v| v.num()).unwrap_or(-1.0);
+    let mut m = 0;
+    for t in ir.get("boss").get("timelines").arr() {
+        let has = t.get("events").arr().iter().any(|e| e.get("frame").num() == Some(f0) && e.get("op").get("text").str().to_ascii_lowercase().starts_with("060a"));
+        if has {
+            m |= hold_mask(ir, t.get("motion").str());
+        }
+    }
+    m
+}
+
+/// A motion's catch commands as timeline ops:
+/// * `060A slot joint radius ...` at frame f -> `Op::Grab` with the window f .. the next `060D` - 1 (f alone when the
+///   motion has no 060D: the Dive's one-frame catch), holding through [`hold_mask`]
+/// * `6528 ...` (release) at frame f -> `Op::GrabRelease`: thrown with the `061A` box of the same frame (damage, angle
+///   and growth from the grab's `throw` block, base knockback the 061A's 11th word [I]) or, without one, with the box
+///   the motion's attack opens on that frame (ChainAttack: 20 + 2.5 L at 361)
+/// * `060D`, `060F`, `setflag v12000006`, the catch exit call: covered by the above
+/// Throw boxes are added to `attacks` by name.
+pub fn grab_timeline(ir: &J, motion: &str, attacks: &mut Vec<Attack>) -> Result<Vec<TimelineEvent>, String> {
+    let boss = ir.get("boss");
+    let Some(t) = boss.get("timelines").arr().iter().find(|t| t.get("motion").str() == motion) else { return Ok(vec![]) };
+    let ev: Vec<(i32, String)> = t.get("events").arr().iter().filter(|e| e.get("op").get("op").str() == "other").map(|e| (e.get("frame").num().unwrap_or(0.0) as i32, e.get("op").get("text").str().to_string())).collect();
+    let mut out = vec![];
+    for (f, text) in &ev {
+        let tl = text.to_ascii_lowercase();
+        let w: Vec<&str> = tl.split_whitespace().collect();
+        match w.first().copied() {
+            Some("060a") => {
+                let num = |i: usize| w.get(i).and_then(|x| x.trim_end_matches('f').parse::<f32>().ok());
+                let (Some(joint), Some(radius)) = (num(2), num(3)) else { return Err(format!("catch box '{text}'")) };
+                let end = ev.iter().filter(|(g, t)| g > f && t.to_ascii_lowercase().starts_with("060d")).map(|(g, _)| g - 1).min().unwrap_or(*f);
+                let hold = hold_mask(ir, motion);
+                if hold == 0 {
+                    return Err(format!("catch in {motion}: no status plays it"));
+                }
+                out.push(TimelineEvent { frame: *f, count: 1, every: 0, op: Op::Grab { part: 0, joint: joint as i32, radius, frames: (*f, end), release: hold } });
+            }
+            Some("6528") => {
+                let throw = if let Some((_, t61)) = ev.iter().find(|(g, t)| g == f && t.to_ascii_lowercase().starts_with("061a")) {
+                    let mine = hold_mask(ir, motion);
+                    let grabs = boss.get("grabs").arr();
+                    let g = grabs.iter().filter(|g| !g.get("throw").is_null()).find(|g| hold_mask_of_grab(ir, g) & mine != 0).or_else(|| grabs.iter().find(|g| !g.get("throw").is_null()));
+                    let Some(g) = g else { return Err(format!("throw '{t61}' without a grab throw block")) };
+                    let th = g.get("throw");
+                    let tw: Vec<&str> = t61.split_whitespace().collect();
+                    let bkb = tw.get(10).and_then(|x| x.trim_end_matches('f').parse::<f32>().ok()).unwrap_or(0.0);
+                    let dmg = th.get("damage");
+                    let b = HitboxDef {
+                        part: 0,
+                        joint: 0,
+                        offset: [0.0; 3],
+                        frames: (*f, *f),
+                        damage: Num::Lin(dmg.get("base").num().unwrap_or(0.0) as f32, dmg.get("per_level").num().unwrap_or(0.0) as f32),
+                        angle: th.get("angle").num().unwrap_or(0.0) as i32,
+                        kbg: Num::K(th.get("knockback_growth").num().unwrap_or(0.0) as f32),
+                        wkb: 0.0,
+                        bkb: Num::K(bkb),
+                        size: Num::K(0.0),
+                        group: 0,
+                        rehit: 0,
+                    };
+                    Some(put_attack(attacks, &format!("{} throw", g.get("id").str()), b))
+                } else {
+                    ir_attack_box(ir, motion).filter(|b| b.frames.0 == *f).map(|b| put_attack(attacks, motion, b))
+                };
+                out.push(TimelineEvent { frame: *f, count: 1, every: 0, op: Op::GrabRelease(throw) });
+            }
+            _ => {}
+        }
+    }
+    Ok(out)
+}
+
+/// A status's per-frame ops, grab phrases only (the grab test define); any other phrase is an error.
+pub fn grab_status_frame(ir: &J, ix: u8) -> Result<Vec<Op>, String> {
+    let Some(s) = ir.get("boss").get("statuses").arr().iter().find(|s| s.get("index").num() == Some(ix as f64)) else { return Err(format!("no status {ix}")) };
+    let mut out = vec![];
+    for o in s.get("per_frame").arr() {
+        let text = o.get("text").str();
+        let tl = text.to_ascii_lowercase();
+        if o.get("op").str() == "other" && is_grab_text(&tl) {
+            out.extend(grab_phrase(text, &tl)?.into_iter().filter(|o| *o != Op::Nop));
+        } else {
+            return Err(format!("status {ix}: per-frame op not part of a grab '{text}'"));
+        }
+    }
+    Ok(out)
 }
 
 /// The IR directory (never printed).

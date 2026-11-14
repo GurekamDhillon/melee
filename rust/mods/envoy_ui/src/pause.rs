@@ -275,7 +275,7 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
         let cy = y + 116.0;
         match pn.page {
             PG_ITEMS => items_page(e, v, p, &pn, x + 10.0, cy),
-            PG_RUN => run_page(e, v, x + 10.0, cy, petey),
+            PG_RUN => run_page(e, v, p, x + 10.0, cy, petey),
             PG_FIGHT => fight_page(e, v, x + 10.0, cy),
             _ => options_page(e, &pn, x + 10.0, cy),
         }
@@ -296,21 +296,16 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
 }
 
 /// Stocks against the limit, and coins.
-unsafe fn header(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32) {
-    let pool = v[V_POOL].max(0);
-    let lim = if v[V_POOL_LIM] > 0 { v[V_POOL_LIM] } else { pool.max(4) };
+unsafe fn header(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32) {
+    let (pool, lim) = crate::hud::stocks_of(v, p);
+    let lim = if lim > 0 { lim } else { pool.max(4) };
     face(e, S_FACE_WHITE, x, y, PW - 20.0, 40.0, WHITE);
     e.text_ex(x + 8.0, y + 3.0, bs(10), LILAC, ALIGN_LEFT, 0.0, "STOCKS");
     let n = lim.max(pool).clamp(1, 8);
     for i in 0..n {
         // on the white sticker the held stocks are ink discs (the HUD's white icons would vanish), the empty slots rings
         let cx = x + 16.0 + i as f32 * 17.0;
-        if i < pool {
-            spr_c(e, S_DISC, cx, y + 26.0, 13.0 / 32.0, if pool == 1 { CORAL } else { INK });
-        } else {
-            spr_c(e, S_DISC, cx, y + 26.0, 13.0 / 32.0, alpha(PALE, 0.7));
-            spr_c(e, S_DISC, cx, y + 26.0, 8.0 / 32.0, WHITE);
-        }
+        crate::icons::slot_ink(e, cx, y + 26.0, 13.0, i < pool, pool == 1, 1.0);
     }
     let mut s = Buf::new();
     s.i(pool).s("/").i(lim);
@@ -359,8 +354,7 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
         if on {
             spr_rot(e, S_BURST_SUNNY, cx, cy, 0.52, 8.0, WHITE);
         }
-        spr_c(e, S_DISC, cx, cy, 24.0 / 32.0, INK);
-        spr_c(e, S_DISC, cx, cy, 19.0 / 32.0, it.rgba);
+        crate::icons::icon(e, it.id, cx, cy, 24.0);
         let cnt = v[V_INV + p * ITEM_IDS + it.id as usize];
         if cnt > 1 {
             let mut s = Buf::new();
@@ -437,7 +431,7 @@ fn road_word(k: i32) -> &'static str {
     }
 }
 
-unsafe fn run_page(e: &mut E, v: &[i32; VW], x: f32, y: f32, petey: bool) {
+unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: bool) {
     let w = PW - 20.0;
     let mut s = Buf::new();
     s.s("Loop ").i(v[V_LOOP].max(1)).s("  -  ");
@@ -457,34 +451,39 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], x: f32, y: f32, petey: bool) {
         s2.s("  -  ").s(rw);
     }
     e.text_ex(x, y + 22.0, tb(12), PALE, ALIGN_LEFT, w, s2.str());
-    // the map: a node per room and the boss at the end, a dashed road between; done rooms ink, this one burst
-    let rooms = v[V_ROOMS].clamp(1, 6);
-    let here = if v[V_ROOM] == 0 { rooms + 1 } else { v[V_ROOM] };
+    // the floor map (the sim's map words); the old room dots only when no map is published
     let my = y + 58.0;
-    let step = (w - 40.0) / rooms as f32;
-    for i in 0..=rooms {
-        let cx = x + 18.0 + i as f32 * step;
-        if i < rooms {
-            let mut k = 0;
-            while k < 5 {
-                e.rect(cx + 12.0 + k as f32 * (step - 24.0) / 5.0, my - 1.0, (step - 24.0) / 9.0, 3.0, alpha(PALE, 0.7));
-                k += 1;
+    if crate::map::has(v) {
+        face(e, S_FACE_INK, x - 2.0, my - 24.0, w + 4.0, 50.0, WHITE);
+        crate::map::draw(e, v, x, my - 24.0, w, 50.0, 8.5);
+    } else {
+        let rooms = v[V_ROOMS].clamp(1, 6);
+        let here = if v[V_ROOM] == 0 { rooms + 1 } else { v[V_ROOM] };
+        let step = (w - 40.0) / rooms as f32;
+        for i in 0..=rooms {
+            let cx = x + 18.0 + i as f32 * step;
+            if i < rooms {
+                let mut k = 0;
+                while k < 5 {
+                    e.rect(cx + 12.0 + k as f32 * (step - 24.0) / 5.0, my - 1.0, (step - 24.0) / 9.0, 3.0, alpha(PALE, 0.7));
+                    k += 1;
+                }
             }
-        }
-        let node = i + 1;
-        let boss = i == rooms;
-        if node == here {
-            spr_rot(e, S_BURST_SUNNY, cx, my, if boss { 0.6 } else { 0.5 }, 8.0, WHITE);
-        }
-        let id = if node < here { S_FACE_INK } else if boss { S_FACE_CORAL } else { S_FACE_WHITE };
-        let r = if boss { 14.0 } else { 10.0 };
-        face(e, id, cx - r, my - r, r * 2.0, r * 2.0, WHITE);
-        if boss {
-            spr_c(e, S_STAR_ON, cx, my, 1.2, WHITE);
-        } else {
-            let mut n = Buf::new();
-            n.i(node);
-            e.text_ex(cx, my - 7.0, d(11), if node < here { PALE } else { INK }, ALIGN_CENTER, 0.0, n.str());
+            let node = i + 1;
+            let boss = i == rooms;
+            if node == here {
+                spr_rot(e, S_BURST_SUNNY, cx, my, if boss { 0.6 } else { 0.5 }, 8.0, WHITE);
+            }
+            let id = if node < here { S_FACE_INK } else if boss { S_FACE_CORAL } else { S_FACE_WHITE };
+            let r = if boss { 14.0 } else { 10.0 };
+            face(e, id, cx - r, my - r, r * 2.0, r * 2.0, WHITE);
+            if boss {
+                spr_c(e, S_STAR_ON, cx, my, 1.2, WHITE);
+            } else {
+                let mut n = Buf::new();
+                n.i(node);
+                e.text_ex(cx, my - 7.0, d(11), if node < here { PALE } else { INK }, ALIGN_CENTER, 0.0, n.str());
+            }
         }
     }
     // what follows in this session (V_SESS_KINDS: kind + 1 per 4 bits)

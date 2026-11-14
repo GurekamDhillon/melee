@@ -228,8 +228,7 @@ pub unsafe fn strip(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32, w: f32) 
             continue;
         }
         any = true;
-        spr_c(e, S_DISC, cx, row_y, 22.0 / 32.0, INK);
-        spr_c(e, S_DISC, cx, row_y, 17.0 / 32.0, it.rgba);
+        crate::icons::icon(e, it.id, cx, row_y, 22.0);
         if n > 1 {
             let mut s = Buf::new();
             s.s("x").i(n);
@@ -284,8 +283,7 @@ pub unsafe fn flash(e: &mut E, v: &[i32; VW]) {
         let (sc, _) = enter(age);
         let _ = sc;
         sticker(e, S_FACE_WHITE, x, y, w, 50.0, if p == 0 { -1.2 } else { 1.2 }, alpha(WHITE, a), |e| {
-            spr_c(e, S_DISC, x + 26.0, y + 25.0, 34.0 / 32.0, alpha(INK, a));
-            spr_c(e, S_DISC, x + 26.0, y + 25.0, 27.0 / 32.0, alpha(it.rgba, a));
+            crate::icons::icon_a(e, it.id, x + 26.0, y + 25.0, 36.0, a);
             e.text_ex(x + 52.0, y + 5.0, d(18), alpha(INK, a), ALIGN_LEFT, 0.0, s.str());
             e.text_ex(x + 52.0, y + 28.0, bs(13), alpha(LILAC, a), ALIGN_LEFT, 0.0, it.line);
         });

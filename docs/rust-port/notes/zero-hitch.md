@@ -525,3 +525,25 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   9113-9159 (tick 1.1 ms each: OS stalls, not engine work). No GPU-pipeline frame, no wave-arrival hitch.
 - Proof: gate OK (goldens, synctest d4 3000 frames 0 mismatches, audio = C, snapguard); run_modes_check 9000 ticks
   equal (tick + NHV1); MELEE_ASSETS on vs off: tick.log and hash.log equal, headless and window.
+
+### Round 3 (2026-11-13, port/diverge1 c587e0c78): quiet 12000-tick hidden run, 0 over budget
+- The "28 MB allocation" in the first fight's tick was the host ARAM `Vec` growing (MELEE_BIG_ALLOC backtrace:
+  `host_dev_com_request` -> realloc): PlMsAJ (1.9 MB) lands at ~26 MB in ARAM, so the Vec reallocated, copied and
+  zero-filled up to 28 MB. ARAM is now its full 32 MB (ARGetSize), zeroed and touched at boot (startup frame 26 -> 38 ms,
+  the exempt first frame). Marth's create 5.0 -> 3.5 ms. The 6 MB block is ItCo's apply (pre-faulted already; its
+  4-5 ms is the allocation replay, not page faults).
+- Envoy only: the tag partner's `Fighter_Create` runs 30 logic frames into the match (during the entry, before GO;
+  `player.rs` TAG_DEFER, `envoy.rs` TAG_DEFER_WAIT; two frames was not enough: the setup tick runs several logic
+  frames). Vanilla and retail transforms never defer.
+- The 3 "unaccounted (OS/loop)" frames (ticks 9113-9159): each followed a "pacing sleep overshoot" hitch record
+  (slept 12.8-14.1 ms, then 13-15 ms unaccounted with a 1 ms tick): the high-resolution waits woke a whole timer tick
+  late. Ours, not the OS's by chance: Windows 11 power-throttles a process with no visible window and ignores its
+  timer resolution. `sleep_until` now opts out (`SetProcessInformation(ProcessPowerThrottling)`, IGNORE_TIMER_RESOLUTION
+  and EXECUTION_SPEED). After: 0 such frames in 12000 ticks. No checker exception was added.
+- Quiet confirmation (no other melee/cargo/rustc/link process; hidden, real time, 12000 ticks, warm list primed):
+  `ZERO-HITCH GATE OK`, 0 over budget (+ the exempt startup frame). Worst game-work frame: the first fight's setup,
+  tick 15.5 ms / 16.03 ms work (was 34.7 at the start of this work); next worst 8.7 ms.
+- Proof: gate OK (goldens, synctest d4 3000 frames 0 mismatches, audio = C, snapguard 0.251/0.399/5.287);
+  run_modes_check 9000 ticks equal (tick log and NHV1; 8144 match frames: the Envoy sim changed by the deferral, the
+  same in both modes); switch_torture at depth 4, 3000 frames per fight (1, 2, 3c, 5): PASS, 0 mismatches;
+  loop_run (camp loop, items) OK.

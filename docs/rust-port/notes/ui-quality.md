@@ -81,6 +81,33 @@ stem keeps the same ink wherever it falls on the pixel grid.
 - `cargo test -p melee_modhost --lib ui::`: a slice is one shape quad at any size; `OP_SHAPE` / `OP_OUTLINE` records.
 - Screens: `scratch/morning/uiquality/index.md` (local): each defect with a before / after crop.
 
+## Cost (hidden pause-overlay run, 2200 frames, RTX 5070; before = port/envoy-pause1 d25c12c04)
+
+| | before | after |
+|---|---|---|
+| quads, pause Items page | 427 | 298 |
+| UI present (mod frame + host), 1080p | p50 0.082 ms, p99 0.188 ms | p50 0.069 ms, p99 0.136 ms |
+| UI present, 4K | p50 0.080 ms, p99 0.167 ms | p50 0.070 ms, p99 0.149 ms |
+| instance + atlas upload per frame | p50 0.045 ms, p99 0.09 ms | p50 0.04 ms, p99 0.07 ms |
+| first atlas upload (the match-setup frame) | 12.0 to 13.4 ms | 5.7 to 6.3 ms |
+| slowest UI present (the mod's first frame) | 1.27 to 1.32 ms | 1.19 to 1.28 ms |
+
+The frame profile lists no frame whose largest component is the UI, in either build. On this base about 46% of the
+frames of a hidden run are 0.1 to 5.5 ms over 16.7 ms under "pacing sleep", before and after alike: the hidden
+window's pacer (candidate8 carries the fix, diverge1 "hidden pacer and zero-hitch check judge game work only"), so
+the zero-hitch gate has to be run again once this branch sits on that base.
+
+## Found on the way (not UI)
+
+- `melee_engine::arena::start_prefault`: the pre-fault thread touched pages past a stale bump pointer with a plain
+  load; a block handed out and freed there in between is decommitted when the keep list is full, and the load
+  faulted. The game closed at a match start, about 5 times in 130 hidden Envoy fight-2 starts of this branch before
+  the fix (0 in 55 of the base build: the larger sticker decode moved the timing), 0 since. The pages are touched
+  with `ReadProcessMemory`, which fails for a decommitted page instead of faulting.
+- That crash left no report: on this base the crash filter's stack scan runs past the top of a young thread's
+  stack and faults itself. port/crashsafe (in candidate8 / candidate9) already bounds the scan, so this branch
+  leaves `crash.rs` alone.
+
 ## Limits
 
 - Art minified more than 8x reaches past the mip chain (4 levels). Nothing in the kit is drawn that small.

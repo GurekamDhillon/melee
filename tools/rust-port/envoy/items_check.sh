@@ -37,9 +37,12 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   19. orbs: Moon Drops and the four stance orbs: orb hits, and an orb shattered by a foe's attack.
 #   Pickup (11.11):
 #   20. pickup: knob `pedfloor` puts an item-room pedestal on the floor; pickup_pad.txt walks player 1 past it with no
-#       button (in range, then out of range, nothing taken), then back with A presses: taken by the button.
+#       button (in range, then out of range, nothing taken), then back with A presses: taken by the button, and the
+#       fighter in Melee's pickup motion (LightGet) instead of a jab;
+#   21. air: pickup_air_z_pad.txt / pickup_air_l_pad.txt: knob `pedair` puts the pedestal under player 1 as a hop leaves the floor; Z / L taps in the air: taken
+#       by the button from an airborne state (jumps, falls, EscapeAir).
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd
-#   shop devil angel secret whiff triggers coopstock map campfire orbs pickup";
+#   shop devil angel secret whiff triggers coopstock map campfire orbs pickup air";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -48,7 +51,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs pickup}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shop devil angel secret whiff triggers coopstock map campfire orbs pickup air}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -251,7 +254,17 @@ for d in $depths; do
     [ -n "$b" ] && [ -n "$a" ] && [ "$b" -gt "$a" ] || miss="$miss (walking past never left the item behind)"
     [ -n "$c" ] && [ -n "$b" ] && [ "$c" -gt "$b" ] || miss="$miss (no take by the button after the walk past)"
     seen pickup "$d" "envoy: item taken" || miss="$miss (no item taken)"
+    seen pickup "$d" "envoy: pickup motion (LightGet)" || miss="$miss (no pickup motion: the A press jabbed)"
     check 20 pickup "$d" "$line" "$miss"
+  fi
+  if on air; then
+    for b in z l; do
+      line=$(run "air$b" "$d" "pedair,noshop" MELEE_PAD_SCRIPT="$here/pickup_air_${b}_pad.txt")
+      miss=""
+      grep -aqE "envoy: pickup by button, state (2[5-9]|3[0-4]|236)$" "$(L "air$b" "$d")" || miss="$miss (no airborne take with ${b})"
+      seen "air$b" "$d" "envoy: item taken" || miss="$miss (no item taken)"
+      check 21 "air$b" "$d" "$line" "$miss"
+    done
   fi
 done
 rm -rf "$tmods"

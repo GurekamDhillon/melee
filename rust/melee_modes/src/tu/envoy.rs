@@ -1068,6 +1068,24 @@ pub unsafe fn jumps(slot: i32) -> i32 {
 }
 
 /// Updraft: give back one used air jump (0 done, -1 none used).
+/// An Envoy pickup by button (envoy-items-design.md 11.11): the slot's grounded fighter goes into Melee's own item
+/// pickup state (`ftpickupitem_80094694(gobj, ftCo_MS_LightGet, false)`, as `ftpickupitem_80094790` does on an A
+/// press by an item), so the press that took the pedestal does not also jab. The pedestal is the sim's, not a game
+/// item, so the grab frame finds nothing and the state returns to Wait at its end (`ftpickupitem_Anim`). Airborne:
+/// nothing changes (Melee's airdodge / Z catch keeps its own motion). Game state, rolled back with the game.
+/// Returns 0 when the state was entered, -1 otherwise.
+pub unsafe fn pickup_anim(slot: i32) -> i32 {
+    if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return -1;
+    }
+    let f = active_fighter(slot);
+    if f.is_null() || (*f).gobj.is_null() || (*f).ground_or_air != GA_Ground {
+        return -1;
+    }
+    melee_fighter::tu::ftpickupitem::ftpickupitem_80094694((*f).gobj, ftCo_MS_LightGet as i32, false);
+    0
+}
+
 pub unsafe fn air_jump(slot: i32) -> i32 {
     let f = active_fighter(slot);
     if f.is_null() || (*f).x1968_jumpsUsed <= 1 {

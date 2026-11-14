@@ -534,8 +534,10 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: b
     let my = y + 58.0;
     if crate::map::has(v) {
         // the act map fills the page (rows up to the boss, as in Slay the Spire)
-        crate::map::draw(e, v, x + 20.0, y + 38.0, w - 40.0, 118.0, 7.0);
-        crate::map::legend(e, v, x, y + 158.0, w);
+        // the page's whole height (what the panel leaves over the hint line), so the rows stand apart
+        let mh = PYV + ph() - 44.0 - (y + 40.0);
+        crate::map::draw(e, v, x + 20.0, y + 40.0, w - 40.0, mh, 8.0);
+        crate::map::legend(e, v, x, y + 40.0 + mh + 2.0, w);
         return;
     } else {
         let rooms = v[V_ROOMS].clamp(1, 6);

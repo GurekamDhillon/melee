@@ -307,13 +307,13 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
         face(e, if window { S_FACE_SUNNY } else if ready { S_FACE_WHITE } else { S_FACE_FADED }, bx, by, bw, 20.0, WHITE);
         if !ready {
             let f = 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0);
-            e.round_rect(bx + 2.0, by + 2.0, (bw - 4.0) * f, 16.0, 8.0, alpha(WHITE, 0.9));
+            e.round_rect(bx + 2.0, by + 2.0, (bw - 4.0) * f, 16.0, 6.0, alpha(WHITE, 0.9));
         }
         // holding Tag toward a swap fills the sticker (P_TAG_HOLD / P_TAG_HOLD_AT)
         let hold = v[pbk + P_TAG_HOLD];
         let at = v[pbk + P_TAG_HOLD_AT].max(1);
         if hold > 0 {
-            e.round_rect(bx + 2.0, by + 2.0, (bw - 4.0) * (hold as f32 / at as f32).min(1.0), 16.0, 8.0, alpha(SUNNY, 0.85));
+            e.round_rect(bx + 2.0, by + 2.0, (bw - 4.0) * (hold as f32 / at as f32).min(1.0), 16.0, 6.0, alpha(SUNNY, 0.85));
         }
         if v[pbk + P_TAG_BUTTON] != 2 {
             // left-aligned with the sticker at the screen's edge (centred on it, the line ran off a 4:3 screen)
@@ -460,6 +460,8 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
                 sx -= 9.0;
             }
             if v[bb + S_CHILL] > 0 {
+                // the badge is wider than a flame: it stands a little further off the last one
+                sx -= 3.0;
                 spr_c(e, S_BADGE + 2 * 3, sx, fy + h - 2.0, 0.3, WHITE);
                 sx -= 10.0;
             }

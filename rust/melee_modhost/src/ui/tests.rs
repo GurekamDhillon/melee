@@ -550,9 +550,9 @@ fn aspect_audit_flags_squished_draws() {
     assert!(out.iter().any(|l| l.contains("shape round")) && out.iter().any(|l| l.contains("text cut")));
     // words on a sticker that run past its side; the same words on a wide enough sticker are fine
     let n0 = out.len();
-    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 100.0, 200.0, 20.0, 6.0, 0.0, 0.0, !0, 0);
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 100.0, 200.0, 20.0, 6.0, 2.0, 0.0, !0, !0);
     b.text(&p, &a, 104.0, 102.0, 2, !0, ALIGN_LEFT, 0.0, "fits");
-    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 200.0, 30.0, 20.0, 6.0, 0.0, 0.0, !0, 0);
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 200.0, 30.0, 20.0, 6.0, 2.0, 0.0, !0, !0);
     b.text(&p, &a, 104.0, 202.0, 2, !0, ALIGN_LEFT, 0.0, "does not fit here");
     let out = &b.audit.as_ref().unwrap().out;
     assert_eq!(out.len(), n0 + 1, "{out:?}");

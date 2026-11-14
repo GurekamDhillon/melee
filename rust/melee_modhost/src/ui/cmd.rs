@@ -255,11 +255,14 @@ impl Audit {
         let (lo, hi) = if w < h { (w, h) } else { (h, w) };
         radius * 2.0 >= lo - 0.01 && hi / lo > 1.0 + ASPECT_TOL && hi / lo < 1.25
     }
-    fn shape(&mut self, x: f32, y: f32, w: f32, h: f32, radius: f32, rot: f32) {
+    fn shape(&mut self, x: f32, y: f32, w: f32, h: f32, radius: f32, rot: f32, border: f32) {
         if self.boxes.len() >= 4096 {
             self.boxes.clear();
         }
-        self.boxes.push([x, y, w, h, rot]);
+        // a sticker (a box with an edge) is something words sit on; a plain fill (a bar, a meter's fill) is not
+        if border > 0.0 {
+            self.boxes.push([x, y, w, h, rot]);
+        }
         if Audit::oval(w, h, radius) && self.once((1u8, (w * 4.0) as i32, (h * 4.0) as i32)) {
             self.out.push(format!("ui_aspect: shape round {w:.1}x{h:.1} off {:+.1}% BAD", (w / h - 1.0) * 100.0));
         }
@@ -435,7 +438,7 @@ impl Batch {
         let s = p.scale;
         if kind == gu::SHAPE_BOX {
             if let Some(a) = self.audit.as_deref_mut() {
-                a.shape(x, y, w, h, radius, p.rot);
+                a.shape(x, y, w, h, radius, p.rot, border);
             }
         }
         // a glow reaches `spread` outside the shape

@@ -288,7 +288,7 @@ fn fx_inputs(r: &mut Renderer, posts: &[melee_gx::fx::Post], draws: usize) {
     let cam = Camera { view: [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]], proj: [1.0, 2.0 / 640.0, -1.0, -2.0 / 480.0, 1.0, -0.001, -0.5], vp: [0.0, 0.0, 640.0, 480.0, 0.0, 1.0] };
     let mut f = FxFrame { intensity: 1.0, cam: Some(cam), ..Default::default() };
     for i in 0..draws {
-        f.draws.push(WorldDraw { model: 0, mat: [MAT_GLOW, MAT_FOIL, MAT_GLASS, MAT_DISSOLVE][i % 4] | MAT_TRAIL | MAT_OUTLINE, at: [80.0 + i as f32 * 40.0, 400.0 - (i % 3) as f32 * 30.0, -50.0], yaw: i as f32, scale: 36.0, alpha: if i % 4 == 2 { 0.3 } else { 1.0 }, p: [1.0, 0.7, 2.0, if i % 4 == 3 { 0.3 } else { 1.0 }], rgba: 0xFF80_40FF });
+        f.draws.push(WorldDraw { model: 0, mat: [MAT_GLOW, MAT_FOIL, MAT_GLASS, MAT_DISSOLVE][i % 4] | MAT_TRAIL | MAT_OUTLINE, at: [80.0 + i as f32 * 40.0, 400.0 - (i % 3) as f32 * 30.0, -50.0], yaw: i as f32, roll: 0.0, scale: 36.0, alpha: if i % 4 == 2 { 0.3 } else { 1.0 }, p: [1.0, 0.7, 2.0, if i % 4 == 3 { 0.3 } else { 1.0 }], rgba: 0xFF80_40FF });
     }
     f.posts.extend_from_slice(posts);
     r.set_fx(&mut f);

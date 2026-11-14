@@ -543,22 +543,26 @@ unsafe fn combo_banner(e: &mut E, v: &[i32; VW]) {
             continue;
         }
         let (kind, k) = (code >> 8, (code & 0xFF) as usize);
-        let (head, name, line, rgba) = if kind == BANNER_EVO {
+        // the emblem: em_syn_<key>.png / em_evo_<key>.png (envoy-models1.md)
+        let (head, name, line, rgba, pre, key) = if kind == BANNER_EVO {
             let Some(ev) = procs::EVOLUTIONS.get(k) else { continue };
-            ("EVOLUTION", ev.name, ev.line, ev.rgba)
+            ("EVOLUTION", ev.name, ev.line, ev.rgba, "evo_", ev.key)
         } else {
             let Some(sy) = procs::SYNERGIES.get(k) else { continue };
-            ("SYNERGY", sy.name, sy.line, sy.rgba)
+            ("SYNERGY", sy.name, sy.line, sy.rgba, "syn_", sy.key)
         };
         let a = if age > 120 { (150 - age) as f32 / 30.0 } else { 1.0 };
         let slide = (1.0 - ease(age as f32 / 12.0)) * 40.0;
-        let w = tw(name, d(20)).max(tw(line, bs(12))) + 60.0;
+        let em = em_tex(pre, key) != 0;
+        let ex = if em { 44.0 } else { 0.0 }; // room for the emblem left of the words
+        let w = tw(name, d(20)).max(tw(line, bs(12))) + 60.0 + ex;
         let (x, y) = (320.0 - w * 0.5 + if p == 0 { -slide } else { slide }, 236.0 + p as f32 * 54.0);
         sticker(e, S_FACE_WHITE, x, y, w, 48.0, if p == 0 { 1.0 } else { -1.0 }, alpha(WHITE, a), |e| {
             e.rect(x + 2.0, y + 2.0, 8.0, 44.0, alpha(rgba, a));
-            e.text_ex(x + 18.0, y + 4.0, bs(10), alpha(LILAC, a), ALIGN_LEFT, 0.0, head);
-            e.text_ex(x + 18.0 + tw(head, bs(10)) + 8.0, y + 1.0, d(20), alpha(INK, a), ALIGN_LEFT, 0.0, name);
-            e.text_ex(x + 18.0, y + 27.0, bs(12), alpha(INK, a), ALIGN_LEFT, 0.0, line);
+            em_spr(e, pre, key, x + 34.0, y + 24.0, 44.0, alpha(WHITE, a));
+            e.text_ex(x + 18.0 + ex, y + 4.0, bs(10), alpha(LILAC, a), ALIGN_LEFT, 0.0, head);
+            e.text_ex(x + 18.0 + ex + tw(head, bs(10)) + 8.0, y + 1.0, d(20), alpha(INK, a), ALIGN_LEFT, 0.0, name);
+            e.text_ex(x + 18.0 + ex, y + 27.0, bs(12), alpha(INK, a), ALIGN_LEFT, 0.0, line);
         });
     }
 }
@@ -588,8 +592,11 @@ pub unsafe fn banners(e: &mut E, v: &[i32; VW]) {
         }
         let w = tw(s.str(), d(18)) + 70.0;
         sticker(e, S_FACE_CORAL, 320.0 - w * 0.5, 190.0, w, 40.0, 1.0, alpha(WHITE, a), |e| {
-            for j in 0..3 {
-                spr_c(e, S_FLAME + 1 + j.min(2), 320.0 - w * 0.5 + 24.0, 210.0 - j as f32 * 3.0, 0.5 + 0.1 * sin(age as f32 * 0.3 + j as f32), alpha(WHITE, a));
+            // the campfire's own sprite, four frames (em_node_campfire_anim.png); the three flame stickers without it
+            if !em_anim(e, "node_campfire_anim", 4, (age / 7) as u32, 320.0 - w * 0.5 + 24.0, 208.0, 36.0, alpha(WHITE, a)) {
+                for j in 0..3 {
+                    spr_c(e, S_FLAME + 1 + j.min(2), 320.0 - w * 0.5 + 24.0, 210.0 - j as f32 * 3.0, 0.5 + 0.1 * sin(age as f32 * 0.3 + j as f32), alpha(WHITE, a));
+                }
             }
             e.text_ex(320.0 - w * 0.5 + 46.0, 199.0, d(18), alpha(WHITE, a), ALIGN_LEFT, 0.0, s.str());
         });
@@ -1010,8 +1017,11 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
         }
         PJ_FEATHER => {
             let sway = 3.0 * sin(t * 0.12 + i as f32);
-            fx(FX_LINE, x + sway - 2.5, y + 3.0, x + sway + 2.5, y - 3.0, 2.6, alpha(0x6A20_58FF, 0.9 * fade));
-            fx(FX_LINE, x + sway - 2.5, y + 3.0, x + sway + 2.5, y - 3.0, 0.6, alpha(0xE060_80FF, fade));
+            // the feather's own model, quill down, rocking as it falls (envoy-models1.md); the old strokes without it
+            if !crate::fx::mesh(crate::fx::ME_FEATHER, x + sway, y, 2.2 + 0.1 * sway, 0.0, 10.0, fade) {
+                fx(FX_LINE, x + sway - 2.5, y + 3.0, x + sway + 2.5, y - 3.0, 2.6, alpha(0x6A20_58FF, 0.9 * fade));
+                fx(FX_LINE, x + sway - 2.5, y + 3.0, x + sway + 2.5, y - 3.0, 0.6, alpha(0xE060_80FF, fade));
+            }
             fx(FX_DISC, x + sway, y, 3.0, 0.0, 0.0, alpha(0x8A20_60FF, 0.5 * fade));
         }
         PJ_TENDRIL => {
@@ -1028,8 +1038,11 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
         }
         PJ_SHARD => {
             fx(FX_LINE, x, y, x - vx * 4.0, y - vy * 4.0, 1.4, alpha(ICE, 0.6 * fade));
-            fx(FX_SPIKES, x, y, 0.8, 4.0, t * 0.4 + i as f32, alpha(ICE, fade));
-            fx(FX_DISC, x, y, 2.4, 0.0, 0.0, alpha(WHITE, 0.8 * fade));
+            // the splinter's own model, point along its flight
+            if !crate::fx::mesh(crate::fx::ME_SHARD, x, y, crate::fx::atan2(vy, vx), 0.0, 9.0, fade) {
+                fx(FX_SPIKES, x, y, 0.8, 4.0, t * 0.4 + i as f32, alpha(ICE, fade));
+                fx(FX_DISC, x, y, 2.4, 0.0, 0.0, alpha(WHITE, 0.8 * fade));
+            }
         }
         PJ_WELL => {
             let r = (a as f32 / 100.0).max(4.0);
@@ -1059,8 +1072,11 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
             let (cx, cy) = player_pos(v, owner).unwrap_or((x, y));
             let ang = t * 0.05 + a as f32 / n * TAU;
             let (sx, sy) = (cx + cos(ang) * 14.0, cy + 10.0 + sin(ang) * 14.0);
-            fx(FX_RING, sx, sy, 3.2, 1.0, 0.0, 0xFF30_40FF);
-            fx(FX_SPIKES, sx, sy, 1.0, 3.2, -t * 0.08, alpha(0xFF60_70FF, 0.9));
+            // the sigil's own model, turning
+            if !crate::fx::mesh(crate::fx::ME_SIGIL, sx, sy, 0.0, t * 0.06 + a as f32, 8.5, 1.0) {
+                fx(FX_RING, sx, sy, 3.2, 1.0, 0.0, 0xFF30_40FF);
+                fx(FX_SPIKES, sx, sy, 1.0, 3.2, -t * 0.08, alpha(0xFF60_70FF, 0.9));
+            }
             fx(FX_DISC, sx, sy, 4.0, 0.0, 0.0, alpha(BLOOD, 0.5));
         }
         PJ_GUARD => {
@@ -1069,16 +1085,22 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
             let ang = -t * 0.04 + a as f32 * 2.1;
             let (sx, sy) = (cx + cos(ang) * 12.0, cy + 12.0 + sin(ang) * 6.0);
             let c = if spent { alpha(PALE, 0.3) } else { HOLY };
-            fx(FX_LINE, sx - 2.5, sy - 2.0, sx + 2.5, sy + 2.0, 2.4, c);
+            // the Guardian Feather's own model (faint once spent)
+            if !crate::fx::mesh(crate::fx::ME_GUARD, sx, sy, 0.0, 0.4 * sin(t * 0.05), 10.0, if spent { 0.35 } else { 1.0 }) {
+                fx(FX_LINE, sx - 2.5, sy - 2.0, sx + 2.5, sy + 2.0, 2.4, c);
+            }
             fx(FX_DISC, sx, sy, 4.0, 0.0, 0.0, alpha(c, 0.5));
         }
         PJ_HALO => {
             let (cx, cy) = player_pos(v, owner).unwrap_or((x, y));
             let sz = (a as f32 / 100.0).max(4.0);
             let hy = cy + 22.0 + 0.8 * sin(t * 0.08);
-            for j in 0..14 {
-                let ang = j as f32 / 14.0 * TAU;
-                fx(FX_DISC, cx + cos(ang) * sz, hy + sin(ang) * sz * 0.3, 1.8, 0.0, 0.0, alpha(0xFFF0_A0FF, 0.95));
+            // the halo's own model (a ring lying flat)
+            if !crate::fx::mesh(crate::fx::ME_HALO, cx, hy, 0.0, 0.0, sz * 2.3, 1.0) {
+                for j in 0..14 {
+                    let ang = j as f32 / 14.0 * TAU;
+                    fx(FX_DISC, cx + cos(ang) * sz, hy + sin(ang) * sz * 0.3, 1.8, 0.0, 0.0, alpha(0xFFF0_A0FF, 0.95));
+                }
             }
             fx(FX_DISC, cx, hy, sz * 1.4, 0.0, 0.0, alpha(HOLY, 0.25));
         }
@@ -1087,7 +1109,12 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
             let face = if a < 0 { -1.0 } else { 1.0 };
             let flap = 2.0 * sin(t * 0.15);
             let c = if bb == 1 { alpha(0x6A30_70FF, 0.5) } else { 0x9A20_78FF };
+            // the wings' own model, beating (a small turn about the vertical); the old strokes without it
+            let winged = crate::fx::mesh(crate::fx::ME_WINGS, cx - face * 2.0, cy + 14.0, 0.0, 0.45 * sin(t * 0.15), 24.0, if bb == 1 { 0.5 } else { 1.0 });
             for side in [-1.0f32, 1.0] {
+                if winged {
+                    break;
+                }
                 let bx = cx - face * 2.0;
                 let by = cy + 13.0;
                 for j in 0..4 {
@@ -1110,23 +1137,33 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
             } else {
                 match fam {
                     IT_DODGE_ORB => {
-                        vfx::fx(vfx::ORB, x, y, 10.0, 10.0).cols(vfx::pale(c, 0.2), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        if !crate::fx::mesh(crate::fx::ME_ORB_DODGE, x, y, 0.0, 0.5 * sin(t * 0.07 + sd), 10.0, 1.0) {
+                            vfx::fx(vfx::ORB, x, y, 10.0, 10.0).cols(vfx::pale(c, 0.2), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        }
                         vfx::fx(vfx::TRAIL, x - 8.0, y, 0.0, 0.0).line(x, y, 5.0).cols(vfx::pale(c, 0.3), c).age(t).seed(sd).a(0.6).emit();
                     }
                     IT_NAIR_RING => {
-                        vfx::fx(vfx::ORB, x, y, 8.0, 8.0).cols(0xFFF0_C0FF, c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        if !crate::fx::mesh(crate::fx::ME_ORB_NAIR, x, y, t * 0.09 + sd, 0.0, 9.0, 1.0) {
+                            vfx::fx(vfx::ORB, x, y, 8.0, 8.0).cols(0xFFF0_C0FF, c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        }
                         vfx::fx(vfx::SPARKS, x, y, 10.0, 10.0).cols(WHITE, c).p(0.6, 0.0, 0.0, 0.0).age(t).seed(sd).a(0.8).emit();
                     }
                     IT_DASH_ORB => {
-                        vfx::fx(vfx::ORB, x, y, 9.0, 9.0).cols(vfx::pale(c, 0.2), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        if !crate::fx::mesh(crate::fx::ME_ORB_DASH, x, y, 0.0, 0.0, 10.0, 1.0) {
+                            vfx::fx(vfx::ORB, x, y, 9.0, 9.0).cols(vfx::pale(c, 0.2), c).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        }
                         vfx::fx(vfx::FLAME, x - 5.0, y, 10.0, 6.0).cols(c, vfx::deep(c, 0.4)).age(t).seed(sd).a(0.6).rot(1.571).emit();
                     }
                     IT_SHIELD_ORBS => {
-                        vfx::fx(vfx::DOME, x, y, 8.0, 8.0).cols(0xE8D8_FFFF, c).age(t).seed(sd).a(0.85).emit();
+                        if !crate::fx::mesh(crate::fx::ME_ORB_SHIELD, x, y, 0.0, t * 0.05 + sd, 8.5, 1.0) {
+                            vfx::fx(vfx::DOME, x, y, 8.0, 8.0).cols(0xE8D8_FFFF, c).age(t).seed(sd).a(0.85).emit();
+                        }
                     }
                     _ => {
                         let m = col(IT_MOON_DROPS);
-                        vfx::fx(vfx::ORB, x, y, 8.0, 8.0).cols(vfx::pale(m, 0.3), m).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        if !crate::fx::mesh(crate::fx::ME_MOON, x, y, 0.0, t * 0.04 + sd, 8.0, 1.0) {
+                            vfx::fx(vfx::ORB, x, y, 8.0, 8.0).cols(vfx::pale(m, 0.3), m).p(1.0, 0.0, 3.0, 0.0).age(t).seed(sd).emit();
+                        }
                         vfx::fx(vfx::GLOW, x, y, 14.0, 14.0).cols(0xA0B8_FFFF, m).age(t).a(0.5).emit();
                     }
                 }
@@ -1135,11 +1172,21 @@ unsafe fn proj2(v: &[i32; VW], i: usize, kind: i32, flags: i32, x: f32, y: f32, 
         PJ_THORNS => {
             let face = if a < 0 { -1.0 } else { 1.0 };
             let sz = (bb as f32 / 100.0).max(3.0) * ease(k * 4.0);
-            for j in 0..4 {
-                let ang = 1.2 + j as f32 * 0.35;
-                let (tx, ty) = (x - face * cos(ang) * sz, y + 6.0 + sin(ang) * sz);
-                fx(FX_LINE, x - face * 2.0, y + 6.0 + j as f32 * 1.5, tx, ty, 1.6, alpha(0x40A0_40FF, fade));
-                fx(FX_SPIKES, tx, ty, 0.3, 1.6, 0.0, alpha(0xC0FF_A0FF, fade));
+            // the thorns' own model, fanning up and back from the fighter's back
+            if !crate::fx::mesh(crate::fx::ME_THORNS, x - face * 3.0, y + 7.0, face * 0.85, 0.0, sz * 1.7, fade) {
+                for j in 0..4 {
+                    let ang = 1.2 + j as f32 * 0.35;
+                    let (tx, ty) = (x - face * cos(ang) * sz, y + 6.0 + sin(ang) * sz);
+                    fx(FX_LINE, x - face * 2.0, y + 6.0 + j as f32 * 1.5, tx, ty, 1.6, alpha(0x40A0_40FF, fade));
+                    fx(FX_SPIKES, tx, ty, 0.3, 1.6, 0.0, alpha(0xC0FF_A0FF, fade));
+                }
+            }
+        }
+        PJ_PRISM => {
+            // Laser Prism's bolts: the bolt's own model along its flight, a thin pink streak behind it
+            fx(FX_LINE, x, y, x - vx * 3.0, y - vy * 3.0, 0.9, alpha(0xFF5A_8AFF, 0.55 * fade));
+            if !crate::fx::mesh(crate::fx::ME_BOLT, x, y, crate::fx::atan2(vy, vx), 0.0, 9.0, fade) {
+                fx(FX_DISC, x, y, 2.0, 0.0, 0.0, alpha(0xFFB0_C8FF, fade));
             }
         }
         _ => {}

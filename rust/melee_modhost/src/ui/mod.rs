@@ -593,7 +593,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if ![x, y, z, yaw, scale, glow, alpha].iter().all(|v| v.is_finite()) {
             return GD_EINVAL;
         }
-        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: 0, p: [glow.clamp(0.0, 2.0), 0.0, 0.0, 0.0], rgba: 0xFFFF_FFFF };
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u16, at: [x, y, z], yaw, roll: 0.0, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: 0, p: [glow.clamp(0.0, 2.0), 0.0, 0.0, 0.0], rgba: 0xFFFF_FFFF };
         if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
     });
     // envoy-fx.md: a drive model with a built-in material (melee_gx::fx::MAT_*: 0 body, 1 glass, 2 glow, 3 foil,
@@ -609,7 +609,21 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             return GD_EINVAL;
         }
         let p = [p0.clamp(0.0, 2.0), p1.clamp(0.0, 1.0), p2.clamp(0.0, 3.0), p3.clamp(0.0, 2.0)];
-        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: m as u8, p, rgba };
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u16, at: [x, y, z], yaw, roll: 0.0, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: m as u8, p, rgba };
+        if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
+    });
+    // envoy-models1.md: gd_ui_world_model_ex with a roll (radians, a turn in the model's own plane before the yaw):
+    // a shot or a beam laid along its velocity. Same checks, cap and clamps; presentation only.
+    f!("gd_ui_world_model_rot", |c: Caller<'_, PresData>, model: i32, x: f32, y: f32, z: f32, yaw: f32, roll: f32, scale: f32, alpha: f32, material: i32, p0: f32, p1: f32, p2: f32, p3: f32, rgba: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(0..melee_modes::tu::drive_draw::MODEL_COUNT as i32).contains(&model) {
+            return GD_EINVAL;
+        }
+        let m = material as u32;
+        if m & !0xFF != 0 || (m & melee_gx::fx::MAT_ID as u32) >= melee_gx::fx::MAT_COUNT as u32 || ![x, y, z, yaw, roll, scale, alpha, p0, p1, p2, p3].iter().all(|v| v.is_finite()) {
+            return GD_EINVAL;
+        }
+        let p = [p0.clamp(0.0, 2.0), p1.clamp(0.0, 1.0), p2.clamp(0.0, 3.0), p3.clamp(0.0, 2.0)];
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u16, at: [x, y, z], yaw, roll, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: m as u8, p, rgba };
         if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
     });
     // envoy-fx.md: a full-screen post effect this present (melee_gx::fx::POST_*: 1 vignette, 2 ember tint, 3 heat-haze

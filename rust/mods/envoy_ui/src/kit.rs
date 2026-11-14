@@ -93,6 +93,64 @@ extern "C" {
     fn gd_ui_tex_load(s: *const u8, len: u32) -> u32;
 }
 
+/// Envoy model sprites (`em_<prefix><key>.png`, docs/rust-port/notes/envoy-models1.md), loaded on first use: up to
+/// EM_MAX distinct ones a session. A sprite is told by its two strings' addresses (table strings: `Synergy::key`,
+/// a literal), so nothing is compared or copied per frame. Handle 0 after a failed load (not retried).
+const EM_MAX: usize = 48;
+static mut EM_TEX: [(usize, usize, u32); EM_MAX] = [(0, 0, 0); EM_MAX];
+static mut EM_N: usize = 0;
+
+pub fn em_tex(prefix: &'static str, key: &'static str) -> u32 {
+    let id = (prefix.as_ptr() as usize, key.as_ptr() as usize);
+    unsafe {
+        let t = &mut *core::ptr::addr_of_mut!(EM_TEX);
+        for e in t.iter().take(EM_N) {
+            if (e.0, e.1) == id {
+                return e.2;
+            }
+        }
+        if EM_N >= EM_MAX {
+            return 0;
+        }
+        let mut name = [0u8; 72];
+        let mut n = 0;
+        for part in ["em_", prefix, key, ".png"] {
+            for &c in part.as_bytes() {
+                if n < name.len() {
+                    name[n] = c;
+                    n += 1;
+                }
+            }
+        }
+        let h = gd_ui_tex_load(name.as_ptr(), n as u32);
+        t[EM_N] = (id.0, id.1, h);
+        EM_N += 1;
+        h
+    }
+}
+
+/// The sprite of Envoy model `prefix` + `key` centred on (cx, cy), `size` across (band units), tinted `rgba`.
+/// False when the sprite is not there (the caller keeps what it drew before).
+pub fn em_spr(e: &mut E, prefix: &'static str, key: &'static str, cx: f32, cy: f32, size: f32, rgba: u32) -> bool {
+    let h = em_tex(prefix, key);
+    if h == 0 {
+        return false;
+    }
+    e.tex(h, cx - size * 0.5, cy - size * 0.5, size, size, [0.0, 0.0, 1.0, 1.0], rgba);
+    true
+}
+
+/// Frame `fr` of the animated strip `em_<key>.png` (`n` cells side by side; `key` ends in `_anim`).
+pub fn em_anim(e: &mut E, key: &'static str, n: u32, fr: u32, cx: f32, cy: f32, size: f32, rgba: u32) -> bool {
+    let h = em_tex("", key);
+    if h == 0 || n == 0 {
+        return false;
+    }
+    let f = (fr % n) as f32;
+    e.tex(h, cx - size * 0.5, cy - size * 0.5, size, size, [f / n as f32, 0.0, (f + 1.0) / n as f32, 1.0], rgba);
+    true
+}
+
 /// Load every sprite (call once from gd_ui_init). Returns how many loaded.
 pub fn load() -> u32 {
     let mut n = 0;

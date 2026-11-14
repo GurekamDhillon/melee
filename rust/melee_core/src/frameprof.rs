@@ -467,6 +467,27 @@ impl Drop for Span {
     }
 }
 
+/// A [`Span`] recorded only when it took at least `min_us` (per-frame phases: nothing is logged for a normal frame).
+pub struct SlowSpan(Option<(Kind, &'static str, Instant, u32)>);
+
+impl SlowSpan {
+    #[inline]
+    pub fn new(kind: Kind, min_us: u32, text: &'static str) -> SlowSpan {
+        SlowSpan(if on() { Some((kind, text, Instant::now(), min_us)) } else { None })
+    }
+}
+
+impl Drop for SlowSpan {
+    fn drop(&mut self) {
+        if let Some((k, t, t0, min)) = self.0.take() {
+            let us = t0.elapsed().as_micros() as u64;
+            if us >= min as u64 {
+                event(k, Text::new().s(t).s(" (").n((us / 1000) as i64).s(" ms)"), us.min(u32::MAX as u64) as u32, 0);
+            }
+        }
+    }
+}
+
 /// An instant event built only when recording.
 #[inline]
 pub fn note(kind: Kind, text: impl FnOnce() -> Text) {

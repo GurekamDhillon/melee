@@ -639,12 +639,47 @@ unsafe fn inline1() {
     }
 }
 
-unsafe fn inline2_inner(data: &lbDvd_803B72C0_t) {
+unsafe fn inline2_inner(data: &lbDvd_803B72C0_t) -> i32 {
     let filename = data.name;
     let effect_index = data.effect_index;
     let ty = data.r#type;
     let entry_num = ext::DVDConvertPathToEntrynum(ext::lbFileGetFullName(filename));
     lbDvd_80017740(ty as i32, entry_num, 3, 3, 0, 1, 8, 0x40, effect_index);
+    entry_num
+}
+
+/// TARGET_PC (zero-hitch.md): the disc entries of the match commons that are plain archives (ItCo, IfAll), as
+/// `inline2` registered them, for [`lbDvd_ParseAhead`]. -1: not registered.
+pub static mut PARSE_AHEAD: [i32; 2] = [-1; 2];
+
+/// TARGET_PC (zero-hitch.md), Envoy only: parse the preloaded match commons (ItCo, IfAll) now instead of at their
+/// first use in the match's setup tick. Only an entry that is loaded, a plain archive (type 2) and not parsed yet is
+/// touched, and only its `load_state` changes (1 -> 2, what `lbDvd_GetPreloadedArchive` does at the first use); its
+/// queue state and score are left for that first use. Returns how many archives were parsed. Vanilla never calls it.
+pub unsafe fn lbDvd_ParseAhead() -> i32 {
+    let mut n = 0;
+    for want in PARSE_AHEAD {
+        if want < 0 {
+            continue;
+        }
+        for i in 0..ENTRIES {
+            let e = entry_at(i);
+            if (*e).state == 3
+                && (*e).load_score > 0
+                && (*e).entry_num as i32 == want
+                && (*e).r#type == 2
+                && (*e).load_state == 1
+                && !(*e).archive.is_null()
+                && !(*e).raw_data.is_null()
+            {
+                ext::lbArchive_InitializeDAT((*(*e).archive).addr as *mut HSD_Archive, (*(*e).raw_data).addr, (*e).size);
+                (*e).load_state = 2;
+                n += 1;
+                break;
+            }
+        }
+    }
+    n
 }
 
 unsafe fn inline2() {
@@ -655,8 +690,11 @@ unsafe fn inline2() {
         lbDvd_803B72C0_t { r#type: 2, name: c"IfAll".as_ptr() as *const i8, effect_index: 0 },
     ];
     if preloadCache.new_scene.is_heap_persistent[1] != 0 {
-        for d in sp28.iter() {
-            inline2_inner(d);
+        for (i, d) in sp28.iter().enumerate() {
+            let e = inline2_inner(d);
+            if i >= 2 {
+                PARSE_AHEAD[i - 2] = e;
+            }
         }
     }
 }

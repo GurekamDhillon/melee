@@ -905,6 +905,13 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
         return false;
     }
 
+    // TARGET_PC (zero-hitch.md): on the stage select the match commons (ItCo, IfAll: preloaded since the character
+    // select) are parsed, once, instead of at their first use in the match's setup tick, where their decode was a
+    // quarter of the tick. `lbDvd_ParseAhead` acts only on an entry that is loaded and not parsed yet.
+    if !info.is_null() && (*info).scene_kind as u32 == melee_types::GS_SSS as u32 && (*temp_r25).unk_0 >= 2 && pad_queue_count > 0 {
+        melee_runtime::tu::lbdvd::lbDvd_ParseAhead();
+    }
+
     i = 0;
     while i < pad_queue_count {
         let mut held: i32 = 0; // the loading screen is holding this frame
@@ -979,7 +986,7 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
             }
             // mod host (melee_modhost, hooks-v1 `frame.run_procs`): pre = frame begin, post = frame end, before the NHV1 sample
             if let Some(m) = MOD_FRAME { m(false) }
-            ext::HSD_GObj_RunProcs();
+            { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "frame: gobj procs"); ext::HSD_GObj_RunProcs(); }
             if let Some(m) = MOD_FRAME { m(true) }
             if let Some(f) = ext::AUDIO_PROCS { f() }
             ext::Netplay_Background(); // an online lobby stays connected on the CSS too
@@ -1074,7 +1081,7 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
     if hidden != 0 {
         ext::Gx_SuppressDraws(1);
     }
-    ext::HSD_GObj_80390FC0();
+    { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "frame: render pass (display lists)"); ext::HSD_GObj_80390FC0(); }
     if hidden != 0 {
         ext::Gx_SuppressDraws(0);
     }

@@ -547,3 +547,106 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   run_modes_check 9000 ticks equal (tick log and NHV1; 8144 match frames: the Envoy sim changed by the deferral, the
   same in both modes); switch_torture at depth 4, 3000 frames per fight (1, 2, 3c, 5): PASS, 0 mismatches;
   loop_run (camp loop, items) OK.
+
+## Setup and scene-change ticks under 16 ms (2026-11-14, port/zerolag2, from candidate10 ce876c7d6)
+
+The budget is now 16.0 ms (`zero_hitch_check.py` default; it was the 16.7 ms slot). New gate scenarios:
+`vanilla_walk` (the real VS path: the port's character and stage selects, `play/walk_vs_fd_2cpu.txt`; in the
+default set), `items` (the envoy route with every item of the table held) and `lab` (the Item Lab's whole script).
+The gate keeps the pipeline warm list in `$OUT/gpucache` across runs (it used to start empty every run, because the
+exe is copied to a fresh folder).
+
+### Causes found
+- **The tick-8 frame (20-25 ms, envoy and lab)**: the Envoy effects layer's start-up pre-warm (`envoy_fx.rs`, new in
+  candidate10) decoded the drive models and compiled the effect pipelines inside the third present of the process
+  (14 ms of `fx_arm` plus the model decode, all "unaccounted"). Now built on a thread (`Renderer::fx_prewarm_start` /
+  `fx_prewarm_poll`), installed disarmed; an arm that comes first waits for it.
+- **The first-fight setup tick, 15.5 -> 17.8-19.3 ms**: measured side by side on a shared machine, the same exes
+  give 16.2 (candidate8), 16.7 (candidate9), 17.6 (candidate10). candidate9: sfxfix loads the tag partner's and
+  the waves' sound banks in `match setup: audio banks` (0.01 -> 0.7 ms). candidate10: the applies after ItCo are
+  slower (IfAll 0.3 -> 1.1, the foe's costume 0.7 -> 1.0, its data 0.3 -> 0.6 ms): the arena's big-block path, below.
+  No single commit: the tick was already at the edge and each merge added a little.
+- **Tail decommits on the game thread** (every setup, all modes of `melee play`): a big request with no free block of
+  its class takes a larger kept block and gives the tail back with `VirtualFree`: 60-140 us per call, 10-17 calls in
+  one ItCo apply, 12 in a fighter data file's (1.7 ms of a 3.1 ms apply). Now queued and done by the arena's
+  background thread (`tail_decommit` / `tails_drain`); the tail is dead for good once cut, so when its pages go back
+  changes no readable byte. A kept block is also zeroed only up to the cut.
+- **Replaying temporaries**: a realloc's old block was written whole, copied into the new block, and the new block
+  written whole again; a freed big temporary's fixups were walked byte by byte even inside the pages its free drops.
+  Now a realloc is replayed as allocate + free (no copy: the new block is always written whole with its own last
+  contents), a same-class growing realloc writes nothing, and fixups inside the dropped middle are skipped by a
+  binary search. ItCo: temporaries 1.1-1.3 -> 0.2 ms.
+- **Envoy and Lab: everything decoded in the setup tick**: Envoy goes camp -> its own select scene -> VS with no
+  loading scene, so ItCo and IfAll were parsed at their first use in the setup tick. `lbDvd_ParseAhead` parses the
+  preloaded match commons in the select's frames (only `load_state` 1 -> 2 changes; queue state and score are left
+  for the first use). The same call runs on the stage select for the real VS path.
+- **The real VS path's setup tick (50.7 ms on Final Destination here; 74.5 ms in the sse-stage2 notes)**: the stage
+  file is registered with the preload cache in the tick that loads it, the hint started the worker, and the load
+  then waited for the worker's whole prepare (35 ms) with no bound. Two fixes: the wait is bounded
+  (`WAIT_MAX` 1.5 ms, then the file decodes in place: the same arena sequence), and the stage under the stage
+  select's cursor is hinted once it has rested there 12 ticks (`asset::sss_hover`, read through
+  `mnStageSel_HoverStKind`; a GD stage hints its Final Destination carrier).
+- **Disc reads at the drive's speed**: the VS scene change read ~4 MB in its tick at 1.2-1.4 ms per 1.5 MB (5.7 ms);
+  the same read from the file cache is 0.3 ms. A below-normal thread now reads every `.dat/.usd/.ssm/.sem` of the
+  image once at boot (`disc_warm`, 329 MB, `melee play` only, waits while the game reads; `MELEE_DISC_WARM=off`).
+- **Texture bursts** (general; found on the SSE maps): a frame's new textures were converted one after the other
+  inside its present. `Renderer::convert_ahead` converts a burst (6+ textures, 256 KB+) on up to 6 threads first;
+  `texture_view` then only creates and uploads. Lake 50 textures / 14.8 MB: 11.8 -> 5.7 ms; Jungle 67 / 18.5 MB:
+  14.4 -> 7.9 ms.
+
+### Numbers (ms)
+Before: candidate10 on a quiet machine (the lane's brief). After: this branch, quiet-machine gate runs (hidden, real
+time, both build slots held, no other melee / cargo / rustc process at the start), tick / game work of the frame.
+| scenario | frame | before (tick) | after (tick / work) |
+|---|---|---|---|
+| envoy | first fight setup | 17.8-19.3 | 9.0 / 9.4 (the select's parse-ahead tick: 7.5 / 7.8) |
+| envoy, lab | the tick-8 frame | 20-25 (frame) | gone |
+| vanilla_bf | VS scene change | 18.9 | 11.9 / 12.2 (match setup 8.1 / 8.4) |
+| vanilla_walk (new) | match setup, Final Destination | 50.7 (shared machine) | 11.2 / 11.6 |
+| lab | match setup | 18.6 | 7.6 / 7.9 |
+| items (every item held) | first fight setup | 19.3 | 9.4 / 9.7 |
+Gate at the 16.0 ms budget: envoy OK (8992 frames, worst tick 9.0), items OK (8992, worst 9.4, wasm p99 0.74),
+vanilla_walk OK (2593, worst 11.2), vanilla_fod OK (2992). vanilla_bf and lab: see "Runs that were not quiet".
+
+### Runs that were not quiet
+The owner played candidate10 (and Dolphin ran) during parts of the gate runs; the gate's process test only looks at
+its start.
+- vanilla_bf, three runs: (1) 2 frames over, ticks 791-799 on the character select: a 150 ms window in which a 0.4 ms
+  idle tick took 4.9-21.7 ms, the audio tick 6.5 ms and the pacer overslept 23 ms (the same ticks are 0.4 ms in every
+  other run; it began 6 minutes after the owner's game closed): an outside stall, not a load. (2) GATE OK, 0 over.
+  (3) 1 frame: tick 633, tick time 0.4 ms, 15.5 ms "unaccounted (OS/loop)" with Dolphin running. The scene-change
+  and setup ticks were 11.9 / 8.1 ms in all three.
+- lab (34394 frames): the setup tick is 7.6 ms and no longer listed. 3 frames over: tick 7627 (one 11.4 ms call of
+  the envoy_sim hook, wasm p99.9 0.65 ms, at the second the owner's game started), tick 34280 (draw 50.7 ms, Dolphin
+  and his game running, flagged "not quiet"), and tick 522 on the main menu: tick 15.2 ms, work 16.03 ms, before
+  his play. That menu tick is game work of 7.5-8.1 ms in the other four runs (no file, no allocation burst: the
+  main menu's own frame 17 ticks after it opens) and was 14.9 ms on candidate8 on a shared machine: it has little
+  margin and is the next thing to split. A clean lab re-run was not possible before hand-back (the machine was in
+  use); it is the one pass criterion not shown.
+
+### Proof (final build b31b3cf3a + notes)
+- Gate OK: 4 goldens all frames, synctest d4 0 mismatches, audio = C, sfx, lints, semantics lint, snapguard
+  0.268 / 0.418 / 5.544.
+- NHV1 and tick logs, candidate10's exe against the new one, headless turbo: Envoy camp route 9000 ticks (7877
+  match frames) EQUAL; menu flow (retail_full) 6000 ticks (4847) EQUAL; FoD `--match` 3000 EQUAL; the real VS walk
+  3600 ticks (2149) EQUAL. So neither parse-ahead changed a sim result.
+- Arena digests, asset service on vs off: Envoy 66 loads (14 replays, ItCo among them) identical; real VS walk 77
+  (18 replays) identical; FoD 399 identical; menu flow 112: only the known per-run word (load 35, the 42 KB file).
+- run_modes_check 9000 ticks: tick.log and hash.log equal. switch_torture live: depth 0 (14400 frames) and depth 4
+  (3000 frames), fights 1 2 3c 5: PASS, 0 mismatches. items_check at depth 4: ITEMS OK (all 27 rows, 0 mismatches).
+- Not covered by a proof: the bytes of freed arena blocks (the digest lists live blocks). The replay changes are
+  argued above, not measured.
+
+### The SSE maps (pub/port/sse-stage2 cfe4e11d8, measured on a local merge, not merged)
+| | before | with this branch |
+|---|---|---|
+| Final Destination walk, setup tick | 50.7 (74.5 in its notes) | 13.0 |
+| The Lake, setup tick / texture upload of the first draw | 54.2 / 11.8 | 16.8 / 5.7 |
+| The Jungle, setup tick / texture upload | 54.3 / 14.4 | 18.5 / 7.9 |
+(shared machine.) What the general mechanisms cover: the stage wait (35 ms), ItCo / IfAll, the carrier stage's plan
+(hover hint), half of the texture conversion. What is left is the maps' own: the setup tick there runs two logic
+frames and a render pass after `on_enter` (7-8 ms: `explore map draw` 1.2-1.9 ms each time, immediate-mode 14-17 k
+triangles), the first draw's upload lands in the same present, and 3 pipelines compile on every run (6 ms; not
+staying in the warm list). Next steps for that lane: upload the map's textures before the match (they are known
+when the map is loaded at boot; needs a pre-upload entry on the renderer keyed like `tex_key`), draw the map as a
+retained mesh, and find why its first tick runs two logic frames.

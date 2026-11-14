@@ -17,6 +17,9 @@ pub struct EnvoyFx {
     presents: u32,
     /// The effect pipelines were built (pre-warmed at start-up, or by the first run).
     warmed: bool,
+    /// The background build was requested (`Renderer::fx_prewarm_start`), and when.
+    prewarm_started: bool,
+    prewarm_t: Option<std::time::Instant>,
 }
 
 impl EnvoyFx {
@@ -24,9 +27,21 @@ impl EnvoyFx {
     /// of the process (the swapchain format is known by then), so a fight never waits on a shader compile.
     pub fn present(&mut self, r: &mut melee_gx::render::Renderer, netplay: bool, ui_mods: bool) {
         self.presents += 1;
-        let prewarm = ui_mods && !self.warmed && self.presents >= 3 && !r.fx_armed();
+        if ui_mods && !self.warmed {
+            // start-up: build the layer on a background thread, disarmed (on a present, the model decode and the
+            // shader compiles made one ~25 ms frame a few presents into the process: the zero-hitch gate's tick 8)
+            if self.presents >= 3 && !self.prewarm_started {
+                self.prewarm_started = true;
+                self.prewarm_t = Some(std::time::Instant::now());
+                r.fx_prewarm_start(|| drive_draw::models().iter().map(|m| FxMesh { pos: &m.pos, nrm: &m.nrm, base: &m.base, glow: &m.glow }).collect());
+            }
+            if self.prewarm_started && r.fx_prewarm_poll() {
+                self.warmed = true;
+                eprintln!("play: envoy fx: effect pipelines built off the frame path ({:.1} ms after the request, pre-warmed at start-up)", self.prewarm_t.map_or(0.0, |t| t.elapsed().as_secs_f64() * 1e3));
+            }
+        }
         let posts = melee_gx::fx::posts_pending() || std::env::var_os("MELEE_FX_DEMO").is_some();
-        let want = melee_modes::tu::envoy::armed() != 0 || drive_draw::shown() > 0 || melee_gx::vfx::shown() > 0 || posts || prewarm;
+        let want = melee_modes::tu::envoy::armed() != 0 || drive_draw::shown() > 0 || melee_gx::vfx::shown() > 0 || posts;
         if !want {
             // a second of nothing: disarm (every pass off; objects kept for the next run)
             if r.fx_armed() {
@@ -47,7 +62,7 @@ impl EnvoyFx {
             let t = std::time::Instant::now();
             r.fx_arm(&meshes);
             self.warmed = true;
-            eprintln!("play: envoy fx: armed ({:.1} ms to build the effect pipelines{})", t.elapsed().as_secs_f64() * 1e3, if prewarm { ", pre-warmed at start-up" } else { "" });
+            eprintln!("play: envoy fx: armed ({:.1} ms on the present path)", t.elapsed().as_secs_f64() * 1e3);
         }
         let f = &mut self.frame;
         f.intensity = melee_gx::fx::intensity_from_env(netplay);

@@ -170,6 +170,63 @@ pub fn contains(p: *const u8) -> bool {
     unsafe { BASE != 0 && (p as usize) >= BASE && (p as usize) < BASE + CAP }
 }
 
+/// Diagnostics (`MELEE_ASSET_LOG`): how many of the `pages` pages just past the bump pointer are in the working set
+/// (resident: a first write does not fault), and how many are committed at all. One system call.
+#[cfg(windows)]
+pub fn resident_ahead(pages: usize) -> (usize, usize) {
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct Info { addr: usize, attr: usize }
+    extern "system" {
+        fn GetCurrentProcess() -> *mut core::ffi::c_void;
+        fn K32QueryWorkingSetEx(p: *mut core::ffi::c_void, pv: *mut Info, cb: u32) -> i32;
+    }
+    let (bump, committed) = unsafe { (BUMP, COMMITTED) };
+    if bump == 0 {
+        return (0, 0);
+    }
+    let _s = SysScope::enter();
+    let start = (bump + 0xFFF) & !0xFFF;
+    let n = pages.min(committed.saturating_sub(start) / 4096);
+    let mut v: Vec<Info> = (0..n).map(|i| Info { addr: start + i * 4096, attr: 0 }).collect();
+    if n == 0 || unsafe { K32QueryWorkingSetEx(GetCurrentProcess(), v.as_mut_ptr(), (n * 16) as u32) } == 0 {
+        return (0, n);
+    }
+    (v.iter().filter(|i| i.attr & 1 != 0).count(), n)
+}
+#[cfg(not(windows))]
+pub fn resident_ahead(_pages: usize) -> (usize, usize) {
+    (0, 0)
+}
+
+/// `MELEE_ASSET_LOG` diagnostics: (calls, ns, bytes) of the big-block paths since the last [`diag_take`]:
+/// 0 decommit at free, 1 recommit at allocation, 2 the zeroing a kept block's allocation still had to do,
+/// 3 the tail decommit of a larger block taken for a smaller request, 4 big frees kept resident.
+pub static DIAG_ON: AtomicBool = AtomicBool::new(false);
+static mut DIAG: [(u64, u64, u64); 5] = [(0, 0, 0); 5];
+pub fn diag_take() -> [(u64, u64, u64); 5] {
+    let _g = Lock::take();
+    unsafe { core::mem::replace(&mut *core::ptr::addr_of_mut!(DIAG), [(0, 0, 0); 5]) }
+}
+#[inline]
+unsafe fn diag<R>(k: usize, bytes: usize, f: impl FnOnce() -> R) -> R {
+    if !DIAG_ON.load(Relaxed) {
+        return f();
+    }
+    let t = std::time::Instant::now();
+    let r = f();
+    let d = &mut (*core::ptr::addr_of_mut!(DIAG))[k];
+    d.0 += 1;
+    d.1 += t.elapsed().as_nanos() as u64;
+    d.2 += bytes as u64;
+    r
+}
+
+/// Whether the last arena allocation came from the bump pointer (diagnostics; game thread).
+pub fn last_fresh() -> bool {
+    unsafe { FRESH }
+}
+
 /// Blocks allocated since the process started (diagnostics; restored by a rollback like the rest).
 pub fn allocations() -> u64 {
     unsafe { NALLOC }
@@ -397,7 +454,7 @@ unsafe fn alloc_locked(l: Layout) -> *mut u8 {
         }
         *((head + 8) as *mut u64) = 0;
         FREE[ab][c] = *(head as *const usize);
-        if TRIM && size >= TRIM_MIN && !keep::take(head, size) && !recommit(head, head + size) {
+        if TRIM && size >= TRIM_MIN && !diag(2, size, || keep::take(head, size)) && !diag(1, size, || recommit(head, head + size)) {
             return core::ptr::null_mut();
         }
         return head as *mut u8;
@@ -409,10 +466,11 @@ unsafe fn alloc_locked(l: Layout) -> *mut u8 {
             if h2 != 0 {
                 FREE[ab][c2] = *(h2 as *const usize);
                 *((h2 + 8) as *mut u64) = 0;
-                if !keep::take(h2, class_size(c2)) && !recommit(h2, h2 + size) {
+                // (a kept block is zeroed only up to the tail cut off below: the tail's pages are dropped anyway)
+                if !diag(2, size, || keep::take_upto(h2, class_size(c2), (h2 + size + 0xFFF) & !0xFFF)) && !diag(1, size, || recommit(h2, h2 + size)) {
                     return core::ptr::null_mut();
                 }
-                decommit(h2 + size, h2 + class_size(c2));
+                diag(3, class_size(c2) - size, || tail_decommit(h2 + size, h2 + class_size(c2)));
                 return h2 as *mut u8;
             }
         }
@@ -441,6 +499,52 @@ pub unsafe fn alloc(_l: Layout) -> *mut u8 {
 #[cfg(not(any(windows, unix)))]
 pub unsafe fn alloc_zeroed(_l: Layout) -> *mut u8 {
     core::ptr::null_mut()
+}
+
+/// Tails cut off big blocks (the larger-class path of [`alloc_locked`]) that still wait for their decommit. The
+/// tail is dead for good once cut (the block is of the smaller class from then on, and nothing reads past it), so
+/// WHEN its pages go back to the system changes no byte anyone can read: the background thread makes the system
+/// call ([`tails_drain`]) instead of the allocating game thread (measured: 60-140 us per call, 10-15 calls in one
+/// ItCo apply, 12 in a fighter data file's: 1-2 ms of a match's setup tick). Without that thread (or with the queue
+/// full) the tail is decommitted on the spot, as before.
+const TAILQ_CAP: usize = 256;
+static mut TAILQ: [(usize, usize); TAILQ_CAP] = [(0, 0); TAILQ_CAP];
+static mut TAILQ_LEN: usize = 0;
+static BG_ALIVE: AtomicBool = AtomicBool::new(false);
+
+/// Under the arena lock.
+unsafe fn tail_decommit(a: usize, b: usize) {
+    if BG_ALIVE.load(Relaxed) && TAILQ_LEN < TAILQ_CAP {
+        TAILQ[TAILQ_LEN] = (a, b);
+        TAILQ_LEN += 1;
+    } else {
+        decommit(a, b);
+    }
+}
+
+/// The background thread: decommit the queued tails (the system calls run outside the arena lock).
+#[cfg(windows)]
+fn tails_drain() {
+    loop {
+        let mut local = [(0usize, 0usize); 16];
+        let n;
+        {
+            let _g = Lock::take();
+            unsafe {
+                n = TAILQ_LEN.min(local.len());
+                for (i, slot) in local.iter_mut().enumerate().take(n) {
+                    *slot = TAILQ[TAILQ_LEN - n + i];
+                }
+                TAILQ_LEN -= n;
+            }
+        }
+        if n == 0 {
+            return;
+        }
+        for &(a, b) in &local[..n] {
+            unsafe { decommit(a, b) };
+        }
+    }
 }
 
 /// Misuse check: a free block carries this mark in its second word (the first is the free-list link) until it is
@@ -485,8 +589,12 @@ pub unsafe fn free(p: *mut u8, l: Layout) {
     #[cfg(any(windows, unix))]
     if TRIM {
         let size = class_size(c);
-        if size >= TRIM_MIN && !keep::put(p as usize, size) {
-            decommit(p as usize + 16, p as usize + size);
+        if size >= TRIM_MIN {
+            if !keep::put(p as usize, size) {
+                diag(0, size, || decommit(p as usize + 16, p as usize + size));
+            } else {
+                diag(4, size, || ());
+            }
         }
     }
 }
@@ -766,6 +874,7 @@ pub fn start_prefault() {
         }
         let me = unsafe { GetCurrentProcess() };
         unsafe { SetThreadPriority(GetCurrentThread(), -1) }; // below normal: never ahead of the game thread
+        BG_ALIVE.store(true, Relaxed);
         let mut touched = 0usize;
         loop {
             if !bg_begin() {
@@ -810,6 +919,7 @@ pub fn start_prefault() {
             }
             touched = touched.max(p.min(end));
             keep::zero_some();
+            tails_drain();
             bg_end();
             std::thread::sleep(std::time::Duration::from_millis(2));
         }
@@ -868,12 +978,18 @@ mod keep {
     /// Under the lock, from the allocation of free block `p` (its class size `size`): true when it was kept, its
     /// decommit range now zero (the pages stayed committed: no recommit needed).
     pub unsafe fn take(p: usize, size: usize) -> bool {
+        take_upto(p, size, usize::MAX)
+    }
+    /// [`take`] for a block whose pages from `upto` (page aligned) on are cut off and dropped by the caller: only
+    /// the part of the decommit range below `upto` is zeroed.
+    pub unsafe fn take_upto(p: usize, size: usize, upto: usize) -> bool {
         if BYTES == 0 {
             return false;
         }
         let kept = &mut *core::ptr::addr_of_mut!(KEPT);
         let Some(e) = kept.iter_mut().find(|e| e.0 == p) else { return false };
         let (_, b) = range(p, size);
+        let b = b.min(upto);
         if e.2 < b {
             core::ptr::write_bytes(e.2 as *mut u8, 0, b - e.2);
         }
@@ -907,6 +1023,7 @@ mod keep {
 mod keep {
     pub unsafe fn put(_: usize, _: usize) -> bool { false }
     pub unsafe fn take(_: usize, _: usize) -> bool { false }
+    pub unsafe fn take_upto(_: usize, _: usize, _: usize) -> bool { false }
     pub fn zero_some() {}
     pub fn init() {}
 }

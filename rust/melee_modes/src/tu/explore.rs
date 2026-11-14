@@ -48,12 +48,12 @@ const ARENA_SECS: [SecDef; 1] = [SecDef { file: "030101.pac", off: [0.0, 0.0], m
 /// notes/sse-audit.md) -> the nearest of our four Subspace kinds (`subspace::K_*`), or None for a boss (not spawned).
 /// Unknown ids fall back to the Goomba (logged).
 fn enemy_kind(id: u16) -> (Option<usize>, &'static str) {
-    use crate::tu::subspace::{K_BILL, K_GIANT, K_GOOMBA, K_PRIMID};
+    use crate::tu::subspace::{K_BILL, K_GIANT, K_GOOMBA, K_HAMMER, K_JYK, K_KOOPA, K_PRIMID};
     match id {
         0 => (Some(K_GOOMBA), "Goomba"),
         1 => (Some(K_GOOMBA), "Poppant"),
         2 => (Some(K_GOOMBA), "Feyesh"),
-        3 => (Some(K_GOOMBA), "Jyk"),
+        3 => (Some(K_JYK), "Jyk"),
         4 => (Some(K_BILL), "Auroros"), // a diving bird: flies straight at the party
         7 => (Some(K_GIANT), "Borboras"),
         8 => (Some(K_GIANT), "Giant Goomba"),
@@ -62,9 +62,9 @@ fn enemy_kind(id: u16) -> (Option<usize>, &'static str) {
         15 => (Some(K_PRIMID), "Spaak"),
         17 => (Some(K_GOOMBA), "Ticken"),
         18 => (Some(K_GIANT), "Towtow"),
-        19 => (Some(K_PRIMID), "Hammer Bro"),
+        19 => (Some(K_HAMMER), "Hammer Bro"),
         23 => (Some(K_PRIMID), "Primid"),
-        25 => (Some(K_GOOMBA), "Koopa"),
+        25 => (Some(K_KOOPA), "Koopa"),
         32 => (Some(K_PRIMID), "Boomerang Primid"),
         35 => (Some(K_PRIMID), "Sword Primid"),
         45 => (Some(K_GOOMBA), "Glunder"),

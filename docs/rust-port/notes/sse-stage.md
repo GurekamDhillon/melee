@@ -117,3 +117,14 @@ sent off the screen in the same way.
 - Moving collision (GMOV/GMPS), and the brick models (a broken brick's model is not hidden) are not done.
 - A brick's place is its bone's rest translation found by name; several bricks sharing one bone name would land on
   one spot (none in this map).
+
+## Round 3 (partial)
+
+- Subspace enemy kinds 4-6: Koopa (rig EnmPatapata, Walker; shell slide stops 45 frames after it connects),
+  Hammer Bro (EnmHammerbros, Brawler; throw box and jump swing), Jyk (EnmJyakeel, new `Arch::Floater`: drifts
+  toward a player within 40 of home sideways/up and 60 down; on FD its home is clamped to y 10..35). Map spawns:
+  enemy id 3 -> Jyk, 19 -> Hammer Bro, 25 -> Koopa. Hits on Missile/Floater kinds are now logged ("hit by slot").
+- subspace_check d4/d7 vanilla: all 7 kinds ok, 0 mismatches. Gate OK.
+- Not done this round: Jungle as its own GD slot, moving collision (GMOV/GMPS; 060002a sfyuka00-03 ride the
+  st02asuisha wheel CHR0, 600 frames), brick models / hiding broken bricks, side-room screenshots, frame-time
+  profiles on the maps.

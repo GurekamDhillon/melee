@@ -21,6 +21,7 @@ The disc comes from GW_ISO_VANILLA (or the workspace .env); its path is never pr
 titled, at volume 3, with a pad script (no OS input).
 """
 import argparse, base64, hashlib, json, os, queue, re, subprocess, sys, tempfile, threading, time
+os.environ.setdefault("MELEE_WINDOW_HIDDEN", "1")  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]

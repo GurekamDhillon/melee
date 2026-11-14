@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Scripted `melee play` runs of the 1P Event Match and Stadium modes from the retail menus (no OS input: MELEE_PAD_SCRIPT drives
 # port 1, the adapter is ignored, the window never takes focus). Needs GW_ISO_VANILLA (the workspace .env).
 #   bash tools/rust-port/play/onep_modes.sh [--windowed] [name ...]     (names: event1 event10 target homerun multiman_10 ...)

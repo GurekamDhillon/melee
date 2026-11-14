@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # The 1P win paths, unattended (no OS input; port 1 is handed to a level-9 CPU with the TEST-ONLY MELEE_TEST_P1_CPU):
 #   classic / adventure / allstar: MELEE_SCENE at the last stage -> the clear, the ending movie, the staff roll, the
 #   prize scene, back to the main menu;  events: every event 11-51 from the menus (MELEE_TEST_EVENTS_UNLOCKED opens the

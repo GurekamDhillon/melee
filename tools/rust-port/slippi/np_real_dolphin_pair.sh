@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # SPDX-License-Identifier: MIT
 # Slippi Dolphin on Slippi's real ENet matchmaking (mm.slippi.gg:43113), direct mode, our own two accounts.
 #   np_real_dolphin_pair.sh OUTDIR MODE [-- engine args]

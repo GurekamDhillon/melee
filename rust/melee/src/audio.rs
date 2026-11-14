@@ -132,6 +132,10 @@ impl Audio {
         if headless || HOST_MIX.load(std::sync::atomic::Ordering::Relaxed) {
             return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()), resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 });
         }
+        // MELEE_WINDOW_HIDDEN: an agent's hidden run opens no device (the mix still runs, uncaptured)
+        if melee_platform::window_hidden() {
+            return Ok(Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 });
+        }
         let out = sim::Output::new(melee_audio::output::DriverConfig::from_env(false));
         Ok(Audio { out: Some(out), dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 })
     }

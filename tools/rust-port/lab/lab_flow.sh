@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # The LAB's features in real play (lab_flow.py): the retail flow's LAB match headless, the lab mod loaded, P1 a pad
 # script, P2 the dummy as a CPU slot and as a human slot nobody holds; the menu's lab commands at fixed frames
 # (MELEE_LAB_CMDS) and every feature checked on the fighters (MELEE_LAB_TRACE). No OS input.

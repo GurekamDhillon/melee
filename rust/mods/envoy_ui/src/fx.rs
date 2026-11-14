@@ -71,6 +71,14 @@ static mut SEEN_N: usize = 0;
 pub fn moments(v: &[i32; VW]) {
     let n = v[V_EV_N].max(0) as usize;
     let now = v[V_PLAY];
+    // a combo break: a white edge flash held for its first 12 frames (a held effect, posted every present)
+    for i in 0..EV.min(n) {
+        let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
+        let age = now - ev[0];
+        if ev[1] == EV_COMBOBREAK && (0..12).contains(&age) {
+            unsafe { gd_fx_post(POST_VIGNETTE, 1.0 - age as f32 / 12.0, 0.0, 0.0, 0xFFFF_FFFF) };
+        }
+    }
     for i in 0..EV.min(n) {
         let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
         if !(0..6).contains(&(now - ev[0])) || !(ev[1] == EV_CASHOUT || ev[1] == EV_BREAK || ev[1] == EV_COMBOBREAK) {
@@ -95,9 +103,12 @@ pub fn moments(v: &[i32; VW]) {
         let w = if world { POST_WORLD } else { 0 };
         unsafe {
             if ev[1] == EV_COMBOBREAK {
-                // the combo breaker: a white shockwave ring from the player, a short white flash, its sound
-                gd_fx_post(POST_SHOCKWAVE | w, 1.0, x, y, 0xFFFF_FFFF);
-                gd_fx_post(POST_FLASH, 0.6, 0.0, 0.0, 0xFFFF_FFFF);
+                // the combo breaker: a big white shockwave ring from the player (strength 2.6: the host's large
+                // ring), a white wave, a full white flash, the Brawl sound as a layer (the Melee disc's
+                // shield-break sound plays from the sim's host call)
+                gd_fx_post(POST_SHOCKWAVE | w, 2.6, x, y, 0xFFFF_FFFF);
+                gd_fx_post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFFF_FFFF);
+                gd_fx_post(POST_FLASH, 1.0, 0.0, 0.0, 0xFFFF_FFFF);
                 crate::sfx("combobreak");
             } else if ev[1] == EV_CASHOUT {
                 gd_fx_post(POST_RADIAL_WAVE | w, 1.0, x, y, 0xFFD8_4AFF);

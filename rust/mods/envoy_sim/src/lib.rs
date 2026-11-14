@@ -84,7 +84,7 @@ extern "C" {
     fn gd_envoy_speed(slot: i32, active: i32, bench: i32) -> i32;
     fn gd_envoy_absorb(slot: i32) -> i32;
     fn gd_envoy_attacker(slot: i32) -> i32;
-    fn gd_envoy_combo_break(slot: i32, frames: i32) -> i32;
+    fn gd_envoy_combo_break(slot: i32, frames: i32, freeze: i32) -> i32;
     fn gd_envoy_jumps(slot: i32) -> i32;
     fn gd_envoy_air_jump(slot: i32) -> i32;
     fn gd_envoy_blast(slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32) -> i32;
@@ -297,6 +297,8 @@ const CB_GAP: i32 = 60;
 const CB_INTANGIBLE: i32 = 45;
 /// Frames before the breaker can fire again (3 s).
 const CB_COOLDOWN: i32 = 180;
+/// Frames every fighter freezes on the break (a hitlag freeze, so the break reads).
+const CB_FREEZE: i32 = 6;
 /// The push on the foes nearby: a no-damage blast from the player, radius, angle (361: the Sakurai angle), growth, base.
 const CB_PUSH_R: f32 = 24.0;
 const CB_PUSH_ANGLE: i32 = 361;
@@ -3301,7 +3303,7 @@ unsafe fn combo_frame() {
             S.cb_dmg[p] = 0;
             S.cb_cd[p] = CB_COOLDOWN;
             S.cb_n += 1;
-            let r = gd_envoy_combo_break(ps, CB_INTANGIBLE);
+            let r = gd_envoy_combo_break(ps, CB_INTANGIBLE, CB_FREEZE);
             if let Some(at) = pos(ps) {
                 gd_envoy_blast(ps, at.x, at.y + 8.0, CB_PUSH_R, 0, CB_PUSH_ANGLE, CB_PUSH_KBG, CB_PUSH_BKB);
             }

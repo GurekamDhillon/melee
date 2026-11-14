@@ -599,7 +599,9 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
                 burst(e, S_BURST_CORAL, 400.0, 30.0, 80.0, age, "Break!", 14);
             }
             EV_COMBOBREAK => {
-                burst(e, S_BURST_LAGOON, cx + 40.0, 250.0, 84.0, age, "Burst free!", 12);
+                // the tech popups' burst, bigger: a white burst behind the player's colour, "COMBO BREAK!"
+                burst(e, S_BURST_WHITE, cx + 40.0, 240.0, 150.0, age, "", 12);
+                burst(e, if who == 0 { S_BURST_CORAL } else { S_BURST_LAGOON }, cx + 40.0, 240.0, 120.0, age, "COMBO BREAK!", 18);
             }
             _ => {}
         }

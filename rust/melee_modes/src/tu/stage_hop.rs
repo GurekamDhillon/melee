@@ -223,6 +223,7 @@ pub unsafe fn switch_to_ex(kind: i32, live: bool) -> i32 {
     sg::script_retail_items(1);
     { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: destroy outgoing")); sg::script_retail_destroy(); }
     release_ground_subjects();
+    release_stage_sislib();
     sg::script_retail.working = work;
     sg::script_retail.working_bytes = bytes;
     sg::script_retail.archive = archive;
@@ -303,6 +304,49 @@ unsafe fn release_ground_subjects() {
     }
     if freed != 0 && std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
         eprintln!("stage switch: gave back {freed} camera subject(s) of the outgoing stage");
+    }
+}
+
+/// The SisLib state the outgoing stage made. Grounds draw text through SIS slot 1 (HSD_SisLib_804D1124[1]:
+/// grpstadium's SIS_GrPStadiumData, grhomerun's), and in a match nothing else uses that slot (the HUD's are 0 and 2).
+/// grStadium_801D2BEC registers a slot-1 canvas with HSD_SisLib_803A611C at every install, which appends a new
+/// entry to HSD_SisLib_804D797C each time. Retail gets these back when the next scene re-inits SisLib. A hop keeps
+/// the scene, so every Pokemon Stadium visit kept one more entry, pointing at its destroyed ground gobj. At switch
+/// 1877 of the VS rotation, HSD_SisLib_Alloc ran out ("Memory Empty", grStadium_801D4194 -> HSD_SisLib_803A6368). Any
+/// slot-1 text still alive goes too (the ground's destroy normally frees them through the text gobj). Selected by
+/// slot in game memory, so a rollback across a hop sees the same set.
+unsafe fn release_stage_sislib() {
+    use melee_runtime::tu::sislib as sis;
+    let mut texts = 0;
+    let mut t = sis::HSD_SisLib_804D7978;
+    while !t.is_null() {
+        let next = (*t).next;
+        if (*t).font_idx == 1 {
+            sis::HSD_SisLib_803A5CC4(t);
+            texts += 1;
+        }
+        t = next;
+    }
+    let mut canvases = 0;
+    let mut prev: *mut sislib_UnkAlloc3 = core::ptr::null_mut();
+    let mut e = sis::HSD_SisLib_804D797C;
+    while !e.is_null() {
+        let next = (*e).x0;
+        if (*e).xA == 1 {
+            if prev.is_null() {
+                sis::HSD_SisLib_804D797C = next;
+            } else {
+                (*prev).x0 = next;
+            }
+            sis::HSD_SisLib_Free(e as *mut core::ffi::c_void);
+            canvases += 1;
+        } else {
+            prev = e;
+        }
+        e = next;
+    }
+    if texts + canvases != 0 && std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
+        eprintln!("stage switch: gave back {canvases} SisLib canvas(es) and {texts} text(s) of the outgoing stage");
     }
 }
 

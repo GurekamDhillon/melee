@@ -25,6 +25,10 @@ pub const OP_SHADOW: u16 = 15;
 pub const SHAPE_BOX: u32 = 1;
 pub const SHAPE_DIAMOND: u32 = 2;
 pub const SHAPE_GLOW: u32 = 3;
+/// gd-ui-v1.5: a soft (Gaussian) shadow of a rounded box; `spread` is the blur's standard deviation.
+pub const SHAPE_SHADOW: u32 = 4;
+/// gd-ui-v1.5: a box with a radius for each corner.
+pub const OP_SHAPE4: u16 = 16;
 pub const FX_NONE: u32 = 0;
 pub const FX_FOIL: u32 = 1;
 pub const FX_HOLO: u32 = 2;
@@ -208,6 +212,22 @@ impl<const N: usize> Enc<N> {
     }
     pub fn round_rect(&mut self, x: f32, y: f32, w: f32, h: f32, radius: f32, fill: u32) -> &mut Self {
         self.shape(SHAPE_BOX, x, y, w, h, radius, 0.0, 0.0, fill, 0)
+    }
+    /// A soft shadow of the rounded box (x, y, w, h): blurred by `sigma` units, in `rgba`. Drawn before the box.
+    pub fn soft_shadow(&mut self, x: f32, y: f32, w: f32, h: f32, radius: f32, sigma: f32, rgba: u32) -> &mut Self {
+        self.shape(SHAPE_SHADOW, x, y, w, h, radius, 0.0, sigma, rgba, 0)
+    }
+    /// A box with a radius for each corner (`radii`: top-left, top-right, bottom-right, bottom-left): `fill`, and
+    /// a border of `border` units in `line` inside the outline (0: none).
+    pub fn shape4(&mut self, x: f32, y: f32, w: f32, h: f32, radii: [f32; 4], border: f32, fill: u32, line: u32) -> &mut Self {
+        if self.head(OP_SHAPE4, 11) {
+            for v in [x, y, w, h, radii[0], radii[1], radii[2], radii[3], border] {
+                self.f(v);
+            }
+            self.put(fill);
+            self.put(line);
+        }
+        self
     }
     /// A disc of diameter `d` centred on (cx, cy).
     pub fn circle(&mut self, cx: f32, cy: f32, d: f32, fill: u32) -> &mut Self {

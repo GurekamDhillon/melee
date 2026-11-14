@@ -575,3 +575,28 @@ fn aspect_audit_flags_squished_draws() {
     assert_eq!(out.len(), n1 + 1, "{out:?}");
     assert!(out[n1].contains("sprite over sprite"));
 }
+
+/// gd-ui-v1.5: a four-radius box and a soft shadow are one shape quad each; the shadow's quad reaches three
+/// deviations past its box; a bad payload is refused.
+#[test]
+fn shape4_and_soft_shadow_records() {
+    let a = atlas();
+    let mut b = Batch::with_capacity(16);
+    let f = |v: f32| v.to_bits();
+    let mut e = Enc::default();
+    e.rec(OP_SHAPE4, &[f(10.0), f(20.0), f(100.0), f(40.0), f(8.0), f(8.0), f(0.0), f(0.0), f(0.0), 0xFF00_00FF, 0]);
+    e.rec(OP_SHAPE, &[melee_gx::ui::SHAPE_SHADOW, f(10.0), f(20.0), f(100.0), f(40.0), f(12.0), f(0.0), f(5.0), 0x0000_0080, 0]);
+    b.begin();
+    b.submit(&e.0, 0, &a, &[], false).unwrap();
+    b.finish(false);
+    let q = &b.frame.quads;
+    assert_eq!(q.len(), 2);
+    assert_eq!((q[0].flags & melee_gx::ui::Q_SHAPE_MASK) >> melee_gx::ui::Q_SHAPE_SHIFT, melee_gx::ui::SHAPE_BOX4);
+    assert_eq!(q[0].uv, [8.0, 8.0, 0.0, 0.0]);
+    assert_eq!(q[0].rect, [10.0, 20.0, 100.0, 40.0]);
+    assert_eq!((q[1].flags & melee_gx::ui::Q_SHAPE_MASK) >> melee_gx::ui::Q_SHAPE_SHIFT, melee_gx::ui::SHAPE_SHADOW);
+    assert_eq!(q[1].rect, [10.0 - 15.0, 20.0 - 15.0, 130.0, 70.0]);
+    let mut bad = Enc::default();
+    bad.rec(OP_SHAPE4, &[f(0.0), f(0.0), f(1.0), f(1.0), f(f32::NAN), 0, 0, 0, 0, 0, 0]);
+    assert!(b.submit(&bad.0, 0, &a, &[], false).is_err());
+}

@@ -33,6 +33,9 @@ pub const OP_OUTLINE: u16 = 14;
 /// moved by (dx, dy), in `rgba` (its alpha is the shape's: they fade as one). Payload dx, dy, inset, rgba; dx = dy = 0
 /// ends it.
 pub const OP_SHADOW: u16 = 15;
+/// gd-ui-v1.5 (uiremake): a box with a radius for each corner. Payload: x, y, w, h, the four radii (top-left,
+/// top-right, bottom-right, bottom-left), border width, fill RGBA, border RGBA.
+pub const OP_SHAPE4: u16 = 16;
 
 pub const LAYER_SCENE: i32 = 0;
 pub const LAYER_HUD_UNDER: i32 = 1;
@@ -441,8 +444,8 @@ impl Batch {
                 a.shape(x, y, w, h, radius, p.rot, border);
             }
         }
-        // a glow reaches `spread` outside the shape
-        let g = if kind == gu::SHAPE_GLOW { spread.max(0.0) } else { 0.0 };
+        // a glow reaches `spread` outside the shape, a soft shadow three deviations
+        let g = if kind == gu::SHAPE_GLOW { spread.max(0.0) } else if kind == gu::SHAPE_SHADOW { spread.max(0.0) * gu::SHADOW_REACH } else { 0.0 };
         let save = (self.extra_flags, self.extra_shape);
         self.extra_flags |= kind << Q_SHAPE_SHIFT;
         // shape[2]: a glow's spread, a box's dash length
@@ -451,6 +454,22 @@ impl Batch {
         let sh = p.shadow;
         let uv = if kind == gu::SHAPE_BOX && (sh.0 != 0.0 || sh.1 != 0.0) { [sh.0 * s, sh.1 * s, sh.2.max(0.0) * s, (sh.3 >> 8) as f32] } else { [0.0; 4] };
         self.push(p, [x - g, y - g, w + 2.0 * g, h + 2.0 * g], uv, rgba, 0.0);
+        (self.extra_flags, self.extra_shape) = save;
+    }
+
+    /// A box with a radius for each corner (`radii`: top-left, top-right, bottom-right, bottom-left), `rgba` the
+    /// fill, a `border` in `rgba2` inside the outline. One quad.
+    pub fn shape4(&mut self, p: &Pen, x: f32, y: f32, w: f32, h: f32, radii: [f32; 4], border: f32, rgba: u32, rgba2: u32) {
+        if w <= 0.0 || h <= 0.0 || (rgba & 0xFF == 0 && (border <= 0.0 || rgba2 & 0xFF == 0)) {
+            return;
+        }
+        let s = p.scale;
+        let save = (self.extra_flags, self.extra_shape);
+        self.extra_flags |= gu::SHAPE_BOX4 << Q_SHAPE_SHIFT;
+        // shape[0]: the largest radius (the pixel policy's roundness test), shape[1]: the border
+        let rmax = radii.iter().fold(0.0f32, |a, r| a.max(*r)).max(0.0);
+        self.extra_shape = ([rmax * s, border.max(0.0) * s, 0.0], rgba2);
+        self.push(p, [x, y, w, h], radii.map(|r| r.max(0.0) * s), rgba, 0.0);
         (self.extra_flags, self.extra_shape) = save;
     }
 
@@ -592,13 +611,20 @@ impl Batch {
                 OP_SHAPE => {
                     need(10)?;
                     let kind = w(p);
-                    if !(gu::SHAPE_BOX..=gu::SHAPE_GLOW).contains(&kind) {
+                    if !(gu::SHAPE_BOX..=gu::SHAPE_SHADOW).contains(&kind) {
                         return err(at, "shape: kind");
                     }
                     if !(1..8).all(|i| f32_ok(f(p + i * 4))) {
                         return err(at, "shape: non-finite");
                     }
                     self.shape(&pen, kind, f(p + 4), f(p + 8), f(p + 12), f(p + 16), f(p + 20), f(p + 24), f(p + 28), w(p + 32), w(p + 36));
+                }
+                OP_SHAPE4 => {
+                    need(11)?;
+                    if !fs(9) {
+                        return err(at, "shape4: non-finite");
+                    }
+                    self.shape4(&pen, f(p), f(p + 4), f(p + 8), f(p + 12), [f(p + 16), f(p + 20), f(p + 24), f(p + 28)], f(p + 32), w(p + 36), w(p + 40));
                 }
                 OP_SHADOW => {
                     need(4)?;

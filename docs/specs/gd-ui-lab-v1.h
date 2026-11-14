@@ -118,6 +118,9 @@ unsigned gd_ui_kit_id(const char* name, unsigned len);
 int      gd_ui_log(const char* s, unsigned len);                  /* a log line (headless checks); <= 16 per present */
 unsigned gd_ui_tex_load(const char* path, unsigned len);        /* .png in the mod's package dir, <= 512x512 */
 int      gd_ui_band_rect(float out[6]);                          /* GAP-0: band x,y,w,h and window w,h in pixels */
+/* gd-ui-v1.5 records (uiremake): OP_SHAPE kind 4 = a soft (Gaussian) shadow of a rounded box, spread = the blur's
+ * standard deviation; OP_SHAPE4 (16) = a box with a radius for each corner: x, y, w, h, r_tl, r_tr, r_br, r_bl,
+ * border, fill RGBA, border RGBA. */
 int      gd_ui_tex_size(uint32_t tex);                           /* (w << 16) | h in texels of a loaded texture, 0: bad handle */
 int      gd_ui_theme(int theme);
 unsigned gd_ui_token(int tok);

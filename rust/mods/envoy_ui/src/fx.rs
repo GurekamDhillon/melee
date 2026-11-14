@@ -191,3 +191,11 @@ pub unsafe fn handoff(vw: f32, vh: f32, rgba: u32) {
     gd_fx_post(POST_FLASH, 0.35, 0.5, 0.5, 0xFFFF_FFFF);
     gd_fx_post(POST_RADIAL_WAVE, 0.8, 0.5, 0.5, rgba);
 }
+
+/// Big Bang's screen shake: a shockwave post for a few frames from the newest V_SHAKE frame (the shake setting obeyed).
+pub fn big_shake(v: &[i32; VW]) {
+    let age = v[V_PLAY] - v[V_SHAKE];
+    if v[V_SHAKE] > 0 && (0..8).contains(&age) {
+        unsafe { post(POST_SHOCKWAVE, 0.8 * (1.0 - age as f32 / 8.0), 320.0, 240.0, 0xFFA0_40FF) };
+    }
+}

@@ -26,6 +26,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
         let mut label = Buf::new();
         let mut price = 0;
         let mut badge = None;
+        let mut slot_row = false;
         match row {
             0..=2 => {
                 let id = v[pbk + P_SHOP_OFFERS + row as usize];
@@ -36,17 +37,22 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
                         label.s("  (x").i(held + 1).s(")");
                     }
                     price = v[pbk + P_SHOP_PRICE + row as usize];
-                    badge = Some(it.rgba);
+                    badge = Some(it.id);
                 } else {
                     label.s("Sold");
                 }
             }
             SHOP_STOCK => {
-                let (now, lim) = (v[V_POOL], v[V_POOL_LIM]);
+                let (now, lim) = crate::hud::stocks_of(v, p);
                 label.s("Refill a stock  ").i(now).s("/").i(lim);
                 if now < lim {
                     price = v[V_STOCK_PRICE];
                 }
+            }
+            SHOP_SLOT => {
+                label.s("Stock slot: +1 limit, +1 stock");
+                price = v[V_SHOP_SLOT_PRICE];
+                slot_row = true;
             }
             SHOP_REROLL => {
                 label.s("New items on the counter");
@@ -68,10 +74,14 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
         let rw = w - 20.0;
         sticker(e, if on { S_FACE_HOVER } else if row == SHOP_LEAVE { S_FACE_LILAC } else { S_FACE_WHITE }, x, y, rw, 26.0, deg, alpha(WHITE, a), |e| {
             let mut tx = x + 10.0;
+            if slot_row {
+                crate::icons::slot_ink(e, x + 12.0, y + 13.0, 12.0, false, false, a);
+                crate::icons::slot_ink(e, x + 24.0, y + 13.0, 12.0, true, false, a);
+                tx = x + 36.0;
+            }
             if let Some(col) = badge {
                 // the item's icon: its colour in an ink ring
-                spr_c(e, S_DISC, x + 16.0, y + 13.0, 20.0 / 32.0, alpha(INK, a));
-                spr_c(e, S_DISC, x + 16.0, y + 13.0, 15.0 / 32.0, crate::alpha(col, a));
+                crate::icons::icon_a(e, col, x + 16.0, y + 13.0, 22.0, a);
                 tx = x + 30.0;
             }
             e.text_ex(tx, y + 5.0, d(14), alpha(INK, a), ALIGN_LEFT, rw - 90.0, label.str());
@@ -81,6 +91,8 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
                 let mut s = Buf::new();
                 s.i(price);
                 e.text_ex(x + rw - 10.0, y + 5.0, d(14), alpha(if poor { DEEP } else { INK }, a), ALIGN_RIGHT, 0.0, s.str());
+            } else if slot_row {
+                e.text_ex(x + rw - 10.0, y + 6.0, bs(12), alpha(LILAC, a), ALIGN_RIGHT, 0.0, "not today");
             } else if row == SHOP_STOCK {
                 e.text_ex(x + rw - 10.0, y + 6.0, bs(12), alpha(LILAC, a), ALIGN_RIGHT, 0.0, "full");
             }
@@ -111,13 +123,12 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
         if let Some(it) = envoy_data::items::item(id).filter(|_| w > 300.0) {
             let (tx, ty) = (x0 + w + 18.0, 56.0);
             sticker(e, S_FACE_WHITE, tx, ty, 260.0, 100.0, 1.0, WHITE, |e| {
-                spr_c(e, S_DISC, tx + 6.0, ty + 6.0, 34.0 / 32.0, INK);
-                spr_c(e, S_DISC, tx + 6.0, ty + 6.0, 27.0 / 32.0, it.rgba);
+                crate::icons::icon(e, it.id, tx + 8.0, ty + 8.0, 38.0);
                 e.text_ex(tx + 34.0, ty + 8.0, d(17), INK, ALIGN_LEFT, 0.0, it.name);
                 let mut s = Buf::new();
                 s.s("on ").s(envoy_data::items::TRIGGER_TEXT[it.trigger as usize]).s(" / stack: ").s(envoy_data::items::STACK_TEXT[it.stack as usize]);
                 e.text_ex(tx + 250.0, ty + 10.0, bs(11), LILAC, ALIGN_RIGHT, 0.0, s.str());
-                wrap(e, tx + 34.0, ty + 34.0, 216.0, bs(13), 16.0, INK, ALIGN_LEFT, it.line, 4);
+                rich(e, tx + 34.0, ty + 34.0, 216.0, 13, 16.0, INK, false, envoy_data::keywords::card(it.id), 4);
             });
         }
     }
@@ -138,11 +149,6 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, _vw: f32, _vh: f32, sc: f3
         e.text_ex(196.0, 11.0, d(20), INK, ALIGN_LEFT, 0.0, s.str());
         e.text_ex(278.0, 16.0, bs(11), LILAC, ALIGN_RIGHT, 0.0, "one purse");
     });
-    if v[V_TIMER] > 0 {
-        let mut s = Buf::new();
-        s.i((v[V_TIMER] + 59) / 60).s(" s");
-        e.text_ex(620.0, 12.0, d(15), WHITE, ALIGN_RIGHT, 0.0, s.str());
-    }
     let coop = v[V_HUMANS] == 2;
     if coop {
         for p in 0..2 {

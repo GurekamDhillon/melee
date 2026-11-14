@@ -81,6 +81,8 @@ extern "C" {
     fn gd_envoy_publish(ptr: *const i32, n: u32) -> i32;
     fn gd_envoy_seq() -> i32;
     fn gd_envoy_start_fight() -> i32;
+    fn gd_envoy_salt() -> i32;
+    fn gd_envoy_quit() -> i32;
     fn gd_envoy_roster(i: i32) -> i32;
     fn gd_envoy_apply(slot: i32, which: i32, v: i32) -> i32;
     fn gd_envoy_percent(slot: i32, bench: i32, delta_milli: i32) -> i32;
@@ -282,6 +284,8 @@ const POOL_CAP: i32 = 8;
 /// The furthest loop the scaling counts (a guard; nobody gets there).
 const LOOP_TOP: i32 = 50;
 const RUN_OVER: i32 = 3;
+/// `S.outcome`: 0 the fight is on, 1 won, 2 lost (the run is over), 3 left from the pause (the run is kept).
+const OUT_LEFT: i32 = 3;
 
 const NP: usize = 2;
 const SETS: usize = 4;
@@ -1107,6 +1111,13 @@ unsafe fn test_seed() -> i32 {
         .clamp(0, 1_000_000)
 }
 
+/// The seed of run number `runs` (1 the first of this save): the old fixed sequence when the host's salt is 0 (tests,
+/// scripted runs, `MELEE_ENVOY_ARM`), else salted by the camp's New run (`gd_envoy_salt`: fixed from the arm on, so
+/// the plan made before the match and the run's start agree; the seed is sim state from then on).
+unsafe fn run_seed(runs: i32) -> u32 {
+    mix((runs as u32).wrapping_add(test_seed() as u32).wrapping_add((gd_envoy_salt() as u32).wrapping_mul(0x85EB_CA6B)).wrapping_mul(0x9E37_79B9))
+}
+
 fn nh() -> i32 {
     unsafe { S.nh.clamp(1, 2) }
 }
@@ -1384,7 +1395,7 @@ unsafe fn make_plan() {
     let fresh = S.state != RUN_LIVE;
     let coop = if fresh { gd_envoy_coop() != 0 } else { S.nh == 2 };
     let (fight, pool, seed) = if fresh {
-        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), START_POOL[coop as usize], mix((S.runs as u32).wrapping_add(1).wrapping_add(test_seed() as u32).wrapping_mul(0x9E37_79B9)))
+        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), START_POOL[coop as usize], run_seed(S.runs.wrapping_add(1)))
     } else {
         (S.fight as usize, S.pool, S.seed as u32)
     };
@@ -1546,7 +1557,7 @@ unsafe fn on_new_match(seq: i32) {
     if started {
         S.runs = S.runs.wrapping_add(1);
         S.state = RUN_LIVE;
-        S.seed = mix((S.runs as u32).wrapping_add(test_seed() as u32).wrapping_mul(0x9E37_79B9)) as i32;
+        S.seed = run_seed(S.runs) as i32;
         S.fight = gd_envoy_start_fight().clamp(0, FIGHTS as i32 - 1);
         S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
         S.pool = START_POOL[(S.nh == 2) as usize];
@@ -3606,6 +3617,7 @@ extern "C" fn on_damage(h: u32, d: f32) {
         }
         // the combo breaker: the hit that would make it CB_HITS (or take the combo to CB_DAMAGE) does not land
         if (0..nh()).contains(&v) && cb_foe_hit(a) && cb_hit(v as usize, dmg) {
+            KB_PRE[v as usize] = -1;
             gd_envoy_absorb(v);
             gd_envoy_percent(v, 0, -dmg);
             return;
@@ -4843,6 +4855,14 @@ unsafe fn outcome_frame() {
     if S.outcome != 0 {
         return;
     }
+    // the fight was left from the pause (the retail No Contest): not a loss. The run stays live at this fight, which
+    // starts over with the pool it began with (the same as closing the game mid-fight and continuing)
+    if S.collect == 0 && gd_envoy_quit() != 0 {
+        S.outcome = OUT_LEFT;
+        log(b"envoy: fight left from the pause, run kept at fight ", S.fight + 1);
+        make_plan();
+        return;
+    }
     let me = (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0);
     let mut foes = 0;
     for s in 0..4 {
@@ -4935,7 +4955,7 @@ unsafe fn test_waves_read() -> i32 {
     s.split(|c| c == ',' || c == '/' || c == '|' || c == ';')
         .find_map(|t| t.trim().strip_prefix('~').and_then(|x| x.parse::<i32>().ok()))
         .unwrap_or(-1)
-        .clamp(-1, 6)
+        .clamp(-1, 1023) // 100 and up: a Subspace enemy (kind + 32 x tier)
 }
 
 /// Per live frame of a wave fight: spawn the three once the fight is on, then read each enemy's damage taken (its
@@ -5048,12 +5068,55 @@ unsafe fn room_frame() {
     stage_request(SH_WAVE);
 }
 
+/// Subspace enemies in the rooms (docs/rust-port/notes/envoy-subspace.md "Where they appear"): beside the room's
+/// foe fighters, not needed for the win (the fighters still decide it). Per fight: the kinds that may come (Subspace
+/// kind: 0 Goomba, 1 Primid, 2 Bullet Bill, 3 Giant Goomba) and how many in loop 1; every loop past the first adds
+/// one (to EN_MAX) and raises their tier (Brawl's difficulty scalar). The boss room has none. Test flag `noenemies`
+/// turns them off.
+const ROOM_ENEMIES: [(&[i32], i32); FIGHTS] = [(&[0], 2), (&[0, 1], 2), (&[1, 2, 0], 3), (&[], 0)];
+/// Loop 2 on: the elite room's last enemy is a Giant Goomba.
+const ROOM_GIANT_FROM_LX: i32 = 1;
+
+/// Room enemies for the current wave: spawned once the wave is on (each wave of the room brings its own set when
+/// the last set is gone). Seeded from the fight key and the wave: the same run gives the same rooms.
+unsafe fn room_enemies_frame() {
+    let (kinds, base) = ROOM_ENEMIES[S.fight.clamp(0, FIGHTS as i32 - 1) as usize];
+    if kinds.is_empty() || base <= 0 || test_flag("noenemies") || S.play < 60 || S.en_spawned == S.wave {
+        return;
+    }
+    if S.en_h.iter().any(|&h| h > 0) {
+        return;
+    }
+    S.en_spawned = S.wave;
+    let n = (base + lx()).clamp(1, EN_MAX as i32) as usize;
+    let tier = lx().clamp(0, 4);
+    let mut r = mix(fkey() ^ (S.wave as u32).wrapping_mul(0x9E37_79B9) ^ 0x5B5A_CE00);
+    for i in 0..n {
+        r = mix(r.wrapping_add(i as u32));
+        let mut kind = kinds[(r % kinds.len() as u32) as usize];
+        if sched().kind == FK_ELITE && lx() >= ROOM_GIANT_FROM_LX && i == n - 1 {
+            kind = 3;
+        }
+        // spread across the stage, alternating sides; a Bullet Bill comes in from the edge it faces away from
+        let side = if i % 2 == 0 { -1.0 } else { 1.0 };
+        let x = side * (25.0 + 22.0 * (i / 2) as f32);
+        let facing = if x < 0.0 { 1 } else { -1 };
+        let (x, y) = if kind == 2 { (side * 150.0, 25.0 + 15.0 * (i % 3) as f32) } else { (x, 40.0) };
+        let h = (S.seq & 0xFFFF) << 8 | (0x40 + i as i32);
+        let got = gd_envoy_enemy_spawn(100 + kind + 32 * tier, x, y, facing, h);
+        S.en_h[i] = if got == h { h } else { 0 };
+        log(b"envoy: room enemy spawned, kind*1000 + handle low (-1: refused) ", if got == h { kind * 1000 + (h & 0xFF) } else { -1 });
+    }
+}
+
 unsafe fn waves_frame() {
     let k = test_waves();
     if k < 0 {
-        return;
-    }
-    if S.en_spawned == 0 {
+        room_enemies_frame();
+        if S.en_spawned == 0 {
+            return;
+        }
+    } else if S.en_spawned == 0 {
         if S.play < 30 {
             return;
         }
@@ -5136,6 +5199,8 @@ unsafe fn begin_stop() {
 
 /// The fight is won (the last foe fell; `S.won_pool` is the pool left): sweep the drops, pay the clear, advance.
 unsafe fn fight_won() {
+    // the room's Subspace enemies go with it (99: clear them all)
+    gd_envoy_enemy_spawn(99, 0.0, 0.0, 1, 1);
     let me = S.won_pool.max(1);
     for p in 0..nh() as usize {
         for k in 0..DROPS {
@@ -5519,6 +5584,24 @@ unsafe fn publish() {
     gd_envoy_publish(v.as_ptr(), VIEW_WORDS as u32);
 }
 
+/// The pause overlay's Abandon run (envoy_ui pause.rs): the UI holds ABANDON_BIT on the player's pad for a few logic
+/// inputs (`gd_ui_sim_signal`), so the choice is synced input and every peer and every resimulated frame sees it
+/// at the same frame. The run ends as a lost run does (RUN OVER, the saved run dropped) and the match ends now.
+const ABANDON_BIT: u32 = 0x2000;
+unsafe fn abandon_check() {
+    for p in 0..nh() {
+        if gd_pad_held(p) & ABANDON_BIT != 0 {
+            S.outcome = 2;
+            S.pool = 0;
+            S.state = RUN_OVER;
+            log(b"envoy: run abandoned from the pause overlay, player ", p + 1);
+            make_plan();
+            gd_envoy_end_match();
+            return;
+        }
+    }
+}
+
 extern "C" fn on_frame_end() {
     unsafe {
         let armed = (gd_envoy_armed() != 0) as i32;
@@ -5537,6 +5620,9 @@ extern "C" fn on_frame_end() {
             on_new_match(seq);
         }
         let present = gd_player_present(0) != 0;
+        if present && S.seq != 0 && S.state == RUN_LIVE {
+            abandon_check();
+        }
         let mut stepped = false;
         if present && S.seq != 0 && S.state == RUN_LIVE {
             S.live = 1;

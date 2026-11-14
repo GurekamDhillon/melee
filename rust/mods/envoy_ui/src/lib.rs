@@ -29,6 +29,7 @@ mod fx;
 mod help;
 mod items_ui;
 mod pause;
+mod lab;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -247,6 +248,9 @@ pub extern "C" fn gd_ui_scene_enter(scene: u32) {
         if !c.after_fight {
             u.p2 = false;
             camp::coop(0);
+            if gd_ui_envoy_state() & (1 << 11) != 0 {
+                lab::setup_open();
+            }
         }
     }
 }
@@ -620,6 +624,8 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 let act = camp::frame(e, CAMP.after_fight, if view { Some(&v) } else { None }, saved(), st & ST_NO_BRAWL != 0);
                 if act == camp::DO_CLOSE {
                     CAMP.closing = true;
+                } else if act == camp::DO_LAB {
+                    camp_close();
                 } else if act & 0xFF == camp::DO_ARM {
                     let op = act >> 8;
                     let launch = if CAMP.after_fight { 0 } else { ARM_LAUNCH };
@@ -687,7 +693,16 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
             // the Envoy pause overlay over Melee's own pause (pause.rs): D-pad only, its own panel per player
             let paused = hud::FH[12] != 0;
-            if pause::input(&v, paused) {
+            if v[envoy_data::lab::VL_ON] != 0 {
+                // an Item Lab session: its panel over the pause (and mid-fight on D-pad up), the trigger log always
+                lab::trigger_log(e, &v, ex);
+                if lab::input(&v, paused) {
+                    lab::draw(e, &v, ex);
+                }
+                if lab::pause_preview() {
+                    pause::draw(e, &v, ex, st & (1 << 9) != 0);
+                }
+            } else if pause::input(&v, paused) {
                 pause::draw(e, &v, ex, st & (1 << 9) != 0);
             }
             e.space(SPACE_WINDOW, sc);

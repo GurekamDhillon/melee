@@ -30,6 +30,7 @@ use envoy_data::view::*;
 use envoy_data::*;
 
 mod items;
+mod lab;
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -756,6 +757,14 @@ fn is_kind(id: i32, kind: u8) -> bool {
 
 /// The run on arm: the host's saved record (Continue) or a fresh one (New run: the host forgot the record).
 unsafe fn take_arm() {
+    // the Item Lab: a fresh session on its setup, the saved run never read
+    if lab::take() {
+        S.state = RUN_NONE;
+        S.outcome = 0;
+        S.rw_active = 0;
+        S.last_pick = [-1; NP];
+        return;
+    }
     let mut r = [0i32; REC_WORDS];
     let n = gd_envoy_record(r.as_mut_ptr(), REC_WORDS as u32);
     let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && (5..=REC_VERSION).contains(&r[1]) && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[R_FIGHT]);
@@ -1395,7 +1404,7 @@ unsafe fn make_plan() {
     let fresh = S.state != RUN_LIVE;
     let coop = if fresh { gd_envoy_coop() != 0 } else { S.nh == 2 };
     let (fight, pool, seed) = if fresh {
-        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), START_POOL[coop as usize], run_seed(S.runs.wrapping_add(1)))
+        ((lab::start_fight(gd_envoy_start_fight()) as usize).min(FIGHTS - 1), START_POOL[coop as usize], run_seed(S.runs.wrapping_add(1)))
     } else {
         (S.fight as usize, S.pool, S.seed as u32)
     };
@@ -1545,6 +1554,7 @@ unsafe fn make_plan() {
         p[8] = CK_GANONDORF;
         p[26] = 1; // the boss fight (the engine swaps in Petey when MELEE_ENVOY_BOSS=petey)
     }
+    lab::plan(p);
     p[27] = coop as i32;
     p[28] = if fresh || !coop { -1 } else { S.pair[1][0] };
     p[29] = if fresh || !coop { -1 } else { S.pair[1][1] };
@@ -1558,7 +1568,7 @@ unsafe fn on_new_match(seq: i32) {
         S.runs = S.runs.wrapping_add(1);
         S.state = RUN_LIVE;
         S.seed = run_seed(S.runs) as i32;
-        S.fight = gd_envoy_start_fight().clamp(0, FIGHTS as i32 - 1);
+        S.fight = lab::start_fight(gd_envoy_start_fight()).clamp(0, FIGHTS as i32 - 1);
         S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
         S.pool = START_POOL[(S.nh == 2) as usize];
         // items: the stock limit starts where the stocks do; no item held
@@ -3623,8 +3633,9 @@ extern "C" fn on_damage(h: u32, d: f32) {
             return;
         }
         // crowd knockback: in a fight with 3+ foes every foe launches farther (never a player; the boss never)
-        if S.crowd > 1000 && is_foe(v) && !is_boss(v) {
-            gd_envoy_kb_scale(v, S.crowd);
+        let crowd = lab::crowd(S.crowd);
+        if crowd > 1000 && is_foe(v) && !is_boss(v) {
+            gd_envoy_kb_scale(v, crowd);
             S.crowd_hits += 1;
             log(b"envoy: crowd knockback, slot*10000 + x1000 ", v * 10000 + S.crowd);
         }
@@ -4714,12 +4725,12 @@ unsafe fn stage_frame() {
     if S.stage_want == 0 {
         return;
     }
-    let cap = if S.test_torture != 0 { i32::MAX } else if shifting() && S.stage_want == SH_WAVE { WAVES_MAX } else { STAGE_MAX };
+    let cap = if S.test_torture != 0 || lab::on() { i32::MAX } else if shifting() && S.stage_want == SH_WAVE { WAVES_MAX } else { STAGE_MAX };
     if S.outcome != 0 || S.collect != 0 || S.stage_off != 0 || S.stage_switches >= cap {
         S.stage_want = 0;
         return;
     }
-    if S.reward_due != 0 || S.rw_active != 0 || S.test_torture == 0 && S.play < STAGE_GRACE || S.stage_want != SH_WAVE && S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
+    if S.reward_due != 0 || S.rw_active != 0 || S.test_torture == 0 && !lab::on() && S.play < STAGE_GRACE || S.stage_want != SH_WAVE && S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
         return;
     }
     let cur = gd_stage_grkind();
@@ -4874,6 +4885,10 @@ unsafe fn outcome_frame() {
         // an enemy-wave fight: the enemies left (all of them before they spawn)
         foes = if S.en_spawned == 0 { EN_TEST as i32 } else { S.en_h.iter().filter(|&&h| h > 0).count() as i32 };
     }
+    // the Item Lab: no win, no loss, no rewards (the session runs until it is left from the pause)
+    if lab::on() {
+        return;
+    }
     let key = me * 100 + foes;
     if key != S.last_stocks {
         S.last_stocks = key;
@@ -4937,6 +4952,9 @@ const EN_SLOT: i32 = 3;
 /// MELEE_ENVOY_TEST_DRIVES item `~K`: an enemy-wave test fight with three of script kind K (0 Goomba, 2 ReDead,
 /// 4 Octorok); -1 none. Fixed per process.
 unsafe fn test_waves() -> i32 {
+    if lab::on() {
+        return lab::waves();
+    }
     static mut CACHE: i32 = -2;
     if CACHE != -2 {
         return CACHE;
@@ -5268,7 +5286,7 @@ unsafe fn digest() -> u32 {
     let b = core::slice::from_raw_parts(core::ptr::addr_of!(S) as *const u8, core::mem::size_of::<St>());
     let h = core::slice::from_raw_parts(core::ptr::addr_of!(HH) as *const u8, core::mem::size_of::<H>());
     let p = core::slice::from_raw_parts(PLAN.as_ptr() as *const u8, PLAN.len() * 4);
-    fnv(fnv(fnv(fnv(0x811C_9DC5, &POOL_DIGEST.to_le_bytes()), b), h), p)
+    fnv(fnv(fnv(fnv(fnv(0x811C_9DC5, &POOL_DIGEST.to_le_bytes()), b), h), p), lab::bytes())
 }
 
 fn fbits(v: f32) -> i32 {
@@ -5580,6 +5598,7 @@ unsafe fn publish() {
     let r = record();
     v[V_REC..V_REC + REC_WORDS].copy_from_slice(&r);
     items::publish(v);
+    lab::publish(v);
     v[V_OPEN] = 0; // items: no drive slots
     gd_envoy_publish(v.as_ptr(), VIEW_WORDS as u32);
 }
@@ -5622,6 +5641,11 @@ extern "C" fn on_frame_end() {
         let present = gd_player_present(0) != 0;
         if present && S.seq != 0 && S.state == RUN_LIVE {
             abandon_check();
+            lab::frame();
+            if lab::on() {
+                S.reward_due = 0;
+                S.shop_due = 0;
+            }
         }
         let mut stepped = false;
         if present && S.seq != 0 && S.state == RUN_LIVE {

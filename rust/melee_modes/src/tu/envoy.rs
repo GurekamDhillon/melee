@@ -1178,6 +1178,26 @@ pub unsafe fn blast_cap(slot: i32, cap_milli: i32, tag: i32) -> i32 {
     0
 }
 
+/// The look of the blast `slot` armed last (this frame): its hit element (the engine's hit spark: 0 normal, 1 fire,
+/// 2 electric, 3 slash; ice / sleep and the rest are refused) and its hit sound (`sfx_kind`, the Melee disc's hit
+/// sound family, and `severity` 0-2). Envoy items give every hit its own spark and sound (the Spark Ring bar).
+pub unsafe fn blast_look(slot: i32, element: i32, sfx_kind: i32, severity: i32) -> i32 {
+    if !(0..=3).contains(&element) || !(0..=12).contains(&sfx_kind) {
+        return -1;
+    }
+    let Some(b) = BLASTS.iter_mut().filter(|b| b.left == BLAST_LIFE && b.slot == slot).max_by_key(|b| b.hit.x4 & 0xFFFF) else { return -1 };
+    let f = active_fighter(slot);
+    if f.is_null() || !(0..4).contains(&b.cap) {
+        return -1;
+    }
+    let h = &mut *core::ptr::addr_of_mut!((*f).x914[b.cap as usize]);
+    h.element = element as _;
+    h.sfx_kind = sfx_kind as _;
+    h.sfx_severity = severity.clamp(0, 2) as _;
+    b.hit = *h;
+    0
+}
+
 /// What blasts landed on `slot` this frame (`Landed`, as words): n, landed x1000, before the cap x1000, owner slot,
 /// capsule index, tag, group, 1 if a blast launches, the winning knockback x1000.
 pub unsafe fn landed(slot: i32) -> [i32; 9] {
@@ -1358,4 +1378,11 @@ pub unsafe fn hud_words() -> [i32; 16] {
     // word 12: the retail pause is up (its overlay owns the top of the screen)
     o[12] = (crate::tu::gmscene::gm_GetDbPauseFlag(1) != 0) as i32;
     o
+}
+
+/// Envoy orbitals: an orb blocked a foe projectile; the item (`gobj`) is removed the retail way.
+pub unsafe fn item_block(gobj: *mut core::ffi::c_void) {
+    if !gobj.is_null() {
+        melee_items::tu::item::Item_8026A8EC(gobj as _);
+    }
 }

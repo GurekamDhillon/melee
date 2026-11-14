@@ -27,7 +27,14 @@ impl Host {
         let os = Os::new(mem_size)?;
         crate::asset::init(disc.path.clone());
         unsafe {
-            HOST = Some(Host { os, disc, aram: Vec::new(), archives: HashMap::new(), retired: Vec::new(), loaded: Vec::new() });
+            // ARAM at its full size (ARGetSize, 32 MB), zeroed and touched at boot: growing it on demand reallocated,
+            // copied and zero-filled up to 28 MB of fresh pages inside the first fight's tick (an AJ animation file
+            // landing high in ARAM, ~3 ms). Bytes past what was written read 0 either way.
+            HOST = Some(Host { os, disc, aram: vec![0u8; 32 << 20], archives: HashMap::new(), retired: Vec::new(), loaded: Vec::new() });
+            // touch every page now (a zeroed allocation can be lazily mapped)
+            for i in (0..HOST.as_ref().unwrap().aram.len()).step_by(4096) {
+                core::ptr::write_volatile(HOST.as_mut().unwrap().aram.as_mut_ptr().add(i), 0);
+            }
             crate::asset::boot_hints();
             Ok(HOST.as_mut().unwrap())
         }

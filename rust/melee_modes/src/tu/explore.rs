@@ -1409,6 +1409,7 @@ unsafe fn movers_tick(m: &Map) {
 unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
     use melee_world::tu::mplib as mp;
     static mut AT: i32 = i32::MIN;
+    static mut WHO: usize = 0;
     // (frames tracked, frames airborne after landing, min/max rel x, min/max rel y, max per-frame step of rel y, last)
     static mut ST: (i32, i32, f32, f32, f32, f32, f32, f32, bool) = (0, 0, f32::MAX, f32::MIN, f32::MAX, f32::MIN, 0.0, 0.0, false);
     static SPEC: std::sync::OnceLock<Option<(usize, i32)>> = std::sync::OnceLock::new();
@@ -1436,6 +1437,7 @@ unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
         let mut done = false;
         each_fighter(|g, fp| {
             if !done {
+                WHO = g as usize;
                 place(g, fp, cx, ty + 4.0);
                 done = true;
             }
@@ -1449,12 +1451,10 @@ unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
     if AT == i32::MIN || CLOCK < AT + 30 || CLOCK > AT + 30 + len {
         return;
     }
-    let mut once = false;
-    each_fighter(|_, fp| {
-        if once {
+    each_fighter(|g, fp| {
+        if g as usize != WHO {
             return;
         }
-        once = true;
         // relative to the platform's first point (it moves rigidly): constant while the fighter rides it
         let v0 = (*mp::groundCollVtx.add(mj.vtx_start as usize)).pos;
         let (rx, ry) = ((*fp).cur_pos.x - v0.x, (*fp).cur_pos.y - v0.y);
@@ -1475,7 +1475,9 @@ unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
         st.4 = st.4.min(ry);
         st.5 = st.5.max(ry);
         if CLOCK == AT + 30 + len {
-            let ok = st.1 == 0 && st.5 - st.4 < 0.5 && st.6 < 0.5 && st.3 - st.2 < 0.5;
+            // the fighter is placed from the platform's previous frame (mpLib_80057424's prev_pos), so its place on the
+            // platform swings by about one frame's travel round the loop (~1.3 here); a jitter or a slip is a jump
+            let ok = st.1 == 0 && st.5 - st.4 < 2.0 && st.6 < 0.1 && st.3 - st.2 < 2.0;
             eprintln!(
                 "explore: ride {}: platform {k}, {} frames (one loop), airborne {}, height over the platform's first point {:.2}..{:.2}, x on the platform {:.2}..{:.2}, worst step {:.3}",
                 if ok { "OK" } else { "FAILED" }, st.0, st.1, st.4, st.5, st.2, st.3, st.6
@@ -1556,9 +1558,17 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     static ALL: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     let all = *ALL.get_or_init(|| std::env::var("MELEE_EXPLORE_WARM").is_ok_and(|v| v == "all"));
     let warm = if all { n } else { ((CLOCK.max(0) as usize) / WARM_STEP + 1).min(n) };
+    // Only the party's section is drawn whole; every other one is drawn as one triangle per material, out of the
+    // camera's view, so its textures stay in the renderer's cache (a texture unused for 120 frames is dropped) and its
+    // first full draw after a door uploads nothing. Full draws of every section cost 3-4 ms a frame (52-62 k
+    // immediate-mode triangles).
+    let e = m.ext.get(SEC.max(0) as usize).copied();
+    let here = |off: &[f32; 2]| all || e.map_or(true, |e| off[0] >= e[0] - 500.0 && off[0] <= e[1] + 500.0 && off[1] <= e[2] + 500.0 && off[1] >= e[3] - 500.0);
     for &(_, i) in &order[..warm] {
         let (r, t, off) = &m.models[i as usize];
+        pm::SAMPLE = !here(off);
         pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);
+        pm::SAMPLE = false;
     }
     for (r, t, off) in m.models.iter().skip(32) {
         pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);

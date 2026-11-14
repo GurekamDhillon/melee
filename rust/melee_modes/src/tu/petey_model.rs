@@ -1422,6 +1422,9 @@ pub fn extent(tris: &[Vert]) -> ([f32; 3], [f32; 3]) {
 /// the material's alpha compare; opaque, back faces kept. `flash`: solid white.
 /// `org`: the model-space ground height and depth centre that land on `at` (x stays: the model's x is its own).
 /// Allocates nothing of its own: the texture objects live in the model, made on the loader's helper thread.
+/// `draw_tris` draws one triangle per material batch only (set around a call; presentation only).
+pub static mut SAMPLE: bool = false;
+
 pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
     use melee_runtime::tu::displayfunc_native::ext as gx;
     use melee_runtime::tu::lbrefract::ext as gi;
@@ -1502,6 +1505,9 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
             gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
         }
         // GX vertex counts are u16: send in chunks of whole triangles
+        // SAMPLE: one triangle per batch (keeps the batch's texture resident in the renderer's cache; the caller
+        // draws it where the camera does not look)
+        let run = if SAMPLE { &run[..3.min(run.len())] } else { run };
         for chunk in run.chunks(3 * 20000) {
             gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
             for (p, col, uv) in chunk {

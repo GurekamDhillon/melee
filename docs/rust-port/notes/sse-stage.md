@@ -185,3 +185,43 @@ sent off the screen in the same way.
   origin). Brick models draw until broken where a brick has a place (none on these maps yet).
 - **The ~93 ms map load frame** (for the zero-lag lane): file read+parse 47 ms (GrNLa.dat etc., also on FD), draw
   15-17 ms and texture upload 12-15 ms (the map's first draw; FD's own load frame is 74.5 ms), fighter create 7 ms.
+
+## Slice 0 wiring, section warm-up, wheel ride, camp rests (Nov 14, sse3)
+
+- **Slice 0.** `explore::ALLOW` (the session's allowance, `u32::MAX` = this machine's own) gates `available()`, so
+  the stage select row, a `--match` pick and Envoy's room all follow it. `content_token()` = `m<mask>.k:<digest32>`
+  per stage; `header_token()` = `p<pick>.m<mask>.d<digest>`.
+  - netplay: the guest sends its token in the HELLO info (`/x...`, fits the 64-byte field), the host ANDs it with
+    its own (`melee_net::app::room::content_and`: a stage bit stays only when both digests match) and dictates
+    `;sse=pick.mask` in the agreed scene; both apply it (`apply_netplay`) before the match. No extra = no SSE content.
+    The host's pick comes from its `--match` (`jungle`, `lake`/`sse`).
+  - replay header: meta `sse` (pick, mask, digest), applied on playback (`apply_header_token`).
+  - hash: `coll_override` sets `melee_core::hash::CONTENT_WORD` (pick, mask, digest) on an SSE map, 0 otherwise;
+    `melee_modhost::session_hash` mixes it in only when non-zero, so vanilla hashes and goldens are unchanged.
+  - Envoy plan words 42/43 (`P_SSE_MASK`, `P_SSE_DIGEST`) stamped at `match_begin`; `run.bin` carries an 8-byte
+    trailer (mask, content digest); a saved run made with other content plays its rooms without SSE content.
+  - Test knob `MELEE_SSE_TEST_MASK=<hex>` ANDs this machine's mask.
+  - Proof (play_pair, 30 ms lag, 3% loss, host `falcon,jungle`): both have it -> Jungle on both, 3037 frames, 0
+    hash differences, replay 0 mismatches; guest without the Jungle (mask 40000001) -> FD on both, 2653 frames, 0
+    differences; guest with no Brawl files -> mask 0, FD, 3035 frames, 0 differences. Synctest `--match` Jungle and
+    Lake with a door at room frame 600: d4 1797 passes / 7188 checks and d7 1794 / 12558, 0 mismatches each.
+- **Story slots.** Jungle opening Card, Jungle end Camp (Rest), Lake opening Card, before Rayquaza Camp (Rest),
+  after Rayquaza Results. `scene::start` applies `Carry::Rest` (`rest_party`: every fighter's percent and HUD to 0);
+  the camp itself is still the placeholder card.
+- **Draw / zero lag.** The section models join the draw one every 2 room frames, nearest the party first (no frame
+  converts and uploads the whole map: Lake 50 / Jungle 67 textures); the party's section is drawn whole, every other
+  one as one triangle per material batch, off camera (`petey_model::SAMPLE`), which keeps its textures in the
+  renderer's cache (120-frame keep) so a door uploads nothing. `MELEE_EXPLORE_WARM=all` = the old draw, for A/B.
+  Merged `port/zerolag2` (bounded stage wait, carrier hover hint, texture conversion on threads, disc warm).
+  Profiles (hidden, real time, real menu walk + every section by `MELEE_EXPLORE_GOTO`, gpu warm list seeded;
+  machine NOT quiet, 6 other melee/cargo processes): door and first-draw frames: Lake 7 doors / Jungle 5 doors, none
+  over 16 ms with the warm-up (seed run before the warm list: 36-69 ms at doors, from pipelines). Whole match:
+  6 frames over 16 ms per map (16.1-18.0 ms, no textures/pipelines/files in them: draw + the busy machine) vs
+  150-235 with `all`. **Not under budget: the match-setup tick** (Lake 41 ms work / Jungle 49 ms: two logic
+  steps with on_enter 9.8, 3 pipelines that never stay in the warm list 9.5, first section's textures 4.8, frame
+  capture 11). The 47 ms parse is gone (GrNLa.dat now an asset apply hit, ~3 ms). Next: a renderer pre-upload entry
+  keyed like `tex_key` fed from the map's batches at the stage pick, and why those 3 pipelines are not kept.
+- **Wheel ride.** `MELEE_EXPLORE_RIDE=block@frame` sets the first fighter just above a moving block and tracks one
+  loop (600 frames). Jungle wheel room (`MELEE_EXPLORE_GOTO=3@200`, ride at 300), blocks 0-3: grounded all 601
+  frames, worst frame-to-frame step 0.007, place on the platform within 1.33 (one frame of platform travel: the
+  fighter follows the platform's previous place). No fall-through, no jitter.

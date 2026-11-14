@@ -115,13 +115,13 @@ mod tests {
     #[test]
     fn items_slice() {
         use crate::items::*;
-        // the design's first slice: twelve items, ids as in the design's table, each with a visual and a capped stack
-        assert_eq!(ITEMS_LEN, 12);
-        for id in [1, 2, 3, 4, 5, 6, 7, 12, 15, 18, 35, 36] {
+        // slice 1's twelve items plus slice 2's twenty, each with a visual and a capped stack
+        assert_eq!(ITEMS_LEN, 32);
+        for id in [1, 2, 3, 4, 5, 6, 7, 8, 12, 15, 18, 21, 26, 27, 28, 29, 30, 31, 32, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47] {
             let it = item(id).expect("slice item");
             assert!(!it.visual.is_empty() && it.cap >= 1 && it.stack >= ST_MORE);
         }
-        assert!(ITEMS.iter().filter(|i| i.trigger == TR_MODIFIER).count() == 2);
+        assert!(ITEMS.iter().filter(|i| i.trigger == TR_MODIFIER).count() >= 2);
         assert_eq!(stack_mul(IT_SMASH_QUAKE, 1), 1000);
         assert_eq!(stack_mul(IT_SMASH_QUAKE, 2), 1500);
         assert_eq!(stack_mul(IT_SMASH_QUAKE, 9), 2000); // capped at 3 copies

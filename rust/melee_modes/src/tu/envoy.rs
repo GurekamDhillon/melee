@@ -18,7 +18,7 @@ use melee_fighter::tu::player as pl;
 use melee_types::*;
 
 pub const PLAN_WORDS: usize = 52;
-pub const VIEW_WORDS: usize = 1536;
+pub const VIEW_WORDS: usize = 1664;
 
 // plan layout (i32 words)
 pub const P_ACTIVE: usize = 0;
@@ -180,6 +180,103 @@ pub fn armed() -> i32 {
     static KNOB: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     if unsafe { ARMED } != 0 || *KNOB.get_or_init(|| std::env::var_os("MELEE_ENVOY_ARM").is_some()) { 1 } else { 0 }
 }
+// ---- the Item Lab (envoy_data::lab): menu-time setup words and host-side time controls, never match state
+pub const LAB_WORDS: usize = 16;
+/// The Lab session's setup (envoy_data::lab L_*): set by envoy_ui before arming (`gd_ui_envoy_lab`), read once by
+/// the sim at arm time (`gd_envoy_lab`). `LAB[0] != 0`: the armed run is a Lab session: nothing is written to the
+/// run record, the best loop or the saved run (envoy_store skips it). `MELEE_ENVOY_LAB=stage,foes,dummy,level`
+/// sets it from the start (headless checks and the synctest; with MELEE_ENVOY_ARM).
+pub static mut LAB: [i32; LAB_WORDS] = [0; LAB_WORDS];
+/// The Lab's time: [mode (envoy_data::lab TIME_*), frame-advance steps queued]. Read by the frame driver: a skipped
+/// logic tick is not run at all (presentation and input keep going), so the sim never sees the time controls.
+pub static mut LAB_TIME: [i32; 2] = [0; 2];
+/// This tick is held by the Lab's time controls (no logic runs; the pad signals wait).
+pub static mut LAB_HELD: bool = false;
+
+pub fn lab_knob() -> Option<[i32; LAB_WORDS]> {
+    static K: std::sync::OnceLock<Option<[i32; LAB_WORDS]>> = std::sync::OnceLock::new();
+    *K.get_or_init(|| {
+        let v = std::env::var("MELEE_ENVOY_LAB").ok()?;
+        let mut w = [0i32; LAB_WORDS];
+        w[0] = 1;
+        w[5] = -1;
+        w[6] = -1;
+        w[7] = -1;
+        w[4] = 9;
+        for (i, x) in v.split(',').enumerate().take(LAB_WORDS - 1) {
+            if let Ok(n) = x.trim().parse::<i32>() {
+                w[i + 1] = n;
+            }
+        }
+        Some(w)
+    })
+}
+
+/// The Lab setup in force (the knob wins over the menu's words).
+pub fn lab() -> [i32; LAB_WORDS] {
+    lab_knob().unwrap_or(unsafe { LAB })
+}
+pub fn lab_on() -> bool {
+    lab()[0] != 0 && armed() != 0
+}
+
+/// Whether the frame driver runs this logic tick (`tick`: the driver's tick counter): the Lab's slow motion runs
+/// one tick in 2 or 4, its pause none but the queued frame-advance steps. Offline Lab sessions only.
+pub unsafe fn lab_tick_runs(tick: u64) -> bool {
+    if !lab_on() {
+        return true;
+    }
+    match LAB_TIME[0] {
+        1 => tick % 2 == 0,
+        2 => tick % 4 == 0,
+        3 => {
+            if LAB_TIME[1] > 0 {
+                LAB_TIME[1] -= 1;
+                true
+            } else {
+                false
+            }
+        }
+        _ => true,
+    }
+}
+
+/// The main menu's Item Lab cell, right of the Envoy row (mnmain): hovered, and chosen (the camp opens on the Lab).
+pub static mut LAB_HOVER: i32 = 0;
+pub static mut LAB_DOOR: i32 = 0;
+
+/// The Lab dummy (L_DUMMY) for a CPU-controlled foe's fighter, after its input proc: Stand holds nothing, Shield
+/// holds R, Jump presses X whenever it stands idle on the ground (state-derived, so rollback replays it exactly).
+pub fn lab_dummy(f: &mut Fighter) {
+    let l = lab();
+    if l[0] == 0 || l[2] != 1 || !(0..3).contains(&l[3]) || armed() == 0 {
+        return;
+    }
+    let humans = if unsafe { ROSTER2[0] } >= 0 { 2 } else { 1 };
+    if (f.player_idx as i32) < humans {
+        return;
+    }
+    f.input.lstick[0].x = 0.0;
+    f.input.lstick[0].y = 0.0;
+    f.input.cstick[0].x = 0.0;
+    f.input.cstick[0].y = 0.0;
+    f.input.triggers[0] = 0.0;
+    f.input.held_buttons[0] = 0;
+    match l[3] {
+        2 => {
+            f.input.triggers[0] = 1.0;
+            f.input.held_buttons[0] = 0x0020;
+        }
+        1 => {
+            // Wait (14) on the ground: jump
+            if f.motion_id as i32 == 14 && f.ground_or_air as i32 == 0 {
+                f.input.held_buttons[0] = 0x0400;
+            }
+        }
+        _ => {}
+    }
+}
+
 /// The salt of the next new run's seed (menu-time: set by the camp's New run, read by the sim mod when the run
 /// starts, `gd_envoy_salt`; the seed it gives lives in the sim state from then on). 0 with `MELEE_ENVOY_ARM` and in
 /// scripted runs (`MELEE_PAD_SCRIPT` without `MELEE_ENVOY_SEED`): those keep the fixed seed sequence.
@@ -574,6 +671,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     melee_fighter::hooks::ENVOY_JUMP = Some(on_jump);
     melee_fighter::hooks::ENVOY_SHIELD_HIT = Some(on_shield_hit);
     melee_fighter::hooks::ENVOY_CC = Some(on_cc);
+    melee_fighter::hooks::ENVOY_DUMMY = if lab_on() { Some(lab_dummy) } else { None };
     let coop = PLAN[P_COOP] == 1;
     let css = |i: usize| -> i32 { let p = &d.players[i]; if p.slot_type != Gm_PKind_NA as u8 { p.ckind as i32 } else { -1 } };
     // solo: P1's pick is the main, P2's the partner; co-op: P1 + P3 are player 1's pair, P2 + P4 player 2's
@@ -667,6 +765,10 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         p.ckind = { let k = PLAN[P_CPU_CK + i]; if mex_loadable(k) { k } else { k.clamp(0, 0x19) } } as i8;
         p.slot_type = 1;
         p.cpu_kind = 4; // the VS AI (0 is the training dummy)
+        // the Item Lab's dummy: the training dummy's AI (0), its input rewritten by lab_dummy
+        if lab_on() && lab()[2] == 1 && (0..3).contains(&lab()[3]) {
+            p.cpu_kind = 0;
+        }
         p.cpu_level = PLAN[P_CPU_LV + i].clamp(1, 9) as u8;
         p.stocks = PLAN[P_CPU_STOCKS + i].clamp(1, 99) as i8;
         p.color = 0;

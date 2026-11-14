@@ -10,6 +10,7 @@ pub mod heat;
 pub mod items;
 pub mod keywords;
 pub mod procs;
+pub mod lab;
 
 /// One drive (one rule, one charge source, one effect, one number) or one keystone (one rule, one price).
 #[derive(Clone, Copy)]

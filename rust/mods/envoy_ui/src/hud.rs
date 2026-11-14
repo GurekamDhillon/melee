@@ -387,7 +387,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     } else {
         let (pool, lim) = stocks_of(v, 0);
         let total = if v[V_ITEMS_ON] == 1 && lim > 0 { lim } else if humans == 2 { 5 } else { 4 };
-        let n = total.max(pool);
+        let n = if pool > 8 { 1 } else { total.max(pool) };
         // stocks 21 game px (were 14)
         let px = 320.0 - (n - 1) as f32 * 12.0;
         stock_row(e, 0, px, 455.0, pool, n, 24.0);
@@ -497,6 +497,16 @@ static mut PAID_AT: [i32; 2] = [0; 2];
 static mut PAID_I: [i32; 2] = [0; 2];
 
 unsafe fn stock_row(e: &mut E, p: usize, px: f32, cy: f32, now: i32, n: i32, step: f32) {
+    // more stocks than a row can show (the Item Lab's 99): one icon and the count, centred on the row
+    if now > 8 {
+        let mid = px + (n - 1).max(0) as f32 * step * 0.5;
+        spr_c(e, S_STOCK, mid - 12.0, cy, 1.17, WHITE);
+        let mut c = Buf::new();
+        c.s("x").i(now);
+        e.text_ex(mid + 2.0, cy - 9.0, d(15), WHITE, ALIGN_LEFT, 0.0, c.str());
+        LIM_SEEN[p] = -1;
+        return;
+    }
     if LIM_SEEN[p] >= 0 && n < LIM_SEEN[p] {
         PAID_AT[p] = T.max(1);
         PAID_I[p] = n;

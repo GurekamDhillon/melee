@@ -256,6 +256,16 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
         e.rect(FB_X, FB_Y, 214.0, 30.0, if hover { 0xFFC8_1CFF } else { 0x1A12_2CFF });
         spr(e, S_LABEL + if miss { 2 } else if hover { 1 } else { 0 }, FB_X + 38.0, FB_Y - 4.0, 222.0, 38.0, WHITE);
     }
+    // the Item Lab cell, right of the Envoy row (mnmain: Right / Left move to it while the row is hovered)
+    if hover {
+        let lab_on = st & (1 << 10) != 0;
+        let (lx, ly) = (FB_X + 222.0, FB_Y + 1.0);
+        face(e, if lab_on { S_FACE_HOVER } else { S_FACE_INK }, lx, ly, 104.0, 28.0, WHITE);
+        e.text_ex(lx + 52.0, ly + 6.0, d(13), if lab_on { INK } else { SUNNY }, ALIGN_CENTER, 98.0, "Item Lab");
+        if !lab_on {
+            e.text_ex(lx + 98.0, ly + 7.0, bs(10), PALE, ALIGN_RIGHT, 0.0, ">");
+        }
+    }
     if !hover {
         MENU_AGE = 0;
         return;

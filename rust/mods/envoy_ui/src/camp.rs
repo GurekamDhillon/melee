@@ -29,6 +29,7 @@ pub const R_NG: u8 = 5;
 pub const R_COLLECTION: u8 = 6;
 pub const R_BACK: u8 = 7;
 pub const R_TAGBTN: u8 = 8;
+pub const R_LAB: u8 = 9;
 // the road between fights
 pub const R_GO: u8 = 10;
 pub const R_ABANDON: u8 = 11;
@@ -115,15 +116,15 @@ pub unsafe fn read_pad(port: usize) -> Pad {
 /// The rows for what is true now.
 pub fn rows(after_fight: bool, ended: bool, has: bool, no_brawl: bool) -> &'static [u8] {
     if no_brawl {
-        &[R_BACK]
+        &[R_LAB, R_BACK]
     } else if after_fight && ended {
         &[R_DONE, R_NEW]
     } else if after_fight {
         &[R_GO, R_ABANDON, R_LEAVE]
     } else if has {
-        &[R_BIG, R_NEW, R_FIGHTERS, R_TAGBTN, R_COLLECTION, R_BACK]
+        &[R_BIG, R_NEW, R_FIGHTERS, R_TAGBTN, R_LAB, R_COLLECTION, R_BACK]
     } else {
-        &[R_BIG, R_FIGHTERS, R_TAGBTN, R_COLLECTION, R_BACK]
+        &[R_BIG, R_FIGHTERS, R_TAGBTN, R_LAB, R_COLLECTION, R_BACK]
     }
 }
 
@@ -137,6 +138,7 @@ fn row_text(r: u8, has: bool, p2: bool) -> (&'static str, &'static str) {
         R_NG => ("NG+ level", "0 only"),
         R_COLLECTION => ("How to play", ""),
         R_TAGBTN => ("Tag button", unsafe { ["Y", "X", "D-pad (classic)"][TAG_BUTTON.clamp(0, 2) as usize] }),
+        R_LAB => ("Item Lab", "sandbox"),
         R_BACK => ("Back", ""),
         R_GO => ("On to the next fight", ""),
         R_ABANDON => ("Abandon run", ""),
@@ -159,6 +161,7 @@ fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
         R_NG => "NG+ opens when a run is cleared. Not in this build yet.",
         R_COLLECTION => "The goal, your pair, Heat, drives and the buttons, on one card.",
         R_TAGBTN => "Y and X tag at once, no cutscene. The D-pad is the classic tag with its cutscene.",
+        R_LAB => "Every item and effect, any stack, fired on demand. Nothing is saved to your run.",
         R_BACK => "Back to the main menu.",
         R_GO => "The fights of this session follow back to back.",
         R_ABANDON => "End this run for good.",
@@ -227,6 +230,8 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
 pub const DO_NOTHING: i32 = 0;
 pub const DO_CLOSE: i32 = 1;
 pub const DO_ARM: i32 = 2; // + op << 8
+/// The Item Lab armed itself (lab.rs): close the camp, the VS launch follows.
+pub const DO_LAB: i32 = 3;
 /// gd_ui_pass: D-pad left / right and the main stick's X (the host's PASS_STICK_X).
 const PASS_LR: u32 = 0x0001 | 0x0002 | 0x1_0000;
 
@@ -253,6 +258,15 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         }
     }
     let has = rec.is_some();
+    // the Item Lab's setup (lab.rs), opened by its row or the main menu's Item Lab cell
+    if !after_fight && crate::lab::setup_is_open() {
+        let pad = read_pad(0);
+        let r = crate::lab::setup_frame(e, &pad, !no_brawl);
+        if r == 2 {
+            u.age = 1;
+        }
+        return if r == 1 { DO_LAB } else { DO_NOTHING };
+    }
     if crate::picker::is_open() {
         if !crate::picker::frame(e) {
             u.age = 1; // back on the camp: the closing press must not choose a row
@@ -344,6 +358,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                     R_BACK => act = DO_CLOSE,
                     R_FIGHTERS if !has => crate::picker::open(u.p2),
                     R_COLLECTION => crate::help::open(),
+                    R_LAB => crate::lab::setup_open(),
                     R_TAGBTN => {
                         TAG_BUTTON = (TAG_BUTTON + 1) % 3;
                         gd_ui_envoy_set_tag_button(TAG_BUTTON);

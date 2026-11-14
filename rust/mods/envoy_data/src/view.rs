@@ -2,7 +2,7 @@
 // shared here so the two mods cannot disagree. Positions are f32 bits; ids are pool index + 1 (0: none).
 // V3 (Heat): docs/rust-port/notes/envoy-v3-view.md is the prose contract for every word below.
 
-pub const VIEW_WORDS: usize = 1536;
+pub const VIEW_WORDS: usize = 1664;
 pub const VIEW_MAGIC: i32 = 0x454E_5633; // "ENV3"
 
 // ---- the run

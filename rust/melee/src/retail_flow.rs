@@ -700,6 +700,10 @@ impl RetailPlay {
             scene: (self.cur.0 as i32, self.cur.1 as i32),
             match_frame: self.age as i32,
         };
+        // the Item Lab's slow motion / pause / frame advance (offline only): a held tick is not run at all, and the
+        // UI's synced signals wait for the next tick that runs (melee_modes envoy::LAB_HELD)
+        let lab_hold = self.net.is_none() && self.sync.is_none() && self.feed.is_none() && gameplay && !unsafe { melee_modes::tu::envoy::lab_tick_runs(self.tick_no as u64) };
+        unsafe { melee_modes::tu::envoy::LAB_HELD = lab_hold };
         let overlay_keys = self.settings_input(pads, &live_pads, &mut four);
         if let Some(u) = self.ui.as_mut() {
             u.set_native_modal(self.settings.as_ref().is_some_and(|o| o.open));
@@ -725,7 +729,7 @@ impl RetailPlay {
             melee_core::frameprof::test_tick(self.tick_no as u64);
         }
         let t_step = std::time::Instant::now();
-        let entered = self.step(four);
+        let entered = if lab_hold { false } else { self.step(four) };
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
         if melee_core::frameprof::on() {
             self.profile_test_stage();
@@ -884,7 +888,11 @@ impl RetailPlay {
             self.arm = now.1 == crate::play_net::SCENE_VS;
             // the Envoy run disarms on the way back to the main menu (envoy-redesign.md 1.3); VS from there is retail
             if now.0 == melee_types::GM_MENU as u8 && prev.0 != melee_types::GM_MENU as u8 {
-                unsafe { melee_modes::tu::envoy::ARMED = 0 };
+                unsafe {
+                    melee_modes::tu::envoy::ARMED = 0;
+                    melee_modes::tu::envoy::LAB[0] = 0;
+                    melee_modes::tu::envoy::LAB_TIME = [0; 2];
+                }
             }
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;

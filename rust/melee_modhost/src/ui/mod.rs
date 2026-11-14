@@ -86,6 +86,12 @@ pub struct SceneDef {
 pub const PASS_STICK_X: u32 = 0x1_0000;
 /// PAD bits no GameCube button uses, reserved for `gd_ui_sim_signal` (0x2000: Envoy's Abandon run).
 pub const SIM_SIGNAL_BITS: u32 = 0x2000;
+/// The Item Lab's command wire (envoy_data::lab SIG_CLK / SIG_DATA): two more PAD bits no GameCube button uses.
+pub const LAB_CLK: u32 = 0x4000;
+fn data_name_ok(n: &str) -> bool {
+    n.len() <= 40 && n.ends_with(".bin") && n[..n.len() - 4].bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_') && n.len() > 4
+}
+pub const LAB_DATA: u32 = 0x8000;
 
 /// Host state the `gd_ui` imports of every presentation store share.
 pub struct Shared {
@@ -120,6 +126,11 @@ pub struct Shared {
     /// logic inputs, so a UI choice that changes the run (Envoy's Abandon) reaches the sim as synced input.
     pub sim_signal: [u16; 4],
     pub sim_left: [u8; 4],
+    /// `gd_ui_sim_cmd`: Item Lab commands (24 bits) queued per port, streamed one bit per logic input on
+    /// LAB_CLK / LAB_DATA (envoy_data::lab: a start bit, then the 24 bits high first, then a gap frame).
+    pub cmd_q: [std::collections::VecDeque<u32>; 4],
+    /// The bit of the head command on the wire next (0: the start bit; 25: the gap).
+    pub cmd_bit: [u8; 4],
     /// Keyboard events of this present (only filled while a KEYBOARD capture exists).
     pub keys: Vec<u32>,
     pub scenes: Vec<SceneDef>,
@@ -231,6 +242,8 @@ impl Shared {
             strip: [0; 4],
             sim_signal: [0; 4],
             sim_left: [0; 4],
+            cmd_q: Default::default(),
+            cmd_bit: [0; 4],
             keys: Vec::with_capacity(64),
             scenes: Vec::new(),
             replace: Vec::new(),
@@ -296,6 +309,24 @@ impl Shared {
     /// `gd_ui_strip` and `gd_ui_sim_signal` on one port's pad, at the input boundary (before the rollback submit).
     pub fn strip_and_signal(&mut self, p: usize, pad: &mut PADStatus) {
         pad.button &= !self.strip[p];
+        // the Item Lab's time controls hold this tick: nothing is run, so nothing is sent
+        if unsafe { melee_modes::tu::envoy::LAB_HELD } {
+            return;
+        }
+        if let Some(&c) = self.cmd_q[p].front() {
+            let k = self.cmd_bit[p];
+            if k == 0 {
+                pad.button |= (LAB_CLK | LAB_DATA) as u16;
+            } else if k <= 24 {
+                pad.button |= LAB_CLK as u16 | if c >> (24 - k) & 1 != 0 { LAB_DATA as u16 } else { 0 };
+            }
+            if k >= 25 {
+                self.cmd_q[p].pop_front();
+                self.cmd_bit[p] = 0;
+            } else {
+                self.cmd_bit[p] = k + 1;
+            }
+        }
         if self.sim_left[p] > 0 {
             self.sim_left[p] -= 1;
             pad.button |= self.sim_signal[p];
@@ -486,6 +517,37 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
     f!("gd_ui_kit_id", |c: Caller<'_, PresData>, s: u32, len: u32| -> u32 {
         let Some(t) = read_str(&c, s, len) else { return 0 };
         melee_gx::ui::KIT_PIECES.iter().position(|p| !p.0.is_empty() && p.0 == t).unwrap_or(0) as u32
+    });
+    // a small data file in the mod's own folder (<mods>/<mod>/data/<name>; name: [a-z0-9_]+ .bin, at most 16 KB):
+    // presentation-side preferences (the Item Lab's loadout presets). Never read by a sim. Offline sessions only.
+    f!("gd_ui_data_write", |c: Caller<'_, PresData>, s: u32, len: u32, ptr: u32, n: u32| -> i32 {
+        let Some(name) = read_str(&c, s, len) else { return GD_EINVAL };
+        if !data_name_ok(&name) || n > 16384 {
+            return GD_EINVAL;
+        }
+        let Some(b) = read_bytes(&c, ptr, n) else { return GD_EINVAL };
+        let module = c.data().module as usize;
+        let sh = c.data().ui().borrow();
+        if sh.session != Session::Offline {
+            return GD_EOFFLINE;
+        }
+        let d = sh.dirs[module].join("data");
+        let _ = std::fs::create_dir_all(&d);
+        let tmp = d.join(format!("{name}.tmp"));
+        if std::fs::write(&tmp, &b).and_then(|_| std::fs::rename(&tmp, d.join(&name))).is_err() {
+            return GD_ESTATE;
+        }
+        n as i32
+    });
+    f!("gd_ui_data_read", |mut c: Caller<'_, PresData>, s: u32, len: u32, ptr: u32, cap: u32| -> i32 {
+        let Some(name) = read_str(&c, s, len) else { return GD_EINVAL };
+        if !data_name_ok(&name) {
+            return GD_EINVAL;
+        }
+        let path = { let module = c.data().module as usize; c.data().ui().borrow().dirs[module].join("data").join(&name) };
+        let Ok(b) = std::fs::read(path) else { return 0 };
+        let n = b.len().min(cap as usize).min(16384);
+        if write_bytes(&mut c, ptr, &b[..n]) { n as i32 } else { GD_EINVAL }
     });
     f!("gd_ui_tex_load", |c: Caller<'_, PresData>, s: u32, len: u32| -> u32 {
         if !feat(&c, FEATURE_UI_DRAW) {
@@ -980,6 +1042,9 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
                 | ((ev::BYPASSED && !ev::SEL_HOLD) as i32) << 7
                 | ((main && melee_modes::tu::mnmain::ENVOY_ROW_OK != 0) as i32) << 8
                 | (melee_modes::tu::petey::selected() as i32) << 9
+                | ((hover && ev::LAB_HOVER != 0) as i32) << 10
+                | ((ev::LAB_DOOR != 0) as i32) << 11
+                | ((ev::lab_on()) as i32) << 12
         }
     });
     // the buttons a masked port still hands the game this present (PAD bits; PASS_STICK_X adds the main stick's X):
@@ -1007,6 +1072,51 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         sh.sim_signal[port as usize] = bits as u16;
         sh.sim_left[port as usize] = frames.clamp(1, 30) as u8;
         GD_OK
+    });
+    // the Item Lab: a command (24 bits, envoy_data::lab) queued for the sim as synced input on a port (offline only)
+    f!("gd_ui_sim_cmd", |c: Caller<'_, PresData>, port: u32, word: u32| -> i32 {
+        if port > 3 || !feat(&c, FEATURE_UI_INPUT) {
+            return GD_EINVAL;
+        }
+        let mut sh = c.data().ui().borrow_mut();
+        if sh.session == Session::Netplay {
+            return GD_EOFFLINE;
+        }
+        if sh.cmd_q[port as usize].len() >= 256 {
+            return GD_ESTATE;
+        }
+        sh.cmd_q[port as usize].push_back(word & 0xFF_FFFF);
+        sh.cmd_q[port as usize].len() as i32
+    });
+    // the Item Lab's setup words (melee_modes envoy::LAB; set before arming with op 5). Offline only.
+    f!("gd_ui_envoy_lab", |c: Caller<'_, PresData>, ptr: u32, n: u32| -> i32 {
+        if c.data().ui().borrow().session != Session::Offline {
+            return GD_EOFFLINE;
+        }
+        let n = (n as usize).min(melee_modes::tu::envoy::LAB_WORDS);
+        let Some(b) = read_bytes(&c, ptr, (n * 4) as u32) else { return GD_EINVAL };
+        unsafe {
+            for i in 0..n {
+                melee_modes::tu::envoy::LAB[i] = i32::from_le_bytes([b[i * 4], b[i * 4 + 1], b[i * 4 + 2], b[i * 4 + 3]]);
+            }
+        }
+        GD_OK
+    });
+    // the Item Lab's time (envoy_data::lab TIME_*) and frame-advance steps to add; returns the steps still queued
+    // the camp took the main menu's Item Lab door (gd_ui_envoy_state bit 11): clear it
+    f!("gd_ui_envoy_lab_door_taken", |_c: Caller<'_, PresData>| -> i32 { unsafe { melee_modes::tu::envoy::LAB_DOOR = 0 }; GD_OK });
+    f!("gd_ui_envoy_lab_time", |_c: Caller<'_, PresData>, mode: i32, steps: i32| -> i32 {
+        unsafe {
+            let t = &mut melee_modes::tu::envoy::LAB_TIME;
+            if (0..4).contains(&mode) {
+                t[0] = mode;
+            }
+            t[1] = (t[1] + steps.clamp(0, 60)).min(600);
+            if t[0] != 3 {
+                t[1] = 0;
+            }
+            t[1]
+        }
     });
     // Envoy V3: player 2 joined (1) or left (0) at the camp; a new run started after this is co-op. Offline only.
     f!("gd_ui_envoy_coop", |c: Caller<'_, PresData>, on: i32| -> i32 {
@@ -1051,8 +1161,12 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         }
         unsafe {
             match op & 0xF {
-                0 => ev::ARMED = 0,
+                0 => {
+                    ev::ARMED = 0;
+                    ev::LAB[0] = 0;
+                }
                 1 => {
+                    ev::LAB[0] = 0;
                     ev::SAVED_LEN = 0;
                     ev::SAVED_DROP = 1;
                     ev::ARMED = 1;
@@ -1070,6 +1184,13 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
                     ev::SAVED_DROP = 1;
                     ev::ARMED = 0;
                 }
+                // the Item Lab: a session armed on the setup words (no saved run is read, forgotten or written)
+                5 => {
+                    ev::ARMED = 1;
+                    ev::LAB[0] = 1;
+                    ev::LAB_TIME = [0; 2];
+                    ev::new_run_salt();
+                }
                 // the run is over: back to the camp (through the main menu), never the character select
                 4 => {
                     ev::ARMED = 0;
@@ -1081,7 +1202,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
                 ev::CAMP_DUE = 0;
                 ev::LAUNCH_VS = 1;
                 // the camp's picker set the party (or a saved run has its own): no character or stage select
-                if ev::skip_select_on() && matches!(op & 0xF, 1 | 2) && (ev::PICK[0] >= 0 || op & 0xF == 2) {
+                if ev::skip_select_on() && matches!(op & 0xF, 1 | 2 | 5) && (ev::PICK[0] >= 0 || op & 0xF == 2) {
                     ev::SKIP_SELECT = 3;
                     ev::SKIP_WAIT = 0;
                 }

@@ -83,7 +83,7 @@ fn sqrtf(x: f32) -> f32 {
 }
 
 pub(crate) unsafe fn copies(p: usize, id: i32) -> i32 {
-    if p < NP && (1..ITEM_IDS as i32).contains(&id) { S.inv[p][id as usize] } else { 0 }
+    if p < NP && (1..ITEM_IDS as i32).contains(&id) { super::lab::gate(id, S.inv[p][id as usize]) } else { 0 }
 }
 
 unsafe fn has(p: usize, id: i32) -> bool {
@@ -450,12 +450,14 @@ pub(crate) unsafe fn on_hit(p: usize, v: i32, tags: i32, ast: i32) {
     let vc = P { x: vp.x, y: vp.y + 8.0 };
     if ast == AS_AIR_N && S.it_nair[p] == 0 {
         S.it_nair[p] = 1;
+        super::lab::trig(p, TR_NAIR_HIT as i32);
         if has(p, IT_SPARK_RING) {
             item_spark_ring(p, v, vc);
         }
     }
     if tags & T_SMASH != 0 && S.it_smash[p] == 0 {
         S.it_smash[p] = 1;
+        super::lab::trig(p, TR_SMASH_HIT as i32);
         if has(p, IT_SMASH_QUAKE) {
             item_smash_quake(p, v, vp);
         }
@@ -530,6 +532,7 @@ pub(crate) unsafe fn on_stock_lost(p: usize) {
 /// A foe was KO'd (lost a stock): Coin Magnet pays every player who holds it.
 pub(crate) unsafe fn on_ko(s: i32) {
     for p in 0..nh() as usize {
+        super::lab::trig(p, TR_KO as i32);
         if has(p, IT_COIN_MAGNET) {
             item_coin_magnet(p, s);
         }
@@ -565,6 +568,7 @@ pub(crate) unsafe fn frame(ev_bits: [u32; NP]) {
 
 /// A wavedash was registered for player `p` (tech_frame's detection).
 pub(crate) unsafe fn on_wavedash(p: usize) {
+    super::lab::trig(p, TR_WAVEDASH as i32);
     if has(p, IT_GLIDE_WAKE) {
         item_glide_wake(p);
     }
@@ -606,6 +610,7 @@ unsafe fn poll(p: usize, bits: u32) {
         if S.it_hop_t[p] > 2 && vy <= 0.0 {
             S.it_hop[p] = 0;
             log(b"envoy: technique short hop apex, player\0", p as i32);
+            super::lab::trig(p, TR_SHORT_HOP as i32);
             if has(p, IT_HOP_SHOT) {
                 item_hop_shot(p, me);
             }
@@ -624,6 +629,7 @@ unsafe fn poll(p: usize, bits: u32) {
     if watched >= AS_ATTACK0 && st != watched {
         if S.it_atk_hit[p] == 0 {
             log(b"envoy: technique whiff, player*1000 + move\0", p as i32 * 1000 + watched);
+            super::lab::trig(p, TR_WHIFF as i32);
             if has(p, IT_WHIFF_ECHO) {
                 item_whiff_echo(p);
             }
@@ -640,12 +646,14 @@ unsafe fn poll(p: usize, bits: u32) {
     let kind = gd_fighter_kind(h);
     if AS_SHINE.contains(&st) && (kind == FT_FOX || kind == FT_FALCO) {
         log(b"envoy: technique shine, player\0", p as i32);
+        super::lab::trig(p, TR_SHINE as i32);
         if has(p, IT_SHINE_BELL) {
             item_shine_bell(p, me);
         }
     }
     if st == AS_CLIFF_CATCH {
         log(b"envoy: technique ledge grab, player\0", p as i32);
+        super::lab::trig(p, TR_LEDGE_GRAB as i32);
         if has(p, IT_LEDGE_SPIKES) {
             item_ledge_spikes(p, me);
         }
@@ -658,6 +666,7 @@ unsafe fn poll(p: usize, bits: u32) {
     }
     if st == AS_ESCAPE_F || st == AS_ESCAPE_B {
         log(b"envoy: technique roll, player\0", p as i32);
+        super::lab::trig(p, TR_ROLL as i32);
         if has(p, IT_ROLL_MINES) {
             item_roll_mines(p, me);
         }
@@ -1263,9 +1272,18 @@ unsafe fn demo_frame() {
 }
 
 unsafe fn demo_fire(id: i32) {
-    let p = 0usize;
-    let h = gd_fighter_from_slot(0);
-    let Some(me) = pos(0) else { return };
+    lab_fire(0, id);
+}
+
+/// Item `id`'s effect for player `p` now, whatever its trigger (the showcase and the Item Lab's Fire button): from
+/// the fighter, at the nearest foe where the effect needs one. Moon Drops just orbit; a modifier fires a Spark Ring
+/// and a Hop Shot to show its look. An item with no arm here logs that the Lab cannot fire it yet.
+pub(crate) unsafe fn lab_fire(p: usize, id: i32) {
+    if p >= NP {
+        return;
+    }
+    let h = gd_fighter_from_slot(p as i32);
+    let Some(me) = pos(p as i32) else { return };
     let face = if h != 0 && gd_fighter_get_facing(h) < 0.0 { -1.0 } else { 1.0 };
     let front = P { x: me.x + face * 14.0, y: me.y + 8.0 };
     let v = foe_near(p, me, 400.0, 0);
@@ -1322,7 +1340,44 @@ unsafe fn demo_fire(id: i32) {
             }
         }
         IT_GUARDIAN_FEATHER => burst(id, p, P { x: me.x, y: me.y + 9.0 }, 18.0, 0),
-        _ => {}
+        // the always-on orbitals: their look at the fighter (the orbs themselves circle whenever they are held)
+        IT_MOON_DROPS | IT_DODGE_ORB | IT_NAIR_RING | IT_DASH_ORB | IT_SHIELD_ORBS => burst(id, p, me, 14.0, 0),
+        IT_SPARE_HEART => burst(id, p, P { x: me.x, y: me.y + 12.0 }, 14.0, 0),
+        // the proc items (synergy lane): one proc straight off the nearest foe, as if a hit of their kind had rolled it
+        IT_EMBER_SEED | IT_STATIC_COIL | IT_FROST_BUD => {
+            if v >= 0 {
+                proc_fire(p, &Proc { item: id, depth: 1, coef: 1000, parent: 255 }, v);
+            } else {
+                burst(id, p, front, 10.0, 0);
+            }
+        }
+        // the co-op items: their hit on the nearest foe (solo too, so the Lab can show them); Rally Banner rallies
+        // the partner in co-op and shows its pennant burst solo
+        IT_KIN_TETHER | IT_KINDRED_SPARK => {
+            if let Some(f) = (v >= 0).then(|| pos(v)).flatten() {
+                let at = P { x: f.x, y: f.y + 8.0 };
+                tap(p, v, at, (mul(p, id) / 1000).max(1), id);
+                burst(id, p, at, 7.0, 0);
+            } else {
+                burst(id, p, front, 7.0, 0);
+            }
+        }
+        IT_RALLY_BANNER => {
+            if nh() >= 2 {
+                item_rally_banner(p);
+            } else {
+                burst(id, p, P { x: me.x, y: me.y + 22.0 }, 12.0, 0);
+            }
+        }
+        // a modifier changes what the others make: a Spark Ring and a Hop Shot show its look
+        IT_HOMING_INK | IT_FIRE_LACE | IT_HALO | IT_ICE_GLASS | IT_CHAIN_SPARK | IT_TWIN_SHOT | IT_GRAVITY_WELL | IT_BIG_BANG | IT_BOUNCY => {
+            lab_fire(p, IT_SPARK_RING);
+            lab_fire(p, IT_HOP_SHOT);
+        }
+        _ => {
+            log_item(b"lab cannot fire yet", id, S.play);
+            return;
+        }
     }
     log_item(b"item demo fires", id, S.play);
 }

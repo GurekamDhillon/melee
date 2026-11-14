@@ -283,7 +283,13 @@ pub fn Player_80031AD0(slot: i32) {
         second_struct.x6.set_has_transformation(has_transformation as u8);
         second_struct.x5 = -1;
 
-        player.player_entity[1] = ext::Fighter_Create(&mut second_struct);
+        if unsafe { TAG_DEFER && TAG_SLOT[slot as usize] != 0 } {
+            // TARGET_PC, Envoy only: the tag partner (asleep until the first tag) is created 30 logic frames later
+            // (`tag_create_deferred`), so the fight's first tick does not also load and build it (zero-hitch.md)
+            unsafe { TAG_DEFERRED[slot as usize] = Some(second_struct) };
+        } else {
+            player.player_entity[1] = ext::Fighter_Create(&mut second_struct);
+        }
 
         if player.player_state != 1 {
             player.player_state = 2;
@@ -295,6 +301,27 @@ pub fn Player_80031AD0(slot: i32) {
             unsafe { f(slot) };
         }
     }
+}
+
+/// TARGET_PC, Envoy: defer the tag partner's `Fighter_Create` out of the match's setup tick (set by
+/// `envoy::match_begin` for an armed run only; vanilla and retail transforms never defer). Plain statics: snapshotted.
+pub static mut TAG_DEFER: bool = false;
+pub static mut TAG_DEFERRED: [Option<plAllocInfo>; 4] = [None; 4];
+
+/// Create the deferred tag partners (asleep, entity 1), as `Player_80031AD0` would have. True if any was created.
+pub fn tag_create_deferred() -> bool {
+    let mut any = false;
+    for slot in 0..4 {
+        if let Some(mut info) = unsafe { TAG_DEFERRED[slot].take() } {
+            let player = sp(slot as i32);
+            if player.player_entity[0].is_null() {
+                continue; // the slot was freed meanwhile
+            }
+            player.player_entity[1] = ext::Fighter_Create(&mut info);
+            any = true;
+        }
+    }
+    any
 }
 
 /// TARGET_PC: the tag partner character kind per port (-1 none), set at engine boot from `MELEE_TAG_PARTNER`.

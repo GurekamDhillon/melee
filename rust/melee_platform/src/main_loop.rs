@@ -150,6 +150,23 @@ fn precise_sleep(d: Duration) {
             CreateWaitableTimerExW(core::ptr::null(), core::ptr::null(), CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS) as isize
         };
     }
+    static NO_THROTTLE: std::sync::Once = std::sync::Once::new();
+    NO_THROTTLE.call_once(|| unsafe {
+        // Windows 11 power-throttles a process with no visible window (MELEE_WINDOW_HIDDEN, a minimized or occluded
+        // game): timer resolution requests are ignored, so a high-resolution wait could wake a whole 15.6 ms timer
+        // tick late (quiet hidden run: 3 frames of 18-31 ms, "pacing sleep overshoot" then ~14 ms unaccounted).
+        // Opt out of timer-resolution and execution-speed (EcoQoS) throttling.
+        use windows_sys::Win32::System::Threading::{
+            GetCurrentProcess, ProcessPowerThrottling, SetProcessInformation, PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+            PROCESS_POWER_THROTTLING_EXECUTION_SPEED, PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION, PROCESS_POWER_THROTTLING_STATE,
+        };
+        let st = PROCESS_POWER_THROTTLING_STATE {
+            Version: PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+            ControlMask: PROCESS_POWER_THROTTLING_EXECUTION_SPEED | PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION,
+            StateMask: 0,
+        };
+        SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &st as *const _ as *const core::ffi::c_void, core::mem::size_of_val(&st) as u32);
+    });
     let h = TIMER.with(|h| *h);
     if h == 0 {
         std::thread::sleep(d);

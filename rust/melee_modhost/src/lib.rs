@@ -31,7 +31,10 @@ pub const MAX_MODS: usize = 16;
 pub const MAX_HOOKS: u32 = 256;
 pub const MAX_PAGES: u64 = 16; // 1 MiB
 /// Fuel per hook invocation (wasmi fuel units, about one per instruction). Running out traps and disables the mod.
-pub const HOOK_FUEL: u64 = 1_000_000;
+/// candidate10: 4M (was 1M). The Envoy sim with slice 2 and the synergy lane already used ~0.7M a hook with 12 items
+/// held and ran out with the Item Lab's full kit (38 items), which a long real run can approach; a trap disables the
+/// run. The budget only decides where a runaway mod stops (deterministic either way); it costs nothing below it.
+pub const HOOK_FUEL: u64 = 4_000_000;
 /// Activations of one address deeper than this run the original only (spec section 5, re-entrancy).
 pub const MAX_DEPTH: u32 = 8;
 /// Hooks per address across all mods (spec limits): pre and post each.

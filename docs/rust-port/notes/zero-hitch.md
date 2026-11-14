@@ -484,3 +484,23 @@ Symptom: on port/zerolag-merge1 (80db1856b), fight 3 of `envoy/switch_torture.sh
 The fix runs no code on these paths (no snapshot, so no pause; the pre-faulter only gains two atomic stores per 2 ms
 loop). The worst-of-3 spread is run-to-run noise (first run of the batch each time, machine shared); the other runs
 match merge1.
+
+## Pipeline warm list and the Envoy wave hitch (2026-11-13, port/diverge1)
+Hidden real-time profiled Envoy runs (gate `envoy` scenario, 12000 ticks, `MELEE_WINDOW_HIDDEN=1`, machine not quiet:
+other agents' processes up, `GATE_ALLOW_BUSY=1`). Game-work offenders only (the hidden window's present interval sits
+at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, not game work).
+| offender | before (9c2b519bb) | warm list primed | warm list + `MELEE_ASSETS=on` |
+| GPU pipelines in fight (wave brings a new fighter, tick 8188) | 43.1 ms (and 23.4) | none | none |
+| first fight setup (tick 722/723) | 43.6 frame / 34.7 tick | 35.0 / 34.0 | 32.0 / 29.1 |
+| later fight setups (tick 5793) | 19.6 / 11.7 | 16.8 / 12.5 | under budget |
+| menu -> scene (tick 716, unaccounted) | 60.2 | - | - |
+- Pipelines: the warm list (3ae1b71f9) was keyed by exe size+mtime, so a new build or a copied exe (the gate copies)
+  started empty. Now keyed by the repr(C) layout of the config types; `MELEE_GPUCACHE=<dir>`;
+  `tools/rust-port/perf/pipe_seed.sh` fills it for a fresh machine: all envoy_sim CPU_POOL fighters, all 29 VS stages
+  (Envoy stage shifts, fights2's gauntlet rooms) and an Envoy effects run. General: anything a run can draw that a seed
+  or earlier run drew compiles at start-up (289 configs in ~0.5 s), so destination stages and queued foes need no
+  per-plan hook. Not covered: a config never drawn on this machine (an unseeded costume / animation-only material).
+- Loads: NOT fixed. The first fight's setup is ItCo (2.9 MB; 10 ms in place, 4 ms as an asset-service apply),
+  fighter create ~9 ms, the envoy_sim match-setup hook ~8 ms (includes host work it calls), all in one tick. The asset
+  service (`MELEE_ASSETS=on`, still off by default) takes it to ~29 ms. Getting under 16.7 needs the setup split over
+  ticks or the envoy hook's work moved earlier; both change the sim's frame layout and need NHV1/golden proof.

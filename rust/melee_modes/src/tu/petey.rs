@@ -522,7 +522,12 @@ pub unsafe fn tick() {
     B.last_frame = frame;
     if ARMED {
         ARMED = false;
-        B.px = 0.0;
+        // in his arena: the arena's enemy spawn point (its GEG1 record); on Final Destination the centre
+        B.px = if crate::tu::explore::ARENA {
+            crate::tu::explore::arena().and_then(|m| m.spawns.first()).map(|s| s.1).unwrap_or(0.0)
+        } else {
+            0.0
+        };
         // Envoy endless loops: the plan's cage HP x1000 (0 / no plan: retail's)
         let hp = crate::tu::envoy::PLAN[crate::tu::envoy::P_BOSS_HP];
         let base = CAGE_HP_LIVE; // the file's tun().cage_hp (999) is the unscaled spawn value
@@ -537,6 +542,7 @@ pub unsafe fn tick() {
         // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
         enter(ST_WAIT_A);
         eprintln!("petey: fight begins, cages {} difficulty {} L {:.1}", B.cage_max, B.diff, level());
+        eprintln!("petey: stage {}", if crate::tu::explore::ARENA { "his arena" } else { "Final Destination" });
         match crate::tu::petey_model::get().and_then(|m| m.arena_blast) {
             Some(z) => eprintln!("petey: arena blast zones {:.0} {:.0} {:.0} {:.0}, knockback x{}", z[0], z[1], z[2], z[3], kb_scale_pm()),
             None => eprintln!("petey: no arena blast zones (stage's own), knockback x{}", kb_scale_pm()),
@@ -705,8 +711,14 @@ unsafe fn follow_camera() {
     let hh = B.cam[2] * melee_runtime::gekko::tanf(0.5 * CAM_FOV * 0.017453292);
     let hw = hh * cm::cm_803BCB64.aspect;
     let clamp = |v: f32, lo: f32, hi: f32| if lo > hi { 0.5 * (lo + hi) } else { fmin(fmax(v, lo), hi) };
-    B.cam[0] = clamp(B.cam[0], CAM_LIMIT[0] + CAM_MARGIN + hw, CAM_LIMIT[1] - CAM_MARGIN - hw);
-    B.cam[1] = clamp(B.cam[1], CAM_LIMIT[2] + CAM_MARGIN + hh, CAM_LIMIT[3] - CAM_MARGIN - hh);
+    // in his arena the camera limit is the arena's own (stage position model, CamLimit0N / CamLimit1N)
+    let lim = if crate::tu::explore::ARENA {
+        crate::tu::explore::arena().and_then(|m| m.cam).map(|c| [c[0], c[1], c[3], c[2]]).unwrap_or(CAM_LIMIT)
+    } else {
+        CAM_LIMIT
+    };
+    B.cam[0] = clamp(B.cam[0], lim[0] + CAM_MARGIN + hw, lim[1] - CAM_MARGIN - hw);
+    B.cam[1] = clamp(B.cam[1], lim[2] + CAM_MARGIN + hh, lim[3] - CAM_MARGIN - hh);
     let t = CAM_TILT_DEG * 0.017453292;
     let (ts, tc) = (melee_runtime::gekko::sinf(t), melee_runtime::gekko::cosf(t));
     let interest = Vec3 { x: B.cam[0], y: B.cam[1], z: 0.0 };
@@ -1499,10 +1511,20 @@ fn seg_dist(p: (f32, f32), q: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
 /// One live hitbox against the body and both cages (bits in `latch`, once per hitbox lifetime). Body damage is
 /// forwarded to both cages (§5); a cage hit damages that cage. Returns (hit anything, cage bits hit).
 unsafe fn hit_test(hs: &[Option<[f32; 5]>; 3], a: (f32, f32), b: (f32, f32), r: f32, dmg: f32, latch: &mut u8) -> (bool, u8) {
+    hit_test_n(hs, a, b, r, dmg, latch, false)
+}
+
+/// `single`: stop at the first part hit, cages before the body (a projectile is spent on one part).
+unsafe fn hit_test_n(hs: &[Option<[f32; 5]>; 3], a: (f32, f32), b: (f32, f32), r: f32, dmg: f32, latch: &mut u8, single: bool) -> (bool, u8) {
     let mut any = false;
     let mut cages = 0u8;
     let d = round_i(dmg);
-    for (k, h) in hs.iter().enumerate() {
+    let order: [usize; 3] = if single { [1, 2, 0] } else { [0, 1, 2] };
+    for k in order {
+        if single && any {
+            break;
+        }
+        let h = &hs[k];
         let bit = 1u8.pshl(k as i64);
         let Some(c) = h else { continue };
         if *latch & bit != 0 {
@@ -1594,24 +1616,30 @@ unsafe fn item_hits(hs: &[Option<[f32; 5]>; 3], carrier: i32) -> (bool, u8) {
             }
         }
         let key = it.entity as usize;
+        // a projectile hits Petey once in its life, on the first of his parts it touches (Brawl: a laser or a thrown
+        // item is spent on the boss). The latch lives as long as the item (a laser's hitbox re-arms every frame, which
+        // re-hit him each frame and hit the body and both cages in turn: ~10 cage HP per 3% laser, owner Nov 13).
         let mut lat = LATCH_IT.iter().find(|(k, _)| *k == key).map(|(_, l)| *l).unwrap_or([0; 4]);
-        let mut live = false;
         for i in 0..4 {
             let h: *mut HitCapsule = core::ptr::addr_of_mut!(it.x5D4_hitboxes[i].hit);
-            if (*h).state == HitCapsule_Disabled {
-                lat[i] = 0;
+            if (*h).state == HitCapsule_Disabled || lat[0] == 0xFF {
                 continue;
             }
-            live = true;
             let (a, b) = (((*h).x58.x, (*h).x58.y), ((*h).x4C.x, (*h).x4C.y));
-            let (hit, cg) = hit_test(hs, a, b, (*h).scale, (*h).damage, &mut lat[i]);
+            let mut one = 0u8;
+            let before = B.cage;
+            let (hit, cg) = hit_test_n(hs, a, b, (*h).scale, (*h).damage, &mut one, true);
             if hit {
                 any = true;
                 cages |= cg;
+                lat = [0xFF; 4];
                 melee_runtime::tu::lbcollision::lbColl_80005BB0(h, 0x7E);
+                if log_on() {
+                    eprintln!("petey: f{} item hit {:.1} on {} cages {} {} -> {} {} ({:.1}% {:.1}%)", B.last_frame, (*h).damage, if cg == 0 { "body" } else { "cage" }, before[0], before[1], B.cage[0], B.cage[1], cage_pct(0), cage_pct(1));
+                }
             }
         }
-        if live && n < next.len() {
+        if n < next.len() {
             next[n] = (key, lat);
             n += 1;
         }

@@ -980,6 +980,14 @@ pub unsafe fn room_tick() {
         }
         return;
     }
+    // checks only (`MELEE_EXPLORE_GOTO=door@frame[,door@frame..]`): the party goes through to `door` at room frame
+    // `frame`, as if it had opened the door leading there (screenshots inside the side rooms without a walk)
+    if let Some(&(_, to)) = goto_list().iter().find(|&&(f, to)| f == CLOCK && (to as usize) < m.doors.len()) {
+        DEST = to;
+        FADE = 1;
+        eprintln!("explore: test goto door {to} at room frame {CLOCK}");
+        return;
+    }
     // a fresh up tilt on the ground inside a door's area opens it (Brawl: 15 x 20 around the door's foot; air doors hang
     // up to ~50 above their floor, so the area reaches 55 below the door)
     let mut want = -1;
@@ -1029,6 +1037,21 @@ pub unsafe fn room_tick() {
             eprintln!("explore: door {want} opened (type {}) at room frame {}", d.kind, CLOCK);
         }
     }
+}
+
+/// `MELEE_EXPLORE_GOTO` as (room frame, door) pairs; empty when unset.
+fn goto_list() -> &'static [(i32, i32)] {
+    static G: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
+    G.get_or_init(|| {
+        std::env::var("MELEE_EXPLORE_GOTO")
+            .unwrap_or_default()
+            .split(',')
+            .filter_map(|p| {
+                let (d, f) = p.split_once('@')?;
+                Some((f.trim().parse().ok()?, d.trim().parse().ok()?))
+            })
+            .collect()
+    })
 }
 
 /// Section `s`'s enemy points, each as its own Brawl kind's nearest Subspace kind (`enemy_kind`); the previous

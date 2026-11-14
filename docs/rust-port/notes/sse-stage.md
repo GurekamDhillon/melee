@@ -128,3 +128,17 @@ sent off the screen in the same way.
 - Not done this round: Jungle as its own GD slot, moving collision (GMOV/GMPS; 060002a sfyuka00-03 ride the
   st02asuisha wheel CHR0, 600 frames), brick models / hiding broken bricks, side-room screenshots, frame-time
   profiles on the maps.
+
+## Round 3, continued (Nov 14)
+
+- The Jungle is GD stage 0x7002 (060002 + 060002a at x+3000), second GD icon; `--match ...,jungle`. Its doors carry
+  neither the room-door nor the way-back flag, so `link_doors` pairs an unlinked side room with the first free main
+  door (door 0 at (625,193) <-> the wheel room's door at (3000,-4)). Door 1 (1770,75) stays shut; no exit door.
+- VS walks (real menus, 2 CPUs): Lake and Jungle on vanilla and ACE pick their slot and play; FD walk unchanged.
+- `MELEE_EXPLORE_GOTO=door@frame,...` (checks only) sends the party through to a door at a room frame: used for the
+  side-room screenshots (Lake rooms 1 and 2, Jungle wheel room).
+- Frame time (hidden window, no screenshots, MELEE_PROFILE): Lake and Jungle each 1 frame over 16.7 ms in 4190, the
+  match-setup load frame (92.7 / 95.5 ms; FD's own is 74.5 ms, the extra is the map's first draw and texture upload).
+  Screenshot frames hitch on FD too (shot capture), so profiles with shots are not evidence.
+- Still open: water-wheel platforms (sfyuka00-03 on st02asuisha), hiding broken bricks' models; the 060003 platform
+  is skipped (GBLK bone index unresolved).

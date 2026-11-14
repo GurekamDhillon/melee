@@ -5177,6 +5177,24 @@ unsafe fn publish() {
     gd_envoy_publish(v.as_ptr(), VIEW_WORDS as u32);
 }
 
+/// The pause overlay's Abandon run (envoy_ui pause.rs): the UI holds ABANDON_BIT on the player's pad for a few logic
+/// inputs (`gd_ui_sim_signal`), so the choice is synced input and every peer and every resimulated frame sees it
+/// at the same frame. The run ends as a lost run does (RUN OVER, the saved run dropped) and the match ends now.
+const ABANDON_BIT: u32 = 0x2000;
+unsafe fn abandon_check() {
+    for p in 0..nh() {
+        if gd_pad_held(p) & ABANDON_BIT != 0 {
+            S.outcome = 2;
+            S.pool = 0;
+            S.state = RUN_OVER;
+            log(b"envoy: run abandoned from the pause overlay, player ", p + 1);
+            make_plan();
+            gd_envoy_end_match();
+            return;
+        }
+    }
+}
+
 extern "C" fn on_frame_end() {
     unsafe {
         let armed = (gd_envoy_armed() != 0) as i32;
@@ -5195,6 +5213,9 @@ extern "C" fn on_frame_end() {
             on_new_match(seq);
         }
         let present = gd_player_present(0) != 0;
+        if present && S.seq != 0 && S.state == RUN_LIVE {
+            abandon_check();
+        }
         let mut stepped = false;
         if present && S.seq != 0 && S.state == RUN_LIVE {
             S.live = 1;

@@ -83,6 +83,8 @@ pub struct SceneDef {
 
 /// `gd_ui_pass`: also hand the game the main stick's X.
 pub const PASS_STICK_X: u32 = 0x1_0000;
+/// PAD bits no GameCube button uses, reserved for `gd_ui_sim_signal` (0x2000: Envoy's Abandon run).
+pub const SIM_SIGNAL_BITS: u32 = 0x2000;
 
 /// Host state the `gd_ui` imports of every presentation store share.
 pub struct Shared {
@@ -109,6 +111,14 @@ pub struct Shared {
     /// this present. Set every frame by the scene that wants it (the Envoy road's fork: the sim's synced road
     /// cursor reads D-pad / stick left and right), cleared on every custom-scene switch.
     pub pass: u32,
+    /// `gd_ui_strip`: PAD bits taken off a port before the game (and the rollback submit) sees it, without masking
+    /// the rest of the pad: the Envoy pause overlay keeps the D-pad to itself while the retail pause keeps its camera,
+    /// Start and the quit combo. Held until the mod changes it.
+    pub strip: [u16; 4],
+    /// `gd_ui_sim_signal`: a reserved PAD bit (SIM_SIGNAL_BITS) ORed into a port's pad for the next `sim_left[p]`
+    /// logic inputs, so a UI choice that changes the run (Envoy's Abandon) reaches the sim as synced input.
+    pub sim_signal: [u16; 4],
+    pub sim_left: [u8; 4],
     /// Keyboard events of this present (only filled while a KEYBOARD capture exists).
     pub keys: Vec<u32>,
     pub scenes: Vec<SceneDef>,
@@ -215,6 +225,9 @@ impl Shared {
             edges: [0; 4],
             inject: [None; 4],
             pass: 0,
+            strip: [0; 4],
+            sim_signal: [0; 4],
+            sim_left: [0; 4],
             keys: Vec::with_capacity(64),
             scenes: Vec::new(),
             replace: Vec::new(),
@@ -274,6 +287,15 @@ impl Shared {
         self.next_token += 1;
         self.caps.push(Capture { token, module, ports, flags, released: false });
         Ok(token)
+    }
+
+    /// `gd_ui_strip` and `gd_ui_sim_signal` on one port's pad, at the input boundary (before the rollback submit).
+    pub fn strip_and_signal(&mut self, p: usize, pad: &mut PADStatus) {
+        pad.button &= !self.strip[p];
+        if self.sim_left[p] > 0 {
+            self.sim_left[p] -= 1;
+            pad.button |= self.sim_signal[p];
+        }
     }
 
     pub fn keyboard_wanted(&self) -> bool {
@@ -889,12 +911,33 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
                 | (!melee_modes::tu::petey_model::brawl_present() as i32) << 5 | ((hover && ev::DOOR_NO_DISC > 0) as i32) << 6
                 | ((ev::BYPASSED && !ev::SEL_HOLD) as i32) << 7
                 | ((main && melee_modes::tu::mnmain::ENVOY_ROW_OK != 0) as i32) << 8
+                | (melee_modes::tu::petey::selected() as i32) << 9
         }
     });
     // the buttons a masked port still hands the game this present (PAD bits; PASS_STICK_X adds the main stick's X):
     // a scene that draws over a held retail scene asks for it each frame (the Envoy road's fork cursor is the sim's)
     f!("gd_ui_pass", |c: Caller<'_, PresData>, buttons: u32| -> i32 {
         c.data().ui().borrow_mut().pass = buttons & (0xFFFF | PASS_STICK_X);
+        GD_OK
+    });
+    // PAD bits taken off one port before the game sees it (the rest of the pad still reaches the game); 0 clears.
+    // Local input only: what the game sees is what the rollback submit sends, so it stays deterministic.
+    f!("gd_ui_strip", |c: Caller<'_, PresData>, port: u32, bits: u32| -> i32 {
+        if port > 3 || !feat(&c, FEATURE_UI_INPUT) {
+            return GD_EINVAL;
+        }
+        c.data().ui().borrow_mut().strip[port as usize] = (bits & 0x1F7F) as u16;
+        GD_OK
+    });
+    // a reserved PAD bit (SIM_SIGNAL_BITS) held on a port's pad for `frames` logic inputs (1-30): a UI choice the
+    // sim must see as synced input (Envoy's Abandon from the pause overlay)
+    f!("gd_ui_sim_signal", |c: Caller<'_, PresData>, port: u32, bits: u32, frames: u32| -> i32 {
+        if port > 3 || bits & !SIM_SIGNAL_BITS != 0 || bits == 0 || !feat(&c, FEATURE_UI_INPUT) {
+            return GD_EINVAL;
+        }
+        let mut sh = c.data().ui().borrow_mut();
+        sh.sim_signal[port as usize] = bits as u16;
+        sh.sim_left[port as usize] = frames.clamp(1, 30) as u8;
         GD_OK
     });
     // Envoy V3: player 2 joined (1) or left (0) at the camp; a new run started after this is co-op. Offline only.
@@ -1492,6 +1535,7 @@ impl PresHost {
                         pads[p].stickX = sx;
                     }
                 }
+                sh.strip_and_signal(p, &mut pads[p]);
             }
         }
         if !self.exts.is_empty() {

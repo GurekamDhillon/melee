@@ -154,6 +154,9 @@ pub fn new_run_salt() -> i32 {
     let salt = match std::env::var("MELEE_ENVOY_SEED").ok().and_then(|v| v.trim().parse::<u32>().ok()) {
         Some(v) => v & 0x3FFF_FFFF,
         None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) => 0,
+        // a netplay session (mod identity frozen): every peer must roll the same run, and the clock differs per peer.
+        // No shared per-session value reaches the camp yet (the envoy= handshake is milestone 6): the fixed sequence.
+        None if melee_data::netid::frozen() => 0,
         None => {
             let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos() as u64);
             let mut x = (t ^ (t >> 29)).wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(n as u64);

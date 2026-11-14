@@ -13,6 +13,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/switch_torture.sh
 #   OUT=dir; FRAMES (default 14400); FIGHTS (start fights, default "1 2 3c 5"; a trailing c = co-op);
 #   OLD=1 runs the pre-fix placement (MELEE_ENVOY_SWITCH_OLD=1), which must FAIL;
+#   TORTURE_KNOBS (default "torture"): "torture,freezeshift" runs the switches as freeze transitions (live is the default since fights2).
 #   RUN_TIMEOUT=secs per fight (default FRAMES/2+600; a depth-7 14400-frame run under load takes 70-85 min): the game's own watchdog, plus an outer kill 30 s later.
 #   DEPTH=4 / 7 runs it as a synctest (0 mismatches required; log lines then repeat once per rollback pass).
 set -u
@@ -32,7 +33,7 @@ for f in $fights; do
   coop=(); case "$f" in *c) coop=(MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3); f=${f%c} ;; esac
   if [ "$depth" = 0 ]; then mode=(golden --out "$out/$tag.csv"); else mode=(synctest --depth "$depth" --timeout 3000); fi
   env "${coop[@]}" MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_TEST_P1CPU=1 \
-    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="torture" MELEE_ENVOY_SWITCH_OLD="$old" \
+    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="${TORTURE_KNOBS:-torture}" MELEE_ENVOY_SWITCH_OLD="$old" \
     MELEE_PAD_SCRIPT="$here/drives_pad.txt" MELEE_WINDOW_TITLE="switch torture $tag d$depth (${BRANCH_TAG:-envoy})" \
     timeout -k 15 $((tmo + 30)) "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" --scenario pad_falcon_fox_fd \
     --depth "$depth" --frames "$frames" --timeout "$tmo" >"$out/$tag.log" 2>&1

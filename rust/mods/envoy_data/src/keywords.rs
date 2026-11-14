@@ -31,7 +31,7 @@ const fn k(word: &'static str, cat: u8, def: &'static str) -> Keyword {
     Keyword { word, cat, def }
 }
 
-pub const KEYWORDS: [Keyword; 49] = [
+pub const KEYWORDS: [Keyword; 56] = [
     k("ON", KC_TIMING, "Each time the action happens."),
     k("WHEN", KC_TIMING, "Each time this happens to you."),
     k("WHILE", KC_TIMING, "For as long as it stays true."),
@@ -81,6 +81,14 @@ pub const KEYWORDS: [Keyword; 49] = [
     k("MARK", KC_STATUS, "Marked foes take more from your items."),
     k("STACK", KC_STACK, "Copies of the same item."),
     k("PER STACK", KC_STACK, "For each copy past the first."),
+    // the synergy lane's item language (envoy-synergy.md; procs::KEYWORDS is the Combos page's longer glossary)
+    k("SHOT", KC_EFFECT, "A small projectile: stars, bolts, feathers, shards."),
+    k("SPARK", KC_EFFECT, "Sparks, arcs and orbs."),
+    k("PROC", KC_OUTCOME, "An item firing off another item's hit; up to 4 deep."),
+    k("MAY", KC_COND, "A chance, scaled by how hard the hit procs."),
+    k("2P", KC_COND, "Co-op only: works through your partner; nothing solo."),
+    k("SYNERGY", KC_STACK, "Two named items held together: a combined effect."),
+    k("EVOLUTION", KC_STACK, "An item at its cap with its partner: an evolved form."),
 ];
 
 /// The opening words of every card with this trigger.
@@ -107,12 +115,14 @@ pub const fn trigger_words(tr: u8) -> &'static str {
         TR_WHILE_NAIR => "{WHILE} {NAIR}",
         TR_WHILE_DASH => "{WHILE} {DASH}",
         TR_WHILE_SHIELD => "{WHILE} {SHIELDING}",
+        TR_ITEM_HIT => "{ON}",
+        TR_COOP => "{2P}",
         _ => "",
     }
 }
 
 /// Every item's card text (by id).
-pub const CARDS: [(i32, &str); 32] = [
+pub const CARDS: [(i32, &str); 38] = [
     (IT_SPARK_RING, "{ON} {NAIR} {HIT}: a spark {BURST} rings out. {PER STACK}: more sparks."),
     (IT_GLIDE_WAKE, "{ON} {WAVEDASH}: leave a burning {TRAIL} that can {BURN}. {PER STACK}: longer."),
     (IT_SHINE_BELL, "{ON} {SHINE}: a shock-ring {BURST} that launches. {PER STACK}: bigger."),
@@ -145,6 +155,12 @@ pub const CARDS: [(i32, &str); 32] = [
     (IT_DASH_ORB, "{WHILE} {DASH}: an {ORB} leads your run. {PER STACK}: more orbs."),
     (IT_SHIELD_ORBS, "{WHILE} {SHIELDING}: {ORB} circle your shield and break on blocks. {PER STACK}: more orbs."),
     (IT_SPARE_HEART, "{ON} {PICKUP}: +1 stock limit and +1 stock (to 8)."),
+    (IT_EMBER_SEED, "{ON} {BURST} {HIT}: {MAY} {PROC} a fire seed that can {BURN}. {PER STACK}: likelier."),
+    (IT_STATIC_COIL, "{ON} {SHOT} {HIT}: {MAY} {PROC} an arc to another foe. {PER STACK}: likelier."),
+    (IT_FROST_BUD, "{ON} {SPARK} {HIT}: {MAY} {PROC} a frost {BURST} that can {CHILL}. {PER STACK}: likelier."),
+    (IT_KIN_TETHER, "{2P}: a {BEAM} tether to your partner nicks foes. {PER STACK}: stronger."),
+    (IT_RALLY_BANNER, "{2P}: {ON} {KO}: rally your partner for 5 s. {PER STACK}: stronger."),
+    (IT_KINDRED_SPARK, "{2P}: your {HIT} near your partner {PROC} their items. {PER STACK}: stronger."),
 ];
 
 /// The card text of item `id` ("" if none).

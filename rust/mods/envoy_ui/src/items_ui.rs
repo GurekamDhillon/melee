@@ -13,6 +13,7 @@ unsafe fn fx(kind: i32, x: f32, y: f32, a: f32, b: f32, c: f32, rgba: u32) {
 }
 use crate::{Buf, VW};
 use envoy_data::items::*;
+use envoy_data::procs;
 use envoy_data::view::*;
 use gd_ui_enc::*;
 
@@ -20,8 +21,18 @@ const INK_COL: u32 = 0xB04A_FFFF;
 const EMBER: u32 = 0xFF7A_20FF;
 
 fn col(id: i32) -> u32 {
+    if (VFX_SYN..VFX_SYN + procs::SYNERGIES.len() as i32).contains(&id) {
+        return procs::SYNERGIES[(id - VFX_SYN) as usize].rgba;
+    }
+    if (VFX_EVO..VFX_EVO + procs::EVOLUTIONS.len() as i32).contains(&id) {
+        return procs::EVOLUTIONS[(id - VFX_EVO) as usize].rgba;
+    }
     item(id).map_or(WHITE, |it| it.rgba)
 }
+
+/// The sim's burst ids for the synergy lane's own visuals (envoy_sim items.rs VFX_SYN / VFX_EVO).
+const VFX_SYN: i32 = 100;
+const VFX_EVO: i32 = 120;
 
 fn pb(p: usize) -> usize {
     V_P0 + p * V_PW
@@ -113,6 +124,16 @@ pub unsafe fn world(v: &[i32; VW]) {
                     vfx::fx(vfx::TRAIL, x - dx * 5.0, y - dy * 5.0, 0.0, 0.0).line(x, y, 2.6).cols(0xFFF4_C0FF, c).a(0.6).age(t).seed(sd).emit();
                 }
                 vfx::fx(vfx::COIN, x, y, 5.6, 5.6).cols(c, 0xFFF4_C0FF).p(1.6, 1.0, 0.0, 0.0).age(t).seed(sd).emit();
+            }
+            PJ_TETHER => {
+                // Kin Tether: a light line between the partners with beads running along it
+                let (bx, by) = (a as f32 / 100.0, bb as f32 / 100.0);
+                let c = col(IT_KIN_TETHER);
+                fx(FX_LINE, x, y, bx, by, 1.1 + 0.4 * sin(t * 0.2), alpha(c, 0.55));
+                for j in 0..3 {
+                    let u = ((t * 0.012 + j as f32 / 3.0) % 1.0).abs();
+                    fx(FX_DISC, x + (bx - x) * u, y + (by - y) * u, 1.6, 0.0, 0.0, alpha(WHITE, 0.8));
+                }
             }
             PJ_MOON => {
                 // Moon Drops: crescent moons of cold light in orbit, each trailing a wake
@@ -219,6 +240,57 @@ pub unsafe fn world(v: &[i32; VW]) {
                 vfx::fx(vfx::STAR, x, y, size * 1.6 * a + 3.0, size * 1.6 * a + 3.0).cols(0xFFF4_C0FF, c).p(1.0, 2.0, 0.6, 0.0).age(af).a(a).emit();
                 vfx::pop(x, y, size * 0.7, af, 8.0, 0xFFF4_C0FF);
             }
+            // ---- the synergy lane
+            IT_EMBER_SEED => {
+                // a seed that splits into five petals of flame
+                fx(FX_DISC, x, y, 2.5 * a, 0.0, 0.0, alpha(0xFFE0_80FF, a));
+                for j in 0..5 {
+                    let ang = j as f32 * TAU / 5.0 + k * 1.5;
+                    let r = size * ease(k * 2.0);
+                    fx(FX_SPIKES, x + cos(ang) * r, y + sin(ang) * r + k * 4.0, 0.5, 2.6 * a + 0.5, ang, alpha(c, a));
+                }
+            }
+            IT_STATIC_COIL => {
+                fx(FX_SPIKES, x, y, 0.8, size * (0.8 + 0.6 * k), T as f32 * 0.7, alpha(c, a));
+                fx(FX_RING, x, y, 2.0 + size * 0.6 * k, 0.7, 0.0, alpha(WHITE, a));
+            }
+            IT_FROST_BUD => {
+                // a frost flower: six ice spikes and a pale ring
+                for j in 0..6 {
+                    let ang = j as f32 * TAU / 6.0;
+                    let r = size * 0.7 * ease(k * 3.0);
+                    fx(FX_LINE, x, y, x + cos(ang) * r, y + sin(ang) * r, 1.0, alpha(c, a));
+                }
+                fx(FX_RING, x, y, size * ease(k * 2.0), 1.2, 0.0, alpha(0xE8F8_FFFF, a));
+            }
+            IT_KIN_TETHER => fx(FX_RING, x, y, 2.0 + size * k, 0.9, 0.0, alpha(c, a)),
+            IT_RALLY_BANNER => {
+                // a pennant raised over the partner
+                let h = 10.0 * ease(k * 3.0);
+                fx(FX_LINE, x, y - 6.0, x, y - 6.0 + h, 0.8, alpha(WHITE, a));
+                fx(FX_BEAM, x + 3.0, y - 6.0 + h - 2.0, 4.0, 6.0, 0.0, alpha(c, a));
+            }
+            IT_KINDRED_SPARK => {
+                fx(FX_SPIKES, x, y, 1.0, size * (0.6 + k), -(T as f32) * 0.3, alpha(c, a));
+                fx(FX_RING, x, y, size * 0.5 * (1.0 + k), 0.8, 0.0, alpha(WHITE, 0.7 * a));
+            }
+            _ if (VFX_SYN..VFX_SYN + 20).contains(&id) => {
+                // a synergy: a double ring in the synergy's colour, a white core flash, rays
+                fx(FX_RING, x, y, size * ease(k * 2.0), 1.8, 0.0, alpha(c, a));
+                fx(FX_RING, x, y, size * 0.6 * ease(k * 1.4), 1.0, 0.0, alpha(WHITE, 0.8 * a));
+                fx(FX_SPIKES, x, y, size * 0.2, size * 0.8 * ease(k * 2.0), k * 2.0, alpha(c, 0.5 * a));
+            }
+            _ if (VFX_EVO..VFX_EVO + 20).contains(&id) => {
+                // an evolution: a crown of eight rays, gold rimmed, and a slow ring
+                for j in 0..8 {
+                    let ang = j as f32 * TAU / 8.0 + k;
+                    let r0 = size * 0.3;
+                    let r1 = size * (0.5 + 0.6 * ease(k * 2.0));
+                    fx(FX_LINE, x + cos(ang) * r0, y + sin(ang) * r0, x + cos(ang) * r1, y + sin(ang) * r1, 1.4, alpha(c, a));
+                }
+                fx(FX_RING, x, y, size * (0.4 + k), 2.0, 0.0, alpha(0xFFD8_60FF, a));
+                fx(FX_DISC, x, y, size * 0.25 * a, 0.0, 0.0, alpha(WHITE, a));
+            }
             _ => {}
         }
         burst2(id, x, y, size, fl, age, k, a);
@@ -228,6 +300,20 @@ pub unsafe fn world(v: &[i32; VW]) {
             vfx::fx(vfx::EMBERS, x, y + size * 0.7, size * 1.6, size * 2.0).cols(0xFFC0_60FF, EMBER).p(5.0, 1.5, 0.0, 0.0).age(af).seed(sd).a(a).emit();
         }
     }
+    // a partner's Rally Banner: a gold pennant over the rallied fighter while it lasts
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    for p in 0..humans {
+        let left = v[V_RALLY + p];
+        if left <= 0 || v[pb(p) + P_HAVE_POS] == 0 {
+            continue;
+        }
+        let (fx_, fy) = (f32::from_bits(v[pb(p) + P_X] as u32), f32::from_bits(v[pb(p) + P_Y] as u32));
+        let a = (left as f32 / 30.0).min(1.0);
+        let wave = sin(t * 0.25) * 1.2;
+        fx(FX_LINE, fx_, fy + 20.0, fx_, fy + 30.0, 0.7, alpha(WHITE, 0.8 * a));
+        fx(FX_BEAM, fx_ + 3.0 + wave * 0.3, fy + 28.0, 5.0, 5.0 + wave, 0.0, alpha(col(IT_RALLY_BANNER), 0.85 * a));
+    }
+    let _ = FX_BOLT;
 }
 
 /// The pedestals (the item room and the boss drop) and their fly-in: a circle of the item colour turning on the
@@ -282,7 +368,7 @@ pub unsafe fn strip(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32, w: f32) 
     let mut row_y = y + 11.0;
     let mut any = false;
     for it in ITEMS.iter() {
-        let n = v[V_INV + p * ITEM_IDS + it.id as usize];
+        let n = v[inv_word(p, it.id as usize)];
         if n <= 0 {
             continue;
         }
@@ -360,8 +446,40 @@ pub unsafe fn flash(e: &mut E, v: &[i32; VW]) {
     }
 }
 
+/// The synergy / evolution banner: the first time a synergy fires (or an evolution forms) this run, its name and
+/// keyword line slide in under the top for 2.5 s (a sticker in its colour; never a full-screen flash).
+unsafe fn combo_banner(e: &mut E, v: &[i32; VW]) {
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    for p in 0..humans {
+        let code = v[V_BANNER + p];
+        let age = v[V_PLAY] - v[V_BANNER_AT + p];
+        if code == 0 || v[V_BANNER_AT + p] <= 0 || !(0..150).contains(&age) {
+            continue;
+        }
+        let (kind, k) = (code >> 8, (code & 0xFF) as usize);
+        let (head, name, line, rgba) = if kind == BANNER_EVO {
+            let Some(ev) = procs::EVOLUTIONS.get(k) else { continue };
+            ("EVOLUTION", ev.name, ev.line, ev.rgba)
+        } else {
+            let Some(sy) = procs::SYNERGIES.get(k) else { continue };
+            ("SYNERGY", sy.name, sy.line, sy.rgba)
+        };
+        let a = if age > 120 { (150 - age) as f32 / 30.0 } else { 1.0 };
+        let slide = (1.0 - ease(age as f32 / 12.0)) * 40.0;
+        let w = tw(name, d(20)).max(tw(line, bs(12))) + 60.0;
+        let (x, y) = (320.0 - w * 0.5 + if p == 0 { -slide } else { slide }, 236.0 + p as f32 * 54.0);
+        sticker(e, S_FACE_WHITE, x, y, w, 48.0, if p == 0 { 1.0 } else { -1.0 }, alpha(WHITE, a), |e| {
+            e.rect(x + 2.0, y + 2.0, 8.0, 44.0, alpha(rgba, a));
+            e.text_ex(x + 18.0, y + 4.0, bs(10), alpha(LILAC, a), ALIGN_LEFT, 0.0, head);
+            e.text_ex(x + 18.0 + tw(head, bs(10)) + 8.0, y + 1.0, d(20), alpha(INK, a), ALIGN_LEFT, 0.0, name);
+            e.text_ex(x + 18.0, y + 27.0, bs(12), alpha(INK, a), ALIGN_LEFT, 0.0, line);
+        });
+    }
+}
+
 /// The room banners: the item room and the boss drop while their pedestals wait, the campfire after the boss.
 pub unsafe fn banners(e: &mut E, v: &[i32; VW]) {
+    combo_banner(e, v);
     let kind = v[V_PED_KIND];
     if (kind == PED_ITEM_ROOM || kind == PED_BOSS) && v[V_RW] == 0 {
         let title = if kind == PED_BOSS { "Boss drop: take one" } else { "Item room" };
@@ -420,6 +538,14 @@ pub unsafe fn sounds(v: &[i32; VW]) {
             IT_ROLL_MINES | IT_SMASH_QUAKE => "fire_yellow",
             IT_COIN_MAGNET => "pickup",
             IT_GLIDE_WAKE => "fire_red",
+            IT_EMBER_SEED => "fire_red",
+            IT_STATIC_COIL => "fire_bolt",
+            IT_FROST_BUD => "fire_purple",
+            IT_KIN_TETHER => "fire_green",
+            IT_RALLY_BANNER => "levelup",
+            IT_KINDRED_SPARK => "fire_spire",
+            id if (VFX_SYN..VFX_SYN + 20).contains(&id) => "keystone",
+            id if (VFX_EVO..VFX_EVO + 20).contains(&id) => "fire_heal",
             _ => "",
         });
     }

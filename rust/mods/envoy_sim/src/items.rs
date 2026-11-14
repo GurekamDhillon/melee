@@ -5,6 +5,7 @@
 //! the Isaac-style stock limit. Hitboxes go through `gd_envoy_blast` (a real launching hit on the engine path) or the
 //! percent hook (a nick); one effect per item per frame, player 1 before player 2.
 use super::*;
+use envoy_data::procs::{self, Proc, ProcIn, PROC_ITEMS, PROC_MAX, EVOLUTIONS, SYNERGIES};
 
 /// The stock limit's hard cap (heart containers; each player's start is rooms::LIM_START).
 pub(crate) const LIM_CAP: i32 = 8;
@@ -13,15 +14,17 @@ pub(crate) const PED_TIME: i32 = 900;
 /// The shop's stock refill price (before the per-loop rise past loop 5).
 pub(crate) const STOCK_REFILL: i32 = 60;
 
-const ORDER: [i32; 32] = [
+const ORDER: [i32; 38] = [
     IT_SPARK_RING, IT_GLIDE_WAKE, IT_SHINE_BELL, IT_HOP_SHOT, IT_LEDGE_SPIKES, IT_WHIFF_ECHO, IT_ROLL_MINES, IT_SMASH_QUAKE,
     IT_MOON_DROPS, IT_COIN_MAGNET, IT_HOMING_INK, IT_FIRE_LACE,
     // slice 2
     IT_LASER_PRISM, IT_CROUCH_THORNS, IT_PERFECT_GUARD, IT_BRIMSTONE_JAB, IT_DEMON_WINGS, IT_CRIMSON_COUNT, IT_BLOODLUST,
     IT_HALO, IT_GUARDIAN_FEATHER, IT_ICE_GLASS, IT_CHAIN_SPARK, IT_TWIN_SHOT, IT_GRAVITY_WELL, IT_BIG_BANG, IT_BOUNCY,
     IT_SPARE_HEART, IT_DODGE_ORB, IT_NAIR_RING, IT_DASH_ORB, IT_SHIELD_ORBS,
+    // the synergy lane
+    IT_EMBER_SEED, IT_STATIC_COIL, IT_FROST_BUD, IT_KIN_TETHER, IT_RALLY_BANNER, IT_KINDRED_SPARK,
 ];
-/// Walk steps coprime with ORDER's 32 (a roll visits every item).
+/// Walk steps coprime with ORDER's 38 (a roll visits every item).
 const STEPS: [usize; 6] = [1, 3, 5, 9, 11, 13];
 /// Slice 2 cooldowns per player (frames): Brimstone Jab, Bloodlust, Crouch Thorns, Perfect Guard, Laser Prism.
 const CD_BRIM: usize = 0;
@@ -113,6 +116,7 @@ pub(crate) unsafe fn give(p: usize, id: i32, how: i32) {
     let n = S.gain[p][5] + 1;
     S.gain[p] = [S.play, id, 0, S.inv[p][id as usize], how, n];
     log_item(b"item taken", id, p as i32 * 100 + S.inv[p][id as usize]);
+    evo_check(p);
     if id == IT_SPARE_HEART {
         // on pickup: +1 stock limit and +1 stock (to the cap)
         rooms::add_slot(p, 1);
@@ -142,6 +146,10 @@ unsafe fn offer_ok(p: usize, id: i32, pools: u8) -> bool {
         return false;
     }
     if (id == IT_SHINE_BELL || id == IT_LASER_PRISM) && ![CK_FOX, CK_FALCO].iter().any(|k| S.pair[p].contains(k)) {
+        return false;
+    }
+    // co-op items only in a 2P run
+    if it.trigger == TR_COOP && nh() < 2 {
         return false;
     }
     // a pool roll never hands out more Spare Hearts than the limit can take
@@ -238,7 +246,7 @@ fn pj_pos(q: &[i32; PJ_W]) -> P {
 }
 
 /// Damage on a foe without a launch (a nick): through the foe's toughness, into the cash-out tally; Fire Lace burns.
-unsafe fn nick(p: usize, s: i32, milli: i32) {
+unsafe fn nick(p: usize, s: i32, milli: i32, src: i32) {
     if !enemy_of(p * 2, s) || milli <= 0 {
         return;
     }
@@ -246,13 +254,13 @@ unsafe fn nick(p: usize, s: i32, milli: i32) {
     gd_envoy_percent(s, 0, m);
     deal(p, s, m, 1000, T_FIRE, -1, CM_NONE, 0, 0);
     lace(p, s);
-    after_hit(p, s);
+    after_hit(p, s, src);
 }
 
 /// What every item hit carries on: Crimson Count's sigils burn, Chain Spark arcs on to the next foe (never from an
 /// arc: no chain of chains).
 static mut IN_CHAIN: bool = false;
-unsafe fn after_hit(p: usize, s: i32) {
+unsafe fn after_hit(p: usize, s: i32, src: i32) {
     if S.sigils[p] > 0 {
         burn(s, BURN_STACKS + S.sigils[p].min(3) - 1, true, p as i32);
     }
@@ -273,6 +281,8 @@ unsafe fn after_hit(p: usize, s: i32) {
             IN_CHAIN = false;
         }
     }
+    procs_off(p, s, src);
+    kindred(p, s, src);
 }
 
 unsafe fn lace(p: usize, s: i32) {
@@ -285,6 +295,10 @@ unsafe fn lace(p: usize, s: i32) {
 /// A launching hit at `at` (radius `r`, `pct` percent, knockback angle / growth / base) on the engine's hit path;
 /// when no capsule is free, a nick on `target` instead. Fire Lace burns whoever stands in it.
 unsafe fn boom(p: usize, at: P, r: f32, pct: i32, angle: i32, kbg: i32, bkb: i32, target: i32) {
+    // the hit's source item (its look and its procs); taken and cleared, so a stale id never carries into a later
+    // boom (BOOM_ID is not sim state: a rollback must not see a value from a frame it rewound)
+    let src = BOOM_ID;
+    BOOM_ID = 0;
     // Gravity Well: the burst pulls in first (a well that bursts at the end of its life, proj_frame)
     if has(p, IT_GRAVITY_WELL) && !IN_WELL {
         let rr = r * mul(p, IT_GRAVITY_WELL) as f32 / 1000.0;
@@ -304,7 +318,7 @@ unsafe fn boom(p: usize, at: P, r: f32, pct: i32, angle: i32, kbg: i32, bkb: i32
     let rc = gd_envoy_blast(p as i32, at.x, at.y, r, pct, angle, kbg, bkb);
     if rc == 0 {
         S.blasts += 1;
-        let (el, k, sev) = hit_look(BOOM_ID);
+        let (el, k, sev) = hit_look(src);
         gd_envoy_blast_look(p as i32, el, k, sev);
         if has(p, IT_FIRE_LACE) {
             for s in 0..4 {
@@ -314,11 +328,11 @@ unsafe fn boom(p: usize, at: P, r: f32, pct: i32, angle: i32, kbg: i32, bkb: i32
             }
         }
     } else if target >= 0 {
-        nick(p, target, pct * 1000);
+        nick(p, target, pct * 1000, src);
         return;
     }
     if target >= 0 && rc == 0 {
-        after_hit(p, target);
+        after_hit(p, target, src);
     }
 }
 static mut IN_WELL: bool = false;
@@ -348,6 +362,12 @@ fn hit_look(id: i32) -> (i32, i32, i32) {
         IT_CHAIN_SPARK => (2, 6, 1),
         IT_ICE_GLASS => (0, 2, 0),
         IT_GRAVITY_WELL => (0, 4, 2),
+        // the synergy lane: each its own spark and sound family
+        IT_EMBER_SEED => (1, 5, 1),
+        IT_STATIC_COIL => (2, 2, 0),
+        IT_FROST_BUD => (0, 2, 2),
+        IT_KIN_TETHER => (2, 5, 0),
+        IT_KINDRED_SPARK => (3, 6, 1),
         _ => (0, 0, 1),
     }
 }
@@ -359,8 +379,18 @@ const TAP_BKB: i32 = 22;
 
 /// An orb's hit (orbs.rs): the light engine hit with the orb item's look.
 pub(crate) unsafe fn orb_hit(p: usize, s: i32, at: P, pct: i32, id: i32) {
-    tap(p, s, at, pct, id);
-    burst(id, p, at, 5.0, 0);
+    if id == IT_MOON_DROPS && evo_on(p, procs::EVO_ECLIPSE) {
+        // Eclipse: black moons with gold rims, twice as hard
+        tap(p, s, at, pct * 2, id);
+        burst(VFX_EVO + procs::EVO_ECLIPSE as i32, p, at, 9.0, 0);
+    } else {
+        tap(p, s, at, pct, id);
+        burst(id, p, at, 5.0, 0);
+    }
+    if id == IT_MOON_DROPS && syn_on(p, procs::SY_BLOOD_MOON) {
+        burn(s, BURN_STACKS, true, p as i32);
+        burst(VFX_SYN + procs::SY_BLOOD_MOON as i32, p, at, 6.0, 0);
+    }
 }
 
 /// An orb shattered: its pop (the UI's burst of shards; the event carries the sound).
@@ -375,14 +405,15 @@ unsafe fn tap(p: usize, s: i32, at: P, pct: i32, id: i32) {
         return;
     }
     let c = pos(s).map_or(at, |q| P { x: q.x, y: q.y + 8.0 });
+    let pct = pct + rallied(p) as i32;
     if gd_envoy_blast(p as i32, c.x, c.y, 5.0, pct.max(1), 361, TAP_KBG, TAP_BKB) == 0 {
         S.blasts += 1;
         let (el, k, sev) = hit_look(id);
         gd_envoy_blast_look(p as i32, el, k, sev);
         lace(p, s);
-        after_hit(p, s);
+        after_hit(p, s, id);
     } else {
-        nick(p, s, pct * 1000);
+        nick(p, s, pct * 1000, id);
     }
 }
 
@@ -458,6 +489,12 @@ pub(crate) unsafe fn on_taken(p: usize, a: i32) {
         return;
     }
     item_bloodlust(p, a);
+    if has(p, IT_CROUCH_THORNS) && syn_on(p, procs::SY_IRON_MAIDEN) {
+        if let Some(me) = pos(p as i32) {
+            item_crouch_thorns(p, me);
+            burst(VFX_SYN + procs::SY_IRON_MAIDEN as i32, p, P { x: me.x, y: me.y + 9.0 }, 14.0, 0);
+        }
+    }
 }
 
 /// Player `p` is about to take `d` percent: the Guardian Feather eats a KO-strength hit, once a stock per copy.
@@ -499,6 +536,9 @@ pub(crate) unsafe fn on_ko(s: i32) {
         if has(p, IT_CRIMSON_COUNT) {
             item_crimson_count(p);
         }
+        if has(p, IT_RALLY_BANNER) {
+            item_rally_banner(p);
+        }
     }
 }
 
@@ -516,6 +556,9 @@ pub(crate) unsafe fn frame(ev_bits: [u32; NP]) {
     for p in 0..nh() as usize {
         if has(p, IT_DEMON_WINGS) {
             item_demon_wings(p);
+        }
+        if has(p, IT_KIN_TETHER) {
+            item_kin_tether(p);
         }
     }
 }
@@ -633,6 +676,20 @@ unsafe fn item_spark_ring(p: usize, v: i32, at: P) {
     }
     burst(IT_SPARK_RING, p, at, 10.0, 0);
     log_item(b"item fires", IT_SPARK_RING, p as i32 * 100 + n);
+    if evo_on(p, procs::EVO_STORM_CROWN) {
+        // Storm Crown: a crown of lightning strikes up to three foes near the nair's victim
+        let mut skip = 0;
+        for _ in 0..3 {
+            let t = foe_near(p, at, 60.0, skip);
+            let Some(to) = t.ge(&0).then(|| pos(t)).flatten() else { break };
+            skip |= 1 << t;
+            let to = P { x: to.x, y: to.y + 8.0 };
+            spawn(PJ_ARC, p, P { x: to.x, y: to.y + 40.0 }, 0.0, 0.0, 14, x100(to.x), x100(to.y));
+            tap(p, t, to, 3, IT_CHAIN_SPARK);
+        }
+        burst(VFX_EVO + procs::EVO_STORM_CROWN as i32, p, at, 16.0, 0);
+        log_syn(b"evolution fires", EVOLUTIONS[procs::EVO_STORM_CROWN].key, p as i32);
+    }
 }
 
 /// 2 Glide Wake: the wavedash leaves a burning streak on the floor for 1.5 s; foes in it flinch and burn.
@@ -652,11 +709,25 @@ unsafe fn item_shine_bell(p: usize, me: P) {
     boom(p, c, r, 3, 361, 70, 50, foe_near(p, c, r, 0));
     burst(IT_SHINE_BELL, p, c, r, 0);
     log_item(b"item fires", IT_SHINE_BELL, p as i32 * 100 + r as i32);
+    // Thunder Bell (with Chain Spark): the ring arcs to every foe within 2.5x its reach
+    if has(p, IT_CHAIN_SPARK) && foe_near(p, c, r * 2.5, 0) >= 0 && syn_on(p, procs::SY_THUNDER_BELL) {
+        let mut skip = 0;
+        loop {
+            let t = foe_near(p, c, r * 2.5, skip);
+            let Some(to) = t.ge(&0).then(|| pos(t)).flatten() else { break };
+            skip |= 1 << t;
+            let to = P { x: to.x, y: to.y + 8.0 };
+            spawn(PJ_ARC, p, c, 0.0, 0.0, 12, x100(to.x), x100(to.y));
+            tap(p, t, to, 2, IT_CHAIN_SPARK);
+        }
+        burst(VFX_SYN + procs::SY_THUNDER_BELL as i32, p, c, r * 2.5, 0);
+    }
 }
 
 /// 4 Hop Shot: at the top of a short hop a star arcs toward the nearest foe (one more per copy, fanned).
 unsafe fn item_hop_shot(p: usize, me: P) {
-    let n = more(p, IT_HOP_SHOT);
+    // Seeker Stars (with Homing Ink): one more star
+    let n = more(p, IT_HOP_SHOT) + (has(p, IT_HOMING_INK) && syn_on(p, procs::SY_SEEKER_STARS)) as i32;
     let c = P { x: me.x, y: me.y + 9.0 };
     let t = foe_near(p, c, 400.0, 0);
     let (dx, dy) = match t.ge(&0).then(|| pos(t)).flatten() {
@@ -715,9 +786,14 @@ unsafe fn item_roll_mines(p: usize, me: P) {
 unsafe fn item_smash_quake(p: usize, v: i32, vp: P) {
     let me = pos(p as i32).unwrap_or(vp);
     let m = mul(p, IT_SMASH_QUAKE);
-    let size = 7.0 * m as f32 / 1000.0;
+    let tect = has(p, IT_BIG_BANG) && syn_on(p, procs::SY_TECTONIC);
+    let size = 7.0 * m as f32 / 1000.0 * if tect { 1.5 } else { 1.0 };
+    let life = (26 + 8 * (m / 500 - 2)) * if tect { 2 } else { 1 };
+    if tect {
+        burst(VFX_SYN + procs::SY_TECTONIC as i32, p, P { x: vp.x, y: me.y }, size * 3.0, 0);
+    }
     for dir in [-1, 1] {
-        if let Some(i) = spawn(PJ_QUAKE, p, P { x: vp.x, y: me.y }, 3.2 * dir as f32, 0.0, 26 + 8 * (m / 500 - 2), dir, x100(size)) {
+        if let Some(i) = spawn(PJ_QUAKE, p, P { x: vp.x, y: me.y }, 3.2 * dir as f32, 0.0, life, dir, x100(size)) {
             S.pj_hit[i] = 1 << v;
         }
     }
@@ -782,7 +858,11 @@ unsafe fn item_coin_magnet(p: usize, s: i32) {
 /// 8 Laser Prism: a laser that hits splits into three thin bolts fanning past the target (three more per copy).
 unsafe fn item_laser_prism(p: usize, v: i32, at: P) {
     let dir = pos(p as i32).map_or(1.0, |m| if at.x >= m.x { 1.0 } else { -1.0 });
-    let n = 3 * more(p, IT_LASER_PRISM);
+    let spectrum = has(p, IT_HALO) && syn_on(p, procs::SY_SPECTRUM);
+    let n = if spectrum { 5 } else { 3 } * more(p, IT_LASER_PRISM);
+    if spectrum {
+        burst(VFX_SYN + procs::SY_SPECTRUM as i32, p, at, 12.0, 0);
+    }
     for k in 0..n {
         let a = (k as f32 - (n - 1) as f32 * 0.5) * 0.28;
         shot(PJ_PRISM, p, at, cosf(a) * 3.4 * dir, sinf(a) * 3.4, 30, 1 << v);
@@ -883,6 +963,253 @@ unsafe fn item_bloodlust(p: usize, a: i32) {
 
 // 35 Homing Ink and 36 Fire Lace are modifiers: Homing Ink steers every projectile (proj_frame), Fire Lace burns on
 // every item hit (nick / boom) and puts embers on every effect (the PF_LACE look flag).
+
+// ---- the synergy lane (envoy-synergy.md): proc chains, synergies, evolutions, co-op items
+
+/// Burst ids for the lane's own visuals (the UI draws them in the synergy's / evolution's colour).
+pub(crate) const VFX_SYN: i32 = 100;
+pub(crate) const VFX_EVO: i32 = 120;
+
+/// Inside a chain's own hits: they never start another chain (resolve already worked the whole chain out). Set and
+/// cleared within one call, so never carried across frames (not sim state, nothing for a rollback to restore).
+static mut IN_PROC: bool = false;
+
+/// A partner's Rally Banner is lifting player p now.
+unsafe fn rallied(p: usize) -> bool {
+    p < NP && S.rally_until[p] > S.play
+}
+
+/// The resolver's input for player p: the run seed, the frame, the nonce, the copies and the bonuses.
+unsafe fn proc_in(p: usize) -> ProcIn {
+    let mut inp = ProcIn { seed: S.seed as u32, frame: S.play, nonce: S.proc_n as u32, player: p as u8, ..Default::default() };
+    for (k, q) in PROC_ITEMS.iter().enumerate() {
+        inp.copies[k] = copies(p, q.id).clamp(0, 3) as u8;
+        if rallied(p) {
+            inp.bonus[k] += 500;
+        }
+    }
+    // Wildfire (Ember Seed + Fire Lace): Ember Seed procs twice as often; Inferno Seed (evolved) +50% more
+    if has(p, IT_FIRE_LACE) && has(p, IT_EMBER_SEED) {
+        inp.bonus[0] += 1000;
+        if evo_on(p, procs::EVO_INFERNO_SEED) {
+            inp.bonus[0] += 500;
+        }
+    }
+    inp
+}
+
+/// The chain off player p's item hit on foe s made by item `src`: resolved whole (integers only, seeded), then each
+/// proc's effect applied in order, each from the foe its parent hit.
+unsafe fn procs_off(p: usize, s: i32, src: i32) {
+    if IN_PROC || p >= nh() as usize || procs::hit_kind(src) == 0 {
+        return;
+    }
+    let inp = proc_in(p);
+    if inp.copies.iter().all(|&c| c == 0) {
+        return;
+    }
+    S.proc_n = S.proc_n.wrapping_add(1);
+    let mut out = [Proc::default(); PROC_MAX];
+    let n = procs::resolve(&inp, src, &mut out);
+    run_chain(p, s, &out[..n]);
+}
+
+unsafe fn run_chain(p: usize, s: i32, chain: &[Proc]) {
+    if chain.is_empty() {
+        return;
+    }
+    IN_PROC = true;
+    let mut tgt = [s; PROC_MAX];
+    for (i, q) in chain.iter().enumerate() {
+        let from = if q.parent == 255 { s } else { tgt[q.parent as usize] };
+        tgt[i] = proc_fire(p, q, from);
+        log_item(b"item procs", q.item, p as i32 * 10_000 + q.depth as i32 * 1000 + q.coef as i32);
+        // frame-tagged (a resimulated frame logs the same line again: the checks compare the unique set)
+        log_item(b"proc at", q.item, S.play * 100 + p as i32 * 10 + q.depth as i32);
+    }
+    let deep = chain.iter().map(|q| q.depth).max().unwrap_or(0);
+    if deep >= 2 {
+        log_item(b"proc chain", chain[0].item, p as i32 * 100 + chain.len() as i32 * 10 + deep as i32);
+    }
+    IN_PROC = false;
+}
+
+/// One proc's effect on foe `from`; returns the foe it hit (its children start there).
+unsafe fn proc_fire(p: usize, q: &Proc, from: i32) -> i32 {
+    let Some(f) = pos(from) else { return from };
+    let c = P { x: f.x, y: f.y + 8.0 };
+    match q.item {
+        IT_EMBER_SEED => {
+            // a fire seed blooms on the foe: a small burning hit (Inferno Seed: a launching bloom)
+            if evo_on(p, procs::EVO_INFERNO_SEED) {
+                BOOM_ID = IT_EMBER_SEED;
+                boom(p, c, 9.0, (3 * mul(p, IT_EMBER_SEED) / 1000).max(1), 70, 45, 30, from);
+                burst(VFX_EVO + procs::EVO_INFERNO_SEED as i32, p, c, 14.0, 0);
+            } else {
+                tap(p, from, c, (2 * mul(p, IT_EMBER_SEED) / 1000).max(1), IT_EMBER_SEED);
+            }
+            burn(from, BURN_STACKS, true, p as i32);
+            if has(p, IT_FIRE_LACE) {
+                syn_on(p, procs::SY_WILDFIRE);
+            }
+            burst(IT_EMBER_SEED, p, c, 9.0, 0);
+            from
+        }
+        IT_STATIC_COIL => {
+            // an arc jumps to the nearest other foe (the same one when it stands alone)
+            let t = foe_near(p, c, 80.0, 1 << from);
+            let t = if t >= 0 { t } else { from };
+            let to = pos(t).map_or(c, |g| P { x: g.x, y: g.y + 8.0 });
+            spawn(PJ_ARC, p, c, 0.0, 0.0, 12, x100(to.x), x100(to.y));
+            tap(p, t, to, (2 * mul(p, IT_STATIC_COIL) / 1000).max(1), IT_STATIC_COIL);
+            if has(p, IT_FROST_BUD) && syn_on(p, procs::SY_SUPERCONDUCTOR) {
+                chill(t, 45);
+                burst(VFX_SYN + procs::SY_SUPERCONDUCTOR as i32, p, to, 7.0, 0);
+            }
+            burst(IT_STATIC_COIL, p, to, 6.0, 0);
+            t
+        }
+        IT_FROST_BUD => {
+            // a bud of frost bursts on the foe and chills
+            chill(from, 60);
+            tap(p, from, c, (2 * mul(p, IT_FROST_BUD) / 1000).max(1), IT_FROST_BUD);
+            burst(IT_FROST_BUD, p, c, 11.0, 0);
+            if has(p, IT_STATIC_COIL) && syn_on(p, procs::SY_SUPERCONDUCTOR) {
+                let t = foe_near(p, c, 80.0, 1 << from);
+                if let Some(g) = t.ge(&0).then(|| pos(t)).flatten() {
+                    let to = P { x: g.x, y: g.y + 8.0 };
+                    spawn(PJ_ARC, p, c, 0.0, 0.0, 12, x100(to.x), x100(to.y));
+                    tap(p, t, to, 1, IT_STATIC_COIL);
+                }
+            }
+            from
+        }
+        _ => from,
+    }
+}
+
+/// Synergy k held by player p (both items): true, logged; the first time this run, its banner.
+unsafe fn syn_on(p: usize, k: usize) -> bool {
+    let Some(sy) = SYNERGIES.get(k) else { return false };
+    if p >= NP || !has(p, sy.a) || !has(p, sy.b) {
+        return false;
+    }
+    if S.syn_seen[p] >> k & 1 == 0 {
+        S.syn_seen[p] |= 1 << k;
+        announce(p, BANNER_SYN, k as i32);
+        log_syn(b"synergy first", sy.key, p as i32 * 100 + k as i32);
+    }
+    log_syn(b"synergy fires", sy.key, p as i32 * 100 + k as i32);
+    true
+}
+
+/// Evolution j formed for player p (its base at the cap, its partner held).
+unsafe fn evo_on(p: usize, j: usize) -> bool {
+    let Some(e) = EVOLUTIONS.get(j) else { return false };
+    p < NP && procs::evolves(e, copies(p, e.base), copies(p, e.partner))
+}
+
+/// After an item is gained: any evolution newly formed is announced (once a run).
+unsafe fn evo_check(p: usize) {
+    for (j, e) in EVOLUTIONS.iter().enumerate() {
+        if evo_on(p, j) && S.evo_seen[p] >> j & 1 == 0 {
+            S.evo_seen[p] |= 1 << j;
+            announce(p, BANNER_EVO, j as i32);
+            log_syn(b"evolution formed", e.key, p as i32 * 100 + j as i32);
+            if let Some(me) = pos(p as i32) {
+                burst(VFX_EVO + j as i32, p, P { x: me.x, y: me.y + 9.0 }, 22.0, 0);
+            }
+        }
+    }
+}
+
+unsafe fn announce(p: usize, kind: i32, k: i32) {
+    S.banner[p] = [S.play.max(1), kind << 8 | k];
+    ev(EV_SYNERGY, p as i32, kind << 8 | k);
+}
+
+fn log_syn(what: &[u8], key: &str, v: i32) {
+    let mut b = [0u8; 80];
+    let mut n = 0;
+    for &x in b"envoy: ".iter().chain(what.iter()).chain(b" ".iter()).chain(key.as_bytes().iter()) {
+        if n < b.len() - 1 {
+            b[n] = x;
+            n += 1;
+        }
+    }
+    unsafe { gd_log(b.as_ptr(), v) }
+}
+
+/// 51 Kin Tether (2P): a light line between the partners; a foe crossing it is nicked (once each 40 frames).
+unsafe fn item_kin_tether(p: usize) {
+    if nh() < 2 || !alive(0) || !alive(1) {
+        return;
+    }
+    let (Some(a), Some(b)) = (pos(p as i32), pos(1 - p as i32)) else { return };
+    let (a, b) = (P { x: a.x, y: a.y + 9.0 }, P { x: b.x, y: b.y + 9.0 });
+    let (dx, dy) = (b.x - a.x, b.y - a.y);
+    let l2 = (dx * dx + dy * dy).max(1.0);
+    if l2 > 160.0 * 160.0 {
+        return; // too far apart: the tether is slack
+    }
+    for s in 0..4 {
+        if !enemy_of(p * 2, s) || S.play < S.tether_cd[p][s as usize] {
+            continue;
+        }
+        let Some(f) = pos(s) else { continue };
+        let fc = P { x: f.x, y: f.y + 8.0 };
+        let t = (((fc.x - a.x) * dx + (fc.y - a.y) * dy) / l2).clamp(0.0, 1.0);
+        let at = P { x: a.x + dx * t, y: a.y + dy * t };
+        if d2(at, fc) < 7.0 * 7.0 {
+            S.tether_cd[p][s as usize] = S.play + 40;
+            tap(p, s, at, (mul(p, IT_KIN_TETHER) / 1000).max(1), IT_KIN_TETHER);
+            burst(IT_KIN_TETHER, p, at, 6.0, 0);
+            log_item(b"item fires", IT_KIN_TETHER, p as i32 * 100 + s);
+        }
+    }
+}
+
+/// 52 Rally Banner (2P): a KO rallies the partner for 5 s: their item hits +1% and their procs +50%.
+unsafe fn item_rally_banner(p: usize) {
+    if nh() < 2 {
+        return;
+    }
+    let q = 1 - p;
+    S.rally_until[q] = S.play + 300 * mul(p, IT_RALLY_BANNER) / 1000;
+    if let Some(m) = pos(q as i32) {
+        burst(IT_RALLY_BANNER, q, P { x: m.x, y: m.y + 22.0 }, 12.0, 0);
+    }
+    log_item(b"item fires", IT_RALLY_BANNER, p as i32 * 100 + q as i32);
+}
+
+/// 53 Kindred Spark (2P): player p's item hit on a foe near the partner jumps a spark from the partner, and the
+/// partner's procs roll off it (at half coefficient). Once each 20 frames.
+unsafe fn kindred(p: usize, s: i32, src: i32) {
+    if IN_PROC || nh() < 2 || p >= NP || !has(p, IT_KINDRED_SPARK) || src == IT_KINDRED_SPARK || S.play < S.kin_cd[p] {
+        return;
+    }
+    let q = 1 - p;
+    let (Some(m), Some(f)) = (pos(q as i32), pos(s)) else { return };
+    let (from, to) = (P { x: m.x, y: m.y + 9.0 }, P { x: f.x, y: f.y + 8.0 });
+    if d2(from, to) > 60.0 * 60.0 || !alive(q as i32) {
+        return;
+    }
+    S.kin_cd[p] = S.play + 20;
+    spawn(PJ_ARC, q, from, 0.0, 0.0, 12, x100(to.x), x100(to.y));
+    burst(IT_KINDRED_SPARK, q, to, 7.0, 0);
+    log_item(b"item fires", IT_KINDRED_SPARK, p as i32 * 100 + s);
+    IN_PROC = true;
+    tap(q, s, to, 1, IT_KINDRED_SPARK);
+    IN_PROC = false;
+    let inp = proc_in(q);
+    if inp.copies.iter().any(|&c| c > 0) {
+        S.proc_n = S.proc_n.wrapping_add(1);
+        let mut out = [Proc::default(); PROC_MAX];
+        let coef = procs::proc_coef(IT_KINDRED_SPARK) * mul(p, IT_KINDRED_SPARK) as u32 / 1000;
+        let n = procs::resolve_from(&inp, procs::hit_kind(src) | procs::HK_SPARK, coef, &mut out);
+        run_chain(q, s, &out[..n]);
+    }
+}
 
 // ---- the showcase (test knob `itemdemo`: screenshots of every effect)
 
@@ -1031,7 +1358,10 @@ unsafe fn proj_frame() {
                         let (dx, dy) = (f.x - at.x, f.y + 8.0 - at.y);
                         let l = sqrtf(dx * dx + dy * dy).max(0.001);
                         let sp = sqrtf(vx * vx + vy * vy).max(1.2);
-                        let k = 0.08 * mul(p, IT_HOMING_INK) as f32 / 1000.0;
+                        let mut k = 0.08 * mul(p, IT_HOMING_INK) as f32 / 1000.0;
+                        if q[0] == PJ_STAR && has(p, IT_HOP_SHOT) {
+                            k *= 1.6; // Seeker Stars: stars home harder
+                        }
                         vx += (dx / l * sp - vx) * k;
                         vy += (dy / l * sp - vy) * k;
                     }
@@ -1315,6 +1645,9 @@ pub(crate) unsafe fn reset_match() {
     S.wings = [0; NP];
     S.guard_used = [0; NP];
     S.it_cd = [[0; 8]; NP];
+    S.rally_until = [0; NP];
+    S.tether_cd = [[0; 4]; NP];
+    S.kin_cd = [0; NP];
     S.ped_cost = [[0; DROPS]; NP];
     S.door = 0;
     S.door_at = 0;
@@ -1548,7 +1881,14 @@ pub(crate) unsafe fn rec_put(r: &mut [i32; REC_WORDS]) {
         r[R_KEYS + k] = 0;
     }
     for p in 0..NP {
-        for id in 1..ITEM_IDS {
+        // ids 48-55: two bits a copy in the spare high halves of R_ACTIVE (player 1) and R_PIPS (player 2)
+        let mut hi = 0;
+        for id in INV_STRIDE..ITEM_IDS {
+            hi |= S.inv[p][id].clamp(0, 3) << (2 * (id - INV_STRIDE));
+        }
+        let w = if p == 0 { R_ACTIVE } else { R_PIPS };
+        r[w] = r[w] & 0xFFFF | hi << 16;
+        for id in 1..INV_STRIDE {
             let c = S.inv[p][id].clamp(0, 255);
             // ids 0-39 in R_DRIVES (10 words a player), 40-47 in R_KEYS[1..5] (2 words a player)
             let w = if id < 40 { R_DRIVES + p * 10 + id / 4 } else { R_KEYS + 1 + p * 2 + (id - 40) / 4 };
@@ -1563,7 +1903,13 @@ pub(crate) unsafe fn rec_put(r: &mut [i32; REC_WORDS]) {
 pub(crate) unsafe fn rec_get(r: &[i32; REC_WORDS]) {
     S.inv = [[0; ITEM_IDS]; NP];
     for p in 0..NP {
-        for id in 1..ITEM_IDS {
+        let hi = (r[if p == 0 { R_ACTIVE } else { R_PIPS }] as u32 >> 16) as i32;
+        for id in INV_STRIDE..ITEM_IDS {
+            if item(id as i32).is_some() {
+                S.inv[p][id] = hi >> (2 * (id - INV_STRIDE)) & 3;
+            }
+        }
+        for id in 1..INV_STRIDE {
             let w = if id < 40 { R_DRIVES + p * 10 + id / 4 } else { R_KEYS + 1 + p * 2 + (id - 40) / 4 };
             let c = (r[w] as u32 >> (8 * (id % 4)) & 0xFF) as i32;
             if item(id as i32).is_some() {
@@ -1621,6 +1967,19 @@ pub(crate) unsafe fn publish(v: &mut [i32; VIEW_WORDS]) {
             n += 1;
         }
     }
+    // Kin Tether: the line between the partners
+    if nh() == 2 && alive(0) && alive(1) {
+        for p in 0..NP {
+            if !has(p, IT_KIN_TETHER) || n >= PROJ {
+                continue;
+            }
+            let (Some(a), Some(b)) = (pos(p as i32), pos(1 - p as i32)) else { continue };
+            let base = V_PROJ + n * PJ_W;
+            v[base..base + PJ_W].copy_from_slice(&[PJ_TETHER, p as i32 | look(p), x100(a.x), x100(a.y + 9.0), S.play, 0, x100(b.x), x100(b.y + 9.0)]);
+            n += 1;
+            break; // one line, whoever holds it
+        }
+    }
     // slice 2's worn looks: Crimson Count's sigils, the Guardian Feather, the Halo, the Demon Wings
     for p in 0..nh() as usize {
         if !alive(p as i32) {
@@ -1658,8 +2017,23 @@ pub(crate) unsafe fn publish(v: &mut [i32; VIEW_WORDS]) {
     }
     for p in 0..NP {
         for id in 0..ITEM_IDS {
-            v[V_INV + p * ITEM_IDS + id] = S.inv[p][id];
+            v[inv_word(p, id)] = S.inv[p][id];
         }
+        v[V_BANNER + p] = S.banner[p][1];
+        v[V_BANNER_AT + p] = S.banner[p][0];
+        let mut bits = 0;
+        for (k, sy) in SYNERGIES.iter().enumerate() {
+            if has(p, sy.a) && has(p, sy.b) {
+                bits |= 1 << k;
+            }
+        }
+        for (j, e) in EVOLUTIONS.iter().enumerate() {
+            if procs::evolves(e, copies(p, e.base), copies(p, e.partner)) {
+                bits |= 1 << (16 + j);
+            }
+        }
+        v[V_SYN + p] = bits;
+        v[V_RALLY + p] = (S.rally_until[p] - S.play).max(0);
         v[V_PED_NEAR + p] = S.ped_near[p];
         v[V_FLOURISH + p] = if S.flourish_at[p] > 0 { (FLOURISH_LEN - (S.play - S.flourish_at[p])).max(0) } else { 0 };
         v[V_AURA + p] = rarest(p);

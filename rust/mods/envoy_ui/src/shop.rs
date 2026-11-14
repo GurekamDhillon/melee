@@ -32,7 +32,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
                 let id = v[pbk + P_SHOP_OFFERS + row as usize];
                 if let Some(it) = envoy_data::items::item(id) {
                     label.s(it.name);
-                    let held = v[V_INV + p * envoy_data::items::ITEM_IDS + id as usize];
+                    let held = v[inv_word(p, id as usize)];
                     if held > 0 {
                         label.s("  (x").i(held + 1).s(")");
                     }

@@ -157,7 +157,9 @@ pub fn post(id: u32, strength: f32, x: f32, y: f32, rgba: u32) -> bool {
     if q.len() >= MAX_POST {
         return false;
     }
-    q.push(Post { id, strength: strength.clamp(0.0, 1.0), x, y, rgba });
+    // a shockwave may go to 3 (bigger and brighter: Envoy's combo breaker); every other post is 0-1
+    let top = if kind == POST_SHOCKWAVE { 3.0 } else { 1.0 };
+    q.push(Post { id, strength: strength.clamp(0.0, top), x, y, rgba });
     true
 }
 
@@ -855,7 +857,8 @@ impl FxGpu {
                 }
                 POST_RADIAL_WAVE | POST_SHOCKWAVE | POST_CHROMA => {
                     let big = s.id == POST_SHOCKWAVE;
-                    let (rad, wid, amp) = if big { (0.9, 0.07, 0.022) } else if s.id == POST_CHROMA { (0.5, 0.25, 0.0) } else { (0.55, 0.045, 0.014) };
+                    let sz = if big { s.strength.max(1.0) } else { 1.0 };
+                    let (rad, wid, amp) = if big { (0.9 * sz, 0.07 * sz, 0.022) } else if s.id == POST_CHROMA { (0.5, 0.25, 0.0) } else { (0.55, 0.045, 0.014) };
                     waves[i] = [s.uv[0], s.uv[1], ease(a) * rad, wid, amp * s.strength * fade * k, 0.012 * s.strength * fade * k, 0.25 * s.strength * fade * k, 0.0];
                     wcol[i] = [c[0], c[1], c[2], 1.0];
                 }

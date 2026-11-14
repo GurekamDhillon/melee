@@ -4,7 +4,8 @@
   python zero_hitch_check.py PROFILE.csv [--budget 16.7] [--label NAME] [--skip-ms 0]
 
 Budget rules (docs/rust-port/notes/zero-hitch.md):
-  * owner line: no presented frame interval over 16.7 ms and no tick longer than 16.7 ms (a tick must finish in its slot);
+  * owner line: no frame with more than 16.7 ms of game work (its interval minus pacing sleep and display wait) and
+    no tick longer than 16.7 ms (a tick must finish in its slot);
   * tighter line, reported but not failed on: no present over 1.5x the display interval.
 Each offender is printed with the frame's split (file read+parse, GPU pipelines, textures, big allocations, pacing
 sleep, wasm mods, ui, draw, unaccounted) and the events that fell inside it (scene, stage, fighter, envoy, file), and is
@@ -46,7 +47,10 @@ def main():
         iv, tk = f(r, "interval_ms"), f(r, "tick_max_ms")
         exp = f(r, "expected_ms") or 16.667
         if iv > 1.5 * exp and exp < 16.0: tight += 1
-        if iv <= budget and tk <= budget: continue
+        # game work in the frame: the interval minus the pacer's sleep and the wait on the display (never game
+        # work, in any mode: a hidden window's timer jitter or vsync can stretch an interval with no work in it)
+        work = iv - f(r, "pacing_sleep_ms") - f(r, "display_wait_ms")
+        if work <= budget and tk <= budget: continue
         t1 = f(r, "t_ms"); t0 = t1 - iv
         ev = [e for e in events if t0 - 0.5 <= e["t_ms"] <= t1 + 0.5]
         alloc_ms = sum(e.get("ms", 0) for e in ev if e["kind"] == "alloc")

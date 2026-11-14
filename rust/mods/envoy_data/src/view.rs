@@ -107,6 +107,8 @@ pub const P_ACT_READY: usize = 106; // 1: D-pad right fires the active now
 pub const P_CHAIN: usize = 107; // the fighter in play's chain: links fired so far in the running chain (0 none)
 pub const P_HEAT_PEAK: usize = 108; // the highest Heat x1000 this fight
 pub const P_CASHOUTS: usize = 109; // cash-outs this fight
+pub const P_BREAK_CD: usize = 110; // the combo breaker's cooldown: frames left (0: ready)
+pub const P_BREAK_MAX: usize = 111; // its full cooldown, frames
 // the shop (V_RW == RW_SHOP): one list per player
 pub const P_SHOP_OFFERS: usize = 112; // 3: pool index of the three drives on sale (-1 sold)
 pub const P_SHOP_PRICE: usize = 115; // 3: their prices (coins)
@@ -231,6 +233,7 @@ pub const EV_ASSIST: i32 = 18; // who = player; amount = the move (AS_*): the pa
 pub const EV_ASSIST_END: i32 = 19; // who = player; amount = frames the strike ran: the partner left
 pub const EV_HEAT_SHORT: i32 = 20; // who = player; amount = Heat x1000: a tap with under the strike's cost (shake the bar)
 pub const EV_WAVE: i32 = 21; // who = the wave now starting (2..); amount = the room's waves: the next wave arrives
+pub const EV_COMBOBREAK: i32 = 22; // who = player; amount = hits << 16 | the combo's percent (whole): the player burst free
 pub const EV_HANDOFF: i32 = 16; // who = player; amount = the fired drive's id + 1 | 0x100 when Relay fired the row
 pub const EV_COINS: i32 = 14; // who = player; amount = coins from a flat award (a fight cleared, interest)
 /// Why the stage switched (EV_SHIFT's who).

@@ -83,6 +83,19 @@ pub fn get() -> &'static Tuning {
     })
 }
 
+/// Read the boss parameters in the background ahead of the first fight (once; the Envoy plan's publication calls it
+/// from mod load on). The first `get()` used to read and decode the Brawl files inside the first Envoy fight's first
+/// tick (~5.7 ms, envoy_sim `fight_setup` -> `gd_envoy_boss_dmg`). The result is a function of the files alone, so
+/// when it is read never reaches the simulation.
+pub fn prefetch() {
+    static STARTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    if T.get().is_none() && !STARTED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+        let _ = std::thread::Builder::new().name("petey prefetch".into()).spawn(|| {
+            let _ = get();
+        });
+    }
+}
+
 /// Boss setup: decode now (on a helper thread).
 pub fn load() {
     let _ = get();

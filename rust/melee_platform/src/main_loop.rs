@@ -119,21 +119,56 @@ pub fn judge_vrr(shown_per_s: f64, refreshes_per_s: f64, hz: f64) -> Option<bool
     None
 }
 
-/// Wait until `t`: a timer sleep for most of it, then yields for the last stretch (a plain sleep can wake late by
-/// most of a millisecond, a whole frame at 1000 fps).
+/// Wait until `t`: a high-resolution waitable timer for most of it, then a spin for the last 0.6 ms (a plain sleep can
+/// wake late by most of a millisecond: the hidden window's presents landed at 16.8-17.5 ms instead of 16.67).
 pub fn sleep_until(t: Instant) {
+    const SPIN: Duration = Duration::from_micros(600);
     loop {
         let now = Instant::now();
         if now >= t {
             return;
         }
         let left = t - now;
-        if left > Duration::from_micros(1300) {
-            std::thread::sleep(left - Duration::from_millis(1));
+        if left > SPIN {
+            precise_sleep(left - SPIN);
         } else {
-            std::thread::yield_now();
+            std::hint::spin_loop();
         }
     }
+}
+
+/// One timer wait of `d`: on Windows a per-thread CREATE_WAITABLE_TIMER_HIGH_RESOLUTION timer (no timeBeginPeriod
+/// needed), elsewhere `thread::sleep`.
+#[cfg(windows)]
+fn precise_sleep(d: Duration) {
+    use windows_sys::Win32::System::Threading::{
+        CreateWaitableTimerExW, SetWaitableTimer, WaitForSingleObject, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, INFINITE,
+    };
+    const TIMER_ALL_ACCESS: u32 = 0x1F0003;
+    thread_local! {
+        static TIMER: isize = unsafe {
+            CreateWaitableTimerExW(core::ptr::null(), core::ptr::null(), CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS) as isize
+        };
+    }
+    let h = TIMER.with(|h| *h);
+    if h == 0 {
+        std::thread::sleep(d);
+        return;
+    }
+    // relative due time in 100 ns units (negative = relative)
+    let due: i64 = -((d.as_nanos() / 100) as i64).max(1);
+    unsafe {
+        if SetWaitableTimer(h as _, &due, 0, None, core::ptr::null(), 0) == 0 {
+            std::thread::sleep(d);
+            return;
+        }
+        WaitForSingleObject(h as _, INFINITE);
+    }
+}
+
+#[cfg(not(windows))]
+fn precise_sleep(d: Duration) {
+    std::thread::sleep(d);
 }
 
 /// Fixed 60 Hz step clock in exact integer arithmetic (no drift: time is kept in ns * 60).

@@ -854,7 +854,8 @@ impl PipeFactory {
         if let Some(p) = self.pipelines.lock().unwrap().get(&key) {
             return Ok(p.clone());
         }
-        let prof = melee_core::frameprof::on().then(std::time::Instant::now);
+        // the warm thread's start-up compiles are no frame's work: kept out of the frame profile
+        let prof = (melee_core::frameprof::on() && !warmlist::WARMING.with(|w| w.get())).then(std::time::Instant::now);
         let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
         let wgsl = adapt_wgsl(&src);
         let (pipeline, errs) = guarded(|| {
@@ -923,12 +924,103 @@ impl PipeFactory {
         if let Some(e) = errs.first() {
             return Err(format!("{e}\n--- WGSL ---\n{wgsl}"));
         }
-        self.pipelines.lock().unwrap().insert(key, pipeline.clone());
+        let fresh = self.pipelines.lock().unwrap().insert(key, pipeline.clone()).is_none();
+        if fresh {
+            warmlist::record(pc);
+        }
         if let Some(t) = prof {
             melee_core::frameprof::add(melee_core::frameprof::C::Pipes, 1);
             melee_core::frameprof::add(melee_core::frameprof::C::PipeNs, t.elapsed().as_nanos() as u64);
         }
         Ok(pipeline)
+    }
+}
+
+/// The pipeline warm list: every pipeline config this exe has ever needed, kept on disk next to the exe
+/// (`gpucache/pipelines-<layout id>-<size>.bin`, or `MELEE_GPUCACHE=<dir>`) and compiled on a background thread at start-up, so a match does
+/// not compile a pipeline on its frame path the second time it needs one. MELEE_PIPE_WARM=0 turns it off.
+/// The records are the raw bytes of [`crate::shader::PipelineConfig`] (plain integers, bools and floats); the file name
+/// carries the record layout's identity ([`LAYOUT_ID`]), so a file is only read back by a binary with the same layout.
+pub mod warmlist {
+    use crate::shader::PipelineConfig;
+    use std::io::Write;
+    use std::sync::Mutex;
+    const SZ: usize = std::mem::size_of::<PipelineConfig>();
+    static FILE: Mutex<Option<std::fs::File>> = Mutex::new(None);
+    thread_local! {
+        /// The warm thread: its pipelines are already in the file.
+        pub static WARMING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    }
+
+    fn path() -> Option<std::path::PathBuf> {
+        if std::env::var("MELEE_PIPE_WARM").is_ok_and(|v| v == "0") {
+            return None;
+        }
+        let dir = match std::env::var_os("MELEE_GPUCACHE") {
+            Some(d) if !d.is_empty() => std::path::PathBuf::from(d),
+            _ => std::env::current_exe().ok()?.parent()?.join("gpucache"),
+        };
+        Some(dir.join(format!("pipelines-{:016x}-{SZ}.bin", LAYOUT_ID)))
+    }
+
+    /// The identity of the record layout: the source of every struct a record holds (all `#[repr(C)]`, so the
+    /// layout follows from the source alone). A rebuilt exe with the same config types keeps its list (the owner's
+    /// list survives updates); any change to those types starts a new file.
+    const LAYOUT_ID: u64 = {
+        const fn fnv(mut h: u64, b: &[u8]) -> u64 {
+            let mut i = 0;
+            while i < b.len() {
+                h = (h ^ b[i] as u64).wrapping_mul(0x100_0000_01b3);
+                i += 1;
+            }
+            h
+        }
+        let h = fnv(0xcbf2_9ce4_8422_2325, include_str!("shader.rs").as_bytes());
+        fnv(h, include_str!("state.rs").as_bytes())
+    };
+
+    fn checksum(b: &[u8]) -> u32 {
+        b.iter().fold(0x811c9dc5u32, |h, &x| (h ^ x as u32).wrapping_mul(0x01000193))
+    }
+
+    /// Append one newly created pipeline's config (a record: the config bytes, then their FNV-1a).
+    pub fn record(pc: &PipelineConfig) {
+        if WARMING.with(|w| w.get()) {
+            return;
+        }
+        let mut g = FILE.lock().unwrap();
+        if g.is_none() {
+            let Some(p) = path() else { return };
+            let _ = std::fs::create_dir_all(p.parent().unwrap());
+            *g = std::fs::OpenOptions::new().create(true).append(true).open(p).ok();
+        }
+        if let Some(f) = g.as_mut() {
+            // SAFETY: PipelineConfig is plain data (no pointers); the bytes are only read back by a binary with the same layout (LAYOUT_ID).
+            let b = unsafe { std::slice::from_raw_parts(pc as *const PipelineConfig as *const u8, SZ) };
+            let mut rec = b.to_vec();
+            rec.extend_from_slice(&checksum(b).to_le_bytes());
+            let _ = f.write_all(&rec);
+        }
+    }
+
+    /// The configs recorded by earlier runs of this exe (records whose checksum fails are skipped).
+    pub fn load() -> Vec<PipelineConfig> {
+        let Some(p) = path() else { return Vec::new() };
+        let Ok(data) = std::fs::read(&p) else { return Vec::new() };
+        let mut out = Vec::new();
+        for rec in data.chunks_exact(SZ + 4) {
+            let (b, c) = rec.split_at(SZ);
+            if checksum(b).to_le_bytes() != c {
+                continue;
+            }
+            let mut v = std::mem::MaybeUninit::<PipelineConfig>::uninit();
+            // SAFETY: the bytes are a PipelineConfig a binary with the same repr(C) layout wrote (LAYOUT_ID in the file name, checksum).
+            unsafe {
+                std::ptr::copy_nonoverlapping(b.as_ptr(), v.as_mut_ptr() as *mut u8, SZ);
+                out.push(v.assume_init());
+            }
+        }
+        out
     }
 }
 
@@ -1211,6 +1303,22 @@ impl Renderer {
         let empty_view = empty.create_view(&Default::default());
         let empty_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
         let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default() });
+        {
+            // compile every pipeline earlier runs needed, off the frame path, while the game boots
+            let pf = pipes.clone();
+            let _ = std::thread::Builder::new().name("pipeline warm".into()).spawn(move || {
+                let t = std::time::Instant::now();
+                warmlist::WARMING.with(|w| w.set(true));
+                let list = warmlist::load();
+                let n = list.len();
+                for pc in &list {
+                    let _ = pf.get(pc);
+                }
+                if n > 0 {
+                    eprintln!("gx: pipeline warm: {n} recorded configs, {} pipelines, {:.0} ms", pf.len(), t.elapsed().as_secs_f64() * 1e3);
+                }
+            });
+        }
         Ok(Self {
             adapter,
             last_fill_us: 0,

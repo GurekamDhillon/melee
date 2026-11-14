@@ -12,6 +12,7 @@ use std::fmt::Write as _;
 
 /// Aurora `AttrConfig`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct AttrConfig {
     pub attr_type: u8,
     pub cnt: u8,
@@ -30,6 +31,7 @@ impl Default for AttrConfig {
 
 /// Aurora `ShaderConfig`: everything the generated WGSL depends on.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct ShaderConfig {
     pub fog_type: u8,
     pub vtx_stride: u8,
@@ -80,6 +82,7 @@ impl Default for ShaderConfig {
 
 /// Aurora `PipelineConfig` (fixed-function state + the shader config).
 #[derive(Clone, Debug, PartialEq)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct PipelineConfig {
     pub shader: ShaderConfig,
     pub depth_func: u32,

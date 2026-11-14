@@ -19,7 +19,8 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   7. gauntlet: fight 1 (the opening gauntlet), the player a level-9 CPU: the next duel comes in after the KO with a
 #      new character (two different faces, no repeat), no results screen between;
 #   8. live: the torture knob's stage switches as live transitions: the rift runs, the hand-off lands, the fight never
-#      freezes, no KO caused by a switch;
+#      freezes, no KO caused by a switch; every fighter mapped (no spawn-point reset, no push past the mapped point beyond a
+#      12-unit step up, or an 80-unit slide out of the new body), with the probe knob forcing a ledge-hang and an under-stage case;
 #   9. crowd: fight 2 (the 1v3 crowd): every foe hit carries the crowd knockback (x1350 at three foes), no player hit.
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
@@ -122,10 +123,18 @@ for d in $depths; do
     check 7 gauntlet "$d" "$line" "$miss"
   fi
   if on live; then
-    line=$(run live "$d" "torture,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    line=$(run live "$d" "torture,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1 MELEE_ENVOY_LIVE_PROBE=1)
     miss=""; seen live "$d" "envoy: live stage transition begins" || miss="$miss (no live transition)"
     seen live "$d" "envoy: live stage hand-off, frame" || miss="$miss (no hand-off)"
-    seen live "$d" "stage switch: live keep\|stage switch: safe place" || miss="$miss (no carry)"
+    seen live "$d" "stage switch: live map" || miss="$miss (no mapped carry)"
+    # nobody is reset to a spawn point; nobody moves more than LIVE_PUSH (40) past the mapped point; both fallbacks ran
+    seen live "$d" "stage switch: safe place" && miss="$miss (a spawn-point reset)"
+    # a mapped point over the floor moves at most a step up (12); one inside the new body slides outward at most 80
+    big=$(grep -aoE "stage switch: live map .* push [0-9.]+" "$(L live "$d")" | awk '{ lim = ($0 ~ /case (under|hang|ledge)/) ? 80 : 12; if ($NF + 0 > lim) n++ } END { print n + 0 }')
+    [ "$big" = 0 ] || miss="$miss ($big pushes past the limit beyond the mapped point)"
+    seen live "$d" "case scale\|case ledge" || miss="$miss (no plain mapping)"
+    seen live "$d" "case hang" || miss="$miss (no ledge-hang mapping)"
+    seen live "$d" "case under" || miss="$miss (no under-stage mapping)"
     seen live "$d" "envoy: KO right after a stage switch" && miss="$miss (a switch caused a KO)"
     seen live "$d" "freeze kind 2" && miss="$miss (a freeze switch ran)"
     check 8 live "$d" "$line" "$miss"

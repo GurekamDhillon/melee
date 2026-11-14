@@ -964,7 +964,7 @@ const BACK: i32 = 8;
 const TAU: f32 = 6.283_185_5;
 
 /// The sound for each presentation key (Brawl wave sounds from the player's own disc; silent without it).
-const SFX: [(&str, &str); 15] = [
+const SFX: [(&str, &str); 16] = [
     ("fire_red", "snd_se_common_fire_m"),
     ("fire_bolt", "snd_se_item_pasaran_spark"),
     ("fire_spire", "snd_se_item_StarRod_l"),
@@ -980,9 +980,10 @@ const SFX: [(&str, &str); 15] = [
     ("levelup", "snd_se_common_LifeUp"),
     ("keystone", "snd_se_item_Superstar_get"),
     ("absorb", "snd_se_common_Guard_on"),
+    ("combobreak", "snd_se_item_StarRod_m"),
 ];
 
-fn sfx(key: &str) {
+pub(crate) fn sfx(key: &str) {
     if let Some(&(_, name)) = SFX.iter().find(|s| s.0 == key) {
         unsafe { gd_ui_brawl_sfx(name.as_ptr(), name.len() as u32) };
     }

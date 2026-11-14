@@ -238,6 +238,9 @@ pub fn engine_config() -> Config {
     let mut c = Config::default();
     c.consume_fuel(true);
     c.wasm_multi_memory(false);
+    // translate every function at load, not on its first call (wasmi's default, LazyTranslation): the first Envoy
+    // match's run setup translated ~6 ms of envoy_sim code inside the fight's first tick (notes/zero-hitch.md)
+    c.compilation_mode(wasmi::CompilationMode::Eager);
     c
 }
 
@@ -640,6 +643,21 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     // ground, an aerial in the air): the move (0-5) or a refusal; the frames the running strike has run + 1 (0 none)
     w!("gd_tag_assist", |slot: i32, dir: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::assist(slot, dir) } });
     // Envoy rooms: park a foe slot for the next wave; the parked-and-asleep slots (bits); start the next wave
+    // profiling marks (no game effect): the time since the previous mark as a frame-profile phase "mod mark N"
+    w!("gd_prof_mark", |id: i32| -> i32 {
+        thread_local! { static LAST: core::cell::Cell<Option<std::time::Instant>> = const { core::cell::Cell::new(None) }; }
+        if melee_core::frameprof::on() {
+            let now = std::time::Instant::now();
+            let prev = LAST.with(|l| l.replace(Some(now)));
+            if let Some(p) = prev {
+                let us = (now - p).as_micros() as u32;
+                if us >= 500 {
+                    melee_core::frameprof::event(melee_core::frameprof::Kind::Note, melee_core::frameprof::Text::new().s("mod mark ").n(id as i64), us, 0);
+                }
+            }
+        }
+        0
+    });
     w!("gd_envoy_wave_park", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::wave_park(slot) } });
     w!("gd_envoy_wave_pending", || -> i32 { unsafe { melee_modes::tu::envoy::wave_pending() } });
     w!("gd_envoy_wave_start", || -> i32 { unsafe { melee_modes::tu::envoy::wave_start() } });
@@ -662,6 +680,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         let Some(b) = m.data(&c).get(ptr as usize..ptr as usize + n * 4) else { return -1 };
         unsafe { for i in 0..n { melee_modes::tu::envoy::PLAN[i] = i32::from_le_bytes(b[i * 4..i * 4 + 4].try_into().unwrap()); } }
         unsafe {
+            melee_modes::tu::petey_file::prefetch();
             if let Some(h) = melee_modes::tu::envoy::PLAN_HINT {
                 h(&*core::ptr::addr_of!(melee_modes::tu::envoy::PLAN));
             }
@@ -706,6 +725,9 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_speed", |slot: i32, active: i32, bench: i32| -> i32 { unsafe { melee_modes::tu::envoy::speed(slot, active, bench) } });
     w!("gd_envoy_absorb", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::absorb(slot) } });
     w!("gd_envoy_attacker", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::attacker(slot) } });
+    // the combo breaker: the slot's fighter bursts out of the combo (no launch, out of hitstun, intangible `frames`;
+    // the shield-break sound, a quake, every fighter frozen `freeze` frames)
+    w!("gd_envoy_combo_break", |slot: i32, frames: i32, freeze: i32| -> i32 { unsafe { melee_modes::tu::envoy::combo_break(slot, frames, freeze) } });
     w!("gd_envoy_jumps", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::jumps(slot) } });
     w!("gd_envoy_air_jump", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::air_jump(slot) } });
     w!("gd_envoy_blast", |slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32| -> i32 {
@@ -1077,7 +1099,13 @@ unsafe fn call_hook(host: *mut Host, e: Entry, args: &[Val], nres: usize) -> Opt
     let prof = melee_core::frameprof::on().then(std::time::Instant::now);
     let r = e.func.call(&mut c, args, &mut out[..nres]);
     if let Some(t) = prof {
-        melee_core::frameprof::mod_ns((&(*host).mods)[e.module].prof, t.elapsed().as_nanos() as u64);
+        let ns = t.elapsed().as_nanos() as u64;
+        melee_core::frameprof::mod_ns((&(*host).mods)[e.module].prof, ns);
+        if ns >= 1_000_000 {
+            // a long hook call as a named phase (its host calls show inside it: fighter create, file loads)
+            let id = (&(*host).mods)[e.module].id.clone();
+            melee_core::frameprof::event(melee_core::frameprof::Kind::Note, melee_core::frameprof::Text::new().s("wasm hook ").s(&id), (ns / 1000) as u32, 0);
+        }
     }
     let mut c = ctx(host);
     c.data_mut().cur_module = prev;

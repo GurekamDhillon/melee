@@ -466,6 +466,8 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     if v[V_ITEMS_ON] == 1 {
         crate::items_ui::flash(e, v);
         crate::items_ui::banners(e, v);
+        crate::items_ui::callouts(e, v);
+        crate::items_ui::fork(e, v);
     }
     // sessions: the fight's banner over its first seconds ("Fight 2 - Pack", the loop and the stocks left)
     let pl = v[V_PLAY];

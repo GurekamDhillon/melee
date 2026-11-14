@@ -59,7 +59,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], x: f32, y: f32, w: f32, h: f32, r: 
             let skipped = sj & MS_SKIPPED != 0;
             let col = if walked { SUNNY } else if skipped { alpha(PALE, 0.35) } else { alpha(WHITE, 0.85) };
             let (dx, dy) = (bx - ax, by - ay);
-            let len = (dx * dx + dy * dy).sqrt().max(1.0);
+            let len = crate::icons::sqrt(dx * dx + dy * dy).max(1.0);
             if secret || sj & MS_UNKNOWN != 0 {
                 // dashed: a hidden way
                 let k = (len / (r * 0.8)) as i32;

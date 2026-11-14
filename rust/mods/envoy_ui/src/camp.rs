@@ -50,8 +50,11 @@ pub struct Ui {
     pub msg: &'static str,
     pub msg_at: i32,
     pub team: bool,
+    /// A new run is armed from the camp and its road (the map and the fork) shows before fight 1.
+    pub pre_road: bool,
+    pub pre_at: i32,
 }
-pub static mut UI: Ui = Ui { cur: 0, prev_cur: 0, moved_at: -100, age: 0, dialog: false, dcur: 0, p2: false, p2_at: -100, p2_hold: 0, stick: [0; 2], rep: [0; 2], msg: "", msg_at: -100, team: false };
+pub static mut UI: Ui = Ui { cur: 0, prev_cur: 0, moved_at: -100, age: 0, dialog: false, dcur: 0, p2: false, p2_at: -100, p2_hold: 0, stick: [0; 2], rep: [0; 2], msg: "", msg_at: -100, team: false, pre_road: false, pre_at: 0 };
 
 /// What the controllers did this frame (edges, with stick repeat).
 #[derive(Clone, Copy, Default)]
@@ -232,7 +235,8 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     let ended = view.is_some_and(|v| v[V_STATE] == 2 || v[V_STATE] == 3);
     // the forked road: the cursor is the sim's (synced input, so co-op and netplay agree), but this scene holds the
     // game's pads; left / right (D-pad and the main stick) are handed through while the fork is on screen
-    let fork_up = after_fight && view.is_some_and(|v| v[V_ROAD_N] > 1 && v[V_SESS_NEXT] != 1) && !ended && !crate::picker::is_open();
+    let pre = UI.pre_road && !after_fight;
+    let fork_up = (after_fight || pre) && view.is_some_and(|v| v[V_ROAD_N] > 1 && v[V_SESS_NEXT] != 1) && !ended && !crate::picker::is_open();
     gd_ui_pass(if fork_up { PASS_LR } else { 0 });
     // sessions: the fight was won and the next is in the same session: no road, the banner, then on at once
     if after_fight {
@@ -258,7 +262,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         }
         return DO_NOTHING;
     }
-    let rs = rows(after_fight, ended, has, no_brawl);
+    let rs: &[u8] = if pre { &[R_GO] } else { rows(after_fight, ended, has, no_brawl) };
     if u.cur >= rs.len() {
         u.cur = 0;
     }
@@ -311,14 +315,19 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                 u.moved_at = t;
             }
             let r = rs[u.cur];
-            if p1.b && !after_fight {
+            if p1.b && pre {
+                // back from the road: the run is disarmed again (nothing was played)
+                u.pre_road = false;
+                act = DO_ARM | (7 << 8);
+            } else if p1.b && !after_fight {
                 act = DO_CLOSE;
             }
             let go = p1.a || (p1.start && !after_fight && !no_brawl);
             if go {
                 let r = if p1.start { R_BIG } else { r };
                 match r {
-                    R_BIG => act = DO_ARM | (if has { 2 } else { 1 } << 8),
+                    // a new run: arm it here and show its road before fight 1 (op 5); A on the road launches (op 6)
+                    R_BIG => act = DO_ARM | (if has { 2 } else { 5 } << 8),
                     R_NEW => {
                         if has && !after_fight {
                             u.dialog = true;
@@ -336,6 +345,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                         u.msg = row_say(r, has, u.p2);
                         u.msg_at = t;
                     }
+                    R_GO if pre => act = DO_ARM | (6 << 8),
                     R_GO => act = DO_ARM | (2 << 8),
                     R_ABANDON => {
                         u.dialog = true;
@@ -355,7 +365,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     e.layer(LAYER_MENU, 0);
     let ex = 107.0;
     spr(e, S_BG_CAMP, -ex, 0.0, 854.0, 480.0, WHITE);
-    if after_fight {
+    if after_fight || pre {
         road(e, t, view, rec.as_ref());
     } else {
         // title
@@ -366,7 +376,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     // the list
     let lx = 30.0;
     let forked = view.is_some_and(|v| v[V_ROAD_N] > 1 && !ended);
-    let mut y = if after_fight { if forked { 298.0 } else { 288.0 } } else { 58.0 };
+    let mut y = if after_fight || pre { if forked { 298.0 } else { 288.0 } } else { 58.0 };
     for (i, &r) in rs.iter().enumerate() {
         let on = i == u.cur && !u.dialog;
         let (label, value) = row_text(r, has, u.p2);
@@ -399,7 +409,9 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     let r = rs[u.cur];
     let say = if t - u.msg_at < 150 && !u.msg.is_empty() { u.msg } else if no_brawl { "Envoy needs your Brawl disc. Add it in the launcher." } else { row_say(r, has, u.p2) };
     strip(e, 24.0, 590.0, say);
-    if after_fight {
+    if pre {
+        hints(e, &[("Left / Right", "Road"), ("A", "Start fight 1"), ("B", "Back to camp")]);
+    } else if after_fight {
         hints(e, &[("Up / Down", "Choose"), ("A", if r == R_GO { "Start the fight" } else { "Choose" })]);
     } else {
         let a = match r {
@@ -529,6 +541,13 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
     let looped = v[V_STATE] == 1 && next == 0 && v[V_LOOP] > 1;
     let _ = rec;
     // run strip
+    if crate::map::has(v) {
+        // the floor map (the sim's words): rooms, the fork, the door, the hidden wall
+        sticker(e, S_FACE_INK, 16.0, 4.0, 608.0, 56.0, -0.4, WHITE, |e| {
+            face(e, S_FACE_INK, 16.0, 4.0, 608.0, 56.0, WHITE);
+            crate::map::draw(e, v, 24.0, 4.0, 592.0, 56.0, 9.5);
+        });
+    } else {
     let (x, y) = (16.0, 8.0);
     sticker(e, S_FACE_SUNNY, x, y, 608.0, 46.0, -0.4, WHITE, |e| {
         let n = v[V_FIGHTS].clamp(1, 8);
@@ -538,6 +557,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             spr(e, S_PTRDOWN, x + 34.0 + next as f32 * gap - 13.0, y + 34.0, 26.0, 18.0, WHITE);
         }
     });
+    }
     if v[V_ROAD_N] > 1 && !ended {
         fork(e, t, v, looped);
         return;

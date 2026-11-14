@@ -12,8 +12,8 @@ fn dot(e: &mut E, x: f32, y: f32, dm: f32, c: u32) {
 /// A thick line from (x0, y0) to (x1, y1) as overlapping discs of diameter `w`.
 pub fn ln(e: &mut E, x0: f32, y0: f32, x1: f32, y1: f32, w: f32, c: u32) {
     let (dx, dy) = (x1 - x0, y1 - y0);
-    let len = (dx * dx + dy * dy).sqrt();
-    let n = ((len / (w * 0.35)).ceil() as i32).clamp(1, 64);
+    let len = sqrt(dx * dx + dy * dy);
+    let n = (ceil(len / (w * 0.35)) as i32).clamp(1, 64);
     for i in 0..=n {
         let t = i as f32 / n as f32;
         dot(e, x0 + dx * t, y0 + dy * t, w, c);
@@ -23,7 +23,7 @@ pub fn ln(e: &mut E, x0: f32, y0: f32, x1: f32, y1: f32, w: f32, c: u32) {
 /// A triangle pointing up (apex at (x, top), base `w` wide at `bot`) from stacked rects.
 fn tri_up(e: &mut E, x: f32, top: f32, bot: f32, w: f32, c: u32) {
     let h = bot - top;
-    let n = (h / 1.2).ceil().clamp(2.0, 24.0) as i32;
+    let n = ceil(h / 1.2).clamp(2.0, 24.0) as i32;
     for i in 0..n {
         let t0 = i as f32 / n as f32;
         let ww = w * (t0 + 0.5 / n as f32);
@@ -34,7 +34,7 @@ fn tri_up(e: &mut E, x: f32, top: f32, bot: f32, w: f32, c: u32) {
 /// A triangle pointing down (apex at (x, bot)).
 fn tri_down(e: &mut E, x: f32, top: f32, bot: f32, w: f32, c: u32) {
     let h = bot - top;
-    let n = (h / 1.2).ceil().clamp(2.0, 24.0) as i32;
+    let n = ceil(h / 1.2).clamp(2.0, 24.0) as i32;
     for i in 0..n {
         let t0 = i as f32 / n as f32;
         let ww = w * (1.0 - t0 - 0.5 / n as f32);
@@ -299,4 +299,21 @@ pub fn slot_ink(e: &mut E, x: f32, y: f32, size: f32, full: bool, last: bool, a:
         dot(e, x, y, size, alpha(PALE, 0.9 * a));
         dot(e, x, y, size * 0.6, alpha(WHITE, a));
     }
+}
+
+/// Square root (no_std): a bit-trick guess and three Newton steps (presentation only).
+pub fn sqrt(x: f32) -> f32 {
+    if x <= 0.0 {
+        return 0.0;
+    }
+    let mut g = f32::from_bits((x.to_bits() >> 1) + 0x1FBD_1DF5);
+    for _ in 0..3 {
+        g = 0.5 * (g + x / g);
+    }
+    g
+}
+
+pub fn ceil(x: f32) -> f32 {
+    let t = x as i32 as f32;
+    if t < x { t + 1.0 } else { t }
 }

@@ -508,6 +508,16 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         sh.texs[module].push(r);
         sh.texs[module].len() as u32
     });
+    // ---- body-group tints (notes/envoy-tints.md): add RGB x strength (0..1) to the groups in `mask` (bit per
+    // melee_modes::tu::envoy_tint::G_*: head, torso, arms, hands, legs, feet) of port's fighter for this present.
+    // Calls add up (saturating); presentation only, never read by a sim.
+    f!("gd_ui_body_tint", |c: Caller<'_, PresData>, port: i32, mask: u32, rgb: u32, strength: f32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(0..6).contains(&port) || !strength.is_finite() {
+            return GD_EINVAL;
+        }
+        melee_modes::tu::envoy_tint::add(port as usize, mask & melee_modes::tu::envoy_tint::ALL, rgb & 0xFF_FFFF, strength.clamp(0.0, 1.0));
+        GD_OK
+    });
     // ---- Envoy drives (envoy-core-v2.md 3.1): presentation only, never read back by a sim
     // a drive model in the world (melee_modes::tu::drive_draw): model id, centre, yaw, diameter, glow 0..1, alpha 0..1
     f!("gd_ui_world_model", |c: Caller<'_, PresData>, model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32, alpha: f32| -> i32 {
@@ -1652,6 +1662,7 @@ impl PresHost {
         let pno = self.shared.borrow().present_no;
         let t1 = std::time::Instant::now();
         melee_modes::tu::drive_draw::begin();
+        melee_modes::tu::envoy_tint::begin();
         self.shared.borrow_mut().submit_ns = 0;
         for i in 0..n {
             if let Some(f) = self.mods[i].frame {
@@ -1662,6 +1673,7 @@ impl PresHost {
             }
         }
         melee_modes::tu::drive_draw::commit();
+        melee_modes::tu::envoy_tint::commit();
         let t2 = std::time::Instant::now();
         for e in &mut self.exts {
             e.after_logic(frame);

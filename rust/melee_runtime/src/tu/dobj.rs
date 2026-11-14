@@ -313,6 +313,18 @@ pub mod ext {
         assert!((*dobj).mobj == mobj, "dobj.c:704 dobj->mobj == mobj");
     }
 
+    /// The body-group tint hook (melee_modes::tu::envoy_tint): `begin` installs a TEV stage for this DObj and
+    /// says whether it did; `pobj` then sets that stage's colour before each PObj draws. Presentation only.
+    #[derive(Clone, Copy)]
+    pub struct BodyTint {
+        pub begin: unsafe fn(*mut HSD_DObj) -> bool,
+        pub pobj: unsafe fn(*mut HSD_PObj),
+    }
+    pub static mut BODY_TINT: Option<BodyTint> = None;
+    /// The renderer's live TEV stage count and the konst registers those stages select (installed by melee_engine),
+    /// for a stage appended after a material's.
+    pub static mut GX_NUM_TEV: Option<fn() -> (u32, u32)> = None;
+
     /// `HSD_DObjDisp` (class `disp` method; TARGET_PC script-parts overrides included).
     pub unsafe extern "C" fn HSD_DObjDisp(dobj: *mut HSD_DObj, vmtx: *mut [f32; 4], pmtx: *mut [f32; 4], rendermode: u32) {
         let mut lab_override = ext::ScriptParts_Draw(dobj);
@@ -328,8 +340,19 @@ pub mod ext {
                 lab_override = 1;
             }
         }
+        // Envoy body-group tint (presentation only): a TEV stage after the material's, its colour set per PObj.
+        let body = match (lab_override, BODY_TINT) {
+            (0, Some(t)) if rendermode & 0x400_0000 == 0 && (t.begin)(dobj) => {
+                lab_override = 1;
+                Some(t)
+            }
+            _ => None,
+        };
         let mut p = (*dobj).pobj;
         while !p.is_null() {
+            if let Some(t) = body {
+                (t.pobj)(p);
+            }
             let pi = (*(p as *mut HSD_Class)).class_info as *mut HSD_PObjInfo;
             let disp: unsafe extern "C" fn(*mut HSD_PObj, *mut [f32; 4], *mut [f32; 4], u32) =
                 core::mem::transmute((*pi).disp.expect("PObjInfo.disp"));

@@ -576,7 +576,7 @@ shatter; stance-orb hits and blocks reported). ready_checks.sh `fresh`: two New 
   round the fighter; a subtle per-player aura tint from the rarest item held (`V_AURA`: devil/angel/secret, then
   boss, then quality); the run-end summary lists the build. All are view words drawn by the UI: no sim cost.
 
-### 11.12 Body-group glow (spec; follow-up, not in slice 2)
+### 11.12 Body-group glow (built: notes/envoy-tints.md)
 
 The C-build roguelite (pc/scripts/examples/roguelite/visuals.lua, bindings.lua) tinted fighter draw objects by role:
 an offline "part lab" measured each costume's DObjs over several poses and bound them to three body roles (assault:

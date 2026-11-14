@@ -366,3 +366,50 @@ pub unsafe fn sounds(v: &[i32; VW]) {
         });
     }
 }
+
+/// Subtle tint while held; the group flares on a proc (frames) and fades out.
+const BODY_BASE: f32 = 0.12;
+const BODY_FLARE: f32 = 0.6;
+const FLARE_FRAMES: i32 = 12;
+
+/// Body-group tints (notes/envoy-tints.md): each held item's family lights its body group a little (the best
+/// item of a group wins its colour), and the group flares for FLARE_FRAMES after that item procs.
+pub unsafe fn body(v: &[i32; VW]) {
+    let k = crate::pause::fx_scale();
+    if k <= 0.0 {
+        return;
+    }
+    let play = v[V_PLAY];
+    for p in 0..2 {
+        // per group bit: (quality, id) of the best held item
+        let mut best = [(0i32, 0i32); 6];
+        for id in 1..ITEM_IDS as i32 {
+            if v[V_INV + p * ITEM_IDS + id as usize] <= 0 {
+                continue;
+            }
+            let (m, q) = (body_groups(id), item(id).map_or(0, |it| it.quality as i32) + 1);
+            for (g, b) in best.iter_mut().enumerate() {
+                if m & (1 << g) != 0 && q > b.0 {
+                    *b = (q, id);
+                }
+            }
+        }
+        for (g, b) in best.iter().enumerate() {
+            if b.1 != 0 {
+                let s = if g == 0 { BODY_BASE * 0.8 } else { BODY_BASE };
+                crate::gd_ui_body_tint(p as i32, 1 << g, col(b.1) >> 8, s * k);
+            }
+        }
+        let n = v[V_BURST_N].max(0) as usize;
+        for e in 0..BURSTS.min(n) {
+            let b = V_BURST + e * BU_W;
+            let age = play - v[b];
+            if v[b + 2] != p as i32 || !(0..FLARE_FRAMES).contains(&age) {
+                continue;
+            }
+            let id = v[b + 1];
+            let f = 1.0 - age as f32 / FLARE_FRAMES as f32;
+            crate::gd_ui_body_tint(p as i32, body_groups(id), col(id) >> 8, BODY_FLARE * f * k);
+        }
+    }
+}

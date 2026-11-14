@@ -361,6 +361,7 @@ unsafe fn safe_place(live: bool) {
             let cpu = (*fp).cpu;
             sg::script_switch_contacts(fp);
             (*fp).cpu = cpu;
+            cpu_forget(fp);
             sg::ftCamera_80076064(fp);
             melee_fighter::tu::ftcoll::ftColl_8007B760(g as _, SAFE_INTANGIBLE);
             if std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
@@ -408,8 +409,20 @@ struct Pre {
 static mut LIVE_PRE: [Pre; 8] = [Pre { x: 0.0, y: 0.0, motion: -1, ground: false, ok: false }; 8];
 /// The old stage's main floor (left x, right x, y); valid flag.
 static mut LIVE_SPAN: (f32, f32, f32, bool) = (0.0, 0.0, 0.0, false);
+/// The old stage's blast lines (left, right, bottom, top; camera offsets applied).
+static mut LIVE_BLAST: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 0.0);
+
+/// The live stage's blast lines (left, right, bottom, top).
+unsafe fn blast_lines() -> (f32, f32, f32, f32) {
+    let bz = &sg::stage_info.blast_zone;
+    let cam = &sg::stage_info.cam_info;
+    (bz.left + cam.cam_x_offset, bz.right + cam.cam_x_offset, bz.bottom + cam.cam_y_offset, bz.top + cam.cam_y_offset)
+}
 /// The largest extra push the last hand-off made beyond a mapped point (the live check reads the log).
 pub static mut LIVE_PUSH_MAX: f32 = 0.0;
+/// How far above the new bottom blast line a mapped point is kept (a deep recovery mapped onto a shallower stage
+/// keeps room to come back instead of sitting on the line).
+const LIVE_BOTTOM_ROOM: f32 = 60.0;
 /// The most a point is slid outward to leave the new geometry.
 const LIVE_SLIDE_MAX: f32 = 80.0;
 /// A step up onto a floor that counts as "the shortest axis" (a slope, a platform lip).
@@ -476,6 +489,7 @@ unsafe fn inside(x: f32, y: f32) -> bool {
 /// Record every fighter's place and the old main floor (before the teardown).
 unsafe fn live_snapshot() {
     LIVE_PRE = [Pre { x: 0.0, y: 0.0, motion: -1, ground: false, ok: false }; 8];
+    LIVE_BLAST = blast_lines();
     LIVE_SPAN = match main_span() {
         Some((l, r, y)) => (l, r, y, true),
         None => (0.0, 0.0, 0.0, false),
@@ -516,7 +530,7 @@ unsafe fn in_box(x: f32, y: f32) -> (f32, f32) {
     let bz = &sg::stage_info.blast_zone;
     let cam = &sg::stage_info.cam_info;
     let c = |v: f32, lo: f32, hi: f32| if v < lo { lo } else if v > hi { hi } else { v };
-    (c(x, bz.left + cam.cam_x_offset + 20.0, bz.right + cam.cam_x_offset - 20.0), c(y, bz.bottom + cam.cam_y_offset + 20.0, bz.top + cam.cam_y_offset - 40.0))
+    (c(x, bz.left + cam.cam_x_offset + 20.0, bz.right + cam.cam_x_offset - 20.0), c(y, bz.bottom + cam.cam_y_offset + LIVE_BOTTOM_ROOM, bz.top + cam.cam_y_offset - 40.0))
 }
 
 /// The live hand-off's placement (after the carry): see the block comment above.
@@ -563,6 +577,26 @@ unsafe fn live_place() {
             }
             _ => ("keep", x, y),
         };
+        // beside or under the stage: the same offset from the ledge, but never closer to a blast line than the fighter
+        // was on the old stage (a small new stage would otherwise put a recovery past the point of no return)
+        let (mx, my) = if case == "ledge" || case == "under" {
+            let (ol, or_, ob, _) = LIVE_BLAST;
+            let (nl, nr, nb, _) = blast_lines();
+            let mut mx = mx;
+            let mut my = my;
+            if mx > 0.0 && nr - mx < or_ - x {
+                mx = nr - pos0(or_ - x);
+            }
+            if mx < 0.0 && mx - nl < x - ol {
+                mx = nl + pos0(x - ol);
+            }
+            if my - nb < y - ob {
+                my = nb + pos0(y - ob);
+            }
+            (mx, my)
+        } else {
+            (mx, my)
+        };
         let (mut fx, mut fy2) = (mx, my);
         // out of the new geometry: a small step up onto a floor, else outward (never up through the stage)
         if inside(fx, fy2) {
@@ -597,12 +631,15 @@ unsafe fn live_place() {
         let ground_floor = if pre.ground && !hang && case == "scale" { floor_under(fx, fy2 + LIVE_STEP_UP) } else { None };
         (*fp).cur_pos = Vec { x: fx, y: fy2, z: 0.0 };
         if hang {
-            // into the ledge grab box, facing the stage, still: the next frame's air collision grabs the ledge
-            (*fp).facing_dir = if fx > 0.0 { -1.0 } else { 1.0 };
+            // the same side's ledge of the new stage, caught for real (CliffCatch on its ledge line); if the new stage
+            // has no grabbable ledge there, the fighter is left in the air at the mapped offset with a recovery
             sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
             sg::script_switch_contacts(fp);
             (*fp).self_vel = core::mem::zeroed();
             (*fp).x8c_kb_vel = core::mem::zeroed();
+            if !ledge_catch(g, fp, new) {
+                give_recovery(fp, g);
+            }
         } else if let Some((ty, _)) = ground_floor.filter(|&(ty, _)| (fy2 - ty).abs() <= LIVE_STEP_UP + 2.0) {
             // grounded: on the new floor under the mapped x, same action (the carry's floor attach)
             (*fp).cur_pos.y = ty;
@@ -633,8 +670,15 @@ unsafe fn live_place() {
             (*fp).x8c_kb_vel = kb;
             (*fp).x98_atk_shield_kb = shield;
             (*fp).gr_vel = grvel;
+            if case != "scale" {
+                // beside or under the new stage: the place is kept, the way back is given (the new stage's ledge can
+                // be farther than the old one's): the air jump back, out of a helpless fall, launch speed spent
+                give_recovery(fp, g);
+                (*fp).x8c_kb_vel = core::mem::zeroed();
+            }
         }
         (*fp).cpu = cpu;
+            cpu_forget(fp);
         sg::ftCamera_80076064(fp);
         melee_fighter::tu::ftcoll::ftColl_8007B760(g as _, LIVE_INTANGIBLE);
         if std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
@@ -645,4 +689,63 @@ unsafe fn live_place() {
         }
         g = next;
     }
+}
+
+/// A fighter kept beside or under the new stage gets its way back: one air jump, out of a helpless fall
+/// (FallSpecial), no downward speed. Its place is not changed.
+unsafe fn give_recovery(fp: *mut Fighter, g: *mut HSD_GObj) {
+    let m = (*fp).motion_id as i32;
+    if (ftCo_MS_FallSpecial as i32..=ftCo_MS_FallSpecialB as i32).contains(&m) {
+        sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
+    }
+    if (*fp).x1968_jumpsUsed as i32 > 1 {
+        (*fp).x1968_jumpsUsed = 1;
+    }
+    if (*fp).self_vel.y < 0.0 {
+        (*fp).self_vel.y = 0.0;
+    }
+}
+
+/// Put a fighter that hung on a ledge onto the same side's ledge of the new stage, in CliffCatch (the retail entry:
+/// it snaps to the ledge, faces in and hangs). False: no grabbable ledge found there.
+unsafe fn ledge_catch(g: *mut HSD_GObj, fp: *mut Fighter, new: Option<(f32, f32, f32)>) -> bool {
+    let Some((nl, nr, nfy)) = new else { return false };
+    let right = (*fp).cur_pos.x > (nl + nr) * 0.5;
+    let x = if right { nr - 1.5 } else { nl + 1.5 };
+    let (mut p, mut n): (Vec, Vec) = (core::mem::zeroed(), core::mem::zeroed());
+    let (mut line, mut flags) = (-1i32, 0u32);
+    if melee_world::tu::mplib::mpCheckFloor(x, nfy + 6.0, x, nfy - 6.0, 0.0, &mut p, &mut line, &mut flags, &mut n, -1, -1, -1, None, core::ptr::null_mut()) == 0
+        || line < 0
+        || flags & LINE_FLAG_LEDGE as u32 == 0
+    {
+        return false;
+    }
+    let c = &mut (*fp).coll_data;
+    if right {
+        c.ledge_id_right = line;
+        c.env_flags = (c.env_flags & !(Collide_LeftLedgeGrab as s32)) | Collide_RightLedgeGrab as s32;
+        (*fp).facing_dir = -1.0;
+    } else {
+        c.ledge_id_left = line;
+        c.env_flags = (c.env_flags & !(Collide_RightLedgeGrab as s32)) | Collide_LeftLedgeGrab as s32;
+        (*fp).facing_dir = 1.0;
+    }
+    melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(g as _);
+    true
+}
+
+/// After a switch places a fighter, its CPU's remembered target spot (`cpu.x54`, kept `cpu.x60` frames) is a point
+/// of the OLD stage (often the foe's old place): a level-9 CPU would chase it off the new stage (a Raptor Boost into
+/// the pit, the freeze torture's "KO 119 frames after a switch"). Forget it so the AI picks a target on the new stage.
+unsafe fn cpu_forget(fp: *mut Fighter) {
+    (*fp).cpu.x60 = 0;
+    (*fp).cpu.x54.x = (*fp).cur_pos.x;
+    (*fp).cpu.x54.y = (*fp).cur_pos.y;
+    (*fp).cpu.x64.x = (*fp).cur_pos.x;
+    (*fp).cpu.x64.y = (*fp).cur_pos.y;
+}
+
+/// max(v, 0) without f32::max (the semantics lint bans it: NaN rules differ from the PPC fsel path)
+fn pos0(v: f32) -> f32 {
+    if v > 0.0 { v } else { 0.0 }
 }

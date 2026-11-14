@@ -8,7 +8,10 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #     switch unless it was hit or grabbed first after the switch (that one is a combat KO, counted, allowed; placed
 #     fighters are intangible for 60 frames);
 #   * 45 frames after each switch every fighter in play is inside the stage's box (|x| < 200, y > -5 below the main
-#     floor of every stage in the rotation, y < 180) and not in a KO;
+#     floor of every stage in the rotation, y < 180) and not in a KO; with the live hand-off a fighter that was beside
+#     or under the stage or on a ledge at the switch may still be below the floor (its kept recovery) or on a ledge;
+#   * a KO of a fighter that was recovering at a live hand-off is logged as "offstage KO after a live stage switch"
+#     (not a switch KO: its place relative to the stage and its way back were kept);
 #   * the states fighters were in at the switches (the coverage table).
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/switch_torture.sh
 #   OUT=dir; FRAMES (default 14400); FIGHTS (start fights, default "1 2 3c 5"; a trailing c = co-op);
@@ -32,7 +35,7 @@ for f in $fights; do
   coop=(); case "$f" in *c) coop=(MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3); f=${f%c} ;; esac
   if [ "$depth" = 0 ]; then mode=(golden --out "$out/$tag.csv"); else mode=(synctest --depth "$depth" --timeout 3000); fi
   env "${coop[@]}" MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_TEST_P1CPU=1 \
-    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="torture" MELEE_ENVOY_SWITCH_OLD="$old" \
+    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="${TORTURE_KNOBS:-torture}" MELEE_ENVOY_SWITCH_OLD="$old" \
     MELEE_PAD_SCRIPT="$here/drives_pad.txt" MELEE_WINDOW_TITLE="switch torture $tag d$depth (${BRANCH_TAG:-envoy})" \
     timeout -k 15 $((tmo + 30)) "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" --scenario pad_falcon_fox_fd \
     --depth "$depth" --frames "$frames" --timeout "$tmo" >"$out/$tag.log" 2>&1
@@ -72,7 +75,13 @@ bad = []
 for (w, i, s), d in sorted(snap.items()):
     if w != 'after' or 'motion' not in d: continue
     x, y, m = d.get('x10', 0) / 10, d.get('y10', 0) / 10, d['motion']
-    if 0 <= m <= 10 or abs(x) >= 200 or y <= -5 or y >= 180:
+    # live hand-off (Fights 3): a fighter beside / under the stage or on a ledge at the switch keeps that place
+    # (same offset from the ledge), so below the floor or on a ledge 45 frames later is its recovery, not misplacement
+    a = snap.get(('at', i, s), {})
+    ax, ay, am = a.get('x10', 0) / 10, a.get('y10', 0) / 10, a.get('motion', -1)
+    # a fighter flying in knockback near the edge keeps its launch (no reset), so it may carry past the edge too
+    was_off = abs(ax) > 90 or ay < -5 or 252 <= am <= 263 or (75 <= am <= 91 and abs(ax) > 55)
+    if 0 <= m <= 10 or abs(x) >= 200 or y >= 180 or (y <= -5 and not was_off and not 252 <= m <= 263):
         bad.append(f'switch {i} slot {s}: motion {m} at ({x:.1f},{y:.1f})')
 # every run is a synctest (depth 0 too): no result line means it never finished (a stall, a crash, the timeout)
 ok = ' 0 MISMATCHES' in sync

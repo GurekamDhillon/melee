@@ -21,8 +21,9 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   8. live: the torture knob's stage switches as live transitions: the rift runs, the hand-off lands, the fight never
 #      freezes, no KO caused by a switch; every fighter mapped (no spawn-point reset, no push past the mapped point beyond a
 #      12-unit step up, or an 80-unit slide out of the new body), with the probe knob forcing a ledge-hang and an under-stage case;
-#   9. crowd: fight 2 (the 1v3 crowd): every foe hit carries the crowd knockback (x1350 at three foes), no player hit.
-#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd";
+#   9. crowd: fight 2 (the 1v3 crowd): every foe hit carries the crowd knockback (x1350 at three foes), no player hit;
+#  10. shiftko: the torture knob's freeze switches on the gauntlet: no KO and no stock lost because of a switch.
+#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/items_check.sh   (EXE=path; ONLY="lint pad cpu room boss coop petey gauntlet live crowd shiftko";
 #   OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -31,7 +32,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "items_check: GW_ISO_VANILLA not set"; exit 2; }
 . "$here/exe_check.sh"; exe_pick items_check
 out="${OUT:-${TEMP:-/tmp}/items_check}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint pad cpu room boss coop petey gauntlet live crowd shiftko}"
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 cargo_locked() {
@@ -136,6 +137,7 @@ for d in $depths; do
     seen live "$d" "case hang" || miss="$miss (no ledge-hang mapping)"
     seen live "$d" "case under" || miss="$miss (no under-stage mapping)"
     seen live "$d" "envoy: KO right after a stage switch" && miss="$miss (a switch caused a KO)"
+    seen live "$d" "stock lost soon after a stage switch" && miss="$miss (a stock lost to a switch)"
     seen live "$d" "freeze kind 2" && miss="$miss (a freeze switch ran)"
     check 8 live "$d" "$line" "$miss"
   fi
@@ -145,6 +147,15 @@ for d in $depths; do
     seen crowd "$d" "envoy: crowd knockback, slot" || miss="$miss (no crowd knockback hit)"
     grep -aqE "envoy: crowd knockback, slot\*10000 \+ x1000 0?[0-9]{4}$" "$(L crowd "$d")" && miss="$miss (a player got it)"
     check 9 crowd "$d" "$line" "$miss"
+  fi
+  if on shiftko; then
+    # regression (candidate9 torture): the freeze switch on the gauntlet re-placed a CPU whose AI still chased its old
+    # target spot and it flew off; the CPU now forgets its target at every re-place, so no switch costs a stock
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run shiftko "$d" "torture,freezeshift,*4000" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen shiftko "$d" "stage switch: safe place" || miss="$miss (no freeze switch ran)"
+    seen shiftko "$d" "envoy: KO right after a stage switch" && miss="$miss (a switch caused a KO)"
+    seen shiftko "$d" "stock lost soon after a stage switch" && miss="$miss (a stock lost to a switch)"
+    check 10 shiftko "$d" "$line" "$miss"
   fi
 done
 rm -rf "$tmods"

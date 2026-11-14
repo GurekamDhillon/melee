@@ -613,6 +613,9 @@ struct St {
     sw_ko: [i32; 4],
     /// Whether the slot was hit or grabbed since the last switch.
     sw_hit: [i32; 4],
+    /// Whether the slot was beside or under the stage at the switch (a live hand-off keeps it there: a fall after it
+    /// is that recovery's, not the switch's).
+    sw_off: [i32; 4],
     // ---- envoy items (items.rs; envoy-items-design.md)
     /// The stock limit (heart containers; `pool` is the stocks held now).
     lim: i32,
@@ -3952,7 +3955,7 @@ unsafe fn moments_frame() {
         let n = if (0..nh() + ncpu()).contains(&s) { gd_player_stocks(s).max(0) } else { 0 };
         let i = s as usize;
         if n < S.stocks_each[i] {
-            if S.stage_switches > 0 && S.lv_on != 1 && S.stage_clock < SWITCH_KO_WINDOW && S.sw_hit[i] == 0 {
+            if S.stage_switches > 0 && S.lv_on != 1 && S.stage_clock < SWITCH_KO_WINDOW && S.sw_hit[i] == 0 && !(S.sw_off[i] != 0 && S.lv_on != 0) {
                 log(b"envoy: stock lost soon after a stage switch (see the KO lines), slot*10000 + frames since\0", s * 10000 + S.stage_clock);
             }
             if is_foe(s) && s != S.boss_slot {
@@ -4800,6 +4803,13 @@ unsafe fn switch_snapshot(what: &[u8]) {
             S.sw_as[s as usize] = if h != 0 { gd_fighter_get_action_state(h) + 1 } else { 0 };
             S.sw_ko[s as usize] = 0;
             S.sw_hit[s as usize] = 0;
+            S.sw_off[s as usize] = 0;
+            if h != 0 {
+                let li = STAGES.iter().position(|&k| k == gd_stage_grkind()).unwrap_or(0);
+                let (x, y) = (gd_fighter_get_pos_x(h), gd_fighter_get_pos_y(h));
+                let m = gd_fighter_get_action_state(h);
+                S.sw_off[s as usize] = (x.abs() > LEDGE_X[li] + 2.0 || y < -5.0 || (252..=263).contains(&m)) as i32;
+            }
         }
         if h == 0 || S.test_torture == 0 {
             continue;
@@ -4827,7 +4837,9 @@ unsafe fn switch_watch() {
         }
         if (0..=10).contains(&m) && was > 13 {
             S.sw_ko[i] = 1;
-            if S.sw_hit[i] != 0 {
+            if S.sw_off[i] != 0 && S.lv_on != 0 {
+                log(b"envoy: offstage KO after a live stage switch (it was recovering at the hand-off), slot*10000 + frames since ", s * 10000 + S.stage_clock);
+            } else if S.sw_hit[i] != 0 {
                 log(b"envoy: combat KO after a stage switch (hit first), slot*10000 + frames since\0", s * 10000 + S.stage_clock);
             } else {
                 log(b"envoy: KO right after a stage switch, slot*10000 + frames since\0", s * 10000 + S.stage_clock);

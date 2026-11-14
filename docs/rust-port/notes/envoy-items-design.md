@@ -595,6 +595,17 @@ colour per role in three phases (equipped, charging, ready). Envoy's version, in
   per-group colour multiply + add in the fighter material path, fed from the view (`V_AURA` / `V_PROC_AGE` plus a
   group mask), deterministic (presentation only, never read by the sim). Estimated well under 0.1 ms a frame.
 
+### 11.13 Effects, check notes (Nov 14)
+
+- The vfx lane (port/envoy-vfx, notes/envoy-vfx.md) is merged: orbs (each family its own shader look; shattered as
+  faint ice), orb shatter (impact + ice) and block (hex dome + pop), and the devil / angel doors are vfx quads; the
+  other slice 2 shapes go through lib.rs's shim onto the same quads. Big Bang's shake is a screen-space shockwave.
+- Scripted flows (camp_run, ready_checks) carry the test knob `autotake` now: rooms wait for the player, and the pad
+  scripts do not walk to pedestals or pick rooms.
+- items_check row 15: crouch cancel, powershield and jab hits depend on what the CPUs do and are reported, not
+  required (a pad script forcing each is a follow-up); Bloodlust and the laser hit are required/seen.
+- The pause Words glossary is off the L / R cycle (up on the tab row opens it), so the four main pages keep their order.
+
 ## Open questions for the owner
 
 1. Decided (owner, 2026-11-13): devil deals cost stock slots; Isaac-style stock limit + campfire refills.

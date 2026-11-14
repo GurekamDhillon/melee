@@ -1,4 +1,7 @@
 #!/bin/bash
+# RETIRED by the first Envoy item slice (docs/rust-port/notes/envoy-items-design.md 8): drives, keystones, Heat and
+# KO drops are cut, so this check's expectations no longer hold. The item slice's check runs instead.
+exec bash "$(dirname "${BASH_SOURCE[0]}")/items_check.sh" "$@"
 # Envoy V2 (the full drive core, envoy-core-v2.md 6): drives charge, fire, launch, drop and level under rollback,
 # deterministically, solo and in local co-op.
 #   0. envoy_data's lint (the full-pool rules on) and its tests; the balancing harness's bands (sim.py);

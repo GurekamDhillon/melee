@@ -293,7 +293,7 @@ pub const FX_BEAM: u8 = 5;
 pub const FX_LINE: u8 = 6;
 
 /// Per-present cap (budget: 8 orbiters + 2, a drop, a handful of effects).
-pub const MAX_INST: usize = 96;
+pub const MAX_INST: usize = 320;
 
 static BUILD: Mutex<Vec<Inst>> = Mutex::new(Vec::new());
 static SHOW: Mutex<Vec<Inst>> = Mutex::new(Vec::new());

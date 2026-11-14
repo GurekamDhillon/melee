@@ -18,7 +18,7 @@ use melee_fighter::tu::player as pl;
 use melee_types::*;
 
 pub const PLAN_WORDS: usize = 44;
-pub const VIEW_WORDS: usize = 768;
+pub const VIEW_WORDS: usize = 1536;
 
 // plan layout (i32 words)
 pub const P_ACTIVE: usize = 0;
@@ -65,6 +65,20 @@ pub static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
 /// is armed, so retail play never writes it.
 pub static mut EVENTS: [u32; 4] = [0; 4];
 pub const EVENT_LCANCEL: u32 = 1;
+/// Envoy items: the fighter left its jump squat as a short hop (bit 1) or a full hop (bit 2).
+pub const EVENT_SHORTHOP: u32 = 2;
+pub const EVENT_FULLHOP: u32 = 4;
+
+/// The jump site (`ftCo_KneeBend_Anim`, before `ftCo_Jump_Enter`): installed in `melee_fighter::hooks::ENVOY_JUMP`.
+pub fn on_jump(f: &Fighter, short_hop: bool) {
+    if armed() == 0 || f.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = f.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= if short_hop { EVENT_SHORTHOP } else { EVENT_FULLHOP } };
+    }
+}
 
 /// The L-cancel site (`ftCo_LandingAir_EnterWithLag`, the branch where `x67F < xE4` sets the skill mode): installed
 /// in `melee_fighter::hooks::ENVOY_LCANCEL`. A sub-fighter (the second Ice Climber) is ignored.
@@ -159,7 +173,7 @@ pub static mut COOP_JOIN: i32 = 0;
 pub const REC_WORDS: usize = 48;
 pub const REC_AT: usize = 704;
 pub const REC_MAGIC: i32 = 0x454E_5652; // "ENVR"
-pub const REC_VERSION: i32 = 8; // 8: the forked road, bank tokens, pins; 7: sessions (the bank in R_LOOP); 6: endless loops; 5 (V3) still read; older dropped
+pub const REC_VERSION: i32 = 9; // 9: envoy items; 8: the forked road, bank tokens, pins; 7: sessions (the bank in R_LOOP); 6: endless loops; 5 (V3) still read; older dropped
 /// The record the host holds (loaded from disk, updated from the view); `SAVED_LEN` 0 = no run saved.
 pub static mut SAVED: [i32; REC_WORDS] = [0; REC_WORDS];
 pub static mut SAVED_LEN: i32 = 0;
@@ -441,6 +455,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     crate::tu::tag_swap::reset();
     EVENTS = [0; 4];
     melee_fighter::hooks::ENVOY_LCANCEL = Some(on_lcancel);
+    melee_fighter::hooks::ENVOY_JUMP = Some(on_jump);
     let coop = PLAN[P_COOP] == 1;
     let css = |i: usize| -> i32 { let p = &d.players[i]; if p.slot_type != Gm_PKind_NA as u8 { p.ckind as i32 } else { -1 } };
     // solo: P1's pick is the main, P2's the partner; co-op: P1 + P3 are player 1's pair, P2 + P4 player 2's

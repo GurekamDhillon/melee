@@ -25,8 +25,11 @@
 #![allow(static_mut_refs)]
 
 use envoy_data::heat;
+use envoy_data::items::*;
 use envoy_data::view::*;
 use envoy_data::*;
+
+mod items;
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -42,6 +45,7 @@ extern "C" {
     fn gd_fighter_get_pos_x(h: u32) -> f32;
     fn gd_fighter_get_pos_y(h: u32) -> f32;
     fn gd_fighter_get_action_state(h: u32) -> i32;
+    fn gd_fighter_get_facing(h: u32) -> f32;
     fn gd_fighter_read(h: u32, out: *mut u32);
     fn gd_player_present(slot: i32) -> i32;
     fn gd_player_stocks(slot: i32) -> i32;
@@ -111,7 +115,8 @@ const QT_PAUSE: i32 = 2;
 /// Tap vs hold (Assist Strike): Tag released before QT_HOLD frames is a tap (the partner strikes, ASSIST_COST Heat);
 /// held QT_HOLD frames is the swap (free, the cooldown). A press within the after-damage window keeps it (Handoff).
 const QT_HOLD: i32 = 15;
-const ASSIST_COST: i64 = 30;
+/// Items: the Heat meter is gone from the HUD, so the strike costs nothing (it is still one strike at a time).
+const ASSIST_COST: i64 = 0;
 /// The stick (pad units, about +-80) past which a strike goes up or down instead of forward.
 const ASSIST_STICK: i32 = 40;
 const TAG_BTN_Y: i32 = 0;
@@ -539,7 +544,44 @@ struct St {
     sw_ko: [i32; 4],
     /// Whether the slot was hit or grabbed since the last switch.
     sw_hit: [i32; 4],
+    // ---- envoy items (items.rs; envoy-items-design.md)
+    /// The stock limit (heart containers; `pool` is the stocks held now).
+    lim: i32,
+    /// Copies of each item id per player.
+    inv: [[i32; ITEM_IDS]; NP],
+    /// The projectile pool: kind, owner player, x100, y100, age, life, a, b (view layout); velocity x100; the slots
+    /// each one already struck (bits); its look flags.
+    proj: [[i32; PJ_W]; PROJ],
+    pv: [[i32; 2]; PROJ],
+    pj_hit: [i32; PROJ],
+    pf: [i32; PROJ],
+    /// One-shot visuals for the UI (frame, item, owner, x100, y100, size x100, flags) and the count written.
+    burst: [[i32; BU_W]; BURSTS],
+    burst_n: i32,
+    /// Per player: this nair / smash already fired its item (once per move); the attack watched for a whiff (state
+    /// + 1), whether it connected, where it began (x100, y100, facing); a short hop waiting for its apex and its age;
+    /// the action state last frame.
+    it_nair: [i32; NP],
+    it_smash: [i32; NP],
+    it_atk: [i32; NP],
+    it_atk_hit: [i32; NP],
+    it_atk_at: [[i32; 3]; NP],
+    it_hop: [i32; NP],
+    it_hop_t: [i32; NP],
+    it_prev: [i32; NP],
+    /// Moon Drops: the frame each foe slot can be nicked again, per player.
+    moon_cd: [[i32; 4]; NP],
+    /// Pedestals out (PED_*), frames left before they fly in, opened this match (1).
+    ped_kind: i32,
+    ped_left: i32,
+    ped_done: i32,
+    /// The campfire: the play frame it burned (0 none) and the stocks it gave back.
+    camp_at: i32,
+    camp_gain: i32,
 }
+
+/// The engine's event bits this stepped frame (read once in tech_frame, used by the items the same frame).
+static mut EVB: [u32; NP] = [0; NP];
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
 #[repr(C)]
@@ -609,6 +651,9 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_EARNED] = ((HH.earned[0] / COIN_UNIT) as i32).clamp(0, 0xFFFF) | ((HH.earned[1] / COIN_UNIT) as i32).clamp(0, 0x7FFF) << 16;
     // v8: the loop | the stop done << 8 | the road << 9 | the first 5 bank tokens << 12
     r[R_LOOP] = lp().clamp(1, 0xFF) | ((S.stop_done != 0) as i32) << 8 | S.road.clamp(0, 7) << 9 | (S.bank_q & 0xF_FFFF) << 12;
+    // v9: the item copies replace the drive words, the stock limit the keystones; the digest is the item table's
+    items::rec_put(&mut r);
+    r[R_POOL_DIGEST] = (POOL_DIGEST ^ ITEMS_DIGEST) as i32;
     r[REC_WORDS - 1] = rec_digest(&r);
     r
 }
@@ -622,7 +667,11 @@ unsafe fn take_arm() {
     let mut r = [0i32; REC_WORDS];
     let n = gd_envoy_record(r.as_mut_ptr(), REC_WORDS as u32);
     let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && (5..=REC_VERSION).contains(&r[1]) && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[R_FIGHT]);
-    if ok && r[R_POOL_DIGEST] != POOL_DIGEST as i32 {
+    if ok && r[1] < 9 {
+        // a drive-era run: its drives have no items to become; it is dropped (a new run)
+        log(b"envoy: saved run is from the drive rules (record version), dropped\0", r[1]);
+        S.state = RUN_NONE;
+    } else if ok && r[R_POOL_DIGEST] != (POOL_DIGEST ^ ITEMS_DIGEST) as i32 {
         log(b"envoy: saved run is from another drive pool, dropped\0", r[R_POOL_DIGEST]);
         S.state = RUN_NONE;
     } else if ok {
@@ -683,6 +732,18 @@ unsafe fn take_arm() {
         S.act_id = [r[R_ACTIVE] & 0xFF, r[R_ACTIVE] >> 8 & 0xFF];
         HH.pips = [(r[R_PIPS] & 0xFF) as i64 * PIP_UNIT, (r[R_PIPS] >> 8 & 0xFF) as i64 * PIP_UNIT];
         HH.earned = [(r[R_EARNED] & 0xFFFF) as i64 * COIN_UNIT, (r[R_EARNED] >> 16 & 0x7FFF) as i64 * COIN_UNIT];
+        // items: no drives, keystones or banked picks survive; the item copies and the stock limit come back
+        S.drives = [[0; SLOTS]; SETS];
+        S.levels = [[0; SLOTS]; SETS];
+        S.pins = [0; SETS];
+        S.keys = [[0; KEYSTONES]; NP];
+        S.bank = 0;
+        S.bank_q = 0;
+        S.act_id = [0; NP];
+        HH.pips = [0; NP];
+        items::rec_get(&r);
+        S.pool = S.pool.clamp(1, S.lim);
+        log(b"envoy: continued with stock limit\0", S.lim);
         log(b"envoy: continued on road ", S.road);
         log(b"envoy: armed, run continued at loop*10 + fight\0", S.lp * 10 + S.fight + 1);
     } else {
@@ -1142,19 +1203,23 @@ unsafe fn test_drives() {
                     continue;
                 }
                 let (key, lv) = item.split_once(':').unwrap_or((item, "1"));
-                let lv = lv.trim().parse::<i32>().unwrap_or(1).clamp(1, lvl_cap());
-                if let Some(id) = by_key(key.trim()).filter(|&i| POOL[i].kind == K_DRIVE) {
-                    for _ in 0..lv {
-                        gain(p, f, id, G_PICK);
+                let n = lv.trim().parse::<i32>().unwrap_or(1);
+                // items (`key[:copies]`), the stock limit (`lim:N`) and the stocks held (`pool:N`); drive keys are
+                // no longer worn by the players (the drives are cut)
+                match key.trim() {
+                    "lim" => {
+                        S.lim = n.clamp(1, items::LIM_CAP);
+                        S.pool = S.pool.min(S.lim);
+                    }
+                    "pool" => S.pool = n.clamp(1, S.lim.max(1)),
+                    k => {
+                        let _ = f;
+                        items::test_item(p, k, n);
                     }
                 }
             }
         }
-        for key in ks.split(',') {
-            if let Some(id) = by_key(key.trim()).filter(|&i| POOL[i].kind == K_KEYSTONE) {
-                take_keystone(p, id);
-            }
-        }
+        let _ = ks; // keystones are cut with the drives
     }
     // keep only the slots the test row uses
     let used = (0..SETS).map(|s| S.drives[s].iter().rposition(|&d| d > 0).map_or(0, |k| k + 1)).max().unwrap_or(0) as i32;
@@ -1280,6 +1345,11 @@ unsafe fn on_new_match(seq: i32) {
         S.fight = gd_envoy_start_fight().clamp(0, FIGHTS as i32 - 1);
         S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
         S.pool = START_POOL[(S.nh == 2) as usize];
+        // items: the stock limit starts where the stocks do; no item held
+        S.lim = items::LIM_START[(S.nh == 2) as usize];
+        S.inv = [[0; ITEM_IDS]; NP];
+        S.burst = [[0; BU_W]; BURSTS];
+        S.burst_n = 0;
         S.bosses = 0;
         S.lp = test_loop();
         if S.lp > 1 {
@@ -1288,9 +1358,6 @@ unsafe fn on_new_match(seq: i32) {
         // a test run begun past fight 1 has the pick of the fight before it banked
         S.bank = 0;
         S.bank_q = 0;
-        if S.fight > 0 {
-            bank_push(RK_PICK);
-        }
         S.bank_n = 0;
         S.bank_i = 0;
         S.drives = [[0; SLOTS]; SETS];
@@ -1317,11 +1384,8 @@ unsafe fn on_new_match(seq: i32) {
         S.last_pick = [-1; NP];
         S.attrs_done = 0;
         HH = core::mem::zeroed();
-        // Volley is given at the run's start with its pips full (V3 12.6)
-        for p in 0..nh() as usize {
-            S.act_id[p] = ACTIVE_VOLLEY;
-            HH.pips[p] = VOLLEY_PIPS * PIP_UNIT;
-        }
+        // items: Volley is cut with the drives (no active, no pips)
+        S.act_id = [0; NP];
         log(b"envoy: run start, players\0", S.nh);
         if S.shared != 0 {
             log(b"envoy: drives shared by the pair\0", 1);
@@ -1349,7 +1413,8 @@ unsafe fn on_new_match(seq: i32) {
     S.frames = 0;
     S.play = 0;
     S.attrs_done = 0;
-    let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
+    // items: no keystone picks (cut with the drives)
+    let keys_short = false;
     // sessions: the stop (banked picks, a keystone if due, the shop) opens only a session's first fight
     let sstart = SESSION_START[S.fight.clamp(0, FIGHTS as i32 - 1) as usize];
     // the stop already ran at the end of the last session (in that match): no picks, no shop here
@@ -1456,12 +1521,11 @@ unsafe fn on_new_match(seq: i32) {
     S.rec_n = 0;
     S.drop = [[[0; 4]; DROPS]; NP];
     let f = sched();
-    S.drops_due = match f.kind {
-        FK_ELITE | FK_BOSS => 2,
-        FK_PACK => (ncpu() / 2).max(1),
-        _ => 1,
-    } + S.drop_all * 8;
+    // items: no drops on KOs (items come only from the item room, the shop and the boss)
+    let _ = f;
+    S.drops_due = 0;
     S.drops_made = 0;
+    items::reset_match();
     S.en_h = [0; EN_MAX];
     S.en_dmg = [0; EN_MAX];
     S.en_rcv = [0; EN_MAX];
@@ -1621,7 +1685,8 @@ unsafe fn roll_offers(p: usize) {
 
 /// The shop's extra stock: coins for one more stock in the shared pool (and on the players in the held match).
 unsafe fn buy_stock() -> bool {
-    if !spend(stock_price()) {
+    // items: a refill, up to the stock limit (never past it)
+    if S.pool >= S.lim || !spend(stock_price()) {
         return false;
     }
     S.pool += 1;
@@ -1659,6 +1724,22 @@ unsafe fn open_reward(kind: i32) {
                 open_shop(p);
             } else {
                 roll_offers(p);
+            }
+        }
+    }
+    // test knob `buystock` also buys each player's first shop item (coins given if short): the scripted item check
+    if kind == RW_SHOP && S.test_buy != 0 {
+        for p in 0..nh() as usize {
+            let id = S.shop_off[p][0];
+            if id > 0 {
+                let c = price_of(id) as i64 * COIN_UNIT;
+                if HH.purse < c {
+                    HH.purse = c;
+                }
+                spend(price_of(id));
+                items::give(p, id, G_SHOP);
+                items::log_item(b"shop bought", id, p as i32);
+                S.shop_off[p][0] = -1;
             }
         }
     }
@@ -1890,24 +1971,23 @@ unsafe fn timeout_pick(p: usize) {
 
 // ---- the shop (V3 7.3, 12.9): a screen at the start of fights 2, 4 and 5
 
+/// An item's shop price (items: by quality, +10% a loop).
 unsafe fn price_of(id: i32) -> i32 {
-    if (0..POOL_LEN as i32).contains(&id) { per_loop(PRICE_TIER[POOL[id as usize].tier.min(2) as usize], LOOP_PRICE, lx()) } else { 0 }
+    if id > 0 { per_loop(item_price(id), LOOP_PRICE, lx()) } else { 0 }
 }
 
+/// The shop's three items for player `p`: the shop pool first, then the item pool (the slice's shop pool is small);
+/// rerolls give new ones.
 unsafe fn roll_shop(p: usize) {
-    let mut h = mix(S.seed as u32 ^ 0x5A0B_0000 ^ fkey() << 4 ^ (S.rerolls as u32) << 12 ^ (p as u32) << 24);
     S.shop_off[p] = [-1; 3];
-    let mut n = 0;
-    let mut tries = 0;
-    while n < 3 && tries < 400 {
-        tries += 1;
-        let c = (h % POOL_LEN as u32) as usize;
-        h = mix(h.wrapping_add(0x6D2B_79F5));
-        if POOL[c].kind != K_DRIVE || S.shop_off[p][..n].contains(&(c as i32)) || !offer_ok(p, c, false) {
-            continue;
+    let salt = 0x5A0 + S.rerolls as u32 * 7 + S.picks as u32 * 131;
+    for n in 0..3 {
+        let taken = S.shop_off[p];
+        let mut id = items::roll(p, PL_SHOP, salt + n as u32, &taken);
+        if id == 0 {
+            id = items::roll(p, PL_ITEM, salt + 0x40 + n as u32, &taken);
         }
-        S.shop_off[p][n] = c as i32;
-        n += 1;
+        S.shop_off[p][n] = if id > 0 { id } else { -1 };
     }
 }
 
@@ -1928,7 +2008,8 @@ unsafe fn reroll_cost() -> i32 {
 
 /// Restoring a stock: the base price to loop 5, then +25 a loop.
 unsafe fn stock_price() -> i32 {
-    PRICE_STOCK + 25 * (lp() - 5).max(0)
+    let _ = PRICE_STOCK;
+    items::STOCK_REFILL + 25 * (lp() - 5).max(0)
 }
 
 unsafe fn spend(c: i32) -> bool {
@@ -1950,7 +2031,74 @@ unsafe fn level_price(set: usize, k: usize) -> i32 {
     }
 }
 
+/// The item shop (items slice): up / down walk the three items, a stock refill, a reroll and Leave; A buys. Items
+/// are bought outright (no slots, no level-ups, no reorder); the purse is the party's.
 unsafe fn shop_frame() {
+    for p in 0..nh() as usize {
+        if S.rw_done[p] != 0 {
+            continue;
+        }
+        if S.timer <= 0 {
+            S.rw_done[p] = 1;
+            continue;
+        }
+        let pad = gd_pad_pressed(p as i32);
+        if pad & (DPAD_UP | STICK_UP) != 0 {
+            S.shop_cursor[p] = (S.shop_cursor[p] + SHOP_ROWS - 1) % SHOP_ROWS;
+        }
+        if pad & (DPAD_DOWN | STICK_DOWN) != 0 {
+            S.shop_cursor[p] = (S.shop_cursor[p] + 1) % SHOP_ROWS;
+        }
+        // test knob `buystock`: the first item row is bought too when the purse allows (the scripted shop check)
+        if pad & BTN_A == 0 {
+            continue;
+        }
+        let row = S.shop_cursor[p];
+        S.shop_msg[p] = match row {
+            0..=2 => {
+                let id = S.shop_off[p][row as usize];
+                if id <= 0 {
+                    SM_CANT
+                } else if spend(price_of(id)) {
+                    items::give(p, id, G_SHOP);
+                    items::log_item(b"shop bought", id, p as i32);
+                    S.shop_off[p][row as usize] = -1;
+                    SM_BOUGHT
+                } else {
+                    SM_POOR
+                }
+            }
+            SHOP_STOCK => {
+                if S.pool >= S.lim {
+                    SM_CANT
+                } else if buy_stock() {
+                    SM_STOCK
+                } else {
+                    SM_POOR
+                }
+            }
+            SHOP_REROLL => {
+                if spend(reroll_cost()) {
+                    S.shop_rerolls += 1;
+                    S.rerolls += 1;
+                    roll_shop(p);
+                    log(b"envoy: shop reroll, player\0", p as i32);
+                    SM_REROLLED
+                } else {
+                    SM_POOR
+                }
+            }
+            _ => {
+                S.rw_done[p] = 1;
+                log(b"envoy: shop left, coins\0", coins());
+                SM_NONE
+            }
+        };
+    }
+}
+
+#[allow(dead_code)]
+unsafe fn shop_frame_drives() {
     for p in 0..nh() as usize {
         if S.rw_done[p] != 0 {
             continue;
@@ -3246,6 +3394,7 @@ unsafe fn records_frame() {
                 deal(p, v, dmg, WORD_COEF[0], tags, -1, CM_NONE, 0, 0);
             } else {
                 deal(p, v, dmg, 1000, tags, ast, CM_MOVE, 0, 0);
+                items::on_hit(p, v, tags, ast);
             }
         } else {
             // self, friendly, a hazard on a foe: only the sim's own percent moves
@@ -3287,6 +3436,7 @@ unsafe fn finale_probe() {
 unsafe fn tech_frame() {
     for p in 0..nh() as usize {
         let ev_bits = gd_envoy_events(p as i32);
+        EVB[p] = ev_bits;
         for m in S.marks[p].iter_mut() {
             if *m > 0 {
                 *m -= 1;
@@ -3321,6 +3471,7 @@ unsafe fn tech_frame() {
                 S.marks[p][1] = MARK_FRAMES[1];
                 ev(EV_SPARK, p as i32, MARK_WAVEDASH);
                 log(b"envoy: technique wavedash, player\0", p as i32);
+                items::on_wavedash(p);
             }
             if (AS_TECH.0..=AS_TECH.1).contains(&st) {
                 S.marks[p][2] = MARK_FRAMES[2];
@@ -3365,7 +3516,8 @@ unsafe fn pay_of(s: i32, last: bool) -> i32 {
 unsafe fn cash_out(p: usize, s: i32, pay: i32, finale: bool) {
     let h = HH.heat[p];
     let pay = if finale { pay * 3 / 2 } else { pay };
-    let c = heat::cash(h, pay);
+    // items: a KO pays flat coins (pay / 100: a fighter 10, a minion 5, an elite 15), no longer scaled by Heat
+    let c = pay as i64 / 100 * COIN_UNIT;
     let coins_before = coins();
     let pips_before = HH.pips[p];
     HH.purse += c;
@@ -3379,7 +3531,8 @@ unsafe fn cash_out(p: usize, s: i32, pay: i32, finale: bool) {
     log(b"envoy: cash-out, heat\0", heat::milli(h) / 1000);
     log(b"envoy: cash-out, coins paid\0", paid);
     // the flare: Heat / 15 percent to every other foe in play, no launch; it feeds nothing
-    let fl = heat::flare(h, pay);
+    // items: the cash-out flare (Heat / 15 percent on the other foes) is cut with the Heat rewards
+    let fl = 0;
     if fl > 0 {
         S.fx_mode = FX_FLARE;
         for t in 0..4 {
@@ -3424,12 +3577,8 @@ unsafe fn foe_ko(s: i32, last: bool) {
     S.foe_m[i] = 0;
     S.last_off[i] = -9999;
     S.last_smash[i] = 0;
-    if S.drops_made < S.drops_due {
-        S.drops_made += 1;
-        for q in 0..nh() as usize {
-            roll_drop(q);
-        }
-    }
+    // items: no KO drops; Coin Magnet pays
+    items::on_ko(s);
 }
 
 /// Per unfrozen live frame: the stock edges (KOs dealt and cash-outs, stocks lost, the shared pool), the boss's
@@ -3623,6 +3772,12 @@ unsafe fn drop_frame() {
 }
 
 unsafe fn take_drop(p: usize, k: usize, how: i32) {
+    // items: the floor points hold pedestals now (an item id, not a drive)
+    items::ped_take(p, k, how);
+}
+
+#[allow(dead_code)]
+unsafe fn take_drop_drive(p: usize, k: usize, how: i32) {
     let id = S.drop[p][k][1] as usize - 1;
     S.gain_from[p] = [S.drop[p][k][2], S.drop[p][k][3], p as i32];
     let a = S.active[p] as usize;
@@ -3855,7 +4010,7 @@ unsafe fn fly_frame() {
                 continue;
             };
             if S.collect == 1 {
-                log_drive(b"drop flies in", S.drop[p][k][1] as usize - 1, p as i32);
+                items::log_item(b"pedestal flies in", S.drop[p][k][1], p as i32);
             }
             let (tx, ty) = ((me.x * 100.0) as i32, (me.y * 100.0) as i32 + 800);
             S.drop[p][k][2] += (tx - S.drop[p][k][2]) / left;
@@ -3947,6 +4102,10 @@ unsafe fn fight_setup() {
     S.boss_hp_max = w[5] as i32;
     S.my_stocks = [0; NP];
     for p in 0..nh() as usize {
+        // items: the run's stocks are the truth (a test knob or a continued run may differ from the plan's)
+        if S.pool > 0 && gd_player_stocks(p as i32) != S.pool && gd_player_stocks(p as i32) > 0 {
+            gd_envoy_apply(p as i32, AP_STOCKS, S.pool);
+        }
         S.my_stocks[p] = gd_player_stocks(p as i32);
     }
     S.foe_stocks = 0;
@@ -4325,6 +4484,17 @@ unsafe fn outcome_frame() {
         if me > 0 {
             S.won_pool = me;
         }
+        // items: the item room / the boss drop: pedestals on the floor of the held match; the owners walk in
+        if S.ped_done == 0 && S.outcome == 0 {
+            S.ped_done = 1;
+            let k = items::ped_due();
+            if k != 0 {
+                items::ped_open(k);
+            }
+        }
+        if items::ped_wait() {
+            return;
+        }
         // the fly-in: every drop still on the floor flies to its owner's fighter in play, then is worn (the
         // match end is held for every fight: nothing a fight dropped is lost, nobody chases a drop)
         if drops_on_floor() && S.collect <= FLY_TIME {
@@ -4414,7 +4584,6 @@ unsafe fn room_frame() {
         for p in 0..nh() as usize {
             HH.earned[p] += COINS_WAVE as i64 * COIN_UNIT / nh() as i64;
             ev(EV_COINS, p as i32, COINS_WAVE);
-            roll_drop(p);
             if !old_scale() {
                 // rule 4: a cleared wave heals (never below 0%)
                 let h = gd_fighter_from_slot(p as i32);
@@ -4508,8 +4677,8 @@ fn session_last(f: i32) -> bool {
 /// due, the shop; then the match ends (reward_close) and the road shows the next session. `S.fight` is already the
 /// next session's first fight. If the freeze cannot start, the stop opens the next fight instead (the old way).
 unsafe fn begin_stop() {
-    let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
-    let due = if S.bank > 0 { RW_DRIVES } else if keys_short { RW_KEYS } else { 0 };
+    // items: the stop is the shop only (no banked picks, no keystones)
+    let due = 0;
     S.shop_due = (S.no_shop == 0) as i32;
     S.stop_done = 1;
     if due == 0 && S.shop_due == 0 {
@@ -4566,17 +4735,17 @@ unsafe fn fight_won() {
     }
     if S.fight as usize == FIGHTS - 1 {
         // endless loops: the run goes on at fight 1 of the next loop with everything kept, one more stock in the pool
-        bank_push(RK_PICK);
+        // items: no banked pick, no free stock past the limit; the campfire after the boss refills to the limit
         S.lp = (lp() + 1).min(LOOP_TOP);
         S.fight = 0;
-        if S.pool < POOL_CAP {
-            S.pool += 1;
-        }
+        let _ = POOL_CAP;
+        items::campfire();
         log(b"envoy: loop now\0", S.lp);
         log(b"envoy: RUN CLEAR, pool left ", me);
     } else {
         // the road's prize for this fight of its session (the Open road and the elite session: a drive pick)
-        bank_push(road_prize_at(S.road, S.fight));
+        // items: a won fight banks nothing (items come from the item room, the shop and the boss)
+        let _ = road_prize_at;
         S.fight += 1;
         log(b"envoy: fight won, next ", S.fight + 1);
     }
@@ -4912,6 +5081,8 @@ unsafe fn publish() {
     }
     let r = record();
     v[V_REC..V_REC + REC_WORDS].copy_from_slice(&r);
+    items::publish(v);
+    v[V_OPEN] = 0; // items: no drive slots
     gd_envoy_publish(v.as_ptr(), VIEW_WORDS as u32);
 }
 
@@ -4977,6 +5148,7 @@ extern "C" fn on_frame_end() {
                     tech_frame();
                     records_frame();
                     moments_frame();
+                    items::frame(EVB);
                     room_frame();
                     waves_frame();
                     drives_frame();
@@ -5015,6 +5187,7 @@ pub extern "C" fn gd_mod_loaded() {
         S.seed = 1;
         S.nh = 1;
         S.pool = START_POOL[0];
+        S.lim = items::LIM_START[0];
         S.pair = [[-1; 2]; NP];
         S.last_pick = [-1; NP];
         S.last_wearer = [-1; NP];

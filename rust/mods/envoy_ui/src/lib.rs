@@ -26,6 +26,7 @@ mod kit;
 mod party;
 mod picker;
 mod fx;
+mod items_ui;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -118,6 +119,8 @@ unsafe fn saved() -> Option<[i32; REC_WORDS]> {
 
 /// envoy_sim's view (envoy_data::view, 512 words) and the run record inside it.
 pub(crate) const VW: usize = VIEW_WORDS;
+/// The view read each present (a static: 6 KiB is too much for the mod's 16 KiB stack).
+static mut VBUF: [i32; VW] = [0; VW];
 
 /// "FOX: Ember 2, Frost" for one fighter's drives (`ids`: id + 1, 0 empty; `lv`: levels).
 fn drive_line(b: &mut Buf, who: &str, ids: &[i32], lv: &[i32]) {
@@ -178,7 +181,7 @@ unsafe fn camp_build() {
     label(root, "ENVOY CAMP");
     gd_ui_node_rect(root, 220.0, 165.0, 200.0, 0.0);
     let list = gd_ui_node(root, NODE_LIST, 2);
-    let mut v = [0i32; VW];
+    let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
     let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC;
     let ended = view && (v[V_STATE] == 2 || v[V_STATE] == 3);
     let has = saved().is_some();
@@ -338,7 +341,7 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
     e.rect(0.0, 0.0, vw, vh, 0x0B0B_12FF);
     let cx = vw * 0.5;
     e.text_ex(cx, 90.0, ROLE_TITLE, WHITE, ALIGN_CENTER, 0.0, "ENVOY");
-    let mut v = [0i32; VW];
+    let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
     let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC;
     let mut l1 = Buf::new();
     let mut l2 = Buf::new();
@@ -609,7 +612,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             } else if CAMP.open {
                 CAMP.age += 1;
                 e.space(SPACE_BAND, 1.0);
-                let mut v = [0i32; VW];
+                let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
                 let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && v[V_STATE] != 0;
                 let act = camp::frame(e, CAMP.after_fight, if view { Some(&v) } else { None }, saved(), st & ST_NO_BRAWL != 0);
                 if act == camp::DO_CLOSE {
@@ -646,7 +649,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             e.submit();
             return;
         }
-        let mut v = [0i32; VW];
+        let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
         // only an armed run has a HUD or a between-fights line: with the mods loaded and no run armed, VS is retail
         if gd_ui_envoy(v.as_mut_ptr(), VW as u32) != 0 || v[V_MAGIC] != VIEW_MAGIC || st & ST_ARMED == 0 {
             return;
@@ -669,6 +672,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             fx::heat_screen(&v);
             fx::moments(&v);
             sounds(&v);
+            items_ui::sounds(&v);
             let mut pv = [0i32; 12];
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
             // V3 HUD in band space (640 x 480; `ex` the extra width each side of the 4:3 band)
@@ -1204,9 +1208,14 @@ unsafe fn world(v: &[i32; VW]) {
             }
         }
     }
+    // items: the floor points hold the item room's and the boss's pedestals; every item effect
+    if v[V_ITEMS_ON] == 1 {
+        items_ui::pedestals(v);
+        items_ui::world(v);
+    }
     // the drops: the model in its glass shell with a beam in the owner's colour (co-op), else the family's
     let mut drops_seen = [0u32; 2];
-    for p in 0..humans {
+    for p in 0..if v[V_ITEMS_ON] == 1 { 0 } else { humans } {
         for k in 0..DROPS {
             let d = pb(p) + P_DROPS + k * 4;
             if v[d] != 1 || v[d + 1] <= 0 {

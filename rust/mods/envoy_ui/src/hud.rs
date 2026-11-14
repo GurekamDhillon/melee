@@ -192,10 +192,11 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
     e.text_ex(x + 37.0, y + 2.0, d(12), INK, ALIGN_LEFT, 0.0, name);
     // the big percent (the player's match slot is its port)
     big_pct(e, x, y + 18.0, p.min(3), 40, ALIGN_LEFT);
-    // the drive row
+    // the drive row (items: no item HUD in a fight, the items show on the fighter)
+    let items_on = v[V_ITEMS_ON] == 1;
     let rx = x + 104.0;
     let cy = y + 36.0;
-    for k in 0..SLOTS {
+    for k in 0..if items_on { 0 } else { SLOTS } {
         let cx = rx + k as f32 * 29.0;
         let id = ids[k];
         if (1..=POOL_LEN as i32).contains(&id) {
@@ -222,7 +223,7 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
         }
         let age = T - PICKUP_AT[p];
         let id = v[g + 1];
-        if PICKUP_AT[p] > 0 && (0..90).contains(&age) && (1..=POOL_LEN as i32).contains(&id) {
+        if !items_on && PICKUP_AT[p] > 0 && (0..90).contains(&age) && (1..=POOL_LEN as i32).contains(&id) {
             let name = POOL[id as usize - 1].name;
             let how = v[g + 4];
             let lv = v[g + 3];
@@ -266,7 +267,7 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
     }
     // Heat bar and the bench sticker (shrunk)
     let hy = y + 74.0;
-    if let Some(h) = heat_of(v, p) {
+    if let Some(h) = heat_of(v, p).filter(|_| !items_on) {
         // a tap with too little Heat shakes the bar (EV_HEAT_SHORT)
         let sh = tag_age(v, p, EV_HEAT_SHORT);
         let dx = if (0..12).contains(&sh) { 3.0 * sin(sh as f32 * 2.2) * (1.0 - sh as f32 / 12.0) } else { 0.0 };
@@ -352,7 +353,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         spr_c(e, kem_of(ks[i]), x + 15.0, 25.5, 19.0 / 34.0, WHITE);
         x += 34.0;
     }
-    if v[v3::V_HEAT_ON] == 1 {
+    if v[v3::V_HEAT_ON] == 1 || v[V_ITEMS_ON] == 1 {
         let mut s = Buf::new();
         s.i(v[v3::V_COINS]);
         // the coin 21 game px (was 14)
@@ -364,7 +365,8 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     }
     // the pool: white dots bottom centre, the last one coral on a burst
     let pool = v[V_POOL].max(0);
-    let total = if humans == 2 { 5 } else { 4 };
+    // items: the stock limit (heart containers): full icons for the stocks held, outlines for the empty slots
+    let total = if v[V_ITEMS_ON] == 1 && v[V_POOL_LIM] > 0 { v[V_POOL_LIM] } else if humans == 2 { 5 } else { 4 };
     let n = total.max(pool);
     // stocks 21 game px (were 14)
     let px = 320.0 - (n - 1) as f32 * 12.0;
@@ -450,6 +452,10 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         boss_bar(e, pv);
     }
     moments(e, v, ex);
+    if v[V_ITEMS_ON] == 1 {
+        crate::items_ui::flash(e, v);
+        crate::items_ui::banners(e, v);
+    }
     // sessions: the fight's banner over its first seconds ("Fight 2 - Pack", the loop and the stocks left)
     let pl = v[V_PLAY];
     if v[V_RW] == 0 && pl < 110 {

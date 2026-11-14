@@ -51,9 +51,17 @@ done
 for n in $(seq 2 "$last"); do
   grep -q "envoy: fight won, next $n" "$log" && ok "fight $((n - 1)) won" || bad "fight $((n - 1)) not won"
 done
-# the picks between fights: a card was taken after every won fight
-picks=$(grep -c "envoy: card taken" "$log")
-[ "$picks" -ge $((last - 1)) ] && ok "$picks picks taken between fights" || bad "only $picks picks taken"
+# items (envoy-items-design.md 8): the item room after the session's last fight (fight 2) gives an item, the shop opens;
+# with MAX_FIGHT >= 5 the boss (fight 4) drops a choice of two and the campfire refills the stocks
+if [ "$last" -ge 3 ]; then
+  grep -q "envoy: item room open" "$log" && ok "the item room opened" || bad "no item room"
+  grep -q "envoy: item taken" "$log" && ok "$(grep -c "envoy: item taken" "$log") item(s) taken" || bad "no item taken"
+  grep -q "envoy: shop open" "$log" && ok "the shop opened" || bad "no shop"
+fi
+if [ "$last" -ge 5 ]; then
+  grep -q "envoy: boss drop, choose one" "$log" && ok "the boss dropped a choice of two" || bad "no boss drop"
+  grep -q "envoy: campfire, stocks refilled to" "$log" && ok "$(grep -m1 -o "campfire, stocks refilled to.*" "$log")" || bad "no campfire"
+fi
 # every VS match up to the third rewrite is a rewritten one (a plain VS match would be a VS with no R before it)
 prefix=${seq%%R$last*}
 if [ "$prefix" != "$seq" ]; then

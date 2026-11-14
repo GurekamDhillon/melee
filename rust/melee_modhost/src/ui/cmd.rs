@@ -158,6 +158,154 @@ pub struct Batch {
     /// `shape` / `rgba2` of the quads pushed next (a shape's parameters; a glyph outline pass's widening).
     extra_shape: ([f32; 3], u32),
     pub frame: UiFrame,
+    /// ui_aspect (MELEE_UI_ASPECT=1): what was drawn out of proportion, for the headless aspect check.
+    pub audit: Option<Box<Audit>>,
+}
+
+/// The aspect audit (tools/rust-port/envoy/ui_aspect.sh; notes/ui-remake.md). The band's pixels are square and the
+/// host never scales text sideways, so a piece can only come out squished when a mod asks for it: a sprite drawn
+/// into a box of another shape than its art, a round shape that is not quite round, a line cut at its width. With
+/// MELEE_UI_ASPECT=1 every such draw is logged once (`ui_aspect: ..`), the bad ones marked `BAD`.
+#[derive(Default)]
+pub struct Audit {
+    /// atlas origin of a loaded texture -> the name the mod loaded it by
+    pub names: std::collections::HashMap<(u16, u16), String>,
+    seen: std::collections::HashSet<u64>,
+    pub out: Vec<String>,
+    /// the boxes of this buffer so far (x, y, w, h, rotation), newest last: what a text may sit on
+    boxes: Vec<[f32; 5]>,
+    /// the window's left and right edges in band units (set before a buffer is encoded); None: unknown
+    pub view: Option<(f32, f32)>,
+    /// the lines of this buffer so far (x, y, w, h, rotation, layer key) and their words
+    texts: Vec<([f32; 5], u64, String)>,
+    /// the sprites of this buffer so far (x, y, w, h, rotation), their layer key and atlas origin
+    sprites: Vec<([f32; 5], u64, (u16, u16))>,
+}
+
+/// A sprite's drawn width / height may differ from its art's by this much (the check's 2%).
+pub const ASPECT_TOL: f32 = 0.02;
+
+impl Audit {
+    pub fn from_env() -> Option<Box<Audit>> {
+        std::env::var("MELEE_UI_ASPECT").is_ok_and(|v| v == "1").then(Box::default)
+    }
+    fn once(&mut self, k: impl std::hash::Hash) -> bool {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        k.hash(&mut h);
+        self.seen.insert(h.finish())
+    }
+    /// How far a (w, h) draw of the `uv` part of art `r` is from the art's own proportions (0: exact).
+    pub fn tex_off(r: AtlasRect, w: f32, h: f32, uv: [f32; 4]) -> Option<(f32, f32, f32)> {
+        let (aw, ah) = ((uv[2] - uv[0]).abs() * r.w as f32, (uv[3] - uv[1]).abs() * r.h as f32);
+        if aw <= 0.0 || ah <= 0.0 || w <= 0.0 || h <= 0.0 {
+            return None;
+        }
+        Some(((w / h) / (aw / ah) - 1.0, aw, ah))
+    }
+    /// Two sprites of one layer that cross (neither inside the other) over more than an eighth of the smaller one:
+    /// icons packed closer than they are wide. Sprites larger than 120 units (backdrops, rays) are not looked at.
+    fn tex_over(&mut self, r: AtlasRect, x: f32, y: f32, w: f32, h: f32, rot: f32, key: u64) {
+        if w > 120.0 || h > 120.0 || w < 4.0 || h < 4.0 {
+            return;
+        }
+        let me = [x, y, w, h, rot];
+        let mut hit = None;
+        for (o, k, at) in self.sprites.iter() {
+            if *k != key || o[4] != rot {
+                continue;
+            }
+            let (ix, iy) = ((x + w).min(o[0] + o[2]) - x.max(o[0]), (y + h).min(o[1] + o[3]) - y.max(o[1]));
+            if ix <= 0.0 || iy <= 0.0 {
+                continue;
+            }
+            let inside = |a: &[f32; 5], b: &[f32; 5]| a[0] >= b[0] - 1.0 && a[1] >= b[1] - 1.0 && a[0] + a[2] <= b[0] + b[2] + 1.0 && a[1] + a[3] <= b[1] + b[3] + 1.0;
+            if inside(&me, o) || inside(o, &me) {
+                continue;
+            }
+            let small = (w * h).min(o[2] * o[3]);
+            if ix * iy > small * 0.125 {
+                hit = Some((*at, ix, iy, o[2], o[3]));
+                break;
+            }
+        }
+        if let Some((at, ix, iy, ow, oh)) = hit {
+            if self.once((6u8, r.x, r.y, at, (ix * 2.0) as i32, (iy * 2.0) as i32)) {
+                let name = |k: (u16, u16)| self.names.get(&k).cloned().unwrap_or_else(|| "?".into());
+                let line = format!("ui_aspect: sprite over sprite by {ix:.1}x{iy:.1}: {} ({w:.1}x{h:.1}) over {} ({ow:.1}x{oh:.1}) BAD", name((r.x, r.y)), name(at));
+                self.out.push(line);
+            }
+        }
+        if self.sprites.len() < 2048 {
+            self.sprites.push((me, key, (r.x, r.y)));
+        }
+    }
+    fn tex(&mut self, r: AtlasRect, w: f32, h: f32, uv: [f32; 4]) {
+        let Some((off, aw, ah)) = Audit::tex_off(r, w, h, uv) else { return };
+        if !self.once((0u8, r.x, r.y, uv.map(f32::to_bits), (off * 400.0).round() as i32)) {
+            return;
+        }
+        let name = self.names.get(&(r.x, r.y)).map_or("?", |s| s.as_str());
+        let bad = if off.abs() > ASPECT_TOL { " BAD" } else { "" };
+        self.out.push(format!("ui_aspect: tex {name} art {aw:.0}x{ah:.0} drawn {w:.1}x{h:.1} off {:+.1}%{bad}", off * 100.0));
+    }
+    /// A box whose corner radius makes its short side fully round and whose sides differ by 2% to 25% is a circle
+    /// that is not round (or a pill too short to read as one).
+    pub fn oval(w: f32, h: f32, radius: f32) -> bool {
+        let (lo, hi) = if w < h { (w, h) } else { (h, w) };
+        radius * 2.0 >= lo - 0.01 && hi / lo > 1.0 + ASPECT_TOL && hi / lo < 1.25
+    }
+    fn shape(&mut self, x: f32, y: f32, w: f32, h: f32, radius: f32, rot: f32) {
+        if self.boxes.len() >= 4096 {
+            self.boxes.clear();
+        }
+        self.boxes.push([x, y, w, h, rot]);
+        if Audit::oval(w, h, radius) && self.once((1u8, (w * 4.0) as i32, (h * 4.0) as i32)) {
+            self.out.push(format!("ui_aspect: shape round {w:.1}x{h:.1} off {:+.1}% BAD", (w / h - 1.0) * 100.0));
+        }
+    }
+    /// A line that starts on a box (the newest one under its first glyph, in the same rotation) and runs past that
+    /// box's side: words spilling out of their sticker. `x0`, `w`: the line's left end and width; `size` its height.
+    #[allow(clippy::too_many_arguments)]
+    fn text_fit(&mut self, s: &str, x0: f32, y: f32, w: f32, size: f32, rot: f32, band: bool, key: u64, alpha: u32) {
+        if w <= 0.0 || s.trim().is_empty() {
+            return;
+        }
+        // a line set over an earlier line of the same layer (their ink boxes cross): words on words
+        let me = [x0, y + size * 0.3, w, size * 0.62, rot];
+        if alpha > 40 {
+            let hit = self.texts.iter().find_map(|(o, k, os)| {
+                let (ix, iy) = ((me[0] + me[2]).min(o[0] + o[2]) - me[0].max(o[0]), (me[1] + me[3]).min(o[1] + o[3]) - me[1].max(o[1]));
+                (*k == key && o[4] == rot && ix > 2.0 && iy > size.min(o[3] / 0.62) * 0.3 && os != s).then(|| (ix, iy, os.clone()))
+            });
+            if let Some((ix, iy, os)) = hit {
+                if self.once((5u8, s, os.as_str())) {
+                    self.out.push(format!("ui_aspect: text over text by {ix:.1}x{iy:.1}: \"{s}\" (size {size:.0}) over \"{os}\" BAD"));
+                }
+            }
+            if self.texts.len() < 2048 {
+                self.texts.push((me, key, s.to_string()));
+            }
+        }
+        // a line that leaves the window (band space, unrotated): words nobody can read
+        if let Some((l, r)) = self.view.filter(|_| band && rot == 0.0) {
+            let over = (l - x0).max(x0 + w - r);
+            if over > 0.5 && self.once((4u8, s)) {
+                self.out.push(format!("ui_aspect: text runs off the screen by {over:.1}: \"{s}\" (size {size:.0}, from {x0:.1} to {:.1}, the screen {l:.1} to {r:.1}) BAD", x0 + w));
+            }
+        }
+        let (px, py) = (x0 + size.min(w) * 0.3, y + size * 0.6);
+        let Some(b) = self.boxes.iter().rev().find(|b| b[4] == rot && px >= b[0] && px <= b[0] + b[2] && py >= b[1] && py <= b[1] + b[3]).copied() else { return };
+        let over = (x0 + w) - (b[0] + b[2]);
+        if over > 0.5 && self.once((3u8, s, (b[2] * 2.0) as i32)) {
+            self.out.push(format!("ui_aspect: text overflows its box by {over:.1}: \"{s}\" (size {size:.0}, width {w:.1}) on a {:.0}x{:.0} box BAD", b[2], b[3]));
+        }
+    }
+    fn text_cut(&mut self, s: &str, n: usize, max_w: f32, size: f32) {
+        if n < s.chars().count() && self.once((2u8, s, max_w.to_bits())) {
+            self.out.push(format!("ui_aspect: text cut at {n} of {} chars, width {max_w:.0}, size {size:.0}: \"{s}\" BAD", s.chars().count()));
+        }
+    }
 }
 
 fn f32_ok(v: f32) -> bool {
@@ -166,7 +314,7 @@ fn f32_ok(v: f32) -> bool {
 
 impl Batch {
     pub fn with_capacity(quads: usize) -> Batch {
-        Batch { staging: Vec::with_capacity(quads), runs: Vec::with_capacity(256), seq: 0, extra_flags: 0, extra_shape: ([0.0; 3], 0), frame: UiFrame { quads: Vec::with_capacity(quads), hide_gx: false } }
+        Batch { staging: Vec::with_capacity(quads), runs: Vec::with_capacity(256), seq: 0, extra_flags: 0, extra_shape: ([0.0; 3], 0), frame: UiFrame { quads: Vec::with_capacity(quads), hide_gx: false }, audit: Audit::from_env() }
     }
 
     pub fn begin(&mut self) {
@@ -263,6 +411,12 @@ impl Batch {
 
     pub fn tex(&mut self, p: &Pen, r: AtlasRect, x: f32, y: f32, w: f32, h: f32, uv: [f32; 4], rgba: u32) {
         let (tw, th) = (r.w as f32, r.h as f32);
+        if let Some(a) = self.audit.as_deref_mut() {
+            a.tex(r, w, h, uv);
+            if rgba & 0xFF > 40 {
+                a.tex_over(r, x, y, w, h, p.rot, Batch::key(p));
+            }
+        }
         // a whole entry (not a cell of a sheet or a slice of it): its edge may fade into the atlas gutter
         let save = self.extra_flags;
         if uv == [0.0, 0.0, 1.0, 1.0] {
@@ -279,6 +433,11 @@ impl Batch {
             return;
         }
         let s = p.scale;
+        if kind == gu::SHAPE_BOX {
+            if let Some(a) = self.audit.as_deref_mut() {
+                a.shape(x, y, w, h, radius, p.rot);
+            }
+        }
         // a glow reaches `spread` outside the shape
         let g = if kind == gu::SHAPE_GLOW { spread.max(0.0) } else { 0.0 };
         let save = (self.extra_flags, self.extra_shape);
@@ -322,6 +481,10 @@ impl Batch {
         let st = style(role);
         let (n, w) = gu_font::fit(&a.faces, st, s, max_w);
         let x0 = match align { ALIGN_CENTER => x - w * 0.5, ALIGN_RIGHT => x - w, _ => x };
+        if let Some(au) = self.audit.as_deref_mut() {
+            au.text_cut(s, n, max_w, st.size);
+            au.text_fit(s, x0, y, w, st.size, p.rot, !p.window && p.scale == 1.0, Batch::key(p), rgba & 0xFF);
+        }
         let save = (self.extra_flags, self.extra_shape);
         self.extra_flags |= Q_SDF;
         if p.outline.0 > 0.0 && p.outline.1 & 0xFF != 0 {
@@ -368,6 +531,11 @@ impl Batch {
         let w = |o: usize| u32::from_le_bytes([buf[o], buf[o + 1], buf[o + 2], buf[o + 3]]);
         let f = |o: usize| f32::from_bits(w(o));
         let mut pen = Pen::new(module);
+        if let Some(au) = self.audit.as_deref_mut() {
+            au.boxes.clear();
+            au.texts.clear();
+            au.sprites.clear();
+        }
         let mut o = 0usize;
         while o < buf.len() {
             let head = w(o);

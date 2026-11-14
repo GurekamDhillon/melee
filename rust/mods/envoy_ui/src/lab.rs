@@ -258,20 +258,21 @@ unsafe fn draw_setup(e: &mut E, brawl: bool) {
             "Start: the panel over the pause.",
         ];
         for (k, l) in lines.iter().enumerate() {
-            e.text_ex(cx + 14.0, cy + 42.0 + k as f32 * 24.0, bs(12), WHITE, ALIGN_LEFT, 214.0, l);
+            text_fit(e, cx + 14.0, cy + 42.0 + k as f32 * 24.0, bs, 12, 9, WHITE, ALIGN_LEFT, 214.0, l);
         }
     });
     if !brawl {
-        e.text_ex(370.0, 336.0, bs(11), PALE, ALIGN_LEFT, 240.0, "Subspace enemies need your Brawl files.");
+        text_fit(e, 370.0, 336.0, bs, 11, 8, PALE, ALIGN_LEFT, 240.0, "Subspace enemies need your Brawl files.");
     }
     hints(e, &[("Up / Down", "Choose"), ("Left / Right", "Change"), ("A", "Start"), ("B", "Back")]);
 }
 
 // ------------------------------------------------------------------ the panel
 
-const PAGES: [&str; 6] = ["Items", "Kit", "Fire", "FX", "State", "Combos"];
-/// The pages' full names (the log and the page title).
+/// The pages' names: the tabs carry them whole (uiremake: the tabs were a sixth of the bar each and carried
+/// abbreviations, "Kit", "Fire", "FX", "State", with "Combos" still cut).
 const PAGE_NAMES: [&str; 6] = ["Items", "Loadout", "Triggers", "Effects", "Sandbox", "Synergy"];
+const PAGES: [&str; 6] = PAGE_NAMES;
 const PG_ITEMS: usize = 0;
 const PG_LOADOUT: usize = 1;
 const PG_TRIG: usize = 2;
@@ -677,26 +678,44 @@ unsafe fn sand_row(p: &mut Panel, v: &[i32; VW], r: usize, d: i32, right: bool) 
 // ------------------------------------------------------------------ drawing (band space, 640 x 480)
 
 const PX: f32 = 14.0;
-const PY: f32 = 40.0;
-const PW: f32 = 300.0;
-const PH: f32 = 392.0;
+/// The panel's size this present (`draw` sets them): 300 wide on a 4:3 screen, where the six tab names take two
+/// rows; up to 380 on a wide window, where they fit one.
+static mut PWV: f32 = 300.0;
+static mut PHV: f32 = 392.0;
+static mut PYV: f32 = 40.0;
+static mut TABH: f32 = 28.0;
+fn pw() -> f32 {
+    unsafe { PWV }
+}
+fn ph() -> f32 {
+    unsafe { PHV }
+}
+const TAB_PX: u32 = 10;
+/// The panel's right edge (band units) while it is open: what the HUD's centred cards keep clear of.
+pub fn right_edge(ex: f32) -> f32 {
+    PX - ex + pw() + 8.0
+}
 const VISIBLE: usize = 9;
 
 pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     let p = PANEL;
     e.layer(LAYER_MENU, 5);
     let (sc, a) = enter(p.age);
+    PWV = (300.0 + ex).min(380.0);
+    TABH = tab_h(tab_rows(PWV - 16.0, TAB_PX, &PAGES), 22.0);
+    PHV = 392.0 + TABH - 28.0;
+    PYV = 40.0 - (TABH - 28.0) * 0.5;
     let x = PX - ex;
-    let y = PY + (1.0 - sc) * 30.0;
-    sticker(e, S_FACE_INK, x, y, PW, PH, -0.6, alpha(WHITE, a), |e| {
-        face(e, S_FACE_INK, x, y, PW, PH, alpha(WHITE, a));
+    claim_left(right_edge(ex));
+    let y = PYV + (1.0 - sc) * 30.0;
+    sticker(e, S_FACE_INK, x, y, pw(), ph(), -0.6, alpha(WHITE, a), |e| {
+        face(e, S_FACE_INK, x, y, pw(), ph(), alpha(WHITE, a));
         text_edge(e, x + 12.0, y + 8.0, d(18), SUNNY, ALIGN_LEFT, 1.2, "ITEM LAB");
-        e.text_ex(x + 118.0, y + 14.0, bs(11), WHITE, ALIGN_LEFT, 0.0, PAGE_NAMES[p.page]);
         let mut hd = Buf::new();
         hd.i(v[V_POOL]).s(" stocks   ").i(v[V_COINS]).s(" coins");
-        e.text_ex(x + PW - 12.0, y + 13.0, bs(11), PALE, ALIGN_RIGHT, 0.0, hd.str());
+        e.text_ex(x + pw() - 12.0, y + 13.0, bs(11), PALE, ALIGN_RIGHT, 0.0, hd.str());
         tabs(e, &p, x + 8.0, y + 38.0);
-        let cy = y + 70.0;
+        let cy = y + 42.0 + TABH;
         match p.page {
             PG_ITEMS => items_page(e, v, &p, x + 10.0, cy),
             PG_LOADOUT => loadout_page(e, v, &p, x + 10.0, cy),
@@ -717,27 +736,22 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
                 _ => "Up / down: row. Left / right: change",
             }
         };
-        e.text_ex(x + PW * 0.5, y + PH - 20.0, bs(11), if T - p.said_at < 120 { SUNNY } else { PALE }, ALIGN_CENTER, PW - 16.0, hint);
+        text_fit(e, x + pw() * 0.5, y + ph() - 20.0, bs, 11, 8, if T - p.said_at < 120 { SUNNY } else { PALE }, ALIGN_CENTER, pw() - 16.0, hint);
     });
 }
 
 fn tabs(e: &mut E, p: &Panel, x: f32, y: f32) {
-    let w = (PW - 16.0) / PAGES.len() as f32;
-    for (i, name) in PAGES.iter().enumerate() {
-        let on = i == p.page;
-        let tx = x + i as f32 * w;
-        let id = if on && p.row == 0 { S_FACE_HOVER } else if on { S_FACE_SUNNY } else { S_FACE_LILAC };
-        let ty = if on { y - 2.0 } else { y };
-        face(e, id, tx + 1.0, ty, w - 3.0, 22.0, WHITE);
-        e.text_ex(tx + w * 0.5, ty + 5.0, d(10), if on { INK } else { WHITE }, ALIGN_CENTER, w - 4.0, name);
-    }
+    // every tab as wide as its word (kit::tab_row): two rows where one cannot hold the six names
+    tab_row(e, x, y, pw() - 16.0, 22.0, TAB_PX, &PAGES, p.page, p.row == 0);
 }
 
 /// A list row: label left, value right; hovered rows move right on the hover face.
 fn row(e: &mut E, x: f32, y: f32, w: f32, on: bool, label: &str, value: &str, dim: bool) {
     let dx = if on { 6.0 } else { 0.0 };
     face(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, x + dx, y, w - 6.0, 20.0, if dim { alpha(WHITE, 0.55) } else { WHITE });
-    e.text_ex(x + dx + 8.0, y + 3.0, bs(11), INK, ALIGN_LEFT, w - 90.0, label);
+    // the label takes what the value leaves (set smaller when it must be: never cut)
+    let vw = if value.is_empty() { 0.0 } else { tw(value, bs(11)) + 10.0 };
+    text_fit(e, x + dx + 8.0, y + 3.0, bs, 11, 8, INK, ALIGN_LEFT, w - 6.0 - 8.0 - 14.0 - vw, label);
     if !value.is_empty() {
         e.text_ex(x + dx + w - 14.0, y + 3.0, bs(11), if on { INK } else { LILAC }, ALIGN_RIGHT, 0.0, value);
     }
@@ -759,7 +773,7 @@ fn icon(e: &mut E, it: &Item, cx: f32, cy: f32, r: f32, dim: bool) {
 }
 
 unsafe fn items_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let mut f = Buf::new();
     f.s("< ").s(filter_name(p.filter)).s(" >");
     row(e, x, y, w, p.row == 1, "Show", f.str(), false);
@@ -790,7 +804,7 @@ unsafe fn card(e: &mut E, v: &[i32; VW], it: &Item, x: f32, y: f32, w: f32) {
     let h = 136.0;
     sticker(e, S_FACE_WHITE, x, y, w, h, 0.5, WHITE, |e| {
         e.rect(x + 6.0, y + 6.0, 5.0, h - 12.0, it.rgba);
-        e.text_ex(x + 18.0, y + 6.0, d(15), INK, ALIGN_LEFT, w - 80.0, it.name);
+        text_fit(e, x + 18.0, y + 6.0, d, 15, 10, INK, ALIGN_LEFT, w - 30.0 - it.quality.min(4) as f32 * 13.0, it.name);
         for q in 0..it.quality.min(4) {
             spr_c(e, S_STAR_ON, x + w - 14.0 - q as f32 * 13.0, y + 14.0, 1.0, WHITE);
         }
@@ -801,14 +815,16 @@ unsafe fn card(e: &mut E, v: &[i32; VW], it: &Item, x: f32, y: f32, w: f32) {
         }
         face(e, S_FACE_INK, x + 18.0, y + 28.0, tw(t.str(), bs(10)) + 12.0, 16.0, WHITE);
         e.text_ex(x + 24.0, y + 29.0, bs(10), SUNNY, ALIGN_LEFT, 0.0, t.str());
-        rich(e, x + 18.0, y + 47.0, w - 26.0, 10, 11.5, INK, false, item_text(it), 2);
+        let lines = rich(e, x + 18.0, y + 47.0, w - 26.0, 10, 11.5, INK, false, item_text(it), 3);
+        // two lines of card text leave the old places; a third moves what follows down a line
+        let y = y + (lines - 2).max(0) as f32 * 11.5;
         let mut nb = Buf::new();
         nb.s("Held ").i(c).s(" / cap ").i(it.cap as i32).s("   copies: ").s(STACK_TEXT[(it.stack as usize).min(4)]);
-        e.text_ex(x + 18.0, y + 72.0, bs(10), LILAC, ALIGN_LEFT, w - 26.0, nb.str());
+        text_fit(e, x + 18.0, y + 72.0, bs, 10, 7, LILAC, ALIGN_LEFT, w - 26.0, nb.str());
         let m = stack_mul(it.id, c.max(1));
         let mut mb = Buf::new();
         mb.s("Strength now x").i(m / 1000).s(".").i(m % 1000 / 100).s("   price ").i(item_price(it.id)).s("   id ").i(it.id);
-        e.text_ex(x + 18.0, y + 88.0, bs(10), LILAC, ALIGN_LEFT, w - 26.0, mb.str());
+        text_fit(e, x + 18.0, y + 86.0, bs, 10, 7, LILAC, ALIGN_LEFT, w - 26.0, mb.str());
         let mut tg = Buf::new();
         let cats = if it.trigger == TR_MODIFIER { 0 } else { item_cats(it) };
         tg.s(if it.trigger == TR_MODIFIER { "Changes: " } else { "Makes: " });
@@ -826,9 +842,10 @@ unsafe fn card(e: &mut E, v: &[i32; VW], it: &Item, x: f32, y: f32, w: f32) {
         if !any {
             tg.s("nothing on screen");
         }
-        e.text_ex(x + 18.0, y + 104.0, bs(10), INK, ALIGN_LEFT, w - 26.0, tg.str());
+        text_fit(e, x + 18.0, y + 100.0, bs, 10, 7, INK, ALIGN_LEFT, w - 26.0, tg.str());
         if off(v, it.id) {
-            e.text_ex(x + w - 12.0, y + h - 18.0, bs(10), CORAL, ALIGN_RIGHT, 0.0, "switched off");
+            // beside the trigger pill (the card's foot belongs to its last line)
+            e.text_ex(x + w - 12.0, y + 29.0 - (lines - 2).max(0) as f32 * 11.5, bs(10), CORAL, ALIGN_RIGHT, 0.0, "switched off");
         }
     });
 }
@@ -840,30 +857,36 @@ const fn cats_of_tags(t: u8) -> i32 {
         | (if t & TG_ORBITAL != 0 { CAT_AURA } else { 0 })
 }
 
+/// The Loadout page's row pitch.
+const LROW: f32 = 22.0;
+
 unsafe fn loadout_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let labels = ["Add all", "Clear", "Random (5)", "Stack 10 of the last item"];
     for (k, l) in labels.iter().enumerate() {
-        row(e, x, y + k as f32 * 24.0, w, p.row == k + 1, l, "", false);
+        row(e, x, y + k as f32 * LROW, w, p.row == k + 1, l, "", false);
     }
     for s in 0..PRESETS {
         let n: i32 = PRESET[s].iter().map(|&c| (c > 0) as i32).sum();
         let mut val = Buf::new();
         if n == 0 { val.s("empty") } else { val.i(n).s(" items") };
         let name = ["Preset 1", "Preset 2", "Preset 3", "Preset 4"][s];
-        row(e, x, y + (4 + s) as f32 * 24.0, w, p.row == 5 + s, name, val.str(), false);
+        row(e, x, y + (4 + s) as f32 * LROW, w, p.row == 5 + s, name, val.str(), false);
     }
-    row(e, x, y + (4 + PRESETS) as f32 * 24.0, w, p.row == 5 + PRESETS, "A / B swap", if p.ab == 0 { "on A" } else { "on B" }, false);
+    row(e, x, y + (4 + PRESETS) as f32 * LROW, w, p.row == 5 + PRESETS, "A / B swap", if p.ab == 0 { "on A" } else { "on B" }, false);
     // the loadout now: an icon per held item
-    let iy = y + (5 + PRESETS) as f32 * 24.0 + 10.0;
+    let iy = y + (5 + PRESETS) as f32 * LROW + 6.0;
     e.text_ex(x, iy, bs(10), PALE, ALIGN_LEFT, 0.0, "Equipped now");
     let mut k = 0;
     for it in ITEMS.iter() {
         let c = inv(v, it.id);
         if c > 0 {
-            let cx = x + 12.0 + (k % 10) as f32 * 27.0;
-            let cy = iy + 26.0 + (k / 10) as f32 * 26.0;
-            icon(e, it, cx, cy, 22.0, off(v, it.id));
+            // every held item stays inside the panel: rows of 24-unit cells across its width, 21 apart (a full
+            // loadout is four rows at 300 wide; it ran off the panel's foot and onto the HUD at 26 a row)
+            let per = (((w - 4.0) / 24.0) as usize).max(1);
+            let cx = x + 12.0 + (k % per) as f32 * 24.0;
+            let cy = iy + 22.0 + (k / per) as f32 * 21.0;
+            icon(e, it, cx, cy, 20.0, off(v, it.id));
             if c > 1 {
                 let mut s = Buf::new();
                 s.i(c);
@@ -875,7 +898,7 @@ unsafe fn loadout_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
 }
 
 unsafe fn trig_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let n = trig_rows();
     let (a, b) = window(p, n, 12);
     for (k, r) in (a..b).enumerate() {
@@ -897,7 +920,7 @@ unsafe fn trig_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
 }
 
 unsafe fn fx_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let mut m = [0usize; ITEMS_LEN];
     let nm = modifiers(&mut m);
     let n = fx_rows();
@@ -934,7 +957,7 @@ unsafe fn fx_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
 }
 
 unsafe fn sand_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let (a, b) = window(p, SAND_ROWS, 12);
     for (k, r) in (a..b).enumerate() {
         let ry = y + k as f32 * 22.0;
@@ -984,7 +1007,7 @@ unsafe fn sand_page(e: &mut E, v: &[i32; VW], p: &Panel, x: f32, y: f32) {
 /// Every held modifier and the held items it changes (their tags meet), and the modifiers not held that would
 /// change something held: the synergies to look for.
 unsafe fn synergy_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let mut yy = y;
     let mut any = false;
     for m in ITEMS.iter().filter(|m| m.trigger == TR_MODIFIER) {
@@ -1002,21 +1025,21 @@ unsafe fn synergy_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
         }
         any = true;
         let hot = held && n > 0 && !off(v, m.id);
-        let h = 24.0 + ((n + 1) / 2) as f32 * 20.0;
+        let h = if n == 0 { 34.0 } else { 24.0 + ((n + 1) / 2) as f32 * 20.0 };
         face(e, if hot { S_FACE_SUNNY } else { S_FACE_WHITE }, x, yy, w, h, if held { WHITE } else { alpha(WHITE, 0.6) });
         icon(e, m, x + 12.0, yy + 11.0, 16.0, !held);
         let mut t = Buf::new();
         t.s(m.name).s(if held { "" } else { " (not held)" }).s(if hot { "  -  active" } else { "" });
-        e.text_ex(x + 24.0, yy + 4.0, bs(11), INK, ALIGN_LEFT, w - 30.0, t.str());
+        text_fit(e, x + 24.0, yy + 4.0, bs, 11, 8, INK, ALIGN_LEFT, w - 32.0, t.str());
         for k in 0..n {
             let it = &ITEMS[hits[k]];
             let cx = x + 16.0 + (k % 2) as f32 * (w * 0.5);
             let cy = yy + 32.0 + (k / 2) as f32 * 20.0;
             icon(e, it, cx, cy, 16.0, !hot);
-            e.text_ex(cx + 12.0, cy - 7.0, bs(10), INK, ALIGN_LEFT, w * 0.5 - 30.0, it.name);
+            text_fit(e, cx + 12.0, cy - 7.0, bs, 10, 7, INK, ALIGN_LEFT, w * 0.5 - 32.0, it.name);
         }
         if n == 0 {
-            e.text_ex(x + 24.0, yy + 4.0 + 13.0, bs(9), LILAC, ALIGN_LEFT, w - 30.0, "nothing held it changes");
+            e.text_ex(x + 24.0, yy + 4.0 + 13.0, bs(9), LILAC, ALIGN_LEFT, 0.0, "nothing held it changes");
         }
         yy += h + 6.0;
         if yy > y + 280.0 {
@@ -1024,8 +1047,8 @@ unsafe fn synergy_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
         }
     }
     if !any {
-        e.text_ex(x + w * 0.5, y + 40.0, bs(12), PALE, ALIGN_CENTER, w, "No modifier held, and none that");
-        e.text_ex(x + w * 0.5, y + 58.0, bs(12), PALE, ALIGN_CENTER, w, "would change what you hold.");
+        e.text_ex(x + w * 0.5, y + 40.0, bs(12), PALE, ALIGN_CENTER, 0.0, "No modifier held, and none that");
+        e.text_ex(x + w * 0.5, y + 58.0, bs(12), PALE, ALIGN_CENTER, 0.0, "would change what you hold.");
     }
 }
 
@@ -1034,8 +1057,9 @@ pub unsafe fn trigger_log(e: &mut E, v: &[i32; VW], ex: f32) {
     let n = v[VL_TLOG_N].max(0) as usize;
     let play = v[V_PLAY];
     e.layer(LAYER_MENU, 2);
-    let x = 330.0;
-    let mut y = 440.0;
+    // right-aligned in the bottom right corner, over player 2's corner in co-op
+    let xr = 626.0 + ex;
+    let mut y = if v[V_HUMANS] >= 2 { 346.0 } else { 440.0 };
     for k in 0..n.min(6) {
         let i = (n - 1 - k) % TLOG;
         let b = VL_TLOG + i * TL_W;
@@ -1058,6 +1082,7 @@ pub unsafe fn trigger_log(e: &mut E, v: &[i32; VW], ex: f32) {
             }
         }
         let wd = tw(s.str(), bs(11)) + 16.0;
+        let x = xr - wd;
         face(e, if k == 0 && age < 30 { S_FACE_SUNNY } else { S_FACE_INK }, x, y, wd, 18.0, alpha(WHITE, a));
         e.text_ex(x + 8.0, y + 2.0, bs(11), if k == 0 && age < 30 { INK } else { WHITE }, ALIGN_LEFT, 0.0, s.str());
         y -= 21.0;

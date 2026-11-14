@@ -1437,7 +1437,9 @@ pub unsafe fn tick() {
             melee_fighter::tu::player::TAG_DEFER = false;
         }
     }
-    if ARMED != 0 && hud_off() {
+    // armed by the camp, or by the headless knob (a `--match` start: the checks and the UI captures showed the
+    // retail plates under the Envoy HUD, which no run from the menus does)
+    if armed() != 0 && hud_off() {
         hide_retail_hud();
     }
     LANDED = [Landed::NONE; 4];

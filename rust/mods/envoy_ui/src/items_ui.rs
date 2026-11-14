@@ -459,17 +459,14 @@ pub unsafe fn strip(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32, w: f32) 
             continue;
         }
         any = true;
-        item_icon(e, it.id, cx, row_y, 22.0, 1.0);
+        item_icon(e, it.id, cx, row_y, 20.0, 1.0);
         if n > 1 {
-            let mut s = Buf::new();
-            s.s("x").i(n);
-            face(e, S_FACE_INK, cx + 3.0, row_y + 2.0, 16.0, 11.0, WHITE);
-            e.text_ex(cx + 11.0, row_y + 2.0, d(8), SUNNY, ALIGN_CENTER, 0.0, s.str());
+            count_chip(e, cx, row_y, 22.0, n);
         }
         cx += 26.0;
         if cx > x + w - 12.0 {
             cx = x + 11.0;
-            row_y += 26.0;
+            row_y += 30.0;
         }
     }
     if !any {
@@ -510,14 +507,17 @@ pub unsafe fn flash(e: &mut E, v: &[i32; VW]) {
             s.s("  x").i(copies);
         }
         let card = envoy_data::keywords::card(it.id);
-        let w = (tw(s.str(), d(18)) + 70.0).max(400.0);
-        let (x, y) = (320.0 - w * 0.5, 64.0 + p as f32 * 72.0);
+        // as wide as the clear span lets it be (a side panel up: narrower, more lines), as high as its lines
+        let w = (tw(s.str(), d(18)) + 74.0).max(400.0).min(clear_w() - 16.0);
+        let lines = rich_lines(w - 66.0, 13, card).clamp(1, 4);
+        let h = 32.0 + lines as f32 * 16.0;
+        let (x, y) = (mid() - w * 0.5, 64.0 + p as f32 * (h + 8.0));
         let (sc, _) = enter(age);
         let _ = sc;
-        sticker(e, S_FACE_WHITE, x, y, w, 64.0, if p == 0 { -1.2 } else { 1.2 }, alpha(WHITE, a), |e| {
-            item_icon(e, it.id, x + 26.0, y + 25.0, 36.0, a);
-            e.text_ex(x + 52.0, y + 5.0, d(18), alpha(INK, a), ALIGN_LEFT, 0.0, s.str());
-            rich(e, x + 52.0, y + 27.0, w - 62.0, 13, 16.0, alpha(INK, a), false, card, 2);
+        sticker(e, S_FACE_WHITE, x, y, w, h, if p == 0 { -1.2 } else { 1.2 }, alpha(WHITE, a), |e| {
+            item_icon(e, it.id, x + 28.0, y + h * 0.5, 36.0, a);
+            text_fit(e, x + 56.0, y + 5.0, d, 18, 12, alpha(INK, a), ALIGN_LEFT, w - 66.0, s.str());
+            rich(e, x + 56.0, y + 27.0, w - 66.0, 13, 16.0, alpha(INK, a), false, card, lines);
         });
         // in the world: a circle in the item colour flares under the fighter, a pillar of its light, sparks going up
         if v[pb(p) + P_HAVE_POS] != 0 && age < 48 {
@@ -552,15 +552,34 @@ unsafe fn combo_banner(e: &mut E, v: &[i32; VW]) {
         };
         let a = if age > 120 { (150 - age) as f32 / 30.0 } else { 1.0 };
         let slide = (1.0 - ease(age as f32 / 12.0)) * 40.0;
-        let w = tw(name, d(20)).max(tw(line, bs(12))) + 60.0;
-        let (x, y) = (320.0 - w * 0.5 + if p == 0 { -slide } else { slide }, 236.0 + p as f32 * 54.0);
-        sticker(e, S_FACE_WHITE, x, y, w, 48.0, if p == 0 { 1.0 } else { -1.0 }, alpha(WHITE, a), |e| {
-            e.rect(x + 2.0, y + 2.0, 8.0, 44.0, alpha(rgba, a));
-            e.text_ex(x + 18.0, y + 4.0, bs(10), alpha(LILAC, a), ALIGN_LEFT, 0.0, head);
-            e.text_ex(x + 18.0 + tw(head, bs(10)) + 8.0, y + 1.0, d(20), alpha(INK, a), ALIGN_LEFT, 0.0, name);
-            e.text_ex(x + 18.0, y + 27.0, bs(12), alpha(INK, a), ALIGN_LEFT, 0.0, line);
+        // as wide as its words: the head and the name on one line, the keyword line under them (wrapped when the
+        // clear span is narrower than the line)
+        let hw = tw(head, bs(10)) + 8.0;
+        let w = (hw + tw(name, d(20))).max(tw(line, bs(12))).min(clear_w() - 60.0) + 36.0;
+        let lines = wrap_lines(line, w - 36.0, bs(12)).clamp(1, 3);
+        let h = 34.0 + lines as f32 * 14.0;
+        let (x, y) = (mid() - w * 0.5 + if p == 0 { -slide } else { slide }, 236.0 + p as f32 * (h + 6.0));
+        sticker(e, S_FACE_WHITE, x, y, w, h, if p == 0 { 1.0 } else { -1.0 }, alpha(WHITE, a), |e| {
+            e.shape(SHAPE_BOX, x + 5.0, y + 5.0, 6.0, h - 10.0, 3.0, 0.0, 0.0, alpha(rgba, a), 0);
+            e.text_ex(x + 18.0, y + 9.0, bs(10), alpha(LILAC, a), ALIGN_LEFT, 0.0, head);
+            text_fit(e, x + 18.0 + hw, y + 3.0, d, 20, 12, alpha(INK, a), ALIGN_LEFT, w - 28.0 - hw, name);
+            wrap(e, x + 18.0, y + 29.0, w - 36.0, bs, 12, 14.0, alpha(INK, a), ALIGN_LEFT, line, lines);
         });
     }
+}
+
+/// A room's banner at `y`: the title and one sentence, centred in the clear span; the sentence wraps onto a second
+/// line where the span is narrower than it (a side panel up, a 4:3 screen), and the sticker grows by that line.
+fn room_banner(e: &mut E, face_id: usize, ink: u32, y: f32, title: &str, say: &str) -> f32 {
+    let w = tw(say, bs(13)).max(tw(title, d(22))).min(clear_w() - 60.0) + 40.0;
+    let lines = wrap_lines(say, w - 40.0, bs(13)).clamp(1, 3);
+    let m = mid();
+    let h = 42.0 + lines as f32 * 16.0;
+    sticker(e, face_id, m - w * 0.5, y, w, h, -1.0, WHITE, |e| {
+        e.text_ex(m, y + 4.0, d(22), ink, ALIGN_CENTER, 0.0, title);
+        wrap(e, m, y + 34.0, w - 40.0, bs, 13, 16.0, ink, ALIGN_CENTER, say, lines);
+    });
+    h
 }
 
 /// The room banners: the item room and the boss drop while their pedestals wait, the campfire after the boss.
@@ -570,11 +589,7 @@ pub unsafe fn banners(e: &mut E, v: &[i32; VW]) {
     if (kind == PED_ITEM_ROOM || kind == PED_BOSS) && v[V_RW] == 0 {
         let title = if kind == PED_BOSS { "Boss drop: take one" } else { "Item room" };
         let say = if kind == PED_BOSS { "Press A by the item you want (Z in the air). The other one stays behind." } else { "Press A by the pedestal to take the item (Z in the air)." };
-        let w = tw(say, bs(13)).max(tw(title, d(22))) + 40.0;
-        sticker(e, S_FACE_SUNNY, 320.0 - w * 0.5, 120.0, w, 58.0, -1.0, WHITE, |e| {
-            e.text_ex(320.0, 124.0, d(22), INK, ALIGN_CENTER, 0.0, title);
-            e.text_ex(320.0, 154.0, bs(13), INK, ALIGN_CENTER, 0.0, say);
-        });
+        room_banner(e, S_FACE_SUNNY, INK, 120.0, title, say);
         // no timer (11.10): the room waits for every player's take, so no countdown is drawn
     }
     let at = v[V_CAMP_AT];
@@ -587,11 +602,12 @@ pub unsafe fn banners(e: &mut E, v: &[i32; VW]) {
             s.s("  (+").i(v[V_CAMP_GAIN]).s(")");
         }
         let w = tw(s.str(), d(18)) + 70.0;
-        sticker(e, S_FACE_CORAL, 320.0 - w * 0.5, 190.0, w, 40.0, 1.0, alpha(WHITE, a), |e| {
+        let m = mid();
+        sticker(e, S_FACE_CORAL, m - w * 0.5, 190.0, w, 40.0, 1.0, alpha(WHITE, a), |e| {
             for j in 0..3 {
-                spr_c(e, S_FLAME + 1 + j.min(2), 320.0 - w * 0.5 + 24.0, 210.0 - j as f32 * 3.0, 0.5 + 0.1 * sin(age as f32 * 0.3 + j as f32), alpha(WHITE, a));
+                spr_c(e, S_FLAME + 1 + j.min(2), m - w * 0.5 + 24.0, 210.0 - j as f32 * 3.0, 0.5 + 0.1 * sin(age as f32 * 0.3 + j as f32), alpha(WHITE, a));
             }
-            e.text_ex(320.0 - w * 0.5 + 46.0, 199.0, d(18), alpha(WHITE, a), ALIGN_LEFT, 0.0, s.str());
+            e.text_ex(m - w * 0.5 + 46.0, 199.0, d(18), alpha(WHITE, a), ALIGN_LEFT, 0.0, s.str());
         });
     }
 }
@@ -853,20 +869,20 @@ pub unsafe fn callouts(e: &mut E, v: &[i32; VW]) {
         let a = if age > 80 { (100 - age) as f32 / 20.0 } else { 1.0 };
         let (sc, _) = enter(age);
         let w = tw(s.str(), d(15)) + if icon_id != 0 { 48.0 } else { 24.0 };
-        let x = 320.0 - w * 0.5;
+        let x = mid() - w * 0.5;
         let y = 230.0 + row as f32 * 36.0 - (1.0 - sc) * 20.0;
         let ink = if face_id == S_FACE_CORAL { WHITE } else { INK };
         let deg = if who == 0 { -1.4 } else { 1.4 };
         sticker(e, face_id, x, y, w, 30.0, deg, alpha(WHITE, a), |e| {
             let mut tx = x + 12.0;
             if icon_id != 0 {
-                crate::icons::icon_a(e, icon_id, x + 18.0, y + 15.0, 22.0, a);
+                item_icon(e, icon_id, x + 18.0, y + 15.0, 18.0, a);
                 tx = x + 34.0;
             }
             e.text_ex(tx, y + 6.0, d(15), alpha(ink, a), ALIGN_LEFT, 0.0, s.str());
         });
         if ev[1] == EV_SECRET && age < 40 {
-            burst(e, S_BURST_SUNNY, 320.0, 190.0, 120.0, age, "Secret room!", 15);
+            burst(e, S_BURST_SUNNY, mid(), 190.0, 120.0, age, "Secret room!", 15);
         }
         row += 1;
         if row >= 3 {
@@ -880,16 +896,12 @@ pub unsafe fn callouts(e: &mut E, v: &[i32; VW]) {
             PED_ANGEL => ("Angel room", "A gift. Walk to the pedestal to take it.", S_FACE_WHITE),
             _ => ("Secret room", "Walk to the pedestal to take the item.", S_FACE_SUNNY),
         };
-        let w = tw(say, bs(13)).max(tw(title, d(22))) + 40.0;
         let ink = if kind == PED_DEVIL { WHITE } else { INK };
-        sticker(e, fid, 320.0 - w * 0.5, 60.0, w, 58.0, -1.0, WHITE, |e| {
-            e.text_ex(320.0, 64.0, d(22), ink, ALIGN_CENTER, 0.0, title);
-            e.text_ex(320.0, 94.0, bs(13), ink, ALIGN_CENTER, 0.0, say);
-        });
+        let bh = room_banner(e, fid, ink, 60.0, title, say);
         if kind == PED_DEVIL {
             // the price list: each pedestal's item and its price in stock slots (locked: crossed, and why)
             let humans = v[V_HUMANS].clamp(1, 2) as usize;
-            let mut y = 126.0;
+            let mut y = 68.0 + bh;
             for p in 0..humans {
                 for k in 0..DROPS {
                     let dd = pb(p) + P_DROPS + k * 4;
@@ -902,9 +914,9 @@ pub unsafe fn callouts(e: &mut E, v: &[i32; VW]) {
                     let locked = cw & COST_LOCKED != 0;
                     let name = item(id).map_or("?", |it| it.name);
                     let w = tw(name, d(14)) + 60.0 + cost as f32 * 18.0;
-                    let x = 320.0 - w * 0.5;
+                    let x = mid() - w * 0.5;
                     face(e, S_FACE_INK, x, y, w, 26.0, WHITE);
-                    crate::icons::icon(e, id, x + 14.0, y + 13.0, 20.0);
+                    item_icon(e, id, x + 14.0, y + 13.0, 16.0, 1.0);
                     e.text_ex(x + 28.0, y + 5.0, d(14), if locked { PALE } else { WHITE }, ALIGN_LEFT, 0.0, name);
                     for j in 0..cost {
                         let sx = x + w - 14.0 - j as f32 * 18.0;
@@ -953,7 +965,7 @@ pub unsafe fn fork(e: &mut E, v: &[i32; VW]) {
                 _ => spr_c(e, S_STAR_ON, bx + 34.0, by + 45.0, 3.0, WHITE),
             }
             e.text_ex(bx + 66.0, by + 14.0, d(22), if fid == S_FACE_WHITE { INK } else { WHITE }, ALIGN_LEFT, 0.0, title);
-            e.text_ex(bx + 66.0, by + 50.0, bs(13), if fid == S_FACE_WHITE { INK } else { WHITE }, ALIGN_LEFT, bw - 74.0, say);
+            text_fit(e, bx + 66.0, by + 50.0, bs, 13, 8, if fid == S_FACE_WHITE { INK } else { WHITE }, ALIGN_LEFT, bw - 74.0, say);
         }
         let _ = cur;
         e.text_ex(x + 310.0, y + h - 30.0, bs(13), PALE, ALIGN_CENTER, 0.0, "P1: Left / Right to choose, A to go.");

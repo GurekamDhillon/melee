@@ -515,3 +515,63 @@ fn strip_and_sim_signal() {
     }
     assert_eq!(seen, 2);
 }
+
+/// ui_aspect: a sprite drawn into a box of another shape than its art, a round shape that is not round and a line
+/// cut at its width are each reported once and marked BAD; true proportions are reported clean.
+#[test]
+fn aspect_audit_flags_squished_draws() {
+    let a = atlas();
+    let mut b = Batch::with_capacity(64);
+    b.audit = Some(Box::default());
+    let p = Pen::new(0);
+    let art = melee_gx::ui::AtlasRect { x: 64, y: 64, w: 160, h: 120 };
+    b.audit.as_mut().unwrap().names.insert((64, 64), "wide.png".into());
+    // exact, a uniform scale, and inside the 2% tolerance: clean
+    b.tex(&p, art, 0.0, 0.0, 40.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 0.0, 0.0, 80.0, 60.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 0.0, 0.0, 40.6, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    // a cell of a sheet keeps the cell's proportions (half the width: 80 x 120)
+    b.tex(&p, art, 0.0, 0.0, 20.0, 30.0, [0.0, 0.0, 0.5, 1.0], !0);
+    assert!(b.audit.as_ref().unwrap().out.iter().all(|l| !l.contains("BAD")), "{:?}", b.audit.as_ref().unwrap().out);
+    // 4:3 art in a square box: squished 25%
+    b.tex(&p, art, 0.0, 0.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 5.0, 5.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    let bad: Vec<_> = b.audit.as_ref().unwrap().out.iter().filter(|l| l.contains("BAD")).cloned().collect();
+    assert_eq!(bad.len(), 1, "{bad:?}");
+    assert!(bad[0].contains("tex wide.png") && bad[0].contains("-25.0%"), "{bad:?}");
+    // a disc is round; a 20 x 18 "disc" is not; a real pill is fine
+    assert!(!Audit::oval(20.0, 20.0, 20.0) && Audit::oval(20.0, 18.0, 20.0) && !Audit::oval(60.0, 18.0, 9.0) && !Audit::oval(20.0, 18.0, 4.0));
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 0.0, 0.0, 20.0, 18.0, 20.0, 0.0, 0.0, !0, 0);
+    // text cut at its width
+    b.text(&p, &a, 0.0, 0.0, 2, !0, ALIGN_LEFT, 20.0, "a long line that cannot fit");
+    b.text(&p, &a, 0.0, 0.0, 2, !0, ALIGN_LEFT, 0.0, "a long line with no limit");
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.iter().filter(|l| l.contains("BAD")).count(), 3, "{out:?}");
+    assert!(out.iter().any(|l| l.contains("shape round")) && out.iter().any(|l| l.contains("text cut")));
+    // words on a sticker that run past its side; the same words on a wide enough sticker are fine
+    let n0 = out.len();
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 100.0, 200.0, 20.0, 6.0, 0.0, 0.0, !0, 0);
+    b.text(&p, &a, 104.0, 102.0, 2, !0, ALIGN_LEFT, 0.0, "fits");
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 200.0, 30.0, 20.0, 6.0, 0.0, 0.0, !0, 0);
+    b.text(&p, &a, 104.0, 202.0, 2, !0, ALIGN_LEFT, 0.0, "does not fit here");
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.len(), n0 + 1, "{out:?}");
+    assert!(out[n0].contains("text overflows its box"));
+    // one line set over another
+    b.text(&p, &a, 300.0, 300.0, 2, !0, ALIGN_LEFT, 0.0, "a name on the left");
+    b.text(&p, &a, 340.0, 302.0, 2, !0, ALIGN_LEFT, 0.0, "words over it");
+    b.text(&p, &a, 300.0, 320.0, 2, !0, ALIGN_LEFT, 0.0, "the next line down is fine");
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.len(), n0 + 2, "{out:?}");
+    assert!(out[n0 + 1].contains("text over text"));
+    // icons packed closer than they are wide; an icon inside its frame and icons side by side are fine
+    let icon = melee_gx::ui::AtlasRect { x: 256, y: 64, w: 96, h: 96 };
+    b.tex(&p, icon, 400.0, 100.0, 24.0, 24.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, icon, 403.0, 103.0, 18.0, 18.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, icon, 424.0, 100.0, 24.0, 24.0, [0.0, 0.0, 1.0, 1.0], !0);
+    let n1 = b.audit.as_ref().unwrap().out.len();
+    b.tex(&p, icon, 440.0, 100.0, 24.0, 24.0, [0.0, 0.0, 1.0, 1.0], !0);
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.len(), n1 + 1, "{out:?}");
+    assert!(out[n1].contains("sprite over sprite"));
+}

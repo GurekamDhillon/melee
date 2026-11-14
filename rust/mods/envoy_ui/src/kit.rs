@@ -91,6 +91,7 @@ static mut H: [u32; N_SPRITES + 2] = [0; N_SPRITES + 2];
 #[link(wasm_import_module = "gd_ui")]
 extern "C" {
     fn gd_ui_tex_load(s: *const u8, len: u32) -> u32;
+    fn gd_ui_tex_size(h: u32) -> i32;
 }
 
 /// Load every sprite (call once from gd_ui_init). Returns how many loaded.
@@ -162,22 +163,54 @@ fn frame_of(it: &envoy_data::items::Item) -> u32 {
     unsafe { H_FRAME[i] }
 }
 
-/// An item's icon centred on (cx, cy), `size` px: its pool frame behind at 4/3 the size, then its sprite; the
-/// glyph icon (icons.rs) when the item has no sprite yet.
+/// The part of a pool frame's cell its opening takes (the frame art's border is about a sixth of the cell on every
+/// side) and the part of an item's cell its drawing fills: an item sits inside its frame at `FRAME_FIT` of the
+/// frame's cell.
+const FRAME_FIT: f32 = 0.6;
+
+/// An item's icon centred on (cx, cy): its pool frame over a cell of 4/3 `size`, and its sprite inside the frame's
+/// opening (uiremake: the sprite was drawn at `size`, 3/4 of the frame's cell, while the opening is about 2/3 of it
+/// and the sprites fill their own cells, so every item ran over its frame's border). The glyph icon (icons.rs)
+/// when the item has no sprite yet. Icons in a row need a step of `size` * 1.2 or more to stand clear of each other
+/// (`item_step`).
 pub fn item_icon(e: &mut E, id: i32, cx: f32, cy: f32, size: f32, a: f32) {
     let Some(it) = envoy_data::items::item(id) else { return };
     let f = frame_of(it);
+    let w = size * 4.0 / 3.0;
     if f != 0 {
-        let w = size * 4.0 / 3.0;
         e.tex(f, cx - w * 0.5, cy - w * 0.5, w, w, [0.0, 0.0, 1.0, 1.0], alpha(WHITE, a));
     }
+    let s = if f != 0 { w * FRAME_FIT } else { size };
     let h = unsafe { H_ITEM.get(id as usize).copied().unwrap_or(0) };
     if h != 0 {
-        e.tex(h, cx - size * 0.5, cy - size * 0.5, size, size, [0.0, 0.0, 1.0, 1.0], alpha(WHITE, a));
+        e.tex(h, cx - s * 0.5, cy - s * 0.5, s, s, [0.0, 0.0, 1.0, 1.0], alpha(WHITE, a));
     } else {
         // no sprite yet: the slice-2 glyph icon (icons.rs)
-        crate::icons::icon_a(e, id, cx, cy, size * if f != 0 { 0.8 } else { 1.0 }, a);
+        crate::icons::icon_a(e, id, cx, cy, s, a);
     }
+}
+
+/// The step between `item_icon`s of `size` in a row: the frames (visible over 5/6 of their 4/3 cell) stand 2 apart.
+pub fn item_step(size: f32) -> f32 {
+    size * (4.0 / 3.0) * (5.0 / 6.0) + 2.0
+}
+
+/// A stack count under an icon centred on (cx, cy) of `size` ("x2"): an ink pill as wide as its words, centred on
+/// the icon's foot (it was a 16 x 11 chip, a squashed oval, or loose digits over the next icon).
+pub fn count_chip(e: &mut E, cx: f32, cy: f32, size: f32, n: i32) {
+    let mut b = [b'x', 0, 0, 0];
+    let n = n.clamp(0, 99) as u8;
+    let len = if n >= 10 {
+        b[1] = b'0' + n / 10;
+        b[2] = b'0' + n % 10;
+        3
+    } else {
+        b[1] = b'0' + n;
+        2
+    };
+    let s = unsafe { core::str::from_utf8_unchecked(&b[..len]) };
+    let w = pill_w(11.0, 3.5, d(8), s);
+    pill(e, S_FACE_INK, cx - w * 0.5, cy + size * 0.5 - 5.0, 11.0, 3.5, d, 8, SUNNY, WHITE, s);
 }
 
 /// A heart sprite (0 container, 1 full) centred, `size` px; false when not loaded (draw the old look).
@@ -214,10 +247,49 @@ pub fn disc(e: &mut E, cx: f32, cy: f32, d: f32, fill: u32, edge: f32, line: u32
     e.shape(SHAPE_BOX, cx - d * 0.5, cy - d * 0.5, d, d, d, edge, 0.0, fill, line);
 }
 
-/// A sprite at (x, y) with size (w, h) (0: its own size), tinted `rgba`. The round pieces (the disc, the ink dot,
-/// the stock dots) are drawn as analytic shapes with the art's own proportions, not as bitmaps.
+/// The largest rectangle of proportions `aw : ah` inside the box (x, y, w, h), centred: (x, y, w, h). Art placed
+/// with this is never stretched: a box of another shape only leaves room beside it (uiremake; ui_aspect checks it).
+pub fn contain(x: f32, y: f32, w: f32, h: f32, aw: f32, ah: f32) -> (f32, f32, f32, f32) {
+    if aw <= 0.0 || ah <= 0.0 || w <= 0.0 || h <= 0.0 {
+        return (x, y, w, h);
+    }
+    let k = (w / aw).min(h / ah);
+    let (fw, fh) = (aw * k, ah * k);
+    (x + (w - fw) * 0.5, y + (h - fh) * 0.5, fw, fh)
+}
+
+/// A whole texture of `aw : ah` art (any units) contained in the box (x, y, w, h), centred, never stretched.
+#[allow(clippy::too_many_arguments)]
+pub fn tex_fit(e: &mut E, h: u32, aw: f32, ah: f32, x: f32, y: f32, w: f32, hh: f32, rgba: u32) {
+    if h == 0 {
+        return;
+    }
+    let (fx, fy, fw, fh) = contain(x, y, w, hh, aw, ah);
+    e.tex(h, fx, fy, fw, fh, [0.0, 0.0, 1.0, 1.0], rgba);
+}
+
+/// A whole texture contained in the box (x, y, w, h) at the proportions of its own texels (`gd_ui_tex_size`): for
+/// art whose size the mod does not carry (the disc's fighter icons and portraits).
+pub fn tex_in(e: &mut E, h: u32, x: f32, y: f32, w: f32, hh: f32, rgba: u32) {
+    if h == 0 {
+        return;
+    }
+    let sz = unsafe { gd_ui_tex_size(h) };
+    let (aw, ah) = if sz > 0 { ((sz >> 16) as f32, (sz & 0xFFFF) as f32) } else { (w, hh) };
+    tex_fit(e, h, aw, ah, x, y, w, hh, rgba);
+}
+
+/// A sprite in the box (x, y, w, h) (w 0: its own size at x, y), tinted `rgba`. A kit sprite keeps its art's
+/// proportions whatever the box (it is contained and centred, `contain`); only the backgrounds fill their box. The
+/// round pieces (the disc, the ink dot, the stock dots) are analytic shapes with the art's own proportions.
 pub fn spr(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32) {
-    let (w, h) = if w <= 0.0 && id < N_SPRITES { (SPRITES[id].1, SPRITES[id].2) } else { (w, h) };
+    let (x, y, w, h) = if id >= N_SPRITES {
+        (x, y, w, h)
+    } else if w <= 0.0 {
+        (x, y, SPRITES[id].1, SPRITES[id].2)
+    } else {
+        contain(x, y, w, h, SPRITES[id].1, SPRITES[id].2)
+    };
     let (cx, cy) = (x + w * 0.5, y + h * 0.5);
     match id {
         // disc: r 15 in a 32 box
@@ -394,6 +466,146 @@ pub fn tw(s: &str, role: i32) -> f32 {
     unsafe { gd_ui_measure(s.as_ptr(), s.len() as u32, role) }
 }
 
+/// The largest size from `px` down to `min` at which `s` is no wider than `w` in the face `role` (`d` or `bs`).
+/// Words are never squeezed or cut to a width (uiremake): a line that is too long is set smaller, down to a floor
+/// that still reads, and past that the caller wraps it or gives it more room.
+pub fn fit_px(s: &str, role: fn(u32) -> i32, px: u32, min: u32, w: f32) -> u32 {
+    let mut p = px;
+    while p > min && tw(s, role(p)) > w {
+        p -= 1;
+    }
+    p
+}
+
+/// `role` with its size taken down (to two thirds at most, never under 7) until `s` is no wider than `w`.
+pub fn fit_role(s: &str, role: i32, w: f32) -> i32 {
+    let px = ((role >> 16) & 0xFF) as u32;
+    if px == 0 {
+        return role;
+    }
+    let min = (px * 2 / 3).max(7).min(px);
+    let mut p = px;
+    let at = |p: u32| (role & !0x00FF_0000) | text_size(p);
+    while p > min && tw(s, at(p)) > w {
+        p -= 1;
+    }
+    at(p)
+}
+
+/// One whole line, at `px` if it fits `w`, else smaller (not under `min`); never cut. `y` is the line top at `px`:
+/// a smaller size is moved down so the words keep their baseline. Returns the width drawn.
+#[allow(clippy::too_many_arguments)]
+pub fn text_fit(e: &mut E, x: f32, y: f32, role: fn(u32) -> i32, px: u32, min: u32, rgba: u32, align: i32, w: f32, s: &str) -> f32 {
+    let p = fit_px(s, role, px, min.min(px), w);
+    e.text_ex(x, y + (px - p) as f32 * 0.8, role(p), rgba, align, 0.0, s);
+    tw(s, role(p))
+}
+
+/// Where the first line of `s` ends when lines are `w` wide in `role`: the byte offset of the break (the whole
+/// string when it fits; a single word wider than the line stays whole).
+fn line_end(s: &str, w: f32, role: i32) -> usize {
+    if tw(s, role) <= w {
+        return s.len();
+    }
+    let mut cut = 0;
+    for (i, c) in s.char_indices() {
+        if c == ' ' {
+            if tw(&s[..i], role) <= w {
+                cut = i;
+            } else {
+                break;
+            }
+        }
+    }
+    if cut == 0 { s.find(' ').unwrap_or(s.len()) } else { cut }
+}
+
+/// Whole words over as many lines as they need, at most `max_lines` (the last line takes all that is left, set
+/// smaller if it must): lines `w` wide, `lh` apart, in `role(px)`. Returns the lines used. Nothing is cut.
+#[allow(clippy::too_many_arguments)]
+pub fn wrap(e: &mut E, x: f32, y: f32, w: f32, role: fn(u32) -> i32, px: u32, lh: f32, rgba: u32, align: i32, s: &str, max_lines: usize) -> usize {
+    let mut rest = s.trim();
+    let mut line = 0;
+    let max = max_lines.max(1);
+    while !rest.is_empty() && line < max {
+        let cut = if line + 1 == max { rest.len() } else { line_end(rest, w, role(px)) };
+        text_fit(e, x, y + line as f32 * lh, role, px, (px * 2 / 3).max(7), rgba, align, w, &rest[..cut]);
+        rest = rest[cut..].trim_start();
+        line += 1;
+    }
+    line
+}
+
+/// The lines `s` needs at width `w` in `role` (what `wrap` uses, given enough lines).
+pub fn wrap_lines(s: &str, w: f32, role: i32) -> usize {
+    let mut rest = s.trim();
+    let mut n = 0;
+    while !rest.is_empty() {
+        let cut = line_end(rest, w, role);
+        rest = rest[cut..].trim_start();
+        n += 1;
+    }
+    n
+}
+
+/// The width `pill` gives `s`: its words plus `pad` each side, never narrower than `h`. A pill between one and
+/// 1.25 circles wide reads as a squashed circle, so it is made a circle or a real pill.
+pub fn pill_w(h: f32, pad: f32, role: i32, s: &str) -> f32 {
+    let w = tw(s, role) + 2.0 * pad;
+    if w <= h { h } else if w < h * 1.3 { h * 1.3 } else { w }
+}
+
+/// A pill sized from its words: the face `id` at (x, y), `h` high (`pill_w` wide), the words centred in
+/// `role(px)`. Returns its width.
+#[allow(clippy::too_many_arguments)]
+pub fn pill(e: &mut E, id: usize, x: f32, y: f32, h: f32, pad: f32, role: fn(u32) -> i32, px: u32, ink: u32, rgba: u32, s: &str) -> f32 {
+    let w = pill_w(h, pad, role(px), s);
+    face(e, id, x, y, w, h, rgba);
+    e.text_ex(x + w * 0.5, y + (h - px as f32 * 1.25) * 0.5, role(px), ink, ALIGN_CENTER, 0.0, s);
+    w
+}
+
+/// A tab row over the width `w` from (x, y): every tab as wide as its words need, the room left over shared out
+/// evenly; when the words do not fit one row they go on two (never cut, never squeezed). `on`: the open tab,
+/// `hover`: the cursor is on the row. Returns the height used.
+#[allow(clippy::too_many_arguments)]
+pub fn tab_row(e: &mut E, x: f32, y: f32, w: f32, th: f32, px: u32, names: &[&str], on: usize, hover: bool) -> f32 {
+    let n = names.len();
+    if n == 0 {
+        return 0.0;
+    }
+    let (gap, pad) = (5.0, 7.0);
+    let nat = |a: usize, b: usize| names[a..b].iter().map(|s| tw(s, d(px)) + 2.0 * pad).sum::<f32>() + gap * (b - a - 1) as f32;
+    let one = [(0, n)];
+    let two = [(0, n.div_ceil(2)), (n.div_ceil(2), n)];
+    let rows: &[(usize, usize)] = if nat(0, n) <= w || n < 2 { &one } else { &two };
+    for (r, &(a, b)) in rows.iter().enumerate() {
+        let extra = ((w - nat(a, b)) / (b - a) as f32).max(0.0);
+        let mut tx = x;
+        for (i, name) in names.iter().enumerate().take(b).skip(a) {
+            let tw_ = tw(name, d(px)) + 2.0 * pad + extra;
+            let sel = i == on;
+            let id = if sel && hover { S_FACE_HOVER } else if sel { S_FACE_SUNNY } else { S_FACE_LILAC };
+            let ty = y + r as f32 * (th + 6.0) - if sel { 2.0 } else { 0.0 };
+            face(e, id, tx, ty, tw_, th, WHITE);
+            e.text_ex(tx + tw_ * 0.5, ty + (th - px as f32 * 1.25) * 0.5, d(px), if sel { INK } else { WHITE }, ALIGN_CENTER, 0.0, name);
+            tx += tw_ + gap;
+        }
+    }
+    tab_h(rows.len(), th)
+}
+
+/// The height of `rows` tab rows `th` high.
+pub fn tab_h(rows: usize, th: f32) -> f32 {
+    rows as f32 * (th + 6.0)
+}
+
+/// How many rows `tab_row` needs for `names` at width `w`.
+pub fn tab_rows(w: f32, px: u32, names: &[&str]) -> usize {
+    let nat = names.iter().map(|s| tw(s, d(px)) + 14.0).sum::<f32>() + 5.0 * (names.len().max(1) - 1) as f32;
+    if nat <= w || names.len() < 2 { 1 } else { 2 }
+}
+
 /// The strip: one white sticker at (x, 403), 30 high, one sentence (UI-SPEC 3.8).
 pub fn strip(e: &mut E, x: f32, max_w: f32, s: &str) {
     if s.is_empty() {
@@ -401,7 +613,7 @@ pub fn strip(e: &mut E, x: f32, max_w: f32, s: &str) {
     }
     let w = (tw(s, bs(13)) + 22.0).min(max_w);
     sticker(e, S_FACE_WHITE, x, 403.0, w, 30.0, -0.6, WHITE, |e| {
-        e.text_ex(x + 11.0, 403.0 + 8.0, bs(13), INK, ALIGN_LEFT, w - 22.0, s);
+        text_fit(e, x + 11.0, 403.0 + 8.0, bs, 13, 8, INK, ALIGN_LEFT, w - 22.0, s);
     });
 }
 
@@ -409,7 +621,8 @@ pub fn strip(e: &mut E, x: f32, max_w: f32, s: &str) {
 pub fn hints(e: &mut E, items: &[(&str, &str)]) {
     let mut x = 26.0;
     for &(cap, words) in items {
-        let cw = tw(cap, d(11)).max(8.0) + 12.0;
+        // a one-letter cap is a circle, a word a pill (a 20 x 18 "A" cap read as a squashed circle)
+        let cw = pill_w(18.0, 6.0, d(11), cap);
         face(e, S_FACE_WHITE, x, 449.0, cw, 18.0, WHITE);
         e.text_ex(x + cw * 0.5, 449.0 + 3.0, d(11), INK, ALIGN_CENTER, 0.0, cap);
         x += cw + 6.0;
@@ -482,21 +695,32 @@ pub fn cos(x: f32) -> f32 {
 
 /// A card's text in the item keyword language (envoy_data::keywords): plain words in `body` / `rgba`, keywords in
 /// the display face in their category's colour (`dark`: the palette for an ink sticker). Wraps at `w`, `lh` a line,
-/// at most `max_lines`. Returns the lines used.
+/// at most `max_lines`. Returns the lines used. A card sizes itself with `rich_lines` first, so no line is lost.
 #[allow(clippy::too_many_arguments)]
 pub fn rich(e: &mut E, x: f32, y: f32, w: f32, px: u32, lh: f32, rgba: u32, dark: bool, s: &str, max_lines: i32) -> i32 {
+    rich_run(Some(e), x, y, w, px, lh, rgba, dark, s, max_lines).min(max_lines)
+}
+
+/// The lines `rich` needs for `s` at width `w` and size `px`.
+pub fn rich_lines(w: f32, px: u32, s: &str) -> i32 {
+    rich_run(None, 0.0, 0.0, w, px, 0.0, 0, false, s, 0)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn rich_run(mut e: Option<&mut E>, x: f32, y: f32, w: f32, px: u32, lh: f32, rgba: u32, dark: bool, s: &str, max_lines: i32) -> i32 {
     use envoy_data::keywords::*;
     let body = bs(px);
     let key = d(px);
     let (mut cx, mut line) = (x, 0);
     let space = tw(" ", body).max(px as f32 * 0.25);
-    let mut put = |e: &mut E, word: &str, role: i32, col: u32, cx: &mut f32, line: &mut i32| {
+    let mut put = |e: &mut Option<&mut E>, word: &str, role: i32, col: u32, cx: &mut f32, line: &mut i32| {
         let ww = tw(word, role);
-        if *cx > x && *cx + ww > x + w {
+        // a piece that opens with punctuation (": more orbs." after a keyword) stays on its keyword's line
+        if *cx > x && *cx + ww > x + w && !word.starts_with([':', ',', '.', ';', ')']) {
             *line += 1;
             *cx = x;
         }
-        if *line < max_lines {
+        if let Some(e) = e.as_deref_mut().filter(|_| *line < max_lines) {
             e.text_ex(*cx, y + *line as f32 * lh, role, col, ALIGN_LEFT, 0.0, word);
         }
         *cx += ww;
@@ -506,7 +730,7 @@ pub fn rich(e: &mut E, x: f32, y: f32, w: f32, px: u32, lh: f32, rgba: u32, dark
             Span::Key(k) => {
                 let kw = &KEYWORDS[k];
                 let col = if dark { KC_DARK[kw.cat as usize] } else { KC_LIGHT[kw.cat as usize] };
-                put(e, kw.word, key, alpha(col, (rgba & 0xFF) as f32 / 255.0), &mut cx, &mut line);
+                put(&mut e, kw.word, key, alpha(col, (rgba & 0xFF) as f32 / 255.0), &mut cx, &mut line);
             }
             Span::Text(t) => {
                 let mut first = true;
@@ -516,11 +740,59 @@ pub fn rich(e: &mut E, x: f32, y: f32, w: f32, px: u32, lh: f32, rgba: u32, dark
                     }
                     first = false;
                     if !word.is_empty() {
-                        put(e, word, body, rgba, &mut cx, &mut line);
+                        put(&mut e, word, body, rgba, &mut cx, &mut line);
                     }
                 }
             }
         }
     }
-    (line + 1).min(max_lines)
+    line + 1
+}
+
+// ---- the clear span: where the HUD's centred cards go while a side panel is up
+/// The horizontal span (band units) no side panel covers, this present and as claimed for the next. The pause and
+/// Lab panels claim their side while they draw; the HUD's centred cards (the new-item card, the room banners, the
+/// callouts), drawn before the panels, centre themselves in last present's span and stay inside it (uiremake: with
+/// the Lab panel up, the new-item card ran under the panel and showed half its words).
+static mut CLEAR: (f32, f32) = (f32::MIN, f32::MAX);
+static mut CLEAR_NEXT: (f32, f32) = (f32::MIN, f32::MAX);
+static mut CLEAR_EX: f32 = 0.0;
+
+/// Start of a present: last present's claims become this present's span. `ex`: the extra width each side of the
+/// 4:3 band.
+pub fn clear_begin(ex: f32) {
+    unsafe {
+        CLEAR = CLEAR_NEXT;
+        CLEAR_NEXT = (f32::MIN, f32::MAX);
+        CLEAR_EX = ex;
+    }
+}
+/// A panel covers everything left of `x`.
+pub fn claim_left(x: f32) {
+    unsafe { CLEAR_NEXT.0 = CLEAR_NEXT.0.max(x) }
+}
+/// A panel covers everything right of `x`.
+pub fn claim_right(x: f32) {
+    unsafe { CLEAR_NEXT.1 = CLEAR_NEXT.1.min(x) }
+}
+/// The clear span (left, right): the 4:3 band with no panel up, else from the panel to the far screen edge.
+pub fn clear_span() -> (f32, f32) {
+    unsafe {
+        if CLEAR.0 == f32::MIN && CLEAR.1 == f32::MAX {
+            return (0.0, 640.0);
+        }
+        let l = if CLEAR.0 == f32::MIN { 8.0 - CLEAR_EX } else { CLEAR.0 };
+        let r = if CLEAR.1 == f32::MAX { 632.0 + CLEAR_EX } else { CLEAR.1 };
+        if r - l < 160.0 { (0.0, 640.0) } else { (l, r) }
+    }
+}
+/// The centre of the clear span (320 with no panel up).
+pub fn mid() -> f32 {
+    let (l, r) = clear_span();
+    (l + r) * 0.5
+}
+/// The clear span's width (640 with no panel up).
+pub fn clear_w() -> f32 {
+    let (l, r) = clear_span();
+    r - l
 }

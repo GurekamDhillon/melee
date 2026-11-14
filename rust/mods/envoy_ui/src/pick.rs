@@ -19,7 +19,8 @@ fn level_of(v: &[i32; VW], p: usize, f: usize, id: i32) -> i32 {
     (0..SLOTS).find(|&k| v[pbk + P_DRIVES + f * SLOTS + k] == id + 1).map_or(0, |k| v[pbk + P_LEVELS + f * SLOTS + k])
 }
 
-/// Word-wrap `s` into lines of at most `w` px (role), drawn from (x, y), `lh` apart. Returns the lines drawn.
+/// Word-wrap `s` into lines of at most `w` px (role), drawn from (x, y), `lh` apart. Returns the lines drawn. Whole
+/// words always: the last line is set smaller rather than cut.
 pub fn wrap(e: &mut E, x: f32, y: f32, w: f32, role: i32, lh: f32, rgba: u32, align: i32, s: &str, max_lines: usize) -> usize {
     let bytes = s.as_bytes();
     let mut start = 0;
@@ -45,8 +46,12 @@ pub fn wrap(e: &mut E, x: f32, y: f32, w: f32, role: i32, lh: f32, rgba: u32, al
         if last_ok == start {
             last_ok = bytes.len();
         }
+        // the last line takes all that is left, set smaller until it fits (it was cut at the width: words lost)
+        if line + 1 == max_lines {
+            last_ok = bytes.len();
+        }
         let piece = unsafe { core::str::from_utf8_unchecked(&bytes[start..last_ok]) };
-        e.text_ex(x, y + line as f32 * lh, role, rgba, align, if line + 1 == max_lines { w } else { 0.0 }, piece);
+        e.text_ex(x, y + line as f32 * lh, fit_role(piece, role, w), rgba, align, 0.0, piece);
         line += 1;
         start = last_ok;
         while start < bytes.len() && bytes[start] == b' ' {
@@ -68,10 +73,10 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
         let cx = x + w * 0.5;
         if id == OFFER_STOCK || !(0..POOL_LEN as i32).contains(&id) {
             spr_c(e, S_STOCK, cx, y + 40.0, 2.4, alpha(WHITE, a));
-            e.text_ex(cx, y + 74.0, d(19), alpha(INK, a), ALIGN_CENTER, w - 12.0, "+1 stock");
+            text_fit(e, cx, y + 74.0, d, 19, 11, alpha(INK, a), ALIGN_CENTER, w - 12.0, "+1 stock");
             let mut s = Buf::new();
             s.s("Pool ").i(v[V_POOL]).s(" to ").i(v[V_POOL] + 1);
-            e.text_ex(cx, y + 100.0, bs(13), alpha(LILAC, a), ALIGN_CENTER, w - 12.0, s.str());
+            text_fit(e, cx, y + 100.0, bs, 13, 8, alpha(LILAC, a), ALIGN_CENTER, w - 12.0, s.str());
             return;
         }
         let dr = &POOL[id as usize];
@@ -81,7 +86,7 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
         } else {
             spr_c(e, badge_of(id as usize), cx, y + 32.0, 38.0 / 28.5, alpha(WHITE, a));
         }
-        e.text_ex(cx, y + 66.0, d(17), alpha(INK, a), ALIGN_CENTER, w - 10.0, dr.name);
+        text_fit(e, cx, y + 66.0, d, 17, 10, alpha(INK, a), ALIGN_CENTER, w - 10.0, dr.name);
         let fam = if keystone { "Keystone" } else { crate::party::FAM_WORD[FAM_BADGE.get(dr.family as usize).copied().unwrap_or(5)] };
         e.text_ex(cx, y + 88.0, bs(11), alpha(LILAC, a), ALIGN_CENTER, 0.0, fam);
         wrap(e, cx, y + 106.0, w - 16.0, bs(12), 14.0, alpha(INK, a), ALIGN_CENTER, dr.rule, 5);
@@ -102,7 +107,7 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
                     s.s("level ").i(lv + 1);
                 }
                 let col = if !ok { DEEP } else if lv > 0 { CORAL } else { INK };
-                e.text_ex(cx, fy, bs(11), alpha(col, a), ALIGN_CENTER, w - 10.0, s.str());
+                text_fit(e, cx, fy, bs, 11, 7, alpha(col, a), ALIGN_CENTER, w - 10.0, s.str());
                 if ok && lv > 0 && on {
                     burst(e, S_BURST_CORAL, x + w - 6.0, y + 6.0, 46.0, unsafe { T - OPEN_AT }, "Level up!", 9);
                 }
@@ -111,7 +116,7 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
             let pr = PRICES[dr.price as usize];
             let mut s = Buf::new();
             s.s("Price: ").s(pr);
-            e.text_ex(cx, y + h - 24.0, d(12), alpha(CORAL, a), ALIGN_CENTER, w - 10.0, s.str());
+            text_fit(e, cx, y + h - 24.0, d, 12, 7, alpha(CORAL, a), ALIGN_CENTER, w - 10.0, s.str());
         }
     });
 }
@@ -168,7 +173,7 @@ fn offer_row(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f3
         }
         let dr = &POOL[id as usize];
         let keystone = dr.kind == K_KEYSTONE;
-        e.text_ex(tx, y + 5.0, d(17), alpha(INK, a), ALIGN_LEFT, w - 150.0, dr.name);
+        text_fit(e, tx, y + 5.0, d, 17, 10, alpha(INK, a), ALIGN_LEFT, w - 150.0, dr.name);
         let mut s = Buf::new();
         if keystone {
             s.s("Keystone");
@@ -207,7 +212,7 @@ fn offer_row(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f3
                 }
             }
         }
-        e.text_ex(tx, y + 50.0, bs(11), alpha(col, a), ALIGN_LEFT, w - 66.0, s.str());
+        text_fit(e, tx, y + 50.0, bs, 11, 7, alpha(col, a), ALIGN_LEFT, w - 66.0, s.str());
     });
     // the badge over the tag's left edge, with its tier stars
     spr_c(e, S_DISC, bx, by, 58.0 / 32.0, alpha(INK, a));
@@ -267,7 +272,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w0: f32, coop: bool)
                 wrap(e, cx, wy + 112.0, 128.0, bs(15), 18.0, alpha(ink, al), ALIGN_CENTER, dr.rule, 5);
                 let mut s = Buf::new();
                 s.s("Price: ").s(PRICES[dr.price as usize]);
-                e.text_ex(cx, wy + 236.0, d(13), alpha(if on { DEEP } else { CORAL }, al), ALIGN_CENTER, 150.0, s.str());
+                text_fit(e, cx, wy + 236.0, d, 13, 8, alpha(if on { DEEP } else { CORAL }, al), ALIGN_CENTER, 150.0, s.str());
             } else {
                 e.text_ex(cx, wy + 100.0, d(22), alpha(ink, al), ALIGN_CENTER, 0.0, "+1 stock");
             }
@@ -356,7 +361,7 @@ fn fighter_sticker_w(e: &mut E, x: f32, y: f32, w: f32, deg: f32, p: &Party, set
     }
     sticker(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, x, y, w, 80.0, if on { 0.0 } else { deg }, WHITE, |e| {
         spr_c(e, S_HEAD, x + 16.0, y + 14.0, 1.0, WHITE);
-        e.text_ex(x + 31.0, y + 6.0, d(14), INK, ALIGN_LEFT, w - 36.0, ck_name(p.pairs[set]));
+        text_fit(e, x + 31.0, y + 6.0, d, 14, 8, INK, ALIGN_LEFT, w - 36.0, ck_name(p.pairs[set]));
         let step = ((w - 12.0) / SLOTS as f32).min(26.0);
         for k in 0..SLOTS {
             let cx = x + 6.0 + step * 0.5 + k as f32 * step;
@@ -507,7 +512,7 @@ pub unsafe fn confirm(e: &mut E, v: &[i32; VW]) {
             wrap(e, x + 16.0, y + 14.0, w - 32.0, d(17), 22.0, INK, ALIGN_LEFT, s.str(), 2);
             let mut s = Buf::new();
             s.s(if at / 8 == 0 { "Main" } else { "Partner" }).s(", slot ").i(at % 8 + 1).s(". The old drive is gone.");
-            e.text_ex(x + 16.0, y + 64.0, bs(12), LILAC, ALIGN_LEFT, w - 32.0, s.str());
+            text_fit(e, x + 16.0, y + 64.0, bs, 12, 7, LILAC, ALIGN_LEFT, w - 32.0, s.str());
             let cur = v[b + P_CONFIRM_CUR];
             let words = if new == 0 { ["Keep", "Scrap"] } else { ["Keep", "Replace"] };
             for (i, word) in words.iter().enumerate() {

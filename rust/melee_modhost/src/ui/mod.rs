@@ -482,9 +482,21 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Some(buf) = m.data(&c).get(ptr as usize..(ptr as usize).saturating_add(len as usize)) else { return GD_EINVAL };
         let module = d.module;
         let vector = d.features & FEATURE_UI_VECTOR != 0;
+        if sh.batch.audit.is_some() {
+            // the window's sides in band units, for the audit's off-screen check
+            let (b, win) = (sh.band_rect(), sh.window);
+            let k = if b[2] > 0.0 { 640.0 / b[2] } else { 1.0 };
+            let view = (-b[0] * k, (win.0 as f32 - b[0]) * k);
+            if let Some(au) = sh.batch.audit.as_deref_mut() {
+                au.view = (b[2] > 0.0 && win.0 > 0).then_some(view);
+            }
+        }
         let t = std::time::Instant::now();
         let r = sh.batch.submit(buf, module, &sh.atlas, &sh.texs[module as usize], vector);
         sh.submit_ns += t.elapsed().as_nanos() as u64;
+        if let Some(au) = sh.batch.audit.as_deref_mut() {
+            sh.log.append(&mut au.out);
+        }
         match r {
             Ok(()) => GD_OK,
             Err(e) => {
@@ -571,8 +583,21 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             return 0;
         };
         sh.atlas.put(r, &px);
+        if let Some(au) = sh.batch.audit.as_deref_mut() {
+            au.names.insert((r.x, r.y), p.clone());
+        }
         sh.texs[module].push(r);
         sh.texs[module].len() as u32
+    });
+    // the size of a loaded texture in texels, (w << 16) | h, 0 for a bad handle: what a mod needs to place art whose
+    // size it does not carry (the disc's fighter icons and portraits) without stretching it (uiremake)
+    f!("gd_ui_tex_size", |c: Caller<'_, PresData>, h: u32| -> i32 {
+        let module = c.data().module as usize;
+        let sh = c.data().ui().borrow();
+        match sh.texs.get(module).and_then(|t| t.get((h as usize).wrapping_sub(1))) {
+            Some(r) => ((r.w as i32) << 16) | r.h as i32,
+            None => 0,
+        }
     });
     // ---- body-group tints (notes/envoy-tints.md): add RGB x strength (0..1) to the groups in `mask` (bit per
     // melee_modes::tu::envoy_tint::G_*: head, torso, arms, hands, legs, feet) of port's fighter for this present.
@@ -669,6 +694,9 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Some((w, h, px)) = melee_modes::tu::drive_draw::sprite_sheet(model as usize) else { return 0 };
         let Some(r) = sh.atlas.alloc(w as u16, h as u16) else { return 0 };
         sh.atlas.put(r, &px);
+        if let Some(au) = sh.batch.audit.as_deref_mut() {
+            au.names.insert((r.x, r.y), format!("model sheet {model}"));
+        }
         sh.texs[module].push(r);
         let hd = sh.texs[module].len() as u32;
         sh.model_texs.push((module, model, hd));
@@ -690,6 +718,9 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let hd = match fighter_art::get(ck, which).and_then(|p| sh.atlas.alloc(p.w as u16, p.h as u16).map(|r| (r, p))) {
             Some((r, p)) => {
                 sh.atlas.put(r, &p.rgba);
+                if let Some(au) = sh.batch.audit.as_deref_mut() {
+                    au.names.insert((r.x, r.y), format!("fighter art {ck} {}", if which == 0 { "icon" } else { "portrait" }));
+                }
                 sh.texs[module].push(r);
                 sh.texs[module].len() as u32
             }

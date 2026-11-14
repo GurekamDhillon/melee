@@ -294,46 +294,51 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
     }
     let bench = if act == 0 { v[pbk + P_PARTNER] } else { v[pbk + P_MAIN] };
     if v[pbk + P_PARTNER_KIND] >= 0 || (0..26).contains(&bench) {
-        let (bx, by) = (x + 162.0, hy - 5.0);
+        // the sticker is as wide as the bench fighter's name needs (it was 84 wide with 44 for the name: "CAPTAIN
+        // FALCON" was cut to "CAPTAIN", then ran under the button); under the percent when there is no drive row
+        let bname = crate::picker::short(bench);
+        let bw = (22.0 + tw(bname, d(10)) + 6.0 + 20.0).max(84.0);
+        let (bx, by) = (if items_on { x } else { x + 162.0 }, hy - 5.0);
         let cd = v[pbk + P_TAG_CD];
         let mx = v[pbk + P_TAG_MAX].max(1);
         let ready = cd <= 0;
         // Quick Tag: sunny in the after-damage window (a tag now is a Handoff), white when legal, faded on cooldown
         let window = v[pbk + P_TAG_WINDOW] > 0 && ready;
-        face(e, if window { S_FACE_SUNNY } else if ready { S_FACE_WHITE } else { S_FACE_FADED }, bx, by, 84.0, 20.0, WHITE);
+        face(e, if window { S_FACE_SUNNY } else if ready { S_FACE_WHITE } else { S_FACE_FADED }, bx, by, bw, 20.0, WHITE);
         if !ready {
             let f = 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0);
-            e.rect(bx + 2.0, by + 2.0, 80.0 * f, 16.0, alpha(WHITE, 0.9));
+            e.round_rect(bx + 2.0, by + 2.0, (bw - 4.0) * f, 16.0, 8.0, alpha(WHITE, 0.9));
         }
         // holding Tag toward a swap fills the sticker (P_TAG_HOLD / P_TAG_HOLD_AT)
         let hold = v[pbk + P_TAG_HOLD];
         let at = v[pbk + P_TAG_HOLD_AT].max(1);
         if hold > 0 {
-            e.rect(bx + 2.0, by + 2.0, 80.0 * (hold as f32 / at as f32).min(1.0), 16.0, alpha(SUNNY, 0.85));
+            e.round_rect(bx + 2.0, by + 2.0, (bw - 4.0) * (hold as f32 / at as f32).min(1.0), 16.0, 8.0, alpha(SUNNY, 0.85));
         }
         if v[pbk + P_TAG_BUTTON] != 2 {
-            e.text_ex(bx + 42.0, by + 21.0, bs(9), WHITE, ALIGN_CENTER, 0.0, "Tap: Strike / Hold: Swap");
+            // left-aligned with the sticker at the screen's edge (centred on it, the line ran off a 4:3 screen)
+            text_edge(e, bx + 2.0, by + 22.0, bs(9), WHITE, ALIGN_LEFT, 1.0, "Tap: Strike / Hold: Swap");
         }
         // the ring round the head: full when a tag is legal, the cooldown's fraction otherwise
         let frac = if ready { 1.0 } else { 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0) };
         ring(e, bx + 10.0, by + 10.0, 9.0, 2.0, frac, if window { CORAL } else if ready { SUNNY } else { PALE }, alpha(PALE, 0.4));
-        // the heads flip on a tag (EV_TAG): the bench head turns over for 8 frames
+        // the heads flip on a tag (EV_TAG): the bench head pops (shrinks and comes back, whole) for 8 frames. It
+        // was squashed sideways to a sliver, which the aspect check reads as what it looks like: a squished icon.
         let flip = tag_age(v, p, EV_TAG);
         let sx = if (0..8).contains(&flip) { (cos(flip as f32 * 0.3927)).abs().max(0.15) } else { 1.0 };
-        let hw = 22.0 * 0.62;
-        spr(e, S_HEAD, bx + 10.0 - hw * sx * 0.5, by + 10.0 - hw * 0.5, hw * sx, hw, WHITE);
-        e.text_ex(bx + 19.0, by + 4.0, d(10), INK, ALIGN_LEFT, 44.0, ck_name(bench));
+        spr_c(e, S_HEAD, bx + 10.0, by + 10.0, 0.62 * sx, WHITE);
+        e.text_ex(bx + 21.0, by + 4.0, d(10), INK, ALIGN_LEFT, 0.0, bname);
         match v[pbk + P_TAG_BUTTON] {
             0 | 1 => {
-                face(e, S_FACE_INK, bx + 66.0, by + 2.0, 16.0, 16.0, WHITE);
-                e.text_ex(bx + 74.0, by + 3.0, d(10), WHITE, ALIGN_CENTER, 0.0, if v[pbk + P_TAG_BUTTON] == 0 { "Y" } else { "X" });
+                disc(e, bx + bw - 10.0, by + 10.0, 16.0, INK, 0.0, 0);
+                e.text_ex(bx + bw - 10.0, by + 3.0, d(10), WHITE, ALIGN_CENTER, 0.0, if v[pbk + P_TAG_BUTTON] == 0 { "Y" } else { "X" });
             }
-            _ => spr_c(e, S_DPAD_DOWN, bx + 75.0, by + 10.0, 0.72, WHITE),
+            _ => spr_c(e, S_DPAD_DOWN, bx + bw - 10.0, by + 10.0, 0.72, WHITE),
         }
         // a Handoff: "Handoff!" by the heads and the first chip of the row bursts
         let ho = tag_age(v, p, EV_HANDOFF);
         if (0..30).contains(&ho) {
-            burst(e, S_BURST_SUNNY, bx + 42.0, by - 16.0, 50.0, ho, "Handoff!", 10);
+            burst(e, S_BURST_SUNNY, bx + bw * 0.5, by - 16.0, 50.0, ho, "Handoff!", 10);
             let rx = x + 104.0;
             ring(e, rx, y + 36.0, 12.0 + ho as f32 * 0.6, 3.0, 1.0, alpha(CORAL, 1.0 - ho as f32 / 30.0), 0);
         }
@@ -344,6 +349,9 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
 fn corner_w() -> f32 {
     104.0 + 29.0 * SLOTS as f32 + 20.0
 }
+
+/// Where the room right of the purse (the coin sticker) starts: the payouts ("+5") rise there.
+static mut PURSE_X: f32 = 60.0;
 
 /// The whole HUD.
 pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>) {
@@ -372,6 +380,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         spr_c(e, S_COIN, x + 17.0, 25.5, 1.3, WHITE);
         e.text_ex(x + 30.0, 16.0, d(15), INK, ALIGN_LEFT, 0.0, s.str());
         x += w + 10.0;
+        PURSE_X = x;
     }
     // stocks, bottom centre: full icons for the stocks held, outlines for the empty slots up to the limit. Co-op
     // (items): each player their own stocks and limit, P1 left of centre, P2 right; a paid slot crumbles away.
@@ -410,7 +419,8 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     if v[V_CROWD] > 1000 {
         s.s(" - Crowd");
     }
-    e.text_ex(14.0 - ex, 40.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
+    // an ink edge: plain white words were lost on a bright stage
+    text_edge(e, 14.0 - ex, 41.0, bs(12), WHITE, ALIGN_LEFT, 1.2, s.str());
     // foes, top right: an elite or boss plate with its drives
     let kind = v[V_FIGHT_KIND];
     let mut fy = 12.0;
@@ -476,8 +486,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         session_banner(e, v, a, 318.0);
     }
     if humans == 2 && crate::pad_present(1) == 0 {
-        sticker(e, S_FACE_LAGOON, 180.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
-            e.text_ex(320.0, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");
+        let m = mid();
+        sticker(e, S_FACE_LAGOON, m - 140.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
+            e.text_ex(m, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");
         });
     }
 }
@@ -602,7 +613,7 @@ pub unsafe fn picked(e: &mut E, v: &[i32; VW]) {
             }
         }
         let w = tw(s.str(), d(16)) + 60.0;
-        let (x, y) = (320.0 - w * 0.5, 76.0 + p as f32 * 44.0);
+        let (x, y) = (mid() - w * 0.5, 76.0 + p as f32 * 44.0);
         let (sc, _) = enter(since);
         let _ = sc;
         sticker(e, S_FACE_WHITE, x, y, w, 36.0, if p == 0 { -1.5 } else { 1.5 }, alpha(WHITE, a), |e| {
@@ -623,6 +634,7 @@ pub unsafe fn picked(e: &mut E, v: &[i32; VW]) {
 unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
     let n = v[V_EV_N].max(0) as usize;
     let now = v[V_PLAY];
+    let mut pays = 0;
     for i in 0..EV.min(n) {
         let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
         let age = now - ev[0];
@@ -643,9 +655,12 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
                 }
             }
             EV_PAY | EV_COINS => {
+                // beside the purse, rising from its level; a second payout in the same moment stands after the
+                // first (they were all drawn at one spot, over each other and over the room's label)
                 let mut s = Buf::new();
                 s.s("+").i(ev[3]);
-                text_edge(e, 100.0 - ex, 40.0 - age as f32 * 0.4, d(16), SUNNY, ALIGN_LEFT, 1.6, s.str());
+                text_edge(e, PURSE_X + pays as f32 * 38.0, 18.0 - age as f32 * 0.25, d(16), SUNNY, ALIGN_LEFT, 1.6, s.str());
+                pays += 1;
             }
             EV_SPARK => {
                 let word = match ev[3] { 1 => "L-cancel!", 2 => "Wavedash!", 3 => "Tech!", _ => "Offstage!" };

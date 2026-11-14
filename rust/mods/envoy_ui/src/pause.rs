@@ -283,7 +283,7 @@ const WORDS_ROWS: usize = 6;
 /// The glossary: every keyword of the item language, in its colour, and what it means.
 unsafe fn words_page(e: &mut E, pn: &Panel, x: f32, y: f32) {
     use envoy_data::keywords::*;
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let top = if pn.page == PG_WORDS { pn.item.min(KEYWORDS.len() - WORDS_ROWS) } else { 0 };
     for (r, kw) in KEYWORDS.iter().enumerate().skip(top).take(WORDS_ROWS) {
         let ry = y + (r - top) as f32 * 27.0;
@@ -292,7 +292,7 @@ unsafe fn words_page(e: &mut E, pn: &Panel, x: f32, y: f32) {
         e.text_ex(x + 8.0, ry, td(12), col, ALIGN_LEFT, 0.0, kw.word);
         let cat = KC_NAME[kw.cat as usize];
         e.text_ex(x + w, ry + 1.0, tb(9), PALE, ALIGN_RIGHT, 0.0, cat);
-        e.text_ex(x + 8.0, ry + 13.0, tb(10), WHITE, ALIGN_LEFT, w - 10.0, kw.def);
+        text_fit(e, x + 8.0, ry + 13.0, tb, 10, 7, WHITE, ALIGN_LEFT, w - 10.0, kw.def);
     }
     let mut b = Buf::new();
     b.i(top as i32 + 1).s("-").i((top + WORDS_ROWS) as i32).s(" of ").i(KEYWORDS.len() as i32);
@@ -301,16 +301,40 @@ unsafe fn words_page(e: &mut E, pn: &Panel, x: f32, y: f32) {
 
 // ------------------------------------------------------------------ drawing (band space, 640 x 480)
 
-const PW: f32 = 232.0;
-const PY: f32 = 52.0;
-const PH: f32 = 318.0;
+/// The panel's size this present (`draw` sets them): wide enough for the six tabs' words on one row wherever the
+/// screen has the room (uiremake: at 232 wide the tabs were 36 units each and their words were cut, "Optio",
+/// "Comb"); two panels on a 4:3 screen have less, and there the tabs take two rows and the panel grows by a row.
+static mut PWV: f32 = 312.0;
+static mut PHV: f32 = 318.0;
+static mut PYV: f32 = 52.0;
+/// The height of the tab bar this present (one row or two).
+static mut TABH: f32 = 28.0;
+fn pw() -> f32 {
+    unsafe { PWV }
+}
+fn ph() -> f32 {
+    unsafe { PHV }
+}
+const TAB_PX: u32 = 10;
 
 /// The overlay over the retail pause: a panel per human player.
 pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, boss_petey: bool) {
     let humans = v[V_HUMANS].clamp(1, 2) as usize;
     e.layer(LAYER_MENU, 4);
+    // one panel: 312 wide; two: what half the screen leaves each (4:3: 298, a wide window: 312)
+    PWV = if humans == 2 { ((640.0 + 2.0 * ex - 44.0) * 0.5).clamp(232.0, 312.0) } else { 312.0 };
+    let rows = tab_rows(PWV - 16.0, TAB_PX, &PAGES);
+    TABH = tab_h(rows, 22.0);
+    PHV = 318.0 + TABH - 28.0;
+    PYV = 52.0 - (TABH - 28.0);
     for p in 0..humans {
-        let x = if p == 0 { 14.0 - ex } else { 626.0 + ex - PW };
+        let x = if p == 0 { 14.0 - ex } else { 626.0 + ex - pw() };
+        // the HUD's centred cards keep clear of the panel (kit::clear_span)
+        if p == 0 {
+            claim_left(x + pw() + 10.0);
+        } else {
+            claim_right(x - 10.0);
+        }
         panel(e, v, p, x, if p == 0 { -0.8 } else { 0.8 }, boss_petey, humans);
     }
 }
@@ -318,11 +342,11 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, boss_petey: bool) {
 unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: bool, humans: usize) {
     let pn = PANELS[p];
     let (sc, a) = enter(pn.age);
-    let y = PY + (1.0 - sc) * 40.0;
+    let y = PYV + (1.0 - sc) * 40.0;
     let col = PCOL[p];
     // the ink sticker twice: the baked face is see-through at its middle, and the panel must read over any stage
-    sticker(e, S_FACE_INK, x, y, PW, PH, deg, alpha(WHITE, a), |e| {
-        face(e, S_FACE_INK, x, y, PW, PH, alpha(WHITE, a));
+    sticker(e, S_FACE_INK, x, y, pw(), ph(), deg, alpha(WHITE, a), |e| {
+        face(e, S_FACE_INK, x, y, pw(), ph(), alpha(WHITE, a));
         // title strip: ENVOY + the player tag
         let mut t = Buf::new();
         t.s("ENVOY");
@@ -330,10 +354,10 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
             t.s(if p == 0 { "  P1" } else { "  P2" });
         }
         text_edge(e, x + 12.0, y + 8.0, d(18), SUNNY, ALIGN_LEFT, 1.2, t.str());
-        e.text_ex(x + PW - 12.0, y + 13.0, bs(11), PALE, ALIGN_RIGHT, 0.0, "paused");
+        e.text_ex(x + pw() - 12.0, y + 13.0, bs(11), PALE, ALIGN_RIGHT, 0.0, "paused");
         header(e, v, p, x + 10.0, y + 36.0);
         tabs(e, &pn, x + 8.0, y + 84.0, col);
-        let cy = y + 116.0;
+        let cy = y + 88.0 + TABH;
         match pn.page {
             PG_ITEMS => items_page(e, v, p, &pn, x + 10.0, cy),
             PG_RUN => run_page(e, v, p, x + 10.0, cy, petey),
@@ -358,7 +382,7 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
         } else {
             "D-pad up: back to the tabs"
         };
-        e.text_ex(x + PW * 0.5, y + PH - 22.0, bs(11), if pn.abandoned > 0 { CORAL } else { PALE }, ALIGN_CENTER, PW - 16.0, hint);
+        text_fit(e, x + pw() * 0.5, y + ph() - 22.0, bs, 11, 8, if pn.abandoned > 0 { CORAL } else { PALE }, ALIGN_CENTER, pw() - 16.0, hint);
     });
 }
 
@@ -366,7 +390,7 @@ unsafe fn panel(e: &mut E, v: &[i32; VW], p: usize, x: f32, deg: f32, petey: boo
 unsafe fn header(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32) {
     let (pool, lim) = crate::hud::stocks_of(v, p);
     let lim = if lim > 0 { lim } else { pool.max(4) };
-    face(e, S_FACE_WHITE, x, y, PW - 20.0, 40.0, WHITE);
+    face(e, S_FACE_WHITE, x, y, pw() - 20.0, 40.0, WHITE);
     e.text_ex(x + 8.0, y + 3.0, bs(10), LILAC, ALIGN_LEFT, 0.0, "STOCKS");
     let n = lim.max(pool).clamp(1, 8);
     for i in 0..n {
@@ -376,26 +400,24 @@ unsafe fn header(e: &mut E, v: &[i32; VW], p: usize, x: f32, y: f32) {
     }
     let mut s = Buf::new();
     s.i(pool).s("/").i(lim);
-    e.text_ex(x + 136.0, y + 3.0, bs(10), LILAC, ALIGN_LEFT, 0.0, "LIMIT");
-    e.text_ex(x + 136.0, y + 16.0, d(14), INK, ALIGN_LEFT, 0.0, s.str());
-    spr_c(e, S_COIN, x + 180.0, y + 26.0, 1.0, WHITE);
     let mut c = Buf::new();
     c.i(v[V_COINS]);
-    e.text_ex(x + 190.0, y + 18.0, d(13), INK, ALIGN_LEFT, 0.0, c.str());
+    // from the right: the coins (their number never runs off the sticker), then the limit
+    let w = pw() - 20.0;
+    let cw = tw(c.str(), d(13));
+    let coin_x = x + w - 12.0 - cw - 12.0;
+    spr_c(e, S_COIN, coin_x, y + 26.0, 1.0, WHITE);
+    e.text_ex(coin_x + 11.0, y + 18.0, d(13), INK, ALIGN_LEFT, 0.0, c.str());
+    let lx = (coin_x - 20.0 - tw(s.str(), d(14)).max(tw("LIMIT", bs(10)))).max(x + 16.0 + n as f32 * 17.0);
+    e.text_ex(lx, y + 3.0, bs(10), LILAC, ALIGN_LEFT, 0.0, "LIMIT");
+    e.text_ex(lx, y + 16.0, d(14), INK, ALIGN_LEFT, 0.0, s.str());
 }
 
 unsafe fn tabs(e: &mut E, pn: &Panel, x: f32, y: f32, col: u32) {
-    let w = (PW - 16.0) / PAGES.len() as f32;
-    for (i, name) in PAGES.iter().enumerate() {
-        let on = i == pn.page;
-        let tx = x + i as f32 * w;
-        let id = if on && pn.row == 0 { S_FACE_HOVER } else if on { S_FACE_SUNNY } else { S_FACE_LILAC };
-        let ty = if on { y - 2.0 } else { y };
-        face(e, id, tx + 1.0, ty, w - 4.0, 24.0, WHITE);
-        e.text_ex(tx + w * 0.5 - 1.0, ty + 5.0, d(10), if on { INK } else { WHITE }, ALIGN_CENTER, w - 6.0, name);
-    }
+    // every tab as wide as its word (kit::tab_row): no word is cut to a share of the bar
+    let h = tab_row(e, x, y, pw() - 16.0, 22.0, TAB_PX, &PAGES, pn.page, pn.row == 0);
     // the player's colour under the tab bar
-    e.rect(x + 2.0, y + 26.0, PW - 20.0, 2.0, alpha(col, 0.9));
+    e.rect(x + 2.0, y + h - 2.0, pw() - 20.0, 2.0, alpha(col, 0.9));
 }
 
 fn trigger_word(it: &Item) -> &'static str {
@@ -404,40 +426,40 @@ fn trigger_word(it: &Item) -> &'static str {
 
 unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: f32) {
     let (list, n) = held_items(v, p);
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     if n == 0 {
-        e.text_ex(x + w * 0.5, y + 40.0, tb(13), PALE, ALIGN_CENTER, w, "No items yet.");
-        e.text_ex(x + w * 0.5, y + 62.0, tb(11), PALE, ALIGN_CENTER, w, "The item room, the shop");
-        e.text_ex(x + w * 0.5, y + 76.0, tb(11), PALE, ALIGN_CENTER, w, "and the boss hand them out.");
+        e.text_ex(x + w * 0.5, y + 40.0, tb(13), PALE, ALIGN_CENTER, 0.0, "No items yet.");
+        e.text_ex(x + w * 0.5, y + 62.0, tb(11), PALE, ALIGN_CENTER, 0.0, "The item room, the shop");
+        e.text_ex(x + w * 0.5, y + 76.0, tb(11), PALE, ALIGN_CENTER, 0.0, "and the boss hand them out.");
         return;
     }
     let sel = pn.item.min(n - 1);
-    // the icon strip: 7 a row
+    // the icon strip: as many a row as the panel's width takes (26 units each)
+    let per = (((w - 4.0) / 26.0) as usize).max(1);
     for k in 0..n {
         let it = &ITEMS[list[k]];
-        let cx = x + 12.0 + (k % 8) as f32 * 26.0;
-        let cy = y + 11.0 + (k / 8) as f32 * 25.0;
+        let cx = x + 12.0 + (k % per) as f32 * 26.0;
+        let cy = y + 11.0 + (k / per) as f32 * 25.0;
         let on = k == sel && pn.row == 1;
         if on {
             spr_rot(e, S_BURST_SUNNY, cx, cy, 0.52, 8.0, WHITE);
         }
-        crate::icons::icon(e, it.id, cx, cy, 22.0);
+        // the same icons as everywhere else (the pool frame and the item's sprite; they were the older glyph discs)
+        item_icon(e, it.id, cx, cy, 18.0, 1.0);
         let cnt = v[inv_word(p, it.id as usize)];
         if cnt > 1 {
-            let mut s = Buf::new();
-            s.s("x").i(cnt);
-            face(e, S_FACE_INK, cx + 3.0, cy + 3.0, 16.0, 11.0, WHITE);
-            e.text_ex(cx + 11.0, cy + 3.0, d(8), SUNNY, ALIGN_CENTER, 0.0, s.str());
+            count_chip(e, cx, cy, 22.0, cnt);
         }
     }
     // the card of the hovered item (the first one while the tab bar has the cursor)
     let it = &ITEMS[list[sel]];
     let cnt = v[inv_word(p, it.id as usize)];
-    let cy = y + 4.0 + ((n + 7) / 8) as f32 * 25.0;
-    let ch = (PY + PH - 30.0 - cy).clamp(70.0, 130.0);
+    let cy = y + 4.0 + n.div_ceil(per) as f32 * 25.0;
+    let ch = (PYV + ph() - 30.0 - cy).clamp(70.0, 150.0);
     sticker(e, S_FACE_WHITE, x, cy, w, ch, 0.6, WHITE, |e| {
         e.rect(x + 6.0, cy + 6.0, 6.0, ch - 12.0, it.rgba);
-        e.text_ex(x + 20.0, cy + 8.0, td(17), INK, ALIGN_LEFT, w - 28.0, it.name);
+        let stars = it.quality.min(4) as f32 * 13.0;
+        text_fit(e, x + 20.0, cy + 8.0, td, 17, 11, INK, ALIGN_LEFT, w - 34.0 - stars, it.name);
         // the card in the keyword language (its trigger words lead), then the stack
         rich(e, x + 20.0, cy + 30.0, w - 30.0, ts(12), 14.0, INK, false, envoy_data::keywords::card(it.id), 4);
         // the item language's combos: the synergies and evolutions it is part of
@@ -452,14 +474,15 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
                 }
                 c.s(nm);
             }
-            e.text_ex(x + 20.0, cy + ch - 36.0, tb(10), CORAL, ALIGN_LEFT, w - 28.0, c.str());
+            let lines = wrap_lines(c.str(), w - 28.0, tb(10)).min(2);
+            wrap(e, x + 20.0, cy + ch - 25.0 - lines as f32 * 11.0, w - 28.0, tb, 10, 11.0, CORAL, ALIGN_LEFT, c.str(), 2);
         }
         let mut s = Buf::new();
         s.s("Stack ").i(cnt).s("/").i(it.cap as i32);
         if cnt >= it.cap as i32 {
             s.s("  (at its cap)");
         }
-        e.text_ex(x + 20.0, cy + ch - 20.0, tb(11), LILAC, ALIGN_LEFT, w - 28.0, s.str());
+        e.text_ex(x + 20.0, cy + ch - 20.0, tb(11), LILAC, ALIGN_LEFT, 0.0, s.str());
         for q in 0..it.quality.min(4) {
             spr_c(e, S_STAR_ON, x + w - 14.0 - q as f32 * 13.0, cy + 16.0, 1.0, WHITE);
         }
@@ -467,24 +490,6 @@ unsafe fn items_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: 
 }
 
 /// Text over at most two lines of width `w` (split at the last space that fits).
-fn line_wrap(e: &mut E, x: f32, y: f32, role: i32, rgba: u32, w: f32, s: &str) {
-    if tw(s, role) <= w {
-        e.text_ex(x, y, role, rgba, ALIGN_LEFT, 0.0, s);
-        return;
-    }
-    let mut cut = 0;
-    for (i, c) in s.char_indices() {
-        if c == ' ' && tw(&s[..i], role) <= w {
-            cut = i;
-        }
-    }
-    if cut == 0 {
-        e.text_ex(x, y, role, rgba, ALIGN_LEFT, w, s);
-        return;
-    }
-    e.text_ex(x, y, role, rgba, ALIGN_LEFT, 0.0, &s[..cut]);
-    e.text_ex(x, y + 16.0, role, rgba, ALIGN_LEFT, w, &s[cut + 1..]);
-}
 
 fn kind_word(k: i32) -> &'static str {
     match k {
@@ -506,7 +511,7 @@ fn road_word(k: i32) -> &'static str {
 }
 
 unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: bool) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let mut s = Buf::new();
     s.s("Loop ").i(v[V_LOOP].max(1)).s("  -  ");
     if v[V_ROOM] == 0 {
@@ -514,7 +519,7 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: b
     } else {
         s.s("Room ").i(v[V_ROOM]).s(" of ").i(v[V_ROOMS]);
     }
-    e.text_ex(x, y, td(15), WHITE, ALIGN_LEFT, w, s.str());
+    text_fit(e, x, y, td, 15, 10, WHITE, ALIGN_LEFT, w, s.str());
     let mut s2 = Buf::new();
     s2.s(kind_word(v[V_FIGHT_KIND]));
     if v[V_WAVES] > 1 {
@@ -524,7 +529,7 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: b
     if !rw.is_empty() {
         s2.s("  -  ").s(rw);
     }
-    e.text_ex(x, y + 22.0, tb(12), PALE, ALIGN_LEFT, w, s2.str());
+    text_fit(e, x, y + 22.0, tb, 12, 8, PALE, ALIGN_LEFT, w, s2.str());
     // the floor map (the sim's map words); the old room dots only when no map is published
     let my = y + 58.0;
     if crate::map::has(v) {
@@ -581,7 +586,7 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: b
     if !any {
         q.s(if v[V_ROOM] == 0 { "the campfire" } else { "a stop: item room / shop" });
     }
-    e.text_ex(x, my + 22.0, tb(12), WHITE, ALIGN_LEFT, w, q.str());
+    text_fit(e, x, my + 22.0, tb, 12, 8, WHITE, ALIGN_LEFT, w, q.str());
     // the boss card
     let by = my + 46.0;
     sticker(e, S_FACE_CORAL, x, by, w, 60.0, -0.7, WHITE, |e| {
@@ -590,12 +595,12 @@ unsafe fn run_page(e: &mut E, v: &[i32; VW], _p: usize, x: f32, y: f32, petey: b
         text_edge(e, x + 12.0, by + 18.0, td(16), SUNNY, ALIGN_LEFT, 1.2, name);
         let mut b = Buf::new();
         b.s("Bosses beaten this run: ").i(v[V_BOSSES]);
-        e.text_ex(x + 12.0, by + 41.0, tb(10), WHITE, ALIGN_LEFT, w - 20.0, b.str());
+        text_fit(e, x + 12.0, by + 41.0, tb, 10, 8, WHITE, ALIGN_LEFT, w - 24.0, b.str());
     });
 }
 
 unsafe fn fight_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let fh = &*core::ptr::addr_of!(crate::hud::FH);
     let kind = v[V_FIGHT_KIND];
     let mut yy = y;
@@ -629,8 +634,8 @@ unsafe fn fight_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
         e.text_ex(x + 70.0, yy + 6.0, tb(10), if foe { WHITE } else { LILAC }, ALIGN_LEFT, 0.0, st.str());
         if v[b + S_HP_MAX] > 0 {
             let f = (v[b + S_HP] as f32 / v[b + S_HP_MAX] as f32).clamp(0.0, 1.0);
-            e.rect(x + 70.0, yy + 21.0, 120.0, 6.0, TRACK);
-            e.rect(x + 70.0, yy + 21.0, 120.0 * f, 6.0, SUNNY);
+            e.rect(x + 70.0, yy + 21.0, w - 82.0, 6.0, TRACK);
+            e.rect(x + 70.0, yy + 21.0, (w - 82.0) * f, 6.0, SUNNY);
         }
         // statuses
         let mut words = Buf::new();
@@ -656,7 +661,7 @@ unsafe fn fight_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
         if words.str().is_empty() {
             words.s(if foe { "no status" } else { "" });
         }
-        e.text_ex(x + 70.0, yy + 29.0, tb(10), if foe { WHITE } else { LILAC }, ALIGN_LEFT, w - 76.0, words.str());
+        text_fit(e, x + 70.0, yy + 29.0, tb, 10, 7, if foe { WHITE } else { LILAC }, ALIGN_LEFT, w - 78.0, words.str().trim_end());
         for k in 0..burn.clamp(0, 4) {
             spr_c(e, S_FLAME + 2, x + w - 10.0 - k as f32 * 9.0, yy + 10.0, 0.35, WHITE);
         }
@@ -669,12 +674,12 @@ unsafe fn fight_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
         }
     }
     if foes == 0 {
-        e.text_ex(x + w * 0.5, yy + 10.0, tb(12), PALE, ALIGN_CENTER, w, "No foes left standing.");
+        e.text_ex(x + w * 0.5, yy + 10.0, tb(12), PALE, ALIGN_CENTER, 0.0, "No foes left standing.");
     }
 }
 
 unsafe fn options_page(e: &mut E, pn: &Panel, x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let fx_txt = ["Off", "25%", "50%", "75%", "Full"];
     let rows: [(&str, &str); OPT_ROWS] = [
         ("Text size", ["Small", "Normal", "Large"][TEXT.min(2)]),
@@ -708,7 +713,7 @@ fn item_name(id: i32) -> &'static str {
 /// The Combos page: every synergy and evolution (lit when the player holds it), the selected one's card, then the
 /// keyword glossary of the item language.
 unsafe fn combos_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y: f32) {
-    let w = PW - 20.0;
+    let w = pw() - 20.0;
     let bits = v[V_SYN + p];
     let sel = pn.opt.min(COMBO_ROWS - 1);
     for k in 0..COMBOS {
@@ -726,7 +731,7 @@ unsafe fn combos_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y:
         }
         spr_c(e, S_DISC, cx + 5.0, cy + 6.0, 9.0 / 32.0, if on { rgba } else { alpha(PALE, 0.5) });
         let evo = k >= procs::SYNERGIES.len();
-        e.text_ex(cx + 13.0, cy, tb(10), if on { WHITE } else if evo { alpha(SUNNY, 0.6) } else { PALE }, ALIGN_LEFT, w * 0.5 - 16.0, name);
+        text_fit(e, cx + 13.0, cy, tb, 10, 7, if on { WHITE } else if evo { alpha(SUNNY, 0.6) } else { PALE }, ALIGN_LEFT, w * 0.5 - 18.0, name);
     }
     let cy = y + ((COMBOS + 1) / 2) as f32 * 15.0 + 6.0;
     let (title, recipe_a, recipe_b, line, rgba) = if sel < procs::SYNERGIES.len() {
@@ -739,9 +744,13 @@ unsafe fn combos_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y:
         let (kw, gl) = procs::KEYWORDS[sel - COMBOS];
         (kw, "", "", gl, SUNNY)
     };
-    sticker(e, S_FACE_WHITE, x, cy, w, 64.0, -0.4, WHITE, |e| {
-        e.rect(x + 5.0, cy + 5.0, 5.0, 54.0, rgba);
-        e.text_ex(x + 16.0, cy + 4.0, td(13), INK, ALIGN_LEFT, w - 22.0, title);
+    // the card grows with its line (two lines at most at this width, three on a narrow panel)
+    let ly = if recipe_a.is_empty() { 22.0 } else { 34.0 };
+    let lines = wrap_lines(line, w - 26.0, tb(10)).min(3);
+    let chh = (ly + lines as f32 * 13.0 + 6.0).max(64.0);
+    sticker(e, S_FACE_WHITE, x, cy, w, chh, -0.4, WHITE, |e| {
+        e.rect(x + 5.0, cy + 5.0, 5.0, chh - 10.0, rgba);
+        text_fit(e, x + 16.0, cy + 4.0, td, 13, 9, INK, ALIGN_LEFT, w - 24.0, title);
         if !recipe_a.is_empty() {
             let mut r = Buf::new();
             r.s(recipe_a);
@@ -749,8 +758,8 @@ unsafe fn combos_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y:
                 r.s(" (at cap)");
             }
             r.s(" + ").s(recipe_b);
-            e.text_ex(x + 16.0, cy + 20.0, tb(10), LILAC, ALIGN_LEFT, w - 22.0, r.str());
+            text_fit(e, x + 16.0, cy + 20.0, tb, 10, 7, LILAC, ALIGN_LEFT, w - 24.0, r.str());
         }
-        line_wrap(e, x + 16.0, cy + if recipe_a.is_empty() { 22.0 } else { 34.0 }, tb(10), INK, w - 24.0, line);
+        wrap(e, x + 16.0, cy + ly, w - 26.0, tb, 10, 13.0, INK, ALIGN_LEFT, line, 3);
     });
 }

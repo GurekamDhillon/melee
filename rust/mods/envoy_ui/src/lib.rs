@@ -708,11 +708,17 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
             // V3 HUD in band space (640 x 480; `ex` the extra width each side of the 4:3 band)
             let ex = if b[2] > 0.0 { b[0] / (b[2] / 640.0) } else { 0.0 };
+            kit::clear_begin(ex);
             e.space(SPACE_BAND, 1.0);
             if gd_ui_fight_hud(core::ptr::addr_of_mut!(hud::FH) as *mut i32, 16) != 0 {
                 hud::FH = [0; 16];
             }
-            hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
+            // the HUD belongs to a fight: with no fighter in a match slot (the retail results screen after the last
+            // stock, a scene change) there is nothing it could show but zeros over someone else's screen
+            // and not under the shop: its backdrop is a tenth see-through, and the HUD showed through it as smudges
+            if (0..4).any(|s| hud::FH[s * 3] != 0) && v[V_RW] != RW_SHOP {
+                hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
+            }
             // the Envoy pause overlay over Melee's own pause (pause.rs): D-pad only, its own panel per player
             let paused = hud::FH[12] != 0;
             if v[envoy_data::lab::VL_ON] != 0 {

@@ -731,18 +731,22 @@ unsafe fn combos_page(e: &mut E, v: &[i32; VW], p: usize, pn: &Panel, x: f32, y:
         e.text_ex(cx + 13.0, cy, tb(10), if on { WHITE } else if evo { alpha(SUNNY, 0.6) } else { PALE }, ALIGN_LEFT, w * 0.5 - 16.0, name);
     }
     let cy = y + ((COMBOS + 1) / 2) as f32 * 15.0 + 6.0;
-    let (title, recipe_a, recipe_b, line, rgba) = if sel < procs::SYNERGIES.len() {
+    // the selected one's emblem: em_syn_<key>.png / em_evo_<key>.png (envoy-models1.md)
+    let (title, recipe_a, recipe_b, line, rgba, pre, key) = if sel < procs::SYNERGIES.len() {
         let sy = &procs::SYNERGIES[sel];
-        (sy.name, item_name(sy.a), item_name(sy.b), sy.line, sy.rgba)
+        (sy.name, item_name(sy.a), item_name(sy.b), sy.line, sy.rgba, "syn_", sy.key)
     } else if sel < COMBOS {
         let ev = &procs::EVOLUTIONS[sel - procs::SYNERGIES.len()];
-        (ev.name, item_name(ev.base), item_name(ev.partner), ev.line, ev.rgba)
+        (ev.name, item_name(ev.base), item_name(ev.partner), ev.line, ev.rgba, "evo_", ev.key)
     } else {
         let (kw, gl) = procs::KEYWORDS[sel - COMBOS];
-        (kw, "", "", gl, SUNNY)
+        (kw, "", "", gl, SUNNY, "", "")
     };
     sticker(e, S_FACE_WHITE, x, cy, w, 64.0, -0.4, WHITE, |e| {
         e.rect(x + 5.0, cy + 5.0, 5.0, 54.0, rgba);
+        if !key.is_empty() {
+            em_spr(e, pre, key, x + w - 24.0, cy + 20.0, 34.0, WHITE);
+        }
         e.text_ex(x + 16.0, cy + 4.0, td(13), INK, ALIGN_LEFT, w - 22.0, title);
         if !recipe_a.is_empty() {
             let mut r = Buf::new();

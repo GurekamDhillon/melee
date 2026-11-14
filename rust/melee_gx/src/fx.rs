@@ -66,11 +66,15 @@ pub struct Post {
 /// One world draw (a drive model with a material).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct WorldDraw {
-    pub model: u8,
+    /// The model's index in the meshes the layer was armed with (u16: the Envoy model set passed 256).
+    pub model: u16,
     /// MAT_* (| MAT_TRAIL).
     pub mat: u8,
     pub at: [f32; 3],
     pub yaw: f32,
+    /// A turn in the model's own plane (about its Z axis, radians), applied before the yaw: a shot or a beam laid
+    /// along its velocity. 0 for a drive.
+    pub roll: f32,
     /// Diameter in world units.
     pub scale: f32,
     pub alpha: f32,
@@ -885,6 +889,9 @@ fn model_rows(d: &WorldDraw) -> [[f32; 4]; 3] {
     let (sy, cy) = d.yaw.sin_cos();
     let (sp, cp) = 0.35f32.sin_cos();
     let r = [[cy, 0.0, sy], [sy * sp, cp, -cy * sp], [-sy * cp, sp, cy * cp]];
+    // the roll first (model space, about Z): column 0 and 1 of the rotation turn into each other
+    let (sr, cr) = d.roll.sin_cos();
+    let r: [[f32; 3]; 3] = std::array::from_fn(|i| [r[i][0] * cr + r[i][1] * sr, r[i][1] * cr - r[i][0] * sr, r[i][2]]);
     let s = d.scale;
     std::array::from_fn(|i| [r[i][0] * s, r[i][1] * s, r[i][2] * s, d.at[i]])
 }
@@ -1188,7 +1195,7 @@ impl Renderer {
                 // oldest first, shrinking and fading toward the tail
                 let p = tr.0[(tr.1 + j) % TRAIL_LEN];
                 let age = 1.0 - j as f32 / TRAIL_LEN as f32;
-                let ghost = WorldDraw { model: d.model, mat: MAT_UNLIT_ADD, at: p, yaw: d.yaw, scale: d.scale * (0.85 - 0.5 * age), alpha: (1.0 - age) * 0.22, p: [0.0; 4], rgba: d.rgba | 0xFF };
+                let ghost = WorldDraw { model: d.model, mat: MAT_UNLIT_ADD, at: p, yaw: d.yaw, roll: d.roll, scale: d.scale * (0.85 - 0.5 * age), alpha: (1.0 - age) * 0.22, p: [0.0; 4], rgba: d.rgba | 0xFF };
                 push(&mut f.inst_scratch, &ghost, 0.0);
                 lists[2].push((start, count, ni));
                 ni += 1;

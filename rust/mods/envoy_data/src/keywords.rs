@@ -107,12 +107,15 @@ pub const fn trigger_words(tr: u8) -> &'static str {
         TR_WHILE_NAIR => "{WHILE} {NAIR}",
         TR_WHILE_DASH => "{WHILE} {DASH}",
         TR_WHILE_SHIELD => "{WHILE} {SHIELDING}",
+        // the synergy lane: a proc off another item's hit, and the co-op items (2P only)
+        TR_ITEM_HIT => "{ON}",
+        TR_COOP => "{IF}",
         _ => "",
     }
 }
 
 /// Every item's card text (by id).
-pub const CARDS: [(i32, &str); 32] = [
+pub const CARDS: [(i32, &str); 38] = [
     (IT_SPARK_RING, "{ON} {NAIR} {HIT}: a spark {BURST} rings out. {PER STACK}: more sparks."),
     (IT_GLIDE_WAKE, "{ON} {WAVEDASH}: leave a burning {TRAIL} that can {BURN}. {PER STACK}: longer."),
     (IT_SHINE_BELL, "{ON} {SHINE}: a shock-ring {BURST} that launches. {PER STACK}: bigger."),
@@ -145,6 +148,13 @@ pub const CARDS: [(i32, &str); 32] = [
     (IT_DASH_ORB, "{WHILE} {DASH}: an {ORB} leads your run. {PER STACK}: more orbs."),
     (IT_SHIELD_ORBS, "{WHILE} {SHIELDING}: {ORB} circle your shield and break on blocks. {PER STACK}: more orbs."),
     (IT_SPARE_HEART, "{ON} {PICKUP}: +1 stock limit and +1 stock (to 8)."),
+    // the synergy lane (envoy-synergy.md): procs and co-op items
+    (IT_EMBER_SEED, "{ON} {BURST} {HIT}: a fire seed may bloom, a second {BURST} that can {BURN}. {PER STACK}: more often."),
+    (IT_STATIC_COIL, "{ON} {PROJECTILE} {HIT}: the shot may arc on to another foe. {PER STACK}: more often."),
+    (IT_FROST_BUD, "{ON} spark {HIT}: may {BURST} into frost that can {CHILL}. {PER STACK}: more often."),
+    (IT_KIN_TETHER, "{IF} 2P: a {TRAIL} of light to your partner nicks foes that cross it. {PER STACK}: stronger."),
+    (IT_RALLY_BANNER, "{IF} 2P, {ON} {KO}: your partner is rallied for 5 s. {PER STACK}: stronger."),
+    (IT_KINDRED_SPARK, "{IF} 2P: your {HIT} near your partner can fire their items. {PER STACK}: more often."),
 ];
 
 /// The card text of item `id` ("" if none).

@@ -745,6 +745,16 @@ struct St {
     proc_at: [i32; NP],
     flourish_at: [i32; NP],
     ped_near: [i32; NP],
+    /// The synergy lane (items.rs, envoy_data::procs): root hits that rolled procs (the chain's nonce); synergies and
+    /// evolutions already announced (bits); the last banner (frame, kind << 8 | index); a partner's Rally Banner until
+    /// this frame; Kin Tether's next bite per foe slot; Kindred Spark's next jump.
+    proc_n: i32,
+    syn_seen: [i32; NP],
+    evo_seen: [i32; NP],
+    banner: [[i32; 2]; NP],
+    rally_until: [i32; NP],
+    tether_cd: [[i32; 4]; NP],
+    kin_cd: [i32; NP],
 }
 
 /// The engine's event bits this stepped frame (read once in tech_frame, used by the items the same frame).
@@ -1675,6 +1685,10 @@ unsafe fn on_new_match(seq: i32) {
         S.seen = [-1; SEEN];
         S.seen_n = 0;
         S.inv = [[0; ITEM_IDS]; NP];
+        S.proc_n = 0;
+        S.syn_seen = [0; NP];
+        S.evo_seen = [0; NP];
+        S.banner = [[0; 2]; NP];
         S.burst = [[0; BU_W]; BURSTS];
         S.burst_n = 0;
         S.bosses = 0;

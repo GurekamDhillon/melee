@@ -476,6 +476,22 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
 }
 
 static mut ENC: kit::E = Enc::new();
+static mut OVERFLOW_LOGGED: u32 = 0;
+
+/// Hand the frame over; a frame whose records did not all fit is logged (the first few times), since a dropped
+/// record can be a state change (a tilt's end, a shadow's end) and the rest of the frame then draws wrong.
+unsafe fn send(e: &mut kit::E) {
+    if e.overflow > 0 {
+        if OVERFLOW_LOGGED < 8 {
+            OVERFLOW_LOGGED += 1;
+            let mut m = Buf::new();
+            m.s("envoy_ui: command buffer full, records dropped: ").i(e.overflow as i32);
+            gd_ui_log(m.str().as_ptr(), m.str().len() as u32);
+        }
+        e.overflow = 0;
+    }
+    e.submit();
+}
 
 const REVEAL: i32 = 18;
 /// FighterKind order (the transition record's from / to).
@@ -604,7 +620,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             e.layer(LAYER_MENU, 0);
             e.rect(-200.0, -20.0, 1040.0, 520.0, 0x1A10_4AFF);
             kit::text_edge(e, 320.0, 210.0, kit::d(30), kit::SUNNY, ALIGN_CENTER, 2.2, "Get ready");
-            e.submit();
+            send(e);
             return;
         }
         if CAMP.open || st & ST_1P != 0 {
@@ -624,7 +640,10 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 CAMP.age += 1;
                 e.space(SPACE_BAND, 1.0);
                 let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
-                let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && v[V_STATE] != 0;
+                // a new run armed on the road before fight 1 is not live yet (state 0) but its map is published
+                // (V_MAP_PICK 1): without the view the camp drew no map and passed no Left / Right through, so fight
+                // 1's node was picked blind
+                let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && (v[V_STATE] != 0 || v[V_MAP_PICK] == 1);
                 let act = camp::frame(e, CAMP.after_fight, if view { Some(&v) } else { None }, saved(), st & ST_NO_BRAWL != 0);
                 if act == camp::DO_CLOSE {
                     CAMP.closing = true;
@@ -676,7 +695,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 e.space(SPACE_BAND, 1.0);
                 party::menu(e, st, saved());
             }
-            e.submit();
+            send(e);
             return;
         }
         let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
@@ -764,7 +783,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             pause::input(&v, false);
             between(e, &v, vw, vh);
         }
-        e.submit();
+        send(e);
         // every effect quad of this present, in one call
         vfx::flush();
     }

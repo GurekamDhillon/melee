@@ -511,7 +511,11 @@ pub unsafe fn flash(e: &mut E, v: &[i32; VW]) {
         let w = (tw(s.str(), d(18)) + 74.0).max(400.0).min(clear_w() - 16.0);
         let lines = rich_lines(w - 66.0, 13, card).clamp(1, 4);
         let h = 32.0 + lines as f32 * 16.0;
-        let (x, y) = (mid() - w * 0.5, 64.0 + p as f32 * (h + 8.0));
+        // low on the screen while a room's banner is up (the card and the banners both sat at the top: an item
+        // taken as a door opened put the card on the banner; the devil's price list hangs under its banner)
+        let room = matches!(v[V_PED_KIND], PED_ITEM_ROOM | PED_BOSS | PED_DEVIL | PED_ANGEL | PED_SECRET) && v[V_RW] == 0;
+        let top = if room { 296.0 - p as f32 * 2.0 * (h + 8.0) } else { 64.0 };
+        let (x, y) = (mid() - w * 0.5, top + p as f32 * (h + 8.0));
         let (sc, _) = enter(age);
         let _ = sc;
         sticker(e, S_FACE_WHITE, x, y, w, h, if p == 0 { -1.2 } else { 1.2 }, alpha(WHITE, a), |e| {

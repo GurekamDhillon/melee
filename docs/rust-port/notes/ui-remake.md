@@ -71,6 +71,21 @@ content changed, with four times the presentation fuel. The mod still hashes its
 changes, so a present that changes nothing makes no call. Layout is draw-only: no value reaches the sim, and the
 same request and font give the same rectangles on every machine (the host computes in f32 with no rounding).
 
+Cost of the layout (hidden 1280x720 widescreen runs, the mod's frame call in microseconds; the pause run's pad
+script changes page or cursor every few presents, so its p99 is a present that was laid out again):
+
+| | p50 | p99 | max |
+|---|---|---|---|
+| pause panel, hand-laid (before) | 94 | 190 | 370 |
+| pause panel, Taffy inside the mod, every present | 2846 | 3969 | 7905 |
+| pause panel, Taffy inside the mod, cached | 132 | 3133 | 4496 |
+| pause panel, Taffy in the host, cached | 137 | 360 | 710 |
+| Item Lab panel, Taffy in the host, cached | 62 | 193 | 492 |
+
+The Lab's own perf run (34,393 presents, every item fired): inside the Lab session no present over budget, all wasm
+mods together p99 0.62 ms, 1.29 ms at worst. The mod is 309 KB (280 KB before any layout code, 381 KB with Taffy
+inside it). `UI_FUEL` is unchanged at 4M.
+
 **Renderer (melee_gx ui.rs).**
 - `SHAPE_SHADOW`: a Gaussian soft shadow of a rounded box in closed form, written from Raph Levien's "Blurred
   rounded rectangles" (2020). One quad at any blur. Under the pause and Lab panels and the run-end card.
@@ -129,6 +144,18 @@ resolves. `MELEE_UI_SS=0` turns it off, `MELEE_UI_SS=2` (1..4) forces a factor a
 What it buys is small, because the shapes were already analytic and the text a distance field: glyph stems and
 diagonal edges get a true area average instead of a one-pixel coverage ramp, and minified sprites are filtered from
 more texels. Crops: `scratch/morning/uiremake/supersampling.png`.
+
+## Results (tip 88a114a8b and after)
+
+- `ui_aspect.sh`, 1280x720 widescreen and 960x720: 24 of 24 scenarios in proportion (candidate 10's mods under the
+  same audit: 105 findings at 1280x720 widescreen over the twelve scenarios, 17 of them the allowed bursts).
+- `pause_check.sh`: nav and abandon ok, with the audit on.
+- `lab_check.sh`: flow ok with the audit on; sync depth 4, 3000 frames, 0 mismatches. perf: no present over budget
+  inside the Lab session; the leg still exits non-zero on frames before the Lab opens (a 23 ms OS/loop frame in the
+  boot scene on one run; match-setup engine steps on a second run the check itself marked "not quiet, re-run").
+- `items_check.sh` depth 4: 27 ok. `gate.sh`: GATE OK (13 ok).
+- `cargo test -p melee_modhost --lib ui::`: 20 passed. `cargo test -p melee_gx --test ui_quality`: 7 passed.
+- Sheets: `scratch/morning/uiremake/index.md` (local).
 
 ## Limits
 

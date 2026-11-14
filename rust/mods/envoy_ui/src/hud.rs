@@ -489,8 +489,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     }
     if humans == 2 && crate::pad_present(1) == 0 {
         let m = mid();
-        sticker(e, S_FACE_LAGOON, m - 140.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
-            e.text_ex(m, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");
+        // low on the screen, clear of the room banners and the cards at the top
+        sticker(e, S_FACE_LAGOON, m - 140.0, 330.0, 280.0, 34.0, -1.0, WHITE, |e| {
+            e.text_ex(m, 338.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");
         });
     }
 }

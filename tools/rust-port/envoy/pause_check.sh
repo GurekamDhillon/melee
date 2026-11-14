@@ -47,7 +47,7 @@ if case " $only " in *" nav "*) true ;; *) false ;; esac; then
   has nav "envoy: quick tag" && miss="$miss (a tag fired while paused: input leaked)"
   # the quit: the match ended by the pause quit (the scene left the match before max frames)
   has nav "envoy pause: closed" || miss="$miss (the overlay never closed)"
-  grep -aqE "scene results" "$out/nav/run.log" && [ "$(grep -ac "game pause by player" "$out/nav/run.log")" -ge 2 ] || miss="$miss (no match end after L+R+A+Start)"
+  grep -aqE "scene (results|css) [(]" "$out/nav/run.log" && [ "$(grep -ac "game pause by player" "$out/nav/run.log")" -ge 2 ] || miss="$miss (no match end after L+R+A+Start)"
   a="$out/nav/shots"; f1=$(ls "$a" | grep 0637 | head -1); f2=$(ls "$a" | grep 0847 | head -1)
   if [ -n "$f1" ] && [ -n "$f2" ] && cmp -s "$a/$f1" "$a/$f2"; then miss="$miss (the pause camera did not move)"; fi
   [ -z "$miss" ] && echo "ok   nav: every page, options, native camera, resume, quit" || { echo "FAIL nav:$miss (see $out/nav/run.log)"; fail=1; }

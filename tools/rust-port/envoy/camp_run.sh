@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy from the camp door, fights 1 -> 3 (the run must never fall out to plain VS between fights).
 #
 # Boots the game with no MELEE_ENVOY_ARM (the camp arms the run), walks title > main menu > the Envoy row (V3: the

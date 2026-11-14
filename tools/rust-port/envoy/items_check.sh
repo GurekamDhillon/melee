@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy items, the first slice (docs/rust-port/notes/envoy-items-design.md 8): the items fire off their triggers, the
 # item room / shop / boss drop / campfire hand out items and stocks, all deterministic under rollback.
 #   0. envoy_data's tests (the item table's lint runs at compile time; the drive pool's lint still runs);

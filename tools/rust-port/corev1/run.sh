@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # The engine as a core v1 game library (docs/rust-port/notes/core-v1.md), one scripted run in a core v1 host, or the
 # same run in our own renderer for comparison. No OS input: MELEE_PAD_SCRIPT drives port 1.
 #   HOST_EXE=<melee_source.exe> HOST_DIR=<its checkout root> bash tools/rust-port/corev1/run.sh host <out> <ticks> [host args]

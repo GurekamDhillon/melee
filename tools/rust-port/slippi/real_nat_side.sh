@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # SPDX-License-Identifier: MIT
 # One side of the real NAT test (REAL_NAT_TEST.md): our engine on THIS machine against the other machine, through
 # Slippi's production matchmaking (mm.slippi.gg:43113), direct mode, unranked-free (direct only; ranked is refused by

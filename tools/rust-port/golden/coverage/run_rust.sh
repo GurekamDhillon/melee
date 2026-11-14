@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Run coverage scenarios against the Rust engine and compare with the C goldens (docs/rust-port/golden/coverage/<name>.csv).
 #   bash tools/rust-port/golden/coverage/run_rust.sh [-j N] [--out RESULTS.tsv] [NAME...|--all]
 # Output rows: name <TAB> status (PASS|FAIL|NOT_WIRED|NO_GOLDEN) <TAB> matched frames <TAB> golden rows <TAB> first divergence / reason.

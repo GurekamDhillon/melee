@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # RETIRED by the first Envoy item slice (docs/rust-port/notes/envoy-items-design.md 8): drives, keystones, Heat and
 # KO drops are cut, so this check's expectations no longer hold. The item slice's check runs instead.
 exec bash "$(dirname "${BASH_SOURCE[0]}")/items_check.sh" "$@"

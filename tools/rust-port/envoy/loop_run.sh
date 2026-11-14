@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # Envoy endless loops (envoy-v3-rules.md "Endless loops"): a strong scripted run from the camp door that clears the
 # boss, goes on through later loops and finally loses, then (SAVE_TEST=1) a save / continue across a loop boundary.
 #

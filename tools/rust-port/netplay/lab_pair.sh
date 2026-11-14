@@ -1,4 +1,5 @@
 #!/bin/bash
+export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # The online Lab (LabNetplay, gd-lab-v1 GAP-13): two headless `melee play --netplay ... --np-lab` peers on loopback with
 # the lab_demo mod. The players pick on the retail character select (lockstep), the match runs in lockstep with the
 # Lab: the host's lab_demo saves, records, rewinds, loads and plays back, the guest's saves and loads slot 2, and every

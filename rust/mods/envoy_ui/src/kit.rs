@@ -317,11 +317,60 @@ pub fn spr_rot(e: &mut E, id: usize, cx: f32, cy: f32, scale: f32, deg: f32, rgb
     unrot(e);
 }
 
+/// The rotation in force (radians, pivot): the host keeps one per pen, so `seg` composes its own with it.
+static mut ROT: (f32, f32, f32) = (0.0, 0.0, 0.0);
+
 pub fn rot(e: &mut E, deg: f32, cx: f32, cy: f32) {
+    unsafe { ROT = (deg * 0.017_453_3, cx, cy) };
     e.rot(deg * 0.017_453_3, cx, cy);
 }
 pub fn unrot(e: &mut E) {
+    unsafe { ROT = (0.0, 0.0, 0.0) };
     e.rot(0.0, 0.0, 0.0);
+}
+
+/// atan2 (no_std, presentation only): a minimax polynomial, about 0.0002 rad off.
+pub fn atan2(y: f32, x: f32) -> f32 {
+    if x == 0.0 && y == 0.0 {
+        return 0.0;
+    }
+    let (ax, ay) = (if x < 0.0 { -x } else { x }, if y < 0.0 { -y } else { y });
+    let a = if ax > ay { ay / ax } else { ax / ay };
+    let s = a * a;
+    let mut r = ((-0.046_496_47 * s + 0.159_314_22) * s - 0.327_622_76) * s * a + a;
+    if ay > ax {
+        r = 1.570_796_3 - r;
+    }
+    if x < 0.0 {
+        r = 3.141_592_7 - r;
+    }
+    if y < 0.0 { -r } else { r }
+}
+
+/// A round-capped line from (x0, y0) to (x1, y1), `w` thick: one analytic pill quad turned onto the segment, under
+/// whatever sticker tilt is in force (the turn is composed with it and the tilt put back). One 11-word record where
+/// the old chain of discs took up to 65 (the act map's roads alone used to fill the frame's command buffer, and
+/// the records that no longer fit were dropped mid-frame: missing icons, half lines, a shadow or tilt left on).
+pub fn seg(e: &mut E, x0: f32, y0: f32, x1: f32, y1: f32, w: f32, c: u32) {
+    let (dx, dy) = (x1 - x0, y1 - y0);
+    let len = crate::icons::sqrt(dx * dx + dy * dy);
+    let (mut cx, mut cy) = ((x0 + x1) * 0.5, (y0 + y1) * 0.5);
+    let (oa, px, py) = unsafe { ROT };
+    if oa != 0.0 {
+        // the pill's centre under the outer turn; the pill then turns by both angles about it
+        let (cs, sn) = (cos(oa), sin(oa));
+        let (ddx, ddy) = (cx - px, cy - py);
+        cx = px + ddx * cs - ddy * sn;
+        cy = py + ddx * sn + ddy * cs;
+    }
+    let a = oa + atan2(dy, dx);
+    if a != 0.0 {
+        e.rot(a, cx, cy);
+    }
+    e.shape(SHAPE_BOX, cx - (len + w) * 0.5, cy - w * 0.5, len + w, w, w * 0.5, 0.0, 0.0, c, 0);
+    if a != 0.0 || oa != 0.0 {
+        e.rot(oa, px, py);
+    }
 }
 
 /// A sticker face over the face rectangle (x, y, w, h); the shadow falls outside it. `rgba` tints (alpha fades).

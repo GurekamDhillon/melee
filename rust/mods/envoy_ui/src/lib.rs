@@ -1824,7 +1824,7 @@ unsafe fn stage_rift(e: &mut kit::E, l: &[i32; 8], vw: f32, vh: f32) {
     let cx = 320.0 + (x - vw * 0.5) * 480.0 / vh;
     let lean = 46.0;
     let w = 46.0 + 110.0 * near * near;
-    vfx::fx(vfx::GLOW, cx, 240.0, 150.0 + 160.0 * near, 760.0).cols(ct, ct).p(2.2, 0.0, 0.0, 0.0).a(0.5 * a).screen().emit();
+    vfx::fx(vfx::GLOW, cx, 240.0, 150.0 + 160.0 * near, 760.0).cols(ct, ct).p(2.2, 0.0, 0.0, 0.0).a(0.28 * a).screen().emit();
     vfx::fx(vfx::BOLT, cx + lean, -30.0, 0.0, 0.0).line(cx - lean, 510.0, w).cols(vfx::pale(ct, 0.2), ct).p(0.8, 1.0, 20.0, 1.6 + 1.6 * near).age(frame).seed(3.0).a(a).screen().emit();
     vfx::fx(vfx::BOLT, cx + lean, -30.0, 0.0, 0.0).line(cx - lean, 510.0, w * 0.55).cols(WHITE, ct).p(0.5, 0.0, 30.0, 1.0 + near).age(frame).seed(7.0).a(a).screen().emit();
     vfx::fx(vfx::EMBERS, cx, 240.0, 90.0, 520.0).cols(vfx::pale(ct, 0.4), ct).p(5.0, 2.2, 0.0, 0.0).age(frame).seed(5.0).a(a).screen().emit();

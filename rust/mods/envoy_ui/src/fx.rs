@@ -83,14 +83,14 @@ pub fn moments(v: &[i32; VW]) {
             let fade = 1.0 - ((k - 0.6) / 0.4).clamp(0.0, 1.0);
             vfx::ground_circle(x, y + 0.8, 30.0 + 6.0 * k, (k * 6.0).min(1.0), ((k - 0.12) * 1.6).clamp(0.0, 1.0), 1.0, af, crate::kit::alpha(pc, fade), sd);
             // two rings: the white one bends the air, the player's follows it
-            vfx::fx(vfx::SHOCK, x, y + 10.0, 150.0, 150.0).cols(0xFFFF_FFB0, pc).p((k * 2.2).min(1.0), 0.03, 1.0, 2.0).age(af).seed(sd).bend().emit();
-            vfx::fx(vfx::SHOCK, x, y + 10.0, 110.0, 110.0).cols(pc, pc).p(((k - 0.08) * 2.4).clamp(0.0, 1.0), 0.025, 0.0, 0.0).age(af).seed(sd + 1.0).emit();
+            vfx::fx(vfx::SHOCK, x, y + 10.0, 104.0, 104.0).cols(0xFFFF_FFB0, pc).p((k * 2.2).min(1.0), 0.03, 1.0, 2.0).age(af).seed(sd).bend().emit();
+            vfx::fx(vfx::SHOCK, x, y + 10.0, 76.0, 76.0).cols(pc, pc).p(((k - 0.08) * 2.4).clamp(0.0, 1.0), 0.025, 0.0, 0.0).age(af).seed(sd + 1.0).emit();
             for j in 0..5 {
                 let ang = j as f32 * 1.2566 + sd;
                 let (dx, dy) = (crate::kit::cos(ang), crate::kit::sin(ang));
-                vfx::bolt(x + dx * 5.0, y + 10.0 + dy * 5.0, x + dx * 44.0, y + 10.0 + dy * 34.0, 13.0, af, 14.0, 0xFFFF_FFFF, sd + j as f32 * 5.0);
+                vfx::bolt(x + dx * 5.0, y + 10.0 + dy * 5.0, x + dx * 36.0, y + 10.0 + dy * 28.0, 12.0, af, 14.0, 0xFFFF_FFFF, sd + j as f32 * 5.0);
             }
-            vfx::fx(vfx::SPARKS, x, y + 10.0, 110.0, 110.0).cols(0xFFFF_FFFF, pc).p((k * 1.6).min(1.0), 34.0, 0.5, 0.0).seed(sd).emit();
+            vfx::fx(vfx::SPARKS, x, y + 10.0, 84.0, 84.0).cols(0xFFFF_FFFF, pc).p((k * 1.6).min(1.0), 34.0, 0.5, 0.0).seed(sd).emit();
             vfx::pop(x, y + 10.0, 11.0, af, 5.0, 0xFFFF_FFC0);
             if age < 14 {
                 // the one thing at the screen's edge: a soft pulse in the player's colour, scaled by the setting
@@ -101,7 +101,7 @@ pub fn moments(v: &[i32; VW]) {
             vfx::fx(vfx::SPARKS, x, y + 12.0, 70.0, 70.0).rot(1.5708).cols(0xFFF4_D0FF, 0xFFD8_4AFF).p((k * 1.4).min(1.0), 26.0, 1.0, 0.6).seed(sd).emit();
             vfx::fx(vfx::STAR, x, y + 12.0, 30.0 * (1.0 - k) + 4.0, 30.0 * (1.0 - k) + 4.0).cols(0xFFF4_D0FF, 0xFFD8_4AFF).p(1.0, 2.0, 0.7, 0.0).age(af).a(1.0 - k).emit();
         } else {
-            vfx::fx(vfx::SHOCK, x, y + 10.0, 130.0, 130.0).cols(0xFF4D_6DE0, 0xC020_40FF).p((k * 1.8).min(1.0), 0.035, 0.5, 2.0).age(af).seed(sd).bend().emit();
+            vfx::fx(vfx::SHOCK, x, y + 10.0, 96.0, 96.0).cols(0xFF4D_6DE0, 0xC020_40FF).p((k * 1.8).min(1.0), 0.035, 0.5, 2.0).age(af).seed(sd).bend().emit();
             vfx::fx(vfx::SPARKS, x, y + 10.0, 100.0, 100.0).cols(0xFFFF_FFFF, 0xFF4D_6DFF).p((k * 1.5).min(1.0), 32.0, 0.8, 0.0).seed(sd).emit();
             vfx::pop(x, y + 10.0, 11.0, af, 5.0, 0xFFD0_D8C0);
         }

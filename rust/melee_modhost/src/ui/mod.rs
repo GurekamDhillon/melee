@@ -1682,6 +1682,9 @@ impl PresHost {
         }
         melee_modes::tu::drive_draw::commit();
         melee_gx::vfx::commit();
+        if melee_gx::vfx::shown() > 0 {
+            melee_modes::tu::drive_draw::want_camera();
+        }
         let t2 = std::time::Instant::now();
         for e in &mut self.exts {
             e.after_logic(frame);

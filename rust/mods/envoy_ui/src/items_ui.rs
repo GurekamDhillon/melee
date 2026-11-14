@@ -57,6 +57,7 @@ pub unsafe fn world(v: &[i32; VW]) {
             PJ_SPARK => {
                 // Spark Ring sparks: a spinning electric star on a short hot tail (the look the item had, kept)
                 let c = col(IT_SPARK_RING);
+                let fade = fade * (af / 5.0).min(1.0);
                 vfx::fx(vfx::TRAIL, x - vx * 4.5, y - vy * 4.5, 0.0, 0.0).line(x + vx * 0.6, y + vy * 0.6, 3.4).cols(0xFFF6_B0FF, c).a(0.9 * fade).age(t).seed(sd).emit();
                 vfx::fx(vfx::STAR, x, y, 9.5, 9.5).cols(vfx::pale(c, 0.4), c).p(1.0, 9.0, 0.8, 0.0).age(t).seed(sd).a(fade).emit();
                 vfx::fx(vfx::BOLT, x - 3.2, y + 1.0, 0.0, 0.0).line(x + 3.2, y - 1.0, 3.0).cols(0xFFFF_FFFF, c).p(1.0, 0.0, 30.0, 0.8).age(t).seed(sd).a(0.7 * fade).emit();
@@ -89,7 +90,7 @@ pub unsafe fn world(v: &[i32; VW]) {
                 let blink = if (age / 6) % 2 == 0 || age > life - 18 && (age / 3) % 2 == 0 { 1.0 } else { 0.12 };
                 let armed = if age > life - 18 { 1.0 } else { 0.0 };
                 let ring = (age % 36) as f32 / 36.0;
-                vfx::fx(vfx::MINE, x, y + 2.2, 7.2, 7.2).cols(col(IT_ROLL_MINES), 0xFFB0_B0FF).p(blink, ring, armed, 0.0).age(t).seed(sd).emit();
+                vfx::fx(vfx::MINE, x, y + 3.0, 9.6, 9.6).cols(col(IT_ROLL_MINES), 0xFFB0_B0FF).p(blink, ring, armed, 0.0).age(t).seed(sd).emit();
             }
             PJ_QUAKE => {
                 // Smash Quake: the ground tearing open under a running wall of dust and thrown rock
@@ -146,11 +147,11 @@ pub unsafe fn world(v: &[i32; VW]) {
                 // the ring and its white pop (kept), now a live wire: arcs ride the ring, sparks fly, the air bends
                 let r = 2.0 + size * 1.6;
                 vfx::burst_ring(x, y, r, (k * 1.5).min(1.0), c, 1.0, af);
-                vfx::pop(x, y, 7.0, af, 6.0, WHITE);
-                vfx::sparks(x, y, r * 1.1, (k * 1.6).min(1.0), 20.0, c, sd);
+                vfx::pop(x, y, 6.0, af, 6.0, WHITE);
+                vfx::sparks(x, y, r * 1.1, (k * 1.6).min(1.0), 14.0, c, sd);
             }
             IT_GLIDE_WAKE => {
-                vfx::fx(vfx::FLAME, x, y + 5.0, 9.0, 12.0 * a + 2.0).cols(0xFFB0_40FF, c).p(1.0, 0.0, 0.6 * a, 0.0).age(af).seed(sd).a(a).emit();
+                vfx::fx(vfx::FLAME, x, y + 6.0, 9.0, 13.0).cols(0xFFB0_40FF, c).p(0.4 + 0.6 * a, 0.0, 0.6 * a, 0.0).age(af).seed(sd).a(a).emit();
                 vfx::fx(vfx::SPARKS, x, y + 1.5, 16.0, 16.0).rot(1.5708).cols(0xFFD0_70FF, c).p(k, 12.0, 0.6, 0.5).seed(sd).emit();
             }
             IT_SHINE_BELL => {
@@ -212,7 +213,7 @@ pub unsafe fn world(v: &[i32; VW]) {
         }
         if fl & PF_LACE != 0 {
             // Fire Lace on a burst: tongues of fire and embers rising off it
-            vfx::fx(vfx::FLAME, x, y + size * 0.3, size * 1.2, size * 1.3 * a + 3.0).cols(0xFFB0_40FF, EMBER).p(1.0, 0.0, 0.3, 0.0).age(af).seed(sd + 2.0).a(a).emit();
+            vfx::fx(vfx::FLAME, x, y + size * 0.45, size * 0.9, size * 1.5).cols(0xFFB0_40FF, EMBER).p(0.5 + 0.5 * a, 0.0, 0.3, 0.0).age(af).seed(sd + 2.0).a(a).emit();
             vfx::fx(vfx::EMBERS, x, y + size * 0.7, size * 1.6, size * 2.0).cols(0xFFC0_60FF, EMBER).p(5.0, 1.5, 0.0, 0.0).age(af).seed(sd).a(a).emit();
         }
     }

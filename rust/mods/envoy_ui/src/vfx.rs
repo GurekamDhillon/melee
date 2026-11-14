@@ -92,9 +92,12 @@ const ZERO: Fx = Fx { pos: [0.0; 3], rot: 0.0, size: [0.0; 2], t: 0.0, seed: 0.0
 static mut BUF: [Fx; CAP] = [ZERO; CAP];
 static mut N: usize = 0;
 
-/// A quad of `kind` centred at (x, y) in the world, `w` wide and `h` tall, in front of the fighters, white.
+/// A quad of `kind` centred at (x, y) in the world, `w` wide and `h` tall, white. Thin light (rings, bolts, sparks,
+/// stars, trails, small bodies) is drawn in front of the fighters; anything with area (glows, fire, auras, ice,
+/// spectres, shields, circles, pillars) behind them, so a fighter is never covered: it stands out against the effect.
 pub fn fx(kind: u32, x: f32, y: f32, w: f32, h: f32) -> Fx {
-    Fx { pos: [x, y, FRONT], size: [w, h], col0: 0xFFFF_FFFF, col1: 0xFFFF_FFFF, kind, ..ZERO }
+    let z = if matches!(kind, GLOW | FLAME | EMBERS | ICE | WISP | CRACK | BEAM | DOME | AURA | CIRCLE) { BACK } else { FRONT };
+    Fx { pos: [x, y, z], size: [w, h], col0: 0xFFFF_FFFF, col1: 0xFFFF_FFFF, kind, ..ZERO }
 }
 
 impl Fx {
@@ -127,6 +130,11 @@ impl Fx {
     /// Turned by `r` radians, counter-clockwise.
     pub fn rot(mut self, r: f32) -> Fx {
         self.rot = r;
+        self
+    }
+    /// In front of the fighters (thin, short effects only).
+    pub fn front(mut self) -> Fx {
+        self.pos[2] = FRONT;
         self
     }
     /// Behind the fighters.

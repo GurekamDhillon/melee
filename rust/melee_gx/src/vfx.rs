@@ -396,6 +396,8 @@ fn ease(x: f32) -> f32 {
 fn line(d: f32, w: f32) -> f32 {
     return smoothstep(w, w * 0.25, d) + 0.35 * exp(-d / (w * 3.5));
 }
+// how much a light dims what is right behind it (a dark fringe that keeps lightning and sparks readable on a bright stage)
+var<private> dim: f32 = 0.0;
 struct R { rgb: vec3f, a: f32 };   // straight light (may exceed 1) and how much it covers what is behind
 
 // ---- 1 glow: a soft light. p0 falloff (default 4), p1 core size 0..1
@@ -418,8 +420,8 @@ fn k_shock(uv: vec2f, v: VO) -> R {
     // a crisp leading edge, a soft body behind it, torn by the noise
     let lead = smoothstep(1.0, 0.0, abs(x * 2.6));
     let body = exp(-x * x) * (0.45 + 0.9 * brk);
-    let wake = smoothstep(rad, rad - 0.5, r) * smoothstep(0.0, 0.12, r) * 0.16 * (1.0 - pr);
-    var i = (lead * 1.6 + body) * smoothstep(0.0, 0.1, pr + 0.03);
+    let wake = smoothstep(rad, rad - 0.5, r) * smoothstep(0.0, 0.12, r) * 0.06 * (1.0 - pr);
+    var i = (lead * 1.3 + body * 0.6) * smoothstep(0.0, 0.3, pr + 0.06);
     var arc = 0.0;
     if (v.p.z > 0.0) {
         // crackle: thin arcs riding the ring, re-drawn 30 times a second
@@ -428,11 +430,12 @@ fn k_shock(uv: vec2f, v: VO) -> R {
         for (var j = 0; j < 2; j++) {
             let ra = rad + (n1l(a * (5.0 + f32(j) * 4.0) + sd + f32(j) * 31.0) - 0.5) * (0.16 + 0.08 * f32(j)) * v.p.z;
             let gate = smoothstep(0.35, 0.6, n1(a * 1.6 + sd * 0.37 + f32(j) * 11.0));
-            arc += line(abs(r - ra), 0.008) * gate;
+            arc += line(abs(r - ra), 0.008) * gate * smoothstep(0.0, 0.25, pr);
         }
     }
     let fade = pow(1.0 - pr, 0.7);
-    let rgb = (v.c0.rgb * i + v.c1.rgb * (wake + body * 0.6) + vec3f(1.0) * arc * 1.4) * fade;
+    let rgb = (v.c0.rgb * i + v.c1.rgb * (wake + body * 0.4) + vec3f(1.0) * arc * 1.2) * fade;
+    dim = clamp(lead * 0.5, 0.0, 0.4) * fade;
     return R(rgb, 0.0);
 }
 // ---- 3 bolt: lightning from the quad's -x end to its +x end, redrawn from the seed. p0 jaggedness (default 1),
@@ -481,6 +484,7 @@ fn k_bolt(uv: vec2f, v: VO) -> R {
     let hit = exp(-dot(hv, hv) * 9.0);
     let ends = smoothstep(1.0, 0.92, abs(x));
     let rgb = (vec3f(1.0) * core * 2.2 + v.c0.rgb * glow * 1.5 + v.c1.rgb * (halo + hit * 0.8)) * fl * ends * smoothstep(1.0, 0.7, abs(y));
+    dim = clamp(glow * 0.9, 0.0, 0.6) * ends;
     return R(rgb, 0.0);
 }
 // ---- 4 circle: a magic circle. p0 drawn-in 0..1, p1 cracks 0..1, p2 charge 0..1 (energy running round), p3 spin
@@ -592,13 +596,13 @@ fn k_flame(uv: vec2f, v: VO) -> R {
     if (asp < 1.6) {
         body = 1.0 - smoothstep(0.0, 1.0, abs(x / asp) / mix(0.95, 0.12, y));
     } else {
-        body = smoothstep(1.0, 0.9, abs(uv.x)) * (0.75 + 0.5 * n1(x * 1.3 + v.a.y * 5.0 + t * 0.7));
+        body = smoothstep(1.0, 0.8, abs(uv.x)) * (0.75 + 0.5 * n1(x * 1.3 + v.a.y * 5.0 + t * 0.7));
     }
     let f = body * (1.3 - y * 1.3 / hgt) + (n - 0.5) * 1.0 * (0.25 + y) + (n2 - 0.5) * 0.35 - 0.12;
     let i = smoothstep(0.0, 0.55, f);
     let hot = smoothstep(0.5, 1.0, f + v.p.z * 0.4);
-    let rgb = mix(v.c1.rgb * 0.9, v.c0.rgb, smoothstep(0.1, 0.5, f)) * i * 1.3 + vec3f(1.0, 0.92, 0.7) * hot * 1.2;
-    return R(rgb * smoothstep(0.0, 0.05, y), i * 0.35);
+    let rgb = mix(v.c1.rgb * 0.9, v.c0.rgb, smoothstep(0.1, 0.5, f)) * i * 1.0 + vec3f(1.0, 0.92, 0.7) * hot * 0.6;
+    return R(rgb * smoothstep(0.0, 0.05, y), i * 0.2);
 }
 // ---- 6 embers: sparks drifting up through the quad. p0 density (default 6 columns), p1 speed (default 1)
 fn k_embers(uv: vec2f, v: VO) -> R {
@@ -617,7 +621,7 @@ fn k_embers(uv: vec2f, v: VO) -> R {
             let sway = sin(t * 3.0 + h.y * 40.0) * 0.18;
             let d = length(fract(gp) - vec2f(0.5 + (h.y - 0.5) * 0.5 + sway, 0.5));
             let tw = 0.6 + 0.4 * sin(t * 11.0 + h.x * 60.0);
-            i += (smoothstep(0.11, 0.0, d) + 0.25 * exp(-d * 9.0)) * tw;
+            i += (smoothstep(0.11, 0.0, d) + 0.25 * exp(-d * 9.0) * smoothstep(0.45, 0.2, d)) * tw;
         }
     }
     let m = smoothstep(0.0, 0.12, y) * smoothstep(1.0, 0.35, y) * smoothstep(1.0, 0.7, abs(uv.x));
@@ -716,7 +720,8 @@ fn k_sparks(uv: vec2f, v: VO) -> R {
     }
     let pop = exp(-dot(uv, uv) * 60.0) * pow(1.0 - pr, 6.0) * 0.9;
     i = min(i, 1.6) * smoothstep(0.03, 0.22, length(uv));
-    return R(v.c0.rgb * i * 2.0 + v.c1.rgb * (i * 0.8 + pop) + vec3f(1.0) * (min(hot, 1.0) * 1.2 + pop * 0.5), 0.0);
+    dim = clamp(i * 0.5, 0.0, 0.45);
+    return R(v.c0.rgb * i * 2.0 + v.c1.rgb * (i * 0.8 + pop) + vec3f(1.0) * (min(hot, 1.0) * 0.6 + pop * 0.5), 0.0);
 }
 // ---- 10 star: a four-point sparkle. p0 sharpness (default 1), p1 spin (radians / s), p2 second cross 0..1
 fn k_star(uv: vec2f, v: VO) -> R {
@@ -752,9 +757,9 @@ fn k_wisp(uv: vec2f, v: VO) -> R {
     let f = select(-1.0, 1.0, v.p.x >= 0.0);
     let ex = px - f * 0.06;
     let eyes = smoothstep(0.075, 0.03, length(vec2f((abs(ex) - 0.105) * 1.2, (y - 0.55) * 0.8)));
-    let i = body * (0.30 + 0.45 * n) * (0.35 + 0.65 * thin) + rim * (0.4 + 0.6 * thin);
-    let rgb = v.c0.rgb * i * (1.0 + 1.5 * v.p.y) * (1.0 - eyes * 0.9) + mix(v.c1.rgb, vec3f(1.0), 0.5) * eyes * (1.3 + 2.0 * v.p.y) + v.c1.rgb * exp(-d * d * 30.0) * 0.25;
-    return R(rgb, body * 0.25);
+    let i = body * (0.16 + 0.3 * n) * (0.35 + 0.65 * thin) + rim * (0.35 + 0.5 * thin);
+    let rgb = v.c0.rgb * i * (1.0 + 0.8 * v.p.y) * (1.0 - eyes * 0.9) + mix(v.c1.rgb, vec3f(1.0), 0.5) * eyes * (1.2 + 1.0 * v.p.y) + v.c1.rgb * exp(-d * d * 30.0) * 0.12;
+    return R(rgb, body * 0.12);
 }
 // ---- 12 slash: a crescent cut. p0 progress 0..1, p1 arc span in turns (default 0.42), p2 thickness (default 1)
 fn k_slash(uv: vec2f, v: VO) -> R {
@@ -930,9 +935,9 @@ fn k_aura(uv: vec2f, v: VO) -> R {
     let n = fbm(vec2f(uv.x * 2.6 * v.a.z + v.a.y * 5.0, uv.y * 2.2 - t * 2.3));
     let ell = length(vec2f(uv.x / 0.78, (uv.y + 0.12) / 0.86));
     let up = uv.y * 0.5 + 0.5;
-    let band = smoothstep(0.42, 0.80, ell) * smoothstep(1.02, 0.80, ell + (0.5 - n) * 0.55 - up * 0.10);
+    let band = smoothstep(0.62, 0.86, ell) * smoothstep(1.02, 0.84, ell + (0.5 - n) * 0.5 - up * 0.10);
     let i = band * (0.2 + 1.5 * n * n) * (0.45 + 0.75 * up) * clamp(v.p.x, 0.0, 1.0) * 1.3;
-    return R(v.c1.rgb * i * 0.7 + v.c0.rgb * i * i * 1.6 + vec3f(1.0, 0.9, 0.7) * pow(i, 4.0) * 0.8, 0.0);
+    return R(v.c1.rgb * i * 0.5 + v.c0.rgb * i * i * 1.0 + vec3f(1.0, 0.9, 0.7) * pow(i, 4.0) * 0.3, 0.0);
 }
 // ---- 21 ring: a thin standing ring of light. p0 radius (default 0.8), p1 line width (default 0.035), p2 dashes
 // (0 a whole ring), p3 turn rate
@@ -989,10 +994,10 @@ fn shade(v: VO) -> R {
     // what it covers: solid parts by their own cover, light by a little of its brightness (so it reads on a bright
     // stage and never turns a fighter behind it into a white blot)
     let lum = dot(rgb, vec3f(0.3, 0.5, 0.2));
-    let a = clamp(s.a * k + max(lum - 0.45, 0.0) * 0.5 * (1.0 - s.a), 0.0, 0.96);
+    let a = clamp(max(s.a, dim) * k + max(lum - 0.45, 0.0) * 0.5 * (1.0 - s.a), 0.0, 0.96);
     var o: FO;
     o.c = vec4f(rgb * mix(1.0, a, s.a), a);
-    o.e = vec4f(rgb * (1.0 - s.a * 0.7) * 0.5 * g.misc.y, 1.0);
+    o.e = vec4f(rgb * (1.0 - s.a * 0.7) * 0.3 * g.misc.y, 1.0);
     return o;
 }
 // the offsets (EFB uv units) the blit bends the picture by: a shock's ring pushes outward, haze shimmers upward

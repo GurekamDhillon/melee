@@ -854,7 +854,8 @@ impl PipeFactory {
         if let Some(p) = self.pipelines.lock().unwrap().get(&key) {
             return Ok(p.clone());
         }
-        let prof = melee_core::frameprof::on().then(std::time::Instant::now);
+        // the warm thread's start-up compiles are no frame's work: kept out of the frame profile
+        let prof = (melee_core::frameprof::on() && !warmlist::WARMING.with(|w| w.get())).then(std::time::Instant::now);
         let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
         let wgsl = adapt_wgsl(&src);
         let (pipeline, errs) = guarded(|| {
@@ -930,21 +931,16 @@ impl PipeFactory {
         if let Some(t) = prof {
             melee_core::frameprof::add(melee_core::frameprof::C::Pipes, 1);
             melee_core::frameprof::add(melee_core::frameprof::C::PipeNs, t.elapsed().as_nanos() as u64);
-            static LOG: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-            if *LOG.get_or_init(|| std::env::var_os("MELEE_PIPE_LOG").is_some()) {
-                let n = self.pipelines.lock().unwrap().len();
-                eprintln!("gx: pipeline {n} created in {:.1} ms (tev stages {}, stride {})", t.elapsed().as_secs_f64() * 1e3, pc.shader.tev_stage_count, pc.shader.vtx_stride);
-            }
         }
         Ok(pipeline)
     }
 }
 
 /// The pipeline warm list: every pipeline config this exe has ever needed, kept on disk next to the exe
-/// (`gpucache/pipelines-<exe size>-<exe mtime>.bin`) and compiled on a background thread at start-up, so a match does
+/// (`gpucache/pipelines-<layout id>-<size>.bin`, or `MELEE_GPUCACHE=<dir>`) and compiled on a background thread at start-up, so a match does
 /// not compile a pipeline on its frame path the second time it needs one. MELEE_PIPE_WARM=0 turns it off.
 /// The records are the raw bytes of [`crate::shader::PipelineConfig`] (plain integers, bools and floats); the file name
-/// carries the exe's identity, so only the binary that wrote a file ever reads it back.
+/// carries the record layout's identity ([`LAYOUT_ID`]), so a file is only read back by a binary with the same layout.
 pub mod warmlist {
     use crate::shader::PipelineConfig;
     use std::io::Write;
@@ -960,11 +956,28 @@ pub mod warmlist {
         if std::env::var("MELEE_PIPE_WARM").is_ok_and(|v| v == "0") {
             return None;
         }
-        let exe = std::env::current_exe().ok()?;
-        let m = std::fs::metadata(&exe).ok()?;
-        let t = m.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
-        Some(exe.parent()?.join("gpucache").join(format!("pipelines-{}-{t}-{SZ}.bin", m.len())))
+        let dir = match std::env::var_os("MELEE_GPUCACHE") {
+            Some(d) if !d.is_empty() => std::path::PathBuf::from(d),
+            _ => std::env::current_exe().ok()?.parent()?.join("gpucache"),
+        };
+        Some(dir.join(format!("pipelines-{:016x}-{SZ}.bin", LAYOUT_ID)))
     }
+
+    /// The identity of the record layout: the source of every struct a record holds (all `#[repr(C)]`, so the
+    /// layout follows from the source alone). A rebuilt exe with the same config types keeps its list (the owner's
+    /// list survives updates); any change to those types starts a new file.
+    const LAYOUT_ID: u64 = {
+        const fn fnv(mut h: u64, b: &[u8]) -> u64 {
+            let mut i = 0;
+            while i < b.len() {
+                h = (h ^ b[i] as u64).wrapping_mul(0x100_0000_01b3);
+                i += 1;
+            }
+            h
+        }
+        let h = fnv(0xcbf2_9ce4_8422_2325, include_str!("shader.rs").as_bytes());
+        fnv(h, include_str!("state.rs").as_bytes())
+    };
 
     fn checksum(b: &[u8]) -> u32 {
         b.iter().fold(0x811c9dc5u32, |h, &x| (h ^ x as u32).wrapping_mul(0x01000193))
@@ -982,7 +995,7 @@ pub mod warmlist {
             *g = std::fs::OpenOptions::new().create(true).append(true).open(p).ok();
         }
         if let Some(f) = g.as_mut() {
-            // SAFETY: PipelineConfig is plain data (no pointers); the bytes are only read back by this same binary.
+            // SAFETY: PipelineConfig is plain data (no pointers); the bytes are only read back by a binary with the same layout (LAYOUT_ID).
             let b = unsafe { std::slice::from_raw_parts(pc as *const PipelineConfig as *const u8, SZ) };
             let mut rec = b.to_vec();
             rec.extend_from_slice(&checksum(b).to_le_bytes());
@@ -1001,7 +1014,7 @@ pub mod warmlist {
                 continue;
             }
             let mut v = std::mem::MaybeUninit::<PipelineConfig>::uninit();
-            // SAFETY: the bytes are a PipelineConfig this same binary wrote (exe identity in the file name, checksum).
+            // SAFETY: the bytes are a PipelineConfig a binary with the same repr(C) layout wrote (LAYOUT_ID in the file name, checksum).
             unsafe {
                 std::ptr::copy_nonoverlapping(b.as_ptr(), v.as_mut_ptr() as *mut u8, SZ);
                 out.push(v.assume_init());

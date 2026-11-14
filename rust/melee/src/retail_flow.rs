@@ -726,6 +726,7 @@ impl RetailPlay {
         }
         let t_step = std::time::Instant::now();
         let entered = self.step(four);
+        tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
         if melee_core::frameprof::on() {
             self.profile_test_stage();
         }
@@ -1581,6 +1582,24 @@ fn hash_log(frame: u64, hash: u32) {
     let f = F.get_or_init(|| std::env::var_os("MELEE_HASH_LOG").and_then(|p| std::fs::File::create(p).ok()).map(std::sync::Mutex::new));
     if let Some(f) = f {
         let _ = writeln!(f.lock().unwrap(), "{frame} {hash:08X}");
+    }
+}
+
+/// `MELEE_TICK_LOG=<file>`: one line per tick in every scene: tick, engine frame, scene, the pads the sim got (after the
+/// UI host's input boundary) and the logic random seed, to find the first tick two run modes (headless / windowed) part.
+fn tick_log(tick: u64, frame: u64, cur: (u8, u8), four: &[melee_types::PADStatus; 4]) {
+    use std::io::Write;
+    static F: std::sync::OnceLock<Option<std::sync::Mutex<std::io::BufWriter<std::fs::File>>>> = std::sync::OnceLock::new();
+    let f = F.get_or_init(|| std::env::var_os("MELEE_TICK_LOG").and_then(|p| std::fs::File::create(p).ok()).map(|f| std::sync::Mutex::new(std::io::BufWriter::new(f))));
+    if let Some(f) = f {
+        let seed = melee_runtime::tu::random::global::state().seed;
+        let mut w = f.lock().unwrap();
+        let _ = write!(w, "{tick} {frame} {:02X}{:02X} {seed:08X}", cur.0, cur.1);
+        for p in four {
+            let _ = write!(w, " {:04X}.{:02X}{:02X}.{:02X}{:02X}.{:02X}{:02X}.{:02X}", p.button, p.stickX as u8, p.stickY as u8, p.substickX as u8, p.substickY as u8, p.triggerLeft, p.triggerRight, p.err as u8);
+        }
+        let _ = writeln!(w);
+        let _ = w.flush();
     }
 }
 

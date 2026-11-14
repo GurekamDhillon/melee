@@ -276,11 +276,15 @@ pub fn install() {
     }
 }
 
-/// `OSGetTime`: the console time base (`__OSBusClock / 4` = 40.5 MHz ticks) off the host's monotonic clock.
+/// Logic frames run since boot (every engine of the process), the base of the sim's clock ([`os_get_time`]).
+pub static SIM_FRAMES: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
+
+/// `OSGetTime`: the console time base (`__OSBusClock / 4` = 40.5 MHz ticks), counted in logic frames, NOT the host's
+/// wall clock. The game reads it into the simulation: the title burns `HSD_Rand()` once per second of the clock
+/// (gmTitle_801A165C), so a wall clock gave a headless turbo run (title at ~0.3 s) and a windowed run (title at ~5 s)
+/// different random streams from the title on (notes/run-modes.md). One frame = 40.5 MHz / 60 = 675000 ticks.
 pub fn os_get_time() -> i64 {
-    use std::sync::OnceLock;
-    static T0: OnceLock<std::time::Instant> = OnceLock::new();
-    (T0.get_or_init(std::time::Instant::now).elapsed().as_nanos() as i64) * 81 / 2000
+    SIM_FRAMES.load(core::sync::atomic::Ordering::Relaxed) as i64 * 675_000
 }
 
 /// `GXGetTexBufferSize` (dolphin SDK GXTexture.c): bytes a texture of `format` occupies, tile padded, with the mip

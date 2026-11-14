@@ -878,6 +878,54 @@ pub unsafe fn absorb(slot: i32) -> i32 {
     0
 }
 
+/// Envoy's combo breaker (the sim decides when; envoy_sim `CB_*`): `slot`'s fighter in play bursts out of the combo.
+/// Its launch goes (knockback velocity zeroed, the reaction to the hit now skipped), it leaves hitstun into Fall in
+/// the air or Wait on the ground, and it is intangible for `frames` with the game's own white intangibility flash
+/// (`ftColl_8007B760`), with the shield-break sound, a large quake and a `freeze`-frame hitlag on every fighter.
+/// Game state, rolled back with the game. 0 done; -1 no fighter / not in gameplay.
+pub unsafe fn combo_break(slot: i32, frames: i32, freeze: i32) -> i32 {
+    if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return -1;
+    }
+    let f = active_fighter(slot);
+    if f.is_null() || (*f).gobj.is_null() {
+        return -1;
+    }
+    let g = (*f).gobj;
+    (*f).dmg.kb_applied = 0.0;
+    (*f).x8c_kb_vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+    if (*f).self_vel.y < 0.0 {
+        (*f).self_vel.y = 0.0;
+    }
+    if (*f).ground_or_air == GA_Ground {
+        melee_fighter::tu::ft_08a1::ft_8008A2BC(g);
+    } else {
+        melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(g);
+    }
+    melee_fighter::tu::ftcoll::ftcoll_8007b760(g, frames.clamp(0, 600));
+    // unmistakable: the shield-break sound from the Melee disc, a large camera quake, and a hitlag freeze on every
+    // fighter in play (`freeze` frames, as a hit's hitlag: game state, so rollback replays it the same)
+    melee_fighter::ft0877::play_sfx(&mut *f, 130, 127, 64);
+    let mut at = (*f).cur_pos;
+    melee_world::tu::camera::Camera_RequestQuake(QuakeKind_Large, core::ptr::addr_of_mut!(at) as *mut _);
+    let fz = freeze.clamp(0, 30) as f32;
+    if fz > 0.0 {
+        for s in 0..4 {
+            let t = active_fighter(s);
+            if t.is_null() || (*t).gobj.is_null() {
+                continue;
+            }
+            if (*t).dmg.x195c_hitlag_frames < fz {
+                (*t).dmg.x195c_hitlag_frames = fz;
+            }
+            if (*t).x2219_b5() == 0 {
+                melee_fighter::tu::fighter::Fighter_UnkRecursiveFunc_8006D044((*t).gobj);
+            }
+        }
+    }
+    0
+}
+
 /// The slot whose hit `slot`'s fighter in play took last (its damage source: a fighter, or an item's owner), or -1.
 pub unsafe fn attacker(slot: i32) -> i32 {
     let f = active_fighter(slot);

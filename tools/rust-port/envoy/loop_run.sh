@@ -46,6 +46,8 @@ if [ "${RUN_A:-1}" = 1 ]; then
   else echo "     a: no RUN OVER inside FRAMES (allowed): reached loop $(grep -o 'envoy: loop now [0-9]*' "$out/a.log" | tail -1 | grep -o '[0-9]*$')"; fi
   [ -f "$out/a.save/best.bin" ] && ok "best loop saved: $(od -An -i "$out/a.save/best.bin" | tr -d ' ')" || bad "no best.bin"
   grep -q "crash\|panicked" "$out/a.log" && bad "a crash or panic in run a"
+  # the combo breaker (envoy_sim CB_*): breaks fired in the run (report only; the CPU pilot is not a human)
+  echo "     a: combo breaks fired: $(grep -c 'envoy: combo break, player' "$out/a.log")"
   # room lengths per loop (report only: the CPU pilot with the strong row is not a human; the owner's target is 1-2 min)
   python "$here/room_lengths.py" "$out/a.log" | sed 's/^/     /'
 fi

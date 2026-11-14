@@ -190,6 +190,16 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
     let nw = tw(name, d(12)) + 14.0;
     face(e, S_FACE_WHITE, x + 30.0, y, nw, 17.0, WHITE);
     e.text_ex(x + 37.0, y + 2.0, d(12), INK, ALIGN_LEFT, 0.0, name);
+    // the combo breaker's cooldown (P_BREAK_CD): a white "Burst" sticker after the name whose ring fills back up
+    let bcd = v[pbk + P_BREAK_CD];
+    if bcd > 0 {
+        let bmx = v[pbk + P_BREAK_MAX].max(1);
+        let bx = x + 34.0 + nw;
+        let frac = 1.0 - (bcd as f32 / bmx as f32).clamp(0.0, 1.0);
+        face(e, S_FACE_INK, bx, y, 58.0, 17.0, WHITE);
+        ring(e, bx + 9.0, y + 8.5, 6.0, 2.0, frac, WHITE, alpha(PALE, 0.35));
+        e.text_ex(bx + 18.0, y + 2.0, d(11), WHITE, ALIGN_LEFT, 0.0, "Burst");
+    }
     // the big percent (the player's match slot is its port)
     big_pct(e, x, y + 18.0, p.min(3), 40, ALIGN_LEFT);
     // the drive row
@@ -587,6 +597,11 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
             }
             EV_BREAK => {
                 burst(e, S_BURST_CORAL, 400.0, 30.0, 80.0, age, "Break!", 14);
+            }
+            EV_COMBOBREAK => {
+                // the tech popups' burst, bigger: a white burst behind the player's colour, "COMBO BREAK!"
+                burst(e, S_BURST_WHITE, cx + 40.0, 240.0, 150.0, age, "", 12);
+                burst(e, if who == 0 { S_BURST_CORAL } else { S_BURST_LAGOON }, cx + 40.0, 240.0, 120.0, age, "COMBO BREAK!", 18);
             }
             _ => {}
         }

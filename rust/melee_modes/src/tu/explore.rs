@@ -216,6 +216,23 @@ fn link_doors(m: &mut Map, secs: &[SecDef]) {
             }
         }
     }
+    // a section whose doors carry neither flag (The Jungle's `060002` and its wheel room): a side room still unreached
+    // is paired with the first free main door (a way-back-flagged one first) through its own first free door
+    for r in next_room..=secs.iter().map(|s| s.room).max().unwrap_or(0) {
+        let Some(rs) = room_sec(r) else { continue };
+        if m.doors.iter().any(|d| d.sec == rs && d.to >= 0) {
+            continue;
+        }
+        let free = |m: &Map, main: bool, back: bool| {
+            m.doors.iter().position(|d| (d.sec == 0) == main && (main || d.sec == rs) && d.to < 0 && !d.exit && (!back || d.back))
+        };
+        let Some(i) = free(m, true, true).or_else(|| free(m, true, false)) else { continue };
+        let Some(t) = free(m, false, false) else { continue };
+        m.doors[i].to = t as i32;
+        m.doors[i].into_room = true;
+        m.doors[t].to = i as i32;
+        m.doors[t].back = true;
+    }
 }
 
 /// `whole`: every collision file of a section, welded (the arena's centre floor is its own file).
@@ -1225,6 +1242,7 @@ mod jungle_tests {
         }
         eprintln!("spawns {} crates {} blocks {} lines {}", m.spawns.len(), m.crates.len(), m.blocks.len(), m.lines.len());
         assert!(m.doors.iter().any(|d| d.sec == 0 && d.into_room && d.to >= 0), "no room door linked");
+        assert!(m.doors.iter().any(|d| d.sec == 1 && d.back && d.to >= 0), "no way back");
         assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"));
     }
 }

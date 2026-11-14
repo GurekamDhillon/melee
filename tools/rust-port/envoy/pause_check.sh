@@ -30,7 +30,7 @@ run() { # name pad
   echo "$name: exit $? ($(ls "$d/shots" 2>/dev/null | wc -l) shots)"
   # PERF=1: real time with the frame profiler and no shots; every frame interval and tick under 16.7 ms
   if [ -n "${PERF:-}" ]; then
-    local pf; pf=$(ls -t "$d/profiles/"profile-*.csv 2>/dev/null | head -1)
+    local pf; pf=$(ls -t "$(dirname "$exe")/profiles/"profile-*.csv 2>/dev/null | head -1)
     if [ -n "$pf" ]; then python "$repo/tools/rust-port/perf/zero_hitch_check.py" "$pf" --label "pause $name" || fail=1
     else echo "FAIL perf $name: no profile"; fail=1; fi
   fi

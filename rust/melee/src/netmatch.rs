@@ -400,6 +400,7 @@ pub mod engine_game {
             self.e.frames -= 1;
         }
         pub fn open_scene(args: &[String], scene: &str, seed: u32) -> Result<Self, String> {
+            melee_modes::tu::envoy::set_net_salt(seed);
             // SAFETY: single-threaded start-up, before the engine reads them.
             unsafe {
                 std::env::set_var("MELEE_TEST_SEED", seed.to_string());
@@ -418,6 +419,7 @@ pub mod engine_game {
 
     impl super::NetGame for EngineGame {
         fn open(_args: &[String], stage_file: &str, names: &[&str], seed: u32, _stocks: i32) -> Result<Self, String> {
+            melee_modes::tu::envoy::set_net_salt(seed);
             let stage = match stage_file {
                 "GrNLa.dat" => "fd",
                 "GrNBa.dat" => "bf",

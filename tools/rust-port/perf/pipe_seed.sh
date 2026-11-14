@@ -28,15 +28,19 @@ while [ $i -lt ${#stages[@]} ]; do
     --match "$1/cpu9,$2/cpu9,$st" --max-frames "${FRAMES:-1500}" >"$out/$i-$1-$2.log" 2>&1
 done
 if [ -n "${MODS:-}" ] && [ -n "${CARD_MASTER:-}" ]; then
-  # one Envoy run through the effects (drives, tags, waves, stage shift, combo breaks)
+  # one Envoy run through the effects (drives, every item, tags, waves, stage shift, combo breaks). The shader effect
+  # quads (melee_gx::vfx, envoy-vfx.md) are not in the warm list: their pipelines (one shader, three pipelines) are
+  # built at start-up whenever a UI mod is loaded (envoy_fx.rs, `pre-warmed at start-up` in the log); this run
+  # makes the driver cache them and checks the log line is there.
   o="$out/envoy"; rm -rf "$o"; mkdir -p "$o/save" "$o/card/USA/Card A"; cp "$CARD_MASTER/"* "$o/card/USA/Card A/"
   echo "-- envoy"
   (cd "$o" && env MELEE_WINDOW_HIDDEN=1 MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_TURBO=1 MELEE_WINDOW_TITLE="pipe_seed: envoy" \
     MELEE_WASM_MODS="$MODS" MELEE_ENVOY_DIR="$o/save" MELEE_CARD_PATH="$o/card" MELEE_PAD_SCRIPT="$here/envoy/camp_pad.txt" \
     MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_PAD_NO_PAUSE=1 \
-    "MELEE_ENVOY_TEST_DRIVES=ember,bolt,tagauto,wave2,shift,dropall/ember,bolt" \
+    "MELEE_ENVOY_TEST_DRIVES=ember,bolt,spark_ring,glide_wake,shine_bell,hop_shot,ledge_spikes,whiff_echo,roll_mines,smash_quake,moon_drops,coin_magnet,homing_ink,fire_lace,tagauto,wave2,shift,dropall/ember,bolt" \
     timeout "${RUN_TIMEOUT:-600}" "$EXE" play --iso "$GW_ISO_VANILLA" --widescreen --windowed --window 1280x720 \
     --max-frames "${ENVOY_FRAMES:-20000}" >"$o/run.log" 2>&1)
+  grep -a -m1 "envoy fx: armed" "$o/run.log" || echo "pipe_seed: the effect pipelines were not built (no 'envoy fx: armed' line)"
 fi
 d=${MELEE_GPUCACHE:-$(dirname "$EXE")/gpucache}
 ls -la "$d" 2>/dev/null | grep pipelines- || echo "no warm list written in $d"

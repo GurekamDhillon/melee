@@ -63,6 +63,10 @@ pub fn ftCo_KneeBend_Anim(g: G) {
         if ext::ft_800D2D0C(g) {
             ext::ftCo_ItemScrew_Enter(g);
         } else {
+            if let Some(h) = unsafe { crate::hooks::ENVOY_JUMP } {
+                let short = unsafe { f.mv.co.kneebend.is_short_hop } != 0;
+                h(f, short);
+            }
             ext::ftCo_Jump_Enter(g);
         }
     }

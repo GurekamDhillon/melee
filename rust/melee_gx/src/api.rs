@@ -1215,6 +1215,23 @@ impl Gx {
         self.write_ras_reg(bg);
         self.sh.bp_sent = 1;
     }
+    /// The konst colour registers (bit k = K_k) the first `stages` TEV stages select for colour or alpha
+    /// (a stage appended later picks a free one: melee_modes envoy_tint).
+    pub fn tev_kregs_used(&self, stages: u32) -> u32 {
+        let mut used = 0;
+        for st in 0..stages.min(16) {
+            let v = self.sh.tev_ksel[(st / 2) as usize];
+            let (c, a) = if st & 1 != 0 { ((v >> 14) & 31, (v >> 19) & 31) } else { ((v >> 4) & 31, (v >> 9) & 31) };
+            for sel in [c, a] {
+                if (12..=15).contains(&sel) {
+                    used |= 1 << (sel - 12);
+                } else if (16..=31).contains(&sel) {
+                    used |= 1 << ((sel - 16) % 4);
+                }
+            }
+        }
+        used
+    }
     pub fn set_tev_kcolor_sel(&mut self, id: u32, sel: u32) {
         let k = (id / 2) as usize;
         if id & 1 != 0 {

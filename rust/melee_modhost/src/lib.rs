@@ -31,7 +31,10 @@ pub const MAX_MODS: usize = 16;
 pub const MAX_HOOKS: u32 = 256;
 pub const MAX_PAGES: u64 = 16; // 1 MiB
 /// Fuel per hook invocation (wasmi fuel units, about one per instruction). Running out traps and disables the mod.
-pub const HOOK_FUEL: u64 = 1_000_000;
+/// candidate10: 4M (was 1M). The Envoy sim with slice 2 and the synergy lane already used ~0.7M a hook with 12 items
+/// held and ran out with the Item Lab's full kit (38 items), which a long real run can approach; a trap disables the
+/// run. The budget only decides where a runaway mod stops (deterministic either way); it costs nothing below it.
+pub const HOOK_FUEL: u64 = 4_000_000;
 /// Activations of one address deeper than this run the original only (spec section 5, re-entrancy).
 pub const MAX_DEPTH: u32 = 8;
 /// Hooks per address across all mods (spec limits): pre and post each.
@@ -663,6 +666,14 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_wave_start", || -> i32 { unsafe { melee_modes::tu::envoy::wave_start() } });
     w!("gd_tag_assist_frames", |slot: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::assist_frames(slot) } });
     w!("gd_stage_transition", |kind: i32, len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_begin(kind, len) } });
+    // Envoy "Fights 2": a live stage transition (no freeze; the hand-off at frame `at`) and its record: phase, done,
+    // from, to, frame, len, at, finished count
+    w!("gd_stage_transition_live", |kind: i32, len: i32, at: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_live_begin(kind, len, at) } });
+    w!("gd_stage_live", |mut c: Caller<'_, HostData>, out: u32| -> i32 {
+        let l = unsafe { melee_modes::tu::tag_swap::LIVE };
+        write_words(&mut c, out, &[l.phase as u32, l.done as u32, l.from as i32 as u32, l.to as i32 as u32, l.frame as u32, l.len as u32, l.at as u32, l.count]);
+        l.phase as i32
+    });
     w!("gd_hold_begin", |len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::hold_begin(len) } });
     w!("gd_hold_release", || -> i32 { unsafe { melee_modes::tu::tag_swap::hold_release() } });
     // Envoy run (melee_modes::tu::envoy): the next match's plan, the presentation view, live upgrades
@@ -692,7 +703,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         *V.get_or_init(|| std::env::var("MELEE_ENVOY_START_FIGHT").ok().and_then(|v| v.parse::<i32>().ok()).map_or(0, |n| (n - 1).clamp(0, 4)))
     });
     // the salt of a new run's seed (menu-time, set by the camp's New run; 0 under MELEE_ENVOY_ARM and in scripted runs)
-    w!("gd_envoy_salt", || -> i32 { unsafe { melee_modes::tu::envoy::RUN_SALT } });
+    w!("gd_envoy_salt", || -> i32 { melee_modes::tu::envoy::salt_now() });
     // test knob: MELEE_ENVOY_TEST_DRIVES="key[:level],key/key|keystone" (main / partner | keystones), fixed per process
     w!("gd_envoy_test_drives", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
         static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();
@@ -719,16 +730,28 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_speed", |slot: i32, active: i32, bench: i32| -> i32 { unsafe { melee_modes::tu::envoy::speed(slot, active, bench) } });
     w!("gd_envoy_absorb", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::absorb(slot) } });
     w!("gd_envoy_attacker", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::attacker(slot) } });
+    w!("gd_envoy_hit_item", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::hit_item(slot) } });
     // the combo breaker: the slot's fighter bursts out of the combo (no launch, out of hitstun, intangible `frames`;
     // the shield-break sound, a quake, every fighter frozen `freeze` frames)
     w!("gd_envoy_combo_break", |slot: i32, frames: i32, freeze: i32| -> i32 { unsafe { melee_modes::tu::envoy::combo_break(slot, frames, freeze) } });
     w!("gd_envoy_jumps", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::jumps(slot) } });
     w!("gd_envoy_air_jump", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::air_jump(slot) } });
+    // an Envoy pickup by button: the grounded fighter takes Melee's item pickup state (no jab off the same A press)
+    w!("gd_envoy_pickup_anim", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::pickup_anim(slot) } });
     w!("gd_envoy_blast", |slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32| -> i32 {
         unsafe { melee_modes::tu::envoy::blast(slot, canon(x), canon(y), canon(r), dmg, angle, kbg, bkb) }
     });
     // a blast's landing cap (x1000, 0 none) and log tag, on the blast `slot` armed this frame; what blasts landed on
     // a victim slot this frame (9 words: envoy::landed)
+    // Envoy orbitals: an orb blocked a foe projectile (an item); it is removed the retail way. Armed runs only.
+    w!("gd_envoy_item_block", |c: Caller<'_, HostData>, h: u32| -> i32 {
+        if melee_modes::tu::envoy::armed() == 0 { return -1; }
+        let g = item_gobj(c.data(), h);
+        if g.is_null() { return -1; }
+        unsafe { melee_modes::tu::envoy::item_block(g as *mut core::ffi::c_void) };
+        0
+    });
+    w!("gd_envoy_blast_look", |slot: i32, el: i32, kind: i32, sev: i32| -> i32 { unsafe { melee_modes::tu::envoy::blast_look(slot, el, kind, sev) } });
     w!("gd_envoy_blast_cap", |slot: i32, cap_milli: i32, tag: i32| -> i32 { unsafe { melee_modes::tu::envoy::blast_cap(slot, cap_milli, tag) } });
     w!("gd_envoy_landed", |mut c: Caller<'_, HostData>, slot: i32, out: u32| -> i32 {
         let l = unsafe { melee_modes::tu::envoy::landed(slot) };
@@ -792,6 +815,16 @@ if which == melee_modes::tu::subspace::SPAWN_BASE - 1 { melee_modes::tu::subspac
     // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
     // plan only while armed, so VS stays retail with the mods loaded
     w!("gd_envoy_armed", || -> i32 { melee_modes::tu::envoy::armed() });
+    // the Item Lab's setup words (envoy_data::lab L_*; menu-time, read at arm time): the words copied, 0 = not a Lab
+    w!("gd_envoy_lab", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
+        let l = melee_modes::tu::envoy::lab();
+        if l[0] == 0 {
+            return 0;
+        }
+        let n = (cap as usize).min(l.len());
+        write_words(&mut c, out, &l[..n].iter().map(|&x| x as u32).collect::<Vec<u32>>());
+        n as i32
+    });
     // the saved run record (host-side file, read at arm time): the words copied (<= cap), 0 = no saved run
     w!("gd_envoy_record", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
         let (rec, n) = unsafe { (melee_modes::tu::envoy::SAVED, melee_modes::tu::envoy::SAVED_LEN) };

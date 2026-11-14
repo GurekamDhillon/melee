@@ -324,6 +324,13 @@ pub fn boot_bank_sizes() -> [i32; 3] {
     [b0, b1, b2]
 }
 
+/// TARGET_PC: the ARAM room bank 2 gets beyond `boot_bank_sizes` (the four largest fighter banks again), for the
+/// characters an Envoy match adds to the players' (tag partners, the next waves).
+pub fn extra_fighter_bank_room() -> i32 {
+    let l4 = fn_80023254(4);
+    BANK_SIZE[l4[0]] + BANK_SIZE[l4[1]] + BANK_SIZE[l4[2]] + BANK_SIZE[l4[3]]
+}
+
 /// lbAudioAx_80026E84(ckind): the bank mask of a CharacterKind.
 pub fn lb_80026e84(ckind: i32) -> u64 {
     if (0..33).contains(&ckind) { CKIND_BANK_MASK[ckind as usize] } else { 0 }
@@ -612,6 +619,7 @@ impl Sound {
 
     /// lbAudioAx_80027DF8: the per-frame audio update (without fn_80024654's ducking).
     pub fn lb_audio_ax_80027df8(&mut self) {
+        crate::sound::SFX_LOG_FRAME.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         if self.lb.muted == 0 {
             self.lb.hb1_timer -= 1;
             if self.lb.hb1_timer <= 0 {

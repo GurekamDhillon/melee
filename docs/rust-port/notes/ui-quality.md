@@ -1,0 +1,116 @@
+# UI quality: causes and construction (port/uiquality, 2026-11-13)
+
+The owner's report: render artifacts, squished and smudged UI pieces, micro tears in the seams, small circles that are
+not circles. Two earlier rounds (uiseams 8d8b9f87a, 7b9e20efe) fixed the cases they targeted. This pass measured every
+screen at 720p, 1080p, 1440p and 4K, in 4:3 and widescreen, and fixed the causes in the renderer and the kit.
+
+## What was wrong
+
+| # | Cause | Where | What it looked like |
+|---|---|---|---|
+| 1 | A sticker face was a 9-slice of a 48-unit tile with 14-unit corners, used for stickers lower or narrower than two corners (28 units). The corner tiles were pushed into each other. | `envoy_ui` `kit::face`: the P1 tag, name pills, the coin pill, tabs, hint caps, the "x2" badge, every small ink chip (11 to 24 units) | lumpy, pinched pills; doubled outlines; "squished" |
+| 2 | Every rounded shape was a bitmap magnified by bilinear filtering: host slices and kit pieces at 1 texel per unit (magnified 1.5x at 720p to 4.5x at 4K), sticker art at 2 texels per unit (magnified above 960p band height). | `melee_gx::ui` atlas tiles; `bake_stickers.py` | soft, smudged edges and corners, worse the higher the resolution |
+| 3 | The atlas had no mip chain. Minified art was box-filtered over at most 4x4 taps, which undersamples anything drawn more than 4x smaller than its texels (a 64-texel disc as a 4.5 px ring dot). | `ui.rs` fragment shader | small circles not round; dots of one ring differing from each other |
+| 4 | A shape was up to nine quads. Their shared sides only stay closed while every piece is transformed identically and the pieces are found by the join pass (12 quads back, exact matches). | 9-slices rotated or under the menu tilt | hairline seams; fixed case by case before |
+| 5 | Text with an ink edge was nine draws of the string (eight ink copies at offsets). The copies do not make a round outline and their antialiased edges stack. | `kit::text_edge`: titles, percent, names | a soft, lumpy ink edge on text |
+| 6 | Glyph distance fields were 24 texels per em: large text (a 40-unit percent at 4K is 180 px) is built from 24 texels, and small text minified the field without mips. | `ui_font.rs` | rounded corners on large text, uneven stems on small text |
+| 7 | In a window narrower than 4:3 the band took the window's full height but only its width: non-square pixels. | `Renderer::blit_to` band | every shape squeezed sideways (only at such window shapes) |
+| 8 | A glyph's edge was normalised by `fwidth` of the sampled distance value. On the ridge of a thin stem that derivative is zero, so a stem lying between two pixel centres got no coverage at all instead of two half-covered pixels. | `ui.rs` fragment shader, every text quad | small text lost stems depending on where it sat on the pixel grid (the LAB's "FA_CON", "Startup") |
+
+Checked and not a cause: the blit pass is single-sampled and the UI is drawn at window resolution after the EFB
+resolve, so MSAA and the render scale do not touch it; the atlas is premultiplied and the blend state is premultiplied
+(no fringe); PNG texels and the target are both non-linear 8-bit and blended as such, which matches how the art was
+drawn; widescreen keeps the band 4:3 with square pixels.
+
+## How it is built now
+
+**Analytic shapes.** `Q_SHAPE` instances (`ui.rs`, flags bits 16..19) carry no texture. The fragment shader evaluates
+the signed distance to a rounded box (a pill or a circle when the radius reaches half the short side), a diamond or a
+glow, in device pixels, and turns it into coverage one pixel wide. A border is a second distance inside the first, in
+its own colour; a clear fill with a border is a ring; a dashed border is measured along the perimeter. One quad is the
+whole shape at any size, so:
+
+- there are no pieces, and so no seams, by construction, at rest, rotated and under the menu tilt;
+- a sticker's hard shadow is part of the same quad (`OP_SHADOW`): face and shadow are composed per pixel before the
+  blend, so a sticker that fades in is one translucent piece (two overlapping translucent quads would show the
+  shadow through the face);
+- corners are true arcs at every resolution; nothing is magnified;
+- a sticker smaller than its corner radius is a pill, not two corners overlapping.
+
+Host slices (`OP_SLICE`) and the round kit pieces (`ui.dot`, `ui.ring`, `ui.knob`, `ui.diamond`) are now one shape
+quad each, so every existing mod (the LAB, the menus) gets this without a change. Mods draw their own with
+`OP_SHAPE` (gd-ui-v1.4, `Enc::shape`, `round_rect`, `circle`). The Envoy kit's `face`, `sticker`, `disc`, and the
+disc / ink dot / stock dot sprites are shapes with the numbers of the tiles they replace.
+
+**Pixel policy.** An unrotated, untilted shape with straight sides is snapped: origin and size land on whole device
+pixels (the size is rounded on its own, so it does not change as the shape moves) and its border is a whole number of
+pixels. Straight edges are crisp and a border of one width is the same number of pixels everywhere. Circles, rotated
+and tilted shapes are not snapped: they are pure coverage. Flat and textured quads keep the rasterizer's rule (an
+edge lands on the nearest pixel boundary), which is watertight between abutting quads; rotated ones keep the uiseams
+edge ramp with inner sides marked.
+
+**Atlas.** 4096 x 4096, premultiplied, with 4 mip levels built on the CPU when an entry is written (at load, not at
+present). Every entry starts on an 8-texel boundary and is followed by an 8-texel clear gutter, so no mip texel mixes
+two entries. Sampling is trilinear, half a level sharp. A quad that shows a whole entry (`Q_FULL`) reaches one pixel
+past its rect and may filter into the gutter, so minified art fades out at its edge instead of being cut. The CPU page is reserved whole, once, and never reallocated (entries are written while the game's allocator scopes may be active; a block allocated there would not outlive them); its rows are only touched as the shelves fill.
+
+**Art.** `bake_stickers.py` renders at 4x (was 2x): 1:1 or better up to 1440p, 0.9 texel per pixel at 4K. The faces,
+disc and dots are no longer baked.
+
+**Text.** 48 texels per em, 6 texels of spread, the same 96 px supersampled raster as before (same build time);
+minified through the mips. `OP_OUTLINE` draws an outline pass from the glyphs' own distance field under the fill:
+two draws of the string instead of nine, a round outline. A glyph's edge is one screen pixel wide, taken from the
+field's known spread (`2 * SDF_RANGE` texels) and the texels per pixel, not from `fwidth` of the sampled value: a thin
+stem keeps the same ink wherever it falls on the pixel grid.
+
+**Band.** `ui::band_in`: the largest centred 4:3 rect of the blit rect, square pixels at every window shape.
+
+## Checks
+
+- `cargo test -p melee_gx --test ui_quality` renders on the real pipeline, offscreen, at the band scales of 720p,
+  1080p, 1440p and 4K, and reads the pixels back:
+  - circles and rings from 2 to 32 units: area within 2% of pi r^2 (10% under 6 px across), width equals height
+    within 2% (5% under 6 px), centroid within 0.08 px, every edge pixel within 0.3 px of the circle;
+  - small pills: mirror-symmetric within 3% coverage, straight sides exactly on pixel boundaries;
+  - seams: no partly covered pixel between fully covered ones, for a panel, a pill, a sticker (shadow under face)
+    and a three-piece flat bar, at rest, rotated 0.6 and 8 degrees, tilted, rotated and tilted;
+  - a 128-texel sprite disc drawn down to 18 px stays round (the mip chain covers 8x minification);
+  - a sticker with its shadow at half opacity reads the same value over the face, the overlap and the shadow;
+  - small text (10 to 15 px) keeps its ink within 4% at sixteen sub-pixel positions (measured: 2.3%; the old edge
+    swung 9.6%).
+- `cargo test -p melee_modhost --lib ui::`: a slice is one shape quad at any size; `OP_SHAPE` / `OP_OUTLINE` records.
+- Screens: `scratch/morning/uiquality/index.md` (local): each defect with a before / after crop.
+
+## Cost (hidden pause-overlay run, 2200 frames, RTX 5070; before = port/envoy-pause1 d25c12c04)
+
+| | before | after |
+|---|---|---|
+| quads, pause Items page | 427 | 298 |
+| UI present (mod frame + host), 1080p | p50 0.082 ms, p99 0.188 ms | p50 0.069 ms, p99 0.136 ms |
+| UI present, 4K | p50 0.080 ms, p99 0.167 ms | p50 0.070 ms, p99 0.149 ms |
+| instance + atlas upload per frame | p50 0.045 ms, p99 0.09 ms | p50 0.04 ms, p99 0.07 ms |
+| first atlas upload (the match-setup frame) | 12.0 to 13.4 ms | 5.7 to 6.3 ms |
+| slowest UI present (the mod's first frame) | 1.27 to 1.32 ms | 1.19 to 1.28 ms |
+
+The frame profile lists no frame whose largest component is the UI, in either build. On this base about 46% of the
+frames of a hidden run are 0.1 to 5.5 ms over 16.7 ms under "pacing sleep", before and after alike: the hidden
+window's pacer (candidate8 carries the fix, diverge1 "hidden pacer and zero-hitch check judge game work only"), so
+the zero-hitch gate has to be run again once this branch sits on that base.
+
+## Found on the way (not UI)
+
+- `melee_engine::arena::start_prefault`: the pre-fault thread touched pages past a stale bump pointer with a plain
+  load; a block handed out and freed there in between is decommitted when the keep list is full, and the load
+  faulted. The game closed at a match start, about 5 times in 130 hidden Envoy fight-2 starts of this branch before
+  the fix (0 in 55 of the base build: the larger sticker decode moved the timing), 0 since. The pages are touched
+  with `ReadProcessMemory`, which fails for a decommitted page instead of faulting.
+- That crash left no report: on this base the crash filter's stack scan runs past the top of a young thread's
+  stack and faults itself. port/crashsafe (in candidate8 / candidate9) already bounds the scan, so this branch
+  leaves `crash.rs` alone.
+
+## Limits
+
+- Art minified more than 8x reaches past the mip chain (4 levels). Nothing in the kit is drawn that small.
+- Sprite-sheet cells that abut with no gutter (the drive model sheets) can pick up a neighbouring cell's edge when
+  minified. Their cells are clear at the edges today.
+- The first present with UI still uploads the whole used atlas once (about 13 ms, as before this change).

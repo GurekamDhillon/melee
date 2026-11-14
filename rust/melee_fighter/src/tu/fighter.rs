@@ -2069,6 +2069,11 @@ pub unsafe fn Fighter_procInput(g: G) {
             fp.input.triggers[0] = 0.0;
         }
         fp.input.held_buttons[0] = if e::ftCo_IsCpuControlled(fp) { e::ftCo_GetCpuButtons(fp) } else { e::pad_button(fp.pad_port) };
+        if e::ftCo_IsCpuControlled(fp) {
+            if let Some(h) = crate::hooks::ENVOY_DUMMY {
+                h(fp);
+            }
+        }
         if e::ftCo_IsCpuControlled(fp) && e::ScriptGame_CpuStanding(fp) == 0 {
             technical_ai_overlay(fp);
             cpu_assist_overlay(fp);

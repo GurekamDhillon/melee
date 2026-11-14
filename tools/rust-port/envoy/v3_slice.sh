@@ -1,5 +1,8 @@
 #!/bin/bash
 export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
+# RETIRED by the first Envoy item slice (docs/rust-port/notes/envoy-items-design.md 8): drives, keystones, Heat and
+# KO drops are cut, so this check's expectations no longer hold. The item slice's check runs instead.
+exec bash "$(dirname "${BASH_SOURCE[0]}")/items_check.sh" "$@"
 # Envoy V3 (Heat, envoy-synergy-v3.md 12.10; docs/rust-port/notes/envoy-v3-rules.md): the slice's checks.
 #   A. envoy_data's lint and tests (the split test: one record against 2 / 7 / 30, bit-identical);
 #   B. sim.py's V3 measures (--v3; exit 1 on a missed band);

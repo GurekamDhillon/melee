@@ -29,6 +29,7 @@ pub const R_NG: u8 = 5;
 pub const R_COLLECTION: u8 = 6;
 pub const R_BACK: u8 = 7;
 pub const R_TAGBTN: u8 = 8;
+pub const R_LAB: u8 = 9;
 // the road between fights
 pub const R_GO: u8 = 10;
 pub const R_ABANDON: u8 = 11;
@@ -50,8 +51,11 @@ pub struct Ui {
     pub msg: &'static str,
     pub msg_at: i32,
     pub team: bool,
+    /// A new run is armed from the camp and its road (the map and the fork) shows before fight 1.
+    pub pre_road: bool,
+    pub pre_at: i32,
 }
-pub static mut UI: Ui = Ui { cur: 0, prev_cur: 0, moved_at: -100, age: 0, dialog: false, dcur: 0, p2: false, p2_at: -100, p2_hold: 0, stick: [0; 2], rep: [0; 2], msg: "", msg_at: -100, team: false };
+pub static mut UI: Ui = Ui { cur: 0, prev_cur: 0, moved_at: -100, age: 0, dialog: false, dcur: 0, p2: false, p2_at: -100, p2_hold: 0, stick: [0; 2], rep: [0; 2], msg: "", msg_at: -100, team: false, pre_road: false, pre_at: 0 };
 
 /// What the controllers did this frame (edges, with stick repeat).
 #[derive(Clone, Copy, Default)]
@@ -112,15 +116,15 @@ pub unsafe fn read_pad(port: usize) -> Pad {
 /// The rows for what is true now.
 pub fn rows(after_fight: bool, ended: bool, has: bool, no_brawl: bool) -> &'static [u8] {
     if no_brawl {
-        &[R_BACK]
+        &[R_LAB, R_BACK]
     } else if after_fight && ended {
         &[R_DONE, R_NEW]
     } else if after_fight {
         &[R_GO, R_ABANDON, R_LEAVE]
     } else if has {
-        &[R_BIG, R_NEW, R_FIGHTERS, R_TAGBTN, R_COLLECTION, R_BACK]
+        &[R_BIG, R_NEW, R_FIGHTERS, R_TAGBTN, R_LAB, R_COLLECTION, R_BACK]
     } else {
-        &[R_BIG, R_FIGHTERS, R_TAGBTN, R_COLLECTION, R_BACK]
+        &[R_BIG, R_FIGHTERS, R_TAGBTN, R_LAB, R_COLLECTION, R_BACK]
     }
 }
 
@@ -134,6 +138,7 @@ fn row_text(r: u8, has: bool, p2: bool) -> (&'static str, &'static str) {
         R_NG => ("NG+ level", "0 only"),
         R_COLLECTION => ("How to play", ""),
         R_TAGBTN => ("Tag button", unsafe { ["Y", "X", "D-pad (classic)"][TAG_BUTTON.clamp(0, 2) as usize] }),
+        R_LAB => ("Item Lab", "sandbox"),
         R_BACK => ("Back", ""),
         R_GO => ("On to the next fight", ""),
         R_ABANDON => ("Abandon run", ""),
@@ -156,6 +161,7 @@ fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
         R_NG => "NG+ opens when a run is cleared. Not in this build yet.",
         R_COLLECTION => "The goal, your pair, Heat, drives and the buttons, on one card.",
         R_TAGBTN => "Y and X tag at once, no cutscene. The D-pad is the classic tag with its cutscene.",
+        R_LAB => "Every item and effect, any stack, fired on demand. Nothing is saved to your run.",
         R_BACK => "Back to the main menu.",
         R_GO => "The fights of this session follow back to back.",
         R_ABANDON => "End this run for good.",
@@ -224,6 +230,8 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
 pub const DO_NOTHING: i32 = 0;
 pub const DO_CLOSE: i32 = 1;
 pub const DO_ARM: i32 = 2; // + op << 8
+/// The Item Lab armed itself (lab.rs): close the camp, the VS launch follows.
+pub const DO_LAB: i32 = 3;
 /// gd_ui_pass: D-pad left / right and the main stick's X (the host's PASS_STICK_X).
 const PASS_LR: u32 = 0x0001 | 0x0002 | 0x1_0000;
 
@@ -237,7 +245,8 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     let ended = view.is_some_and(|v| v[V_STATE] == 2 || v[V_STATE] == 3);
     // the forked road: the cursor is the sim's (synced input, so co-op and netplay agree), but this scene holds the
     // game's pads; left / right (D-pad and the main stick) are handed through while the fork is on screen
-    let fork_up = after_fight && view.is_some_and(|v| v[V_ROAD_N] > 1 && v[V_SESS_NEXT] != 1) && !ended && !crate::picker::is_open();
+    let pre = UI.pre_road && !after_fight;
+    let fork_up = (after_fight || pre) && view.is_some_and(|v| v[V_ROAD_N] > 1 && v[V_SESS_NEXT] != 1) && !ended && !crate::picker::is_open();
     gd_ui_pass(if fork_up { PASS_LR } else { 0 });
     // sessions: the fight was won and the next is in the same session: no road, the banner, then on at once
     if after_fight {
@@ -249,6 +258,15 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         }
     }
     let has = rec.is_some();
+    // the Item Lab's setup (lab.rs), opened by its row or the main menu's Item Lab cell
+    if !after_fight && crate::lab::setup_is_open() {
+        let pad = read_pad(0);
+        let r = crate::lab::setup_frame(e, &pad, !no_brawl);
+        if r == 2 {
+            u.age = 1;
+        }
+        return if r == 1 { DO_LAB } else { DO_NOTHING };
+    }
     if crate::picker::is_open() {
         if !crate::picker::frame(e) {
             u.age = 1; // back on the camp: the closing press must not choose a row
@@ -263,7 +281,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         }
         return DO_NOTHING;
     }
-    let rs = rows(after_fight, ended, has, no_brawl);
+    let rs: &[u8] = if pre { &[R_GO] } else { rows(after_fight, ended, has, no_brawl) };
     if u.cur >= rs.len() {
         u.cur = 0;
     }
@@ -316,14 +334,19 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                 u.moved_at = t;
             }
             let r = rs[u.cur];
-            if p1.b && !after_fight {
+            if p1.b && pre {
+                // back from the road: the run is disarmed again (nothing was played)
+                u.pre_road = false;
+                act = DO_ARM | (7 << 8);
+            } else if p1.b && !after_fight {
                 act = DO_CLOSE;
             }
             let go = p1.a || (p1.start && !after_fight && !no_brawl);
             if go {
                 let r = if p1.start { R_BIG } else { r };
                 match r {
-                    R_BIG => act = DO_ARM | (if has { 2 } else { 1 } << 8),
+                    // a new run: arm it here and show its road before fight 1 (op 5); A on the road launches (op 6)
+                    R_BIG => act = DO_ARM | (if has { 2 } else { 5 } << 8),
                     R_NEW => {
                         if has && !after_fight {
                             u.dialog = true;
@@ -335,12 +358,14 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                     R_BACK => act = DO_CLOSE,
                     R_FIGHTERS if !has => crate::picker::open(u.p2),
                     R_COLLECTION => crate::help::open(),
+                    R_LAB => crate::lab::setup_open(),
                     R_TAGBTN => {
                         TAG_BUTTON = (TAG_BUTTON + 1) % 3;
                         gd_ui_envoy_set_tag_button(TAG_BUTTON);
                         u.msg = row_say(r, has, u.p2);
                         u.msg_at = t;
                     }
+                    R_GO if pre => act = DO_ARM | (6 << 8),
                     R_GO => act = DO_ARM | (2 << 8),
                     R_ABANDON => {
                         u.dialog = true;
@@ -360,7 +385,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     e.layer(LAYER_MENU, 0);
     let ex = 107.0;
     spr(e, S_BG_CAMP, -ex, 0.0, 854.0, 480.0, WHITE);
-    if after_fight {
+    if after_fight || pre {
         road(e, t, view, rec.as_ref());
     } else {
         // title
@@ -371,7 +396,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     // the list
     let lx = 30.0;
     let forked = view.is_some_and(|v| v[V_ROAD_N] > 1 && !ended);
-    let mut y = if after_fight { if forked { 298.0 } else { 288.0 } } else { 58.0 };
+    let mut y = if after_fight || pre { if forked { 298.0 } else { 288.0 } } else { 58.0 };
     for (i, &r) in rs.iter().enumerate() {
         let on = i == u.cur && !u.dialog;
         let (label, value) = row_text(r, has, u.p2);
@@ -404,7 +429,9 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     let r = rs[u.cur];
     let say = if t - u.msg_at < 150 && !u.msg.is_empty() { u.msg } else if no_brawl { "Envoy needs your Brawl disc. Add it in the launcher." } else { row_say(r, has, u.p2) };
     strip(e, 24.0, 590.0, say);
-    if after_fight {
+    if pre {
+        hints(e, &[("Left / Right", "Road"), ("A", "Start fight 1"), ("B", "Back to camp")]);
+    } else if after_fight {
         hints(e, &[("Up / Down", "Choose"), ("A", if r == R_GO { "Start the fight" } else { "Choose" })]);
     } else {
         let a = match r {
@@ -534,6 +561,39 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
     let looped = v[V_STATE] == 1 && next == 0 && v[V_LOOP] > 1;
     let _ = rec;
     // run strip
+    let act = crate::map::has(v) && !ended;
+    if act {
+        // the act map (Slay the Spire style, the sim's words): rows up to the boss, P1's cursor picks the next fight
+        sticker(e, S_FACE_INK, 16.0, 8.0, 300.0, 272.0, -0.4, WHITE, |e| {
+            face(e, S_FACE_INK, 16.0, 8.0, 300.0, 272.0, WHITE);
+            crate::map::draw(e, v, 40.0, 14.0, 236.0, 262.0, 10.0);
+        });
+        let picking = v[V_MAP_PICK] == 1;
+        let mut s = Buf::new();
+        if looped {
+            s.s("Act ").i(v[V_LOOP]).s(" begins.");
+        } else {
+            s.s(if picking { "Choose the next fight" } else { "The road ahead" });
+        }
+        text_edge(e, 340.0, 10.0, d(20), SUNNY, ALIGN_LEFT, 1.8, s.str());
+        if let Some((_, k)) = crate::map::cursor(v) {
+            let line = match k {
+                MN_DUEL => "Duels: one foe at a time.",
+                MN_CROWD => "Crowd: three foes at once.",
+                MN_ELITE => "Elite: strong foes, better rewards.",
+                MN_BOSS => "The boss of the act.",
+                _ => crate::map::kind_word(k),
+            };
+            text_edge(e, 340.0, 38.0, bs(14), WHITE, ALIGN_LEFT, 1.4, line);
+        }
+        if picking {
+            let hint = if v[V_HUMANS] > 1 { "P1 Left / Right picks, A goes. P2 Left / Right flags a wish." } else { "Left / Right picks the lane, A goes." };
+            text_edge(e, 340.0, 58.0, bs(12), PALE, ALIGN_LEFT, 1.2, hint);
+        }
+    }
+    if act {
+    } else if crate::map::has(v) {
+    } else {
     let (x, y) = (16.0, 8.0);
     sticker(e, S_FACE_SUNNY, x, y, 608.0, 46.0, -0.4, WHITE, |e| {
         let n = v[V_FIGHTS].clamp(1, 8);
@@ -543,11 +603,13 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             spr(e, S_PTRDOWN, x + 34.0 + next as f32 * gap - 13.0, y + 34.0, 26.0, 18.0, WHITE);
         }
     });
-    if v[V_ROAD_N] > 1 && !ended {
+    }
+    if v[V_ROAD_N] > 1 && !ended && !act {
         fork(e, t, v, looped);
         return;
     }
-    if ended || looped {
+    if act {
+    } else if ended || looped {
         let won = v[V_STATE] == 2 || looped;
         let (x, y) = (20.0, 70.0);
         sticker(e, S_FACE_WHITE, x, y, 300.0, 200.0, -1.0, WHITE, |e| {
@@ -567,6 +629,18 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             let mut s = Buf::new();
             s.s("Drives fired: ").i(v[V_FIRES]);
             e.text_ex(x + 16.0, y + 110.0, d(17), INK, ALIGN_LEFT, 0.0, s.str());
+            // the build the run ended with, a row a player (11.11)
+            let any = (0..p.players).any(|q| p.items[q].iter().any(|&c| c > 0));
+            if any {
+                e.text_ex(x + 16.0, y + 136.0, d(13), LILAC, ALIGN_LEFT, 0.0, "Build");
+                for q in 0..p.players {
+                    let ry = y + 150.0 + q as f32 * 24.0;
+                    if p.players == 2 {
+                        e.text_ex(x + 16.0, ry - 5.0, d(11), if q == 0 { CORAL } else { LAGOON }, ALIGN_LEFT, 0.0, if q == 0 { "P1" } else { "P2" });
+                    }
+                    build_row(e, &p.items[q], x + 40.0, ry + 2.0, 250.0, 18.0);
+                }
+            }
         });
         if won {
             spr_rot(e, S_RAYS, 170.0, 160.0, 1.6, (t as f32) * 0.07, alpha(WHITE, 0.13));
@@ -612,7 +686,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
         for f in 0..sets {
             let set = q * 2 + f;
             let fx = 340.0 + (k % 2) as f32 * 146.0;
-            let fy = 72.0 + (k / 2) as f32 * 90.0;
+            let fy = if act { 84.0 } else { 72.0 } + (k / 2) as f32 * 90.0;
             let (_, a) = enter(t - 6 - k as i32 * 3);
             if a > 0.0 {
                 fighter_sticker(e, fx, fy, ROT[k % 4], &p, set, f == 0, alpha(WHITE, a));
@@ -620,7 +694,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             k += 1;
         }
     }
-    let sy = 72.0 + ((k + 1) / 2) as f32 * 90.0;
+    let sy = if act { 84.0 } else { 72.0 } + ((k + 1) / 2) as f32 * 90.0;
     stocks(e, 342.0, sy, 128.0, p.pool, if p.players == 2 { 5 } else { 4 }, "Team stocks", -1.5);
     let (ks, kn) = party_keys(&p);
     for i in 0..kn {
@@ -638,13 +712,20 @@ pub fn fighter_sticker(e: &mut E, x: f32, y: f32, deg: f32, p: &Party, set: usiz
             spr_c(e, S_HEAD, x + 16.0, y + 14.0, 1.0, WHITE);
         }
         e.text_ex(x + 33.0, y + 6.0, d(15), INK, ALIGN_LEFT, 104.0, crate::picker::short(p.pairs[set]));
-        for k in 0..SLOTS {
-            let cx = x + 17.0 + k as f32 * 26.0;
-            let id = p.ids[set][k];
-            if (1..=POOL_LEN as i32).contains(&id) {
-                chip(e, cx, y + 48.0, id as usize - 1, p.lvs[set][k], 22.0);
-            } else {
-                spr_c(e, S_DISC, cx, y + 48.0, 19.0 / 32.0, alpha(PALE, 0.5));
+        let drives = p.ids[set].iter().any(|&id| (1..=POOL_LEN as i32).contains(&id));
+        let pl = (set / 2).min(1);
+        if !drives && p.items[pl].iter().any(|&c| c > 0) {
+            // envoy items: the player's build, in their colours (11.11, showing off a build)
+            build_row(e, &p.items[pl], x + 6.0, y + 48.0, 128.0, 18.0);
+        } else {
+            for k in 0..SLOTS {
+                let cx = x + 17.0 + k as f32 * 26.0;
+                let id = p.ids[set][k];
+                if (1..=POOL_LEN as i32).contains(&id) {
+                    chip(e, cx, y + 48.0, id as usize - 1, p.lvs[set][k], 22.0);
+                } else {
+                    spr_c(e, S_DISC, cx, y + 48.0, 19.0 / 32.0, alpha(PALE, 0.5));
+                }
             }
         }
         if first && p.players == 2 {

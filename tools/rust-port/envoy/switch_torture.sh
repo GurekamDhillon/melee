@@ -8,11 +8,15 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #     switch unless it was hit or grabbed first after the switch (that one is a combat KO, counted, allowed; placed
 #     fighters are intangible for 60 frames);
 #   * 45 frames after each switch every fighter in play is inside the stage's box (|x| < 200, y > -5 below the main
-#     floor of every stage in the rotation, y < 180) and not in a KO;
+#     floor of every stage in the rotation, y < 180) and not in a KO; with the live hand-off a fighter that was beside
+#     or under the stage or on a ledge at the switch may still be below the floor (its kept recovery) or on a ledge;
+#   * a KO of a fighter that was recovering at a live hand-off is logged as "offstage KO after a live stage switch"
+#     (not a switch KO: its place relative to the stage and its way back were kept);
 #   * the states fighters were in at the switches (the coverage table).
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/switch_torture.sh
 #   OUT=dir; FRAMES (default 14400); FIGHTS (start fights, default "1 2 3c 5"; a trailing c = co-op);
 #   OLD=1 runs the pre-fix placement (MELEE_ENVOY_SWITCH_OLD=1), which must FAIL;
+#   TORTURE_KNOBS (default "torture"): "torture,freezeshift" runs the switches as freeze transitions (live is the default since fights2).
 #   RUN_TIMEOUT=secs per fight (default FRAMES/2+600; a depth-7 14400-frame run under load takes 70-85 min): the game's own watchdog, plus an outer kill 30 s later.
 #   DEPTH=4 / 7 runs it as a synctest (0 mismatches required; log lines then repeat once per rollback pass).
 set -u
@@ -32,7 +36,7 @@ for f in $fights; do
   coop=(); case "$f" in *c) coop=(MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3); f=${f%c} ;; esac
   if [ "$depth" = 0 ]; then mode=(golden --out "$out/$tag.csv"); else mode=(synctest --depth "$depth" --timeout 3000); fi
   env "${coop[@]}" MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_TEST_P1CPU=1 \
-    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="torture" MELEE_ENVOY_SWITCH_OLD="$old" \
+    MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="${TORTURE_KNOBS:-torture}" MELEE_ENVOY_SWITCH_OLD="$old" \
     MELEE_PAD_SCRIPT="$here/drives_pad.txt" MELEE_WINDOW_TITLE="switch torture $tag d$depth (${BRANCH_TAG:-envoy})" \
     timeout -k 15 $((tmo + 30)) "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" --scenario pad_falcon_fox_fd \
     --depth "$depth" --frames "$frames" --timeout "$tmo" >"$out/$tag.log" 2>&1
@@ -73,7 +77,15 @@ for (w, i, s), d in sorted(snap.items()):
     # Sleep (11) is not in play: a benched tag partner or a parked wave foe keeps its old spot off screen
     if w != 'after' or 'motion' not in d or d['motion'] == 11: continue
     x, y, m = d.get('x10', 0) / 10, d.get('y10', 0) / 10, d['motion']
-    if 0 <= m <= 10 or abs(x) >= 200 or y <= -5 or y >= 180:
+    # live hand-off (Fights 3): a fighter beside / under the stage or on a ledge at the switch keeps that place
+    # (same offset from the ledge), so below the floor or on a ledge 45 frames later is its recovery, not misplacement
+    a = snap.get(('at', i, s), {})
+    ax, ay, am = a.get('x10', 0) / 10, a.get('y10', 0) / 10, a.get('motion', -1)
+    # a fighter flying in knockback keeps its launch (no reset), so it may carry past an edge too
+    was_off = abs(ax) > 90 or ay < -5 or 252 <= am <= 263 or 75 <= am <= 91
+    # the smallest main floor (Yoshi's Story) ends near |x| 56: below the floor only means misplaced under the centre;
+    # nearer the edge it is a fighter that walked, jumped or was knocked off in the 45 frames
+    if 0 <= m <= 10 or abs(x) >= 200 or y >= 180 or (y <= -5 and abs(x) < 50 and not was_off and not 252 <= m <= 263):
         bad.append(f'switch {i} slot {s}: motion {m} at ({x:.1f},{y:.1f})')
 # every run is a synctest (depth 0 too): no result line means it never finished (a stall, a crash, the timeout)
 ok = ' 0 MISMATCHES' in sync

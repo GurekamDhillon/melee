@@ -1,5 +1,9 @@
 # Envoy effects layer (port/fx)
 
+> 2026-11-13 (port/envoy-vfx): the flash, the Heat screen treatment and the screen-wide rings described below are
+> retired, and every effect shape is a shader quad now. See `envoy-vfx.md`; this note still describes the drive
+> materials, the bloom, the UI quad effects and the menu camera.
+
 A small, fixed set of GPU effects for Envoy, built from `scratch/envoy-notes/shader-effects-study.md`. Mods pick
 built-in shaders by id; they never ship WGSL. Everything is presentation only.
 

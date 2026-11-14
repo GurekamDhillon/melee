@@ -4762,6 +4762,31 @@ pub unsafe extern "C" fn mn_8022DB10(mut gp: *mut HSD_GObj) {
     if envoy_main6(MENU_KIND_MAIN as ::core::ffi::c_int) && buttons & MenuInput_Back as ::core::ffi::c_int as u32_0 == 0 {
         let order = envoy_order();
         let pos = order.iter().position(|&x| x == (*mf).hovered_selection as ::core::ffi::c_int).unwrap_or(0);
+        let on_envoy = (*mf).hovered_selection as ::core::ffi::c_int == ENVOY_SEL;
+        if !on_envoy {
+            crate::tu::envoy::LAB_HOVER = 0;
+        }
+        // the Item Lab cell, right of the Envoy row (envoy_ui draws it): Right / Left move between them
+        if on_envoy && buttons & MenuInput_Right as ::core::ffi::c_int as u32_0 != 0 && crate::tu::envoy::LAB_HOVER == 0 {
+            sfxMove();
+            crate::tu::envoy::LAB_HOVER = 1;
+            return;
+        }
+        if on_envoy && buttons & MenuInput_Left as ::core::ffi::c_int as u32_0 != 0 && crate::tu::envoy::LAB_HOVER != 0 {
+            sfxMove();
+            crate::tu::envoy::LAB_HOVER = 0;
+            return;
+        }
+        if on_envoy && crate::tu::envoy::LAB_HOVER != 0 && buttons & MenuInput_Confirm as ::core::ffi::c_int as u32_0 != 0 {
+            mn_804D6BC8.cooldown = 5 as u16_0;
+            crate::tu::envoy::LAB_DOOR = 1;
+            crate::tu::envoy::DOOR_OPEN = 1;
+            sfxForward();
+            return;
+        }
+        if buttons & (MenuInput_Up | MenuInput_Down) as ::core::ffi::c_int as u32_0 != 0 {
+            crate::tu::envoy::LAB_HOVER = 0;
+        }
         if buttons & MenuInput_Confirm as ::core::ffi::c_int as u32_0 != 0 {
             if (*mf).hovered_selection as ::core::ffi::c_int == ENVOY_SEL {
                 mn_804D6BC8.cooldown = 5 as u16_0;

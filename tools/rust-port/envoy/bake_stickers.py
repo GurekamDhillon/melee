@@ -3,8 +3,13 @@
 
 Renders original vector art from the design generators in `menu/out_envoy/` (build_step*.py, build_final.py: our own
 SVG, no disc data) with headless Chromium into PNGs the mod loads with `gd_ui_tex_load`. Every sprite is rendered at
-2x its size in game pixels (640x480 units); the mod draws it at 1x. A sticker face is a 48x48 9-slice (cuts at 14 and
-34): the face rectangle (radius 10, 3 px ink edge) at (1.5, 1.5, 42 x 42) and its hard ink shadow offset (3, 4).
+4x its size in game pixels (640x480 units; the big flat ones at 2x) and the mod draws it at 1x: a game pixel is 4.5
+device pixels at 4K, and the host's UI atlas is mipmapped, so the same art is sharp at 4K and clean at 720p
+(uiquality; it was 2x, which was soft above 1080p).
+
+Not baked any more: the sticker faces, the disc, the ink dot and the stock dots. The mod draws those as analytic
+shapes (rust/mods/envoy_ui/src/kit.rs `face`, `spr`), exact at every size; the numbers there are the ones the tiles
+had (face radius 10, 3 px ink edge centred on the rectangle, hard ink shadow offset (3, 4)).
 
   python tools/rust-port/envoy/bake_stickers.py [OUT_DIR]   (default rust/mods/envoy_ui/art)
 Needs playwright (Chromium) and the design folder (GW_ENVOY_DESIGN, default E:/Projects/Melee Workspace/menu/out_envoy).
@@ -42,32 +47,7 @@ def add(name, w, h, inner):
     S[name] = (w, h, inner)
 
 
-# ---- sticker faces (9-slice 48x48: cuts 14 / 34)
-FACES = {"white": (WHITE, INK), "sunny": (SUN, INK), "coral": (CORAL, INK), "lagoon": (LAGOON, INK), "faded": ("#DAD7E8", INK),
-         "lilac": ("#C9BFF5", INK)}
-for k, (face, edge) in FACES.items():
-    add(f"face_{k}", 48, 48, svg(48, 48, "0 0 48 48",
-        f'<rect x="4.5" y="5.5" width="42" height="42" rx="10" fill="{INK}"/>'
-        f'<rect x="1.5" y="1.5" width="42" height="42" rx="10" fill="{face}" stroke="{edge}" stroke-width="3"/>'))
-add("face_ink", 48, 48, svg(48, 48, "0 0 48 48",
-    f'<rect x="4.5" y="5.5" width="42" height="42" rx="10" fill="{INK}"/>'
-    f'<rect x="1.5" y="1.5" width="42" height="42" rx="10" fill="{INK}"/>'
-    f'<rect x="4" y="4" width="37" height="37" rx="8" fill="{INK}" stroke="#fff" stroke-width="2.5"/>'))
-add("face_cream", 48, 48, svg(48, 48, "0 0 48 48",
-    f'<rect x="1.5" y="1.5" width="42" height="42" rx="10" fill="#FBF6DD" stroke="{INK}" stroke-width="2.5" stroke-dasharray="5 4"/>'))
-# hovered: sunny face with a 3 px white ring outside the edge, shadow (4, 6)
-add("face_hover", 48, 48, svg(48, 48, "0 0 48 48",
-    f'<rect x="5.5" y="6.5" width="40" height="40" rx="11" fill="{INK}"/>'
-    f'<rect x="0.5" y="0.5" width="42" height="42" rx="12" fill="#fff"/>'
-    f'<rect x="3" y="3" width="37" height="37" rx="9" fill="{SUN}" stroke="{INK}" stroke-width="3"/>'))
-# the description strip / hint caps reuse face_white; the veil is a flat rect
-
-# ---- discs and dots
-add("disc", 32, 32, svg(32, 32, "0 0 32 32", '<circle cx="16" cy="16" r="15" fill="#fff"/>'))
-add("dot_ink", 16, 16, svg(16, 16, "-8 -8 16 16", f'<circle r="6" fill="#fff" stroke="{INK}" stroke-width="2.5"/>'))
-add("stock", 18, 18, svg(18, 18, "-9 -9 18 18", f'<circle cx="1.5" cy="2.5" r="7" fill="{INK}"/><circle r="7" fill="#fff" stroke="{INK}" stroke-width="2.5"/>'))
-add("stock_last", 18, 18, svg(18, 18, "-9 -9 18 18", f'<circle cx="1.5" cy="2.5" r="7" fill="{INK}"/><circle r="7" fill="{CORAL}" stroke="{INK}" stroke-width="2.5"/>'))
-add("stock_spent", 18, 18, svg(18, 18, "-9 -9 18 18", f'<circle r="4.2" fill="{INK}" stroke="#fff" stroke-width="1.5"/>'))
+# ---- small pieces (the faces, discs and stock dots are analytic shapes in kit.rs)
 add("coin", 16, 16, s5.coin(16))
 add("star_on", 12, 12, s2.star_svg(12))
 add("star_off", 12, 12, s2.star_svg(12, on=False))
@@ -146,7 +126,7 @@ def main():
     with sync_playwright() as p:
         b = p.chromium.launch(args=["--force-color-profile=srgb"])
         for k, (w, h, _) in S.items():
-            scale = 1 if k.startswith("bg_") or k.startswith("wedge_") or k == "rays" else 2
+            scale = 1 if k.startswith("bg_") else 2 if k.startswith("wedge_") or k == "rays" else 4
             pg = b.new_page(viewport={"width": max(w, 16), "height": max(h, 16)}, device_scale_factor=scale)
             pg.goto(tmp.as_uri())
             pg.evaluate("document.fonts.ready")

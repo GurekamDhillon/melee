@@ -42,6 +42,7 @@ pub mod subspace;
 pub mod subspace_model;
 pub mod explore;
 pub mod drive_draw;
+pub mod envoy_tint;
 // Per-TU native ports of the game's gm/mn/lb/if translation units (one module per `.c` file,
 // `pub mod <tu_stem>;`). Each module's `ext` lists the callees of unported TUs as settable
 // hooks named like the C functions (unset: panics "TODO"); the oracle tests in

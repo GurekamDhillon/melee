@@ -399,7 +399,8 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
         let sub = if keys { "One rule for the whole run." } else { "One of three, for one of your two fighters." };
         e.text_ex(22.0, 36.0, bs(13), WHITE, ALIGN_LEFT, 0.0, sub);
     }
-    if v[V_TIMER] > 0 {
+    if false && v[V_TIMER] > 0 {
+        // no timers on item choices (owner, Nov 13): the countdown is not shown
         let secs = (v[V_TIMER] + 59) / 60;
         let (tx, ty) = (606.0 + ex.min(20.0), 26.0);
         if secs <= 5 {

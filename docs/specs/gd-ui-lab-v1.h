@@ -53,8 +53,15 @@ enum {
     GD_UI_OP_CLIP   = 6,  /* f32 x,y,w,h (intersected with the enclosing clip; depth 8) */
     GD_UI_OP_UNCLIP = 7,  /* no payload */
     GD_UI_OP_VECTOR = 8,  /* u32 path_id, f32 affine[6], u32 rgba: UI_VECTOR only (no Vello in this build) */
-    GD_UI_OP_SLICE  = 9,  /* u32 slice_id, f32 x,y,w,h, u32 rgba: a host 9-slice piece (theme radius/border/glow) */
-    GD_UI_OP_SPACE  = 10  /* i32 space, f32 scale: GAP-0; following coordinates and sizes times scale; not inside a CLIP */
+    GD_UI_OP_SLICE  = 9,  /* u32 slice_id, f32 x,y,w,h, u32 rgba: a host slice piece (theme radius/border/glow), drawn as one shape */
+    GD_UI_OP_SPACE  = 10, /* i32 space, f32 scale: GAP-0; following coordinates and sizes times scale; not inside a CLIP */
+    /* 11 ROT (f32 angle, x, y) and 12 EFFECT (u32 effect, u32 rgba): see below */
+    /* gd-ui-v1.4 (uiquality): analytic shapes and text outlines. A shape is evaluated per device pixel by the host:
+       exact and antialiased at every size, resolution, rotation and menu tilt, and always one quad (no seams). */
+    GD_UI_OP_SHAPE  = 13, /* u32 kind (GD_UI_SHAPE_*), f32 x,y,w,h, f32 radius, f32 border, f32 spread, u32 fill rgba, u32 border rgba */
+    GD_UI_OP_OUTLINE = 14,/* f32 width, u32 rgba: the text that follows is outlined (from the glyph distance field, under the fill); width 0 ends it */
+    GD_UI_OP_SHADOW = 15  /* f32 dx, dy, inset, u32 rgba: the BOX shapes that follow carry a hard shadow in the same quad (their outline
+                             shrunk by inset, moved by dx, dy; it fades with the shape as one piece); dx = dy = 0 ends it */
 };
 enum { GD_UI_SPACE_BAND = 0, GD_UI_SPACE_WINDOW = 1 };
 /* layers, drawn in this order; within a layer by z, then mod load order, then submission order (a total order) */
@@ -70,6 +77,12 @@ enum { GD_UI_ROLE_LABEL = 0, GD_UI_ROLE_VALUE, GD_UI_ROLE_BODY, GD_UI_ROLE_BIG, 
 #define GD_UI_TEXT_MONO    (1 << 10)         /* JetBrains Mono instead of Inter */
 #define GD_UI_TEXT_SIZE(px) (((px) & 0xFF) << 16) /* line height in canvas units, 1..255 (0: the role's size) */
 enum { GD_UI_ALIGN_LEFT = 0, GD_UI_ALIGN_CENTER = 1, GD_UI_ALIGN_RIGHT = 2 };
+/* Shapes. BOX: a rounded box; radius >= half the short side makes a pill or a circle; border > 0 draws that width in
+   the border colour inside the outline (a clear fill leaves a ring); spread > 0 dashes the border (that long on, 0.8
+   of it off). DIAMOND: inscribed in the rect. GLOW: a rounded box with a soft falloff reaching `spread` outside it.
+   Pixel policy: an unrotated, untilted box with straight sides lands on whole device pixels (origin and size, and a
+   whole-pixel border); circles, rotated and tilted shapes are pure coverage. */
+enum { GD_UI_SHAPE_BOX = 1, GD_UI_SHAPE_DIAMOND = 2, GD_UI_SHAPE_GLOW = 3 };
 enum { GD_UI_SLICE_FILL_R4 = 1, GD_UI_SLICE_FILL_R6, GD_UI_SLICE_FILL_R14, GD_UI_SLICE_LINE_R4, GD_UI_SLICE_LINE_R6,
        GD_UI_SLICE_LINE_R14_3, GD_UI_SLICE_GLOW_R6, GD_UI_SLICE_FILL_R1 };
 /* kit pieces by name (gd_ui_kit_id): "ui.dot" 10x10, "ui.ring" 56x56, "ui.diamond" 9x9, "ui.knob" 32x32, "ui.hatch" 9x14 */
@@ -337,12 +350,22 @@ int gd_controls_set(unsigned port, unsigned choice);      /* queued for the host
    with p1 = charge 0..1, brighter with p2 = the wearer's Heat 0..3), 3 foil (p3 1 Epic, 2 Unique), 4 dissolve
    (p3 0 whole .. 1 gone), 5 unlit additive; | 0x80 a light trail. p0 = glow 0..2. Same 96-instance cap as
    gd_ui_world_model. Emissive output blooms (the drives only).
-   gd_fx_post: a full-screen effect, at most 4 a present (GD_EFULL), host-clamped, never over the screen's centre:
+   gd_fx_post: (only 1, the edge vignette, is still drawn; see gd_vfx_batch) a full-screen effect, at most 4 a present (GD_EFULL), host-clamped, never over the screen's centre:
    held (post every present) 1 vignette, 2 ember tint, 3 heat-haze + embers; one-shots 4 flash (max 3 a second),
    5 radial ring, 6 colour split, 7 shockwave; | 0x100 (x, y) is a world position, else 640x480 canvas units.
    All of it follows the player's intensity (MELEE_FX = off | subtle | full). */
 int      gd_ui_world_model_ex(int model, float x, float y, float z, float yaw, float scale, float alpha, int material,
                               float p0, float p1, float p2, float p3, unsigned rgba);
 int      gd_fx_post(unsigned effect, float strength, float x, float y, unsigned rgba);
+
+/* envoy-vfx.md: shader effect quads. `count` records of 64 bytes at `ptr`, little-endian:
+   float x, y, z, rot, w, h, t (age in seconds), seed, p0, p1, p2, p3; unsigned col0, col1 (0xRRGGBBAA), kind, flags.
+   kind 1 glow, 2 shock ring, 3 bolt, 4 magic circle, 5 flame, 6 embers, 7 ice, 8 trail, 9 sparks, 10 star, 11 wisp,
+   12 slash, 13 crack, 14 beam, 15 orb, 16 dome, 17 mine, 18 coin, 19 haze, 20 aura, 21 ring (p0..p3 per kind: the
+   table in envoy-vfx.md). flags: 1 (x, y) on the 640x480 canvas, 2 over the scene whatever its depth, 4 also bends
+   the picture behind it, 8 a segment (x, y) to (w, h) of width rot. Returns how many were queued (768 a present).
+   Since gd_fx_post's flash, ember, heat-haze and ring effects are retired (accepted, not drawn), this is how a mod
+   draws an effect. Presentation only; follows MELEE_FX. */
+int      gd_vfx_batch(const void *ptr, unsigned count);
 
 #endif

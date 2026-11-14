@@ -289,6 +289,9 @@ impl Engine {
             // the render pass draws into melee_gx unless the run is headless (MELEE_ENGINE_HEADLESS): then the GX hooks answer nothing
             if RENDER && !melee_runtime::tu::gobj_native::HEADLESS_RENDER {
                 crate::gxbridge_gen::install_gx();
+                // the body-group tint appends its stage after however many the material really set (not just HSD's committed count),
+                // with a konst register none of them selects
+                unsafe { melee_runtime::tu::dobj::hsd::GX_NUM_TEV = Some(|| { let s = crate::gxbridge::shim(); (s.ind.num_tev, s.gx.tev_kregs_used(s.ind.num_tev)) }) };
                 // render-only pose tags for frame interpolation (melee_runtime pose_capture; off unless the presenter asks)
                 melee_runtime::pose_capture::TAG = Some(|s, t| crate::gxbridge::shim().gx.pose_tag(s, t));
                 melee_runtime::pose_capture::CAMERA = Some(|c| crate::gxbridge::shim().gx.pose_cam(c));

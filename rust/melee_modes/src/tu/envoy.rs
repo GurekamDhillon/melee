@@ -17,8 +17,8 @@
 use melee_fighter::tu::player as pl;
 use melee_types::*;
 
-pub const PLAN_WORDS: usize = 44;
-pub const VIEW_WORDS: usize = 768;
+pub const PLAN_WORDS: usize = 52;
+pub const VIEW_WORDS: usize = 1664;
 
 // plan layout (i32 words)
 pub const P_ACTIVE: usize = 0;
@@ -52,6 +52,14 @@ pub const P_WAVE_ATK: usize = 38;
 pub const P_WAVE_DEF: usize = 39;
 pub const P_WAVE_SCALE: usize = 40;
 pub const P_WAVE_LV: usize = 41;
+/// Envoy gauntlets (back-to-back duels): foe rows 0-1, the characters of waves 3, 4 and 5 (-1: none; three words a
+/// row). Every one is preloaded at match begin; wave 2 is P_WAVE_CK.
+pub const P_GAUNT_CK: usize = 44;
+/// The wave the elite arrives in (foe row 0 of an elite room; 0: none, read as 2 for an old plan with P_WAVE_SCALE).
+pub const P_ELITE_WAVE: usize = 50;
+/// The stage a live stage transition will go to next (Gr_Kind; 0 none): hinted to the asset worker with the plan, so
+/// its file is in memory long before the hand-off frame.
+pub const P_STAGE_NEXT: usize = 51;
 /// Final Destination (Gr_Kind): the Petey arena for now (an original stage is later work).
 const GR_FD: i32 = 37;
 
@@ -65,6 +73,60 @@ pub static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
 /// is armed, so retail play never writes it.
 pub static mut EVENTS: [u32; 4] = [0; 4];
 pub const EVENT_LCANCEL: u32 = 1;
+/// Envoy items: the fighter left its jump squat as a short hop (bit 1) or a full hop (bit 2).
+pub const EVENT_SHORTHOP: u32 = 2;
+pub const EVENT_FULLHOP: u32 = 4;
+/// Envoy slice 2: the fighter's hitbox struck a shield (bit 3; a shielded attack is not a whiff), and the fighter
+/// crouch-cancelled a hit (bit 5: its knockback was cut by crouching).
+pub const EVENT_SHIELDHIT: u32 = 8;
+pub const EVENT_CC: u32 = 32;
+
+/// The shield-hit site (`ftColl_80076CBC`): installed in `melee_fighter::hooks::ENVOY_SHIELD_HIT`.
+pub fn on_shield_hit(a: &Fighter, _d: &Fighter) {
+    if armed() == 0 || a.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = a.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= EVENT_SHIELDHIT };
+    }
+}
+
+/// The crouch-cancel site (`ftCo_Damage_CalcKnockback`, the squat branch): installed in `hooks::ENVOY_CC`.
+pub fn on_cc(f: &Fighter) {
+    if armed() == 0 || f.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = f.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= EVENT_CC };
+    }
+}
+
+/// The item kind behind `slot`'s last hit (`dmg.x1868_source` an item: a Fox / Falco laser is 54 / 55), or -1.
+pub unsafe fn hit_item(slot: i32) -> i32 {
+    let f = active_fighter(slot);
+    if f.is_null() {
+        return -1;
+    }
+    let g = (*f).dmg.x1868_source;
+    if !g.is_null() && (*g).classifier as i32 == HSD_GOBJ_CLASS_ITEM && !(*g).user_data.is_null() {
+        (*((*g).user_data as *mut Item)).kind as i32
+    } else {
+        -1
+    }
+}
+
+/// The jump site (`ftCo_KneeBend_Anim`, before `ftCo_Jump_Enter`): installed in `melee_fighter::hooks::ENVOY_JUMP`.
+pub fn on_jump(f: &Fighter, short_hop: bool) {
+    if armed() == 0 || f.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = f.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= if short_hop { EVENT_SHORTHOP } else { EVENT_FULLHOP } };
+    }
+}
 
 /// The L-cancel site (`ftCo_LandingAir_EnterWithLag`, the branch where `x67F < xE4` sets the skill mode): installed
 /// in `melee_fighter::hooks::ENVOY_LCANCEL`. A sub-fighter (the second Ice Climber) is ignored.
@@ -118,10 +180,119 @@ pub fn armed() -> i32 {
     static KNOB: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     if unsafe { ARMED } != 0 || *KNOB.get_or_init(|| std::env::var_os("MELEE_ENVOY_ARM").is_some()) { 1 } else { 0 }
 }
+// ---- the Item Lab (envoy_data::lab): menu-time setup words and host-side time controls, never match state
+pub const LAB_WORDS: usize = 16;
+/// The Lab session's setup (envoy_data::lab L_*): set by envoy_ui before arming (`gd_ui_envoy_lab`), read once by
+/// the sim at arm time (`gd_envoy_lab`). `LAB[0] != 0`: the armed run is a Lab session: nothing is written to the
+/// run record, the best loop or the saved run (envoy_store skips it). `MELEE_ENVOY_LAB=stage,foes,dummy,level`
+/// sets it from the start (headless checks and the synctest; with MELEE_ENVOY_ARM).
+pub static mut LAB: [i32; LAB_WORDS] = [0; LAB_WORDS];
+/// The Lab's time: [mode (envoy_data::lab TIME_*), frame-advance steps queued]. Read by the frame driver: a skipped
+/// logic tick is not run at all (presentation and input keep going), so the sim never sees the time controls.
+pub static mut LAB_TIME: [i32; 2] = [0; 2];
+/// This tick is held by the Lab's time controls (no logic runs; the pad signals wait).
+pub static mut LAB_HELD: bool = false;
+
+pub fn lab_knob() -> Option<[i32; LAB_WORDS]> {
+    static K: std::sync::OnceLock<Option<[i32; LAB_WORDS]>> = std::sync::OnceLock::new();
+    *K.get_or_init(|| {
+        let v = std::env::var("MELEE_ENVOY_LAB").ok()?;
+        let mut w = [0i32; LAB_WORDS];
+        w[0] = 1;
+        w[5] = -1;
+        w[6] = -1;
+        w[7] = -1;
+        w[4] = 9;
+        for (i, x) in v.split(',').enumerate().take(LAB_WORDS - 1) {
+            if let Ok(n) = x.trim().parse::<i32>() {
+                w[i + 1] = n;
+            }
+        }
+        Some(w)
+    })
+}
+
+/// The Lab setup in force (the knob wins over the menu's words).
+pub fn lab() -> [i32; LAB_WORDS] {
+    lab_knob().unwrap_or(unsafe { LAB })
+}
+pub fn lab_on() -> bool {
+    lab()[0] != 0 && armed() != 0
+}
+
+/// Whether the frame driver runs this logic tick (`tick`: the driver's tick counter): the Lab's slow motion runs
+/// one tick in 2 or 4, its pause none but the queued frame-advance steps. Offline Lab sessions only.
+pub unsafe fn lab_tick_runs(tick: u64) -> bool {
+    if !lab_on() {
+        return true;
+    }
+    match LAB_TIME[0] {
+        1 => tick % 2 == 0,
+        2 => tick % 4 == 0,
+        3 => {
+            if LAB_TIME[1] > 0 {
+                LAB_TIME[1] -= 1;
+                true
+            } else {
+                false
+            }
+        }
+        _ => true,
+    }
+}
+
+/// The main menu's Item Lab cell, right of the Envoy row (mnmain): hovered, and chosen (the camp opens on the Lab).
+pub static mut LAB_HOVER: i32 = 0;
+pub static mut LAB_DOOR: i32 = 0;
+
+/// The Lab dummy (L_DUMMY) for a CPU-controlled foe's fighter, after its input proc: Stand holds nothing, Shield
+/// holds R, Jump presses X whenever it stands idle on the ground (state-derived, so rollback replays it exactly).
+pub fn lab_dummy(f: &mut Fighter) {
+    let l = lab();
+    if l[0] == 0 || l[2] != 1 || !(0..3).contains(&l[3]) || armed() == 0 {
+        return;
+    }
+    let humans = if unsafe { ROSTER2[0] } >= 0 { 2 } else { 1 };
+    if (f.player_idx as i32) < humans {
+        return;
+    }
+    f.input.lstick[0].x = 0.0;
+    f.input.lstick[0].y = 0.0;
+    f.input.cstick[0].x = 0.0;
+    f.input.cstick[0].y = 0.0;
+    f.input.triggers[0] = 0.0;
+    f.input.held_buttons[0] = 0;
+    match l[3] {
+        2 => {
+            f.input.triggers[0] = 1.0;
+            f.input.held_buttons[0] = 0x0020;
+        }
+        1 => {
+            // Wait (14) on the ground: jump
+            if f.motion_id as i32 == 14 && f.ground_or_air as i32 == 0 {
+                f.input.held_buttons[0] = 0x0400;
+            }
+        }
+        _ => {}
+    }
+}
+
 /// The salt of the next new run's seed (menu-time: set by the camp's New run, read by the sim mod when the run
 /// starts, `gd_envoy_salt`; the seed it gives lives in the sim state from then on). 0 with `MELEE_ENVOY_ARM` and in
 /// scripted runs (`MELEE_PAD_SCRIPT` without `MELEE_ENVOY_SEED`): those keep the fixed seed sequence.
 pub static mut RUN_SALT: i32 = 0;
+/// Netplay: the salt both peers use, from the session's agreed seed (set when the netplay match opens). A local
+/// clock salt would differ per machine and split the run on the first frame; with this set, `new_run_salt` and the
+/// sim's `gd_envoy_salt` read the shared value, and each new run still differs through the sim's run counter.
+pub static mut NET_SALT: Option<i32> = None;
+/// The salt the sim reads (`gd_envoy_salt`): the netplay session's shared one when there is a session.
+pub fn salt_now() -> i32 {
+    unsafe { NET_SALT.unwrap_or(RUN_SALT) }
+}
+/// Called by the netplay match setup with the agreed seed.
+pub fn set_net_salt(seed: u32) {
+    unsafe { NET_SALT = Some(((seed ^ (seed >> 15)).wrapping_mul(0x2C1B_3C6D) & 0x3FFF_FFFF).max(1) as i32) };
+}
 
 /// The camp starts a new run: pick its salt. `MELEE_ENVOY_SEED=<n>` fixes it (a reproducible run; 0 = the old fixed
 /// sequence); a scripted run without it keeps 0; otherwise the clock and a per-process counter (every launch and
@@ -129,9 +300,18 @@ pub static mut RUN_SALT: i32 = 0;
 pub fn new_run_salt() -> i32 {
     static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
     let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    if let Some(v) = unsafe { NET_SALT } {
+        unsafe { RUN_SALT = v };
+        eprintln!("envoy: new run salt {v} (netplay: the session's shared salt)");
+        return v;
+    }
     let salt = match std::env::var("MELEE_ENVOY_SEED").ok().and_then(|v| v.trim().parse::<u32>().ok()) {
         Some(v) => v & 0x3FFF_FFFF,
-        None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) => 0,
+        // MELEE_ENVOY_SALT_LIVE=1: a scripted run rolls the clock salt as a player's would (ready_checks `fresh`)
+        None if std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty()) && std::env::var_os("MELEE_ENVOY_SALT_LIVE").is_none() => 0,
+        // a netplay session (mod identity frozen): every peer must roll the same run, and the clock differs per peer.
+        // No shared per-session value reaches the camp yet (the envoy= handshake is milestone 6): the fixed sequence.
+        None if melee_data::netid::frozen() => 0,
         None => {
             let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos() as u64);
             let mut x = (t ^ (t >> 29)).wrapping_mul(0x9E37_79B9_7F4A_7C15).wrapping_add(n as u64);
@@ -185,7 +365,7 @@ pub static mut COOP_JOIN: i32 = 0;
 pub const REC_WORDS: usize = 48;
 pub const REC_AT: usize = 704;
 pub const REC_MAGIC: i32 = 0x454E_5652; // "ENVR"
-pub const REC_VERSION: i32 = 8; // 8: the forked road, bank tokens, pins; 7: sessions (the bank in R_LOOP); 6: endless loops; 5 (V3) still read; older dropped
+pub const REC_VERSION: i32 = 9; // 9: envoy items; 8: the forked road, bank tokens, pins; 7: sessions (the bank in R_LOOP); 6: endless loops; 5 (V3) still read; older dropped
 /// The record the host holds (loaded from disk, updated from the view); `SAVED_LEN` 0 = no run saved.
 pub static mut SAVED: [i32; REC_WORDS] = [0; REC_WORDS];
 pub static mut SAVED_LEN: i32 = 0;
@@ -416,6 +596,12 @@ pub unsafe extern "C" fn envoy_sel_frame() {
         }
         return;
     }
+    // zero-hitch.md: the match commons (ItCo, IfAll) are parsed here, in the select's own frames under the camp's
+    // cover, instead of in the match's setup tick (their decode was a third of that tick). Envoy only.
+    let ahead = melee_runtime::tu::lbdvd::lbDvd_ParseAhead();
+    if ahead > 0 {
+        melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("select: match commons parsed ahead: ").n(ahead as i64));
+    }
     if SEL_FRAMES == 2 {
         crate::tu::adapt::gm_801A4B60__d469d9();
     }
@@ -474,6 +660,8 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     crate::tu::gmvs::gmVs_SetEndHold(0);
     melee_fighter::hooks::ENVOY_TAG_MASK = [0; 4];
     pl::ENVOY_WAVE_CK = [-1; 4];
+    pl::ENVOY_WAVE_Q = [[-1; 3]; 4];
+    WAVE_NO = 1;
     WAVE_PARK = [0; 4];
     WAVE_PENDING = [0; 4];
     if PLAN[P_ACTIVE] == 0 || armed() == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
@@ -486,6 +674,10 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     crate::tu::tag_swap::reset();
     EVENTS = [0; 4];
     melee_fighter::hooks::ENVOY_LCANCEL = Some(on_lcancel);
+    melee_fighter::hooks::ENVOY_JUMP = Some(on_jump);
+    melee_fighter::hooks::ENVOY_SHIELD_HIT = Some(on_shield_hit);
+    melee_fighter::hooks::ENVOY_CC = Some(on_cc);
+    melee_fighter::hooks::ENVOY_DUMMY = if lab_on() { Some(lab_dummy) } else { None };
     let coop = PLAN[P_COOP] == 1;
     let css = |i: usize| -> i32 { let p = &d.players[i]; if p.slot_type != Gm_PKind_NA as u8 { p.ckind as i32 } else { -1 } };
     // solo: P1's pick is the main, P2's the partner; co-op: P1 + P3 are player 1's pair, P2 + P4 player 2's
@@ -579,6 +771,10 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         p.ckind = { let k = PLAN[P_CPU_CK + i]; if mex_loadable(k) { k } else { k.clamp(0, 0x19) } } as i8;
         p.slot_type = 1;
         p.cpu_kind = 4; // the VS AI (0 is the training dummy)
+        // the Item Lab's dummy: the training dummy's AI (0), its input rewritten by lab_dummy
+        if lab_on() && lab()[2] == 1 && (0..3).contains(&lab()[3]) {
+            p.cpu_kind = 0;
+        }
         p.cpu_level = PLAN[P_CPU_LV + i].clamp(1, 9) as u8;
         p.stocks = PLAN[P_CPU_STOCKS + i].clamp(1, 99) as i8;
         p.color = 0;
@@ -591,8 +787,17 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         p.defense_ratio = ratio(PLAN[P_CPU_DEF + i]);
         p.model_scale = ratio(PLAN[P_CPU_SCALE + i]);
         let wk = PLAN[P_WAVE_CK + i];
-        if (0..=0x19).contains(&wk) && wk != CK_ICS && wk != CK_ZELDA && wk != CK_SHEIK {
+        if wave_ck_ok(wk) {
             pl::ENVOY_WAVE_CK[humans + i] = wk as i8;
+            if i < 2 {
+                for k in 0..3 {
+                    let g = PLAN[P_GAUNT_CK + i * 3 + k];
+                    if !wave_ck_ok(g) {
+                        break;
+                    }
+                    pl::ENVOY_WAVE_Q[humans + i][k] = g as i8;
+                }
+            }
         }
     }
     // 4-player rows past the first four are never used by VS
@@ -645,6 +850,11 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     );
 }
 
+/// A character a wave can bring in (no sub-fighter characters: the respawn refuses them).
+fn wave_ck_ok(k: i32) -> bool {
+    (0..=0x19).contains(&k) && k != CK_ICS && k != CK_ZELDA && k != CK_SHEIK
+}
+
 fn me_stocks(d: &StartMeleeData) -> i32 {
     d.players[0].stocks as i32
 }
@@ -663,6 +873,24 @@ unsafe fn fighters(slot: i32) -> [*mut Fighter; 2] {
 pub static mut WAVE_PARK: [u8; 4] = [0; 4];
 /// Parked and asleep (the KO countdown has ended): waiting for `wave_start`.
 pub static mut WAVE_PENDING: [u8; 4] = [0; 4];
+/// The wave in play (1-based; set at match begin, +1 per `wave_start`).
+pub static mut WAVE_NO: i32 = 1;
+
+/// Whether the wave starting now is foe row 0's elite (an elite room's last wave).
+unsafe fn elite_now(s: usize) -> bool {
+    let at = if PLAN[P_ELITE_WAVE] > 0 { PLAN[P_ELITE_WAVE] } else { 2 };
+    s == 1 + (PLAN[P_COOP] != 0) as usize && PLAN[P_WAVE_SCALE] > 0 && WAVE_NO + 1 == at
+}
+
+/// Gauntlets: after a slot's swap, its next duel's character comes off the queue (the old flip-back is the
+/// fallback once the queue is empty).
+unsafe fn wave_queue_pop(s: usize) {
+    let q = pl::ENVOY_WAVE_Q[s];
+    if q[0] >= 0 {
+        pl::ENVOY_WAVE_CK[s] = q[0];
+        pl::ENVOY_WAVE_Q[s] = [q[1], q[2], -1];
+    }
+}
 
 /// The sim parks `slot` (0 ok, -1 not in a run / not a slot).
 pub unsafe fn wave_park(slot: i32) -> i32 {
@@ -693,7 +921,9 @@ pub unsafe fn wave_start() -> i32 {
             continue;
         }
         let ck = pl::ENVOY_WAVE_CK[s];
-        if ck >= 0 && !swap_in(s, ck) {
+        if ck >= 0 && swap_in(s, ck) {
+            wave_queue_pop(s);
+        } else if ck >= 0 {
             if pl::envoy_wave_old_way() {
                 eprintln!("envoy: wave respawn of slot {s} as {ck} refused; it comes back as itself");
             } else {
@@ -709,13 +939,17 @@ pub unsafe fn wave_start() -> i32 {
         WAVE_PARK[s] = 0;
         WAVE_PENDING[s] = 0;
         // foe row 0 of an elite room: the elite's numbers before the new fighter is built (it reads the scale)
-        let elite = s == 1 + (PLAN[P_COOP] != 0) as usize && PLAN[P_WAVE_SCALE] > 0;
+        let elite = elite_now(s);
         if elite {
             pl::Player_SetModelScale(s as i32, ratio(PLAN[P_WAVE_SCALE]));
         }
         let ck = pl::ENVOY_WAVE_CK[s];
-        if ck >= 0 && later[s] && !swap_in(s, ck) {
-            eprintln!("envoy: wave respawn of slot {s} as {ck} refused; it comes back as itself");
+        if ck >= 0 && later[s] {
+            if swap_in(s, ck) {
+                wave_queue_pop(s);
+            } else {
+                eprintln!("envoy: wave respawn of slot {s} as {ck} refused; it comes back as itself");
+            }
         }
         if elite {
             pl::Player_SetAttackRatio(s as i32, ratio(PLAN[P_WAVE_ATK]));
@@ -726,12 +960,15 @@ pub unsafe fn wave_start() -> i32 {
         crate::tu::gm_1601::fn_8016719C(s as i32, 0);
         n += 1;
     }
+    if n > 0 {
+        WAVE_NO += 1;
+    }
     n
 }
 
 /// One slot's swap to its next-wave character (the elite's scale set first: the new fighter reads it).
 unsafe fn swap_in(s: usize, ck: i8) -> bool {
-    if s == 1 + (PLAN[P_COOP] != 0) as usize && PLAN[P_WAVE_SCALE] > 0 {
+    if elite_now(s) {
         pl::Player_SetModelScale(s as i32, ratio(PLAN[P_WAVE_SCALE]));
     }
     let ok = pl::envoy_wave_respawn(s as i32, ck as CharacterKind);
@@ -963,6 +1200,24 @@ pub unsafe fn jumps(slot: i32) -> i32 {
 }
 
 /// Updraft: give back one used air jump (0 done, -1 none used).
+/// An Envoy pickup by button (envoy-items-design.md 11.11): the slot's grounded fighter goes into Melee's own item
+/// pickup state (`ftpickupitem_80094694(gobj, ftCo_MS_LightGet, false)`, as `ftpickupitem_80094790` does on an A
+/// press by an item), so the press that took the pedestal does not also jab. The pedestal is the sim's, not a game
+/// item, so the grab frame finds nothing and the state returns to Wait at its end (`ftpickupitem_Anim`). Airborne:
+/// nothing changes (Melee's airdodge / Z catch keeps its own motion). Game state, rolled back with the game.
+/// Returns 0 when the state was entered, -1 otherwise.
+pub unsafe fn pickup_anim(slot: i32) -> i32 {
+    if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return -1;
+    }
+    let f = active_fighter(slot);
+    if f.is_null() || (*f).gobj.is_null() || (*f).ground_or_air != GA_Ground {
+        return -1;
+    }
+    melee_fighter::tu::ftpickupitem::ftpickupitem_80094694((*f).gobj, ftCo_MS_LightGet as i32, false);
+    0
+}
+
 pub unsafe fn air_jump(slot: i32) -> i32 {
     let f = active_fighter(slot);
     if f.is_null() || (*f).x1968_jumpsUsed <= 1 {
@@ -1070,6 +1325,26 @@ pub unsafe fn blast_cap(slot: i32, cap_milli: i32, tag: i32) -> i32 {
     let Some(b) = BLASTS.iter_mut().filter(|b| b.left == BLAST_LIFE && b.slot == slot).max_by_key(|b| b.hit.x4 & 0xFFFF) else { return -1 };
     b.land_cap = cap_milli.max(0);
     b.tag = tag;
+    0
+}
+
+/// The look of the blast `slot` armed last (this frame): its hit element (the engine's hit spark: 0 normal, 1 fire,
+/// 2 electric, 3 slash; ice / sleep and the rest are refused) and its hit sound (`sfx_kind`, the Melee disc's hit
+/// sound family, and `severity` 0-2). Envoy items give every hit its own spark and sound (the Spark Ring bar).
+pub unsafe fn blast_look(slot: i32, element: i32, sfx_kind: i32, severity: i32) -> i32 {
+    if !(0..=3).contains(&element) || !(0..=12).contains(&sfx_kind) {
+        return -1;
+    }
+    let Some(b) = BLASTS.iter_mut().filter(|b| b.left == BLAST_LIFE && b.slot == slot).max_by_key(|b| b.hit.x4 & 0xFFFF) else { return -1 };
+    let f = active_fighter(slot);
+    if f.is_null() || !(0..4).contains(&b.cap) {
+        return -1;
+    }
+    let h = &mut *core::ptr::addr_of_mut!((*f).x914[b.cap as usize]);
+    h.element = element as _;
+    h.sfx_kind = sfx_kind as _;
+    h.sfx_severity = severity.clamp(0, 2) as _;
+    b.hit = *h;
     0
 }
 
@@ -1254,4 +1529,11 @@ pub unsafe fn hud_words() -> [i32; 16] {
     // word 12: the retail pause is up (its overlay owns the top of the screen)
     o[12] = (crate::tu::gmscene::gm_GetDbPauseFlag(1) != 0) as i32;
     o
+}
+
+/// Envoy orbitals: an orb blocked a foe projectile; the item (`gobj`) is removed the retail way.
+pub unsafe fn item_block(gobj: *mut core::ffi::c_void) {
+    if !gobj.is_null() {
+        melee_items::tu::item::Item_8026A8EC(gobj as _);
+    }
 }

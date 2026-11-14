@@ -232,13 +232,25 @@ unsafe fn hsd_assert(line: u32, cond: bool, msg: &core::ffi::CStr) {
 /// Stage-slot teardown: the spawn table `grZakoGenerator_801CA67C` allocates (972 bytes) was only
 /// ever freed by the heap reset of a scene exit, and a stage switch overwrote the pointer in
 /// `grZakoGenerator_801CAE04` without freeing it. Called after the outgoing stage's procs are gone.
+/// TARGET_PC: the spawn table this match's stage made (`grZakoGenerator_801CAE04`), or null. `lbl_8049F030` itself
+/// outlives the match (retail never clears it), so after a match on a stage with a generator its `x4` points into
+/// the dead scene's heap: a later hop's release freed that stale pointer (the stage_switch crash). Cleared by every
+/// stage init (`Ground_801BFFB0`, `grZakoGenerator_StageInit`), so only a table of the live stage is ever freed.
+pub static mut ZAKO_LIVE: *mut grZakoGenerator_Data = null_mut();
+
+/// A stage init (match start or a hop's install): no table of the live stage yet.
+pub unsafe fn grZakoGenerator_StageInit() {
+    ZAKO_LIVE = null_mut();
+}
+
 pub unsafe extern "C" fn grZakoGenerator_StageSlotRelease() {
     melee_core::ct!("grZakoGenerator_StageSlotRelease");
-    if !lbl_8049F030.x4.is_null() {
+    if !lbl_8049F030.x4.is_null() && lbl_8049F030.x4 == ZAKO_LIVE {
         ext::HSD_Free(lbl_8049F030.x4.cast());
     }
     lbl_8049F030.x0 = null_mut();
     lbl_8049F030.x4 = null_mut();
+    ZAKO_LIVE = null_mut();
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CA394(
@@ -537,6 +549,7 @@ pub unsafe extern "C" fn grZakoGenerator_801CAE04(arg0: *mut grZakoGenerator_Spa
     ext::HSD_GObj_SetupProc(gobj, Some(fn_801CADBC), 0);
     lbl_8049F030.x0 = arg0;
     lbl_8049F030.x4 = data;
+    ZAKO_LIVE = data;
     gobj
 }
 

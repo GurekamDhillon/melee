@@ -41,6 +41,7 @@ pub type Mat3x4 = [[f32; 4]; 3];
 pub type Mat4x4 = [[f32; 4]; 4];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct TevPass {
     pub a: u32,
     pub b: u32,
@@ -49,6 +50,7 @@ pub struct TevPass {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct TevOp {
     pub op: u32,
     pub bias: u32,
@@ -63,6 +65,7 @@ impl Default for TevOp {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct TevStage {
     pub color_pass: TevPass,
     pub alpha_pass: TevPass,
@@ -113,6 +116,7 @@ impl Default for TevStage {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct IndStage {
     pub tex_coord_id: u32,
     pub tex_map_id: u32,
@@ -121,6 +125,7 @@ pub struct IndStage {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct ColorChannelConfig {
     pub mat_src: u32,
     pub amb_src: u32,
@@ -142,6 +147,7 @@ pub struct ColorChannelState {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct TcgConfig {
     pub ty: u32,
     pub src: u32,
@@ -189,6 +195,7 @@ impl Default for FogState {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct TevSwap {
     pub red: u32,
     pub green: u32,
@@ -207,6 +214,7 @@ impl TevSwap {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)] // a byte image of the pipeline config is kept on disk (render.rs warmlist)
 pub struct AlphaCompare {
     pub comp0: u32,
     pub ref0: u32,

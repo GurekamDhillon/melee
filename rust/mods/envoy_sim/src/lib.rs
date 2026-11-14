@@ -746,6 +746,9 @@ struct St {
     proc_at: [i32; NP],
     flourish_at: [i32; NP],
     ped_near: [i32; NP],
+    /// each player's motion state on the frame before (the pickup reads the state the press was made in: by the
+    /// sim's turn this frame the press has already moved the fighter, A into Attack11, Z into AttackAirN)
+    pick_prev: [i32; NP],
 }
 
 /// The engine's event bits this stepped frame (read once in tech_frame, used by the items the same frame).
@@ -4244,9 +4247,9 @@ unsafe fn drop_frame() {
     // only shows the prompt (V_PED_NEAR); nothing takes on touch, not even under `autotake` (whose checks let the
     // pedestal wait run out into the fly-in instead). The pad edge is the sim's own, so the take is deterministic
     // and rolls back with the rest.
-    // test knob `pedfloor` (the pickup check): an item-room pedestal on the floor mid-fight at frame 240 (after the entry drop), so a pad
+    // test knob `pedfloor` (the pickup check): an item-room pedestal on the floor mid-fight at frame 150, so a pad
     // script can walk past it and then take it
-    if test_flag("pedfloor") && S.play == 240 && S.ped_kind == 0 && !drops_on_floor() {
+    if test_flag("pedfloor") && S.play == 150 && S.ped_kind == 0 && !drops_on_floor() {
         items::ped_open(PED_ITEM_ROOM);
         // on player 1's floor (the scenario's stage floor need not be at y 0)
         if let Some(me) = pos(0) {
@@ -4270,6 +4273,10 @@ unsafe fn drop_frame() {
     for p in 0..nh() as usize {
         let was = S.ped_near[p];
         S.ped_near[p] = 0;
+        let h = gd_fighter_from_slot(p as i32);
+        let now = if h != 0 { gd_fighter_get_action_state(h) } else { -1 };
+        let st = S.pick_prev[p];
+        S.pick_prev[p] = now;
         let Some(me) = pos(p as i32) else { continue };
         if was != 0 && S.drop[p][(was - 1) as usize][0] == 1 {
             // still on its pedestal: the log line the pickup check reads for "walking past takes nothing"
@@ -4279,8 +4286,6 @@ unsafe fn drop_frame() {
                 log(b"envoy: pickup range left, item untaken, dx*1000 + dy (x1) ", dx as i32 * 1000 + dy as i32);
             }
         }
-        let h = gd_fighter_from_slot(p as i32);
-        let st = if h != 0 { gd_fighter_get_action_state(h) } else { -1 };
         let pad = gd_pad_pressed(p as i32);
         let press = pick_press(st, pad);
         for k in 0..DROPS {

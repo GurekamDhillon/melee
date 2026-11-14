@@ -39,11 +39,14 @@ fn sgn1(a: f32) -> f32 {
 
 /// Pool size (also the width of the per-hitbox latch masks).
 pub const MAX: usize = 8;
-pub const KINDS: usize = 4;
+pub const KINDS: usize = 7;
 pub const K_GOOMBA: usize = 0;
 pub const K_PRIMID: usize = 1;
 pub const K_BILL: usize = 2;
 pub const K_GIANT: usize = 3;
+pub const K_KOOPA: usize = 4;
+pub const K_HAMMER: usize = 5;
+pub const K_JYK: usize = 6;
 
 /// `gd_envoy_enemy_spawn`'s `which` for a Subspace enemy: `SPAWN_BASE + kind + 32 x tier`.
 pub const SPAWN_BASE: i32 = 100;
@@ -58,6 +61,8 @@ pub enum Arch {
     Brawler,
     /// Bullet Bill: flies at a player and explodes.
     Missile,
+    /// Jyk: hangs in the air near its spawn point, drifts toward a player it sees, hurts on contact.
+    Floater,
 }
 
 /// A scaled number: `base + slope x L`.
@@ -316,6 +321,133 @@ pub static DEFS: [Def; KINDS] = [
         sight: [70.0, 20.0],
         stomp: 2,
     },
+    // Koopa Troopa (Brawl: Nokonoko, drawn with the Paratroopa rig EnmPatapata, which carries the walking and shell
+    // clips). Approximation (no parameter file read): walks its ledge, and when it sees a player tucks into its shell
+    // and slides at it. HP 6 + 1 L. Shell slide: 7 + 2 L, angle 50, growth 30, base 50. Landing on it squashes it.
+    Def {
+        name: "Koopa",
+        src: Source { rel: &["stage", "adventure", "060001.pac"], model: "EnmPatapata", prefix: "EnmPatapata", idle: "Walk", extra: &[] },
+        arch: Arch::Walker,
+        hp: (6.0, 1.0),
+        weight: 85.0,
+        walk: 0.32,
+        run: 1.6,
+        gravity: 0.09,
+        fall_max: 2.2,
+        hurt: [0.0, 4.0, 0.0, 8.0, 6.0],
+        scale: 1.2,
+        yaw_face: true,
+        anims: &[
+            ("Walk", "Walk", 60, true),
+            ("Walk", "Walk", 60, true),
+            ("ShellMode", "ShellMode", 30, true),
+            ("ShellMode", "ShellMode", 12, false),
+            ("ShellReturn", "ShellReturn", 20, false),
+            ("Damage", "Damage", 20, false),
+            ("Fall", "Fall", 30, true),
+            ("Landing", "Landing", 20, false),
+            ("Damage", "Damage", 30, false),
+        ],
+        attacks: &[Attack {
+            phases: &[(A_RUN, 30)],
+            active: (0, 9999),
+            hit: Hit { fx: 2.0, y: 4.0, r: 5.0, dmg: (7.0, 2.0), angle: 50, kbg: (30.0, 0.0), wkb: 0.0, bkb: (50.0, 0.0) },
+            reach: 0.0,
+            weight: 0,
+        }],
+        sight: [70.0, 14.0],
+        stomp: 1,
+    },
+    // Hammer Bro (Brawl: Hammerbros). Approximation: keeps its distance and throws (the hammer's arc is a box in
+    // front of it while the throw is live), or swings on a jump when a player is close. HP 12 + 2 L. Throw: 5 + 1.5 L,
+    // angle 50, growth 40, base 40. Jump swing: 8 + 1.5 L, angle 60, growth 45, base 60.
+    Def {
+        name: "Hammer Bro",
+        src: Source { rel: &["stage", "adventure", "060002.pac"], model: "EnmHammerbros", prefix: "EnmHammerbros", idle: "Wait", extra: &[] },
+        arch: Arch::Brawler,
+        hp: (12.0, 2.0),
+        weight: 100.0,
+        walk: 0.3,
+        run: 0.6,
+        gravity: 0.09,
+        fall_max: 2.2,
+        hurt: [0.0, 3.5, 0.0, 10.0, 4.5],
+        scale: 1.3,
+        yaw_face: true,
+        anims: &[
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("Turn", "Turn", 10, false),
+            ("Wait", "Wait", 20, false),
+            ("Damage", "Damage", 20, false),
+            ("Jump", "Jump", 30, true),
+            ("Landing", "Landing", 15, false),
+            ("Damage", "Damage", 30, false),
+            ("Hammer", "Hammer", 40, false),
+            ("JumpHammer", "JumpHammer", 40, false),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("JumpSquat", "JumpSquat", 5, false),
+            ("Jump", "Jump", 30, false),
+        ],
+        attacks: &[
+            Attack {
+                phases: &[(A_X0, 40)],
+                active: (14, 34),
+                hit: Hit { fx: 22.0, y: 12.0, r: 8.0, dmg: (5.0, 1.5), angle: 50, kbg: (40.0, 0.0), wkb: 0.0, bkb: (40.0, 0.0) },
+                reach: 34.0,
+                weight: 60,
+            },
+            Attack {
+                phases: &[(A_X0 + 1, 40)],
+                active: (12, 22),
+                hit: Hit { fx: 8.0, y: 9.0, r: 7.0, dmg: (8.0, 1.5), angle: 60, kbg: (45.0, 0.0), wkb: 0.0, bkb: (60.0, 0.0) },
+                reach: 14.0,
+                weight: 40,
+            },
+        ],
+        sight: [160.0, 60.0],
+        stomp: 2,
+    },
+    // Jyk (Brawl: Jyakeel). Approximation: a spiked ball that hangs near its spawn point, drifts toward a player it
+    // sees (within 40 of home sideways and up, 60 down) and hurts on touch. HP 8 + 1.5 L. Touch: 6 + 1.5 L, angle 45, growth 50,
+    // base 40.
+    Def {
+        name: "Jyk",
+        src: Source { rel: &["stage", "adventure", "060004.pac"], model: "EnmJyakeel", prefix: "EnmJyakeel", idle: "Wait", extra: &[] },
+        arch: Arch::Floater,
+        hp: (8.0, 1.5),
+        weight: 70.0,
+        walk: 0.25,
+        run: 0.25,
+        gravity: 0.09,
+        fall_max: 2.2,
+        hurt: [0.0, 0.0, 0.0, 0.0, 9.0],
+        scale: 1.0,
+        yaw_face: true,
+        anims: &[
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 20, false),
+            ("Wait", "Wait", 60, true),
+            ("Wait", "Wait", 20, false),
+            ("Wait", "Wait", 30, false),
+        ],
+        attacks: &[Attack {
+            phases: &[(A_IDLE, 60)],
+            active: (0, 9999),
+            hit: Hit { fx: 0.0, y: 0.0, r: 6.5, dmg: (6.0, 1.5), angle: 45, kbg: (50.0, 0.0), wkb: 0.0, bkb: (40.0, 0.0) },
+            reach: 0.0,
+            weight: 0,
+        }],
+        sight: [90.0, 60.0],
+        stomp: 0,
+    },
 ];
 
 // states
@@ -366,11 +498,13 @@ pub struct Enemy {
     pub life: i32,
     /// order of spawning (the oldest defeated record is reused first)
     pub born: u32,
+    /// a floater's spawn point (it never strays far from it)
+    pub home: [f32; 2],
 }
 
 const FREE: Enemy = Enemy {
     kind: -1, handle: 0, tier: 0, st: ST_FALL, sf: 0, x: 0.0, y: 0.0, vx: 0.0, vy: 0.0, face: 1.0, hp: 0.0, taken: 0.0, rcv: 0,
-    last_by: 0, ground: false, lag: 0, flash: 0, stun: 0, an: 0, af: 0, atk: -1, cool: 0, hit_mask: 0, dead: false, life: 0, born: 0,
+    last_by: 0, ground: false, lag: 0, flash: 0, stun: 0, an: 0, af: 0, atk: -1, cool: 0, hit_mask: 0, dead: false, life: 0, born: 0, home: [0.0; 2],
 };
 
 pub static mut E: [Enemy; MAX] = [FREE; MAX];
@@ -469,15 +603,27 @@ pub unsafe fn sub_spawn(which: i32, x: f32, y: f32, facing: i32, handle: i32) ->
     e.born = BORN;
     e.cool = 30;
     if d.arch == Arch::Missile {
-        // a missile comes in from the side it flies away from, at a height a player can meet
-        if fabs(e.x) < 140.0 {
-            e.x = -e.face * 150.0;
+        // a missile comes in from the side it flies away from, at a height a player can meet (on Final
+        // Destination; a map room's spawn point is the cannon's own place)
+        if handle < ROOM_HANDLE_BASE {
+            if fabs(e.x) < 140.0 {
+                e.x = -e.face * 150.0;
+            }
+            e.y = fclamp(e.y, 8.0, 40.0);
         }
-        e.y = fclamp(e.y, 8.0, 40.0);
         e.st = ST_FLY;
         e.an = A_RUN as i32;
         e.life = 480;
         e.vx = e.face * d.run;
+        e.atk = 0;
+    } else if d.arch == Arch::Floater {
+        // on Final Destination it hangs at a height a player can meet; a map room's spawn point is its own place
+        if handle < ROOM_HANDLE_BASE {
+            e.y = fclamp(e.y, 10.0, 35.0);
+        }
+        e.home = [e.x, e.y];
+        e.st = ST_FLY;
+        e.an = A_IDLE as i32;
         e.atk = 0;
     } else {
         e.st = ST_FALL;
@@ -514,8 +660,16 @@ pub fn kind_by_name(name: &str) -> Option<usize> {
         "primid" => Some(K_PRIMID),
         "bill" | "bullet_bill" | "bulletbill" => Some(K_BILL),
         "giant" | "giant_goomba" | "giantgoomba" => Some(K_GIANT),
+        "koopa" => Some(K_KOOPA),
+        "hammer" | "hammer_bro" | "hammerbro" => Some(K_HAMMER),
+        "jyk" => Some(K_JYK),
         _ => None,
     }
+}
+
+/// A kind's display name (logs).
+pub fn kind_name(kind: usize) -> &'static str {
+    DEFS.get(kind).map(|d| d.name).unwrap_or("?")
 }
 
 /// The room-side spawn (the Subspace map lane): `kind` (K_*), `tier` (Envoy loops cleared, 0..), world (x, y),
@@ -574,6 +728,15 @@ pub fn alive() -> i32 {
 pub unsafe fn clear_all() {
     for e in E.iter_mut() {
         if e.kind >= 0 {
+            e.kind = -2;
+        }
+    }
+}
+
+/// Remove the map room's own enemies (handles from `spawn`), leaving the Envoy sim's.
+pub unsafe fn clear_room() {
+    for e in E.iter_mut() {
+        if e.kind >= 0 && e.handle >= ROOM_HANDLE_BASE {
             e.kind = -2;
         }
     }
@@ -703,8 +866,8 @@ unsafe fn receive(i: usize, dmg: f32, angle: i32, kbg: f32, wkb: f32, bkb: f32, 
         kb = fmax(kb, 90.0);
     }
     e.lag = fctiwz_f32(dmg / 3.0 + 3.0).clamp(3, 12);
-    if d.arch == Arch::Missile {
-        // a Bullet Bill that survives a hit flies on; a beaten one drops
+    if d.arch == Arch::Missile || d.arch == Arch::Floater {
+        // a Bullet Bill (or a Jyk) that survives a hit flies on; a beaten one drops
         if e.dead {
             e.st = ST_LAUNCH;
             e.sf = 0;
@@ -714,6 +877,9 @@ unsafe fn receive(i: usize, dmg: f32, angle: i32, kbg: f32, wkb: f32, bkb: f32, 
             e.vy = 0.6;
             e.stun = 40;
             e.ground = false;
+        }
+        if logging() {
+            eprintln!("subspace: f{} {} #{i} hit by slot {slot} for {dmg:.1}, hp {:.1}, kb {kb:.0}{}", LAST_FRAME, d.name, e.hp, if e.dead { " (beaten)" } else { "" });
         }
         return;
     }
@@ -920,6 +1086,11 @@ unsafe fn attack_players(i: usize, k: usize) {
         strike(f, e.x, dmg, h.angle, kbg, fctiwz_f32(h.wkb), bkb);
         E[i].hit_mask |= 1u32.pshl(s as i64);
         E[i].lag = fctiwz_f32(dmg as f32 / 3.0 + 3.0).clamp(3, 10);
+        if E[i].kind as usize == K_KOOPA {
+            // a shell that connects stops and sits still for a while: the opening to hit it back
+            E[i].vx = 0.0;
+            E[i].lag = 45;
+        }
         if logging() {
             eprintln!("subspace: f{} {} #{i} attack {k} hits slot {s} for {dmg} (angle {} kbg {kbg} bkb {bkb})", LAST_FRAME, d.name, h.angle);
         }
@@ -1218,9 +1389,15 @@ unsafe fn missile(i: usize) {
                 }
             }
             e.vx = e.face * d.run;
+            let (x0, y0) = (e.x, e.y);
             e.x += e.vx;
             e.y += e.vy;
-            if e.hit_mask != 0 || e.life <= 0 {
+            // in a map room it also blows up on the terrain it flies into (Brawl's Killer explodes on any wall);
+            // Final Destination's spawns never meet a wall, so they keep their old path
+            let mut hit = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+            let wall = e.handle >= ROOM_HANDLE_BASE
+                && melee_world::tu::mplib::mpCheckAll(&mut hit, core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), -1, -1, x0, y0 + 4.0, e.x + e.face * 4.0, e.y + 4.0) != 0;
+            if e.hit_mask != 0 || e.life <= 0 || wall {
                 e.atk = 1;
                 e.hit_mask = 0;
                 e.vx = 0.0;
@@ -1235,6 +1412,34 @@ unsafe fn missile(i: usize) {
             }
         }
         _ => {}
+    }
+}
+
+/// A Jyk: drifts toward the nearest player in sight, held within 40 of its spawn point (60 below it), aiming at the player's middle; no gravity, the touch box is
+/// always live (attack 0).
+unsafe fn floater(i: usize) {
+    let d = &DEFS[E[i].kind as usize];
+    let near = nearest(E[i].x, E[i].y);
+    let e = &mut E[i];
+    let (mut tx, mut ty) = (e.home[0], e.home[1]);
+    if let Some((_, dx, dy)) = near {
+        if fabs(dx) < d.sight[0] && fabs(dy) < d.sight[1] {
+            tx = fclamp(e.x + dx, e.home[0] - 40.0, e.home[0] + 40.0);
+            ty = fclamp(e.y + dy + 6.0, e.home[1] - 60.0, e.home[1] + 40.0);
+        }
+    }
+    e.vx = fclamp(tx - e.x, -d.walk, d.walk);
+    e.vy = fclamp(ty - e.y, -d.walk, d.walk);
+    if fabs(e.vx) > 0.01 {
+        e.face = sgn1(e.vx);
+    }
+    e.x += e.vx;
+    e.y += e.vy;
+    e.atk = 0;
+    // a touch hits each player once per pass; the mask clears once nobody is touching any more
+    if e.sf >= 60 {
+        e.sf = 0;
+        e.hit_mask = 0;
     }
 }
 
@@ -1301,7 +1506,14 @@ unsafe fn advance(i: usize) {
             }
             physics(e, d);
             if e.dead && (e.sf >= e.stun.min(45) || e.ground) {
-                if d.arch == Arch::Missile {
+                if d.arch == Arch::Missile && e.handle >= ROOM_HANDLE_BASE {
+                    // a beaten map-room Bullet Bill blows up where it comes down
+                    e.atk = 1;
+                    e.hit_mask = 0;
+                    e.vx = 0.0;
+                    e.vy = 0.0;
+                    set(e, ST_BOOM, A_HURT);
+                } else if d.arch == Arch::Missile {
                     e.kind = -2;
                 } else {
                     e.vx = 0.0;
@@ -1340,6 +1552,7 @@ unsafe fn advance(i: usize) {
                 }
             }
             Arch::Missile => missile(i),
+            Arch::Floater => floater(i),
         },
     }
     let e = &mut E[i];

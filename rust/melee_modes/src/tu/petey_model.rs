@@ -127,6 +127,12 @@ pub fn brawl_present() -> bool {
     })
 }
 
+/// Whether the owner's Brawl folder has adventure archive `name` (`MELEE_BRAWL_ABSENT`: as if missing).
+pub fn adventure_present(name: &str) -> bool {
+    std::env::var_os("MELEE_BRAWL_ABSENT").is_none()
+        && local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(name).is_file())
+}
+
 fn local_root() -> Option<PathBuf> {
     if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
         return Some(PathBuf::from(p));
@@ -322,6 +328,39 @@ pub fn load_rigs(rel: &[&str], wants: &[(&str, &str, &str)]) -> Result<Vec<Optio
         .collect())
 }
 
+/// Stage props (explore.rs: moving collision): every MDL0 named in `want` from the leaves of one map archive, each
+/// with every CHR0 of the archive (by full name) and its root motion kept. Call it on a helper thread.
+pub fn prop_rigs(leaves: &[Vec<u8>], want: &[&str]) -> Vec<Option<Rig>> {
+    let mut mdls: Vec<(String, usize, usize)> = vec![];
+    let mut chrs: Vec<(String, usize, usize)> = vec![];
+    for (li, b) in leaves.iter().enumerate() {
+        if b.len() < 0x10 || &b[..4] != b"bres" {
+            continue;
+        }
+        let Some(entries) = brres_entries(b) else { continue };
+        for (name, off) in entries {
+            let list = match b.get(off..off + 4) {
+                Some(b"CHR0") => &mut chrs,
+                Some(b"MDL0") => &mut mdls,
+                _ => continue,
+            };
+            if !list.iter().any(|(n, _, _)| *n == name) {
+                list.push((name, li, off));
+            }
+        }
+    }
+    want.iter()
+        .map(|w| {
+            let (_, li, off) = mdls.iter().find(|(n, _, _)| n == w)?;
+            let mut r = mdl0(&leaves[*li], *off, &[])?;
+            for (n, cl, co) in &chrs {
+                r.anims.push((n.clone(), chr0(&leaves[*cl], *co)));
+            }
+            Some(r)
+        })
+        .collect()
+}
+
 // ---------------------------------------------------------------- containers
 
 fn be16(d: &[u8], o: usize) -> u16 {
@@ -446,7 +485,7 @@ fn group(d: &[u8], g: usize) -> Vec<(String, usize)> {
 }
 
 /// All second-level entries of a BRRES (every folder's items).
-fn brres_entries(d: &[u8]) -> Option<Vec<(String, usize)>> {
+pub fn brres_entries(d: &[u8]) -> Option<Vec<(String, usize)>> {
     let root = be16(d, 0xC) as usize;
     if d.get(root..root + 4)? != b"root" {
         return None;
@@ -685,7 +724,7 @@ fn xf(m: &M34, p: [f32; 3], w: f32) -> [f32; 3] {
 // ---------------------------------------------------------------- CHR0
 
 /// One animated channel.
-enum Track {
+pub enum Track {
     Fixed(f32),
     /// Hermite keys: (frame, value, tangent).
     Keys(Vec<[f32; 3]>),
@@ -737,7 +776,7 @@ impl Track {
 /// A CHR0: its length and, per bone name, the nine channels (scale xyz, rotation xyz degrees, translation xyz).
 pub struct Anim {
     pub frames: f32,
-    tracks: Vec<(String, [Option<Track>; 9])>,
+    pub tracks: Vec<(String, [Option<Track>; 9])>,
 }
 
 impl Anim {
@@ -872,8 +911,8 @@ fn chr0(d: &[u8], c: usize) -> Anim {
 
 // ---------------------------------------------------------------- MDL0 -> skinned rig
 
-struct Bone {
-    name: String,
+pub struct Bone {
+    pub name: String,
     /// the bone's own index (MDL0 bone header +0x0C), what param files refer to
     index: u32,
     srt: [[f32; 3]; 3],
@@ -920,7 +959,7 @@ pub struct Batch {
 }
 
 pub struct Rig {
-    bones: Vec<Bone>,
+    pub bones: Vec<Bone>,
     srcs: Vec<Src>,
     /// (source, position, normal (zero: none), vertex colour, texture coordinate)
     verts: Vec<(u16, [f32; 3], [f32; 3], [u8; 4], [f32; 2])>,

@@ -20,15 +20,15 @@ srcmods="${MODS:-$repo/build/mods}"
 mods="$out/mods"; rm -rf "$mods"; mkdir -p "$mods"
 cp "$srcmods/envoy_sim.wasm" "$mods/" || { echo "subspace_check: envoy_sim.wasm not found in $srcmods (build the mods first)"; exit 2; }
 depths="${DEPTHS:-4}"; frames="${FRAMES:-3000}"
-names=(goomba primid bill giant)
-kinds="${KINDS:-goomba primid bill giant}"
+names=(goomba primid bill giant koopa hammer jyk)
+kinds="${KINDS:-goomba primid bill giant koopa hammer jyk}"
 fail=0
 export MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=1 MELEE_SUBSPACE_LOG=1
 export MELEE_PAD_SCRIPT="${PAD:-$here/subspace_pad.txt}"
 [ "$disc" = ace ] && export MELEE_ENVOY_TEST_MAIN="${MAIN:-34}"
 exe_banner "subspace_check ($disc)"
 for d in $depths; do
-  for k in 0 1 2 3; do
+  for k in 0 1 2 3 4 5 6; do
     name=${names[$k]}
     case " $kinds " in *" $name "*) ;; *) continue ;; esac
     log="$out/$name.d$d.log"

@@ -1573,6 +1573,7 @@ unsafe fn on_new_match(seq: i32) {
         S.pool = START_POOL[(S.nh == 2) as usize];
         // items: the stock limit starts where the stocks do; no item held
         S.lim = items::LIM_START[(S.nh == 2) as usize];
+        lab::new_match();
         S.seen = [-1; SEEN];
         S.seen_n = 0;
         S.inv = [[0; ITEM_IDS]; NP];
@@ -5744,6 +5745,10 @@ pub extern "C" fn gd_mod_loaded() {
         S.fx_mode = FX_FLARE;
         S.fx_set = -1;
         S.arm_seen = (gd_envoy_armed() != 0) as i32;
+        // armed from the start (MELEE_ENVOY_ARM): a Lab session's setup is taken now, as take_arm would
+        if S.arm_seen != 0 {
+            lab::take();
+        }
         make_plan();
         publish();
     }

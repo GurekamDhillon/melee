@@ -22,7 +22,7 @@ mkdir -p "$out"
 python "$here/lab_pad.py" > "$out/lab_pad.txt"
 python "$here/lab_pad.py" --marks > "$out/marks.txt"
 frames=$(head -1 "$out/lab_pad.txt" | grep -oE "[0-9]+ frames" | grep -oE "[0-9]+")
-shots=$(awk '{printf "%s%d", (NR>1?",":""), $2+8}' "$out/marks.txt")
+shots=$(awk '{d = ($1 ~ /^fx_/) ? 44 : 8; printf "%s%d", (NR>1?",":""), $2+d}' "$out/marks.txt")
 fail=0
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 run() { # name extra-env...
@@ -33,14 +33,14 @@ run() { # name extra-env...
     MELEE_WASM_MODS="$mods" MELEE_ENVOY_DIR="$d/save" MELEE_CARD_PATH="$d/card" \
     MELEE_PAD_SCRIPT="$out/lab_pad.txt" MELEE_PAD_IGNORE_ADAPTER=1 MELEE_PAD_CHANNELS=01 MELEE_WIDESCREEN=1 MELEE_FULLSCREEN=off \
     MELEE_WINDOW="$size" MELEE_UI_LOG=1 "$@" \
-    timeout 1800 "$exe" play --iso "$GW_ISO_VANILLA" --max-frames $((frames + 200)) >"$d/run.log" 2>&1)
+    timeout 1800 "$exe" play --iso "$GW_ISO_VANILLA" --max-frames $((frames + 200)) ${XARGS:-} >"$d/run.log" 2>&1)
   echo "$name: exit $? ($(ls "$d/shots" 2>/dev/null | wc -l) shots)"
 }
 has() { grep -aq -- "$2" "$out/$1/run.log"; }
 cnt() { grep -ac -- "$2" "$out/$1/run.log"; }
 if on flow; then
   exe_banner "lab_check flow"
-  run flow --shots --shot-dir shots MELEE_RETAIL_SHOT_TICKS="$shots"
+  XARGS="--shots --shot-dir shots" run flow MELEE_RETAIL_SHOT_TICKS="$shots"
   miss=""
   has flow "envoy lab: setup open" || miss="$miss (setup never opened from the menu cell)"
   has flow "envoy: lab session armed" || miss="$miss (no lab session)"

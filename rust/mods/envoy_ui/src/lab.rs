@@ -267,7 +267,9 @@ unsafe fn draw_setup(e: &mut E, brawl: bool) {
 
 // ------------------------------------------------------------------ the panel
 
-const PAGES: [&str; 6] = ["Items", "Loadout", "Triggers", "Effects", "Sandbox", "Synergy"];
+const PAGES: [&str; 6] = ["Items", "Kit", "Fire", "FX", "State", "Combos"];
+/// The pages' full names (the log and the page title).
+const PAGE_NAMES: [&str; 6] = ["Items", "Loadout", "Triggers", "Effects", "Sandbox", "Synergy"];
 const PG_ITEMS: usize = 0;
 const PG_LOADOUT: usize = 1;
 const PG_TRIG: usize = 2;
@@ -458,7 +460,7 @@ pub unsafe fn input(v: &[i32; VW], paused: bool) -> bool {
             p.age = 0;
             p.row = 0;
         }
-        log(if p.open { "panel open, page " } else { "panel closed" }, if p.open { PAGES[p.page] } else { "" });
+        log(if p.open { "panel open, page " } else { "panel closed" }, if p.open { PAGE_NAMES[p.page] } else { "" });
     } else if p.open && p.age > 2 {
         nav(p, v, edge & 0xF);
     }
@@ -482,7 +484,7 @@ unsafe fn nav(p: &mut Panel, v: &[i32; VW], e: u32) {
         if left || right {
             p.page = (p.page + if right { 1 } else { PAGES.len() - 1 }) % PAGES.len();
             p.scroll = 0;
-            log("page ", PAGES[p.page]);
+            log("page ", PAGE_NAMES[p.page]);
         } else if down && n > 0 {
             p.row = 1;
         } else if up && p.hot {
@@ -685,8 +687,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     sticker(e, S_FACE_INK, x, y, PW, PH, -0.6, alpha(WHITE, a), |e| {
         face(e, S_FACE_INK, x, y, PW, PH, alpha(WHITE, a));
         text_edge(e, x + 12.0, y + 8.0, d(18), SUNNY, ALIGN_LEFT, 1.2, "ITEM LAB");
+        e.text_ex(x + 118.0, y + 14.0, bs(11), WHITE, ALIGN_LEFT, 0.0, PAGE_NAMES[p.page]);
         let mut hd = Buf::new();
-        hd.i(v[V_POOL]).s(" stocks  /  limit ").i(v[V_POOL_LIM]).s("   ").i(v[V_COINS]).s(" coins");
+        hd.i(v[V_POOL]).s(" stocks   ").i(v[V_COINS]).s(" coins");
         e.text_ex(x + PW - 12.0, y + 13.0, bs(11), PALE, ALIGN_RIGHT, 0.0, hd.str());
         tabs(e, &p, x + 8.0, y + 38.0);
         let cy = y + 70.0;
@@ -995,7 +998,7 @@ unsafe fn synergy_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
         }
         any = true;
         let hot = held && n > 0 && !off(v, m.id);
-        let h = 22.0 + ((n + 5) / 6) as f32 * 24.0;
+        let h = 24.0 + ((n + 1) / 2) as f32 * 20.0;
         face(e, if hot { S_FACE_SUNNY } else { S_FACE_WHITE }, x, yy, w, h, if held { WHITE } else { alpha(WHITE, 0.6) });
         icon(e, m, x + 12.0, yy + 11.0, 16.0, !held);
         let mut t = Buf::new();
@@ -1003,10 +1006,10 @@ unsafe fn synergy_page(e: &mut E, v: &[i32; VW], x: f32, y: f32) {
         e.text_ex(x + 24.0, yy + 4.0, bs(11), INK, ALIGN_LEFT, w - 30.0, t.str());
         for k in 0..n {
             let it = &ITEMS[hits[k]];
-            let cx = x + 16.0 + (k % 6) as f32 * 44.0;
-            let cy = yy + 32.0 + (k / 6) as f32 * 24.0;
-            icon(e, it, cx, cy, 18.0, !hot);
-            e.text_ex(cx + 10.0, cy - 5.0, bs(8), INK, ALIGN_LEFT, 30.0, it.name);
+            let cx = x + 16.0 + (k % 2) as f32 * (w * 0.5);
+            let cy = yy + 32.0 + (k / 2) as f32 * 20.0;
+            icon(e, it, cx, cy, 16.0, !hot);
+            e.text_ex(cx + 12.0, cy - 7.0, bs(10), INK, ALIGN_LEFT, w * 0.5 - 30.0, it.name);
         }
         if n == 0 {
             e.text_ex(x + 24.0, yy + 4.0 + 13.0, bs(9), LILAC, ALIGN_LEFT, w - 30.0, "nothing held it changes");
@@ -1027,8 +1030,8 @@ pub unsafe fn trigger_log(e: &mut E, v: &[i32; VW], ex: f32) {
     let n = v[VL_TLOG_N].max(0) as usize;
     let play = v[V_PLAY];
     e.layer(LAYER_MENU, 2);
-    let x = 12.0 - ex;
-    let mut y = 420.0;
+    let x = 330.0;
+    let mut y = 440.0;
     for k in 0..n.min(6) {
         let i = (n - 1 - k) % TLOG;
         let b = VL_TLOG + i * TL_W;

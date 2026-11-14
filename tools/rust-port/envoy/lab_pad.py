@@ -78,8 +78,9 @@ def stream(n):
 # boot to the main menu (as camp_pad.txt), the Envoy row, the Item Lab cell, the setup, Start
 idle(300); press(0x1000, 0); idle(200); press(0x1000, 0); idle(60)
 press(D, 20); press(D, 60)
-press(R, 30)
+press(R, 0)
 mark("menu_cell")
+idle(30)
 press(0x0100, 120)
 mark("setup")
 press(0x0100, 0)
@@ -94,6 +95,7 @@ mark("page_triggers")
 for i in range(NITEMS):
     to_row(1 + NTRIG + i)
     press(R, 4)
+    mark("fx_" + items[i][1])  # the shot lands 8 + 26 frames on: the command has reached the sim
     stream(1)
     idle(30)
 mark("fired_all")

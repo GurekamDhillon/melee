@@ -377,7 +377,14 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     let pool = v[V_POOL].max(0);
     // items: the stock limit (heart containers): full icons for the stocks held, outlines for the empty slots
     let total = if v[V_ITEMS_ON] == 1 && v[V_POOL_LIM] > 0 { v[V_POOL_LIM] } else if humans == 2 { 5 } else { 4 };
-    let n = total.max(pool);
+    // more stocks than the limit can show (the Item Lab's 99): one icon and the count
+    if pool > 8 {
+        spr_c(e, S_STOCK, 308.0, 455.0, 1.17, WHITE);
+        let mut c = Buf::new();
+        c.s("x").i(pool);
+        e.text_ex(322.0, 446.0, d(15), WHITE, ALIGN_LEFT, 0.0, c.str());
+    }
+    let n = if pool > 8 { 0 } else { total.max(pool) };
     // stocks 21 game px (were 14)
     let px = 320.0 - (n - 1) as f32 * 12.0;
     for i in 0..n {

@@ -1175,6 +1175,9 @@ pub const MODEL_SCALE: f32 = 1.0;
 pub struct Tracks {
     pub mots: std::vec::Vec<std::vec::Vec<[[f32; 3]; NP]>>,
     pub zc: f32,
+    /// the Geno define's hitboxes: keys (attack, box, owning part) and, per motion and frame, their points
+    pub gkeys: std::vec::Vec<(u8, u8, u8)>,
+    pub gpts: std::vec::Vec<std::vec::Vec<std::vec::Vec<[f32; 3]>>>,
 }
 
 pub fn tracks() -> Option<&'static Tracks> {
@@ -1202,13 +1205,50 @@ fn build_tracks() -> Option<Tracks> {
                 return None;
             }
         }
+        // the define's boxes: every (attack, box, part) a box can sit on (a limb box on each weak point)
+        let mut gkeys = vec![];
+        if let Some(g) = geno() {
+            for (ai, a) in g.attacks.iter().enumerate() {
+                for (bi, bx) in a.boxes.iter().enumerate() {
+                    let limb = g.parts.get(bx.part as usize).is_some_and(|p| p.role == crate::tu::geno_boss::Role::Limb);
+                    if limb {
+                        for (pi, p) in g.parts.iter().enumerate() {
+                            if p.role == crate::tu::geno_boss::Role::WeakPoint {
+                                gkeys.push((ai as u8, bi as u8, pi as u8));
+                            }
+                        }
+                    } else {
+                        gkeys.push((ai as u8, bi as u8, bx.part));
+                    }
+                }
+            }
+        }
+        let mut gpts = vec![];
         let mut mots = vec![];
         for name in MOTIONS {
             let n = fctiwz_f32(m.body.anim(name)?.frames).max(0) as usize;
             let (ab, aal, aar) = (m.body.anim(name), al.anim(name), ar.anim(name));
             let mut v = std::vec::Vec::with_capacity(n + 1);
+            let mut gv = std::vec::Vec::with_capacity(n + 1);
             for f in 0..=n {
                 let f = f as f32;
+                if let Some(g) = geno() {
+                    // part 0 the body, 1 / 2 the left / right cage (this host's models)
+                    let mut row = std::vec::Vec::with_capacity(gkeys.len());
+                    for &(ai, bi, pi) in &gkeys {
+                        let bx = &g.attacks[ai as usize].boxes[bi as usize];
+                        let (mdl, an) = match pi {
+                            1 => (al, aal),
+                            2 => (ar, aar),
+                            _ => (&m.body, ab),
+                        };
+                        row.push(match mdl.bone_by_index(bx.joint as u32) {
+                            Some(bn) => mdl.bone_point(an, f, bn, bx.offset),
+                            None => [0.0; 3],
+                        });
+                    }
+                    gv.push(row);
+                }
                 let mut c = [[0.0f32; 3]; NP];
                 c[P_BODY_A] = m.body.bone_point(ab, f, b28, [0.0, 0.0, 10.0]);
                 c[P_BODY_B] = m.body.bone_point(ab, f, b28, [0.0, 0.0, 20.0]);
@@ -1227,10 +1267,11 @@ fn build_tracks() -> Option<Tracks> {
                 v.push(c);
             }
             mots.push(v);
+            gpts.push(gv);
         }
         let zc = (m.body.min[2] + m.body.max[2]) * 0.5;
         eprintln!("petey: bone-following hurt / hit shapes from the local data");
-        Some(Tracks { mots, zc })
+        Some(Tracks { mots, zc, gkeys, gpts })
     }
 }
 
@@ -1330,7 +1371,7 @@ pub const KB_SCALE_PM_NO_ARENA: u32 = 800;
 fn kb_scale_pm() -> u32 {
     static V: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
     *V.get_or_init(|| {
-        std::env::var("MELEE_PETEY_KB_PM").ok().and_then(|v| v.trim().parse::<u32>().ok()).map(|v| v.clamp(500, 1500)).unwrap_or_else(|| if crate::tu::petey_model::get().is_some_and(|m| m.arena_blast.is_some()) { KB_SCALE_PM_DEFAULT } else { KB_SCALE_PM_NO_ARENA })
+        std::env::var("MELEE_PETEY_KB_PM").ok().and_then(|v| v.trim().parse::<u32>().ok()).map(|v| v.clamp(500, 1500)).unwrap_or_else(|| if geno().is_some() { KB_SCALE_PM_DEFAULT } else if crate::tu::petey_model::get().is_some_and(|m| m.arena_blast.is_some()) { KB_SCALE_PM_DEFAULT } else { KB_SCALE_PM_NO_ARENA })
     })
 }
 
@@ -1370,6 +1411,11 @@ fn hit_list() -> ([HitDef; 4], usize) {
             n += 1;
         }
     };
+    if let (Some(g), Some(t)) = (geno(), tracks()) {
+        if !t.gkeys.is_empty() {
+            return geno_hits(g, t, &b);
+        }
+    }
     let grp = |id: u32, rehit: i32| b.inst.wrapping_mul(16).wrapping_add(id).wrapping_add(f.pdiv(rehit.max(1)) as u32 * 0x1000_0000);
     let mot = b.mot as usize;
     // body contact (id 4): armed at frame 0 of every motion except Down and the landing; the baskets clear it at
@@ -1419,6 +1465,59 @@ fn hit_list() -> ([HitDef; 4], usize) {
         }
     }
     (v, n)
+}
+
+/// The Geno define's live boxes (geno_boss::live_boxes), on the bone tracks, with the numbers at the owning part's L.
+fn geno_hits(g: &crate::tu::geno_boss::Define, t: &Tracks, b: &Boss) -> ([HitDef; 4], usize) {
+    use crate::tu::geno_boss as gb;
+    let mut v = [HitDef::default(); 4];
+    let mut live = [gb::LiveBox::default(); 8];
+    let n = gb::live_boxes(g, &mut live);
+    let f = b.mf;
+    let mot = b.mot.clamp(0, 11) as usize;
+    let row = t.gpts.get(mot).and_then(|m| m.get((f.max(0) as usize).min(m.len().saturating_sub(1))));
+    let mut k = 0;
+    for lb in &live[..n] {
+        if k >= 4 {
+            break;
+        }
+        let Some(ix) = t.gkeys.iter().position(|&x| x == (lb.attack, lb.boxi, lb.part)) else { continue };
+        let Some(q) = row.and_then(|r| r.get(ix)) else { continue };
+        let bx = &g.attacks[lb.attack as usize].boxes[lb.boxi as usize];
+        let l = gb::part_level(g, lb.part);
+        let x = b.px + q[0] * MODEL_SCALE;
+        let y = q[1] * MODEL_SCALE;
+        // knockback facing: the owning part's fixed facing; a facing-less part launches away from its own centre
+        let pf = g.parts.get(lb.part as usize).map(|p| p.facing).unwrap_or(0.0);
+        let face = if pf != 0.0 {
+            pf
+        } else if bx.offset[0] != 0.0 {
+            if bx.offset[0] < 0.0 { -1.0 } else { 1.0 }
+        } else if bx.angle == 270 {
+            b.aim
+        } else if x >= b.px {
+            1.0
+        } else {
+            -1.0
+        };
+        let rehit = bx.rehit.max(1);
+        let id = lb.attack as u32 * 8 + bx.group as u32;
+        v[k] = HitDef {
+            x,
+            y,
+            r: gb::num_at(bx.size, l) * MODEL_SCALE,
+            dmg: fctiwz_f32(gb::num_at(bx.damage, l)).max(0) as u32,
+            angle: bx.angle,
+            kbg: fctiwz_f32(gb::num_at(bx.kbg, l)).max(0) as u32,
+            wkb: fctiwz_f32(gb::num_at(bx.wkb, l)).max(0) as u32,
+            bkb: fctiwz_f32(gb::num_at(bx.bkb, l)).max(0) as u32,
+            grp: b.inst.wrapping_mul(16).wrapping_add(id).wrapping_add(f.pdiv(rehit) as u32 * 0x1000_0000),
+            face,
+            atk: lb.attack + 1,
+        };
+        k += 1;
+    }
+    (v, k)
 }
 
 unsafe fn disable_all(cf: &mut Fighter) {
@@ -1903,7 +2002,7 @@ unsafe fn mirror(g: &crate::tu::geno_boss::Define) {
     B.cage = [S.hp[1], S.hp[2]];
     B.locked = S.locked;
     B.inst = S.inst;
-    let ph = var("phase") as i32;
+    let ph = fctiwz_f32(var("phase"));
     if ph != B.phase {
         eprintln!("petey: phase {} (L {:.1})", ph, level());
     }

@@ -10,13 +10,28 @@
 //! frame, no allocation in [`tick`].
 #![allow(static_mut_refs, clippy::missing_safety_doc)]
 
-use melee_core::ppc::fctiwz_f32;
+use melee_core::ppc::{fctiwz_f32, Ppc};
+
+#[inline]
+fn bit<T: Into<u64>>(m: T, i: i32) -> bool {
+    m.into().pshr(i as i64) & 1 != 0
+}
+#[inline]
+fn m64(i: i32) -> u64 {
+    1u64.pshl(i as i64)
+}
+#[inline]
+fn m8(i: i32) -> u8 {
+    (1u32.pshl(i as i64) & 0xFF) as u8
+}
 
 /// Engine limits (the state block is fixed size).
 pub const MAX_PARTS: usize = 4;
 pub const MAX_VARS: usize = 24;
 pub const MAX_RULES: usize = 64;
 pub const MAX_EVENTS: usize = 16;
+/// Actor-owned spawned objects (projectiles, minions): the pool size (Duon needs up to 14).
+pub const MAX_SPAWNS: usize = 14;
 
 // ------------------------------------------------------------------------------------------------- define
 
@@ -220,6 +235,8 @@ pub struct Part {
     pub intangible_in: u64,
     /// trunc(L) instead of L for this part's attacks
     pub int_level: bool,
+    /// fixed facing (+1 / -1), 0 = none (never turns)
+    pub facing: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -232,14 +249,17 @@ pub struct TimelineEvent {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct HitboxDef {
+    /// owning part; a `Limb` part means "the part the timeline's hitbox op names" (e.g. whichever cage swings)
     pub part: u8,
     pub joint: i32,
     pub offset: [f32; 3],
-    pub frames: (i32, i32),
+    /// motion frames the box is live (inclusive); None = from the motion's start until cleared
+    pub frames: Option<(i32, i32)>,
     pub damage: Num,
     pub angle: i32,
     pub kbg: Num,
-    pub wkb: f32,
+    /// set (weight-based) knockback
+    pub wkb: Num,
     pub bkb: Num,
     pub size: Num,
     pub group: u8,
@@ -250,6 +270,64 @@ pub struct HitboxDef {
 pub struct Attack {
     pub name: String,
     pub boxes: Vec<HitboxDef>,
+    /// the statuses the attack is armed in
+    pub states: u64,
+}
+
+/// One live box this frame: attack, box index, owning part.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct LiveBox {
+    pub attack: u8,
+    pub boxi: u8,
+    pub part: u8,
+}
+
+/// The boxes live this frame (status in the attack's states, inside the box's frames, its part not cleared since
+/// the motion began). Limb boxes take their part from the timeline's hitbox op.
+pub fn live_boxes(d: &Define, out: &mut [LiveBox]) -> usize {
+    let s = unsafe { &S };
+    if !s.live || s.cause != 0 || s.status < 0 {
+        return 0;
+    }
+    let mut n = 0;
+    for (ai, a) in d.attacks.iter().enumerate() {
+        if !bit(a.states, (s.status) as i32) {
+            continue;
+        }
+        for (bi, b) in a.boxes.iter().enumerate() {
+            let limb = d.parts.get(b.part as usize).is_some_and(|p| p.role == Role::Limb);
+            let part = if limb {
+                match s.atk.iter().find(|x| x.0 == ai as u8) {
+                    Some(x) => x.1,
+                    None => continue,
+                }
+            } else {
+                b.part
+            };
+            if bit(s.cleared, (part) as i32) && b.frames.is_none() {
+                continue;
+            }
+            if let Some((f0, f1)) = b.frames {
+                if s.mf < f0 || s.mf > f1 {
+                    continue;
+                }
+            }
+            if n < out.len() {
+                out[n] = LiveBox { attack: ai as u8, boxi: bi as u8, part };
+                n += 1;
+            }
+        }
+    }
+    n
+}
+
+/// A number at a given level (a part's own L).
+pub fn num_at(n: Num, l: f32) -> f32 {
+    match n {
+        Num::K(k) => k,
+        Num::Lin(b, s) => b + s * l,
+        Num::Var(v) => unsafe { S.vars[v as usize] },
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -316,6 +394,22 @@ impl Define {
 
 // ------------------------------------------------------------------------------------------------- state
 
+/// One actor-owned spawned object (lane B, port/geno-boss-spawn, fills the behaviour). Plain data.
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[repr(C)]
+pub struct SpawnSlot {
+    pub live: bool,
+    /// the spawn record index in the define
+    pub record: u16,
+    pub age: i32,
+    pub x: f32,
+    pub y: f32,
+    pub vx: f32,
+    pub vy: f32,
+}
+
+pub const SPAWN_OFF: SpawnSlot = SpawnSlot { live: false, record: 0, age: 0, x: 0.0, y: 0.0, vx: 0.0, vy: 0.0 };
+
 /// Everything that changes during a fight. Plain data, fixed size: memory snapshots cover it.
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
@@ -362,6 +456,10 @@ pub struct State {
     pub inst: u32,
     /// live attack boxes: (attack index, part) per slot, 0xFF = none
     pub atk: [(u8, u8); 4],
+    /// parts whose contact boxes a timeline cleared since the motion began
+    pub cleared: u8,
+    /// spawned objects (lanes add their fields after this one, and to `state_hash`)
+    pub spawn: [SpawnSlot; MAX_SPAWNS],
 }
 
 pub const OFF: State = State {
@@ -369,7 +467,7 @@ pub const OFF: State = State {
     goal: 0.0, has_goal: false, strength: 1, difficulty: 5, rules_on: 0, vars: [0.0; MAX_VARS], hp: [0; MAX_PARTS],
     hp_max: [1; MAX_PARTS], counter: [0; MAX_PARTS], zero_sent: 0, intangible: 0, hit: false, hit_part: 0, dmg_core: 0,
     damaged: 0, locked: -1, last_slot: -1, rng: 1, frame: 0, cause: 0, despawned: false, ev_n: 0,
-    ev: [(0, 0); MAX_EVENTS], inst: 1, atk: [(0xFF, 0xFF); 4],
+    ev: [(0, 0); MAX_EVENTS], inst: 1, atk: [(0xFF, 0xFF); 4], cleared: 0, spawn: [SPAWN_OFF; MAX_SPAWNS],
 };
 
 pub static mut S: State = OFF;
@@ -432,6 +530,15 @@ pub fn state_hash() -> Option<u32> {
     mix(s.last_slot as u32);
     mix(s.rng);
     mix(s.cause as u32);
+    mix(s.cleared as u32);
+    for sp in s.spawn.iter().filter(|sp| sp.live) {
+        mix(sp.record as u32);
+        mix(sp.age as u32);
+        mix(sp.x.to_bits());
+        mix(sp.y.to_bits());
+        mix(sp.vx.to_bits());
+        mix(sp.vy.to_bits());
+    }
     Some(h)
 }
 
@@ -444,7 +551,7 @@ impl<'a> Rt<'a> {
     fn rnd(&self, n: u32) -> u32 {
         unsafe {
             S.rng = S.rng.wrapping_mul(1_103_515_245).wrapping_add(12345);
-            (S.rng >> 8) % n.max(1)
+            (S.rng >> 8).prem(n.max(1))
         }
     }
     fn rnd01(&self) -> f32 {
@@ -507,8 +614,8 @@ impl<'a> Rt<'a> {
             Cond::TimerDone(v) => s.sf as f32 >= s.vars[*v as usize],
             Cond::Var(v, op, k) => op.test(s.vars[*v as usize], *k),
             Cond::VarVar(a, op, b) => op.test(s.vars[*a as usize], s.vars[*b as usize]),
-            Cond::StatusIn(m) => s.status >= 0 && s.status < 64 && m >> s.status & 1 != 0,
-            Cond::PrevStatusIn(m) => s.prev_status >= 0 && s.prev_status < 64 && m >> s.prev_status & 1 != 0,
+            Cond::StatusIn(m) => s.status >= 0 && s.status < 64 && bit(*m, (s.status) as i32),
+            Cond::PrevStatusIn(m) => s.prev_status >= 0 && s.prev_status < 64 && bit(*m, (s.prev_status) as i32),
             Cond::Hit(k) => {
                 s.hit
                     && match k {
@@ -572,7 +679,7 @@ impl<'a> Rt<'a> {
 
     fn table_pick(&self, t: u8, store: Option<u8>) -> Option<usize> {
         let t = &self.d.tables[t as usize];
-        let prev = store.map(|v| unsafe { S.vars[v as usize] } as i32);
+        let prev = store.map(|v| fctiwz_f32(unsafe { S.vars[v as usize] }));
         let mut w = [0f32; 8];
         for (i, e) in t.entries.iter().enumerate().take(8) {
             let x = fctiwz_f32(self.num(e.weight)) as f32;
@@ -605,6 +712,7 @@ impl<'a> Rt<'a> {
             S.tl_mf = -1;
             S.inst = S.inst.wrapping_add(1);
             S.atk = [(0xFF, 0xFF); 4];
+            S.cleared = 0;
         }
     }
 
@@ -620,10 +728,10 @@ impl<'a> Rt<'a> {
             S.inst = S.inst.wrapping_add(1);
             self.push_ev(EV_STATUS, st as i32);
             for (i, p) in self.d.parts.iter().enumerate() {
-                if p.intangible_in >> st & 1 != 0 {
-                    S.intangible |= 1 << i;
+                if bit(p.intangible_in, (st) as i32) {
+                    S.intangible |= m8(i as i32);
                 } else if p.role == Role::Core {
-                    S.intangible &= !(1 << i);
+                    S.intangible &= !m8(i as i32);
                 }
             }
             if self.d.defeat_status[0] == Some(st) && S.cause == 0 {
@@ -652,7 +760,7 @@ impl<'a> Rt<'a> {
         match op {
             Op::Nop => {}
             Op::ResetRules => {
-                s.rules_on = d.rules.iter().enumerate().filter(|(_, r)| r.default_on).fold(0, |m, (i, _)| m | 1u64 << i);
+                s.rules_on = d.rules.iter().enumerate().filter(|(_, r)| r.default_on).fold(0, |m, (i, _)| m | m64(i as i32));
             }
             Op::DisableRules => s.rules_on = 0,
             Op::EnableRules(m) => s.rules_on |= *m,
@@ -759,9 +867,9 @@ impl<'a> Rt<'a> {
                 if unless.map_or(true, |v| s.vars[v as usize] == 0.0) && s.dmg_core > 0 {
                     let d_out = fctiwz_f32(s.dmg_core as f32 * d.route_factor);
                     for i in 0..d.parts.len().min(MAX_PARTS) {
-                        if d.route_mask >> i & 1 != 0 && s.hp[i] > 0 {
+                        if bit(d.route_mask, (i) as i32) && s.hp[i] > 0 {
                             s.hp[i] -= d_out;
-                            s.damaged |= 1 << i;
+                            s.damaged |= m8(i as i32);
                         }
                     }
                     s.dmg_core = 0;
@@ -779,8 +887,9 @@ impl<'a> Rt<'a> {
                 return self.evaluate((p, p));
             }
             Op::ClearHitboxes(mask) => {
+                s.cleared |= if *mask == 0 { 0xFF } else { *mask };
                 for a in s.atk.iter_mut() {
-                    if *mask == 0 || (a.1 != 0xFF && *mask >> a.1 & 1 != 0) {
+                    if *mask == 0 || (a.1 != 0xFF && bit(*mask, (a.1) as i32)) {
                         *a = (0xFF, 0xFF);
                     }
                 }
@@ -803,7 +912,7 @@ impl<'a> Rt<'a> {
         let mut order = [0u8; MAX_RULES];
         let mut n = 0;
         for (i, r) in d.rules.iter().enumerate().take(MAX_RULES) {
-            if unsafe { S.rules_on } >> i & 1 != 0 && r.priority >= window.0 && r.priority <= window.1 {
+            if bit(unsafe { S.rules_on }, (i) as i32) && r.priority >= window.0 && r.priority <= window.1 {
                 order[n] = i as u8;
                 n += 1;
             }
@@ -821,7 +930,7 @@ impl<'a> Rt<'a> {
         let st0 = unsafe { S.status };
         for &ri in &order[..n] {
             let r = &d.rules[ri as usize];
-            if unsafe { S.rules_on } >> ri & 1 == 0 || unsafe { S.status } != st0 {
+            if !bit(unsafe { S.rules_on }, (ri) as i32) || unsafe { S.status } != st0 {
                 continue;
             }
             if done_prio == Some(r.priority) {
@@ -862,7 +971,7 @@ impl<'a> Rt<'a> {
                 let mut hit = e.frame == f;
                 if !hit && e.count > 1 && e.every > 0 && f > e.frame {
                     let k = f - e.frame;
-                    hit = k % e.every == 0 && k / e.every < e.count;
+                    hit = k.prem(e.every) == 0 && k.pdiv(e.every) < e.count;
                 }
                 if hit {
                     if log_on() {
@@ -899,15 +1008,15 @@ impl<'a> Rt<'a> {
             }
             let (hp, zs, dm, ctr) = unsafe { (S.hp[i], S.zero_sent, S.damaged, S.counter[i]) };
             if hp <= 0 {
-                if zs >> i & 1 == 0 {
-                    unsafe { S.zero_sent |= 1 << i };
+                if !bit(zs, (i) as i32) {
+                    unsafe { S.zero_sent |= m8(i as i32) };
                     if let Some(m) = p.on_zero {
                         self.send(m, i);
                     }
                 }
                 continue;
             }
-            if dm >> i & 1 != 0 {
+            if bit(dm, (i) as i32) {
                 if let Some(m) = p.on_damaged {
                     self.send(m, i);
                 }
@@ -938,7 +1047,13 @@ impl<'a> Rt<'a> {
             }
             Some(Kinetic::Decay(dc)) => {
                 let dc = self.num(*dc);
-                s.vx = if s.vx > 0.0 { (s.vx - dc).max(0.0) } else { (s.vx + dc).min(0.0) };
+                s.vx = if s.vx > 0.0 {
+                    let v = s.vx - dc;
+                    if v < 0.0 { 0.0 } else { v }
+                } else {
+                    let v = s.vx + dc;
+                    if v > 0.0 { 0.0 } else { v }
+                };
             }
             None => {}
         }
@@ -981,7 +1096,7 @@ pub fn begin(d: &Define, w: World, difficulty: i32, hp_scale_pm: i32, seed: u32)
     unsafe {
         for (i, p) in d.parts.iter().enumerate().take(MAX_PARTS) {
             let base = fctiwz_f32(rt0.num(p.hp));
-            let hp = if p.role == Role::WeakPoint { (base as i64 * hp_scale_pm.max(1) as i64 / 1000) as i32 } else { base };
+            let hp = if p.role == Role::WeakPoint { base.wrapping_mul(hp_scale_pm.max(1)).pdiv(1000) } else { base };
             S.hp[i] = hp;
             S.hp_max[i] = hp.max(1);
         }
@@ -997,7 +1112,7 @@ pub fn damage(d: &Define, part: usize, amount: i32) {
         return;
     }
     unsafe {
-        if S.intangible >> part & 1 != 0 {
+        if bit(S.intangible, (part) as i32) {
             return;
         }
         // hitByPlayer is the core's own flag: a weak point is its own object, its hits reach the core only as messages
@@ -1008,8 +1123,8 @@ pub fn damage(d: &Define, part: usize, amount: i32) {
             S.hp[part] -= amount;
         } else {
             S.hp[part] -= amount;
-            S.hit_part |= 1 << part;
-            S.damaged |= 1 << part;
+            S.hit_part |= m8(part as i32);
+            S.damaged |= m8(part as i32);
         }
     }
 }
@@ -1082,8 +1197,8 @@ mod tests {
         Define {
             name: "tiny".into(),
             parts: vec![
-                Part { name: "core".into(), role: Role::Core, hp: Num::K(100.0), on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: false },
-                Part { name: "wp".into(), role: Role::WeakPoint, hp: Num::Lin(5.0, 2.0), on_damaged: Some(1), thresholds: vec![(0, 50.0, 2)], on_zero: None, intangible_in: 0, int_level: true },
+                Part { name: "core".into(), role: Role::Core, hp: Num::K(100.0), on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: false, facing: 0.0 },
+                Part { name: "wp".into(), role: Role::WeakPoint, hp: Num::Lin(5.0, 2.0), on_damaged: Some(1), thresholds: vec![(0, 50.0, 2)], on_zero: None, intangible_in: 0, int_level: true, facing: 1.0 },
             ],
             vars: vec![("T".into(), 0.0), ("hit".into(), 0.0)],
             statuses: vec![

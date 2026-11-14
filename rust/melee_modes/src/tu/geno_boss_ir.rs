@@ -167,6 +167,19 @@ fn value(b: &[u8], i: &mut usize) -> Result<J, String> {
             *i += 5;
             Ok(J::Bool(false))
         }
+        // Python's json writes NaN / Infinity for non-finite raw words
+        b'N' if b[*i..].starts_with(b"NaN") => {
+            *i += 3;
+            Ok(J::Num(f64::NAN))
+        }
+        b'I' if b[*i..].starts_with(b"Infinity") => {
+            *i += 8;
+            Ok(J::Num(f64::INFINITY))
+        }
+        b'-' if b[*i..].starts_with(b"-Infinity") => {
+            *i += 9;
+            Ok(J::Num(f64::NEG_INFINITY))
+        }
         b'n' if b[*i..].starts_with(b"null") => {
             *i += 4;
             Ok(J::Null)
@@ -753,7 +766,7 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
         };
         let pool = pools.arr().iter().find(|h| h.get("id").str() == p.get("hp_pool").str());
         let hp = pool.map(|h| lx.num(h.get("max"))).unwrap_or(Num::K(0.0));
-        let mut part = Part { name: p.get("name").str().to_string(), role, hp, on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: p.get("own_level").str().contains("trunc") };
+        let mut part = Part { name: p.get("name").str().to_string(), role, hp, on_damaged: None, thresholds: vec![], on_zero: None, intangible_in: 0, int_level: p.get("own_level").str().contains("trunc"), facing: p.get("facing").str().trim().parse::<f32>().unwrap_or(0.0) };
         for h in p.get("hurtboxes").arr() {
             for s in h.get("intangible_in").arr() {
                 if let Some(ix) = Lx::status_ix(s.str()) {
@@ -949,7 +962,39 @@ pub fn lower(ir: &J, motions: &[HostMotion]) -> Result<Define, String> {
     };
     let win = boss.get("rule_engine").get("default_window").arr();
     let window = (win.first().and_then(|v| v.num()).unwrap_or(-50.0) as i32, win.get(1).and_then(|v| v.num()).unwrap_or(250.0) as i32);
-    let attacks = boss.get("attacks").arr().iter().map(|a| Attack { name: a.get("name").str().to_string(), boxes: vec![] }).collect();
+    let mut attacks = vec![];
+    for a in boss.get("attacks").arr() {
+        let mut states = 0u64;
+        for st in a.get("states").arr() {
+            if let Some(ix) = Lx::status_ix(st.str()) {
+                states |= 1u64 << ix;
+            }
+        }
+        let mut boxes = vec![];
+        for b in a.get("hitboxes").arr() {
+            let part = lx.parts.get(b.get("part").str()).copied().unwrap_or(0);
+            let off = b.get("offset").arr();
+            let o = |i: usize| off.get(i).and_then(|v| v.num()).unwrap_or(0.0) as f32;
+            let fr = b.get("frames").arr();
+            let frames = if fr.len() == 2 { Some((fr[0].num().unwrap_or(0.0) as i32, fr[1].num().unwrap_or(0.0) as i32)) } else { None };
+            let ang = b.get("angle").num().unwrap_or(0.0) as i32;
+            boxes.push(HitboxDef {
+                part,
+                joint: b.get("joint").num().unwrap_or(0.0) as i32,
+                offset: [o(0), o(1), o(2)],
+                frames,
+                damage: lx.num(b.get("damage")),
+                angle: if ang < 0 { ang + 360 } else { ang },
+                kbg: lx.num(b.get("knockback_growth")),
+                wkb: lx.num(b.get("set_knockback")),
+                bkb: lx.num(b.get("base_knockback")),
+                size: lx.num(b.get("size")),
+                group: b.get("group").num().unwrap_or(0.0) as u8,
+                rehit: b.get("rehit_frames").num().unwrap_or(0.0) as i32,
+            });
+        }
+        attacks.push(Attack { name: a.get("name").str().to_string(), boxes, states });
+    }
     if !lx.errors.is_empty() {
         return Err(lx.errors.join("; "));
     }
@@ -1071,6 +1116,73 @@ mod tests {
             if s.status != st {
                 eprintln!("sim: f{f} {st} -> {} x {:.1} hp {:?} L {:.1}", s.status, s.x, &s.hp[..3], level(&d));
                 st = s.status;
+            }
+        }
+    }
+
+    /// Synthetic host motions from the IR itself (timeline lengths, status motions; 60 frames when unknown).
+    pub fn ir_motions(ir: &J) -> std::vec::Vec<(String, i32, bool)> {
+        let b = ir.get("boss");
+        let mut out: std::vec::Vec<(String, i32, bool)> = vec![];
+        for t in b.get("timelines").arr() {
+            let n = t.get("motion").str().to_string();
+            if !n.is_empty() && !out.iter().any(|m| m.0 == n) {
+                let looping = n.contains("Loop");
+                out.push((n, t.get("frames").num().unwrap_or(60.0) as i32, looping));
+            }
+        }
+        for s in b.get("statuses").arr() {
+            for n in s.get("motion").str().split(|c| c == '|' || c == '/' || c == ' ') {
+                let n = n.trim();
+                if !n.is_empty() && n.chars().next().is_some_and(|c| c.is_ascii_uppercase()) && !out.iter().any(|m| m.0 == n) {
+                    out.push((n.to_string(), 60, n.contains("Loop")));
+                }
+            }
+        }
+        for t in b.get("selection_tables").arr() {
+            for e in t.get("entries").arr() {
+                if let Some(n) = e.get("label").str().split_whitespace().next() {
+                    if n.starts_with("Wait") && !out.iter().any(|m| m.0 == n) {
+                        out.push((n.to_string(), 60, false));
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    /// Every local boss IR: lowered (errors listed) and, when it lowers, a headless fight. Skipped without the files.
+    #[test]
+    fn lowers_other_local_bosses() {
+        let Some(dir) = ir_dir() else { return };
+        for f in ["rayquaza", "ridley"] {
+            let Ok(t) = std::fs::read_to_string(dir.join(format!("{f}.brawl.ir.json"))) else { continue };
+            let j = parse_json(&t).unwrap();
+            let ms = ir_motions(&j);
+            let hm: std::vec::Vec<HostMotion> = ms.iter().map(|m| HostMotion { name: &m.0, len: m.1, looping: m.2 }).collect();
+            match lower(&j, &hm) {
+                Err(e) => {
+                    for x in e.split("; ") {
+                        eprintln!("gap {f}: {x}");
+                    }
+                }
+                Ok(d) => {
+                    eprintln!("lowered {f}: {} statuses, {} rules, {} tables, {} attacks", d.statuses.len(), d.rules.len(), d.tables.len(), d.attacks.len());
+                    let w = World { slots: [Some(40.0), None, None, None], airborne: false, out_of_area: false };
+                    begin(&d, w, 5, 1000, 0x5E7E);
+                    let mut st = unsafe { S.status };
+                    for fr in 1..3000u32 {
+                        if fr % 200 == 0 {
+                            damage(&d, 0, 15);
+                        }
+                        tick(&d, w);
+                        let s = unsafe { S };
+                        if s.status != st {
+                            eprintln!("sim {f}: f{fr} {st} -> {} hp {} L {:.1}", s.status, s.hp[0], level(&d));
+                            st = s.status;
+                        }
+                    }
+                }
             }
         }
     }

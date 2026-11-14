@@ -584,7 +584,9 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         crate::tu::petey::disarm();
     }
     BASE = [[[0.0; 4]; 2]; 4];
+    blast_hooks();
     BLASTS = [Blast::OFF; 4];
+    LANDED = [Landed::NONE; 4];
     SEQ = SEQ.wrapping_add(1);
     CAMP_DUE = 1;
     eprintln!("envoy: match {} rewritten: main {main} partner {partner} co-op {} stocks {} cpus {n} stage {}", SEQ, coop as i32, me_stocks(d), PLAN[P_STAGE]);
@@ -882,9 +884,102 @@ pub struct Blast {
     pub x: f32,
     pub y: f32,
     pub hit: HitCapsule,
+    /// The most this blast lands on one victim, x1000 (0: no cap). A foe's blast: the sim's foe fire cap.
+    pub land_cap: i32,
+    /// The sim's tag for the logs (its drive id + 1 | level << 8); 0 none.
+    pub tag: i32,
 }
 impl Blast {
-    pub const OFF: Blast = Blast { slot: -1, cap: -1, left: 0, x: 0.0, y: 0.0, hit: unsafe { core::mem::zeroed() } };
+    pub const OFF: Blast = Blast { slot: -1, cap: -1, left: 0, x: 0.0, y: 0.0, hit: unsafe { core::mem::zeroed() }, land_cap: 0, tag: 0 };
+}
+
+/// What drive blasts did to a victim slot in the logic frame now (written on the hit path, read by the sim in its
+/// take-damage hook of the same frame, cleared in `tick`): the number of blast capsules that landed, what they
+/// landed after the cap and before it (x1000), and the last one's owner slot, capsule index, tag and group. `best`:
+/// 1 when a blast capsule's knockback won the frame (the blast is what launches), with that knockback x1000.
+#[derive(Clone, Copy)]
+pub struct Landed {
+    pub n: i32,
+    pub milli: i32,
+    pub raw: i32,
+    pub owner: i32,
+    pub cap: i32,
+    pub tag: i32,
+    pub grp: i32,
+    pub best: i32,
+    pub kb: i32,
+}
+impl Landed {
+    pub const NONE: Landed = Landed { n: 0, milli: 0, raw: 0, owner: -1, cap: -1, tag: 0, grp: 0, best: 0, kb: 0 };
+}
+pub static mut LANDED: [Landed; 4] = [Landed::NONE; 4];
+
+/// The live blast `hit` belongs to (a capsule of `attacker`), if it is one.
+unsafe fn blast_of(attacker: &Fighter, hit: *const HitCapsule) -> Option<usize> {
+    if hit.is_null() || (*hit).x4 >> 16 != 0xB1A5 {
+        return None;
+    }
+    let s = attacker.player_idx as i32;
+    BLASTS.iter().position(|b| b.left > 0 && b.slot == s && b.hit.x4 == (*hit).x4)
+}
+
+/// `melee_fighter::hooks::ENVOY_BLAST_LAND`: the damage of a fighter capsule on `victim`, after every multiplier and
+/// right before it joins the victim's damage of the frame. A blast with a cap lands at most the cap, whatever
+/// multiplied it on the way (the foe fire cap: rule 2 of envoy-balance.md). Any other capsule: unchanged.
+fn blast_land(attacker: &Fighter, hit: *const HitCapsule, victim: &Fighter, dmg: f32) -> f32 {
+    unsafe {
+        let Some(k) = blast_of(attacker, hit) else { return dmg };
+        let b = &BLASTS[k];
+        let cap = b.land_cap as f32 / 1000.0;
+        let out = if b.land_cap > 0 && dmg > cap { cap } else { dmg };
+        let v = victim.player_idx as usize;
+        if v < 4 {
+            let l = &mut LANDED[v];
+            l.n += 1;
+            l.milli += melee_core::ppc::fctiwz_f32(out * 1000.0 + 0.5);
+            l.raw += melee_core::ppc::fctiwz_f32(dmg * 1000.0 + 0.5);
+            l.owner = b.slot;
+            l.cap = b.cap;
+            l.tag = b.tag;
+            l.grp = (b.hit.x4 & 0xFFFF) as i32;
+        }
+        out
+    }
+}
+
+/// `melee_fighter::hooks::ENVOY_BLAST_BEST`: the capsule whose knockback won `victim`'s damage log (logs only).
+fn blast_best(victim: &Fighter, attacker: &Fighter, hit: *const HitCapsule, kb: f32) {
+    unsafe {
+        let v = victim.player_idx as usize;
+        if v < 4 {
+            LANDED[v].best = blast_of(attacker, hit).is_some() as i32;
+            LANDED[v].kb = melee_core::ppc::fctiwz_f32(kb * 1000.0);
+        }
+    }
+}
+
+unsafe fn blast_hooks() {
+    melee_fighter::hooks::ENVOY_BLAST_LAND = Some(blast_land);
+    melee_fighter::hooks::ENVOY_BLAST_BEST = Some(blast_best);
+}
+
+/// The sim caps and tags the blast `slot` armed last (this frame): it lands at most `cap_milli` / 1000 percent on a
+/// victim (0: no cap). 0 done, -1 no such blast.
+pub unsafe fn blast_cap(slot: i32, cap_milli: i32, tag: i32) -> i32 {
+    let Some(b) = BLASTS.iter_mut().filter(|b| b.left == BLAST_LIFE && b.slot == slot).max_by_key(|b| b.hit.x4 & 0xFFFF) else { return -1 };
+    b.land_cap = cap_milli.max(0);
+    b.tag = tag;
+    0
+}
+
+/// What blasts landed on `slot` this frame (`Landed`, as words): n, landed x1000, before the cap x1000, owner slot,
+/// capsule index, tag, group, 1 if a blast launches, the winning knockback x1000.
+pub unsafe fn landed(slot: i32) -> [i32; 9] {
+    if !(0..4).contains(&slot) {
+        return [0, 0, 0, -1, -1, 0, 0, 0, 0];
+    }
+    let l = LANDED[slot as usize];
+    [l.n, l.milli, l.raw, l.owner, l.cap, l.tag, l.grp, l.best, l.kb]
 }
 pub static mut BLASTS: [Blast; 4] = [Blast::OFF; 4];
 static mut BLAST_GRP: u32 = 0;
@@ -951,7 +1046,8 @@ pub unsafe fn blast(slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg
         }
     }
     (*f).set_x2219_b3(1);
-    BLASTS[k] = Blast { slot, cap: ci as i32, left: BLAST_LIFE, x, y, hit: *h };
+    BLASTS[k] = Blast { slot, cap: ci as i32, left: BLAST_LIFE, x, y, hit: *h, land_cap: 0, tag: 0 };
+    blast_hooks();
     0
 }
 
@@ -967,6 +1063,7 @@ pub unsafe fn tick() {
     if ARMED != 0 && hud_off() {
         hide_retail_hud();
     }
+    LANDED = [Landed::NONE; 4];
     for b in BLASTS.iter_mut() {
         if b.left <= 0 {
             continue;

@@ -59,6 +59,12 @@ adds a CPU to a duel or a pack (CPUs are slots 2-3 then) and a stock to an elite
   owner's teammates are pre-registered as victims: a blast never hits a teammate, whatever the friendly-fire rule.
   Nova: radius 16, Sakurai angle, kbg 70 / bkb 35; Comet: 13, 80 degrees (pops up), 55 / 30; Spire: 9 at the foe,
   straight up, 75 / 40; level 3 widens them by a quarter. No free capsule: the fire falls back to percent.
+  `gd_envoy_blast_cap(slot, cap x1000, tag)` puts a cap and a log tag on the blast the slot armed this frame: the
+  engine clamps that capsule's damage on each victim to the cap in `ftColl_80076ED8`, after every multiplier and
+  right before it joins the victim's damage of the frame (`melee_fighter::hooks::ENVOY_BLAST_LAND`, None in a
+  vanilla match). Foe blasts carry the foe fire cap (envoy-balance.md, round 3). `gd_envoy_landed(victim, out)`
+  reads what blasts landed on a victim this frame (per capsule: landed, before the cap, owner, capsule, tag, and
+  whether the blast's knockback won the frame), for the sim's take-damage hook and `kblog`.
 - **Prices**: Fragile defence x1.25, Weak attack x0.8, Bleed 1% per fire, Slow walk / dash x0.85, Lock tag cooldown
   10 s; Glass Core deals and takes x1.6. Vulnerable (statuses last twice as long) is coded, no keystone uses it yet.
 - **Foes**: an elite or boss carries 1-2 drives from the foe list (Ember, Nova, Bolt, Frost, Rush, Bulwark, Hex,

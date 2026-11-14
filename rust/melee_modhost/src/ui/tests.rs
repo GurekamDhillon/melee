@@ -165,7 +165,7 @@ fn nine_slice_is_nine_quads_and_one_page() {
 }
 
 /// uiseams: a rotated 9-slice's pieces mark their shared sides inner (no edge AA there), the outer sides stay AA'd;
-/// an unrotated one is untouched.
+/// unrotated the same (harmless: no AA there); all nine share the first piece's tilt depth.
 #[test]
 fn rotated_nine_slice_marks_inner_sides() {
     let a = atlas();
@@ -179,10 +179,9 @@ fn rotated_nine_slice_marks_inner_sides() {
         b.submit(&e.0, 0, &a, &[], false).unwrap();
         b.finish(false);
         let f: Vec<u32> = b.frame.quads.iter().map(|q| q.flags & ins).collect();
-        if rot == 0.0 {
-            assert!(f.iter().all(|&x| x == 0));
-            continue;
-        }
+        // every piece points back to the first (the tilt's shared parallax depth)
+        let back: Vec<u32> = b.frame.quads.iter().map(|q| (q.flags >> 8) & 0xFF).collect();
+        assert_eq!(back, (0..9).collect::<Vec<u32>>());
         // row-major 3x3: corners have two inner sides, edges three, the centre four
         assert_eq!(f[0], Q_IN_R | Q_IN_B);
         assert_eq!(f[1], Q_IN_L | Q_IN_R | Q_IN_B);

@@ -1743,8 +1743,9 @@ mod jungle_tests {
             eprintln!("door {i} sec {} type {} to {} exit {} back {} room {}", d.sec, d.kind, d.to, d.exit, d.back, d.into_room);
         }
         eprintln!("spawns {} crates {} blocks {} lines {}", m.spawns.len(), m.crates.len(), m.blocks.len(), m.lines.len());
-        assert!(m.doors.iter().any(|d| d.sec == 0 && d.into_room && d.to >= 0), "no room door linked");
-        assert!(m.doors.iter().any(|d| d.sec == 1 && d.back && d.to >= 0), "no way back");
+        // 060002 (section 1) into its wheel room (section 2) and back
+        assert!(m.doors.iter().any(|d| d.sec == 1 && d.into_room && d.to >= 0), "no room door linked");
+        assert!(m.doors.iter().any(|d| d.sec == 2 && d.back && d.to >= 0), "no way back");
         // chained: every main section but the last leads on to the next one's entry, the last to the story
         assert!(m.doors.iter().any(|d| d.to == super::STORY_NEXT), "no way on");
         assert_eq!(m.doors.iter().filter(|d| d.kind == super::ENTRY).count(), 3, "sections not chained");

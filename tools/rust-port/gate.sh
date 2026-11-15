@@ -14,6 +14,16 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #      tools/rust-port/semantics_lint.py finds no console-arithmetic violation in the game crates.
 # --update-progress appends the measured counts (only when none went down) and lowers baseline_max.tsv.
 set -u
+# One cargo target dir per worktree (notes/buildspeed.md): a CARGO_TARGET_DIR shared by worktrees makes lanes overwrite each
+# other's rlibs (cargo hashes workspace crates by workspace-relative path, so two trees get the same file names).
+# A target dir outside this worktree is ignored (build/cargo here, from .cargo/config.toml) unless ALLOW_SHARED_TARGET=1.
+_repo_for_target="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [ -n "${CARGO_TARGET_DIR:-}" ] && [ -z "${ALLOW_SHARED_TARGET:-}" ]; then
+  case "$(cd "$CARGO_TARGET_DIR" 2>/dev/null && pwd || echo "$CARGO_TARGET_DIR")/" in
+    "$_repo_for_target"/*) ;;
+    *) echo "$(basename "$0"): ignoring CARGO_TARGET_DIR=$CARGO_TARGET_DIR (outside this worktree; ALLOW_SHARED_TARGET=1 keeps it)" >&2; unset CARGO_TARGET_DIR ;;
+  esac
+fi
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 cd "$repo"

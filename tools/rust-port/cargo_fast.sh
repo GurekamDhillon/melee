@@ -12,6 +12,16 @@
 # sccache across worktrees and target dirs, and the workspace crates come out of each worktree's incremental dir. Never delete a
 # worktree's build/cargo/fast/incremental if you want the one-file edit loop to stay fast.
 # Does not touch the release profile; `--release` / `--profile release|perf` pass through unchanged.
+# One cargo target dir per worktree (notes/buildspeed.md): a CARGO_TARGET_DIR shared by worktrees makes lanes overwrite each
+# other's rlibs (cargo hashes workspace crates by workspace-relative path, so two trees get the same file names).
+# A target dir outside this worktree is ignored (build/cargo here, from .cargo/config.toml) unless ALLOW_SHARED_TARGET=1.
+_repo_for_target="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [ -n "${CARGO_TARGET_DIR:-}" ] && [ -z "${ALLOW_SHARED_TARGET:-}" ]; then
+  case "$(cd "$CARGO_TARGET_DIR" 2>/dev/null && pwd || echo "$CARGO_TARGET_DIR")/" in
+    "$_repo_for_target"/*) ;;
+    *) echo "$(basename "$0"): ignoring CARGO_TARGET_DIR=$CARGO_TARGET_DIR (outside this worktree; ALLOW_SHARED_TARGET=1 keeps it)" >&2; unset CARGO_TARGET_DIR ;;
+  esac
+fi
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${NO_SCCACHE:-}" ]; then
   export SCCACHE_DIR="${SCCACHE_DIR:-$ws/_build/sccache}"

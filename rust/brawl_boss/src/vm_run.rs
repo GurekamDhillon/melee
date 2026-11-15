@@ -289,6 +289,20 @@ pub struct Input {
     /// R10059: a flag byte of a global sora_melee object (the one 0x81C21B30 creates and clears), set by sora_melee
     /// 0x81C51C04 when one of that object's timers reaches its value [L: meaning not traced; a VS fight leaves it clear]
     pub global_flag: bool,
+    /// R10054: the enemy manager's live entries (0x81A0CF18: entries whose first byte is set)
+    pub enemy_live: u32,
+    /// R10054: per value a, the live entries whose enemy's id word equals a (0x81A0CF8C) [L: the word's meaning is
+    /// not traced]; `gated` is the static object's answer (its vfunc 0x0C on a) that forces the count to 0. An a not
+    /// listed counts 0
+    pub enemy_ids: [EnemyCount; 4],
+}
+
+/// One R10054 count (0x81A0CF8C).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct EnemyCount {
+    pub id: i32,
+    pub live: u32,
+    pub gated: bool,
 }
 
 /// One group of the stage-wide group manager (R10052).
@@ -1095,6 +1109,19 @@ impl<'a> Cx<'a> {
             // (0x81A0D044, then 0x81A0D0A8): true when there is none, else when that enemy's work flag 0 (0x12000000,
             // its work module's flag query) is set: the partner is gone
             10053 => !self.i.partner_alive,
+            // 10054 a b f (0x81A14EB0, each a variable or a constant -> 0x81A0B5EC): X = the enemy manager's live
+            // entries, Y = those whose enemy's id word is a (0 when the static object gates a); d = b - (X - Y) * f
+            // in single precision (b and X - Y converted unsigned); true when d > 0 and d > Y
+            10054 => {
+                let (ga, gb, f) = (x(0) as i32, x(1) as i32, x(2));
+                let xl = self.i.enemy_live;
+                let y = match self.i.enemy_ids.iter().find(|e| e.id == ga) {
+                    Some(e) if !e.gated => e.live,
+                    _ => 0,
+                };
+                let d = gb as u32 as f32 - xl.wrapping_sub(y) as f32 * f;
+                !(d <= 0.0) && !(d <= y as f32)
+            }
             // 10059 (0x81A15284): no arguments (else false); the global object's flag byte
             10059 => self.i.global_flag,
             _ => false,

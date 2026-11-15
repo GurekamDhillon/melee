@@ -225,3 +225,29 @@ sent off the screen in the same way.
   loop (600 frames). Jungle wheel room (`MELEE_EXPLORE_GOTO=3@200`, ride at 300), blocks 0-3: grounded all 601
   frames, worst frame-to-frame step 0.007, place on the platform within 1.33 (one frame of platform travel: the
   fighter follows the platform's previous place). No fall-through, no jitter.
+
+## Match-setup frame (Nov 14, sse3 round 2)
+
+Quiet machine (no other melee/cargo/rustc/link, 3 build slots held), real menu walk, hidden, real time, warm list
+persisted (`MELEE_GPUCACHE`). Setup frame, longest tick / game work (ms):
+
+| | before this round | after |
+|---|---|---|
+| Lake | 41 work (shared machine) | tick 15.9-17.5, work 19.8-24.6 |
+| Jungle | 49 work (shared machine) | tick 19.4-22.0, work 28.6-36.6 |
+| Final Destination (same walk) | - | tick 12.1-13.3, work 15.8-16.9 |
+
+Every other match frame, doors included, is under 16 ms on both maps.
+- Textures: `melee_gx::render::preload` + `gxbridge::preload_tex`; `explore::sss_preload` queues both maps on the
+  stage select (the pick is only ~14 frames before the match). Setup-frame texture upload 5.7 ms -> 0.3.
+- Pipelines: they are kept. With a warm list that persists, the second run compiles 0 in the whole match. The "3 every
+  run" came from a fresh exe folder (the warm list sits beside the exe). `pipe_seed.sh` now seeds `lake` and `jungle`.
+- Draw: the party's section goes out as prebuilt display lists (`pm::build_lists`), ~1 ms -> ~0.9 ms incl. state.
+- Spread: the enemies and crates of a section come in one a room frame (was all 17 on room frame 2, inside the setup
+  tick).
+- Still over: the Jungle setup tick, plus the setup frame's work on both maps; FD's own is at the edge (15.8-16.9). The
+  setup tick runs a second, catch-up tick inside the same frame. A pacing fix is drafted, not built or measured:
+  present after a scene's first tick and run the owed tick in the next frame (`present_now`;
+  `scratch/sse3/scene_tick_wip.patch`; its first version stalled the loop because nothing cleared the flag).
+  Further work: the VS setup's own on_enter (~9 ms, FD too), and the remaining `explore map draw` state setup.
+- Synctest Jungle/Lake with a door at 600: d4 1797 passes / 7188 checks and d7 1794 / 12558, 0 mismatches each.

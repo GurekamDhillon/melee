@@ -341,8 +341,10 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
                     }
                     0x0410 if ins.n >= 2 => {
                         let v = |k: u32| p.args.get((ins.a + k) as usize).map_or(-1.0, |&x| arg(a, x));
-                        if melee_core::ppc::fctiwz_f32(v(0)) == 0 {
-                            VIS_SLOT = (melee_core::ppc::fctiwz_f32(v(1)), a.tick.wrapping_sub(1));
+                        // the same motion again keeps running (Porky's scripts reissue it every other frame) [L]
+                        let m = melee_core::ppc::fctiwz_f32(v(1));
+                        if melee_core::ppc::fctiwz_f32(v(0)) == 0 && VIS_SLOT.0 != m {
+                            VIS_SLOT = (m, a.tick.wrapping_sub(1));
                             if log {
                                 eprintln!("petey: f{frame} vm vis slot: motion {}", VIS_SLOT.0);
                             }

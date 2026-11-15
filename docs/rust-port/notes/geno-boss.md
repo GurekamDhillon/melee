@@ -436,3 +436,38 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
 - Knobs: `MELEE_VMBOSS_NO_VIS=1` draws every mesh (the old look); `MELEE_VMBOSS_VIS_LOG=n` logs motion, frame and the
   hidden-object count every n ticks; `MELEE_PETEY_CAM=boss` frames a VM boss (captures only).
 - Drawing only: Tabuu's NHV1 is identical with and without `MELEE_VMBOSS_NO_VIS` (the check below).
+
+
+
+### Round 10 (2026-11-15)
+
+- Spec corrections: R28's slot is the soGenerateArticleManageModuleImpl every enemy owns (the article-manage slot of
+  round 9), not a per-class article table; R39's handler is in sora_melee (the motion module), not in the enemy module.
+- Host wiring (geno_vm_host / vm_boss_model): the VS host fills `nodes`, `center`, `target_lr` and `target_scale`
+  from the boss model. The node ids are read once per program (value 23014's node, the constant node arguments of
+  R10006 / R10007 / R10024-R10047; fixed size, no allocation in the game scope). Bone lookups of one clip frame share
+  one pose: the sim pose buffer carries a tag entry after the bones (`Rig::pose_keyed`). The tag must sit in the
+  buffer: a rollback restores the buffer's memory, and a (clip, frame) kept beside it went stale (synctest: 28 to
+  14514 mismatches on five bosses). With the tag in the buffer: sync d4 / d7 0 mismatches and NHV1 rows identical to
+  the round-10 exe on all seven bosses.
+- Perf row: the round-10 failures (Porky 86, Ridley 38, Meta Ridley 28, Galleom 6, Tabuu 5 frames over 16 ms) were
+  machine load, not the host wiring. Release exes of round 9, the R-command commit and the host-wiring commit, each
+  merged with geno-boss3, run alternately per boss (frames over budget, two passes):
+
+  | boss | round 9 | R commands | host wiring | round 11 |
+  |---|---|---|---|---|
+  | Porky | 29 / 0 | 36 / 0 | 0 / 0 | 0 |
+  | Ridley | 4 / 0 | 0 / 0 | 0 / 0 | 0 |
+  | Meta Ridley | 0 / 0 | 0 / 0 | 0 / 0 | 0 |
+  | Galleom | 0 / 0 | 0 / 0 | 0 / 8 | 0 |
+  | Tabuu | 0 / 0 | 0 / 0 | 0 / 0 | 0 |
+  | Rayquaza | 0 / 0 | 0 / 0 | 0 / 0 | 0 |
+  | Duon | 0 / 10 | 0 / 9 | 0 / 1 | 0 |
+
+  Round 9 fails the same way under load. Every failing run started with other agents' builds running (CPU 26-67%);
+  the over-budget frames are single phases (render pass, step, frame capture) stretched to 20-260 ms, and the same
+  build is clean on the next pass. On clean runs the tick is p50 1.2-1.3 ms, p99.9 under 3 ms, Porky included.
+- Lints: the model turn uses the MSL sinf / cosf, min / max are the C comparisons, the float-to-int, rem and shift
+  sites use the ppc helpers. `Actor::hash` is now `vm_hash` and `geno_vm_host::frame` is now `vm_frame`: their C
+  names (id.c's static hash; a static frame in pc/gameworld/script_echo_state_tests.c) made the logic lint count
+  them, and the second also made netmatch.rs's own `frame` an R2.

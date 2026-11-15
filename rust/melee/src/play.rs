@@ -1637,6 +1637,15 @@ pub fn play(args: &[String]) -> ExitCode {
                     }
                     n += 1;
                 }
+            } else if part.eq_ignore_ascii_case("sse") || part.eq_ignore_ascii_case("lake") || part.eq_ignore_ascii_case("jungle") {
+                // the GD stage slots of the Brawl SSE maps (explore.rs: The Lake step 3; "jungle": The Jungle step 2), on the Final Destination carrier
+                let id = if part.eq_ignore_ascii_case("jungle") {
+                    melee_modes::tu::explore::GD_STAGE_SSE_JUNGLE
+                } else {
+                    melee_modes::tu::explore::GD_STAGE_SSE_LAKE3
+                };
+                let fd = melee_modes::tu::explore::carrier(id);
+                stage = STAGES.iter().position(|s| s.0 == fd).unwrap_or(stage);
             } else if let Some(st) = STAGES.iter().position(|s| s.0.to_string() == part || s.1.eq_ignore_ascii_case(part) || (part == "GrNLa.dat" && s.0 == 32) || (part == "GrNBa.dat" && s.0 == 31)) {
                 stage = st;
             } else {
@@ -1665,6 +1674,10 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
         if let Some(f) = feed.as_ref() {
             crate::play_net::apply_controls_meta(&f.r);
+            // slice 0: the recorded pick and content mask (an older replay has none: the args' pick as before)
+            if let Some(t) = f.r.meta("sse") {
+                melee_modes::tu::explore::apply_header_token(t);
+            }
         }
         let mut seed = feed.as_ref().and_then(|f| f.r.meta("seed").and_then(|s| s.parse::<u32>().ok()));
         // the guest plays by the host's rules (sent in the agreed scene): its own --stocks / --time-secs / --items are
@@ -1830,6 +1843,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
                 meta.push(("np_role".into(), "host".into()));
                 meta.extend(crate::play_net::controls_meta());
+            meta.push(crate::play_net::sse_meta());
                 rp.rec = Some((String::new(), crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() }));
             }
         }
@@ -1852,6 +1866,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 meta.push(("np_role".into(), n.tag().into()));
             }
             meta.extend(crate::play_net::controls_meta());
+            meta.push(crate::play_net::sse_meta());
             let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }

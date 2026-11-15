@@ -224,6 +224,21 @@ impl Gcm {
         self.entry_for_path_disc(path)
     }
 
+    /// (byte offset, length) in the image of every file whose name ends in one of `exts` (ASCII, any case), in disc
+    /// order. Reads the FST only (the asset service's disc warm-up, zero-hitch.md).
+    pub fn files_with_ext(&self, exts: &[&str]) -> Vec<(u64, usize)> {
+        let mut v: Vec<(u64, usize)> = (1..self.count())
+            .filter(|&i| !self.is_dir(i))
+            .filter(|&i| {
+                let n = self.name(i);
+                exts.iter().any(|e| n.len() >= e.len() && n[n.len() - e.len()..].eq_ignore_ascii_case(e.as_bytes()))
+            })
+            .map(|i| (be32(&self.fst, i * 12 + 4) as u64, be32(&self.fst, i * 12 + 8) as usize))
+            .collect();
+        v.sort_unstable();
+        v
+    }
+
     pub fn plain_location(&self, entry: i32) -> Option<(u64, usize)> {
         let i = usize::try_from(entry).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i))?;
         if self.overlay.is_some() {

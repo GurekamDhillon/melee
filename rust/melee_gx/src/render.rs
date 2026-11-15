@@ -260,7 +260,37 @@ struct TexEntry {
     bytes: u64,
     /// The last [`Renderer::prepare`] count it was used at.
     used: std::cell::Cell<u64>,
+    /// Uploaded ahead of its first draw ([`preload`]): kept whatever its age until a draw first uses it.
+    pin: std::cell::Cell<bool>,
 }
+
+/// Textures uploaded before anything draws them: a caller that knows what a coming scene will draw (a Brawl map's
+/// section textures, known when the stage is picked) queues them here, and [`Renderer::prepare`] converts and uploads
+/// some each frame (`PRELOAD_MS`) under the same cache key its first draw will look up, so that draw finds it made.
+/// Non-palette textures only. Presentation only.
+pub mod preload {
+    use crate::state::TexObj;
+    use std::sync::Mutex;
+    pub(crate) static Q: Mutex<Vec<TexObj>> = Mutex::new(Vec::new());
+    /// Queue one texture (as the GX layer's `GXInitTexObj` + `GXInitTexObjLOD` made it).
+    pub fn push(o: TexObj) {
+        Q.lock().unwrap().push(o);
+    }
+    /// Every pinned texture may age out again (a match began: what it draws it has drawn; the rest goes).
+    pub static UNPIN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    /// Textures still queued.
+    pub fn pending() -> usize {
+        Q.lock().unwrap().len()
+    }
+}
+/// `MELEE_TEX_LOG=1`: one line per texture made (checks only).
+fn tex_log() -> bool {
+    static L: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *L.get_or_init(|| std::env::var_os("MELEE_TEX_LOG").is_some())
+}
+
+/// Time a frame spends on queued preloads (ms).
+const PRELOAD_MS: f64 = 2.5;
 
 /// An address alias not used for this many prepared frames is dropped (releasing the guest buffer it holds): a
 /// buffer handed over anew every frame then pins at most a few frames' worth of bytes.
@@ -338,6 +368,9 @@ pub struct Renderer {
     tex_alias: FxMap<TexAddr, TexAlias>,
     /// Sum of `textures`' `bytes`.
     tex_bytes: u64,
+    /// Textures of the frame being prepared, converted ahead on several threads ([`Renderer::convert_ahead`]);
+    /// `texture_view` takes its texture from here instead of converting it.
+    tex_ready: FxMap<TexKey, texture::Converted>,
     /// `tex_override::generation()` the decoded textures were made under.
     ovr_gen: u64,
     /// [`Renderer::prepare`] calls so far (texture eviction clock).
@@ -370,6 +403,8 @@ pub struct Renderer {
     pub(crate) ui: Option<crate::ui::UiGpu>,
     /// The Envoy effects layer (crate::fx): None until a run arms it; disarmed, every pass is skipped.
     pub(crate) fx: Option<Box<crate::fx::FxGpu>>,
+    /// The effects layer being built at start-up (crate::fx `fx_prewarm_start`).
+    pub(crate) fx_build: Option<std::thread::JoinHandle<Box<crate::fx::FxGpu>>>,
     /// Effects intensity (0 off, 0.5 subtle, 1 full): the UI quad effects and the fx layer.
     pub fx_intensity: f32,
     /// The presenter's true-widescreen x factor (interp::Widen; 1 = none): the fx world camera follows it.
@@ -1345,6 +1380,7 @@ impl Renderer {
             textures: FxMap::default(),
             tex_alias: FxMap::default(),
             tex_bytes: 0,
+            tex_ready: FxMap::default(),
             ovr_gen: crate::tex_override::generation(),
             prepared: 0,
             packed: None,
@@ -1362,6 +1398,7 @@ impl Renderer {
             zcopy_pipe: None,
             ui: None,
             fx: None,
+            fx_build: None,
             fx_intensity: 1.0,
             fx_widen: 1.0,
             ui_tilt: [0.0; 2],
@@ -1435,6 +1472,7 @@ impl Renderer {
         let key = self.tex_key(d, map)?;
         let e = self.textures.get(&key)?;
         e.used.set(self.prepared);
+        e.pin.set(false);
         Some(key)
     }
 
@@ -1562,6 +1600,221 @@ impl Renderer {
         self.zcopy_pipe = Some((pipe, bgl));
     }
 
+    /// A frame that brings many new textures at once (a match's first frame, a stage switch, a wave's new fighter, a
+    /// big custom map: 50-67 textures / 15-18 MB on the SSE maps, 12-14 ms converted one after the other inside that
+    /// one present) has them converted here first, on several threads: the conversion (GX tiles, CMPR, palettes to
+    /// RGBA8) is nearly all of a new texture's cost and each one is independent. `texture_view` then finds its texture
+    /// in `tex_ready` and only creates and uploads it. Same bytes, same cache keys, same order of GPU calls; a frame
+    /// with few or small new textures converts them in place as before.
+    fn convert_ahead(&mut self, draws: &[DrawCmd]) {
+        self.tex_ready.clear();
+        if crate::tex_override::active() {
+            return; // a registered override replaces a texture by its key's bytes: left to the one path that looks it up
+        }
+        struct Job<'a> {
+            key: TexKey,
+            fmt: u32,
+            w: u32,
+            h: u32,
+            mips: u32,
+            data: &'a [u8],
+            tlut: Option<(u32, u16, &'a [u8])>,
+        }
+        let t0 = melee_core::frameprof::on().then(std::time::Instant::now);
+        let mut jobs: Vec<Job<'_>> = Vec::new();
+        let mut bytes = 0usize;
+        let mut prev: Option<usize> = None;
+        for (di, d) in draws.iter().enumerate() {
+            if prev.is_some_and(|j| same_textures(&draws[j], d)) {
+                continue;
+            }
+            prev = Some(di);
+            for i in 0..MAX_TEXTURES {
+                if d.info.sampled_textures & (1 << i) == 0 && d.info.sampled_ind_textures & (1 << i) == 0 {
+                    continue;
+                }
+                let o = &d.textures[i];
+                if o.width() == 0 || o.height() == 0 || self.copy_view(o).is_some() {
+                    continue;
+                }
+                let Some(data) = o.data.as_ref() else { continue };
+                let fmt = o.format();
+                let tlut = if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
+                    let Some(t) = d.tluts.get(o.tlut as usize) else { continue };
+                    let Some(td) = t.data.as_deref() else { continue };
+                    Some((t.format, t.num_entries, td))
+                } else {
+                    None
+                };
+                let Some(key) = self.tex_key(d, i) else { continue };
+                if self.textures.contains_key(&key) || jobs.iter().any(|j| j.key == key) {
+                    continue;
+                }
+                bytes += data.len();
+                jobs.push(Job { key, fmt, w: o.width(), h: o.height(), mips: o.mip_count(), data: &data[..], tlut });
+            }
+        }
+        // worth the threads only for a real burst
+        if jobs.len() < 6 || bytes < 256 << 10 {
+            return;
+        }
+        let n = std::thread::available_parallelism().map_or(4, |n| n.get()).saturating_sub(2).clamp(2, 6).min(jobs.len());
+        let next = std::sync::atomic::AtomicUsize::new(0);
+        let out: Vec<std::sync::Mutex<Option<texture::Converted>>> = (0..jobs.len()).map(|_| std::sync::Mutex::new(None)).collect();
+        let work = || loop {
+            let k = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let Some(j) = jobs.get(k) else { break };
+            let c = match j.tlut {
+                Some((tf, tn, td)) => texture::convert_texture_palette(j.fmt, j.w, j.h, j.mips, j.data, tf, tn, td),
+                None => texture::convert_texture(j.fmt, j.w, j.h, j.mips, j.data),
+            };
+            *out[k].lock().unwrap() = Some(c);
+        };
+        std::thread::scope(|s| {
+            for _ in 1..n {
+                s.spawn(work);
+            }
+            work();
+        });
+        for (j, c) in jobs.iter().zip(out) {
+            if let Some(c) = c.into_inner().unwrap() {
+                self.tex_ready.insert(j.key, c);
+            }
+        }
+        if let Some(t) = t0 {
+            melee_core::frameprof::add(melee_core::frameprof::C::TexNs, t.elapsed().as_nanos() as u64);
+        }
+    }
+
+    /// `tex_key` for a texture object outside a draw (no palette): the same key its draw will compute.
+    fn tex_key_obj(&mut self, o: &TexObj) -> Option<TexKey> {
+        let data = o.data.as_ref()?;
+        let fmt = o.format();
+        if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
+            return None;
+        }
+        let (w, h, mips) = (o.width(), o.height(), o.mip_count());
+        let addr = TexAddr { ptr: data.as_ptr() as usize, len: data.len(), w, h, fmt, mips, tlut: (0, 0, 0, 0) };
+        let now = self.prepared;
+        if let Some(a) = self.tex_alias.get_mut(&addr) {
+            a.used = now;
+            return Some(a.key);
+        }
+        let mut hash = [0x243f_6a88_85a3_08d3, 0x1319_8a2e_0370_7344];
+        content_hash(data, &mut hash);
+        let key = TexKey { hash, len: data.len(), w, h, fmt, mips, tlut: (0, 0, 0) };
+        self.tex_alias.insert(addr, TexAlias { key, _data: data.clone(), _tlut: None, used: now });
+        Some(key)
+    }
+
+    /// Convert and upload queued [`preload`] textures for at most `PRELOAD_MS` this frame (converted on threads, as
+    /// `convert_ahead`), pinned until their first draw.
+    fn preload_some(&mut self) {
+        if preload::UNPIN.swap(false, std::sync::atomic::Ordering::Relaxed) {
+            for e in self.textures.values() {
+                e.pin.set(false);
+            }
+        }
+        let batch: Vec<TexObj> = {
+            let mut q = preload::Q.lock().unwrap();
+            if q.is_empty() {
+                return;
+            }
+            // about 1 MB of GX texels a frame: the SSE maps' 15-18 MB go up in well under a second
+            let mut bytes = 0usize;
+            let mut n = 0;
+            while n < q.len() && bytes < 1 << 20 {
+                bytes += q[n].data.as_ref().map_or(0, |d| d.len());
+                n += 1;
+            }
+            q.drain(..n).collect()
+        };
+        let t0 = std::time::Instant::now();
+        let mut jobs: Vec<(TexKey, &TexObj)> = Vec::new();
+        for o in &batch {
+            if o.width() == 0 || o.height() == 0 {
+                continue;
+            }
+            let Some(key) = self.tex_key_obj(o) else { continue };
+            if self.textures.contains_key(&key) || jobs.iter().any(|j| j.0 == key) {
+                continue;
+            }
+            jobs.push((key, o));
+        }
+        let out: Vec<std::sync::Mutex<Option<texture::Converted>>> = (0..jobs.len()).map(|_| std::sync::Mutex::new(None)).collect();
+        let next = std::sync::atomic::AtomicUsize::new(0);
+        let work = || loop {
+            let k = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let Some((_, o)) = jobs.get(k) else { break };
+            let Some(d) = o.data.as_ref() else { continue };
+            *out[k].lock().unwrap() = Some(texture::convert_texture(o.format(), o.width(), o.height(), o.mip_count(), d));
+        };
+        let nt = std::thread::available_parallelism().map_or(4, |n| n.get()).saturating_sub(2).clamp(1, 6).min(jobs.len().max(1));
+        std::thread::scope(|s| {
+            for _ in 1..nt {
+                s.spawn(work);
+            }
+            work();
+        });
+        let mut done = 0;
+        for ((key, o), c) in jobs.iter().zip(out) {
+            done += 1;
+            let Some(c) = c.into_inner().unwrap() else { continue };
+            let (w, h, mips) = (o.width(), o.height(), o.mip_count());
+            let desc = wgpu::TextureDescriptor {
+                label: Some("GX texture (preloaded)"),
+                size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+                mip_level_count: mips,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8Unorm,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                view_formats: &[],
+            };
+            let (tex, errs) = guarded(|| self.device.create_texture(&desc));
+            if !errs.is_empty() {
+                continue; // left to its draw, which handles a full video memory
+            }
+            let (mut mw, mut mh, mut off, mut bytes) = (w, h, 0usize, 0u64);
+            for mip in 0..mips {
+                let n = (mw * mh * 4) as usize;
+                if off + n > c.data.len() {
+                    break;
+                }
+                self.queue.write_texture(
+                    wgpu::TexelCopyTextureInfo { texture: &tex, mip_level: mip, origin: wgpu::Origin3d::ZERO, aspect: Default::default() },
+                    &c.data[off..off + n],
+                    wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(mw * 4), rows_per_image: Some(mh) },
+                    wgpu::Extent3d { width: mw, height: mh, depth_or_array_layers: 1 },
+                );
+                off += n;
+                bytes += n as u64;
+                mw = (mw >> 1).max(1);
+                mh = (mh >> 1).max(1);
+            }
+            let view = tex.create_view(&Default::default());
+            self.tex_bytes += bytes;
+            if tex_log() {
+                eprintln!("gx tex: preloaded {:016x} len {} {}x{} fmt {} mips {} (frame {})", key.hash[0], key.len, key.w, key.h, key.fmt, key.mips, self.prepared);
+            }
+            self.textures.insert(*key, TexEntry { _tex: tex, view, bytes, used: std::cell::Cell::new(self.prepared), pin: std::cell::Cell::new(true) });
+            if t0.elapsed().as_secs_f64() * 1e3 > PRELOAD_MS {
+                break;
+            }
+        }
+        // what the time budget left goes back to the front of the queue
+        let left: Vec<TexObj> = jobs.iter().skip(done).map(|(_, o)| (*o).clone()).collect();
+        if !left.is_empty() {
+            let mut q = preload::Q.lock().unwrap();
+            let rest = std::mem::take(&mut *q);
+            *q = left;
+            q.extend(rest);
+        }
+        if melee_core::frameprof::on() {
+            melee_core::frameprof::add(melee_core::frameprof::C::TexNs, t0.elapsed().as_nanos() as u64);
+        }
+    }
+
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
         let o = &d.textures[map];
         let data = o.data.as_ref()?;
@@ -1573,6 +1826,7 @@ impl Renderer {
         let key = self.tex_key(d, map)?;
         if let Some(e) = self.textures.get(&key) {
             e.used.set(self.prepared);
+            e.pin.set(false);
             return Some(e.view.clone());
         }
         if w == 0 || h == 0 {
@@ -1591,7 +1845,9 @@ impl Renderer {
         let conv: &[u8] = if let Some(p) = ovr.as_ref() {
             &p.rgba
         } else {
-            conv_data = if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
+            conv_data = if let Some(c) = self.tex_ready.remove(&key) {
+                c // converted ahead (convert_ahead), from the same bytes
+            } else if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
                 let t = &d.tluts[o.tlut as usize];
                 texture::convert_texture_palette(fmt, w, h, mips, data, t.format, t.num_entries, t.data.as_deref()?)
             } else {
@@ -1656,7 +1912,10 @@ impl Renderer {
             fp::add(fp::C::TexBytes, bytes);
             fp::add(fp::C::TexNs, t.elapsed().as_nanos() as u64);
         }
-        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), bytes, used: std::cell::Cell::new(self.prepared) });
+        if tex_log() {
+            eprintln!("gx tex: made at draw {:016x} len {} {}x{} fmt {} mips {} (frame {})", key.hash[0], key.len, key.w, key.h, key.fmt, key.mips, self.prepared);
+        }
+        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), bytes, used: std::cell::Cell::new(self.prepared), pin: std::cell::Cell::new(false) });
         Some(view)
     }
 
@@ -1753,6 +2012,8 @@ impl Renderer {
             self.tex_bytes = 0;
         }
         self.evict_textures();
+        self.convert_ahead(draws);
+        self.preload_some();
         if self.prepared % 600 == 0 && std::env::var_os("MELEE_GX_CACHE_LOG").is_some() {
             let f = &self.frames[self.fc];
             eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipes.len(), self.efb_copies.len(), self.pipes.wgsl_hashes.lock().unwrap().len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubytes, f.draws.capacity());
@@ -1944,7 +2205,7 @@ impl Renderer {
         let before = self.textures.len();
         if self.tex_bytes > TEX_BUDGET {
             // the last two frames' textures are in use: the budget is only enforced among older ones
-            let mut ages: Vec<(u64, TexKey)> = self.textures.iter().filter(|(_, e)| now - e.used.get() > 1).map(|(k, e)| (e.used.get(), *k)).collect();
+            let mut ages: Vec<(u64, TexKey)> = self.textures.iter().filter(|(_, e)| now - e.used.get() > 1 && !e.pin.get()).map(|(k, e)| (e.used.get(), *k)).collect();
             ages.sort_unstable_by_key(|a| a.0);
             for (_, k) in ages {
                 if self.tex_bytes <= TEX_BUDGET * 3 / 4 {
@@ -1958,7 +2219,7 @@ impl Renderer {
         if now % 16 == 0 {
             let mut freed = 0;
             self.textures.retain(|_, e| {
-                let keep = now - e.used.get() < TEX_KEEP;
+                let keep = now - e.used.get() < TEX_KEEP || e.pin.get();
                 if !keep {
                     freed += e.bytes;
                 }

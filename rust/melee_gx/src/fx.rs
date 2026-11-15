@@ -903,6 +903,14 @@ impl Renderer {
             f.armed = true;
             return;
         }
+        if let Some(h) = self.fx_build.take() {
+            // the start-up build is still running (a run began within its first moments): wait for it
+            if let Ok(mut f) = h.join() {
+                f.armed = true;
+                self.fx = Some(f);
+                return;
+            }
+        }
         let mut f = FxGpu::new(&self.device, &self.queue, meshes, self.samples);
         let mut fmts: Vec<wgpu::TextureFormat> = self.blit.keys().copied().collect();
         fmts.push(wgpu::TextureFormat::Rgba8Unorm);
@@ -911,6 +919,41 @@ impl Renderer {
         }
         f.targets(&self.device, self.width, self.height, self.samples);
         self.fx = Some(Box::new(f));
+    }
+
+    /// Build the layer's buffers and pipelines on a background thread (start-up, a UI mod is loaded), DISARMED: the
+    /// shader compiles and the model decode (~20 ms together) then never sit on a present. `meshes` runs on that
+    /// thread. [`Self::fx_prewarm_poll`] installs the result; an arm that comes first waits for it. Returns false
+    /// when the layer exists or is being built already.
+    pub fn fx_prewarm_start(&mut self, meshes: impl FnOnce() -> Vec<FxMesh<'static>> + Send + 'static) -> bool {
+        if self.fx.is_some() || self.fx_build.is_some() {
+            return false;
+        }
+        let (device, queue, samples, w, h) = (self.device.clone(), self.queue.clone(), self.samples, self.width, self.height);
+        let mut fmts: Vec<wgpu::TextureFormat> = self.blit.keys().copied().collect();
+        fmts.push(wgpu::TextureFormat::Rgba8Unorm);
+        let t = std::thread::Builder::new().name("fx-prewarm".into()).spawn(move || {
+            let m = meshes();
+            let mut f = FxGpu::new(&device, &queue, &m, samples);
+            for fmt in fmts {
+                f.post_pipeline(&device, fmt);
+            }
+            f.targets(&device, w, h, samples);
+            f.armed = false;
+            Box::new(f)
+        });
+        self.fx_build = t.ok();
+        self.fx_build.is_some()
+    }
+
+    /// Install a finished [`Self::fx_prewarm_start`] build (never blocks). True once the layer exists.
+    pub fn fx_prewarm_poll(&mut self) -> bool {
+        if self.fx_build.as_ref().is_some_and(|h| h.is_finished()) {
+            if let Ok(f) = self.fx_build.take().unwrap().join() {
+                self.fx = Some(f);
+            }
+        }
+        self.fx.is_some()
     }
 
     /// Disarm (the run ended): every pass is skipped from the next present; the GPU objects are kept.

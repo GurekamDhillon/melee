@@ -741,6 +741,16 @@ pub fn mods_identity_mode(args: &[String], mode: melee_data::netid::Mode) -> Res
     Ok((h, format!("mods {} ({fp:016x}){}{}", shorts.join(", "), w.replace("|wasm ", "; code mods "), g.replace("|geno ", "; geno "))))
 }
 
+/// This machine's slice-0 content token for the handshake (empty without Brawl content).
+pub fn sse_token() -> String {
+    if melee_modes::tu::explore::content_mask() == 0 { String::new() } else { melee_modes::tu::explore::content_token() }
+}
+
+/// The replay header's SSE line (`sse` meta): the GD stage pick, the mask played, the map digest.
+pub fn sse_meta() -> (String, String) {
+    ("sse".into(), melee_modes::tu::explore::header_token())
+}
+
 /// The gameplay codes (melee_core::codes) enter the same handshake word: both peers must run the same codes, and the
 /// refusal names them. No codes leaves the word as it was (vanilla peers of older builds still match).
 pub fn with_codes((h, d): (u64, String)) -> (u64, String) {
@@ -1208,6 +1218,12 @@ impl NetDriver {
         let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
         let ck = ck_of(parts[0]).ok_or_else(|| format!("--match: unknown fighter '{}'", parts[0]))?;
         let stage_ext = parts.iter().skip(1).find_map(|p| stage_of(p)).unwrap_or(32);
+        // a GD stage (`jungle`, `lake` / `sse`) rides on Final Destination (the default ext above); the host dictates it
+        let gd_pick = parts.iter().skip(1).find_map(|p| match p.to_ascii_lowercase().as_str() {
+            "jungle" => Some(melee_modes::tu::explore::GD_STAGE_SSE_JUNGLE),
+            "lake" | "sse" => Some(melee_modes::tu::explore::GD_STAGE_SSE_LAKE3),
+            _ => None,
+        });
         let mut rules = HostRules::from_args(args);
         if host {
             if let Some(c) = arg(args, "--cpu") {
@@ -1301,6 +1317,10 @@ impl NetDriver {
                 caps: if early_on { melee_net::early::CAP_EARLY } else { 0 },
                 // gw_Netplay: this peer's fighter-controls word for its fighter
                 controls: melee_engine::fighter_controls::Get(0, ck as i32),
+                // slice 0: this peer's Brawl content (the host ANDs both and dictates the result); waits for the map
+                // loaders, before any match
+                sse: sse_token(),
+                sse_pick: if host { gd_pick.unwrap_or(0) } else { 0 },
                 ..RoomSettings::default()
             },
             env,
@@ -1315,6 +1335,13 @@ impl NetDriver {
             (b.scene.clone(), b.seed, b.s.delay)
         };
         let scene = parse_scene(&scene_str).ok_or_else(|| format!("netplay: the agreed scene does not parse: {scene_str}"))?;
+        // slice 0: both peers play the host's `;sse=pick.mask` (the AND of the two machines' content); no extra = none
+        let sse = scene.extras.iter().find_map(|e| e.strip_prefix("sse=")).and_then(|v| {
+            let (p, m) = v.split_once('.')?;
+            Some((i32::from_str_radix(p, 16).ok()?, u32::from_str_radix(m, 16).ok()?))
+        });
+        melee_modes::tu::explore::apply_netplay(sse);
+        log(&format!("netplay {tag}: content {}", melee_modes::tu::explore::header_token()));
         // both peers freeze the same words: player 1 the host's, player 2 the guest's (the room's agreed `J` pair)
         melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Netplay(room.sh.borrow().controls));
         log(&format!("netplay {tag}: match agreed after {:.2}s: \"{scene_str}\" (seed {seed}, delay {adelay}, rollback window {maxb})", t0.elapsed().as_secs_f32()));

@@ -62,12 +62,43 @@ pub struct RoomSettings {
     pub scene_extra: String,
     /// Handshake capability bits (`early::CAP_EARLY`), 0 = none (the C build's wire).
     pub caps: u8,
+    /// Slice 0 (Brawl SSE content): this peer's content token (`explore::content_token`, empty = none) and, host only,
+    /// its GD stage pick. The host ANDs the guest's token with its own (`content_and`) and dictates `;sse=pick.mask`.
+    pub sse: String,
+    pub sse_pick: i32,
 }
 
 impl Default for RoomSettings {
     fn default() -> Self {
-        RoomSettings { host: true, ck: 2, color: 0, stocks: 4, minutes: 8, delay: 2, stage_ext: 31, use_lobby: false, peer: None, name: String::new(), exe_hash: 0, stage_mode: 0, seed: None, controls: 0, scene_extra: String::new(), caps: 0 }
+        RoomSettings { host: true, ck: 2, color: 0, stocks: 4, minutes: 8, delay: 2, stage_ext: 31, use_lobby: false, peer: None, name: String::new(), exe_hash: 0, stage_mode: 0, seed: None, controls: 0, scene_extra: String::new(), caps: 0, sse: String::new(), sse_pick: 0 }
     }
+}
+
+/// Slice 0: the AND of two content tokens (`m<mask hex>` then `.k:<digest hex>` per stage bit k). A stage bit stays only
+/// when both peers have it with the same collision digest; bit 30 (enemy looks) when both have it. An empty or
+/// malformed token is no content.
+pub fn content_and(a: &str, b: &str) -> u32 {
+    fn parse(t: &str) -> (u32, Vec<(u32, u64)>) {
+        let mut it = t.split('.');
+        let m = it.next().and_then(|m| m.strip_prefix('m')).and_then(|m| u32::from_str_radix(m, 16).ok()).unwrap_or(0);
+        let d = it.filter_map(|f| { let (k, v) = f.split_once(':')?; Some((k.parse().ok()?, u64::from_str_radix(v, 16).ok()?)) }).collect();
+        (m, d)
+    }
+    let (ma, da) = parse(a);
+    let (mb, db) = parse(b);
+    let mut m = ma & mb;
+    for k in 0..30 {
+        if m & (1 << k) != 0 {
+            let x = da.iter().find(|e| e.0 == k).map(|e| e.1);
+            if x.is_none() || x != db.iter().find(|e| e.0 == k).map(|e| e.1) {
+                m &= !(1 << k);
+            }
+        }
+    }
+    if m & 0x3FFF_FFFF == 0 {
+        m = 0;
+    }
+    m
 }
 
 pub fn controls_word_valid(w: u32) -> bool {
@@ -90,6 +121,8 @@ pub struct Shared {
     pub peer_gone: bool,
     pub env: Box<dyn RoomEnv>,
     pub log: Vec<String>,
+    /// the agreed `;sse=` extra (host: set from the guest's HELLO)
+    sse_agreed: String,
     xtras: String,
     t0: std::time::Instant,
 }
@@ -115,7 +148,7 @@ impl Shared {
         self.send(m);
     }
     fn build_scene_for(&self, hck: i32, hc: i32, gck: i32, gc: i32) -> String {
-        build_scene(&self.env.token_for_ck(hck), hc, &self.env.token_for_ck(gck), gc, &self.env.token_for_ext(self.s.stage_ext), self.s.stocks, self.s.minutes, 0) + &self.s.scene_extra
+        build_scene(&self.env.token_for_ck(hck), hc, &self.env.token_for_ck(gck), gc, &self.env.token_for_ext(self.s.stage_ext), self.s.stocks, self.s.minutes, 0) + &self.s.scene_extra + &self.sse_agreed
     }
 
     /// np_cb_guest_hello.
@@ -142,6 +175,17 @@ impl Shared {
         }
         self.controls[0] = self.s.controls;
         self.controls[1] = if controls_word_valid(word) { word } else { 0 };
+        // slice 0: the content both peers have (an absent token on either side = none). Always dictated when the
+        // host has content, so a guest with more never plays more than the host.
+        let gx = s.split('/').find_map(|p| p.strip_prefix('x')).unwrap_or("");
+        self.sse_agreed = if self.s.sse.is_empty() {
+            String::new()
+        } else {
+            let m = content_and(&self.s.sse, gx);
+            let pick = if self.s.sse_pick != 0 { self.s.sse_pick } else { 0 };
+            self.log.push(format!("content: host {} guest {} -> mask {m:x}", self.s.sse, if gx.is_empty() { "-" } else { gx }));
+            format!(";sse={pick:x}.{m:x}")
+        };
         self.scene = self.build_scene_for(self.s.ck, self.s.color, gck, gc);
         let out = format!("J {} {} {}", self.controls[0], self.controls[1], self.scene);
         if out.len() + 1 > blob.len() || out.len() + 1 > MAX_BLOB {
@@ -351,6 +395,7 @@ impl Room {
             peer_gone: false,
             env,
             log: Vec::new(),
+            sse_agreed: String::new(),
             xtras: String::new(),
             t0,
         }));
@@ -411,7 +456,10 @@ impl Room {
             self.sh.borrow_mut().scene = scene;
             Net::host(&cfg, cb, tp)
         } else {
-            let info = format!("{}/c{}/j{}", self.sh.borrow().env.token_for_ck(s.ck), s.color, s.controls);
+            let mut info = format!("{}/c{}/j{}", self.sh.borrow().env.token_for_ck(s.ck), s.color, s.controls);
+            if !s.sse.is_empty() {
+                info += &format!("/x{}", s.sse);
+            }
             cfg.guest_info = info.into_bytes();
             let peer = peer.ok_or("no host address")?;
             Net::join(&cfg, cb, tp, peer)

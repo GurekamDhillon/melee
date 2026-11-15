@@ -60,6 +60,11 @@ pub const P_ELITE_WAVE: usize = 50;
 /// The stage a live stage transition will go to next (Gr_Kind; 0 none): hinted to the asset worker with the plan, so
 /// its file is in memory long before the hand-off frame.
 pub const P_STAGE_NEXT: usize = 51;
+/// Slice 0 (envoy-sse-design): the Brawl content this fight may use, stamped by the host at `match_begin` (the sim
+/// leaves 42-43 zero): the content mask played (`explore::effective_mask`) and the room map's collision digest
+/// (folded to 32 bits; 0 when the fight is not in an SSE room).
+pub const P_SSE_MASK: usize = 42;
+pub const P_SSE_DIGEST: usize = 43;
 /// Final Destination (Gr_Kind): the Petey arena for now (an original stage is later work).
 const GR_FD: i32 = 37;
 
@@ -596,6 +601,12 @@ pub unsafe extern "C" fn envoy_sel_frame() {
         }
         return;
     }
+    // zero-hitch.md: the match commons (ItCo, IfAll) are parsed here, in the select's own frames under the camp's
+    // cover, instead of in the match's setup tick (their decode was a third of that tick). Envoy only.
+    let ahead = melee_runtime::tu::lbdvd::lbDvd_ParseAhead();
+    if ahead > 0 {
+        melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("select: match commons parsed ahead: ").n(ahead as i64));
+    }
     if SEL_FRAMES == 2 {
         crate::tu::adapt::gm_801A4B60__d469d9();
     }
@@ -832,12 +843,18 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     r.time_limit = 0;
     r.item_freq = -1;
     let petey = PLAN[P_BOSS] == 1 && crate::tu::petey::selected();
-    // the exploration room (explore.rs, MELEE_ENVOY_EXPLORE=1, off by default): every non-boss fight is played in the
-    // Brawl map section, carried by Final Destination
-    let explore = !petey && crate::tu::explore::enabled() && crate::tu::explore::map().is_some();
-    crate::tu::explore::WANT = explore;
-    crate::tu::explore::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it
-    let stage = if petey || explore { GR_FD } else { PLAN[P_STAGE] };
+    // the exploration room (explore.rs, MELEE_ENVOY_EXPLORE=1, off by default): every non-boss fight is played on the
+    // GD stage slot of the Brawl map section (GD_STAGE_SSE_LAKE3, carried by Final Destination)
+    use crate::tu::explore as ex;
+    let explore = !petey && ex::enabled() && ex::available(ex::GD_STAGE_SSE_LAKE3) && ex::map().is_some();
+    let room_stage = if explore { ex::GD_STAGE_SSE_LAKE3 } else { 0 };
+    ex::WANT = explore;
+    PLAN[P_SSE_MASK] = ex::effective_mask() as i32;
+    PLAN[P_SSE_DIGEST] = if explore { let d = ex::digest(room_stage); (d ^ (d >> 32)) as u32 as i32 } else { 0 };
+    ex::PICK = 0; // a VS pick never leaks into a run
+    ex::ARENA_WANT = petey; // Petey's fight in his own arena (explore.rs), when the owner's files have it
+    // a GD stage rides on its carrier (Final Destination's ground kind here)
+    let stage = if petey || ex::is_gd_stage(room_stage) { GR_FD } else { PLAN[P_STAGE] };
     if stage > 0 && crate::tu::stage_hop::supported(stage) {
         r.stkind = melee_world::tu::stage::Stage_StageSlotSelect(stage) as u16;
     }

@@ -15,6 +15,9 @@ stages=("FINAL DESTINATION" "BATTLEFIELD" "YOSHI'S STORY" "FOUNTAIN OF DREAMS" "
         "GREAT BAY" "HYRULE TEMPLE" "BRINSTAR DEPTHS" "YOSHI'S ISLAND" "GREEN GREENS" "FOURSIDE" "MUSHROOM KINGDOM"
         "MUSHROOM KINGDOM II" "VENOM" "POKE FLOATS" "BIG BLUE" "ICICLE MOUNTAIN" "FLAT ZONE" "YOSHI'S ISLAND N64"
         "KONGO JUNGLE N64")
+# the Brawl SSE maps (GD stages, explore.rs) when the owner's files are there: every section is drawn in the first
+# second (the warm-up draw), so a short match seeds all their material pipelines
+[ -n "${MELEE_BRAWL_LOCAL:-}" ] && stages+=(lake jungle)
 # envoy_sim CPU_POOL (the foes a wave can bring) and the two starters, as --match names, two per match
 pairs=("falcon dk" "fox gw" "kirby bowser" "link luigi" "mario marth" "mewtwo ness" "peach pikachu" "jigglypuff samus"
        "yoshi falco" "younglink drmario" "roy pichu" "zelda sheik")

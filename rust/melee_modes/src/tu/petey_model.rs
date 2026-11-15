@@ -127,6 +127,12 @@ pub fn brawl_present() -> bool {
     })
 }
 
+/// Whether the owner's Brawl folder has adventure archive `name` (`MELEE_BRAWL_ABSENT`: as if missing).
+pub fn adventure_present(name: &str) -> bool {
+    std::env::var_os("MELEE_BRAWL_ABSENT").is_none()
+        && local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(name).is_file())
+}
+
 fn local_root() -> Option<PathBuf> {
     if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
         return Some(PathBuf::from(p));
@@ -330,6 +336,39 @@ pub fn load_rigs_with(rel: &[&str], wants: &[(&str, &str, &str)], strip: bool) -
         .collect())
 }
 
+/// Stage props (explore.rs: moving collision): every MDL0 named in `want` from the leaves of one map archive, each
+/// with every CHR0 of the archive (by full name) and its root motion kept. Call it on a helper thread.
+pub fn prop_rigs(leaves: &[Vec<u8>], want: &[&str]) -> Vec<Option<Rig>> {
+    let mut mdls: Vec<(String, usize, usize)> = vec![];
+    let mut chrs: Vec<(String, usize, usize)> = vec![];
+    for (li, b) in leaves.iter().enumerate() {
+        if b.len() < 0x10 || &b[..4] != b"bres" {
+            continue;
+        }
+        let Some(entries) = brres_entries(b) else { continue };
+        for (name, off) in entries {
+            let list = match b.get(off..off + 4) {
+                Some(b"CHR0") => &mut chrs,
+                Some(b"MDL0") => &mut mdls,
+                _ => continue,
+            };
+            if !list.iter().any(|(n, _, _)| *n == name) {
+                list.push((name, li, off));
+            }
+        }
+    }
+    want.iter()
+        .map(|w| {
+            let (_, li, off) = mdls.iter().find(|(n, _, _)| n == w)?;
+            let mut r = mdl0(&leaves[*li], *off, &[])?;
+            for (n, cl, co) in &chrs {
+                r.anims.push((n.clone(), chr0(&leaves[*cl], *co)));
+            }
+            Some(r)
+        })
+        .collect()
+}
+
 // ---------------------------------------------------------------- containers
 
 fn be16(d: &[u8], o: usize) -> u16 {
@@ -454,7 +493,7 @@ fn group(d: &[u8], g: usize) -> Vec<(String, usize)> {
 }
 
 /// All second-level entries of a BRRES (every folder's items).
-fn brres_entries(d: &[u8]) -> Option<Vec<(String, usize)>> {
+pub fn brres_entries(d: &[u8]) -> Option<Vec<(String, usize)>> {
     let root = be16(d, 0xC) as usize;
     if d.get(root..root + 4)? != b"root" {
         return None;
@@ -693,7 +732,7 @@ fn xf(m: &M34, p: [f32; 3], w: f32) -> [f32; 3] {
 // ---------------------------------------------------------------- CHR0
 
 /// One animated channel.
-enum Track {
+pub enum Track {
     Fixed(f32),
     /// Hermite keys: (frame, value, tangent).
     Keys(Vec<[f32; 3]>),
@@ -745,7 +784,7 @@ impl Track {
 /// A CHR0: its length and, per bone name, the nine channels (scale xyz, rotation xyz degrees, translation xyz).
 pub struct Anim {
     pub frames: f32,
-    tracks: Vec<(String, [Option<Track>; 9])>,
+    pub tracks: Vec<(String, [Option<Track>; 9])>,
 }
 
 impl Anim {
@@ -891,8 +930,8 @@ fn chr0(d: &[u8], c: usize) -> Anim {
 
 // ---------------------------------------------------------------- MDL0 -> skinned rig
 
-struct Bone {
-    name: String,
+pub struct Bone {
+    pub name: String,
     /// the bone's own index (MDL0 bone header +0x0C), what param files refer to
     index: u32,
     srt: [[f32; 3]; 3],
@@ -939,7 +978,7 @@ pub struct Batch {
 }
 
 pub struct Rig {
-    bones: Vec<Bone>,
+    pub bones: Vec<Bone>,
     srcs: Vec<Src>,
     /// (source, position, normal (zero: none), vertex colour, texture coordinate)
     verts: Vec<(u16, [f32; 3], [f32; 3], [u8; 4], [f32; 2])>,
@@ -1009,6 +1048,10 @@ impl Rig {
             d.push(x);
         }
         self.bones.iter().zip(d).map(|(b, x)| (b.name.clone(), x)).collect()
+    }
+    /// A bone's own MDL0 index.
+    pub fn bone_index(&self, slot: usize) -> u32 {
+        self.bones.get(slot).map(|b| b.index).unwrap_or(u32::MAX)
     }
     pub fn bone_name(&self, slot: usize) -> &str {
         self.bones.get(slot).map(|b| b.name.as_str()).unwrap_or("")
@@ -1407,6 +1450,62 @@ pub fn extent(tris: &[Vert]) -> ([f32; 3], [f32; 3]) {
 /// the material's alpha compare; opaque, back faces kept. `flash`: solid white.
 /// `org`: the model-space ground height and depth centre that land on `at` (x stays: the model's x is its own).
 /// Allocates nothing of its own: the texture objects live in the model, made on the loader's helper thread.
+/// Every texture `rig`'s batches draw with: (texels, width, height, GX format, mip levels), as `draw_tris` hands
+/// them to `GXInitTexObj` (for an upload ahead of the first draw).
+pub fn rig_textures(rig: &Rig, mut f: impl FnMut(*const u8, u16, u16, u32, u32)) {
+    for bt in &rig.batches {
+        if let Some(t) = &bt.tex {
+            f(t.data.as_ptr(), t.w, t.h, t.fmt, t.levels as u32);
+        }
+    }
+}
+
+/// `draw_tris` draws one triangle per material batch only (set around a call; presentation only).
+pub static mut SAMPLE: bool = false;
+
+/// A static model's triangles as GX display lists, one per material batch, placed at `at` (no scale or turn): the
+/// bytes `draw_tris`'s immediate-mode loop would write for it (GX_DRAW_TRIANGLES on VTXFMT0, then per vertex the
+/// position as 3 BE f32, RGBA8 with alpha 255, and for a textured batch the texture coordinate as 2 BE f32). Built
+/// once off the game thread (a section's 10-20 k triangles cost ~1 ms a draw one GX call at a time).
+pub fn build_lists(rig: &Rig, tris: &[Vert], at: [f32; 2]) -> Vec<Vec<u8>> {
+    let mut out = Vec::with_capacity(rig.batches.len());
+    let mut start = 0usize;
+    for bt in &rig.batches {
+        let end = (bt.end as usize).min(tris.len());
+        let run = &tris[start.min(end)..end];
+        start = end;
+        let textured = bt.tex.is_some();
+        let mut l = Vec::with_capacity(run.len() * if textured { 24 } else { 16 } + 3 * (run.len() / 60000 + 1) + 32);
+        for chunk in run.chunks(3 * 20000) {
+            l.push((melee_types::GX_TRIANGLES | melee_types::GX_VTXFMT0) as u8);
+            l.extend_from_slice(&(chunk.len() as u16).to_be_bytes());
+            for (p, col, uv) in chunk {
+                for v in [at[0] + p[0], at[1] + p[1], p[2]] {
+                    l.extend_from_slice(&v.to_bits().to_be_bytes());
+                }
+                l.extend_from_slice(&[col[0], col[1], col[2], 255]);
+                if textured {
+                    l.extend_from_slice(&uv[0].to_bits().to_be_bytes());
+                    l.extend_from_slice(&uv[1].to_bits().to_be_bytes());
+                }
+            }
+        }
+        // GX display lists are whole 32-byte blocks (NOPs after the last command)
+        l.resize(l.len().next_multiple_of(32), 0);
+        out.push(l);
+    }
+    out
+}
+
+/// `draw_tris` with a model's prebuilt display lists (`build_lists`, same placement): one GX call per batch.
+pub unsafe fn draw_tris_lists(rig: &Rig, tris: &[Vert], at: [f32; 3], lists: &[Vec<u8>]) {
+    LISTS = Some(core::mem::transmute::<&[Vec<u8>], &'static [Vec<u8>]>(lists));
+    draw_tris(rig, tris, [0.0, 0.0], at, 1.0, 0.0, false);
+    LISTS = None;
+}
+/// set by `draw_tris_lists` around one `draw_tris` call
+static mut LISTS: Option<&'static [Vec<u8>]> = None;
+
 pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
     let (s, c) = (yaw.sin(), yaw.cos());
     draw_tris_m(rig, tris, org, at, scale, [[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]], flash)
@@ -1449,7 +1548,7 @@ pub unsafe fn draw_tris_m(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3],
     melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm((&mut (*cobj).view_mtx) as *mut Mtx as _, 0);
     gx::GXSetCurrentMtx(0);
     let mut start = 0usize;
-    for bt in &rig.batches {
+    for (bi, bt) in rig.batches.iter().enumerate() {
         let end = (bt.end as usize).min(tris.len());
         let run = &tris[start.min(end)..end];
         start = end;
@@ -1492,6 +1591,15 @@ pub unsafe fn draw_tris_m(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3],
             gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
         }
         // GX vertex counts are u16: send in chunks of whole triangles
+        // SAMPLE: one triangle per batch (keeps the batch's texture resident in the renderer's cache; the caller
+        // draws it where the camera does not look)
+        let run = if SAMPLE { &run[..3.min(run.len())] } else { run };
+        if let (Some(ls), false) = (LISTS, SAMPLE) {
+            if let Some(l) = ls.get(bi).filter(|l| !l.is_empty()) {
+                melee_runtime::tu::pobj::ext::GXCallDisplayList(l.as_ptr() as *mut _, l.len() as u32);
+                continue;
+            }
+        }
         for chunk in run.chunks(3 * 20000) {
             gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
             for (p, col, uv) in chunk {

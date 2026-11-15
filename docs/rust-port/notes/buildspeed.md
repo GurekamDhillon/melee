@@ -128,3 +128,21 @@ Same source, two exes (release and fast), compared with `cmp`:
 - Stay on release, on purpose: the exe handed to the owner (candidate builds), `launcher/package.sh`, `yougame/package.sh`,
   `perf/zero_hitch_gate.sh`, `perf/snapguard.sh`, and any frame-time measurement. A fast exe runs a little slower (no LTO).
   Say "release" in the report of any such build.
+
+## melee_link compile memory re-measured on port/buildspeed2 (Nov 15): no regression
+A sampler once recorded 9,117 MB for "melee_link" on this branch. Re-measured at da42db877 (six part crates, 15,088 hooks, HOOKS
+17,590 rows) merged with genbloat 8559eac89, own target dir, `-j 3`, peak working set of each rustc filtered to this worktree's
+path (the earlier sample matched every rustc on the machine, so another lane's unsplit melee_link or melee_engine can show up under
+the same name). `gen_link.py` already keeps only HOOKS, `install_all` (six calls) and the retail code in melee_link: no generator
+change was needed.
+
+| crate | release (MB) | fast (MB) |
+|---|---|---|
+| melee_link alone (touch, rebuild) | 2,730 (55 s) | 3,207 (6 s, incremental) |
+| melee_link_p0..p5 | 1,066 / 1,437 / 2,162 / 1,521 / 1,260 / 988 | - |
+| melee_engine | 3,453 | - |
+| melee | 3,536 | - |
+| melee_items / melee_fighter / melee_modes | 2,784 / 2,553 / 1,654 | - |
+
+Release `cargo build -p melee`: clean 350 s; edit melee_modes 152 s; edit melee_engine 152 s (incl. the engine's 29 s rebuild after
+genbloat; was 130 s). `check_split.py` against linkdrift's single-file table: IDENTICAL. `gate.sh` and `RELEASE=1 gate.sh`: GATE OK.

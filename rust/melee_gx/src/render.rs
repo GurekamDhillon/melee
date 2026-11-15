@@ -278,9 +278,43 @@ pub mod preload {
     }
     /// Every pinned texture may age out again (a match began: what it draws it has drawn; the rest goes).
     pub static UNPIN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-    /// Textures still queued.
+    /// Converted on the worker thread ([`start_worker`]), waiting for their upload by `preload_some`.
+    pub(crate) static READY: Mutex<std::collections::VecDeque<(TexObj, crate::texture::Converted)>> = Mutex::new(std::collections::VecDeque::new());
+    /// Being converted by the worker (counted in [`pending`]).
+    static BUSY: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    /// Textures still queued (to convert, being converted, or converted and not yet uploaded).
     pub fn pending() -> usize {
-        Q.lock().unwrap().len()
+        Q.lock().unwrap().len() + READY.lock().unwrap().len() + BUSY.load(std::sync::atomic::Ordering::Relaxed)
+    }
+    /// The conversion (GX tiles / CMPR to RGBA8: nearly all of a texture's cost) runs on one thread of its own, so a
+    /// frame only creates and uploads what is already converted. Before, `preload_some` converted ~1 MB of texels on
+    /// the presenting thread each frame (2.5-4.7 ms), which landed in the match's first frames when the stage was
+    /// picked quickly. Started by the renderer on its first preload frame (host thread, system heap).
+    pub(crate) fn start_worker() {
+        static STARTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if STARTED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            return;
+        }
+        let _ = std::thread::Builder::new().name("gx-tex-preload".into()).spawn(|| loop {
+            let o = {
+                let mut q = Q.lock().unwrap();
+                if q.is_empty() {
+                    None
+                } else {
+                    BUSY.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    Some(q.remove(0))
+                }
+            };
+            let Some(o) = o else {
+                std::thread::sleep(std::time::Duration::from_millis(2));
+                continue;
+            };
+            if let Some(d) = o.data.as_ref().filter(|_| o.width() != 0 && o.height() != 0) {
+                let c = crate::texture::convert_texture(o.format(), o.width(), o.height(), o.mip_count(), d);
+                READY.lock().unwrap().push_back((o, c));
+            }
+            BUSY.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
+        });
     }
 }
 /// `MELEE_TEX_LOG=1`: one line per texture made (checks only).
@@ -290,7 +324,7 @@ fn tex_log() -> bool {
 }
 
 /// Time a frame spends on queued preloads (ms).
-const PRELOAD_MS: f64 = 2.5;
+const PRELOAD_MS: f64 = 1.0;
 
 /// An address alias not used for this many prepared frames is dropped (releasing the guest buffer it holds): a
 /// buffer handed over anew every frame then pins at most a few frames' worth of bytes.
@@ -371,6 +405,8 @@ pub struct Renderer {
     /// Textures of the frame being prepared, converted ahead on several threads ([`Renderer::convert_ahead`]);
     /// `texture_view` takes its texture from here instead of converting it.
     tex_ready: FxMap<TexKey, texture::Converted>,
+    /// The EFB targets of the previous shape (`set_target`): (width, height, samples) and color, depth, msaa.
+    spare_targets: Option<((u32, u32, u32), (wgpu::Texture, wgpu::Texture, Option<wgpu::Texture>))>,
     /// `tex_override::generation()` the decoded textures were made under.
     ovr_gen: u64,
     /// [`Renderer::prepare`] calls so far (texture eviction clock).
@@ -1211,15 +1247,32 @@ impl Renderer {
             return false;
         }
         let (w, h) = Self::target_size(self.base, scale, aspect, self.device.limits().max_texture_dimension_2d);
-        let (color, depth, msaa) = make_targets(&self.device, w, h, self.samples);
-        self.color = color;
-        self.depth = depth;
-        self.msaa = msaa;
+        // The targets being replaced are kept as the spare: a match's entry switches 4:3 -> 16:9 and its exit back, and
+        // making the new targets anew (and freeing the old) landed in the match's setup frame. Presentation only.
+        let (color, depth, msaa) = match self.spare_targets.take() {
+            Some(((sw, sh, sn), t)) if (sw, sh, sn) == (w, h, self.samples) => t,
+            _ => make_targets(&self.device, w, h, self.samples),
+        };
+        let old = (std::mem::replace(&mut self.color, color), std::mem::replace(&mut self.depth, depth), std::mem::replace(&mut self.msaa, msaa));
+        self.spare_targets = Some(((self.width, self.height, self.samples), old));
         self.width = w;
         self.height = h;
         self.scale = scale;
         self.aspect = aspect;
         true
+    }
+
+    /// Make the EFB targets for `scale` / `aspect` ahead as the spare, so the [`Renderer::set_target`] switching to
+    /// them only swaps (no-op when they are current or already the spare).
+    pub fn prewarm_target(&mut self, scale: u32, aspect: f32) {
+        let scale = scale.clamp(1, Self::MAX_SCALE);
+        let aspect = if aspect.is_finite() && aspect > 0.0 { aspect } else { 4.0 / 3.0 };
+        let (w, h) = Self::target_size(self.base, scale, aspect, self.device.limits().max_texture_dimension_2d);
+        let k = (w, h, self.samples);
+        if (self.width, self.height) == (w, h) || self.spare_targets.as_ref().is_some_and(|s| s.0 == k) {
+            return;
+        }
+        self.spare_targets = Some((k, make_targets(&self.device, w, h, self.samples)));
     }
 
     /// The wgpu instance [`Renderer::new`] uses (Vulkan; WGPU_BACKEND overrides).
@@ -1381,6 +1434,7 @@ impl Renderer {
             tex_alias: FxMap::default(),
             tex_bytes: 0,
             tex_ready: FxMap::default(),
+            spare_targets: None,
             ovr_gen: crate::tex_override::generation(),
             prepared: 0,
             packed: None,
@@ -1707,59 +1761,37 @@ impl Renderer {
         Some(key)
     }
 
-    /// Convert and upload queued [`preload`] textures for at most `PRELOAD_MS` this frame (converted on threads, as
-    /// `convert_ahead`), pinned until their first draw.
+    /// Upload queued [`preload`] textures for at most `PRELOAD_MS` this frame (converted ahead on the worker thread),
+    /// pinned until their first draw.
     fn preload_some(&mut self) {
         if preload::UNPIN.swap(false, std::sync::atomic::Ordering::Relaxed) {
             for e in self.textures.values() {
                 e.pin.set(false);
             }
         }
-        let batch: Vec<TexObj> = {
-            let mut q = preload::Q.lock().unwrap();
-            if q.is_empty() {
-                return;
-            }
-            // about 1 MB of GX texels a frame: the SSE maps' 15-18 MB go up in well under a second
-            let mut bytes = 0usize;
-            let mut n = 0;
-            while n < q.len() && bytes < 1 << 20 {
-                bytes += q[n].data.as_ref().map_or(0, |d| d.len());
-                n += 1;
-            }
-            q.drain(..n).collect()
-        };
-        let t0 = std::time::Instant::now();
-        let mut jobs: Vec<(TexKey, &TexObj)> = Vec::new();
-        for o in &batch {
-            if o.width() == 0 || o.height() == 0 {
-                continue;
-            }
-            let Some(key) = self.tex_key_obj(o) else { continue };
-            if self.textures.contains_key(&key) || jobs.iter().any(|j| j.0 == key) {
-                continue;
-            }
-            jobs.push((key, o));
+        if preload::Q.lock().unwrap().is_empty() && preload::READY.lock().unwrap().is_empty() {
+            return;
         }
-        let out: Vec<std::sync::Mutex<Option<texture::Converted>>> = (0..jobs.len()).map(|_| std::sync::Mutex::new(None)).collect();
-        let next = std::sync::atomic::AtomicUsize::new(0);
-        let work = || loop {
-            let k = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            let Some((_, o)) = jobs.get(k) else { break };
-            let Some(d) = o.data.as_ref() else { continue };
-            *out[k].lock().unwrap() = Some(texture::convert_texture(o.format(), o.width(), o.height(), o.mip_count(), d));
-        };
-        let nt = std::thread::available_parallelism().map_or(4, |n| n.get()).saturating_sub(2).clamp(1, 6).min(jobs.len().max(1));
-        std::thread::scope(|s| {
-            for _ in 1..nt {
-                s.spawn(work);
+        preload::start_worker();
+        // a frame that already converts a burst of its own new textures uploads no preloads
+        if !self.tex_ready.is_empty() {
+            return;
+        }
+        let t0 = std::time::Instant::now();
+        // the uploads only (converted on the worker): at most ~2 MB of RGBA8 or PRELOAD_MS a frame, checked before each
+        let mut up = 0usize;
+        loop {
+            if up >= 2 << 20 || t0.elapsed().as_secs_f64() * 1e3 > PRELOAD_MS {
+                break;
             }
-            work();
-        });
-        let mut done = 0;
-        for ((key, o), c) in jobs.iter().zip(out) {
-            done += 1;
-            let Some(c) = c.into_inner().unwrap() else { continue };
+            let Some((o, c)) = preload::READY.lock().unwrap().pop_front() else { break };
+            let o = &o;
+            let Some(key) = self.tex_key_obj(o) else { continue };
+            let key = &key;
+            if self.textures.contains_key(key) {
+                continue;
+            }
+            up += c.data.len();
             let (w, h, mips) = (o.width(), o.height(), o.mip_count());
             let desc = wgpu::TextureDescriptor {
                 label: Some("GX texture (preloaded)"),
@@ -1798,17 +1830,6 @@ impl Renderer {
                 eprintln!("gx tex: preloaded {:016x} len {} {}x{} fmt {} mips {} (frame {})", key.hash[0], key.len, key.w, key.h, key.fmt, key.mips, self.prepared);
             }
             self.textures.insert(*key, TexEntry { _tex: tex, view, bytes, used: std::cell::Cell::new(self.prepared), pin: std::cell::Cell::new(true) });
-            if t0.elapsed().as_secs_f64() * 1e3 > PRELOAD_MS {
-                break;
-            }
-        }
-        // what the time budget left goes back to the front of the queue
-        let left: Vec<TexObj> = jobs.iter().skip(done).map(|(_, o)| (*o).clone()).collect();
-        if !left.is_empty() {
-            let mut q = preload::Q.lock().unwrap();
-            let rest = std::mem::take(&mut *q);
-            *q = left;
-            q.extend(rest);
         }
         if melee_core::frameprof::on() {
             melee_core::frameprof::add(melee_core::frameprof::C::TexNs, t0.elapsed().as_nanos() as u64);

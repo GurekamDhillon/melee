@@ -106,6 +106,16 @@ pub fn aspect() -> f32 {
     }
 }
 
+/// The content aspect a widened scene (a match) will have in this window: the presenter makes its EFB targets ahead.
+pub fn wide_aspect() -> f32 {
+    let win = f32::from_bits(WINDOW.load(Relaxed));
+    if widescreen() && win > 0.0 {
+        content_aspect(win, 1.0, true)
+    } else {
+        MIN_ASPECT
+    }
+}
+
 /// `gw_View_ProjectionScaleBits`.
 pub fn projection_scale_bits() -> i32 {
     if !camera_mode() {

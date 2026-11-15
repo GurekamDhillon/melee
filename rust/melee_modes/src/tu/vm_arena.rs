@@ -148,7 +148,7 @@ pub fn live() -> bool {
 }
 
 /// One frame, after the boss's: the link in, the Flyer stepped, its deck moved.
-pub unsafe fn frame(frame: u32, log: bool) {
+pub unsafe fn arena_frame(frame: u32, log: bool) {
     let Some(p) = program() else { return };
     if !live() {
         return;

@@ -483,7 +483,7 @@ pub unsafe fn tick() {
     if cf.dmg.x195c_hitlag_frames <= 0.0 || B.cause != 0 {
         if let Some(p) = vm() {
             vm_frame(vm_run(p));
-            crate::tu::vm_arena::frame(B.last_frame, log_on());
+            crate::tu::vm_arena::arena_frame(B.last_frame, log_on());
         } else if let Some(g) = geno() {
             let grab = grab_actor().is_some();
             let driving = grab && crate::tu::geno_boss_grab::body_before(cf);

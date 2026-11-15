@@ -462,8 +462,17 @@ fn lz(d: &[u8]) -> Option<Vec<u8>> {
 
 /// Every leaf (non-ARC) file in a (nested, possibly compressed) ARC.
 fn walk(d: &[u8], depth: u32, out: &mut Vec<Vec<u8>>) {
+    walk_tagged(d, depth, out, &mut vec![], None);
+}
+
+/// [`walk`], and with `tags` each leaf's place in the archive tree: the (file type, file index) of every archive
+/// entry from the top down to the leaf (Brawl's gfArchive looks files up by that pair).
+fn walk_tagged(d: &[u8], depth: u32, out: &mut Vec<Vec<u8>>, at: &mut Vec<(u16, u16)>, mut tags: Option<&mut Vec<Vec<(u16, u16)>>>) {
     if depth > 6 || d.len() < 0x40 || &d[..4] != b"ARC\0" {
         out.push(d.to_vec());
+        if let Some(t) = tags {
+            t.push(at.clone());
+        }
         return;
     }
     let n = be16(d, 6) as usize;
@@ -471,7 +480,9 @@ fn walk(d: &[u8], depth: u32, out: &mut Vec<Vec<u8>>) {
     for _ in 0..n {
         let sz = be32(d, p + 4) as usize;
         let Some(body) = d.get(p + 0x20..p + 0x20 + sz) else { return };
-        walk(&unwrap(body.to_vec()), depth + 1, out);
+        at.push((be16(d, p), be16(d, p + 2)));
+        walk_tagged(&unwrap(body.to_vec()), depth + 1, out, at, tags.as_deref_mut());
+        at.pop();
         p = (p + 0x20 + sz + 0x1f) & !0x1f;
     }
 }
@@ -1210,6 +1221,22 @@ fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mu
 }
 
 fn mdl0(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Option<Rig> {
+    mdl0_any(d, m, texs, true)
+}
+
+/// A bone-only rig (no geometry needed) from the first MDL0 of BRRES `d`, with every CHR0 of `d`: a stage gimmick's
+/// locator model (explore.rs: placement paths).
+pub fn locator_rig(d: &[u8]) -> Option<Rig> {
+    let entries = brres_entries(d)?;
+    let (_, m) = entries.iter().find(|(_, o)| d.get(*o..*o + 4) == Some(b"MDL0"))?;
+    let mut r = mdl0_any(d, *m, &[], false)?;
+    for (n, o) in entries.iter().filter(|(_, o)| d.get(*o..*o + 4) == Some(b"CHR0")) {
+        r.anims.push((n.clone(), chr0(d, *o)));
+    }
+    Some(r)
+}
+
+fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tris: bool) -> Option<Rig> {
     if be32(d, m + 8) != 9 {
         return None; // only the v9 layout is read
     }
@@ -1417,7 +1444,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Option<Ri
         bt.end = tris.len() as u32;
         batches.push(bt);
     }
-    if tris.is_empty() {
+    if tris.is_empty() && need_tris {
         return None;
     }
     Some(Rig { bones, srcs, verts: tris, batches, anims: vec![], min: [0.0; 3], max: [0.0; 3], motion_log: String::new() })
@@ -1695,6 +1722,15 @@ pub fn pac_leaves(name: &str) -> Option<Vec<Vec<u8>>> {
     let mut leaves = vec![];
     walk(&unwrap(raw), 0, &mut leaves);
     Some(leaves)
+}
+
+/// [`pac_leaves`] with each leaf's (file type, file index) path through the archive tree.
+pub fn pac_leaves_tagged(name: &str) -> Option<(Vec<Vec<u8>>, Vec<Vec<(u16, u16)>>)> {
+    let root = local_root()?;
+    let raw = std::fs::read(root.join("disc").join("files").join("stage").join("adventure").join(name)).ok()?;
+    let (mut leaves, mut tags) = (vec![], vec![]);
+    walk_tagged(&unwrap(raw), 0, &mut leaves, &mut vec![], Some(&mut tags));
+    Some((leaves, tags))
 }
 
 /// The MDL0s named in `want` from `leaves` (textures resolved across every BRRES of the archive), each posed once in

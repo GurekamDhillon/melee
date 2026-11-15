@@ -150,6 +150,10 @@ pub struct Map {
     brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)>,
     /// moving platforms' bone positions per frame (section space; `Block::path`)
     paths: Vec<Vec<[f32; 2]>>,
+    /// per spawn (`spawns`): index into `enemy_paths`, usize::MAX none
+    pub spawn_path: Vec<usize>,
+    /// the placements' motion paths (Brawl's grGimmickMotionPath; `enemy_path`)
+    enemy_paths: Vec<EnemyPath>,
     /// what the loader left out or moved (printed with the load report)
     notes: Vec<String>,
     /// From the stage position model (arena only): camera limit and blast zones (left, right, top, bottom) and the
@@ -321,6 +325,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut door_models = vec![];
     let mut brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)> = vec![];
     let mut paths: Vec<Vec<[f32; 2]>> = vec![];
+    let mut spawn_path: Vec<usize> = vec![];
+    let mut enemy_paths: Vec<EnemyPath> = vec![];
     // load notes, printed by the game thread with the map's report (never printed from a loader thread)
     let mut notes: Vec<String> = vec![];
     let mut cam = None;
@@ -330,7 +336,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     for (si, s) in secs.iter().enumerate() {
         let p_first = players.len();
         let mut prop_cache: Option<Vec<pm::Rig>> = None;
-        let Some(leaves) = pm::pac_leaves(s.file) else {
+        let Some((leaves, tags)) = pm::pac_leaves_tagged(s.file) else {
             if si > 0 {
                 // a missing side room: the main section still plays (its doors into it stay shut)
                 ext.push([0.0; 4]);
@@ -493,7 +499,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
             }
         }
         // doors (GDOR) and enemy spawn points (GEG1)
-        for b in leaves.iter().filter(|d| d.get(..4) == Some(b"BLOC")) {
+        for (bi, b) in leaves.iter().enumerate().filter(|(_, d)| d.get(..4) == Some(b"BLOC")) {
             for e in bloc_entries(b, b"GDOR") {
                 doors.push(Door {
                     sec: si,
@@ -508,6 +514,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 });
             }
             for e in bloc_entries(b, b"GEG1") {
+                spawn_path.push(placement_path(&leaves, &tags, bi, b.get(e + 6).copied().unwrap_or(0xFF), s.off, &mut enemy_paths, &mut notes));
                 spawns.push((si, bef(b, e + 0x28) + s.off[0], bef(b, e + 0x2C) + s.off[1], if b[e + 0x67] != 0 { 1 } else { -1 }, be16(b, e + 0x1C)));
             }
             // the level-exit block (GMSJ) carries a copy of its exit door: that door's id
@@ -700,6 +707,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         door_models,
         brick_models,
         paths,
+        spawn_path,
+        enemy_paths,
         notes,
         cam,
         blast,
@@ -1467,6 +1476,72 @@ fn mover_path(leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8])
     None
 }
 
+/// A placement's motion path (Brawl's grGimmickMotionPath, read from the code: the enemy creator 0x81A12300
+/// region of sora_adv_stage.rel builds one when the placement's model index byte [off] is not 0xFF, with
+/// `grGimmickMotionPath::create(index, "path_locator", ...)` (0x81C6E13C); `startup` loads model data `index` from the
+/// section's archive; the creator's path object goes into the create parameter (0x81A130A0) and from there to the enemy
+/// (value 41000). The position at a frame is the `path_locator` node after the model's CHR0 is set to that frame
+/// (getTRS 0x81C6EB6C: setFrameModelAnim, then the node's translation).
+struct EnemyPath {
+    rig: pm::Rig,
+    anim: usize,
+    bone: usize,
+    off: [f32; 2],
+    frames: u32,
+}
+
+impl EnemyPath {
+    fn pos(&self, f: f32) -> [f32; 3] {
+        let p = self.rig.bone_point(self.rig.anims.get(self.anim).map(|a| &a.1), f, self.bone, [0.0; 3]);
+        [p[0] + self.off[0], p[1] + self.off[1], p[2]]
+    }
+}
+
+/// The motion path of the GEG1 placement in BLOC leaf `bi` whose model index is `idx`: model data (archive file type
+/// 2) `idx` next to the BLOC in the same archive. usize::MAX when there is none (0xFF) or it has no animated
+/// `path_locator`.
+fn placement_path(leaves: &[Vec<u8>], tags: &[Vec<(u16, u16)>], bi: usize, idx: u8, off: [f32; 2], out: &mut Vec<EnemyPath>, notes: &mut Vec<String>) -> usize {
+    if idx == 0xFF {
+        return usize::MAX;
+    }
+    let Some(t) = tags.get(bi) else { return usize::MAX };
+    let mut want = t[..t.len().saturating_sub(1)].to_vec();
+    want.push((2, idx as u16));
+    let Some(li) = tags.iter().position(|x| *x == want) else {
+        notes.push(format!("explore: placement path {idx}: no model data"));
+        return usize::MAX;
+    };
+    if let Some(r) = pm::locator_rig(&leaves[li]) {
+        let Some(bone) = (0..r.bones.len()).find(|&k| r.bone_name(k) == "path_locator") else { return usize::MAX };
+        let Some(anim) = r.anims.iter().position(|(_, a)| a.tracks.iter().any(|t| t.0 == "path_locator")) else { return usize::MAX };
+        let frames = fctiwz_f32(r.anims[anim].1.frames).max(1) as u32;
+        out.push(EnemyPath { rig: r, anim, bone, off, frames });
+        return out.len() - 1;
+    }
+    notes.push(format!("explore: placement path {idx}: no animated path_locator"));
+    usize::MAX
+}
+
+/// `vm::Path::pos` for the explore maps' placement paths: `id` = map slot << 16 | path index.
+fn enemy_path_pos(id: usize, f: f32) -> [f32; 3] {
+    maps().m.get(id >> 16)
+        .and_then(|m| m.get())
+        .and_then(|m| m.as_ref())
+        .and_then(|m| m.enemy_paths.get(id & 0xFFFF))
+        .map(|p| p.pos(f))
+        .unwrap_or([0.0; 3])
+}
+
+/// The enemy VM's inputs for spawn `k` of GD stage `id`'s map: its placement path (value 41000) and its home (the
+/// GEG1 spawn position, world space).
+pub fn enemy_vm_place(id: i32, k: usize) -> Option<(Option<brawl_boss::vm::Path>, [f32; 2])> {
+    let m = maps().m[slot_of(id)].get()?.as_ref()?;
+    let s = m.spawns.get(k)?;
+    let pi = m.spawn_path.get(k).copied().unwrap_or(usize::MAX);
+    let path = m.enemy_paths.get(pi).map(|p| brawl_boss::vm::Path { id: slot_of(id) << 16 | pi, frames: p.frames, pos: enemy_path_pos });
+    Some((path, [s.1, s.2]))
+}
+
 /// The moving platforms of the party's section: each joint's points follow its bone's path (the frame is the room
 /// clock), the previous place kept for the riders (`mpLib_80057424`), the joint's bounds refreshed.
 unsafe fn movers_tick(m: &Map) {
@@ -2096,5 +2171,73 @@ mod jungle_tests {
         assert!(m.doors.iter().any(|d| d.to == super::STORY_NEXT), "no way on");
         assert_eq!(m.doors.iter().filter(|d| d.kind == super::ENTRY).count(), 3, "sections not chained");
         assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"));
+    }
+
+    /// The Jungle's Bullet Bills on their own placement paths (GEG1 model index -> grGimmickMotionPath), through the
+    /// enemy VM headless: every start status, 1200 frames from the GEG1 home; a path rider must keep to the path's
+    /// points (plus the record's offset), and a replay from the frame-600 snapshot must give identical hashes.
+    #[test]
+    #[ignore]
+    fn jungle_bullet_bill_paths() {
+        use brawl_boss::vm;
+        let id = super::GD_STAGE_SSE_JUNGLE;
+        let Some(m) = super::load_into(super::maps(), id) else {
+            eprintln!("no local files, skipped");
+            return;
+        };
+        let Some(p) = crate::tu::geno_vm::program("bullet-bill") else {
+            eprintln!("no bullet-bill program, skipped");
+            return;
+        };
+        let riders: Vec<usize> = (0..m.spawns.len()).filter(|&k| m.spawns[k].4 == 13 && m.spawn_path[k] != usize::MAX).collect();
+        for n in m.notes.iter().filter(|n| n.contains("placement")) { eprintln!("{n}"); }
+        eprintln!("jungle: {} spawns, {} placement paths, {} Bullet Bills on a path", m.spawns.len(), m.enemy_paths.len(), riders.len());
+        assert!(!riders.is_empty());
+        let mut on_path = 0;
+        for &k in riders.iter().take(3) {
+            let (path, home) = super::enemy_vm_place(id, k).unwrap();
+            let pa = path.unwrap();
+            // no arena box (the program's default is a boss arena's; a Subspace path crosses its section's collision
+            // extent, and the map host hands walls and floors through the input)
+            let mut pp = p.clone();
+            pp.bounds = [-1.0e6, 1.0e6, -1.0e6, 1.0e6];
+            let p = &pp;
+            let inp = |_f: u32| vm::Input { path: Some(pa), home: Some(home), ground: false, ..Default::default() };
+            for st in 0..p.status_enter.len() as i32 {
+                let mut a = vm::OFF;
+                vm::begin(p, &mut a, 1, 5, 0x1234, st, true);
+                a.pos = [home[0], home[1], 0.0];
+                let (mut hashes, mut snap, mut near, mut moved, mut dev) = (vec![], None, 0u32, 0.0f32, None::<[f32; 2]>);
+                for f in 0..1200u32 {
+                    if f == 600 {
+                        snap = Some(a);
+                    }
+                    vm::step(p, &mut a, &inp(f));
+                    moved += a.moved;
+                    // on the path: the actor keeps one fixed offset (the record's offset values plus the frame's step) from
+                    // the path point at the rider unit's frame
+                    if let Some(u) = a.kin.iter().find(|u| matches!(u.ek, 21 | 22) && u.kind >= 0) {
+                        let q = (pa.pos)(pa.id, u.pf);
+                        let d = [a.pos[0] - q[0], a.pos[1] - q[1]];
+                        let d0 = *dev.get_or_insert(d);
+                        if (d[0] - d0[0]).abs() + (d[1] - d0[1]).abs() < 1.0 {
+                            near += 1;
+                        }
+                    }
+                    hashes.push(a.hash());
+                }
+                let q0 = (pa.pos)(pa.id, 0.0); if st == 0 { eprintln!("path pts {:?} ", [0.0f32, 60.0, 120.0, 180.0, 240.0].map(|g| { let q = (pa.pos)(pa.id, g); (q[0] as i32, q[1] as i32) })); }
+                eprintln!("spawn {k} status {st}: path {} frames from ({:.0},{:.0}), home ({:.0},{:.0}), moved {moved:.0}, on path {near}/1200, pos ({:.0},{:.0})", pa.frames, q0[0], q0[1], home[0], home[1], a.pos[0], a.pos[1]);
+                if moved > 400.0 && near > 1000 {
+                    on_path += 1;
+                }
+                let mut b = snap.unwrap();
+                for f in 600..1200u32 {
+                    vm::step(p, &mut b, &inp(f));
+                    assert_eq!(b.hash(), hashes[f as usize], "spawn {k} status {st}: replay diverged at {f}");
+                }
+            }
+        }
+        assert!(on_path > 0, "no Bullet Bill rode its placement path");
     }
 }

@@ -540,7 +540,9 @@ impl<G: Game> App<G> {
             let extra = self.last.map(|l| at.saturating_duration_since(l)).unwrap_or_default();
             let t = Instant::now();
             self.presented_tick = self.clock.ticks;
+            let zp = melee_core::tracy::zone("present phase (prepare + draw + acquire + present)");
             self.game.present(&w, self.clock.alpha_after(extra));
+            drop(zp);
             if !self.game.should_quit() {
                 crate::yougame::presented();
             }
@@ -560,6 +562,8 @@ impl<G: Game> App<G> {
             if melee_core::frameprof::on() {
                 melee_core::frameprof::end_frame();
             }
+            melee_core::tracy::frame_mark();
+            melee_core::tracy::plot("present ms", d.as_secs_f64() * 1e3);
             self.frames += 1;
             self.fps_frames += 1;
             self.fps_tick(&w);
@@ -596,6 +600,7 @@ impl<G: Game> App<G> {
         let dt = self.last.map(|l| now.saturating_duration_since(l)).unwrap_or_default();
         self.last = Some(now);
         for _ in 0..self.clock.advance(dt) {
+            let ztick = melee_core::tracy::zone("tick");
             let t = Instant::now();
             self.game.tick(&mut self.pads);
             if let Some(on) = self.game.take_hud_request() {
@@ -607,6 +612,8 @@ impl<G: Game> App<G> {
                 self.apply_pacing(p);
             }
             let el = t.elapsed();
+            drop(ztick);
+            melee_core::tracy::frame_mark_named("tick");
             self.tick_time += el;
             if melee_core::frameprof::on() {
                 melee_core::frameprof::tick_done(el.as_nanos() as u64);

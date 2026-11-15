@@ -305,6 +305,8 @@ impl<G: Simulation> RollbackDriver<G> {
     pub fn resolve_rollback(&mut self) -> u32 {
         let mut ran = 0;
         if let Some(r) = self.pending.take() {
+            let _z = melee_core::tracy::zone("rollback (load + resimulate)");
+            _z.value((self.frame - r).max(0) as u64);
             let k = ix(r);
             if self.snaps[k].tag == Some(r) {
                 let st = self.snaps[k].state.clone().expect("snapshot");

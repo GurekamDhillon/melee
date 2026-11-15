@@ -101,6 +101,8 @@ pub fn host_dev_com_request(file: i32, src: usize, dst: usize, size: usize, ty: 
     crate::asset::game_io();
     let flen = h.disc.entry_len(file).unwrap_or_else(|| panic!("host_dev_com_request: entry {file} is not a file")) as usize;
     let want = size.min(flen.saturating_sub(src));
+    let _z = melee_core::tracy::zone("disc read");
+    _z.value(want as u64);
     let prof = melee_core::frameprof::on().then(std::time::Instant::now);
     let bytes = h.disc.read_entry(file, src as u32, want).unwrap_or_else(|e| panic!("host_dev_com_request: {e}"));
     if let Some(t) = prof {

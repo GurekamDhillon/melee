@@ -6,12 +6,16 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+# Tracy client (src/tracy.rs), only with `profile-tracy`. No crash handler (the game has its own), no broadcast.
+tracy-client = { version = "0.19", optional = true, default-features = false, features = ["enable", "system-tracing", "context-switch-tracing", "sampling", "code-transfer", "callstack-inlines", "only-localhost"] }
 
 [features]
 # Per-call tracing (ct.rs, tools/rust-port/trace/insert_ct.py). Off in normal builds.
 calltrace = []
 # Discrimination bits at the fp/int helper call sites (disc.rs): the covtest build only (notes/coverage-testing.md).
 disc = []
+# Tracy spans (src/tracy.rs, notes/profiling.md). Off by default; off = no code, no dependency.
+profile-tracy = ["dep:tracy-client"]
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }

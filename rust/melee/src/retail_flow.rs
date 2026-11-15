@@ -728,6 +728,7 @@ impl RetailPlay {
         if melee_core::frameprof::on() {
             melee_core::frameprof::test_tick(self.tick_no as u64);
         }
+        let zstep = melee_core::tracy::zone("sim (engine step)");
         let t_step = std::time::Instant::now();
         let entered = if lab_hold { false } else { self.step(four) };
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
@@ -740,6 +741,7 @@ impl RetailPlay {
             pr.observe();
         }
         let t_step = t_step.elapsed();
+        drop(zstep);
         if melee_core::frameprof::on() {
             melee_core::frameprof::add(melee_core::frameprof::C::EngineNs, t_step.as_nanos() as u64);
         }
@@ -766,6 +768,7 @@ impl RetailPlay {
                 log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3));
             }
         }
+        let zcap = melee_core::tracy::zone("capture / decode");
         let _cap = melee_core::frameprof::on().then(std::time::Instant::now);
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             // a frame no present showed (several ticks ran first): its EFB copies still have to happen
@@ -788,6 +791,7 @@ impl RetailPlay {
             // the view the frame was drawn for (its cameras' projection and the target shape must agree)
             self.frame_aspect = melee_engine::view::aspect();
         }
+        drop(zcap);
         if let Some(t) = _cap {
             melee_core::frameprof::add(melee_core::frameprof::C::CaptureNs, t.elapsed().as_nanos() as u64);
         }
@@ -1358,6 +1362,7 @@ impl RetailPlay {
         if let Some(u) = self.ui.as_mut() {
             let (w, h) = p.size();
             u.set_window(w, h);
+            let _z = melee_core::tracy::zone("ui (gd_ui frame)");
             let t = std::time::Instant::now();
             u.with_frame(|f, a| p.renderer.set_ui(Some(f), a));
             u.stages[5].push(t.elapsed().as_nanos().min(u32::MAX as u128) as u32);

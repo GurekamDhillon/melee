@@ -7,6 +7,8 @@ publish.workspace = true
 description = "Platform layer: rollback netplay transport (port of pc/platform/gw_net.c: UDP, handshake, input exchange, time sync, checksums) + the rollback session/driver interface"
 
 [dependencies]
+# Tracy zones only (melee_core::tracy; empty without the `profile-tracy` feature)
+melee_core.workspace = true
 
 [dev-dependencies]
 # the in-process SyncTest / session tests run the ported game code (tests/session.rs)

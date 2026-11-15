@@ -72,6 +72,29 @@ pub enum C {
     /// Wasm mod time, all mods (the per-mod split is in the frame's mod slots).
     ModNs,
 }
+impl C {
+    /// The Tracy zone name of a timed part.
+    pub const fn zone_name(self) -> &'static str {
+        match self {
+            C::TickNs => "tick",
+            C::PrepareNs => "prepare",
+            C::DrawNs => "draw",
+            C::InterpNs => "interp",
+            C::AcquireNs => "acquire (swapchain)",
+            C::PresentNs => "present (queue.submit + present)",
+            C::UiNs => "ui",
+            C::SleepNs => "pacing sleep",
+            C::FileNs => "disc read",
+            C::ParseNs => "archive parse",
+            C::PipeNs => "pipeline create",
+            C::TexNs => "texture upload",
+            C::EngineNs => "sim (engine step)",
+            C::CaptureNs => "capture",
+            C::ModNs => "mods",
+            _ => "frameprof",
+        }
+    }
+}
 pub const NC: usize = C::ModNs as usize + 1;
 /// Mods the per-mod split keeps apart.
 pub const MAX_MODS: usize = 8;
@@ -352,7 +375,9 @@ pub fn tick_done(ns: u64) {
 
 /// Time a closure into `c` when recording (the closure runs either way).
 #[inline]
+#[track_caller]
 pub fn time<R>(c: C, f: impl FnOnce() -> R) -> R {
+    let _z = crate::tracy::zone(c.zone_name());
     if !on() {
         return f();
     }
@@ -449,12 +474,19 @@ pub fn alloc(size: usize, arena: bool) {
 }
 
 /// An event that times the scope it lives in (recorded when dropped). Inert when not recording.
-pub struct Span(Option<(Kind, Text, Instant)>);
+/// With `profile-tracy` the same scope is also a Tracy zone named by its text.
+pub struct Span(Option<(Kind, Text, Instant)>, #[allow(dead_code)] crate::tracy::Zone);
 
 impl Span {
     #[inline]
+    #[track_caller]
     pub fn new(kind: Kind, text: impl FnOnce() -> Text) -> Span {
-        Span(if on() { Some((kind, text(), Instant::now())) } else { None })
+        if crate::tracy::enabled() {
+            let t = text();
+            let z = crate::tracy::zone_dyn(|| format!("{}: {}", kind.name(), t.as_str()));
+            return Span(if on() { Some((kind, t, Instant::now())) } else { None }, z);
+        }
+        Span(if on() { Some((kind, text(), Instant::now())) } else { None }, crate::tracy::zone_dyn(String::new))
     }
 }
 

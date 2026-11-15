@@ -18,6 +18,7 @@ pub mod heaptrace;
 pub mod modhook;
 pub mod pose;
 pub mod slippi_online;
+pub mod tracy;
 pub mod ppc;
 pub mod vec;
 

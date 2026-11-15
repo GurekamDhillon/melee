@@ -471,3 +471,24 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
   sites use the ppc helpers. `Actor::hash` is now `vm_hash` and `geno_vm_host::frame` is now `vm_frame`: their C
   names (id.c's static hash; a static frame in pc/gameworld/script_echo_state_tests.c) made the logic lint count
   them, and the second also made netmatch.rs's own `frame` an R2.
+
+## Meta Ridley arena, round 2 (2026-11-15, port/metaridley-arena)
+
+- Stage: Final Destination's model and background are not drawn (grdisplay::HIDE_GROUND) and its lines carry no surface
+  kind (geno_boss_coll::want_alone), so the Falcon Flyer's deck is the only ground. The backdrop is the boss archive's
+  own stage model (the `<level>vAdv...` MDL0 beside StagePosition), drawn in its bind pose with the ship; its CHR0
+  (the shaft's scroll) is not played [L].
+- Camera: the bodies are their meshes' boxes per clip (vm_boss_model::body_box, arena fights only); the view eases,
+  and pulls back at once when the box is not inside it. The sim frames for 4:3 so the distance does not depend on the
+  window. 0 frames with the boss, ship or a player out of view over a 9400-frame fight and every forced attack.
+- Clings bound: Brawl does not clamp root-track movement; the box edge was our stand-in. His box bottom is open in
+  the arena, so he rides the dip down with the ship (same offset to it at the bottom as at the start).
+- Dead range: stPositions::getDeadRange [off] has a camera mode (the view grown by margins [val]) and a node mode
+  (Dead0N / Dead1N, static in this archive). Only the camera mode keeps riders alive in the dip [I]. Ported as: the
+  bottom line is the lower of the file's and the ship / boss mesh boxes' bottom less a margin of ours; players do not
+  move it (a falling player dragging it down never died).
+- Ship hitboxes: its 0619 / 0604 kept in vm_arena (SlapAttack id 0; the 0-damage id 3 its Rush / Wait / Wingslap
+  timelines set), placed on its bones, after the boss's boxes in the carrier's capsules. An identical re-set keeps the
+  hit group [L]; 0603 not read [L].
+- Forced statuses for checks: MELEE_VS_BOSS_STATUS=8 Rush, 10 Wingslap, 12 Flameball, 16 Vulcan, 18 Clings, 22 Slap,
+  24 Press. NHV1 changes for Meta Ridley only (the arena's state: boss bounds, ship boxes, dead line).

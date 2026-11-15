@@ -52,7 +52,9 @@ pub struct Model {
     /// file's VIS0 with its CHR0 at the same frame (petey_model::Vis), so attack-only parts (Tabuu's sword, cannon,
     /// chain, lasers; Porky's sparks) show only where the file turns them on
     pub vis: Vec<Option<usize>>,
-    pub bufs: Mutex<pm::DrawBufs>,
+    /// per VM motion: the skinned mesh's model-space box over the whole clip (min, max; None without a clip)
+    pub ext: Vec<Option<[[f32; 3]; 2]>>,
+    pub bufs:Mutex<pm::DrawBufs>,
     /// the pose buffer for bone lookups in the sim (made on the loader's thread), tagged with the (clip, frame) it
     /// holds (`Rig::pose_keyed`): the lookups of one frame share one pose
     pub sim: Mutex<pm::DrawBufs>,
@@ -175,6 +177,31 @@ fn read(name: &str) -> Option<Model> {
     if vm_run {
         crate::tu::geno_vm::set_motion_lengths(name, &lens);
     }
+    // per motion: the skinned mesh's model-space box over the clip (every 6th frame and the last; the travel held), for
+    // a camera that keeps the whole body in view (vm_arena). Made here, on the loader's thread, and only for an arena
+    // fight (the skinning pass is long for the bigger bosses)
+    let mut ext = Vec::with_capacity(names.len());
+    let mut tris = Vec::new();
+    let want_ext = crate::tu::vm_arena::partner().is_some();
+    for &ci in clip.iter().filter(|_| want_ext) {
+        let a = ci.map(|c| &rig.anims[c].1);
+        let last = a.map_or(0.0, |a| fmax(a.frames - 1.0, 0.0));
+        let (mut lo, mut hi) = ([f32::MAX; 3], [f32::MIN; 3]);
+        let mut f = 0.0f32;
+        loop {
+            rig.skin(a, fmin(f, last), &mut tris);
+            let (l, h) = pm::extent(&tris);
+            for k in 0..3 {
+                lo[k] = fmin(lo[k], l[k]);
+                hi[k] = fmax(hi[k], h[k]);
+            }
+            if f >= last {
+                break;
+            }
+            f += 6.0;
+        }
+        ext.push((lo[0] <= hi[0]).then_some([lo, hi]));
+    }
     let bufs = Mutex::new(rig.draw_bufs());
     let sim = Mutex::new(rig.sim_bufs());
     let note = format!(
@@ -185,7 +212,7 @@ fn read(name: &str) -> Option<Model> {
         vis.iter().filter(|v| v.is_some()).count(),
         if by_file { ", by motion file" } else { "" }
     );
-    Some(Model { rig, clip, root, vis, bufs, sim, note })
+    Some(Model { rig, clip, root, vis, ext, bufs, sim, note })
 }
 
 /// The frame of the actor's motion `el` frames after it began (the VM's own motion-frame rule).
@@ -282,6 +309,23 @@ pub fn bone_world_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::
     let q = pm::Rig::posed_point(b, slot, local);
     let r = model_mat(a);
     Some([a.pos[0] + r[0][0] * q[0] + r[0][1] * q[1] + r[0][2] * q[2], a.pos[1] + r[1][0] * q[0] + r[1][1] * q[1] + r[1][2] * q[2]])
+}
+
+/// The actor's whole body in the world for its current motion (x min, x max, y min, y max): the motion's mesh box
+/// ([`Model::ext`]) turned by the facing and rotation, at the actor's position. `arena`: the arena actor's model, else
+/// the boss's. None without the model. Allocates nothing.
+pub fn body_box(arena: bool, a: &brawl_boss::vm::Actor) -> Option<[f32; 4]> {
+    let m = if arena { arena_model()? } else { M.get()?.as_ref()? };
+    let [lo, hi] = (*m.ext.get(usize::try_from(a.motion).ok()?)?)?;
+    let r = model_mat(a);
+    let mut b = [f32::MAX, f32::MIN, f32::MAX, f32::MIN];
+    for k in 0..8 {
+        let q = [if k & 1 == 0 { lo[0] } else { hi[0] }, if k & 2 == 0 { lo[1] } else { hi[1] }, if k & 4 == 0 { lo[2] } else { hi[2] }];
+        let x = a.pos[0] + r[0][0] * q[0] + r[0][1] * q[1] + r[0][2] * q[2];
+        let y = a.pos[1] + r[1][0] * q[0] + r[1][1] * q[1] + r[1][2] * q[2];
+        b = [fmin(b[0], x), fmax(b[1], x), fmin(b[2], y), fmax(b[3], y)];
+    }
+    Some(b)
 }
 
 /// Bone `bone`'s world rotation (rows; column n is its axis n) at the actor's current clip frame: the model's turn

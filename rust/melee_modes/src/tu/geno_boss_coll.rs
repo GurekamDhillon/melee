@@ -58,16 +58,29 @@ static mut LINE0: i32 = 0;
 /// Points wanted at the next stage load (0: none) and their kind.
 static mut WANT_N: usize = 0;
 static mut WANT_PASS: bool = true;
+/// The line set replaces the stage's own floor, walls and ceilings (an arena actor's deck is the whole stage).
+static mut WANT_ALONE: bool = false;
 
 /// Ask for a line set of `n` points at the next stage load (a host calls it before the match; 0 = none).
 pub fn want(n: usize, pass_through: bool) {
     unsafe {
         WANT_N = n.min(MAX_COLL_PTS);
         WANT_PASS = pass_through;
+        WANT_ALONE = false;
         if WANT_N >= 2 {
             melee_world::tu::ground::BOSS_COLL = Some(append);
             melee_world::tu::ground::BOSS_COLL_INIT = Some(init_lines);
         }
+    }
+}
+
+/// [`want`], the line set alone: the stage's own lines are kept in the data (indices unchanged) but carry no
+/// surface kind, so no floor, wall, ceiling or ledge of the host stage is found (vm_arena: Meta Ridley's fight has no
+/// ground but the Falcon Flyer's deck).
+pub fn want_alone(n: usize, pass_through: bool) {
+    want(n, pass_through);
+    unsafe {
+        WANT_ALONE = WANT_N >= 2;
     }
 }
 
@@ -100,6 +113,12 @@ unsafe fn append(orig: *mut MapCollData) -> *mut MapCollData {
     core::ptr::copy_nonoverlapping((*orig).verts, vs, ovc);
     core::ptr::copy_nonoverlapping((*orig).lines, ls, olc);
     core::ptr::copy_nonoverlapping((*orig).joints, js, ojc);
+    if WANT_ALONE {
+        for i in 0..olc {
+            (*ls.add(i)).hi_flags = 0;
+            (*ls.add(i)).lo_flags = 0;
+        }
+    }
     for i in 0..n {
         *vs.add(ovc + i) = Vec2 { x: -9000.0 + 10.0 * i as f32, y: -9000.0 };
     }
@@ -140,7 +159,7 @@ unsafe fn append(orig: *mut MapCollData) -> *mut MapCollData {
     JOINT = ojc as i32;
     VTX0 = ovc as i32;
     LINE0 = olc as i32;
-    eprintln!("geno_boss_coll: boss line set in place ({} points, joint {})", n, ojc);
+    eprintln!("geno_boss_coll: boss line set in place ({} points, joint {}{})", n, ojc, if WANT_ALONE { ", the stage's own lines off" } else { "" });
     cd
 }
 

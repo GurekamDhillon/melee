@@ -648,33 +648,57 @@ unsafe fn arena_blast_zones() {
         bz.right = r;
         bz.top = t;
         bz.bottom = b;
-        // the ship's Clings dip takes its deck below the file's bottom line, with the riders on it: the bottom line
-        // is kept 60 below the deck's lowest point [L: how Brawl keeps them alive there is not read; this stand-in
-        // keeps a rider on the deck safe and still kills one who falls off]
-        if let Some(f) = crate::tu::vm_arena::bounds() {
-            bz.bottom = fmin(b, f[2] - 60.0);
+        // the ship's Clings dip takes its deck below the file's bottom line, with the riders on it. Brawl's dead range
+        // (stPositions::getDeadRange [off]) has a camera mode: the stage camera's view rectangle grown by a margin
+        // [val], the camera itself held inside the stage's camera limits; the other mode reads the stage file's
+        // Dead0N / Dead1N nodes, which in this archive never move (the position model has no animation), so only the
+        // camera mode keeps the riders alive in the dip [I: the flag that picks the mode is set outside the files
+        // read]. Ported as: the bottom line is the lower of the file's and the bottom of what the stage camera must
+        // show, the ship and Meta Ridley (their meshes' boxes), less a margin of ours. The players do not move it (a
+        // falling player dragging the line down would never die); a rider on the deck is always above it, one who
+        // falls off dies below the ship
+        let ship = crate::tu::vm_arena::bounds();
+        let him = crate::tu::vm_boss_model::body_box(false, crate::tu::geno_vm::actor());
+        let low = match (ship, him) {
+            (Some(s), Some(h)) => Some(fmin(s[2], h[2])),
+            (Some(s), None) => Some(s[2]),
+            (None, h) => h.map(|h| h[2]),
+        };
+        if let Some(low) = low {
+            bz.bottom = fmin(b, low - DEAD_MARGIN_Y);
         }
     }
 }
 
-/// The arena fight's camera (vm_arena): frames the players, the ship's deck and the boss together, inside the stage's
-/// blast zones, so the boss stays on screen through his whole fight (Brawl's stage camera frames the ship and lets
-/// him leave the frame for his entries; the owner wants him in view, so he is always inside the box here). The box's
-/// centre and distance ease toward the target each frame (state in `B.cam` and `game_camera`: rollback-safe), through
-/// Melee's scripted (boss intro) mode, as `follow_camera`.
+/// The arena camera's field of view (degrees) and the view aspect the sim frames for (4:3, whatever the window: the
+/// distance, and the bottom dead line made from it, must not depend on a player's display setting; a wider window
+/// shows more at the sides).
+const ARENA_FOV: f32 = 30.0;
+const ARENA_ASPECT: f32 = 4.0 / 3.0;
+/// The camera-relative bottom dead line's distance below the view (ours, not Brawl's number [val]).
+const DEAD_MARGIN_Y: f32 = 60.0;
+
+/// The arena fight's camera (vm_arena): frames the players, the whole ship and Meta Ridley's whole body together, so
+/// nothing leaves the frame through his fight, his exits included (Brawl's stage camera frames the ship and lets him
+/// leave for his entries; the owner wants him in view). The bodies are their meshes' boxes for their current clips
+/// (vm_boss_model::body_box), not a guess around the origin. The view eases toward the target (quick out, slow in);
+/// when the target box is not inside the eased view, the view pulls back that frame until it is. State in `B.cam`
+/// and `game_camera` (rollback-safe), through Melee's scripted (boss intro) mode, as `follow_camera`.
 unsafe fn arena_camera() {
     use melee_world::tu::camera as cm;
-    const FOV: f32 = 30.0;
     const EASE: f32 = 0.08;
-    const MARGIN: f32 = 30.0;
+    const MARGIN: f32 = 20.0;
     let a = crate::tu::geno_vm::actor();
-    // the boss's body: its centre bone when the model has one, else its position, with his size around it
-    let (bx, by) = vm().and_then(|p| crate::tu::vm_boss_model::bone_world(vm_run(p), a, 0, [0.0; 3])).map(|q| (q[0], q[1])).unwrap_or((a.pos[0], a.pos[1]));
-    // his whole body (wings, tail): a generous box around the origin and the root bone [L: not the model's bounds]
-    let mut b = [fmin(a.pos[0], bx) - 60.0, fmax(a.pos[0], bx) + 60.0, fmin(a.pos[1], by) - 60.0, fmax(a.pos[1], by) + 70.0];
-    if let Some(f) = crate::tu::vm_arena::bounds() {
+    let mut b = crate::tu::vm_boss_model::body_box(false, a).unwrap_or([a.pos[0] - 60.0, a.pos[0] + 60.0, a.pos[1] - 60.0, a.pos[1] + 70.0]);
+    let him = b;
+    let ship = crate::tu::vm_arena::bounds();
+    if let Some(f) = ship {
         b = [fmin(b[0], f[0]), fmax(b[1], f[1]), fmin(b[2], f[2]), fmax(b[3], f[3])];
     }
+    // the players, while inside the blast zones (one past them is being KO'd)
+    let bz = &*core::ptr::addr_of!(crate::tu::script_game::stage_info.blast_zone);
+    let mut ps = [[0.0f32; 4]; 4];
+    let mut np = 0;
     for s in 0..4 {
         if s == B.carrier_slot {
             continue;
@@ -682,13 +706,17 @@ unsafe fn arena_camera() {
         let f = fighter_of(s, 0);
         if !f.is_null() && (*f).is_sleeping() == 0 {
             let p = (*f).cur_pos;
-            b = [fmin(b[0], p.x - 10.0), fmax(b[1], p.x + 10.0), fmin(b[2], p.y - 5.0), fmax(b[3], p.y + 25.0)];
+            if p.x > bz.left && p.x < bz.right && p.y > bz.bottom && p.y < bz.top {
+                let q = [p.x - 10.0, p.x + 10.0, p.y - 5.0, p.y + 25.0];
+                b = [fmin(b[0], q[0]), fmax(b[1], q[1]), fmin(b[2], q[2]), fmax(b[3], q[3])];
+                ps[np] = q;
+                np += 1;
+            }
         }
     }
-    let bz = &*core::ptr::addr_of!(crate::tu::script_game::stage_info.blast_zone);
-    b = [fmax(b[0] - MARGIN, bz.left - 100.0), fmin(b[1] + MARGIN, bz.right + 100.0), fmax(b[2] - MARGIN, bz.bottom - 100.0), fmin(b[3] + MARGIN, bz.top + 100.0)];
-    let th = melee_runtime::gekko::tanf(0.5 * FOV * 0.017453292);
-    let asp = cm::cm_803BCB64.aspect;
+    b = [b[0] - MARGIN, b[1] + MARGIN, b[2] - MARGIN, b[3] + MARGIN];
+    let th = melee_runtime::gekko::tanf(0.5 * ARENA_FOV * 0.017453292);
+    let asp = ARENA_ASPECT;
     let want_d = fmax(fmax((b[1] - b[0]) * 0.5 / (th * asp), (b[3] - b[2]) * 0.5 / th), 120.0);
     let (tx, ty) = (0.5 * (b[0] + b[1]), 0.5 * (b[2] + b[3]));
     let gc = &mut *core::ptr::addr_of_mut!(cm::game_camera);
@@ -699,12 +727,23 @@ unsafe fn arena_camera() {
     if gc.mode != CAMERA_BOSS_INTRO as u32 {
         cm::Camera_8002FE38();
     }
-    // widening is quick (the boss must not leave the frame), narrowing slow
+    // widening is quick, narrowing slow
     let ez = if want_d > B.cam[2] { 0.35 } else { EASE };
     let ec = if want_d > B.cam[2] { 0.25 } else { EASE };
     B.cam[0] += (tx - B.cam[0]) * ec;
     B.cam[1] += (ty - B.cam[1]) * ec;
     B.cam[2] += (want_d - B.cam[2]) * ez;
+    // the eased view must hold the whole target box (bodies plus margin); when it does not, take the target now
+    let inside = |c: [f32; 3], q: [f32; 4]| {
+        let (hw, hh) = (c[2] * th * asp, c[2] * th);
+        q[0] >= c[0] - hw && q[1] <= c[0] + hw && q[2] >= c[1] - hh && q[3] <= c[1] + hh
+    };
+    let snapped = !inside(B.cam, b);
+    if snapped {
+        // pulled back just enough around the eased centre: no jump of the centre
+        let (hw, hh) = (fmax(B.cam[0] - b[0], b[1] - B.cam[0]), fmax(B.cam[1] - b[2], b[3] - B.cam[1]));
+        B.cam[2] = fmax(B.cam[2], fmax(hw / (th * asp), hh / th));
+    }
     let interest = Vec3 { x: B.cam[0], y: B.cam[1], z: 0.0 };
     let eye = Vec3 { x: B.cam[0], y: B.cam[1], z: B.cam[2] };
     gc.set_x341_b1_b2(2);
@@ -714,31 +753,38 @@ unsafe fn arena_camera() {
     gc.x35C.vec = eye;
     gc.x350 = interest;
     gc.x368.vec = eye;
-    gc.x374 = FOV;
+    gc.x374 = ARENA_FOV;
     gc.transform.target_interest = interest;
     gc.transform.interest = interest;
     gc.transform.target_position = eye;
     gc.transform.position = eye;
-    gc.transform.target_fov = FOV;
-    gc.transform.fov = FOV;
+    gc.transform.target_fov = ARENA_FOV;
+    gc.transform.fov = ARENA_FOV;
     let mut qb = CameraBounds::zeroed();
     qb.z_pos = B.cam[2];
     cm::Camera_UpdateQuakes(&mut qb);
     cm::Camera_ApplyQuake(&mut qb, core::ptr::addr_of_mut!(gc.transform) as *mut CameraTransformState);
     if log_on() {
-        // log only (a check's count, not game state): frames his body box (origin +-60 x, -60..+70 y) left the frame
+        // log only (a check's count, not game state): frames where his body, the ship or a player was not wholly in
+        // the 4:3 view, and frames the view had to pull back at once
         static OUT: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
-        let half_w = B.cam[2] * th * asp;
-        let half_h = B.cam[2] * th;
-        let on = a.pos[0] - 60.0 >= B.cam[0] - half_w && a.pos[0] + 60.0 <= B.cam[0] + half_w && a.pos[1] - 60.0 >= B.cam[1] - half_h && a.pos[1] + 70.0 <= B.cam[1] + half_h;
-        if !on {
+        static SNAPS: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
+        let c = B.cam;
+        let on_him = inside(c, him);
+        let on_ship = ship.map_or(true, |q| inside(c, q));
+        let on_pl = ps[..np].iter().all(|q| inside(c, *q));
+        if !(on_him && on_ship && on_pl) {
             OUT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+            eprintln!("petey: f{} arena camera: OUT OF VIEW (boss {on_him}, ship {on_ship}, players {on_pl})", B.last_frame);
+        }
+        if snapped {
+            SNAPS.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
         }
         if B.last_frame % 120 == 0 {
             eprintln!(
-                "petey: f{} arena camera centre ({:.1}, {:.1}) dist {:.1}; boss at {:.1} {:.1} {}; frames out of view so far {}",
-                B.last_frame, B.cam[0], B.cam[1], B.cam[2], a.pos[0], a.pos[1], if on { "in view" } else { "OUT OF VIEW" },
-                OUT.load(core::sync::atomic::Ordering::Relaxed)
+                "petey: f{} arena camera centre ({:.1}, {:.1}) dist {:.1}; boss box x {:.1}..{:.1} y {:.1}..{:.1}; bottom line {:.1}; frames out of view so far {}, pull-backs {}",
+                B.last_frame, c[0], c[1], c[2], him[0], him[1], him[2], him[3], bz.bottom,
+                OUT.load(core::sync::atomic::Ordering::Relaxed), SNAPS.load(core::sync::atomic::Ordering::Relaxed)
             );
         }
     }
@@ -1590,6 +1636,14 @@ unsafe fn vm_arena(p: &'static brawl_boss::vm::Program) -> &'static brawl_boss::
         }
         None => ([fmax(cb.left, bz.left), fmin(cb.right, bz.right), fmax(cb.bottom, bz.bottom), fmin(cb.top, bz.top)], "stage camera bounds: no Brawl arena"),
     };
+    // in his arena (vm_arena) no floor under him: Brawl moves an enemy by its root track without a clamp, and its area
+    // test is the stage's dead range, which in this fight follows the camera (stPositions::getDeadRange's camera mode,
+    // see arena_blast_zones) and so never cuts off the Clings dip he rides down with the ship. The box's bottom edge
+    // was a stand-in that stopped him 30 units above the deck at the bottom of the dip
+    let mut bounds = bounds;
+    if crate::tu::vm_arena::partner().is_some() {
+        bounds[2] = -2000.0;
+    }
     if let Some((b, base, q)) = VM_ARENA {
         if b == bounds && core::ptr::eq(base, p) {
             return q;
@@ -1659,6 +1713,27 @@ fn vm_hits(b: &Boss) -> ([HitDef; LIVE_HITS], usize) {
         };
         k += 1;
     }
+    // the arena actor's boxes (vm_arena: the Falcon Flyer's SlapAttack box and its 0-damage box), at their bones,
+    // launching by the ship's facing; their own hit groups and attack ids (one hit per box per victim)
+    crate::tu::vm_arena::live_boxes(|bx, x, y, face| {
+        if k >= LIVE_HITS {
+            return;
+        }
+        v[k] = HitDef {
+            x,
+            y,
+            r: bx.size * MODEL_SCALE,
+            dmg: fctiwz_f32(bx.damage).max(0) as u32,
+            angle: bx.angle,
+            kbg: fctiwz_f32(bx.kbg).max(0) as u32,
+            wkb: fctiwz_f32(bx.wkb).max(0) as u32,
+            bkb: fctiwz_f32(bx.bkb).max(0) as u32,
+            grp: bx.inst.wrapping_mul(16).wrapping_add(bx.id as u32) | 0x4000_0000,
+            face,
+            atk: 0x40 | (bx.id & 0x3F),
+        };
+        k += 1;
+    });
     // the projectiles (650E weapons): each live box at the projectile, its numbers at the weapon's L, one attack
     // per projectile so a victim is hit once per phase
     crate::tu::geno_boss_spawn::live_boxes(unsafe { crate::tu::geno_vm_host::WEAPONS }, |slot, x, y, bx, l, grp| {

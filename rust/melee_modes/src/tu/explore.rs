@@ -1682,9 +1682,11 @@ unsafe fn blocks_tick(m: &Map) {
     }
 }
 
-/// `grdisplay::HIDE_GROUND`: Final Destination's own model stays hidden in the room.
+/// `grdisplay::HIDE_GROUND`: Final Destination's own model stays hidden in the room, and in a VS boss's arena
+/// (vm_arena: Meta Ridley's fight on the Falcon Flyer).
 pub fn hide_ground() -> bool {
-    unsafe { ACTIVE }
+    let room = unsafe { ACTIVE };
+    room || crate::tu::vm_arena::stage_hidden()
 }
 
 /// Room frames between two more section models joining the draw (`draw`).

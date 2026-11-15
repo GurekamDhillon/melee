@@ -92,7 +92,50 @@ pub fn prefetch() {
         crate::tu::geno_vm::prefetch(n);
         crate::tu::vm_boss_model::prefetch(n);
         let _ = deck();
+        let _ = backdrop();
     }
+}
+
+/// The fight's own background: the boss archive's stage model (Meta Ridley's 370301 holds one besides the stage
+/// position model), the MDL0 whose name starts with the level's 3-digit prefix and `vAdv`, in its bind pose. Loaded
+/// once on the engine-start helper. None: the archive has none (the stage's clear colour shows).
+fn backdrop() -> Option<&'static (String, crate::tu::petey_model::Rig, Vec<crate::tu::petey_model::Vert>)> {
+    static B: std::sync::OnceLock<Option<(String, crate::tu::petey_model::Rig, Vec<crate::tu::petey_model::Vert>)>> = std::sync::OnceLock::new();
+    B.get_or_init(|| {
+        let name = partner()?;
+        let arc = brawl_boss::vm::FILES.iter().find(|f| f.0 == name)?.2;
+        let r = std::thread::spawn(move || {
+            let leaves = crate::tu::petey_model::pac_leaves(arc)?;
+            // the background's MDL0: named "<3 digits>vAdv..." (the stage position model is "StagePosition")
+            let mut names = vec![];
+            for b in &leaves {
+                if b.len() >= 0x10 && &b[..4] == b"bres" {
+                    for (n, o) in crate::tu::petey_model::brres_entries(b).unwrap_or_default() {
+                        if b.get(o..o + 4) == Some(b"MDL0") && n.len() > 7 && n.as_bytes()[..3].iter().all(u8::is_ascii_digit) && n[3..].starts_with("vAdv") && !names.contains(&n) {
+                            names.push(n);
+                        }
+                    }
+                }
+            }
+            let want: Vec<&str> = names.iter().map(String::as_str).collect();
+            crate::tu::petey_model::static_models(&leaves, &want).into_iter().next()
+        })
+        .join()
+        .ok()
+        .flatten();
+        match &r {
+            Some((n, _, t)) => eprintln!("vm_arena: backdrop {n} ({} vertices)", t.len()),
+            None => eprintln!("vm_arena: no backdrop model in the boss archive; the stage's clear colour shows"),
+        }
+        r
+    })
+    .as_ref()
+}
+
+/// Final Destination's own model (and its background) is not drawn while the arena runs (grdisplay::HIDE_GROUND, via
+/// explore::hide_ground): the fight's stage is the ship over the boss archive's backdrop. Presentation only.
+pub fn stage_hidden() -> bool {
+    crate::tu::geno_boss_coll::present() && live()
 }
 
 /// Before the stage loads (the VS setup): ask geno_boss_coll for the deck's line set. False: the arena is missing
@@ -105,7 +148,8 @@ pub fn want() -> bool {
     }
     match deck() {
         Some(d) => {
-            crate::tu::geno_boss_coll::want(d.len(), true);
+            // the deck is the fight's only ground: Final Destination's floor and edges are off for the match
+            crate::tu::geno_boss_coll::want_alone(d.len(), true);
             eprintln!("vm_arena: {name}: arena actor ready, deck of {} points", d.len());
             true
         }
@@ -119,6 +163,8 @@ pub fn begin(difficulty: i32, seed: u32) {
     unsafe {
         let s = &mut *core::ptr::addr_of_mut!(S);
         vm::begin(p, &mut s.vm2, 1, difficulty.clamp(0, 14), seed ^ 0x5F1E_7E12, 2, true);
+        BOXES = [OFF_BOX; MAX_BOXES];
+        INST = 0;
     }
     let a = actor();
     eprintln!("vm_arena: {} begins (status {}, at {:.1} {:.1})", partner().unwrap_or("?"), a.status, a.pos[0], a.pos[1]);
@@ -171,6 +217,18 @@ pub unsafe fn arena_frame(frame: u32, log: bool) {
     let last = s.vm2.status;
     vm::step(p, &mut s.vm2, &i);
     let a = &s.vm2;
+    // the ship's attack boxes (its forwarded 0619 / 0604): a status or motion change ends them, as the boss's
+    for e in a.events() {
+        match e.kind {
+            vr::EV_STATUS | vr::EV_MOTION => BOXES = [OFF_BOX; MAX_BOXES],
+            vr::EV_CMD => match p.code.get(e.ins as usize).map(|c| c.id) {
+                Some(0x0619) => set_box(p, a, &p.code[e.ins as usize], frame, log),
+                Some(0x0604) => BOXES = [OFF_BOX; MAX_BOXES],
+                _ => {}
+            },
+            _ => {}
+        }
+    }
     if log {
         for e in a.events() {
             match e.kind {
@@ -202,6 +260,51 @@ pub unsafe fn arena_frame(frame: u32, log: bool) {
     }
 }
 
+use crate::tu::geno_vm_host::VmBox;
+const MAX_BOXES: usize = 4;
+const OFF_BOX: VmBox = VmBox { on: false, id: 0, bone: 0, damage: 0.0, angle: 0, kbg: 0.0, wkb: 0.0, bkb: 0.0, size: 0.0, offset: [0.0; 3], inst: 0 };
+/// The ship's live attack boxes (a static of the executable: the snapshot carries it) and their numbering.
+static mut BOXES: [VmBox; MAX_BOXES] = [OFF_BOX; MAX_BOXES];
+static mut INST: u32 = 0;
+
+/// A ship 0619: SlapAttack's box (id 0, frames 84-85) and the 0-damage box its Rush / Wait / Wingslap timelines call
+/// (id 3). The same box set again while it is still on keeps its hit group (the Wait clip restarts every 12 frames and
+/// sets id 3 each time; a new group each time would re-hit every rider five times a second) [L: Brawl's re-set rule
+/// is not read]. The 0603 those timelines also run is not read [L] and does nothing here.
+unsafe fn set_box(p: &'static Program, a: &vr::Actor, ins: &vr::Ins, frame: u32, log: bool) {
+    let Some(mut nb) = crate::tu::geno_vm_host::parse_box(p, a, ins) else { return };
+    let b = &mut *core::ptr::addr_of_mut!(BOXES);
+    let same = b.iter().position(|x| x.on && x.id == nb.id);
+    if let Some(k) = same {
+        let o = b[k];
+        if (o.bone, o.damage, o.angle, o.kbg, o.wkb, o.bkb, o.size, o.offset) == (nb.bone, nb.damage, nb.angle, nb.kbg, nb.wkb, nb.bkb, nb.size, nb.offset) {
+            return;
+        }
+    }
+    INST = INST.wrapping_add(1);
+    nb.inst = INST;
+    if let Some(k) = same.or_else(|| b.iter().position(|x| !x.on)) {
+        b[k] = nb;
+        if log {
+            let q = crate::tu::vm_boss_model::arena_model().and_then(|m| crate::tu::vm_boss_model::bone_world_m(m, p, a, nb.bone, nb.offset));
+            eprintln!("vm_arena: f{frame} ship hitbox {} on: {:.1} dmg, angle {}, size {:.1}, bone {} at {:?}", nb.id, nb.damage, nb.angle, nb.size, nb.bone, q);
+        }
+    }
+}
+
+/// The ship's live boxes, each at its bone (world x, y), with the ship's facing: (box, x, y, facing).
+pub fn live_boxes(mut f: impl FnMut(&VmBox, f32, f32, f32)) {
+    let (Some(p), Some(m)) = (program(), crate::tu::vm_boss_model::arena_model()) else { return };
+    if !live() {
+        return;
+    }
+    let a = actor();
+    for b in unsafe { &*core::ptr::addr_of!(BOXES) }.iter().filter(|b| b.on) {
+        let (x, y) = crate::tu::vm_boss_model::bone_world_m(m, p, a, b.bone, b.offset).map_or((a.pos[0], a.pos[1]), |q| (q[0], q[1]));
+        f(b, x, y, if a.lr < 0.0 { -1.0 } else { 1.0 });
+    }
+}
+
 /// The deck's line set at the posed bones.
 unsafe fn move_deck(p: &'static Program) {
     let (Some(d), Some(m)) = (deck(), crate::tu::vm_boss_model::arena_model()) else { return };
@@ -217,14 +320,14 @@ unsafe fn move_deck(p: &'static Program) {
     crate::tu::geno_boss_coll::set_points(&pts[..n]);
 }
 
-/// The Flyer's world box (its deck points and its position), for the camera.
+/// The Flyer's world box (its whole mesh for its clip, and its deck points), for the camera.
 pub fn bounds() -> Option<[f32; 4]> {
     if !live() {
         return None;
     }
     let s = unsafe { &*core::ptr::addr_of!(S) };
     let a = &s.vm2;
-    let mut b = [a.pos[0], a.pos[0], a.pos[1], a.pos[1]];
+    let mut b = crate::tu::vm_boss_model::body_box(true, a).unwrap_or([a.pos[0], a.pos[0], a.pos[1], a.pos[1]]);
     for q in &s.coll_pts[..(s.coll_n as usize).min(MAX_COLL_PTS)] {
         b = [fmin(b[0], q[0]), fmax(b[1], q[0]), fmin(b[2], q[1]), fmax(b[3], q[1])];
     }
@@ -233,6 +336,9 @@ pub fn bounds() -> Option<[f32; 4]> {
 
 /// Draw the Flyer (the boss's draw pass).
 pub unsafe fn draw() {
+    if let Some((_, r, t)) = backdrop().filter(|_| live()) {
+        crate::tu::petey_model::draw_tris(r, t, [0.0, 0.0], [0.0, 0.0, 0.0], 1.0, 0.0, false);
+    }
     let (Some(p), Some(m)) = (program(), crate::tu::vm_boss_model::arena_model()) else { return };
     if live() {
         crate::tu::vm_boss_model::draw_m(m, p, actor(), false, (-1, 0));

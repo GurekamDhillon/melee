@@ -389,3 +389,30 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
 - `cond` / `chain` / `skip_false` now take `&mut self` for that write. vm_disc passes; `disc` timeline_baskets /
   timeline_waits fail before and after this round (not caused here).
 
+
+### Round 9 (2026-11-15)
+
+- Accessor slots of an enemy (the soModuleAccesser the Enemy constructor builds through sora_melee 0x81068598 ->
+  0x8106821C): slot 4 is the model module (soModelModuleImpl; its vtable at the module's word 2 gives vfunc 0xA8
+  getNodeGlobalMtx, 0x98 getNodeGlobalPosition, 0x88 getNodeId by name), slot 8 the motion module, slot 0xC the posture
+  module (vfunc 0x18: its position), slot 0x10 emGroundModuleImpl, and the article-manage slot is a
+  soGenerateArticleManageModuleImpl owned by every enemy (built at 0x81A019E4).
+- R10024-R10047 (0x81A145F0): not a distance. A node's rotated unit axis (x / y / z by id, +1 for 10024-10035, -1
+  for 10036-10047; 8003E3BC rotates without translation) against the vector from the enemy's centre to the slot's
+  point (as 6902 for 10024-10029 / 10036-10041 via 0x81A2536C, as 6901 for the others via 0x81A25B54); true when the
+  angle in degrees (0x81A25138, 8003DDD0) is within |arg 4|. A zero axis gives 3 degrees. Tabuu's catch-box choice
+  uses it with -30 / 65 degree thresholds. Host inputs `nodes` (node rotations; default a turn about y by the facing
+  [L]) and `center` (getCenterPos, default the actor's position [L]).
+- R10006 / R10007 (0x81A181D8): the same node matrix; the axis sel picks (35782-35787) against world up, angle at
+  most arg 2 (8003DF9C). Not a target test.
+- R23: ground module vfunc 0x1F8 (soGroundModuleImpl): a ray down by |d| from the posture position; answered from the
+  host floor [M].
+- 6612 (path frame of a kind 21 / 22 unit), 6614 (angle += current, through the angle setter 0x81A1EF60), values 1003
+  (unit 3's angle), 1051 / 1052 (the centre).
+- 35790: a random start speed in the raw limits with one draw from the VM's seeded generator (randf in the game); the
+  level term is added only to a non-zero speed, for every start.
+- R10002 / R10003: speed >= upper / <= lower set limit (the engine's limit words map to `max` / `min`).
+- Read, not ported: R21 (article module vfunc 0x50: a live article whose vfunc 0x20 id equals the argument), R28
+  (vfunc 0x58: the per-class article table's vfunc 0x24, meaning not traced), R39 (motion module vfunc 0x108 ->
+  0x81A202BC, not finished), 6613 (a path unit word the VM does not keep), R24, 0200 / 0300 / 2200, values 1027,
+  20022, 21012, 22, 23.

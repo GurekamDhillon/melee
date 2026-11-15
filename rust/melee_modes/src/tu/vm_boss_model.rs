@@ -37,8 +37,8 @@ pub struct Model {
     /// the axis it faces; empty: no clip / no root track)
     pub root: Vec<Vec<[f32; 2]>>,
     pub bufs: Mutex<pm::DrawBufs>,
-    /// the pose buffer for bone lookups in the sim (made on the loader's thread) and the (clip, frame) it holds: a
-    /// pose is a pure function of the two, so every lookup of one frame shares one pose
+    /// the pose buffer for bone lookups in the sim (made on the loader's thread) and the (clip, frame) it holds this
+    /// host frame (None after [`sim_frame_begin`]): the lookups of one frame share one pose
     pub sim: Mutex<(Option<(Option<usize>, usize)>, pm::DrawBufs)>,
     pub note: String,
 }
@@ -203,7 +203,18 @@ fn model_mat(a: &brawl_boss::vm::Actor) -> [[f32; 3]; 3] {
     o
 }
 
-/// The sim's pose buffer posed at the actor's current clip frame; posed again only when the (clip, frame) changed.
+/// Forget the sim pose: called at the start of every VM host frame. The pose buffer's memory is rolled back with the
+/// game state by a load while the remembered (clip, frame) is not, so a pose is shared only inside one frame.
+pub fn sim_frame_begin() {
+    if let Some(Some(m)) = M.get() {
+        if let Ok(mut g) = m.sim.lock() {
+            g.0 = None;
+        }
+    }
+}
+
+/// The sim's pose buffer posed at the actor's current clip frame; inside one host frame ([`sim_frame_begin`]) posed
+/// again only when the (clip, frame) changed.
 fn posed<'m>(p: &brawl_boss::vm::Program, m: &'m Model, a: &brawl_boss::vm::Actor) -> Option<std::sync::MutexGuard<'m, (Option<(Option<usize>, usize)>, pm::DrawBufs)>> {
     let mut g = m.sim.lock().ok()?;
     let mi = a.motion.max(0) as usize;

@@ -495,3 +495,49 @@ fn vm_bullet_bill() {
         }
     }
 }
+
+/// The batch-2 SSE enemies (and any other enemy named in MELEE_VM_ENEMIES, comma-separated) headless from every start
+/// status for 1200 frames against the scripted players, with area contacts (R10055) on for a few frames: prints the
+/// statuses each start reaches and the ops still missing, and a replay from the frame-600 snapshot must give identical
+/// hashes.
+const BATCH2: &[&str] = &[
+    "cymul", "roturret", "buckot", "greap", "shaydas", "roader", "bytan", "floow", "puppit", "shellpod", "armight", "bombed", "nagagog",
+    "trowlon", "rob-blaster", "rob-distance", "rob-launcher", "rob-sentry", "autolance", "armank", "gamyga", "gamyga-base",
+];
+
+#[test]
+fn vm_enemy_statuses() {
+    let Some(mut d) = Disc::open() else {
+        eprintln!("vm_enemy_statuses: no local Brawl files, skipped");
+        return;
+    };
+    let common = d.common().expect("shared script file");
+    let extra = std::env::var("MELEE_VM_ENEMIES").unwrap_or_default();
+    let names: Vec<&str> = if extra.is_empty() { BATCH2.to_vec() } else { extra.split(',').collect() };
+    let path = vm::Path { id: 0, frames: 120, pos: circle };
+    let inp = |f: u32| Input { path: Some(path), home: Some([40.0, 30.0]), area: if (300..340).contains(&f) || (900..940).contains(&f) { u32::MAX } else { 0 }, ..targets(f) };
+    for name in names {
+        let p = d.program(name, &common).expect(name);
+        let mut seen = std::collections::BTreeSet::new();
+        for st in 0..p.status_enter.len() as i32 {
+            let mut a = vm::OFF;
+            vm::begin(&p, &mut a, 1, 5, 0x1234, st, true);
+            let (mut hashes, mut snap) = (Vec::new(), None);
+            for f in 0..1200u32 {
+                if f == 600 {
+                    snap = Some(a);
+                }
+                vm::step(&p, &mut a, &inp(f));
+                seen.insert(a.status);
+                hashes.push(a.hash());
+            }
+            let mut b = snap.unwrap();
+            for f in 600..1200u32 {
+                vm::step(&p, &mut b, &inp(f));
+                assert_eq!(b.hash(), hashes[f as usize], "{name} status {st}: replay diverged at {f}");
+            }
+        }
+        let u = p.unknown();
+        println!("vm: {name}: {} statuses, reached {:?}; left: {}", p.status_enter.len(), seen, if u.is_empty() { "none".into() } else { u.join(", ") });
+    }
+}

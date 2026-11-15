@@ -268,6 +268,8 @@ pub struct Input {
     /// kind 24's source: the motion module's second translation query (in place of the one kind 1 reads), e.g. a
     /// partial / added motion's root movement; same frame and units
     pub root_move2: [f32; 2],
+    /// the area module's contacts (R10055): bit n = the actor touches area n of the area kind R10055 asks about (13)
+    pub area: u32,
 }
 
 // work variables the engine itself maintains (engine.md 5 / engine-ops.md)
@@ -1033,6 +1035,12 @@ impl<'a> Cx<'a> {
             }
             10050 => self.target(self.slot_arg(x(0))).is_some(),
             10051 => self.arrived(),
+            // 10055 n (0x81A15078; n a variable (argument type 5, read by sora_melee 0x8108D170) or a constant): the
+            // actor's area module (module accessor [off], cast to emAreaModuleImpl) answers 0x81A27688: false when its
+            // contact count (0x810A53D0, list vfunc 0x14) is 0 or area n's kind (0x810A4DC0 then 0x810A8024: byte 1
+            // of the area's record) is not 13; else true when a contact (0x810A53E4, list vfunc 0x0C) has id n. The
+            // host reports the kind-13 contacts by id
+            10055 => self.i.area & (1u32 << (x(0) as i32 as u32 & 31)) != 0,
             _ => false,
         };
         r != not

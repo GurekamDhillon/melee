@@ -209,6 +209,12 @@ unsafe fn input(carrier: i32, damage: i32, ground: bool, fighter_of: unsafe fn(i
 /// actor's feet.
 unsafe fn collision(i: &mut vr::Input) {
     use melee_world::tu::mplib as mp;
+    // in his arena (vm_arena: Meta Ridley over the Falcon Flyer) the boss flies: his stage has no floor under him but
+    // the ship, whose deck his clips meet by their own root tracks (Clings rides it down). The host stage's floor
+    // (Final Destination's, under the ship) would stop him where Brawl has nothing
+    if crate::tu::vm_arena::live() {
+        return;
+    }
     let a = crate::tu::geno_vm::actor();
     let (x, y) = (a.pos[0], a.pos[1]);
     let (mut p, mut n): (Vec, Vec) = (core::mem::zeroed(), core::mem::zeroed());
@@ -395,6 +401,14 @@ pub unsafe fn vm_frame(p: &'static Program, carrier: i32, frame: u32, damage: i3
                         }
                     }
                     0x0604 => reset_boxes(),
+                    // the link events (6E00 int / 6E01 float / 6E02 run): an event id and a value to the actor in link
+                    // slot n. Meta Ridley's three follow a 650E spawn and name the link slot the spawn filled (his
+                    // weapons), not the Falcon Flyer, whose only link to him is the attack id it copies by 6519
+                    // (vm_arena). What event 5103 does to the weapon is not read [L]: logged, not applied
+                    0x6E00..=0x6E02 if log => {
+                        let v = |k: u32| p.args.get((ins.a + k) as usize).map_or(-1.0, |&x| arg(a, x));
+                        eprintln!("petey: f{frame} vm link event {:04X}: slot {} event {} value {} (to its weapon; not applied)", ins.id, v(0), v(1), v(2));
+                    }
                     _ => {}
                 }
             }

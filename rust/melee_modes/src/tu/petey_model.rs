@@ -1435,6 +1435,49 @@ pub fn rig_textures(rig: &Rig, mut f: impl FnMut(*const u8, u16, u16, u32, u32))
 /// `draw_tris` draws one triangle per material batch only (set around a call; presentation only).
 pub static mut SAMPLE: bool = false;
 
+/// A static model's triangles as GX display lists, one per material batch, placed at `at` (no scale or turn): the
+/// bytes `draw_tris`'s immediate-mode loop would write for it (GX_DRAW_TRIANGLES on VTXFMT0, then per vertex the
+/// position as 3 BE f32, RGBA8 with alpha 255, and for a textured batch the texture coordinate as 2 BE f32). Built
+/// once off the game thread (a section's 10-20 k triangles cost ~1 ms a draw one GX call at a time).
+pub fn build_lists(rig: &Rig, tris: &[Vert], at: [f32; 2]) -> Vec<Vec<u8>> {
+    let mut out = Vec::with_capacity(rig.batches.len());
+    let mut start = 0usize;
+    for bt in &rig.batches {
+        let end = (bt.end as usize).min(tris.len());
+        let run = &tris[start.min(end)..end];
+        start = end;
+        let textured = bt.tex.is_some();
+        let mut l = Vec::with_capacity(run.len() * if textured { 24 } else { 16 } + 3 * (run.len() / 60000 + 1) + 32);
+        for chunk in run.chunks(3 * 20000) {
+            l.push((melee_types::GX_TRIANGLES | melee_types::GX_VTXFMT0) as u8);
+            l.extend_from_slice(&(chunk.len() as u16).to_be_bytes());
+            for (p, col, uv) in chunk {
+                for v in [at[0] + p[0], at[1] + p[1], p[2]] {
+                    l.extend_from_slice(&v.to_bits().to_be_bytes());
+                }
+                l.extend_from_slice(&[col[0], col[1], col[2], 255]);
+                if textured {
+                    l.extend_from_slice(&uv[0].to_bits().to_be_bytes());
+                    l.extend_from_slice(&uv[1].to_bits().to_be_bytes());
+                }
+            }
+        }
+        // GX display lists are whole 32-byte blocks (NOPs after the last command)
+        l.resize(l.len().next_multiple_of(32), 0);
+        out.push(l);
+    }
+    out
+}
+
+/// `draw_tris` with a model's prebuilt display lists (`build_lists`, same placement): one GX call per batch.
+pub unsafe fn draw_tris_lists(rig: &Rig, tris: &[Vert], at: [f32; 3], lists: &[Vec<u8>]) {
+    LISTS = Some(core::mem::transmute::<&[Vec<u8>], &'static [Vec<u8>]>(lists));
+    draw_tris(rig, tris, [0.0, 0.0], at, 1.0, 0.0, false);
+    LISTS = None;
+}
+/// set by `draw_tris_lists` around one `draw_tris` call
+static mut LISTS: Option<&'static [Vec<u8>]> = None;
+
 pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
     use melee_runtime::tu::displayfunc_native::ext as gx;
     use melee_runtime::tu::lbrefract::ext as gi;
@@ -1472,7 +1515,7 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
     gx::GXSetCurrentMtx(0);
     let (s, c) = (yaw.sin(), yaw.cos());
     let mut start = 0usize;
-    for bt in &rig.batches {
+    for (bi, bt) in rig.batches.iter().enumerate() {
         let end = (bt.end as usize).min(tris.len());
         let run = &tris[start.min(end)..end];
         start = end;
@@ -1518,6 +1561,12 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
         // SAMPLE: one triangle per batch (keeps the batch's texture resident in the renderer's cache; the caller
         // draws it where the camera does not look)
         let run = if SAMPLE { &run[..3.min(run.len())] } else { run };
+        if let (Some(ls), false) = (LISTS, SAMPLE) {
+            if let Some(l) = ls.get(bi).filter(|l| !l.is_empty()) {
+                melee_runtime::tu::pobj::ext::GXCallDisplayList(l.as_ptr() as *mut _, l.len() as u32);
+                continue;
+            }
+        }
         for chunk in run.chunks(3 * 20000) {
             gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
             for (p, col, uv) in chunk {

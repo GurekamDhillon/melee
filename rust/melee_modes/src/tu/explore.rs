@@ -143,6 +143,8 @@ pub struct Map {
     pub crates: Vec<Crate>,
     /// per section: (rig, posed triangles, offset); presentation only
     models: Vec<(pm::Rig, Vec<pm::Vert>, [f32; 2])>,
+    /// per model: its display lists (`pm::build_lists`, at its offset), built by the loader
+    lists: Vec<Vec<Vec<u8>>>,
     door_models: Vec<(pm::Rig, Vec<pm::Vert>)>,
     /// the bricks' looks (`Block::model`): name, rig, bind-pose triangles
     brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)>,
@@ -693,6 +695,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         doors,
         spawns,
         crates,
+        lists: models.iter().map(|(r, t, off)| pm::build_lists(r, t, *off)).collect(),
         models,
         door_models,
         brick_models,
@@ -1623,7 +1626,10 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     for &(_, i) in &order[..warm] {
         let (r, t, off) = &m.models[i as usize];
         pm::SAMPLE = !here(off);
-        pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);
+        match m.lists.get(i as usize) {
+            Some(l) if !pm::SAMPLE => pm::draw_tris_lists(r, t, [0.0, 0.0, 0.0], l),
+            _ => pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false),
+        }
         pm::SAMPLE = false;
     }
     for (r, t, off) in m.models.iter().skip(32) {

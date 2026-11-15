@@ -4,13 +4,13 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   bash tools/rust-port/golden/coverage/run_rust.sh [-j N] [--out RESULTS.tsv] [NAME...|--all]
 # Output rows: name <TAB> status (PASS|FAIL|NOT_WIRED|NO_GOLDEN) <TAB> matched frames <TAB> golden rows <TAB> first divergence / reason.
 # COV_MODS_DIR=<dir> mounts <dir>/<name> as the scenario's mods folder.
-# Headless, unfocused, no OS input. Needs a built build/cargo/${PROFILE:-release}/melee.exe (PROFILE=fast: cargo_fast.sh build -p melee --profile fast) and GW_ISO_VANILLA (workspace .env, never printed).
+# Headless, unfocused, no OS input. Needs a built build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe (PROFILE=fast: cargo_fast.sh build -p melee --profile fast) and GW_ISO_VANILLA (workspace .env, never printed).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../../.." && pwd)"; cd "$repo"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ] && { set -a; . "$ws/.env"; set +a; }
 export MELEE_WINDOW_UNFOCUSED=1
-exe_default="build/cargo/${PROFILE:-release}/melee.exe"; MELEE_EXE="${MELEE_EXE:-$exe_default}"
+exe_default="build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe"; MELEE_EXE="${MELEE_EXE:-$exe_default}"
 jobs=3; out=""; names=()
 while [ $# -gt 0 ]; do case "$1" in -j) jobs="$2"; shift ;; --out) out="$2"; shift ;; --all) mapfile -t names < <(grep -v '^#' docs/rust-port/golden/coverage/scenarios.tsv | cut -f1) ;; *) names+=("$1") ;; esac; shift; done
 tmp="${TEMP:-/tmp}/covrun.$$"; mkdir -p "$tmp"

@@ -94,3 +94,37 @@ Measured on the desktop, release, `-j 3`, `CARGO_INCREMENTAL=0`, own target dir,
 | edit `melee_modes/src/lib.rs`, rebuild melee | 160 s | 190 s (six part crates rebuild at -j 3) |
 
 The largest rustc of a build is now melee_engine (3.9 GB) / melee (3.6 GB).
+
+## Agent check builds use `--profile fast` (branch port/fastprof, 2026-11-15)
+Measured on this machine with other lanes building (noisy), `cargo build -p melee -j 3`, no sccache, private target dirs, same
+one-line edit (an unused `pub fn`) in each crate for both profiles. Release as the gate builds it (`CARGO_INCREMENTAL=0`); fast
+as committed (incremental, 256 cgus, no LTO, debug 0).
+
+| case | release | fast |
+|---|---|---|
+| clean build | 432 s | 391 s |
+| rebuild after a one-line edit in `melee_world` | 224 s | 94 s |
+| rebuild after a one-line edit in `melee_modes` | 226 s | 78 s |
+
+Peak rustc memory was sampled over all rustc processes on the machine, so other lanes' compiles are in it: release clean 9.1 GB
+single / 16.7 GB total (melee_link, as before), fast clean 7.7 / 11.5 GB. The fast edit rows (10.2 GB single) are another lane's
+melee_link; read them as "no worse". Fast is not a memory fix: melee_link still needs its 12 GB wait until the generator split lands.
+
+### Hashes are byte-identical between profiles
+Same source, two exes (release and fast), compared with `cmp`:
+- goldens `pad_falcon_fox_fd`, `pad_marth_sheik_bf`, `cpu_fox_falco_dl`, `cpu_peach_samus_ys_items`, 3601 frames each, the whole
+  NHV1 CSV (hash columns included): identical;
+- `synctest --engine tu` depth 4 and 7 (600 frames, golden-checked): identical result lines, 0 mismatches;
+- a boss row on a tree with the Geno VM (commit 4a8b6a1a9, not part of this branch): Ridley through `geno_vm_check.sh`
+  fight / sync 4 and 7 / nhv1, 1500 frames: fight.csv, both nhv1 runs and both synctest lines identical; last NHV1 row
+  `1499,338BA078,C3874CD2` in both.
+
+### What changed
+- `cargo_fast.sh build|run` with no `--release`/`--profile` now means `--profile fast`; `RELEASE=1` means `--release`.
+- `gate.sh`, `golden/coverage/run_rust.sh`, `golden/check_slp.sh`, `modhost/determinism.sh` and the Envoy/quickswap/sfx/tag/netplay/slippi
+  check scripts default to `build/cargo/fast/melee.exe`. `PROFILE=<p>` still picks one; `RELEASE=1` picks release.
+- The gate's snapshot perf guard is release-only, so a fast gate skips it: run `RELEASE=1 bash tools/rust-port/gate.sh` when
+  perf matters.
+- Stay on release, on purpose: the exe handed to the owner (candidate builds), `launcher/package.sh`, `yougame/package.sh`,
+  `perf/zero_hitch_gate.sh`, `perf/snapguard.sh`, and any frame-time measurement. A fast exe runs a little slower (no LTO).
+  Say "release" in the report of any such build.

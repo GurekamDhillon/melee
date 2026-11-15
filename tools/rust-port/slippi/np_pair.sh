@@ -4,7 +4,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 # Extra args go to both peers (--frames N, --delay D, --lag-ms N, --loss-pct P). Checksum CSVs must be identical.
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"; set -a; . "$ws/.env"; set +a
-B="${EXE:-$repo/build/cargo/release/melee.exe}"; P=$1; O=$2; shift 2; mkdir -p "$O"
+B="${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}"; P=$1; O=$2; shift 2; mkdir -p "$O"
 export MELEE_VOLUME=3 MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1
 MELEE_WINDOW_TITLE="slippi2:np:host" "$B" slippi-netplay --host --port $P --peer 127.0.0.1:$((P+1)) --out "$O/h.csv" "$@" > "$O/h.log" 2>&1 &
 MELEE_WINDOW_TITLE="slippi2:np:guest" "$B" slippi-netplay --join --port $((P+1)) --peer 127.0.0.1:$P --out "$O/g.csv" "$@" > "$O/g.log" 2>&1; g=$?; wait $!; h=$?

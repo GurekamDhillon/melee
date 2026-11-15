@@ -8,6 +8,7 @@
 # zips it, then audits the zip: no disc data (GameCube/Wii disc headers, Melee's DAT/USD/HPS file names, big
 # binary blobs other than melee.exe), no disc-image paths, no personal paths or user names; prints sha256 + size.
 # CARGO_TARGET_DIR is honoured (default: the workspace's shared target).
+# RELEASE BUILD ON PURPOSE (notes/buildspeed.md): packaging ships the release profile; agent check builds use `fast`.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(cd "$here/../../.." && pwd)"

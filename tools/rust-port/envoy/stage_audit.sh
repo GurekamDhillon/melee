@@ -11,7 +11,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 # Needs build/mods deps like build_mods.sh (wasm32-unknown-unknown). Writes to $OUT (default: a temp dir).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
-kind="${1:?usage: stage_audit.sh GRKIND [EXE] [FRAMES]}"; exe="${2:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
+kind="${1:?usage: stage_audit.sh GRKIND [EXE] [FRAMES]}"; exe="${2:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 frames="${3:-7200}"
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "stage_audit: GW_ISO_VANILLA not set"; exit 2; }
 out="${OUT:-$(mktemp -d)}"; mkdir -p "$out/mod" "$out/mods"

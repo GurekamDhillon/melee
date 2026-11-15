@@ -12,7 +12,7 @@ ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 [ -f "$ws/.env" ] && { set -a; . "$ws/.env"; set +a; }
 which="${ISO:-VANILLA}"; var="GW_ISO_$which"; iso="${!var:-}"
 [ -n "$iso" ] || { echo "quickswap: $var not set"; exit 2; }
-exe="${EXE:-$repo/build/cargo/release/melee.exe}"
+exe="${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}"
 mods="${MODS:-$repo/build/mods}"
 p1="${P1:-falcon}"; partner="${PARTNER:-marth}"; stage="${STAGE:-FINAL DESTINATION}"
 frames="${FRAMES:-9000}"; build=$(git -C "$repo" rev-parse --short HEAD)

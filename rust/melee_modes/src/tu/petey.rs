@@ -679,7 +679,7 @@ unsafe fn arena_camera() {
         }
     }
     let bz = &*core::ptr::addr_of!(crate::tu::script_game::stage_info.blast_zone);
-    b = [fmax(b[0] - MARGIN, bz.left), fmin(b[1] + MARGIN, bz.right), fmax(b[2] - MARGIN, bz.bottom), fmin(b[3] + MARGIN, bz.top)];
+    b = [fmax(b[0] - MARGIN, bz.left - MARGIN), fmin(b[1] + MARGIN, bz.right + MARGIN), fmax(b[2] - MARGIN, bz.bottom - MARGIN), fmin(b[3] + MARGIN, bz.top + MARGIN)];
     let th = melee_runtime::gekko::tanf(0.5 * FOV * 0.017453292);
     let asp = cm::cm_803BCB64.aspect;
     let want_d = fmax(fmax((b[1] - b[0]) * 0.5 / (th * asp), (b[3] - b[2]) * 0.5 / th), 120.0);

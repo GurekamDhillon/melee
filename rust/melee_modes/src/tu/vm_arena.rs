@@ -122,6 +122,21 @@ pub fn begin(difficulty: i32, seed: u32) {
     }
     let a = actor();
     eprintln!("vm_arena: {} begins (status {}, at {:.1} {:.1})", partner().unwrap_or("?"), a.status, a.pos[0], a.pos[1]);
+    // MELEE_PETEY_LOG: each clip's root track (start, end, lowest, highest up), the motion the scripts' kind-1 units take
+    if std::env::var_os("MELEE_PETEY_LOG").is_some() {
+        if let Some(m) = crate::tu::vm_boss_model::arena_model() {
+            for (k, t) in m.root.iter().enumerate() {
+                if let (Some(f), Some(l)) = (t.first(), t.last()) {
+                    let lo = t.iter().map(|v| v[1]).fold(f32::MAX, fmin);
+                    let hi = t.iter().map(|v| v[1]).fold(f32::MIN, fmax);
+                    eprintln!(
+                        "vm_arena: motion {k} {} ({} frames, loop {}): root fwd {:.1} -> {:.1}, up {:.1} -> {:.1} (range {:.1}..{:.1})",
+                        p.motion_names.get(k).map_or("?", |s| s.as_str()), t.len(), p.motion_loop.get(k).copied().unwrap_or(false), f[0], l[0], f[1], l[1], lo, hi
+                    );
+                }
+            }
+        }
+    }
 }
 
 pub fn actor() -> &'static vr::Actor {

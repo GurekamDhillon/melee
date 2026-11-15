@@ -346,6 +346,11 @@ pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
 /// Envoy exploration rooms (melee_modes::tu::explore): at each stage load, a replacement collision (null: the
 /// stage's own). Unset unless `MELEE_ENVOY_EXPLORE=1`.
 pub static mut EXPLORE_COLL: Option<unsafe fn() -> *mut MapCollData> = None;
+/// Boss-carried collision (melee_modes::tu::geno_boss_coll): at each stage load, after `EXPLORE_COLL`, the
+/// collision with the boss's moving line sets appended (null: unchanged). `BOSS_COLL_INIT` runs after `mpLibLoad`
+/// to switch the appended lines on (as `Ground_TTMod_InitLines` does for the TT platforms).
+pub static mut BOSS_COLL: Option<unsafe fn(*mut MapCollData) -> *mut MapCollData> = None;
+pub static mut BOSS_COLL_INIT: Option<unsafe fn(*mut MapCollData)> = None;
 
 /// `Ground_StageData` (3DFEA8)
 pub static mut Ground_StageData: StageData = StageData {
@@ -991,10 +996,25 @@ pub unsafe extern "C" fn Ground_801C0800(pair: *mut StageIdPair) {
                     coll = c;
                 }
             }
+            let mut boss = false;
+            if let Some(f) = BOSS_COLL {
+                if !coll.is_null() {
+                    let c = f(coll);
+                    if !c.is_null() {
+                        coll = c;
+                        boss = true;
+                    }
+                }
+            }
             coll = ext::ScriptGame_StagePrepare(coll);
             ext::mpLibLoad(coll);
             if !merged.is_null() {
                 Ground_TTMod_InitLines(coll, nplat);
+            }
+            if boss {
+                if let Some(f) = BOSS_COLL_INIT {
+                    f(coll);
+                }
             }
             ext::ScriptGame_StageReady();
         }

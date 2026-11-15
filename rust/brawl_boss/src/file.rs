@@ -205,15 +205,15 @@ impl BossFile {
     pub fn slot_weights(&self) -> [Fx; 4] {
         [self.tuning_fx(2), self.tuning_fx(3), self.tuning_fx(4), self.tuning_fx(5)]
     }
-    /// Slot repeat factor (tuning +0x74).
+    /// Slot repeat factor (tuning [off]).
     pub fn slot_repeat_factor(&self) -> Fx {
         self.tuning_fx(0x74 / 4)
     }
-    /// Param 3056, the bounce factor (general +0x08).
+    /// Param 3056, the bounce factor (general [off]).
     pub fn bounce_factor(&self) -> Fx {
         self.general_fx(2)
     }
-    /// Param 3057, the death threshold (general +0x9C).
+    /// Param 3057, the death threshold (general [off]).
     pub fn death_threshold(&self) -> Fx {
         self.general_fx(0x9c / 4)
     }
@@ -235,7 +235,7 @@ impl BossFile {
             Target::Unresolved(v)
         })
     }
-    fn local(&self, field: u32) -> Result<u32> {
+    pub fn local(&self, field: u32) -> Result<u32> {
         match self.ptr_field(field)? {
             Target::Local(o) => Ok(o),
             _ => Err(Error::NotAPointer { field }),
@@ -244,6 +244,15 @@ impl BossFile {
 
     /// Decode a boss parameter file.
     pub fn parse(file: &[u8]) -> Result<BossFile> {
+        let mut bf = Self::parse_raw(file)?;
+        bf.decode_record()?;
+        bf.collect_scripts()?;
+        Ok(bf)
+    }
+
+    /// The container only: header, relocations, exports and imports, no boss record (the enemy files and the shared
+    /// script file `adventure_common` leaf 333 are read this way by [`crate::vm`]).
+    pub fn parse_raw(file: &[u8]) -> Result<BossFile> {
         let header = Header::parse(file)?;
         let file = &file[..header.file_size as usize];
         let data = get(file, HEADER, header.data_size as usize)?.to_vec();
@@ -295,7 +304,7 @@ impl BossFile {
                 imports.push(Import { name: nm, fields });
             }
         }
-        let mut bf = BossFile {
+        let bf = BossFile {
             header,
             data,
             relocs,
@@ -320,9 +329,12 @@ impl BossFile {
             cage_cmd_sets: Vec::new(),
             scripts: BTreeMap::new(),
         };
-        bf.decode_record()?;
-        bf.collect_scripts()?;
         Ok(bf)
+    }
+
+    /// Where the next object after `at` starts (the next relocation target), or the end of the data.
+    pub fn next_object(&self, at: u32) -> u32 {
+        self.targets.range(at + 1..).next().copied().unwrap_or(self.data.len() as u32)
     }
 
     fn table_len(&self, start: u32, stride: u32, ptr_field: u32) -> usize {
@@ -457,7 +469,7 @@ impl BossFile {
         Ok(())
     }
 
-    fn decode_cmd(&self, at: u32) -> Result<Command> {
+    pub fn decode_cmd(&self, at: u32) -> Result<Command> {
         let word = self.word(at)?;
         let n = (word >> 8) & 0xff;
         let mut args = Vec::with_capacity(n as usize);

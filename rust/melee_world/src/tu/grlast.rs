@@ -414,9 +414,14 @@ pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
 /// Envoy exploration rooms (melee_modes::tu::explore): once per logic frame of a Final Destination match. Unset
 /// unless `MELEE_ENVOY_EXPLORE=1`.
 pub static mut EXPLORE_FRAME: Option<unsafe fn()> = None;
+/// Boss-carried collision harness (melee_modes::tu::geno_boss_coll, `MELEE_BOSS_PLATFORM`): once per logic frame.
+pub static mut BOSS_COLL_FRAME: Option<unsafe fn()> = None;
 pub unsafe extern "C" fn grLast_8021A914(_gobj: *mut HSD_GObj) {
     melee_core::ct!("grLast_8021A914");
     if let Some(f) = EXPLORE_FRAME {
+        f();
+    }
+    if let Some(f) = BOSS_COLL_FRAME {
         f();
     }
 }

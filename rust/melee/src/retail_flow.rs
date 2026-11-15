@@ -84,6 +84,10 @@ pub struct RetailPlay {
     shot_dir: Option<PathBuf>,
     shot_ages: Vec<u32>,
     shot_pending: Option<String>,
+    /// The last tick entered a scene (its setup ran in it: the match's setup tick is the longest of a match): that
+    /// frame presents at once, and a tick its time left owing runs in the next frame instead of behind it in this
+    /// one (pacing only; `present_now`).
+    scene_tick: bool,
     quit: bool,
     pub failed: Option<String>,
     interp: bool,
@@ -161,7 +165,7 @@ impl RetailPlay {
             iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, handed_tick: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
-            shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
+            shot_pending: None, scene_tick: false, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
@@ -730,6 +734,7 @@ impl RetailPlay {
         }
         let t_step = std::time::Instant::now();
         let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
+        self.scene_tick = entered && !self.headless;
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
@@ -1427,6 +1432,7 @@ impl Game for RetailPlay {
     }
 
     fn present(&mut self, window: &Arc<Window>, alpha: f64) {
+        self.scene_tick = false;
         let t_present = std::time::Instant::now();
         self.present_inner(window, alpha);
         // MELEE_PRESENT_SPIKE=<ms>: one line per present at least that long, with the presenter's stages (frame-time tail)
@@ -1450,7 +1456,7 @@ impl Game for RetailPlay {
     }
 
     fn present_now(&self) -> bool {
-        self.shot_pending.is_some()
+        self.shot_pending.is_some() || self.scene_tick
     }
 
     fn take_hud_request(&mut self) -> Option<bool> {

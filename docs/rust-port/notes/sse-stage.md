@@ -251,3 +251,23 @@ Every other match frame, doors included, is under 16 ms on both maps.
   `scratch/sse3/scene_tick_wip.patch`; its first version stalled the loop because nothing cleared the flag).
   Further work: the VS setup's own on_enter (~9 ms, FD too), and the remaining `explore map draw` state setup.
 - Synctest Jungle/Lake with a door at 600: d4 1797 passes / 7188 checks and d7 1794 / 12558, 0 mismatches each.
+
+## Setup-frame pacing (Nov 15, sse4)
+
+`RetailPlay::scene_tick` (`present_now`): the tick that enters a scene presents at once; a tick its time left owing
+runs in the next frame instead of behind it in the same one (pacing only; `present` clears the flag, which the first
+draft lacked and so stalled the loop). Same quiet-machine walk (`scratch/sse4/quiet.sh`), setup frame, tick / work ms:
+
+| | before (sse3) | after |
+|---|---|---|
+| Lake | tick 15.9-17.5, work 19.8-24.6 | tick 16.8 (34.1 on the first, cold run), work 23.4 (37.8 cold) |
+| Jungle | tick 19.4-22.0, work 28.6-36.6 | tick 17.1-20.3, work 25.2-27.0 |
+| Final Destination | tick 12.1-13.3, work 15.8-16.9 | tick 16.1, work 23.3 |
+
+The setup frame is now one tick (`ticks` 1), but that tick alone is still over: `scene on_enter` 8.8-10.6 ms (stage
+asset apply 2.3-2.8 ms of a 596 KB plan, 39k events and ~1300 page faults; three fighter creates ~1 ms each), the scene's
+first frame (`ENTRY_RUNS_FRAME`: gobj procs and the explore map draw run twice), and frame capture 2.3-4 ms (the
+async decode of that frame). The present side adds ~6 ms (prepare 2, draw 1, unaccounted 3.5-4.8). Still open:
+spreading on_enter is sim work (the arena apply and fighter creates write game memory), so the remaining lever on the
+host side is the capture/decode and the present's unaccounted time. Synctest d4/d7 Jungle and Lake, door at 600:
+1797/7188 and 1794/12558, 0 mismatches.

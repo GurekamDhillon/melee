@@ -352,3 +352,26 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
   0x81A23A0C / 0x81A23CD4 / 0x81A23E0C, slots 0-3 players, 4-5 other kinds). Both offset the point by (x, y) through
   0x81A24278 and hand the actor-to-point vector to 0x81A25BD0; the out variable is then written. The VM's 6901 (an
   angle by atan2) is a reading of that, not yet checked against 0x81A25BD0; port both together.
+
+### Round 7 (2026-11-15)
+
+- 6901 / 6902 ported together (search-module switch 0x81A26510, sub-ops 1 / 2 -> 0x81A25C60 / 0x81A25DF0). The point
+  is the slot's target plus the offset (x * ax, y) * scale (0x81A24278; its rotation call gets angle 0), the angle is
+  0x81A25BD0 -> 0x81A15A00 in degrees [0, 360) from the actor's facing: the f1 the callers leave is the posture
+  module's lr (vfunc 0x2C on the posture module, the last call before 0x81A25BD0, whose float result is the argument).
+  ax is the target's facing when the flag is set (0x81A23CD4 / 0x81A2619C), else 1; scale 0x81A23E0C / 0x81A262E8.
+  6902 reads the target now (0x81A23A0C), 6901 the search snapshot the same helpers fill (0x81A25440 loop), i.e. the
+  VM's `found`. Slots 0-3 players (absent: point 0, ax 0, scale 1); 4-7 point 0, factors 1 (kinds 4 / 5 linked
+  objects and 6 a module point are not modelled [L]); others point 0 and, for 6901, factors -1. The out variable is
+  written for any slot (the old 6901 skipped it). The actor point is the actor's position (the code's node is the
+  enemy object's own matrix). New host inputs `target_lr`, `target_scale` (0 = 1).
+- Kinetics: 0x81A1E658 raises the speed to the lower limit whatever it was before; the VM clamped only on a crossing,
+  so Meta Ridley's status 26 drift (speed 0, decay, floor 0.4) never moved. Only the crossing still ends the record.
+- R10059 (0x81A15284): no arguments; a flag byte of a global sora_melee object (created and cleared at 0x81C21B30, set
+  at 0x81C51C04 when one of its timers matches) [L: meaning not traced]. Host input `global_flag`, clear in VS.
+- Proof: Meta Ridley leaves status 26 at f930 in the in-game fight row (26 -> 2 -> 3 -> 22 -> 23 -> 26 -> 2 ...,
+  14 status changes; was stuck from f169). Seven-boss set (merge with geno-boss3 1e4b3c905): fight rows ok for all,
+  sync d4 / d7 0 mismatches, NHV1 identical twice, Ridley / Rayquaza root and Glunder crawl ok. vm_disc passes.
+- Host (geno-boss3 lane): set `target_lr` / `target_scale` per player from the fighter's facing and model scale;
+  `enemy_room` / `groups` (R10052) and `partner_alive` (R10053) are still unset in VS, where no boss needs them
+  (R10052 false for Meta Ridley as in Brawl's VS, R10053 is the Falcon Flyer's).

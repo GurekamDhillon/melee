@@ -16,6 +16,8 @@
 #   boss  a boss fight like the geno VM check's perf row: Falcon vs a level-1 CPU Fox carrier on FD with
 #         MELEE_VS_BOSS=${BOSS:-rayquaza}, the jab schedule, 3000 frames. Revisions with MELEE_VS_BOSS.
 #
+# PERF_AB_SHARED=1: build in the lanes' shared target dir <workspace>/_build/cargo-shared (cargo locks it while in
+# use; incremental instead of from scratch). Each exe is copied out right after its build and its banner id checked.
 # Env: N (runs per side, default 5), FEATURES (cargo features for both builds, e.g. profile-tracy), KEEP=1 (keep the
 # worktrees and target dirs; default: deleted at the end, exes and profiles stay in the output dir), OUT (output dir),
 # TMO (seconds per run, default 900), BOSS. Needs GW_ISO_VANILLA (the workspace .env). Pad scripts come from the head
@@ -49,7 +51,8 @@ disk_ok() {
 
 # build <short-sha> -> $out/melee-<sha>.exe
 build() {
-  local sha=$1 wt="$root/wt-$1" exe="$out/melee-$1.exe"
+  local sha=$1 wt="$root/wt-$1" exe="$out/melee-$1.exe" tgt="$root/wt-$1/build/cargo-ab"
+  [ -n "${PERF_AB_SHARED:-}" ] && tgt="$ws/_build/cargo-shared"
   if [ -f "$exe" ]; then echo "perf-ab: $exe exists (reused)"; else
     disk_ok || { echo "perf-ab: FAIL low disk (C: < 15 GB or E: < 20 GB free)" >&2; exit 3; }
     [ -d "$wt" ] || git -C "$repo" worktree add -q --detach "$wt" "$sha" || exit 3
@@ -57,11 +60,11 @@ build() {
     wait_quiet
     local feat=(); [ -n "${FEATURES:-}" ] && feat=(--features "$FEATURES")
     echo "perf-ab: building $sha (release${FEATURES:+, features $FEATURES})"
-    ( cd "$wt/rust" && CARGO_TARGET_DIR="$wt/build/cargo-ab" bash "$S/buildlock.sh" run perf-ab \
+    ( cd "$wt/rust" && CARGO_TARGET_DIR="$tgt" bash "$S/buildlock.sh" run perf-ab \
         cargo build --release -j "${JOBS:-3}" -p melee "${feat[@]}" ) > "$out/build-$sha.log" 2>&1 \
       || { tail -20 "$out/build-$sha.log"; echo "perf-ab: FAIL build $sha" >&2; exit 3; }
-    local b="$wt/build/cargo-ab/release/melee"; [ -f "$b" ] || b="$b.exe"
-    cp "$b" "$exe"
+    local b="$tgt/release/melee"; [ -f "$b" ] || b="$b.exe"
+    cp "$b" "$exe"   # copied out at once: a shared target dir's exe is replaced by the next lane's build
   fi
   local id; id=$(grep -a -o 'melee \[[A-Za-z0-9_./-]* [0-9a-f]\{7,12\}' "$exe" | head -1 | awk '{print $NF}')
   case "$sha" in "$id"*) echo "perf-ab: banner ok: $sha -> ${id}" ;;
@@ -84,15 +87,18 @@ run1() {
   local d="$out/runs/$side-$lab-$i"; rm -rf "$d"; mkdir -p "$d/card/USA/Card A" "$d/save"
   [ -d "$card_src" ] && cp -r "$card_src/." "$d/card/USA/Card A/"
   [ -f "$pads/$pad" ] || { echo "perf-ab: FAIL pad $pad not in $hs" >&2; exit 3; }
+  # the profiler writes profiles/ beside the exe: each run gets its own copy
+  cp "$out/melee-$sha.exe" "$d/melee.exe"
   wait_quiet
   local args=(play --iso "$GW_ISO_VANILLA" --widescreen --windowed --window 1280x720 --max-frames "$frames")
   [ "$scen" = boss ] && args=(play --iso "$GW_ISO_VANILLA" --max-frames "$frames" --match "falcon,fox/cpu1,FINAL DESTINATION" --time-secs 600)
   ( cd "$d" && env MELEE_WINDOW_HIDDEN=1 MELEE_VOLUME=3 MELEE_WINDOW_TITLE="perf-ab $side $scen $lab $i" MELEE_FULLSCREEN=off \
       MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_PAD_NO_PAUSE=1 MELEE_PROFILE=1 MELEE_CARD_PATH="$d/card" \
       MELEE_ENVOY_DIR="$d/save" MELEE_BRAWL_LOCAL="${MELEE_BRAWL_LOCAL:-$ws/_build/brawl}" MELEE_PAD_SCRIPT="$pads/$pad" "$@" \
-      timeout "${TMO:-900}" "$out/melee-$sha.exe" "${args[@]}" ) > "$d/run.log" 2>&1
+      timeout "${TMO:-900}" "$d/melee.exe" "${args[@]}" ) > "$d/run.log" 2>&1
   local rc=$? p; p=$(ls -t "$d"/profiles/profile-*.csv 2>/dev/null | head -1)
   [ -n "$p" ] && cp "$p" "$out/runs/$side-$lab-$i.csv" && cp "${p%.csv}.jsonl" "$out/runs/$side-$lab-$i.jsonl" 2>/dev/null
+  rm -f "$d/melee.exe"
   echo "  $side $lab $i: exit $rc, $( [ -n "$p" ] && echo "$(($(wc -l < "$p") - 1)) frames" || echo "NO PROFILE")"
 }
 

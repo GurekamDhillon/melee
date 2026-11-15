@@ -45,6 +45,7 @@ pub unsafe fn reset() {
     // the boss's weapon records (local data), loaded here at the match's start, never in the frame
     WEAPONS = crate::tu::geno_boss_spawn::vm_records(crate::tu::petey::boss_name());
     SEC = (-1, 0);
+    VIS_SLOT = (-1, 0);
     CAUGHT = false;
     CATCH_OFF = [0.0; 3];
     THROW = None;
@@ -243,6 +244,17 @@ static mut ROOT_TRAVEL: f32 = 0.0;
 /// executable, so the snapshot carries it.
 static mut SEC: (i32, u32) = (-1, 0);
 
+/// The motion module's extra animation slot 0 ("0410 0 n": motion n's file played beside the body's motion; Porky's
+/// SparkDspOff / GrSparkDspOn / AirSparkDspOn, whose files hold only a VIS0): (motion, the tick it began), kept until
+/// the next 0410 on the slot [L: the slot outlives motion changes; its VIS0 runs on its own frame]. Drawing only
+/// (vm_boss_model applies its VIS0); a static of the executable, so the snapshot carries it.
+static mut VIS_SLOT: (i32, u32) = (-1, 0);
+
+/// The extra animation slot's (motion, start tick) for the draw (-1: none).
+pub fn vis_slot() -> (i32, u32) {
+    unsafe { VIS_SLOT }
+}
+
 pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, ground: bool, fighter_of: unsafe fn(i32) -> *mut Fighter, log: bool) -> Out {
     let mut i = input(carrier, damage, ground, fighter_of);
     // out of the boss area (the program's box, the stage's camera bounds): the AreaOut rule (-300) turns the boss back
@@ -326,6 +338,15 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
                     0x040A => {
                         let m = p.args.get(ins.a as usize).map_or(-1.0, |&x| arg(a, x));
                         SEC = (melee_core::ppc::fctiwz_f32(m), a.tick.wrapping_sub(1));
+                    }
+                    0x0410 if ins.n >= 2 => {
+                        let v = |k: u32| p.args.get((ins.a + k) as usize).map_or(-1.0, |&x| arg(a, x));
+                        if melee_core::ppc::fctiwz_f32(v(0)) == 0 {
+                            VIS_SLOT = (melee_core::ppc::fctiwz_f32(v(1)), a.tick.wrapping_sub(1));
+                            if log {
+                                eprintln!("petey: f{frame} vm vis slot: motion {}", VIS_SLOT.0);
+                            }
+                        }
                     }
                     // the catch: 060A (slot, bone, size, offset x y z, ...) arms a catch box, 060D ends it, 061A
                     // defines the throw (slot, ?, damage + per-L, angle, growth, weight-set, -, -, base [I: the

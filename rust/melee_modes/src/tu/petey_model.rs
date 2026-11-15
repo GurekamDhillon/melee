@@ -235,7 +235,7 @@ fn load() -> Result<Model, String> {
 }
 
 /// A bone's bind translation by name in an MDL0 inside `d`: the bone record whose name offset (+8, relative to the
-/// record) points at the name; translation at +0x38.
+/// record) points at the name; translation at [off].
 pub fn bone_trans(d: &[u8], name: &[u8]) -> Option<[f32; 2]> {
     let mut want = name.to_vec();
     want.push(0);
@@ -913,7 +913,7 @@ fn chr0(d: &[u8], c: usize) -> Anim {
 
 pub struct Bone {
     pub name: String,
-    /// the bone's own index (MDL0 bone header +0x0C), what param files refer to
+    /// the bone's own index (MDL0 bone header [off]), what param files refer to
     index: u32,
     srt: [[f32; 3]; 3],
     parent: Option<usize>,

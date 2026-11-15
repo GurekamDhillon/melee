@@ -12,7 +12,11 @@ sleep, wasm mods, ui, draw, unaccounted) and the events that fell inside it (sce
 grouped under one cause: the largest measured component, else "engine step (unsplit)".
 --skip-ms drops frames that start before that time (the window-creation frame: the first present is not a game frame
 the player can see stutter in; it is still listed, as "startup", and does not fail the gate unless --strict-start).
-Exit 0 = pass, 1 = offenders, 2 = bad input.
+Contention (notes/profiling.md): a profile with the `contended` column marks an over-budget frame "contended" when
+the machine was >= 80% busy and the game thread got under 70% of the frame's work time on the CPU (starved by other
+processes). Those are listed apart and do not fail the gate (re-run on a quiet machine); --strict-contended fails on
+them too. Older profiles without the column count every offender as clean.
+Exit 0 = pass, 1 = clean offenders, 2 = bad input.
 """
 import csv, json, os, sys
 from collections import defaultdict
@@ -27,6 +31,7 @@ def main():
     budget = float(opt("--budget", "16.7"))
     label = opt("--label", os.path.basename(path))
     strict_start = "--strict-start" in a
+    strict_cont = "--strict-contended" in a
     jl = path[:-4] + ".jsonl"
     rows = list(csv.DictReader(open(path, newline="")))
     if not rows:
@@ -75,12 +80,19 @@ def main():
         # timed phases (spans of kind note/fighter/stage/envoy with ms >= 0.5): the named split of the engine step
         phases = [f'{e.get("text", "")[:48]} {e.get("ms", 0):.1f}' for e in ev if e["kind"] in ("note", "fighter", "stage", "envoy") and e.get("ms", 0) >= 0.5]
         startup = i == 0
-        offenders.append(dict(t=t0 / 1000, iv=iv, tk=tk, scene=r.get("scene", ""), tick=r.get("tick", ""), cause=("startup: " if startup else "") + cause,
+        cont = r.get("contended", "") == "1"
+        offenders.append(dict(cont=cont, cpu=r.get("thread_cpu_ms", ""), sys=r.get("sys_cpu_pct", ""), t=t0 / 1000, iv=iv, tk=tk, scene=r.get("scene", ""), tick=r.get("tick", ""), cause=("startup: " if startup else "") + cause,
                               parts=parts, ctx=ctx, files=files, phases=phases, startup=startup))
     real = [o for o in offenders if strict_start or not o["startup"]]
-    print(f"== {label}: {len(rows)} frames, budget {budget} ms: {len(real)} over budget"
+    cont = [o for o in real if o["cont"]]
+    clean = [o for o in real if not o["cont"]]
+    print(f"== {label}: {len(rows)} frames, budget {budget} ms: {len(real)} over budget ({len(clean)} clean, {len(cont)} contended)"
           + (f" (+{len(offenders) - len(real)} startup)" if len(offenders) != len(real) else "")
           + f"; {tight} presents over 1.5x the display interval")
+    by = defaultdict(list)
+    for o in offenders: by[o["cause"]].append(o)
+    for o in offenders:
+        if o["cont"]: o["cause"] = "CONTENDED (machine busy, game thread starved): " + o["cause"]
     by = defaultdict(list)
     for o in offenders: by[o["cause"]].append(o)
     for c, L in sorted(by.items(), key=lambda kv: -sum(o["iv"] for o in kv[1])):
@@ -89,11 +101,13 @@ def main():
             top = ", ".join(f"{k} {v:.1f}" for k, v in sorted(o["parts"].items(), key=lambda kv: -kv[1]) if v >= 0.5)
             fl = (f"; files: {', '.join(o['files'][:4])}" + (f" +{len(o['files']) - 4}" if len(o['files']) > 4 else "")) if o["files"] else ""
             print(f"    {o['t']:7.2f}s tick {o['tick']:>6} {o['scene']:<22} frame {o['iv']:6.1f} tick {o['tk']:6.1f} | {top}{fl}"
-                  + (f" | {'; '.join(o['ctx'])}" if o["ctx"] else ""))
+                  + (f" | {'; '.join(o['ctx'])}" if o["ctx"] else "")
+                  + (f" | game thread CPU {o['cpu']} ms, system {o['sys']}%" if o["cpu"] else ""))
             if o["phases"]: print(f"        phases ms: {'; '.join(o['phases'])}")
     busy = [m for m in machine if float(m.get("cpu_pct", 0) or 0) > 85]
     if busy: print(f"  NOTE: machine over 85% CPU in {len(busy)} samples: the run was not quiet, re-run")
-    return 1 if real else 0
+    if cont: print(f"  NOTE: {len(cont)} contended frames (not counted as failures): re-run on a quiet machine to judge them")
+    return 1 if (clean or (strict_cont and cont)) else 0
 
 
 if __name__ == "__main__":

@@ -218,6 +218,8 @@ struct Frame {
     mods: [u64; MAX_MODS],
     interp: bool,
     expected_us: u32,
+    /// Cumulative CPU clocks at this present (the contention flag: the writer takes the differences).
+    clk: sys::Clocks,
 }
 
 /// Start-up options (see `melee::play`).
@@ -241,6 +243,8 @@ struct ModSlot {
 
 struct State {
     t0: Instant,
+    /// The TSC at `t0` (the cycle -> ns rate for the per-frame thread clocks).
+    tsc0: u64,
     cfg: Config,
     c: [AtomicU64; NC],
     mod_ns: [AtomicU64; MAX_MODS],
@@ -300,6 +304,7 @@ pub fn start(cfg: Config) -> Result<String, String> {
     std::fs::write(&probe, "profiling...\n").map_err(|e| format!("profiles folder not writable: {e}"))?;
     let s = Box::new(State {
         t0: Instant::now(),
+        tsc0: sys::tsc(),
         cfg,
         c: Default::default(),
         mod_ns: Default::default(),
@@ -513,7 +518,9 @@ pub fn end_frame() {
     let t = now_us(s);
     let last = s.last_present.swap(t, Relaxed);
     let interval = if last == 0 { 0 } else { (t - last).min(u32::MAX as u64) as u32 };
-    let mut f = Frame { t_us: t, interval_us: interval, scene: s.scene.load(Relaxed) as u16, tick: s.tick.load(Relaxed), c: [0; NC], mods: [0; MAX_MODS], interp: s.interp.load(Relaxed), expected_us: s.expected_us.load(Relaxed) as u32 };
+    let tsc_hz = if t > 1000 { sys::tsc().wrapping_sub(s.tsc0) as f64 * 1e6 / t as f64 } else { 0.0 };
+    let clk = sys::frame_clocks(tsc_hz);
+    let mut f = Frame { t_us: t, interval_us: interval, scene: s.scene.load(Relaxed) as u16, tick: s.tick.load(Relaxed), c: [0; NC], mods: [0; MAX_MODS], interp: s.interp.load(Relaxed), expected_us: s.expected_us.load(Relaxed) as u32, clk };
     for (i, c) in s.c.iter().enumerate() {
         f.c[i] = c.swap(0, Relaxed);
     }

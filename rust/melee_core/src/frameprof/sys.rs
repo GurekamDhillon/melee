@@ -143,3 +143,81 @@ mod imp {
 }
 
 pub use imp::Sampler;
+
+/// Per-frame clocks for the contention flag (game thread, every present; a few hundred ns): the calling thread's
+/// and the process's CPU time (ns, cumulative) and the system's idle / total CPU time (100 ns units, cumulative;
+/// 0 / 0 when unknown). Thread and process time are cycle counts on Windows (QueryThreadCycleTime, exact, unlike
+/// GetThreadTimes' 15.6 ms ticks), turned into ns with the TSC rate measured since `start` (`tsc_hz`).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Clocks {
+    pub thread_ns: u64,
+    pub proc_ns: u64,
+    pub sys_idle: u64,
+    pub sys_total: u64,
+}
+
+#[cfg(all(windows, target_arch = "x86_64"))]
+mod clk {
+    use core::ffi::c_void;
+    extern "system" {
+        fn QueryThreadCycleTime(h: *mut c_void, c: *mut u64) -> i32;
+        fn QueryProcessCycleTime(h: *mut c_void, c: *mut u64) -> i32;
+        fn GetSystemTimes(idle: *mut u64, kernel: *mut u64, user: *mut u64) -> i32;
+    }
+    pub fn tsc() -> u64 {
+        // SAFETY: rdtsc has no preconditions on x86_64
+        unsafe { core::arch::x86_64::_rdtsc() }
+    }
+    pub fn read(tsc_hz: f64) -> super::Clocks {
+        let (mut t, mut p, mut i, mut k, mut u) = (0u64, 0u64, 0u64, 0u64, 0u64);
+        // SAFETY: pseudo handles (-2 current thread, -1 current process) and valid out pointers
+        unsafe {
+            QueryThreadCycleTime(-2isize as *mut c_void, &mut t);
+            QueryProcessCycleTime(-1isize as *mut c_void, &mut p);
+            if GetSystemTimes(&mut i, &mut k, &mut u) == 0 {
+                (i, k, u) = (0, 0, 0);
+            }
+        }
+        let ns = |c: u64| if tsc_hz > 0.0 { (c as f64 * 1e9 / tsc_hz) as u64 } else { 0 };
+        // kernel time includes idle time
+        super::Clocks { thread_ns: ns(t), proc_ns: ns(p), sys_idle: i, sys_total: k + u }
+    }
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+mod clk {
+    #[repr(C)]
+    struct Ts {
+        s: i64,
+        ns: i64,
+    }
+    extern "C" {
+        fn clock_gettime(id: i32, t: *mut Ts) -> i32;
+    }
+    pub fn tsc() -> u64 {
+        0
+    }
+    fn get(id: i32) -> u64 {
+        let mut t = Ts { s: 0, ns: 0 };
+        // SAFETY: valid out pointer; 2 = CLOCK_PROCESS_CPUTIME_ID, 3 = CLOCK_THREAD_CPUTIME_ID
+        if unsafe { clock_gettime(id, &mut t) } != 0 {
+            return 0;
+        }
+        t.s as u64 * 1_000_000_000 + t.ns as u64
+    }
+    pub fn read(_tsc_hz: f64) -> super::Clocks {
+        super::Clocks { thread_ns: get(3), proc_ns: get(2), sys_idle: 0, sys_total: 0 }
+    }
+}
+
+#[cfg(not(any(all(windows, target_arch = "x86_64"), all(unix, not(target_os = "macos")))))]
+mod clk {
+    pub fn tsc() -> u64 {
+        0
+    }
+    pub fn read(_tsc_hz: f64) -> super::Clocks {
+        super::Clocks::default()
+    }
+}
+
+pub use clk::{read as frame_clocks, tsc};

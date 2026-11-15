@@ -2,7 +2,7 @@ use super::writer::{classify, Parts};
 use super::*;
 
 fn test_frame() -> Frame {
-    Frame { t_us: 1_000_000, interval_us: 120_000, scene: 0x0203, tick: 100, c: [0; NC], mods: [0; MAX_MODS], interp: true, expected_us: 4167 }
+    Frame { t_us: 1_000_000, interval_us: 120_000, scene: 0x0203, tick: 100, c: [0; NC], mods: [0; MAX_MODS], interp: true, expected_us: 4167, clk: Default::default() }
 }
 
 #[test]
@@ -53,4 +53,33 @@ fn heavy_process_names() {
     for n in ["explorer.exe", "chrome.exe", "melody.exe"] {
         assert!(!sys::heavy(n), "{n}");
     }
+}
+
+#[test]
+fn contention_flag() {
+    use super::writer::contended;
+    // a fast frame is never slow
+    assert_eq!(contended(10_000.0, 9_000.0, Some(2_000.0), Some(99.0)), (false, false));
+    // slow, the thread ran the whole time: the game's own cost (clean)
+    assert_eq!(contended(25_000.0, 24_000.0, Some(23_000.0), Some(95.0)), (true, false));
+    // slow, busy machine, thread got a third of the time: contended
+    assert_eq!(contended(25_000.0, 24_000.0, Some(8_000.0), Some(95.0)), (true, true));
+    // slow, thread off-CPU but the machine idle (a blocking wait: disc, driver): clean
+    assert_eq!(contended(25_000.0, 24_000.0, Some(8_000.0), Some(20.0)), (true, false));
+    // unknown clocks: never contended
+    assert_eq!(contended(25_000.0, 24_000.0, None, None), (true, false));
+}
+
+#[test]
+fn frame_clocks_advance() {
+    let a = super::sys::frame_clocks(3.0e9);
+    let mut x = 0u64;
+    for i in 0..5_000_000u64 {
+        x = x.wrapping_mul(31).wrapping_add(i);
+    }
+    std::hint::black_box(x);
+    let b = super::sys::frame_clocks(3.0e9);
+    assert!(b.thread_ns >= a.thread_ns && b.proc_ns >= a.proc_ns);
+    #[cfg(windows)]
+    assert!(b.thread_ns > a.thread_ns && b.sys_total > 0);
 }

@@ -224,6 +224,26 @@ struct Agg {
     interp_frames: u64,
     timeline_scenes: Vec<(u64, String)>,
     spans: Vec<(u64, u64, &'static str, String)>,
+    /// The contention flag: the previous frame's clocks, the recent (t_us, sys idle, sys total) for the load window,
+    /// and the over-budget frames split clean / contended.
+    prev_clk: Option<super::sys::Clocks>,
+    sys_win: std::collections::VecDeque<(u64, u64, u64)>,
+    slow_clean: u64,
+    slow_contended: u64,
+}
+
+/// Contention flag (notes/profiling.md): a frame whose game work (interval minus pacing sleep and display wait) or
+/// longest tick is over 16.7 ms is "contended" when the machine was busy (>= 80% of all cores over the frame,
+/// at least the last 100 ms) and the game thread got less CPU than 70% of that work time: it was runnable but not
+/// running (starved), not doing more work. Otherwise it is "clean": the game's own cost.
+pub(super) const BUDGET_US: f64 = 16_700.0;
+pub(super) fn contended(work_us: f64, tick_max_us: f64, thread_cpu_us: Option<f64>, sys_pct: Option<f64>) -> (bool, bool) {
+    let slow = work_us > BUDGET_US || tick_max_us > BUDGET_US;
+    let starved = match (thread_cpu_us, sys_pct) {
+        (Some(c), Some(l)) => l >= 80.0 && c < 0.7 * work_us.max(tick_max_us),
+        _ => false,
+    };
+    (slow, slow && starved)
 }
 
 impl Agg {
@@ -243,7 +263,7 @@ pub(super) fn run(s: &'static State, stem: String) {
     let mut csv = open("csv");
     let mut jsonl = open("jsonl");
     if let Some(c) = csv.as_mut() {
-        let _ = writeln!(c, "t_ms,interval_ms,expected_ms,hitch,scene,tick,ticks,tick_ms,tick_max_ms,file_ms,parse_ms,files,file_kb,mods_ms,prepare_ms,pipelines,pipeline_ms,textures,texture_kb,texture_ms,draw_ms,interp_ms,display_wait_ms,present_ms,ui_ms,pacing_sleep_ms,unaccounted_ms,big_allocs,arena_allocs,window_events,interp{}", (0..MAX_MODS).map(|i| format!(",mod{i}_ms")).collect::<String>());
+        let _ = writeln!(c, "t_ms,interval_ms,expected_ms,hitch,scene,tick,ticks,tick_ms,tick_max_ms,file_ms,parse_ms,files,file_kb,mods_ms,prepare_ms,pipelines,pipeline_ms,textures,texture_kb,texture_ms,draw_ms,interp_ms,display_wait_ms,present_ms,ui_ms,pacing_sleep_ms,unaccounted_ms,big_allocs,arena_allocs,window_events,interp{},thread_cpu_ms,proc_cpu_ms,sys_cpu_pct,slow,contended", (0..MAX_MODS).map(|i| format!(",mod{i}_ms")).collect::<String>());
     }
     let mut agg = Agg {
         t0_wall: super::local_stamp(),
@@ -269,6 +289,10 @@ pub(super) fn run(s: &'static State, stem: String) {
         interp_frames: 0,
         timeline_scenes: Vec::new(),
         spans: Vec::new(),
+        prev_clk: None,
+        sys_win: std::collections::VecDeque::with_capacity(64),
+        slow_clean: 0,
+        slow_contended: 0,
     };
     let mut spare_f: Vec<Frame> = Vec::with_capacity(super::FRAME_CAP);
     let mut spare_e: Vec<Event> = Vec::with_capacity(super::EVENT_CAP);
@@ -344,7 +368,7 @@ pub(super) fn run(s: &'static State, stem: String) {
         }
         if stopping {
             if let Some(j) = jsonl.as_mut() {
-                let _ = writeln!(j, "{{\"type\":\"summary\",\"frames\":{},\"hitches\":{},\"lost_ms\":{:.0},\"dropped_records\":{}}}", agg.frames_n, agg.hitches.len(), agg.hitches.iter().map(|h| h.lost_us).sum::<u64>() as f64 / 1e3, agg.dropped);
+                let _ = writeln!(j, "{{\"type\":\"summary\",\"frames\":{},\"hitches\":{},\"lost_ms\":{:.0},\"dropped_records\":{},\"slow_clean\":{},\"slow_contended\":{}}}", agg.frames_n, agg.hitches.len(), agg.hitches.iter().map(|h| h.lost_us).sum::<u64>() as f64 / 1e3, agg.dropped, agg.slow_clean, agg.slow_contended);
                 let _ = j.flush();
             }
             break;
@@ -374,6 +398,24 @@ fn write_frame(s: &State, agg: &mut Agg, f: &Frame, names: &[String], csv: Optio
         agg.total_mod_ns[i] += f.mods[i];
         agg.max_mod_ns[i] = agg.max_mod_ns[i].max(f.mods[i]);
     }
+    // contention clocks (differences since the previous present)
+    let (thr_us, proc_us) = match agg.prev_clk.replace(f.clk) {
+        Some(p) if f.clk.thread_ns >= p.thread_ns && f.clk.thread_ns > 0 => (Some((f.clk.thread_ns - p.thread_ns) as f64 / 1e3), Some(f.clk.proc_ns.saturating_sub(p.proc_ns) as f64 / 1e3)),
+        _ => (None, None),
+    };
+    let sys_pct = if f.clk.sys_total > 0 {
+        agg.sys_win.push_back((f.t_us, f.clk.sys_idle, f.clk.sys_total));
+        let span = (f.interval_us as u64).max(100_000);
+        while agg.sys_win.len() > 2 && agg.sys_win[1].0 + span <= f.t_us {
+            agg.sys_win.pop_front();
+        }
+        let (_, i0, t0) = agg.sys_win[0];
+        let (dt, di) = (f.clk.sys_total.saturating_sub(t0), f.clk.sys_idle.saturating_sub(i0));
+        (dt > 0).then(|| (100.0 * (1.0 - di as f64 / dt as f64)).clamp(0.0, 100.0))
+    } else {
+        // no per-frame system clock (Linux): the writer's last machine sample
+        agg.samples.last().and_then(|x| x.cpu).map(|c| c as f64)
+    };
     if f.interval_us == 0 {
         return;
     }
@@ -397,6 +439,12 @@ fn write_frame(s: &State, agg: &mut Agg, f: &Frame, names: &[String], csv: Optio
         agg.parts[i].push(v as u32);
     }
     let hitch = p.interval > s.cfg.frame_mult * p.expected || p.tick_max > s.cfg.tick_mult * TICK_US;
+    let (slow, cont) = contended(p.interval - p.sleep - p.acquire, p.tick_max, thr_us, sys_pct);
+    if cont {
+        agg.slow_contended += 1;
+    } else if slow {
+        agg.slow_clean += 1;
+    }
     if let Some(c) = csv {
         let ms = |v: f64| v / 1e3;
         let mut row = format!(
@@ -408,6 +456,8 @@ fn write_frame(s: &State, agg: &mut Agg, f: &Frame, names: &[String], csv: Optio
         for m in f.mods {
             let _ = write!(row, ",{:.3}", m as f64 / 1e6);
         }
+        let opt = |v: Option<f64>, k: f64| v.map_or(String::new(), |v| format!("{:.3}", v * k));
+        let _ = write!(row, ",{},{},{},{},{}", opt(thr_us, 1e-3), opt(proc_us, 1e-3), sys_pct.map_or(String::new(), |v| format!("{v:.0}")), slow as u8, cont as u8);
         let _ = writeln!(c, "{row}");
     }
     if !hitch {
@@ -574,6 +624,7 @@ fn report(s: &State, agg: &Agg, names: &[String], done: bool) -> String {
         row(&mut o, n, &agg.parts[i]);
     }
     let _ = writeln!(o, "  ({} presented frames, {} ticks)", agg.frames_n, agg.total_ticks);
+    let _ = writeln!(o, "  frames over 16.7 ms of game work: {} clean, {} contended (machine busy, game thread starved; see notes/profiling.md)", agg.slow_clean, agg.slow_contended);
     let _ = writeln!(o);
     let _ = writeln!(o, "TOP CAUSES (by time lost)");
     let _ = writeln!(o, "  {:<36} {:>7} {:>9} {:>9}", "cause", "hitches", "lost ms", "worst ms");

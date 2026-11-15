@@ -9,6 +9,8 @@
 #   fight  the scripts compiled, the actor began, its statuses change, the jabs reach it (VM damage), its hitboxes arm
 #   weapons  projectiles (650E): spawned, ending, reaching a player (BOSS=galleom / duon)
 #   root   Ridley and Rayquaza: their models load and the clips' root translation moves them
+#   grab   Tabuu on the VM: his 060A catch box catches Falcon (the VM's catch host), and the hold ends in a throw,
+#          a release or a mash-out
 #   crawl  Glunder on the VM: its surface queries let it crawl along FD's floor
 #   sync   synctest depth 4 and 7, 3000 frames, the fight schedule: 0 mismatches, the VM inside the run
 #   nhv1   the fight schedule twice through `golden`: identical NHV1 rows
@@ -84,6 +86,24 @@ PY
       need weapons 'vm weapon slot [0-9]+ touches player|hit lands' "a projectile or the boss reached a player"
       s=$(grep -c 'vm weapon [0-9]* joint' "$(L weapons)"); e=$(grep -c 'spawn slot [0-9]* removed' "$(L weapons)")
       echo "     $s spawned, $e removed, $(grep -c 'touches player' "$(L weapons)") touches, $(grep -c 'hit lands' "$(L weapons)") hits landed"
+      ;;
+    grab)
+      # his own choice of attack seldom lands on a grab in one fight: the Chain is entered from its status (ChainStart
+      # 36, the scripts run from there), placed so that Falcon, standing at his spawn, is inside the chain's reach in
+      # front of him. (The Dive needs the target search that places it above a player; entered directly it grabs at
+      # the air.)
+      { printf '99999 0000 0 0
+'; } > "$out/stand.txt"
+      for g in chain:36; do
+        n=grab-${g%%:*}
+        BOSS_SAVE=$boss; boss=tabuu; MELEE_GRAB_LOG=1 MELEE_VS_BOSS_STATUS=${g##*:} MELEE_VS_BOSS_X=-140 golden $n stand.txt; boss=$BOSS_SAVE
+        need $n 'petey: vm actor tabuu' "Tabuu runs on the VM"
+        need $n 'vm catch box on: bone' "his catch boxes arm from the forwarded 060A"
+        need $n 'geno_grab: f[0-9]+ catch: slot' "a catch on the VM's catch host"
+        need $n 'status 36 -> 37' "held at ChainStart: rule 21 (caught and holding) enters ChainAttack"
+        need $n 'geno_grab: f[0-9]+ throw: slot' "ChainAttack's 6528 throws the held player"
+        grep -h -E 'geno_grab: f[0-9]+ (catch|throw|release|escape)' "$(L $n)" | head -4 | sed 's/^/     /'
+      done
       ;;
     crawl)
       # Glunder (an enemy run by the VM): the surface queries let it crawl its floor and turn at the end

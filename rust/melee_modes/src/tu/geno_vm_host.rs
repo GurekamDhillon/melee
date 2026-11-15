@@ -45,6 +45,11 @@ pub unsafe fn reset() {
     // the boss's weapon records (local data), loaded here at the match's start, never in the frame
     WEAPONS = crate::tu::geno_boss_spawn::vm_records(crate::tu::petey::boss_name());
     SEC = (-1, 0);
+    VIS_SLOT = (-1, 0);
+    CAUGHT = false;
+    CATCH_OFF = [0.0; 3];
+    THROW = None;
+    crate::tu::geno_boss::S.grab = crate::tu::geno_boss_grab::OFF;
 }
 
 /// The VM boss's weapon records (650E spawns; geno_boss_spawn), set by [`reset`].
@@ -226,6 +231,14 @@ unsafe fn collision(i: &mut vr::Input) {
 }
 
 /// One VM frame: input, `geno_vm::tick`, the events (logged with `log`, hitboxes kept), the actor's state out.
+/// The VM's catch-exit event (the common CommonCatchProcExit routine ran in a status exit).
+const EV_CATCH_EXIT: u32 = vr::EV_CATCH_EXIT;
+/// The catch host's state (statics of the executable, so the snapshot carries them): a catch made last frame, the
+/// catch box's offset in its bone, the throw box of a pending release.
+static mut CAUGHT: bool = false;
+static mut CATCH_OFF: [f32; 3] = [0.0; 3];
+static mut THROW: Option<crate::tu::geno_boss_grab::Throw> = None;
+
 /// The animation root movement fed to the VM since the last status change (log only, not hashed).
 static mut ROOT_TRAVEL: f32 = 0.0;
 
@@ -233,6 +246,17 @@ static mut ROOT_TRAVEL: f32 = 0.0;
 /// ("040A n": blend motion n in; Tabuu's DiveStart1), cleared on a motion change. -1: none. A static of the
 /// executable, so the snapshot carries it.
 static mut SEC: (i32, u32) = (-1, 0);
+
+/// The motion module's extra animation slot 0 ("0410 0 n": motion n's file played beside the body's motion; Porky's
+/// SparkDspOff / GrSparkDspOn / AirSparkDspOn, whose files hold only a VIS0): (motion, the tick it began), kept until
+/// the next 0410 on the slot [L: the slot outlives motion changes; its VIS0 runs on its own frame]. Drawing only
+/// (vm_boss_model applies its VIS0); a static of the executable, so the snapshot carries it.
+static mut VIS_SLOT: (i32, u32) = (-1, 0);
+
+/// The extra animation slot's (motion, start tick) for the draw (-1: none).
+pub fn vis_slot() -> (i32, u32) {
+    unsafe { VIS_SLOT }
+}
 
 pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, ground: bool, fighter_of: unsafe fn(i32) -> *mut Fighter, log: bool) -> Out {
     let mut i = input(carrier, damage, ground, fighter_of);
@@ -254,14 +278,36 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
         ROOT_TRAVEL += mv[0].abs() + mv[1].abs();
     }
     model_nodes(p, &mut i);
+    // the catch host's last frame: a catch (the VM sets its caught flag) and the hold
+    i.caught = CAUGHT;
+    i.holding = crate::tu::geno_boss::S.grab.victim >= 0;
+    CAUGHT = false;
     let last = crate::tu::geno_vm::actor().status;
     crate::tu::geno_vm::tick(p, &i);
     let a = crate::tu::geno_vm::actor();
     let mut wev = [vr::Ev { kind: 0, ins: 0, v: 0 }; 8];
     let mut nw = 0;
+    let mut release = false;
+    let mut box_now: Option<VmBox> = None;
     for e in a.events() {
         match e.kind {
+            EV_CATCH_EXIT => {
+                if log {
+                    eprintln!("petey: f{frame} vm catch exit (CommonCatchProcExit) in status {}", a.status);
+                }
+                // CommonCatchProcExit: the hold ends with this status (a throw already asked for goes first)
+                let g = &mut *core::ptr::addr_of_mut!(crate::tu::geno_boss::S.grab);
+                if g.victim >= 0 && g.pending == 0 {
+                    g.pending = crate::tu::geno_boss_grab::GRAB_DROP;
+                    g.throw = -1;
+                }
+            }
             vr::EV_STATUS => {
+                // the catch box belongs to the status that armed it
+                let g = &mut *core::ptr::addr_of_mut!(crate::tu::geno_boss::S.grab);
+                if g.armed && g.status != e.v {
+                    g.armed = false;
+                }
                 if log {
                     eprintln!("petey: f{frame} status {last} -> {} px {:.1} hp {:.1}", e.v, a.pos[0], a.hp());
                     if ROOT_TRAVEL > 0.0 {
@@ -297,8 +343,44 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
                         let m = p.args.get(ins.a as usize).map_or(-1.0, |&x| arg(a, x));
                         SEC = (melee_core::ppc::fctiwz_f32(m), a.tick.wrapping_sub(1));
                     }
+                    0x0410 if ins.n >= 2 => {
+                        let v = |k: u32| p.args.get((ins.a + k) as usize).map_or(-1.0, |&x| arg(a, x));
+                        // the same motion again keeps running (Porky's scripts reissue it every other frame) [L]
+                        let m = melee_core::ppc::fctiwz_f32(v(1));
+                        if melee_core::ppc::fctiwz_f32(v(0)) == 0 && VIS_SLOT.0 != m {
+                            VIS_SLOT = (m, a.tick.wrapping_sub(1));
+                            if log {
+                                eprintln!("petey: f{frame} vm vis slot: motion {}", VIS_SLOT.0);
+                            }
+                        }
+                    }
+                    // the catch: 060A (slot, bone, size, offset x y z, ...) arms a catch box, 060D ends it, 061A
+                    // defines the throw (slot, ?, damage + per-L, angle, growth, weight-set, -, -, base [I: the
+                    // define path's reading]), 6528 releases the held fighter with that frame's throw
+                    0x060A => {
+                        let v = |k: u32| p.args.get((ins.a + k) as usize).map_or(0.0, |&x| arg(a, x));
+                        let g = &mut *core::ptr::addr_of_mut!(crate::tu::geno_boss::S.grab);
+                        crate::tu::geno_boss_grab::arm(g, 0, melee_core::ppc::fctiwz_f32(v(1)), v(2), (0, i32::MAX), !0, a.status);
+                        CATCH_OFF = [v(3), v(4), v(5)];
+                        if log {
+                            eprintln!("petey: f{frame} vm catch box on: bone {} size {:.1}", g.joint, g.radius);
+                        }
+                    }
+                    0x060D => (*core::ptr::addr_of_mut!(crate::tu::geno_boss::S.grab)).armed = false,
+                    0x061A => {
+                        let v = |k: u32| p.args.get((ins.a + k) as usize).map_or(0.0, |&x| arg(a, x));
+                        let z = melee_core::ppc::fctiwz_f32;
+                        THROW = Some(crate::tu::geno_boss_grab::Throw { damage: v(2) + v(3) * a.level(), angle: z(v(4)), kbg: z(v(5)), wkb: z(v(6)), bkb: z(v(9)) });
+                    }
+                    0x6528 => {
+                        release = true;
+                        if log {
+                            eprintln!("petey: f{frame} vm release (6528) in status {}", a.status);
+                        }
+                    }
                     0x0619 => {
                         set_box(p, a, ins);
+                        box_now = BOXES.iter().find(|b| b.on && b.inst == INST).copied();
                         if log {
                             if let Some(b) = BOXES.iter().find(|b| b.on && b.inst == INST) {
                                 eprintln!("petey: f{frame} vm hitbox {} on: {:.1} dmg, angle {}, size {:.1}", b.id, b.damage, b.angle, b.size);
@@ -323,6 +405,33 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
     }
     weapons_step(carrier, fighter_of, frame, log);
     let a = crate::tu::geno_vm::actor();
+    // a release: the throw this frame defined (061A), else the attack box it opened (Tabuu's ChainAttack)
+    if release {
+        let g = &mut *core::ptr::addr_of_mut!(crate::tu::geno_boss::S.grab);
+        let t = THROW.take().or_else(|| {
+            box_now.map(|b| {
+                let z = melee_core::ppc::fctiwz_f32;
+                crate::tu::geno_boss_grab::Throw { damage: b.damage, angle: b.angle, kbg: z(b.kbg), wkb: z(b.wkb), bkb: z(b.bkb) }
+            })
+        });
+        THROW = t;
+        crate::tu::geno_boss_grab::request_release(g, t.map(|_| 0));
+    }
+    let g = &*core::ptr::addr_of!(crate::tu::geno_boss::S.grab);
+    let catch = (g.armed && g.victim < 0).then(|| (crate::tu::vm_boss_model::bone_world(p, a, g.joint, CATCH_OFF), g.radius));
+    if log && catch.is_some() {
+        let t = (fighter_of)(0);
+        let (tx, ty) = if t.is_null() { (0.0, 0.0) } else { ((*t).cur_pos.x, (*t).cur_pos.y) };
+        eprintln!("petey: f{frame} vm catch box live at {:?} r {:.1} (actor {:.1} {:.1}, player 1 at {tx:.1} {ty:.1})", catch.and_then(|c| c.0), g.radius, a.pos[0], a.pos[1]);
+    }
+    let throw = THROW;
+    let box_of = |i: i32| (i == 0).then_some(()).and(throw).map(|t| (t, "vm throw"));
+    if crate::tu::geno_boss_grab::host_core(carrier, frame, &box_of, catch) {
+        CAUGHT = true;
+    }
+    if crate::tu::geno_boss::S.grab.victim < 0 && crate::tu::geno_boss::S.grab.pending == 0 {
+        THROW = None;
+    }
     Out { status: a.status, x: a.pos[0], y: a.pos[1], lr: a.lr, dead: a.dead() || a.live == 0 }
 }
 

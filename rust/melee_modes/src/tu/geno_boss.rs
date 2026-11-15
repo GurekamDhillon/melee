@@ -534,6 +534,16 @@ pub fn state_hash() -> Option<u32> {
                     h = h.wrapping_mul(0x0100_0193);
                 }
             });
+            // (with its catch host's grab block once a VM boss has used it: other VM bosses hash as before)
+            let g = &s.grab;
+            if g.armed || g.victim >= 0 || g.catches > 0 || g.escapes > 0 {
+                for w in crate::tu::geno_boss_grab::hash_words(g) {
+                    for b in w.to_le_bytes() {
+                        h ^= b as u32;
+                        h = h.wrapping_mul(0x0100_0193);
+                    }
+                }
+            }
             h
         });
     }

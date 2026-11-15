@@ -416,3 +416,23 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
   (vfunc 0x58: the per-class article table's vfunc 0x24, meaning not traced), R39 (motion module vfunc 0x108 ->
   0x81A202BC, not finished), 6613 (a path unit word the VM does not keep), R24, 0200 / 0300 / 2200, values 1027,
   20022, 21012, 22, 23.
+## Mesh visibility (2026-11-15, port/geno-boss3)
+
+Brawl draws a model object only while its draw-list visibility bone is on. Each motion's BRRES (one per motion, in
+the motion list's order) carries a VIS0 next to the CHR0; the motion module's anim set binds both and gives them the
+motion's frame (sora_melee 0x8101FA94 builds the set: GetResAnmVis + AnmObjVisRes::Construct; 0x81020084 sets every
+member's frame). Without a channel a bone keeps its MDL0 visible flag.
+
+- `petey_model`: VIS0 reader, per-batch visibility bone, `Rig::skin_vis` / `draw_tris_vis`; the motion-file order.
+- `vm_boss_model`: per VM motion its VIS0 (by motion file when the files match the motion list, else by name), at
+  the motion frame; `draw_named` (define path) by name.
+- `geno_vm_host`: a forwarded `0410 0 n` (Porky's spark display motions, files with only a VIS0) is the extra slot
+  the draw applies on its own frame [L: the slot persists across motion changes].
+- Script commands: the only kind-0x03 (model-node) commands the seven bosses use are Tabuu's 0302 / 0304 / 0306
+  (spark-bit rotate / translate / scale) and Ridley's / Meta Ridley's 030A (a node position read); none toggles a
+  node. No node-visibility names appear in sora_enemy / sora_melee.
+- Per boss: Tabuu and Porky have VIS0s; Rayquaza, Ridley, Galleom, Duon and Meta Ridley have none for their model
+  and every bone is MDL0-visible, so they draw everything, as Brawl does.
+- Knobs: `MELEE_VMBOSS_NO_VIS=1` draws every mesh (the old look); `MELEE_VMBOSS_VIS_LOG=n` logs motion, frame and the
+  hidden-object count every n ticks; `MELEE_PETEY_CAM=boss` frames a VM boss (captures only).
+- Drawing only: Tabuu's NHV1 is identical with and without `MELEE_VMBOSS_NO_VIS` (the check below).

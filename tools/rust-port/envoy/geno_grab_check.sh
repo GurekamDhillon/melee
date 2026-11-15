@@ -40,7 +40,7 @@ fail=0
 base() { # boss name pad cmd...
   local boss=$1 name=$2 pad=$3; shift 3
   ( cd "$repo" && env MELEE_VOLUME=3 MELEE_WINDOW_HIDDEN=1 MELEE_FULLSCREEN=off MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1 \
-      MELEE_VS_BOSS=$boss MELEE_VS_BOSS_SLOT=1 MELEE_GRAB_LOG=1 MELEE_PETEY_LOG=1 MELEE_PAD_SCRIPT="$out/$pad" \
+      MELEE_TABUU_DEFINE=1 MELEE_VS_BOSS=$boss MELEE_VS_BOSS_SLOT=1 MELEE_GRAB_LOG=1 MELEE_PETEY_LOG=1 MELEE_PAD_SCRIPT="$out/$pad" \
       MELEE_WINDOW_TITLE="genograb geno_grab_check $name" "$@" ) > "$out/$name.log" 2>&1
 }
 golden() { base "$1" "$2" "$3" timeout 900 "$exe" golden --engine tu --iso "$iso" --scenario pad_falcon_fox_fd --frames "${FRAMES:-3000}" --out "$out/$2.csv"; }
@@ -125,7 +125,7 @@ PY
       for boss in tabuu bucculus; do
         d="$out/perf-$boss"; rm -rf "$d"; mkdir -p "$d"; cp "$exe" "$d/melee.exe"
         ( cd "$d" && env MELEE_VOLUME=3 MELEE_WINDOW_HIDDEN=1 MELEE_FULLSCREEN=off MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1 \
-            MELEE_VS_BOSS=$boss MELEE_GRAB_LOG=1 MELEE_PETEY_LOG=1 MELEE_PAD_SCRIPT="$out/hold.txt" MELEE_PROFILE=1 MELEE_WINDOW_TITLE="genograb geno_grab_check perf $boss" \
+            MELEE_TABUU_DEFINE=1 MELEE_VS_BOSS=$boss MELEE_GRAB_LOG=1 MELEE_PETEY_LOG=1 MELEE_PAD_SCRIPT="$out/hold.txt" MELEE_PROFILE=1 MELEE_WINDOW_TITLE="genograb geno_grab_check perf $boss" \
             timeout 600 ./melee.exe play --iso "$iso" --max-frames "${FRAMES:-3000}" --match "falcon,fox/cpu1,FINAL DESTINATION" --time-secs 600 ) > "$out/perf-$boss.log" 2>&1
         need "perf-$boss" 'catch: slot' "grabs in the real-time run"
         p=$(ls -t "$d/profiles/"profile-*.csv 2>/dev/null | head -1)

@@ -1328,6 +1328,102 @@ dependencies = [
  "melee_core",
  "melee_fighter",
  "melee_items",
+ "melee_link_abi",
+ "melee_link_p0",
+ "melee_link_p1",
+ "melee_link_p2",
+ "melee_link_p3",
+ "melee_link_p4",
+ "melee_link_p5",
+ "melee_modes",
+ "melee_runtime",
+ "melee_types",
+ "melee_world",
+]
+
+[[package]]
+name = "melee_link_abi"
+version = "0.1.0"
+dependencies = [
+ "melee_items",
+]
+
+[[package]]
+name = "melee_link_p0"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_link_abi",
+ "melee_modes",
+ "melee_runtime",
+ "melee_types",
+ "melee_world",
+]
+
+[[package]]
+name = "melee_link_p1"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_link_abi",
+ "melee_modes",
+ "melee_runtime",
+ "melee_world",
+]
+
+[[package]]
+name = "melee_link_p2"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_link_abi",
+ "melee_modes",
+ "melee_runtime",
+ "melee_types",
+ "melee_world",
+]
+
+[[package]]
+name = "melee_link_p3"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_link_abi",
+ "melee_modes",
+ "melee_runtime",
+ "melee_types",
+ "melee_world",
+]
+
+[[package]]
+name = "melee_link_p4"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_link_abi",
+ "melee_modes",
+ "melee_runtime",
+ "melee_world",
+]
+
+[[package]]
+name = "melee_link_p5"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_link_abi",
  "melee_modes",
  "melee_runtime",
  "melee_types",

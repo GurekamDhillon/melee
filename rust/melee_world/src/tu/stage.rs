@@ -465,9 +465,18 @@ pub unsafe extern "C" fn Stage_80224DC8(arg: i32) -> i32 {
     (arg == 0x3b || arg == 0x3f || arg == 0x42 || arg == 0x49 || arg == 0x4c) as i32
 }
 
+/// TARGET_PC (Rust only): the GD exploration room's respawn point (melee_modes::tu::explore::rebirth_point). The
+/// room is played on Final Destination's carrier, whose rebirth joints stay at Final Destination's origin while the
+/// party's section can be thousands of units away: a KO'd fighter came back outside the section's blast zones and was
+/// KO'd again at once. Set only while a room is active; it rewrites the point `Ground_801C2D24` gave.
+pub static mut EXPLORE_REBIRTH: Option<unsafe fn(*mut Vec3, i32)> = None;
+
 pub unsafe extern "C" fn Stage_80224E38(arg0: *mut Vec3, arg1: i32) {
     melee_core::ct!("Stage_80224E38");
     ext::Ground_801C2D24(arg1.wrapping_add(4), arg0);
+    if let Some(f) = EXPLORE_REBIRTH {
+        f(arg0, arg1);
+    }
 }
 
 pub unsafe extern "C" fn Stage_80224E64(arg0: i32, arg_vec: *mut Vec3) {

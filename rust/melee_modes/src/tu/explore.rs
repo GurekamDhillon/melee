@@ -525,11 +525,11 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
                         paths.push(path);
                         blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model: usize::MAX, at, path: paths.len() - 1 });
-                        notes.push(format!("explore: section {si}: {} moves ({} frames)", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0)));
+                        notes.push(format!("explore: section {si}: {} moves ({} frames{})", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0), if paths.last().map_or(0, |p| p.len()) == 1 { ", held at rest" } else { "" }));
                         (at, blocks.len())
                     } else {
                         if !name.starts_with(b"AdvGdtItemBox") {
-                            notes.push(format!("explore: section {si}: a collision object riding a moving part left out ({} lines)", pc));
+                            notes.push(format!("explore: section {si}: a collision object riding a moving part left out ({} lines, bone {})", pc, String::from_utf8_lossy(name)));
                         }
                         continue;
                     };
@@ -784,6 +784,13 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
             m
         })
         .collect();
+    // a section's extent takes in its moving parts too (The Lake's 080105 floor is the raft: its static collision is a
+    // ledge, and the camera and blast zones built from that alone left the arrival spot outside them)
+    for b in blocks.iter() {
+        if let Some(e) = ext.get_mut(b.sec) {
+            *e = [fmin(e[0], b.x - b.hw), fmax(e[1], b.x + b.hw), fmax(e[2], b.y + b.hh), fmin(e[3], b.y - b.hh)];
+        }
+    }
     let bounds = verts.iter().fold([f32::MAX, f32::MAX, f32::MIN, f32::MIN], |b, p| [fmin(b[0], p[0]), fmin(b[1], p[1]), fmax(b[2], p[0]), fmax(b[3], p[1])]);
     // one MapJoint per joint: the static map (its points first), then one per block (its four points)
     let mut joints: Vec<MapJoint> = vec![];
@@ -1068,6 +1075,13 @@ fn load_into(st: &'static Maps, id: i32) -> Option<&'static Map> {
                     }
                     for (i, d) in m.doors.iter().enumerate() {
                         let _ = writeln!(rep, "explore: door {i} section {} at ({:.0},{:.0}) type {} to {}", d.sec, d.x, d.y, d.kind, d.to);
+                        // a spot the party arrives at must be inside its section's blast zones (else: KO on arrival,
+                        // and again at each respawn there)
+                        if let Some(e) = m.ext.get(d.sec) {
+                            if d.x < e[0] - BLAST_MARGIN || d.x > e[1] + BLAST_MARGIN || d.y > e[2] + BLAST_MARGIN || d.y < e[3] - BLAST_MARGIN {
+                                let _ = writeln!(rep, "explore: door {i} lies outside section {}'s blast zones (extent {:.0},{:.0},{:.0},{:.0})", d.sec, e[0], e[1], e[2], e[3]);
+                            }
+                        }
                     }
                     for (i, b) in m.blocks.iter().enumerate() {
                         let look = m.brick_models.get(b.model).map(|x| x.0.as_str()).unwrap_or("none");
@@ -1172,6 +1186,8 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     CRATE_NEXT = i32::MAX;
     VISITED = 1;
     BROKEN = 0;
+    STOCKS_SEEN = [-1; 6];
+    REBIRTH = [0.0, 0.0];
     CARD = 0;
     ARENA = false;
     if sg::stage_info.grkind as i32 != 37 {
@@ -1301,6 +1317,120 @@ unsafe fn set_bounds(s: usize) {
     bz.bottom = e[3] - BLAST_MARGIN - oy;
 }
 
+/// The floor under a start or arrival spot: the first floor the segment from 80 above it to 300 below it meets (a
+/// spot's bone or door can sit a little off its floor, above or below it; a fighter set down under the floor fell through
+/// the room: sse16 and sse22's starts). The spot's own height when there is none.
+unsafe fn floor_near(x: f32, y: f32) -> f32 {
+    floor_at(x, y).unwrap_or(y)
+}
+
+/// The floor nearest a spot: below it first (10 above to 300 below), else above it (up to 80); `None` when neither.
+unsafe fn floor_at(x: f32, y: f32) -> Option<f32> {
+    let mut at: melee_types::Vec = core::mem::zeroed();
+    let mut seg = |y0: f32, y1: f32| melee_world::tu::mplib::mpCheckMultiple(x, y0, x, y1, &mut at, core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), 1, -1, -1) != 0;
+    if seg(y + 10.0, y - 300.0) || seg(y + 80.0, y + 10.0) { Some(at.y) } else { None }
+}
+
+/// The camera frames the party only (Brawl's adventure camera, `cmAdventureController`, follows the players; a foe or
+/// a CPU off in the section pulled Melee's VS framing wide and shallow): a fighter that is not a human player (in an
+/// Envoy run: not one of the party's slots) has its camera subject held inactive (`CmSubject.force_inactive`, as the
+/// Home-Run Contest's stage does). With no human in the room the VS framing stays.
+unsafe fn camera_party() {
+    let human = |slot: i32| melee_fighter::tu::player::Player_GetPlayerSlotType(slot) as i32 == 0;
+    let party = |slot: i32| if crate::tu::envoy::armed() != 0 { slot < if crate::tu::envoy::PLAN[crate::tu::envoy::P_COOP] == 1 { 2 } else { 1 } } else { human(slot) };
+    if !(0..6).any(|s| party(s)) {
+        return;
+    }
+    let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
+    while !g.is_null() {
+        let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
+        if !fp.is_null() && !(*fp).x890_cameraBox.is_null() {
+            (*(*fp).x890_cameraBox).set_force_inactive(!party((*fp).player_idx as i32) as u8);
+        }
+        g = (*g).next as *mut HSD_GObj;
+    }
+}
+
+/// Log the party's positions with the camera bounds and blast zones in force (world space).
+unsafe fn log_bounds(what: &str) {
+    let ci = &sg::stage_info.cam_info;
+    let (ox, oy) = (ci.cam_x_offset, ci.cam_y_offset);
+    let c = &ci.cam_bounds;
+    let b = &sg::stage_info.blast_zone;
+    eprintln!(
+        "explore: {what} section {SEC} room frame {CLOCK}: camera ({:.0},{:.0},{:.0},{:.0}) blast ({:.0},{:.0},{:.0},{:.0})",
+        c.left + ox, c.right + ox, c.top + oy, c.bottom + oy, b.left + ox, b.right + ox, b.top + oy, b.bottom + oy
+    );
+    each_fighter(|_, fp| {
+        let p = (*fp).cur_pos;
+        eprintln!("explore: {what} player {} at ({:.0},{:.0})", (*fp).player_idx, p.x, p.y);
+    });
+}
+
+/// Stocks last seen per slot (logs only: a stock lost is printed with where the fighter respawns).
+static mut STOCKS_SEEN: [i32; 6] = [-1; 6];
+
+/// Stock losses in the room, logged; and, checks only (`MELEE_EXPLORE_KO=player@frame,..`), the fighter in slot
+/// `player` put just under its section's blast zone at room frame `frame` (a KO without a fight).
+unsafe fn ko_watch() {
+    if let Some(&(_, who)) = goto_list("MELEE_EXPLORE_KO").iter().find(|&&(f, _)| f == CLOCK) {
+        if let Some(e) = cur().and_then(|m| m.ext.get(SEC as usize).copied()) {
+            each_fighter(|_, fp| {
+                if (*fp).player_idx as i32 == who {
+                    eprintln!("explore: test KO player {who} at room frame {CLOCK}");
+                    (*fp).cur_pos.y = e[3] - BLAST_MARGIN - 40.0;
+                    (*fp).prev_pos = (*fp).cur_pos;
+                }
+            });
+        }
+    }
+    for slot in 0..6 {
+        if melee_fighter::tu::player::Player_GetPlayerSlotType(slot) as i32 == 3 {
+            continue;
+        }
+        let s = melee_fighter::tu::player::Player_GetStocks(slot) as i32;
+        let was = STOCKS_SEEN[slot as usize];
+        STOCKS_SEEN[slot as usize] = s;
+        if was > s && CLOCK > 1 {
+            eprintln!("explore: player {slot} lost a stock ({s} left) in section {SEC} at room frame {CLOCK}");
+        }
+    }
+}
+
+/// `stage::EXPLORE_REBIRTH`: the respawn point (Final Destination's rebirth joint `i`'s point, in `p`) moved into the
+/// party's section. See `rebirth_point`.
+unsafe fn rebirth_hook(p: *mut Vec3, i: i32) {
+    if !ACTIVE || ARENA {
+        return;
+    }
+    let Some(m) = map() else { return };
+    let q = rebirth_point(m, i, (*p).x, (*p).y);
+    eprintln!("explore: respawn point {i} in section {SEC}: ({:.0},{:.0}) -> ({:.0},{:.0}) at room frame {CLOCK}", (*p).x, (*p).y, q[0], q[1]);
+    (*p).x = q[0];
+    (*p).y = q[1];
+}
+
+/// The respawn point in the party's section for Final Destination's rebirth point (`x`, `y`).
+/// Brawl (`stAdventure2::getFighterReStartPos`, 0x81A06050, rebirth mode 0): player 1 comes back at one stored
+/// point, which the door warp (0x81A05814) and the section start (0x81A06C6C) set to the arrival position; player 2
+/// comes back on player 1, or at the stored point when player 1 is gone. Final Destination's point keeps only its
+/// height above Final Destination's floor (the platform's drop); the place is the section's.
+unsafe fn rebirth_point(_m: &Map, i: i32, _x: f32, y: f32) -> [f32; 2] {
+    let mut at = REBIRTH;
+    if i != 0 {
+        each_fighter(|_, fp| {
+            if (*fp).player_idx == 0 {
+                at = [(*fp).cur_pos.x, (*fp).cur_pos.y];
+            }
+        });
+    }
+    [at[0], at[1] + y]
+}
+
+/// The stored respawn point (world space; Brawl's `stAdventure2` rebirth position): the section's entry at the
+/// room's start, the arrival door after each door. Snapshot covered (static).
+pub static mut REBIRTH: [f32; 2] = [0.0, 0.0];
+
 unsafe fn each_fighter(mut f: impl FnMut(*mut HSD_GObj, *mut Fighter)) {
     let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
     while !g.is_null() {
@@ -1366,6 +1496,23 @@ pub unsafe fn room_tick() {
     CLOCK += 1;
     if CLOCK == 1 {
         set_bounds(SEC as usize); // after the stage's own camera data has been read
+        // Brawl's section start sets the respawn point to the start position (0x81A06C6C)
+        REBIRTH = m.entries.get(SEC as usize).copied().unwrap_or([0.0, 0.0]);
+        // and the party stands at that start position, as the door warp places it (Final Destination's own spawn
+        // points sit at its origin, where a section's floor need not be: sse22 dropped the party through nothing)
+        let e = REBIRTH;
+        REBIRTH[1] = floor_near(e[0], e[1]);
+        let mut k = 0;
+        each_fighter(|g, fp| {
+            // side by side; a place with no floor (past a ledge) takes the spot itself
+            let x = e[0] + if k % 2 == 0 { -6.0 } else { 6.0 } * ((k / 2 + 1) as f32);
+            match floor_at(x, e[1]) {
+                Some(y) => place(g, fp, x, y),
+                None => place(g, fp, e[0], floor_near(e[0], e[1])),
+            }
+            k += 1;
+        });
+        log_bounds("start");
     }
     // the section's enemies (the Subspace enemy lane: plain sim entities, no Melee articles, so a VS match spawns
     // them too) and every crate of the map
@@ -1387,9 +1534,11 @@ pub unsafe fn room_tick() {
     if FADE == 0 {
         screen_kos(m);
     }
+    camera_party();
     blocks_tick(m);
     movers_tick(m);
     card_tick();
+    ko_watch();
     if CLOCK % 10 == 0 && std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
         each_fighter(|_, fp| {
             let p = (*fp).cur_pos;
@@ -1420,8 +1569,11 @@ pub unsafe fn room_tick() {
             SEC = d.sec as i32;
             VISITED |= 1u32.pshl(d.sec.min(31) as i64);
             set_bounds(d.sec);
+            // Brawl's door warp sets the respawn point to the arrival (0x81A05814)
+            REBIRTH = [d.x, floor_near(d.x, d.y)];
             DOORS_USED += 1;
             eprintln!("explore: through a door to section {} ({:.0},{:.0}) at room frame {}", d.sec, d.x, d.y, CLOCK);
+            log_bounds("arrival");
         }
         if FADE >= FADE_LEN {
             FADE = 0;
@@ -1499,11 +1651,16 @@ pub unsafe fn room_tick() {
     }
 }
 
-/// `MELEE_EXPLORE_GOTO` / `MELEE_EXPLORE_OPEN` as (room frame, door) pairs; empty when unset.
+/// `MELEE_EXPLORE_GOTO` / `MELEE_EXPLORE_OPEN` / `MELEE_EXPLORE_KO` as (room frame, door or player) pairs; empty when unset.
 fn goto_list(var: &'static str) -> &'static [(i32, i32)] {
     static G: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
     static O: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
-    let cell = if var == "MELEE_EXPLORE_OPEN" { &O } else { &G };
+    static K: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
+    let cell = match var {
+        "MELEE_EXPLORE_OPEN" => &O,
+        "MELEE_EXPLORE_KO" => &K,
+        _ => &G,
+    };
     cell.get_or_init(|| {
         std::env::var(var)
             .unwrap_or_default()
@@ -1622,6 +1779,17 @@ fn mover_path(leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8])
         }).collect();
         if path.iter().any(|p| (p[0] - path[0][0]).abs() > 0.01 || (p[1] - path[0][1]).abs() > 0.01) {
             return Some(path);
+        }
+    }
+    // a part whose motion is Brawl code, not a bone animation (The Lake's raft `ikada` in 080105, sse27's lifts): its
+    // collision held at the bone's rest place (a one-point path), so the floor it carries is there; left out, the
+    // section had no floor and the party fell to the blast zone on arrival and at each respawn
+    // (not item boxes, gates, triggers or blasts: a box is an item, a shutter held shut would close the way on)
+    let keep = !["ItemBox", "Shutter", "Trigger", "Explosion", "Spike"].iter().any(|w| name.contains(w));
+    for r in rigs.iter().filter(|_| keep) {
+        if let Some(k) = (0..r.bones.len()).find(|&k| r.bone_name(k) == name) {
+            let p = r.bone_point(None, 0.0, k, [0.0; 3]);
+            return Some(vec![[p[0], p[1]]]);
         }
     }
     None
@@ -2213,6 +2381,7 @@ pub fn install() {
     unsafe {
         melee_world::tu::ground::EXPLORE_COLL = Some(coll_override);
         melee_world::tu::grlast::EXPLORE_FRAME = Some(room_tick);
+        melee_world::tu::stage::EXPLORE_REBIRTH = Some(rebirth_hook);
         melee_world::tu::grdisplay::HIDE_GROUND = Some(hide_ground);
         melee_fighter::tu::ftdrawcommon::MAP_DRAW = Some(draw);
     }

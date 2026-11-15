@@ -1625,6 +1625,7 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut slots = [Slot::new(SlotKind::Off, 0, 0); 4];
         let mut stage = 0;
         let mut n = 0;
+        let mut gd = false;
         for part in spec.split(',') {
             let (name, kind) = part.split_once('/').unwrap_or((part, ""));
             if let Some(f) = ROSTER.iter().position(|r| r.0 == name) {
@@ -1640,6 +1641,7 @@ pub fn play(args: &[String]) -> ExitCode {
             } else if let Some(id) = melee_modes::tu::explore::gd_by_word(part) {
                 // the GD stage slots of the Brawl SSE maps (explore::GD_STAGES words), on the Final Destination carrier
                 let fd = melee_modes::tu::explore::carrier(id);
+                gd = true;
                 stage = STAGES.iter().position(|s| s.0 == fd).unwrap_or(stage);
             } else if let Some(st) = STAGES.iter().position(|s| s.0.to_string() == part || s.1.eq_ignore_ascii_case(part) || (part == "GrNLa.dat" && s.0 == 32) || (part == "GrNBa.dat" && s.0 == 31)) {
                 stage = st;
@@ -1651,6 +1653,13 @@ pub fn play(args: &[String]) -> ExitCode {
         if n < 2 {
             eprintln!("play: --match NAME,NAME[,NAME..][,STAGE]: two fighters or more");
             return ExitCode::from(2);
+        }
+        // a Subspace map plays by Brawl's adventure rules: lives, no time limit (a VS clock ran out mid-level). Explicit
+        // --stocks / --time-secs still win.
+        if gd && get("--stocks").is_none() && get("--time-secs").is_none() {
+            game.rules.stock = true;
+            game.rules.stock_time_secs = 0;
+            eprintln!("play: --match on a Subspace map: {} lives, no time limit", game.rules.stocks);
         }
         game.slots = slots;
         game.setup = Some(MatchSetup { slots, rules: game.rules, stage });

@@ -45,10 +45,10 @@ pub fn program() -> Option<&'static Program> {
         // the latest copy: the model loader replaces it with the clip lengths
         let p = crate::tu::geno_vm::program(name)?;
         let mut q = p.clone();
-        // the arena box: the stage's own blast zones (the Flyer's moves stay inside them in Brawl)
-        if let Some([l, r, t, b]) = crate::tu::petey::vm_brawl_arena() {
-            q.bounds = [l, r, b, t];
-        }
+        // no arena box: the ship's own clips carry it (ClingsAttackLoop's root track sinks it once per loop and
+        // ClingsAttackEnd's lifts it back by the same three loops' worth), and the deepest dip goes below the stage
+        // file's bottom blast line; clamping it there left it high after the lift
+        q.bounds = [-2000.0, 2000.0, -2000.0, 2000.0];
         Some(&*Box::leak(Box::new(q)))
     })
 }

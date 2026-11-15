@@ -648,6 +648,12 @@ unsafe fn arena_blast_zones() {
         bz.right = r;
         bz.top = t;
         bz.bottom = b;
+        // the ship's Clings dip takes its deck below the file's bottom line, with the riders on it: the bottom line
+        // is kept 60 below the deck's lowest point [L: how Brawl keeps them alive there is not read; this stand-in
+        // keeps a rider on the deck safe and still kills one who falls off]
+        if let Some(f) = crate::tu::vm_arena::bounds() {
+            bz.bottom = fmin(b, f[2] - 60.0);
+        }
     }
 }
 

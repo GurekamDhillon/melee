@@ -1006,6 +1006,10 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     UP_PREV = [false; 6];
     CLOCK = 0;
     DOORS_USED = 0;
+    SPAWN_SEC = -1;
+    SPAWN_NEXT = 0;
+    SPAWN_N = 0;
+    CRATE_NEXT = i32::MAX;
     VISITED = 1;
     BROKEN = 0;
     CARD = 0;
@@ -1207,7 +1211,13 @@ pub unsafe fn room_tick() {
     // them too) and every crate of the map
     if CLOCK == 2 {
         spawn_section(m, 0);
-        spawn_crates(m);
+        CRATE_NEXT = 0;
+    }
+    // one enemy and one crate a frame (all at once was 2-4 ms in the match's setup tick)
+    spawn_step(m);
+    if CLOCK >= 2 && (CRATE_NEXT as usize) < m.crates.len() {
+        spawn_crate(&m.crates[CRATE_NEXT as usize]);
+        CRATE_NEXT += 1;
     }
     // outside an Envoy run nothing else ticks the enemy pool (the mod host's post chain does inside one); its own
     // frame latch keeps it to one step per logic frame either way
@@ -1353,22 +1363,44 @@ fn goto_list(var: &'static str) -> &'static [(i32, i32)] {
 /// door (`subspace::clear_room`) stays the caller's to mirror.
 pub static mut ENEMY_HOOK: Option<unsafe fn(u16, f32, f32, i32, usize) -> bool> = None;
 
-unsafe fn spawn_section(m: &Map, s: usize) {
-    use crate::tu::subspace as ss;
+/// The section whose enemy points are being spawned (-1 none), the next point to look at and how many went in.
+/// One a room frame (`spawn_step`). Snapshot covered (statics).
+static mut SPAWN_SEC: i32 = -1;
+static mut SPAWN_NEXT: i32 = 0;
+static mut SPAWN_N: i32 = 0;
+/// The next crate to place (one a room frame from room frame 2; past the end: done).
+static mut CRATE_NEXT: i32 = i32::MAX;
+
+/// Section `s` was entered: the room's own enemies go now, its points come in one a frame (`spawn_step`).
+unsafe fn spawn_section(_m: &Map, s: usize) {
     // only the map's own: the Envoy sim's enemies (its foes for the fight) stay, and keep half the pool free for it
-    ss::clear_room();
+    crate::tu::subspace::clear_room();
+    SPAWN_SEC = s as i32;
+    SPAWN_NEXT = 0;
+    SPAWN_N = 0;
+}
+
+/// Every room frame: the next enemy point of the section being filled, if any.
+unsafe fn spawn_step(m: &Map) {
+    use crate::tu::subspace as ss;
+    if SPAWN_SEC < 0 {
+        return;
+    }
+    let s = SPAWN_SEC as usize;
     let cap = if crate::tu::envoy::armed() != 0 { ss::MAX / 2 } else { ss::MAX };
-    let mut n = 0;
-    for &(si, x, y, face, id) in &m.spawns {
-        if si != s || n >= cap {
+    while (SPAWN_NEXT as usize) < m.spawns.len() {
+        let (si, x, y, face, id) = m.spawns[SPAWN_NEXT as usize];
+        SPAWN_NEXT += 1;
+        if si != s || SPAWN_N >= cap as i32 {
             continue;
         }
+        let n = &mut *core::ptr::addr_of_mut!(SPAWN_N);
         // the Geno enemy lane's actors take a point first (Brawl kind, place, facing, section); the hand-made
         // Subspace kinds are the stand-in until they do
         if let Some(hook) = ENEMY_HOOK {
             if hook(id, x, y, face, s) {
-                n += 1;
-                continue;
+                *n += 1;
+                return;
             }
         }
         let (k, name) = enemy_kind(id);
@@ -1378,14 +1410,16 @@ unsafe fn spawn_section(m: &Map, s: usize) {
         };
         let h = ss::spawn(k, 0, x, y + 5.0, face);
         eprintln!("explore: enemy {name} (Brawl kind {id}) as {} at ({x:.0},{y:.0}) section {s} -> {h}", ss::kind_name(k));
-        n += 1;
+        *n += 1;
+        return;
     }
+    SPAWN_SEC = -1;
 }
 
 /// Every GIB2 crate of the map as a Melee container (small: capsule, crate: box, big: barrel), once per room. Its
 /// contents follow the match's item switch, as any Melee container's.
-unsafe fn spawn_crates(m: &Map) {
-    for c in &m.crates {
+unsafe fn spawn_crate(c: &Crate) {
+    {
         let kind = match c.size {
             0 => It_Kind_Capsule,
             2 => It_Kind_Taru,

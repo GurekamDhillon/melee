@@ -250,8 +250,8 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
 - Value 41000 / 6602's argument 2 is the placement's path object (create parameter [off] -> Enemy [off]), a
   grGimmickMotionPath. Kinds 21 / 22 (0x81A1D2D4, 0x81A1DFCC) follow it: each frame they go to the path point at
   frame [off] plus the offset values 3054 / 3055; the frame advances by the speed, wraps in loop mode (word 12 = 1),
-  and the unit is marked finished at the end (0x81A1C110). The host passes the path as `Input::path`. Which GEG1 field
-  names the path has not been traced yet. Without a path, the unit heads straight for `home` [L].
+  and the unit is marked finished at the end (0x81A1C110). The host passes the path as `Input::path`. The GEG1 field is traced
+  (2026-11-15, below). Without a path, the unit heads straight for `home` [L].
 - R60 = module accessor [off] vfunc 0x20. [off] is the catch (grabber) module (accessor constructor 0x81A6821C);
   soCatchModuleImpl 0x81A64F80 returns true while a victim is held.
 - 661D slot kind [n] [flag] (0x81A19684 -> 0x81A16CFC), ported: the move vectors of every live unit are added up and
@@ -289,3 +289,32 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
   whose start speed is a number, so Bullet Bill's hash does not change.
 - Gate reading: 0x81A1C9C4 is "a flag bit clear" (not running), separate from the finished flag [off]
   (0x81A1C110) that the VM's `done` stands for; 661D / 661E skip only off and paused units [M].
+
+### The placement path source, the running bit (2026-11-15, read from the code)
+
+- sora_adv_stage.rel's enemy creator copies its GEG1 record and, when the record's model-index byte is not 0xFF,
+  builds `grGimmickMotionPath::create(index, "path_locator", "grGimmickMotionPath")` (0x81A124EC -> 0x81C6E13C) and
+  starts it on the section archive: model data (archive file type 2) number `index`, a small BRRES with one MDL0
+  (`enemy_moveNN`) holding a `path_locator` node and its CHR0. The creator hands the object to the enemy through the
+  emCreate it builds at 0x81A12F14 (copied at 0x81A130A0; `emManager::createEnemy` 0x81A0C9D4 called at 0x81A131B4).
+  getTRS (0x81C6EB6C) poses the model at the frame (vfunc 0x178, setFrameModelAnim) and reads the node's position.
+- explore.rs: archive leaves carry their (type, index) path (`pac_leaves_tagged`); every GEG1 spawn gets its path
+  (`Map::spawn_path`), sampled through a bone-only rig (`pm::locator_rig`; `mdl0` refused models without triangles);
+  `enemy_vm_place(stage, spawn)` gives the VM `Input::path` and `Input::home` (the spawn point). The path's frame 0 is
+  the spawn point. The Jungle has 24 placement paths, 13 on Bullet Bills (060003), 241 frames each.
+- Proof (`jungle_bullet_bill_paths`, ignored test, owner's files): Bullet Bill status 4 rides its real path (speed 0.7,
+  loop mode) with a fixed offset from the path point at its frame 1195 / 1200 frames; replays from frame 600 are
+  identical in all 14 statuses for three Bills. The program's arena box is a boss arena's; the test widens it (a map host
+  passes walls and floors).
+- Running vs done: 0x81A1C9C4 tests the unit's running bit; the record start (0x81A1BE44) sets it and clears the
+  finished flag, the kinetic stop points (0x81A1DCF0-0x81A1E298) clear it. The path movers' end (0x81A1DFCC-0x81A1E0F8)
+  only calls 0x81A1C110 (finished): a looping rider is finished from the first wrap on and still running, as the VM
+  already had it. Requirement switch (sora_enemy table, ids 10000-10059): 10000 -> 0x81A1794C (off or not running),
+  10001 -> 0x81A179E0 (off or held: 0x81A1CA10, the pause byte), 10002 -> 0x81A17A74 -> 0x81A1CA50, 10003 ->
+  0x81A17B08 -> 0x81A1CAE4, 10055 -> 0x81A15078, 10006 / 10007 -> 0x81A13C14. Ported: R10000 counts a done path rider
+  as running; R10001 is "off or paused". No boss uses R10001, and Duon / Porky's R10000 never sees a path rider, so the
+  boss set is unchanged (headless hashes identical).
+- Open, read but not ported: 0x81A1CA50 is "speed >= a record word" (fcmpo speed, word; true when not less), the VM's
+  10002 is `spd <= max`; 0x81A1CAE4 (10003) is "speed <= another word". Which VM fields those words are is not mapped
+  [L]. R23 (sora_melee case 0x17 -> 0x81A78A70): model module vfunc 0x1F8 (a float argument, a buffer the resource
+  module's vfunc 0x18 fills, a flag) >= 0; the vfunc is not identified yet.

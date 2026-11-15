@@ -954,11 +954,26 @@ impl<'a> Cx<'a> {
                     None => false,
                 }
             }
-            // energy-slot queries (0x81A1794C / 179E0 / 17A74 / 17B08 via the kinetic module): the slot (-1 = every
-            // slot) is off or its record finished [M: the two finish flags are read as one "done"]
-            10000 | 10001 | 10003 => {
+            // energy-slot queries (enemy requirement switch, table at sora_enemy s5 [off]: 10000 -> 0x81A1794C, 10001 ->
+            // 0x81A179E0, 10003 -> 0x81A17B08): the slot (-1 = every slot) is off or ...
+            // - 10000: not running (0x81A1C9C4: the unit's running bit, set by the record start 0x81A1BE44 and cleared
+            //   by the kinetic stop points 0x81A1DCF0-0x81A1E298). A path rider's end (0x81A1DFCC-0x81A1E0F8) only marks
+            //   it finished (0x81A1C110) and keeps it running, looping or not, so a done path unit counts as running.
+            //   Other done units are read as stopped [M: the VM keeps one finish flag]
+            // - 10001: held (0x81A1CA10: the unit's pause byte, the VM's `paused`: 6604 / 6605)
+            // - 10003 [M: read as 10000; 0x81A1CAE4 compares the speed with a record word, not mapped yet]
+            10001 => {
                 let s = x(0) as i32;
-                let off_or_done = |k: &Kin| k.kind < 0 || k.done != 0;
+                let off_or_held = |k: &Kin| k.kind < 0 || k.paused != 0;
+                if s < 0 {
+                    a.kin.iter().all(off_or_held)
+                } else {
+                    off_or_held(&a.kin[s as usize & (KIN - 1)])
+                }
+            }
+            10000 | 10003 => {
+                let s = x(0) as i32;
+                let off_or_done = |k: &Kin| k.kind < 0 || (k.done != 0 && !(self.i.path.is_some() && matches!(k.ek, 21 | 22)));
                 if s < 0 {
                     a.kin.iter().all(off_or_done)
                 } else {

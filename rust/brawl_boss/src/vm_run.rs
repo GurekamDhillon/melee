@@ -1414,6 +1414,20 @@ impl<'a> Cx<'a> {
                 }
                 self.ev(EV_HURT, pc, s);
             }
+            // 6D00 s (emCollisionHitModuleImpl, command kind 0x6D, 0x81A2BC5C -> 0x81A2BA44): every hurtbox of the
+            // file's list (param 43006) gets status s through the hit module's vfunc 0x44 (i, s, 0), the call 0607 makes
+            0x6D00 => {
+                let s = v(self, 0) as i32;
+                for &i in &self.p.hurt_list {
+                    let i = i & 31;
+                    if s == 2 {
+                        self.a.hurt_mask |= 1 << i;
+                    } else {
+                        self.a.hurt_mask &= !(1 << i);
+                    }
+                }
+                self.ev(EV_HURT, pc, s);
+            }
             0x0808 => {
                 if self.i.ground {
                     self.a.pos[1] = self.i.floor_y;

@@ -160,6 +160,9 @@ pub struct Program {
     /// code index of the shared statusAnimCmd_CommonCatchProcExit (0 = not used): a call to it sends EV_CATCH_EXIT
     pub catch_exit: u32,
     pub general: [f32; 44],
+    /// param 43006 (the accessor 0x81A229F8: word 2 of the file's data root): a (list, count) of hurtbox indices,
+    /// handed to emCollisionHitModuleImpl's constructor (0x81A2B8FC, from 0x81A00CC4). 6D00 sets them all
+    pub hurt_list: Vec<u32>,
     /// engine value 21007 (0x81A22134): the placement's variant; the six Primids share one file and
     /// branch on it [L: the field's writer is not traced]. The host sets it.
     pub variant: i32,
@@ -203,7 +206,7 @@ pub const RUN_IDS: &[u16] = &[
     0x1901, 0x1902, 0x1B02, 0x6500, 0x6504, 0x6505, 0x6507, 0x6509, 0x6514, 0x6516, 0x651E, 0x651F, 0x6523, 0x6600,
     0x6601, 0x6602, 0x6603, 0x6607, 0x6609, 0x660A, 0x660B, 0x660C, 0x6616, 0x6617, 0x661A, 0x661B, 0x6900, 0x6901, 0x6907, 0x6908, 0x6909, 0x690A, 0x6A00, 0x6A01,
     0x6A02, 0x6A03, 0x6B03, 0x1405, 0x6524, 0x6B01, 0x6604, 0x6605, 0x660E, 0x6905, 0x6906, 0x6520, 0x0502, 0x660F, 0x6506, 0x6510, 0x6511, 0x6515, 0x030A, 0x661C,
-    0x661D, 0x661E,
+    0x661D, 0x661E, 0x6D00,
 ];
 
 /// Commands forwarded to the host as presentation events, not interpreted: motion-module rate / partial-motion
@@ -275,6 +278,7 @@ impl Program {
                 builtin: [0; 14],
                 catch_exit: 0,
                 general: [0.0; 44],
+                hurt_list: Vec::new(),
                 variant: 0,
                 inits: Vec::new(),
                 block_values: Vec::new(),
@@ -320,6 +324,14 @@ impl Program {
         b.p.code.push(Ins { id: END, n: 0, a: 0, j: 0, k: 0 });
         for i in 0..44u32 {
             b.p.general[i as usize] = fbits(be32(main.data(), 4 * i));
+        }
+        if let Ok(h) = main.local(w(2)) {
+            let n = be32(main.data(), h + 4) as i32;
+            if let Ok(l) = main.local(h) {
+                for i in 0..n.clamp(0, 64) as u32 {
+                    b.p.hurt_list.push(be32(main.data(), l + 4 * i));
+                }
+            }
         }
         if let Ok(t) = main.local(w(7)) {
             b.p.tuning_at = t;

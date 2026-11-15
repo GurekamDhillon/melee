@@ -13,3 +13,7 @@ melee_fighter.workspace = true
 melee_chara.workspace = true
 melee_items.workspace = true
 melee_link_abi.workspace = true
+melee_link_ms0.workspace = true
+melee_link_ms1.workspace = true
+melee_link_ms2.workspace = true
+melee_link_ms3.workspace = true

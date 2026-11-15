@@ -162,3 +162,5 @@ rust/melee_world/tests/gro_grlast.rs linguist-generated
 rust/melee_world/tests/gro_grlib.rs linguist-generated
 rust/melee_world/tests/gro_grmaterial.rs linguist-generated
 rust/melee_world/tests/tu_soundtest.rs linguist-generated
+rust/melee_link_ms*/src/lib.rs linguist-generated
+rust/melee_mex_table/src/lib.rs linguist-generated

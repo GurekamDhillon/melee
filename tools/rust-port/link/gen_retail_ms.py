@@ -4,7 +4,7 @@
 The MotionState tables are the data of ftmotionstates.c and of every ft*/kinds/*.c: rows of {anim_id, flags, move id,
 five callbacks}.  They are read from the transpiled initialisers under rust/*/src/raw (data only: no raw function is
 ever called) and the callbacks are resolved to the canonical tu/ functions exactly as gen_retail does.  The tables are
-static arrays in melee_link; `install_ms()` fills them once at boot.  Run: gen_retail_ms.py
+static arrays in the melee_link_ms<N> crates (split_retail_ms.py); `install_ms()` fills them once at boot.  Run: gen_retail_ms.py
 """
 import os, re, sys
 sys.path.insert(0, os.path.dirname(__file__))
@@ -121,7 +121,8 @@ def run_ms(gen):
         text += lines
         inst += ilines
     inst += ['    }', '}', '']
-    open(MS_OUT, 'w', newline='\n').write('\n'.join(text + inst))
+    import split_retail_ms  # one crate per group of modules (melee_link_ms<N>); retail_ms.rs re-exports them
+    split_retail_ms.split('\n'.join(text + inst))
     print(f'motion states: {ntab} tables, {nrow} rows')
     return seen
 

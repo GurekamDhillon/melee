@@ -20,7 +20,7 @@ VSTUB(ft_80083B68, 9)
 static u32 state_hash(void)
 {
     H = 0x811C9DC5u;
-    HM(F.victim_gobj == &GO2); HM(F.x1A5C == &GO2); HM(F.x221B_b5); HM(F.x221B_b7);
+    HM(F.victim_gobj == &GO2); HM(F.x1A5C == &GO2); HM(F.x221B.x221B_b5); HM(F.x221B.x221B_b7);
     HM(B(F.facing_dir)); HM(F.accessory1_cb == ftCo_800DB464); HM(F.accessory1_cb == NULL);
     return H;
 }
@@ -36,7 +36,7 @@ int main(void)
         for (k = 0; k < NCASE; k++) {
             u32 ret = 0;
             tu_case(op, k);
-            F.x221B_b5 = rnd() & 1; F.x221B_b7 = rnd() & 1; F.x2226_b2 = rnd() & 1;
+            F.x221B.x221B_b5 = rnd() & 1; F.x221B.x221B_b7 = rnd() & 1; F.x2226_b2 = rnd() & 1;
             F.ground_or_air = rnd() & 1;
             F.facing_dir = rg(); F2.facing_dir = rg();
             switch (op) {

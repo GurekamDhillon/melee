@@ -130,15 +130,15 @@ fn itclimbersblizzard_matches_c() {
                     0 => { let v2: f32 = rw() as f32; ret = pi(m::itClimbersBlizzard_Spawn(&raw mut GO[0], &raw mut VA[0], v2)); } // itClimbersBlizzard_Spawn
                     1 => {  m::itClimbersBlizzard_802C2248(&raw mut GO[0]); } // itClimbersBlizzard_802C2248
                     2 => {  m::itClimbersBlizzard_802C2358(&raw mut GO[0]); } // itClimbersBlizzard_802C2358
-                    3 => {  ret = m::itClimbersBlizzard_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itClimbersBlizzard_UnkMotion0_Anim
+                    3 => {  ret = ((m::itClimbersBlizzard_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_UnkMotion0_Anim
                     4 => {  m::itClimbersBlizzard_UnkMotion0_Phys(&raw mut GO[0]); } // itClimbersBlizzard_UnkMotion0_Phys
-                    5 => {  ret = m::itClimbersBlizzard_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itClimbersBlizzard_UnkMotion0_Coll
-                    6 => {  ret = m::itClimbersBlizzard_DmgDealt(&raw mut GO[0]) as u32; } // itClimbersBlizzard_DmgDealt
-                    7 => {  ret = m::itClimbersBlizzard_Reflected(&raw mut GO[0]) as u32; } // itClimbersBlizzard_Reflected
-                    8 => {  ret = m::itClimbersBlizzard_Clanked(&raw mut GO[0]) as u32; } // itClimbersBlizzard_Clanked
-                    9 => {  ret = m::itClimbersBlizzard_HitShield(&raw mut GO[0]) as u32; } // itClimbersBlizzard_HitShield
-                    10 => {  ret = m::itClimbersBlizzard_Absorbed(&raw mut GO[0]) as u32; } // itClimbersBlizzard_Absorbed
-                    11 => {  ret = m::itClimbersBlizzard_ShieldBounced(&raw mut GO[0]) as u32; } // itClimbersBlizzard_ShieldBounced
+                    5 => {  ret = ((m::itClimbersBlizzard_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_UnkMotion0_Coll
+                    6 => {  ret = ((m::itClimbersBlizzard_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_DmgDealt
+                    7 => {  ret = ((m::itClimbersBlizzard_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_Reflected
+                    8 => {  ret = ((m::itClimbersBlizzard_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_Clanked
+                    9 => {  ret = ((m::itClimbersBlizzard_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_HitShield
+                    10 => {  ret = ((m::itClimbersBlizzard_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_Absorbed
+                    11 => {  ret = ((m::itClimbersBlizzard_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itClimbersBlizzard_ShieldBounced
                     12 => {  m::itClimbersBlizzard_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itClimbersBlizzard_EvtUnk
                     13 => { for j in 0..1 { let row = &m::it_803F76A8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

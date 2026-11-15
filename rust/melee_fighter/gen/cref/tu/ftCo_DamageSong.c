@@ -39,10 +39,10 @@ int main(void)
             CD.x624 = rw(); CD.x628 = rw(); CD.x62C = rw(); CD.x630 = rw(); CD.x634 = rw();
             CD.x638 = rw(); CD.x63C = rw(); CD.x640 = rg(); CD.x644 = rw();
             F.dmg.x1830_percent = rw();
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.grab_timer = rw();
             F.x2222_b2 = rnd() & 1;
-            F.x2070.x2071_b0_3 = rnd() & 15;
+            F.x2070.x0.x2071_b0_3 = rnd() & 15;
             switch (op) {
             case 0: ftCo_800C318C(&GO, rnd() & 1); break;
             case 1: ftCo_DamageSong_Anim(&GO); break;

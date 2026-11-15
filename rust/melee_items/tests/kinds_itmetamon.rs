@@ -126,16 +126,16 @@ fn itmetamon_matches_c() {
                     2 => {  m::itMetamon_Logic19_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itMetamon_Logic19_EvtUnk
                     3 => {  m::it_802D3090(&raw mut GO[0]); } // it_802D3090
                     4 => {  m::it_802D30C4(&raw mut GO[0]); } // it_802D30C4
-                    5 => {  ret = m::itMetamon_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itMetamon_UnkMotion0_Anim
+                    5 => {  ret = ((m::itMetamon_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMetamon_UnkMotion0_Anim
                     6 => {  m::itMetamon_UnkMotion0_Phys(&raw mut GO[0]); } // itMetamon_UnkMotion0_Phys
-                    7 => {  ret = m::itMetamon_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itMetamon_UnkMotion0_Coll
-                    8 => {  ret = m::itMetamon_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itMetamon_UnkMotion1_Anim
+                    7 => {  ret = ((m::itMetamon_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMetamon_UnkMotion0_Coll
+                    8 => {  ret = ((m::itMetamon_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMetamon_UnkMotion1_Anim
                     9 => {  m::itMetamon_UnkMotion1_Phys(&raw mut GO[0]); } // itMetamon_UnkMotion1_Phys
-                    10 => {  ret = m::itMetamon_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itMetamon_UnkMotion1_Coll
+                    10 => {  ret = ((m::itMetamon_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMetamon_UnkMotion1_Coll
                     11 => {  m::it_802D31B4(&raw mut GO[0]); } // it_802D31B4
-                    12 => {  ret = m::itMetamon_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itMetamon_UnkMotion2_Anim
+                    12 => {  ret = ((m::itMetamon_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMetamon_UnkMotion2_Anim
                     13 => {  m::itMetamon_UnkMotion2_Phys(&raw mut GO[0]); } // itMetamon_UnkMotion2_Phys
-                    14 => {  ret = m::itMetamon_UnkMotion2_Coll(&raw mut GO[0]) as u32; } // itMetamon_UnkMotion2_Coll
+                    14 => {  ret = ((m::itMetamon_UnkMotion2_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMetamon_UnkMotion2_Coll
                     15 => { for j in 0..3 { let row = &m::it_803F7FC8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

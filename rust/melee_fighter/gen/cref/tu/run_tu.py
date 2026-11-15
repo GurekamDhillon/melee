@@ -16,12 +16,20 @@ import run as R  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 FTCO = "src/melee/ft/kinds/ftCommon"
+# functions the game moved out of the driver's TU: cut verbatim into <stem>_extract.inc (run.py EXTRACTS), which the driver includes
+TU_EXTRACTS = {
+    "ftcoll": [("src/melee/ft/ft_0763.c", "static inline void comboCount_Push(", "/// Combo count something"),
+               ("src/melee/ft/ft_0763.c", "fn:ftColl_80076528", None)],
+}
 
 
 def main():
     R.BUILD.mkdir(parents=True, exist_ok=True)
     R.DATA.mkdir(parents=True, exist_ok=True)
+    R.EXTRACTS.update(TU_EXTRACTS)
     for n in sys.argv[1:]:
+        if n in TU_EXTRACTS:
+            R.extract(n)
         drv = HERE / f"{n}.c"
         first = drv.read_text(encoding="utf-8").splitlines()[0]
         # first line of the driver: /* TU: src/... */

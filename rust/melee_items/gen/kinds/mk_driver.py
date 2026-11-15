@@ -259,7 +259,8 @@ def build_ops(tu, cfg):
             sc, sr = f"{call_c};", f"{call_r};"
         elif rk in ("int", "uint", "bool"):
             if fn.type.get_result().spelling == "bool":
-                # MSL `bool` is `int`: the C returns the callee's raw value, the port a Rust bool or the raw int (nonzero == true): both sides compare != 0
+                # MSL `bool` is `int`: the C returns the callee's raw value, and so do ports that return i32 (as retail does);
+                # both sides compare nonzero, so a raw 8 or -1 and a Rust `true` all record 1
                 sc, sr = f"ret = (u32) (({call_c}) != 0);", f"ret = (({call_r}) as i32 != 0) as u32;"
             else:
                 sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"

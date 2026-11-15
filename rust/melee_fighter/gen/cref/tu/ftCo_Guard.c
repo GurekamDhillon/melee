@@ -130,7 +130,7 @@ static u32 state_hash(void)
     HM(F.mv.co.guard.x20); HM(F.mv.co.guard.x24); HM(B(F.mv.co.guard.x2C));
     HM(B(F.lightshield_amount)); HM(B(F.shield_health)); HM(B(F.gr_vel)); HM(B(F.cur_pos.x)); HM(B(F.cur_pos.y));
     HM(F.active_timer.trigger); HM(F.active_timer.lstick.x);
-    HM(F.reflecting); HM(F.x221B_b0); HM(F.x221A_b7); HM(F.x2219_b0); HM(F.x221C_b1); HM(F.x221C_b2); HM(F.x221C_b3);
+    HM(F.reflecting); HM(F.x221B.x221B_b0); HM(F.x221A_b7); HM(F.x2219_b0); HM(F.x221C_b1); HM(F.x221C_b2); HM(F.x221C_b3);
     HM(F.hitlag_cb == ftCo_80093240); HM(F.post_hitlag_cb == ftCo_800932DC);
     for (i = 0; i < 8; i++) {
         HM(B(JO[i].scale.x)); HM(B(JO[i].scale.y)); HM(B(JO[i].scale.z));
@@ -181,7 +181,7 @@ int main(void)
             F.ft_data = &FD; F.parts = PARTS; F.x8AC_animSkeleton = &SKEL; F.x108_costume_joint = &CJ;
             F.x1C_actionStateList = MS;
             F.kind = KINDS[rnd() % 4];
-            F.player_id = rnd() % 4; F.x618_player_id = rnd() % 4; F.is_sub_fighter = rnd() & 1;
+            F.player_idx = rnd() % 4; F.pad_port = rnd() % 4; F.is_sub_fighter = rnd() & 1;
             F.input.held_buttons[0] = rnd(); F.input.pressed_buttons = rnd();
             F.input.triggers[0] = rg();
             F.input.lstick[0].x = rg(); F.input.lstick[0].y = rg(); F.input.lstick[1].x = rg();
@@ -198,7 +198,7 @@ int main(void)
             F.x19A4 = rnd() % 30; F.x19B0 = (rnd() & 1) ? 10 : 3;
             F.specialn_facing_dir = rg();
             F.allow_sdi = rnd() & 1; F.ground_or_air = rnd() & 1;
-            F.reflecting = rnd() & 1; F.x221B_b0 = rnd() & 1;
+            F.reflecting = rnd() & 1; F.x221B.x221B_b0 = rnd() & 1;
             F.x221C_b1 = rnd() & 1; F.x221C_b2 = rnd() & 1; F.x221C_b3 = rnd() & 1;
             F.co_attrs.initial_shield_size = rg();
             F.cur_anim_frame = rg(); F.cur_pos.x = rw(); F.cur_pos.y = rw();

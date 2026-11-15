@@ -74,7 +74,7 @@ int main(void)
             F.smash_attrs.x2135 = (rnd() & 1) ? -1 : (s8) (rnd() % 4);
             F.is_sub_fighter = rnd() & 1;
             O.cur_pos.y = rf(); O.self_vel.x = rf(); O.self_vel.y = rf();
-            O.x221F_b3 = rnd() & 1;
+            O.is_sleeping = rnd() & 1;
             g_stage.x = rf(); g_stage.y = rf(); g_stage.z = rf();
             g_some.x = rf(); g_some.y = rf(); g_some.z = rf();
             g_ent[0] = &GO;

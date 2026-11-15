@@ -31,7 +31,7 @@ int main(void)
             tu_case(op, k);
             cargo_fill();
             switch (op) {
-            case 0: F.victim_gobj = NULL; F.x221B_b5 = 1; F.x221B_b7 = rnd() & 1; ftCo_800BBB8C(&GO, &GO2); break;
+            case 0: F.victim_gobj = NULL; F.x221B.x221B_b5 = 1; F.x221B.x221B_b7 = rnd() & 1; ftCo_800BBB8C(&GO, &GO2); break;
             case 1: ftCo_CaptureYoshi_Anim(&GO); break;
             case 2: ftCo_CaptureYoshi_IASA(&GO); break;
             case 3: ftCo_CaptureYoshi_Phys(&GO); break;

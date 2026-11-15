@@ -122,9 +122,9 @@ fn ityoshitongue_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => {  m::it_802F2BFC(&raw mut GO[0], &raw mut GO[1]); } // it_802F2BFC
-                    1 => {  ret = m::it_2F2B_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // it_2F2B_UnkMotion0_Anim
+                    1 => {  ret = ((m::it_2F2B_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // it_2F2B_UnkMotion0_Anim
                     2 => {  m::it_2F2B_UnkMotion0_Phys(&raw mut GO[0]); } // it_2F2B_UnkMotion0_Phys
-                    3 => {  ret = m::it_2F2B_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // it_2F2B_UnkMotion0_Coll
+                    3 => {  ret = ((m::it_2F2B_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // it_2F2B_UnkMotion0_Coll
                     4 => { let v = fv() & 1 != 0; m::it_802F2CE0(&raw mut GO[0], v); } // it_802F2CE0
                     5 => { for j in 0..1 { let row = &m::it_803F9480[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

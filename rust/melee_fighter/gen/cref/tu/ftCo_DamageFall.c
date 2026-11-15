@@ -8,7 +8,7 @@
 #define S8(i) ((SRV[i] & 7) == 0)
 
 /* callees of the already-verified leaves: never reached by the ops below */
-Vec2** Fighter_804D6530;
+struct ftDamageShifts* Fighter_804D6530;
 bool ft_80081DD4(Fighter_GObj* g) { (void) g; for (;;) {} }
 float ftCommon_CalcHitlag(int d, FtMotionId m, float x) { (void) d; (void) m; (void) x; for (;;) {} }
 void ft_PlaySFX(Fighter* f, enum_t a, u8 b, u8 c) { (void) f; (void) a; (void) b; (void) c; for (;;) {} }
@@ -64,7 +64,7 @@ int main(void)
             u32 ret;
             tu_case(op, k);
             F.ground_or_air = rnd() & 1;
-            F.x618_player_id = rnd() % 4;
+            F.pad_port = rnd() % 4;
             F.input.lstick[1].x = rg();
             F.input.lstick[0].x = rg();
             CD.x210 = rg();

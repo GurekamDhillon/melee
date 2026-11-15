@@ -127,25 +127,25 @@ fn itmatadogas_matches_c() {
                     0 => {  m::it_802CAFD4(&raw mut GO[0]); } // it_802CAFD4
                     1 => {  m::it_802CB0F4(&raw mut GO[0]); } // it_802CB0F4
                     2 => {  m::it_802CB0F8(&raw mut GO[0], &raw mut GO[1]); } // it_802CB0F8
-                    3 => {  ret = m::it_802CB118(&raw mut GO[0]) as u32; } // it_802CB118
+                    3 => {  ret = ((m::it_802CB118(&raw mut GO[0])) as i32 != 0) as u32; } // it_802CB118
                     4 => {  m::it_802CB14C(&raw mut GO[0]); } // it_802CB14C
-                    5 => {  ret = m::it_802CB150(&raw mut GO[0]) as u32; } // it_802CB150
-                    6 => {  ret = m::itMatadogas_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itMatadogas_UnkMotion1_Anim
+                    5 => {  ret = ((m::it_802CB150(&raw mut GO[0])) as i32 != 0) as u32; } // it_802CB150
+                    6 => {  ret = ((m::itMatadogas_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMatadogas_UnkMotion1_Anim
                     7 => {  m::itMatadogas_UnkMotion1_Phys(&raw mut GO[0]); } // itMatadogas_UnkMotion1_Phys
-                    8 => {  ret = m::itMatadogas_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itMatadogas_UnkMotion1_Coll
+                    8 => {  ret = ((m::itMatadogas_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMatadogas_UnkMotion1_Coll
                     9 => {  m::it_802CB2B0(&raw mut GO[0]); } // it_802CB2B0
                     10 => {  m::it_802CB350(&raw mut GO[0]); } // it_802CB350
-                    11 => {  ret = m::itMatadogas_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itMatadogas_UnkMotion2_Anim
+                    11 => {  ret = ((m::itMatadogas_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMatadogas_UnkMotion2_Anim
                     12 => {  m::itMatadogas_UnkMotion2_Phys(&raw mut GO[0]); } // itMatadogas_UnkMotion2_Phys
-                    13 => {  ret = m::itMatadogas_UnkMotion2_Coll(&raw mut GO[0]) as u32; } // itMatadogas_UnkMotion2_Coll
+                    13 => {  ret = ((m::itMatadogas_UnkMotion2_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMatadogas_UnkMotion2_Coll
                     14 => { let v1: i32 = fv() as i32 as i32; let v2: f32 = rw() as f32; m::it_802CB4F0(&raw mut GO[0], v1, v2); } // it_802CB4F0
                     15 => {  m::it_2725_Logic32_Spawned(&raw mut GO[0]); } // it_2725_Logic32_Spawned
                     16 => {  m::it_2725_Logic33_Spawned(&raw mut GO[0]); } // it_2725_Logic33_Spawned
                     17 => {  m::itMatadogas_Logic33_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itMatadogas_Logic33_EvtUnk
                     18 => {  m::it_802CB798(&raw mut GO[0]); } // it_802CB798
-                    19 => {  ret = m::it_802CB810(&raw mut GO[0]) as u32; } // it_802CB810
+                    19 => {  ret = ((m::it_802CB810(&raw mut GO[0])) as i32 != 0) as u32; } // it_802CB810
                     20 => {  m::it_802CB844(&raw mut GO[0]); } // it_802CB844
-                    21 => {  ret = m::it_802CB8A4(&raw mut GO[0]) as u32; } // it_802CB8A4
+                    21 => {  ret = ((m::it_802CB8A4(&raw mut GO[0])) as i32 != 0) as u32; } // it_802CB8A4
                     22 => { for j in 0..3 { let row = &m::it_803F7B58[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } for j in 0..1 { let row = &m::it_803F7BB0[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

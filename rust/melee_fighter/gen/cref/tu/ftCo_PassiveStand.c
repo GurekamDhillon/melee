@@ -10,7 +10,7 @@ void ftCommon_8007D7FC(Fighter* f) { T(2); T(PI(f)); }
 CMS(3)
 void ft_800881D8(Fighter* f, int s, u8 v, u8 p) { T(4); T(PI(f)); T(s); T(v); T(p); }
 void ft_PlaySFX(Fighter* f, enum_t s, u8 v, u8 p) { T(5); T(PI(f)); T(s); T(v); T(p); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 gfx, HSD_JObj* j, ...) { T(6); T(PI(g)); T(PI(q)); T(kind); T(gfx); T(PI(j)); }
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 gfx, HSD_JObj* j, ...) { T(6); T(PI(g)); T(PI(q)); T(kind); T(gfx); T(PI(j)); }
 BSTUB(ftAnim_IsFramesRemaining, 7)
 VSTUB(ft_8008A2BC, 8)
 VSTUB(ft_80084FA8, 9)

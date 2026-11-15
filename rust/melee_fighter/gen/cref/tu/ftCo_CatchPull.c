@@ -35,7 +35,7 @@ void ftCo_800DA698(Fighter_GObj* g, bool a) { T(16); T(g == &GO); T(a); }
 static u32 state_hash(void)
 {
     H = 0x811C9DC5u;
-    HM(B(F.gr_vel)); HM(F.throw_flags_b3); HM(F.throw_flags == 0); HM(F.x221B_b7); HM(F.accessory1_cb == fn_800DA190);
+    HM(B(F.gr_vel)); HM(F.x2210.x0.throw_flags_b3); HM(F.x2210.throw_flags == 0); HM(F.x221B.x221B_b7); HM(F.accessory1_cb == fn_800DA190);
     HM(F.mv.co.capturedamage.x18 == NULL ? 0xFFu : (u32) ((unsigned char*) F.mv.co.capturedamage.x18 - JB));
     return H;
 }
@@ -69,8 +69,8 @@ int main(void)
             F.u.ss.x223C = ((rnd() & 1) || op == 0) ? (Item_GObj*) &IGO : NULL;
             IT.xDD4_itemVar.linkhookshot.xC = (HSD_JObj*) (JB + 60);
             IT.xDD4_itemVar.linkhookshot.x14 = rnd() & 1;
-            F.throw_flags_b3 = rnd() & 1;
-            F.x221B_b7 = rnd() & 1;
+            F.x2210.x0.throw_flags_b3 = rnd() & 1;
+            F.x221B.x221B_b7 = rnd() & 1;
             F.gr_vel = rg(); F.facing_dir = rg();
             F.x2170 = rw(); CD.x34C = rw(); CD.x350 = rw(); F.co_attrs.walk_max_vel = rw();
             CD.x64 = rg(); F.co_attrs.ground_friction = rg();

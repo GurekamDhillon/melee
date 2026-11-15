@@ -140,9 +140,9 @@ static void tables(void)
 static void hbone(FighterBone* b)
 {
     HM(EP(b->joint)); HM(EP(b->x4_jobj2));
-    HM(b->flags_b0); HM(b->flags_b1); HM(b->flags_b2); HM(b->flags_b3); HM(b->flags_b4); HM(b->flags_b5); HM(b->flags_b6); HM(b->flags_b7);
-    HM(b->flags2_b0); HM(b->flags2_b1); HM(b->flags2_b2); HM(b->flags2_b3); HM(b->flags2_b4); HM(b->flags2_b5); HM(b->flags2_b6); HM(b->flags2_b7);
-    HM(b->xC); HM(b->xD);
+    HM(b->x8.x0.flags_b0); HM(b->x8.x0.flags_b1); HM(b->x8.x0.flags_b2); HM(b->x8.x0.flags_b3); HM(b->x8.x0.flags_b4); HM(b->x8.x0.flags_b5); HM(b->x8.x0.flags_b6); HM(b->x8.x0.flags_b7);
+    HM(b->x8.x0.flags2_b0); HM(b->x8.x0.flags2_b1); HM(b->x8.x0.flags2_b2); HM(b->x8.x0.flags2_b3); HM(b->x8.x0.flags2_b4); HM(b->x8.x0.flags2_b5); HM(b->x8.x0.flags2_b6); HM(b->x8.x0.flags2_b7);
+    HM(b->xC_u.x0.xC); HM(b->xC_u.x0.xD);
 }
 static void vis_world(void)
 {
@@ -177,7 +177,7 @@ static void vis_world(void)
     FX8.x0 = FDESC;
     FDATA.x8 = &FX8;
     F.ft_data = &FDATA;
-    F.x619_costume_id = (u8) (rnd() % 3);
+    F.costume_id = (u8) (rnd() % 3);
     F.kind = KIND;
 }
 static void hvis(void)
@@ -201,7 +201,7 @@ int main(void)
             H = 0x811C9DC5u;
             zero(PARTS, sizeof PARTS); zero(P2J, sizeof P2J); zero(J2P, sizeof J2P);
             GO.user_data = &F; F.gobj = &GO;
-            F.player_id = (u8) (rnd() % 4);
+            F.player_idx = (u8) (rnd() % 4);
             F.kind = KIND;
             gen_tree();
             tables();

@@ -56,7 +56,7 @@ BSTUB(ftCo_Walk_CheckInput, 40)
 static u32 state_hash(void)
 {
     H = 0x811C9DC5u;
-    HM(F.allow_interrupt); HM(B(F.facing_dir)); HM(F.cmd_vars[0]); HM(F.throw_flags);
+    HM(F.allow_interrupt); HM(B(F.facing_dir)); HM(F.cmd_vars[0]); HM(F.x2210.throw_flags);
     HM(F.pre_hitlag_cb == efLib_PauseAll); HM(F.post_hitlag_cb == efLib_ResumeAll);
     HM(F.pre_hitlag_cb == NULL); HM(F.post_hitlag_cb == NULL);
     return H;
@@ -88,7 +88,7 @@ int main(void)
             F.kind = (rnd() & 1) ? KINDS[rnd() % 5] : (int) (rnd() % 33);
             F.allow_interrupt = rnd() & 1;
             F.cmd_vars[0] = rnd();
-            F.throw_flags = rnd();
+            F.x2210.throw_flags = rnd();
             a0 = rg(); a1 = rg() * 2;
             switch (op) {
             case 0: ret = checkLStick(&F); break;

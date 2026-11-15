@@ -127,7 +127,7 @@ fn itmariocape_matches_c() {
                     4 => {  m::it_802B26E0(&raw mut GO[0]); } // it_802B26E0
                     5 => {  m::it_2725_Logic41_PickedUp(&raw mut GO[0]); } // it_2725_Logic41_PickedUp
                     6 => {  m::inlineA0(&raw mut GO[0]); } // inlineA0
-                    7 => {  ret = m::itMariocape_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itMariocape_UnkMotion1_Anim
+                    7 => {  ret = ((m::itMariocape_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMariocape_UnkMotion1_Anim
                     8 => {  m::it_802B2870(&raw mut GO[0], &raw mut GO[1]); } // it_802B2870
                     9 => { for j in 0..2 { let row = &m::it_803F70F8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

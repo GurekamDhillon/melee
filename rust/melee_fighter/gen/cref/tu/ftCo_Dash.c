@@ -63,7 +63,7 @@ int main(void)
             F.co_attrs.dash_accel_base = rg(); if (F.co_attrs.dash_accel_base != F.co_attrs.dash_accel_base) F.co_attrs.dash_accel_base = 0.5f; /* NaN+NaN picks an operand by codegen order */ F.co_attrs.dash_max_velocity = rw();
             F.co_attrs.ground_friction = rg();
             F.gr_vel = rw();
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.x197C = (rnd() & 1) ? &GO2 : NULL;
             F.item_gobj = (rnd() & 1) ? (Item_GObj*) &IGO : NULL;
             F.cmd_vars[0] = rnd() & 1;

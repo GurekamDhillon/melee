@@ -130,17 +130,17 @@ fn itpippi_matches_c() {
                     0 => {  m::itPippi_Logic20_Spawned(&raw mut GO[0]); } // itPippi_Logic20_Spawned
                     1 => {  m::it_802D32D8(&raw mut GO[0]); } // it_802D32D8
                     2 => {  m::it_802D32DC(&raw mut GO[0], &raw mut GO[1]); } // it_802D32DC
-                    3 => {  ret = m::itPippi_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itPippi_UnkMotion1_Anim
+                    3 => {  ret = ((m::itPippi_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPippi_UnkMotion1_Anim
                     4 => {  m::itPippi_UnkMotion1_Phys(&raw mut GO[0]); } // itPippi_UnkMotion1_Phys
-                    5 => {  ret = m::itPippi_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itPippi_UnkMotion1_Coll
+                    5 => {  ret = ((m::itPippi_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itPippi_UnkMotion1_Coll
                     6 => {  m::it_802D33F8(&raw mut GO[0]); } // it_802D33F8
-                    7 => {  ret = m::itPippi_UnkMotion5_Anim(&raw mut GO[0]) as u32; } // itPippi_UnkMotion5_Anim
+                    7 => {  ret = ((m::itPippi_UnkMotion5_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPippi_UnkMotion5_Anim
                     8 => {  m::itPippi_UnkMotion5_Phys(&raw mut GO[0]); } // itPippi_UnkMotion5_Phys
-                    9 => {  ret = m::itPippi_UnkMotion5_Coll(&raw mut GO[0]) as u32; } // itPippi_UnkMotion5_Coll
+                    9 => {  ret = ((m::itPippi_UnkMotion5_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itPippi_UnkMotion5_Coll
                     10 => {  m::it_802D3590(&raw mut GO[0]); } // it_802D3590
-                    11 => {  ret = m::itPippi_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itPippi_UnkMotion0_Anim
+                    11 => {  ret = ((m::itPippi_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPippi_UnkMotion0_Anim
                     12 => {  m::itPippi_UnkMotion0_Phys(&raw mut GO[0]); } // itPippi_UnkMotion0_Phys
-                    13 => {  ret = m::itPippi_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itPippi_UnkMotion0_Coll
+                    13 => {  ret = ((m::itPippi_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itPippi_UnkMotion0_Coll
                     14 => { for j in 0..6 { let row = &m::it_803F7FF8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

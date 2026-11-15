@@ -45,7 +45,7 @@ int main(void)
             F.input.lstick[0].x = rg();
             F.facing_dir = rg();
             F.cur_anim_frame = rw();
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.x197C = (rnd() & 1) ? &GO2 : NULL;
             F.cmd_vars[1] = rnd() & 1;
             F.gr_vel = rw();

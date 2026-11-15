@@ -150,6 +150,83 @@ def nested_defs(t):
         yield m, [x[2] for x in enc]
 
 
+_ALLF = {}
+REEXP_CANDS = set()   # (name, crate, modpath, file) of the defs-table candidates that are re-exports, not definitions
+_REEXP = []   # (crate, modpath, rel, exposed name, original name) of the top-level `pub use path::{orig [as exposed]}` lines
+
+
+def _top_level_uses(t):
+    """Yield (orig, exposed, start) for each top-level `pub use path::item;` / `pub use path::{a, b as c};` of blanked text `t`
+    (several on one line are fine; nested modules, `self`, `*` and nested groups are skipped)."""
+    if 'pub use' not in t and 'pub  use' not in t: return
+    depth = [0] * (len(t) + 1)
+    d = 0
+    for i, ch in enumerate(t):
+        if ch == '{': d += 1
+        elif ch == '}': d -= 1
+        depth[i] = d
+    for m in re.finditer(r'(?<![\w])pub\s+use\s+([\w:]+)::(\{[^{}]*\}|\w+(?:\s+as\s+\w+)?)\s*;', t):
+        if depth[m.start()] != 0: continue
+        for n in m.group(2).strip('{}').split(','):
+            n = n.strip()
+            if not n or n == '*' or n.startswith('self'): continue
+            if ' as ' in n:
+                o, e = [x.strip() for x in n.split(' as ', 1)]
+            else:
+                o = e = n
+            if e == '_': continue
+            yield o, e, m.start()
+
+
+def _all_sigs():
+    """name -> [(nparams, hasret)] of every top-level `pub fn` of the leaf crates (any file), plus the re-export table."""
+    if _ALLF: return _ALLF
+    for crate, f, rel in tu_files():
+        t = blank(open(f, encoding='utf8', errors='replace').read())
+        for m, _chain in nested_defs(t):
+            op = m.end() - 1
+            cl = match_close(t, op, '(', ')')
+            if cl < 0: continue
+            plist = t[op+1:cl]
+            if '...' in plist: continue
+            after = t[cl+1:cl+80].lstrip()
+            _ALLF.setdefault(m.group(1), []).append((count_params(plist), after.startswith('->') and not re.match(r'->\s*!', after)))
+        c, mp = modpath_of(f)
+        for o, e, _pos in _top_level_uses(t):
+            _REEXP.append((c, mp, rel, e, o))
+    return _ALLF
+
+
+def reexport_sig(name, seen=None):
+    """(nparams, hasret) of `name` when it is a function, or a chain of `pub use path::orig [as name]` re-exports (facade
+    modules that replaced a forwarder by `pub use crate::tu::x::name_fp as name;`) ending in exactly one definition; else None."""
+    _all_sigs()
+    seen = set(seen or ()) | {name}
+    sig = set(_ALLF.get(name, []))
+    if len(sig) == 1: return next(iter(sig))
+    if sig: return None
+    found = set()
+    for c, mp, rel, e, o in _REEXP:
+        if e != name or o in seen: continue
+        s = reexport_sig(o, seen)
+        if s: found.add(s)
+    return next(iter(found)) if len(found) == 1 else None
+
+
+def add_reexport_defs(defs, tier_tu):
+    """Add the re-exports of the tu/ files (tier_tu) or of the pre-consolidation modules (not tier_tu) as candidates."""
+    _all_sigs()
+    for c, mp, rel, e, o in _REEXP:
+        is_tu = rel.startswith('tu/')
+        if is_tu != tier_tu or 'test' in rel: continue
+        if not is_tu and (rel.split('/')[0] in ('c2r', 'types', 'bin', 'tests', 'gen') or rel.startswith('tu_') or rel in ('lib.rs', 'compat.rs')): continue
+        if any(d[1] == mp for d in defs.get(e, [])): continue
+        sig = reexport_sig(o) if o != e else reexport_sig(e)
+        if sig:
+            defs[e].append((c, mp, sig[0], sig[1], rel))
+            REEXP_CANDS.add((e, c, mp, rel))
+
+
 def index_legacy():
     """Second-tier homes: the pre-consolidation modules outside tu/ (melee_world/src/ftlib.rs ...). Used only when no tu/
     file defines the name; step 21/23 of the plan folds them into their tu files."""
@@ -170,6 +247,7 @@ def index_legacy():
             hasret = after.startswith('->') and not re.match(r'->\s*!', after)
             defs[m.group(1)].append((c, '::'.join([mp] + chain), count_params(plist), hasret, rel))
             PLIST[(c, '::'.join([mp] + chain), m.group(1))] = plist
+    add_reexport_defs(defs, False)
     return defs
 
 
@@ -216,6 +294,8 @@ def index_defs():
                 if len(sig) == 1:
                     npar, hasret = next(iter(sig))
                     defs[n].append((c, mp, npar, hasret, rel))
+                    REEXP_CANDS.add((n, c, mp, rel))
+    add_reexport_defs(defs, True)
     return defs
 
 
@@ -454,6 +534,8 @@ def parse_hooks():
         fnames = {}
         for fm in re.finditer(r'\bpub\s+(?:unsafe\s+)?(?:extern\s+)?fn\s+(\w+)\s*\(', t):
             fnames.setdefault(fm.group(1).upper().replace('_', ''), fm.group(1))
+        for _o, ex, _pos in _top_level_uses(t):   # a `pub use crate::tu::x::name;` that replaced the forwarder `pub fn name`
+            fnames.setdefault(ex.upper().replace('_', ''), ex)
         for sm in re.finditer(r'pub\s+static\s+mut\s+([A-Z][A-Z0-9_]*)\s*:\s*Option<\s*(?:unsafe\s+)?(extern\s+)?fn\s*\(', t):
             nm = fnames.get(sm.group(1).replace('_', ''))
             if not nm: continue
@@ -574,6 +656,9 @@ def choose(cands, name, cmap, own_file):
         norm = lambda s: s.lower().replace('_', '')
         pick = [c for c in cands if norm(os.path.splitext(os.path.basename(c[4]))[0]) == norm(stem)]
         if len(pick) == 1: return pick[0]
+    # a definition beats re-exports of (other crates' copies of) the same name: facade modules re-export instead of forwarding
+    real = [c for c in cands if (name, c[0], c[1], c[4]) not in REEXP_CANDS]
+    if len(real) == 1 and len(real) < len(cands): return real[0]
     low = sorted(cands, key=lambda c: LEAVES.index(c[0]) if c[0] in LEAVES else 99)
     if low and (len(low) == 1 or low[0][0] != low[1][0]) and low[0][0] == 'melee_runtime':
         return low[0]
@@ -677,6 +762,29 @@ def static_index():
     return idx
 
 
+_LOWMAP = {}
+
+
+def real_name(pick, name, defs, legacy):
+    """The spelling the generated call uses: the first definition (tu/ files, then the older modules, in file order) of the pick
+    whose name matches the hook's case-insensitively (the renamed `lower(C name)` fns of the port)."""
+    if not _LOWMAP:
+        for d in (defs, legacy):
+            for k in d: _LOWMAP.setdefault(k.lower(), []).append((k, d))
+    for k, d in _LOWMAP.get(name.lower(), []):
+        if pick in d[k]: return k
+    return name
+
+
+def tc_bad(h, pick, defs, legacy):
+    """True when a parameter of the hook and of the FUNCTION THE CALL WILL USE (same module, same position) are different object
+    classes. A lower-cased typed sibling of another spelling (`it_802f2014(ip: &mut Item)` next to `it_802F2014(gobj: *mut HSD_GObj)`)
+    is a different function and does not count."""
+    real = real_name(pick, h['name'], defs, legacy)
+    return any(class_mismatch(h.get('ptypes') or [], pl) for (kc, km, kn), pl in PLIST.items()
+               if (kc, km) == (pick[0], pick[1]) and kn == real)
+
+
 def main():
     report = '--report' in sys.argv
     skip = set()
@@ -743,11 +851,20 @@ def main():
                 ok = [c for c in cands if c[2] == h['npar'] and (c[3] == h['hasret'] or (c[3] and not h['hasret']))]
                 pick = choose(ok, h['name'], cmap, h['file'])
                 if pick is None:
+                    # a candidate that returns a value the hook does not (`ret::ft_800831cc` next to the void one) is the second choice
+                    ok2 = [c for c in ok if c[3] == h['hasret']]
+                    if len(ok2) < len(ok): pick = choose(ok2, h['name'], cmap, h['file'])
+                if pick is None:
                     why = 'ambiguous' if len([c for c in ok if c[4] != h['file']]) > 1 else ('selfdef' if cands and all(c[4] == h['file'] for c in cands) else 'sigmismatch')
                 elif key in skip or h['name'] in skip:
                     why = 'skipped'
-                elif any(class_mismatch(h.get('ptypes') or [], pl) for (kc, km, kn), pl in PLIST.items() if (kc, km) == (pick[0], pick[1]) and kn.lower() == h['name'].lower()):
-                    why = 'typeclass'
+                elif tc_bad(h, pick, defs, legacy):
+                    # the case-insensitive match is a typed sibling (`ftcommon_8007e2fc(fp: &mut Fighter)`): try the pre-consolidation
+                    # home under the hook's own spelling (`melee_chara::stubs::ftCommon_8007E2FC(g: G)`) before giving up
+                    alt = [c for c in legacy.get(h['name'], []) if c[2] == h['npar'] and (c[3] == h['hasret'] or (c[3] and not h['hasret']))]
+                    p2 = choose(alt, h['name'], cmap, h['file']) if alt else None
+                    if p2 is not None and not tc_bad(h, p2, defs, legacy): h['canon'] = p2
+                    else: why = 'typeclass'
                 else:
                     h['canon'] = pick
         if (why in ('nodef', 'sigmismatch', 'ambiguous', 'cabiref') or aliases.get(h['name'], '').startswith(('variadicw:', '!'))) and h['name'] in aliases and h['path'] and not (h.get('cabi') and h.get('ref')):
@@ -828,7 +945,7 @@ def main():
             site += 1
             S = site * 100
             call_args = ', '.join(f'cast::<_, _, {S + i + 1}>(a{i})' for i in range(npar))
-            real = next((k for k, v in list(defs.items()) + list(legacy.items()) if (cc, cmod, npar, hasret, h['canon'][4]) in v and k.lower() == h['name'].lower()), h['name'])
+            real = real_name(h['canon'], h['name'], defs, legacy)
             callee = f'{cc}::{cmod}::{real}'
             body = f'cast::<_, _, {S}>({callee}({call_args}))' if h['hasret'] else (f'let _ = {callee}({call_args});' if hasret else f'{callee}({call_args})')
             out.append(f'    // {h["file"]}')

@@ -177,6 +177,7 @@ pub fn stop() {
 mod tests {
     #[test]
     fn rayquaza_vm_in_state() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let Some(p) = super::program("rayquaza") else {
             eprintln!("geno_vm: no local files, skipped");
             return;

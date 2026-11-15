@@ -662,6 +662,7 @@ mod tests {
 
     #[test]
     fn catch_window_hold_and_release() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let d = one_status_define(Op::GrabRelease(Some(0)));
         let w = World::default();
         gb::begin(&d, w, 5, 1000, 3);
@@ -708,6 +709,7 @@ mod tests {
     /// Bucculus's chew define from the local enemy IR (skipped without it): catch, bites on a cadence, spit.
     #[test]
     fn bucculus_chew_from_ir() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let Some(dir) = crate::tu::geno_boss_ir::ir_dir() else { return };
         let Ok(text) = std::fs::read_to_string(dir.join("enemies/bucculus.brawl.ir.json")) else { return };
         let d = bucculus_define(&crate::tu::geno_boss_ir::parse_json(&text).unwrap()).unwrap();

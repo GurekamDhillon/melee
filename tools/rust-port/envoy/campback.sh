@@ -13,7 +13,7 @@ rm -rf "$out"; mkdir -p "$out/save"; cp -r "$card" "$out/card"
 unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP MELEE_ENVOY_TEST_DRIVES
 env MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WINDOW_TITLE="${TITLE:-envoy campback: B in the camp}" MELEE_WASM_MODS="$mods" \
   MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="$(pad_for_disc "${PAD:-$here/campback_pad.txt}" "$out")" MELEE_PAD_CHANNELS=0 \
-  MELEE_PAD_IGNORE_ADAPTER=1 MELEE_RECLAIM_LEAK=1 ${EXTRA_ENV:-} \
+  MELEE_PAD_IGNORE_ADAPTER=1 ${EXTRA_ENV:-} \
   timeout 600 "$exe" play --iso "$GW_ISO_VANILLA" --headless --no-audio --max-frames "${FRAMES:-1500}" >"$out/run.log" 2>&1
 seq=$(grep -aoE "play: tick [0-9]+: scene [a-z_]+" "$out/run.log" | sed -E 's/play: tick ([0-9]+): scene /\1:/' | tr '\n' ' ')
 echo "     scenes: $seq"

@@ -243,6 +243,10 @@ struct ModSlot {
 
 struct State {
     t0: Instant,
+    /// The system's cumulative (idle, total) CPU time, refreshed every ~10 ms by the sampler thread (GetSystemTimes
+    /// costs ~50 µs, too much for the game thread's every present).
+    sys_idle: AtomicU64,
+    sys_total: AtomicU64,
     /// The TSC at `t0` (the cycle -> ns rate for the per-frame thread clocks).
     tsc0: u64,
     cfg: Config,
@@ -305,6 +309,8 @@ pub fn start(cfg: Config) -> Result<String, String> {
     let s = Box::new(State {
         t0: Instant::now(),
         tsc0: sys::tsc(),
+        sys_idle: AtomicU64::new(0),
+        sys_total: AtomicU64::new(0),
         cfg,
         c: Default::default(),
         mod_ns: Default::default(),
@@ -335,6 +341,16 @@ pub fn start(cfg: Config) -> Result<String, String> {
     let st2 = stem.clone();
     let h = std::thread::Builder::new().name("frame profiler".into()).spawn(move || writer::run(s, st2)).map_err(|e| e.to_string())?;
     *s.writer.lock().unwrap() = Some(h);
+    if sys::sys_times().1 > 0 {
+        let _ = std::thread::Builder::new().name("frame profiler load".into()).spawn(move || {
+            while !s.stop.load(Relaxed) {
+                let (i, t) = sys::sys_times();
+                s.sys_idle.store(i, Relaxed);
+                s.sys_total.store(t, Relaxed);
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        });
+    }
     Ok(stem)
 }
 
@@ -519,7 +535,9 @@ pub fn end_frame() {
     let last = s.last_present.swap(t, Relaxed);
     let interval = if last == 0 { 0 } else { (t - last).min(u32::MAX as u64) as u32 };
     let tsc_hz = if t > 1000 { sys::tsc().wrapping_sub(s.tsc0) as f64 * 1e6 / t as f64 } else { 0.0 };
-    let clk = sys::frame_clocks(tsc_hz);
+    let mut clk = sys::frame_clocks(tsc_hz);
+    clk.sys_idle = s.sys_idle.load(Relaxed);
+    clk.sys_total = s.sys_total.load(Relaxed);
     let mut f = Frame { t_us: t, interval_us: interval, scene: s.scene.load(Relaxed) as u16, tick: s.tick.load(Relaxed), c: [0; NC], mods: [0; MAX_MODS], interp: s.interp.load(Relaxed), expected_us: s.expected_us.load(Relaxed) as u32, clk };
     for (i, c) in s.c.iter().enumerate() {
         f.c[i] = c.swap(0, Relaxed);

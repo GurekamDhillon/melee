@@ -81,5 +81,19 @@ fn frame_clocks_advance() {
     let b = super::sys::frame_clocks(3.0e9);
     assert!(b.thread_ns >= a.thread_ns && b.proc_ns >= a.proc_ns);
     #[cfg(windows)]
-    assert!(b.thread_ns > a.thread_ns && b.sys_total > 0);
+    assert!(b.thread_ns > a.thread_ns && super::sys::sys_times().1 > 0);
 }
+
+#[test]
+#[ignore]
+fn clock_cost() {
+    use std::time::Instant;
+    for _ in 0..3 {
+        let t = Instant::now();
+        for _ in 0..1000 {
+            std::hint::black_box(super::sys::frame_clocks(3.0e9));
+        }
+        eprintln!("frame_clocks: {:.2} us", t.elapsed().as_secs_f64() * 1e3);
+    }
+}
+

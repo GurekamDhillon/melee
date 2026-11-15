@@ -65,6 +65,15 @@ mod imp {
         fn CloseHandle(h: *mut c_void) -> i32;
     }
 
+    pub fn sys_times() -> (u64, u64) {
+        let (mut i, mut k, mut u) = (FileTime::default(), FileTime::default(), FileTime::default());
+        // SAFETY: valid out pointers
+        if unsafe { GetSystemTimes(&mut i, &mut k, &mut u) } == 0 {
+            return (0, 0);
+        }
+        (i.v(), k.v() + u.v()) // kernel time includes idle time
+    }
+
     #[derive(Default)]
     pub struct Sampler {
         last: Option<(u64, u64, u64, u64, std::time::Instant)>,
@@ -162,25 +171,29 @@ mod clk {
     extern "system" {
         fn QueryThreadCycleTime(h: *mut c_void, c: *mut u64) -> i32;
         fn QueryProcessCycleTime(h: *mut c_void, c: *mut u64) -> i32;
-        fn GetSystemTimes(idle: *mut u64, kernel: *mut u64, user: *mut u64) -> i32;
     }
+    /// The system's (idle, total) CPU time, 100 ns units. ~50 µs a call: only the sampler thread calls it.
+    pub fn sys_times() -> (u64, u64) {
+        super::imp::sys_times()
+    }
+    static PROC: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     pub fn tsc() -> u64 {
         // SAFETY: rdtsc has no preconditions on x86_64
         unsafe { core::arch::x86_64::_rdtsc() }
     }
     pub fn read(tsc_hz: f64) -> super::Clocks {
-        let (mut t, mut p, mut i, mut k, mut u) = (0u64, 0u64, 0u64, 0u64, 0u64);
+        let (mut t, mut p) = (0u64, 0u64);
         // SAFETY: pseudo handles (-2 current thread, -1 current process) and valid out pointers
         unsafe {
             QueryThreadCycleTime(-2isize as *mut c_void, &mut t);
-            QueryProcessCycleTime(-1isize as *mut c_void, &mut p);
-            if GetSystemTimes(&mut i, &mut k, &mut u) == 0 {
-                (i, k, u) = (0, 0, 0);
+            // QueryProcessCycleTime walks every thread of the process (tens of µs in the game): only when asked
+            if *PROC.get_or_init(|| std::env::var_os("MELEE_PROFILE_PROC_CPU").is_some()) {
+                QueryProcessCycleTime(-1isize as *mut c_void, &mut p);
             }
         }
         let ns = |c: u64| if tsc_hz > 0.0 { (c as f64 * 1e9 / tsc_hz) as u64 } else { 0 };
-        // kernel time includes idle time
-        super::Clocks { thread_ns: ns(t), proc_ns: ns(p), sys_idle: i, sys_total: k + u }
+        // the system times come from the sampler thread (frameprof::State::sys)
+        super::Clocks { thread_ns: ns(t), proc_ns: ns(p), sys_idle: 0, sys_total: 0 }
     }
 }
 
@@ -205,6 +218,9 @@ mod clk {
         }
         t.s as u64 * 1_000_000_000 + t.ns as u64
     }
+    pub fn sys_times() -> (u64, u64) {
+        (0, 0)
+    }
     pub fn read(_tsc_hz: f64) -> super::Clocks {
         super::Clocks { thread_ns: get(3), proc_ns: get(2), sys_idle: 0, sys_total: 0 }
     }
@@ -215,9 +231,12 @@ mod clk {
     pub fn tsc() -> u64 {
         0
     }
+    pub fn sys_times() -> (u64, u64) {
+        (0, 0)
+    }
     pub fn read(_tsc_hz: f64) -> super::Clocks {
         super::Clocks::default()
     }
 }
 
-pub use clk::{read as frame_clocks, tsc};
+pub use clk::{read as frame_clocks, sys_times, tsc};

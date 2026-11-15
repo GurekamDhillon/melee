@@ -301,6 +301,9 @@ pub struct Input {
     /// model nodes' global rotations (R10024-R10047, the model module's getNodeGlobalMtx); a node not listed turns by
     /// the facing [L]
     pub nodes: [NodeRot; 2],
+    /// the enemy's centre (getCenterPos: the global position of the model node param 0x59E6 names), for 1051 / 1052
+    /// and R10024-R10047; None: the actor's position [L]
+    pub center: Option<[f32; 2]>,
 }
 
 /// One model node's global rotation (rows of the 3x3 part of its matrix) for R10024-R10047; `id` is the node id the
@@ -555,6 +558,12 @@ impl<'a> Cx<'a> {
     fn rnd(&mut self, n: u32) -> u32 {
         self.a.rng = self.a.rng.wrapping_mul(1_103_515_245).wrapping_add(12345);
         (self.a.rng >> 8) % n.max(1)
+    }
+
+    /// A float draw in [0, 1) from the VM's seeded generator (the engine's randf, 8003FB64, for 35790).
+    fn rndf(&mut self) -> f32 {
+        self.a.rng = self.a.rng.wrapping_mul(1_103_515_245).wrapping_add(12345);
+        (self.a.rng >> 8) as f32 / 16_777_216.0
     }
 
     fn input(&mut self) {
@@ -834,6 +843,16 @@ impl<'a> Cx<'a> {
             // 1050 (value switch case): the distance between the ground module's two positions (current and
             // previous): how far the last frame moved the actor
             1050 => a.moved,
+            // 1003 (0x81A216CC -> 0x81A161B4 on unit 3): unit 3's angle as 0x81A1EC18 reads it (as 6614's term: a stored
+            // 35790 reads as 270; the markers 35782-35787 [L: not traced, read as stored])
+            1003 => {
+                let x = a.kin[3].ang;
+                if x as i32 == 35790 { 270.0 } else { x }
+            }
+            // 1051 / 1052 (0x81A22060 / 0x81A22098): the enemy's centre (getCenterPos 0x81A0A88C: the model module's
+            // getNodeGlobalPosition, vfunc 0x98, on the node of param 0x59E6), x / y; the host's `center`
+            1051 => self.center()[0],
+            1052 => self.center()[1],
             // 1020-1025 (value switch 0x81A214C8, cases -> 0x81A16234 -> 0x81A1E6A4): unit 2-7's speed (the record's
             // speed word, which 660E negates), 0 for an off unit; units of modes 2-4 are signed by the facing. Read here
             // as: a unit without a direction moves along the facing, so its speed is signed by it
@@ -963,6 +982,12 @@ impl<'a> Cx<'a> {
 
     /// The rotation part of a model node's global matrix (rows; column n is the node's axis n): the host's `nodes`
     /// entry for the node, else a turn about y by the facing (lr * 90 degrees) [L: no skeleton]
+    /// The enemy's centre (getCenterPos 0x81A0A88C: a model node's global position): the host's `center`, else the
+    /// actor's position [L: no skeleton]
+    fn center(&self) -> [f32; 2] {
+        self.i.center.unwrap_or([self.a.pos[0], self.a.pos[1]])
+    }
+
     fn node_rot(&self, node: i32) -> [[f32; 3]; 3] {
         if let Some(n) = self.i.nodes.iter().find(|n| n.on && n.id == node) {
             return n.rot;
@@ -1062,13 +1087,12 @@ impl<'a> Cx<'a> {
                 }
             }
             // energy-slot queries (enemy requirement switch, table at sora_enemy s5 [off]: 10000 -> 0x81A1794C, 10001 ->
-            // 0x81A179E0, 10003 -> 0x81A17B08): the slot (-1 = every slot) is off or ...
+            // 0x81A179E0): the slot (-1 = every slot) is off or ...
             // - 10000: not running (0x81A1C9C4: the unit's running bit, set by the record start 0x81A1BE44 and cleared
             //   by the kinetic stop points 0x81A1DCF0-0x81A1E298). A path rider's end (0x81A1DFCC-0x81A1E0F8) only marks
             //   it finished (0x81A1C110) and keeps it running, looping or not, so a done path unit counts as running.
             //   Other done units are read as stopped [M: the VM keeps one finish flag]
             // - 10001: held (0x81A1CA10: the unit's pause byte, the VM's `paused`: 6604 / 6605)
-            // - 10003 [M: read as 10000; 0x81A1CAE4 compares the speed with a record word, not mapped yet]
             10001 => {
                 let s = x(0) as i32;
                 let off_or_held = |k: &Kin| k.kind < 0 || k.paused != 0;
@@ -1078,7 +1102,7 @@ impl<'a> Cx<'a> {
                     off_or_held(&a.kin[s as usize & (KIN - 1)])
                 }
             }
-            10000 | 10003 => {
+            10000 => {
                 let s = x(0) as i32;
                 let off_or_done = |k: &Kin| k.kind < 0 || (k.done != 0 && !(self.i.path.is_some() && matches!(k.ek, 21 | 22)));
                 if s < 0 {
@@ -1087,10 +1111,51 @@ impl<'a> Cx<'a> {
                     off_or_done(&a.kin[s as usize & (KIN - 1)])
                 }
             }
-            // 10002 (0x81A1CA50): the slot is on and its speed is at or below its limit
-            10002 => {
-                let k = &a.kin[x(0) as usize & (KIN - 1)];
-                k.kind >= 0 && k.spd <= k.max
+            // 10002 / 10003 slot (0x81A17A74 / 0x81A17B08): the unit is on, its upper (10002, 0x81A1CA50) / lower
+            // (10003, 0x81A1CAE4) limit is set (not the 35791 / 35795 "none", the VM's f32::MAX / MIN) and its speed
+            // has reached it: speed >= upper / speed <= lower. Slot -1: every unit that is on passes; a slot outside
+            // 0..7 reads unit 0 (0x81A15FD4)
+            // 10006 / 10007 node sel angle (0x81A13C14 -> 0x81A181D8; it needs three arguments): the model node (10006: the id
+            // x(0); 10007: by name, vfunc 0x88) gives its global matrix (vfunc 0xA8); its rotation turns the axis sel
+            // picks (35782 / 35785: z -1 / +1, 35783 / 35786: y, 35784 / 35787: x; any other: the zero vector) and
+            // the angle in degrees between that and world up (8003DF9C: 0 for a zero vector) is at most x(2)
+            10006 | 10007 => {
+                let s = match x(1) as i32 {
+                    35782 => [0.0, 0.0, -1.0],
+                    35783 => [0.0, -1.0, 0.0],
+                    35784 => [-1.0, 0.0, 0.0],
+                    35785 => [0.0, 0.0, 1.0],
+                    35786 => [0.0, 1.0, 0.0],
+                    35787 => [1.0, 0.0, 0.0],
+                    _ => [0.0f32; 3],
+                };
+                let r = self.node_rot(x(0) as i32);
+                let d: [f32; 3] = core::array::from_fn(|i| r[i][0] * s[0] + r[i][1] * s[1] + r[i][2] * s[2]);
+                let sq = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+                let ang = if sq == 0.0 { 0.0 } else { (libm::acos((d[1] / libm::sqrtf(sq)).clamp(-1.0, 1.0) as f64) as f32) * 57.29578 };
+                ang <= x(2)
+            }
+            // R23 d [flag] (generic switch case 0x17 -> the ground module's vfunc 0x1F8, emGroundModuleImpl ->
+            // soGroundModuleImpl, sora_melee offset 0x2A578; true when its result is >= 0): from the posture position
+            // (soPostureModuleImpl vfunc 0x18) a stage ray straight down by |d| (0x81C27CC4): d <= 0 or no hit gives
+            // -1, a hit its distance. Answered from the host's floor under the actor [M: the nearest floor below; the
+            // flag passed to the ray is not modelled]
+            23 => {
+                let d = x(0);
+                let drop = a.pos[1] - self.i.floor_y;
+                d > 0.0 && self.i.floor_on && drop >= 0.0 && drop <= libm::fabsf(d)
+            }
+            10002 | 10003 => {
+                let hit = |k: &Kin| {
+                    k.kind >= 0
+                        && if id == 10002 { k.max != f32::MAX && !(k.spd < k.max) } else { k.min != f32::MIN && !(k.spd > k.min) }
+                };
+                let s = x(0) as i32;
+                if s == -1 {
+                    a.kin.iter().filter(|k| k.kind >= 0).all(hit)
+                } else {
+                    hit(&a.kin[if (0..KIN as i32).contains(&s) { s as usize } else { 0 }])
+                }
             }
             // 10023 n (0x81A17B9C): unit n is on with speed 0 (0x81A1CB78); n = -1: every unit off or at speed 0 [M]
             10023 => {
@@ -1122,8 +1187,8 @@ impl<'a> Cx<'a> {
             // from the actor's centre to the slot's point (0x81A25268 / 0x81A25A50: as 6902 / 6901, the target now for
             // 10024-10029 and 10036-10041 (0x81A2536C), the search snapshot for the others (0x81A25B54)) is within
             // |angle| (0x81A25138: a zero P gives 3 degrees; a zero product of the lengths 0, 8003DDD0). The centre
-            // is a node (param 0x59E6, 0x81A0A88C) [L: no skeleton: the actor's position]; the node rotation is the
-            // host's `nodes`, else a turn about y by the facing [L]
+            // is the enemy's centre (`center`); the node rotation is the host's `nodes`, else a turn about y by the
+            // facing [L]
             10024..=10047 => {
                 let k = id - 10024;
                 let axis = (k % 3) as usize;
@@ -1133,7 +1198,8 @@ impl<'a> Cx<'a> {
                 let py = r[1][axis] * sign;
                 let found = (k / 6) % 2 == 1;
                 let t = self.slot_point(x(1) as i32, found, x(2), x(3), x(5) != 0.0);
-                let ang = cone_angle([px, py], [t[0] - a.pos[0], t[1] - a.pos[1]]);
+                let c = self.center();
+                let ang = cone_angle([px, py], [t[0] - c[0], t[1] - c[1]]);
                 libm::fabsf(ang) <= libm::fabsf(x(4))
             }
             10010 => a.lock >= 0 && self.target(a.lock).is_some(),
@@ -1990,6 +2056,47 @@ impl<'a> Cx<'a> {
                     }
                 }
             }
+            // 6614 slot value (kinetic switch case 0x14, shared with 0x0C at 0x81A19ED4): exactly two arguments; the
+            // unit's angle becomes value + its current angle as 0x81A1EC18 reads it (slot -1: + 0; a stored 35790
+            // reads as 270; the markers 35782-35787 read the posture [L: not traced, read as stored]), written by
+            // the angle setter 0x81A1EF60 (slot -1: every unit that is on; one slot: written even when off)
+            0x6614 => {
+                if ins.n == 2 {
+                    let n = v(self, 0) as i32;
+                    let unit = |n: i32| if (0..KIN as i32).contains(&n) { n as usize } else { 0 };
+                    let f = if n == -1 {
+                        0.0
+                    } else {
+                        let x = self.a.kin[unit(n)].ang;
+                        if x as i32 == 35790 { 270.0 } else { x }
+                    };
+                    let w = v(self, 1) + f;
+                    if n == -1 {
+                        for s in 0..KIN {
+                            if self.a.kin[s].ek != -1 {
+                                kin_set_ang(&mut self.a.kin[s], w);
+                            }
+                        }
+                    } else {
+                        kin_set_ang(&mut self.a.kin[unit(n)], w);
+                    }
+                }
+            }
+            // 6612 slot var (kinetic switch case 0x12, 0x81A1A554 -> 0x81A17CF0 -> 0x81A1F130): exactly two arguments,
+            // the second a variable; var = the unit's placement-path frame when its engine kind is 21 / 22, else 0
+            // (an off unit too; slot -1 gives 0; a slot outside 0..7 reads unit 0, 0x81A15FD4)
+            0x6612 => {
+                if ins.n == 2 {
+                    let s = v(self, 0) as i32;
+                    let f = if s == -1 {
+                        0.0
+                    } else {
+                        let k = &self.a.kin[if (0..KIN as i32).contains(&s) { s as usize } else { 0 }];
+                        if k.kind >= 0 && (k.ek == 21 || k.ek == 22) { k.pf } else { 0.0 }
+                    };
+                    self.set(self.arg(ins, 1), f);
+                }
+            }
             0x660C => {
                 let s = v(self, 0) as usize & (KIN - 1);
                 self.a.kin[s].ang = v(self, 1);
@@ -2106,7 +2213,7 @@ impl<'a> Cx<'a> {
             // directed old kind (0 / 8-13) goes to a root-movement one (1 / 14-19 / 21-24); else 35791 the old
             // speed, but the length of the old move vector (0x81A10830) when a root-movement old kind goes to a
             // directed one; 35789 / 35788 the vector's x / y. [M: the unit's vector ([off]) is the VM's move vector;
-            // 35790 (0x81A1B564: a random speed between the limits) is not modelled and keeps the old speed]
+            // 35790 is the random speed below]
             let (pek, nek) = (self.a.kin[s].ek, wd(0) as i32);
             let directed = |e: i32| e == 0 || (8..=13).contains(&e);
             let rooted = |e: i32| matches!(e, 1 | 14..=19 | 21..=24);
@@ -2126,7 +2233,26 @@ impl<'a> Cx<'a> {
                     self.a.kin[s].spd
                 }
             };
-            k.spd = if keep(w1) || w1 == 35788.0 { carried } else { w(1) + w(2) * l };
+            // 35790 (0x81A1B564): a random speed between the raw limits, Y = word 5 and X = word 7: 0 when X < Y, X
+            // when they are equal, else Y + r (X - Y + the smallest normal float) with one draw r in [0, 1) (randf,
+            // here the VM's seeded generator). Then for every start (0x81A1B614): the level term w2 L is added only
+            // when the speed is not 0
+            let base = if w1 as i32 == 35790 {
+                let (x, y) = (w(7), w(5));
+                if x < y {
+                    0.0
+                } else if x == y {
+                    x
+                } else {
+                    let span = x - y + f32::MIN_POSITIVE;
+                    y + span * self.rndf()
+                }
+            } else if keep(w1) || w1 == 35788.0 {
+                carried
+            } else {
+                w1
+            };
+            k.spd = if base != 0.0 { base + w(2) * l } else { base };
             k.acc = if keep(w(3)) { 0.0 } else { w(3) + w(4) * l };
             // a "keep" limit keeps the slot's current limit; a slot with none caps at its start speed (no
             // unbounded acceleration) [L: the energy classes' keep handling is stripped]
@@ -2431,6 +2557,19 @@ fn vec_angle(ax: f32, n: [f32; 2]) -> f32 {
         }
     }
     d
+}
+
+/// The unit angle setter (0x81A1EF60): nothing for a category-1 engine kind (2-7, 0x81A1AE30) or the markers 35791 /
+/// 35789; 35782-35787 become 0 for a category-2 kind (20), and for a category-0 kind with a negative mode word [L: the
+/// mode word is not kept: kept as given]; 35781 becomes 0. Else the angle is set.
+fn kin_set_ang(k: &mut Kin, v: f32) {
+    if (2..=7).contains(&k.ek) || v == 35791.0 || v == 35789.0 {
+        return;
+    }
+    let marker = (35782.0..=35787.0).contains(&v) && v == libm::truncf(v);
+    let v = if v == 35781.0 || (marker && k.ek == 20) { 0.0 } else { v };
+    k.ang = v;
+    k.dir_set = 1;
 }
 
 /// 0x81A25138 from P on: a zero P (0x81A10830: length, 0 at or under the smallest normal) gives 3; else the angle

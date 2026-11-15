@@ -29,12 +29,12 @@ pub mod ext {
     ext_fns! {
     fn CARDProbe(a0: i32) -> i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32);
     fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjLoadDesc(a0);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = crate::tu::gobj::HSD_GObj_JObjCallback(a0, a1);
+    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) = crate::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::jobj::HSD_JObjLoadJoint(a0);
@@ -64,7 +64,7 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
@@ -421,7 +421,7 @@ pub unsafe extern "C" fn gobj1_Proc(gobj: *mut HSD_GObj) {
 }
 
 /// `gobj0_RenderFunc`
-pub unsafe extern "C" fn gobj0_RenderFunc(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn gobj0_RenderFunc(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("gobj0_RenderFunc");
     if state.x10 == 1 {
         ext::HSD_GObj_803910D8(gobj, arg1);

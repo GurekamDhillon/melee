@@ -151,6 +151,10 @@ harness = false
 name = "tu_particle"
 harness = false
 
+[[test]]
+name = "tu_lbcardgame"
+harness = false
+
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }
 

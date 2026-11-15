@@ -318,3 +318,23 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
   10002 is `spd <= max`; 0x81A1CAE4 (10003) is "speed <= another word". Which VM fields those words are is not mapped
   [L]. R23 (sora_melee case 0x17 -> 0x81A78A70): model module vfunc 0x1F8 (a float argument, a buffer the resource
   module's vfunc 0x18 fills, a flag) >= 0; the vfunc is not identified yet.
+
+### Round 5 (2026-11-15): batch-2 SSE enemies
+
+- The VM's FILES list holds the 22 new regular enemies (all 40 SSE enemy classes now load); `class_of` maps them to
+  their accessor classes, and feyesh / glunder were corrected (Pacci / Galfire, from their accessor symbols). The local
+  accessor map's 44000-44004 entries of the if-tree accessors were re-read (44000 is the block base itself); that
+  added the missing 44003 and fixed the others for those classes (local data only).
+- New test `vm_enemy_statuses`: every batch-2 enemy (or `MELEE_VM_ENEMIES=a,b`) headless from every start status,
+  1200 frames, replay from frame 600 identical. All 22 pass.
+- Ported: R10055 (0x81A15078: emAreaModuleImpl contact with area n of kind 13 via 0x81A27688; host input `area`),
+  6D00 (emCollisionHitModuleImpl, command kind 0x6D, 0x81A2BC5C -> 0x81A2BA44: the hit module's vfunc 0x44 on each
+  hurtbox of param 43006, word 2 of the data root), 100D (soGenerateArticleManageModuleImpl case 13 -> vfunc 0x64
+  0x810977A0: max less live articles of a kind; host input `article_room`), 6508 (0x81A06660, integer 6509), 651B
+  (0x81A0872C, percentage with the module constants 0 / 100), 6521 (0x81A06C44, a node position [L: no skeleton]),
+  R56 (link module vfunc 0x168 = emLinkModuleImpl 0x81A28530: partner id != -1; host input `linked`).
+- Forwarded to the host: the link module's 0F00-0F02 (command kind 0x0F, soLinkModuleImpl), 6519 (copies a variable
+  into the linked enemy through the enemy manager: 0x81A0B438 -> 0x81A0B1E8) and 6527 (emGroundModuleImpl
+  0x81A2B630: ground-collision shape pairs).
+- Read, not ported yet: R10052 (0x81A14D38 -> 0x81A0AEC8: a stage-wide manager (sora_melee 0x812331C4 count /
+  0x81233208 entry) asked whether all, or entry b, of group a exist), R10053 (0x81A14E70 -> 0x81A0B34C).

@@ -375,3 +375,17 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
 - Host (geno-boss3 lane): set `target_lr` / `target_scale` per player from the fighter's facing and model scale;
   `enemy_room` / `groups` (R10052) and `partner_alive` (R10053) are still unset in VS, where no boss needs them
   (R10052 false for Meta Ridley as in Brawl's VS, R10053 is the Falcon Flyer's).
+
+### Round 8 (2026-11-15)
+
+- R10054 (0x81A14EB0 -> 0x81A0B5EC): X = the enemy manager's live entries, Y = those whose enemy's id word is a (0 when
+  the static object's vfunc 0x0C gates a); d = b - (X - Y) * f in single precision, true when d > 0 and d > Y. Host
+  inputs `enemy_live`, `enemy_ids` (Bytan; no boss uses it).
+- R10057 (0x81A15204 -> 0x81A06EB4 on the actor, the 0x803F0F44 call being a __dynamic_cast of the actor): work vfunc
+  0x50 sets the actor's own work flag 17, the manager walk 0x81A0CC44 with callback 0x81A06DDC clears it (vfunc 0x54)
+  when a live enemy linked to the actor is not dead, and the result is the flag (vfunc 0x4C). The VM writes flag 17 on
+  every evaluation; host input `child_alive` (Gamyga head). R10053 re-read with the same cast: unchanged (the actor's
+  own entry's link id, then that partner's dead flag).
+- `cond` / `chain` / `skip_false` now take `&mut self` for that write. vm_disc passes; `disc` timeline_baskets /
+  timeline_waits fail before and after this round (not caused here).
+

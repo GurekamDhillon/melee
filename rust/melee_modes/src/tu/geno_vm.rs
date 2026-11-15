@@ -15,29 +15,7 @@ use std::sync::{Mutex, OnceLock};
 static PROGRAMS: OnceLock<Mutex<HashMap<String, &'static Program>>> = OnceLock::new();
 
 fn local_root() -> Option<PathBuf> {
-    if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
-        return Some(PathBuf::from(p));
-    }
-    let mut starts = vec![];
-    if let Ok(c) = std::env::current_dir() {
-        starts.push(c);
-    }
-    if let Ok(e) = std::env::current_exe() {
-        if let Some(d) = e.parent() {
-            starts.push(d.to_path_buf());
-        }
-    }
-    for s in starts {
-        let mut d: Option<&Path> = Some(&s);
-        while let Some(p) = d {
-            let c = p.join("_build").join("brawl");
-            if c.join("disc").join("files").is_dir() {
-                return Some(c);
-            }
-            d = p.parent();
-        }
-    }
-    None
+    crate::tu::petey_model::local_root()
 }
 
 fn ir_text(root: &Path, stem: &str) -> Option<String> {
@@ -77,7 +55,7 @@ fn acc_text(root: &Path) -> Option<String> {
 }
 
 fn read(name: &str) -> Result<Program, String> {
-    if std::env::var_os("MELEE_BRAWL_ABSENT").is_some() {
+    if crate::tu::petey_model::brawl_env().absent {
         return Err("disabled".into());
     }
     let &(_, stem, arc, h) = vm::FILES.iter().find(|f| f.0 == name).ok_or("not a VM boss / enemy")?;

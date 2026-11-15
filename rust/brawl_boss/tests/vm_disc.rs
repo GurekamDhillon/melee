@@ -9,7 +9,7 @@
 
 use brawl_boss::archive;
 use brawl_boss::file::BossFile;
-use brawl_boss::vm::{self, fnv, leaves, param_map, Actor, Input, Program, COMMON_FNV, FILES};
+use brawl_boss::vm::{self, fnv, leaves, param_map, Actor, Group, Input, Program, COMMON_FNV, FILES};
 use std::path::{Path, PathBuf};
 
 fn local_root() -> Option<PathBuf> {
@@ -516,7 +516,7 @@ fn vm_enemy_statuses() {
     let extra = std::env::var("MELEE_VM_ENEMIES").unwrap_or_default();
     let names: Vec<&str> = if extra.is_empty() { BATCH2.to_vec() } else { extra.split(',').collect() };
     let path = vm::Path { id: 0, frames: 120, pos: circle };
-    let inp = |f: u32| Input { path: Some(path), home: Some([40.0, 30.0]), area: if (300..340).contains(&f) || (900..940).contains(&f) { u32::MAX } else { 0 }, article_room: if f % 200 < 100 { [1; 4] } else { [0; 4] }, linked: f % 300 < 150, ..targets(f) };
+    let inp = |f: u32| Input { path: Some(path), home: Some([40.0, 30.0]), area: if (300..340).contains(&f) || (900..940).contains(&f) { u32::MAX } else { 0 }, article_room: if f % 200 < 100 { [1; 4] } else { [0; 4] }, linked: f % 300 < 150, enemy_room: true, partner_alive: f % 400 < 200, groups: [Group { id: 0, count: 2, present: if f % 500 < 250 { 3 } else { 1 } }; 4], ..targets(f) };
     for name in names {
         let p = d.program(name, &common).expect(name);
         let mut seen = std::collections::BTreeSet::new();

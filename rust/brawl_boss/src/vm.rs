@@ -166,6 +166,9 @@ pub struct Program {
     /// engine value 21007 (0x81A22134): the placement's variant; the six Primids share one file and
     /// branch on it [L: the field's writer is not traced]. The host sets it.
     pub variant: i32,
+    /// engine value 21009 (0x81A22118): the create record's word the enemy constructor keeps (0x81A003E8) [L: its
+    /// meaning is not traced]. The host sets it; 0 by default
+    pub place_word: i32,
     /// work-variable initial values the IR supplies (applied before the init script): (raw var, value)
     pub inits: Vec<(u32, f32)>,
     /// engine values 23000+ (the enemy's data-block words): (id, block 0 general / 1 tuning, offset), from the local
@@ -234,12 +237,12 @@ pub fn forwarded(id: u16) -> bool {
 /// Requirement ids the VM answers.
 pub const REQ_IDS: &[u32] = &[
     1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 15, 16, 17, 18, 19, 20, 22, 47, 73, 10000, 10001, 10002, 10003, 10004, 10021, 10022, 10023, 37, 10005, 10008, 10009, 10010, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020,
-    10050, 10051, 10055, 56, 60, 75, 63, 64, 65, 66, 67, 68, 69, 10024, 10025, 10026, 10027, 10028, 10029, 10030, 10031, 10032, 10033, 10034, 10035,
+    10050, 10051, 10052, 10053, 10055, 56, 60, 75, 63, 64, 65, 66, 67, 68, 69, 10024, 10025, 10026, 10027, 10028, 10029, 10030, 10031, 10032, 10033, 10034, 10035,
 ];
 
 /// Engine values (memory 0) the VM answers.
 fn known_value(id: u32) -> bool {
-    matches!(id, 3 | 4 | 8 | 9 | 15 | 21 | 20000 | 1020 | 1021 | 1022 | 1023 | 1024 | 1025 | 1026 | 1049 | 1050 | 1028 | 1029 | 3056 | 3057 | 20001 | 20003 | 21000 | 21001 | 21002 | 21004 | 21007 | 21008 | 41000)
+    matches!(id, 3 | 4 | 8 | 9 | 15 | 21 | 20000 | 1020 | 1021 | 1022 | 1023 | 1024 | 1025 | 1026 | 1049 | 1050 | 1028 | 1029 | 3056 | 3057 | 20001 | 20003 | 21000 | 21001 | 21002 | 21004 | 21007 | 21008 | 21009 | 21010 | 41000)
         || (23000..=23099).contains(&id)
 }
 
@@ -286,6 +289,7 @@ impl Program {
                 general: [0.0; 44],
                 hurt_list: Vec::new(),
                 variant: 0,
+                place_word: 0,
                 inits: Vec::new(),
                 block_values: Vec::new(),
                 bounds: [-250.0, 250.0, -100.0, 280.0],

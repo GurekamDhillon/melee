@@ -274,6 +274,23 @@ pub struct Input {
     pub article_room: [i32; 4],
     /// the link module has a partner (R56)
     pub linked: bool,
+    /// the enemy manager has a free enemy slot (0x81A0CEF0: 0x81A0CE10 finds an entry whose first byte is 0)
+    pub enemy_room: bool,
+    /// the stage-wide group manager (sora_melee 0x812331C4 count / 0x81233208 entry) as R10052 asks it: per group id,
+    /// its entry count and a bit per entry the manager reports present. A group not listed has no entries
+    pub groups: [Group; 4],
+    /// the actor's linked enemy (the one the enemy manager holds under the actor's link id) exists and its work flag 0
+    /// (dead, 0x12000000) is clear (R10053)
+    pub partner_alive: bool,
+}
+
+/// One group of the stage-wide group manager (R10052).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Group {
+    pub id: i32,
+    pub count: u32,
+    /// bit n: entry n is present
+    pub present: u32,
 }
 
 // work variables the engine itself maintains (engine.md 5 / engine-ops.md)
@@ -821,6 +838,11 @@ impl<'a> Cx<'a> {
                 }
             }
             21007 => self.p.variant as f32,
+            // 21009 / 21010 (value switch 0x81A22118, cases 0x5211 / 0x5212): enemy fields the constructor copies from
+            // the create record (0x81A003E8: a word of it; 0x81A003F8: a byte). The byte is the strength (the level
+            // getter 0x81A03678 reads it 1-5 with the difficulty; 6523's setter 0x81A037D8 writes it)
+            21009 => self.p.place_word as f32,
+            21010 => a.strength as f32,
             // 23000-23033 (0x81A227C0): words of the enemy's data blocks, placed by the local value table
             // (`Program::block_values`) [L: which block the second pointer is was not traced]. A word below 0x10000 is
             // an int, else a float.
@@ -1048,6 +1070,24 @@ impl<'a> Cx<'a> {
             // of the area's record) is not 13; else true when a contact (0x810A53E4, list vfunc 0x0C) has id n. The
             // host reports the kind-13 contacts by id
             10055 => self.i.area & (1u32 << (x(0) as i32 as u32 & 31)) != 0,
+            // 10052 a b (0x81A14D38, two arguments, each a variable or a constant -> 0x81A0AEC8): false unless the
+            // enemy manager has a free slot (0x81A0CEF0); then the stage-wide group manager's count of group a
+            // (sora_melee 0x812331C4): false when 0; b = -1: every entry 0..count of group a is present (0x81233208);
+            // else entry b is present
+            10052 => {
+                let (ga, gb) = (x(0) as i32, x(1) as i32);
+                let g = self.i.groups.iter().find(|g| g.id == ga && g.count > 0);
+                self.i.enemy_room
+                    && match g {
+                        None => false,
+                        Some(g) if gb == -1 => (0..g.count).all(|n| n < 32 && g.present & (1 << n) != 0),
+                        Some(g) => (0..32).contains(&gb) && g.present & (1 << gb) != 0,
+                    }
+            }
+            // 10053 (0x81A14E70, no arguments -> 0x81A0B34C): the enemy manager looks up the actor's linked enemy
+            // (0x81A0D044, then 0x81A0D0A8): true when there is none, else when that enemy's work flag 0 (0x12000000,
+            // its work module's flag query) is set: the partner is gone
+            10053 => !self.i.partner_alive,
             _ => false,
         };
         r != not

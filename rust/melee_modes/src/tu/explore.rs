@@ -413,7 +413,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     if sg::stage_info.grkind as i32 != 37 {
         return core::ptr::null_mut();
     }
-    let m = if ARENA_WANT && crate::tu::envoy::armed() != 0 {
+    let m = if ARENA_WANT && (crate::tu::envoy::armed() != 0 || crate::tu::petey::vs_selected()) {
         let Some(a) = arena() else { return core::ptr::null_mut() };
         ARENA = true;
         a
@@ -700,7 +700,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
 
 /// Install the hooks (the engine start). Nothing is hooked unless the mode is on.
 pub fn install() {
-    if !enabled() && !crate::tu::petey::selected() {
+    if !enabled() && !(crate::tu::petey::selected() || crate::tu::petey::vs_selected()) {
         return;
     }
     unsafe {
@@ -711,8 +711,18 @@ pub fn install() {
     }
     // load now, before the first match (the loader is a helper thread; the first stage load must not wait on it)
     let _ = map();
-    if crate::tu::petey::selected() {
+    if (crate::tu::petey::selected() || crate::tu::petey::vs_selected()) {
         let _ = arena();
+    }
+    // the VS boss's enemy scripts compile on a helper thread at the engine start, not in the match's first frame
+    if crate::tu::petey::vs_selected() && !crate::tu::petey::is_petey() {
+        let name = crate::tu::petey::boss_name();
+        std::thread::spawn(move || {
+            crate::tu::geno_vm::prefetch(name);
+            crate::tu::vm_boss_model::prefetch(name);
+            let _ = crate::tu::petey::vm_start_status();
+            let _ = crate::tu::petey::vm_brawl_arena();
+        });
     }
 }
 

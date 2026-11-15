@@ -3,15 +3,15 @@
 //! Opt-in: the Envoy plan marks the boss fight (`envoy::P_BOSS`) and `MELEE_ENVOY_BOSS=petey` is set; otherwise the
 //! level-9 Ganondorf stand-in plays as before and nothing here runs.
 //!
-//! Clean room: the behaviour follows a functional spec written by a separate reader (prose and tables only) plus the
-//! data in the owner's files read as formats (petey-behavior.md). Section numbers `§n` below refer to that spec.
+//! Petey and every other VS / Envoy boss run as Geno actors (geno_boss, lowered at load from the owner's local IR),
+//! as enemy-command VM actors (geno_vm_host) or as grab actors (geno_boss_grab). No boss numbers are typed in here:
+//! statuses, rules, timings, boxes, sounds and the camera come from the IR; shapes from the owner's model files.
 //!
 //! Shape:
 //! * the match's one CPU is a *carrier*: invisible, intangible, standing still. Petey's hitboxes are the carrier's
 //!   capsule slots (the engine's normal hit path); when Petey is beaten the carrier takes the bottom-blast-zone KO so
 //!   Envoy's win check runs.
-//! * Petey is plain statics (rollback snapshot covered), our own LCG, no wall clock, no host input. The statuses,
-//!   rules, timings and hitboxes are §4 / §8 / §9; the cages are §6.
+//! * The host is plain statics (rollback snapshot covered), no wall clock, no host input.
 //! * Hurt and hit shapes follow the animated bones when the owner's local model is present (`tracks`, built at load
 //!   from the files, kept in memory only); without it a stand-in set of shapes is used. The two can give different
 //!   sims, so a replay recorded with the model present must be played with it present.
@@ -36,89 +36,16 @@ fn round_i(v: f32) -> i32 {
     fctiwz_f32(if v < 0.0 { v - 0.5 } else { v + 0.5 })
 }
 
-// ---------------------------------------------------------------- spec numbers
+// ---------------------------------------------------------------- difficulty plumbing (Envoy)
 
-/// Cage HP and max (§5, §6.1).
-pub const CAGE_HP: i32 = 999;
-/// Each cage's HP as the running fight has it: 157, not the file's 999 (observed in the original at the owner's save
-/// state, Midair Stadium: both cages read 157.0 at the fight's start and fall 1:1 with the player's damage; the
-/// file's spawn value is scaled down by the game before the fight. _build/petey-spec/runs/obs2-summary.md).
-pub const CAGE_HP_LIVE: i32 = 157;
-/// Death threshold in cage-HP percent (param 3057).
-#[allow(dead_code)] // the fallback is petey_file::FALLBACK
-const DEATH_PCT: f32 = 10.0;
-/// Cage proc thresholds (§6.2).
-#[allow(dead_code)] // the fallback is petey_file::FALLBACK
-const PHASE1_PCT: f32 = 50.0;
-#[allow(dead_code)] // the fallback is petey_file::FALLBACK
-const PHASE2_PCT: f32 = 25.0;
-// Param 3056 (0.75) is not a speed scale (spec §2 / §7, Q5): it is the fallback bounce factor applied when a running
-// movement touches a wall or floor. Petey's dive and landing never bounce and he is never launched, so it is unused;
-// the movement kinds run at their raw values (measured dive at L 2.5: 0.2225 first step, +0.0225 / f, max 1.475).
-/// The difficulty index the fight uses (0-14): clamp(3 tier + 2 - min(retries, 5)) in Brawl (spec §3); Envoy has no
-/// SSE tier or continues, so a fresh Normal game: 5.
+/// The difficulty index a fresh Normal game uses (0-14), and Envoy's step per endless loop (one tier).
 const DIFFICULTY: usize = 5;
-/// Envoy's difficulty hook: one Brawl difficulty tier (3 index steps: Normal 5, Hard 8, Very Hard 11, Intense 14) per
-/// endless loop. `MELEE_PETEY_DIFFICULTY=<0-14>` pins the index for every fight (tests, tuning).
 const DIFFICULTY_PER_LOOP: i32 = 3;
-/// The plan's cage-HP word grows by this much per loop (envoy_sim `LOOP_BOSS_HP`): the loop number is read back from it.
+/// The plan's boss-HP word grows by this much per loop (envoy_sim `LOOP_BOSS_HP`): the loop number is read back from it.
 const PLAN_HP_PER_LOOP: i32 = 250;
-/// Frames of Down after which the fight ends (the Down timeline's stage notification 7; 8 follows at 420).
-const DOWN_END: i32 = 180;
-/// Strength by phase (param 24001 / 24002; phase 0 is the placement's 1).
-#[allow(dead_code)] // the fallback is petey_file::FALLBACK
-const STRENGTH: [usize; 3] = [1, 2, 3];
-/// L table, default mode (§3).
-const L_TABLE: [[f32; 15]; 5] = [
-    [0.0, 0.3, 0.5, 1.7, 2.1, 2.5, 3.2, 3.6, 4.0, 5.5, 6.0, 6.5, 8.0, 8.5, 9.0],
-    [0.6, 0.9, 1.1, 2.5, 2.9, 3.3, 3.8, 4.2, 4.8, 6.1, 6.6, 7.1, 8.5, 9.0, 9.5],
-    [1.2, 1.5, 1.7, 3.3, 3.7, 4.1, 4.7, 5.1, 5.5, 6.7, 7.2, 7.7, 9.0, 9.5, 10.0],
-    [1.8, 2.1, 2.3, 3.9, 4.3, 4.7, 5.5, 5.9, 6.3, 7.3, 7.8, 8.3, 9.5, 10.0, 10.5],
-    [2.4, 2.7, 2.9, 4.5, 5.0, 5.5, 6.2, 6.6, 7.0, 8.0, 8.5, 9.0, 10.0, 10.5, 11.0],
-];
-/// Petey's x range on FD (FD's edges; the jump goals are +-68, spec §7.2).
-const ARENA: f32 = 85.0;
-/// The jump's absolute world goal x (params 44006 / 44007).
-#[allow(dead_code)] // the fallback is petey_file::FALLBACK
-const JUMP_GOAL: f32 = 68.0;
 
-// motions (§1.2): index = the spec's motion number
-pub const M_ANGRY: usize = 0;
-pub const M_BASKET_L: usize = 1;
-pub const M_BASKET_R: usize = 2;
-pub const M_DAMAGE_L: usize = 3;
-pub const M_DAMAGE_R: usize = 4;
-pub const M_DOWN: usize = 5;
-pub const M_JUMP_ATTACK: usize = 6;
-pub const M_JUMP_LANDING: usize = 7;
-pub const M_JUMP_LOOP: usize = 8;
-pub const M_JUMP_START: usize = 9;
-pub const M_WAIT1: usize = 10;
-pub const M_WAIT2: usize = 11;
-pub const MOTIONS: [&str; 12] = [
-    "Angry", "BasketAttackL", "BasketAttackR", "DamageLeft", "DamageRight", "Down", "JumpAttack", "JumpAttackLanding",
-    "JumpLoop", "JumpStart", "Wait1", "Wait2",
-];
-/// Frame counts (the clips' own lengths; the same for body and both cages).
-pub const MOT_LEN: [i32; 12] = [70, 160, 160, 30, 30, 721, 90, 71, 31, 20, 271, 160];
-
-// statuses (§4.3)
+/// No boss running.
 pub const ST_OFF: i32 = -1;
-pub const ST_DOWN: i32 = 1;
-pub const ST_WAIT_A: i32 = 2;
-pub const ST_WAIT_B: i32 = 3;
-pub const ST_CHOOSE_BASKET: i32 = 4;
-pub const ST_MENU: i32 = 5;
-pub const ST_ANGRY: i32 = 6;
-pub const ST_JUMP_START: i32 = 7;
-pub const ST_JUMP_LOOP: i32 = 8;
-pub const ST_JUMP_ATTACK: i32 = 9;
-pub const ST_JUMP_LANDING: i32 = 10;
-pub const ST_BASKET_L: i32 = 11;
-pub const ST_BASKET_R: i32 = 12;
-pub const ST_DAMAGE_L: i32 = 13;
-pub const ST_DAMAGE_R: i32 = 14;
-pub const ST_DYING: i32 = 15;
 
 #[derive(Clone, Copy)]
 pub struct Boss {
@@ -187,17 +114,16 @@ pub struct Boss {
 }
 
 const OFF: Boss = Boss {
-    st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: M_WAIT1 as i32, mf: 0, px: 0.0, vx: 0.0, cage: [CAGE_HP_LIVE; 2],
-    phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_MENU,
+    st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: 0, mf: 0, px: 0.0, vx: 0.0, cage: [0; 2],
+    phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_OFF,
     aim: 1.0, cage_broken: false, cause: 0, freed: -1, ko_done: false, down_t: 0, rng: 1, carrier_slot: -1,
-    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, locked: -1, menu_pick: 0, has_goal: false, goal_x: 0.0, cage_max: CAGE_HP_LIVE, lag_prev: 0.0,
+    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, locked: -1, menu_pick: 0, has_goal: false, goal_x: 0.0, cage_max: 0, lag_prev: 0.0,
     cam_on: false, cam: [0.0; 3], diff: DIFFICULTY as i32, tl_mf: -1, snd_seq: 0, snd: [0; 8], age: 0,
 };
 
-/// Each cage's full HP this fight (CAGE_HP with no Envoy loop scaling).
+/// Each cage's full HP this fight (the define's, Envoy's loop scaling applied).
 fn cage_max() -> i32 {
-    let m = unsafe { B.cage_max };
-    if m > 0 { m } else { CAGE_HP_LIVE }
+    unsafe { B.cage_max }.max(1)
 }
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
@@ -219,6 +145,28 @@ pub fn selected() -> bool {
     *V.get_or_init(|| std::env::var("MELEE_ENVOY_BOSS").map(|v| v.eq_ignore_ascii_case("petey")).unwrap_or(false))
 }
 
+/// VS boss: `MELEE_VS_BOSS=petey` (fixed for the process) puts Petey on the first CPU slot of a VS match.
+pub fn vs_selected() -> bool {
+    vs_boss().is_some()
+}
+
+/// `MELEE_VS_BOSS=<name>`: the boss IR `<name>.brawl.ir.json` (any boss; Petey keeps his model and arena, the others
+/// run on stand-in shapes on Final Destination). Lower-case, fixed for the process.
+pub fn vs_boss() -> Option<&'static str> {
+    static V: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
+    V.get_or_init(|| std::env::var("MELEE_VS_BOSS").ok().map(|v| v.trim().to_ascii_lowercase()).filter(|v| !v.is_empty() && v.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'))).as_deref()
+}
+
+/// The boss this process runs: the VS boss, else Envoy's (Petey).
+pub fn boss_name() -> &'static str {
+    vs_boss().unwrap_or("petey")
+}
+
+/// Petey's own model, arena, sounds and stand-in shapes apply.
+pub fn is_petey() -> bool {
+    boss_name() == "petey"
+}
+
 pub fn active() -> bool {
     unsafe { B.st != ST_OFF || ARMED }
 }
@@ -233,7 +181,11 @@ pub fn partner_caged() -> bool {
 /// Called by `envoy::match_begin` for the boss fight. The player count does not scale anything (Brawl has no such
 /// rule); it is kept in the signature for the caller.
 pub unsafe fn arm(_humans: i32, carrier_slot: i32, seed: u32) {
+    let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("boss: arm"));
     B = OFF;
+    crate::tu::geno_boss::stop();
+    let _ = geno();
+    melee_fighter::tu::fighter::BOSS_HASH = Some(crate::tu::geno_boss::state_hash);
     B.carrier_slot = carrier_slot;
     HITS = [0; 4];
     DMG = [0; 4];
@@ -243,7 +195,6 @@ pub unsafe fn arm(_humans: i32, carrier_slot: i32, seed: u32) {
     LATCH_IT = [(0, [0; 4]); 16];
     SLOT_INST = [0; 4];
     let _ = tracks(); // load (or miss) the local model before frame 0
-    crate::tu::petey_file::load(); // and his parameter file (helper thread, outside the arena)
 }
 
 /// Hits each player slot landed on Petey or a cage (Envoy's drives charge on them: his hits never reach the
@@ -270,76 +221,27 @@ pub unsafe fn damage(amount: f32) {
         return;
     }
     let d = round_i(amount).max(1);
-    B.cage[0] -= d;
-    B.cage[1] -= d;
     B.flash[0] = 8;
-    cage_events(true, [false; 2]);
+    if vm().is_some() {
+        VM_DMG += d;
+    } else if let Some(g) = geno() {
+        crate::tu::geno_boss::damage(g, 0, d);
+    }
 }
 
 /// Not a Petey match: everything off.
 pub unsafe fn disarm() {
+    crate::tu::geno_boss::stop();
     B = OFF;
     ARMED = false;
 }
 
-fn rnd(n: u32) -> u32 {
-    unsafe {
-        B.rng = B.rng.wrapping_mul(1_103_515_245).wrapping_add(12345);
-        (B.rng >> 8).prem(n.max(1))
-    }
-}
-/// Uniform in [0, 1).
-fn rnd01() -> f32 {
-    rnd(1 << 16) as f32 / 65536.0
-}
-/// The decoded boss parameters (petey_file.rs), or the built-in values.
-fn tun() -> &'static crate::tu::petey_file::Tuning {
-    crate::tu::petey_file::get()
-}
-
-/// A weighted list's weights x1000 (base + slope L), with the 0.3 repeat cut on the previous pick `prev`
-/// (format spec 4.3: the conditions of 44008 / 44009). Exact to 1/1000.
-fn weights<const N: usize>(list: &[(i32, f32); N], prev: Option<i32>) -> [i32; N] {
-    let l = level();
-    let mut w = [0i32; N];
-    for i in 0..N {
-        let x = fctiwz_f32((list[i].0 as f32 + list[i].1 * l) * 1000.0);
-        w[i] = if prev == Some(i as i32) { x * tun().repeat_pm / 1000 } else { x };
-    }
-    w
-}
-
-/// Weighted pick (§4.7) over integer weights (<= 0 skipped).
-fn pick(w: &[i32]) -> usize {
-    let sum: i32 = w.iter().map(|&x| x.max(0)).sum();
-    if sum <= 0 {
-        return 0;
-    }
-    let r = rnd(sum as u32) as i32;
-    let mut acc = 0;
-    for (i, &x) in w.iter().enumerate() {
-        if x <= 0 {
-            continue;
-        }
-        acc += x;
-        if acc > r {
-            return i;
-        }
-    }
-    w.len() - 1
-}
-/// A range parameter (§2.1): uniform in [lo, hi].
-fn range(min: f32, min_s: f32, max: f32, max_s: f32) -> f32 {
-    let l = level();
-    let lo = min + min_s * l;
-    let hi = fmax(max + max_s * l, lo);
-    lo + (hi - lo) * rnd01()
-}
-
-/// The difficulty scalar L for the current phase (§3).
+/// The difficulty scalar L (the define's, or the VM actor's).
 pub fn level() -> f32 {
-    let s = tun().strength[unsafe { B.phase }.clamp(0, 2) as usize];
-    L_TABLE[s - 1][unsafe { B.diff }.clamp(0, 14) as usize]
+    if vm().is_some() {
+        return crate::tu::geno_vm::actor().level();
+    }
+    geno().map(crate::tu::geno_boss::level).unwrap_or(0.0)
 }
 
 /// The pinned difficulty index (`MELEE_PETEY_DIFFICULTY`), read once per process.
@@ -402,88 +304,6 @@ pub fn sfx_drain(out: &mut [u16; 8]) -> usize {
     n as usize
 }
 
-/// Screen shake of a motion frame (the game timelines' 1A00: 0 small, 1 medium, 2 large; "wait until" read as the
-/// absolute motion frame, so the baskets' twenty shakes all fall on frame 70 and JumpLoop's on 0 and 10).
-fn shake_at(mot: usize, f: i32) -> Option<u32> {
-    match mot {
-        M_ANGRY if f >= 4 && f <= 60 && (f - 4) % 8 == 0 => Some(1),
-        M_BASKET_L | M_BASKET_R if f == 70 => Some(0),
-        M_JUMP_ATTACK if f == 0 => Some(1),
-        M_JUMP_ATTACK if f >= 4 && f <= 64 && (f - 4) % 5 == 0 => Some(0),
-        M_JUMP_ATTACK if f >= 69 && f <= 89 && (f - 69) % 5 == 0 => Some(1),
-        M_JUMP_LANDING if f == 2 => Some(2),
-        M_JUMP_LANDING if f == 5 => Some(1),
-        M_JUMP_LOOP if f == 0 || f == 10 => Some(0),
-        M_DOWN if f == 0 || f == 1 => Some(2),
-        M_DOWN if f == 20 => Some(1),
-        M_DOWN if f == 60 => Some(0),
-        _ => None,
-    }
-}
-
-/// The sound timelines (0A00 / 0A02): (motion, frame, Brawl sound id). The variant-only voices (param 24000 == 2)
-/// are not in the stock fight.
-const SOUNDS: [(usize, i32, u16); 25] = [
-    (M_ANGRY, 9, 9592),
-    (M_BASKET_L, 17, 9593),
-    (M_BASKET_R, 17, 9593),
-    (M_DAMAGE_L, 0, 9594),
-    (M_DAMAGE_R, 0, 9595),
-    (M_DOWN, 0, 9612),
-    (M_DOWN, 1, 9608),
-    (M_DOWN, 11, 9609),
-    (M_DOWN, 20, 9609),
-    (M_DOWN, 30, 9609),
-    (M_DOWN, 31, 9610),
-    (M_DOWN, 38, 9609),
-    (M_DOWN, 50, 9609),
-    (M_DOWN, 60, 9609),
-    (M_DOWN, 68, 9609),
-    (M_DOWN, 78, 9611),
-    (M_DOWN, 85, 9609),
-    (M_DOWN, 98, 9609),
-    (M_DOWN, 152, 9596),
-    (M_JUMP_ATTACK, 0, 9597),
-    (M_JUMP_LANDING, 0, 9598),
-    (M_JUMP_LOOP, 0, 9602),
-    (M_JUMP_START, 14, 9601),
-    (M_WAIT2, 20, 9599),
-    (M_WAIT2, 96, 9600),
-];
-
-/// Fire the timeline events of the motion frames passed since the last call (frame 0 included on a motion's first
-/// tick). A looping motion's wrap does not restart its timelines; a motion change does.
-unsafe fn timeline() {
-    if B.st == ST_OFF {
-        return;
-    }
-    let mot = B.mot.clamp(0, 11) as usize;
-    let mut f = B.tl_mf + 1;
-    while f <= B.mf {
-        if let Some(k) = shake_at(mot, f) {
-            let kind = [QuakeKind_Small, QuakeKind_Medium, QuakeKind_Large][k as usize];
-            if log_on() {
-                eprintln!("petey: f{} shake {} (motion {} frame {})", B.last_frame, k, mot, f);
-            }
-            melee_world::tu::camera::Camera_RequestQuake(kind, core::ptr::null_mut());
-        }
-        for &(m, sf, id) in SOUNDS.iter() {
-            if m == mot && sf == f {
-                push_snd(id, f);
-            }
-        }
-        f += 1;
-    }
-    if B.mf > B.tl_mf {
-        B.tl_mf = B.mf;
-    }
-}
-
-/// The cages' L: the boss's L truncated to an integer (spec §3, Q4).
-pub fn cage_level() -> f32 {
-    fctiwz_f32(level()) as f32
-}
-
 unsafe fn fighter_of(slot: i32, i: usize) -> *mut Fighter {
     if !(0..4).contains(&slot) {
         return core::ptr::null_mut();
@@ -521,6 +341,7 @@ pub unsafe fn tick() {
     }
     B.last_frame = frame;
     if ARMED {
+        let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("boss: first frame"));
         ARMED = false;
         // in his arena: the arena's enemy spawn point (its GEG1 record); on Final Destination the centre
         B.px = if crate::tu::explore::ARENA {
@@ -528,22 +349,50 @@ pub unsafe fn tick() {
         } else {
             0.0
         };
-        // Envoy endless loops: the plan's cage HP x1000 (0 / no plan: retail's)
+        // Envoy endless loops: the plan's boss-HP word (0 / no plan: retail's)
         let hp = crate::tu::envoy::PLAN[crate::tu::envoy::P_BOSS_HP];
-        let base = CAGE_HP_LIVE; // the file's tun().cage_hp (999) is the unscaled spawn value
-        B.cage_max = if hp > 0 { (base as i64 * hp.clamp(1000, 20_000) as i64 / 1000) as i32 } else { base };
         // the difficulty index: Normal, one Brawl tier up per Envoy loop (read back from the plan's HP word), or pinned
         let loops = if hp > 1000 { (hp.clamp(1000, 20_000) - 1000) / PLAN_HP_PER_LOOP } else { 0 };
         B.diff = difficulty_pin().unwrap_or((DIFFICULTY as i32 + DIFFICULTY_PER_LOOP * loops).clamp(0, 14));
-        // the file's init: jumpCount 0, jumpsWanted 1, phase 0, side 0, menuPick 0 (format spec 3.2, corrects spec 6.1)
-        B.jump_count = 0;
-        B.jumps_wanted = 1;
-        B.cage = [B.cage_max; 2];
-        // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
-        enter(ST_WAIT_A);
+        if let Some(p) = vm() {
+            // the enemy-command VM: the scripts from the player's files; the IR's start status, L from strength 1
+            let st = std::env::var("MELEE_VS_BOSS_STATUS").ok().and_then(|v| v.parse().ok())
+                .or_else(vm_start_status)
+                .unwrap_or(2);
+            let p = vm_arena(p);
+            crate::tu::geno_vm_host::reset();
+            crate::tu::geno_vm::begin(p, 1, B.diff, B.rng, st, B.px);
+            B.cage = [0; 2];
+            B.cage_max = 0;
+            B.st = crate::tu::geno_vm::actor().status;
+            eprintln!("petey: vm actor {} (status {}, hp {:.1}, L {:.2})", boss_name(), st, crate::tu::geno_vm::actor().hp(), crate::tu::geno_vm::actor().level());
+        } else if let Some(g) = geno() {
+            // the Geno actor: the define's own start status, HP and init; the plan scales the weak points' HP
+            // cage HP is trunc(base + slope L) in the define: Envoy's loops scale it through the difficulty (B.diff)
+            let scale = 1000;
+            let px = B.px;
+            crate::tu::geno_boss::begin(g, world(), B.diff, scale, B.rng);
+            if grab_actor().is_some() {
+                crate::tu::geno_boss::S.x = (*carrier).cur_pos.x; // the actor starts where its body stands
+            }
+            B.cage_max = if g.parts.len() > 1 { crate::tu::geno_boss::S.hp_max[1] } else { crate::tu::geno_boss::S.hp_max[0] };
+            if crate::tu::explore::ARENA {
+                crate::tu::geno_boss::S.x = px;
+            }
+            mirror(g);
+            eprintln!("petey: geno actor ({} statuses, {} rules from the IR)", g.statuses.len(), g.rules.len());
+            if crate::tu::geno_boss_grab::has_grabs(g) {
+                eprintln!("geno_grab: {} actor ({} statuses, {} rules, grabs from the IR) on slot {}", boss_name(), g.statuses.len(), g.rules.len(), B.carrier_slot);
+            }
+        } else {
+            // no define and no VM program (the owner's files absent): nothing to run; envoy / the VS setup checked
+            eprintln!("petey: {} has no Geno define or VM program; boss off", boss_name());
+            B = OFF;
+            return;
+        }
         eprintln!("petey: fight begins, cages {} difficulty {} L {:.1}", B.cage_max, B.diff, level());
         eprintln!("petey: stage {}", if crate::tu::explore::ARENA { "his arena" } else { "Final Destination" });
-        match crate::tu::petey_model::get().and_then(|m| m.arena_blast) {
+        match is_petey().then(crate::tu::petey_model::get).flatten().and_then(|m| m.arena_blast) {
             Some(z) => eprintln!("petey: arena blast zones {:.0} {:.0} {:.0} {:.0}, knockback x{}", z[0], z[1], z[2], z[3], kb_scale_pm()),
             None => eprintln!("petey: no arena blast zones (stage's own), knockback x{}", kb_scale_pm()),
         }
@@ -554,7 +403,7 @@ pub unsafe fn tick() {
     // model): the fight runs on Final Destination, whose closer zones turned Brawl's launch speeds into one-shots.
     // Applied every frame of the fight (idempotent, rollback-safe); the next stage load restores FD's. Without the
     // files FD's zones stay and the knockback falls back to x0.8 (kb_scale_pm).
-    if let Some(z) = crate::tu::petey_model::get().and_then(|m| m.arena_blast) {
+    if let Some(z) = is_petey().then(crate::tu::petey_model::get).flatten().and_then(|m| m.arena_blast) {
         let bz = &mut *core::ptr::addr_of_mut!(crate::tu::script_game::stage_info.blast_zone);
         bz.left = z[0];
         bz.right = z[1];
@@ -568,63 +417,36 @@ pub unsafe fn tick() {
         // the CPUs (a CPU ally, the level-9 test players) aim at the carrier's position: keep it on the floor under
         // Petey's body, not at its parked spawn at the stage's edge (the camera already frames Petey: camera_box).
         // Game state in the arena (rolled back with the fighter); Petey's own targeting skips the carrier.
-        if cf.ground_or_air == GA_Ground {
+        // a grab actor's body is the carrier itself (geno_boss_grab::body_before / body_after move it)
+        if cf.ground_or_air == GA_Ground && grab_actor().is_none() {
             cf.cur_pos.x = B.px;
         }
     }
     for f in B.flash.iter_mut() {
         *f = (*f - 1).max(0);
     }
-    // hits on Petey this frame (body damage forwards to both cages; a cage hit to that cage)
-    let (mut hit_any, mut cage_hit) = if B.cause == 0 { player_hits(B.carrier_slot) } else { (false, [false; 2]) };
+    // hits on the boss this frame (the define routes body / weak-point damage)
+    if B.cause == 0 {
+        player_hits(B.carrier_slot);
+    }
     B.age = B.age.wrapping_add(1);
     if B.cause == 0 {
         for &(f, t, d) in test_hits().iter() {
             if f == B.age {
-                hit_any = true;
-                match t {
-                    b'l' => {
-                        B.cage[0] -= d;
-                        cage_hit[0] = true;
-                    }
-                    b'r' => {
-                        B.cage[1] -= d;
-                        cage_hit[1] = true;
-                    }
-                    _ => {
-                        B.cage[0] -= d;
-                        B.cage[1] -= d;
-                    }
+                if vm().is_some() {
+                    VM_DMG += d;
+                } else if let Some(g) = geno() {
+                    crate::tu::geno_boss::damage(g, match t { b'l' => 1, b'r' => 2, _ => 0 }, d);
                 }
-                eprintln!("petey: f{} test hit {} {} -> cages {} {}", B.last_frame, t as char, d, B.cage[0], B.cage[1]);
+                eprintln!("petey: f{} test hit {} {}", B.last_frame, t as char, d);
             }
         }
     }
-    if B.cause == 0 {
-        cage_events(hit_any, cage_hit);
-    }
-    // hitlag: when one of Petey's boxes connects the carrier (the attacker) gets Melee's hitlag; Petey's motion and
-    // movement freeze with it, as in Brawl (measured: basket 9 frozen frames, landing 4). The landing boxes carry a
-    // hitlag multiplier of 0.5 (spec §8), applied to the attacker and the victims on the frame the hit lands.
+    // hitlag: when one of the boss's boxes connects the carrier (the attacker) gets Melee's hitlag; the actor's motion
+    // and movement freeze with it, as in Brawl
     let lag = cf.dmg.x195c_hitlag_frames;
     if lag > B.lag_prev && std::env::var_os("MELEE_PETEY_LOG").is_some() {
         eprintln!("petey: f{} hit lands: motion {} frame {} attacker hitlag {}", B.last_frame, B.mot, B.mf, lag);
-    }
-    if lag > B.lag_prev {
-        push_snd(311, B.mf); // the boxes' hit sound (flag field a29)
-    }
-    if lag > B.lag_prev && B.mot == M_JUMP_LANDING as i32 {
-        let full = lag;
-        cf.dmg.x195c_hitlag_frames = fctiwz_f32(full * 0.5) as f32;
-        for s in 0..4 {
-            if s == B.carrier_slot {
-                continue;
-            }
-            let v = fighter_of(s, 0);
-            if !v.is_null() && (*v).dmg.x195c_hitlag_frames == full {
-                (*v).dmg.x195c_hitlag_frames = fctiwz_f32(full * 0.5) as f32;
-            }
-        }
     }
     if std::env::var_os("MELEE_PETEY_LOG").is_some() && (B.lag_prev > 0.0 || KB_LOG > 0) {
         // the victims' first frames of flight (launch angle / speed), for the Brawl comparison
@@ -640,15 +462,24 @@ pub unsafe fn tick() {
     }
     B.lag_prev = cf.dmg.x195c_hitlag_frames;
     if cf.dmg.x195c_hitlag_frames <= 0.0 || B.cause != 0 {
-        rules();
-        advance();
-        timeline();
+        if let Some(p) = vm() {
+            vm_frame(vm_run(p));
+        } else if let Some(g) = geno() {
+            let grab = grab_actor().is_some();
+            let driving = grab && crate::tu::geno_boss_grab::body_before(cf);
+            geno_frame(g);
+            if grab {
+                crate::tu::geno_boss_grab::body_after(cf, driving, B.last_frame);
+            }
+            // grabs (geno_boss_grab): escapes, releases, then a catch, on Melee's capture path with the carrier as grabber
+            crate::tu::geno_boss_grab::host_frame(g, B.carrier_slot, B.last_frame);
+        }
     }
     hitboxes(cf);
     follow_camera();
     if B.cause != 0 {
         B.down_t += 1;
-        if !B.ko_done && B.down_t >= DOWN_END {
+        if !B.ko_done && B.down_t >= down_end() {
             B.ko_done = true;
             disable_all(cf);
             cf.x1988 = 0;
@@ -658,22 +489,14 @@ pub unsafe fn tick() {
     }
 }
 
-/// Brawl's stage camera for this fight (spec §2.3 / §10, Q6): the shared adventure follow camera. It follows the
-/// player only (Petey's range box and clip sphere never widen it), at a fixed eye distance of 260 that it approaches
-/// by 5% of the remaining gap per frame, tilted -1 degree (eye slightly above, looking down), and keeps the visible
-/// rectangle plus a 10-unit margin inside the camera limit box x -180..180, y -70..120. Brawl's FOV is unknown;
-/// Melee's own camera FOV, 30 degrees, gives 2 * 260 * tan 15 = 139.3 visible units of height, the reader's figure.
-/// The centre also eases in by the same 5%. Width uses the camera's authored aspect (not the window), so the logic
-/// is the same on every machine. Driven through Melee's scripted (boss intro) mode with fixed interest and eye, whose
-/// proc then copies our targets as they are. State is in `B` and `game_camera` (statics): rollback-safe.
-const CAM_DIST: f32 = 260.0;
-const CAM_RATE: f32 = 0.05;
-const CAM_TILT_DEG: f32 = -1.0;
-const CAM_FOV: f32 = 30.0;
-const CAM_LIMIT: [f32; 4] = [-180.0, 180.0, -70.0, 120.0];
-const CAM_MARGIN: f32 = 10.0;
-
+/// The boss's stage camera from the define's camera block (Petey's IR: the adventure follow camera): it follows the
+/// player only, at the block's eye distance approached by its ease per frame, its tilt and FOV, keeping the visible
+/// rectangle inside the block's limit box (the arena's own in his arena). The centre eases in too. Width uses the
+/// camera's authored aspect (not the window), so the logic is the same on every machine. Driven through Melee's
+/// scripted (boss intro) mode with fixed interest and eye. State is in `B` and `game_camera` (statics): rollback-safe.
+/// A define without a camera block keeps Melee's own camera.
 unsafe fn follow_camera() {
+    let Some(cd) = geno().and_then(|g| g.camera) else { return };
     use melee_world::tu::camera as cm;
     // the player: the first fighter that is not the carrier
     let mut tgt = None;
@@ -693,7 +516,7 @@ unsafe fn follow_camera() {
         let (i, e) = (gc.transform.interest, gc.transform.position);
         let (dx, dy, dz) = (e.x - i.x, e.y - i.y, e.z - i.z);
         let d = melee_runtime::gekko::sqrtf(dx * dx + dy * dy + dz * dz);
-        B.cam = [i.x, i.y, if d > 1.0 { d } else { CAM_DIST }];
+        B.cam = [i.x, i.y, if d > 1.0 { d } else { cd.distance }];
         B.cam_on = true;
     }
     if gc.mode != CAMERA_BOSS_INTRO as u32 {
@@ -702,24 +525,24 @@ unsafe fn follow_camera() {
     // MELEE_PETEY_CAM=boss (captures only): frame Petey instead of the player, so a recording keeps him in view
     static BOSS_CAM: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     if *BOSS_CAM.get_or_init(|| std::env::var("MELEE_PETEY_CAM").map(|v| v == "boss").unwrap_or(false)) {
-        tgt = Some((B.px, 45.0));
+        tgt = Some((B.px, hurt()[0].map_or(0.0, |h| h[1])));
     }
     let (tx, ty) = tgt.unwrap_or((B.cam[0], B.cam[1]));
-    B.cam[2] += (CAM_DIST - B.cam[2]) * CAM_RATE;
-    B.cam[0] += (tx - B.cam[0]) * CAM_RATE;
-    B.cam[1] += (ty - B.cam[1]) * CAM_RATE;
-    let hh = B.cam[2] * melee_runtime::gekko::tanf(0.5 * CAM_FOV * 0.017453292);
+    B.cam[2] += (cd.distance - B.cam[2]) * cd.ease;
+    B.cam[0] += (tx - B.cam[0]) * cd.ease;
+    B.cam[1] += (ty - B.cam[1]) * cd.ease;
+    let hh = B.cam[2] * melee_runtime::gekko::tanf(0.5 * cd.fov * 0.017453292);
     let hw = hh * cm::cm_803BCB64.aspect;
     let clamp = |v: f32, lo: f32, hi: f32| if lo > hi { 0.5 * (lo + hi) } else { fmin(fmax(v, lo), hi) };
     // in his arena the camera limit is the arena's own (stage position model, CamLimit0N / CamLimit1N)
     let lim = if crate::tu::explore::ARENA {
-        crate::tu::explore::arena().and_then(|m| m.cam).map(|c| [c[0], c[1], c[3], c[2]]).unwrap_or(CAM_LIMIT)
+        crate::tu::explore::arena().and_then(|m| m.cam).map(|c| [c[0], c[1], c[3], c[2]]).unwrap_or(cd.limits)
     } else {
-        CAM_LIMIT
+        cd.limits
     };
-    B.cam[0] = clamp(B.cam[0], lim[0] + CAM_MARGIN + hw, lim[1] - CAM_MARGIN - hw);
-    B.cam[1] = clamp(B.cam[1], lim[2] + CAM_MARGIN + hh, lim[3] - CAM_MARGIN - hh);
-    let t = CAM_TILT_DEG * 0.017453292;
+    B.cam[0] = clamp(B.cam[0], lim[0] + hw, lim[1] - hw);
+    B.cam[1] = clamp(B.cam[1], lim[2] + hh, lim[3] - hh);
+    let t = cd.tilt * 0.017453292;
     let (ts, tc) = (melee_runtime::gekko::sinf(t), melee_runtime::gekko::cosf(t));
     let interest = Vec3 { x: B.cam[0], y: B.cam[1], z: 0.0 };
     let eye = Vec3 { x: B.cam[0], y: B.cam[1] - B.cam[2] * ts, z: B.cam[2] * tc };
@@ -730,13 +553,13 @@ unsafe fn follow_camera() {
     gc.x35C.vec = eye;
     gc.x350 = interest;
     gc.x368.vec = eye;
-    gc.x374 = CAM_FOV;
+    gc.x374 = cd.fov;
     gc.transform.target_interest = interest;
     gc.transform.interest = interest;
     gc.transform.target_position = eye;
     gc.transform.position = eye;
-    gc.transform.target_fov = CAM_FOV;
-    gc.transform.fov = CAM_FOV;
+    gc.transform.target_fov = cd.fov;
+    gc.transform.fov = cd.fov;
     // the scripted mode's proc does not run the quakes: step them here (the quake gobjs write the offset, this turns
     // it into the render translation and counts the kinds down)
     let mut qb = CameraBounds::zeroed();
@@ -763,435 +586,105 @@ unsafe fn hide_marker(slot: i32) {
     }
 }
 
-/// §6.2 / §6.3 / §5: cage procs, the boss's reaction and the death check, in that order on the hit frame.
-unsafe fn cage_events(hit_any: bool, cage_hit: [bool; 2]) {
-    // the boss's cage-event handler: a cage hit this frame (event 1, or 0x13FF when the hit took it to 0) first runs a
-    // one-off death check for that cage (rules 6/7, priority -198/-197) before anything else. When it fires the boss
-    // dies with that side freed and the break path (stage notify, Down) is skipped, so a cage knocked straight to 0
-    // by a hit is a death, not a Down.
-    if !B.cage_broken {
-        for c in 0..2 {
-            if cage_hit[c] && cage_pct(c) <= tun().death_pct {
-                B.freed = c as i32;
-                B.cause = 1;
-                enter(ST_DYING);
-                eprintln!("petey: dying (cage {} hit to {:.1}%, same-frame check)", c, cage_pct(c));
-                return;
-            }
-        }
-    }
-    // a cage reaching 0: broken (0x13FF), the princess on that side is freed, boss to Down
-    for c in 0..2 {
-        if B.cage[c] <= 0 && !B.cage_broken {
-            B.cage_broken = true;
-            B.freed = c as i32;
-            eprintln!("petey: cage {c} broken: partner freed");
-        }
-    }
-    // death (rule 5): a frame with a player hit and the lower cage at or under 10%
-    if hit_any && !B.cage_broken {
-        let (l, r) = (cage_pct(0), cage_pct(1));
-        if fmin(l, r) <= tun().death_pct {
-            B.freed = if l < r { 0 } else { 1 }; // a tie counts as the right cage (the test is left < right)
-            B.cause = 1;
-            enter(ST_DYING);
-            eprintln!("petey: dying (lower cage {} at {:.1}%)", B.freed, fmin(l, r));
-            return;
-        }
-    }
-    // event 1 (the spec's 30-frame flinch on a cage hit in a wait) is not taken: in the observed Brawl fight none of
-    // five cage hits during a wait made him flinch; the wait carried on (obs2-summary, owner decision Nov 13).
-    let _ = cage_hit;
-    // 0x1400 / 0x1401: the phase-up rules
-    let low = fmin(cage_pct(0), cage_pct(1));
-    if B.cage_ctr == 0 && low <= tun().phase1_pct {
-        B.rule28 = true;
-    }
-    if B.cage_ctr == 1 && low <= tun().phase2_pct {
-        B.rule29 = true;
-    }
-}
-
-/// Rule 10 is on in these statuses.
-fn rule10_on(st: i32) -> bool {
-    matches!(st, 2 | 3 | 6 | 7 | 8 | 10 | 11 | 12 | 13 | 14)
-}
-
-fn motion_end() -> bool {
-    unsafe { B.mf + 1 >= MOT_LEN[B.mot as usize] }
-}
-
-/// The nearest present player's x (the "locked target" when one is needed), weighted per §4.1.
-#[allow(dead_code)]
-unsafe fn target_x() -> Option<f32> {
-    let s = draw_slot()?;
-    Some(slot_x(s))
-}
-
-/// The player's x in a slot.
-unsafe fn slot_x(s: i32) -> f32 {
-    let f = fighter_of(s, 0);
-    if f.is_null() { B.px } else { (*f).cur_pos.x }
-}
-
-/// The rule engine's target-slot draw (format spec 4.3 step 3): tuning weights, the last used slot cut by the
-/// tuning repeat factor (0.3), one draw. Weights x1000.
-unsafe fn draw_slot() -> Option<i32> {
-    let mut w = [0i32; 4];
-    for s in 0..4i32 {
-        if s == B.carrier_slot || fighter_of(s, 0).is_null() {
-            continue;
-        }
-        let x = tun().slot_w[s as usize] * 1000;
-        w[s as usize] = if B.last_slot == s { x * tun().slot_cut_pm / 1000 } else { x };
-    }
-    if w.iter().all(|&x| x <= 0) {
-        return None;
-    }
-    let s = pick(&w) as i32;
-    B.last_slot = s;
-    Some(s)
-}
-
-#[allow(dead_code)]
-unsafe fn target_x_old() -> Option<f32> {
-    const W: [i32; 4] = [25, 10, 20, 8];
-    let mut w = [0i32; 4];
-    let mut xs = [0.0f32; 4];
-    for s in 0..4i32 {
-        if s == B.carrier_slot {
-            continue;
-        }
-        let f = fighter_of(s, 0);
-        if f.is_null() {
-            continue;
-        }
-        w[s as usize] = W[s as usize];
-        xs[s as usize] = (*f).cur_pos.x;
-    }
-    if w.iter().all(|&x| x == 0) {
-        return None;
-    }
-    let s = pick(&w);
-    B.last_slot = s as i32;
-    Some(xs[s])
-}
-
-/// Side 1 = the target's world x is less than the boss's (screen-left; spec §4.4 rule 13, reader 2).
-#[allow(dead_code)]
-unsafe fn target_side() -> i32 {
-    match target_x() {
-        Some(x) if x < B.px => 1,
-        Some(_) => 0,
-        None => 0,
-    }
-}
-
-/// One evaluation of the enabled rules (§4.4) by priority.
-unsafe fn rules() {
-    let st = B.st;
-    if st == ST_DYING || st == ST_DOWN {
-        return;
-    }
-    // -100: rule 10 (cage broken -> Down), rule 28 / 29 (phase-up from the waits)
-    if B.cage_broken && rule10_on(st) {
-        B.cause = 2;
-        enter(ST_DOWN);
-        return;
-    }
-    // the phase-up roar waits for the current wait to end (observed: it began when the wait ran out, ~65 frames
-    // after the 50% hit, rather than interrupting it)
-    if st == ST_WAIT_A || st == ST_WAIT_B {
-        if B.rule28 && B.phase == 0 && B.sf as f32 >= B.t_out {
-            B.rule28 = false;
-            B.phase = 1;
-            B.cage_ctr = 1;
-            eprintln!("petey: phase 1 (L {:.1})", level());
-            enter(ST_ANGRY);
-            return;
-        }
-        if B.rule29 && B.phase == 1 {
-            B.rule29 = false;
-            B.phase = 2;
-            B.cage_ctr = 2;
-            eprintln!("petey: phase 2 (L {:.1})", level());
-        }
-    }
-    // 200: rule 13 in JumpStart / JumpLoop: lock the target, set the absolute goal x (-68 on side 1, else +68)
-    // Once per jump (format spec 4.4 rule 13): only while no target is locked; landing and the menu clear the lock.
-    if (st == ST_JUMP_START || st == ST_JUMP_LOOP) && B.locked < 0 {
-        if let Some(s) = draw_slot() {
-            B.locked = s;
-            B.has_goal = true;
-            B.goal_x = if slot_x(s) < B.px { tun().goal[0] } else { tun().goal[1] };
-        }
-    }
-    // 200: the status's own rules
-    let to = match st {
-        ST_WAIT_A if B.sf as f32 >= B.t_out => Some(ST_CHOOSE_BASKET), // 16
-        ST_WAIT_B if B.sf as f32 >= B.t_out => Some(ST_MENU),          // 17
-        ST_CHOOSE_BASKET => basket_status(),                            // 21 / 24
-        ST_MENU => {
-            // 22: (20, 20, 60 + 2L)
-            // each entry cut to 0.3 when it repeats the last menu pick (format spec 4.4 rule 22)
-            let p = pick(&weights(&tun().menu, Some(B.menu_pick)));
-            B.menu_pick = p as i32;
-            if p == 2 {
-                B.jump_count = 0;
-                B.jumps_wanted = if B.phase >= 1 { 2 } else { 1 };
-                Some(ST_JUMP_START)
-            } else if B.phase >= 1 {
-                // the menu only enables rule 24 (a basket once a player is present)
-                aimed_basket()
-            } else {
-                B.side = p as i32;
-                Some(if p == 0 { ST_BASKET_L } else { ST_BASKET_R })
-            }
-        }
-        ST_ANGRY if motion_end() => Some(if pick(&weights(&tun().after_angry, None)) == 0 { ST_CHOOSE_BASKET } else { ST_MENU }), // 23
-        ST_JUMP_START if motion_end() => Some(ST_JUMP_LOOP),                                              // 18
-        ST_JUMP_LOOP if B.sf as f32 >= B.t_out => Some(ST_JUMP_ATTACK),                                   // 25
-        ST_JUMP_ATTACK if motion_end() => Some(ST_JUMP_LANDING),                                          // 26
-        ST_JUMP_LANDING if motion_end() => {
-            // 27
-            Some(if B.jump_count >= B.jumps_wanted { ST_WAIT_A } else { ST_JUMP_START })
-        }
-        ST_BASKET_L | ST_BASKET_R if motion_end() => Some(ST_WAIT_B), // 15
-        ST_DAMAGE_L | ST_DAMAGE_R if motion_end() => Some(B.flinch_to), // 19 / 20
-        _ => None,
-    };
-    if let Some(s) = to {
-        enter(s); // statuses 4 and 5 resolve on the next frame's evaluation (§4.3)
-    }
-}
-
-/// Status 4: phase 0 random side (rule 21), else aimed (rule 24).
-unsafe fn basket_status() -> Option<i32> {
-    if B.phase >= 1 {
-        aimed_basket()
-    } else {
-        B.side = pick(&weights(&tun().side, Some(B.side))) as i32; // 21: with the repeat cut on `side`
-        Some(if B.side == 0 { ST_BASKET_L } else { ST_BASKET_R })
-    }
-}
-
-/// Rule 24: side 1 -> right basket, else left. With no valid target the rule does not fire (format spec 4.4).
-unsafe fn aimed_basket() -> Option<i32> {
-    // rule 24 locks the target it reads
-    let s = draw_slot()?;
-    B.locked = s;
-    Some(if slot_x(s) < B.px { ST_BASKET_R } else { ST_BASKET_L })
-}
-
-unsafe fn set_motion(m: usize) {
-    B.mot = m as i32;
-    B.mf = 0;
-    B.tl_mf = -1;
-    B.inst = B.inst.wrapping_add(1);
-}
-
-unsafe fn pick_wait() {
-    set_motion(if pick(&weights(&tun().wait_pick, None)) == 0 { M_WAIT1 } else { M_WAIT2 });
-}
-
-/// Enter a status (§4.3).
-unsafe fn enter(st: i32) {
-    if std::env::var_os("MELEE_PETEY_LOG").is_some() {
-        eprintln!("petey: f{} status {} -> {} px {:.1} cages {} {}", B.last_frame, B.st, st, B.px, B.cage[0], B.cage[1]);
-    }
-    B.prev_st = B.st;
-    B.st = st;
-    B.sf = 0;
-    B.inst = B.inst.wrapping_add(1);
-    let l = level();
-    match st {
-        ST_DOWN => {
-            set_motion(M_DOWN);
-            B.vx = 0.0;
-        }
-        ST_WAIT_A => {
-            pick_wait();
-            let [a, b, c, d] = tun().wait_a;
-            B.t_out = range(a, b, c, d);
-        }
-        ST_WAIT_B => {
-            pick_wait();
-            let [a, b, c, d] = tun().wait_b;
-            B.t_out = range(a, b, c, d);
-        }
-        ST_ANGRY => set_motion(M_ANGRY),
-        ST_JUMP_START => {
-            set_motion(M_JUMP_START);
-            B.t_out = tun().hover[0] + tun().hover[1] * l;
-            B.jump_count += 1;
-        }
-        ST_JUMP_LOOP => set_motion(M_JUMP_LOOP),
-        ST_JUMP_ATTACK => {
-            set_motion(M_JUMP_ATTACK);
-            // §7.2: the angle to the locked target, snapped to horizontal; the boss does not turn
-            // the locked target (rule 13's), no new draw
-            // (with no valid locked target the aim angle keeps its last value)
-            if B.locked >= 0 && !fighter_of(B.locked, 0).is_null() {
-                B.aim = if slot_x(B.locked) < B.px { -1.0 } else { 1.0 };
-            }
-            B.vx = tun().dive[0] * B.aim;
-        }
-        ST_JUMP_LANDING => {
-            B.locked = -1; // status 10: reset target
-            set_motion(M_JUMP_LANDING);
-        }
-        ST_MENU => B.locked = -1, // status 5: reset target
-        ST_BASKET_L => {
-            B.side = 0;
-            set_motion(M_BASKET_L);
-        }
-        ST_BASKET_R => {
-            B.side = 1;
-            set_motion(M_BASKET_R);
-        }
-        ST_DAMAGE_L => set_motion(M_DAMAGE_L),
-        ST_DAMAGE_R => set_motion(M_DAMAGE_R),
-        ST_DYING => {
-            // status 15: the defeat sound and stage event 1000 / 1001 for the lower cage. The stage's answer is not
-            // in the boss file: here it frees that princess (her cage breaks) and the boss collapses (Down).
-            B.vx = 0.0;
-            push_snd(8837, B.mf);
-            B.cage_broken = true;
-            enter(ST_DOWN);
-        }
-        _ => {} // 4, 5 keep the motion
-    }
-}
-
-/// Frame advance: motion, wait-motion re-pick, movement (§7).
-unsafe fn advance() {
-    if B.st == ST_OFF {
-        return;
-    }
-    let l = level();
-    // movement: kind 16 during the dive, kind 14 / 15 (decay toward 0) otherwise
-    if B.st == ST_JUMP_ATTACK {
-        let k = tun().dive;
-        let acc = k[1] + k[2] * l;
-        let max = k[3] + k[4] * l;
-        B.vx = fclamp(B.vx + acc * B.aim, -max, max);
-    } else {
-        let mut dec = tun().decay;
-        if B.st == ST_JUMP_LANDING {
-            dec += tun().land_decay_l * l;
-        }
-        B.vx = if B.vx > 0.0 { fmax(B.vx - dec, 0.0) } else { fmin(B.vx + dec, 0.0) };
-    }
-    B.px = fclamp(B.px + B.vx, -ARENA, ARENA);
-    // §7.2: within reach of the goal x, snap to it and hold (every status, after the movement step)
-    if B.has_goal && (B.goal_x - B.px).abs() <= 0.1 + B.vx.abs() {
-        B.px = B.goal_x;
-    }
-    if B.px.abs() >= ARENA {
-        B.vx = 0.0;
-    }
-    B.sf += 1;
-    let len = MOT_LEN[B.mot as usize];
-    if B.mf + 1 >= len {
-        match B.st {
-            ST_WAIT_A | ST_WAIT_B => pick_wait(),
-            ST_JUMP_LOOP => {
-                B.mf = 0; // the hover loops until its timeout
-                B.inst = B.inst.wrapping_add(1);
-            }
-            _ => {} // hold the last frame (Down holds: spec §11 item 6)
-        }
-    } else {
-        B.mf += 1;
-    }
-}
-
-// ---------------------------------------------------------------- shapes
-
-/// Bone-space points per motion frame (model space), in this order. Offsets are §5 / §8.
-const P_BODY_A: usize = 0; // UppermouthN + (0,0,10): the body hurtbox (a sphere) and its stretch end
+/// Hurt points per motion frame (model space): body, left cage, right cage, each a capsule from the model's parameter
+/// hurtbox (its bone, offset and stretch end).
+const P_BODY_A: usize = 0;
 const P_BODY_B: usize = 1;
-const P_CAGE_L_A: usize = 2; // left cage LIronNb, (0,0,0) -> (0,-20,0)
+const P_CAGE_L_A: usize = 2;
 const P_CAGE_L_B: usize = 3;
-const P_CAGE_R_A: usize = 4; // right cage RIronNb, (0,0,0) -> (0,20,0)
+const P_CAGE_R_A: usize = 4;
 const P_CAGE_R_B: usize = 5;
-const P_HIT_L_A: usize = 6; // left cage bone 9 + (0,5.5,0)
-const P_HIT_L_B: usize = 7; // left cage bone 10 (princess hip) + (0,-3.8,0)
-const P_HIT_R_A: usize = 8;
-const P_HIT_R_B: usize = 9;
-const P_CONTACT: usize = 10; // body bone 28 + (0,3,8)
-const P_LAND_C: usize = 11; // TopN + (0,31,0)
-const P_LAND_L: usize = 12; // TopN + (-29,0,0)
-const P_LAND_R: usize = 13; // TopN + (29,0,0)
-const NP: usize = 14;
-const BODY_HURT_R: f32 = 39.0;
-const CAGE_HURT_R: f32 = 11.0;
+const NP: usize = 6;
 
 /// Model scale Brawl units -> ours (open question Q1).
 pub const MODEL_SCALE: f32 = 1.0;
 
-/// Per motion, per whole frame: the `P_*` points in model space. Built once from the owner's local files (derived
-/// numbers, in memory only, never written).
+/// Per define motion, per whole frame: the hurt points in model space, and the hurt radii (body, cage, cage). Built
+/// once from the owner's local files (derived numbers, in memory only, never written).
 pub struct Tracks {
     pub mots: std::vec::Vec<std::vec::Vec<[[f32; 3]; NP]>>,
+    pub radii: [f32; 3],
     pub zc: f32,
+    /// the Geno define's hitboxes: keys (attack, box, owning part) and, per motion and frame, their points
+    pub gkeys: std::vec::Vec<(u8, u8, u8)>,
+    pub gpts: std::vec::Vec<std::vec::Vec<std::vec::Vec<[f32; 3]>>>,
 }
 
 pub fn tracks() -> Option<&'static Tracks> {
     static T: std::sync::OnceLock<Option<Tracks>> = std::sync::OnceLock::new();
     // built on a helper thread, as the model is: the first call comes inside a game frame, where allocations land in
-    // the game arena that rollback snapshots rewrite (the tables were freed under the sim by the first load: arena
-    // misuse, desyncs and a stalled synctest with the owner's files present)
+    // the game arena that rollback snapshots rewrite
     T.get_or_init(|| std::thread::spawn(build_tracks).join().ok().flatten()).as_ref()
 }
 
 fn build_tracks() -> Option<Tracks> {
-    {
-        let m = crate::tu::petey_model::get()?;
-        let (al, ar) = (m.arm_l.as_ref()?, m.arm_r.as_ref()?);
-        let b28 = m.body.bone_by_index(28)?;
-        let b0 = m.body.bone_by_index(0)?;
-        let (l9, l10, r9, r10) = (al.bone_by_index(9)?, al.bone_by_index(10)?, ar.bone_by_index(9)?, ar.bone_by_index(10)?);
-        // the param file's hurtbox sets must agree with the spec's (a mismatch means the files are not the expected
-        // ones: fall back to the stand-in)
-        if let Some(p) = m.params.as_ref() {
-            let ok = p.body.first().map(|h| h.flags >> 23 == 28 && h.r == BODY_HURT_R).unwrap_or(false)
-                && p.arm_l.first().map(|h| h.flags >> 23 == 9 && h.r == CAGE_HURT_R).unwrap_or(false);
-            if !ok {
-                eprintln!("petey: param hurtboxes differ from the expected ones; stand-in shapes");
-                return None;
-            }
-        }
-        let mut mots = vec![];
-        for name in MOTIONS {
-            let n = fctiwz_f32(m.body.anim(name)?.frames).max(0) as usize;
-            let (ab, aal, aar) = (m.body.anim(name), al.anim(name), ar.anim(name));
-            let mut v = std::vec::Vec::with_capacity(n + 1);
-            for f in 0..=n {
-                let f = f as f32;
-                let mut c = [[0.0f32; 3]; NP];
-                c[P_BODY_A] = m.body.bone_point(ab, f, b28, [0.0, 0.0, 10.0]);
-                c[P_BODY_B] = m.body.bone_point(ab, f, b28, [0.0, 0.0, 20.0]);
-                c[P_CAGE_L_A] = al.bone_point(aal, f, l9, [0.0; 3]);
-                c[P_CAGE_L_B] = al.bone_point(aal, f, l9, [0.0, -20.0, 0.0]);
-                c[P_CAGE_R_A] = ar.bone_point(aar, f, r9, [0.0; 3]);
-                c[P_CAGE_R_B] = ar.bone_point(aar, f, r9, [0.0, 20.0, 0.0]);
-                c[P_HIT_L_A] = al.bone_point(aal, f, l9, [0.0, 5.5, 0.0]);
-                c[P_HIT_L_B] = al.bone_point(aal, f, l10, [0.0, -3.8, 0.0]);
-                c[P_HIT_R_A] = ar.bone_point(aar, f, r9, [0.0, 5.5, 0.0]);
-                c[P_HIT_R_B] = ar.bone_point(aar, f, r10, [0.0, -3.8, 0.0]);
-                c[P_CONTACT] = m.body.bone_point(ab, f, b28, [0.0, 3.0, 8.0]);
-                c[P_LAND_C] = m.body.bone_point(ab, f, b0, [0.0, 31.0, 0.0]);
-                c[P_LAND_L] = m.body.bone_point(ab, f, b0, [-29.0, 0.0, 0.0]);
-                c[P_LAND_R] = m.body.bone_point(ab, f, b0, [29.0, 0.0, 0.0]);
-                v.push(c);
-            }
-            mots.push(v);
-        }
-        let zc = (m.body.min[2] + m.body.max[2]) * 0.5;
-        eprintln!("petey: bone-following hurt / hit shapes from the local data");
-        Some(Tracks { mots, zc })
+    if !is_petey() {
+        return None; // other bosses: stand-in shapes (no model loader for them yet)
     }
+    let g = geno()?;
+    let m = crate::tu::petey_model::get()?;
+    let (al, ar) = (m.arm_l.as_ref()?, m.arm_r.as_ref()?);
+    let p = m.params.as_ref()?;
+    // the hurtboxes the model's parameter file declares: (bone, offset, stretch end, radius)
+    let hb = |h: &crate::tu::petey_model::Hurt| (h.flags.pshr(23), h.off, h.stretch, h.r);
+    let (hbody, hl, hr) = (hb(p.body.first()?), hb(p.arm_l.first()?), hb(p.arm_r.first()?));
+    let (bb, bl, br) = (m.body.bone_by_index(hbody.0)?, al.bone_by_index(hl.0)?, ar.bone_by_index(hr.0)?);
+    // the define's boxes: every (attack, box, part) a box can sit on (a limb box on each weak point)
+    let mut gkeys = vec![];
+    for (ai, a) in g.attacks.iter().enumerate() {
+        for (bi, bx) in a.boxes.iter().enumerate() {
+            let limb = g.parts.get(bx.part as usize).is_some_and(|p| p.role == crate::tu::geno_boss::Role::Limb);
+            if limb {
+                for (pi, p) in g.parts.iter().enumerate() {
+                    if p.role == crate::tu::geno_boss::Role::WeakPoint {
+                        gkeys.push((ai as u8, bi as u8, pi as u8));
+                    }
+                }
+            } else {
+                gkeys.push((ai as u8, bi as u8, bx.part));
+            }
+        }
+    }
+    let mut gpts = vec![];
+    let mut mots = vec![];
+    for mo in &g.motions {
+        let name = mo.name.as_str();
+        let n = m.body.anim(name).map(|a| fctiwz_f32(a.frames).max(0) as usize).unwrap_or(mo.len.max(1) as usize);
+        let (ab, aal, aar) = (m.body.anim(name), al.anim(name), ar.anim(name));
+        let mut v = std::vec::Vec::with_capacity(n + 1);
+        let mut gv = std::vec::Vec::with_capacity(n + 1);
+        for f in 0..=n {
+            let f = f as f32;
+            // part 0 the body, 1 / 2 the left / right cage (this host's models)
+            let mut row = std::vec::Vec::with_capacity(gkeys.len());
+            for &(ai, bi, pi) in &gkeys {
+                let bx = &g.attacks[ai as usize].boxes[bi as usize];
+                let (mdl, an) = match pi {
+                    1 => (al, aal),
+                    2 => (ar, aar),
+                    _ => (&m.body, ab),
+                };
+                row.push(match mdl.bone_by_index(bx.joint as u32) {
+                    Some(bn) => mdl.bone_point(an, f, bn, bx.offset),
+                    None => [0.0; 3],
+                });
+            }
+            gv.push(row);
+            let mut c = [[0.0f32; 3]; NP];
+            c[P_BODY_A] = m.body.bone_point(ab, f, bb, hbody.1);
+            c[P_BODY_B] = m.body.bone_point(ab, f, bb, hbody.2);
+            c[P_CAGE_L_A] = al.bone_point(aal, f, bl, hl.1);
+            c[P_CAGE_L_B] = al.bone_point(aal, f, bl, hl.2);
+            c[P_CAGE_R_A] = ar.bone_point(aar, f, br, hr.1);
+            c[P_CAGE_R_B] = ar.bone_point(aar, f, br, hr.2);
+            v.push(c);
+        }
+        mots.push(v);
+        gpts.push(gv);
+    }
+    let zc = (m.body.min[2] + m.body.max[2]) * 0.5;
+    eprintln!("petey: bone-following hurt / hit shapes from the local data");
+    Some(Tracks { mots, radii: [hbody.3, hl.3, hr.3], zc, gkeys, gpts })
 }
 
 /// This frame's points in world x y.
@@ -1199,100 +692,74 @@ pub fn points() -> [(f32, f32); NP] {
     let b = unsafe { B };
     let mut out = [(0.0, 0.0); NP];
     if let Some(t) = tracks() {
-        let v = &t.mots[b.mot.clamp(0, 11) as usize];
-        let c = &v[(b.mf.max(0) as usize).min(v.len() - 1)];
-        for (k, q) in c.iter().enumerate() {
-            out[k] = (b.px + q[0] * MODEL_SCALE, q[1] * MODEL_SCALE);
+        if let Some(v) = t.mots.get(b.mot.max(0) as usize).filter(|v| !v.is_empty()) {
+            let c = &v[(b.mf.max(0) as usize).min(v.len() - 1)];
+            for (k, q) in c.iter().enumerate() {
+                out[k] = (b.px + q[0] * MODEL_SCALE, q[1] * MODEL_SCALE);
+            }
+            return out;
         }
-        return out;
     }
     stand_in_points(&b)
 }
 
-/// Without the local model: fixed shapes of the same sizes, the swinging cage moved across during its active
-/// frames and the body raised in the jump, so the fight plays the same rules.
+/// Without a model: plain shapes of our own (not the boss's), so a boss without its files still plays its rules.
+const STAND_IN_BODY_Y: f32 = 40.0;
+const STAND_IN_BODY_R: f32 = 30.0;
+const STAND_IN_CAGE_DX: f32 = 30.0;
+const STAND_IN_CAGE_Y: f32 = 25.0;
+const STAND_IN_CAGE_R: f32 = 10.0;
+
 fn stand_in_points(b: &Boss) -> [(f32, f32); NP] {
     let x = b.px;
-    let len = MOT_LEN[b.mot.clamp(0, 11) as usize] as f32;
-    let k = b.mf as f32 / fmax(len - 1.0, 1.0);
-    // the leap is in JumpAttack's clip (the model's root rises about 110 between its frames 5 and 85); JumpStart /
-    // JumpLoop stay on the ground (a crouch held for the timeout)
-    let _ = k;
-    let lift = match b.mot as usize {
-        M_JUMP_ATTACK => 110.0 * libm_sin(fclamp((b.mf as f32 - 5.0) / 80.0, 0.0, 1.0) * core::f32::consts::PI),
-        _ => 0.0,
-    };
-    let mut cage = [(x + 36.0, 30.0 + lift), (x - 36.0, 30.0 + lift)];
-    let swing = |m: usize, c: &mut (f32, f32)| {
-        let f = fclamp((b.mf as f32 - 60.0) / 60.0, 0.0, 1.0);
-        let dir = if m == M_BASKET_L { -1.0 } else { 1.0 };
-        c.0 = x - dir * 36.0 + dir * 80.0 * f;
-        c.1 = 30.0 - 22.0 * libm_sin(f * core::f32::consts::PI);
-    };
-    match b.mot as usize {
-        M_BASKET_L => swing(M_BASKET_L, &mut cage[0]),
-        M_BASKET_R => swing(M_BASKET_R, &mut cage[1]),
-        _ => {}
-    }
-    let body = (x, 70.0 + lift);
     let mut o = [(0.0, 0.0); NP];
-    o[P_BODY_A] = body;
-    o[P_BODY_B] = (body.0, body.1);
-    o[P_CAGE_L_A] = (cage[0].0, cage[0].1 + 10.0);
-    o[P_CAGE_L_B] = (cage[0].0, cage[0].1 - 10.0);
-    o[P_CAGE_R_A] = (cage[1].0, cage[1].1 + 10.0);
-    o[P_CAGE_R_B] = (cage[1].0, cage[1].1 - 10.0);
-    o[P_HIT_L_A] = (cage[0].0, cage[0].1 + 5.5);
-    o[P_HIT_L_B] = (cage[0].0, cage[0].1 - 3.8);
-    o[P_HIT_R_A] = (cage[1].0, cage[1].1 + 5.5);
-    o[P_HIT_R_B] = (cage[1].0, cage[1].1 - 3.8);
-    o[P_CONTACT] = (body.0, body.1 + 3.0);
-    o[P_LAND_C] = (x, 31.0);
-    o[P_LAND_L] = (x - 29.0, 0.0);
-    o[P_LAND_R] = (x + 29.0, 0.0);
+    o[P_BODY_A] = (x, STAND_IN_BODY_Y);
+    o[P_BODY_B] = (x, STAND_IN_BODY_Y);
+    o[P_CAGE_L_A] = (x + STAND_IN_CAGE_DX, STAND_IN_CAGE_Y + STAND_IN_CAGE_R);
+    o[P_CAGE_L_B] = (x + STAND_IN_CAGE_DX, STAND_IN_CAGE_Y - STAND_IN_CAGE_R);
+    o[P_CAGE_R_A] = (x - STAND_IN_CAGE_DX, STAND_IN_CAGE_Y + STAND_IN_CAGE_R);
+    o[P_CAGE_R_B] = (x - STAND_IN_CAGE_DX, STAND_IN_CAGE_Y - STAND_IN_CAGE_R);
     o
 }
 
-/// Hurt capsules this frame: (ax, ay, bx, by, r) for body, cage L, cage R; `None` when intangible.
+/// Hurt capsules this frame: (ax, ay, bx, by, r) for body, weak point 1, weak point 2; `None` when not hittable (the
+/// define's intangibility, a part at 0, a cause set).
 fn hurt() -> [Option<[f32; 5]>; 3] {
     let b = unsafe { B };
     let p = points();
+    let radii = tracks().map(|t| t.radii).unwrap_or([STAND_IN_BODY_R, STAND_IN_CAGE_R, STAND_IN_CAGE_R]);
     let cap = |a: usize, c: usize, r: f32| Some([p[a].0, p[a].1, p[c].0, p[c].1, r * MODEL_SCALE]);
-    let body = if b.st == ST_DOWN || b.st == ST_DYING { None } else { cap(P_BODY_A, P_BODY_B, BODY_HURT_R) };
-    let cages = !b.cage_broken && b.st != ST_DYING;
+    if vm().is_some() {
+        // a VM boss: one stand-in body (no part shapes in the VM yet), gone once it is down
+        return [if b.cause != 0 { None } else { cap(P_BODY_A, P_BODY_B, radii[0]) }, None, None];
+    }
+    let Some(g) = geno() else { return [None; 3] };
+    let s = unsafe { &*core::ptr::addr_of!(crate::tu::geno_boss::S) };
+    let live = |k: usize| k < g.parts.len() && s.intangible & 1u8.pshl(k as i64) == 0 && (k == 0 || s.hp[k] > 0);
+    let body = if b.cause != 0 || !live(0) { None } else { cap(P_BODY_A, P_BODY_B, radii[0]) };
+    let wp = !b.cage_broken && b.cause == 0;
     [
         body,
-        if cages && b.cage[0] > 0 { cap(P_CAGE_L_A, P_CAGE_L_B, CAGE_HURT_R) } else { None },
-        if cages && b.cage[1] > 0 { cap(P_CAGE_R_A, P_CAGE_R_B, CAGE_HURT_R) } else { None },
+        if wp && live(1) { cap(P_CAGE_L_A, P_CAGE_L_B, radii[1]) } else { None },
+        if wp && live(2) { cap(P_CAGE_R_A, P_CAGE_R_B, radii[2]) } else { None },
     ]
-}
-
-// deterministic polynomial sin (no libm differences between platforms)
-fn libm_sin(a: f32) -> f32 {
-    let tau = core::f32::consts::TAU;
-    let mut x = a - tau * (a / tau).floor();
-    if x > core::f32::consts::PI {
-        x -= tau;
-    }
-    let x2 = x * x;
-    x * (1.0 - x2 / 6.0 * (1.0 - x2 / 20.0 * (1.0 - x2 / 42.0 * (1.0 - x2 / 72.0))))
 }
 
 // ---------------------------------------------------------------- hitboxes (§8)
 
 /// Petey's knockback scale for Melee fighters, per mille (growth and base; see `hitboxes`).
 pub const KB_SCALE_PM_DEFAULT: u32 = 1000;
-/// Without the arena's blast zones (no local Brawl files): FD's closer zones, so Brawl's knockback x0.8 (the largest
-/// 0.05 step at which no Petey attack KOs a light or fast fighter from 0-100% in an FD launch model).
-pub const KB_SCALE_PM_NO_ARENA: u32 = 800;
-
 /// The knockback scale knob (`MELEE_PETEY_KB_PM`, per mille, 500..1500; fixed for the process). 1000 = Brawl's.
 fn kb_scale_pm() -> u32 {
     static V: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
     *V.get_or_init(|| {
-        std::env::var("MELEE_PETEY_KB_PM").ok().and_then(|v| v.trim().parse::<u32>().ok()).map(|v| v.clamp(500, 1500)).unwrap_or_else(|| if crate::tu::petey_model::get().is_some_and(|m| m.arena_blast.is_some()) { KB_SCALE_PM_DEFAULT } else { KB_SCALE_PM_NO_ARENA })
+        std::env::var("MELEE_PETEY_KB_PM").ok().and_then(|v| v.trim().parse::<u32>().ok()).map(|v| v.clamp(500, 1500)).unwrap_or(KB_SCALE_PM_DEFAULT)
     })
 }
+
+/// Live boxes per frame (the carrier's four hit capsules): the boss's attack boxes first, then, for a VM boss, its
+/// projectiles' (geno_boss_spawn) in the capsules left.
+const LIVE_HITS: usize = 4;
 
 #[derive(Clone, Copy, Default)]
 struct HitDef {
@@ -1314,71 +781,81 @@ struct HitDef {
 }
 
 /// The boxes live this frame.
-fn hit_list() -> ([HitDef; 4], usize) {
+fn hit_list() -> ([HitDef; LIVE_HITS], usize) {
     let b = unsafe { B };
-    let mut v = [HitDef::default(); 4];
+    let mut v = [HitDef::default(); LIVE_HITS];
     let mut n = 0;
     if b.cause != 0 || b.st == ST_OFF {
         return (v, 0);
     }
-    let p = points();
-    let l = level();
+    if vm().is_some() {
+        return vm_hits(&b);
+    }
+    match geno() {
+        Some(g) => geno_hits(g, tracks().filter(|t| !t.gkeys.is_empty()), &b),
+        None => (v, n),
+    }
+}
+
+/// The Geno define's live boxes (geno_boss::live_boxes), on the bone tracks, with the numbers at the owning part's L.
+fn geno_hits(g: &crate::tu::geno_boss::Define, t: Option<&Tracks>, b: &Boss) -> ([HitDef; LIVE_HITS], usize) {
+    use crate::tu::geno_boss as gb;
+    let mut v = [HitDef::default(); LIVE_HITS];
+    let mut live = [gb::LiveBox::default(); 8];
+    let n = gb::live_boxes(g, &mut live);
     let f = b.mf;
-    let mut push = |h: HitDef| {
-        if n < 4 {
-            v[n] = h;
-            n += 1;
+    let mot = b.mot.max(0) as usize;
+    let row = t.and_then(|t| t.gpts.get(mot)).and_then(|m| m.get((f.max(0) as usize).min(m.len().saturating_sub(1))));
+    // without bone tracks: the box offset from the stand-in body centre (no joint motion)
+    let centre = stand_in_points(b)[P_BODY_A];
+    let mut k = 0;
+    for lb in &live[..n] {
+        if k >= 4 {
+            break;
         }
-    };
-    let grp = |id: u32, rehit: i32| b.inst.wrapping_mul(16).wrapping_add(id).wrapping_add(f.pdiv(rehit.max(1)) as u32 * 0x1000_0000);
-    let mot = b.mot as usize;
-    // body contact (id 4): armed at frame 0 of every motion except Down and the landing; the baskets clear it at
-    // frame 69 and JumpAttack at frame 4 (the leap and the dive carry no contact box: the file's game thread 0)
-    let basket = mot == M_BASKET_L || mot == M_BASKET_R;
-    let contact = mot != M_DOWN && mot != M_JUMP_LANDING && (!basket || f < 69) && (mot != M_JUMP_ATTACK || f < 4);
-    if contact {
-        let (x, y) = p[P_CONTACT];
-        push(HitDef {
-            x, y, r: 25.7 * MODEL_SCALE, dmg: 0, angle: 0, kbg: 100, wkb: if basket { 5 } else { 6 }, bkb: 0,
-            grp: grp(4, 4), face: if x >= b.px { 1.0 } else { -1.0 }, atk: 0,
-        });
-    }
-    // basket cage boxes: frames 70-114 on the swinging cage
-    if basket && (70..=114).contains(&f) {
-        let (a, c) = if mot == M_BASKET_L { (P_HIT_L_A, P_HIT_L_B) } else { (P_HIT_R_A, P_HIT_R_B) };
-        let face = if mot == M_BASKET_L { 1.0 } else { -1.0 }; // the cage's own facing (proc 15: left +1, right -1)
-        // the cage's own L: link 5112 hands it the boss's L read as an integer (truncated), spec §3 / §8 (Q4).
-        // Normal phases 0/1/2: boss L 2.5/3.3/4.1 -> cage L 2/3/4 -> 15/18/20 damage. Body and landing keep the float L.
-        let lc = cage_level();
-        let dmg = fctiwz_f32(10.0 + 2.7 * lc).max(0) as u32;
-        let bkb = fctiwz_f32(105.0 - 2.0 * lc).max(0) as u32;
-        // one hit group for the attack's boxes: the engine shares their victims, so two boxes that overlap a victim on
-        // the same frame hit once (they did twice: 30 instead of 15 on a victim inside both at frame 70)
-        for (pi, r) in [(a, 8.0f32), (c, 10.0)].into_iter() {
-            let (x, y) = p[pi];
-            push(HitDef { x, y, r: r * MODEL_SCALE, dmg, angle: 145, kbg: 44, wkb: 0, bkb, grp: grp(0, 60), face, atk: 1 });
-        }
-    }
-    // landing: centre frames 2-4, sides 3-4
-    if mot == M_JUMP_LANDING {
-        if (2..=4).contains(&f) {
-            let (x, y) = p[P_LAND_C];
-            push(HitDef {
-                x, y, r: 28.0 * MODEL_SCALE, dmg: fctiwz_f32(12.0 + 3.0 * l) as u32, angle: 270,
-                kbg: fctiwz_f32(45.0 + l) as u32, wkb: 0, bkb: fctiwz_f32(146.0 - 1.5 * l) as u32, grp: grp(0, 120), face: b.aim, atk: 2,
-            });
-        }
-        if (3..=4).contains(&f) {
-            for (i, pi) in [P_LAND_L, P_LAND_R].into_iter().enumerate() {
-                let (x, y) = p[pi];
-                push(HitDef {
-                    x, y, r: (30.0 + 0.5 * l) * MODEL_SCALE, dmg: fctiwz_f32(8.0 + 2.0 * l) as u32, angle: 30, kbg: 48, wkb: 0,
-                    bkb: fctiwz_f32(112.0 - 1.2 * l) as u32, grp: grp(0, 120), face: if i == 0 { -1.0 } else { 1.0 }, atk: 2,
-                });
+        let bx = &g.attacks[lb.attack as usize].boxes[lb.boxi as usize];
+        let q = match t {
+            Some(t) => {
+                let Some(ix) = t.gkeys.iter().position(|&x| x == (lb.attack, lb.boxi, lb.part)) else { continue };
+                let Some(q) = row.and_then(|r| r.get(ix)) else { continue };
+                *q
             }
-        }
+            None => [centre.0 - b.px + bx.offset[0], centre.1 + bx.offset[1], 0.0],
+        };
+        let l = gb::part_level(g, lb.part);
+        let x = b.px + q[0] * MODEL_SCALE;
+        let y = q[1] * MODEL_SCALE;
+        // knockback facing: the owning part's fixed facing; a facing-less part launches away from its own centre
+        let pf = g.parts.get(lb.part as usize).map(|p| p.facing).unwrap_or(0.0);
+        let face = if pf != 0.0 {
+            pf
+        } else if bx.offset[0] != 0.0 {
+            if bx.offset[0] < 0.0 { -1.0 } else { 1.0 }
+        } else if bx.angle == 270 {
+            b.aim
+        } else if x >= b.px {
+            1.0
+        } else {
+            -1.0
+        };
+        let rehit = bx.rehit.max(1);
+        let id = lb.attack as u32 * 8 + bx.group as u32;
+        v[k] = HitDef {
+            x,
+            y,
+            r: gb::num_at(bx.size, l) * MODEL_SCALE,
+            dmg: fctiwz_f32(gb::num_at(bx.damage, l)).max(0) as u32,
+            angle: bx.angle,
+            kbg: fctiwz_f32(gb::num_at(bx.kbg, l)).max(0) as u32,
+            wkb: fctiwz_f32(gb::num_at(bx.wkb, l)).max(0) as u32,
+            bkb: fctiwz_f32(gb::num_at(bx.bkb, l)).max(0) as u32,
+            grp: b.inst.wrapping_mul(16).wrapping_add(id).wrapping_add(f.pdiv(rehit) as u32 * 0x1000_0000),
+            face,
+            atk: lb.attack + 1,
+        };
+        k += 1;
     }
-    (v, n)
+    (v, k)
 }
 
 unsafe fn disable_all(cf: &mut Fighter) {
@@ -1534,7 +1011,14 @@ unsafe fn hit_test_n(hs: &[Option<[f32; 5]>; 3], a: (f32, f32), b: (f32, f32), r
             *latch |= bit;
             any = true;
             B.flash[k] = 8;
-            if k == 0 {
+            if vm().is_some() {
+                VM_DMG += d;
+            } else if let Some(g) = geno() {
+                crate::tu::geno_boss::damage(g, k, d);
+                if k > 0 {
+                    cages |= 1u8.pshl(k as i64 - 1);
+                }
+            } else if k == 0 {
                 B.cage[0] -= d;
                 B.cage[1] -= d;
             } else {
@@ -1654,7 +1138,7 @@ unsafe fn item_hits(hs: &[Option<[f32; 5]>; 3], carrier: i32) -> (bool, u8) {
 /// screen right, cage max, state (7 = beaten), phase >= 1, cause, status, partner kind, real model drawn.
 pub fn view() -> [i32; 12] {
     let b = unsafe { B };
-    let line = fctiwz_f32(cage_max() as f32 * tun().death_pct / 100.0);
+    let line = 0; // the death threshold lives in the define's rules: the bar shows the cages' whole HP
     let low = b.cage[0].min(b.cage[1]).max(0);
     [
         (b.st != ST_OFF) as i32,
@@ -1681,7 +1165,24 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     if cf.is_null() || (*cf).gobj != g {
         return;
     }
-    if let Some(m) = crate::tu::petey_model::get() {
+    if let Some(p) = vm() {
+        if crate::tu::vm_boss_model::draw(vm_run(p), crate::tu::geno_vm::actor(), B.flash[0] > 0)
+            && std::env::var_os("MELEE_PETEY_SHAPES").is_none()
+        {
+            return;
+        }
+    }
+    // a grab-define actor (Tabuu, Bucculus): its model posed by the define's motion and frame
+    if is_grab_actor(boss_name()) {
+        let gs = &*core::ptr::addr_of!(crate::tu::geno_boss::S);
+        let name = geno().and_then(|g| g.motions.get(gs.motion.max(0) as usize)).map(|m| m.name.as_str());
+        if let Some(n) = name {
+            if crate::tu::vm_boss_model::draw_named(n, gs.mf, gs.x, gs.aim, B.flash[0] > 0) && std::env::var_os("MELEE_PETEY_SHAPES").is_none() {
+                return;
+            }
+        }
+    }
+    if let Some(m) = is_petey().then(crate::tu::petey_model::get).flatten() {
         draw_model(m);
         if std::env::var_os("MELEE_PETEY_SHAPES").is_none() {
             return;
@@ -1738,7 +1239,7 @@ unsafe fn draw_model(m: &'static crate::tu::petey_model::Model) {
     if bufs.is_empty() {
         return;
     }
-    let name = MOTIONS[B.mot.clamp(0, 11) as usize];
+    let Some(name) = geno().and_then(|g| g.motions.get(B.mot.max(0) as usize)).map(|m| m.name.as_str()) else { return };
     let fr = B.mf as f32;
     let zc = (m.body.min[2] + m.body.max[2]) * 0.5;
     // the clip's own root carries the jump height; y 0 is the stage
@@ -1762,35 +1263,348 @@ unsafe fn draw_model(m: &'static crate::tu::petey_model::Model) {
     }
 }
 
-#[cfg(test)]
-mod probe {
-    use super::*;
-    /// Local-only (needs the owner's files): derived numbers for notes/petey-behavior.md.
-    #[test]
-    #[ignore]
-    fn petey_tracks_probe() {
-        let t = tracks().expect("local data");
-        for (mi, v) in t.mots.iter().enumerate() {
-            let ys: std::vec::Vec<f32> = v.iter().map(|c| c[P_BODY_A][1]).collect();
-            let (lo, hi) = ys.iter().fold((f32::MAX, f32::MIN), |(a, b), &y| (a.min(y), b.max(y)));
-            eprintln!("{:18} body-hurt y {:6.1}..{:6.1}  x {:6.1}..{:6.1}", MOTIONS[mi], lo, hi,
-                v.iter().map(|c| c[P_BODY_A][0]).fold(f32::MAX, f32::min), v.iter().map(|c| c[P_BODY_A][0]).fold(f32::MIN, f32::max));
-        }
-        for (m, pa) in [(M_BASKET_L, P_HIT_L_A), (M_BASKET_R, P_HIT_R_A)] {
-            for f in [0usize, 40, 69, 70, 80, 92, 104, 114, 130, 159] {
-                let c = t.mots[m][f];
-                eprintln!("{} f{f}: cage box ({:.1}, {:.1}) hurt L ({:.1},{:.1}) R ({:.1},{:.1})", MOTIONS[m], c[pa][0], c[pa][1],
-                    c[P_CAGE_L_A][0], c[P_CAGE_L_A][1], c[P_CAGE_R_A][0], c[P_CAGE_R_A][1]);
+// ---------------------------------------------------------------- the Geno actor (docs/specs/geno-v5.2-boss.md)
+
+/// The motions the define is lowered with: the IR's own (names, loops) with each clip's length from the owner's model
+/// when it has that clip (the IR's timeline length otherwise).
+fn petey_motions(ir: &crate::tu::geno_boss_ir::J) -> std::vec::Vec<(String, i32, bool)> {
+    let mut ms = crate::tu::geno_boss_ir::ir_motions(ir);
+    if let Some(m) = crate::tu::petey_model::get() {
+        for x in ms.iter_mut() {
+            if let Some(a) = m.body.anim(&x.0) {
+                x.1 = fctiwz_f32(a.frames).max(1);
             }
         }
-        for m in [M_JUMP_START, M_JUMP_LOOP, M_JUMP_ATTACK, M_JUMP_LANDING] {
-            let v = &t.mots[m];
-            let s: std::vec::Vec<std::string::String> = (0..v.len()).step_by(10).map(|f| format!("{:.0}", v[f][P_CONTACT][1])).collect();
-            eprintln!("{} contact y every 10f: {}", MOTIONS[m], s.join(" "));
-        }
-        let d = &t.mots[M_DOWN];
-        eprintln!("Down body y f0 {:.1} f150 {:.1} f400 {:.1} f720 {:.1}", d[0][P_BODY_A][1], d[150][P_BODY_A][1], d[400][P_BODY_A][1], d[720][P_BODY_A][1]);
-        let c = &t.mots[M_JUMP_LANDING][3];
-        eprintln!("landing f3 centre ({:.1},{:.1}) L ({:.1},{:.1}) R ({:.1},{:.1})", c[P_LAND_C][0], c[P_LAND_C][1], c[P_LAND_L][0], c[P_LAND_L][1], c[P_LAND_R][0], c[P_LAND_R][1]);
     }
+    ms
+}
+
+/// The boss's Geno define, lowered from the local IR once per process (None without the IR: no boss).
+pub fn geno() -> Option<&'static crate::tu::geno_boss::Define> {
+    // grab actors (geno_boss_grab): Tabuu's and Bucculus's defines, built from their IR's grab data
+    if let Some(d) = grab_actor() {
+        return Some(d);
+    }
+    static D: std::sync::OnceLock<Option<crate::tu::geno_boss::Define>> = std::sync::OnceLock::new();
+    D.get_or_init(|| {
+        // lowered on a helper thread: its allocations stay on the system heap, outside the game arena
+        let name = boss_name();
+        let r = std::thread::spawn(move || {
+            if name == "petey" {
+                let dir = crate::tu::geno_boss_ir::ir_dir().ok_or("no boss IR directory")?;
+                let text = std::fs::read_to_string(dir.join("petey.brawl.ir.json")).map_err(|_| "petey.brawl.ir.json: not readable".to_string())?;
+                let j = crate::tu::geno_boss_ir::parse_json(&text)?;
+                let ms = petey_motions(&j);
+                let hm: std::vec::Vec<crate::tu::geno_boss_ir::HostMotion> = ms.iter().map(|m| crate::tu::geno_boss_ir::HostMotion { name: &m.0, len: m.1, looping: m.2 }).collect();
+                crate::tu::geno_boss_ir::lower(&j, &hm)
+            } else if vm_boss(name) {
+                Err("run by the enemy-command VM".into())
+            } else {
+                crate::tu::geno_boss_ir::load_with_ir_motions(&format!("{name}.brawl.ir.json"))
+            }
+        })
+        .join()
+        .unwrap_or_else(|_| Err("lowering panicked".into()));
+        match r {
+            Ok(d) => {
+                eprintln!("petey: Geno boss define from the local IR ({})", name);
+                Some(d)
+            }
+            Err(e) => {
+                eprintln!("petey: no Geno define ({e})");
+                None
+            }
+        }
+    })
+    .as_ref()
+}
+
+unsafe fn world() -> crate::tu::geno_boss::World {
+    let mut w = crate::tu::geno_boss::World::default();
+    for s in 0..4i32 {
+        if s == B.carrier_slot {
+            continue;
+        }
+        let f = fighter_of(s, 0);
+        if !f.is_null() {
+            w.slots[s as usize] = Some((*f).cur_pos.x);
+        }
+    }
+    // in the air while a jump clip plays (the IR's motion names)
+    w.airborne = geno().and_then(|g| g.motions.get(B.mot.max(0) as usize)).is_some_and(|m| m.name == "JumpLoop" || m.name == "JumpAttack");
+    w
+}
+
+/// The VS bosses built by geno_boss_grab (their grab define, not the full IR or the VM).
+fn is_grab_actor(name: &str) -> bool {
+    matches!(name, "tabuu" | "bucculus")
+}
+
+fn grab_actor() -> Option<&'static crate::tu::geno_boss::Define> {
+    match boss_name() {
+        "tabuu" => crate::tu::geno_boss_grab::tabuu(),
+        "bucculus" => crate::tu::geno_boss_grab::bucculus(),
+        _ => None,
+    }
+}
+
+/// Bosses the enemy-command VM runs (geno_vm): every boss it has files for except Petey (his define) and the
+/// grab actors (their grab defines).
+pub fn vm_boss(name: &str) -> bool {
+    name != "petey" && !is_grab_actor(name) && brawl_boss::vm::FILES.iter().any(|f| f.0 == name)
+}
+
+/// The VS boss's start status from its IR (the IR is parsed once, ahead of the match by the engine-start helper).
+pub fn vm_start_status() -> Option<i32> {
+    static S: std::sync::OnceLock<Option<i32>> = std::sync::OnceLock::new();
+    *S.get_or_init(|| {
+        brawl_boss::vm::FILES.iter().find(|f| f.0 == boss_name()).and_then(|f| crate::tu::geno_boss_ir::ir_start_status(&format!("{}.brawl.ir.json", f.1)))
+    })
+}
+
+/// The VS boss's own Brawl arena box: the blast zones (Dead0N / Dead1N) of the stage position model in the boss's
+/// stage archive, as [left, right, top, bottom]. The boss files' goals assume this arena (Galleom's charge aims at
+/// +-225 inside his +-240). Read once, ahead of the match, by the engine-start helper.
+pub fn vm_brawl_arena() -> Option<[f32; 4]> {
+    static S: std::sync::OnceLock<Option<[f32; 4]>> = std::sync::OnceLock::new();
+    *S.get_or_init(|| {
+        let f = brawl_boss::vm::FILES.iter().find(|f| f.0 == boss_name())?;
+        let leaves = crate::tu::petey_model::pac_leaves(f.2)?;
+        leaves.iter().find_map(|l| crate::tu::petey_model::arena_blast(l))
+    })
+}
+
+/// The VS boss's VM program (None: not a VM boss, or the player's files are absent).
+pub fn vm() -> Option<&'static brawl_boss::vm::Program> {
+    static P: std::sync::OnceLock<Option<&'static brawl_boss::vm::Program>> = std::sync::OnceLock::new();
+    *P.get_or_init(|| {
+        if !vm_boss(boss_name()) {
+            return None;
+        }
+        // the model sets the program's motion lengths from its clips: wait for its load (started at the engine start)
+        let _ = crate::tu::vm_boss_model::get(boss_name());
+        crate::tu::geno_vm::program(boss_name())
+    })
+}
+
+/// The VS boss's program with the arena box set from this stage's blast zones (geno_vm `Program::bounds`: the VM's
+/// movement stops at its edges). One copy per distinct box, made at the match's start, outside the frame loop.
+static mut VM_ARENA: Option<([f32; 4], *const brawl_boss::vm::Program, &'static brawl_boss::vm::Program)> = None;
+
+unsafe fn vm_arena(p: &'static brawl_boss::vm::Program) -> &'static brawl_boss::vm::Program {
+    // the latest program: the model loader replaces it once it has the motion lengths (geno_vm::set_motion_lengths),
+    // after `vm()` cached the first copy; without them every motion ended at the default 60 frames (Galleom's Shoot
+    // ended before its missiles at frames 74-119)
+    let p = crate::tu::geno_vm::program(boss_name()).unwrap_or(p);
+    // the boss area: the boss's own Brawl arena (its blast zones), which its scripts' goals assume. It is used as is
+    // when it fits inside this stage's blast zones; otherwise it is cut to them, logged (goals beyond the cut are
+    // then taken at the edge, see the VM's arrival stand-in). Without the arena: the stage's camera bounds.
+    let bz = &*core::ptr::addr_of!(crate::tu::script_game::stage_info.blast_zone);
+    let cb = &*core::ptr::addr_of!(crate::tu::script_game::stage_info.cam_info.cam_bounds);
+    let (bounds, src) = match vm_brawl_arena() {
+        Some([l, r, t, b]) => {
+            let cut = [fmax(l, bz.left), fmin(r, bz.right), fmax(b, bz.bottom), fmin(t, bz.top)];
+            if cut == [l, r, b, t] {
+                (cut, "the boss's Brawl arena")
+            } else {
+                eprintln!(
+                    "petey: WARNING: {}'s Brawl arena x {:.0}..{:.0} y {:.0}..{:.0} does not fit this stage's blast zones x {:.0}..{:.0} y {:.0}..{:.0}; cut to them",
+                    boss_name(), l, r, b, t, bz.left, bz.right, bz.bottom, bz.top
+                );
+                (cut, "the boss's Brawl arena, cut to the stage")
+            }
+        }
+        None => ([fmax(cb.left, bz.left), fmin(cb.right, bz.right), fmax(cb.bottom, bz.bottom), fmin(cb.top, bz.top)], "stage camera bounds: no Brawl arena"),
+    };
+    if let Some((b, base, q)) = VM_ARENA {
+        if b == bounds && core::ptr::eq(base, p) {
+            return q;
+        }
+    }
+    let mut q = p.clone();
+    q.bounds = bounds;
+    let q: &'static brawl_boss::vm::Program = Box::leak(Box::new(q));
+    VM_ARENA = Some((bounds, p as *const _, q));
+    eprintln!("petey: vm arena box x {:.0}..{:.0} y {:.0}..{:.0} ({src})", bounds[0], bounds[1], bounds[2], bounds[3]);
+    q
+}
+
+/// The program this match runs (the arena copy once the match began).
+unsafe fn vm_run(p: &'static brawl_boss::vm::Program) -> &'static brawl_boss::vm::Program {
+    VM_ARENA.map(|(_, _, q)| q).unwrap_or(p)
+}
+
+/// Damage the players' boxes dealt the VM boss this frame (summed in hit_test, consumed by vm_frame).
+static mut VM_DMG: i32 = 0;
+
+/// One VM frame (geno_vm_host::frame): this frame's damage in, the actor stepped, its state mirrored.
+unsafe fn vm_frame(p: &'static brawl_boss::vm::Program) {
+    unsafe fn fo(s: i32) -> *mut Fighter {
+        fighter_of(s, 0)
+    }
+    let d = VM_DMG;
+    VM_DMG = 0;
+    let o = crate::tu::geno_vm_host::frame(p, B.carrier_slot, B.last_frame, d, true, fo, log_on());
+    B.st = o.status;
+    B.px = o.x;
+    B.aim = if o.lr < 0.0 { -1.0 } else { 1.0 };
+    if B.cause == 0 && o.dead {
+        B.cause = 1;
+        eprintln!("petey: f{} dying (vm hp {:.1})", B.last_frame, crate::tu::geno_vm::actor().hp());
+    }
+}
+
+/// The VM boss's live attack boxes (geno_vm_host::BOXES from its forwarded 0619s) as hit capsules: placed at the
+/// its bone (vm_boss_model::bone_world), or the actor's position plus the box offset without the model.
+fn vm_hits(b: &Boss) -> ([HitDef; LIVE_HITS], usize) {
+    let mut v = [HitDef::default(); LIVE_HITS];
+    let mut k = 0;
+    let a = crate::tu::geno_vm::actor();
+    for bx in unsafe { crate::tu::geno_vm_host::BOXES }.iter().filter(|x| x.on) {
+        if k >= 4 {
+            break;
+        }
+        // on its bone when the boss has its model (the bone's pose at the clip frame, turned by the facing / rotation);
+        // else at the actor's position plus the offset
+        let (x, y) = vm()
+            .and_then(|p| crate::tu::vm_boss_model::bone_world(unsafe { vm_run(p) }, a, bx.bone, bx.offset))
+            .map(|q| (q[0], q[1]))
+            .unwrap_or((b.px + bx.offset[0] * b.aim, a.pos[1] + bx.offset[1]));
+        v[k] = HitDef {
+            x,
+            y,
+            r: bx.size * MODEL_SCALE,
+            dmg: fctiwz_f32(bx.damage).max(0) as u32,
+            angle: bx.angle,
+            kbg: fctiwz_f32(bx.kbg).max(0) as u32,
+            wkb: fctiwz_f32(bx.wkb).max(0) as u32,
+            bkb: fctiwz_f32(bx.bkb).max(0) as u32,
+            grp: bx.inst.wrapping_mul(16).wrapping_add(bx.id as u32),
+            face: b.aim,
+            atk: bx.id.wrapping_add(1),
+        };
+        k += 1;
+    }
+    // the projectiles (650E weapons): each live box at the projectile, its numbers at the weapon's L, one attack
+    // per projectile so a victim is hit once per phase
+    crate::tu::geno_boss_spawn::live_boxes(unsafe { crate::tu::geno_vm_host::WEAPONS }, |slot, x, y, bx, l, grp| {
+        if k >= LIVE_HITS {
+            return;
+        }
+        let (dmg, kbg, bkb, skb) = crate::tu::geno_boss_spawn::at_l(bx, l);
+        if log_on() {
+            eprintln!("petey: f{} weapon box slot {slot} at ({x:.1}, {y:.1}) r {:.1} dmg {dmg:.1} capsule {k}", b.last_frame, bx.size);
+        }
+        v[k] = HitDef {
+            x,
+            y,
+            r: bx.size * MODEL_SCALE,
+            dmg: fctiwz_f32(dmg).max(0) as u32,
+            angle: bx.angle,
+            kbg: fctiwz_f32(kbg).max(0) as u32,
+            wkb: fctiwz_f32(skb).max(0) as u32,
+            bkb: fctiwz_f32(bkb).max(0) as u32,
+            grp,
+            face: b.aim,
+            atk: 0x80 | slot as u8,
+        };
+        k += 1;
+    });
+    (v, k)
+}
+
+/// Copy the actor's state into the host's view (draw, hit shapes, HUD and Envoy read `B`).
+unsafe fn mirror(g: &crate::tu::geno_boss::Define) {
+    use crate::tu::geno_boss::S;
+    let var = |n: &str| g.vars.iter().position(|(k, _)| k == n).map(|i| S.vars[i]).unwrap_or(0.0);
+    B.prev_st = S.prev_status;
+    B.st = S.status;
+    B.sf = S.sf;
+    B.mot = S.motion;
+    B.mf = S.mf;
+    B.tl_mf = S.tl_mf;
+    B.px = S.x;
+    B.vx = S.vx;
+    B.aim = S.aim;
+    B.cage = [S.hp[1], S.hp[2]];
+    B.locked = S.locked;
+    B.inst = S.inst;
+    let ph = fctiwz_f32(var("phase"));
+    if ph != B.phase {
+        eprintln!("petey: phase {} (L {:.1})", ph, level());
+    }
+    B.phase = ph;
+    B.t_out = var("T");
+    B.cage_broken = var("cageBroken") != 0.0;
+    if B.cause == 0 && S.cause != 0 {
+        if S.cause == 1 {
+            B.freed = if var("lowerSideIsLeft") != 0.0 { 0 } else { 1 };
+            eprintln!("petey: f{} dying (lower cage {} at {:.1}%)", B.last_frame, B.freed, fmin(cage_pct(0), cage_pct(1)));
+        } else {
+            eprintln!("petey: f{} cage broken: Down", B.last_frame);
+        }
+        B.cause = S.cause;
+    }
+}
+
+/// Frames from the cause (death / break) to the carrier's KO: the define's first stage notification past a motion's
+/// opening frames (Petey's Down timeline), or 0 (at once) when its timelines have none.
+fn down_end() -> i32 {
+    static V: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
+    *V.get_or_init(|| {
+        let Some(g) = geno() else { return 0 };
+        g.motions
+            .iter()
+            .flat_map(|m| m.timeline.iter())
+            .filter(|e| e.frame > 1 && matches!(e.op, crate::tu::geno_boss::Op::StageEvent(_) | crate::tu::geno_boss::Op::StageEventIf(..)))
+            .map(|e| e.frame)
+            .min()
+            .unwrap_or(0)
+    })
+}
+
+/// One Geno frame: the actor ticks, its events go to the presentation (sounds, shakes, stage events).
+unsafe fn geno_frame(g: &crate::tu::geno_boss::Define) {
+    use crate::tu::geno_boss as gb;
+    let mut last = B.st;
+    gb::tick(g, world());
+    let ev = gb::S.ev;
+    let n = gb::S.ev_n as usize;
+    for &(k, v) in ev.iter().take(n) {
+        match k {
+            gb::EV_STATUS => {
+                if log_on() {
+                    let name = g.status(v as u8).map(|s| s.name.as_str()).unwrap_or("?");
+                    eprintln!("petey: f{} status {} -> {} ({name}) px {:.1} cages {} {}", B.last_frame, last, v, gb::S.x, gb::S.hp[1], gb::S.hp[2]);
+                }
+                last = v;
+            }
+            gb::EV_SOUND => {
+                let f = gb::S.mf;
+                // the IR's sound id (an id the IR left unread plays nothing)
+                if v >= 0 {
+                    let id = v as u16;
+                    B.mot = gb::S.motion;
+                    push_snd(id, f);
+                }
+            }
+            gb::EV_SHAKE => {
+                let kind = [QuakeKind_Small, QuakeKind_Medium, QuakeKind_Large][(v as usize).min(2)];
+                if log_on() {
+                    eprintln!("petey: f{} shake {} (motion {} frame {})", B.last_frame, v, gb::S.motion, gb::S.mf);
+                }
+                melee_world::tu::camera::Camera_RequestQuake(kind, core::ptr::null_mut());
+            }
+            gb::EV_STAGE => {
+                eprintln!("petey: f{} stage event {}", B.last_frame, v);
+                match v {
+                    1000 => B.freed = 0,
+                    1001 => B.freed = 1,
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+    mirror(g);
 }

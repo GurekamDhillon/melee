@@ -683,7 +683,6 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         let Some(b) = m.data(&c).get(ptr as usize..ptr as usize + n * 4) else { return -1 };
         unsafe { for i in 0..n { melee_modes::tu::envoy::PLAN[i] = i32::from_le_bytes(b[i * 4..i * 4 + 4].try_into().unwrap()); } }
         unsafe {
-            melee_modes::tu::petey_file::prefetch();
             if let Some(h) = melee_modes::tu::envoy::PLAN_HINT {
                 h(&*core::ptr::addr_of!(melee_modes::tu::envoy::PLAN));
             }

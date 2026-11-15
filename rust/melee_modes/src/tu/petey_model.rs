@@ -264,6 +264,12 @@ pub fn arena_blast(d: &[u8]) -> Option<[f32; 4]> {
 /// suffix and its extent taken in the first frame of `idle` (the bind pose without it). `wants` = (model name,
 /// animation prefix). Call it on a helper thread, as `get` does: the rigs must live on the system heap.
 pub fn load_rigs(rel: &[&str], wants: &[(&str, &str, &str)]) -> Result<Vec<Option<Rig>>, String> {
+    load_rigs_with(rel, wants, true)
+}
+
+/// [`load_rigs`] with the root-motion strip optional (`strip` false: the clips keep their travel, for a host that
+/// reads it as movement and holds it itself, `vm_boss_model.rs`).
+pub fn load_rigs_with(rel: &[&str], wants: &[(&str, &str, &str)], strip: bool) -> Result<Vec<Option<Rig>>, String> {
     let root = local_root().ok_or("no local Brawl folder")?;
     let mut f = root.join("disc").join("files");
     for p in rel {
@@ -313,7 +319,9 @@ pub fn load_rigs(rel: &[&str], wants: &[(&str, &str, &str)]) -> Result<Vec<Optio
                     }
                 }
             }
-            r.strip_root_motion();
+            if strip {
+                r.strip_root_motion();
+            }
             let mut tris = vec![];
             r.skin(r.anim(idle), 0.0, &mut tris);
             (r.min, r.max) = extent(&tris);
@@ -762,6 +770,17 @@ impl Anim {
         }
         any.then_some(r)
     }
+    /// `bone`'s translation at `frame` (None: no such bone track; an axis without a channel reads 0).
+    pub fn trans_at(&self, bone: &str, frame: f32) -> Option<[f32; 3]> {
+        let (_, v) = self.tracks.iter().find(|(n, _)| n == bone)?;
+        let mut r = [0.0f32; 3];
+        for a in 0..3 {
+            if let Some(t) = &v[6 + a] {
+                r[a] = t.at(frame);
+            }
+        }
+        Some(r)
+    }
     /// Root-motion strip (the halberd `transn_policy` 'strip' rule): `bone`'s translation on the chosen axes holds
     /// its frame-0 value for the whole clip, for a body whose travel the game moves itself (Subspace enemies).
     pub fn hold_translation(&mut self, bone: &str, axes: [bool; 3]) {
@@ -1025,6 +1044,15 @@ impl Rig {
                 _ => local,
             });
         }
+    }
+
+    /// Pose the bones for `frame` of `anim` into `b.world` (no allocation once `b` came from [`Self::draw_bufs`]).
+    pub fn pose_into(&self, anim: Option<&Anim>, frame: f32, b: &mut DrawBufs) {
+        self.pose_bones_into(anim, frame, &mut b.world);
+    }
+    /// A point in bone `slot`'s local space, in model space, from bones posed by [`Self::pose_into`].
+    pub fn posed_point(b: &DrawBufs, slot: usize, local: [f32; 3]) -> [f32; 3] {
+        b.world.get(slot).map(|m| xf(m, local, 1.0)).unwrap_or(local)
     }
 
     /// Buffers sized for [`Self::skin_with`]: (bone matrices, skin matrices, vertices). Make them off the game thread
@@ -1380,6 +1408,12 @@ pub fn extent(tris: &[Vert]) -> ([f32; 3], [f32; 3]) {
 /// `org`: the model-space ground height and depth centre that land on `at` (x stays: the model's x is its own).
 /// Allocates nothing of its own: the texture objects live in the model, made on the loader's helper thread.
 pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
+    let (s, c) = (yaw.sin(), yaw.cos());
+    draw_tris_m(rig, tris, org, at, scale, [[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]], flash)
+}
+
+/// [`draw_tris`] with a full model rotation `m` (row-major, applied to the model-space point) in place of the yaw.
+pub unsafe fn draw_tris_m(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, m: [[f32; 3]; 3], flash: bool) {
     use melee_runtime::tu::displayfunc_native::ext as gx;
     use melee_runtime::tu::lbrefract::ext as gi;
     use melee_runtime::tu::sobjlib::ext as gs;
@@ -1414,7 +1448,6 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
     }
     melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm((&mut (*cobj).view_mtx) as *mut Mtx as _, 0);
     gx::GXSetCurrentMtx(0);
-    let (s, c) = (yaw.sin(), yaw.cos());
     let mut start = 0usize;
     for bt in &rig.batches {
         let end = (bt.end as usize).min(tris.len());
@@ -1463,7 +1496,11 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
             gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
             for (p, col, uv) in chunk {
                 let (x, y, z) = (p[0] * scale, (p[1] - org[0]) * scale, (p[2] - org[1]) * scale);
-                gx::GXPosition3f32(at[0] + x * c + z * s, at[1] + y, at[2] - x * s + z * c);
+                gx::GXPosition3f32(
+                    at[0] + m[0][0] * x + m[0][1] * y + m[0][2] * z,
+                    at[1] + m[1][0] * x + m[1][1] * y + m[1][2] * z,
+                    at[2] + m[2][0] * x + m[2][1] * y + m[2][2] * z,
+                );
                 if flash {
                     gx::GXColor4u8(255, 255, 255, 255);
                 } else {
@@ -1638,3 +1675,5 @@ pub unsafe fn draw_fade(a: u8) {
     gx::GXSetBlendMode(GX_BM_NONE as _, GX_BL_ONE as _, GX_BL_ZERO as _, GX_LO_NOOP as _);
     melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
 }
+
+

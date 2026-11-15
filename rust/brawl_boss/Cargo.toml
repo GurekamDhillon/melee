@@ -7,6 +7,7 @@ publish.workspace = true
 description = "Standalone decoder and script runner for Brawl boss parameter files (clean-room, phase 1 of the Petey port). No game-crate dependencies; no_std + alloc core, integer / fixed-point only."
 
 [dependencies]
+libm = "0.2"
 
 [[bin]]
 name = "brawl_boss_dump"

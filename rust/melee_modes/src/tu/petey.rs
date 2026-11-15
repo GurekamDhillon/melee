@@ -670,7 +670,8 @@ unsafe fn arena_camera() {
     let a = crate::tu::geno_vm::actor();
     // the boss's body: its centre bone when the model has one, else its position, with his size around it
     let (bx, by) = vm().and_then(|p| crate::tu::vm_boss_model::bone_world(vm_run(p), a, 0, [0.0; 3])).map(|q| (q[0], q[1])).unwrap_or((a.pos[0], a.pos[1]));
-    let mut b = [fmin(a.pos[0], bx) - 25.0, fmax(a.pos[0], bx) + 25.0, fmin(a.pos[1], by) - 25.0, fmax(a.pos[1], by) + 25.0];
+    // his whole body (wings, tail): a generous box around the origin and the root bone [L: not the model's bounds]
+    let mut b = [fmin(a.pos[0], bx) - 60.0, fmax(a.pos[0], bx) + 60.0, fmin(a.pos[1], by) - 60.0, fmax(a.pos[1], by) + 70.0];
     if let Some(f) = crate::tu::vm_arena::bounds() {
         b = [fmin(b[0], f[0]), fmax(b[1], f[1]), fmin(b[2], f[2]), fmax(b[3], f[3])];
     }
@@ -685,7 +686,7 @@ unsafe fn arena_camera() {
         }
     }
     let bz = &*core::ptr::addr_of!(crate::tu::script_game::stage_info.blast_zone);
-    b = [fmax(b[0] - MARGIN, bz.left - MARGIN), fmin(b[1] + MARGIN, bz.right + MARGIN), fmax(b[2] - MARGIN, bz.bottom - MARGIN), fmin(b[3] + MARGIN, bz.top + MARGIN)];
+    b = [fmax(b[0] - MARGIN, bz.left - 100.0), fmin(b[1] + MARGIN, bz.right + 100.0), fmax(b[2] - MARGIN, bz.bottom - 100.0), fmin(b[3] + MARGIN, bz.top + 100.0)];
     let th = melee_runtime::gekko::tanf(0.5 * FOV * 0.017453292);
     let asp = cm::cm_803BCB64.aspect;
     let want_d = fmax(fmax((b[1] - b[0]) * 0.5 / (th * asp), (b[3] - b[2]) * 0.5 / th), 120.0);
@@ -724,13 +725,22 @@ unsafe fn arena_camera() {
     qb.z_pos = B.cam[2];
     cm::Camera_UpdateQuakes(&mut qb);
     cm::Camera_ApplyQuake(&mut qb, core::ptr::addr_of_mut!(gc.transform) as *mut CameraTransformState);
-    if B.last_frame % 120 == 0 && log_on() {
+    if log_on() {
+        // log only (a check's count, not game state): frames his body box (origin +-60 x, -60..+70 y) left the frame
+        static OUT: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
         let half_w = B.cam[2] * th * asp;
-        let on = (a.pos[0] - B.cam[0]).abs() <= half_w && (a.pos[1] - B.cam[1]).abs() <= B.cam[2] * th;
-        eprintln!(
-            "petey: f{} arena camera centre ({:.1}, {:.1}) dist {:.1}; boss at {:.1} {:.1} {}",
-            B.last_frame, B.cam[0], B.cam[1], B.cam[2], a.pos[0], a.pos[1], if on { "in view" } else { "OUT OF VIEW" }
-        );
+        let half_h = B.cam[2] * th;
+        let on = a.pos[0] - 60.0 >= B.cam[0] - half_w && a.pos[0] + 60.0 <= B.cam[0] + half_w && a.pos[1] - 60.0 >= B.cam[1] - half_h && a.pos[1] + 70.0 <= B.cam[1] + half_h;
+        if !on {
+            OUT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+        }
+        if B.last_frame % 120 == 0 {
+            eprintln!(
+                "petey: f{} arena camera centre ({:.1}, {:.1}) dist {:.1}; boss at {:.1} {:.1} {}; frames out of view so far {}",
+                B.last_frame, B.cam[0], B.cam[1], B.cam[2], a.pos[0], a.pos[1], if on { "in view" } else { "OUT OF VIEW" },
+                OUT.load(core::sync::atomic::Ordering::Relaxed)
+            );
+        }
     }
 }
 

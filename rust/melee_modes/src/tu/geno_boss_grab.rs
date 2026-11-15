@@ -21,6 +21,7 @@ use crate::tu::geno_boss::{self as gb, Attack, Cond, Define, HitboxDef, Motion, 
 use crate::tu::geno_boss_ir::J;
 use melee_types::*;
 use std::vec::Vec;
+use melee_core::ppc::{fctiwz, Ppc};
 
 /// `EV_GRAB` values.
 pub const GRAB_ARMED: i32 = 1;
@@ -481,7 +482,7 @@ pub fn tabuu_define(ir: &J) -> Result<Define, String> {
         attacks,
         messages: vec![],
         level_rows,
-        strength0: lv.get("initial").get("strength").num().unwrap_or(1.0) as u8,
+        strength0: fctiwz(lv.get("initial").get("strength").num().unwrap_or(1.0)) as u8,
         start_status: st_wait,
         slot_w: [1.0; 4],
         slot_repeat: 1.0,
@@ -547,12 +548,12 @@ pub fn bucculus_define(ir: &J) -> Result<Define, String> {
     attacks.push(Attack { name: "Spit-out roll".into(), boxes: vec![spit], states: 0 });
     let (a_bite, a_spit) = ((attacks.len() - 2) as u8, (attacks.len() - 1) as u8);
     // the bite on Absorption's hitbox frame
-    let hit_f = boss.get("timelines").arr().iter().find(|t| t.get("motion").str() == "Absorption").and_then(|t| t.get("events").arr().iter().find(|e| e.get("op").get("op").str() == "hitbox").and_then(|e| e.get("frame").num())).ok_or("Absorption: no hitbox frame")? as i32;
+    let hit_f = boss.get("timelines").arr().iter().find(|t| t.get("motion").str() == "Absorption").and_then(|t| t.get("events").arr().iter().find(|e| e.get("op").get("op").str() == "hitbox").and_then(|e| e.get("frame").num())).ok_or("Absorption: no hitbox frame").map(fctiwz)?;
     let mi = |n: &str| motions_wanted.iter().position(|m| *m == n).unwrap() as u8;
     motions[mi("Absorption") as usize].timeline.push(TimelineEvent { frame: hit_f, count: 1, every: 0, op: Op::GrabHit(a_bite) });
     let name = |ix: u8| boss.get("statuses").arr().iter().find(|s| s.get("index").num() == Some(ix as f64)).map(|s| s.get("name").str().to_string()).unwrap_or_default();
     let (st_wait, st_abs, st_b1, st_b2, st_roll) = (7u8, 10u8, 11u8, 12u8, 14u8);
-    let bit = |s: u8| 1u64 << s;
+    let bit = |s: u8| 1u64.pshl(s as i64);
     let st = |ix: u8, m: &str, mut enter: Vec<Op>, frame: Vec<Op>| {
         enter.insert(0, Op::Motion(mi(m)));
         Status { index: ix, name: name(ix), enter, frame, frame_once: false, intangible: false }

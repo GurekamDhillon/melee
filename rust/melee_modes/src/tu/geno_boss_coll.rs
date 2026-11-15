@@ -19,6 +19,15 @@ use super::geno_boss::{MAX_COLL_PTS, S};
 use super::geno_boss_ir::J;
 use crate::tu::petey_model as pm;
 use melee_types::{MapCollData, MapJoint, MapLine, MapLineRange, Vec2, LINE_FLAG_ENABLED, LINE_FLAG_PLATFORM};
+use melee_core::ppc::fcvt_u32;
+
+/// The C comparisons (semantics lint M1: no IEEE min / max).
+fn fmin(a: f32, b: f32) -> f32 {
+    if a < b { a } else { b }
+}
+fn fmax(a: f32, b: f32) -> f32 {
+    if a > b { a } else { b }
+}
 const MAP_LINE_GROUP_FLOOR: usize = melee_types::MapLineGroup_Floor as usize;
 
 /// A part's line set: the joints carrying its points, in point order (IR `platforms[].point_joints`). A name
@@ -285,7 +294,7 @@ pub fn build_surface(name: &'static str) -> Result<Surface, String> {
     // the side view: the horizontal axis with the larger spread in the reference pose (Wait / GunWait, else bind)
     let refa = r.anims.iter().find(|(n, _)| n.ends_with("Wait")).map(|(_, a)| a);
     let p0: Vec<[f32; 3]> = slots.iter().map(|&s| r.bone_point(refa, 0.0, s, [0.0; 3])).collect();
-    let spread = |k: usize| p0.iter().map(|p| p[k]).fold(f32::MIN, f32::max) - p0.iter().map(|p| p[k]).fold(f32::MAX, f32::min);
+    let spread = |k: usize| p0.iter().map(|p| p[k]).fold(f32::MIN, fmax) - p0.iter().map(|p| p[k]).fold(f32::MAX, fmin);
     let axis = if spread(2) > spread(0) { 2 } else { 0 };
     let order = upper_envelope(&p0.iter().map(|p| [p[axis], p[1]]).collect::<Vec<_>>());
     if order.len() < 2 {
@@ -293,7 +302,7 @@ pub fn build_surface(name: &'static str) -> Result<Surface, String> {
     }
     let mut clips = vec![];
     for (an, a) in r.anims.iter() {
-        let n = (a.frames.max(1.0) as usize).min(3600);
+        let n = (fcvt_u32(fmax(a.frames, 1.0)) as usize).min(3600);
         let mut v = Vec::with_capacity(n);
         for f in 0..n {
             v.push(order.iter().map(|&i| {
@@ -344,13 +353,13 @@ fn harness() -> Option<&'static Harness> {
             let (mut lo, mut x0, mut x1) = (f32::MAX, f32::MAX, f32::MIN);
             for f in v {
                 for p in f {
-                    lo = lo.min(p[1]);
-                    x0 = x0.min(p[0]);
-                    x1 = x1.max(p[0]);
+                    lo = fmin(lo, p[1]);
+                    x0 = fmin(x0, p[0]);
+                    x1 = fmax(x1, p[0]);
                 }
             }
             // a surface wider than 3/4 of FD is scaled down to fit (the boss arenas are wider than Melee's stage)
-            let w = (x1 - x0).max(1.0);
+            let w = fmax(x1 - x0, 1.0);
             let scale = std::env::var("MELEE_BOSS_PLATFORM_SCALE").ok().and_then(|v| v.parse().ok()).unwrap_or(if w > 120.0 { 120.0 / w } else { 1.0 });
             let floor: f32 = std::env::var("MELEE_BOSS_PLATFORM_Y").ok().and_then(|v| v.parse().ok()).unwrap_or(12.0);
             Ok(Harness { dy: floor - lo * scale, half: (x1 - x0) * 0.5 * scale, s, clip, scale })
@@ -400,7 +409,7 @@ unsafe fn harness_tick() {
     let v = &h.s.clips[h.clip].1;
     let c = S.coll_clock;
     // x: a triangle wave between the edges (the body turns at an edge without mirroring: the deck stays one way)
-    let span = 2.0 * (EDGE - h.half).max(1.0);
+    let span = 2.0 * fmax(EDGE - h.half, 1.0);
     let period = (2.0 * span / WALK) as i32;
     let t = c.rem_euclid(period.max(1)) as f32 * WALK;
     let x = if t < span { -span / 2.0 + t } else { span / 2.0 - (t - span) };

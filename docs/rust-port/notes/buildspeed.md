@@ -71,3 +71,27 @@ build). Blockers: the three build scripts (`melee/build.rs`, `melee_modes/build.
 Windows host; `webgpu_dawn`/SDL3 DLL packaging stays on the desktop; float code is Rust-defined so output should match, but the exe
 must pass the gate on Windows before it is trusted; msvc `link.exe` vs lld-link produces a different binary (pdb, ordering). Do a
 spike: `cargo xwin build --release -p melee` on the laptop, then run `gate.sh` against the result on the desktop.
+
+## Linux laptop, 2026-11-15 (i7-1370P, 20 threads, 62 GB)
+
+### Generic bloat (`cargo llvm-lines --release`)
+melee_modes and melee_chara have no generic worth a change (no function with more than one copy that matters). melee_engine's one
+large item was `mex_bridge::gobj_fn`: a 7249-arm `match` on a `&str` (58,004 LLVM lines, 9% of the crate) compiled to a chain of
+string compares; its "5427 copies of `gobj_fn::f`" are distinct one-line trampolines, not monomorphisations. `gen_mex_bridge.py`
+now emits a name-sorted table and a binary search (port/genbloat). melee_engine rebuild (touch, `-j 8`): 129-130 s -> 29 s.
+Goldens, synctest d4/d7 and run_modes NHV1 byte-identical against an exe of the parent.
+
+### Compiler: Arch's stable vs rustup's builds (`cargo build --release -j 8 -p melee`, private target dirs, idle machine)
+| toolchain | clean | melee_modes edit |
+|---|---|---|
+| stable 1.99.1, Arch's package (`/usr/bin/rustc`) | 632 s | 328 s, 327 s |
+| nightly 1.102.0 (2026-11-14), `-Zthreads=1` | 416 s | 237 s, 235 s |
+| nightly 1.102.0, `-Zthreads=8` | 425 s | 233 s, 252 s |
+The parallel front end gains nothing here (few, huge crates: codegen and LLVM dominate). The ~30% is the compiler build:
+the official rustup builds against Arch's own. Decision (owner): rustup's pinned nightly for every melee build, `-Zthreads` off.
+
+### PATH trap on the laptop
+Arch's `cargo` / `rustc` are in `/usr/bin`, which comes before `~/.cargo/bin` on this machine's PATH. `rustup override` and
+`rust-toolchain.toml` only act through rustup's proxies, so a plain `cargo` here silently builds with Arch's 1.99.1. Use
+`~/.cargo/bin/cargo` explicitly, or put `~/.cargo/bin` first in the build environment (`PATH="$HOME/.cargo/bin:$PATH"`).
+Check with `cargo --version` inside the worktree: it must say the pinned nightly.

@@ -329,20 +329,53 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
 /// The model's answers for a boss with a skeleton: the enemy's centre (getCenterPos: the node value 23014 names) and
 /// the node rotations R10006 / R10007 / R10024-R10047 ask for (their constant node arguments, the first two found;
 /// node ids are MDL0 bone indices). Without the model the VM's fallbacks stay.
-fn model_nodes(p: &Program, i: &mut vr::Input) {
+fn model_nodes(p: &'static Program, i: &mut vr::Input) {
+    let scan = node_scan(p);
     let a = crate::tu::geno_vm::actor();
-    if let Some(&(_, t, off)) = p.block_values.iter().find(|v| v.0 == 23014) {
-        let at = (if t == 0 { 0 } else { p.tuning_at } + off) as usize;
-        if let Some(w) = p.data.get(at..at + 4) {
-            let node = u32::from_be_bytes([w[0], w[1], w[2], w[3]]) as i32;
-            i.center = crate::tu::vm_boss_model::bone_world(p, a, node, [0.0; 3]);
-        }
+    if let Some(node) = scan.center {
+        i.center = crate::tu::vm_boss_model::bone_world(p, a, node, [0.0; 3]);
     }
     let mut n = 0;
-    for ins in &p.code {
+    for &node in &scan.ids[..scan.n] {
         if n == i.nodes.len() {
             break;
         }
+        if let Some(rot) = crate::tu::vm_boss_model::bone_rot(p, a, node) {
+            i.nodes[n] = vr::NodeRot { on: true, id: node, rot };
+            n += 1;
+        }
+    }
+}
+
+/// [`model_nodes`]'s reading of the program, made once per program: value 23014's node and the distinct constant node
+/// arguments of R10006 / R10007 / R10024-R10047 in code order (the first [`NODE_SCAN_MAX`]; a node the model lacks is
+/// skipped at use, as before). Fixed size: nothing is allocated in the game scope.
+const NODE_SCAN_MAX: usize = 16;
+#[derive(Clone, Copy)]
+struct NodeScan {
+    prog: usize,
+    center: Option<i32>,
+    ids: [i32; NODE_SCAN_MAX],
+    n: usize,
+}
+static mut NODE_SCAN: NodeScan = NodeScan { prog: 0, center: None, ids: [0; NODE_SCAN_MAX], n: 0 };
+
+fn node_scan(p: &'static Program) -> NodeScan {
+    let key = p as *const Program as usize;
+    // SAFETY: the game thread only; a pure function of the 'static program, so a rollback cannot stale it
+    unsafe {
+        if NODE_SCAN.prog == key {
+            return NODE_SCAN;
+        }
+    }
+    let mut s = NodeScan { prog: key, center: None, ids: [0; NODE_SCAN_MAX], n: 0 };
+    if let Some(&(_, t, off)) = p.block_values.iter().find(|v| v.0 == 23014) {
+        let at = (if t == 0 { 0 } else { p.tuning_at } + off) as usize;
+        if let Some(w) = p.data.get(at..at + 4) {
+            s.center = Some(u32::from_be_bytes([w[0], w[1], w[2], w[3]]) as i32);
+        }
+    }
+    'code: for ins in &p.code {
         for k in 0..ins.n as u32 {
             let Some(&A::Req { id, .. }) = p.args.get((ins.a + k) as usize) else { continue };
             if !matches!(id, 10006 | 10007 | 10024..=10047) {
@@ -350,14 +383,17 @@ fn model_nodes(p: &Program, i: &mut vr::Input) {
             }
             let Some(&A::K(v)) = p.args.get((ins.a + k + 1) as usize) else { continue };
             let node = v as i32;
-            if n < i.nodes.len() && !i.nodes[..n].iter().any(|x| x.id == node) {
-                if let Some(rot) = crate::tu::vm_boss_model::bone_rot(p, a, node) {
-                    i.nodes[n] = vr::NodeRot { on: true, id: node, rot };
-                    n += 1;
+            if !s.ids[..s.n].contains(&node) {
+                if s.n == NODE_SCAN_MAX {
+                    break 'code;
                 }
+                s.ids[s.n] = node;
+                s.n += 1;
             }
         }
     }
+    unsafe { NODE_SCAN = s };
+    s
 }
 
 unsafe fn reset_boxes() {

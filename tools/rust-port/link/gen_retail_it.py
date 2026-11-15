@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate rust/melee_link/src/retail_it.rs: the item logic and render-link tables of the it/*.c data files.
+"""Generate rust/melee_link_retail/src/retail_it.rs: the item logic and render-link tables of the it/*.c data files.
 
 The C fills `it_803F14C4` / `it_803F3100` / `it_803F23CC` / `it_803F4D20` (struct ItemLogicTable, one row per item kind:
 the ItemStateTable of the kind and 14 event / predicate callbacks) and the render-link tables `it_803F1418` /
@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 import gen_link as g
 import gen_retail as r
 
-OUT = os.path.join(g.RUST, 'melee_link', 'src', 'retail_it.rs')
-UNRES = os.path.join(g.RUST, 'melee_link', 'retail_it_unresolved.txt')
+OUT = os.path.join(g.RUST, 'melee_link_retail', 'src', 'retail_it.rs')
+UNRES = os.path.join(g.RUST, 'melee_link_retail', 'retail_it_unresolved.txt')
 IT = os.path.join(g.ROOT, 'src', 'melee', 'it')
 
 # (C file, table, rust path of the static, kind)

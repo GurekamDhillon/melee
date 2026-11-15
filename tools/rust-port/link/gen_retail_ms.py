@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate rust/melee_link/src/retail_ms.rs (MotionState tables) and, through gen_retail, retail.rs.
+"""Generate rust/melee_link_retail/src/retail_ms.rs (MotionState tables) and, through gen_retail, retail.rs.
 
 The MotionState tables are the data of ftmotionstates.c and of every ft*/kinds/*.c: rows of {anim_id, flags, move id,
 five callbacks}.  They are read from the transpiled initialisers under rust/*/src/raw (data only: no raw function is
@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import gen_link as g
 import gen_retail as r
 
-MS_OUT = os.path.join(g.RUST, 'melee_link', 'src', 'retail_ms.rs')
+MS_OUT = os.path.join(g.RUST, 'melee_link_retail', 'src', 'retail_ms.rs')
 KW = {'as', 'unsafe', 'i32', 'u32', 'u8', 'u16', 'i8', 'i16', 'u64', 'i64', 'usize', 'isize', 'f32', 'f64', 'bool', 'crate',
       'core', 'ffi', 'c_int', 'c_uint', 'enum_t', 'u32_0', 'u8_0', 'u16_0', 's32', 'MotionFlags', 'static', 'mut', 'const'}
 TABLE_RE = re.compile(r'(?m)^pub static mut (\w+): \[MotionState; (\d+)\]\s*=\s*unsafe \{')

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wire entries of rust/melee_link/retail_unresolved.txt whose canonical tu/ item now exists into the generated
+"""Wire entries of rust/melee_link_retail/retail_unresolved.txt whose canonical tu/ item now exists into the generated
 retail_ms.rs / retail.rs, and drop them from the list.
 
 gen_retail.py / gen_retail_ms.py read transpiled initialisers (melee_fighter/src/c2r, */src/raw) that were deleted in
@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 import gen_link as g
 import gen_retail as r
 
-MS = os.path.join(g.RUST, 'melee_link', 'src', 'retail_ms.rs')
-RT = os.path.join(g.RUST, 'melee_link', 'src', 'retail.rs')
+MS = os.path.join(g.RUST, 'melee_link_retail', 'src', 'retail_ms.rs')
+RT = os.path.join(g.RUST, 'melee_link_retail', 'src', 'retail.rs')
 OPT_CONST = {r'\[\[Option<&str>;\d+\];\d+\]': 'costume_strings_opt', r'\[Option<&str>;\d+\]': 'demo_strings_opt'}
 
 

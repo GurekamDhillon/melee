@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate rust/melee_link/src/retail.rs: the per-character static initialiser tables of ftdata.c.
+"""Generate rust/melee_link_retail/src/retail.rs: the per-character static initialiser tables of ftdata.c.
 
 The C fills `ftData_OnLoad[]`, `ftData_SpecialS[]`, ... (one slot per fighter kind, 33 retail rows) with static
 initialisers.  The native `melee_fighter::tu::ftdata` statics start empty, so the engine calls `install_retail()`
@@ -19,8 +19,8 @@ import gen_link as g
 
 C2R = os.path.join(g.RUST, 'melee_fighter', 'src', 'c2r', 'ft', 'ftdata.rs')
 TU = os.path.join(g.RUST, 'melee_fighter', 'src', 'tu', 'ftdata.rs')
-OUT = os.path.join(g.RUST, 'melee_link', 'src', 'retail.rs')
-UNRES = os.path.join(g.RUST, 'melee_link', 'retail_unresolved.txt')
+OUT = os.path.join(g.RUST, 'melee_link_retail', 'src', 'retail.rs')
+UNRES = os.path.join(g.RUST, 'melee_link_retail', 'retail_unresolved.txt')
 
 STATIC_RE = re.compile(r'(?m)^[ \t]*pub\s+static\s+(?:mut\s+)?(\w+)\s*:')
 

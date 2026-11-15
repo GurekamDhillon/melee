@@ -1383,6 +1383,7 @@ dependencies = [
  "melee_link_p3",
  "melee_link_p4",
  "melee_link_p5",
+ "melee_link_retail",
  "melee_modes",
  "melee_runtime",
  "melee_types",
@@ -1476,6 +1477,17 @@ dependencies = [
  "melee_runtime",
  "melee_types",
  "melee_world",
+]
+
+[[package]]
+name = "melee_link_retail"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_link_abi",
+ "melee_types",
 ]
 
 [[package]]

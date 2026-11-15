@@ -5,10 +5,7 @@
 
 pub use melee_link_abi::cabi;
 pub mod manual;
-pub mod retail;
-pub mod retail_ms;
-pub mod retail_it;
-pub mod strs;
+pub use melee_link_retail::{retail, retail_ms, retail_it, strs};
 mod gen_table;
 pub use gen_table::HOOKS;
 #[allow(unused_imports)]

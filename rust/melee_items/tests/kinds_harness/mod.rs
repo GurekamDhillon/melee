@@ -21,7 +21,10 @@ pub fn t64(d: f64) {
 }
 pub static mut H: u32 = 0;
 pub static mut HDBG: bool = false;
-pub fn hm(v: u32) {
+pub fn hm(mut v: u32) {
+    // every f32 NaN bit pattern hashes as one: neither the native C nor LLVM keeps Gekko's NaN sign / operand choice
+    // (tools/rust-port/referee nanprobe rows 6-27), and the drivers feed NaN on purpose (rg() case 2). gen/kinds/tu/mtu_common.h's HM does the same.
+    if v & 0x7F80_0000 == 0x7F80_0000 && v & 0x7F_FFFF != 0 { v = 0x7FC0_0000; }
     unsafe {
         H = H.wrapping_mul(0x0100_0193) ^ v;
         if HDBG {

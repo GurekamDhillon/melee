@@ -7,7 +7,7 @@
 # Exit 0 = every run 0 mismatches (and the golden run equal frame for frame).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$here/../../.."
-exe="${1:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
+exe="${1:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "m0_probe: GW_ISO_VANILLA not set"; exit 2; }
 cd "$repo"
 fail=0

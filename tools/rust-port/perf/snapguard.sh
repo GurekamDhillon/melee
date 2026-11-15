@@ -9,6 +9,7 @@ set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ] && { set -a; . "$ws/.env"; set +a; }
+# release by default on purpose (perf baseline profile, notes/buildspeed.md)
 runs=3; update=0; exe="build/cargo/${PROFILE:-release}/melee.exe"
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
 # Linux (notes/linux.md): no `python` on PATH means python3; the exe has no .exe suffix

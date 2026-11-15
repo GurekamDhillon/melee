@@ -4,6 +4,7 @@
 #   bash tools/rust-port/launcher/package.sh <out dir on E:> [patched MeleeUnlockedLauncher.exe]
 # Builds melee.exe (release) unless MELEE_EXE names one. Ships no disc data: the folder is checked against the list of
 # files it may hold, and any .iso/.dat/.usd/.ssm/.hps/.thp/.dol/.gci in it fails the run. Writes <out>.zip beside it.
+# RELEASE BUILD ON PURPOSE (notes/buildspeed.md): packaging ships the release profile; agent check builds use `fast`.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"
 OUT="${1:?usage: package.sh <out dir> [launcher exe]}"; LAUNCHER="${2:-}"

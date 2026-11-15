@@ -2,8 +2,10 @@
 export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are invisible (MELEE_WINDOW_HIDDEN=0 shows them)
 # The consolidation gate (docs/rust-port/notes/consolidation.md section 4). Run from anywhere; needs GW_ISO_VANILLA
 # (the workspace .env, never printed) and, for the diff part, C snapshots (tools/rust-port/snap/dump.sh).
-#   [PROFILE=fast] bash tools/rust-port/gate.sh [--engine legacy] [--update-progress] [--skip-build] [--scenarios a,b]
-#   PROFILE (default release): cargo profile of the exe under test; `fast` builds through cargo_fast.sh (notes/fastbuild.md).
+#   [RELEASE=1] bash tools/rust-port/gate.sh [--engine legacy] [--update-progress] [--skip-build] [--scenarios a,b]
+#   PROFILE (default fast; RELEASE=1 = release): cargo profile of the exe under test; non-release builds go through cargo_fast.sh
+#   (notes/fastbuild.md, notes/buildspeed.md). The snapshot perf guard (4) runs only on release: RELEASE=1 gate.sh for it.
+#   Hashes are byte-identical between fast and release (notes/buildspeed.md); candidate/packaging/perf builds stay release.
 # Checks (any failure exits non-zero):
 #   1. each golden scenario matches its CSV from frame 0 for at least the count recorded for the engine in
 #      docs/rust-port/engine_progress.tsv (latest step's row per scenario/engine);
@@ -14,6 +16,16 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #      tools/rust-port/semantics_lint.py finds no console-arithmetic violation in the game crates.
 # --update-progress appends the measured counts (only when none went down) and lowers baseline_max.tsv.
 set -u
+# One cargo target dir per worktree (notes/buildspeed.md): a CARGO_TARGET_DIR shared by worktrees makes lanes overwrite each
+# other's rlibs (cargo hashes workspace crates by workspace-relative path, so two trees get the same file names).
+# A target dir outside this worktree is ignored (build/cargo here, from .cargo/config.toml) unless ALLOW_SHARED_TARGET=1.
+_repo_for_target="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [ -n "${CARGO_TARGET_DIR:-}" ] && [ -z "${ALLOW_SHARED_TARGET:-}" ]; then
+  case "$(cd "$CARGO_TARGET_DIR" 2>/dev/null && pwd || echo "$CARGO_TARGET_DIR")/" in
+    "$_repo_for_target"/*) ;;
+    *) echo "$(basename "$0"): ignoring CARGO_TARGET_DIR=$CARGO_TARGET_DIR (outside this worktree; ALLOW_SHARED_TARGET=1 keeps it)" >&2; unset CARGO_TARGET_DIR ;;
+  esac
+fi
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 cd "$repo"
@@ -34,7 +46,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "gate: GW_ISO_VANILLA not set" >&2; exit 2; }
 export MELEE_WINDOW_UNFOCUSED=1
 case "$engine" in tu) ;; legacy) echo "gate: the legacy model was removed (consolidation step 19)" >&2; exit 2 ;; *) echo "gate: unknown engine '$engine' (tu)" >&2; exit 2 ;; esac
-profile="${PROFILE:-release}"
+profile="${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}"
 case "$profile" in release|fast|perf) ;; *) echo "gate: unknown PROFILE '$profile' (release|fast|perf)" >&2; exit 2 ;; esac
 exe="$repo/build/cargo/$profile/melee.exe"
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"

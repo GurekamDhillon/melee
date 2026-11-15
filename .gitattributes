@@ -123,6 +123,7 @@ rust/melee_items/tests/round6/fwd_cases.rs linguist-generated
 rust/melee_items/tests/round7/fwd_cases.rs linguist-generated
 rust/melee_items/tests/round8/fwd_cases.rs linguist-generated
 rust/melee_link/src/gen_table.rs linguist-generated
+rust/melee_link_p*/** linguist-generated
 rust/melee_link/src/retail.rs linguist-generated
 rust/melee_link/src/retail_ms.rs linguist-generated
 rust/melee_modes/tests/tu_geno_game.rs linguist-generated

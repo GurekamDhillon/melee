@@ -2,7 +2,7 @@
 # Envoy readiness checks (docs/rust-port/notes/envoy-readiness.md): one scripted check per fix of the readiness
 # audit. Each row FAILS on the build before its fix and passes after it. Headless, turbo, in-engine pads only.
 #
-#   EXE=build/cargo/release/melee.exe MODS=build/mods OUT=... [CARD=...] bash tools/rust-port/envoy/ready_checks.sh [row...]
+#   EXE=build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe MODS=build/mods OUT=... [CARD=...] bash tools/rust-port/envoy/ready_checks.sh [row...]
 # Rows (default: all that can run):
 #   quit    pause + L+R+A+Start in room 1 keeps the run (no RUN OVER); the next boot continues it at that room
 #   seed    MELEE_ENVOY_SEED=1 / 2 / 1 from the camp: runs 1 and 3 roll the same, run 2 differs
@@ -14,7 +14,7 @@
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
-. "$here/exe_check.sh"; exe_pick ready_checks "$repo/build/cargo/release/melee"
+. "$here/exe_check.sh"; exe_pick ready_checks "$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee"
 mods=${MODS:-$repo/build/mods}
 out=${OUT:-$repo/build/envoy-ready}
 card=${CARD:-$(dirname "$exe")/card}

@@ -25,7 +25,7 @@ ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env"; set +a; fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "switch_torture: GW_ISO_VANILLA not set"; exit 2; }
 command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
-exe="${EXE:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
+exe="${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 out="${OUT:-${TEMP:-/tmp}/switch_torture}"; mkdir -p "$out"
 frames="${FRAMES:-14400}"; tmo="${RUN_TIMEOUT:-$((frames / 2 + 600))}"; fights="${FIGHTS:-1 2 3c 5}"; old="${OLD:-0}"; depth="${DEPTH:-0}"
 mods="$repo/build/mods-torture"; rm -rf "$mods"; mkdir -p "$mods"

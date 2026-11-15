@@ -10,7 +10,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../..
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"; set -a; . "$ws/.env"; set +a
 O=$1; U1=$2; U2=$3; shift 3; [ "$1" = "--" ] && shift
 mkdir -p "$O"; O="$(cd "$O" && pwd)"
-B="${EXE:-$repo/build/cargo/release/melee.exe}"
+B="${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}"
 code() { python -I -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8"))["connectCode"])' "$1"; }
 C1=$(code "$U1"); C2=$(code "$U2")
 export MELEE_VOLUME=3 MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1

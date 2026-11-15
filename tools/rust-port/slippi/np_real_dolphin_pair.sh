@@ -22,7 +22,7 @@ O=$1; M=$2; shift 2; [ "$1" = "--" ] && shift
 EA=("$@")
 mkdir -p "$O"; O="$(cd "$O" && pwd)"; W=$(cygpath -w "$O")
 DOL="${DOL:-$ws/_build/dolphin-slippi6}"; DW=$(cygpath -w "$DOL")
-B="${EXE:-$repo/build/cargo/release/melee.exe}"
+B="${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}"
 AV="${APPV:-4.0.0-mainline-beta.20}"   # the engine's default appVersion, sent by both clients
 F=${FRAMES:-2400}
 export MELEE_VOLUME=3 MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1

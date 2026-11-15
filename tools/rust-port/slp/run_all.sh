@@ -5,7 +5,7 @@
 # Headless: no window is opened by the engine; nothing here sends OS input.
 set -u
 DIR=$1; OUT=$2; shift 2
-EXE=${MELEE_EXE:-build/cargo/release/melee.exe}
+EXE=${MELEE_EXE:-build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}
 [ -e "$EXE" ] || [ ! -e "${EXE%.exe}" ] || EXE="${EXE%.exe}"
 JOBS=${JOBS:-4}; TIMEOUT=${TIMEOUT:-900}
 mkdir -p "$OUT"

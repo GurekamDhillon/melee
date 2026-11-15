@@ -12,7 +12,7 @@ ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env"; set +a; fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "modhost: GW_ISO_VANILLA not set" >&2; exit 2; }
 export MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_VOLUME=3 MELEE_SCRIPTS=0
-profile="${PROFILE:-release}"; frames="${FRAMES:-3601}"; s="${SCENARIO:-cpu_fox_falco_dl}"; idle=""; case $s in cpu_*) idle="--idle-pads" ;; esac
+profile="${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}"; frames="${FRAMES:-3601}"; s="${SCENARIO:-cpu_fox_falco_dl}"; idle=""; case $s in cpu_*) idle="--idle-pads" ;; esac
 exe="$repo/build/cargo/$profile/melee.exe"
 if [ "${1:-}" != --skip-build ]; then
   bash "$here/build_mods.sh" || exit 1

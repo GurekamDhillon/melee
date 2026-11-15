@@ -5,7 +5,8 @@ Consolidation plan section 1.2 / step 4.  Usage:
   gen_link.py            regenerate gen_table.rs and unresolved.txt
   gen_link.py --report   print the counts only
 Inputs : rust/<crate>/src/tu/**/*.rs (never src/raw), tools/rust-port/link/link_skip.txt (entries that do not link).
-Outputs: rust/melee_link/src/gen_table.rs, rust/melee_link/unresolved.txt
+Outputs: rust/melee_link/src/gen_table.rs (install_all + HOOKS), the install crates rust/melee_link_p<N> (NPARTS of them,
+         listed in rust/Cargo.toml), rust/melee_link/unresolved.txt
 
 A hook entry NAME is linked when exactly one `tu/` file (other than the hook's own file) defines
 `#[no_mangle] pub [unsafe] extern "C" fn NAME` with the same arity and the same return-ness, or when
@@ -150,6 +151,83 @@ def nested_defs(t):
         yield m, [x[2] for x in enc]
 
 
+_ALLF = {}
+REEXP_CANDS = set()   # (name, crate, modpath, file) of the defs-table candidates that are re-exports, not definitions
+_REEXP = []   # (crate, modpath, rel, exposed name, original name) of the top-level `pub use path::{orig [as exposed]}` lines
+
+
+def _top_level_uses(t):
+    """Yield (orig, exposed, start) for each top-level `pub use path::item;` / `pub use path::{a, b as c};` of blanked text `t`
+    (several on one line are fine; nested modules, `self`, `*` and nested groups are skipped)."""
+    if 'pub use' not in t and 'pub  use' not in t: return
+    depth = [0] * (len(t) + 1)
+    d = 0
+    for i, ch in enumerate(t):
+        if ch == '{': d += 1
+        elif ch == '}': d -= 1
+        depth[i] = d
+    for m in re.finditer(r'(?<![\w])pub\s+use\s+([\w:]+)::(\{[^{}]*\}|\w+(?:\s+as\s+\w+)?)\s*;', t):
+        if depth[m.start()] != 0: continue
+        for n in m.group(2).strip('{}').split(','):
+            n = n.strip()
+            if not n or n == '*' or n.startswith('self'): continue
+            if ' as ' in n:
+                o, e = [x.strip() for x in n.split(' as ', 1)]
+            else:
+                o = e = n
+            if e == '_': continue
+            yield o, e, m.start()
+
+
+def _all_sigs():
+    """name -> [(nparams, hasret)] of every top-level `pub fn` of the leaf crates (any file), plus the re-export table."""
+    if _ALLF: return _ALLF
+    for crate, f, rel in tu_files():
+        t = blank(open(f, encoding='utf8', errors='replace').read())
+        for m, _chain in nested_defs(t):
+            op = m.end() - 1
+            cl = match_close(t, op, '(', ')')
+            if cl < 0: continue
+            plist = t[op+1:cl]
+            if '...' in plist: continue
+            after = t[cl+1:cl+80].lstrip()
+            _ALLF.setdefault(m.group(1), []).append((count_params(plist), after.startswith('->') and not re.match(r'->\s*!', after)))
+        c, mp = modpath_of(f)
+        for o, e, _pos in _top_level_uses(t):
+            _REEXP.append((c, mp, rel, e, o))
+    return _ALLF
+
+
+def reexport_sig(name, seen=None):
+    """(nparams, hasret) of `name` when it is a function, or a chain of `pub use path::orig [as name]` re-exports (facade
+    modules that replaced a forwarder by `pub use crate::tu::x::name_fp as name;`) ending in exactly one definition; else None."""
+    _all_sigs()
+    seen = set(seen or ()) | {name}
+    sig = set(_ALLF.get(name, []))
+    if len(sig) == 1: return next(iter(sig))
+    if sig: return None
+    found = set()
+    for c, mp, rel, e, o in _REEXP:
+        if e != name or o in seen: continue
+        s = reexport_sig(o, seen)
+        if s: found.add(s)
+    return next(iter(found)) if len(found) == 1 else None
+
+
+def add_reexport_defs(defs, tier_tu):
+    """Add the re-exports of the tu/ files (tier_tu) or of the pre-consolidation modules (not tier_tu) as candidates."""
+    _all_sigs()
+    for c, mp, rel, e, o in _REEXP:
+        is_tu = rel.startswith('tu/')
+        if is_tu != tier_tu or 'test' in rel: continue
+        if not is_tu and (rel.split('/')[0] in ('c2r', 'types', 'bin', 'tests', 'gen') or rel.startswith('tu_') or rel in ('lib.rs', 'compat.rs')): continue
+        if any(d[1] == mp for d in defs.get(e, [])): continue
+        sig = reexport_sig(o) if o != e else reexport_sig(e)
+        if sig:
+            defs[e].append((c, mp, sig[0], sig[1], rel))
+            REEXP_CANDS.add((e, c, mp, rel))
+
+
 def index_legacy():
     """Second-tier homes: the pre-consolidation modules outside tu/ (melee_world/src/ftlib.rs ...). Used only when no tu/
     file defines the name; step 21/23 of the plan folds them into their tu files."""
@@ -170,6 +248,7 @@ def index_legacy():
             hasret = after.startswith('->') and not re.match(r'->\s*!', after)
             defs[m.group(1)].append((c, '::'.join([mp] + chain), count_params(plist), hasret, rel))
             PLIST[(c, '::'.join([mp] + chain), m.group(1))] = plist
+    add_reexport_defs(defs, False)
     return defs
 
 
@@ -216,6 +295,8 @@ def index_defs():
                 if len(sig) == 1:
                     npar, hasret = next(iter(sig))
                     defs[n].append((c, mp, npar, hasret, rel))
+                    REEXP_CANDS.add((n, c, mp, rel))
+    add_reexport_defs(defs, True)
     return defs
 
 
@@ -237,6 +318,20 @@ def class_mismatch(hook_ptypes, plist):
         ca, cb = tclass(a), tclass(b)
         if ca and cb and ca != cb: return True
     return False
+
+
+def void_ptypes(ptypes, ptext, dflt):
+    """An untyped `*mut c_void` parameter gets the class its default body reads it as: `_a0 as *mut HSD_GObj` (then
+    `.user_data`) is a GObj, `_a0 as *mut Fighter` the Fighter record. Without this the class check sees no class and a
+    typed canonical (`ftcommon_8007e2fc(fp: &mut Fighter)`) would get the GObj pointer bit-copied into its `&mut Fighter`
+    (ft_0d31's `ftCommon_8007E2FC` hook: the fighter read its motion state from the GObj and faulted)."""
+    names = [re.sub(r'^mut\s+', '', x.strip()).split(':')[0].strip() for x in split_top(ptext, ',') if x.strip()]
+    out = list(ptypes)
+    for i, (n, t) in enumerate(zip(names, ptypes)):
+        if 'c_void' not in t or not n: continue
+        m = re.search(r'(?<!\w)' + re.escape(n) + r'\s+as\s+\*(?:mut|const)\s+(\w+)', dflt or '')
+        if m and tclass('*mut ' + m.group(1)): out[i] = '*mut ' + m.group(1)
+    return out
 
 
 ENTRY_HEAD = re.compile(r'\s*(?:(?P<hook>[A-Za-z_]\w*)\s+(?=[A-Za-z_]\w*\s*\()|fn\s+)?(?P<name>[A-Za-z_]\w*)\s*\(')
@@ -318,7 +413,7 @@ def parse_hooks():
                 else:
                     path = None
                 rt = re.match(r'\s*->\s*(.+?)\s*(?:(?<![=!<>])=>?(?![=>])|$)', rest, re.S)
-                hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=name, npar=npar, hasret=hasret, todo=todo,
+                hooks.append(dict(ptypes=void_ptypes(_ptypes(_pt), _pt, dflt), crate=c, file=rel, name=name, npar=npar, hasret=hasret, todo=todo,
                                   kind=kind, path=path, mod=mod_chain, ret=rt.group(1).strip() if rt else None,
                                   byname=(kind == 'external_macro' and crate == 'melee_modes')))
     # `lb_hook!(H_NAME, NAME, (a: T, ..) -> R [= default]);` (melee_runtime lb* TUs): the static is `<mods>::H_NAME`
@@ -454,6 +549,8 @@ def parse_hooks():
         fnames = {}
         for fm in re.finditer(r'\bpub\s+(?:unsafe\s+)?(?:extern\s+)?fn\s+(\w+)\s*\(', t):
             fnames.setdefault(fm.group(1).upper().replace('_', ''), fm.group(1))
+        for _o, ex, _pos in _top_level_uses(t):   # a `pub use crate::tu::x::name;` that replaced the forwarder `pub fn name`
+            fnames.setdefault(ex.upper().replace('_', ''), ex)
         for sm in re.finditer(r'pub\s+static\s+mut\s+([A-Z][A-Z0-9_]*)\s*:\s*Option<\s*(?:unsafe\s+)?(extern\s+)?fn\s*\(', t):
             nm = fnames.get(sm.group(1).replace('_', ''))
             if not nm: continue
@@ -574,6 +671,9 @@ def choose(cands, name, cmap, own_file):
         norm = lambda s: s.lower().replace('_', '')
         pick = [c for c in cands if norm(os.path.splitext(os.path.basename(c[4]))[0]) == norm(stem)]
         if len(pick) == 1: return pick[0]
+    # a definition beats re-exports of (other crates' copies of) the same name: facade modules re-export instead of forwarding
+    real = [c for c in cands if (name, c[0], c[1], c[4]) not in REEXP_CANDS]
+    if len(real) == 1 and len(real) < len(cands): return real[0]
     low = sorted(cands, key=lambda c: LEAVES.index(c[0]) if c[0] in LEAVES else 99)
     if low and (len(low) == 1 or low[0][0] != low[1][0]) and low[0][0] == 'melee_runtime':
         return low[0]
@@ -677,6 +777,123 @@ def static_index():
     return idx
 
 
+NPARTS = 6       # install crates rust/melee_link_p<N> (each resolves only its own few thousand hook paths: notes/buildspeed.md)
+NL = chr(10)
+PER_FILE = 10    # install fns per module file (lets codegen units run in parallel)
+HDR = ['// @generated by tools/rust-port/link/gen_link.py. Do not edit.',
+       '#![allow(non_snake_case, unused_unsafe, clippy::all)]']
+
+
+def part_cuts(counts, nparts=NPARTS):
+    """Chunk index ranges of the parts: consecutive chunks, each cut at the chunk boundary nearest an equal hook share."""
+    total = sum(counts); cum = [0]
+    for c in counts: cum.append(cum[-1] + c)
+    cuts = [0]
+    for k in range(1, nparts):
+        t = total * k / nparts
+        i = min(range(cuts[-1] + 1, len(counts)), key=lambda j: abs(cum[j] - t))
+        cuts.append(i)
+    cuts.append(len(counts))
+    return list(zip(cuts, cuts[1:]))
+
+
+def emit_parts(chunks, tail, rust=RUST):
+    """Write the install crates melee_link_p<N> (chunks = [(leaf crate, [hook lines])] in install order) and
+    melee_link/src/gen_table.rs (install_all calling each part in order, then the `tail` lines: the HOOKS table)."""
+    w = lambda path, lines: open(path, 'w', encoding='utf8', newline=NL).write(NL.join(lines) + NL)
+    counts = [sum(1 for l in c[1] if l.startswith('    unsafe {')) for c in chunks]
+    parts = part_cuts(counts)
+    for p, (lo, hi) in enumerate(parts):
+        pdir = os.path.join(rust, f'melee_link_p{p}')
+        os.makedirs(os.path.join(pdir, 'src'), exist_ok=True)
+        for old in glob.glob(os.path.join(pdir, 'src', 'f*.rs')): os.remove(old)
+        deps = sorted(set(re.findall(r'\b(melee_[a-z]+)::', NL.join(l for c in chunks[lo:hi] for l in c[1]))))
+        w(os.path.join(pdir, 'Cargo.toml'), ['# @generated by tools/rust-port/link/gen_link.py. Do not edit.', '[package]',
+          f'name = "melee_link_p{p}"', 'version.workspace = true', 'edition.workspace = true', 'license.workspace = true',
+          'publish.workspace = true', '', '[dependencies]', 'melee_link_abi.workspace = true'] + [f'{d}.workspace = true' for d in deps])
+        files = sorted(set(ci // PER_FILE for ci in range(lo, hi)))
+        for fi in files:
+            fo = list(HDR) + ['use crate::cast;', '']
+            for ci in range(max(lo, fi * PER_FILE), min(hi, (fi + 1) * PER_FILE)):
+                fo += [f'// {chunks[ci][0]}', '#[inline(never)]', f'pub(super) fn c{ci:03}() {{'] + chunks[ci][1] + ['}', '']
+            w(os.path.join(pdir, 'src', f'f{fi:02}.rs'), fo)
+        lib = list(HDR) + [f'//! Install part {p} of {len(parts)} of melee_link (hooks of chunks {lo}..{hi}): called by `melee_link::install()`.',
+               '#![allow(unused_imports)]', 'pub(crate) use melee_link_abi::{cabi, cast, va_word, va_words};', '']
+        lib += [f'mod f{fi:02};' for fi in files] + ['', 'pub fn install() {'] + [f'    f{ci // PER_FILE:02}::c{ci:03}();' for ci in range(lo, hi)] + ['}']
+        w(os.path.join(pdir, 'src', 'lib.rs'), lib)
+    for stale in glob.glob(os.path.join(rust, 'melee_link_p*')):
+        if not re.search(r'melee_link_p(\d+)$', stale) or int(re.search(r'(\d+)$', stale).group(1)) >= len(parts):
+            print('stale part crate (remove it and its workspace entry):', stale)
+    link_dir = os.path.join(rust, 'melee_link')
+    for old in glob.glob(os.path.join(link_dir, 'src', 'gen_table', '*.rs')): os.remove(old)
+    if os.path.isdir(os.path.join(link_dir, 'src', 'gen_table')): os.rmdir(os.path.join(link_dir, 'src', 'gen_table'))
+    out = list(HDR) + ['', 'pub fn install_all() {'] + [f'    melee_link_p{p}::install();' for p in range(len(parts))] + ['}', '']
+    w(os.path.join(link_dir, 'src', 'gen_table.rs'), out + tail)
+    print('parts (chunks, hooks):', [(hi - lo, sum(counts[lo:hi])) for lo, hi in parts])
+
+
+_LOWMAP = {}
+
+
+def real_name(pick, name, defs, legacy):
+    """The spelling the generated call uses: the first definition (tu/ files, then the older modules, in file order) of the pick
+    whose name matches the hook's case-insensitively (the renamed `lower(C name)` fns of the port)."""
+    if not _LOWMAP:
+        for d in (defs, legacy):
+            for k in d: _LOWMAP.setdefault(k.lower(), []).append((k, d))
+    for k, d in _LOWMAP.get(name.lower(), []):
+        if pick in d[k]: return k
+    return name
+
+
+def tc_bad(h, pick, defs, legacy):
+    """True when a parameter of the hook and of the FUNCTION THE CALL WILL USE (same module, same position) are different object
+    classes. A lower-cased typed sibling of another spelling (`it_802f2014(ip: &mut Item)` next to `it_802F2014(gobj: *mut HSD_GObj)`)
+    is a different function and does not count."""
+    real = real_name(pick, h['name'], defs, legacy)
+    return any(class_mismatch(h.get('ptypes') or [], pl) for (kc, km, kn), pl in PLIST.items()
+               if (kc, km) == (pick[0], pick[1]) and kn == real)
+
+
+def bisect_limit(chunks, base_path, subset):
+    """Debug switch for bisecting a table change (GEN_LINK_BASE=<an older single-file gen_table.rs>, GEN_LINK_SUBSET=<lo>:<hi>).
+    An install entry whose code differs from the base's (site numbers ignored) is a change; the changes are numbered in
+    hook-path order (the list goes to stderr) and only those with lo <= index < hi are kept. Any other change falls back
+    to the base's entry, or is left out when the base had none (the hook keeps its default). Entries only in the base
+    are installed first (an extra leading chunk): they set the same static as a re-exported old module name, so a kept
+    change still wins. Takes and returns the install chunks [(leaf crate, [hook lines])]."""
+    norm = lambda s: re.sub(r'cast::<_, _, \d+>', 'cast', s)
+    keyre = re.compile(r'^    unsafe \{ (\S+) = Some\(')
+    def entries(lines):
+        d = {}
+        for i, ln in enumerate(lines):
+            m = keyre.match(ln)
+            if m: d[m.group(1)] = (lines[i - 1], ln)
+        return d
+    base = entries(open(base_path, encoding='utf8').read().splitlines())
+    new = entries([l for c in chunks for l in c[1]])
+    changes = sorted(k for k, v in new.items() if k not in base or norm(base[k][1]) != norm(v[1]))
+    lo, hi = (int(x) for x in (subset or f'0:{len(changes)}').split(':'))
+    keep = set(changes[lo:hi])
+    for i, k in enumerate(changes):
+        sys.stderr.write(f'change {i} {"KEEP" if k in keep else "base"} {k}\n')
+    res = []
+    for crate, out in chunks:
+        r = []
+        i = 0
+        while i < len(out):
+            m = keyre.match(out[i + 1]) if i + 1 < len(out) else None
+            if m and out[i].startswith('    // ') and m.group(1) in new and m.group(1) in changes and m.group(1) not in keep:
+                if m.group(1) in base: r.extend(base[m.group(1)])
+                i += 2
+                continue
+            r.append(out[i]); i += 1
+        res.append((crate, r))
+    only = []
+    for k in sorted(set(base) - set(new)): only.extend(base[k])
+    return ([('base_only', only)] if only else []) + res
+
+
 def main():
     report = '--report' in sys.argv
     skip = set()
@@ -743,11 +960,20 @@ def main():
                 ok = [c for c in cands if c[2] == h['npar'] and (c[3] == h['hasret'] or (c[3] and not h['hasret']))]
                 pick = choose(ok, h['name'], cmap, h['file'])
                 if pick is None:
+                    # a candidate that returns a value the hook does not (`ret::ft_800831cc` next to the void one) is the second choice
+                    ok2 = [c for c in ok if c[3] == h['hasret']]
+                    if len(ok2) < len(ok): pick = choose(ok2, h['name'], cmap, h['file'])
+                if pick is None:
                     why = 'ambiguous' if len([c for c in ok if c[4] != h['file']]) > 1 else ('selfdef' if cands and all(c[4] == h['file'] for c in cands) else 'sigmismatch')
                 elif key in skip or h['name'] in skip:
                     why = 'skipped'
-                elif any(class_mismatch(h.get('ptypes') or [], pl) for (kc, km, kn), pl in PLIST.items() if (kc, km) == (pick[0], pick[1]) and kn.lower() == h['name'].lower()):
-                    why = 'typeclass'
+                elif tc_bad(h, pick, defs, legacy):
+                    # the case-insensitive match is a typed sibling (`ftcommon_8007e2fc(fp: &mut Fighter)`): try the pre-consolidation
+                    # home under the hook's own spelling (`melee_chara::stubs::ftCommon_8007E2FC(g: G)`) before giving up
+                    alt = [c for c in legacy.get(h['name'], []) if c[2] == h['npar'] and (c[3] == h['hasret'] or (c[3] and not h['hasret']))]
+                    p2 = choose(alt, h['name'], cmap, h['file']) if alt else None
+                    if p2 is not None and not tc_bad(h, p2, defs, legacy): h['canon'] = p2
+                    else: why = 'typeclass'
                 else:
                     h['canon'] = pick
         if (why in ('nodef', 'sigmismatch', 'ambiguous', 'cabiref') or aliases.get(h['name'], '').startswith(('variadicw:', '!'))) and h['name'] in aliases and h['path'] and not (h.get('cabi') and h.get('ref')):
@@ -773,15 +999,17 @@ def main():
 
     link_dir = os.path.join(RUST, 'melee_link')
     os.makedirs(os.path.join(link_dir, 'src'), exist_ok=True)
-    out = ['// @generated by tools/rust-port/link/gen_link.py. Do not edit.',
-           '#![allow(non_snake_case, unused_unsafe, clippy::all)]',
-           'use crate::cast;', '']
+    CHUNK = 150          # hooks per install fn (keeps rustc's per-function passes small: notes/buildspeed.md)
+    chunks = []          # (crate, [lines of one hook ...]) in install order
+    out = []
     by_crate = collections.defaultdict(list)
     for h in linked: by_crate[h['crate']].append(h)
     site = 0
     for crate in LEAVES:
-        out.append(f'fn install_{crate}() {{')
-        for h in sorted(by_crate.get(crate, []), key=lambda x: x['path']):
+        for hi, h in enumerate(sorted(by_crate.get(crate, []), key=lambda x: x['path'])):
+            if hi % CHUNK == 0:
+                out = []
+                chunks.append((crate, out))
             if h.get('alias'):
                 out.append(f'    // {h["file"]}: link_alias.tsv')
                 al = h["alias"]
@@ -828,7 +1056,7 @@ def main():
             site += 1
             S = site * 100
             call_args = ', '.join(f'cast::<_, _, {S + i + 1}>(a{i})' for i in range(npar))
-            real = next((k for k, v in list(defs.items()) + list(legacy.items()) if (cc, cmod, npar, hasret, h['canon'][4]) in v and k.lower() == h['name'].lower()), h['name'])
+            real = real_name(h['canon'], h['name'], defs, legacy)
             callee = f'{cc}::{cmod}::{real}'
             body = f'cast::<_, _, {S}>({callee}({call_args}))' if h['hasret'] else (f'let _ = {callee}({call_args});' if hasret else f'{callee}({call_args})')
             out.append(f'    // {h["file"]}')
@@ -836,20 +1064,17 @@ def main():
                 out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(crate::cabi::c{npar}(|{args}| unsafe {{ {body} }})); }}')
             else:
                 out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(|{args}| unsafe {{ {body} }}); }}')
-        out.append('}')
-        out.append('')
-    out.append('pub fn install_all() {')
-    for crate in LEAVES: out.append(f'    install_{crate}();')
-    out.append('}')
-    out.append('')
-    out.append('/// (hook path, linked) for every hook entry the generator saw; `todo` = default body is a todo!()/panic.')
-    out.append('pub static HOOKS: &[(&str, &str, bool, bool)] = &[')
+    tail = []
+    tail.append('/// (hook path, linked) for every hook entry the generator saw; `todo` = default body is a todo!()/panic.')
+    tail.append('pub static HOOKS: &[(&str, &str, bool, bool)] = &[')
     for h in sorted(linked, key=lambda x: (x['crate'], x['path'])):
-        out.append(f'    ("{h["name"]}", "{h["crate"]}::{h["path"]}", true, {str(h["todo"]).lower()}),')
+        tail.append(f'    ("{h["name"]}", "{h["crate"]}::{h["path"]}", true, {str(h["todo"]).lower()}),')
     for w, h in sorted(unresolved, key=lambda x: (x[1]['crate'], x[1]['file'], x[1]['name'])):
-        out.append(f'    ("{h["name"]}", "{h["crate"]}::{h["path"] or h["file"]}", false, {str(h["todo"]).lower()}),')
-    out.append('];')
-    open(os.path.join(link_dir, 'src', 'gen_table.rs'), 'w', encoding='utf8', newline='\n').write('\n'.join(out) + '\n')
+        tail.append(f'    ("{h["name"]}", "{h["crate"]}::{h["path"] or h["file"]}", false, {str(h["todo"]).lower()}),')
+    tail.append('];')
+    if os.environ.get('GEN_LINK_BASE'):
+        chunks = bisect_limit(chunks, os.environ['GEN_LINK_BASE'], os.environ.get('GEN_LINK_SUBSET', ''))
+    emit_parts(chunks, tail)
     with open(os.path.join(link_dir, 'unresolved.txt'), 'w', newline='\n') as fh:
         fh.write('# kind name file todo(default is todo!/panic)  [regenerated by gen_link.py]\n')
         for w, h in sorted(unresolved, key=lambda x: (x[0], x[1]['file'], x[1]['name'])):

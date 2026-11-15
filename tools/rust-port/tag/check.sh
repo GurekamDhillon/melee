@@ -10,7 +10,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../..
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env"; set +a; fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "tag: GW_ISO_VANILLA not set" >&2; exit 2; }
-exe="${EXE:-$repo/build/cargo/release/melee.exe}"
+exe="${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}"
 export MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_VOLUME=3 MELEE_SCRIPTS=0
 export MELEE_WASM_MODS="$repo/build/mods-tag" MELEE_TAG_PARTNER=marth MELEE_PAD_SCRIPT="$here/tag_p1.txt" MELEE_PAD_CHANNELS=0
 mkdir -p "$MELEE_WASM_MODS"; cp "$repo/build/mods/tag_fighter.wasm" "$MELEE_WASM_MODS/"

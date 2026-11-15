@@ -22,6 +22,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 # The pipeline warm list (melee_gx render.rs) is kept in $OUT/gpucache across runs, as a player's stays beside the
 # exe: a first run on a machine fills it, later runs compile at start-up, off the frame path.
 # GW_ISO_VANILLA must be set (never printed). CARD: a memory card folder with a save (default: the exe's card/).
+# RELEASE EXE ON PURPOSE (notes/buildspeed.md): frame times are measured on the release profile, not `fast`.
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../.." && pwd)

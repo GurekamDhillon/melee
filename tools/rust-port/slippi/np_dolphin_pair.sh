@@ -20,7 +20,7 @@ while [ $# -gt 0 ]; do
     *) echo "np_dolphin_pair: unknown option $1" >&2; exit 2 ;;
   esac; shift
 done
-B="${EXE:-$repo/build/cargo/release/melee.exe}"
+B="${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}"
 export MELEE_VOLUME=3 MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1
 python -I "$here/mock_mm.py" --port $mmp --stages ${NP_STAGES:-0x20} --lag-ms $lag --loss-pct $loss --capture "$O/cap.txt" > "$O/mm.log" 2>&1 &
 mpid=$!

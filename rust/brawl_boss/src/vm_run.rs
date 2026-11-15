@@ -282,6 +282,10 @@ pub struct Input {
     /// the actor's linked enemy (the one the enemy manager holds under the actor's link id) exists and its work flag 0
     /// (dead, 0x12000000) is clear (R10053)
     pub partner_alive: bool,
+    /// per target (player slot 0..3): its facing (the posture module's lr; 0 = +1) and its model scale (0 = 1), the
+    /// per-target factors 6901 / 6902 apply to their (x, y) offset
+    pub target_lr: [f32; 4],
+    pub target_scale: [f32; 4],
 }
 
 /// One group of the stage-wide group manager (R10052).
@@ -1893,13 +1897,40 @@ impl<'a> Cx<'a> {
                     self.lock(s);
                 }
             }
-            // 6901 slot a b out flag: the angle (degrees) from the actor to the target
-            0x6901 => {
-                let s = self.slot_arg(v(self, 0));
-                if let Some(t) = self.target(s) {
-                    let ang = libm::atan2f(t[1] - self.a.pos[1], t[0] - self.a.pos[0]) * (180.0 / core::f32::consts::PI);
-                    self.set(self.arg(ins, 3), ang);
-                }
+            // 6901 / 6902 slot x y out flag (search-module switch 0x81A26510, sub-op 1 / 2; 0x81A25C60 / 0x81A25DF0):
+            // the angle (degrees, [0, 360), 0x81A25BD0 -> 0x81A15A00) from the actor to a point = the slot's target
+            // plus the offset (x * ax, y) * scale (0x81A24278; its rotation is by 0). ax is the target's facing when
+            // the flag is set, else 1; the angle is measured from the actor's facing (the posture lr passed in f1).
+            // 6901 reads the search snapshot (the target as last found), 6902 the target now. Slot 0..3: a player
+            // (absent: point 0, ax 0, scale 1); 4..7: other target kinds (4 / 5 linked objects, 6 a module point,
+            // 7 none) give point 0 and factors 1 here [L: 4..6 not modelled]; any other slot: point 0 and, for
+            // 6901, factors -1 (6902: ax 0, scale 1). Only a variable out is written; the actor point is the actor's
+            // position (the node the code reads; no skeleton)
+            0x6901 | 0x6902 => {
+                let s = v(self, 0) as i32;
+                let flag = v(self, 4) != 0.0;
+                let (t, ax, sc) = match s {
+                    0..=3 => {
+                        let i = s as usize;
+                        let live = self.target(s);
+                        let p = if ins.id == 0x6901 { live.map(|_| self.a.found[i]) } else { live };
+                        match p {
+                            Some(p) => {
+                                let lr = if self.i.target_lr[i] == 0.0 { 1.0 } else { self.i.target_lr[i] };
+                                let sc = if self.i.target_scale[i] == 0.0 { 1.0 } else { self.i.target_scale[i] };
+                                (p, lr, sc)
+                            }
+                            None => ([0.0; 2], 0.0, 1.0),
+                        }
+                    }
+                    4..=7 => ([0.0; 2], 1.0, 1.0),
+                    _ if ins.id == 0x6901 => ([0.0; 2], -1.0, -1.0),
+                    _ => ([0.0; 2], 0.0, 1.0),
+                };
+                let ax = if flag { ax } else { 1.0 };
+                let p = [t[0] + v(self, 1) * ax * sc, t[1] + v(self, 2) * sc];
+                let ang = vec_angle(self.a.lr, [p[0] - self.a.pos[0], p[1] - self.a.pos[1]]);
+                self.set(self.arg(ins, 3), ang);
             }
             // 6905 / 6906 slot var: the distance from the actor to the target's live / found position (0x81A244DC)
             0x6905 | 0x6906 => {

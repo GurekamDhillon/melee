@@ -338,3 +338,17 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
   0x81A2B630: ground-collision shape pairs).
 - Read, not ported yet: R10052 (0x81A14D38 -> 0x81A0AEC8: a stage-wide manager (sora_melee 0x812331C4 count /
   0x81233208 entry) asked whether all, or entry b, of group a exist), R10053 (0x81A14E70 -> 0x81A0B34C).
+
+### Round 6 (2026-11-15)
+
+- Ported: R10052 (needs a free enemy-manager slot (0x81A0CEF0), then group a's count and its entries; host inputs
+  `enemy_room`, `groups`), R10053 (the linked enemy is missing or its work flag 0 is set; host input `partner_alive`),
+  21009 (a create-record word the constructor keeps, 0x81A003E8; `Program::place_word`, meaning not traced) and
+  21010 (the strength byte the level getter 0x81A03678 reads). The VS host sets none of the new inputs: R10052 stays
+  false as before for Meta Ridley; R10053 only matters for the Falcon Flyer, which is not a VM actor yet.
+- Read, not ported: 6901 / 6902 share one case of the search-module command switch (0x81A26510, case 1 / 2: five
+  arguments: slot, x, y, out variable, flag). 6901 calls 0x81A25C60 (target position from the search slots 0-7,
+  0x81A25524 / 0x81A2619C / 0x81A262E8), 6902 calls 0x81A25DF0 (the same body on the player / slot-kind targets,
+  0x81A23A0C / 0x81A23CD4 / 0x81A23E0C, slots 0-3 players, 4-5 other kinds). Both offset the point by (x, y) through
+  0x81A24278 and hand the actor-to-point vector to 0x81A25BD0; the out variable is then written. The VM's 6901 (an
+  angle by atan2) is a reading of that, not yet checked against 0x81A25BD0; port both together.

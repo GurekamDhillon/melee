@@ -14,6 +14,15 @@ SPEC = dict(
     unions={"GroundVars": ["homerun", "homerun2"]},
     # xC8 / xCC of the text stages hold pointers as ints (compared through PI in the driver)
     skip=(".homerun2.xC8", ".homerun2.xCC"),
+    # grHomeRun_8021D680 reads the map's text/joint pointers through `u.unk.xCC/xD0`, which on the GameCube are the same
+    # words as `u.homerun.xCC/xD0`. The oracle compiles the C at 64 bits, where the `unk` ints alias the halves of
+    # `u.homerun.parts/back` instead, so the C is read through the `homerun` pointer view here (the port does the same,
+    # commit 64211c630); the driver's op 12 sets that view on both sides.
+    patch=[
+        ("if ((u32) gp->u.unk.xD0 != 0 && (u32) gp->u.unk.xCC == 0) {\n        gp->u.unk.xCC = (intptr_t) grHomeRun_8021EC58(0);\n        jobj2 = (HSD_JObj*) gp->u.unk.xD0;",
+         "if (gp->u.homerun.xD0 != 0 && gp->u.homerun.xCC == 0) {\n        gp->u.homerun.xCC = grHomeRun_8021EC58(0);\n        jobj2 = gp->u.homerun.xD0;"),
+        ("text = (HSD_Text*) (intptr_t) gp->u.unk.xCC;", "text = gp->u.homerun.xCC;"),
+    ],
     null_ret_ok=["HSD_GObj_SetupProc", "grZakoGenerator_801CAE04", "it_8026BE84"],
     custom_stubs={
         "HSD_SisLib_803A6B98": dict(
@@ -217,9 +226,9 @@ DRV = dict(
         gs("grHomeRun_8021C914", 0), pgs("grHomeRun_8021CB10", 0), gs("grHomeRun_8021CB18", 0), gs("grHomeRun_8021CB1C", 0),
         gs("grHomeRun_8021CB20", 10, 0), pgs("grHomeRun_8021D678", 10),
         dict(name="grHomeRun_8021D680", usel=0,
-             pre_c="GG[10].u.unk.xD0 = (fv() & 1) ? (int) (intptr_t) &JO[fv() & 7] : 0; GG[10].u.unk.xCC = (fv() & 1) ? 0 : (int) (fv() & 0xFF);",
-             pre_r="GG[10].u.unk.xD0 = if fv() & 1 != 0 { (&raw mut JO[(fv() & 7) as usize]) as isize as i32 } else { 0 }; "
-                   "GG[10].u.unk.xCC = if fv() & 1 != 0 { 0 } else { (fv() & 0xFF) as i32 };",
+             pre_c="GG[10].u.homerun.xD0 = (fv() & 1) ? &JO[fv() & 7] : 0; GG[10].u.homerun.xCC = (fv() & 1) ? 0 : (HSD_Text*) (intptr_t) (fv() & 0xFF);",
+             pre_r="GG[10].u.homerun.xD0 = if fv() & 1 != 0 { &raw mut JO[(fv() & 7) as usize] } else { core::ptr::null_mut() }; "
+                   "GG[10].u.homerun.xCC = if fv() & 1 != 0 { core::ptr::null_mut() } else { (fv() & 0xFF) as usize as *mut HSD_Text };",
              c="grHomeRun_8021D680(&GS[10]);", r="m::grHomeRun_8021D680(&raw mut GS[10]);"),
         gs("grHomeRun_8021DEB0", 10), gs("grHomeRun_8021DEB4", 4), pgs("grHomeRun_8021DEE0", 4), gs("grHomeRun_8021DEE8", 4), gs("grHomeRun_8021DEEC", 4),
         gs("grHomeRun_8021DEF0", 5), pgs("grHomeRun_8021DF48", 5), gs("grHomeRun_8021DF50", 5, 1, True), gs("grHomeRun_8021E008", 5, 1, True),

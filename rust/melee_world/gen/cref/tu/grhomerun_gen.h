@@ -26,7 +26,7 @@ static void hash_UnkArchiveStruct(const UnkArchiveStruct* p);
 static void fill_GrJoint(GrJoint* p);
 static void hash_GrJoint(const GrJoint* p);
 u8 HSD_GObj_CameraKind;
-struct SIS * HSD_SisLib_804D1124[5];
+unsigned char ** HSD_SisLib_804D1124[5];
 StageInfo stage_info;
 __typeof__(struct HSD_GObj *) Camera_80030A50(void) { T(1000); return (__typeof__(struct HSD_GObj *)) ((((fv() & 3) == 0) ? 0 : &MCG)); }
 void Camera_GetTransformInterest(__typeof__(Vec *) a0) { T(1001); T(PI((const void*) a0)); a0->x = (float) ((int) (fv() % 80000) - 40000); a0->y = rw(); a0->z = rw(); }
@@ -80,14 +80,14 @@ int HSD_SisLib_803A6B98(HSD_Text* a0, float a1, float a2, const char* a3, ...) {
 __typeof__(float) Stage_GetBlastZoneRightOffset(void) { T(1049); return (__typeof__(float)) (rw()); }
 __typeof__(float) Stage_GetCamBoundsRightOffset(void) { T(1050); return (__typeof__(float)) (rw()); }
 void Stage_UnkSetVec3TCam_Offset(__typeof__(Vec *) a0) { T(1051); T(PI((const void*) a0)); a0->x = rw(); a0->y = rw(); a0->z = rw(); }
-void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1052); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
-__typeof__(struct CmSubject *) ftLib_GetCameraSubject(__typeof__(struct HSD_GObj *) a0) { T(1053); T(PI((const void*) a0)); return (__typeof__(struct CmSubject *)) ((((fv() & 3) == 0) ? 0 : &CS[fv() & 1])); }
+__typeof__(struct CmSubject *) ftLib_GetCameraSubject(__typeof__(struct HSD_GObj *) a0) { T(1052); T(PI((const void*) a0)); return (__typeof__(struct CmSubject *)) ((((fv() & 3) == 0) ? 0 : &CS[fv() & 1])); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1053); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
 __typeof__(struct HSD_GObj *) gm_80180AF4(void) { T(1054); return (__typeof__(struct HSD_GObj *)) ((((fv() & 3) == 0) ? 0 : &SG)); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1055); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(struct UnkArchiveStruct *) grDatFiles_GetArchive(void) { T(1056); return (__typeof__(struct UnkArchiveStruct *)) (&ARCH); }
 void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1057); T(PI((const void*) a0)); T((u32) a1); }
 __typeof__(struct HSD_GObj *) grZakoGenerator_801CAE04(__typeof__(struct grZakoGenerator_SpawnDesc *) a0) { T(1058); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
-__typeof__(struct HSD_GObj *) it_8026BE84(__typeof__(struct BobOmbRain *) a0) { T(1059); T(PI((const void*) a0)); HM(PI(a0->x0)); HM(PI(a0->x4)); HM(B(a0->x8_vec.x)); HM(B(a0->x8_vec.y)); HM(B(a0->x8_vec.z)); HM((u32) a0->x14); HM((u32) a0->x18); HM((u32) a0->x1C.b0); return (__typeof__(struct HSD_GObj *)) (0); }
+__typeof__(struct HSD_GObj *) it_8026BE84(__typeof__(struct BobOmbRain *) a0) { T(1059); T(PI((const void*) a0)); HM(PI(a0->x0)); HM(PI(a0->x4)); HM(B(a0->x8_vec.x)); HM(B(a0->x8_vec.y)); HM(B(a0->x8_vec.z)); HM((u32) a0->x14); HM((u32) a0->x18); HM((u32) a0->x1C.x0.b0); return (__typeof__(struct HSD_GObj *)) (0); }
 __typeof__(int) lbLang_IsSavedLanguageJP(void) { T(1060); return (__typeof__(int)) (fv()); }
 __typeof__(int) lbLang_IsSavedLanguageUS(void) { T(1061); return (__typeof__(int)) (fv()); }
 void lb_8000B1CC(__typeof__(struct HSD_JObj *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1062); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); a2->x = rw(); a2->y = rw(); a2->z = rw(); }
@@ -504,7 +504,7 @@ static void hash_HSD_JObj(const HSD_JObj* p)
 static void fill_StageCallbacks(StageCallbacks* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[32 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x10)[i0] = (unsigned char) rnd();
 }
 static void hash_StageCallbacks(const StageCallbacks* p)
 {
@@ -517,7 +517,8 @@ static void hash_StageCallbacks(const StageCallbacks* p)
     HM(FI((const void*) p->gobj_proc));
     HN("p->callback3");
     HM(FI((const void*) p->callback3));
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[32 + j0]);
+    HN("p->x10");
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x10)[i0]);
 }
 
 static void fill_StageData(StageData* p)
@@ -636,7 +637,7 @@ static void fill_CollData(CollData* p)
     p->xE4_ecb.left.x = rg();
     p->xE4_ecb.left.y = rg();
     p->ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->ecb_source.x4)[i0] = (unsigned char) rnd();
     p->ecb_source.x124 = rg();
     p->ecb_source.x128 = rg();
     p->ecb_source.x12C = rg();
@@ -823,7 +824,8 @@ static void hash_CollData(const CollData* p)
     HM(B(p->xE4_ecb.left.y));
     HN("p->ecb_source.kind");
     HM((u32) p->ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->ecb_source)[8 + j0]);
+    HN("p->ecb_source.x4");
+    for (i0 = 0; i0 < 56; i0++) HM(((const unsigned char*) &p->ecb_source.x4)[i0]);
     HN("p->ecb_source.x124");
     HM(B(p->ecb_source.x124));
     HN("p->ecb_source.x128");
@@ -940,8 +942,8 @@ static void fill_HSD_Text(HSD_Text* p)
     p->hidden = fv();
     p->x4E = fv();
     p->font_idx = fv();
-    p->x6C = fv();
-    p->x6E = fv();
+    p->state_stack_used = fv();
+    p->state_stack_capacity = fv();
     p->current_width = rg();
     p->current_height = rg();
     p->x78.x = rg();
@@ -1043,12 +1045,12 @@ static void hash_HSD_Text(const HSD_Text* p)
     HM(PI((const void*) p->x60));
     HN("p->alloc_data");
     HM(PI((const void*) p->alloc_data));
-    HN("p->string_buffer");
-    HM(PI((const void*) p->string_buffer));
-    HN("p->x6C");
-    HM((u32) p->x6C);
-    HN("p->x6E");
-    HM((u32) p->x6E);
+    HN("p->state_stack");
+    HM(PI((const void*) p->state_stack));
+    HN("p->state_stack_used");
+    HM((u32) p->state_stack_used);
+    HN("p->state_stack_capacity");
+    HM((u32) p->state_stack_capacity);
     HN("p->current_width");
     HM(B(p->current_width));
     HN("p->current_height");
@@ -1770,8 +1772,8 @@ static void freg_all(void)
 // stub Stage_GetBlastZoneRightOffset = 1049
 // stub Stage_GetCamBoundsRightOffset = 1050
 // stub Stage_UnkSetVec3TCam_Offset = 1051
-// stub ftLib_GetPos = 1052
-// stub ftLib_GetCameraSubject = 1053
+// stub ftLib_GetCameraSubject = 1052
+// stub ftLib_GetPos = 1053
 // stub gm_80180AF4 = 1054
 // stub grAnime_801C8138 = 1055
 // stub grDatFiles_GetArchive = 1056

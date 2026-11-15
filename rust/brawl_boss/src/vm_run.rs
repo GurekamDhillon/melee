@@ -298,6 +298,18 @@ pub struct Input {
     /// R10057: a live enemy (in the manager, its enemy present, work flag 0 clear) is linked to the actor (its link id
     /// is the actor's id in the enemy manager)
     pub child_alive: bool,
+    /// model nodes' global rotations (R10024-R10047, the model module's getNodeGlobalMtx); a node not listed turns by
+    /// the facing [L]
+    pub nodes: [NodeRot; 2],
+}
+
+/// One model node's global rotation (rows of the 3x3 part of its matrix) for R10024-R10047; `id` is the node id the
+/// script names (for the by-name ids, the argument's value).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct NodeRot {
+    pub on: bool,
+    pub id: i32,
+    pub rot: [[f32; 3]; 3],
 }
 
 /// One R10054 count (0x81A0CF8C).
@@ -921,6 +933,44 @@ impl<'a> Cx<'a> {
             self.a.eval_slot
         }
     }
+    /// The point the search module's helpers build for slot `s` (0x81A25C60 / 0x81A25DF0, also 0x81A25A50 /
+    /// 0x81A25268): the slot's target (`found`: the search snapshot, 0x81A25524; else the target now, 0x81A23A0C)
+    /// plus the offset (x * ax, y) * scale (0x81A24278, rotation 0). ax is the target's facing when `flag` is set,
+    /// else 1. Slot 0..3: a player (absent: point 0, ax 0, scale 1); 4..7: point 0, factors 1 [L: kinds 4..6 not
+    /// modelled]; any other slot: point 0 and, for the snapshot, factors -1 (else ax 0, scale 1)
+    fn slot_point(&self, s: i32, found: bool, x: f32, y: f32, flag: bool) -> [f32; 2] {
+        let (t, ax, sc) = match s {
+            0..=3 => {
+                let i = s as usize;
+                let live = self.target(s);
+                let p = if found { live.map(|_| self.a.found[i]) } else { live };
+                match p {
+                    Some(p) => {
+                        let lr = if self.i.target_lr[i] == 0.0 { 1.0 } else { self.i.target_lr[i] };
+                        let sc = if self.i.target_scale[i] == 0.0 { 1.0 } else { self.i.target_scale[i] };
+                        (p, lr, sc)
+                    }
+                    None => ([0.0; 2], 0.0, 1.0),
+                }
+            }
+            4..=7 => ([0.0; 2], 1.0, 1.0),
+            _ if found => ([0.0; 2], -1.0, -1.0),
+            _ => ([0.0; 2], 0.0, 1.0),
+        };
+        let ax = if flag { ax } else { 1.0 };
+        [t[0] + x * ax * sc, t[1] + y * sc]
+    }
+
+    /// The rotation part of a model node's global matrix (rows; column n is the node's axis n): the host's `nodes`
+    /// entry for the node, else a turn about y by the facing (lr * 90 degrees) [L: no skeleton]
+    fn node_rot(&self, node: i32) -> [[f32; 3]; 3] {
+        if let Some(n) = self.i.nodes.iter().find(|n| n.on && n.id == node) {
+            return n.rot;
+        }
+        let s = self.a.lr;
+        [[0.0, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, 0.0]]
+    }
+
     fn target(&self, s: i32) -> Option<[f32; 2]> {
         if s < 0 {
             return None;
@@ -1064,20 +1114,27 @@ impl<'a> Cx<'a> {
             10014 | 10015 | 10017 | 10019 => self.target(self.slot_arg(x(1))).is_some(),
             10018 | 10020 => self.target(self.slot_arg(x(1))).is_none(),
             10016 => false,
-            // 10024-10035 (0x81A145F0): a point = a model node's position plus an axis offset plus (x(2), x(3)), then
-            // a player of slot x(1) within radius x(4) of it (10024-10029, 0x81A2536C) or not (10030-10035,
-            // 0x81A25B54) [M: the polarity from Tabuu's use, which moves while no player is near]. No skeleton: the
-            // node is the actor's position and the offset is mirrored by the facing [L]
-            10024..=10035 => {
-                let near = match self.target(self.slot_arg(x(1))) {
-                    Some(t) => {
-                        let dx = t[0] - (a.pos[0] + a.lr * x(2));
-                        let dy = t[1] - (a.pos[1] + x(3));
-                        dx * dx + dy * dy <= x(4) * x(4)
-                    }
-                    None => false,
-                };
-                if id < 10030 { near } else { !near }
+            // 10024-10047 node slot x y angle flag (0x81A145F0): the model module's node (10024-10026, 10030-10032,
+            // 10036-10038, 10042-10044: the node id x(0); the others: the node named by x(0), vfunc 0x88 getNodeId)
+            // gives its global matrix (vfunc 0xA8 getNodeGlobalMtx); its rotation turns a unit axis (x / y / z by id,
+            // +1 for 10024-10035, -1 for 10036-10047; the table at the switch's float constants) into P (8003E3BC,
+            // rotation only), and (P.x, P.y) is the direction. True when the angle (degrees) between it and the vector
+            // from the actor's centre to the slot's point (0x81A25268 / 0x81A25A50: as 6902 / 6901, the target now for
+            // 10024-10029 and 10036-10041 (0x81A2536C), the search snapshot for the others (0x81A25B54)) is within
+            // |angle| (0x81A25138: a zero P gives 3 degrees; a zero product of the lengths 0, 8003DDD0). The centre
+            // is a node (param 0x59E6, 0x81A0A88C) [L: no skeleton: the actor's position]; the node rotation is the
+            // host's `nodes`, else a turn about y by the facing [L]
+            10024..=10047 => {
+                let k = id - 10024;
+                let axis = (k % 3) as usize;
+                let sign = if k < 12 { 1.0 } else { -1.0 };
+                let r = self.node_rot(x(0) as i32);
+                let px = r[0][axis] * sign;
+                let py = r[1][axis] * sign;
+                let found = (k / 6) % 2 == 1;
+                let t = self.slot_point(x(1) as i32, found, x(2), x(3), x(5) != 0.0);
+                let ang = cone_angle([px, py], [t[0] - a.pos[0], t[1] - a.pos[1]]);
+                libm::fabsf(ang) <= libm::fabsf(x(4))
             }
             10010 => a.lock >= 0 && self.target(a.lock).is_some(),
             10012 | 10013 => {
@@ -1954,28 +2011,7 @@ impl<'a> Cx<'a> {
             // 6901, factors -1 (6902: ax 0, scale 1). Only a variable out is written; the actor point is the actor's
             // position (the node the code reads; no skeleton)
             0x6901 | 0x6902 => {
-                let s = v(self, 0) as i32;
-                let flag = v(self, 4) != 0.0;
-                let (t, ax, sc) = match s {
-                    0..=3 => {
-                        let i = s as usize;
-                        let live = self.target(s);
-                        let p = if ins.id == 0x6901 { live.map(|_| self.a.found[i]) } else { live };
-                        match p {
-                            Some(p) => {
-                                let lr = if self.i.target_lr[i] == 0.0 { 1.0 } else { self.i.target_lr[i] };
-                                let sc = if self.i.target_scale[i] == 0.0 { 1.0 } else { self.i.target_scale[i] };
-                                (p, lr, sc)
-                            }
-                            None => ([0.0; 2], 0.0, 1.0),
-                        }
-                    }
-                    4..=7 => ([0.0; 2], 1.0, 1.0),
-                    _ if ins.id == 0x6901 => ([0.0; 2], -1.0, -1.0),
-                    _ => ([0.0; 2], 0.0, 1.0),
-                };
-                let ax = if flag { ax } else { 1.0 };
-                let p = [t[0] + v(self, 1) * ax * sc, t[1] + v(self, 2) * sc];
+                let p = self.slot_point(v(self, 0) as i32, ins.id == 0x6901, v(self, 1), v(self, 2), v(self, 4) != 0.0);
                 let ang = vec_angle(self.a.lr, [p[0] - self.a.pos[0], p[1] - self.a.pos[1]]);
                 self.set(self.arg(ins, 3), ang);
             }
@@ -2395,6 +2431,23 @@ fn vec_angle(ax: f32, n: [f32; 2]) -> f32 {
         }
     }
     d
+}
+
+/// 0x81A25138 from P on: a zero P (0x81A10830: length, 0 at or under the smallest normal) gives 3; else the angle
+/// between P and d (8003DDD0: 0 when the product of the squared lengths is 0, else acos of the clamped cosine) times
+/// 57.29578
+fn cone_angle(p: [f32; 2], d: [f32; 2]) -> f32 {
+    let sq = p[0] * p[0] + p[1] * p[1];
+    let len = if libm::fabsf(sq) <= f32::MIN_POSITIVE { 0.0 } else { sq * (1.0 / libm::sqrtf(sq)) };
+    if len == 0.0 {
+        return 3.0;
+    }
+    let prod = sq * (d[0] * d[0] + d[1] * d[1]);
+    if prod == 0.0 {
+        return 0.0;
+    }
+    let c = ((p[0] * d[0] + p[1] * d[1]) * (1.0 / libm::sqrtf(prod))).clamp(-1.0, 1.0);
+    (libm::acos(c as f64) as f32) * 57.29578
 }
 
 fn sentinel(x: f32) -> bool {

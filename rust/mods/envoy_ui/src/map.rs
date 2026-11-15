@@ -50,6 +50,11 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], x: f32, y: f32, w: f32, h: f32, r: 
     let lanes = v[V_MAP_LANES].clamp(1, 6);
     let secret = (0..n).any(|i| node(v, i).0 == MN_SECRET);
     let cols = lanes + if secret { 1 } else { 0 };
+    // the nodes never touch (uiremake): a node with its edge, shadow and cursor ring takes about 2.9 radii, so the
+    // radius asked for is taken down to what a row and a lane of this box leave (the pause page's 118-high box
+    // held eight rows of radius-7 nodes at a 14.75 pitch: every node sat on the one under it)
+    let rows = v[V_MAP_ROWS].clamp(1, 16);
+    let r = r.min(h / rows as f32 / 2.9).min(w / cols as f32 / 2.9);
     // the roads first
     for i in 0..n {
         let (ki, _, _, st, links) = node(v, i);
@@ -108,13 +113,28 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], x: f32, y: f32, w: f32, h: f32, r: 
 unsafe fn node_icon(e: &mut E, v: &[i32; VW], kind: i32, st: i32, cx: f32, cy: f32, r: f32) {
     let t = T as f32;
     let a = if st & MS_SKIPPED != 0 { 0.4 } else { 1.0 };
+    let rb = if kind == MN_BOSS { r * 1.2 } else { r };
+    // a ring in the node's own shape round it, `pad` out, `wd` thick
+    let halo = |e: &mut E, pad: f32, wd: f32, col: u32| {
+        let sz = rb * 2.0 + pad * 2.0;
+        e.shape(SHAPE_BOX, cx - sz * 0.5, cy - sz * 0.5, sz, sz, 11.5 + pad, wd, 0.0, col & !0xFF, col);
+    };
     if st & MS_HERE != 0 {
-        spr_c(e, S_BURST_SUNNY, cx, cy, r * 2.9 / 58.0 * (1.0 + 0.06 * sin(t * 0.12)), WHITE);
+        // where the party stands: a steady sunny ring (it was a sunny burst the size of the node, all but hidden
+        // behind it)
+        halo(e, r * 0.32, r * 0.24, SUNNY);
     }
     if st & MS_CURSOR != 0 {
-        spr_c(e, S_BURST_CORAL, cx, cy, r * 3.1 / 58.0 * (1.0 + 0.1 * sin(t * 0.2)), WHITE);
+        // the cursor: a coral ring that breathes outside the node, an ink line round it so it reads on any
+        // backdrop, and the pointer beside it (a coral burst barely larger than the node showed as a few red specks)
+        let pulse = 0.5 + 0.5 * sin(t * 0.2);
+        let pad = r * (0.42 + 0.14 * pulse);
+        halo(e, pad + r * 0.12, r * 0.5, INK);
+        halo(e, pad, r * 0.34, CORAL);
+        // the pointer stands in the gap between two lanes, left of the node (above it, it sat on the next row)
+        spr_c(e, S_PTR, cx - rb - pad - r * 1.0 - r * 0.2 * pulse, cy, r / 16.0, WHITE);
     } else if st & MS_NEXT != 0 {
-        spr_c(e, S_DISC, cx, cy, (r * 2.0 + 5.0 + 2.0 * sin(t * 0.15)) / 32.0, alpha(WHITE, 0.55));
+        halo(e, r * (0.3 + 0.1 * sin(t * 0.15)), r * 0.18, alpha(WHITE, 0.7));
     }
     let face_id = if st & MS_UNKNOWN != 0 {
         S_FACE_LILAC

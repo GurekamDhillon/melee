@@ -81,10 +81,10 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
             }
             if let Some(col) = badge {
                 // the item's icon: its colour in an ink ring
-                crate::icons::icon_a(e, col, x + 16.0, y + 13.0, 22.0, a);
+                item_icon(e, col, x + 16.0, y + 13.0, 17.0, a);
                 tx = x + 30.0;
             }
-            e.text_ex(tx, y + 5.0, d(14), alpha(INK, a), ALIGN_LEFT, rw - 90.0, label.str());
+            text_fit(e, tx, y + 5.0, d, 14, 8, alpha(INK, a), ALIGN_LEFT, rw - 90.0, label.str());
             if price > 0 {
                 let poor = price > coins;
                 spr_c(e, S_COIN, x + rw - 48.0, y + 13.0, 0.85, alpha(WHITE, a));
@@ -121,14 +121,19 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
     if (0..3).contains(&cur) && step == 0 && !done {
         let id = v[pbk + P_SHOP_OFFERS + cur as usize];
         if let Some(it) = envoy_data::items::item(id).filter(|_| w > 300.0) {
-            let (tx, ty) = (x0 + w + 18.0, 56.0);
-            sticker(e, S_FACE_WHITE, tx, ty, 260.0, 100.0, 1.0, WHITE, |e| {
-                crate::icons::icon(e, it.id, tx + 8.0, ty + 8.0, 38.0);
-                e.text_ex(tx + 34.0, ty + 8.0, d(17), INK, ALIGN_LEFT, 0.0, it.name);
+            // the card: the name, then its trigger and stacking on their own line (they shared the name's line,
+            // right-aligned, and ran over a long name), then the card text; as high as its lines
+            let (tx, ty, tw_) = (x0 + w + 18.0, 56.0, 264.0);
+            let card = envoy_data::keywords::card(it.id);
+            let lines = rich_lines(tw_ - 28.0, 13, card).clamp(1, 5);
+            let th = 58.0 + lines as f32 * 16.0;
+            sticker(e, S_FACE_WHITE, tx, ty, tw_, th, 1.0, WHITE, |e| {
+                item_icon(e, it.id, tx + 22.0, ty + 24.0, 24.0, 1.0);
+                text_fit(e, tx + 44.0, ty + 7.0, d, 17, 11, INK, ALIGN_LEFT, tw_ - 54.0, it.name);
                 let mut s = Buf::new();
                 s.s("on ").s(envoy_data::items::TRIGGER_TEXT[it.trigger as usize]).s(" / stack: ").s(envoy_data::items::STACK_TEXT[it.stack as usize]);
-                e.text_ex(tx + 250.0, ty + 10.0, bs(11), LILAC, ALIGN_RIGHT, 0.0, s.str());
-                rich(e, tx + 34.0, ty + 34.0, 216.0, 13, 16.0, INK, false, envoy_data::keywords::card(it.id), 4);
+                text_fit(e, tx + 44.0, ty + 28.0, bs, 11, 8, LILAC, ALIGN_LEFT, tw_ - 54.0, s.str());
+                rich(e, tx + 14.0, ty + 48.0, tw_ - 28.0, 13, 16.0, INK, false, card, lines);
             });
         }
     }

@@ -370,3 +370,124 @@ fn fading_sticker_is_one_piece() {
         assert_eq!(at(90.0, 90.0), 0);
     }
 }
+
+/// uiremake: the supersampled path draws the same picture (to within a coverage step) and its cost is printed: a
+/// frame the size of the Envoy pause overlay (a panel, forty stickers, four hundred glyph-sized quads) drawn
+/// straight and through the factor-times target, timed to GPU completion at 720p, 1080p and 4K.
+#[test]
+fn supersampled_ui_matches_and_costs() {
+    let Some(mut g) = gpu() else {
+        eprintln!("ui_quality: no GPU adapter, skipped");
+        return;
+    };
+    let fmt = wgpu::TextureFormat::Rgba8Unorm;
+    let mut quads = vec![shape(SHAPE_BOX, 14.0, 52.0, 312.0, 318.0, 10.0, 0.0)];
+    for i in 0..40 {
+        let mut q = shape(SHAPE_BOX, 24.0 + (i % 5) as f32 * 58.0, 90.0 + (i / 5) as f32 * 30.0, 50.0, 22.0, 10.0, 2.5);
+        q.rgba = 0x2A1A_6EFF;
+        quads.push(q);
+    }
+    for i in 0..400 {
+        let mut q = shape(SHAPE_BOX, 28.0 + (i % 40) as f32 * 7.0, 96.0 + (i / 40) as f32 * 26.0, 5.0, 8.0, 1.5, 0.0);
+        q.rgba = 0xFFD8_4AFF;
+        quads.push(q);
+    }
+    let frame = UiFrame { quads, hide_gx: false };
+    g.ui.upload(&g.device, &g.queue, &frame, &mut g.atlas);
+    let target = |g: &Gpu, w: u32, h: u32| {
+        g.device.create_texture(&wgpu::TextureDescriptor {
+            label: None,
+            size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: fmt,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        })
+    };
+    // one frame: the window's pass cleared, then the batch straight (factor 1) or through the supersampled target
+    let draw = |g: &mut Gpu, view: &wgpu::TextureView, w: u32, h: u32, factor: u32| {
+        let band = band_in([0.0, 0.0, w as f32, h as f32]);
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        let ss = g.ui.ss_record(&g.device, &g.queue, &mut enc, fmt, w, h, band, [0.0; 2], 0.0, factor);
+        {
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment { view, depth_slice: None, resolve_target: None, ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), store: wgpu::StoreOp::Store } })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+            if ss {
+                g.ui.ss_composite(&mut pass, fmt, w as f32, h as f32);
+            } else {
+                g.ui.record(&g.device, &g.queue, &mut pass, fmt, w as f32, h as f32, band, [0.0; 2], 0.0);
+            }
+        }
+        g.queue.submit([enc.finish()]);
+    };
+    let read = |g: &Gpu, tex: &wgpu::Texture, w: u32, h: u32| {
+        let bpr = (w * 4).next_multiple_of(256);
+        let buf = g.device.create_buffer(&wgpu::BufferDescriptor { label: None, size: (bpr * h) as u64, usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ, mapped_at_creation: false });
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        enc.copy_texture_to_buffer(
+            wgpu::TexelCopyTextureInfo { texture: tex, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: wgpu::TextureAspect::All },
+            wgpu::TexelCopyBufferInfo { buffer: &buf, layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(bpr), rows_per_image: Some(h) } },
+            wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+        );
+        g.queue.submit([enc.finish()]);
+        let slice = buf.slice(..);
+        slice.map_async(wgpu::MapMode::Read, |_| {});
+        g.device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+        let data = slice.get_mapped_range();
+        let mut out = Vec::with_capacity((w * h) as usize);
+        for y in 0..h {
+            for x in 0..w {
+                out.push(data[(y * bpr + x * 4) as usize]);
+            }
+        }
+        out
+    };
+    let max_dim = g.device.limits().max_texture_dimension_2d;
+    for (w, h) in [(1280u32, 720u32), (1920, 1080), (3840, 2160)] {
+        let factor = 2160u32.div_ceil(h).clamp(2, 4).min(max_dim / w.max(h)).max(1);
+        let tex = target(&g, w, h);
+        let view = tex.create_view(&Default::default());
+        draw(&mut g, &view, w, h, 1);
+        let a = read(&g, &tex, w, h);
+        draw(&mut g, &view, w, h, factor);
+        let b = read(&g, &tex, w, h);
+        // the same picture: no pixel more than a third of full coverage apart (edges resample), and under 0.3% of
+        // the frame's coverage in all
+        let (mut worst, mut sum) = (0i32, 0i64);
+        for (x, y) in a.iter().zip(&b) {
+            let d = (*x as i32 - *y as i32).abs();
+            worst = worst.max(d);
+            sum += d as i64;
+        }
+        let total: i64 = a.iter().map(|v| *v as i64).sum();
+        assert!(worst <= 96 && sum * 1000 < total * 3, "{w}x{h} factor {factor}: worst {worst}, sum {sum} of {total}");
+        let mut time = |g: &mut Gpu, f: u32| {
+            for _ in 0..8 {
+                draw(g, &view, w, h, f);
+                let _ = g.device.poll(wgpu::PollType::wait_indefinitely());
+            }
+            let n = 120;
+            let t = std::time::Instant::now();
+            for _ in 0..n {
+                draw(g, &view, w, h, f);
+                let _ = g.device.poll(wgpu::PollType::wait_indefinitely());
+            }
+            t.elapsed().as_secs_f64() * 1e3 / n as f64
+        };
+        let (t1, t2) = (time(&mut g, 1), time(&mut g, factor));
+        let (sw, sh, _) = g.ui.ss_info().unwrap_or((0, 0, 0));
+        eprintln!(
+            "ui supersampling at {w}x{h}: straight {t1:.3} ms, {factor}x ({sw}x{sh}, {:.1} MB) {t2:.3} ms (+{:.3} ms a frame, to GPU completion); worst pixel {worst}/255, coverage moved {:.3}%",
+            sw as f64 * sh as f64 * 4.0 / 1048576.0,
+            t2 - t1,
+            sum as f64 * 100.0 / total.max(1) as f64
+        );
+    }
+}

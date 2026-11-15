@@ -17,6 +17,8 @@ melee_gx.workspace = true
 # Brawl music / sfx from the player's disc (gd_brawl_*: presentation, never sim state)
 melee_audio = { path = "../melee_audio", default-features = false }
 png = "0.18"
+# gd_ui_layout (ui/layout.rs): flexbox layout for the presentation mods, computed natively
+taffy = { version = "=0.15.0", default-features = false, features = ["std", "flexbox", "taffy_tree"] }
 wasmi = { version = "2.0.0", default-features = false, features = ["std", "validate", "deterministic"] }
 
 [dev-dependencies]

@@ -59,9 +59,8 @@ pub fn stocks(e: &mut E, x: f32, y: f32, w: f32, left: i32, total: i32, label: &
         e.text_ex(x + w - 10.0, y + 6.0, d(13), INK, ALIGN_RIGHT, 0.0, s.str());
         let n = total.clamp(1, 6);
         let cw = n as f32 * 16.0 + 6.0;
-        e.rect(x + 10.0, y + 25.0, cw, 18.0, INK);
-        spr_c(e, S_DISC, x + 10.0, y + 34.0, 18.0 / 32.0, INK);
-        spr_c(e, S_DISC, x + 10.0 + cw, y + 34.0, 18.0 / 32.0, INK);
+        // the capsule is one shape (it was a rect between two discs a little smaller than it: stepped ends)
+        e.shape(SHAPE_BOX, x + 1.0, y + 25.0, cw + 18.0, 18.0, 9.0, 0.0, 0.0, INK, 0);
         for i in 0..n {
             let cx = x + 18.0 + i as f32 * 16.0;
             if heart(e, i < left, cx, y + 34.0, 16.0, WHITE) {
@@ -157,7 +156,7 @@ pub fn session_banner(e: &mut E, v: &[i32; VW], a: f32, y: f32) {
     if a <= 0.0 {
         return;
     }
-    let (x, w, h) = (170.0, 300.0, 86.0);
+    let (x, w, h) = (mid() - 150.0, 300.0, 86.0);
     sticker(e, S_FACE_SUNNY, x, y, w, h, -1.0, alpha(WHITE, a), |e| {
         let mut t = Buf::new();
         t.s("Fight ").i(v[V_FIGHT] + 1).s(" - ").s(kind_word(v[V_FIGHT_KIND]));
@@ -228,15 +227,16 @@ pub fn party_from_view(v: &[i32; VW]) -> Party {
 /// A build row: each item held as a chip of its colour (x2 on a stack), left to right from (x, cy), at most `w` wide.
 /// The camp cards, the run-end summary and the pause header all show a build with it.
 pub fn build_row(e: &mut E, items: &[u8; envoy_data::items::ITEM_IDS], x: f32, cy: f32, w: f32, size: f32) -> usize {
-    let step = size + 4.0;
-    let mut cx = x + size * 0.5;
+    // the frames stand clear of each other (they overlapped at `size` + 4 a step)
+    let step = item_step(size);
+    let mut cx = x + step * 0.5;
     let mut n = 0;
     for it in envoy_data::items::ITEMS.iter() {
         let c = items[it.id as usize];
         if c == 0 {
             continue;
         }
-        if cx > x + w - size * 0.5 {
+        if cx > x + w - step * 0.5 {
             // no room left: a "+n" for the rest
             let more = envoy_data::items::ITEMS.iter().filter(|j| items[j.id as usize] > 0).count() - n;
             let mut s = Buf::new();
@@ -246,9 +246,7 @@ pub fn build_row(e: &mut E, items: &[u8; envoy_data::items::ITEM_IDS], x: f32, c
         }
         item_icon(e, it.id, cx, cy, size, 1.0);
         if c > 1 {
-            let mut s = Buf::new();
-            s.s("x").i(c as i32);
-            e.text_ex(cx + size * 0.45, cy + size * 0.1, bs(9), INK, ALIGN_CENTER, 0.0, s.str());
+            count_chip(e, cx, cy, size * 4.0 / 3.0, c as i32);
         }
         cx += step;
         n += 1;
@@ -279,7 +277,7 @@ fn fighter_line(e: &mut E, x: f32, y: f32, p: &Party, set: usize, first: bool) {
         e.text_ex(x + 11.0, y + 10.0, d(11), WHITE, ALIGN_CENTER, 0.0, if pl == 0 { "P1" } else { "P2" });
     }
     spr_c(e, S_HEAD, x + 36.0, y + 16.0, 0.9, WHITE);
-    e.text_ex(x + 50.0, y + 10.0, d(12), INK, ALIGN_LEFT, 74.0, ck_name(p.pairs[set]));
+    text_fit(e, x + 50.0, y + 10.0, d, 12, 7, INK, ALIGN_LEFT, 74.0, ck_name(p.pairs[set]));
     let mut cx = x + 136.0;
     for k in 0..SLOTS {
         let id = p.ids[set][k];
@@ -309,7 +307,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
         let lab_on = st & (1 << 10) != 0;
         let (lx, ly) = (FB_X + 222.0, FB_Y + 1.0);
         face(e, if lab_on { S_FACE_HOVER } else { S_FACE_INK }, lx, ly, 104.0, 28.0, WHITE);
-        e.text_ex(lx + 52.0, ly + 6.0, d(13), if lab_on { INK } else { SUNNY }, ALIGN_CENTER, 98.0, "Item Lab");
+        text_fit(e, lx + 52.0, ly + 6.0, d, 13, 8, if lab_on { INK } else { SUNNY }, ALIGN_CENTER, 98.0, "Item Lab");
         if !lab_on {
             e.text_ex(lx + 98.0, ly + 7.0, bs(10), PALE, ALIGN_RIGHT, 0.0, ">");
         }
@@ -342,8 +340,8 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
         pop(e, 0, x, y, w, h, -2.0, &|e| {
             face(e, S_FACE_CREAM, x, y, w, h, WHITE);
             spr_c(e, S_NODISC, x + 30.0, y + 32.0, 1.4, WHITE);
-            e.text_ex(x + 52.0, y + 18.0, d(19), INK, ALIGN_LEFT, w - 60.0, "Needs your Brawl disc");
-            e.text_ex(x + 14.0, y + 56.0, bs(13), LILAC, ALIGN_LEFT, w - 28.0, "Envoy opens once the disc is added.");
+            text_fit(e, x + 52.0, y + 18.0, d, 19, 11, INK, ALIGN_LEFT, w - 60.0, "Needs your Brawl disc");
+            text_fit(e, x + 14.0, y + 56.0, bs, 13, 8, LILAC, ALIGN_LEFT, w - 28.0, "Envoy opens once the disc is added.");
             for (i, s) in ["Open the launcher.", "Add your Brawl disc.", "Restart the game."].iter().enumerate() {
                 let yy = y + 84.0 + i as f32 * 28.0;
                 spr_c(e, S_DISC, x + 24.0, yy + 9.0, 20.0 / 32.0, INK);
@@ -367,7 +365,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             let mut s = Buf::new();
             loop_fight(&mut s, p.lp, p.fight, p.fights);
             s.s(". Saved after fight ").i(p.fight.max(1)).s(".");
-            e.text_ex(x + 14.0, y + 33.0, bs(12), INK, ALIGN_LEFT, w - 28.0, s.str());
+            text_fit(e, x + 14.0, y + 33.0, bs, 12, 7, INK, ALIGN_LEFT, w - 28.0, s.str());
             let mut yy = y + 62.0;
             for q in 0..p.players {
                 for f in 0..sets {
@@ -413,11 +411,11 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             e.rect(x + 1.5, y + 1.5, w - 3.0, 52.0, SUNNY);
             e.rect(x + 1.5, y + 53.5, w - 3.0, 2.5, INK);
             e.text_ex(x + 14.0, y + 6.0, d(23), INK, ALIGN_LEFT, 0.0, "Start a run");
-            e.text_ex(x + 14.0, y + 33.0, bs(12), INK, ALIGN_LEFT, w - 28.0, "Three rooms of waves, then a boss.");
+            text_fit(e, x + 14.0, y + 33.0, bs, 12, 7, INK, ALIGN_LEFT, w - 28.0, "Three rooms of waves, then a boss.");
             for (i, s) in ["Pick two fighters at the camp.", "Player 2 joins at the camp."].iter().enumerate() {
                 let yy = y + 72.0 + i as f32 * 40.0;
                 spr_c(e, S_DOT_INK, x + 20.0, yy + 8.0, 1.0, WHITE);
-                e.text_ex(x + 34.0, yy, bs(14), INK, ALIGN_LEFT, w - 44.0, s);
+                text_fit(e, x + 34.0, yy, bs, 14, 8, INK, ALIGN_LEFT, w - 44.0, s);
             }
         });
         let (px, py) = (ox + 245.0, oy + 0.0);

@@ -1,0 +1,6 @@
+# ui_aspect.sh: findings that are meant (a fixed string per line; a finding that contains one is not a failure).
+# Moments drawn over each other on purpose, for under a second:
+# a burst behind a burst (COMBO BREAK: the white burst behind the player's colour; a tech spark beside a cash-out)
+burst_
+# the cash-out's coins in flight to the purse cross each other
+coin.png (20.8x20.8) over coin.png

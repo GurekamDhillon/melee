@@ -70,7 +70,7 @@ fn secs_of(id: i32) -> &'static [SecDef] {
 
 const ARENA_SECS: [SecDef; 1] = [sec("030101.pac", 0.0, 0.0, "030vAdvStadium", 0, 0)];
 
-/// Brawl's enemy kind (GEG1 +0x1C; names: BrawlCrate's public `EnemyList`, ids matched to the per-file counts in
+/// Brawl's enemy kind (GEG1 [off]; names: BrawlCrate's public `EnemyList`, ids matched to the per-file counts in
 /// notes/sse-audit.md) -> the nearest of our four Subspace kinds (`subspace::K_*`), or None for a boss (not spawned).
 /// Unknown ids fall back to the Goomba (logged).
 fn enemy_kind(id: u16) -> (Option<usize>, &'static str) {
@@ -108,11 +108,11 @@ pub struct Door {
     pub kind: u8,
     /// index into `Map::doors` of the destination; -1: the exit (or unlinked)
     pub to: i32,
-    /// the door's own id (GDOR +0x30: level, step, room, index)
+    /// the door's own id (GDOR [off]: level, step, room, index)
     pub id: u32,
-    /// GDOR +0x34: set on a side room's way back to its main section
+    /// GDOR [off]: set on a side room's way back to its main section
     pub back: bool,
-    /// GDOR +0x51 == 0x13: a main-section door into a side room
+    /// GDOR [off] == 0x13: a main-section door into a side room
     pub into_room: bool,
     /// the level's exit (the door the GMSJ block names, else an arrow door)
     pub exit: bool,

@@ -9,7 +9,7 @@ marked [spec] below. Nothing from the disc is committed: the numbers here are de
 
 1. Data (a). `petey_model.rs` reads the owner's local extracted files at runtime. Formats: ARC (nested, LZ77
    0x10/0x11), BRRES groups, MDL0 v9 bones, CHR0 v4/v5 (BrawlBox-documented layouts), and the boss's enemy param
-   file: a relocatable section (header: size, data size, relocation count, root counts; data at +0x20; root table
+   file: a relocatable section (header: size, data size, relocation count, root counts; data at [off]; root table
    of (data offset, name offset) pairs). Its named roots include `HitDataSet`, `wpnHitDataSet_ArmLeft/Right`,
    `cameraRangeSet`, `CameraClipSphereData`, `s_wpnAnmCmdDataSet` and AI script names. Hurtbox records use the
    BrawlBox HurtBox layout: offset xyz, stretch xyz, radius, flag word with the bone index in bits 23-31.

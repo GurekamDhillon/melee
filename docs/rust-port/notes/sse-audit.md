@@ -5,8 +5,8 @@ Rust port (`melee_modes/src/tu/explore.rs`). Only names, counts and ids here. No
 
 Provenance tags used below:
 * **[file]**: counted by a throwaway python reader (same ARC / LZ walk as `petey_model::pac_leaves`, same collision
-  test and BLOC sub-block walk as `explore.rs`). Enemy kind = u16 at GEG1 entry +0x1C, door type = byte at GDOR
-  entry +0x44.
+  test and BLOC sub-block walk as `explore.rs`). Enemy kind = u16 at GEG1 entry [off], door type = byte at GDOR
+  entry [off].
 * **[pub]**: public knowledge. Enemy id -> name table and the BLOC sub-block names/categories come from BrawlCrate's
   `BrawlLib/SSBB/ResourceNodes/Subspace/*` (enum `EnemyList` in `Hazards/GEG1Node.cs`). Story names and order are
   common knowledge of the game.
@@ -107,7 +107,7 @@ Level `08` files [file]:
 | geometry | 15 MDL0 in `080103`, 8 in `a`, 4 in `b`; 38 CHR0 animations [file] | main map model only, bind pose; no CHR0/SRT0 playback; `080103b` not loaded |
 | collision | 3 files in `080103` (+1 per room); GMOV parts carry their own collision [file/inferred] | largest file only, welded static; no moving collision |
 | doors | 3 + 1 + 2 GDOR (normal 4, arrow 2) | GDOR read, hand-linked (`LINKS`), up tilt + fade; Brawl's step/jump tables not read; `b` room missing |
-| enemies | 8 GEG1: Bucculus x4, Mite x4 (Mite = swarm generator) | first 4 GEG1 of section 0 only, one stub kind (Goomba); kinds at +0x1C ignored |
+| enemies | 8 GEG1: Bucculus x4, Mite x4 (Mite = swarm generator) | first 4 GEG1 of section 0 only, one stub kind (Goomba); kinds at [off] ignored |
 | items / crates | 1 GIB2 (item box/crate gen) in `080103` | none |
 | moving parts | GMOV 2, GMWA 1 (switch wall), GMOT in hut | none |
 | triggers | GET1 4, GET2 4, EPSP 1, GASD in hut | none |
@@ -137,7 +137,7 @@ moving platforms, 9 cannon blocks (GBC1/2), 8 GBLK, 9 GIB2, 3 GITM [file].
 Next level: **The Plain** in story order. Under the mapping above our `08` map is The Lake, so the true order is
 Jungle(06) -> Plain(07) -> Lake(08) -> Ruined Zoo(09). Recommended (cheapest playable sequence):
 
-1. Read GEG1 kind ids (u16 +0x1C) and spawn every point, mapping unsupported kinds to the nearest of our 4 (log the
+1. Read GEG1 kind ids (u16 [off]) and spawn every point, mapping unsupported kinds to the nearest of our 4 (log the
    miss). Zero new art; makes every map populated. Add Bullet Bill's explosion.
 2. Load all collision files per section (the `whole` path in `load_secs` already welds them) and read GMSJ as the
    level exit; read Brawl's door targets instead of hand `LINKS`.

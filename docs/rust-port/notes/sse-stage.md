@@ -34,24 +34,24 @@ Koopa, Hammer Bro, Bullet Bill, Giant Goomba; GEG1 kinds 0, 25, 19, 13, 8) with 
 Offsets are entry-relative; only ids and counts here.
 
 - **Collision:** every collision file of every section, object by object. A collision object names the bone it rides
-  (+0x2A index, +0x4C name). World objects (no bone, 0xFFFF) are the static map and are welded across files (the
+  ([off] index, [off] name). World objects (no bone, 0xFFFF) are the static map and are welded across files (the
   arena's welding code). Bricks (`AdvGdtPunBrick*`) at their bone's rest place become their own collision joint each
   (breakable blocks). Item-box tops (`AdvGdtItemBox*`) are dropped: the crate is a Melee item. Everything else rides
   a moving part (GMOV) the port does not animate yet and is left out (logged). `080103`: 3 files, 3 world objects,
   one moving floor (left out), one item-box top.
-- **Enemies (GEG1):** kind = u16 at +0x1C, mapped by `enemy_kind` to the nearest of our four Subspace kinds (table
+- **Enemies (GEG1):** kind = u16 at [off], mapped by `enemy_kind` to the nearest of our four Subspace kinds (table
   below); a boss kind is not spawned. Each section's points spawn when the party enters it (the previous section's
   enemies go), at most the pool's 8. They are `subspace.rs` sim entities, so a plain VS match on the slot gets them
   too (round 1 spawned only inside Envoy runs because the old script enemies needed Envoy's articles).
-- **Doors (GDOR):** id u32 +0x30 (level, step, room letter, index); +0x34 = 1 on a side room's way back; +0x51 = 0x13
-  on a main-section door into a side room; type byte +0x44 (2 = arrow). `link_doors`: the main section's room doors
+- **Doors (GDOR):** id u32 [off] (level, step, room letter, index); [off] = 1 on a side room's way back; [off] = 0x13
+  on a main-section door into a side room; type byte [off] (2 = arrow). `link_doors`: the main section's room doors
   lead, in order, into rooms `a` then `b`; each room's way-back door returns to the door that led in. `080103` has
   its two room doors at one spot: the one into a room not yet seen opens first (`VISITED`), so the first visit is
   the hut, the next `b`. This pairing rule is inferred from the data shapes (`080103`, `080104` have the same pair),
   not from a Brawl table.
 - **Level exit (GMSJ):** carries a copy of its exit door (a nested GDOR); that door id is the exit. A section set
   with no GMSJ (`080103`'s) uses its arrow door. The exit sends the party back to the start (VS) as before.
-- **Crates (GIB2):** x, y at +0x30/+0x34, size at +0x38 (0 small, 1 crate, 2 big) -> Melee capsule, box, barrel
+- **Crates (GIB2):** x, y at [off]/[off], size at [off] (0 small, 1 crate, 2 big) -> Melee capsule, box, barrel
   (`Item_80268B18`), spawned once per room. Their contents follow the match's item switch.
 - **Blocks (GBLK):** the brick collision joints above. Any live fighter hitbox touching one breaks it
   (`mpLib_80057BC0` switches its joint off). `080103` has none (the level's blocks are in `080101`/`080102`/`080105a`
@@ -180,7 +180,7 @@ sent off the screen in the same way.
 - **Moving platforms.** 060002a's sfyuka00-03 follow st02asuisha's bone path (600 frames, a circle ~60 across):
   `movers_tick` keeps prev_pos (`mpLib_80057424`), writes the points, `mpJointUpdateBounding`. Riding not yet
   checked with a fighter; the wheel model is not drawn (prop rigs carry no textures).
-- **Bricks.** GBLK names its brick by model index, not bone (bytes +0x2C/+0x2D: 0x7c..0x8e / 0x65..0x67), and the
+- **Bricks.** GBLK names its brick by model index, not bone (bytes [off]/[off]: 0x7c..0x8e / 0x65..0x67), and the
   main model has one bone, so the Jungle's bricks have no place: left out (they were invisible collision at the
   origin). Brick models draw until broken where a brick has a place (none on these maps yet).
 - **The ~93 ms map load frame** (for the zero-lag lane): file read+parse 47 ms (GrNLa.dat etc., also on FD), draw

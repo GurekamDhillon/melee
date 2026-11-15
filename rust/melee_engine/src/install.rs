@@ -39,6 +39,9 @@ fn check_heap(id: i32) -> i32 { os().check_heap(id) }
 /// Install every seam. Call after `Host::boot`.
 pub fn install() {
     unsafe {
+        // the SSE maps queue their textures for upload at the stage pick (presentation only)
+        melee_modes::tu::explore::TEX_PRELOAD = Some(crate::gxbridge::preload_tex);
+        melee_modes::tu::explore::TEX_UNPIN = Some(|| melee_gx::render::preload::UNPIN.store(true, std::sync::atomic::Ordering::Relaxed));
         use initialize::ext::hook as ih;
         ih::OSGetArenaLo = Some(arena_lo);
         ih::OSGetArenaHi = Some(arena_hi);

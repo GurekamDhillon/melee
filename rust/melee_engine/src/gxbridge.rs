@@ -386,6 +386,20 @@ pub unsafe fn GXInitTexObj(o: *mut c_void, image: *mut c_void, w: u16, h: u16, f
     shim().init_tex_obj(t, d, w, h, fmt, ws, wt, mip != 0);
     t.guest = image as usize as u64;
 }
+/// Queue a texture for upload before its first draw (`melee_gx::render::preload`), made exactly as a draw's
+/// `GXInitTexObj(image, w, h, fmt, .., levels > 1)` + `GXInitTexObjLOD(.., 0, levels - 1, ..)` makes it, so the
+/// renderer's key is the one that draw will compute. Presentation only (the GX objects table is not touched).
+pub unsafe fn preload_tex(image: *const u8, w: u16, h: u16, fmt: u32, levels: u32) {
+    let mip = levels > 1;
+    let want = get_tex_buffer_size(w, h, fmt, mip, if mip { 11 } else { 0 }) as usize;
+    let Some(d) = tex_data_at(image as *const c_void, want.max(32)) else { return };
+    let mut t = TexObj::default();
+    shim().init_tex_obj(&mut t, Some(d), w, h, fmt, 0, 0, mip);
+    let min = if mip { melee_types::GX_LIN_MIP_LIN } else { melee_types::GX_LINEAR } as u32;
+    GxShim::init_tex_obj_lod(&mut t, min, melee_types::GX_LINEAR as u32, 0.0, levels.max(1) as f32 - 1.0, 0.0, false, false, melee_types::GX_ANISO_1 as u32);
+    melee_gx::render::preload::push(t);
+}
+
 pub unsafe fn GXInitTexObjCI(o: *mut c_void, image: *mut c_void, w: u16, h: u16, fmt: u32, ws: u32, wt: u32, mip: u8, tlut: u32) {
     let want = get_tex_buffer_size(w, h, fmt, mip != 0, if mip != 0 { 11 } else { 0 }) as usize;
     let d = tex_data_at(image, want.max(32));

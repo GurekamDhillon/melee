@@ -734,6 +734,8 @@ impl RetailPlay {
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
             melee_engine::asset::sss_hover(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() });
+            // the SSE maps' textures go up while the stage select is open (a pick is ~14 frames before the match)
+            melee_modes::tu::explore::sss_preload();
         }
         if melee_core::frameprof::on() {
             self.profile_test_stage();

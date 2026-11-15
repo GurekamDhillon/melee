@@ -772,10 +772,61 @@ pub fn carrier(id: i32) -> i32 {
     unsafe {
         PICK = if is_gd_stage(id) && available(id) { id } else { 0 };
         if PICK != 0 {
+            preload_textures(PICK);
             eprintln!("explore: stage {id:#x} ({}) on the Final Destination carrier", gd_name(id).unwrap_or("?"));
         }
     }
     if is_gd_stage(id) { FD_STKIND } else { id }
+}
+
+/// The renderer's upload-ahead entry (`melee_engine::gxbridge::preload_tex`, set at engine start): texels, width,
+/// height, GX format, mip levels.
+pub static mut TEX_PRELOAD: Option<unsafe fn(*const u8, u16, u16, u32, u32)> = None;
+
+/// Queue every texture GD stage `id`'s map draws (all sections, doors, bricks) for upload before the match: the
+/// renderer puts up about a megabyte of texels a frame and keeps them until their first draw, so the match's first
+/// frame and each section's first draw find them made. Called at the pick (presentation only; nothing sim-visible).
+pub fn preload_textures(id: i32) {
+    let Some(f) = (unsafe { TEX_PRELOAD }) else { return };
+    let Some(k) = GD_STAGES.iter().position(|g| g.id == id) else { return };
+    let Some(m) = map_of(id) else { return };
+    unsafe { PRELOADED |= 1u32.pshl(k as i64) };
+    let mut n = 0;
+    let mut seen = std::collections::HashSet::new();
+    let mut each = |p: *const u8, w: u16, h: u16, fmt: u32, lv: u32| {
+        if seen.insert(p as usize) {
+            unsafe { f(p, w, h, fmt, lv) };
+            n += 1;
+        }
+    };
+    // the party's first section first: it is the match's first frame
+    for (r, _, _) in &m.models {
+        pm::rig_textures(r, &mut each);
+    }
+    for (r, _) in &m.door_models {
+        pm::rig_textures(r, &mut each);
+    }
+    for (_, r, _) in &m.brick_models {
+        pm::rig_textures(r, &mut each);
+    }
+    eprintln!("explore: {n} textures of {id:#x} queued for upload ahead of the match");
+}
+
+/// The GD stages whose textures were queued since the last match began (bit per `GD_STAGES` row; presentation).
+static mut PRELOADED: u32 = 0;
+/// The renderer's "a match began" (set at engine start with `TEX_PRELOAD`): pinned uploads may age out again.
+pub static mut TEX_UNPIN: Option<fn()> = None;
+
+/// Every tick of the stage select: each available GD stage's textures are queued once (the pick comes ~14 frames
+/// before the match's first frame, too late to upload a map's 15-18 MB of texels at about 1 MB a frame).
+pub fn sss_preload() {
+    for (k, g) in GD_STAGES.iter().enumerate() {
+        let bit = 1u32.pshl(k as i64);
+        if unsafe { PRELOADED } & bit == 0 && available(g.id) && map_of(g.id).is_some() {
+            unsafe { PRELOADED |= bit };
+            preload_textures(g.id);
+        }
+    }
 }
 
 /// Envoy's opt-in for its rooms (`MELEE_ENVOY_EXPLORE=1`).
@@ -940,6 +991,11 @@ const FADE_LEN: i32 = 2 * FADE_IN + HOLD;
 /// collision (a fresh copy in the game heap) for Final Destination with the mode on, else null (the stage's own).
 pub unsafe fn coll_override() -> *mut MapCollData {
     melee_core::hash::CONTENT_WORD.store(0, core::sync::atomic::Ordering::Relaxed);
+    // a match begins: the uploads made ahead may age out once unused (presentation only)
+    PRELOADED = 0;
+    if let Some(u) = TEX_UNPIN {
+        u();
+    }
     ACTIVE = false;
     SEC = 0;
     FADE = 0;
@@ -1803,6 +1859,9 @@ pub fn apply_header_token(t: &str) {
     unsafe {
         ALLOW = m;
         PICK = if p != 0 && available(p) && digest(p) == d { p } else { 0 };
+        if PICK != 0 {
+            preload_textures(PICK);
+        }
         eprintln!("explore: replay header sse {t}: pick {:#x}, mask {:x}", PICK, effective_mask());
     }
 }
@@ -1814,6 +1873,9 @@ pub fn apply_netplay(agreed: Option<(i32, u32)>) {
         let (p, m) = agreed.unwrap_or((0, 0));
         ALLOW = m;
         PICK = if p != 0 && available(p) { p } else { 0 };
+        if PICK != 0 {
+            preload_textures(PICK);
+        }
         eprintln!("explore: netplay content: mask {:x} (this machine {:x}), pick {:#x}", effective_mask(), content_mask(), PICK);
     }
 }

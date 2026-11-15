@@ -1422,6 +1422,16 @@ pub fn extent(tris: &[Vert]) -> ([f32; 3], [f32; 3]) {
 /// the material's alpha compare; opaque, back faces kept. `flash`: solid white.
 /// `org`: the model-space ground height and depth centre that land on `at` (x stays: the model's x is its own).
 /// Allocates nothing of its own: the texture objects live in the model, made on the loader's helper thread.
+/// Every texture `rig`'s batches draw with: (texels, width, height, GX format, mip levels), as `draw_tris` hands
+/// them to `GXInitTexObj` (for an upload ahead of the first draw).
+pub fn rig_textures(rig: &Rig, mut f: impl FnMut(*const u8, u16, u16, u32, u32)) {
+    for bt in &rig.batches {
+        if let Some(t) = &bt.tex {
+            f(t.data.as_ptr(), t.w, t.h, t.fmt, t.levels as u32);
+        }
+    }
+}
+
 /// `draw_tris` draws one triangle per material batch only (set around a call; presentation only).
 pub static mut SAMPLE: bool = false;
 

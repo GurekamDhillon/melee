@@ -245,8 +245,8 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
 
 - Kind 0 runs the directed-unit code (0x81A1D298, like kinds 8-13). Word 9's marker 35790 becomes the angle. 0x81A1EC18
   maps it to 270 degrees with no mirroring, so the unit moves straight down. Its limits hold the "none" marker, so
-  there is no cap. A "keep" start speed is 0 when the slot's previous kind is unset or in another category
-  (0x81A1B370, 0x81A1AE30).
+  there is no cap. A "keep" start speed is 0 when the slot's previous engine kind is unset or in another category
+  (0x81A1B370, 0x81A1AE30; see the geno-vm4 fix below).
 - Value 41000 / 6602's argument 2 is the placement's path object (create parameter [off] -> Enemy [off]), a
   grGimmickMotionPath. Kinds 21 / 22 (0x81A1D2D4, 0x81A1DFCC) follow it: each frame they go to the path point at
   frame [off] plus the offset values 3054 / 3055; the frame advances by the speed, wraps in loop mode (word 12 = 1),
@@ -270,8 +270,22 @@ and motion frame; the harness then goes. The landing reaction scripts (`grColDat
   unnamed slots, the Null classes' typeinfo strings in the 0x81A80C.. build. The map is in the local boss-ir notes.
 - Angle markers on a record start (0x81A1EF60): 35791 and 35789 keep the slot's current angle (was: taken as degrees;
   changes Tabuu and Jyk, not the six-boss set: their 3 x 3600-frame headless hashes are unchanged).
-- Known wrong, not changed: the "keep" start speed classes the engine kinds (unit [off], old value copied before the
-  start), not the kind numbers. Switching changes Porky's hash, so it waits for a six-boss run. Bullet Bill's bounce
-  (661D on kind 20, then 6600 kind 18) loses its speed until then.
+- Fixed (geno-vm4): the "keep" start speed compares the old and new units' engine kinds, not the kind numbers. The
+  record start (0x81A1B0C0) copies the unit's words to the stack before it loads the record, so "previous" is the old
+  engine kind and "new" is the record's word 0. 0x81A1B330 / 0x81A1B370 -> 0x81A1B39C, for a start speed whose integer
+  part is 35791 / 35789 / 35788: 0 when the old engine kind is unset (0x81A1AE10: outside 0-24) or of another
+  category (0x81A1AE30); 0 when a directed old kind (0 / 8-13) goes to a root-movement one (1 / 14-19 / 21-24); else
+  35791 the old speed, but the length of the unit's vector (0x81A10830) for a root-movement old kind going to a
+  directed one; 35789 / 35788 the vector's x / y. The VM uses its move vector for the unit's vector [M] (zero for
+  root-movement kinds: not modelled [L]); 35790 (0x81A1B564: a random speed between the limits) is not modelled.
+- Why Porky's hash changes: Porky's own records are kinds 14-34 with engine kinds 0 / 1. The kind-number check sent
+  every kind >= 25 through 0x81A1AE10's range test as "unset", so 25-34 with a 35791 start (Porky's 31 -> 31 / 30 /
+  33 -> 31, 30 -> 30, 27 -> 28) always restarted at 0. The engine kinds (0 / 1, both category 0) are in range, so
+  those starts now keep the slot's speed. Three starts go the other way (23 -> 25, 23 -> 19, 21 -> 17: root-movement
+  to directed, now the vector's length, 0 in the VM; before, the old speed). The code reads the copied
+  engine kind ([off] from the stack copy), so the new behaviour is the right one.
+- Bullet Bill: after the bounce (661D kind 20, then 6600 18) the script starts kind 20 on the slot again from kind 18;
+  that start now keeps the speed (vm_bullet_bill asserts it through `vm::start_unit`). The same frame then starts 18,
+  whose start speed is a number, so Bullet Bill's hash does not change.
 - Gate reading: 0x81A1C9C4 is "a flag bit clear" (not running), separate from the finished flag [off]
   (0x81A1C110) that the VM's `done` stands for; 661D / 661E skip only off and paused units [M].

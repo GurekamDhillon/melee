@@ -453,6 +453,13 @@ pub fn begin(p: &Program, a: &mut Actor, strength: i32, difficulty: i32, seed: u
     cx.change_status(status);
 }
 
+/// Start movement record `kind` on `slot` as 6600 does (no angle), outside a frame: for tests of the record start.
+#[doc(hidden)]
+pub fn start_unit(p: &Program, a: &mut Actor, i: &Input, slot: i32, kind: i32) {
+    let mut cx = Cx { p, a, i, depth: 0 };
+    cx.kin_start(slot, kind, None);
+}
+
 /// One frame. Never allocates.
 pub fn step(p: &Program, a: &mut Actor, i: &Input) {
     if a.live == 0 {
@@ -1842,20 +1849,40 @@ impl<'a> Cx<'a> {
             let keep = |x: f32| (KEEP_LO..=KEEP_HI).contains(&x);
             // every energy type reads the same words: speed w1 + w2 L (keep = the slot's current speed),
             // acceleration w3 + w4 L (negative = decay toward zero), limit w7 + w8 L [M: from the records' use]
-            // a "keep" start speed (0x81A1B370): 0 when the slot's previous kind is unset or of another category
-            // (0x81A1AE30, table s5+2A38: kinds 2-7 one, 20 another, the rest a third); else the previous speed
-            // [L: a previous root-movement kind gives the length of its last move vector, not modelled]
+            // the engine kind's category (0x81A1AE30, table s5+2A38: kinds 2-7 one, 20 another, the rest a third)
             let cat = |k: i32| match k {
                 2..=7 => 1,
                 20 => 2,
                 _ => 0,
             };
-            // [L, known wrong: the record start (0x81A1B0C0) classes the engine kinds (unit [off], its old value copied
-            // before the start), not the kind numbers; switching to ek changes Porky's hash, so it waits
-            // for the six-boss check]
-            let pk = self.a.kin[s].kind;
-            let carried = if (0..25).contains(&pk) && cat(pk) == cat(kind) { self.a.kin[s].spd } else { 0.0 };
-            k.spd = if keep(w(1)) { carried } else { w(1) + w(2) * l };
+            // the record start (0x81A1B0C0) copies the unit's old words before it loads the record, so "previous"
+            // is the old unit's engine kind (unit [off]), and the new one is the record's word 0, not the kind
+            // numbers. For a start speed whose integer part is 35791 / 35789 / 35788 (0x81A1B330), 0x81A1B370 ->
+            // 0x81A1B39C give: 0 when the old engine kind is unset (0x81A1AE10) or its category differs; 0 when a
+            // directed old kind (0 / 8-13) goes to a root-movement one (1 / 14-19 / 21-24); else 35791 the old
+            // speed, but the length of the old move vector (0x81A10830) when a root-movement old kind goes to a
+            // directed one; 35789 / 35788 the vector's x / y. [M: the unit's vector ([off]) is the VM's move vector;
+            // 35790 (0x81A1B564: a random speed between the limits) is not modelled and keeps the old speed]
+            let (pek, nek) = (self.a.kin[s].ek, wd(0) as i32);
+            let directed = |e: i32| e == 0 || (8..=13).contains(&e);
+            let rooted = |e: i32| matches!(e, 1 | 14..=19 | 21..=24);
+            let w1 = w(1);
+            let carried = if !(0..25).contains(&pek) || cat(pek) != cat(nek) || (directed(pek) && rooted(nek)) {
+                0.0
+            } else {
+                let mv = self.unit_move(s);
+                let from_vec = rooted(pek) && directed(nek);
+                if w1 == 35789.0 {
+                    mv[0]
+                } else if w1 == 35788.0 {
+                    mv[1]
+                } else if from_vec {
+                    libm::sqrtf(mv[0] * mv[0] + mv[1] * mv[1])
+                } else {
+                    self.a.kin[s].spd
+                }
+            };
+            k.spd = if keep(w1) || w1 == 35788.0 { carried } else { w(1) + w(2) * l };
             k.acc = if keep(w(3)) { 0.0 } else { w(3) + w(4) * l };
             // a "keep" limit keeps the slot's current limit; a slot with none caps at its start speed (no
             // unbounded acceleration) [L: the energy classes' keep handling is stripped]

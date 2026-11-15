@@ -71,3 +71,26 @@ build). Blockers: the three build scripts (`melee/build.rs`, `melee_modes/build.
 Windows host; `webgpu_dawn`/SDL3 DLL packaging stays on the desktop; float code is Rust-defined so output should match, but the exe
 must pass the gate on Windows before it is trusted; msvc `link.exe` vs lld-link produces a different binary (pdb, ordering). Do a
 spike: `cargo xwin build --release -p melee` on the laptop, then run `gate.sh` against the result on the desktop.
+
+## melee_link split into install crates (Nov 15)
+
+Chunking alone (150 hooks per `fn`, 10 files) cut melee_link's peak rustc only from 8.9 to 6.2 GB: the peak is
+`late_resolve_crate` resolving all 14,947 hook statements (29,877 paths) in one crate. `gen_link.py` now emits the installs
+as six workspace crates `rust/melee_link_p0..p5` (consecutive 150-hook chunks, cut at the nearest equal share: 2,400-2,564
+hooks each, `NPARTS` in the script) plus `melee_link_abi` (`cast`, `va_word(s)`, `cabi`, re-exported at each crate root so
+the hook lines are unchanged). `melee_link::install()` calls `melee_link_pN::install()` in order. Grouping by dependency crate
+does not help: every leaf group's hooks reach five or six of the leaf crates. The committed tables are a mechanical re-split
+of the previous ones; `tools/rust-port/link/check_split.py <old single-file gen_table.rs> rust` shows the ordered install
+statements and HOOKS table identical.
+
+Measured on the desktop, release, `-j 3`, `CARGO_INCREMENTAL=0`, own target dir, peak working set per rustc:
+
+| | before (chunked, one crate) | after (6 crates) |
+|---|---|---|
+| melee_link peak | 6,209 MB | 2,724 MB (retail_ms + HOOKS floor) |
+| largest part crate | - | 1,884 MB (p2) |
+| clean `cargo build -p melee` | 350 s | 350 s |
+| touch `melee_link/src/lib.rs`, rebuild melee | 157 s | 137 s |
+| edit `melee_modes/src/lib.rs`, rebuild melee | 160 s | 190 s (six part crates rebuild at -j 3) |
+
+The largest rustc of a build is now melee_engine (3.9 GB) / melee (3.6 GB).

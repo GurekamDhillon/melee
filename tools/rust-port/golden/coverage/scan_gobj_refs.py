@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Link-cast check: tu bodies the link installs (gen_table.rs) whose parameter is a Fighter/Item/Ground reference or pointer where the C definition takes a GObj (or the reverse). The link `cast` transmutes same-size pointers, so such a mismatch reads garbage at run time. Run from the repo root; prints the offenders (0 expected)."""
+"""Link-cast check: tu bodies the link installs (gen_table.rs and the melee_link_p<N> install crates) whose parameter is a Fighter/Item/Ground reference or pointer where the C definition takes a GObj (or the reverse). The link `cast` transmutes same-size pointers, so such a mismatch reads garbage at run time. Run from the repo root; prints the offenders (0 expected)."""
 import re,glob,os
-tab=open('rust/melee_link/src/gen_table.rs',encoding='utf8').read()
+tab=''.join(open(f,encoding='utf8').read() for f in sorted(glob.glob('rust/melee_link_p*/src/f*.rs')))  # the hooks live in the install crates
 csrc={}
 for root,_,files in os.walk('src/melee'):
     for fn in files:

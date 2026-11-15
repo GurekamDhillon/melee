@@ -1,0 +1,104 @@
+//! The link layer's shared helpers: `cast` (size-checked bit conversion), `va_word(s)` (variadic words) and `cabi`
+//! (extern "C" trampolines), used by `melee_link` and its generated install crates `melee_link_p<N>`.
+#![allow(clippy::missing_safety_doc)]
+
+pub mod cabi;
+
+/// A variadic tail the hook already carries as a slice: one machine word per element (see [`va_word`]).
+#[inline(always)]
+pub unsafe fn va_words<A: Copy>(a: &[A]) -> std::vec::Vec<*const core::ffi::c_void> {
+    // melee_items' `EfArg` is a tagged enum standing for one C variadic word (an int or a pointer): unwrap it
+    if core::any::type_name::<A>() == core::any::type_name::<melee_items::tu::iteffect::EfArg>() {
+        use melee_items::tu::iteffect::EfArg;
+        return a
+            .iter()
+            .map(|x| match *(x as *const A as *const EfArg) {
+                EfArg::Int(i) => i as isize as *const core::ffi::c_void,
+                EfArg::Ptr(p) => p as *const core::ffi::c_void,
+                EfArg::F32P(p) => p as *const core::ffi::c_void,
+                EfArg::Vec3P(p) => p as *const core::ffi::c_void,
+            })
+            .collect();
+    }
+    a.iter().map(|&x| va_word(x)).collect()
+}
+
+/// One variadic argument as the machine word `melee_world::tu::va::Va` steps over: pointers and references as they are,
+/// integers sign- or zero-extended by their type, an `f32` widened to a double (passed by its bits), like C's default
+/// argument promotions.
+#[inline(always)]
+pub unsafe fn va_word<A>(a: A) -> *const core::ffi::c_void {
+    let n = core::any::type_name::<A>();
+    let a = core::mem::ManuallyDrop::new(a);
+    let sa = core::mem::size_of::<A>();
+    let mut raw = [0u8; 8];
+    core::ptr::copy_nonoverlapping(&*a as *const A as *const u8, raw.as_mut_ptr(), sa.min(8));
+    let v = u64::from_le_bytes(raw);
+    let w = match n {
+        "f32" => (f32::from_bits(v as u32) as f64).to_bits(),
+        "i8" | "i16" | "i32" => (v | (u64::MAX << (sa * 8))) * ((v >> (sa * 8 - 1)) & 1) + v * (1 - ((v >> (sa * 8 - 1)) & 1)),
+        _ => v,
+    };
+    w as usize as *const core::ffi::c_void
+}
+
+#[cold]
+#[inline(never)]
+fn null_ref(site: u32, a: &str, b: &str) {
+    static N: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
+    if N.fetch_add(1, core::sync::atomic::Ordering::Relaxed) < 64 {
+        eprintln!("link cast: NULL -> reference {a} -> {b} (site {site})");
+    }
+    debug_assert!(false, "link cast: NULL -> reference {a} -> {b} (site {site})");
+}
+
+/// Bit copy between a hook's parameter/return type and the canonical function's (i32/u32, `&mut T`/`*mut T`,
+/// `Option<fn>`/`Option<extern fn>`). Same size: transmute. Different sizes can only be scalars (bool vs i32, u8
+/// vs i32...): converted the way a C integer conversion does (zero or sign extension by the source type, truncation,
+/// and any non-zero value is `true` for a `bool` target). Any other size mismatch is a build error.
+#[inline(always)]
+pub unsafe fn cast<A, B, const SITE: u32>(a: A) -> B {
+    let (sa, sb) = (core::mem::size_of::<A>(), core::mem::size_of::<B>());
+    let a = core::mem::ManuallyDrop::new(a);
+    if sa == sb {
+        // an `f32` result read as an `i32` (or the reverse) is a wrong extern signature, not a conversion
+        let fl = |n: &str| matches!(n, "f32" | "f64");
+        if fl(core::any::type_name::<A>()) != fl(core::any::type_name::<B>()) {
+            panic!("link cast: float/int mismatch {} -> {} (site {SITE})", core::any::type_name::<A>(), core::any::type_name::<B>());
+        }
+        // a NULL pointer bit-copied into `&T`/`&mut T` is UB that fat LTO exploits (it folds the callee's null
+        // checks: the invisible-fighter bug in HSD_JObjDispAll); a C NULL must land in a raw pointer or `Option<&T>`
+        if core::any::type_name::<B>().starts_with('&') && sa == core::mem::size_of::<usize>() {
+            let bits: usize = core::mem::transmute_copy::<A, usize>(&a);
+            if bits == 0 {
+                null_ref(SITE, core::any::type_name::<A>(), core::any::type_name::<B>());
+            }
+        }
+        return core::mem::transmute_copy::<A, B>(&a);
+    }
+    assert!(sa <= 8 && sb <= 8, "link cast: size mismatch {} -> {} (site {SITE})", core::any::type_name::<A>(), core::any::type_name::<B>());
+    let scalar = |n: &str| matches!(n, "bool" | "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "usize" | "isize");
+    // C converts an integer to a pointer by extension (the `0` NULL of a call such as `ftCo_800DE7C0(gobj, 0, 0)` whose
+    // declaration the hook mirrors with ints), so a scalar -> raw pointer cast is a conversion too
+    let ptr = |n: &str| n.starts_with("*mut ") || n.starts_with("*const ");
+    assert!(
+        scalar(core::any::type_name::<A>()) && (scalar(core::any::type_name::<B>()) || ptr(core::any::type_name::<B>())),
+        "link cast: {} -> {} (site {SITE})",
+        core::any::type_name::<A>(),
+        core::any::type_name::<B>()
+    );
+    let mut raw = [0u8; 8];
+    core::ptr::copy_nonoverlapping(&*a as *const A as *const u8, raw.as_mut_ptr(), sa);
+    let mut v = u64::from_le_bytes(raw);
+    if core::any::type_name::<A>().starts_with('i') && sa < 8 && (v >> (sa * 8 - 1)) & 1 == 1 {
+        v |= u64::MAX << (sa * 8);
+    }
+    if core::any::type_name::<B>() == "bool" {
+        v = (v != 0) as u64;
+    }
+    let raw = v.to_le_bytes();
+    let mut out = core::mem::MaybeUninit::<B>::uninit();
+    core::ptr::copy_nonoverlapping(raw.as_ptr(), out.as_mut_ptr() as *mut u8, sb);
+    out.assume_init()
+}
+

@@ -468,6 +468,18 @@ fn vm_bullet_bill() {
                 snap = Some(a);
             }
             vm::step(&p, &mut a, &inp(f));
+            if st == 4 && f == 159 {
+                // after the bounce (661D kind 20, then 6600 kind 18) the script starts kind 20 on the slot again (then 18, in the same frame): both
+                // records have engine kind 0, so the record start (0x81A1B0C0) keeps the unit's speed (start speed
+                // word 35791). Comparing the kind numbers (20 is category 2, 18 category 0) restarted it at 0
+                let s = a.kin.iter().position(|k| k.kind == 18).expect("status 4: the bounced unit on kind 18");
+                let mut c = a;
+                let sp = c.kin[s].spd;
+                assert!(sp != 0.0, "status 4: the bounced unit has no speed");
+                vm::start_unit(&p, &mut c, &inp(f), s as i32, 20);
+                assert_eq!((c.kin[s].kind, c.kin[s].ek), (20, 0));
+                assert_eq!(c.kin[s].spd, sp, "status 4: kind 20 after kind 18 did not keep the bounce's speed");
+            }
             moved += a.moved;
             aims += a.ev[..(a.ev_n as usize).min(vm::EVQ)].iter().filter(|e| e.kind == vm::EV_AIM).count() as u32;
             hashes.push(a.hash());

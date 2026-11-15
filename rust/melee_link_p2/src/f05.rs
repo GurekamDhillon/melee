@@ -6,609 +6,914 @@ use crate::cast;
 #[inline(never)]
 pub(super) fn c050() {
     // stubs.rs
-    unsafe { melee_chara::stubs::EFLIB_DESTROYALL = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(cast::<_, _, 712101>(a0)) }); }
+    unsafe { melee_chara::stubs::EFLIB_DESTROYALL = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(cast::<_, _, 712801>(a0)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FIGHTER_CHANGEMOTIONSTATE = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 712201>(a0), cast::<_, _, 712202>(a1), cast::<_, _, 712203>(a2), cast::<_, _, 712204>(a3), cast::<_, _, 712205>(a4), cast::<_, _, 712206>(a5), cast::<_, _, 712207>(a6)) }); }
+    unsafe { melee_chara::stubs::FIGHTER_CHANGEMOTIONSTATE = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 712901>(a0), cast::<_, _, 712902>(a1), cast::<_, _, 712903>(a2), cast::<_, _, 712904>(a3), cast::<_, _, 712905>(a4), cast::<_, _, 712906>(a5), cast::<_, _, 712907>(a6)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTANIM_8006EBA4 = Some(|a0| unsafe { melee_fighter::tu::ftanim::ftAnim_8006EBA4(cast::<_, _, 712301>(a0)) }); }
+    unsafe { melee_chara::stubs::FTANIM_8006EBA4 = Some(|a0| unsafe { melee_fighter::tu::ftanim::ftAnim_8006EBA4(cast::<_, _, 713001>(a0)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTANIM_800704F0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftanim::ftAnim_800704F0(cast::<_, _, 712401>(a0), cast::<_, _, 712402>(a1), cast::<_, _, 712403>(a2)) }); }
+    unsafe { melee_chara::stubs::FTANIM_800704F0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftanim::ftAnim_800704F0(cast::<_, _, 713101>(a0), cast::<_, _, 713102>(a1), cast::<_, _, 713103>(a2)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTANIM_80070C48 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070C48(cast::<_, _, 712501>(a0), cast::<_, _, 712502>(a1)) }); }
+    unsafe { melee_chara::stubs::FTANIM_80070C48 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070C48(cast::<_, _, 713201>(a0), cast::<_, _, 713202>(a1)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTANIM_80070CC4 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070CC4(cast::<_, _, 712601>(a0), cast::<_, _, 712602>(a1)) }); }
+    unsafe { melee_chara::stubs::FTANIM_80070CC4 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070CC4(cast::<_, _, 713301>(a0), cast::<_, _, 713302>(a1)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTANIM_APPLYPARTANIM = Some(|a0, a1, a2, a3| unsafe { melee_fighter::tu::ftanim::ftAnim_ApplyPartAnim(cast::<_, _, 712701>(a0), cast::<_, _, 712702>(a1), cast::<_, _, 712703>(a2), cast::<_, _, 712704>(a3)) }); }
+    unsafe { melee_chara::stubs::FTANIM_APPLYPARTANIM = Some(|a0, a1, a2, a3| unsafe { melee_fighter::tu::ftanim::ftAnim_ApplyPartAnim(cast::<_, _, 713401>(a0), cast::<_, _, 713402>(a1), cast::<_, _, 713403>(a2), cast::<_, _, 713404>(a3)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTANIM_ISFRAMESREMAINING = Some(|a0| unsafe { cast::<_, _, 712800>(melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(cast::<_, _, 712801>(a0))) }); }
+    unsafe { melee_chara::stubs::FTANIM_ISFRAMESREMAINING = Some(|a0| unsafe { cast::<_, _, 713500>(melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(cast::<_, _, 713501>(a0))) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTANIM_SETANIMRATE = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(cast::<_, _, 712901>(a0), cast::<_, _, 712902>(a1)) }); }
+    unsafe { melee_chara::stubs::FTANIM_SETANIMRATE = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(cast::<_, _, 713601>(a0), cast::<_, _, 713602>(a1)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTCLIFFCOMMON_80081298 = Some(|a0| unsafe { cast::<_, _, 713000>(melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081298(cast::<_, _, 713001>(a0))) }); }
+    unsafe { melee_chara::stubs::FTCLIFFCOMMON_80081298 = Some(|a0| unsafe { cast::<_, _, 713700>(melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081298(cast::<_, _, 713701>(a0))) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTCO_800957F4 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_ItemThrow::ftCo_800957F4(cast::<_, _, 713101>(a0), cast::<_, _, 713102>(a1)) }); }
+    unsafe { melee_chara::stubs::FTCO_800957F4 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_ItemThrow::ftCo_800957F4(cast::<_, _, 713801>(a0), cast::<_, _, 713802>(a1)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTCO_80096900 = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(cast::<_, _, 713201>(a0), cast::<_, _, 713202>(a1), cast::<_, _, 713203>(a2), cast::<_, _, 713204>(a3), cast::<_, _, 713205>(a4), cast::<_, _, 713206>(a5)) }); }
+    unsafe { melee_chara::stubs::FTCO_80096900 = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(cast::<_, _, 713901>(a0), cast::<_, _, 713902>(a1), cast::<_, _, 713903>(a2), cast::<_, _, 713904>(a3), cast::<_, _, 713905>(a4), cast::<_, _, 713906>(a5)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTCO_FALL_ENTER = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(cast::<_, _, 713301>(a0)) }); }
+    unsafe { melee_chara::stubs::FTCO_FALL_ENTER = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(cast::<_, _, 714001>(a0)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTCO_LANDINGFALLSPECIAL_ENTER = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(cast::<_, _, 713401>(a0), cast::<_, _, 713402>(a1), cast::<_, _, 713403>(a2)) }); }
+    unsafe { melee_chara::stubs::FTCO_LANDINGFALLSPECIAL_ENTER = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(cast::<_, _, 714101>(a0), cast::<_, _, 714102>(a1), cast::<_, _, 714103>(a2)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTCO_WAIT_IASA = Some(|a0| unsafe { melee_fighter::tu::ftCo_Wait::ftCo_Wait_IASA(cast::<_, _, 713501>(a0)) }); }
+    unsafe { melee_chara::stubs::FTCO_WAIT_IASA = Some(|a0| unsafe { melee_fighter::tu::ftCo_Wait::ftCo_Wait_IASA(cast::<_, _, 714201>(a0)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FTPARTS_80074B0C = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftParts_80074B0C(cast::<_, _, 713601>(a0), cast::<_, _, 713602>(a1), cast::<_, _, 713603>(a2)) }); }
+    unsafe { melee_chara::stubs::FTPARTS_80074B0C = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftParts_80074B0C(cast::<_, _, 714301>(a0), cast::<_, _, 714302>(a1), cast::<_, _, 714303>(a2)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FT_80081D0C = Some(|a0| unsafe { cast::<_, _, 713700>(melee_fighter::tu::ft_081b::ft_80081d0c(cast::<_, _, 713701>(a0))) }); }
+    unsafe { melee_chara::stubs::FT_80081D0C = Some(|a0| unsafe { cast::<_, _, 714400>(melee_fighter::tu::ft_081b::ft_80081d0c(cast::<_, _, 714401>(a0))) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FT_80082708 = Some(|a0| unsafe { cast::<_, _, 713800>(melee_fighter::tu::ft_081b::ft_80082708(cast::<_, _, 713801>(a0))) }); }
+    unsafe { melee_chara::stubs::FT_80082708 = Some(|a0| unsafe { cast::<_, _, 714500>(melee_fighter::tu::ft_081b::ft_80082708(cast::<_, _, 714501>(a0))) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FT_800827A0 = Some(|a0| unsafe { cast::<_, _, 713900>(melee_fighter::tu::ft_081b::ft_800827a0(cast::<_, _, 713901>(a0))) }); }
+    unsafe { melee_chara::stubs::FT_800827A0 = Some(|a0| unsafe { cast::<_, _, 714600>(melee_fighter::tu::ft_081b::ft_800827a0(cast::<_, _, 714601>(a0))) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FT_80083F88 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80083f88(cast::<_, _, 714001>(a0)) }); }
+    unsafe { melee_chara::stubs::FT_80083F88 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80083f88(cast::<_, _, 714701>(a0)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FT_80084104 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084104(cast::<_, _, 714101>(a0)) }); }
+    unsafe { melee_chara::stubs::FT_80084104 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084104(cast::<_, _, 714801>(a0)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::FT_8008A2BC = Some(|a0| unsafe { melee_fighter::tu::ft_08a1::ft_8008A2BC(cast::<_, _, 714201>(a0)) }); }
+    unsafe { melee_chara::stubs::FT_8008A2BC = Some(|a0| unsafe { melee_fighter::tu::ft_08a1::ft_8008A2BC(cast::<_, _, 714901>(a0)) }); }
     // stubs.rs
-    unsafe { melee_chara::stubs::PLAYER_GETPLAYERSLOTTYPE = Some(|a0| unsafe { cast::<_, _, 714300>(melee_fighter::tu::player::Player_GetPlayerSlotType(cast::<_, _, 714301>(a0))) }); }
+    unsafe { melee_chara::stubs::PLAYER_GETPLAYERSLOTTYPE = Some(|a0| unsafe { cast::<_, _, 715000>(melee_fighter::tu::player::Player_GetPlayerSlotType(cast::<_, _, 715001>(a0))) }); }
     // tu/ftcaptainspecialhi.rs
-    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 714401>(a0)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 715101>(a0)) }); }
     // tu/ftcaptainspecialhi.rs
-    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_8009CA0C = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CaptureCaptain::ftCo_8009CA0C(cast::<_, _, 714501>(a0), cast::<_, _, 714502>(a1)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_8009CA0C = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CaptureCaptain::ftCo_8009CA0C(cast::<_, _, 715201>(a0), cast::<_, _, 715202>(a1)) }); }
     // tu/ftcaptainspecialhi.rs
-    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_800DB368 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB368(cast::<_, _, 714601>(a0), cast::<_, _, 714602>(a1)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_800DB368 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB368(cast::<_, _, 715301>(a0), cast::<_, _, 715302>(a1)) }); }
     // tu/ftcaptainspecialhi.rs
-    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_800DE2A8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(cast::<_, _, 714701>(a0), cast::<_, _, 714702>(a1)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_800DE2A8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(cast::<_, _, 715401>(a0), cast::<_, _, 715402>(a1)) }); }
     // tu/ftcaptainspecialhi.rs
-    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_800DE7C0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(cast::<_, _, 714801>(a0), cast::<_, _, 714802>(a1), cast::<_, _, 714803>(a2)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTCO_800DE7C0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(cast::<_, _, 715501>(a0), cast::<_, _, 715502>(a1), cast::<_, _, 715503>(a2)) }); }
     // tu/ftcaptainspecialhi.rs
-    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTPARTSETROTY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 714901>(a0), cast::<_, _, 714902>(a1), cast::<_, _, 714903>(a2)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FTPARTSETROTY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 715601>(a0), cast::<_, _, 715602>(a1), cast::<_, _, 715603>(a2)) }); }
     // tu/ftcaptainspecialhi.rs
-    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FT_80083B68 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80083b68(cast::<_, _, 715001>(a0)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialhi::ext::FT_80083B68 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80083b68(cast::<_, _, 715701>(a0)) }); }
     // tu/ftcaptainspeciallw.rs
-    unsafe { melee_chara::tu::ftcaptainspeciallw::ext::FTCOMMON_8007E5AC = Some(|a0| unsafe { melee_fighter::tu::ftcommon::ftcommon_8007e5ac(cast::<_, _, 715101>(a0)) }); }
+    unsafe { melee_chara::tu::ftcaptainspeciallw::ext::FTCOMMON_8007E5AC = Some(|a0| unsafe { melee_fighter::tu::ftcommon::ftcommon_8007e5ac(cast::<_, _, 715801>(a0)) }); }
     // tu/ftcaptainspeciallw.rs
-    unsafe { melee_chara::tu::ftcaptainspeciallw::ext::FTPARTSETROTZ = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotZ(cast::<_, _, 715201>(a0), cast::<_, _, 715202>(a1), cast::<_, _, 715203>(a2)) }); }
+    unsafe { melee_chara::tu::ftcaptainspeciallw::ext::FTPARTSETROTZ = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotZ(cast::<_, _, 715901>(a0), cast::<_, _, 715902>(a1), cast::<_, _, 715903>(a2)) }); }
     // tu/ftcaptainspecialn.rs
-    unsafe { melee_chara::tu::ftcaptainspecialn::ext::LB_800119DC = Some(|a0, a1, a2, a3, a4| unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(cast::<_, _, 715301>(a0), cast::<_, _, 715302>(a1), cast::<_, _, 715303>(a2), cast::<_, _, 715304>(a3), cast::<_, _, 715305>(a4)) }); }
+    unsafe { melee_chara::tu::ftcaptainspecialn::ext::LB_800119DC = Some(|a0, a1, a2, a3, a4| unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(cast::<_, _, 716001>(a0), cast::<_, _, 716002>(a1), cast::<_, _, 716003>(a2), cast::<_, _, 716004>(a3), cast::<_, _, 716005>(a4)) }); }
     // tu/ftclink.rs
-    unsafe { melee_chara::tu::ftclink::ext::FTCO_80092ED8 = Some(|a0, a1| unsafe { cast::<_, _, 715400>(melee_fighter::tu::ftCo_Guard::ftCo_80092ED8(cast::<_, _, 715401>(a0), cast::<_, _, 715402>(a1))) }); }
+    unsafe { melee_chara::tu::ftclink::ext::FTCO_80092ED8 = Some(|a0, a1| unsafe { cast::<_, _, 716100>(melee_fighter::tu::ftCo_Guard::ftCo_80092ED8(cast::<_, _, 716101>(a0), cast::<_, _, 716102>(a1))) }); }
     // tu/ftclink.rs
-    unsafe { melee_chara::tu::ftclink::ext::FTCO_800DEAE8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8(cast::<_, _, 715501>(a0), cast::<_, _, 715502>(a1), cast::<_, _, 715503>(a2)) }); }
+    unsafe { melee_chara::tu::ftclink::ext::FTCO_800DEAE8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8(cast::<_, _, 716201>(a0), cast::<_, _, 716202>(a1), cast::<_, _, 716203>(a2)) }); }
     // tu/ftclink.rs
-    unsafe { melee_chara::tu::ftclink::ext::FTDATA_80085E50 = Some(|a0, a1| unsafe { cast::<_, _, 715600>(melee_fighter::tu::ftdata::ftData_80085E50(cast::<_, _, 715601>(a0), cast::<_, _, 715602>(a1))) }); }
+    unsafe { melee_chara::tu::ftclink::ext::FTDATA_80085E50 = Some(|a0, a1| unsafe { cast::<_, _, 716300>(melee_fighter::tu::ftdata::ftData_80085E50(cast::<_, _, 716301>(a0), cast::<_, _, 716302>(a1))) }); }
     // tu/ftclink.rs
-    unsafe { melee_chara::tu::ftclink::ext::FTLK_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftlink::ftLk_Init_LoadSpecialAttrs(cast::<_, _, 715701>(a0)) }); }
+    unsafe { melee_chara::tu::ftclink::ext::FTLK_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftlink::ftLk_Init_LoadSpecialAttrs(cast::<_, _, 716401>(a0)) }); }
     // tu/ftclink.rs
-    unsafe { melee_chara::tu::ftclink::ext::FTLK_INIT_ONLOADFORCLINK = Some(|a0| unsafe { melee_chara::tu::ftlink::ftLk_Init_OnLoadForCLink(cast::<_, _, 715801>(a0)) }); }
+    unsafe { melee_chara::tu::ftclink::ext::FTLK_INIT_ONLOADFORCLINK = Some(|a0| unsafe { melee_chara::tu::ftlink::ftLk_Init_OnLoadForCLink(cast::<_, _, 716501>(a0)) }); }
     // tu/ftclink.rs
-    unsafe { melee_chara::tu::ftclink::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 715901>(a0), cast::<_, _, 715902>(a1)) }); }
+    unsafe { melee_chara::tu::ftclink::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 716601>(a0), cast::<_, _, 716602>(a1)) }); }
     // tu/ftclinkappeals.rs
-    unsafe { melee_chara::tu::ftclinkappeals::ext::FTCO_APPEALS_IASA = Some(|a0| unsafe { melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_IASA(cast::<_, _, 716001>(a0)) }); }
+    unsafe { melee_chara::tu::ftclinkappeals::ext::FTCO_APPEALS_IASA = Some(|a0| unsafe { melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_IASA(cast::<_, _, 716701>(a0)) }); }
     // tu/ftclinkappeals.rs
-    unsafe { melee_chara::tu::ftclinkappeals::ext::FT_80084280 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084280(cast::<_, _, 716101>(a0)) }); }
+    unsafe { melee_chara::tu::ftclinkappeals::ext::FT_80084280 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084280(cast::<_, _, 716801>(a0)) }); }
     // tu/ftcrazyhand.rs
-    unsafe { melee_chara::tu::ftcrazyhand::ext::FTBOSSLIB_REPORTGOBJSLOTTYPE = Some(|a0| unsafe { melee_fighter::tu::ftbosslib::ftBossLib_ReportGObjSlotType(cast::<_, _, 716201>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhand::ext::FTBOSSLIB_REPORTGOBJSLOTTYPE = Some(|a0| unsafe { melee_fighter::tu::ftbosslib::ftBossLib_ReportGObjSlotType(cast::<_, _, 716901>(a0)) }); }
     // tu/ftcrazyhand.rs
-    unsafe { melee_chara::tu::ftcrazyhand::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 716301>(a0), cast::<_, _, 716302>(a1)) }); }
+    unsafe { melee_chara::tu::ftcrazyhand::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 717001>(a0), cast::<_, _, 717002>(a1)) }); }
     // tu/ftcrazyhandbackairplane1.rs
-    unsafe { melee_chara::tu::ftcrazyhandbackairplane1::ext::FTCH_GRABUNK1_8015B670 = Some(|a0| unsafe { melee_chara::chars::r7::ftCrazyHand::ftcrazyhandcapturedamagecrazyhand::ftCh_GrabUnk1_8015B670(cast::<_, _, 716401>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandbackairplane1::ext::FTCH_GRABUNK1_8015B670 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandcapturedamagecrazyhand::ftCh_GrabUnk1_8015B670(cast::<_, _, 717101>(a0)) }); }
     // tu/ftcrazyhandbackairplane2.rs
-    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCH_GRABUNK1_8015B850 = Some(|a0, a1| unsafe { melee_chara::tu::ftcrazyhandthrowncrazyhand::ftCh_GrabUnk1_8015B850(cast::<_, _, 716501>(a0), cast::<_, _, 716502>(a1)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCH_GRABUNK1_8015B850 = Some(|a0, a1| unsafe { melee_chara::tu::ftcrazyhandthrowncrazyhand::ftCh_GrabUnk1_8015B850(cast::<_, _, 717201>(a0), cast::<_, _, 717202>(a1)) }); }
     // tu/ftcrazyhandbackairplane2.rs
-    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 716601>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 717301>(a0)) }); }
     // tu/ftcrazyhandbackairplane2.rs
-    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCO_800DE2A8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(cast::<_, _, 716701>(a0), cast::<_, _, 716702>(a1)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCO_800DE2A8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(cast::<_, _, 717401>(a0), cast::<_, _, 717402>(a1)) }); }
     // tu/ftcrazyhandbackairplane2.rs
-    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCO_800DE7C0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(cast::<_, _, 716801>(a0), cast::<_, _, 716802>(a1), cast::<_, _, 716803>(a2)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandbackairplane2::ext::FTCO_800DE7C0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(cast::<_, _, 717501>(a0), cast::<_, _, 717502>(a1), cast::<_, _, 717503>(a2)) }); }
     // tu/ftcrazyhandfingerbeam0.rs
-    unsafe { melee_chara::tu::ftcrazyhandfingerbeam0::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 716901>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandfingerbeam0::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 717601>(a0)) }); }
     // tu/ftcrazyhandfingerbeam0.rs
-    unsafe { melee_chara::tu::ftcrazyhandfingerbeam0::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 717001>(a0), cast::<_, _, 717002>(a1), cast::<_, _, 717003>(a2)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandfingerbeam0::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 717701>(a0), cast::<_, _, 717702>(a1), cast::<_, _, 717703>(a2)) }); }
     // tu/ftcrazyhandfingergun2.rs
-    unsafe { melee_chara::tu::ftcrazyhandfingergun2::ext::FTCH_INIT_801592D4 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandbackairplane1::ftCh_Init_801592D4(cast::<_, _, 717101>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandfingergun2::ext::FTCH_INIT_801592D4 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandbackairplane1::ftCh_Init_801592D4(cast::<_, _, 717801>(a0)) }); }
     // tu/ftcrazyhandpoke.rs
-    unsafe { melee_chara::tu::ftcrazyhandpoke::ext::IT_802F0340 = Some(|a0, a1, a2, a3, a4, a5| unsafe { cast::<_, _, 717200>(melee_items::tu::itmasterhandlaser::it_802F0340(cast::<_, _, 717201>(a0), cast::<_, _, 717202>(a1), cast::<_, _, 717203>(a2), cast::<_, _, 717204>(a3), cast::<_, _, 717205>(a4), cast::<_, _, 717206>(a5))) }); }
+    unsafe { melee_chara::tu::ftcrazyhandpoke::ext::IT_802F0340 = Some(|a0, a1, a2, a3, a4, a5| unsafe { cast::<_, _, 717900>(melee_items::tu::itmasterhandlaser::it_802F0340(cast::<_, _, 717901>(a0), cast::<_, _, 717902>(a1), cast::<_, _, 717903>(a2), cast::<_, _, 717904>(a3), cast::<_, _, 717905>(a4), cast::<_, _, 717906>(a5))) }); }
     // tu/ftcrazyhandpoke.rs
-    unsafe { melee_chara::tu::ftcrazyhandpoke::ext::IT_802F046C = Some(|a0| unsafe { melee_items::tu::itmasterhandlaser::it_802F046C(cast::<_, _, 717301>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandpoke::ext::IT_802F046C = Some(|a0| unsafe { melee_items::tu::itmasterhandlaser::it_802F046C(cast::<_, _, 718001>(a0)) }); }
     // tu/ftcrazyhandpoke.rs
-    unsafe { melee_chara::tu::ftcrazyhandpoke::ext::LBAUDIOAX_800236B8 = Some(|a0| unsafe { cast::<_, _, 717400>(melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(cast::<_, _, 717401>(a0))) }); }
+    unsafe { melee_chara::tu::ftcrazyhandpoke::ext::LBAUDIOAX_800236B8 = Some(|a0| unsafe { cast::<_, _, 718100>(melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(cast::<_, _, 718101>(a0))) }); }
     // tu/ftcrazyhandtaggrab.rs
-    unsafe { melee_chara::tu::ftcrazyhandtaggrab::ext::IT_802F046C = Some(|a0| unsafe { melee_items::tu::itmasterhandlaser::it_802F046C(cast::<_, _, 717501>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandtaggrab::ext::IT_802F046C = Some(|a0| unsafe { melee_items::tu::itmasterhandlaser::it_802F046C(cast::<_, _, 718201>(a0)) }); }
     // tu/ftcrazyhandtaggrab.rs
-    unsafe { melee_chara::tu::ftcrazyhandtaggrab::ext::LBAUDIOAX_800236B8 = Some(|a0| unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(cast::<_, _, 717601>(a0)); }); }
+    unsafe { melee_chara::tu::ftcrazyhandtaggrab::ext::LBAUDIOAX_800236B8 = Some(|a0| unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(cast::<_, _, 718301>(a0)); }); }
     // tu/ftcrazyhandtaggrab.rs
-    unsafe { melee_chara::tu::ftcrazyhandtaggrab::ext::LBAUDIOAX_8002438C = Some(|a0| unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002438C(cast::<_, _, 717701>(a0)); }); }
+    unsafe { melee_chara::tu::ftcrazyhandtaggrab::ext::LBAUDIOAX_8002438C = Some(|a0| unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002438C(cast::<_, _, 718401>(a0)); }); }
     // tu/ftcrazyhandthrow.rs
-    unsafe { melee_chara::tu::ftcrazyhandthrow::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 717801>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandthrow::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 718501>(a0)) }); }
     // tu/ftcrazyhandwait10.rs
-    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::FTCH_GRABUNK1_8015B174 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandgrabunk1b174::ftCh_GrabUnk1_8015B174(cast::<_, _, 717901>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::FTCH_GRABUNK1_8015B174 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandgrabunk1b174::ftCh_GrabUnk1_8015B174(cast::<_, _, 718601>(a0)) }); }
     // tu/ftcrazyhandwait10.rs
-    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::FTCH_GRABUNK1_8015BA34 = Some(|a0, a1, a2| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BA34(cast::<_, _, 718001>(a0), cast::<_, _, 718002>(a1), cast::<_, _, 718003>(a2)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::FTCH_GRABUNK1_8015BA34 = Some(|a0, a1, a2| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BA34(cast::<_, _, 718701>(a0), cast::<_, _, 718702>(a1), cast::<_, _, 718703>(a2)) }); }
     // tu/ftcrazyhandwait10.rs
-    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::FTCH_INIT_80157DF8 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandrockcrush0::ftCh_Init_80157DF8(cast::<_, _, 718101>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::FTCH_INIT_80157DF8 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandrockcrush0::ftCh_Init_80157DF8(cast::<_, _, 718801>(a0)) }); }
     // tu/ftcrazyhandwait10.rs
-    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::MPFLOORGETLEFT = Some(|a0, a1| unsafe { melee_world::tu::mplib::mpFloorGetLeft(cast::<_, _, 718201>(a0), cast::<_, _, 718202>(a1)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::MPFLOORGETLEFT = Some(|a0, a1| unsafe { melee_world::tu::mplib::mpFloorGetLeft(cast::<_, _, 718901>(a0), cast::<_, _, 718902>(a1)) }); }
     // tu/ftcrazyhandwait10.rs
-    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::STAGE_80225194 = Some(|| unsafe { cast::<_, _, 718300>(melee_world::tu::stage::Stage_80225194()) }); }
+    unsafe { melee_chara::tu::ftcrazyhandwait10::ext::STAGE_80225194 = Some(|| unsafe { cast::<_, _, 719000>(melee_world::tu::stage::Stage_80225194()) }); }
     // tu/ftcrazyhandwait11.rs
-    unsafe { melee_chara::tu::ftcrazyhandwait11::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 718401>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandwait11::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 719101>(a0)) }); }
     // tu/ftcrazyhandwalk.rs
-    unsafe { melee_chara::tu::ftcrazyhandwalk::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 718501>(a0)) }); }
+    unsafe { melee_chara::tu::ftcrazyhandwalk::ext::FTCH_GRABUNK1_8015BC88 = Some(|a0| unsafe { melee_chara::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(cast::<_, _, 719201>(a0)) }); }
     // tu/ftdonkey.rs
-    unsafe { melee_chara::tu::ftdonkey::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(cast::<_, _, 718601>(a0), cast::<_, _, 718602>(a1), cast::<_, _, 718603>(a2)); }); }
+    unsafe { melee_chara::tu::ftdonkey::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { let _ = melee_fighter::tu::ftcolanimlist::ftco_800bffd0(cast::<_, _, 719301>(a0), cast::<_, _, 719302>(a1), cast::<_, _, 719303>(a2)); }); }
     // tu/ftdonkey.rs
-    unsafe { melee_chara::tu::ftdonkey::ext::MPLIB_80056C54 = Some(|a0, a1, a2, a3, a4, a5, a6, a7| unsafe { cast::<_, _, 718700>(melee_world::tu::mplib::mpLib_80056C54(cast::<_, _, 718701>(a0), cast::<_, _, 718702>(a1), cast::<_, _, 718703>(a2), cast::<_, _, 718704>(a3), cast::<_, _, 718705>(a4), cast::<_, _, 718706>(a5), cast::<_, _, 718707>(a6), cast::<_, _, 718708>(a7))) }); }
+    unsafe { melee_chara::tu::ftdonkey::ext::MPLIB_80056C54 = Some(|a0, a1, a2, a3, a4, a5, a6, a7| unsafe { cast::<_, _, 719400>(melee_world::tu::mplib::mpLib_80056C54(cast::<_, _, 719401>(a0), cast::<_, _, 719402>(a1), cast::<_, _, 719403>(a2), cast::<_, _, 719404>(a3), cast::<_, _, 719405>(a4), cast::<_, _, 719406>(a5), cast::<_, _, 719407>(a6), cast::<_, _, 719408>(a7))) }); }
     // tu/ftdonkeyheavylanding.rs
-    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_8008DCE0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Damage::ftCo_8008DCE0(cast::<_, _, 718801>(a0), cast::<_, _, 718802>(a1), cast::<_, _, 718803>(a2)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_8008DCE0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Damage::ftCo_8008DCE0(cast::<_, _, 719501>(a0), cast::<_, _, 719502>(a1), cast::<_, _, 719503>(a2)) }); }
     // tu/ftdonkeyheavylanding.rs
-    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_8008E984 = Some(|a0| unsafe { cast::<_, _, 718900>(melee_fighter::tu::ftCo_Damage::ftCo_8008E984(cast::<_, _, 718901>(a0))) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_8008E984 = Some(|a0| unsafe { cast::<_, _, 719600>(melee_fighter::tu::ftCo_Damage::ftCo_8008E984(cast::<_, _, 719601>(a0))) }); }
     // tu/ftdonkeyheavylanding.rs
-    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_8008F744 = Some(|a0| unsafe { melee_fighter::tu::ftCo_Damage::ftCo_8008F744(cast::<_, _, 719001>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_8008F744 = Some(|a0| unsafe { melee_fighter::tu::ftCo_Damage::ftCo_8008F744(cast::<_, _, 719701>(a0)) }); }
     // tu/ftdonkeyheavylanding.rs
-    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_DAMAGE_PHYS = Some(|a0| unsafe { melee_fighter::tu::ftCo_Damage::ftCo_Damage_Phys(cast::<_, _, 719101>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavylanding::ext::FTCO_DAMAGE_PHYS = Some(|a0| unsafe { melee_fighter::tu::ftCo_Damage::ftCo_Damage_Phys(cast::<_, _, 719801>(a0)) }); }
     // tu/ftdonkeyheavyturn.rs
-    unsafe { melee_chara::tu::ftdonkeyheavyturn::ext::FTCO_80094EA4 = Some(|a0| unsafe { cast::<_, _, 719200>(melee_fighter::tu::ftCo_ItemThrow::ftCo_80094EA4(cast::<_, _, 719201>(a0))) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavyturn::ext::FTCO_80094EA4 = Some(|a0| unsafe { cast::<_, _, 719900>(melee_fighter::tu::ftCo_ItemThrow::ftCo_80094EA4(cast::<_, _, 719901>(a0))) }); }
     // tu/ftdonkeyheavyturn.rs
-    unsafe { melee_chara::tu::ftdonkeyheavyturn::ext::FTCO_TURN_ANIM_INNER = Some(|a0| unsafe { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Anim_Inner(cast::<_, _, 719301>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavyturn::ext::FTCO_TURN_ANIM_INNER = Some(|a0| unsafe { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Anim_Inner(cast::<_, _, 720001>(a0)) }); }
     // tu/ftdonkeyheavyturn.rs
-    unsafe { melee_chara::tu::ftdonkeyheavyturn::ext::FTDK_MS_347_800E0378 = Some(|a0| unsafe { cast::<_, _, 719400>(melee_chara::tu::ftdonkeyheavyfall::ftDk_MS_347_800E0378(cast::<_, _, 719401>(a0))) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavyturn::ext::FTDK_MS_347_800E0378 = Some(|a0| unsafe { cast::<_, _, 720100>(melee_chara::tu::ftdonkeyheavyfall::ftDk_MS_347_800E0378(cast::<_, _, 720101>(a0))) }); }
     // tu/ftdonkeyheavywait0.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywait0::ext::FT_8008A1FC = Some(|a0| unsafe { cast::<_, _, 719500>(melee_fighter::ft084e::ft_8008a1fc(cast::<_, _, 719501>(a0))) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywait0::ext::FT_8008A1FC = Some(|a0| unsafe { cast::<_, _, 720200>(melee_fighter::tu::ft_08a1::ft_8008a1fc(cast::<_, _, 720201>(a0))) }); }
     // tu/ftdonkeyheavywait1.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywait1::ext::FTCO_KNEEBEND_CHECK_SHORTHOP = Some(|a0| unsafe { melee_fighter::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(cast::<_, _, 719601>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywait1::ext::FTCO_KNEEBEND_CHECK_SHORTHOP = Some(|a0| unsafe { melee_fighter::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(cast::<_, _, 720301>(a0)) }); }
     // tu/ftdonkeyheavywait1.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywait1::ext::FTCO_LANDING_ENTER = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter(cast::<_, _, 719701>(a0), cast::<_, _, 719702>(a1), cast::<_, _, 719703>(a2), cast::<_, _, 719704>(a3), cast::<_, _, 719705>(a4), cast::<_, _, 719706>(a5)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywait1::ext::FTCO_LANDING_ENTER = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter(cast::<_, _, 720401>(a0), cast::<_, _, 720402>(a1), cast::<_, _, 720403>(a2), cast::<_, _, 720404>(a3), cast::<_, _, 720405>(a4), cast::<_, _, 720406>(a5)) }); }
     // tu/ftdonkeyheavywalk.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFC70 = Some(|a0| unsafe { cast::<_, _, 719800>(melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfc70(cast::<_, _, 719801>(a0))) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFC70 = Some(|a0| unsafe { cast::<_, _, 720500>(melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfc70(cast::<_, _, 720501>(a0))) }); }
     // tu/ftdonkeyheavywalk.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFCA4 = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfca4(cast::<_, _, 719901>(a0), cast::<_, _, 719902>(a1), cast::<_, _, 719903>(a2), cast::<_, _, 719904>(a3), cast::<_, _, 719905>(a4), cast::<_, _, 719906>(a5), cast::<_, _, 719907>(a6), cast::<_, _, 719908>(a7), cast::<_, _, 719909>(a8), cast::<_, _, 719910>(a9), cast::<_, _, 719911>(a10)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFCA4 = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfca4(cast::<_, _, 720601>(a0), cast::<_, _, 720602>(a1), cast::<_, _, 720603>(a2), cast::<_, _, 720604>(a3), cast::<_, _, 720605>(a4), cast::<_, _, 720606>(a5), cast::<_, _, 720607>(a6), cast::<_, _, 720608>(a7), cast::<_, _, 720609>(a8), cast::<_, _, 720610>(a9), cast::<_, _, 720611>(a10)) }); }
     // tu/ftdonkeyheavywalk.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFDDC = Some(|a0| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfddc(cast::<_, _, 720001>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFDDC = Some(|a0| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfddc(cast::<_, _, 720701>(a0)) }); }
     // tu/ftdonkeyheavywalk.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFEC8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfec8(cast::<_, _, 720101>(a0), cast::<_, _, 720102>(a1)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800DFEC8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfec8(cast::<_, _, 720801>(a0), cast::<_, _, 720802>(a1)) }); }
     // tu/ftdonkeyheavywalk.rs
-    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800E0060 = Some(|a0| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800e0060(cast::<_, _, 720201>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyheavywalk::ext::FTWALKCOMMON_800E0060 = Some(|a0| unsafe { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800e0060(cast::<_, _, 720901>(a0)) }); }
     // tu/ftdonkeyms3450.rs
-    unsafe { melee_chara::tu::ftdonkeyms3450::ext::FTCO_800C97A8 = Some(|a0| unsafe { cast::<_, _, 720300>(melee_fighter::tu::ftCo_Turn::ftCo_800C97A8(cast::<_, _, 720301>(a0))) }); }
+    unsafe { melee_chara::tu::ftdonkeyms3450::ext::FTCO_800C97A8 = Some(|a0| unsafe { cast::<_, _, 721000>(melee_fighter::tu::ftCo_Turn::ftCo_800C97A8(cast::<_, _, 721001>(a0))) }); }
     // tu/ftdonkeyms3450.rs
-    unsafe { melee_chara::tu::ftdonkeyms3450::ext::FTCO_TURN_ENTER = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Enter(cast::<_, _, 720401>(a0), cast::<_, _, 720402>(a1), cast::<_, _, 720403>(a2), cast::<_, _, 720404>(a3), cast::<_, _, 720405>(a4), cast::<_, _, 720406>(a5)) }); }
+    unsafe { melee_chara::tu::ftdonkeyms3450::ext::FTCO_TURN_ENTER = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Enter(cast::<_, _, 721101>(a0), cast::<_, _, 721102>(a1), cast::<_, _, 721103>(a2), cast::<_, _, 721104>(a3), cast::<_, _, 721105>(a4), cast::<_, _, 721106>(a5)) }); }
     // tu/ftdonkeyspecialhi.rs: link_alias.tsv
-    unsafe { melee_chara::tu::ftdonkeyspecialhi::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { { let _ = melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 720501>(a0), cast::<_, _, 720502>(a1), &[crate::va_word(a2)]); } }); }
+    unsafe { melee_chara::tu::ftdonkeyspecialhi::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { { let _ = melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 721201>(a0), cast::<_, _, 721202>(a1), &[crate::va_word(a2)]); } }); }
     // tu/ftdonkeyspecialhi.rs
-    unsafe { melee_chara::tu::ftdonkeyspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 720601>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 721301>(a0)) }); }
     // tu/ftdonkeyspeciallw.rs: link_alias.tsv
-    unsafe { melee_chara::tu::ftdonkeyspeciallw::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { { let _ = melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 720701>(a0), cast::<_, _, 720702>(a1), &[crate::va_word(a2)]); } }); }
+    unsafe { melee_chara::tu::ftdonkeyspeciallw::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { { let _ = melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 721401>(a0), cast::<_, _, 721402>(a1), &[crate::va_word(a2)]); } }); }
     // tu/ftdonkeyspeciallw.rs
-    unsafe { melee_chara::tu::ftdonkeyspeciallw::ext::FTDK_INIT_8010DB3C = Some(|a0| unsafe { melee_chara::tu::ftdonkey::ftDk_Init_8010DB3C(cast::<_, _, 720801>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyspeciallw::ext::FTDK_INIT_8010DB3C = Some(|a0| unsafe { melee_chara::tu::ftdonkey::ftDk_Init_8010DB3C(cast::<_, _, 721501>(a0)) }); }
     // tu/ftdonkeyspeciallw.rs
-    unsafe { melee_chara::tu::ftdonkeyspeciallw::ext::FT_80089824 = Some(|a0| unsafe { melee_fighter::ft0892::ft_80089824(cast::<_, _, 720901>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyspeciallw::ext::FT_80089824 = Some(|a0| unsafe { melee_fighter::ft0892::ft_80089824(cast::<_, _, 721601>(a0)) }); }
     // tu/ftdonkeyspecials.rs
-    unsafe { melee_chara::tu::ftdonkeyspecials::ext::FTDK_SPECIALLW_8010E148 = Some(|a0| unsafe { melee_chara::tu::ftdonkeyspeciallw::ftDk_SpecialLw_8010E148(cast::<_, _, 721001>(a0)) }); }
+    unsafe { melee_chara::tu::ftdonkeyspecials::ext::FTDK_SPECIALLW_8010E148 = Some(|a0| unsafe { melee_chara::tu::ftdonkeyspeciallw::ftDk_SpecialLw_8010E148(cast::<_, _, 721701>(a0)) }); }
     // tu/ftdrmario.rs
-    unsafe { melee_chara::tu::ftdrmario::ext::FTMR_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftmario::ftMr_Init_LoadSpecialAttrs(cast::<_, _, 721101>(a0)) }); }
+    unsafe { melee_chara::tu::ftdrmario::ext::FTMR_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftmario::ftMr_Init_LoadSpecialAttrs(cast::<_, _, 721801>(a0)) }); }
     // tu/ftdrmario.rs
-    unsafe { melee_chara::tu::ftdrmario::ext::FTMR_INIT_ONLOADFORDRMARIO = Some(|a0| unsafe { melee_chara::tu::ftmario::ftMr_Init_OnLoadForDrMario(cast::<_, _, 721201>(a0)) }); }
+    unsafe { melee_chara::tu::ftdrmario::ext::FTMR_INIT_ONLOADFORDRMARIO = Some(|a0| unsafe { melee_chara::tu::ftmario::ftMr_Init_OnLoadForDrMario(cast::<_, _, 721901>(a0)) }); }
     // tu/ftdrmario.rs
-    unsafe { melee_chara::tu::ftdrmario::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 721301>(a0), cast::<_, _, 721302>(a1)) }); }
+    unsafe { melee_chara::tu::ftdrmario::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 722001>(a0), cast::<_, _, 722002>(a1)) }); }
     // tu/ftdrmarioappeals.rs
-    unsafe { melee_chara::tu::ftdrmarioappeals::ext::FTMR_SPECIALN_VITAMINRANDOM = Some(|a0| unsafe { cast::<_, _, 721400>(melee_chara::tu::ftmariospecialn::ftMr_SpecialN_VitaminRandom(cast::<_, _, 721401>(a0))) }); }
+    unsafe { melee_chara::tu::ftdrmarioappeals::ext::FTMR_SPECIALN_VITAMINRANDOM = Some(|a0| unsafe { cast::<_, _, 722100>(melee_chara::tu::ftmariospecialn::ftMr_SpecialN_VitaminRandom(cast::<_, _, 722101>(a0))) }); }
     // tu/ftdrmarioappeals.rs
-    unsafe { melee_chara::tu::ftdrmarioappeals::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 721501>(a0), cast::<_, _, 721502>(a1), cast::<_, _, 721503>(a2)) }); }
+    unsafe { melee_chara::tu::ftdrmarioappeals::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 722201>(a0), cast::<_, _, 722202>(a1), cast::<_, _, 722203>(a2)) }); }
     // tu/ftemblem.rs
-    unsafe { melee_chara::tu::ftemblem::ext::FTMS_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftmars::ftMs_Init_LoadSpecialAttrs(cast::<_, _, 721601>(a0)) }); }
+    unsafe { melee_chara::tu::ftemblem::ext::FTMS_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftmars::ftMs_Init_LoadSpecialAttrs(cast::<_, _, 722301>(a0)) }); }
     // tu/ftemblem.rs
-    unsafe { melee_chara::tu::ftemblem::ext::FTMS_INIT_ONLOADFORROY = Some(|a0| unsafe { melee_chara::tu::ftmars::ftMs_Init_OnLoadForRoy(cast::<_, _, 721701>(a0)) }); }
+    unsafe { melee_chara::tu::ftemblem::ext::FTMS_INIT_ONLOADFORROY = Some(|a0| unsafe { melee_chara::tu::ftmars::ftMs_Init_OnLoadForRoy(cast::<_, _, 722401>(a0)) }); }
     // tu/ftfox.rs
-    unsafe { melee_chara::tu::ftfox::ext::FTFX_SPECIALN_REMOVEBLASTER = Some(|a0| unsafe { melee_chara::tu::ftfoxspecialn::ftFx_SpecialN_RemoveBlaster(cast::<_, _, 721801>(a0)) }); }
+    unsafe { melee_chara::tu::ftfox::ext::FTFX_SPECIALN_REMOVEBLASTER = Some(|a0| unsafe { melee_chara::tu::ftfoxspecialn::ftFx_SpecialN_RemoveBlaster(cast::<_, _, 722501>(a0)) }); }
     // tu/ftfox.rs
-    unsafe { melee_chara::tu::ftfox::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 721901>(a0), cast::<_, _, 721902>(a1)) }); }
+    unsafe { melee_chara::tu::ftfox::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 722601>(a0), cast::<_, _, 722602>(a1)) }); }
     // tu/ftfoxappeals.rs
     unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2AF4 = Some(|| unsafe { melee_world::tu::grcorneria::grCorneria_801E2AF4() }); }
     // tu/ftfoxappeals.rs
-    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2B80 = Some(|| unsafe { cast::<_, _, 722100>(melee_world::tu::grcorneria::grCorneria_801E2B80()) }); }
+    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2B80 = Some(|| unsafe { cast::<_, _, 722800>(melee_world::tu::grcorneria::grCorneria_801E2B80()) }); }
     // tu/ftfoxappeals.rs
-    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2C34 = Some(|| unsafe { cast::<_, _, 722200>(melee_world::tu::grcorneria::grCorneria_801E2C34()) }); }
+    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2C34 = Some(|| unsafe { cast::<_, _, 722900>(melee_world::tu::grcorneria::grCorneria_801E2C34()) }); }
     // tu/ftfoxappeals.rs
-    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2CE8 = Some(|| unsafe { cast::<_, _, 722300>(melee_world::tu::grcorneria::grCorneria_801E2CE8()) }); }
+    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2CE8 = Some(|| unsafe { cast::<_, _, 723000>(melee_world::tu::grcorneria::grCorneria_801E2CE8()) }); }
     // tu/ftfoxappeals.rs
-    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2D14 = Some(|| unsafe { cast::<_, _, 722400>(melee_world::tu::grcorneria::grCorneria_801E2D14()) }); }
+    unsafe { melee_chara::tu::ftfoxappeals::ext::GRCORNERIA_801E2D14 = Some(|| unsafe { cast::<_, _, 723100>(melee_world::tu::grcorneria::grCorneria_801E2D14()) }); }
     // tu/ftfoxappeals.rs
-    unsafe { melee_chara::tu::ftfoxappeals::ext::PLAYER_GETACTIONSTATS = Some(|a0| unsafe { cast::<_, _, 722500>(melee_fighter::tu::player::Player_GetActionStats(cast::<_, _, 722501>(a0))) }); }
+    unsafe { melee_chara::tu::ftfoxappeals::ext::PLAYER_GETACTIONSTATS = Some(|a0| unsafe { cast::<_, _, 723200>(melee_fighter::tu::player::Player_GetActionStats(cast::<_, _, 723201>(a0))) }); }
     // tu/ftfoxspeciallw.rs
-    unsafe { melee_chara::tu::ftfoxspeciallw::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 722601>(a0), cast::<_, _, 722602>(a1), cast::<_, _, 722603>(a2)) }); }
+    unsafe { melee_chara::tu::ftfoxspeciallw::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 723301>(a0), cast::<_, _, 723302>(a1), cast::<_, _, 723303>(a2)) }); }
     // tu/ftfoxspeciallw.rs
-    unsafe { melee_chara::tu::ftfoxspeciallw::ext::LB_800119DC = Some(|a0, a1, a2, a3, a4| unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(cast::<_, _, 722701>(a0), cast::<_, _, 722702>(a1), cast::<_, _, 722703>(a2), cast::<_, _, 722704>(a3), cast::<_, _, 722705>(a4)) }); }
+    unsafe { melee_chara::tu::ftfoxspeciallw::ext::LB_800119DC = Some(|a0, a1, a2, a3, a4| unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(cast::<_, _, 723401>(a0), cast::<_, _, 723402>(a1), cast::<_, _, 723403>(a2), cast::<_, _, 723404>(a3), cast::<_, _, 723405>(a4)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::FTFX_INIT_800E5534 = Some(|a0| unsafe { cast::<_, _, 722800>(melee_chara::tu::ftfox::ftFx_Init_800E5534(cast::<_, _, 722801>(a0))) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::FTFX_INIT_800E5534 = Some(|a0| unsafe { cast::<_, _, 723500>(melee_chara::tu::ftfox::ftFx_Init_800E5534(cast::<_, _, 723501>(a0))) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::FTFX_INIT_800E5588 = Some(|a0| unsafe { melee_chara::tu::ftfox::ftFx_Init_800E5588(cast::<_, _, 722901>(a0)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::FTFX_INIT_800E5588 = Some(|a0| unsafe { melee_chara::tu::ftfox::ftFx_Init_800E5588(cast::<_, _, 723601>(a0)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_8026BAE8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BAE8(cast::<_, _, 723001>(a0), cast::<_, _, 723002>(a1)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_8026BAE8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BAE8(cast::<_, _, 723701>(a0), cast::<_, _, 723702>(a1)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_8029C6A4 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itfoxlaser::it_8029C6A4(cast::<_, _, 723101>(a0), cast::<_, _, 723102>(a1), cast::<_, _, 723103>(a2), cast::<_, _, 723104>(a3), cast::<_, _, 723105>(a4)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_8029C6A4 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itfoxlaser::it_8029C6A4(cast::<_, _, 723801>(a0), cast::<_, _, 723802>(a1), cast::<_, _, 723803>(a2), cast::<_, _, 723804>(a3), cast::<_, _, 723805>(a4)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_8029C6CC = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itfoxlaser::it_8029C6CC(cast::<_, _, 723201>(a0), cast::<_, _, 723202>(a1), cast::<_, _, 723203>(a2), cast::<_, _, 723204>(a3), cast::<_, _, 723205>(a4)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_8029C6CC = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itfoxlaser::it_8029C6CC(cast::<_, _, 723901>(a0), cast::<_, _, 723902>(a1), cast::<_, _, 723903>(a2), cast::<_, _, 723904>(a3), cast::<_, _, 723905>(a4)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802ADDD0 = Some(|a0, a1| unsafe { melee_items::tu::itfoxblaster::it_802ADDD0(cast::<_, _, 723301>(a0), cast::<_, _, 723302>(a1)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802ADDD0 = Some(|a0, a1| unsafe { melee_items::tu::itfoxblaster::it_802ADDD0(cast::<_, _, 724001>(a0), cast::<_, _, 724002>(a1)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE1D0 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE1D0(cast::<_, _, 723401>(a0)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE1D0 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE1D0(cast::<_, _, 724101>(a0)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE538 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE538(cast::<_, _, 723501>(a0)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE538 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE538(cast::<_, _, 724201>(a0)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE608 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE608(cast::<_, _, 723601>(a0)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE608 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE608(cast::<_, _, 724301>(a0)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE8A8 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 723700>(melee_items::tu::itfoxblaster::it_802AE8A8(cast::<_, _, 723701>(a0), cast::<_, _, 723702>(a1), cast::<_, _, 723703>(a2), cast::<_, _, 723704>(a3), cast::<_, _, 723705>(a4))) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AE8A8 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 724400>(melee_items::tu::itfoxblaster::it_802AE8A8(cast::<_, _, 724401>(a0), cast::<_, _, 724402>(a1), cast::<_, _, 724403>(a2), cast::<_, _, 724404>(a3), cast::<_, _, 724405>(a4))) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AEAB4 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AEAB4(cast::<_, _, 723801>(a0)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::IT_802AEAB4 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AEAB4(cast::<_, _, 724501>(a0)) }); }
     // tu/ftfoxspecialn.rs
-    unsafe { melee_chara::tu::ftfoxspecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 723901>(a0), cast::<_, _, 723902>(a1), cast::<_, _, 723903>(a2)) }); }
+    unsafe { melee_chara::tu::ftfoxspecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 724601>(a0), cast::<_, _, 724602>(a1), cast::<_, _, 724603>(a2)) }); }
     // tu/ftfoxspecials.rs
-    unsafe { melee_chara::tu::ftfoxspecials::ext::IT_8029CEB4 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 724000>(melee_items::tu::itfoxillusion::it_8029CEB4(cast::<_, _, 724001>(a0), cast::<_, _, 724002>(a1), cast::<_, _, 724003>(a2), cast::<_, _, 724004>(a3))) }); }
+    unsafe { melee_chara::tu::ftfoxspecials::ext::IT_8029CEB4 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 724700>(melee_items::tu::itfoxillusion::it_8029CEB4(cast::<_, _, 724701>(a0), cast::<_, _, 724702>(a1), cast::<_, _, 724703>(a2), cast::<_, _, 724704>(a3))) }); }
     // tu/ftgamewatch.rs
-    unsafe { melee_chara::tu::ftgamewatch::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 724101>(a0), cast::<_, _, 724102>(a1)) }); }
+    unsafe { melee_chara::tu::ftgamewatch::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 724801>(a0), cast::<_, _, 724802>(a1)) }); }
     // tu/ftgamewatch.rs
-    unsafe { melee_chara::tu::ftgamewatch::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 724201>(a0), cast::<_, _, 724202>(a1), cast::<_, _, 724203>(a2)) }); }
+    unsafe { melee_chara::tu::ftgamewatch::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 724901>(a0), cast::<_, _, 724902>(a1), cast::<_, _, 724903>(a2)) }); }
     // tu/ftgamewatch.rs
-    unsafe { melee_chara::tu::ftgamewatch::ext::MEX_COSTUMEVISIDX = Some(|a0, a1| unsafe { cast::<_, _, 724300>(melee_runtime::tu::mex_data::Mex_CostumeVisIdx(cast::<_, _, 724301>(a0), cast::<_, _, 724302>(a1))) }); }
+    unsafe { melee_chara::tu::ftgamewatch::ext::MEX_COSTUMEVISIDX = Some(|a0, a1| unsafe { cast::<_, _, 725000>(melee_runtime::tu::mex_data::Mex_CostumeVisIdx(cast::<_, _, 725001>(a0), cast::<_, _, 725002>(a1))) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6328 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6328(cast::<_, _, 724401>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6328 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6328(cast::<_, _, 725101>(a0)) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6374 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6374(cast::<_, _, 724501>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6374 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6374(cast::<_, _, 725201>(a0)) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6394 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6394(cast::<_, _, 724601>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6394 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6394(cast::<_, _, 725301>(a0)) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6430 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6430(cast::<_, _, 724701>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6430 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6430(cast::<_, _, 725401>(a0)) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6458 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6458(cast::<_, _, 724801>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6458 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6458(cast::<_, _, 725501>(a0)) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6480 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6480(cast::<_, _, 724901>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C6480 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6480(cast::<_, _, 725601>(a0)) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C64A8 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C64A8(cast::<_, _, 725001>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_802C64A8 = Some(|a0| unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C64A8(cast::<_, _, 725701>(a0)) }); }
     // tu/ftgamewatchattack11.rs
-    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_SPAWN = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 725100>(melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_Spawn(cast::<_, _, 725101>(a0), cast::<_, _, 725102>(a1), cast::<_, _, 725103>(a2), cast::<_, _, 725104>(a3))) }); }
+    unsafe { melee_chara::tu::ftgamewatchattack11::ext::ITGAMEWATCHGREENHOUSE_SPAWN = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 725800>(melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_Spawn(cast::<_, _, 725801>(a0), cast::<_, _, 725802>(a1), cast::<_, _, 725803>(a2), cast::<_, _, 725804>(a3))) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6C38 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 725200>(melee_items::tu::itgamewatchparachute::it_802C6C38(cast::<_, _, 725201>(a0), cast::<_, _, 725202>(a1), cast::<_, _, 725203>(a2), cast::<_, _, 725204>(a3))) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6C38 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 725900>(melee_items::tu::itgamewatchparachute::it_802C6C38(cast::<_, _, 725901>(a0), cast::<_, _, 725902>(a1), cast::<_, _, 725903>(a2), cast::<_, _, 725904>(a3))) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6D6C = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6D6C(cast::<_, _, 725301>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6D6C = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6D6C(cast::<_, _, 726001>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6DB8 = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6DB8(cast::<_, _, 725401>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6DB8 = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6DB8(cast::<_, _, 726101>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6DD8 = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6DD8(cast::<_, _, 725501>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6DD8 = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6DD8(cast::<_, _, 726201>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6E50 = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6E50(cast::<_, _, 725601>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6E50 = Some(|a0| unsafe { melee_items::tu::itgamewatchparachute::it_802C6E50(cast::<_, _, 726301>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6F40 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 725700>(melee_items::tu::itgamewatchturtle::it_802C6F40(cast::<_, _, 725701>(a0), cast::<_, _, 725702>(a1), cast::<_, _, 725703>(a2), cast::<_, _, 725704>(a3))) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C6F40 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 726400>(melee_items::tu::itgamewatchturtle::it_802C6F40(cast::<_, _, 726401>(a0), cast::<_, _, 726402>(a1), cast::<_, _, 726403>(a2), cast::<_, _, 726404>(a3))) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7074 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C7074(cast::<_, _, 725801>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7074 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C7074(cast::<_, _, 726501>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C70C0 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C70C0(cast::<_, _, 725901>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C70C0 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C70C0(cast::<_, _, 726601>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C70E0 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C70E0(cast::<_, _, 726001>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C70E0 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C70E0(cast::<_, _, 726701>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7158 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C7158(cast::<_, _, 726101>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7158 = Some(|a0| unsafe { melee_items::tu::itgamewatchturtle::it_802C7158(cast::<_, _, 726801>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C720C = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 726200>(melee_items::tu::itgamewatchbreath::it_802C720C(cast::<_, _, 726201>(a0), cast::<_, _, 726202>(a1), cast::<_, _, 726203>(a2), cast::<_, _, 726204>(a3))) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C720C = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 726900>(melee_items::tu::itgamewatchbreath::it_802C720C(cast::<_, _, 726901>(a0), cast::<_, _, 726902>(a1), cast::<_, _, 726903>(a2), cast::<_, _, 726904>(a3))) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7340 = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C7340(cast::<_, _, 726301>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7340 = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C7340(cast::<_, _, 727001>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C738C = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C738C(cast::<_, _, 726401>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C738C = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C738C(cast::<_, _, 727101>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C73AC = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C73AC(cast::<_, _, 726501>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C73AC = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C73AC(cast::<_, _, 727201>(a0)) }); }
     // tu/ftgamewatchattackair.rs
-    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7424 = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C7424(cast::<_, _, 726601>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattackair::ext::IT_802C7424 = Some(|a0| unsafe { melee_items::tu::itgamewatchbreath::it_802C7424(cast::<_, _, 727301>(a0)) }); }
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026B724 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B724(cast::<_, _, 726701>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026B724 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B724(cast::<_, _, 727401>(a0)) }); }
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026B73C = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B73C(cast::<_, _, 726801>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026B73C = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B73C(cast::<_, _, 727501>(a0)) }); }
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026BB20 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BB20(cast::<_, _, 726901>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026BB20 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BB20(cast::<_, _, 727601>(a0)) }); }
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026BB44 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BB44(cast::<_, _, 727001>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_8026BB44 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BB44(cast::<_, _, 727701>(a0)) }); }
 }
 
 // melee_chara
 #[inline(never)]
 pub(super) fn c051() {
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C65E4 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 727100>(melee_items::tu::itgamewatchmanhole::it_802C65E4(cast::<_, _, 727101>(a0), cast::<_, _, 727102>(a1), cast::<_, _, 727103>(a2), cast::<_, _, 727104>(a3))) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C65E4 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 727800>(melee_items::tu::itgamewatchmanhole::it_802C65E4(cast::<_, _, 727801>(a0), cast::<_, _, 727802>(a1), cast::<_, _, 727803>(a2), cast::<_, _, 727804>(a3))) }); }
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C6718 = Some(|a0| unsafe { melee_items::tu::itgamewatchmanhole::it_802C6718(cast::<_, _, 727201>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C6718 = Some(|a0| unsafe { melee_items::tu::itgamewatchmanhole::it_802C6718(cast::<_, _, 727901>(a0)) }); }
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C6764 = Some(|a0| unsafe { melee_items::tu::itgamewatchmanhole::it_802C6764(cast::<_, _, 727301>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C6764 = Some(|a0| unsafe { melee_items::tu::itgamewatchmanhole::it_802C6764(cast::<_, _, 728001>(a0)) }); }
     // tu/ftgamewatchattacklw3.rs
-    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C6784 = Some(|a0| unsafe { melee_items::tu::itgamewatchmanhole::it_802C6784(cast::<_, _, 727401>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacklw3::ext::IT_802C6784 = Some(|a0| unsafe { melee_items::tu::itgamewatchmanhole::it_802C6784(cast::<_, _, 728101>(a0)) }); }
     // tu/ftgamewatchattacks4.rs
-    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_802C6A2C = Some(|a0| unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A2C(cast::<_, _, 727501>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_802C6A2C = Some(|a0| unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A2C(cast::<_, _, 728201>(a0)) }); }
     // tu/ftgamewatchattacks4.rs
-    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_802C6A78 = Some(|a0| unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A78(cast::<_, _, 727601>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_802C6A78 = Some(|a0| unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A78(cast::<_, _, 728301>(a0)) }); }
     // tu/ftgamewatchattacks4.rs
-    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_802C6A98 = Some(|a0| unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A98(cast::<_, _, 727701>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_802C6A98 = Some(|a0| unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A98(cast::<_, _, 728401>(a0)) }); }
     // tu/ftgamewatchattacks4.rs
-    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_SPAWN = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 727800>(melee_items::tu::itgamewatchfire::itGamewatchFire_Spawn(cast::<_, _, 727801>(a0), cast::<_, _, 727802>(a1), cast::<_, _, 727803>(a2), cast::<_, _, 727804>(a3))) }); }
+    unsafe { melee_chara::tu::ftgamewatchattacks4::ext::ITGAMEWATCHFIRE_SPAWN = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 728500>(melee_items::tu::itgamewatchfire::itGamewatchFire_Spawn(cast::<_, _, 728501>(a0), cast::<_, _, 728502>(a1), cast::<_, _, 728503>(a2), cast::<_, _, 728504>(a3))) }); }
     // tu/ftgamewatchspecialhi.rs
-    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C8038 = Some(|a0, a1, a2, a3, a4, a5| unsafe { cast::<_, _, 727900>(melee_items::tu::itgamewatchrescue::it_802C8038(cast::<_, _, 727901>(a0), cast::<_, _, 727902>(a1), cast::<_, _, 727903>(a2), cast::<_, _, 727904>(a3), cast::<_, _, 727905>(a4), cast::<_, _, 727906>(a5))) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C8038 = Some(|a0, a1, a2, a3, a4, a5| unsafe { cast::<_, _, 728600>(melee_items::tu::itgamewatchrescue::it_802C8038(cast::<_, _, 728601>(a0), cast::<_, _, 728602>(a1), cast::<_, _, 728603>(a2), cast::<_, _, 728604>(a3), cast::<_, _, 728605>(a4), cast::<_, _, 728606>(a5))) }); }
     // tu/ftgamewatchspecialhi.rs
-    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C8158 = Some(|a0| unsafe { melee_items::tu::itgamewatchrescue::it_802C8158(cast::<_, _, 728001>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C8158 = Some(|a0| unsafe { melee_items::tu::itgamewatchrescue::it_802C8158(cast::<_, _, 728701>(a0)) }); }
     // tu/ftgamewatchspecialhi.rs
-    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C81C8 = Some(|a0| unsafe { melee_items::tu::itgamewatchrescue::it_802C81C8(cast::<_, _, 728101>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C81C8 = Some(|a0| unsafe { melee_items::tu::itgamewatchrescue::it_802C81C8(cast::<_, _, 728801>(a0)) }); }
     // tu/ftgamewatchspecialhi.rs
-    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C81E8 = Some(|a0| unsafe { melee_items::tu::itgamewatchrescue::it_802C81E8(cast::<_, _, 728201>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecialhi::ext::IT_802C81E8 = Some(|a0| unsafe { melee_items::tu::itgamewatchrescue::it_802C81E8(cast::<_, _, 728901>(a0)) }); }
     // tu/ftgamewatchspeciallw.rs
-    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7D60 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 728300>(melee_items::tu::itgamewatchpanic::it_802C7D60(cast::<_, _, 728301>(a0), cast::<_, _, 728302>(a1), cast::<_, _, 728303>(a2), cast::<_, _, 728304>(a3))) }); }
+    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7D60 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 729000>(melee_items::tu::itgamewatchpanic::it_802C7D60(cast::<_, _, 729001>(a0), cast::<_, _, 729002>(a1), cast::<_, _, 729003>(a2), cast::<_, _, 729004>(a3))) }); }
     // tu/ftgamewatchspeciallw.rs
-    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7E94 = Some(|a0| unsafe { melee_items::tu::itgamewatchpanic::it_802C7E94(cast::<_, _, 728401>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7E94 = Some(|a0| unsafe { melee_items::tu::itgamewatchpanic::it_802C7E94(cast::<_, _, 729101>(a0)) }); }
     // tu/ftgamewatchspeciallw.rs
-    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7EE0 = Some(|a0| unsafe { melee_items::tu::itgamewatchpanic::it_802C7EE0(cast::<_, _, 728501>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7EE0 = Some(|a0| unsafe { melee_items::tu::itgamewatchpanic::it_802C7EE0(cast::<_, _, 729201>(a0)) }); }
     // tu/ftgamewatchspeciallw.rs
-    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7F00 = Some(|a0| unsafe { melee_items::tu::itgamewatchpanic::it_802C7F00(cast::<_, _, 728601>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspeciallw::ext::IT_802C7F00 = Some(|a0| unsafe { melee_items::tu::itgamewatchpanic::it_802C7F00(cast::<_, _, 729301>(a0)) }); }
     // tu/ftgamewatchspecialn.rs
-    unsafe { melee_chara::tu::ftgamewatchspecialn::ext::IT_802C837C = Some(|a0, a1, a2, a3, a4| unsafe { let _ = melee_items::tu::itgamewatchchef::it_802C837C(cast::<_, _, 728701>(a0), cast::<_, _, 728702>(a1), cast::<_, _, 728703>(a2), cast::<_, _, 728704>(a3), cast::<_, _, 728705>(a4)); }); }
+    unsafe { melee_chara::tu::ftgamewatchspecialn::ext::IT_802C837C = Some(|a0, a1, a2, a3, a4| unsafe { let _ = melee_items::tu::itgamewatchchef::it_802C837C(cast::<_, _, 729401>(a0), cast::<_, _, 729402>(a1), cast::<_, _, 729403>(a2), cast::<_, _, 729404>(a3), cast::<_, _, 729405>(a4)); }); }
     // tu/ftgamewatchspecials.rs
-    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_8028FAF4 = Some(|a0, a1| unsafe { let _ = melee_items::tu::itfoods::it_8028FAF4(cast::<_, _, 728801>(a0), cast::<_, _, 728802>(a1)); }); }
+    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_8028FAF4 = Some(|a0, a1| unsafe { let _ = melee_items::tu::itfoods::it_8028FAF4(cast::<_, _, 729501>(a0), cast::<_, _, 729502>(a1)); }); }
     // tu/ftgamewatchspecials.rs
-    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7774 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 728900>(melee_items::tu::itgamewatchjudge::it_802C7774(cast::<_, _, 728901>(a0), cast::<_, _, 728902>(a1), cast::<_, _, 728903>(a2), cast::<_, _, 728904>(a3), cast::<_, _, 728905>(a4))) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7774 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 729600>(melee_items::tu::itgamewatchjudge::it_802C7774(cast::<_, _, 729601>(a0), cast::<_, _, 729602>(a1), cast::<_, _, 729603>(a2), cast::<_, _, 729604>(a3), cast::<_, _, 729605>(a4))) }); }
     // tu/ftgamewatchspecials.rs
-    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7A84 = Some(|a0| unsafe { melee_items::tu::itgamewatchjudge::it_802C7A84(cast::<_, _, 729001>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7A84 = Some(|a0| unsafe { melee_items::tu::itgamewatchjudge::it_802C7A84(cast::<_, _, 729701>(a0)) }); }
     // tu/ftgamewatchspecials.rs
-    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7AD0 = Some(|a0| unsafe { melee_items::tu::itgamewatchjudge::it_802C7AD0(cast::<_, _, 729101>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7AD0 = Some(|a0| unsafe { melee_items::tu::itgamewatchjudge::it_802C7AD0(cast::<_, _, 729801>(a0)) }); }
     // tu/ftgamewatchspecials.rs
-    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7AF0 = Some(|a0| unsafe { melee_items::tu::itgamewatchjudge::it_802C7AF0(cast::<_, _, 729201>(a0)) }); }
+    unsafe { melee_chara::tu::ftgamewatchspecials::ext::IT_802C7AF0 = Some(|a0| unsafe { melee_items::tu::itgamewatchjudge::it_802C7AF0(cast::<_, _, 729901>(a0)) }); }
     // tu/ftgkoopa.rs
-    unsafe { melee_chara::tu::ftgkoopa::ext::FTKP_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftkoopa::ftKp_Init_LoadSpecialAttrs(cast::<_, _, 729301>(a0)) }); }
+    unsafe { melee_chara::tu::ftgkoopa::ext::FTKP_INIT_LOADSPECIALATTRS = Some(|a0| unsafe { melee_chara::tu::ftkoopa::ftKp_Init_LoadSpecialAttrs(cast::<_, _, 730001>(a0)) }); }
     // tu/ftgkoopa.rs
-    unsafe { melee_chara::tu::ftgkoopa::ext::FTKP_INIT_ONLOADFORGKOOPA = Some(|a0| unsafe { melee_chara::tu::ftkoopa::ftKp_Init_OnLoadForGKoopa(cast::<_, _, 729401>(a0)) }); }
+    unsafe { melee_chara::tu::ftgkoopa::ext::FTKP_INIT_ONLOADFORGKOOPA = Some(|a0| unsafe { melee_chara::tu::ftkoopa::ftKp_Init_OnLoadForGKoopa(cast::<_, _, 730101>(a0)) }); }
     // tu/ftgkoopa.rs
-    unsafe { melee_chara::tu::ftgkoopa::ext::FTKP_INIT_UNKMOTIONSTATES3 = Some(|a0| unsafe { melee_chara::tu::ftkoopa::ftKp_Init_UnkMotionStates3(cast::<_, _, 729501>(a0)) }); }
+    unsafe { melee_chara::tu::ftgkoopa::ext::FTKP_INIT_UNKMOTIONSTATES3 = Some(|a0| unsafe { melee_chara::tu::ftkoopa::ftKp_Init_UnkMotionStates3(cast::<_, _, 730201>(a0)) }); }
     // tu/ftgkoopa.rs
-    unsafe { melee_chara::tu::ftgkoopa::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 729601>(a0), cast::<_, _, 729602>(a1)) }); }
+    unsafe { melee_chara::tu::ftgkoopa::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 730301>(a0), cast::<_, _, 730302>(a1)) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FIGHTER_CHANGEMOTIONSTATE = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 729701>(a0), cast::<_, _, 729702>(a1), cast::<_, _, 729703>(a2), cast::<_, _, 729704>(a3), cast::<_, _, 729705>(a4), cast::<_, _, 729706>(a5), cast::<_, _, 729707>(a6)) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FIGHTER_CHANGEMOTIONSTATE = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 730401>(a0), cast::<_, _, 730402>(a1), cast::<_, _, 730403>(a2), cast::<_, _, 730404>(a3), cast::<_, _, 730405>(a4), cast::<_, _, 730406>(a5), cast::<_, _, 730407>(a6)) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FTANIM_8006EBA4 = Some(|a0| unsafe { melee_fighter::tu::ftanim::ftAnim_8006EBA4(cast::<_, _, 729801>(a0)) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FTANIM_8006EBA4 = Some(|a0| unsafe { melee_fighter::tu::ftanim::ftAnim_8006EBA4(cast::<_, _, 730501>(a0)) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FTANIM_800704F0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftanim::ftAnim_800704F0(cast::<_, _, 729901>(a0), cast::<_, _, 729902>(a1), cast::<_, _, 729903>(a2)) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FTANIM_800704F0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftanim::ftAnim_800704F0(cast::<_, _, 730601>(a0), cast::<_, _, 730602>(a1), cast::<_, _, 730603>(a2)) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FTANIM_80070C48 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070C48(cast::<_, _, 730001>(a0), cast::<_, _, 730002>(a1)) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FTANIM_80070C48 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070C48(cast::<_, _, 730701>(a0), cast::<_, _, 730702>(a1)) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FTANIM_80070CC4 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070CC4(cast::<_, _, 730101>(a0), cast::<_, _, 730102>(a1)) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FTANIM_80070CC4 = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_80070CC4(cast::<_, _, 730801>(a0), cast::<_, _, 730802>(a1)) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FTANIM_ISFRAMESREMAINING = Some(|a0| unsafe { cast::<_, _, 730200>(melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(cast::<_, _, 730201>(a0))) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FTANIM_ISFRAMESREMAINING = Some(|a0| unsafe { cast::<_, _, 730900>(melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(cast::<_, _, 730901>(a0))) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FTCO_FALL_ENTER = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(cast::<_, _, 730301>(a0)) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FTCO_FALL_ENTER = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(cast::<_, _, 731001>(a0)) }); }
     // tu/ftinl.rs
-    unsafe { melee_chara::tu::ftinl::ext::FT_8008A2BC = Some(|a0| unsafe { melee_fighter::tu::ft_08a1::ft_8008A2BC(cast::<_, _, 730401>(a0)) }); }
+    unsafe { melee_chara::tu::ftinl::ext::FT_8008A2BC = Some(|a0| unsafe { melee_fighter::tu::ft_08a1::ft_8008A2BC(cast::<_, _, 731101>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTANIM_80070FB4 = Some(|a0, a1, a2| unsafe { melee_fighter::ftanim::ftanim_80070fb4(cast::<_, _, 730501>(a0), cast::<_, _, 730502>(a1), cast::<_, _, 730503>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTANIM_80070FB4 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftanim::ftanim_80070fb4(cast::<_, _, 731201>(a0), cast::<_, _, 731202>(a1), cast::<_, _, 731203>(a2)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(cast::<_, _, 730601>(a0), cast::<_, _, 730602>(a1), cast::<_, _, 730603>(a2)); }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { let _ = melee_fighter::tu::ftcolanimlist::ftco_800bffd0(cast::<_, _, 731301>(a0), cast::<_, _, 731302>(a1), cast::<_, _, 731303>(a2)); }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_ATTACKDASHAIR_800F22D4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialhi::ftKb_AttackDashAir_800F22D4(cast::<_, _, 730701>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_ATTACKDASHAIR_800F22D4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialhi::ftKb_AttackDashAir_800F22D4(cast::<_, _, 731401>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALAIRLW_800F5318 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_800F5318(cast::<_, _, 730801>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALAIRLW_800F5318 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_800F5318(cast::<_, _, 731501>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALAIRLW_800F5524 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecials::ftKb_SpecialAirLw_800F5524(cast::<_, _, 730901>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALAIRLW_800F5524 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecials::ftKb_SpecialAirLw_800F5524(cast::<_, _, 731601>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNIC_80108D04 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108D04(cast::<_, _, 731001>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNIC_80108D04 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108D04(cast::<_, _, 731701>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNKP_800FA7D4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA7D4(cast::<_, _, 731101>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNKP_800FA7D4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA7D4(cast::<_, _, 731801>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNLK800FB800 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB800(cast::<_, _, 731201>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNLK800FB800 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB800(cast::<_, _, 731901>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNLK800FB840 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB840(cast::<_, _, 731301>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNLK800FB840 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB840(cast::<_, _, 732001>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNMT_8010709C = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_8010709C(cast::<_, _, 731401>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNMT_8010709C = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_8010709C(cast::<_, _, 732101>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNMT_80107130 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107130(cast::<_, _, 731501>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNMT_80107130 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107130(cast::<_, _, 732201>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNPE_8010C3F4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C3F4(cast::<_, _, 731601>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNPE_8010C3F4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C3F4(cast::<_, _, 732301>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNSK_8010603C = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialseak::ftKb_SpecialNSk_8010603C(cast::<_, _, 731701>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNSK_8010603C = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialseak::ftKb_SpecialNSk_8010603C(cast::<_, _, 732401>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNSS_800FCD60 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCD60(cast::<_, _, 731801>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNSS_800FCD60 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCD60(cast::<_, _, 732501>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNYS_801093B4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_801093B4(cast::<_, _, 731901>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNYS_801093B4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_801093B4(cast::<_, _, 732601>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNYS_8010A8BC = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010A8BC(cast::<_, _, 732001>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALNYS_8010A8BC = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010A8BC(cast::<_, _, 732701>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F5D04 = Some(|a0, a1| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5D04(cast::<_, _, 732101>(a0), cast::<_, _, 732102>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F5D04 = Some(|a0, a1| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5D04(cast::<_, _, 732801>(a0), cast::<_, _, 732802>(a1)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F5F68 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5F68(cast::<_, _, 732201>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F5F68 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5F68(cast::<_, _, 732901>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F6070 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F6070(cast::<_, _, 732301>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F6070 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F6070(cast::<_, _, 733001>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F9090 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F9090(cast::<_, _, 732401>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::FTKB_SPECIALN_800F9090 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F9090(cast::<_, _, 733101>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::HSD_GOBJ_80390EB8 = Some(|a0| unsafe { cast::<_, _, 732500>(melee_runtime::tu::gobj::HSD_GObj_80390EB8(cast::<_, _, 732501>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::HSD_GOBJ_80390EB8 = Some(|a0| unsafe { cast::<_, _, 733200>(melee_runtime::tu::gobj::HSD_GObj_80390EB8(cast::<_, _, 733201>(a0))) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::HSD_IDINSERTTOTABLE = Some(|a0, a1, a2| unsafe { melee_runtime::tu::id::HSD_IDInsertToTable(cast::<_, _, 732601>(a0), cast::<_, _, 732602>(a1), cast::<_, _, 732603>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::HSD_IDINSERTTOTABLE = Some(|a0, a1, a2| unsafe { melee_runtime::tu::id::HSD_IDInsertToTable(cast::<_, _, 733301>(a0), cast::<_, _, 733302>(a1), cast::<_, _, 733303>(a2)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::HSD_JOBJLOADJOINT = Some(|a0| unsafe { cast::<_, _, 732700>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 732701>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::HSD_JOBJLOADJOINT = Some(|a0| unsafe { cast::<_, _, 733400>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 733401>(a0))) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::HSD_JOBJSETMTXDIRTY = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirty(cast::<_, _, 732801>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::HSD_JOBJSETMTXDIRTY = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirty(cast::<_, _, 733501>(a0)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::HSD_OBJALLOC = Some(|a0| unsafe { cast::<_, _, 732900>(melee_runtime::tu::objalloc::HSD_ObjAlloc(cast::<_, _, 732901>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::HSD_OBJALLOC = Some(|a0| unsafe { cast::<_, _, 733600>(melee_runtime::tu::objalloc::HSD_ObjAlloc(cast::<_, _, 733601>(a0))) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::HSD_OBJFREE = Some(|a0, a1| unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(cast::<_, _, 733001>(a0), cast::<_, _, 733002>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::HSD_OBJFREE = Some(|a0, a1| unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(cast::<_, _, 733701>(a0), cast::<_, _, 733702>(a1)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::ITGETHOLDKIND = Some(|a0| unsafe { cast::<_, _, 733100>(melee_items::tu::it_26B1::itGetHoldKind(cast::<_, _, 733101>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::ITGETHOLDKIND = Some(|a0| unsafe { cast::<_, _, 733800>(melee_items::tu::it_26B1::itGetHoldKind(cast::<_, _, 733801>(a0))) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 733201>(a0), cast::<_, _, 733202>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 733901>(a0), cast::<_, _, 733902>(a1)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::LB_8000CE30 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000CE30(cast::<_, _, 733301>(a0), cast::<_, _, 733302>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::LB_8000CE30 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000CE30(cast::<_, _, 734001>(a0), cast::<_, _, 734002>(a1)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::LB_8000CE40 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000CE40(cast::<_, _, 733401>(a0), cast::<_, _, 733402>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::LB_8000CE40 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000CE40(cast::<_, _, 734101>(a0), cast::<_, _, 734102>(a1)) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::PLAYER_GETFLAGSAEBIT1 = Some(|a0| unsafe { cast::<_, _, 733500>(melee_fighter::tu::player::Player_GetFlagsAEBit1(cast::<_, _, 733501>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::PLAYER_GETFLAGSAEBIT1 = Some(|a0| unsafe { cast::<_, _, 734200>(melee_fighter::tu::player::Player_GetFlagsAEBit1(cast::<_, _, 734201>(a0))) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::PLAYER_GETFLAGSBIT1 = Some(|a0| unsafe { cast::<_, _, 733600>(melee_fighter::tu::player::Player_GetFlagsBit1(cast::<_, _, 733601>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::PLAYER_GETFLAGSBIT1 = Some(|a0| unsafe { cast::<_, _, 734300>(melee_fighter::tu::player::Player_GetFlagsBit1(cast::<_, _, 734301>(a0))) }); }
     // tu/ftkirby.rs
-    unsafe { melee_chara::tu::ftkirby::ext::PLAYER_GETUNK4D = Some(|a0| unsafe { cast::<_, _, 733700>(melee_fighter::tu::player::Player_GetUnk4D(cast::<_, _, 733701>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirby::ext::PLAYER_GETUNK4D = Some(|a0| unsafe { cast::<_, _, 734400>(melee_fighter::tu::player::Player_GetUnk4D(cast::<_, _, 734401>(a0))) }); }
     // tu/ftkirbycaptureyoshi.rs
-    unsafe { melee_chara::tu::ftkirbycaptureyoshi::ext::FTCO_800DB368 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB368(cast::<_, _, 733801>(a0), cast::<_, _, 733802>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbycaptureyoshi::ext::FTCO_800DB368 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB368(cast::<_, _, 734501>(a0), cast::<_, _, 734502>(a1)) }); }
     // tu/ftkirbyspecialdonkey.rs
-    unsafe { melee_chara::tu::ftkirbyspecialdonkey::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(cast::<_, _, 733901>(a0), cast::<_, _, 733902>(a1), cast::<_, _, 733903>(a2)); }); }
+    unsafe { melee_chara::tu::ftkirbyspecialdonkey::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { let _ = melee_fighter::tu::ftcolanimlist::ftco_800bffd0(cast::<_, _, 734601>(a0), cast::<_, _, 734602>(a1), cast::<_, _, 734603>(a2)); }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::FTFOX_SPECIALN_CHECKLOOPINPUT = Some(|a0| unsafe { melee_chara::tu::ftfoxspecialn::ftFox_SpecialN_CheckLoopInput(cast::<_, _, 734001>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::FTFOX_SPECIALN_CHECKLOOPINPUT = Some(|a0| unsafe { melee_chara::tu::ftfoxspecialn::ftFox_SpecialN_CheckLoopInput(cast::<_, _, 734701>(a0)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::FTPICKUPITEM_80094818 = Some(|a0, a1| unsafe { melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(cast::<_, _, 734101>(a0), cast::<_, _, 734102>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::FTPICKUPITEM_80094818 = Some(|a0, a1| unsafe { melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(cast::<_, _, 734801>(a0), cast::<_, _, 734802>(a1)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_8029C6A4 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itfoxlaser::it_8029C6A4(cast::<_, _, 734201>(a0), cast::<_, _, 734202>(a1), cast::<_, _, 734203>(a2), cast::<_, _, 734204>(a3), cast::<_, _, 734205>(a4)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_8029C6A4 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itfoxlaser::it_8029C6A4(cast::<_, _, 734901>(a0), cast::<_, _, 734902>(a1), cast::<_, _, 734903>(a2), cast::<_, _, 734904>(a3), cast::<_, _, 734905>(a4)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AAA50 = Some(|a0| unsafe { melee_items::tu::itnesspkflash::it_802AAA50(cast::<_, _, 734301>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AAA50 = Some(|a0| unsafe { melee_items::tu::itnesspkflash::it_802AAA50(cast::<_, _, 735001>(a0)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802ADDD0 = Some(|a0, a1| unsafe { melee_items::tu::itfoxblaster::it_802ADDD0(cast::<_, _, 734401>(a0), cast::<_, _, 734402>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802ADDD0 = Some(|a0, a1| unsafe { melee_items::tu::itfoxblaster::it_802ADDD0(cast::<_, _, 735101>(a0), cast::<_, _, 735102>(a1)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE1D0 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE1D0(cast::<_, _, 734501>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE1D0 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE1D0(cast::<_, _, 735201>(a0)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE538 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE538(cast::<_, _, 734601>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE538 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE538(cast::<_, _, 735301>(a0)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE608 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE608(cast::<_, _, 734701>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE608 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AE608(cast::<_, _, 735401>(a0)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE8A8 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 734800>(melee_items::tu::itfoxblaster::it_802AE8A8(cast::<_, _, 734801>(a0), cast::<_, _, 734802>(a1), cast::<_, _, 734803>(a2), cast::<_, _, 734804>(a3), cast::<_, _, 734805>(a4))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AE8A8 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 735500>(melee_items::tu::itfoxblaster::it_802AE8A8(cast::<_, _, 735501>(a0), cast::<_, _, 735502>(a1), cast::<_, _, 735503>(a2), cast::<_, _, 735504>(a3), cast::<_, _, 735505>(a4))) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AEAB4 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AEAB4(cast::<_, _, 734901>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::IT_802AEAB4 = Some(|a0| unsafe { melee_items::tu::itfoxblaster::it_802AEAB4(cast::<_, _, 735601>(a0)) }); }
     // tu/ftkirbyspecialfox.rs
-    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 735001>(a0), cast::<_, _, 735002>(a1), cast::<_, _, 735003>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialfox::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 735701>(a0), cast::<_, _, 735702>(a1), cast::<_, _, 735703>(a2)) }); }
     // tu/ftkirbyspecialgamewatch.rs
-    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C74D8 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 735100>(melee_items::tu::itkirbygamewatchchefpan::it_802C74D8(cast::<_, _, 735101>(a0), cast::<_, _, 735102>(a1), cast::<_, _, 735103>(a2), cast::<_, _, 735104>(a3))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C74D8 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 735800>(melee_items::tu::itkirbygamewatchchefpan::it_802C74D8(cast::<_, _, 735801>(a0), cast::<_, _, 735802>(a1), cast::<_, _, 735803>(a2), cast::<_, _, 735804>(a3))) }); }
     // tu/ftkirbyspecialgamewatch.rs
-    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C760C = Some(|a0| unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C760C(cast::<_, _, 735201>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C760C = Some(|a0| unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C760C(cast::<_, _, 735901>(a0)) }); }
     // tu/ftkirbyspecialgamewatch.rs
-    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C7658 = Some(|a0| unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C7658(cast::<_, _, 735301>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C7658 = Some(|a0| unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C7658(cast::<_, _, 736001>(a0)) }); }
     // tu/ftkirbyspecialgamewatch.rs
-    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C7678 = Some(|a0| unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C7678(cast::<_, _, 735401>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C7678 = Some(|a0| unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C7678(cast::<_, _, 736101>(a0)) }); }
     // tu/ftkirbyspecialgamewatch.rs
-    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C837C = Some(|a0, a1, a2, a3, a4| unsafe { let _ = melee_items::tu::itgamewatchchef::it_802C837C(cast::<_, _, 735501>(a0), cast::<_, _, 735502>(a1), cast::<_, _, 735503>(a2), cast::<_, _, 735504>(a3), cast::<_, _, 735505>(a4)); }); }
+    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::IT_802C837C = Some(|a0, a1, a2, a3, a4| unsafe { let _ = melee_items::tu::itgamewatchchef::it_802C837C(cast::<_, _, 736201>(a0), cast::<_, _, 736202>(a1), cast::<_, _, 736203>(a2), cast::<_, _, 736204>(a3), cast::<_, _, 736205>(a4)); }); }
     // tu/ftkirbyspecialgamewatch.rs
-    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 735601>(a0), cast::<_, _, 735602>(a1), cast::<_, _, 735603>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialgamewatch::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 736301>(a0), cast::<_, _, 736302>(a1), cast::<_, _, 736303>(a2)) }); }
     // tu/ftkirbyspecialhi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::EFLIB_SETFLAGS = Some(|a0, a1| unsafe { melee_world::tu::efn::eflib::efLib_SetFlags(cast::<_, _, 735701>(a0), cast::<_, _, 735702>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::EFLIB_SETFLAGS = Some(|a0, a1| unsafe { melee_world::tu::efn::eflib::efLib_SetFlags(cast::<_, _, 736401>(a0), cast::<_, _, 736402>(a1)) }); }
     // tu/ftkirbyspecialhi.rs: link_alias.tsv
-    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 735900>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 735801>(a0), cast::<_, _, 735802>(a1), &crate::va_words(a2))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 736600>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 736501>(a0), cast::<_, _, 736502>(a1), &crate::va_words(a2))) }); }
     // tu/ftkirbyspecialhi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 736001>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 736701>(a0)) }); }
     // tu/ftkirbyspecialhi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 736101>(a0), cast::<_, _, 736102>(a1), cast::<_, _, 736103>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 736801>(a0), cast::<_, _, 736802>(a1), cast::<_, _, 736803>(a2)) }); }
     // tu/ftkirbyspecialhi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::FTPARTSETROTY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 736201>(a0), cast::<_, _, 736202>(a1), cast::<_, _, 736203>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::FTPARTSETROTY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 736901>(a0), cast::<_, _, 736902>(a1), cast::<_, _, 736903>(a2)) }); }
     // tu/ftkirbyspecialhi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::IT_8029BAB8 = Some(|a0, a1, a2| unsafe { melee_items::tu::itkirbycutterbeam::it_8029BAB8(cast::<_, _, 736301>(a0), cast::<_, _, 736302>(a1), cast::<_, _, 736303>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::IT_8029BAB8 = Some(|a0, a1, a2| unsafe { melee_items::tu::itkirbycutterbeam::it_8029BAB8(cast::<_, _, 737001>(a0), cast::<_, _, 737002>(a1), cast::<_, _, 737003>(a2)) }); }
     // tu/ftkirbyspecialhi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 736401>(a0), cast::<_, _, 736402>(a1), cast::<_, _, 736403>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialhi::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 737101>(a0), cast::<_, _, 737102>(a1), cast::<_, _, 737103>(a2)) }); }
     // tu/ftkirbyspecialiceclimber.rs
-    unsafe { melee_chara::tu::ftkirbyspecialiceclimber::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 736501>(a0), cast::<_, _, 736502>(a1), cast::<_, _, 736503>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialiceclimber::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 737201>(a0), cast::<_, _, 737202>(a1), cast::<_, _, 737203>(a2)) }); }
     // tu/ftkirbyspecialiceclimber.rs
-    unsafe { melee_chara::tu::ftkirbyspecialiceclimber::ext::LB_8000C2F8 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(cast::<_, _, 736601>(a0), cast::<_, _, 736602>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialiceclimber::ext::LB_8000C2F8 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(cast::<_, _, 737301>(a0), cast::<_, _, 737302>(a1)) }); }
     // tu/ftkirbyspecialkoopa.rs
-    unsafe { melee_chara::tu::ftkirbyspecialkoopa::ext::ITEM_8026AE60 = Some(|| unsafe { cast::<_, _, 736700>(melee_items::tu::item::Item_8026AE60()) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialkoopa::ext::ITEM_8026AE60 = Some(|| unsafe { cast::<_, _, 737400>(melee_items::tu::item::Item_8026AE60()) }); }
     // tu/ftkirbyspecialkoopa.rs
-    unsafe { melee_chara::tu::ftkirbyspecialkoopa::ext::ITKOOPAFLAME_SPAWN = Some(|a0, a1, a2, a3, a4, a5, a6, a7| unsafe { cast::<_, _, 736800>(melee_items::tu::itkoopaflame::itKoopaFlame_Spawn(cast::<_, _, 736801>(a0), cast::<_, _, 736802>(a1), cast::<_, _, 736803>(a2), cast::<_, _, 736804>(a3), cast::<_, _, 736805>(a4), cast::<_, _, 736806>(a5), cast::<_, _, 736807>(a6), cast::<_, _, 736808>(a7))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialkoopa::ext::ITKOOPAFLAME_SPAWN = Some(|a0, a1, a2, a3, a4, a5, a6, a7| unsafe { cast::<_, _, 737500>(melee_items::tu::itkoopaflame::itKoopaFlame_Spawn(cast::<_, _, 737501>(a0), cast::<_, _, 737502>(a1), cast::<_, _, 737503>(a2), cast::<_, _, 737504>(a3), cast::<_, _, 737505>(a4), cast::<_, _, 737506>(a5), cast::<_, _, 737507>(a6), cast::<_, _, 737508>(a7))) }); }
     // tu/ftkirbyspecialkoopa.rs
-    unsafe { melee_chara::tu::ftkirbyspecialkoopa::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 736901>(a0), cast::<_, _, 736902>(a1), cast::<_, _, 736903>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialkoopa::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 737601>(a0), cast::<_, _, 737602>(a1), cast::<_, _, 737603>(a2)) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::FTPICKUPITEM_80094818 = Some(|a0, a1| unsafe { melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(cast::<_, _, 737001>(a0), cast::<_, _, 737002>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::FTPICKUPITEM_80094818 = Some(|a0, a1| unsafe { melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(cast::<_, _, 737701>(a0), cast::<_, _, 737702>(a1)) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::ITLINKARROW_802A850C = Some(|a0, a1, a2, a3, a4, a5| unsafe { cast::<_, _, 737100>(melee_items::tu::itlinkarrow::itLinkArrow_802A850C(cast::<_, _, 737101>(a0), cast::<_, _, 737102>(a1), cast::<_, _, 737103>(a2), cast::<_, _, 737104>(a3), cast::<_, _, 737105>(a4), cast::<_, _, 737106>(a5))) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::ITLINKARROW_802A850C = Some(|a0, a1, a2, a3, a4, a5| unsafe { cast::<_, _, 737800>(melee_items::tu::itlinkarrow::itLinkArrow_802A850C(cast::<_, _, 737801>(a0), cast::<_, _, 737802>(a1), cast::<_, _, 737803>(a2), cast::<_, _, 737804>(a3), cast::<_, _, 737805>(a4), cast::<_, _, 737806>(a5))) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802A8398 = Some(|a0, a1, a2| unsafe { melee_items::tu::itlinkarrow::it_802A8398(cast::<_, _, 737201>(a0), cast::<_, _, 737202>(a1), cast::<_, _, 737203>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802A8398 = Some(|a0, a1, a2| unsafe { melee_items::tu::itlinkarrow::it_802A8398(cast::<_, _, 737901>(a0), cast::<_, _, 737902>(a1), cast::<_, _, 737903>(a2)) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802A83E0 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 737300>(melee_items::tu::itlinkarrow::it_802A83E0(cast::<_, _, 737301>(a0), cast::<_, _, 737302>(a1), cast::<_, _, 737303>(a2), cast::<_, _, 737304>(a3), cast::<_, _, 737305>(a4))) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802A83E0 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 738000>(melee_items::tu::itlinkarrow::it_802A83E0(cast::<_, _, 738001>(a0), cast::<_, _, 738002>(a1), cast::<_, _, 738003>(a2), cast::<_, _, 738004>(a3), cast::<_, _, 738005>(a4))) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802A8A7C = Some(|a0| unsafe { melee_items::tu::itlinkarrow::it_802A8A7C(cast::<_, _, 737401>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802A8A7C = Some(|a0| unsafe { melee_items::tu::itlinkarrow::it_802A8A7C(cast::<_, _, 738101>(a0)) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802AF1A4 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 737500>(melee_items::tu::itlinkbow::it_802AF1A4(cast::<_, _, 737501>(a0), cast::<_, _, 737502>(a1), cast::<_, _, 737503>(a2), cast::<_, _, 737504>(a3), cast::<_, _, 737505>(a4))) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802AF1A4 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 738200>(melee_items::tu::itlinkbow::it_802AF1A4(cast::<_, _, 738201>(a0), cast::<_, _, 738202>(a1), cast::<_, _, 738203>(a2), cast::<_, _, 738204>(a3), cast::<_, _, 738205>(a4))) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802AF304 = Some(|a0| unsafe { melee_items::tu::itlinkbow::it_802AF304(cast::<_, _, 737601>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::IT_802AF304 = Some(|a0| unsafe { melee_items::tu::itlinkbow::it_802AF304(cast::<_, _, 738301>(a0)) }); }
     // tu/ftkirbyspeciallink.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 737701>(a0), cast::<_, _, 737702>(a1), cast::<_, _, 737703>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallink::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 738401>(a0), cast::<_, _, 738402>(a1), cast::<_, _, 738403>(a2)) }); }
     // tu/ftkirbyspecialluigi.rs: link_alias.tsv
-    unsafe { melee_chara::tu::ftkirbyspecialluigi::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 737900>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 737801>(a0), cast::<_, _, 737802>(a1), &crate::va_words(a2))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialluigi::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 738600>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 738501>(a0), cast::<_, _, 738502>(a1), &crate::va_words(a2))) }); }
     // tu/ftkirbyspecialluigi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialluigi::ext::IT_802C01AC = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::itluigifireball::it_802C01AC(cast::<_, _, 738001>(a0), cast::<_, _, 738002>(a1), cast::<_, _, 738003>(a2), cast::<_, _, 738004>(a3)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialluigi::ext::IT_802C01AC = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::itluigifireball::it_802C01AC(cast::<_, _, 738701>(a0), cast::<_, _, 738702>(a1), cast::<_, _, 738703>(a2), cast::<_, _, 738704>(a3)) }); }
     // tu/ftkirbyspecialluigi.rs
-    unsafe { melee_chara::tu::ftkirbyspecialluigi::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 738101>(a0), cast::<_, _, 738102>(a1), cast::<_, _, 738103>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialluigi::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 738801>(a0), cast::<_, _, 738802>(a1), cast::<_, _, 738803>(a2)) }); }
     // tu/ftkirbyspeciallw.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::EFLIB_DESTROYALL = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(cast::<_, _, 738201>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::EFLIB_DESTROYALL = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(cast::<_, _, 738901>(a0)) }); }
     // tu/ftkirbyspeciallw.rs: link_alias.tsv
-    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 738400>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 738301>(a0), cast::<_, _, 738302>(a1), &crate::va_words(a2))) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 739100>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 739001>(a0), cast::<_, _, 739002>(a1), &crate::va_words(a2))) }); }
     // tu/ftkirbyspeciallw.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 738501>(a0), cast::<_, _, 738502>(a1), cast::<_, _, 738503>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 739201>(a0), cast::<_, _, 739202>(a1), cast::<_, _, 739203>(a2)) }); }
     // tu/ftkirbyspeciallw.rs
-    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::MPCHECKALLREMAP = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 738600>(melee_world::tu::mplib::mpCheckAllRemap(cast::<_, _, 738601>(a0), cast::<_, _, 738602>(a1), cast::<_, _, 738603>(a2), cast::<_, _, 738604>(a3), cast::<_, _, 738605>(a4), cast::<_, _, 738606>(a5), cast::<_, _, 738607>(a6), cast::<_, _, 738608>(a7), cast::<_, _, 738609>(a8), cast::<_, _, 738610>(a9))) }); }
+    unsafe { melee_chara::tu::ftkirbyspeciallw::ext::MPCHECKALLREMAP = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 739300>(melee_world::tu::mplib::mpCheckAllRemap(cast::<_, _, 739301>(a0), cast::<_, _, 739302>(a1), cast::<_, _, 739303>(a2), cast::<_, _, 739304>(a3), cast::<_, _, 739305>(a4), cast::<_, _, 739306>(a5), cast::<_, _, 739307>(a6), cast::<_, _, 739308>(a7), cast::<_, _, 739309>(a8), cast::<_, _, 739310>(a9))) }); }
     // tu/ftkirbyspecialmario.rs: link_alias.tsv
-    unsafe { melee_chara::tu::ftkirbyspecialmario::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 738800>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 738701>(a0), cast::<_, _, 738702>(a1), &crate::va_words(a2))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmario::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 739500>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 739401>(a0), cast::<_, _, 739402>(a1), &crate::va_words(a2))) }); }
     // tu/ftkirbyspecialmario.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmario::ext::IT_8029B6F8 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::itmariofireball::it_8029B6F8(cast::<_, _, 738901>(a0), cast::<_, _, 738902>(a1), cast::<_, _, 738903>(a2), cast::<_, _, 738904>(a3)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmario::ext::IT_8029B6F8 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::itmariofireball::it_8029B6F8(cast::<_, _, 739601>(a0), cast::<_, _, 739602>(a1), cast::<_, _, 739603>(a2), cast::<_, _, 739604>(a3)) }); }
     // tu/ftkirbyspecialmario.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmario::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 739001>(a0), cast::<_, _, 739002>(a1), cast::<_, _, 739003>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmario::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 739701>(a0), cast::<_, _, 739702>(a1), cast::<_, _, 739703>(a2)) }); }
     // tu/ftkirbyspecialmars.rs: link_alias.tsv
-    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 739200>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 739101>(a0), cast::<_, _, 739102>(a1), &crate::va_words(a2))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| unsafe { cast::<_, _, 739900>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 739801>(a0), cast::<_, _, 739802>(a1), &crate::va_words(a2))) }); }
     // tu/ftkirbyspecialmars.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { cast::<_, _, 739300>(melee_fighter::tu::ftcolanim::ftco_800bffd0(cast::<_, _, 739301>(a0), cast::<_, _, 739302>(a1), cast::<_, _, 739303>(a2))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { cast::<_, _, 740000>(melee_fighter::tu::ftcolanimlist::ftco_800bffd0(cast::<_, _, 740001>(a0), cast::<_, _, 740002>(a1), cast::<_, _, 740003>(a2))) }); }
     // tu/ftkirbyspecialmars.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::HSD_JOBJSETSCALE = Some(|a0, a1| unsafe { melee_world::tu::efn::efasync::HSD_JObjSetScale(cast::<_, _, 739401>(a0), cast::<_, _, 739402>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::HSD_JOBJSETSCALE = Some(|a0, a1| unsafe { melee_world::tu::efn::efasync::HSD_JObjSetScale(cast::<_, _, 740101>(a0), cast::<_, _, 740102>(a1)) }); }
     // tu/ftkirbyspecialmars.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::LB_8000C2F8 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(cast::<_, _, 739501>(a0), cast::<_, _, 739502>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmars::ext::LB_8000C2F8 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(cast::<_, _, 740201>(a0), cast::<_, _, 740202>(a1)) }); }
     // tu/ftkirbyspecialmewtwo.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FTCO_8009917C = Some(|a0| unsafe { cast::<_, _, 739600>(melee_fighter::tu::ftCo_Escape::ftCo_8009917C(cast::<_, _, 739601>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FTCO_8009917C = Some(|a0| unsafe { cast::<_, _, 740300>(melee_fighter::tu::ftCo_Escape::ftCo_8009917C(cast::<_, _, 740301>(a0))) }); }
     // tu/ftkirbyspecialmewtwo.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FTCO_800BFFAC = Some(|a0| unsafe { melee_fighter::tu::ftcolanim::ftco_800bffac(cast::<_, _, 739701>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FTCO_800BFFAC = Some(|a0| unsafe { melee_fighter::tu::ftcolanimlist::ftco_800bffac(cast::<_, _, 740401>(a0)) }); }
     // tu/ftkirbyspecialmewtwo.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { cast::<_, _, 739800>(melee_fighter::tu::ftcolanim::ftco_800bffd0(cast::<_, _, 739801>(a0), cast::<_, _, 739802>(a1), cast::<_, _, 739803>(a2))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { cast::<_, _, 740500>(melee_fighter::tu::ftcolanimlist::ftco_800bffd0(cast::<_, _, 740501>(a0), cast::<_, _, 740502>(a1), cast::<_, _, 740503>(a2))) }); }
     // tu/ftkirbyspecialmewtwo.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FT_80088510 = Some(|a0, a1, a2, a3| unsafe { melee_fighter::ft0881::ft_80088510(cast::<_, _, 739901>(a0), cast::<_, _, 739902>(a1), cast::<_, _, 739903>(a2), cast::<_, _, 739904>(a3)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::FT_80088510 = Some(|a0, a1, a2, a3| unsafe { melee_fighter::ft0881::ft_80088510(cast::<_, _, 740601>(a0), cast::<_, _, 740602>(a1), cast::<_, _, 740603>(a2), cast::<_, _, 740604>(a3)) }); }
     // tu/ftkirbyspecialmewtwo.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::IT_802C5000 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 740000>(melee_items::tu::itmewtwoshadowball::it_802C5000(cast::<_, _, 740001>(a0), cast::<_, _, 740002>(a1), cast::<_, _, 740003>(a2), cast::<_, _, 740004>(a3), cast::<_, _, 740005>(a4))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::IT_802C5000 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 740700>(melee_items::tu::itmewtwoshadowball::it_802C5000(cast::<_, _, 740701>(a0), cast::<_, _, 740702>(a1), cast::<_, _, 740703>(a2), cast::<_, _, 740704>(a3), cast::<_, _, 740705>(a4))) }); }
     // tu/ftkirbyspecialmewtwo.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::IT_802C53F0 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itmewtwoshadowball::it_802C53F0(cast::<_, _, 740101>(a0), cast::<_, _, 740102>(a1), cast::<_, _, 740103>(a2), cast::<_, _, 740104>(a3), cast::<_, _, 740105>(a4)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::IT_802C53F0 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itmewtwoshadowball::it_802C53F0(cast::<_, _, 740801>(a0), cast::<_, _, 740802>(a1), cast::<_, _, 740803>(a2), cast::<_, _, 740804>(a3), cast::<_, _, 740805>(a4)) }); }
     // tu/ftkirbyspecialmewtwo.rs
-    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::IT_802C573C = Some(|a0| unsafe { melee_items::tu::itmewtwoshadowball::it_802C573C(cast::<_, _, 740201>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ext::IT_802C573C = Some(|a0| unsafe { melee_items::tu::itmewtwoshadowball::it_802C573C(cast::<_, _, 740901>(a0)) }); }
     // tu/ftkirbyspecialn.rs
-    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802ADA1C = Some(|a0, a1, a2| unsafe { melee_items::tu::it_2ADA::it_802ADA1C(cast::<_, _, 740301>(a0), cast::<_, _, 740302>(a1), cast::<_, _, 740303>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802ADA1C = Some(|a0, a1, a2| unsafe { melee_items::tu::it_2ADA::it_802ADA1C(cast::<_, _, 741001>(a0), cast::<_, _, 741002>(a1), cast::<_, _, 741003>(a2)) }); }
     // tu/ftkirbyspecialn.rs
-    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F23AC = Some(|a0, a1| unsafe { cast::<_, _, 740400>(melee_items::tu::itkirby_2F23::it_802F23AC(cast::<_, _, 740401>(a0), cast::<_, _, 740402>(a1))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F23AC = Some(|a0, a1| unsafe { cast::<_, _, 741100>(melee_items::tu::itkirby_2F23::it_802F23AC(cast::<_, _, 741101>(a0), cast::<_, _, 741102>(a1))) }); }
     // tu/ftkirbyspecialn.rs
-    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F23EC = Some(|a0, a1, a2| unsafe { melee_items::tu::itkirby_2F23::it_802F23EC(cast::<_, _, 740501>(a0), cast::<_, _, 740502>(a1), cast::<_, _, 740503>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F23EC = Some(|a0, a1, a2| unsafe { melee_items::tu::itkirby_2F23::it_802F23EC(cast::<_, _, 741201>(a0), cast::<_, _, 741202>(a1), cast::<_, _, 741203>(a2)) }); }
     // tu/ftkirbyspecialn.rs
-    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F2810 = Some(|a0| unsafe { melee_items::tu::itkirby_2F23::it_802F2810(cast::<_, _, 740601>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F2810 = Some(|a0| unsafe { melee_items::tu::itkirby_2F23::it_802F2810(cast::<_, _, 741301>(a0)) }); }
     // tu/ftkirbyspecialn.rs
-    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F295C = Some(|a0, a1| unsafe { cast::<_, _, 740700>(melee_items::tu::it_2F28::it_802F295C(cast::<_, _, 740701>(a0), cast::<_, _, 740702>(a1))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialn::ext::IT_802F295C = Some(|a0, a1| unsafe { cast::<_, _, 741400>(melee_items::tu::it_2F28::it_802F295C(cast::<_, _, 741401>(a0), cast::<_, _, 741402>(a1))) }); }
     // tu/ftkirbyspecialn.rs
-    unsafe { melee_chara::tu::ftkirbyspecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 740801>(a0), cast::<_, _, 740802>(a1), cast::<_, _, 740803>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 741501>(a0), cast::<_, _, 741502>(a1), cast::<_, _, 741503>(a2)) }); }
     // tu/ftkirbyspecialn.rs
-    unsafe { melee_chara::tu::ftkirbyspecialn::ext::MPUPDATEFLOORSKIP = Some(|a0| unsafe { melee_world::tu::mpcoll::mpUpdateFloorSkip(cast::<_, _, 740901>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialn::ext::MPUPDATEFLOORSKIP = Some(|a0| unsafe { melee_world::tu::mpcoll::mpUpdateFloorSkip(cast::<_, _, 741601>(a0)) }); }
     // tu/ftkirbyspecialness.rs
-    unsafe { melee_chara::tu::ftkirbyspecialness::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 741001>(a0), cast::<_, _, 741002>(a1), cast::<_, _, 741003>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialness::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 741701>(a0), cast::<_, _, 741702>(a1), cast::<_, _, 741703>(a2)) }); }
     // tu/ftkirbyspecialness.rs
-    unsafe { melee_chara::tu::ftkirbyspecialness::ext::IT_802AA7E4 = Some(|a0| unsafe { cast::<_, _, 741100>(melee_items::tu::itnesspkflash::it_802AA7E4(cast::<_, _, 741101>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialness::ext::IT_802AA7E4 = Some(|a0| unsafe { cast::<_, _, 741800>(melee_items::tu::itnesspkflash::it_802AA7E4(cast::<_, _, 741801>(a0))) }); }
     // tu/ftkirbyspecialness.rs
-    unsafe { melee_chara::tu::ftkirbyspecialness::ext::IT_802AA7F0 = Some(|a0| unsafe { cast::<_, _, 741200>(melee_items::tu::itnesspkflash::it_802AA7F0(cast::<_, _, 741201>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialness::ext::IT_802AA7F0 = Some(|a0| unsafe { cast::<_, _, 741900>(melee_items::tu::itnesspkflash::it_802AA7F0(cast::<_, _, 741901>(a0))) }); }
     // tu/ftkirbyspecialness.rs
-    unsafe { melee_chara::tu::ftkirbyspecialness::ext::IT_802AA8C0 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 741300>(melee_items::tu::itnesspkflash::it_802AA8C0(cast::<_, _, 741301>(a0), cast::<_, _, 741302>(a1), cast::<_, _, 741303>(a2), cast::<_, _, 741304>(a3))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialness::ext::IT_802AA8C0 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 742000>(melee_items::tu::itnesspkflash::it_802AA8C0(cast::<_, _, 742001>(a0), cast::<_, _, 742002>(a1), cast::<_, _, 742003>(a2), cast::<_, _, 742004>(a3))) }); }
     // tu/ftkirbyspecialpeach.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDE18 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 741400>(melee_items::tu::itpeachtoad::it_802BDE18(cast::<_, _, 741401>(a0), cast::<_, _, 741402>(a1), cast::<_, _, 741403>(a2), cast::<_, _, 741404>(a3), cast::<_, _, 741405>(a4))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDE18 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 742100>(melee_items::tu::itpeachtoad::it_802BDE18(cast::<_, _, 742101>(a0), cast::<_, _, 742102>(a1), cast::<_, _, 742103>(a2), cast::<_, _, 742104>(a3), cast::<_, _, 742105>(a4))) }); }
     // tu/ftkirbyspecialpeach.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDF40 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BDF40(cast::<_, _, 741501>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDF40 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BDF40(cast::<_, _, 742201>(a0)) }); }
     // tu/ftkirbyspecialpeach.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDFA0 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BDFA0(cast::<_, _, 741601>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDFA0 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BDFA0(cast::<_, _, 742301>(a0)) }); }
     // tu/ftkirbyspecialpeach.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDFC0 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BDFC0(cast::<_, _, 741701>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BDFC0 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BDFC0(cast::<_, _, 742401>(a0)) }); }
     // tu/ftkirbyspecialpeach.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BE100 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BE100(cast::<_, _, 741801>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BE100 = Some(|a0| unsafe { melee_items::tu::itpeachtoad::it_802BE100(cast::<_, _, 742501>(a0)) }); }
     // tu/ftkirbyspecialpeach.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BE214 = Some(|a0, a1, a2, a3| unsafe { let _ = melee_items::tu::itpeachtoadspore::it_802BE214(cast::<_, _, 741901>(a0), cast::<_, _, 741902>(a1), cast::<_, _, 741903>(a2), cast::<_, _, 741904>(a3)); }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpeach::ext::IT_802BE214 = Some(|a0, a1, a2, a3| unsafe { let _ = melee_items::tu::itpeachtoadspore::it_802BE214(cast::<_, _, 742601>(a0), cast::<_, _, 742602>(a1), cast::<_, _, 742603>(a2), cast::<_, _, 742604>(a3)); }); }
     // tu/ftkirbyspecialpikachu.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpikachu::ext::ITPIKACHUTHUNDERJOLT_SPAWN = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 742000>(melee_items::tu::itpikachutjoltground::itPikachuThunderJolt_Spawn(cast::<_, _, 742001>(a0), cast::<_, _, 742002>(a1), cast::<_, _, 742003>(a2), cast::<_, _, 742004>(a3))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpikachu::ext::ITPIKACHUTHUNDERJOLT_SPAWN = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 742700>(melee_items::tu::itpikachutjoltground::itPikachuThunderJolt_Spawn(cast::<_, _, 742701>(a0), cast::<_, _, 742702>(a1), cast::<_, _, 742703>(a2), cast::<_, _, 742704>(a3))) }); }
     // tu/ftkirbyspecialpurin.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpurin::ext::HSD_JOBJSETROTATIONY = Some(|a0, a1| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetRotationY(cast::<_, _, 742101>(a0), cast::<_, _, 742102>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpurin::ext::HSD_JOBJSETROTATIONY = Some(|a0, a1| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetRotationY(cast::<_, _, 742801>(a0), cast::<_, _, 742802>(a1)) }); }
     // tu/ftkirbyspecialpurin.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpurin::ext::HSD_JOBJSETSCALE = Some(|a0, a1| unsafe { melee_world::tu::efn::efasync::HSD_JObjSetScale(cast::<_, _, 742201>(a0), cast::<_, _, 742202>(a1)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpurin::ext::HSD_JOBJSETSCALE = Some(|a0, a1| unsafe { melee_world::tu::efn::efasync::HSD_JObjSetScale(cast::<_, _, 742901>(a0), cast::<_, _, 742902>(a1)) }); }
     // tu/ftkirbyspecialpurin.rs
-    unsafe { melee_chara::tu::ftkirbyspecialpurin::ext::MPLIB_800569EC = Some(|a0| unsafe { cast::<_, _, 742300>(melee_world::tu::mplib::mpLib_800569EC(cast::<_, _, 742301>(a0))) }); }
+    unsafe { melee_chara::tu::ftkirbyspecialpurin::ext::MPLIB_800569EC = Some(|a0| unsafe { cast::<_, _, 743000>(melee_world::tu::mplib::mpLib_800569EC(cast::<_, _, 743001>(a0))) }); }
     // tu/ftkirbyspecials.rs
-    unsafe { melee_chara::tu::ftkirbyspecials::ext::ASSERT = Some(|a0, a1, a2| unsafe { melee_runtime::tu::debug::__assert(cast::<_, _, 742401>(a0), cast::<_, _, 742402>(a1), cast::<_, _, 742403>(a2)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecials::ext::ASSERT = Some(|a0, a1, a2| unsafe { melee_runtime::tu::debug::__assert(cast::<_, _, 743101>(a0), cast::<_, _, 743102>(a1), cast::<_, _, 743103>(a2)) }); }
     // tu/ftkirbyspecials.rs
-    unsafe { melee_chara::tu::ftkirbyspecials::ext::IT_802ADC34 = Some(|a0| unsafe { melee_items::tu::itkirbyhammer::it_802ADC34(cast::<_, _, 742501>(a0)) }); }
+    unsafe { melee_chara::tu::ftkirbyspecials::ext::IT_802ADC34 = Some(|a0| unsafe { melee_items::tu::itkirbyhammer::it_802ADC34(cast::<_, _, 743201>(a0)) }); }
+}
+
+// melee_chara
+#[inline(never)]
+pub(super) fn c052() {
+    // tu/ftkirbyspecials.rs
+    unsafe { melee_chara::tu::ftkirbyspecials::ext::IT_802ADC54 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 743300>(melee_items::tu::itkirbyhammer::it_802ADC54(cast::<_, _, 743301>(a0), cast::<_, _, 743302>(a1), cast::<_, _, 743303>(a2), cast::<_, _, 743304>(a3), cast::<_, _, 743305>(a4))) }); }
+    // tu/ftkirbyspecials.rs
+    unsafe { melee_chara::tu::ftkirbyspecials::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 743401>(a0), cast::<_, _, 743402>(a1), cast::<_, _, 743403>(a2)) }); }
+    // tu/ftkirbyspecialsamus.rs
+    unsafe { melee_chara::tu::ftkirbyspecialsamus::ext::IT_802B55C8 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 743500>(melee_items::tu::itsamuschargeshot::it_802B55C8(cast::<_, _, 743501>(a0), cast::<_, _, 743502>(a1), cast::<_, _, 743503>(a2), cast::<_, _, 743504>(a3), cast::<_, _, 743505>(a4))) }); }
+    // tu/ftkirbyspecialsamus.rs
+    unsafe { melee_chara::tu::ftkirbyspecialsamus::ext::IT_802B56E4 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itsamuschargeshot::it_802B56E4(cast::<_, _, 743601>(a0), cast::<_, _, 743602>(a1), cast::<_, _, 743603>(a2), cast::<_, _, 743604>(a3), cast::<_, _, 743605>(a4)) }); }
+    // tu/ftkirbyspecialsamus.rs
+    unsafe { melee_chara::tu::ftkirbyspecialsamus::ext::IT_802B5974 = Some(|a0| unsafe { melee_items::tu::itsamuschargeshot::it_802B5974(cast::<_, _, 743701>(a0)) }); }
+    // tu/ftkirbyspecialseak.rs
+    unsafe { melee_chara::tu::ftkirbyspecialseak::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { cast::<_, _, 743800>(melee_fighter::tu::ftcolanimlist::ftco_800bffd0(cast::<_, _, 743801>(a0), cast::<_, _, 743802>(a1), cast::<_, _, 743803>(a2))) }); }
+    // tu/ftkirbyspecialseak.rs
+    unsafe { melee_chara::tu::ftkirbyspecialseak::ext::FTCO_LANDING_ENTER_BASIC = Some(|a0| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(cast::<_, _, 743901>(a0)) }); }
+    // tu/ftkirbyspecialseak.rs
+    unsafe { melee_chara::tu::ftkirbyspecialseak::ext::IT_802AFD8C = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 744000>(melee_items::tu::itseakneedlethrown::it_802AFD8C(cast::<_, _, 744001>(a0), cast::<_, _, 744002>(a1), cast::<_, _, 744003>(a2), cast::<_, _, 744004>(a3))) }); }
+    // tu/ftkirbyspecialseak.rs
+    unsafe { melee_chara::tu::ftkirbyspecialseak::ext::IT_802AFEA8 = Some(|a0, a1, a2| unsafe { melee_items::tu::itseakneedlethrown::it_802AFEA8(cast::<_, _, 744101>(a0), cast::<_, _, 744102>(a1), cast::<_, _, 744103>(a2)) }); }
+    // tu/ftkirbyspecialseak.rs
+    unsafe { melee_chara::tu::ftkirbyspecialseak::ext::IT_802B19AC = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 744200>(melee_items::tu::itseakneedleheld::it_802B19AC(cast::<_, _, 744201>(a0), cast::<_, _, 744202>(a1), cast::<_, _, 744203>(a2), cast::<_, _, 744204>(a3), cast::<_, _, 744205>(a4))) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::FN_8010A930 = Some(|a0, a1| unsafe { melee_chara::tu::ftkirbycaptureyoshi::fn_8010A930(cast::<_, _, 744301>(a0), cast::<_, _, 744302>(a1)) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::FTCO_800DE2CC = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2CC(cast::<_, _, 744401>(a0), cast::<_, _, 744402>(a1)) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::FTKB_KIRBYFTDATA = Some(|| unsafe { cast::<_, _, 744500>(melee_chara::tu::ftkirbyspecialn::ftKb_KirbyFtData()) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::FTKB_SPECIALNYS_8010AA2C = Some(|a0| unsafe { melee_chara::tu::ftkirbycaptureyoshi::ftKb_SpecialNYs_8010AA2C(cast::<_, _, 744601>(a0)) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::IT_802F2D98 = Some(|a0, a1| unsafe { melee_items::tu::itkirbyyoshispecialn::it_802F2D98(cast::<_, _, 744701>(a0), cast::<_, _, 744702>(a1)) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::IT_802F2E7C = Some(|a0, a1| unsafe { melee_items::tu::itkirbyyoshispecialn::it_802F2E7C(cast::<_, _, 744801>(a0), cast::<_, _, 744802>(a1)) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::IT_802F2F34 = Some(|a0, a1| unsafe { melee_items::tu::ityoshiegglay::it_802F2F34(cast::<_, _, 744901>(a0), cast::<_, _, 744902>(a1)) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 745001>(a0), cast::<_, _, 745002>(a1), cast::<_, _, 745003>(a2)) }); }
+    // tu/ftkirbyspecialyoshi.rs
+    unsafe { melee_chara::tu::ftkirbyspecialyoshi::ext::LB_8000BA0C = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000BA0C(cast::<_, _, 745101>(a0), cast::<_, _, 745102>(a1)) }); }
+    // tu/ftkirbyyoshiegg.rs
+    unsafe { melee_chara::tu::ftkirbyyoshiegg::ext::FIGHTER_UPDATEMODELSCALE = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_UpdateModelScale(cast::<_, _, 745201>(a0)) }); }
+    // tu/ftkirbyyoshiegg.rs
+    unsafe { melee_chara::tu::ftkirbyyoshiegg::ext::FTCO_800C0C88 = Some(|a0| unsafe { cast::<_, _, 745300>(melee_fighter::tu::ftCo_Bury::ftCo_800C0C88(cast::<_, _, 745301>(a0))) }); }
+    // tu/ftkirbyyoshiegg.rs
+    unsafe { melee_chara::tu::ftkirbyyoshiegg::ext::FTCO_FALL_ENTER_YOSHIEGG_KIRBY = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter_YoshiEgg_Kirby(cast::<_, _, 745401>(a0)) }); }
+    // tu/ftkirbyyoshiegg.rs
+    unsafe { melee_chara::tu::ftkirbyyoshiegg::ext::HSD_JOBJSETSCALE = Some(|a0, a1| unsafe { melee_world::tu::efn::efasync::HSD_JObjSetScale(cast::<_, _, 745501>(a0), cast::<_, _, 745502>(a1)) }); }
+    // tu/ftkirbyyoshiegg.rs
+    unsafe { melee_chara::tu::ftkirbyyoshiegg::ext::LB_8000C2F8 = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(cast::<_, _, 745601>(a0), cast::<_, _, 745602>(a1)) }); }
+    // tu/ftkoopa.rs
+    unsafe { melee_chara::tu::ftkoopa::ext::FTCO_800DE2A8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(cast::<_, _, 745701>(a0), cast::<_, _, 745702>(a1)) }); }
+    // tu/ftkoopa.rs
+    unsafe { melee_chara::tu::ftkoopa::ext::FTCO_800DE7C0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(cast::<_, _, 745801>(a0), cast::<_, _, 745802>(a1), cast::<_, _, 745803>(a2)) }); }
+    // tu/ftkoopa.rs
+    unsafe { melee_chara::tu::ftkoopa::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 745901>(a0), cast::<_, _, 745902>(a1)) }); }
+    // tu/ftkoopaspecialhi.rs
+    unsafe { melee_chara::tu::ftkoopaspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 746001>(a0)) }); }
+    // tu/ftkoopaspecialhi.rs
+    unsafe { melee_chara::tu::ftkoopaspecialhi::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 746101>(a0), cast::<_, _, 746102>(a1), cast::<_, _, 746103>(a2)) }); }
+    // tu/ftkoopaspeciallw.rs
+    unsafe { melee_chara::tu::ftkoopaspeciallw::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 746201>(a0)) }); }
+    // tu/ftkoopaspecialn.rs
+    unsafe { melee_chara::tu::ftkoopaspecialn::ext::FTCOMMON_8007F5CC = Some(|a0, a1| unsafe { melee_fighter::tu::ftcommon::ftcommon_8007f5cc(cast::<_, _, 746301>(a0), cast::<_, _, 746302>(a1)) }); }
+    // tu/ftkoopaspecialn.rs
+    unsafe { melee_chara::tu::ftkoopaspecialn::ext::FT_80089824 = Some(|a0| unsafe { melee_fighter::ft0892::ft_80089824(cast::<_, _, 746401>(a0)) }); }
+    // tu/ftkoopaspecialn.rs
+    unsafe { melee_chara::tu::ftkoopaspecialn::ext::ITEM_8026AE60 = Some(|| unsafe { cast::<_, _, 746500>(melee_items::tu::item::Item_8026AE60()) }); }
+    // tu/ftkoopaspecialn.rs
+    unsafe { melee_chara::tu::ftkoopaspecialn::ext::ITKOOPAFLAME_SPAWN = Some(|a0, a1, a2, a3, a4, a5, a6, a7| unsafe { cast::<_, _, 746600>(melee_items::tu::itkoopaflame::itKoopaFlame_Spawn(cast::<_, _, 746601>(a0), cast::<_, _, 746602>(a1), cast::<_, _, 746603>(a2), cast::<_, _, 746604>(a3), cast::<_, _, 746605>(a4), cast::<_, _, 746606>(a5), cast::<_, _, 746607>(a6), cast::<_, _, 746608>(a7))) }); }
+    // tu/ftkoopaspecialn.rs
+    unsafe { melee_chara::tu::ftkoopaspecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 746701>(a0), cast::<_, _, 746702>(a1), cast::<_, _, 746703>(a2)) }); }
+    // tu/ftkoopaspecials.rs
+    unsafe { melee_chara::tu::ftkoopaspecials::ext::FTANIM_8006F0FC = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_8006F0FC(cast::<_, _, 746801>(a0), cast::<_, _, 746802>(a1)) }); }
+    // tu/ftkoopaspecials.rs
+    unsafe { melee_chara::tu::ftkoopaspecials::ext::FTKP_SPECIALS_80132E30 = Some(|a0| unsafe { melee_chara::tu::ftkoopa::ftKp_SpecialS_80132E30(cast::<_, _, 746901>(a0)) }); }
+    // tu/ftlink.rs
+    unsafe { melee_chara::tu::ftlink::ext::FTDATA_80085E50 = Some(|a0, a1| unsafe { cast::<_, _, 747000>(melee_fighter::tu::ftdata::ftData_80085E50(cast::<_, _, 747001>(a0), cast::<_, _, 747002>(a1))) }); }
+    // tu/ftlinkspecialn.rs
+    unsafe { melee_chara::tu::ftlinkspecialn::ext::IT_802A8A7C = Some(|a0| unsafe { melee_items::tu::itlinkarrow::it_802A8A7C(cast::<_, _, 747101>(a0)) }); }
+    // tu/ftlinkspecialn.rs
+    unsafe { melee_chara::tu::ftlinkspecialn::ext::IT_802AF304 = Some(|a0| unsafe { melee_items::tu::itlinkbow::it_802AF304(cast::<_, _, 747201>(a0)) }); }
+    // tu/ftlinkspecials.rs
+    unsafe { melee_chara::tu::ftlinkspecials::ext::IT_8029FDBC = Some(|a0| unsafe { cast::<_, _, 747300>(melee_items::tu::itlinkboomerang::it_8029FDBC(cast::<_, _, 747301>(a0))) }); }
+    // tu/ftlinkspecials.rs
+    unsafe { melee_chara::tu::ftlinkspecials::ext::IT_802A07B4 = Some(|a0| unsafe { melee_items::tu::itlinkboomerang::it_802A07B4(cast::<_, _, 747401>(a0)) }); }
+    // tu/ftluigispecialn.rs
+    unsafe { melee_chara::tu::ftluigispecialn::ext::IT_802C01AC = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::itluigifireball::it_802C01AC(cast::<_, _, 747501>(a0), cast::<_, _, 747502>(a1), cast::<_, _, 747503>(a2), cast::<_, _, 747504>(a3)) }); }
+    // tu/ftluigispecialn.rs
+    unsafe { melee_chara::tu::ftluigispecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 747601>(a0), cast::<_, _, 747602>(a1), cast::<_, _, 747603>(a2)) }); }
+    // tu/ftmario.rs
+    unsafe { melee_chara::tu::ftmario::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 747701>(a0), cast::<_, _, 747702>(a1)) }); }
+    // tu/ftmariospecialn.rs
+    unsafe { melee_chara::tu::ftmariospecialn::ext::IT_8029B6F8 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::itmariofireball::it_8029B6F8(cast::<_, _, 747801>(a0), cast::<_, _, 747802>(a1), cast::<_, _, 747803>(a2), cast::<_, _, 747804>(a3)) }); }
+    // tu/ftmariospecialn.rs
+    unsafe { melee_chara::tu::ftmariospecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 747901>(a0), cast::<_, _, 747902>(a1), cast::<_, _, 747903>(a2)) }); }
+    // tu/ftmariospecials.rs
+    unsafe { melee_chara::tu::ftmariospecials::ext::IT_802B2560 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 748000>(melee_items::tu::itmariocape::it_802B2560(cast::<_, _, 748001>(a0), cast::<_, _, 748002>(a1), cast::<_, _, 748003>(a2), cast::<_, _, 748004>(a3), cast::<_, _, 748005>(a4))) }); }
+    // tu/ftmariospecials.rs
+    unsafe { melee_chara::tu::ftmariospecials::ext::IT_802B2674 = Some(|a0| unsafe { melee_items::tu::itmariocape::it_802B2674(cast::<_, _, 748101>(a0)) }); }
+    // tu/ftmariospecials.rs
+    unsafe { melee_chara::tu::ftmariospecials::ext::IT_802B26C0 = Some(|a0| unsafe { melee_items::tu::itmariocape::it_802B26C0(cast::<_, _, 748201>(a0)) }); }
+    // tu/ftmariospecials.rs
+    unsafe { melee_chara::tu::ftmariospecials::ext::IT_802B26E0 = Some(|a0| unsafe { melee_items::tu::itmariocape::it_802B26E0(cast::<_, _, 748301>(a0)) }); }
+    // tu/ftmarsspecialhi.rs
+    unsafe { melee_chara::tu::ftmarsspecialhi::ext::FTPARTSETROTY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 748401>(a0), cast::<_, _, 748402>(a1), cast::<_, _, 748403>(a2)) }); }
+    // tu/ftmarsspecialhi.rs
+    unsafe { melee_chara::tu::ftmarsspecialhi::ext::FT_800831CC = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ft_081b::ft_800831cc(cast::<_, _, 748501>(a0), cast::<_, _, 748502>(a1), cast::<_, _, 748503>(a2)) }); }
+    // tu/ftmarsspecialhi.rs
+    unsafe { melee_chara::tu::ftmarsspecialhi::ext::FT_80083B68 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80083b68(cast::<_, _, 748601>(a0)) }); }
+    // tu/ftmarsspeciallw.rs
+    unsafe { melee_chara::tu::ftmarsspeciallw::ext::FTCOLL_8007ABD0 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftcoll::ftcoll_8007abd0(cast::<_, _, 748701>(a0), cast::<_, _, 748702>(a1), cast::<_, _, 748703>(a2)) }); }
+    // tu/ftmarsspecials.rs
+    unsafe { melee_chara::tu::ftmarsspecials::ext::FT_800892A0 = Some(|a0| unsafe { melee_fighter::tu::ft_0881::ft_800892A0(cast::<_, _, 748801>(a0)) }); }
+    // tu/ftmasterhandbackairplane3.rs
+    unsafe { melee_chara::tu::ftmasterhandbackairplane3::ext::FTMH_MS_389_80151018 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandwait12::ftMh_MS_389_80151018(cast::<_, _, 748901>(a0)) }); }
+    // tu/ftmasterhandbackcrush0.rs
+    unsafe { melee_chara::tu::ftmasterhandbackcrush0::ext::HSD_JOBJSETMTXDIRTYSUB = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 749001>(a0)) }); }
+    // tu/ftmasterhandbackdisappear.rs
+    unsafe { melee_chara::tu::ftmasterhandbackdisappear::ext::FTMH_CAPTUREWAITMASTERHAND_80155D1C = Some(|a0| unsafe { melee_chara::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D1C(cast::<_, _, 749101>(a0)) }); }
+    // tu/ftmasterhandbackdisappear.rs
+    unsafe { melee_chara::tu::ftmasterhandbackdisappear::ext::FTMH_MS_388_80155A58 = Some(|a0, a1| unsafe { melee_chara::tu::ftmasterhandtagcancel::ftMh_MS_388_80155A58(cast::<_, _, 749201>(a0), cast::<_, _, 749202>(a1)) }); }
+    // tu/ftmasterhanddamage0.rs
+    unsafe { melee_chara::tu::ftmasterhanddamage0::ext::FTMH_CAPTUREWAITMASTERHAND_80155D1C = Some(|a0| unsafe { melee_chara::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D1C(cast::<_, _, 749301>(a0)) }); }
+    // tu/ftmasterhanddamage0.rs
+    unsafe { melee_chara::tu::ftmasterhanddamage0::ext::FTMH_MS_389_80151018 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandwait12::ftMh_MS_389_80151018(cast::<_, _, 749401>(a0)) }); }
+    // tu/ftmasterhanddamage0.rs
+    unsafe { melee_chara::tu::ftmasterhanddamage0::ext::IT_802F046C = Some(|a0| unsafe { melee_items::tu::itmasterhandlaser::it_802F046C(cast::<_, _, 749501>(a0)) }); }
+    // tu/ftmasterhanddamage0.rs
+    unsafe { melee_chara::tu::ftmasterhanddamage0::ext::LBAUDIOAX_800236B8 = Some(|a0| unsafe { cast::<_, _, 749600>(melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(cast::<_, _, 749601>(a0))) }); }
+    // tu/ftmasterhanddamage0.rs
+    unsafe { melee_chara::tu::ftmasterhanddamage0::ext::LBAUDIOAX_8002438C = Some(|a0| unsafe { cast::<_, _, 749700>(melee_runtime::tu::lbaudio_ax::lbAudioAx_8002438C(cast::<_, _, 749701>(a0))) }); }
+    // tu/ftmasterhanddamage0.rs
+    unsafe { melee_chara::tu::ftmasterhanddamage0::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 749801>(a0), cast::<_, _, 749802>(a1), cast::<_, _, 749803>(a2)) }); }
+    // tu/ftmasterhandfingerbeam.rs
+    unsafe { melee_chara::tu::ftmasterhandfingerbeam::ext::IT_802F0340 = Some(|a0, a1, a2, a3, a4, a5| unsafe { cast::<_, _, 749900>(melee_items::tu::itmasterhandlaser::it_802F0340(cast::<_, _, 749901>(a0), cast::<_, _, 749902>(a1), cast::<_, _, 749903>(a2), cast::<_, _, 749904>(a3), cast::<_, _, 749905>(a4), cast::<_, _, 749906>(a5))) }); }
+    // tu/ftmasterhandfingergun.rs
+    unsafe { melee_chara::tu::ftmasterhandfingergun::ext::IT_802F0AE0 = Some(|a0, a1, a2, a3, a4, a5, a6, a7| unsafe { melee_items::tu::itmasterhandbullet::it_802F0AE0(cast::<_, _, 750001>(a0), cast::<_, _, 750002>(a1), cast::<_, _, 750003>(a2), cast::<_, _, 750004>(a3), cast::<_, _, 750005>(a4), cast::<_, _, 750006>(a5), cast::<_, _, 750007>(a6), cast::<_, _, 750008>(a7)) }); }
+    // tu/ftmasterhandslap.rs
+    unsafe { melee_chara::tu::ftmasterhandslap::ext::FTMH_MS_389_80151018 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandwait12::ftMh_MS_389_80151018(cast::<_, _, 750101>(a0)) }); }
+    // tu/ftmasterhandsqueezing.rs
+    unsafe { melee_chara::tu::ftmasterhandsqueezing::ext::FTMH_CAPTUREWAITMASTERHAND_80155D6C = Some(|a0, a1| unsafe { melee_chara::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D6C(cast::<_, _, 750201>(a0), cast::<_, _, 750202>(a1)) }); }
+    // tu/ftmasterhandsweep.rs
+    unsafe { melee_chara::tu::ftmasterhandsweep::ext::MPFLOORGETLEFT = Some(|a0, a1| unsafe { melee_world::tu::mplib::mpFloorGetLeft(cast::<_, _, 750301>(a0), cast::<_, _, 750302>(a1)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_343_801510B0 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandentry::ftMh_MS_343_801510B0(cast::<_, _, 750401>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_358_80152880 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandpoke::ftMh_MS_358_80152880(cast::<_, _, 750501>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_363_801530A4 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandfingergun::ftMh_MS_363_801530A4(cast::<_, _, 750601>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_369_80153B90 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandbackairplane3::ftMh_MS_369_80153B90(cast::<_, _, 750701>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_370_80153D2C = Some(|a0| unsafe { melee_chara::tu::ftmasterhandbackcrush0::ftMh_MS_370_80153D2C(cast::<_, _, 750801>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_371_801541C8 = Some(|a0, a1| unsafe { melee_chara::tu::ftmasterhandbackcrush1::ftMh_MS_371_801541C8(cast::<_, _, 750901>(a0), cast::<_, _, 750902>(a1)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_372_801542E0 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandbackdisappear::ftMh_MS_372_801542E0(cast::<_, _, 751001>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_380_80155194 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandslam::ftMh_MS_380_80155194(cast::<_, _, 751101>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::FTMH_MS_383_80155484 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandtagapplaud::ftMh_MS_383_80155484(cast::<_, _, 751201>(a0)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::MPFLOORGETRIGHT = Some(|a0, a1| unsafe { melee_world::tu::mplib::mpFloorGetRight(cast::<_, _, 751301>(a0), cast::<_, _, 751302>(a1)) }); }
+    // tu/ftmasterhandwait10.rs
+    unsafe { melee_chara::tu::ftmasterhandwait10::ext::STAGE_80225194 = Some(|| unsafe { cast::<_, _, 751400>(melee_world::tu::stage::Stage_80225194()) }); }
+    // tu/ftmasterhandwalk.rs
+    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTBOSSLIB_8015C244 = Some(|a0, a1| unsafe { cast::<_, _, 751500>(melee_fighter::tu::ftbosslib::ftBossLib_8015C244(cast::<_, _, 751501>(a0), cast::<_, _, 751502>(a1))) }); }
+    // tu/ftmasterhandwalk.rs
+    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GETCAMERABONEPOS = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_getcamerabonepos(cast::<_, _, 751601>(a0), cast::<_, _, 751602>(a1)) }); }
+    // tu/ftmasterhandwalk.rs
+    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_349_80151CA8 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandslap::ftMh_MS_349_80151CA8(cast::<_, _, 751701>(a0)) }); }
+    // tu/ftmasterhandwalk.rs
+    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_389_80151018 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandwait12::ftMh_MS_389_80151018(cast::<_, _, 751801>(a0)) }); }
+    // tu/ftmasterhandwalk.rs
+    unsafe { melee_chara::tu::ftmasterhandwalk::ext::MPFLOORGETLEFT = Some(|a0, a1| unsafe { melee_world::tu::mplib::mpFloorGetLeft(cast::<_, _, 751901>(a0), cast::<_, _, 751902>(a1)) }); }
+    // tu/ftmewtwo.rs
+    unsafe { melee_chara::tu::ftmewtwo::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 752001>(a0), cast::<_, _, 752002>(a1)) }); }
+    // tu/ftmewtwospecialhi.rs
+    unsafe { melee_chara::tu::ftmewtwospecialhi::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 752101>(a0), cast::<_, _, 752102>(a1), cast::<_, _, 752103>(a2)) }); }
+    // tu/ftmewtwospeciallw.rs
+    unsafe { melee_chara::tu::ftmewtwospeciallw::ext::ITMEWTWODISABLE_LOGIC67_DESTROY = Some(|a0| unsafe { melee_items::tu::itmewtwodisable::itMewtwoDisable_Logic67_Destroy(cast::<_, _, 752201>(a0)) }); }
+    // tu/ftmewtwospeciallw.rs
+    unsafe { melee_chara::tu::ftmewtwospeciallw::ext::ITMEWTWODISABLE_LOGIC67_SPAWNMEWTWODISABLE = Some(|a0, a1, a2| unsafe { cast::<_, _, 752300>(melee_items::tu::itmewtwodisable::itMewtwoDisable_Logic67_SpawnMewtwoDisable(cast::<_, _, 752301>(a0), cast::<_, _, 752302>(a1), cast::<_, _, 752303>(a2))) }); }
+    // tu/ftmewtwospeciallw.rs
+    unsafe { melee_chara::tu::ftmewtwospeciallw::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 752401>(a0), cast::<_, _, 752402>(a1), cast::<_, _, 752403>(a2)) }); }
+    // tu/ftmewtwospecialn.rs
+    unsafe { melee_chara::tu::ftmewtwospecialn::ext::IT_802C5000 = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 752500>(melee_items::tu::itmewtwoshadowball::it_802C5000(cast::<_, _, 752501>(a0), cast::<_, _, 752502>(a1), cast::<_, _, 752503>(a2), cast::<_, _, 752504>(a3), cast::<_, _, 752505>(a4))) }); }
+    // tu/ftmewtwospecialn.rs
+    unsafe { melee_chara::tu::ftmewtwospecialn::ext::IT_802C519C = Some(|a0, a1, a2, a3, a4, a5| unsafe { let _ = melee_items::tu::itmewtwoshadowball::it_802C519C(cast::<_, _, 752601>(a0), cast::<_, _, 752602>(a1), cast::<_, _, 752603>(a2), cast::<_, _, 752604>(a3), cast::<_, _, 752605>(a4), cast::<_, _, 752606>(a5)); }); }
+    // tu/ftmewtwospecialn.rs
+    unsafe { melee_chara::tu::ftmewtwospecialn::ext::IT_802C53F0 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itmewtwoshadowball::it_802C53F0(cast::<_, _, 752701>(a0), cast::<_, _, 752702>(a1), cast::<_, _, 752703>(a2), cast::<_, _, 752704>(a3), cast::<_, _, 752705>(a4)) }); }
+    // tu/ftmewtwospecialn.rs
+    unsafe { melee_chara::tu::ftmewtwospecialn::ext::IT_802C573C = Some(|a0| unsafe { melee_items::tu::itmewtwoshadowball::it_802C573C(cast::<_, _, 752801>(a0)) }); }
+    // tu/ftmewtwospecialn.rs
+    unsafe { melee_chara::tu::ftmewtwospecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 752901>(a0), cast::<_, _, 752902>(a1), cast::<_, _, 752903>(a2)) }); }
+    // tu/ftnana.rs
+    unsafe { melee_chara::tu::ftnana::ext::FTPP_INIT_ONLOADFORNANA = Some(|a0| unsafe { melee_chara::tu::ftpopo::ftPp_Init_OnLoadForNana(cast::<_, _, 753001>(a0)) }); }
+    // tu/ftnanaspecials.rs
+    unsafe { melee_chara::tu::ftnanaspecials::ext::FTPP_SPECIALS_8011F6FC = Some(|a0| unsafe { cast::<_, _, 753100>(melee_chara::tu::ftpopospecials::ftPp_SpecialS_8011F6FC(cast::<_, _, 753101>(a0))) }); }
+    // tu/ftness.rs
+    unsafe { melee_chara::tu::ftness::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 753201>(a0), cast::<_, _, 753202>(a1)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::FTCO_800BFFD0 = Some(|a0, a1, a2| unsafe { let _ = melee_fighter::tu::ftcolanimlist::ftco_800bffd0(cast::<_, _, 753301>(a0), cast::<_, _, 753302>(a1), cast::<_, _, 753303>(a2)); }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802BE598 = Some(|a0| unsafe { melee_items::tu::itnessyoyo::it_802BE598(cast::<_, _, 753401>(a0)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802BE5B8 = Some(|a0| unsafe { melee_items::tu::itnessyoyo::it_802BE5B8(cast::<_, _, 753501>(a0)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802BE5D8 = Some(|a0, a1| unsafe { melee_items::tu::itnessyoyo::it_802BE5D8(cast::<_, _, 753601>(a0), cast::<_, _, 753602>(a1)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802BE958 = Some(|a0| unsafe { melee_items::tu::itnessyoyo::it_802BE958(cast::<_, _, 753701>(a0)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802BE9D8 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 753800>(melee_items::tu::itnessyoyo::it_802BE9D8(cast::<_, _, 753801>(a0), cast::<_, _, 753802>(a1), cast::<_, _, 753803>(a2), cast::<_, _, 753804>(a3))) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802BFE5C = Some(|a0, a1, a2| unsafe { melee_items::tu::itnessyoyo::it_802BFE5C(cast::<_, _, 753901>(a0), cast::<_, _, 753902>(a1), cast::<_, _, 753903>(a2)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802BFEC4 = Some(|a0| unsafe { melee_items::tu::itnessyoyo::it_802BFEC4(cast::<_, _, 754001>(a0)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::IT_802C0010 = Some(|a0, a1| unsafe { melee_items::tu::itnessyoyo::it_802C0010(cast::<_, _, 754101>(a0), cast::<_, _, 754102>(a1)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::LBCOLL_80008434 = Some(|a0| unsafe { melee_runtime::tu::lbcollision::lbColl_80008434(cast::<_, _, 754201>(a0)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::LBCOLL_80008440 = Some(|a0| unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(cast::<_, _, 754301>(a0)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 754401>(a0), cast::<_, _, 754402>(a1), cast::<_, _, 754403>(a2)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::MPCOLL_80041EE4 = Some(|a0| unsafe { melee_world::tu::mpcoll::mpColl_80041EE4(cast::<_, _, 754501>(a0)) }); }
+    // tu/ftnessattackhi4.rs
+    unsafe { melee_chara::tu::ftnessattackhi4::ext::MPCOLL_8004730C = Some(|a0, a1| unsafe { cast::<_, _, 754600>(melee_world::tu::mpcoll::mpColl_8004730C(cast::<_, _, 754601>(a0), cast::<_, _, 754602>(a1))) }); }
+    // tu/ftnessattacks4.rs
+    unsafe { melee_chara::tu::ftnessattacks4::ext::IT_802AD478 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 754700>(melee_items::tu::itnessbat::it_802AD478(cast::<_, _, 754701>(a0), cast::<_, _, 754702>(a1), cast::<_, _, 754703>(a2), cast::<_, _, 754704>(a3))) }); }
+    // tu/ftnessattacks4.rs
+    unsafe { melee_chara::tu::ftnessattacks4::ext::IT_802AD6B8 = Some(|a0| unsafe { melee_items::tu::itnessbat::it_802AD6B8(cast::<_, _, 754801>(a0)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::EFLIB_DESTROYALL = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(cast::<_, _, 754901>(a0)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::FTCLIFFCOMMON_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 755001>(a0)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::FTCO_800969D8 = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_800969D8(cast::<_, _, 755101>(a0), cast::<_, _, 755102>(a1), cast::<_, _, 755103>(a2), cast::<_, _, 755104>(a3), cast::<_, _, 755105>(a4), cast::<_, _, 755106>(a5), cast::<_, _, 755107>(a6)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::FTCO_80097D40 = Some(|a0| unsafe { melee_fighter::tu::ftCo_DownBound::ftCo_80097D40(cast::<_, _, 755201>(a0)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 755301>(a0), cast::<_, _, 755302>(a1), cast::<_, _, 755303>(a2)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::IT_802AB3F0 = Some(|a0, a1, a2| unsafe { melee_items::tu::itnesspkthunderball::it_802AB3F0(cast::<_, _, 755401>(a0), cast::<_, _, 755402>(a1), cast::<_, _, 755403>(a2)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::IT_802AB568 = Some(|a0| unsafe { cast::<_, _, 755500>(melee_items::tu::itnesspkthunderball::it_802AB568(cast::<_, _, 755501>(a0))) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::IT_802AB58C = Some(|a0, a1, a2| unsafe { cast::<_, _, 755600>(melee_items::tu::itnesspkthunderball::it_802AB58C(cast::<_, _, 755601>(a0), cast::<_, _, 755602>(a1), cast::<_, _, 755603>(a2))) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::IT_802AB9C0 = Some(|a0| unsafe { melee_items::tu::itnesspkthunderball::it_802AB9C0(cast::<_, _, 755701>(a0)) }); }
+    // tu/ftnessspecialhi.rs
+    unsafe { melee_chara::tu::ftnessspecialhi::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 755801>(a0), cast::<_, _, 755802>(a1), cast::<_, _, 755803>(a2)) }); }
+    // tu/ftnessspeciallw.rs
+    unsafe { melee_chara::tu::ftnessspeciallw::ext::FTPARTGETROTZ = Some(|a0, a1| unsafe { cast::<_, _, 755900>(melee_fighter::tu::ftparts::ftPartGetRotZ(cast::<_, _, 755901>(a0), cast::<_, _, 755902>(a1))) }); }
+    // tu/ftnessspeciallw.rs
+    unsafe { melee_chara::tu::ftnessspeciallw::ext::FTPARTSETROTY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 756001>(a0), cast::<_, _, 756002>(a1), cast::<_, _, 756003>(a2)) }); }
+    // tu/ftnessspeciallw.rs
+    unsafe { melee_chara::tu::ftnessspeciallw::ext::PLAYER_SETHPBYINDEX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::player::Player_SetHPByIndex(cast::<_, _, 756101>(a0), cast::<_, _, 756102>(a1), cast::<_, _, 756103>(a2)) }); }
+    // tu/ftnessspeciallw.rs
+    unsafe { melee_chara::tu::ftnessspeciallw::ext::PL_80040B8C = Some(|a0, a1, a2| unsafe { melee_fighter::tu::plbonuslib::pl_80040B8C(cast::<_, _, 756201>(a0), cast::<_, _, 756202>(a1), cast::<_, _, 756203>(a2)) }); }
+    // tu/ftnessspecialn.rs
+    unsafe { melee_chara::tu::ftnessspecialn::ext::FTPARTSETROTX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 756301>(a0), cast::<_, _, 756302>(a1), cast::<_, _, 756303>(a2)) }); }
+    // tu/ftnessspecialn.rs
+    unsafe { melee_chara::tu::ftnessspecialn::ext::IT_802AA7E4 = Some(|a0| unsafe { cast::<_, _, 756400>(melee_items::tu::itnesspkflash::it_802AA7E4(cast::<_, _, 756401>(a0))) }); }
+    // tu/ftnessspecialn.rs
+    unsafe { melee_chara::tu::ftnessspecialn::ext::IT_802AA7F0 = Some(|a0| unsafe { cast::<_, _, 756500>(melee_items::tu::itnesspkflash::it_802AA7F0(cast::<_, _, 756501>(a0))) }); }
+    // tu/ftnessspecialn.rs
+    unsafe { melee_chara::tu::ftnessspecialn::ext::IT_802AA8C0 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 756600>(melee_items::tu::itnesspkflash::it_802AA8C0(cast::<_, _, 756601>(a0), cast::<_, _, 756602>(a1), cast::<_, _, 756603>(a2), cast::<_, _, 756604>(a3))) }); }
+    // tu/ftnessspecialn.rs
+    unsafe { melee_chara::tu::ftnessspecialn::ext::IT_802AAA50 = Some(|a0| unsafe { melee_items::tu::itnesspkflash::it_802AAA50(cast::<_, _, 756701>(a0)) }); }
+    // tu/ftnessspecialn.rs
+    unsafe { melee_chara::tu::ftnessspecialn::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 756801>(a0), cast::<_, _, 756802>(a1), cast::<_, _, 756803>(a2)) }); }
+    // tu/ftnessspecials.rs
+    unsafe { melee_chara::tu::ftnessspecials::ext::IT_802AA054 = Some(|a0, a1, a2, a3, a4| unsafe { melee_items::tu::itnesspkfire::it_802AA054(cast::<_, _, 756901>(a0), cast::<_, _, 756902>(a1), cast::<_, _, 756903>(a2), cast::<_, _, 756904>(a3), cast::<_, _, 756905>(a4)) }); }
+    // tu/ftnessspecials.rs
+    unsafe { melee_chara::tu::ftnessspecials::ext::LB_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 757001>(a0), cast::<_, _, 757002>(a1), cast::<_, _, 757003>(a2)) }); }
+    // tu/ftpeach.rs
+    unsafe { melee_chara::tu::ftpeach::ext::FTDATA_80085E50 = Some(|a0, a1| unsafe { cast::<_, _, 757100>(melee_fighter::tu::ftdata::ftData_80085E50(cast::<_, _, 757101>(a0), cast::<_, _, 757102>(a1))) }); }
+    // tu/ftpeach.rs
+    unsafe { melee_chara::tu::ftpeach::ext::FTPE_SPECIALN_ONDEATH2 = Some(|a0| unsafe { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_OnDeath2(cast::<_, _, 757201>(a0)) }); }
+    // tu/ftpeach.rs
+    unsafe { melee_chara::tu::ftpeach::ext::IT_8026B3F8 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B3F8(cast::<_, _, 757301>(a0), cast::<_, _, 757302>(a1)) }); }
+    // tu/ftpeachattacks4.rs
+    unsafe { melee_chara::tu::ftpeachattacks4::ext::HSD_RANDI = Some(|a0| unsafe { cast::<_, _, 757400>(melee_runtime::tu::random::global::HSD_Randi(cast::<_, _, 757401>(a0))) }); }
+    // tu/ftpeachfloat.rs
+    unsafe { melee_chara::tu::ftpeachfloat::ext::FTCO_SPECIALAIR_CHECKINPUT = Some(|a0| unsafe { cast::<_, _, 757500>(melee_fighter::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(cast::<_, _, 757501>(a0))) }); }
+    // tu/ftpeachfloat.rs
+    unsafe { melee_chara::tu::ftpeachfloat::ext::FT_80082B1C = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80082b1c(cast::<_, _, 757601>(a0)) }); }
+    // tu/ftpeachfloatattack.rs
+    unsafe { melee_chara::tu::ftpeachfloatattack::ext::FTCO_80095328 = Some(|a0, a1| unsafe { cast::<_, _, 757700>(melee_fighter::tu::ftCo_ItemThrow::ftCo_80095328(cast::<_, _, 757701>(a0), cast::<_, _, 757702>(a1))) }); }
+    // tu/ftpeachfloatattack.rs
+    unsafe { melee_chara::tu::ftpeachfloatattack::ext::FTCO_800CB870 = Some(|a0| unsafe { cast::<_, _, 757800>(melee_fighter::tu::ftCo_JumpAerial::ftCo_800CB870(cast::<_, _, 757801>(a0))) }); }
+    // tu/ftpeachfloatattack.rs
+    unsafe { melee_chara::tu::ftpeachfloatattack::ext::FTCO_800CDDA0 = Some(|a0| unsafe { melee_fighter::tu::ft_0cdd::ftco_800cdda0(cast::<_, _, 757901>(a0)) }); }
+    // tu/ftpeachfloatattack.rs
+    unsafe { melee_chara::tu::ftpeachfloatattack::ext::FTCO_ATTACKAIR_ENTERFROMMSID = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(cast::<_, _, 758001>(a0), cast::<_, _, 758002>(a1)) }); }
+    // tu/ftpeachfloatattack.rs
+    unsafe { melee_chara::tu::ftpeachfloatattack::ext::IT_8026B30C = Some(|a0| unsafe { cast::<_, _, 758100>(melee_items::tu::it_26B1::it_8026B30C(cast::<_, _, 758101>(a0))) }); }
+    // tu/ftpeachfloatfall.rs
+    unsafe { melee_chara::tu::ftpeachfloatfall::ext::FTCO_FALLAERIAL_ENTER = Some(|a0| unsafe { melee_fighter::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(cast::<_, _, 758201>(a0)) }); }
 }
 

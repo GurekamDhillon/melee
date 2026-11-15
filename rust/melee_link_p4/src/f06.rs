@@ -6,304 +6,304 @@ use crate::cast;
 #[inline(never)]
 pub(super) fn c069() {
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_JObjSetFlagsAll = Some(|a0, a1| unsafe { melee_items::tu::jobj::HSD_JObjSetFlagsAll(cast::<_, _, 999301>(a0), cast::<_, _, 999302>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_JObjSetFlagsAll = Some(|a0, a1| unsafe { melee_items::tu::jobj::HSD_JObjSetFlagsAll(cast::<_, _, 1000101>(a0), cast::<_, _, 1000102>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_JObjSetMtxDirty = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirty(cast::<_, _, 999401>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_JObjSetMtxDirty = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirty(cast::<_, _, 1000201>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 999501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1000301>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_Randf = Some(|| unsafe { cast::<_, _, 999600>(melee_runtime::tu::random::global::HSD_Randf()) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::HSD_Randf = Some(|| unsafe { cast::<_, _, 1000400>(melee_runtime::tu::random::global::HSD_Randf()) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 999700>(melee_items::tu::item::Item_80268B18(cast::<_, _, 999701>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1000500>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1000501>(a0))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_80268D34 = Some(|a0, a1| unsafe { melee_items::tu::item::Item_80268D34(cast::<_, _, 999801>(a0), cast::<_, _, 999802>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_80268D34 = Some(|a0, a1| unsafe { melee_items::tu::item::Item_80268D34(cast::<_, _, 1000601>(a0), cast::<_, _, 1000602>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 999901>(a0), cast::<_, _, 999902>(a1), cast::<_, _, 999903>(a2)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1000701>(a0), cast::<_, _, 1000702>(a1), cast::<_, _, 1000703>(a2)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1000001>(a0), cast::<_, _, 1000002>(a1), cast::<_, _, 1000003>(a2)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1000801>(a0), cast::<_, _, 1000802>(a1), cast::<_, _, 1000803>(a2)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::ftLk_AttackAir_SetupParts = Some(|a0| unsafe { melee_chara::tu::ftlinkattackair::ftLk_AttackAir_SetupParts(cast::<_, _, 1000101>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::ftLk_AttackAir_SetupParts = Some(|a0| unsafe { melee_chara::tu::ftlinkattackair::ftLk_AttackAir_SetupParts(cast::<_, _, 1000901>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1000200>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1000201>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1001000>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1001001>(a0))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::itColl_BounceOffVictim = Some(|a0| unsafe { melee_items::tu::it_2725::itColl_BounceOffVictim(cast::<_, _, 1000301>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::itColl_BounceOffVictim = Some(|a0| unsafe { melee_items::tu::it_2725::itColl_BounceOffVictim(cast::<_, _, 1001101>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 1000401>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 1001201>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1000500>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1000501>(a0), cast::<_, _, 1000502>(a1))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1001300>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1001301>(a0), cast::<_, _, 1001302>(a1))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BB68 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BB68(cast::<_, _, 1000601>(a0), cast::<_, _, 1000602>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BB68 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BB68(cast::<_, _, 1001401>(a0), cast::<_, _, 1001402>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BCF4 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BCF4(cast::<_, _, 1000701>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BCF4 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BCF4(cast::<_, _, 1001501>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BD0C = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BD0C(cast::<_, _, 1000801>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BD0C = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BD0C(cast::<_, _, 1001601>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BD24 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BD24(cast::<_, _, 1000901>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026BD24 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BD24(cast::<_, _, 1001701>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026D62C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026D62C(cast::<_, _, 1001001>(a0), cast::<_, _, 1001002>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026D62C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026D62C(cast::<_, _, 1001801>(a0), cast::<_, _, 1001802>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026DAA8 = Some(|a0| unsafe { cast::<_, _, 1001100>(melee_items::tu::itgroundcoll::it_8026DAA8(cast::<_, _, 1001101>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026DAA8 = Some(|a0| unsafe { cast::<_, _, 1001900>(melee_items::tu::itgroundcoll::it_8026DAA8(cast::<_, _, 1001901>(a0))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026E15C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026E15C(cast::<_, _, 1001201>(a0), cast::<_, _, 1001202>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026E15C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026E15C(cast::<_, _, 1002001>(a0), cast::<_, _, 1002002>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026E8C4 = Some(|a0, a1, a2| unsafe { melee_items::tu::itgroundcoll::it_8026E8C4(cast::<_, _, 1001301>(a0), cast::<_, _, 1001302>(a1), cast::<_, _, 1001303>(a2)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8026E8C4 = Some(|a0, a1, a2| unsafe { melee_items::tu::itgroundcoll::it_8026E8C4(cast::<_, _, 1002101>(a0), cast::<_, _, 1002102>(a1), cast::<_, _, 1002103>(a2)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272860 = Some(|a0, a1, a2| unsafe { melee_items::tu::it_2725::it_80272860(cast::<_, _, 1001401>(a0), cast::<_, _, 1001402>(a1), cast::<_, _, 1001403>(a2)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272860 = Some(|a0, a1, a2| unsafe { melee_items::tu::it_2725::it_80272860(cast::<_, _, 1002201>(a0), cast::<_, _, 1002202>(a1), cast::<_, _, 1002203>(a2)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272980 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272980(cast::<_, _, 1001501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272980 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272980(cast::<_, _, 1002301>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272A60 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A60(cast::<_, _, 1001601>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272A60 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A60(cast::<_, _, 1002401>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272C6C = Some(|a0| unsafe { cast::<_, _, 1001700>(melee_items::tu::it_2725::it_80272C6C(cast::<_, _, 1001701>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80272C6C = Some(|a0| unsafe { cast::<_, _, 1002500>(melee_items::tu::it_2725::it_80272C6C(cast::<_, _, 1002501>(a0))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80273030 = Some(|a0| unsafe { cast::<_, _, 1001800>(melee_items::tu::it_2725::it_80273030(cast::<_, _, 1001801>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80273030 = Some(|a0| unsafe { cast::<_, _, 1002600>(melee_items::tu::it_2725::it_80273030(cast::<_, _, 1002601>(a0))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80273454 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80273454(cast::<_, _, 1001901>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80273454 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80273454(cast::<_, _, 1002701>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8027429C = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_8027429C(cast::<_, _, 1002001>(a0), cast::<_, _, 1002002>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8027429C = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_8027429C(cast::<_, _, 1002801>(a0), cast::<_, _, 1002802>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80274658 = Some(|a0, a1| unsafe { cast::<_, _, 1002100>(melee_items::tu::it_2725::it_80274658(cast::<_, _, 1002101>(a0), cast::<_, _, 1002102>(a1))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80274658 = Some(|a0, a1| unsafe { cast::<_, _, 1002900>(melee_items::tu::it_2725::it_80274658(cast::<_, _, 1002901>(a0), cast::<_, _, 1002902>(a1))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275158 = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_80275158(cast::<_, _, 1002201>(a0), cast::<_, _, 1002202>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275158 = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_80275158(cast::<_, _, 1003001>(a0), cast::<_, _, 1003002>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8027518C = Some(|a0| unsafe { melee_items::tu::it_2725::it_8027518C(cast::<_, _, 1002301>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_8027518C = Some(|a0| unsafe { melee_items::tu::it_2725::it_8027518C(cast::<_, _, 1003101>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802751D8 = Some(|a0| unsafe { cast::<_, _, 1002400>(melee_items::tu::it_2725::it_802751D8(cast::<_, _, 1002401>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802751D8 = Some(|a0| unsafe { cast::<_, _, 1003200>(melee_items::tu::it_2725::it_802751D8(cast::<_, _, 1003201>(a0))) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275414 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_80275414(cast::<_, _, 1002501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275414 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_80275414(cast::<_, _, 1003301>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275444 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_80275444(cast::<_, _, 1002601>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275444 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_80275444(cast::<_, _, 1003401>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802754A4 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_802754A4(cast::<_, _, 1002701>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802754A4 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_802754A4(cast::<_, _, 1003501>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802756D0 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_802756D0(cast::<_, _, 1002801>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802756D0 = Some(|a0| unsafe { melee_items::tu::ithitbox::it_802756D0(cast::<_, _, 1003601>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275D5C = Some(|a0, a1| unsafe { melee_items::tu::itmaplib::it_80275D5C(cast::<_, _, 1002901>(a0), cast::<_, _, 1002902>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_80275D5C = Some(|a0, a1| unsafe { melee_items::tu::itmaplib::it_80275D5C(cast::<_, _, 1003701>(a0), cast::<_, _, 1003702>(a1)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802762B0 = Some(|a0| unsafe { melee_items::tu::itmaplib::it_802762B0(cast::<_, _, 1003001>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::it_802762B0 = Some(|a0| unsafe { melee_items::tu::itmaplib::it_802762B0(cast::<_, _, 1003801>(a0)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::lb_800119DC = Some(|a0, a1, a2, a3, a4| unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(cast::<_, _, 1003101>(a0), cast::<_, _, 1003102>(a1), cast::<_, _, 1003103>(a2), cast::<_, _, 1003104>(a3), cast::<_, _, 1003105>(a4)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::lb_800119DC = Some(|a0, a1, a2, a3, a4| unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(cast::<_, _, 1003901>(a0), cast::<_, _, 1003902>(a1), cast::<_, _, 1003903>(a2), cast::<_, _, 1003904>(a3), cast::<_, _, 1003905>(a4)) }); }
     // tu/itlinkbomb.rs
-    unsafe { melee_items::tu::itlinkbomb::ext::hook::mpCollSetFacingDir = Some(|a0, a1| unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(cast::<_, _, 1003201>(a0), cast::<_, _, 1003202>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbomb::ext::hook::mpCollSetFacingDir = Some(|a0, a1| unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(cast::<_, _, 1004001>(a0), cast::<_, _, 1004002>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_GObj_80390EB8 = Some(|a0| unsafe { cast::<_, _, 1003300>(melee_runtime::tu::gobj::HSD_GObj_80390EB8(cast::<_, _, 1003301>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_GObj_80390EB8 = Some(|a0| unsafe { cast::<_, _, 1004100>(melee_runtime::tu::gobj::HSD_GObj_80390EB8(cast::<_, _, 1004101>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjAddAnimAll = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnimAll(cast::<_, _, 1003401>(a0), cast::<_, _, 1003402>(a1), cast::<_, _, 1003403>(a2), cast::<_, _, 1003404>(a3)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjAddAnimAll = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnimAll(cast::<_, _, 1004201>(a0), cast::<_, _, 1004202>(a1), cast::<_, _, 1004203>(a2), cast::<_, _, 1004204>(a3)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjAnimAll = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(cast::<_, _, 1003501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjAnimAll = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(cast::<_, _, 1004301>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjDispAll = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::jobj::HSD_JObjDispAll(cast::<_, _, 1003601>(a0), cast::<_, _, 1003602>(a1), cast::<_, _, 1003603>(a2), cast::<_, _, 1003604>(a3)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjDispAll = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::jobj::HSD_JObjDispAll(cast::<_, _, 1004401>(a0), cast::<_, _, 1004402>(a1), cast::<_, _, 1004403>(a2), cast::<_, _, 1004404>(a3)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjLoadJoint = Some(|a0| unsafe { cast::<_, _, 1003700>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 1003701>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjLoadJoint = Some(|a0| unsafe { cast::<_, _, 1004500>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 1004501>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjRemoveAll = Some(|a0| unsafe { melee_chara::adapt::HSD_JObjRemoveAll(cast::<_, _, 1003801>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjRemoveAll = Some(|a0| unsafe { melee_chara::adapt::HSD_JObjRemoveAll(cast::<_, _, 1004601>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjRemoveAnimAll = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjRemoveAnimAll(cast::<_, _, 1003901>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjRemoveAnimAll = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjRemoveAnimAll(cast::<_, _, 1004701>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjReqAnimAll = Some(|a0, a1| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(cast::<_, _, 1004001>(a0), cast::<_, _, 1004002>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjReqAnimAll = Some(|a0, a1| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(cast::<_, _, 1004801>(a0), cast::<_, _, 1004802>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1004101>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1004901>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_MtxGetRotation = Some(|a0, a1| unsafe { melee_runtime::tu::mtx::HSD_MtxGetRotation(cast::<_, _, 1004201>(a0), cast::<_, _, 1004202>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::HSD_MtxGetRotation = Some(|a0, a1| unsafe { melee_runtime::tu::mtx::HSD_MtxGetRotation(cast::<_, _, 1005001>(a0), cast::<_, _, 1005002>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1004300>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1004301>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1005100>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1005101>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1004401>(a0), cast::<_, _, 1004402>(a1), cast::<_, _, 1004403>(a2)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1005201>(a0), cast::<_, _, 1005202>(a1), cast::<_, _, 1005203>(a2)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1004501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1005301>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1004601>(a0), cast::<_, _, 1004602>(a1), cast::<_, _, 1004603>(a2)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1005401>(a0), cast::<_, _, 1005402>(a1), cast::<_, _, 1005403>(a2)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_8026AF0C = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AF0C(cast::<_, _, 1004701>(a0), cast::<_, _, 1004702>(a1), cast::<_, _, 1004703>(a2), cast::<_, _, 1004704>(a3)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::Item_8026AF0C = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AF0C(cast::<_, _, 1005501>(a0), cast::<_, _, 1005502>(a1), cast::<_, _, 1005503>(a2), cast::<_, _, 1005504>(a3)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::atan2f = Some(|a0, a1| unsafe { cast::<_, _, 1004800>(melee_runtime::tu::lbtrigf::atan2f(cast::<_, _, 1004801>(a0), cast::<_, _, 1004802>(a1))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::atan2f = Some(|a0, a1| unsafe { cast::<_, _, 1005600>(melee_runtime::tu::lbtrigf::atan2f(cast::<_, _, 1005601>(a0), cast::<_, _, 1005602>(a1))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1004900>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1004901>(a0), cast::<_, _, 1004902>(a1))) }); }
-    // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1005001>(a0), cast::<_, _, 1005002>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1005701>(a0), cast::<_, _, 1005702>(a1)) }); }
     // tu/itlinkboomerang.rs: link_alias.tsv
     unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SepcialS_Get2219b5 = Some(|a0| unsafe { cast::<_, _, 1005100>(melee_chara::tu::ftlinkspecials::ftLk_SepcialS_Get2219b5(cast::<_, _, 1005101>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1005800>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1005801>(a0), cast::<_, _, 1005802>(a1))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialHi_GetFv4 = Some(|a0| unsafe { cast::<_, _, 1005200>(melee_chara::tu::ftlinkspecialhi::ftLk_SpecialHi_GetFv4(cast::<_, _, 1005201>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SepcialS_Get2219b5 = Some(|a0| unsafe { cast::<_, _, 1005900>(melee_chara::tu::ftlinkspecials::ftLk_SepcialS_Get2219b5(cast::<_, _, 1005901>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialHi_GetPosWithAdjustedY = Some(|a0, a1| unsafe { melee_chara::tu::ftlinkspecialhi::ftLk_SpecialHi_GetPosWithAdjustedY(cast::<_, _, 1005301>(a0), cast::<_, _, 1005302>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialHi_GetFv4 = Some(|a0| unsafe { cast::<_, _, 1006000>(melee_chara::tu::ftlinkspecialhi::ftLk_SpecialHi_GetFv4(cast::<_, _, 1006001>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialHi_ProcessPartLThumbNb = Some(|a0| unsafe { cast::<_, _, 1005400>(melee_chara::tu::ftlinkspecialhi::ftLk_SpecialHi_ProcessPartLThumbNb(cast::<_, _, 1005401>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialHi_GetPosWithAdjustedY = Some(|a0, a1| unsafe { melee_chara::tu::ftlinkspecialhi::ftLk_SpecialHi_GetPosWithAdjustedY(cast::<_, _, 1006101>(a0), cast::<_, _, 1006102>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS2_Enter = Some(|a0| unsafe { melee_chara::tu::ftlinkspecials::ftLk_SpecialS2_Enter(cast::<_, _, 1005501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialHi_ProcessPartLThumbNb = Some(|a0| unsafe { cast::<_, _, 1006200>(melee_chara::tu::ftlinkspecialhi::ftLk_SpecialHi_ProcessPartLThumbNb(cast::<_, _, 1006201>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS_Is2071b0_1to13 = Some(|a0| unsafe { cast::<_, _, 1005600>(melee_chara::tu::ftlinkspecials::ftLk_SpecialS_Is2071b0_1to13(cast::<_, _, 1005601>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS2_Enter = Some(|a0| unsafe { melee_chara::tu::ftlinkspecials::ftLk_SpecialS2_Enter(cast::<_, _, 1006301>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS_Is2071b0_5to13 = Some(|a0| unsafe { cast::<_, _, 1005700>(melee_chara::tu::ftlinkspecials::ftLk_SpecialS_Is2071b0_5to13(cast::<_, _, 1005701>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS_Is2071b0_1to13 = Some(|a0| unsafe { cast::<_, _, 1006400>(melee_chara::tu::ftlinkspecials::ftLk_SpecialS_Is2071b0_1to13(cast::<_, _, 1006401>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS_RemoveBoomerang0 = Some(|a0| unsafe { cast::<_, _, 1005800>(melee_chara::tu::ftlinkspecials::ftLk_SpecialS_RemoveBoomerang0(cast::<_, _, 1005801>(a0))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS_Is2071b0_5to13 = Some(|a0| unsafe { cast::<_, _, 1006500>(melee_chara::tu::ftlinkspecials::ftLk_SpecialS_Is2071b0_5to13(cast::<_, _, 1006501>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 1005901>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialS_RemoveBoomerang0 = Some(|a0| unsafe { cast::<_, _, 1006600>(melee_chara::tu::ftlinkspecials::ftLk_SpecialS_RemoveBoomerang0(cast::<_, _, 1006601>(a0))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1006000>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1006001>(a0), cast::<_, _, 1006002>(a1))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 1006701>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026BB68 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BB68(cast::<_, _, 1006101>(a0), cast::<_, _, 1006102>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1006800>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1006801>(a0), cast::<_, _, 1006802>(a1))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026E0F4 = Some(|a0| unsafe { melee_items::tu::itgroundcoll::it_8026E0F4(cast::<_, _, 1006201>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026BB68 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BB68(cast::<_, _, 1006901>(a0), cast::<_, _, 1006902>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026EECC = Some(|a0, a1| unsafe { melee_items::tu::itdraw::it_8026EECC(cast::<_, _, 1006301>(a0), cast::<_, _, 1006302>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026E0F4 = Some(|a0| unsafe { melee_items::tu::itgroundcoll::it_8026E0F4(cast::<_, _, 1007001>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_80272A18 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A18(cast::<_, _, 1006401>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8026EECC = Some(|a0, a1| unsafe { melee_items::tu::itdraw::it_8026EECC(cast::<_, _, 1007101>(a0), cast::<_, _, 1007102>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_80272A3C = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A3C(cast::<_, _, 1006501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_80272A18 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A18(cast::<_, _, 1007201>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8027429C = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_8027429C(cast::<_, _, 1006601>(a0), cast::<_, _, 1006602>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_80272A3C = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A3C(cast::<_, _, 1007301>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_80275158 = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_80275158(cast::<_, _, 1006701>(a0), cast::<_, _, 1006702>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_8027429C = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_8027429C(cast::<_, _, 1007401>(a0), cast::<_, _, 1007402>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_802762BC = Some(|a0| unsafe { melee_items::tu::itmaplib::it_802762BC(cast::<_, _, 1006801>(a0)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_80275158 = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_80275158(cast::<_, _, 1007501>(a0), cast::<_, _, 1007502>(a1)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::lbVector_CosAngle = Some(|a0, a1| unsafe { cast::<_, _, 1006900>(melee_runtime::tu::lbvector::lbVector_CosAngle(cast::<_, _, 1006901>(a0), cast::<_, _, 1006902>(a1))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::it_802762BC = Some(|a0| unsafe { melee_items::tu::itmaplib::it_802762BC(cast::<_, _, 1007601>(a0)) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::lbVector_Mirror = Some(|a0, a1| unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(cast::<_, _, 1007001>(a0), cast::<_, _, 1007002>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::lbVector_CosAngle = Some(|a0, a1| unsafe { cast::<_, _, 1007700>(melee_runtime::tu::lbvector::lbVector_CosAngle(cast::<_, _, 1007701>(a0), cast::<_, _, 1007702>(a1))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::lb_8000BA0C = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000BA0C(cast::<_, _, 1007101>(a0), cast::<_, _, 1007102>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::lbVector_Mirror = Some(|a0, a1| unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(cast::<_, _, 1007801>(a0), cast::<_, _, 1007802>(a1)) }); }
+    // tu/itlinkboomerang.rs
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::lb_8000BA0C = Some(|a0, a1| unsafe { melee_runtime::tu::lb_00B0::lb_8000BA0C(cast::<_, _, 1007901>(a0), cast::<_, _, 1007902>(a1)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1007201>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1008001>(a0)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1007300>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1007301>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1008100>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1008101>(a0))) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_80268DD4 = Some(|a0, a1| unsafe { melee_items::tu::item::Item_80268DD4(cast::<_, _, 1007401>(a0), cast::<_, _, 1007402>(a1)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_80268DD4 = Some(|a0, a1| unsafe { melee_items::tu::item::Item_80268DD4(cast::<_, _, 1008201>(a0), cast::<_, _, 1008202>(a1)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1007501>(a0), cast::<_, _, 1007502>(a1), cast::<_, _, 1007503>(a2)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1008301>(a0), cast::<_, _, 1008302>(a1), cast::<_, _, 1008303>(a2)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_802694CC = Some(|a0| unsafe { melee_items::tu::item::Item_802694CC(cast::<_, _, 1007601>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_802694CC = Some(|a0| unsafe { melee_items::tu::item::Item_802694CC(cast::<_, _, 1008401>(a0)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1007701>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1008501>(a0)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1007801>(a0), cast::<_, _, 1007802>(a1), cast::<_, _, 1007803>(a2)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1008601>(a0), cast::<_, _, 1008602>(a1), cast::<_, _, 1008603>(a2)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB394 = Some(|a0| unsafe { cast::<_, _, 1007900>(melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB394(cast::<_, _, 1007901>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB394 = Some(|a0| unsafe { cast::<_, _, 1008700>(melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB394(cast::<_, _, 1008701>(a0))) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB444 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB444(cast::<_, _, 1008001>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB444 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB444(cast::<_, _, 1008801>(a0)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB470 = Some(|a0| unsafe { cast::<_, _, 1008100>(melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB470(cast::<_, _, 1008101>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB470 = Some(|a0| unsafe { cast::<_, _, 1008900>(melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB470(cast::<_, _, 1008901>(a0))) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 1008200>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 1008201>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 1009000>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 1009001>(a0))) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_GetIndex = Some(|a0| unsafe { cast::<_, _, 1008300>(melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_GetIndex(cast::<_, _, 1008301>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_GetIndex = Some(|a0| unsafe { cast::<_, _, 1009100>(melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_GetIndex(cast::<_, _, 1009101>(a0))) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_IsActiveAnd2071b6 = Some(|a0| unsafe { cast::<_, _, 1008400>(melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_IsActiveAnd2071b6(cast::<_, _, 1008401>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_IsActiveAnd2071b6 = Some(|a0| unsafe { cast::<_, _, 1009200>(melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_IsActiveAnd2071b6(cast::<_, _, 1009201>(a0))) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_UnsetFv14 = Some(|a0| unsafe { melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_UnsetFv14(cast::<_, _, 1008501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_UnsetFv14 = Some(|a0| unsafe { melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_UnsetFv14(cast::<_, _, 1009301>(a0)) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1008600>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1008601>(a0), cast::<_, _, 1008602>(a1))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1009400>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1009401>(a0), cast::<_, _, 1009402>(a1))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::GObj_Create = Some(|a0, a1, a2| unsafe { cast::<_, _, 1008700>(melee_runtime::tu::gobj_native::GObj_Create(cast::<_, _, 1008701>(a0), cast::<_, _, 1008702>(a1), cast::<_, _, 1008703>(a2))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::GObj_Create = Some(|a0, a1, a2| unsafe { cast::<_, _, 1009500>(melee_runtime::tu::gobjplink::GObj_Create(cast::<_, _, 1009501>(a0), cast::<_, _, 1009502>(a1), cast::<_, _, 1009503>(a2))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::GObj_InitUserData = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(cast::<_, _, 1008801>(a0), cast::<_, _, 1008802>(a1), cast::<_, _, 1008803>(a2), cast::<_, _, 1008804>(a3)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::GObj_InitUserData = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::gobjuserdata::GObj_InitUserData(cast::<_, _, 1009601>(a0), cast::<_, _, 1009602>(a1), cast::<_, _, 1009603>(a2), cast::<_, _, 1009604>(a3)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(cast::<_, _, 1008901>(a0), cast::<_, _, 1008902>(a1), cast::<_, _, 1008903>(a2), cast::<_, _, 1008904>(a3)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::gobjgxlink::GObj_SetupGXLink(cast::<_, _, 1009701>(a0), cast::<_, _, 1009702>(a1), cast::<_, _, 1009703>(a2), cast::<_, _, 1009704>(a3)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_GObjFree = Some(|a0| unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(cast::<_, _, 1009001>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_GObjFree = Some(|a0| unsafe { melee_runtime::tu::gobjplink::HSD_GObjFree(cast::<_, _, 1009801>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_GObjObject_80390A70 = Some(|a0, a1, a2| unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(cast::<_, _, 1009101>(a0), cast::<_, _, 1009102>(a1), cast::<_, _, 1009103>(a2)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_GObjObject_80390A70 = Some(|a0, a1, a2| unsafe { melee_runtime::tu::gobjobject::HSD_GObjObject_80390A70(cast::<_, _, 1009901>(a0), cast::<_, _, 1009902>(a1), cast::<_, _, 1009903>(a2)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_GObj_JObjCallback = Some(|a0, a1| unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(cast::<_, _, 1009201>(a0), cast::<_, _, 1009202>(a1)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_GObj_JObjCallback = Some(|a0, a1| unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(cast::<_, _, 1010001>(a0), cast::<_, _, 1010002>(a1)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_JObjLoadJoint = Some(|a0| unsafe { cast::<_, _, 1009300>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 1009301>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_JObjLoadJoint = Some(|a0| unsafe { cast::<_, _, 1010100>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 1010101>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1009401>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1010201>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_JObjSetupMatrixSub = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetupMatrixSub(cast::<_, _, 1009501>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_JObjSetupMatrixSub = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetupMatrixSub(cast::<_, _, 1010301>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_ObjAlloc = Some(|a0| unsafe { cast::<_, _, 1009600>(melee_runtime::tu::objalloc::HSD_ObjAlloc(cast::<_, _, 1009601>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_ObjAlloc = Some(|a0| unsafe { cast::<_, _, 1010400>(melee_runtime::tu::objalloc::HSD_ObjAlloc(cast::<_, _, 1010401>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_ObjFree = Some(|a0, a1| unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(cast::<_, _, 1009701>(a0), cast::<_, _, 1009702>(a1)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::HSD_ObjFree = Some(|a0, a1| unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(cast::<_, _, 1010501>(a0), cast::<_, _, 1010502>(a1)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1009800>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1009801>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1010600>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1010601>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1009901>(a0), cast::<_, _, 1009902>(a1), cast::<_, _, 1009903>(a2)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1010701>(a0), cast::<_, _, 1010702>(a1), cast::<_, _, 1010703>(a2)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1010001>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1010801>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1010101>(a0), cast::<_, _, 1010102>(a1), cast::<_, _, 1010103>(a2)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::Item_8026AB54 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026AB54(cast::<_, _, 1010901>(a0), cast::<_, _, 1010902>(a1), cast::<_, _, 1010903>(a2)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSMTXConcat = Some(|a0, a1, a2| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXConcat(cast::<_, _, 1010201>(a0), cast::<_, _, 1010202>(a1), cast::<_, _, 1010203>(a2)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSMTXConcat = Some(|a0, a1, a2| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXConcat(cast::<_, _, 1011001>(a0), cast::<_, _, 1011002>(a1), cast::<_, _, 1011003>(a2)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSMTXCopy = Some(|a0, a1| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXCopy(cast::<_, _, 1010301>(a0), cast::<_, _, 1010302>(a1)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSMTXCopy = Some(|a0, a1| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXCopy(cast::<_, _, 1011101>(a0), cast::<_, _, 1011102>(a1)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSMTXIdentity = Some(|a0| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(cast::<_, _, 1010401>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSMTXIdentity = Some(|a0| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(cast::<_, _, 1011201>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSVECCrossProduct = Some(|a0, a1, a2| unsafe { melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(cast::<_, _, 1010501>(a0), cast::<_, _, 1010502>(a1), cast::<_, _, 1010503>(a2)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::PSVECCrossProduct = Some(|a0, a1, a2| unsafe { melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(cast::<_, _, 1011301>(a0), cast::<_, _, 1011302>(a1), cast::<_, _, 1011303>(a2)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCliffCommon_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 1010601>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCliffCommon_80081370 = Some(|a0| unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(cast::<_, _, 1011401>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_80090780 = Some(|a0| unsafe { melee_fighter::tu::ftCo_DamageFall::ftCo_80090780(cast::<_, _, 1010701>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_80090780 = Some(|a0| unsafe { melee_fighter::tu::ftCo_DamageFall::ftCo_80090780(cast::<_, _, 1011501>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_8009B390 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CliffJump::ftCo_8009B390(cast::<_, _, 1010801>(a0), cast::<_, _, 1010802>(a1)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_8009B390 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_CliffJump::ftCo_8009B390(cast::<_, _, 1011601>(a0), cast::<_, _, 1011602>(a1)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_800C3A14 = Some(|a0| unsafe { cast::<_, _, 1010900>(melee_fighter::tu::ftco_aircatch::ftco_800c3a14(cast::<_, _, 1010901>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_800C3A14 = Some(|a0| unsafe { cast::<_, _, 1011700>(melee_fighter::tu::ftco_aircatch::ftco_800c3a14(cast::<_, _, 1011701>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_800C3CC0 = Some(|a0| unsafe { melee_fighter::tu::ftco_aircatch::ftco_800c3cc0(cast::<_, _, 1011001>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCo_800C3CC0 = Some(|a0| unsafe { melee_fighter::tu::ftco_aircatch::ftco_800c3cc0(cast::<_, _, 1011801>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftColl_8007AFF8 = Some(|a0| unsafe { melee_fighter::tu::ftcoll::ftcoll_8007aff8(cast::<_, _, 1011101>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftColl_8007AFF8 = Some(|a0| unsafe { melee_fighter::tu::ftcoll::ftcoll_8007aff8(cast::<_, _, 1011901>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCommon_8007E2F4 = Some(|a0, a1| unsafe { melee_chara::stubs::ftCommon_8007E2F4(cast::<_, _, 1011201>(a0), cast::<_, _, 1011202>(a1)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftCommon_8007E2F4 = Some(|a0, a1| unsafe { melee_fighter::tu::ftcommon::ftcommon_8007e2f4(cast::<_, _, 1012001>(a0), cast::<_, _, 1012002>(a1)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftParts_GetBoneIndex = Some(|a0, a1| unsafe { cast::<_, _, 1011300>(melee_chara::adapt::ftParts_GetBoneIndex(cast::<_, _, 1011301>(a0), cast::<_, _, 1011302>(a1))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ftParts_GetBoneIndex = Some(|a0, a1| unsafe { cast::<_, _, 1012100>(melee_chara::adapt::ftParts_GetBoneIndex(cast::<_, _, 1012101>(a0), cast::<_, _, 1012102>(a1))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ft_80082E3C = Some(|a0| unsafe { cast::<_, _, 1011400>(melee_fighter::tu::ft_081b::ft_80082e3c(cast::<_, _, 1011401>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::ft_80082E3C = Some(|a0| unsafe { cast::<_, _, 1012200>(melee_fighter::tu::ft_081b::ft_80082e3c(cast::<_, _, 1012201>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1011500>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1011501>(a0), cast::<_, _, 1011502>(a1))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1012300>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1012301>(a0), cast::<_, _, 1012302>(a1))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::it_80272F7C = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_80272F7C(cast::<_, _, 1011601>(a0), cast::<_, _, 1011602>(a1)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::it_80272F7C = Some(|a0, a1| unsafe { melee_items::tu::it_2725::it_80272F7C(cast::<_, _, 1012401>(a0), cast::<_, _, 1012402>(a1)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::lbAudioAx_800237A8 = Some(|a0, a1, a2| unsafe { cast::<_, _, 1011700>(melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(cast::<_, _, 1011701>(a0), cast::<_, _, 1011702>(a1), cast::<_, _, 1011703>(a2))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::lbAudioAx_800237A8 = Some(|a0, a1, a2| unsafe { cast::<_, _, 1012500>(melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(cast::<_, _, 1012501>(a0), cast::<_, _, 1012502>(a1), cast::<_, _, 1012503>(a2))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::lbVector_Normalize = Some(|a0| unsafe { cast::<_, _, 1011800>(melee_runtime::tu::lbvector::lbVector_Normalize(cast::<_, _, 1011801>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::lbVector_Normalize = Some(|a0| unsafe { cast::<_, _, 1012600>(melee_runtime::tu::lbvector::lbVector_Normalize(cast::<_, _, 1012601>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpCheckAllRemap = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1011900>(melee_world::tu::mplib::mpCheckAllRemap(cast::<_, _, 1011901>(a0), cast::<_, _, 1011902>(a1), cast::<_, _, 1011903>(a2), cast::<_, _, 1011904>(a3), cast::<_, _, 1011905>(a4), cast::<_, _, 1011906>(a5), cast::<_, _, 1011907>(a6), cast::<_, _, 1011908>(a7), cast::<_, _, 1011909>(a8), cast::<_, _, 1011910>(a9))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpCheckAllRemap = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1012700>(melee_world::tu::mplib::mpCheckAllRemap(cast::<_, _, 1012701>(a0), cast::<_, _, 1012702>(a1), cast::<_, _, 1012703>(a2), cast::<_, _, 1012704>(a3), cast::<_, _, 1012705>(a4), cast::<_, _, 1012706>(a5), cast::<_, _, 1012707>(a6), cast::<_, _, 1012708>(a7), cast::<_, _, 1012709>(a8), cast::<_, _, 1012710>(a9))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_80041EE4 = Some(|a0| unsafe { melee_world::tu::mpcoll::mpColl_80041EE4(cast::<_, _, 1012001>(a0)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_80041EE4 = Some(|a0| unsafe { melee_world::tu::mpcoll::mpColl_80041EE4(cast::<_, _, 1012801>(a0)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_800471F8 = Some(|a0| unsafe { cast::<_, _, 1012100>(melee_world::tu::mpcoll::mpColl_800471F8(cast::<_, _, 1012101>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_800471F8 = Some(|a0| unsafe { cast::<_, _, 1012900>(melee_world::tu::mpcoll::mpColl_800471F8(cast::<_, _, 1012901>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_8004B108 = Some(|a0| unsafe { cast::<_, _, 1012200>(melee_world::tu::mpcoll::mpColl_8004B108(cast::<_, _, 1012201>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_8004B108 = Some(|a0| unsafe { cast::<_, _, 1013000>(melee_world::tu::mpcoll::mpColl_8004B108(cast::<_, _, 1013001>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_SetECBSource_Fixed = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_world::tu::mpcoll::mpColl_SetECBSource_Fixed(cast::<_, _, 1012301>(a0), cast::<_, _, 1012302>(a1), cast::<_, _, 1012303>(a2), cast::<_, _, 1012304>(a3), cast::<_, _, 1012305>(a4), cast::<_, _, 1012306>(a5)) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpColl_SetECBSource_Fixed = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_world::tu::mpcoll::mpColl_SetECBSource_Fixed(cast::<_, _, 1013101>(a0), cast::<_, _, 1013102>(a1), cast::<_, _, 1013103>(a2), cast::<_, _, 1013104>(a3), cast::<_, _, 1013105>(a4), cast::<_, _, 1013106>(a5)) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpGetSpeed = Some(|a0, a1, a2| unsafe { cast::<_, _, 1012400>(melee_world::tu::mplib::mpGetSpeed(cast::<_, _, 1012401>(a0), cast::<_, _, 1012402>(a1), cast::<_, _, 1012403>(a2))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpGetSpeed = Some(|a0, a1, a2| unsafe { cast::<_, _, 1013200>(melee_world::tu::mplib::mpGetSpeed(cast::<_, _, 1013201>(a0), cast::<_, _, 1013202>(a1), cast::<_, _, 1013203>(a2))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpIsland_8005AB54 = Some(|a0| unsafe { cast::<_, _, 1012500>(melee_world::tu::mpisland::mpIsland_8005AB54(cast::<_, _, 1012501>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpIsland_8005AB54 = Some(|a0| unsafe { cast::<_, _, 1013300>(melee_world::tu::mpisland::mpIsland_8005AB54(cast::<_, _, 1013301>(a0))) }); }
     // tu/itlinkhookshot.rs
-    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpLib_80054ED8 = Some(|a0| unsafe { cast::<_, _, 1012600>(melee_world::tu::mplib::mpLib_80054ED8(cast::<_, _, 1012601>(a0))) }); }
+    unsafe { melee_items::tu::itlinkhookshot::ext::hook::mpLib_80054ED8 = Some(|a0| unsafe { cast::<_, _, 1013400>(melee_world::tu::mplib::mpLib_80054ED8(cast::<_, _, 1013401>(a0))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1012701>(a0), cast::<_, _, 1012702>(a1), cast::<_, _, 1012703>(a2)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1013501>(a0), cast::<_, _, 1013502>(a1), cast::<_, _, 1013503>(a2)) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1012800>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1012801>(a0))) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1013600>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1013601>(a0))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::itColl_BounceOffVictim = Some(|a0| unsafe { melee_items::tu::it_2725::itColl_BounceOffVictim(cast::<_, _, 1012901>(a0)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::itColl_BounceOffVictim = Some(|a0| unsafe { melee_items::tu::it_2725::itColl_BounceOffVictim(cast::<_, _, 1013701>(a0)) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026B390 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B390(cast::<_, _, 1013001>(a0)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026B390 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B390(cast::<_, _, 1013801>(a0)) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1013100>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1013101>(a0), cast::<_, _, 1013102>(a1))) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1013900>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1013901>(a0), cast::<_, _, 1013902>(a1))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026D62C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026D62C(cast::<_, _, 1013201>(a0), cast::<_, _, 1013202>(a1)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026D62C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026D62C(cast::<_, _, 1014001>(a0), cast::<_, _, 1014002>(a1)) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026DAA8 = Some(|a0| unsafe { cast::<_, _, 1013300>(melee_items::tu::itgroundcoll::it_8026DAA8(cast::<_, _, 1013301>(a0))) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026DAA8 = Some(|a0| unsafe { cast::<_, _, 1014100>(melee_items::tu::itgroundcoll::it_8026DAA8(cast::<_, _, 1014101>(a0))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026DBC8 = Some(|a0| unsafe { cast::<_, _, 1013400>(melee_items::tu::itgroundcoll::it_8026DBC8(cast::<_, _, 1013401>(a0))) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026DBC8 = Some(|a0| unsafe { cast::<_, _, 1014200>(melee_items::tu::itgroundcoll::it_8026DBC8(cast::<_, _, 1014201>(a0))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026DF34 = Some(|a0| unsafe { cast::<_, _, 1013500>(melee_items::tu::itgroundcoll::it_8026DF34(cast::<_, _, 1013501>(a0))) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026DF34 = Some(|a0| unsafe { cast::<_, _, 1014300>(melee_items::tu::itgroundcoll::it_8026DF34(cast::<_, _, 1014301>(a0))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026E15C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026E15C(cast::<_, _, 1013601>(a0), cast::<_, _, 1013602>(a1)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026E15C = Some(|a0, a1| unsafe { melee_items::tu::itgroundcoll::it_8026E15C(cast::<_, _, 1014401>(a0), cast::<_, _, 1014402>(a1)) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026E8C4 = Some(|a0, a1, a2| unsafe { melee_items::tu::itgroundcoll::it_8026E8C4(cast::<_, _, 1013701>(a0), cast::<_, _, 1013702>(a1), cast::<_, _, 1013703>(a2)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_8026E8C4 = Some(|a0, a1, a2| unsafe { melee_items::tu::itgroundcoll::it_8026E8C4(cast::<_, _, 1014501>(a0), cast::<_, _, 1014502>(a1), cast::<_, _, 1014503>(a2)) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_80272860 = Some(|a0, a1, a2| unsafe { melee_items::tu::it_2725::it_80272860(cast::<_, _, 1013801>(a0), cast::<_, _, 1013802>(a1), cast::<_, _, 1013803>(a2)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_80272860 = Some(|a0, a1, a2| unsafe { melee_items::tu::it_2725::it_80272860(cast::<_, _, 1014601>(a0), cast::<_, _, 1014602>(a1), cast::<_, _, 1014603>(a2)) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_80273030 = Some(|a0| unsafe { cast::<_, _, 1013900>(melee_items::tu::it_2725::it_80273030(cast::<_, _, 1013901>(a0))) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_80273030 = Some(|a0| unsafe { cast::<_, _, 1014700>(melee_items::tu::it_2725::it_80273030(cast::<_, _, 1014701>(a0))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_80274658 = Some(|a0, a1| unsafe { cast::<_, _, 1014000>(melee_items::tu::it_2725::it_80274658(cast::<_, _, 1014001>(a0), cast::<_, _, 1014002>(a1))) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_80274658 = Some(|a0, a1| unsafe { cast::<_, _, 1014800>(melee_items::tu::it_2725::it_80274658(cast::<_, _, 1014801>(a0), cast::<_, _, 1014802>(a1))) }); }
     // tu/itlipstick.rs
-    unsafe { melee_items::tu::itlipstick::ext::hook::it_80276FC4 = Some(|a0, a1| unsafe { melee_items::tu::itmaplib::it_80276FC4(cast::<_, _, 1014101>(a0), cast::<_, _, 1014102>(a1)) }); }
+    unsafe { melee_items::tu::itlipstick::ext::hook::it_80276FC4 = Some(|a0, a1| unsafe { melee_items::tu::itmaplib::it_80276FC4(cast::<_, _, 1014901>(a0), cast::<_, _, 1014902>(a1)) }); }
 }
 

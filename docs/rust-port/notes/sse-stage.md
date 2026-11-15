@@ -222,7 +222,7 @@ sent off the screen in the same way.
   capture 11). The 47 ms parse is gone (GrNLa.dat now an asset apply hit, ~3 ms). Next: a renderer pre-upload entry
   keyed like `tex_key` fed from the map's batches at the stage pick, and why those 3 pipelines are not kept.
 - **Wheel ride.** `MELEE_EXPLORE_RIDE=block@frame` sets the first fighter just above a moving block and tracks one
-  loop (600 frames). Jungle wheel room (`MELEE_EXPLORE_GOTO=3@200`, ride at 300), blocks 0-3: grounded all 601
+  loop (600 frames). Jungle wheel room (`MELEE_EXPLORE_GOTO=9@200` since the ADSJ chain: arrival points are pseudo doors 15+ on the Lake, 8+ on the Jungle; ride at 300), blocks 0-3: grounded all 601
   frames, worst frame-to-frame step 0.007, place on the platform within 1.33 (one frame of platform travel: the
   fighter follows the platform's previous place). No fall-through, no jitter.
 
@@ -296,3 +296,12 @@ Setup frame (tick / work ms) and the worst other frame, after:
 Still over: the setup tick itself (scene on_enter 9-11 ms of sim work, the frame capture 2-4 ms), and isolated
 steady frames at 16-19 ms of work whose tick is 13-15 ms (sim). Synctest d4/d7 Jungle and Lake, door at 600:
 1797/7188 and 1794/12558, 0 mismatches.
+
+## ADSJ chain proofs (Nov 15, ssechain)
+- `MELEE_EXPLORE_GOTO` targets a door index; arrival points are now pseudo doors after the real ones (`chains_link
+  --nocapture` prints them). Every section: Lake `17@300,16@450,20@600,15@750,23@900,27@1050,14@1200`
+  (080103a, 080103b, 080104b, 080104, 080104a, 080105, 080105a); Jungle `8@300,9@450,10@600,12@750,13@900`.
+- Lake story walk (`MELEE_EXPLORE_OPEN`): 080103 door 1 -> 080103b, door 5 (b1) -> 080104b, door 12 (b2) -> 080105,
+  door 13 clear. Door 6 (08010400) leads back to 080103. Jungle: doors 0, 2, 4, 6 (clear).
+- SSE 16 / 22 / 27 real-menu walks (`walk_vs_sse16|22|27_2cpu.txt`, 5th GD icon now shown): door 0, then the clear
+  door (16: door 1; 22, 27: door 2) takes the way on. SyncTest d4 / d7 on SSE 22 through its door: 0 mismatches.

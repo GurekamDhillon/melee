@@ -5172,7 +5172,7 @@ pub const NULL: i32 = 0;
 // Brawl files no row is added: the screen is the retail one.
 
 /// Icon rows of the GD stages: (row index, GD stage id); -1 unused.
-static mut GD_ROWS: [(i32, i32); 4] = [(-1, 0); 4];
+static mut GD_ROWS: [(i32, i32); 5] = [(-1, 0); 5];
 static mut GD_CANVAS: i32 = -1;
 static mut GD_TEXT: *mut HSD_Text = null_mut();
 /// World position of the first GD icon (the stage select's cursor space is +-27 x +-19) and its spacing.
@@ -5185,7 +5185,7 @@ fn gd_icon(id: i32) -> bool {
 }
 
 unsafe fn gd_icons_add() {
-    GD_ROWS = [(-1, 0); 4];
+    GD_ROWS = [(-1, 0); 5];
     let mut k = 0usize;
     for g in crate::tu::explore::GD_STAGES.iter() {
         if k >= GD_ROWS.len() || mnStageSel_IconCount >= SSS_ICON_MAX - 1 || !crate::tu::explore::available(g.id) {
@@ -5274,6 +5274,6 @@ unsafe fn gd_icons_exit() {
             mnStageSel_803F06D0[r.0 as usize] = StageListInfo::zeroed();
         }
     }
-    GD_ROWS = [(-1, 0); 4];
+    GD_ROWS = [(-1, 0); 5];
     GD_CANVAS = -1;
 }

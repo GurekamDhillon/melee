@@ -1637,13 +1637,8 @@ pub fn play(args: &[String]) -> ExitCode {
                     }
                     n += 1;
                 }
-            } else if part.eq_ignore_ascii_case("sse") || part.eq_ignore_ascii_case("lake") || part.eq_ignore_ascii_case("jungle") {
-                // the GD stage slots of the Brawl SSE maps (explore.rs: The Lake step 3; "jungle": The Jungle step 2), on the Final Destination carrier
-                let id = if part.eq_ignore_ascii_case("jungle") {
-                    melee_modes::tu::explore::GD_STAGE_SSE_JUNGLE
-                } else {
-                    melee_modes::tu::explore::GD_STAGE_SSE_LAKE3
-                };
+            } else if let Some(id) = melee_modes::tu::explore::gd_by_word(part) {
+                // the GD stage slots of the Brawl SSE maps (explore::GD_STAGES words), on the Final Destination carrier
                 let fd = melee_modes::tu::explore::carrier(id);
                 stage = STAGES.iter().position(|s| s.0 == fd).unwrap_or(stage);
             } else if let Some(st) = STAGES.iter().position(|s| s.0.to_string() == part || s.1.eq_ignore_ascii_case(part) || (part == "GrNLa.dat" && s.0 == 32) || (part == "GrNBa.dat" && s.0 == 31)) {

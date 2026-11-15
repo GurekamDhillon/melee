@@ -1219,11 +1219,7 @@ impl NetDriver {
         let ck = ck_of(parts[0]).ok_or_else(|| format!("--match: unknown fighter '{}'", parts[0]))?;
         let stage_ext = parts.iter().skip(1).find_map(|p| stage_of(p)).unwrap_or(32);
         // a GD stage (`jungle`, `lake` / `sse`) rides on Final Destination (the default ext above); the host dictates it
-        let gd_pick = parts.iter().skip(1).find_map(|p| match p.to_ascii_lowercase().as_str() {
-            "jungle" => Some(melee_modes::tu::explore::GD_STAGE_SSE_JUNGLE),
-            "lake" | "sse" => Some(melee_modes::tu::explore::GD_STAGE_SSE_LAKE3),
-            _ => None,
-        });
+        let gd_pick = parts.iter().skip(1).find_map(|p| melee_modes::tu::explore::gd_by_word(p));
         let mut rules = HostRules::from_args(args);
         if host {
             if let Some(c) = arg(args, "--cpu") {

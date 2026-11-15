@@ -15,6 +15,16 @@
 
 use crate::tu::petey_model as pm;
 use std::sync::{Mutex, OnceLock};
+use melee_core::ppc::{fcvt_u32, Ppc};
+use melee_runtime::tu::gekko_fp::{cosf, sinf};
+
+/// The C comparisons (semantics lint M1: no IEEE min / max).
+fn fmin(a: f32, b: f32) -> f32 {
+    if a < b { a } else { b }
+}
+fn fmax(a: f32, b: f32) -> f32 {
+    if a > b { a } else { b }
+}
 
 /// (VM boss name, MDL0 name; the clips are named `<MDL0><motion>`, the idle clip gives the extent)
 const MODELS: &[(&str, &str, &str)] = &[
@@ -102,7 +112,7 @@ fn read(name: &str) -> Option<Model> {
         if let Some(ci) = ci {
             with += 1;
             let a = &rig.anims[ci].1;
-            let frames = (a.frames.max(1.0)) as u16;
+            let frames = fcvt_u32(fmax(a.frames, 1.0)) as u16;
             lens.push((mn.clone(), frames));
             if let Some(b) = &bone {
                 let mut f = 0.0;
@@ -112,7 +122,7 @@ fn read(name: &str) -> Option<Model> {
                     }
                     f += 1.0;
                 }
-                let (lo, hi) = track.iter().fold((f32::MAX, f32::MIN), |(l, h), v| (l.min(v[0]), h.max(v[0])));
+                let (lo, hi) = track.iter().fold((f32::MAX, f32::MIN), |(l, h), v| (fmin(l, v[0]), fmax(h, v[0])));
                 if hi - lo > 0.5 {
                     moving += 1;
                 }
@@ -146,7 +156,7 @@ fn frame_of(p: &brawl_boss::vm::Program, m: usize, el: u32) -> (usize, usize) {
     let len = p.motion_len.get(m).copied().unwrap_or(60).max(1) as usize;
     let el = el as usize;
     if p.motion_loop.get(m).copied().unwrap_or(false) {
-        (el % len, len)
+        (el.prem(len), len)
     } else {
         (el.min(len - 1), len)
     }
@@ -184,9 +194,11 @@ pub fn root_move2(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, mi: i3
 /// The model's rotation in the world: the facing (a yaw of +-90 degrees: the model faces its z) after the rotation
 /// units' turn (Actor::rot, degrees about x, y, z; applied z, y, x) [L: the posture module's order is not read].
 fn model_mat(a: &brawl_boss::vm::Actor) -> [[f32; 3]; 3] {
-    let (sx, cx) = a.rot[0].to_radians().sin_cos();
-    let (sy, cy) = a.rot[1].to_radians().sin_cos();
-    let (sz, cz) = a.rot[2].to_radians().sin_cos();
+    // the MSL sinf / cosf (gekko_fp), not the host's
+    let sc = |d: f32| (sinf(d.to_radians()), cosf(d.to_radians()));
+    let (sx, cx) = sc(a.rot[0]);
+    let (sy, cy) = sc(a.rot[1]);
+    let (sz, cz) = sc(a.rot[2]);
     let r = [
         [cy * cz, sx * sy * cz - cx * sz, cx * sy * cz + sx * sz],
         [cy * sz, sx * sy * sz + cx * cz, cx * sy * sz - sx * cz],

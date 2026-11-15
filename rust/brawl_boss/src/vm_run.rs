@@ -378,7 +378,7 @@ fn level_f(strength: i32, difficulty: i32) -> f32 {
 
 impl Actor {
     /// FNV-1a over the simulation state (the event queue excluded: presentation, rebuilt every frame).
-    pub fn hash(&self) -> u32 {
+    pub fn vm_hash(&self) -> u32 {
         let mut h: u32 = 0x811C_9DC5;
         let mut mix = |v: u32| {
             for b in v.to_le_bytes() {

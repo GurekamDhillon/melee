@@ -2224,7 +2224,7 @@ mod jungle_tests {
                             near += 1;
                         }
                     }
-                    hashes.push(a.hash());
+                    hashes.push(a.vm_hash());
                 }
                 let q0 = (pa.pos)(pa.id, 0.0); if st == 0 { eprintln!("path pts {:?} ", [0.0f32, 60.0, 120.0, 180.0, 240.0].map(|g| { let q = (pa.pos)(pa.id, g); (q[0] as i32, q[1] as i32) })); }
                 eprintln!("spawn {k} status {st}: path {} frames from ({:.0},{:.0}), home ({:.0},{:.0}), moved {moved:.0}, on path {near}/1200, pos ({:.0},{:.0})", pa.frames, q0[0], q0[1], home[0], home[1], a.pos[0], a.pos[1]);
@@ -2234,7 +2234,7 @@ mod jungle_tests {
                 let mut b = snap.unwrap();
                 for f in 600..1200u32 {
                     vm::step(p, &mut b, &inp(f));
-                    assert_eq!(b.hash(), hashes[f as usize], "spawn {k} status {st}: replay diverged at {f}");
+                    assert_eq!(b.vm_hash(), hashes[f as usize], "spawn {k} status {st}: replay diverged at {f}");
                 }
             }
         }

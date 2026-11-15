@@ -187,7 +187,7 @@ fn boss_runs(name: &str, start: i32) {
         ext[0] = ext[0].max(libm_abs(a.pos[0]));
         ext[1] = ext[1].max(a.pos[1]);
         ext[2] = ext[2].min(a.pos[1]);
-        hashes.push(a.hash());
+        hashes.push(a.vm_hash());
     }
     println!(
         "vm: {name} 3600 frames: statuses {:?}, motions {:?}, HP {:.1} ({}%), dead {}, pos ({:.1}, {:.1}), last hash {:08X}",
@@ -207,7 +207,7 @@ fn boss_runs(name: &str, start: i32) {
     let mut b = snap.unwrap();
     for f in 1800..3600u32 {
         vm::step(&p, &mut b, &targets(f));
-        assert_eq!(b.hash(), hashes[f as usize], "{name}: replay diverged at frame {f}");
+        assert_eq!(b.vm_hash(), hashes[f as usize], "{name}: replay diverged at frame {f}");
     }
     assert!(statuses.len() > 3, "{name} should move through statuses");
 }
@@ -296,7 +296,7 @@ fn vm_stress_bench() {
     let mut hx = 0u32;
     for _ in 0..reps {
         for a in &world {
-            hx ^= std::hint::black_box(a).hash();
+            hx ^= std::hint::black_box(a).vm_hash();
         }
     }
     let hash_us = s.elapsed().as_nanos() as f64 / reps as f64 / 1000.0;
@@ -431,13 +431,13 @@ fn vm_jyk_path() {
         vm::step(&p, &mut a, &inp(f));
         moved += a.moved;
         pts.insert(((a.pos[0] / 10.0) as i32, (a.pos[1] / 10.0) as i32));
-        hashes.push(a.hash());
+        hashes.push(a.vm_hash());
     }
     println!("vm: jyk on a path 1200 frames: moved {moved:.1}, {} distinct cells, pos ({:.1}, {:.1})", pts.len(), a.pos[0], a.pos[1]);
     let mut b = snap.unwrap();
     for f in 600..1200u32 {
         vm::step(&p, &mut b, &inp(f));
-        assert_eq!(b.hash(), hashes[f as usize], "replay diverged at {f}");
+        assert_eq!(b.vm_hash(), hashes[f as usize], "replay diverged at {f}");
     }
 }
 
@@ -482,7 +482,7 @@ fn vm_bullet_bill() {
             }
             moved += a.moved;
             aims += a.ev[..(a.ev_n as usize).min(vm::EVQ)].iter().filter(|e| e.kind == vm::EV_AIM).count() as u32;
-            hashes.push(a.hash());
+            hashes.push(a.vm_hash());
         }
         if st == 4 {
             assert!(aims > 0, "status 4: the reflection did not bounce");
@@ -491,7 +491,7 @@ fn vm_bullet_bill() {
         let mut b = snap.unwrap();
         for f in 600..1200u32 {
             vm::step(&p, &mut b, &inp(f));
-            assert_eq!(b.hash(), hashes[f as usize], "status {st}: replay diverged at {f}");
+            assert_eq!(b.vm_hash(), hashes[f as usize], "status {st}: replay diverged at {f}");
         }
     }
 }
@@ -530,12 +530,12 @@ fn vm_enemy_statuses() {
                 }
                 vm::step(&p, &mut a, &inp(f));
                 seen.insert(a.status);
-                hashes.push(a.hash());
+                hashes.push(a.vm_hash());
             }
             let mut b = snap.unwrap();
             for f in 600..1200u32 {
                 vm::step(&p, &mut b, &inp(f));
-                assert_eq!(b.hash(), hashes[f as usize], "{name} status {st}: replay diverged at {f}");
+                assert_eq!(b.vm_hash(), hashes[f as usize], "{name} status {st}: replay diverged at {f}");
             }
         }
         let u = p.unknown();

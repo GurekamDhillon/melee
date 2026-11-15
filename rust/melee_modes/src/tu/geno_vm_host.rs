@@ -12,6 +12,7 @@
 
 use brawl_boss::vm::{self as vr, Program, A};
 use melee_types::*;
+use melee_core::ppc::Ppc;
 
 /// One live attack box from a 0619 (the command's own id, its numbers already at the actor's L).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -216,9 +217,9 @@ unsafe fn collision(i: &mut vr::Input) {
     for (side, dx) in [(0usize, -400.0f32), (1, 400.0)] {
         for f in [mp::mpCheckLeftWall, mp::mpCheckRightWall] {
             if f(x, yh, x + dx, yh, &mut p, &mut line, &mut flags, &mut n, -1, -1) != 0 && (p.x - x) * dx >= 0.0 {
-                if i.wall_on & (1 << side) == 0 || (p.x - x).abs() < (i.wall[side] - x).abs() {
+                if i.wall_on & 1u32.pshl(side as i64) == 0 || (p.x - x).abs() < (i.wall[side] - x).abs() {
                     i.wall[side] = p.x;
-                    i.wall_on |= 1 << side;
+                    i.wall_on |= 1u32.pshl(side as i64);
                 }
             }
         }
@@ -234,7 +235,7 @@ static mut ROOT_TRAVEL: f32 = 0.0;
 /// executable, so the snapshot carries it.
 static mut SEC: (i32, u32) = (-1, 0);
 
-pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, ground: bool, fighter_of: unsafe fn(i32) -> *mut Fighter, log: bool) -> Out {
+pub unsafe fn vm_frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, ground: bool, fighter_of: unsafe fn(i32) -> *mut Fighter, log: bool) -> Out {
     let mut i = input(carrier, damage, ground, fighter_of);
     // out of the boss area (the program's box, the stage's camera bounds): the AreaOut rule (-300) turns the boss back
     {

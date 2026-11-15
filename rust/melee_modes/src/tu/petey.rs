@@ -1437,14 +1437,14 @@ unsafe fn vm_run(p: &'static brawl_boss::vm::Program) -> &'static brawl_boss::vm
 /// Damage the players' boxes dealt the VM boss this frame (summed in hit_test, consumed by vm_frame).
 static mut VM_DMG: i32 = 0;
 
-/// One VM frame (geno_vm_host::frame): this frame's damage in, the actor stepped, its state mirrored.
+/// One VM frame (geno_vm_host::vm_frame): this frame's damage in, the actor stepped, its state mirrored.
 unsafe fn vm_frame(p: &'static brawl_boss::vm::Program) {
     unsafe fn fo(s: i32) -> *mut Fighter {
         fighter_of(s, 0)
     }
     let d = VM_DMG;
     VM_DMG = 0;
-    let o = crate::tu::geno_vm_host::frame(p, B.carrier_slot, B.last_frame, d, true, fo, log_on());
+    let o = crate::tu::geno_vm_host::vm_frame(p, B.carrier_slot, B.last_frame, d, true, fo, log_on());
     B.st = o.status;
     B.px = o.x;
     B.aim = if o.lr < 0.0 { -1.0 } else { 1.0 };

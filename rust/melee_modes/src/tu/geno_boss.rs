@@ -527,7 +527,7 @@ pub fn state_hash() -> Option<u32> {
         // a VM-run boss has no define: its actor alone is the state
         // (and its projectile pool, mixed only while a projectile is live)
         return (s.vm.live != 0).then(|| {
-            let mut h = s.vm.hash();
+            let mut h = s.vm.vm_hash();
             crate::tu::geno_boss_spawn::hash_into(s, &mut |v: u32| {
                 for b in v.to_le_bytes() {
                     h ^= b as u32;
@@ -580,7 +580,7 @@ pub fn state_hash() -> Option<u32> {
         }
     }
     if s.vm.live != 0 {
-        mix(s.vm.hash());
+        mix(s.vm.vm_hash());
     }
     Some(h)
 }

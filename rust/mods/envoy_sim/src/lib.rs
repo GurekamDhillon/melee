@@ -717,6 +717,11 @@ struct St {
     fork_cur: i32,
     fork_left: i32,
     fork_pick: i32,
+    /// The room choice holds the match frozen (1: this sim took the hold freeze for it; 0: not frozen yet). The
+    /// fighters stand still while it is open, so the cursor's left / right cannot walk anyone off the stage.
+    fork_hold: i32,
+    /// Each player's stocks when the room choice opened: a stock lost while it is open is given back (fork_guard).
+    fork_stocks: [i32; NP],
     skip_shop: i32,
     /// The shop's stock slot on sale now (its price; 0 none).
     slot_sale: i32,
@@ -5922,6 +5927,10 @@ extern "C" fn on_frame_end() {
                         reward_close();
                     }
                 }
+            } else if S.fork == 1 && S.fork_hold != 0 && phase != 0 && kind == KIND_HOLD {
+                // the act map's room choice over the held match: frozen, only the choice steps (rooms::fork_wait)
+                rooms::fork_guard();
+                rooms::fork_wait();
             } else if phase == 0 || kind != KIND_HOLD {
                 tag_frame();
                 stage_frame();
@@ -5953,8 +5962,10 @@ extern "C" fn on_frame_end() {
             if S.arm_seen != 0 && S.state != RUN_OVER {
                 road_frame();
             }
-            // the match ended inside the collect hold: the latched win stands
+            // the match ended inside the collect hold: the latched win stands (a room choice still open is settled
+            // first, the same on every machine, so the map and the next road screen agree with the sim)
             if S.state == RUN_LIVE && S.outcome == 0 && S.collect > 0 {
+                rooms::fork_settle();
                 fight_won();
             }
         }

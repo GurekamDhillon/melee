@@ -1708,6 +1708,7 @@ pub(crate) unsafe fn reset_match() {
     S.door = 0;
     S.door_at = 0;
     S.fork = if S.fork == 1 { 0 } else { S.fork };
+    S.fork_hold = 0;
     S.skip_shop = 0;
     S.ped_kind = 0;
     S.ped_left = 0;

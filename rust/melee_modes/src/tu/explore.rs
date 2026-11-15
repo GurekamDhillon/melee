@@ -26,53 +26,165 @@ use std::vec::Vec; // melee_types has its own `Vec` (the 3D vector): `melee_type
 
 /// One map section: an adventure archive placed at `off` in the shared world (sections never overlap).
 struct SecDef {
-    file: &'static str,
+    file: String,
     off: [f32; 2],
-    model: &'static str,
-    /// 0: a main section (a story step); 1, 2: the side rooms `a`, `b` of the main section before it
+    /// the section's map model; empty: found in the archive by its name (`section_model`)
+    model: String,
+    /// 0: a main section; 1, 2, ..: its side rooms `a`, `b`, .. (they follow their main section)
     room: u8,
-    /// a main section's way on (a GDOR door id): it leads to the next main section's entry, or past the last one to
-    /// the level's next story step (`STORY`). 0: the level-exit block's (GMSJ) door, else none.
-    exit: u32,
+    /// the start-point bones jumps arrive at in this section (`Jump::start`)
+    starts: Vec<String>,
 }
 
-const fn sec(file: &'static str, x: f32, y: f32, model: &'static str, room: u8, exit: u32) -> SecDef {
-    SecDef { file, off: [x, y], model, room, exit }
+fn sec(file: &str, x: f32, y: f32, model: &str, room: u8) -> SecDef {
+    SecDef { file: file.into(), off: [x, y], model: model.into(), room, starts: vec![] }
 }
 
-/// The Lake from step 3 (notes/sse-stage.md): `080103` (+ the hut `a`, room `b`) -> `080104` (+ `a`, `b`) ->
-/// `080105` (+ `a`), then Rayquaza. Main sections 8000 apart on x, side rooms 4000 below their main. The exit ids
-/// are the sections' own door ids (names and numbers only; the doors' data is read from the owner's files).
-const SECS: [SecDef; 8] = [
-    sec("080103.pac", 0.0, 0.0, "081mAdvJungle03", 0, 0x0801_0300),
-    sec("080103a.pac", 1500.0, 0.0, "081mAdvJungle03a", 1, 0),
-    sec("080103b.pac", 3000.0, 0.0, "081mAdvJungle03b", 2, 0),
-    sec("080104.pac", 8000.0, 0.0, "081mAdvJungle04", 0, 0x0801_0400),
-    sec("080104a.pac", 8000.0, -4000.0, "081mAdvJungle04a", 1, 0),
-    sec("080104b.pac", 9500.0, -4000.0, "081mAdvJungle04b", 2, 0),
-    sec("080105.pac", 16000.0, 0.0, "081mAdvJungle05", 0, 0),
-    sec("080105a.pac", 16000.0, -4000.0, "081mAdvJungle05a", 1, 0),
-];
-/// The Jungle in story order: `060001` -> `060002` (+ the water-wheel room `a`) -> `060003` -> the climb `060004`
-/// (+ `a`), then its scene slot.
-const JUNGLE_SECS: [SecDef; 6] = [
-    sec("060001.pac", 0.0, 0.0, "060mAdvJungle01", 0, 0x0600_0101),
-    sec("060002.pac", 8000.0, 0.0, "060mAdvJungle02", 0, 0x0600_0202),
-    sec("060002a.pac", 11000.0, 0.0, "060mAdvJungle02a", 1, 0),
-    sec("060003.pac", 16000.0, 0.0, "060mAdvJungle03", 0, 0x0600_0301),
-    sec("060004.pac", 24000.0, 0.0, "060mAdvJungle04", 0, 0x0600_0402),
-    sec("060004a.pac", 24000.0, -4000.0, "060mAdvJungle04a", 1, 0),
-];
+/// One record of Brawl's step-jump table (`ADSJ` in `adventure_common.arc`, one table per level; local reference
+/// `_build/boss-ir/sse-chain.md`): the jump a door (GDOR id) or a step-jump block (GMSJ) performs, the step it leads
+/// to and the start-point bone it arrives at. Read from the owner's files at load time, never embedded.
+#[derive(Clone, Debug)]
+pub struct Jump {
+    pub id: u32,
+    /// 0 a move inside the segment, `JUMP_START` the segment's start, `JUMP_CLEAR` the segment's end
+    pub kind: u8,
+    pub dest: u32,
+    pub start: String,
+}
+pub const JUMP_START: u8 = 1;
+pub const JUMP_CLEAR: u8 = 2;
+
+/// Level `level`'s step-jump table (empty without the owner's files).
+pub fn jumps(level: u16) -> Vec<Jump> {
+    let Some((leaves, tags)) = pm::pac_leaves_tagged("adventure_common.arc") else { return vec![] };
+    let mut v = vec![];
+    for (l, t) in leaves.iter().zip(&tags) {
+        if l.get(..4) != Some(b"ADSJ") || t.last().map(|x| x.1) != Some(level) {
+            continue;
+        }
+        for k in 0..be32(l, 4).min(4096) as usize {
+            let o = be32(l, 16 + 4 * k) as usize;
+            let name = l.get(o + 12..(o + 44).min(l.len())).unwrap_or(&[]);
+            let end = name.iter().position(|&c| c == 0).unwrap_or(name.len());
+            v.push(Jump { id: be32(l, o), kind: l.get(o + 4).copied().unwrap_or(0), dest: be32(l, o + 8), start: String::from_utf8_lossy(&name[..end]).into_owned() });
+        }
+    }
+    v
+}
+
+/// The archive stem a jump starts from: the jump id's level, segment and area digits, its high nibble the room.
+fn jump_file(id: u32) -> String {
+    let b = id.to_be_bytes();
+    let r = b[3] >> 4;
+    format!("{:02x}{:02x}{:02x}{}", b[0], b[1], b[2], if r >= 0xA { ((b'a' + r - 0xA) as char).to_string() } else { String::new() })
+}
+
+/// The archive stem of a step: level, segment, area (numbers) and its room (0 the main section, 1 `a`, ..).
+fn step_file(step: u32) -> String {
+    let b = step.to_be_bytes();
+    format!("{:02}{:02}{:02}{}", b[0], b[1], b[2], if b[3] > 0 { ((b'a' + b[3] - 1) as char).to_string() } else { String::new() })
+}
+
+/// Our placement of a section in the shared world (the port's layout, not Brawl data): the two first maps keep the
+/// places they always had; any other main section goes 8000 further on x, its side rooms 4000 below, 1500 apart.
+fn sec_place(stem: &str, main_k: usize, room: u8) -> [f32; 2] {
+    const PLACE: [(&str, f32, f32); 14] = [
+        ("080103", 0.0, 0.0), ("080103a", 1500.0, 0.0), ("080103b", 3000.0, 0.0), ("080104", 8000.0, 0.0),
+        ("080104a", 8000.0, -4000.0), ("080104b", 9500.0, -4000.0), ("080105", 16000.0, 0.0), ("080105a", 16000.0, -4000.0),
+        ("060001", 0.0, 0.0), ("060002", 8000.0, 0.0), ("060002a", 11000.0, 0.0), ("060003", 16000.0, 0.0),
+        ("060004", 24000.0, 0.0), ("060004a", 24000.0, -4000.0),
+    ];
+    match PLACE.iter().find(|p| p.0 == stem) {
+        Some(p) => [p.1, p.2],
+        None if room == 0 => [8000.0 * main_k as f32, 0.0],
+        None => [8000.0 * main_k as f32 + 1500.0 * (room - 1) as f32, -4000.0],
+    }
+}
+
+/// A GD stage's sections from Brawl's own chain: every archive reachable from its first section through the
+/// step-jump table (a segment's start and clear are not walked; an archive not in the owner's folder is left out,
+/// its doors stay shut), main sections in area order, each followed by its side rooms.
+fn chain_secs(level: u16, first: &str, js: &[Jump]) -> Vec<SecDef> {
+    let mut seen = vec![first.to_string()];
+    let mut k = 0;
+    while k < seen.len() {
+        let from = seen[k].clone();
+        k += 1;
+        for j in js.iter().filter(|j| j.kind != JUMP_START && j.kind != JUMP_CLEAR && jump_file(j.id) == from) {
+            let to = step_file(j.dest);
+            if !seen.contains(&to) && to.get(..2) == first.get(..2) && pm::adventure_present(&format!("{to}.pac")) {
+                seen.push(to);
+            }
+        }
+    }
+    let _ = level;
+    seen.sort_by(|a, b| a.get(..6).cmp(&b.get(..6)).then(a.len().cmp(&b.len())).then(a.cmp(b)));
+    let mut main_k = 0usize;
+    let mut out: Vec<SecDef> = vec![];
+    for (i, s) in seen.iter().enumerate() {
+        let room = s.as_bytes().get(6).map(|c| c - b'a' + 1).unwrap_or(0);
+        if room == 0 && i > 0 {
+            main_k += 1;
+        }
+        let at = sec_place(s, main_k, room);
+        let mut d = sec(&format!("{s}.pac"), at[0], at[1], "", room);
+        for j in js.iter().filter(|j| j.kind != JUMP_CLEAR && step_file(j.dest) == *s) {
+            if !d.starts.contains(&j.start) {
+                d.starts.push(j.start.clone());
+            }
+        }
+        out.push(d);
+    }
+    out
+}
+
+/// A GD stage's sections and step-jump table, built once from the owner's files.
+struct Chain {
+    secs: Vec<SecDef>,
+    jumps: Vec<Jump>,
+}
+
+fn chain_of(id: i32) -> &'static Chain {
+    static C: std::sync::OnceLock<Vec<Chain>> = std::sync::OnceLock::new();
+    let all = C.get_or_init(|| {
+        GD_STAGES
+            .iter()
+            .map(|g| {
+                let js = jumps(g.level);
+                Chain { secs: chain_secs(g.level, g.first, &js), jumps: js }
+            })
+            .collect()
+    });
+    &all[GD_STAGES.iter().position(|g| g.id == id).unwrap_or(0)]
+}
+
 /// The sections of GD stage `id`.
 fn secs_of(id: i32) -> &'static [SecDef] {
-    if id == GD_STAGE_SSE_JUNGLE { &JUNGLE_SECS } else { &SECS }
+    &chain_of(id).secs
 }
 
-const ARENA_SECS: [SecDef; 1] = [sec("030101.pac", 0.0, 0.0, "030vAdvStadium", 0, 0)];
+/// A section's map model: the archive's MDL0 named `<level><segment digit>[m|v]Adv...<area><room>` (Brawl's naming
+/// of section models), else the only `<level><segment digit>.Adv` model there.
+fn section_model(leaves: &[Vec<u8>], stem: &str) -> String {
+    let (pre, tail) = (format!("{}{}", stem.get(..2).unwrap_or(""), stem.get(3..4).unwrap_or("")), stem.get(4..).unwrap_or(""));
+    let mut cands = vec![];
+    for b in leaves.iter().filter(|b| b.get(..4) == Some(b"bres")) {
+        for (n, off) in pm::brres_entries(b).unwrap_or_default() {
+            if b.get(off..off + 4) == Some(b"MDL0") && n.starts_with(&pre) && n.get(pre.len() + 1..pre.len() + 4) == Some("Adv") && !cands.contains(&n) {
+                cands.push(n);
+            }
+        }
+    }
+    cands.iter().find(|n| n.ends_with(tail) && !n.ends_with(&format!("{tail}a")) && !n.ends_with(&format!("{tail}b"))).or(if cands.len() == 1 { cands.first() } else { None }).cloned().unwrap_or_default()
+}
 
-/// Brawl's enemy kind (GEG1 [off]; names: BrawlCrate's public `EnemyList`, ids matched to the per-file counts in
-/// notes/sse-audit.md) -> the nearest of our four Subspace kinds (`subspace::K_*`), or None for a boss (not spawned).
-/// Unknown ids fall back to the Goomba (logged).
+fn arena_secs() -> [SecDef; 1] {
+    [sec("030101.pac", 0.0, 0.0, "030vAdvStadium", 0)]
+}
+
+/// Brawl's enemy kind (GEG1 [off]) -> the nearest of our Subspace kinds (`subspace::K_*`), or None for a boss or a
+/// boss part (not spawned). Kind ids follow sora_enemy's kind -> `createInstance<em*>` table (read by 0x81A0F6B0
+/// for emManager::createEnemy 0x81A0C9D4); names: the classes there, English names as BrawlCrate's `EnemyList`.
 fn enemy_kind(id: u16) -> (Option<usize>, &'static str) {
     use crate::tu::subspace::{K_BILL, K_GIANT, K_GOOMBA, K_HAMMER, K_JYK, K_KOOPA, K_PRIMID};
     match id {
@@ -81,20 +193,51 @@ fn enemy_kind(id: u16) -> (Option<usize>, &'static str) {
         2 => (Some(K_GOOMBA), "Feyesh"),
         3 => (Some(K_JYK), "Jyk"),
         4 => (Some(K_BILL), "Auroros"), // a diving bird: flies straight at the party
+        5 => (Some(K_JYK), "Cymul"),
+        6 => (Some(K_PRIMID), "Roturret"),
         7 => (Some(K_GIANT), "Borboras"),
         8 => (Some(K_GIANT), "Giant Goomba"),
+        9 => (Some(K_JYK), "Buckot"),
         10 | 16 => (Some(K_GOOMBA), "Bucculus/Mite"),
+        11 => (Some(K_GIANT), "Greap"),
+        12 => (Some(K_PRIMID), "Shaydas"),
         13 => (Some(K_BILL), "Bullet Bill"),
+        14 => (Some(K_BILL), "Roader"),
         15 => (Some(K_PRIMID), "Spaak"),
         17 => (Some(K_GOOMBA), "Ticken"),
         18 => (Some(K_GIANT), "Towtow"),
         19 => (Some(K_HAMMER), "Hammer Bro"),
-        23 => (Some(K_PRIMID), "Primid"),
+        20 => (Some(K_GOOMBA), "Bytan"),
+        21 => (Some(K_JYK), "Floow"),
+        22 => (Some(K_JYK), "Puppit"),
+        23 | 28 | 31 | 33 | 34 => (Some(K_PRIMID), "Primid"),
+        24 => (Some(K_KOOPA), "Shellpod"),
         25 => (Some(K_KOOPA), "Koopa"),
+        26 => (Some(K_GIANT), "Armight"),
+        27 => (Some(K_GOOMBA), "Bombed"),
+        29 => (Some(K_GOOMBA), "Nagagog"),
+        30 => (Some(K_JYK), "Trowlon"),
         32 => (Some(K_PRIMID), "Boomerang Primid"),
         35 => (Some(K_PRIMID), "Sword Primid"),
-        45 => (Some(K_GOOMBA), "Glunder"),
+        36 => (Some(K_GIANT), "Gamyga"),
+        37 => (Some(K_PRIMID), "R.O.B. Blaster"),
+        38 => (Some(K_JYK), "R.O.B. Distance"),
+        39 => (Some(K_PRIMID), "R.O.B. Launcher"),
+        40 => (Some(K_GIANT), "R.O.B. Sentry"),
+        41 => (Some(K_PRIMID), "Autolance"),
+        42 => (Some(K_GIANT), "Armank"),
+        43..=45 => (Some(K_GOOMBA), "Glunder"),
+        46 => (None, "Petey Piranha (boss)"),
+        47..=50 => (None, "Gamyga base (part)"),
+        51 => (None, "Galleom (boss)"),
+        52 => (None, "Ridley (boss)"),
         53 => (None, "Rayquaza (boss)"),
+        54 => (None, "Duon (boss)"),
+        55 => (None, "Porky (boss)"),
+        56 => (None, "Meta Ridley (boss)"),
+        57 => (None, "Falcon Flyer (boss)"),
+        58 => (None, "Tabuu (boss)"),
+        59 | 60 => (None, "Master/Crazy Hand (boss)"),
         _ => (Some(K_GOOMBA), "unmapped"),
     }
 }
@@ -116,6 +259,8 @@ pub struct Door {
     pub into_room: bool,
     /// the level's exit (the door the GMSJ block names, else an arrow door)
     pub exit: bool,
+    /// the step jump the door performs (`Jump::id`): a GMSJ block's jump when the door is that block's, else its id
+    pub jump: u32,
 }
 
 /// A GIB2 crate generator (section, x, y, Brawl's size: 0 small, 1 crate, 2 big) -> a Melee container item.
@@ -164,6 +309,8 @@ pub struct Map {
     /// per section: where a party arriving from the section before stands (its first player spawn, else its first
     /// door, else its left floor end)
     pub entries: Vec<[f32; 2]>,
+    /// the start-point bones found (section, name, world position): where a jump arrives
+    pub starts: Vec<(usize, String, [f32; 2])>,
     /// per GD stage map: a digest of its collision (the content mask's per-section check, envoy-sse-design slice 0)
     pub digest: u64,
 }
@@ -230,75 +377,44 @@ pub struct Block {
 fn load(id: i32) -> Result<Map, String> {
     let secs = secs_of(id);
     let mut m = load_secs(secs, true, true)?;
-    link_doors(&mut m, secs);
+    link_doors(&mut m, secs, &chain_of(id).jumps);
     Ok(m)
 }
 
-/// Door targets from Brawl's own door data (notes/sse-stage.md, "Doors"): a main-section door flagged as a room door
-/// leads into a side room (the first such door into `a`, the next into `b`; two of them share one spot in `080103`
-/// and the second takes over once the first room has been seen, see `room_tick`); a side room's way-back door
-/// returns to the main door that led in; the exit (GMSJ, else an arrow door) has no target.
-fn link_doors(m: &mut Map, secs: &[SecDef]) {
-    let mains: Vec<usize> = (0..secs.len()).filter(|&k| secs[k].room == 0).collect();
-    for (mi, &ms) in mains.iter().enumerate() {
-        let rooms: Vec<usize> = (ms + 1..secs.len()).take_while(|&k| secs[k].room != 0).collect();
-        let mut ri = 0usize;
-        for i in 0..m.doors.len() {
-            let d = m.doors[i];
-            if d.sec != ms || !d.into_room || d.exit {
-                continue;
-            }
-            let Some(&rs) = rooms.get(ri) else { continue };
-            ri += 1;
-            if let Some(t) = m.doors.iter().position(|o| o.sec == rs && o.back) {
-                m.doors[i].to = t as i32;
-                if m.doors[t].to < 0 {
-                    m.doors[t].to = i as i32;
-                }
-            }
+/// Door targets from Brawl's own chain (`jumps`, the level's step-jump table): a door performs its jump (its GMSJ
+/// block's when it has one, else its own id); a segment clear is the level's way on (`STORY_NEXT`); any other jump
+/// leads to its step's section, arriving at the record's start-point bone (an `ENTRY` pseudo door there, one per
+/// spot; the section's entry when the bone is missing). A door with no record, or into a section not loaded, stays
+/// shut.
+fn link_doors(m: &mut Map, secs: &[SecDef], js: &[Jump]) {
+    let mut arrive: Vec<(usize, String, usize)> = vec![];
+    for i in 0..m.doors.len() {
+        let d = m.doors[i];
+        if d.kind == ENTRY {
+            continue;
         }
-        // the way on: the section's exit door leads to the next main section's entry, past the last one to the
-        // level's next story step; any other door the arrow rule called an exit stays shut
-        let way = if secs[ms].exit != 0 {
-            m.doors.iter().position(|d| d.sec == ms && d.id == secs[ms].exit)
-        } else {
-            m.doors.iter().position(|d| d.sec == ms && d.exit)
+        m.doors[i].exit = false;
+        let Some(j) = js.iter().find(|j| j.id == d.jump) else { continue };
+        if j.kind == JUMP_CLEAR {
+            m.doors[i].to = STORY_NEXT;
+            m.doors[i].exit = true;
+            continue;
+        }
+        let to = step_file(j.dest);
+        let Some(ts) = secs.iter().position(|s| s.file.strip_suffix(".pac") == Some(to.as_str())) else { continue };
+        if m.ext.get(ts).is_none_or(|e| *e == [0.0; 4]) {
+            continue; // the section's archive was not readable
+        }
+        let e = match arrive.iter().find(|a| a.0 == ts && a.1 == j.start) {
+            Some(a) => a.2,
+            None => {
+                let at = m.starts.iter().find(|s| s.0 == ts && s.1 == j.start).map(|s| s.2).unwrap_or_else(|| m.entries.get(ts).copied().unwrap_or([0.0, 0.0]));
+                m.doors.push(Door { sec: ts, x: at[0], y: at[1], kind: ENTRY, to: -1, id: 0, back: false, into_room: false, exit: false, jump: 0 });
+                arrive.push((ts, j.start.clone(), m.doors.len() - 1));
+                m.doors.len() - 1
+            }
         };
-        if let Some(e) = way {
-            for d in m.doors.iter_mut().filter(|d| d.sec == ms) {
-                d.exit = false;
-            }
-            m.doors[e].into_room = false;
-            m.doors[e].back = false;
-            match mains.get(mi + 1) {
-                Some(&n) => {
-                    let at = m.entries.get(n).copied().unwrap_or([0.0, 0.0]);
-                    m.doors.push(Door { sec: n, x: at[0], y: at[1], kind: ENTRY, to: -1, id: 0, back: false, into_room: false, exit: false });
-                    m.doors[e].to = m.doors.len() as i32 - 1;
-                }
-                None => {
-                    m.doors[e].to = STORY_NEXT;
-                    m.doors[e].exit = true;
-                }
-            }
-        }
-        // a section whose doors carry neither flag (The Jungle's `060002` and its wheel room): a side room still
-        // unreached is paired with the first free main door (a way-back-flagged one first) through its own first
-        // free door
-        for &rs in rooms.iter().skip(ri) {
-            if m.doors.iter().any(|d| d.sec == rs && d.to >= 0) {
-                continue;
-            }
-            let free = |m: &Map, main: bool, back: bool| {
-                m.doors.iter().position(|d| if main { d.sec == ms } else { d.sec == rs } && d.to == -1 && d.kind != ENTRY && !d.exit && (!back || d.back))
-            };
-            let Some(i) = free(m, true, true).or_else(|| free(m, true, false)) else { continue };
-            let Some(t) = free(m, false, false) else { continue };
-            m.doors[i].to = t as i32;
-            m.doors[i].into_room = true;
-            m.doors[t].to = i as i32;
-            m.doors[t].back = true;
-        }
+        m.doors[i].to = e as i32;
     }
 }
 
@@ -320,7 +436,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut doors = vec![];
     let mut spawns = vec![];
     let mut crates = vec![];
-    let mut exits: Vec<u32> = vec![];
+    let mut exits: Vec<(u32, u32)> = vec![];
     let mut models = vec![];
     let mut door_models = vec![];
     let mut brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)> = vec![];
@@ -333,10 +449,11 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut blast = None;
     let mut players = vec![];
     let mut entries: Vec<[f32; 2]> = vec![];
+    let mut starts: Vec<(usize, String, [f32; 2])> = vec![];
     for (si, s) in secs.iter().enumerate() {
         let p_first = players.len();
         let mut prop_cache: Option<Vec<pm::Rig>> = None;
-        let Some((leaves, tags)) = pm::pac_leaves_tagged(s.file) else {
+        let Some((leaves, tags)) = pm::pac_leaves_tagged(&s.file) else {
             if si > 0 {
                 // a missing side room: the main section still plays (its doors into it stay shut)
                 ext.push([0.0; 4]);
@@ -511,18 +628,20 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                     back: b.get(e + 0x34) == Some(&1),
                     into_room: b.get(e + 0x51) == Some(&0x13),
                     exit: false,
+                    jump: be32(b, e + 0x30),
                 });
             }
             for e in bloc_entries(b, b"GEG1") {
                 spawn_path.push(placement_path(&leaves, &tags, bi, b.get(e + 6).copied().unwrap_or(0xFF), s.off, &mut enemy_paths, &mut notes));
                 spawns.push((si, bef(b, e + 0x28) + s.off[0], bef(b, e + 0x2C) + s.off[1], if b[e + 0x67] != 0 { 1 } else { -1 }, be16(b, e + 0x1C)));
             }
-            // the level-exit block (GMSJ) carries a copy of its exit door: that door's id
+            // a step-jump block (GMSJ) is fired by the door of the GDOR block right after it: that door performs
+            // the block's jump (its first word, a step-jump id)
             for e in bloc_entries(b, b"GMSJ") {
                 if b.get(e + 0xC..e + 0x10) == Some(b"GDOR") {
                     let inner = e + 0xC;
                     let first = inner + be32(b, inner + 8) as usize;
-                    exits.push(be32(b, first + 0x30));
+                    exits.push((be32(b, first + 0x30), be32(b, e)));
                 }
             }
             for e in bloc_entries(b, b"GIB2") {
@@ -536,7 +655,16 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 .or_else(|| doors.iter().find(|d: &&Door| d.sec == si).map(|d| [d.x, d.y]))
                 .unwrap_or([e[0] + 40.0, e[3]]),
         );
-        for (_, r, t) in pm::static_models(&leaves, &[s.model]) {
+        for n in &s.starts {
+            if let Some(p) = leaves.iter().find_map(|b| pm::bone_trans(b, n.as_bytes())) {
+                starts.push((si, n.clone(), [p[0] + s.off[0], p[1] + s.off[1]]));
+            }
+        }
+        let model = if s.model.is_empty() { section_model(&leaves, s.file.trim_end_matches(".pac")) } else { s.model.clone() };
+        if model.is_empty() {
+            notes.push(format!("explore: section {si}: no map model found"));
+        }
+        for (_, r, t) in pm::static_models(&leaves, &[model.as_str()]) {
             models.push((r, t, s.off));
         }
         if si == 0 {
@@ -546,7 +674,9 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         }
     }
     for d in doors.iter_mut() {
-        d.exit = if exits.is_empty() { d.kind == 2 && !d.back } else { exits.contains(&d.id) };
+        if let Some(x) = exits.iter().find(|x| x.0 == d.id) {
+            d.jump = x.1;
+        }
     }
     if whole {
         // weld: one vertex per position, and each line's neighbours by shared vertices (the files' own links stop at
@@ -714,6 +844,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         blast,
         players,
         entries,
+        starts,
         digest,
     })
 }
@@ -725,6 +856,10 @@ pub const GD_STAGE_LAST: i32 = 0x70FF;
 pub const GD_STAGE_SSE_LAKE3: i32 = 0x7001;
 /// The Jungle, step 2 (+ its water-wheel side room).
 pub const GD_STAGE_SSE_JUNGLE: i32 = 0x7002;
+/// Levels 16 (from 160201), 22 (from 220001) and 27 (from 270001), chained from Brawl's step-jump table.
+pub const GD_STAGE_SSE_16: i32 = 0x7003;
+pub const GD_STAGE_SSE_22: i32 = 0x7004;
+pub const GD_STAGE_SSE_27: i32 = 0x7005;
 /// Final Destination's external stage id: the carrier of every GD stage (its stage proc, camera and music).
 pub const FD_STKIND: i32 = 0x20;
 
@@ -733,12 +868,28 @@ pub struct GdStage {
     pub id: i32,
     pub name: &'static str,
     pub files: &'static [&'static str],
+    /// Brawl's level number (its step-jump table, `jumps`) and the archive the party starts in
+    pub level: u16,
+    pub first: &'static str,
+    /// the `--match` word that picks it
+    pub word: &'static str,
 }
 /// The GD stage table (the stage select appends one icon per available row).
-pub const GD_STAGES: [GdStage; 2] = [
-    GdStage { id: GD_STAGE_SSE_LAKE3, name: "The Lake 3 (SSE)", files: &["080103.pac", "080103a.pac"] },
-    GdStage { id: GD_STAGE_SSE_JUNGLE, name: "The Jungle (SSE)", files: &["060002.pac", "060002a.pac"] },
+pub const GD_STAGES: [GdStage; 5] = [
+    GdStage { id: GD_STAGE_SSE_LAKE3, name: "The Lake 3 (SSE)", files: &["080103.pac", "080103a.pac", "adventure_common.arc"], level: 8, first: "080103", word: "lake" },
+    GdStage { id: GD_STAGE_SSE_JUNGLE, name: "The Jungle (SSE)", files: &["060002.pac", "060002a.pac", "adventure_common.arc"], level: 6, first: "060001", word: "jungle" },
+    GdStage { id: GD_STAGE_SSE_16, name: "SSE 16", files: &["160201.pac", "160202.pac", "adventure_common.arc"], level: 16, first: "160201", word: "sse16" },
+    GdStage { id: GD_STAGE_SSE_22, name: "SSE 22", files: &["220001.pac", "220002.pac", "adventure_common.arc"], level: 22, first: "220001", word: "sse22" },
+    GdStage { id: GD_STAGE_SSE_27, name: "SSE 27", files: &["270001.pac", "270002.pac", "adventure_common.arc"], level: 27, first: "270001", word: "sse27" },
 ];
+
+/// The GD stage a `--match` word picks (`lake` / `sse`, `jungle`, `sse16`, ..).
+pub fn gd_by_word(w: &str) -> Option<i32> {
+    if w.eq_ignore_ascii_case("sse") {
+        return Some(GD_STAGE_SSE_LAKE3);
+    }
+    GD_STAGES.iter().find(|g| g.word.eq_ignore_ascii_case(w)).map(|g| g.id)
+}
 
 /// Whether any GD stage's files are here (the hooks go in at engine start on this, before any netplay agreement).
 fn any_available() -> bool {
@@ -860,9 +1011,9 @@ pub fn map() -> Option<&'static Map> {
 /// loader threads. The report is printed by the game thread (`map_of`): printing from a loader raced the rewrite of
 /// std's own statics and hung a synctest one run in six.
 struct Maps {
-    m: [std::sync::OnceLock<Option<Map>>; 2],
-    msg: [std::sync::Mutex<String>; 2],
-    told: [std::sync::atomic::AtomicBool; 2],
+    m: [std::sync::OnceLock<Option<Map>>; GD_STAGES.len()],
+    msg: [std::sync::Mutex<String>; GD_STAGES.len()],
+    told: [std::sync::atomic::AtomicBool; GD_STAGES.len()],
 }
 
 std::thread_local! {
@@ -876,9 +1027,9 @@ fn maps() -> &'static Maps {
         }
         let s: &'static Maps = std::thread::spawn(|| {
             &*Box::leak(Box::new(Maps {
-                m: [const { std::sync::OnceLock::new() }; 2],
-                msg: [const { std::sync::Mutex::new(String::new()) }; 2],
-                told: [const { std::sync::atomic::AtomicBool::new(false) }; 2],
+                m: [const { std::sync::OnceLock::new() }; GD_STAGES.len()],
+                msg: [const { std::sync::Mutex::new(String::new()) }; GD_STAGES.len()],
+                told: [const { std::sync::atomic::AtomicBool::new(false) }; GD_STAGES.len()],
             }))
         })
         .join()
@@ -889,7 +1040,7 @@ fn maps() -> &'static Maps {
 }
 
 fn slot_of(id: i32) -> usize {
-    if id == GD_STAGE_SSE_JUNGLE { 1 } else { 0 }
+    GD_STAGES.iter().position(|g| g.id == id).unwrap_or(0)
 }
 
 /// Load GD stage `id`'s map into `st` (any thread; once).
@@ -948,7 +1099,7 @@ pub fn map_of(id: i32) -> Option<&'static Map> {
 pub fn arena() -> Option<&'static Map> {
     static M: std::sync::OnceLock<Option<Map>> = std::sync::OnceLock::new();
     M.get_or_init(|| {
-        let r = std::thread::spawn(|| load_secs(&ARENA_SECS, true, false)).join().unwrap_or_else(|_| Err("loader panicked".into()));
+        let r = std::thread::spawn(|| load_secs(&arena_secs(), true, false)).join().unwrap_or_else(|_| Err("loader panicked".into()));
         match &r {
             Ok(m) => eprintln!(
                 "explore: Petey arena loaded ({} verts, {} lines, {} players, camera {}, blast {})",
@@ -1832,6 +1983,9 @@ pub const STORY: &[(Step, Carry)] = &[
     (Step::Scene(4, SceneKind::Camp), Carry::Rest),    // before Rayquaza (080105's GMSJ exit)
     (Step::Boss(BossKind::Rayquaza), Carry::Keep),     // 080001
     (Step::Scene(5, SceneKind::Results), Carry::Keep), // after Rayquaza
+    (Step::Map(GD_STAGE_SSE_16), Carry::Keep),         // 160201 -> 160202 (clear 16020201)
+    (Step::Map(GD_STAGE_SSE_22), Carry::Keep),         // 220001 -> 220002 (+a) (clear 22000203)
+    (Step::Map(GD_STAGE_SSE_27), Carry::Keep),         // 270001 -> 270002 (+a) (clear 27000202)
 ];
 
 /// The story step the party is on (index into `STORY`; -1 outside the story). Snapshot covered.
@@ -2106,7 +2260,7 @@ mod arena_tests {
     /// and none at the weld seams.
     #[test]
     fn arena_outer_ledges() {
-        let Ok(m) = super::load_secs(&super::ARENA_SECS, true, false) else { return };
+        let Ok(m) = super::load_secs(&super::arena_secs(), true, false) else { return };
         let mut ledges = vec![];
         for l in &m.lines {
             if l.hi_flags & 1 != 0 {
@@ -2127,52 +2281,62 @@ mod arena_tests {
 
 #[cfg(test)]
 mod lake3_tests {
-    /// With the owner's Brawl files (skipped otherwise): every door of the main section's room doors and the side
-    /// rooms' way-back doors is linked from Brawl's own door data, the exit is the arrow door, and every enemy point
-    /// has a kind.
+    /// With the owner's Brawl files (skipped otherwise): the chain from Brawl's step-jump table: every GD stage has
+    /// its sections, a door that clears the segment (the way on), its room doors linked both ways, and every enemy
+    /// point a kind.
     #[test]
-    fn lake3_links() {
-        let Ok(mut m) = super::load_secs(&super::SECS, true, true) else { return };
-        super::link_doors(&mut m, &super::SECS);
-        for (i, d) in m.doors.iter().enumerate() {
-            eprintln!("door {i} sec {} type {} to {} exit {} back {} room {}", d.sec, d.kind, d.to, d.exit, d.back, d.into_room);
+    fn chains_link() {
+        for g in super::GD_STAGES.iter() {
+            let secs = super::secs_of(g.id);
+            if secs.is_empty() || !super::files_present(g.id) {
+                continue;
+            }
+            let Ok(mut m) = super::load_secs(secs, true, true) else { continue };
+            super::link_doors(&mut m, secs, &super::chain_of(g.id).jumps);
+            eprintln!("{}: {:?}", g.name, secs.iter().map(|s| s.file.as_str()).collect::<Vec<_>>());
+            for (i, d) in m.doors.iter().enumerate() {
+                eprintln!("  door {i} sec {} type {} jump {:08x} to {} exit {}", d.sec, d.kind, d.jump, d.to, d.exit);
+            }
+            assert!(m.doors.iter().any(|d| d.to == super::STORY_NEXT), "{}: no way on", g.name);
+            assert!(m.models.len() >= secs.len(), "{}: a section without its model", g.name);
+            assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"), "{}: unmapped kind", g.name);
+            // every section is reached from the first by doors
+            let mut seen = vec![0usize];
+            let mut k = 0;
+            while k < seen.len() {
+                let s = seen[k];
+                k += 1;
+                for d in m.doors.iter().filter(|d| d.sec == s && d.to >= 0) {
+                    let t = m.doors[d.to as usize].sec;
+                    if !seen.contains(&t) {
+                        seen.push(t);
+                    }
+                }
+            }
+            // every main section is reached (a side room can hang only off a door whose GMSJ jump wins: 080105a)
+            for (k, s) in secs.iter().enumerate() {
+                if !seen.contains(&k) {
+                    eprintln!("  {} not reached by a door", s.file);
+                    assert!(s.room != 0, "{}: main section {} no door reaches", g.name, s.file);
+                }
+            }
         }
-        for s in &m.spawns {
-            eprintln!("spawn sec {} kind {} -> {}", s.0, s.4, super::enemy_kind(s.4).1);
+    }
+
+    #[test]
+    fn lake_jungle_sections() {
+        let names = |id| super::secs_of(id).iter().map(|s| s.file.trim_end_matches(".pac").to_string()).collect::<Vec<_>>();
+        if super::files_present(super::GD_STAGE_SSE_LAKE3) {
+            assert_eq!(names(super::GD_STAGE_SSE_LAKE3), ["080103", "080103a", "080103b", "080104", "080104a", "080104b", "080105", "080105a"]);
         }
-        eprintln!("crates {} blocks {} joints {} lines {}", m.crates.len(), m.blocks.len(), m.joints.len(), m.lines.len());
-        assert!(m.doors.iter().any(|d| d.exit), "no exit");
-        assert!(m.doors.iter().any(|d| d.to == super::STORY_NEXT), "no way on");
-        assert_eq!(m.doors.iter().filter(|d| d.kind == super::ENTRY).count(), 2, "sections not chained");
-        for d in m.doors.iter().filter(|d| d.into_room || d.back) {
-            assert!(d.to >= 0, "room door unlinked");
+        if super::files_present(super::GD_STAGE_SSE_JUNGLE) {
+            assert_eq!(names(super::GD_STAGE_SSE_JUNGLE), ["060001", "060002", "060002a", "060003", "060004", "060004a"]);
         }
-        assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"));
     }
 }
 
 #[cfg(test)]
 mod jungle_tests {
-    /// With the owner's Brawl files (skipped otherwise): The Jungle's main section links its room door to the
-    /// water-wheel room and back, and every enemy point has a kind.
-    #[test]
-    fn jungle_links() {
-        let secs = super::secs_of(super::GD_STAGE_SSE_JUNGLE);
-        let Ok(mut m) = super::load_secs(secs, true, true) else { return };
-        super::link_doors(&mut m, secs);
-        for (i, d) in m.doors.iter().enumerate() {
-            eprintln!("door {i} sec {} type {} to {} exit {} back {} room {}", d.sec, d.kind, d.to, d.exit, d.back, d.into_room);
-        }
-        eprintln!("spawns {} crates {} blocks {} lines {}", m.spawns.len(), m.crates.len(), m.blocks.len(), m.lines.len());
-        // 060002 (section 1) into its wheel room (section 2) and back
-        assert!(m.doors.iter().any(|d| d.sec == 1 && d.into_room && d.to >= 0), "no room door linked");
-        assert!(m.doors.iter().any(|d| d.sec == 2 && d.back && d.to >= 0), "no way back");
-        // chained: every main section but the last leads on to the next one's entry, the last to the story
-        assert!(m.doors.iter().any(|d| d.to == super::STORY_NEXT), "no way on");
-        assert_eq!(m.doors.iter().filter(|d| d.kind == super::ENTRY).count(), 3, "sections not chained");
-        assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"));
-    }
-
     /// The Jungle's Bullet Bills on their own placement paths (GEG1 model index -> grGimmickMotionPath), through the
     /// enemy VM headless: every start status, 1200 frames from the GEG1 home; a path rider must keep to the path's
     /// points (plus the record's offset), and a replay from the frame-600 snapshot must give identical hashes.

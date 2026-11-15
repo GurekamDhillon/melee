@@ -286,6 +286,9 @@ pub struct Input {
     /// per-target factors 6901 / 6902 apply to their (x, y) offset
     pub target_lr: [f32; 4],
     pub target_scale: [f32; 4],
+    /// R10059: a flag byte of a global sora_melee object (the one 0x81C21B30 creates and clears), set by sora_melee
+    /// 0x81C51C04 when one of that object's timers reaches its value [L: meaning not traced; a VS fight leaves it clear]
+    pub global_flag: bool,
 }
 
 /// One group of the stage-wide group manager (R10052).
@@ -1092,6 +1095,8 @@ impl<'a> Cx<'a> {
             // (0x81A0D044, then 0x81A0D0A8): true when there is none, else when that enemy's work flag 0 (0x12000000,
             // its work module's flag query) is set: the partner is gone
             10053 => !self.i.partner_alive,
+            // 10059 (0x81A15284): no arguments (else false); the global object's flag byte
+            10059 => self.i.global_flag,
             _ => false,
         };
         r != not
@@ -2142,9 +2147,12 @@ impl<'a> Cx<'a> {
                 // mirroring, then 0x81A1E5B0 turns (speed x facing, 0) by 270 x facing: straight down either way
                 let before = k.spd;
                 k.spd += k.acc;
-                if k.min > f32::MIN && k.spd < k.min && before >= k.min {
+                if k.min > f32::MIN && k.spd < k.min {
+                    // 0x81A1E658 clamps to the lower limit whatever the speed was before
                     k.spd = k.min;
-                    k.done = 1;
+                    if before >= k.min {
+                        k.done = 1;
+                    }
                 }
                 if k.spd >= k.max {
                     k.spd = k.max;
@@ -2161,9 +2169,13 @@ impl<'a> Cx<'a> {
             // each skipped when it holds the "none" marker; a limit reached ends the record
             let before = k.spd;
             k.spd += k.acc;
-            if k.min > f32::MIN && k.spd < k.min && before >= k.min {
+            if k.min > f32::MIN && k.spd < k.min {
+                // 0x81A1E658: the speed is raised to the lower limit whatever it was before (a unit that starts
+                // under its floor, e.g. at 0 with a decay, moves at the floor); only crossing it ends the record
                 k.spd = k.min;
-                k.done = 1;
+                if before >= k.min {
+                    k.done = 1;
+                }
             } else if k.min == f32::MIN && k.acc < 0.0 && before > 0.0 && k.spd <= 0.0 {
                 // no lower limit read: a decay stops at zero [L]
                 k.spd = 0.0;

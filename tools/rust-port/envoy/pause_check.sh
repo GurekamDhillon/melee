@@ -24,7 +24,7 @@ run() { # name pad
   (cd "$d" && env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="pause1 agent: pause_check $name $size (port/envoy-pause1)" \
     MELEE_WASM_MODS="$mods" MELEE_ENVOY_DIR="$d/save" MELEE_CARD_PATH="$d/card" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=1 MELEE_ENVOY_TEST_DRIVES="${ITEMS:-spark_ring,hop_shot,hop_shot,moon_drops,coin_magnet,fire_lace,noshop}" \
     MELEE_PAD_SCRIPT="$pad" MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WIDESCREEN=1 MELEE_FULLSCREEN=off MELEE_WINDOW="$size" \
-    MELEE_UI_LOG=1 MELEE_RETAIL_SHOT_TICKS="$SHOTS" ${PERF:+MELEE_PROFILE=1} \
+    MELEE_UI_LOG=1 MELEE_UI_ASPECT=1 MELEE_RETAIL_SHOT_TICKS="$SHOTS" ${PERF:+MELEE_PROFILE=1} \
     timeout 900 "$exe" play --iso "$GW_ISO_VANILLA" --match falcon,fox,32 --max-frames 2200 \
     "${shotargs[@]}" >"$d/run.log" 2>&1)
   echo "$name: exit $? ($(ls "$d/shots" 2>/dev/null | wc -l) shots)"
@@ -43,6 +43,9 @@ if case " $only " in *" nav "*) true ;; *) false ;; esac; then
   has nav "envoy pause: page" || miss="$miss (overlay never logged)"
   for pg in Items Run Fight Options; do has nav "envoy pause: page $pg" || miss="$miss (page $pg)"; done
   has nav "envoy pause: option" || miss="$miss (no option changed)"
+  # the aspect audit (ui_aspect.sh; notes/ui-remake.md): nothing on the overlay out of proportion, cut or overlapping
+  bad=$(grep -a "ui_aspect:.* BAD" "$out/nav/run.log" | sed 's/.*ui_aspect: //' | sort -u | grep -v -F -f <(grep -v '^#' "$here/ui_aspect_allow.txt" | sed '/^$/d') | wc -l)
+  [ "$bad" = 0 ] || miss="$miss ($bad UI pieces out of proportion, cut or overlapping: grep ui_aspect)"
   has nav "run abandoned" && miss="$miss (the run was abandoned: it must not be)"
   has nav "envoy: quick tag" && miss="$miss (a tag fired while paused: input leaked)"
   # the quit: the match ended by the pause quit (results, or with ready1 the run kept and the match left for the camp)

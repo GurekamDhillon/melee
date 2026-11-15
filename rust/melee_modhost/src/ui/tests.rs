@@ -515,3 +515,143 @@ fn strip_and_sim_signal() {
     }
     assert_eq!(seen, 2);
 }
+
+/// ui_aspect: a sprite drawn into a box of another shape than its art, a round shape that is not round and a line
+/// cut at its width are each reported once and marked BAD; true proportions are reported clean.
+#[test]
+fn aspect_audit_flags_squished_draws() {
+    let a = atlas();
+    let mut b = Batch::with_capacity(64);
+    b.audit = Some(Box::default());
+    let p = Pen::new(0);
+    let art = melee_gx::ui::AtlasRect { x: 64, y: 64, w: 160, h: 120 };
+    b.audit.as_mut().unwrap().names.insert((64, 64), "wide.png".into());
+    // exact, a uniform scale, and inside the 2% tolerance: clean
+    b.tex(&p, art, 0.0, 0.0, 40.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 0.0, 0.0, 80.0, 60.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 0.0, 0.0, 40.6, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    // a cell of a sheet keeps the cell's proportions (half the width: 80 x 120)
+    b.tex(&p, art, 0.0, 0.0, 20.0, 30.0, [0.0, 0.0, 0.5, 1.0], !0);
+    assert!(b.audit.as_ref().unwrap().out.iter().all(|l| !l.contains("BAD")), "{:?}", b.audit.as_ref().unwrap().out);
+    // 4:3 art in a square box: squished 25%
+    b.tex(&p, art, 500.0, 5.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, art, 500.0, 5.0, 30.0, 30.0, [0.0, 0.0, 1.0, 1.0], !0);
+    let bad: Vec<_> = b.audit.as_ref().unwrap().out.iter().filter(|l| l.contains("BAD")).cloned().collect();
+    assert_eq!(bad.len(), 1, "{bad:?}");
+    assert!(bad[0].contains("tex wide.png") && bad[0].contains("-25.0%"), "{bad:?}");
+    // a disc is round; a 20 x 18 "disc" is not; a real pill is fine
+    assert!(!Audit::oval(20.0, 20.0, 20.0) && Audit::oval(20.0, 18.0, 20.0) && !Audit::oval(60.0, 18.0, 9.0) && !Audit::oval(20.0, 18.0, 4.0));
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 0.0, 0.0, 20.0, 18.0, 20.0, 0.0, 0.0, !0, 0);
+    // text cut at its width
+    b.text(&p, &a, 0.0, 0.0, 2, !0, ALIGN_LEFT, 20.0, "a long line that cannot fit");
+    b.text(&p, &a, 0.0, 40.0, 2, !0, ALIGN_LEFT, 0.0, "a long line with no limit");
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.iter().filter(|l| l.contains("BAD")).count(), 3, "{out:?}");
+    assert!(out.iter().any(|l| l.contains("shape round")) && out.iter().any(|l| l.contains("text cut")));
+    // words on a sticker that run past its side; the same words on a wide enough sticker are fine
+    let n0 = out.len();
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 100.0, 200.0, 20.0, 6.0, 2.0, 0.0, !0, !0);
+    b.text(&p, &a, 104.0, 102.0, 2, !0, ALIGN_LEFT, 0.0, "fits");
+    b.shape(&p, melee_gx::ui::SHAPE_BOX, 100.0, 200.0, 30.0, 20.0, 6.0, 2.0, 0.0, !0, !0);
+    b.text(&p, &a, 104.0, 202.0, 2, !0, ALIGN_LEFT, 0.0, "does not fit here");
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.len(), n0 + 1, "{out:?}");
+    assert!(out[n0].contains("text overflows its box"));
+    // one line set over another
+    b.text(&p, &a, 300.0, 300.0, 2, !0, ALIGN_LEFT, 0.0, "a name on the left");
+    b.text(&p, &a, 340.0, 302.0, 2, !0, ALIGN_LEFT, 0.0, "words over it");
+    b.text(&p, &a, 300.0, 320.0, 2, !0, ALIGN_LEFT, 0.0, "the next line down is fine");
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.len(), n0 + 2, "{out:?}");
+    assert!(out[n0 + 1].contains("text over text"));
+    // icons packed closer than they are wide; an icon inside its frame and icons side by side are fine
+    let icon = melee_gx::ui::AtlasRect { x: 256, y: 64, w: 96, h: 96 };
+    b.tex(&p, icon, 400.0, 100.0, 24.0, 24.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, icon, 403.0, 103.0, 18.0, 18.0, [0.0, 0.0, 1.0, 1.0], !0);
+    b.tex(&p, icon, 424.0, 100.0, 24.0, 24.0, [0.0, 0.0, 1.0, 1.0], !0);
+    let n1 = b.audit.as_ref().unwrap().out.len();
+    b.tex(&p, icon, 440.0, 100.0, 24.0, 24.0, [0.0, 0.0, 1.0, 1.0], !0);
+    let out = &b.audit.as_ref().unwrap().out;
+    assert_eq!(out.len(), n1 + 1, "{out:?}");
+    assert!(out[n1].contains("sprite over sprite"));
+}
+
+/// gd-ui-v1.5: a four-radius box and a soft shadow are one shape quad each; the shadow's quad reaches three
+/// deviations past its box; a bad payload is refused.
+#[test]
+fn shape4_and_soft_shadow_records() {
+    let a = atlas();
+    let mut b = Batch::with_capacity(16);
+    let f = |v: f32| v.to_bits();
+    let mut e = Enc::default();
+    e.rec(OP_SHAPE4, &[f(10.0), f(20.0), f(100.0), f(40.0), f(8.0), f(8.0), f(0.0), f(0.0), f(0.0), 0xFF00_00FF, 0]);
+    e.rec(OP_SHAPE, &[melee_gx::ui::SHAPE_SHADOW, f(10.0), f(20.0), f(100.0), f(40.0), f(12.0), f(0.0), f(5.0), 0x0000_0080, 0]);
+    b.begin();
+    b.submit(&e.0, 0, &a, &[], false).unwrap();
+    b.finish(false);
+    let q = &b.frame.quads;
+    assert_eq!(q.len(), 2);
+    assert_eq!((q[0].flags & melee_gx::ui::Q_SHAPE_MASK) >> melee_gx::ui::Q_SHAPE_SHIFT, melee_gx::ui::SHAPE_BOX4);
+    assert_eq!(q[0].uv, [8.0, 8.0, 0.0, 0.0]);
+    assert_eq!(q[0].rect, [10.0, 20.0, 100.0, 40.0]);
+    assert_eq!((q[1].flags & melee_gx::ui::Q_SHAPE_MASK) >> melee_gx::ui::Q_SHAPE_SHIFT, melee_gx::ui::SHAPE_SHADOW);
+    assert_eq!(q[1].rect, [10.0 - 15.0, 20.0 - 15.0, 130.0, 70.0]);
+    let mut bad = Enc::default();
+    bad.rec(OP_SHAPE4, &[f(0.0), f(0.0), f(1.0), f(1.0), f(f32::NAN), 0, 0, 0, 0, 0, 0]);
+    assert!(b.submit(&bad.0, 0, &a, &[], false).is_err());
+}
+
+/// gd_ui_layout: a row of a fixed box, a text leaf and a spring lays out natively; the text leaf is as wide as
+/// the host's own measure of its words; a wrapping paragraph in a narrow column takes more than one line; a bad
+/// request is refused.
+#[test]
+fn layout_request_lays_out() {
+    use super::layout;
+    let a = atlas();
+    let f = |v: f32| v.to_bits();
+    let nan = f32::NAN.to_bits();
+    // a node: flags, gap, pad x4, five (kind, value) sizes, grow, shrink, aspect, abs x, abs y, kids, text kind
+    let node = |flags: u32, gap: f32, pad: f32, w: (u32, f32), h: (u32, f32), grow: f32, kids: u32, text: u32| {
+        let mut v = vec![flags, f(gap), f(pad), f(pad), f(pad), f(pad), w.0, f(w.1), h.0, f(h.1), 0, 0, 0, 0, 0, 0, f(grow), f(0.0), nan, nan, nan, kids, text];
+        v.shrink_to_fit();
+        v
+    };
+    let words = |s: &str| {
+        let mut b = s.as_bytes().to_vec();
+        while b.len() % 4 != 0 {
+            b.push(0);
+        }
+        b.chunks(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect::<Vec<u32>>()
+    };
+    let role = 2 | (13 << 16);
+    let mut req = vec![layout::MAGIC, 5, 4, f(300.0), nan];
+    req.extend(node(0, 0.0, 0.0, (1, 20.0), (1, 20.0), 0.0, 0, 0)); // 0: a 20 x 20 box
+    req.extend(node(0, 0.0, 0.0, (0, 0.0), (0, 0.0), 0.0, 0, 1)); // 1: one line
+    req.extend([role as u32, 1, f(17.0), 5]);
+    req.extend(words("Words"));
+    req.extend(node(0, 0.0, 0.0, (0, 0.0), (0, 0.0), 1.0, 0, 0)); // 2: a spring
+    req.extend(node(0, 0.0, 0.0, (1, 60.0), (0, 0.0), 0.0, 0, 1)); // 3: a paragraph in a 60-wide box
+    req.extend([role as u32, 6, f(17.0), 28]);
+    req.extend(words("several words that must wrap"));
+    req.extend(node(4 << 2, 5.0, 10.0, (1, 300.0), (0, 0.0), 0.0, 4, 0)); // 4: the row (align stretch)
+    req.extend([0, 1, 2, 3]);
+    let bytes: Vec<u8> = req.iter().flat_map(|w| w.to_le_bytes()).collect();
+    let r = layout::compute(&bytes, &a).unwrap();
+    assert_eq!(r.len(), 20);
+    let rect = |i: usize| [r[i * 4], r[i * 4 + 1], r[i * 4 + 2], r[i * 4 + 3]];
+    assert_eq!(rect(0)[..3], [10.0, 10.0, 20.0]);
+    let tw = a.measure("Words", cmd::style(role));
+    assert!((rect(1)[2] - tw).abs() < 0.01 && rect(1)[0] == 35.0, "{:?} vs {tw}", rect(1));
+    // the spring takes what is left: 300 - 20 (padding) - 20 - words - 60 - 3 gaps of 5
+    assert!((rect(2)[2] - (300.0 - 20.0 - 20.0 - tw - 60.0 - 15.0)).abs() < 0.01, "{:?}", rect(2));
+    assert!(rect(3)[3] >= 34.0 && rect(3)[2] == 60.0, "{:?}", rect(3));
+    assert_eq!(rect(4)[2], 300.0);
+    assert!(rect(4)[3] >= rect(3)[3] + 20.0);
+    // refused: a child that is not before its parent, a truncated request, a bad magic
+    let mut bad = vec![layout::MAGIC, 1, 0, nan, nan];
+    bad.extend(node(0, 0.0, 0.0, (0, 0.0), (0, 0.0), 0.0, 1, 0));
+    bad.push(0);
+    assert!(layout::compute(&bad.iter().flat_map(|w| w.to_le_bytes()).collect::<Vec<u8>>(), &a).is_err());
+    assert!(layout::compute(&bytes[..bytes.len() - 8], &a).is_err());
+    assert!(layout::compute(&[0u8; 20], &a).is_err());
+}

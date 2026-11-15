@@ -717,6 +717,11 @@ struct St {
     fork_cur: i32,
     fork_left: i32,
     fork_pick: i32,
+    /// The room choice holds the match frozen (1: this sim took the hold freeze for it; 0: not frozen yet). The
+    /// fighters stand still while it is open, so the cursor's left / right cannot walk anyone off the stage.
+    fork_hold: i32,
+    /// Each player's stocks when the room choice opened: a stock lost while it is open is given back (fork_guard).
+    fork_stocks: [i32; NP],
     skip_shop: i32,
     /// The shop's stock slot on sale now (its price; 0 none).
     slot_sale: i32,
@@ -946,6 +951,11 @@ unsafe fn take_arm() {
         S.state = RUN_NONE;
         // the new run's seed and act map now, so the road screen before fight 1 shows the map the run will play
         S.seed = run_seed(S.runs.wrapping_add(1)) as i32;
+        // the map is published from the fight and the loop too: the last run's (a boss beaten, a later loop) would
+        // put the new map's cursor on the wrong row or draw another floor's map
+        S.fight = lab::start_fight(gd_envoy_start_fight()).clamp(0, FIGHTS as i32 - 1);
+        S.lp = test_loop();
+        S.collect = 0;
         rooms::floor_start();
         log(b"envoy: armed, new run\0", 0);
     }
@@ -1506,12 +1516,13 @@ unsafe fn make_plan() {
         make_plan_with();
         return;
     }
-    let keep = (S.seed, S.path, S.map_cur);
+    // the road cursor is kept: it is the lane fight 1 will take (take_fight_node), so the plan reads that node's
+    // kind (it was reset to lane 1, so fight 1 was planned from the middle node whatever lane P1 had picked)
+    let keep = (S.seed, S.path);
     S.seed = run_seed(S.runs.wrapping_add(1)) as _;
     S.path = [-1; 8];
-    S.map_cur = 1;
     make_plan_with();
-    (S.seed, S.path, S.map_cur) = keep;
+    (S.seed, S.path) = keep;
 }
 
 unsafe fn make_plan_with() {
@@ -1699,6 +1710,9 @@ unsafe fn on_new_match(seq: i32) {
         let cur = S.map_cur;
         rooms::floor_start();
         S.map_cur = cur.clamp(0, rooms::LANES as i32 - 1);
+        if test_flag("mapcheck") {
+            rooms::map_check_start(); // items_check map / mapcoop: every map and every way through it (rooms.rs)
+        }
         lab::new_match();
         S.seen = [-1; SEEN];
         S.seen_n = 0;
@@ -5857,6 +5871,7 @@ unsafe fn abandon_check() {
 
 extern "C" fn on_frame_end() {
     unsafe {
+        rooms::map_check_frame();
         let armed = (gd_envoy_armed() != 0) as i32;
         if armed != S.arm_seen {
             S.arm_seen = armed;
@@ -5912,6 +5927,10 @@ extern "C" fn on_frame_end() {
                         reward_close();
                     }
                 }
+            } else if S.fork == 1 && S.fork_hold != 0 && phase != 0 && kind == KIND_HOLD {
+                // the act map's room choice over the held match: frozen, only the choice steps (rooms::fork_wait)
+                rooms::fork_guard();
+                rooms::fork_wait();
             } else if phase == 0 || kind != KIND_HOLD {
                 tag_frame();
                 stage_frame();
@@ -5943,8 +5962,10 @@ extern "C" fn on_frame_end() {
             if S.arm_seen != 0 && S.state != RUN_OVER {
                 road_frame();
             }
-            // the match ended inside the collect hold: the latched win stands
+            // the match ended inside the collect hold: the latched win stands (a room choice still open is settled
+            // first, the same on every machine, so the map and the next road screen agree with the sim)
             if S.state == RUN_LIVE && S.outcome == 0 && S.collect > 0 {
+                rooms::fork_settle();
                 fight_won();
             }
         }

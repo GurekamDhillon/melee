@@ -3,6 +3,8 @@
 //! stop's poster and A to go on (the character select that follows stays, with its Envoy banner).
 
 use crate::kit::*;
+use crate::ly::*;
+use alloc::vec::Vec;
 use crate::party::*;
 use crate::{ck_name, Buf, VW};
 use envoy_data::view::*;
@@ -183,8 +185,8 @@ fn list_row(e: &mut E, i: usize, x: f32, y: f32, w: f32, h: f32, on: bool, t: i3
     let x = x + dx;
     sticker(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, x, y, w, h, deg, alpha(WHITE, a), |e| {
         if big {
-            e.text_ex(x + 14.0, y + 6.0, d(23), INK, ALIGN_LEFT, w - 20.0, label);
-            e.text_ex(x + 14.0, y + 34.0, bs(13), if on { INK } else { LILAC }, ALIGN_LEFT, w - 20.0, sub);
+            text_fit(e, x + 14.0, y + 6.0, d, 23, 14, INK, ALIGN_LEFT, w - 20.0, label);
+            text_fit(e, x + 14.0, y + 34.0, bs, 13, 8, if on { INK } else { LILAC }, ALIGN_LEFT, w - 20.0, sub);
         } else {
             e.text_ex(x + 12.0, y + h * 0.5 - 8.0, d(15), INK, ALIGN_LEFT, 0.0, label);
             if !value.is_empty() {
@@ -202,11 +204,14 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
         if known {
             let h = unsafe { crate::picker::icon(ck) };
             if h != 0 {
-                e.tex(h, x + 14.0, y + 6.0, 44.0, 39.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+                tex_in(e, h, x + 14.0, y + 6.0, 44.0, 39.0, WHITE);
             } else {
                 spr_c(e, S_HEAD, x + 36.0, y + 26.0, 1.6, WHITE);
             }
-            e.text_ex(x + 36.0, y + 46.0, d(13), INK, ALIGN_CENTER, 66.0, if (0..26).contains(&ck) { ck_name(ck) } else { crate::picker::short(ck) });
+            // the full name where the card holds it, else the short one ("MR. GAME & WATCH" ran off both sides)
+            let full = if (0..26).contains(&ck) { ck_name(ck) } else { crate::picker::short(ck) };
+            let name = if tw(full, d(9)) <= 64.0 { full } else { crate::picker::short(ck) };
+            text_fit(e, x + 36.0, y + 46.0, d, 13, 8, INK, ALIGN_CENTER, 64.0, name);
             let mut n = 0;
             for k in 0..ids.len() {
                 if (1..=POOL_LEN as i32).contains(&ids[k]) && n < 4 {
@@ -216,7 +221,7 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
             }
         } else {
             text_edge(e, x + 36.0, y + 14.0, d(30), SUNNY, ALIGN_CENTER, 1.4, "?");
-            e.text_ex(x + 36.0, y + 56.0, d(13), LILAC, ALIGN_CENTER, 66.0, "Random");
+            text_fit(e, x + 36.0, y + 56.0, d, 13, 8, LILAC, ALIGN_CENTER, 66.0, "Random");
         }
         if tag > 0 {
             face(e, if tag == 1 { S_FACE_CORAL } else { S_FACE_LAGOON }, x - 6.0, y - 8.0, 26.0, 18.0, WHITE);
@@ -464,7 +469,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                 b.s("The run and its drives will be gone for good.");
                 b
             };
-            e.text_ex(x + 20.0, y + 52.0, bs(14), LILAC, ALIGN_LEFT, 300.0, line.str());
+            text_fit(e, x + 20.0, y + 52.0, bs, 14, 8, LILAC, ALIGN_LEFT, 300.0, line.str());
             for k in 0..2 {
                 let bx = x + 20.0 + k as f32 * 156.0;
                 let on = UI.dcur == k;
@@ -611,36 +616,52 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
     if act {
     } else if ended || looped {
         let won = v[V_STATE] == 2 || looped;
+        // the run-end card as a layout tree (ly.rs): a coloured head with the verdict, the sentence (wrapped,
+        // never cut), the drives fired and the build each player ended with; the card is as high as all that
+        // (it was a fixed 300 x 200 with typed line positions and a long sentence set smaller to fit)
         let (x, y) = (20.0, 70.0);
-        sticker(e, S_FACE_WHITE, x, y, 300.0, 200.0, -1.0, WHITE, |e| {
-            e.rect(x + 1.5, y + 1.5, 297.0, 56.0, if won { SUNNY } else { CORAL });
-            e.text_ex(x + 16.0, y + 12.0, d(28), INK, ALIGN_LEFT, 0.0, if won { "Run cleared!" } else { "The run ended" });
-            let mut s = Buf::new();
-            if looped {
-                s.s("Loop ").i(v[V_LOOP]).s(" begins. Everything kept, the foes hit harder. ").i(v[V_POOL]).s(" stocks.");
-            } else if won {
-                s.s("All ").i(v[V_FIGHTS]).s(" fights, ").i(v[V_POOL]).s(" stocks to spare.");
-            } else if v[V_LOOP] > 1 {
-                s.s("Reached loop ").i(v[V_LOOP]).s(", fight ").i(next + 1).s(".");
-            } else {
-                s.s("Fight ").i(next + 1).s(" took the last stock.");
-            }
-            e.text_ex(x + 16.0, y + 76.0, bs(14), INK, ALIGN_LEFT, 270.0, s.str());
-            let mut s = Buf::new();
-            s.s("Drives fired: ").i(v[V_FIRES]);
-            e.text_ex(x + 16.0, y + 110.0, d(17), INK, ALIGN_LEFT, 0.0, s.str());
-            // the build the run ended with, a row a player (11.11)
-            let any = (0..p.players).any(|q| p.items[q].iter().any(|&c| c > 0));
-            if any {
-                e.text_ex(x + 16.0, y + 136.0, d(13), LILAC, ALIGN_LEFT, 0.0, "Build");
-                for q in 0..p.players {
-                    let ry = y + 150.0 + q as f32 * 24.0;
-                    if p.players == 2 {
-                        e.text_ex(x + 16.0, ry - 5.0, d(11), if q == 0 { CORAL } else { LAGOON }, ALIGN_LEFT, 0.0, if q == 0 { "P1" } else { "P2" });
-                    }
-                    build_row(e, &p.items[q], x + 40.0, ry + 2.0, 250.0, 18.0);
+        let mut l = Lay::new(SLOT_RESULTS);
+        let k_head = l.text(if won { "Run cleared!" } else { "The run ended" }, d, 28, INK);
+        // the head follows the sticker's top corners and is square where it meets the body
+        let head = l.boxed(St::row().pad4(16.0, 9.0, 16.0, 9.0).fixed(), P::Fill4(if won { SUNNY } else { CORAL }, [8.5, 8.5, 0.0, 0.0]), &[k_head]);
+        let mut s = Buf::new();
+        if looped {
+            s.s("Loop ").i(v[V_LOOP]).s(" begins. Everything kept, the foes hit harder. ").i(v[V_POOL]).s(" stocks.");
+        } else if won {
+            s.s("All ").i(v[V_FIGHTS]).s(" fights, ").i(v[V_POOL]).s(" stocks to spare.");
+        } else if v[V_LOOP] > 1 {
+            s.s("Reached loop ").i(v[V_LOOP]).s(", fight ").i(next + 1).s(".");
+        } else {
+            s.s("Fight ").i(next + 1).s(" took the last stock.");
+        }
+        let k_line = l.para(s.str(), bs, 14, INK, 3);
+        let mut s = Buf::new();
+        s.s("Drives fired: ").i(v[V_FIRES]);
+        let k_fired = l.text(s.str(), d, 17, INK);
+        let mut body = Vec::new();
+        body.extend_from_slice(&[k_line, k_fired]);
+        // the build the run ended with, a row a player (11.11)
+        if (0..p.players).any(|q| p.items[q].iter().any(|&c| c > 0)) {
+            body.push(l.text("Build", d, 13, LILAC));
+            for q in 0..p.players {
+                let row = l.leaf(St::row().h(26.0).grow(1.0), P::Own(1, q as i32));
+                if p.players == 2 {
+                    let tag = l.text(if q == 0 { "P1" } else { "P2" }, d, 11, if q == 0 { CORAL } else { LAGOON });
+                    body.push(l.node(St::row().gap(8.0).align(A::Center).fixed(), &[tag, row]));
+                } else {
+                    body.push(l.node(St::row().fixed(), &[row]));
                 }
             }
+        }
+        let body = l.node(St::col().pad4(16.0, 10.0, 16.0, 14.0).gap(9.0), &body);
+        let root = l.node(St::col().w(300.0).min_h(150.0), &[head, body]);
+        l.compute(root, x, y, None, None);
+        let r = l.rect(root);
+        panel_shadow(e, r.x, r.y, r.w, r.h, 1.0);
+        sticker(e, S_FACE_WHITE, r.x, r.y, r.w, r.h, -1.0, WHITE, |e| {
+            l.draw(e, root, 1.0, &mut |e, _, q, b| {
+                build_row(e, &p.items[(q as usize).min(1)], b.x, b.cy(), b.w, 18.0);
+            });
         });
         if won {
             spr_rot(e, S_RAYS, 170.0, 160.0, 1.6, (t as f32) * 0.07, alpha(WHITE, 0.13));
@@ -666,15 +687,15 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 e.text_ex(x + 16.0, y + 36.0, bs(13), INK, ALIGN_LEFT, 0.0, s.str());
                 // the fight was left from the pause (V_OUTCOME 3): the run is kept, the fight starts over
                 let kline = if v[V_OUTCOME] == 3 { "You left this fight. It starts over." } else { kline };
-                e.text_ex(x + 16.0, y + 70.0, bs(14), INK, ALIGN_LEFT, 270.0, kline);
+                text_fit(e, x + 16.0, y + 70.0, bs, 14, 8, INK, ALIGN_LEFT, 270.0, kline);
                 e.rect(x + 16.0, y + 104.0, 268.0, 2.0, PALE);
                 e.text_ex(x + 16.0, y + 116.0, d(15), INK, ALIGN_LEFT, 0.0, "If you win");
-                e.text_ex(x + 16.0, y + 138.0, bs(13), LILAC, ALIGN_LEFT, 270.0, ifwin);
+                text_fit(e, x + 16.0, y + 138.0, bs, 13, 8, LILAC, ALIGN_LEFT, 270.0, ifwin);
                 let mut s = Buf::new();
                 s.s("Pool: ").i(v[V_POOL]).s(" stocks. Next: ");
                 session_line(&mut s, v[V_SESS_KINDS]);
                 s.s(".");
-                e.text_ex(x + 16.0, y + 168.0, bs(13), LILAC, ALIGN_LEFT, 270.0, s.str());
+                text_fit(e, x + 16.0, y + 168.0, bs, 13, 8, LILAC, ALIGN_LEFT, 270.0, s.str());
             });
         }
     }
@@ -707,11 +728,11 @@ pub fn fighter_sticker(e: &mut E, x: f32, y: f32, deg: f32, p: &Party, set: usiz
     sticker(e, S_FACE_WHITE, x, y, 140.0, 80.0, deg, rgba, |e| {
         let h = unsafe { crate::picker::icon(p.pairs[set]) };
         if h != 0 {
-            e.tex(h, x + 3.0, y + 4.0, 27.0, 24.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+            tex_in(e, h, x + 3.0, y + 4.0, 27.0, 24.0, WHITE);
         } else {
             spr_c(e, S_HEAD, x + 16.0, y + 14.0, 1.0, WHITE);
         }
-        e.text_ex(x + 33.0, y + 6.0, d(15), INK, ALIGN_LEFT, 104.0, crate::picker::short(p.pairs[set]));
+        text_fit(e, x + 33.0, y + 6.0, d, 15, 9, INK, ALIGN_LEFT, 104.0, crate::picker::short(p.pairs[set]));
         let drives = p.ids[set].iter().any(|&id| (1..=POOL_LEN as i32).contains(&id));
         let pl = (set / 2).min(1);
         if !drives && p.items[pl].iter().any(|&c| c > 0) {
@@ -832,7 +853,7 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
         sticker(e, S_FACE_WHITE, x, y, pw, 168.0, deg, alpha(WHITE, a), |e| {
             let head = if danger == DANGER_STEEP { CORAL } else if danger == DANGER_ROUGH { SUNNY } else { 0xBFEB_E3FF };
             e.rect(x + 1.5, y + 1.5, pw - 3.0, 40.0, head);
-            e.text_ex(x + 12.0, y + 6.0, d(19), if danger == DANGER_STEEP { WHITE } else { INK }, ALIGN_LEFT, pw - 90.0, road_name(kind));
+            text_fit(e, x + 12.0, y + 6.0, d, 19, 11, if danger == DANGER_STEEP { WHITE } else { INK }, ALIGN_LEFT, pw - 90.0, road_name(kind));
             let dw = match danger { DANGER_STEEP => "steep", DANGER_ROUGH => "rough", _ => "calm" };
             let ww = tw(dw, d(11)) + 14.0;
             face(e, S_FACE_INK, x + pw - ww - 10.0, y + 11.0, ww, 19.0, WHITE);
@@ -847,7 +868,7 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
                 s.s(fight_word(v[b + RD_FIGHTS + f as usize * RD_FW] - 1));
             }
             e.text_ex(x + 12.0, y + 46.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Fights");
-            e.text_ex(x + 12.0, y + 58.0, d(14), INK, ALIGN_LEFT, pw - 24.0, s.str());
+            text_fit(e, x + 12.0, y + 58.0, d, 14, 8, INK, ALIGN_LEFT, pw - 24.0, s.str());
             // the twist
             let tws = v[b + RD_TWISTS];
             let mut tl = Buf::new();
@@ -905,7 +926,7 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
     s.s(".");
     let w = (tw(s.str(), bs(12)) + 22.0).min(608.0);
     sticker(e, S_FACE_SUNNY, 16.0, 270.0 - 6.0, w, 26.0, -0.4, WHITE, |e| {
-        e.text_ex(27.0, 270.0, bs(12), INK, ALIGN_LEFT, w - 22.0, s.str());
+        text_fit(e, 27.0, 270.0, bs, 12, 7, INK, ALIGN_LEFT, w - 22.0, s.str());
     });
 }
 

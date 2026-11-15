@@ -62,8 +62,8 @@ pub fn install() {
         Stage_GetBlastZoneRightOffset = Some(|| { t(1049); rw() });
         Stage_GetCamBoundsRightOffset = Some(|| { t(1050); rw() });
         Stage_UnkSetVec3TCam_Offset = Some(|a0| { t(1051); t(pi(a0)); (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); });
-        ftLib_GetPos = Some(|a0, a1| { t(1052); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
-        ftLib_GetCameraSubject = Some(|a0| { t(1053); t(pi(a0)); if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::CS[(fv() & 1) as usize] } });
+        ftLib_GetCameraSubject = Some(|a0| { t(1052); t(pi(a0)); if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::CS[(fv() & 1) as usize] } });
+        ftLib_GetPos = Some(|a0, a1| { t(1053); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
         gm_80180AF4 = Some(|| { t(1054); if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::SG } });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1055); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grDatFiles_GetArchive = Some(|| { t(1056); &raw mut super::ARCH });
@@ -542,7 +542,7 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) {
 }
 
 pub fn fill_StageCallbacks(p: &mut StageCallbacks) {
-    for j0 in 0..4 { unsafe { *(base(p) as *mut u8).add(32 + j0) = rnd() as u8; } }
+    for i0 in 0..4 { unsafe { *(&mut p.x10 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
 }
 pub fn hash_StageCallbacks(p: &StageCallbacks) {
     hn("p->on_init");
@@ -553,7 +553,8 @@ pub fn hash_StageCallbacks(p: &StageCallbacks) {
     hm(fi(p.gobj_proc));
     hn("p->callback3");
     hm(fi(p.callback3));
-    for j0 in 0..4 { unsafe { hm(*base(p).add(32 + j0) as u32); } }
+    hn("p->x10");
+    for i0 in 0..4 { unsafe { hm(*(&p.x10 as *const _ as *const u8).add(3 - i0) as u32); } } // the port stores the flags in GC byte order (u32::to_be), the C driver hashes them native
 }
 
 pub fn fill_StageData(p: &mut StageData) {
@@ -666,7 +667,7 @@ pub fn fill_CollData(p: &mut CollData) {
     p.xE4_ecb.left.x = rg();
     p.xE4_ecb.left.y = rg();
     p.ecb_source.kind = fv() as _;
-    for j0 in 0..56 { unsafe { *(base(&p.ecb_source) as *mut u8).add(8 + j0) = rnd() as u8; } }
+    for i0 in 0..56 { unsafe { *(&mut p.ecb_source.x4 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.ecb_source.x124 = rg();
     p.ecb_source.x128 = rg();
     p.ecb_source.x12C = rg();
@@ -851,7 +852,8 @@ pub fn hash_CollData(p: &CollData) {
     hm(p.xE4_ecb.left.y.to_bits());
     hn("p->ecb_source.kind");
     hm(p.ecb_source.kind as u32);
-    for j0 in 0..56 { unsafe { hm(*base(&p.ecb_source).add(8 + j0) as u32); } }
+    hn("p->ecb_source.x4");
+    for i0 in 0..56 { unsafe { hm(*(&p.ecb_source.x4 as *const _ as *const u8).add(i0) as u32); } }
     hn("p->ecb_source.x124");
     hm(p.ecb_source.x124.to_bits());
     hn("p->ecb_source.x128");
@@ -1063,11 +1065,11 @@ pub fn hash_HSD_Text(p: &HSD_Text) {
     hm(pi(p.x60));
     hn("p->alloc_data");
     hm(pi(p.alloc_data));
-    hn("p->string_buffer");
+    hn("p->state_stack");
     hm(pi(p.state_stack));
-    hn("p->x6C");
+    hn("p->state_stack_used");
     hm(p.state_stack_used as u32);
-    hn("p->x6E");
+    hn("p->state_stack_capacity");
     hm(p.state_stack_capacity as u32);
     hn("p->current_width");
     hm(p.current_width.to_bits());

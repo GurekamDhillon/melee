@@ -9,15 +9,9 @@ fn dot(e: &mut E, x: f32, y: f32, dm: f32, c: u32) {
     spr_c(e, S_DISC, x, y, dm / 32.0, c);
 }
 
-/// A thick line from (x0, y0) to (x1, y1) as overlapping discs of diameter `w`.
+/// A thick round-capped line from (x0, y0) to (x1, y1), `w` thick: one pill quad (kit::seg), not a chain of discs.
 pub fn ln(e: &mut E, x0: f32, y0: f32, x1: f32, y1: f32, w: f32, c: u32) {
-    let (dx, dy) = (x1 - x0, y1 - y0);
-    let len = sqrt(dx * dx + dy * dy);
-    let n = (ceil(len / (w * 0.35)) as i32).clamp(1, 64);
-    for i in 0..=n {
-        let t = i as f32 / n as f32;
-        dot(e, x0 + dx * t, y0 + dy * t, w, c);
-    }
+    seg(e, x0, y0, x1, y1, w, c);
 }
 
 /// A triangle pointing up (apex at (x, top), base `w` wide at `bot`) from stacked rects.

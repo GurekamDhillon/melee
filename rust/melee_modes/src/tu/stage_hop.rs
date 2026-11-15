@@ -222,6 +222,8 @@ pub unsafe fn switch_to_ex(kind: i32, live: bool) -> i32 {
     sg::script_switch_detach();
     sg::script_retail_items(1);
     { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: destroy outgoing")); sg::script_retail_destroy(); }
+    release_ground_subjects();
+    release_stage_sislib();
     sg::script_retail.working = work;
     sg::script_retail.working_bytes = bytes;
     sg::script_retail.archive = archive;
@@ -254,6 +256,98 @@ pub unsafe fn switch_to_ex(kind: i32, live: bool) -> i32 {
             sg::script_retail_owned.count, sg::lbHeap_Free(0));
     }
     0
+}
+
+/// Gives back the camera subjects the outgoing stage's grounds took. Some grounds take one at install and never return
+/// it (grpstadium's display xF4, gronett's subject, grpura's x128[], grfourside's xC on one path): retail gets them
+/// back when the next scene calls Camera_Init, which rebuilds the pool. A hop keeps the scene, so every visit
+/// leaked one, and after 68 visits to Pokemon Stadium Camera_80029044 found the free list empty and spun forever
+/// ("couldn't get CmSubject struct."). Only fighters (x890_cameraBox) and items (x520_cameraBox) keep subjects
+/// across a hop. After script_retail_destroy, every other in-use subject belonged to the outgoing stage.
+unsafe fn release_ground_subjects() {
+    use melee_world::tu::camera as cm;
+    let mut held: [*mut CmSubject; 64] = [core::ptr::null_mut(); 64];
+    let mut n = 0usize;
+    for (link, item) in [(HSD_GOBJ_PLINK_FIGHTER, false), (HSD_GOBJ_PLINK_ITEM, true)] {
+        let mut g = *sg::HSD_GObjPLinkHead.offset(link as isize);
+        while !g.is_null() {
+            let ud = sg::HSD_GObjGetUserData(g);
+            if !ud.is_null() {
+                let s = if item { (*(ud as *mut Item)).x520_cameraBox } else { (*(ud as *mut Fighter)).x890_cameraBox as *mut CmSubject };
+                if !s.is_null() && n < held.len() {
+                    held[n] = s;
+                    n += 1;
+                }
+            }
+            g = (*g).next as *mut HSD_GObj;
+        }
+    }
+    let mut s = cm::cm_804D6460;
+    let mut freed = 0;
+    while !s.is_null() {
+        let next = (*s).next;
+        if !held[..n].contains(&s) {
+            cm::Camera_800290D4(s);
+            freed += 1;
+        }
+        s = next;
+    }
+    if cfg!(debug_assertions) {
+        // the pool is back to what the survivors hold: every in-use subject is a fighter's or an item's
+        let mut live = 0usize;
+        let mut s = cm::cm_804D6460;
+        while !s.is_null() {
+            live += 1;
+            s = (*s).next;
+        }
+        debug_assert_eq!(live, n, "stage hop: {live} subjects in use after the release, fighters and items hold {n}");
+    }
+    if freed != 0 && std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
+        eprintln!("stage switch: gave back {freed} camera subject(s) of the outgoing stage");
+    }
+}
+
+/// The SisLib state the outgoing stage made. Grounds draw text through SIS slot 1 (HSD_SisLib_804D1124[1]:
+/// grpstadium's SIS_GrPStadiumData, grhomerun's), and in a match nothing else uses that slot (the HUD's are 0 and 2).
+/// grStadium_801D2BEC registers a slot-1 canvas with HSD_SisLib_803A611C at every install, which appends a new
+/// entry to HSD_SisLib_804D797C each time. Retail gets these back when the next scene re-inits SisLib. A hop keeps
+/// the scene, so every Pokemon Stadium visit kept one more entry, pointing at its destroyed ground gobj. At switch
+/// 1877 of the VS rotation, HSD_SisLib_Alloc ran out ("Memory Empty", grStadium_801D4194 -> HSD_SisLib_803A6368). Any
+/// slot-1 text still alive goes too (the ground's destroy normally frees them through the text gobj). Selected by
+/// slot in game memory, so a rollback across a hop sees the same set.
+unsafe fn release_stage_sislib() {
+    use melee_runtime::tu::sislib as sis;
+    let mut texts = 0;
+    let mut t = sis::HSD_SisLib_804D7978;
+    while !t.is_null() {
+        let next = (*t).next;
+        if (*t).font_idx == 1 {
+            sis::HSD_SisLib_803A5CC4(t);
+            texts += 1;
+        }
+        t = next;
+    }
+    let mut canvases = 0;
+    let mut prev: *mut sislib_UnkAlloc3 = core::ptr::null_mut();
+    let mut e = sis::HSD_SisLib_804D797C;
+    while !e.is_null() {
+        let next = (*e).x0;
+        if (*e).xA == 1 {
+            if prev.is_null() {
+                sis::HSD_SisLib_804D797C = next;
+            } else {
+                (*prev).x0 = next;
+            }
+            sis::HSD_SisLib_Free(e as *mut core::ffi::c_void);
+            canvases += 1;
+        } else {
+            prev = e;
+        }
+        e = next;
+    }
+    if texts + canvases != 0 && std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
+        eprintln!("stage switch: gave back {canvases} SisLib canvas(es) and {texts} text(s) of the outgoing stage");
+    }
 }
 
 /// Frames a fighter cannot be hit after an Envoy stage switch places it.

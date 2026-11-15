@@ -301,11 +301,12 @@ static unsigned NIDM;
 static HSD_GObj* OPLH[HSD_GOBJ_PLINK_FIGHTER + 1];
 HSD_GObj** HSD_GObjPLinkHead = OPLH;
 HSD_PadStatus HSD_PadMasterStatus[4];
-SIS* HSD_SisLib_804D1124[5];""",
+u8** HSD_SisLib_804D1124[5];
+typedef union ColorOverlay_x8_t ColorOverlay_x8_t; /* the oracle spells record tags bare; this one is a union now */""",
     use_rs="""static mut NN: i32 = 0;
 static mut NIDM: u32 = 0;
 static mut OPAD: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
-static mut OSIS: [*mut SIS; 5] = [core::ptr::null_mut(); 5];
+static mut OSIS: [*mut *mut u8; 5] = [core::ptr::null_mut(); 5];
 use core::ptr::null_mut;""",
     extra_pools=["grCorneria_YakumonoParam", "UnkArchiveStruct", "HSD_Text", "grZakoGenerator_Config"],
     statics=[

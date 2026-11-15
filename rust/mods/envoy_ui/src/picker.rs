@@ -346,12 +346,12 @@ pub unsafe fn frame(e: &mut E) -> bool {
         sticker(e, facec, cx, cy, 60.0, 75.0, deg, alpha(WHITE, a), |e| {
             if k == RANDOM {
                 text_edge(e, cx + 30.0, cy + 8.0, d(34), SUNNY, ALIGN_CENTER, 1.4, "?");
-                e.text_ex(cx + 30.0, cy + 54.0, d(11), alpha(INK, a), ALIGN_CENTER, 56.0, "Random");
+                text_fit(e, cx + 30.0, cy + 54.0, d, 11, 7, alpha(INK, a), ALIGN_CENTER, 56.0, "Random");
             } else {
                 let h = icon(k);
                 if h != 0 {
                     // the disc's own select icon (faded when locked)
-                    e.tex(h, cx + 5.0, cy + 5.0, 50.0, 44.0, [0.0, 0.0, 1.0, 1.0], alpha(if lk { 0x8080_80FF } else { WHITE }, a * if lk { 0.6 } else { 1.0 }));
+                    tex_in(e, h, cx + 5.0, cy + 5.0, 50.0, 44.0, alpha(if lk { 0x8080_80FF } else { WHITE }, a * if lk { 0.6 } else { 1.0 }));
                 } else {
                     // no disc art: the lettered sticker (the old select's two-letter fallback)
                     let t = core::str::from_utf8(&ABBR[i]).unwrap_or("?");
@@ -360,7 +360,7 @@ pub unsafe fn frame(e: &mut E) -> bool {
                 if lk {
                     spr_c(e, S_LOCK, cx + 46.0, cy + 12.0, 1.0, WHITE);
                 }
-                e.text_ex(cx + 30.0, cy + 54.0, d(11), alpha(if lk { LILAC } else { INK }, a), ALIGN_CENTER, 58.0, if lk { "Locked" } else { short(k) });
+                text_fit(e, cx + 30.0, cy + 54.0, d, 11, 7, alpha(if lk { LILAC } else { INK }, a), ALIGN_CENTER, 58.0, if lk { "Locked" } else { short(k) });
             }
         });
         // seat tabs and cursors
@@ -398,11 +398,11 @@ pub unsafe fn frame(e: &mut E) -> bool {
                 e.text_ex(sx + 8.0, y + 13.0, bs(11), LILAC, ALIGN_LEFT, 0.0, if s == 0 { "Main" } else { "Partner" });
                 let h = if shown >= 0 && shown != RANDOM { icon(shown) } else { 0 };
                 if h != 0 {
-                    e.tex(h, sx + 4.0, y + 37.0, 28.0, 25.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+                    tex_in(e, h, sx + 4.0, y + 37.0, 28.0, 25.0, WHITE);
                 } else {
                     spr_c(e, S_HEAD, sx + 18.0, y + 52.0, 0.95, WHITE);
                 }
-                e.text_ex(sx + 32.0, y + 45.0, d(13), INK, ALIGN_LEFT, 66.0, if shown >= 0 { short(shown) } else { "?" });
+                text_fit(e, sx + 32.0, y + 45.0, d, 13, 8, INK, ALIGN_LEFT, 66.0, if shown >= 0 { short(shown) } else { "?" });
             }
             if !COOP {
                 // the large portrait of the fighter being chosen (or the main once both are seated)
@@ -410,7 +410,7 @@ pub unsafe fn frame(e: &mut E) -> bool {
                 let h = if k >= 0 && k != RANDOM && !locked(k) { portrait(k) } else { 0 };
                 if h != 0 {
                     face(e, S_FACE_CREAM, x + w - 76.0, y + 4.0, 66.0, 84.0, WHITE);
-                    e.tex(h, x + w - 73.0, y + 6.0, 60.0, 80.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+                    tex_in(e, h, x + w - 73.0, y + 6.0, 60.0, 80.0, WHITE);
                 }
             }
             let (dx, dy) = (x + 222.0, y + 28.0);

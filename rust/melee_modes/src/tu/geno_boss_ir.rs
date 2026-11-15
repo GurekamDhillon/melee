@@ -1404,6 +1404,7 @@ mod tests {
     /// status trail printed. Skipped without the local IR.
     #[test]
     fn simulate_local_petey() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let Ok(d) = load_with_ir_motions("petey.brawl.ir.json") else { return };
         let w = World { slots: [Some(30.0), None, None, None], airborne: false, out_of_area: false };
         begin(&d, w, 5, 1000, 0x5E7E);
@@ -1436,6 +1437,7 @@ mod tests {
     /// Every local boss IR: lowered (errors listed) and, when it lowers, a headless fight. Skipped without the files.
     #[test]
     fn lowers_other_local_bosses() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let Some(dir) = ir_dir() else { return };
         for f in ["rayquaza", "ridley", "galleom", "duon", "tabuu", "porky", "metaridley"] {
             let Ok(t) = std::fs::read_to_string(dir.join(format!("{f}.brawl.ir.json"))) else { continue };

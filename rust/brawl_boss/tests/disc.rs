@@ -366,9 +366,13 @@ fn timeline_baskets() {
             let want = 12_124_000 + id;
             assert!(p.log.iter().any(|e| e.0 == 70 && matches!(&e.3, Event::Effect(_, a) if a.id == want)), "effect {id}");
         }
-        // sound at frame 17; the variant voice needs 24000 == 2, which is 0 here
+        // sound at frame 17; then the file's `wait 59` (relative, so frame 76) and `if compare(24000, ==, 0.0)` guard the variant
+        // voice. Compare operands are (a, op, b) with op 2 = == (engine-ops.md: R7 compare, native-verified), so the 2 in the dump is
+        // the operator, not the constant: the param is 0 here, the test is true and the voice plays (9606 left basket, 9605 right).
         assert!(p.log.iter().any(|e| e.0 == 17 && matches!(e.3, Event::Sound(..))));
-        assert!(p.sound(9606).is_empty() && p.sound(9605).is_empty());
+        let (voice, other) = if m == 1 { (9606, 9605) } else { (9605, 9606) };
+        assert_eq!(p.sound(voice), vec![76]);
+        assert!(p.sound(other).is_empty());
     }
 }
 
@@ -443,8 +447,11 @@ fn timeline_waits() {
     let p = play(&bf, 11, 160, L25);
     body_contact(&p.hitboxes(Obj::Boss)[0].1, 6);
     assert_eq!(p.sound(9599), vec![20]);
-    assert_eq!(p.sound(9600), vec![88]);
-    assert!(p.sound(9603).is_empty() && p.sound(9604).is_empty());
+    // the file's sound thread: wait 20; sound 9599; wait 8; if compare(24000, ==, 0.0) { sound 9603 }; wait 68; sound 9600;
+    // wait 8; if the same { sound 9604 }. Waits are relative, so 9600 is at 20 + 8 + 68 = 96 (the reader's prose said 88, which
+    // drops the 8-frame wait) and the 9603 / 9604 variants play (24000 is 0 here, and op 2 is ==, see timeline_baskets)
+    assert_eq!(p.sound(9600), vec![96]);
+    assert_eq!((p.sound(9603), p.sound(9604)), (vec![28], vec![104]));
 }
 
 // ------------------------------------------------------------------------------------------- the fight

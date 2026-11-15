@@ -115,6 +115,7 @@ pub const fn trigger_words(tr: u8) -> &'static str {
         TR_WHILE_NAIR => "{WHILE} {NAIR}",
         TR_WHILE_DASH => "{WHILE} {DASH}",
         TR_WHILE_SHIELD => "{WHILE} {SHIELDING}",
+        // the synergy lane: a proc off another item's hit, and the co-op items ({2P}, co-op only)
         TR_ITEM_HIT => "{ON}",
         TR_COOP => "{2P}",
         _ => "",
@@ -155,6 +156,7 @@ pub const CARDS: [(i32, &str); 38] = [
     (IT_DASH_ORB, "{WHILE} {DASH}: an {ORB} leads your run. {PER STACK}: more orbs."),
     (IT_SHIELD_ORBS, "{WHILE} {SHIELDING}: {ORB} circle your shield and break on blocks. {PER STACK}: more orbs."),
     (IT_SPARE_HEART, "{ON} {PICKUP}: +1 stock limit and +1 stock (to 8)."),
+    // the synergy lane (envoy-synergy.md): procs and co-op items
     (IT_EMBER_SEED, "{ON} {BURST} {HIT}: {MAY} {PROC} a fire seed that can {BURN}. {PER STACK}: likelier."),
     (IT_STATIC_COIL, "{ON} {SHOT} {HIT}: {MAY} {PROC} an arc to another foe. {PER STACK}: likelier."),
     (IT_FROST_BUD, "{ON} {SPARK} {HIT}: {MAY} {PROC} a frost {BURST} that can {CHILL}. {PER STACK}: likelier."),

@@ -130,7 +130,7 @@ fn grhomerun_matches_c() {
                     9 => {  m::grHomeRun_8021CB1C(&raw mut GS[0]); }
                     10 => {  m::grHomeRun_8021CB20(&raw mut GS[10]); }
                     11 => {  ret = m::grHomeRun_8021D678(&raw mut GS[10]) as u32; }
-                    12 => { GG[10].u.unk.xD0 = if fv() & 1 != 0 { (&raw mut JO[(fv() & 7) as usize]) as isize as i32 } else { 0 }; GG[10].u.unk.xCC = if fv() & 1 != 0 { 0 } else { (fv() & 0xFF) as i32 }; m::grHomeRun_8021D680(&raw mut GS[10]); }
+                    12 => { GG[10].u.homerun.xD0 = if fv() & 1 != 0 { &raw mut JO[(fv() & 7) as usize] } else { core::ptr::null_mut() }; GG[10].u.homerun.xCC = if fv() & 1 != 0 { core::ptr::null_mut() } else { (fv() & 0xFF) as usize as *mut HSD_Text }; m::grHomeRun_8021D680(&raw mut GS[10]); }
                     13 => {  m::grHomeRun_8021DEB0(&raw mut GS[10]); }
                     14 => {  m::grHomeRun_8021DEB4(&raw mut GS[4]); }
                     15 => {  ret = m::grHomeRun_8021DEE0(&raw mut GS[4]) as u32; }

@@ -1,0 +1,8 @@
+node_campfire 4
+w_campfire 4
+fx_refill 4
+map_cursor 4
+hud_a_button 2
+st_burn 4
+hud_coin 6
+fx_spark 4

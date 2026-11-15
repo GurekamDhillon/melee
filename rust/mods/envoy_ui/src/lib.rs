@@ -16,6 +16,8 @@
 #![no_std]
 #![allow(static_mut_refs)]
 
+extern crate alloc;
+
 use gd_ui_enc::*;
 
 mod camp;
@@ -33,6 +35,11 @@ mod icons;
 mod map;
 mod vfx;
 mod lab;
+mod ly;
+
+/// The mod's heap: a bump arena emptied every frame (ly.rs). Only the layout tree lives in it.
+#[global_allocator]
+static HEAP: ly::Bump = ly::Bump;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -476,6 +483,22 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
 }
 
 static mut ENC: kit::E = Enc::new();
+static mut OVERFLOW_LOGGED: u32 = 0;
+
+/// Hand the frame over; a frame whose records did not all fit is logged (the first few times), since a dropped
+/// record can be a state change (a tilt's end, a shadow's end) and the rest of the frame then draws wrong.
+unsafe fn send(e: &mut kit::E) {
+    if e.overflow > 0 {
+        if OVERFLOW_LOGGED < 8 {
+            OVERFLOW_LOGGED += 1;
+            let mut m = Buf::new();
+            m.s("envoy_ui: command buffer full, records dropped: ").i(e.overflow as i32);
+            gd_ui_log(m.str().as_ptr(), m.str().len() as u32);
+        }
+        e.overflow = 0;
+    }
+    e.submit();
+}
 
 const REVEAL: i32 = 18;
 /// FighterKind order (the transition record's from / to).
@@ -595,6 +618,7 @@ pub extern "C" fn gd_ui_init() -> i32 {
 #[no_mangle]
 pub extern "C" fn gd_ui_frame(_present: u32) {
     unsafe {
+        ly::begin();
         let st = gd_ui_envoy_state();
         // Envoy's select: the retail character select loads and confirms itself under this cover (a few frames)
         if st & ST_BYPASS != 0 && !CAMP.open {
@@ -604,7 +628,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             e.layer(LAYER_MENU, 0);
             e.rect(-200.0, -20.0, 1040.0, 520.0, 0x1A10_4AFF);
             kit::text_edge(e, 320.0, 210.0, kit::d(30), kit::SUNNY, ALIGN_CENTER, 2.2, "Get ready");
-            e.submit();
+            send(e);
             return;
         }
         if CAMP.open || st & ST_1P != 0 {
@@ -624,7 +648,10 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 CAMP.age += 1;
                 e.space(SPACE_BAND, 1.0);
                 let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
-                let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && v[V_STATE] != 0;
+                // a new run armed on the road before fight 1 is not live yet (state 0) but its map is published
+                // (V_MAP_PICK 1): without the view the camp drew no map and passed no Left / Right through, so fight
+                // 1's node was picked blind
+                let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && (v[V_STATE] != 0 || v[V_MAP_PICK] == 1);
                 let act = camp::frame(e, CAMP.after_fight, if view { Some(&v) } else { None }, saved(), st & ST_NO_BRAWL != 0);
                 if act == camp::DO_CLOSE {
                     CAMP.closing = true;
@@ -676,7 +703,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 e.space(SPACE_BAND, 1.0);
                 party::menu(e, st, saved());
             }
-            e.submit();
+            send(e);
             return;
         }
         let v: &mut [i32; VW] = &mut *core::ptr::addr_of_mut!(VBUF);
@@ -708,11 +735,17 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
             // V3 HUD in band space (640 x 480; `ex` the extra width each side of the 4:3 band)
             let ex = if b[2] > 0.0 { b[0] / (b[2] / 640.0) } else { 0.0 };
+            kit::clear_begin(ex);
             e.space(SPACE_BAND, 1.0);
             if gd_ui_fight_hud(core::ptr::addr_of_mut!(hud::FH) as *mut i32, 16) != 0 {
                 hud::FH = [0; 16];
             }
-            hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
+            // the HUD belongs to a fight: with no fighter in a match slot (the retail results screen after the last
+            // stock, a scene change) there is nothing it could show but zeros over someone else's screen
+            // and not under the shop: its backdrop is a tenth see-through, and the HUD showed through it as smudges
+            if (0..4).any(|s| hud::FH[s * 3] != 0) && v[V_RW] != RW_SHOP {
+                hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
+            }
             // the Envoy pause overlay over Melee's own pause (pause.rs): D-pad only, its own panel per player
             let paused = hud::FH[12] != 0;
             if v[envoy_data::lab::VL_ON] != 0 {
@@ -758,7 +791,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             pause::input(&v, false);
             between(e, &v, vw, vh);
         }
-        e.submit();
+        send(e);
         // every effect quad of this present, in one call
         vfx::flush();
     }

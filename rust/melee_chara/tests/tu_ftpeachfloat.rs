@@ -22,7 +22,10 @@ fn smoke() {
     f.dat_attrs = da as *mut _ as *mut _;
     unsafe {
         st::FIGHTER_CHANGEMOTIONSTATE = Some(|_, ms, _, _, _, _, _| log(format!("ms {ms}")));
-        t::ext::FT_800831CC = Some(|_, l, c| log(format!("coll {} {}", l.is_some(), c.is_some())));
+        t::ext::FT_800831CC = Some(|_, l, c| {
+            log(format!("coll {} {}", l.is_some(), c.is_some()));
+            false
+        });
     }
     // Float_Anim: timer ticking down to zero would call UpdateFloatDir; with timer > 1 it only decrements.
     f.u.pe.x4 = 3.0;

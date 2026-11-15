@@ -492,6 +492,22 @@ pub const OFF: State = State {
 
 pub static mut S: State = OFF;
 
+/// Unit tests that begin/tick/stop the actor all share this one static. libtest runs them on parallel threads, so each takes
+/// this lock first; the guard resets `S` on drop (also when the test panics), so no test inherits a live actor.
+#[cfg(test)]
+pub(crate) struct STestGuard(#[allow(dead_code)] std::sync::MutexGuard<'static, ()>);
+#[cfg(test)]
+impl Drop for STestGuard {
+    fn drop(&mut self) {
+        unsafe { S = OFF };
+    }
+}
+#[cfg(test)]
+pub(crate) fn s_test_lock() -> STestGuard {
+    static L: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    STestGuard(L.lock().unwrap_or_else(|e| e.into_inner()))
+}
+
 /// Event kinds in `State::ev`.
 pub const EV_SOUND: u8 = 1;
 pub const EV_SHAKE: u8 = 2;
@@ -1315,6 +1331,7 @@ mod tests {
 
     #[test]
     fn rules_timer_motion_and_routing() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let d = tiny();
         let w = World::default();
         begin(&d, w, 5, 1000, 7);

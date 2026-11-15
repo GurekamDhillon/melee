@@ -2205,6 +2205,8 @@ unsafe fn rest_party() {
 
 /// Install the hooks (the engine start). Nothing is hooked without the owner's Brawl files (or Petey's mode).
 pub fn install() {
+    // the loaders below must never getenv (petey_model::brawl_env): settle the Brawl folder settings here, first
+    pm::prime_brawl_env();
     if !any_available() && !(crate::tu::petey::selected() || crate::tu::petey::vs_selected()) {
         return;
     }

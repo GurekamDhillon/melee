@@ -120,7 +120,7 @@ pub fn get() -> Option<&'static Model> {
 pub fn brawl_present() -> bool {
     static P: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *P.get_or_init(|| {
-        if std::env::var_os("MELEE_BRAWL_ABSENT").is_some() {
+        if brawl_env().absent {
             return false; // test knob: behave as if the files were missing
         }
         local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(STAGE).is_file())
@@ -129,11 +129,49 @@ pub fn brawl_present() -> bool {
 
 /// Whether the owner's Brawl folder has adventure archive `name` (`MELEE_BRAWL_ABSENT`: as if missing).
 pub fn adventure_present(name: &str) -> bool {
-    std::env::var_os("MELEE_BRAWL_ABSENT").is_none()
+    !brawl_env().absent
         && local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(name).is_file())
 }
 
-fn local_root() -> Option<PathBuf> {
+/// The owner's Brawl folder settings (`MELEE_BRAWL_ABSENT`, `MELEE_BRAWL_LOCAL` or a `_build/brawl` above the working
+/// directory or the exe), resolved once. The explore map loaders run on their own threads during the match, and a
+/// getenv there takes std's ENV_LOCK, a static the rollback snapshot saves and restores with the executable's
+/// writable sections: a restore while a loader held it left it held, and the game thread's next getenv waited on it
+/// forever (items_check `pad`/`cpu` d4 hung at fight 1's stage load). [`prime_brawl_env`] fills this on the game
+/// thread before the loaders start and before the first snapshot. It is built on a helper thread, as `explore::maps`
+/// is, so the PathBuf lives on the system heap, not in the arena.
+pub struct BrawlEnv {
+    pub absent: bool,
+    root: Option<PathBuf>,
+    /// `MELEE_MDL_LOG`: the model parser's material log (the parser runs on loader threads)
+    mdl_log: bool,
+}
+
+pub fn brawl_env() -> &'static BrawlEnv {
+    static E: std::sync::OnceLock<&'static BrawlEnv> = std::sync::OnceLock::new();
+    E.get_or_init(|| {
+        std::thread::spawn(|| -> &'static BrawlEnv {
+            Box::leak(Box::new(BrawlEnv {
+                absent: std::env::var_os("MELEE_BRAWL_ABSENT").is_some(),
+                root: find_root(),
+                mdl_log: std::env::var_os("MELEE_MDL_LOG").is_some(),
+            }))
+        })
+        .join()
+        .expect("brawl folder settings")
+    })
+}
+
+/// Resolve the Brawl folder settings now, on the game thread (see [`brawl_env`]).
+pub fn prime_brawl_env() {
+    let _ = brawl_env();
+}
+
+pub(crate) fn local_root() -> Option<PathBuf> {
+    brawl_env().root.clone()
+}
+
+fn find_root() -> Option<PathBuf> {
     if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
         return Some(PathBuf::from(p));
     }
@@ -1319,7 +1357,7 @@ impl Rig {
 /// The material state Petey's materials use (see [`Batch`]), from a v9 MDL0 material header at `mo`.
 fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mut Batch) {
     // texture 0 of the material's texture references (name, then wrap S / T)
-    if std::env::var_os("MELEE_MDL_LOG").is_some() {
+    if brawl_env().mdl_log {
         let n = be32(d, mo + 0x2C) as usize;
         let e0 = at(mo, bei(d, mo + 0x30));
         let names: Vec<String> = (0..n.min(8)).map(|k| cstr(d, at(e0 + 0x34 * k, bei(d, e0 + 0x34 * k)))).collect();

@@ -13,6 +13,7 @@
 
 pub mod cmd;
 pub mod fighter_art;
+pub mod layout;
 pub mod nodes;
 pub mod theme;
 
@@ -482,9 +483,21 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Some(buf) = m.data(&c).get(ptr as usize..(ptr as usize).saturating_add(len as usize)) else { return GD_EINVAL };
         let module = d.module;
         let vector = d.features & FEATURE_UI_VECTOR != 0;
+        if sh.batch.audit.is_some() {
+            // the window's sides in band units, for the audit's off-screen check
+            let (b, win) = (sh.band_rect(), sh.window);
+            let k = if b[2] > 0.0 { 640.0 / b[2] } else { 1.0 };
+            let view = (-b[0] * k, (win.0 as f32 - b[0]) * k);
+            if let Some(au) = sh.batch.audit.as_deref_mut() {
+                au.view = (b[2] > 0.0 && win.0 > 0).then_some(view);
+            }
+        }
         let t = std::time::Instant::now();
         let r = sh.batch.submit(buf, module, &sh.atlas, &sh.texs[module as usize], vector);
         sh.submit_ns += t.elapsed().as_nanos() as u64;
+        if let Some(au) = sh.batch.audit.as_deref_mut() {
+            sh.log.append(&mut au.out);
+        }
         match r {
             Ok(()) => GD_OK,
             Err(e) => {
@@ -571,8 +584,57 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             return 0;
         };
         sh.atlas.put(r, &px);
+        if let Some(au) = sh.batch.audit.as_deref_mut() {
+            au.names.insert((r.x, r.y), p.clone());
+        }
         sh.texs[module].push(r);
         sh.texs[module].len() as u32
+    });
+    // the size of a loaded texture in texels, (w << 16) | h, 0 for a bad handle: what a mod needs to place art whose
+    // size it does not carry (the disc's fighter icons and portraits) without stretching it (uiremake)
+    f!("gd_ui_tex_size", |c: Caller<'_, PresData>, h: u32| -> i32 {
+        let module = c.data().module as usize;
+        let sh = c.data().ui().borrow();
+        match sh.texs.get(module).and_then(|t| t.get((h as usize).wrapping_sub(1))) {
+            Some(r) => ((r.w as i32) << 16) | r.h as i32,
+            None => 0,
+        }
+    });
+    // gd-ui-v1.5: flexbox layout of a mod's boxes, computed natively (ui/layout.rs). The answer is four f32 per node
+    // written to `out`; returns the node count, GD_EFULL when `cap` bytes cannot hold it, GD_EINVAL for a bad request.
+    f!("gd_ui_layout", |mut c: Caller<'_, PresData>, ptr: u32, len: u32, out: u32, cap: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) {
+            return GD_ECAP;
+        }
+        if len > 1 << 18 {
+            return GD_EINVAL;
+        }
+        let Some(req) = read_bytes(&c, ptr, len) else { return GD_EINVAL };
+        let res = {
+            let ui = c.data().ui();
+            let sh = ui.borrow();
+            layout::compute(&req, &sh.atlas)
+        };
+        match res {
+            Ok(v) => {
+                if v.len() * 4 > cap as usize {
+                    return GD_EFULL;
+                }
+                let mut b = Vec::with_capacity(v.len() * 4);
+                for x in &v {
+                    b.extend_from_slice(&x.to_le_bytes());
+                }
+                if write_bytes(&mut c, out, &b) { (v.len() / 4) as i32 } else { GD_EINVAL }
+            }
+            Err(what) => {
+                let ui = c.data().ui();
+                let mut sh = ui.borrow_mut();
+                if sh.log.len() < 16 {
+                    sh.log.push(format!("gd_ui_layout refused: {what}"));
+                }
+                GD_EINVAL
+            }
+        }
     });
     // ---- body-group tints (notes/envoy-tints.md): add RGB x strength (0..1) to the groups in `mask` (bit per
     // melee_modes::tu::envoy_tint::G_*: head, torso, arms, hands, legs, feet) of port's fighter for this present.
@@ -593,7 +655,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if ![x, y, z, yaw, scale, glow, alpha].iter().all(|v| v.is_finite()) {
             return GD_EINVAL;
         }
-        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: 0, p: [glow.clamp(0.0, 2.0), 0.0, 0.0, 0.0], rgba: 0xFFFF_FFFF };
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u16, at: [x, y, z], yaw, roll: 0.0, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: 0, p: [glow.clamp(0.0, 2.0), 0.0, 0.0, 0.0], rgba: 0xFFFF_FFFF };
         if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
     });
     // envoy-fx.md: a drive model with a built-in material (melee_gx::fx::MAT_*: 0 body, 1 glass, 2 glow, 3 foil,
@@ -609,7 +671,21 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             return GD_EINVAL;
         }
         let p = [p0.clamp(0.0, 2.0), p1.clamp(0.0, 1.0), p2.clamp(0.0, 3.0), p3.clamp(0.0, 2.0)];
-        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: m as u8, p, rgba };
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u16, at: [x, y, z], yaw, roll: 0.0, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: m as u8, p, rgba };
+        if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
+    });
+    // envoy-models1.md: gd_ui_world_model_ex with a roll (radians, a turn in the model's own plane before the yaw):
+    // a shot or a beam laid along its velocity. Same checks, cap and clamps; presentation only.
+    f!("gd_ui_world_model_rot", |c: Caller<'_, PresData>, model: i32, x: f32, y: f32, z: f32, yaw: f32, roll: f32, scale: f32, alpha: f32, material: i32, p0: f32, p1: f32, p2: f32, p3: f32, rgba: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(0..melee_modes::tu::drive_draw::MODEL_COUNT as i32).contains(&model) {
+            return GD_EINVAL;
+        }
+        let m = material as u32;
+        if m & !0xFF != 0 || (m & melee_gx::fx::MAT_ID as u32) >= melee_gx::fx::MAT_COUNT as u32 || ![x, y, z, yaw, roll, scale, alpha, p0, p1, p2, p3].iter().all(|v| v.is_finite()) {
+            return GD_EINVAL;
+        }
+        let p = [p0.clamp(0.0, 2.0), p1.clamp(0.0, 1.0), p2.clamp(0.0, 3.0), p3.clamp(0.0, 2.0)];
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u16, at: [x, y, z], yaw, roll, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: m as u8, p, rgba };
         if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
     });
     // envoy-fx.md: a full-screen post effect this present (melee_gx::fx::POST_*: 1 vignette, 2 ember tint, 3 heat-haze
@@ -669,6 +745,9 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Some((w, h, px)) = melee_modes::tu::drive_draw::sprite_sheet(model as usize) else { return 0 };
         let Some(r) = sh.atlas.alloc(w as u16, h as u16) else { return 0 };
         sh.atlas.put(r, &px);
+        if let Some(au) = sh.batch.audit.as_deref_mut() {
+            au.names.insert((r.x, r.y), format!("model sheet {model}"));
+        }
         sh.texs[module].push(r);
         let hd = sh.texs[module].len() as u32;
         sh.model_texs.push((module, model, hd));
@@ -690,6 +769,9 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let hd = match fighter_art::get(ck, which).and_then(|p| sh.atlas.alloc(p.w as u16, p.h as u16).map(|r| (r, p))) {
             Some((r, p)) => {
                 sh.atlas.put(r, &p.rgba);
+                if let Some(au) = sh.batch.audit.as_deref_mut() {
+                    au.names.insert((r.x, r.y), format!("fighter art {ck} {}", if which == 0 { "icon" } else { "portrait" }));
+                }
                 sh.texs[module].push(r);
                 sh.texs[module].len() as u32
             }

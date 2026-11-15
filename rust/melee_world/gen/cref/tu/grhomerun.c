@@ -116,7 +116,7 @@ int main(void)
             case 9: {  grHomeRun_8021CB1C(&GS[0]); break; }
             case 10: {  grHomeRun_8021CB20(&GS[10]); break; }
             case 11: {  ret = (u32) grHomeRun_8021D678(&GS[10]); break; }
-            case 12: { GG[10].u.unk.xD0 = (fv() & 1) ? (int) (intptr_t) &JO[fv() & 7] : 0; GG[10].u.unk.xCC = (fv() & 1) ? 0 : (int) (fv() & 0xFF); grHomeRun_8021D680(&GS[10]); break; }
+            case 12: { GG[10].u.homerun.xD0 = (fv() & 1) ? &JO[fv() & 7] : 0; GG[10].u.homerun.xCC = (fv() & 1) ? 0 : (HSD_Text*) (intptr_t) (fv() & 0xFF); grHomeRun_8021D680(&GS[10]); break; }
             case 13: {  grHomeRun_8021DEB0(&GS[10]); break; }
             case 14: {  grHomeRun_8021DEB4(&GS[4]); break; }
             case 15: {  ret = (u32) grHomeRun_8021DEE0(&GS[4]); break; }

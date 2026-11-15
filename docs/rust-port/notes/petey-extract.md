@@ -21,13 +21,13 @@ git-ignored local folder outside this repository; nothing from it is in git, and
 
 `emBosspackunParamAccesser` was traced in `sora_enemy.rel` (2026-11-09): its type name is referenced from its RTTI
 record, whose vtable lists three getters. Each fetches the boss's param block (the blob above, through the enemy's
-resource handle, `+0x2C`) and switches on a numeric parameter id:
+resource handle, `[off]`) and switches on a numeric parameter id:
 
 | getter | ids | reads |
 |---|---|---|
-| float | 0xFA0 | `+0x150` (0xFA1 / 0xFA2: a ratio computed from two live fighter fields, not the blob) |
-| int | 0x5DC0, 0x5DC1, 0x5DC2 | `+0x144`, `+0x148`, `+0x14C` |
-| sub-block pointer | 16 ids from 0xABE0 (jump table) | `+0x100`, `+0x124`, `+0x154`, ... `+0x314` |
+| float | 0xFA0 | `[off]` (0xFA1 / 0xFA2: a ratio computed from two live fighter fields, not the blob) |
+| int | 0x5DC0, 0x5DC1, 0x5DC2 | `[off]`, `[off]`, `[off]` |
+| sub-block pointer | 16 ids from 0xABE0 (jump table) | `[off]`, `[off]`, `[off]`, ... `[off]` |
 
 None of these is named, and HP is not among them as far as this accessor shows: Brawl's enemies take HP from the
 common enemy parameters read by the shared enemy code, which was not traced. So HP and cage HP are **not

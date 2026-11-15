@@ -10,6 +10,7 @@ use envoy_data::view::*;
 extern "C" {
     fn gd_fx_post(effect: u32, strength: f32, x: f32, y: f32, rgba: u32) -> i32;
     fn gd_ui_world_model_ex(model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, alpha: f32, material: i32, p0: f32, p1: f32, p2: f32, p3: f32, rgba: u32) -> i32;
+    fn gd_ui_world_model_rot(model: i32, x: f32, y: f32, z: f32, yaw: f32, roll: f32, scale: f32, alpha: f32, material: i32, p0: f32, p1: f32, p2: f32, p3: f32, rgba: u32) -> i32;
 }
 
 pub const POST_VIGNETTE: u32 = 1;
@@ -41,6 +42,64 @@ const EM_FIRST: i32 = 75;
 /// The model id of Envoy model `key` (an item's key, "node_boss", "frame_devil"...), -1 if there is none.
 pub fn em_model(key: &str) -> i32 {
     EM_KEYS.lines().position(|k| k == key).map_or(-1, |n| EM_FIRST + n as i32)
+}
+
+/// The meshes `items_ui::world` draws as effect bodies (one slot each: the manifest is searched once).
+pub const MESH_KEYS: [&str; 13] = ["pj_feather", "pj_shard", "pj_bolt", "fx_sigil", "guardian_feather", "fx_halo", "fx_wings", "fx_thorns", "orb_dodge",
+    "orb_nair", "orb_dash", "orb_shield", "pj_moon"];
+pub const ME_FEATHER: usize = 0;
+pub const ME_SHARD: usize = 1;
+pub const ME_BOLT: usize = 2;
+pub const ME_SIGIL: usize = 3;
+pub const ME_GUARD: usize = 4;
+pub const ME_HALO: usize = 5;
+pub const ME_WINGS: usize = 6;
+pub const ME_THORNS: usize = 7;
+pub const ME_ORB_DODGE: usize = 8;
+pub const ME_ORB_NAIR: usize = 9;
+pub const ME_ORB_DASH: usize = 10;
+pub const ME_ORB_SHIELD: usize = 11;
+pub const ME_MOON: usize = 12;
+/// Each slot's model id + 1 (0: not looked up yet).
+static mut MESH_ID: [i32; 13] = [0; 13];
+
+/// Effect body `slot` (ME_*) in the world at (x, y): turned `roll` in its own plane (a shot along its velocity) and
+/// `yaw` about the vertical, `scale` world units across, ink edged. False when the model set has no such model (the
+/// caller then draws its old shapes).
+pub fn mesh(slot: usize, x: f32, y: f32, roll: f32, yaw: f32, scale: f32, alpha: f32) -> bool {
+    let id = unsafe {
+        let m = &mut (*core::ptr::addr_of_mut!(MESH_ID))[slot];
+        if *m == 0 {
+            *m = em_model(MESH_KEYS[slot]) + 1;
+            if *m <= 0 {
+                *m = -1;
+            }
+        }
+        *m - 1
+    };
+    if id < 0 || alpha <= 0.01 {
+        return id >= 0;
+    }
+    unsafe { gd_ui_world_model_rot(id, x, y, 0.0, yaw, roll, scale, alpha.min(1.0), MAT_BODY | MAT_OUTLINE, 0.35, 0.0, 0.0, 0.0, 0xFFFF_FFFF) };
+    true
+}
+
+/// The angle of (x, y) in radians (a small polynomial: no_std), 0 for the zero vector.
+pub fn atan2(y: f32, x: f32) -> f32 {
+    let (ax, ay) = (if x < 0.0 { -x } else { x }, if y < 0.0 { -y } else { y });
+    if ax + ay < 1.0e-6 {
+        return 0.0;
+    }
+    let a = if ax > ay { ay / ax } else { ax / ay };
+    let s = a * a;
+    let mut r = ((-0.046_496_47 * s + 0.159_314_22) * s - 0.327_622_76) * s * a + a;
+    if ay > ax {
+        r = 1.570_796_3 - r;
+    }
+    if x < 0.0 {
+        r = 3.141_592_7 - r;
+    }
+    if y < 0.0 { -r } else { r }
 }
 
 /// A drive model with a material (see `gd_ui_world_model_ex`).

@@ -577,6 +577,7 @@ mod tests {
 
     #[test]
     fn galleom_grenades_and_missiles() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         // grenades lob forward and fall (accel y < 0), missiles fly level-ish: targets on each path
         run_ir("galleom.brawl.ir.json", "Grenade", 4, (60.0, 0.0));
         run_ir("galleom.brawl.ir.json", "Shoot", 4, (60.0, 20.0));
@@ -584,6 +585,7 @@ mod tests {
 
     #[test]
     fn duon_shots() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let Some((j, _)) = ir_motions("duon.brawl.ir.json") else { return };
         // every timeline with a spawn op fires and its shots are all removed
         for t in j.get("boss").get("timelines").arr() {
@@ -637,12 +639,14 @@ mod tests {
 
     #[test]
     fn hammer_bro_hammer() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         run_ir("enemies/hammer-bro.brawl.ir.json", "Hammer", 1, (25.0, 20.0));
     }
 
     /// Rollback: snapshot the state mid-flight, run on, restore, rerun: same hashes (the synctest property, headless).
     #[test]
     fn pool_rolls_back() {
+        let _s = crate::tu::geno_boss::s_test_lock();
         let Some((j, _)) = ir_motions("galleom.brawl.ir.json") else { return };
         let recs = lower_records(j.get("boss"));
         let evs = vec![gb::TimelineEvent { frame: 2, count: 4, every: 5, op: Op::Spawn { record: 1, joint: 26 } }];

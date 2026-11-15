@@ -294,15 +294,27 @@ impl Tree {
                 // L and R key caps around the tab labels; the active tab on the accent
                 key_cap(b, a, pen, th, x, y + 3.0, "L");
                 key_cap(b, a, pen, th, x + w - 20.0, y + 3.0, "R");
+                // every tab as wide as its word, the room left over shared out; when the words do not fit at the
+                // value size they are all set smaller (down to 8). They used to be equal shares of the bar with
+                // the word cut to its share: "Dumm", "Recor", "Displa", "Sessio" on a seven-tab bar (uiremake).
                 let k = n.choices.len().max(1) as f32;
-                let tw = (w - 48.0) / k;
+                let avail = w - 48.0;
+                let role = |px: i32| 1 | (px << 16);
+                let nat = |px: i32| n.choices.iter().map(|c| a.measure(c, super::cmd::style(role(px))) + 10.0).sum::<f32>();
+                let mut px = 12;
+                while px > 8 && nat(px) > avail {
+                    px -= 1;
+                }
+                let extra = ((avail - nat(px)) / k).max(0.0);
+                let mut tx = x + 24.0;
                 for (i, c) in n.choices.iter().enumerate() {
-                    let tx = x + 24.0 + i as f32 * tw;
+                    let tw = a.measure(c, super::cmd::style(role(px))) + 10.0 + extra;
                     let on = i as i32 == n.value;
                     if on {
                         fill(b, a, pen, th, tx, y + 2.0, tw - 2.0, TABS_H - 2.0, t(TOK_ACCENT));
                     }
-                    b.text(pen, a, tx + tw * 0.5, y + 7.0, 1, if on { t(TOK_ACCENT_INK) } else { t(TOK_MUTED) }, ALIGN_CENTER, tw - 4.0, c);
+                    b.text(pen, a, tx + tw * 0.5, y + 7.0 + (12 - px) as f32 * 0.5, role(px), if on { t(TOK_ACCENT_INK) } else { t(TOK_MUTED) }, ALIGN_CENTER, 0.0, c);
+                    tx += tw;
                 }
             }
             K_LABEL => b.text(pen, a, x, y + 3.0, 0, fade(t(TOK_MUTED)), 0, w, &n.label),

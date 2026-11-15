@@ -1241,6 +1241,8 @@ fn disc_warm(files: Vec<(u64, usize)>) {
     }
     ONCE.call_once(|| {
         let _s = crate::arena::SysScope::enter();
+        // read here, not on the warm thread: a getenv there can hold std's ENV_LOCK while a rollback load rewrites it
+        let boot_times = log_on() || std::env::var_os("MELEE_BOOT_TIMES").is_some();
         let _ = std::thread::Builder::new().name("disc-warm".into()).spawn(move || {
             crate::arena::mark_foreign_thread();
             #[cfg(windows)]
@@ -1275,7 +1277,7 @@ fn disc_warm(files: Vec<(u64, usize)>) {
                 }
                 n += 1;
             }
-            if log_on() || std::env::var_os("MELEE_BOOT_TIMES").is_some() {
+            if boot_times {
                 eprintln!("asset: disc warm-up: {n} files, {} MB read in {:.0} ms", bytes >> 20, t0.elapsed().as_secs_f64() * 1e3);
             }
         });

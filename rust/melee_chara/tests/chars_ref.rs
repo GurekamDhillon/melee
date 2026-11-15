@@ -47,6 +47,27 @@ fn pick() -> i32 {
 }
 fn install_recorders() {
     unsafe {
+        // callees the folded Samus TUs reach through their own `ext::` hooks (no default): the C oracle runs these for real
+        // (chref.py FTCOMMON cut), so the harness routes them to the group-3 ports the production link table uses
+        {
+            use melee_fighter::ftcommon as fc;
+            use melee_chara::tu::{ftsamusspecialhi as hi, ftsamusspeciallw0 as lw0, ftsamusspeciallw1 as lw1, ftsamusspecials as sp};
+            hi::ext::hook::ftCommon_CalcSelfAccel_Drift = Some(|fp| fc::calc_self_accel_drift(&mut *fp));
+            hi::ext::hook::ftCommon_CalcSelfAccel_DriftSimple = Some(|fp, a, b, c| fc::calc_self_accel_drift_simple(&mut *fp, a, b, c));
+            hi::ext::hook::ftCommon_ClampSelfVelX = Some(|fp, m| fc::clamp_self_vel_x(&mut *fp, m));
+            hi::ext::hook::ftCommon_UpdateFacing = Some(|fp| fc::update_facing(&mut *fp));
+            lw0::ext::hook::ftCommon_CalcGroundAccel_AccelToLStickX = Some(|fp, a, b, c| fc::calc_ground_accel_accel_to_lstick_x(&mut *fp, a, b, c));
+            lw0::ext::hook::ftCommon_CalcSelfAccel_DriftSimple = Some(|fp, a, b, c| fc::calc_self_accel_drift_simple(&mut *fp, a, b, c));
+            lw0::ext::hook::ftCommon_ClampSelfVelX = Some(|fp, m| fc::clamp_self_vel_x(&mut *fp, m));
+            lw0::ext::hook::ftCommon_FallBasic = Some(|fp| fc::fall_basic(&mut *fp));
+            lw0::ext::hook::ftCommon_SetSelfMovementFromGroundedMovement = Some(|g| fc::set_self_movement_from_grounded_movement(&mut *((*g).user_data as *mut Fighter)));
+            lw1::extg::hook::ftCommon_CalcGroundAccel_AccelToLStickX = Some(|fp, a, b, c| fc::calc_ground_accel_accel_to_lstick_x(&mut *fp, a, b, c));
+            lw1::extg::hook::ftCommon_CalcSelfAccel_DriftSimple_NoFriction = Some(|fp, a, b, c| fc::calc_self_accel_drift_simple_no_friction(&mut *fp, a, b, c));
+            lw1::extg::hook::ftCommon_FallBasic = Some(|fp| fc::fall_basic(&mut *fp));
+            lw1::extg::hook::ftCommon_SetSelfMovementFromGroundedMovement = Some(|g| fc::set_self_movement_from_grounded_movement(&mut *((*g).user_data as *mut Fighter)));
+            sp::ext::hook::ftCommon_CalcSelfAccel_Deaccel = Some(|fp, f| fc::calc_self_accel_deaccel(&mut *fp, f));
+            sp::ext::hook::ftCommon_FallBasic = Some(|fp| fc::fall_basic(&mut *fp));
+        }
         st::FT_80084F3C = Some(|g| { tr(1); trg(g) });
         st::FT_80084EEC = Some(|g| { tr(2); trg(g) });
         st::FT_80085134 = Some(|g| { tr(3); trg(g) });

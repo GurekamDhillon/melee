@@ -1049,6 +1049,10 @@ impl Rig {
         }
         self.bones.iter().zip(d).map(|(b, x)| (b.name.clone(), x)).collect()
     }
+    /// A bone's own MDL0 index.
+    pub fn bone_index(&self, slot: usize) -> u32 {
+        self.bones.get(slot).map(|b| b.index).unwrap_or(u32::MAX)
+    }
     pub fn bone_name(&self, slot: usize) -> &str {
         self.bones.get(slot).map(|b| b.name.as_str()).unwrap_or("")
     }
@@ -1446,6 +1450,9 @@ pub fn extent(tris: &[Vert]) -> ([f32; 3], [f32; 3]) {
 /// the material's alpha compare; opaque, back faces kept. `flash`: solid white.
 /// `org`: the model-space ground height and depth centre that land on `at` (x stays: the model's x is its own).
 /// Allocates nothing of its own: the texture objects live in the model, made on the loader's helper thread.
+/// `draw_tris` draws one triangle per material batch only (set around a call; presentation only).
+pub static mut SAMPLE: bool = false;
+
 pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
     let (s, c) = (yaw.sin(), yaw.cos());
     draw_tris_m(rig, tris, org, at, scale, [[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]], flash)
@@ -1531,6 +1538,9 @@ pub unsafe fn draw_tris_m(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3],
             gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
         }
         // GX vertex counts are u16: send in chunks of whole triangles
+        // SAMPLE: one triangle per batch (keeps the batch's texture resident in the renderer's cache; the caller
+        // draws it where the camera does not look)
+        let run = if SAMPLE { &run[..3.min(run.len())] } else { run };
         for chunk in run.chunks(3 * 20000) {
             gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
             for (p, col, uv) in chunk {

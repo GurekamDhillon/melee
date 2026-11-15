@@ -20,7 +20,7 @@
 
 use crate::tu::petey_model as pm;
 use crate::tu::script_game::ext as sg;
-use melee_core::ppc::Ppc;
+use melee_core::ppc::{fctiwz_f32, Ppc};
 use melee_types::*;
 use std::vec::Vec; // melee_types has its own `Vec` (the 3D vector): `melee_types::Vec` below
 
@@ -29,29 +29,46 @@ struct SecDef {
     file: &'static str,
     off: [f32; 2],
     model: &'static str,
-    /// 0: the step's main section; 1, 2: its side rooms `a`, `b` (Brawl's room files)
+    /// 0: a main section (a story step); 1, 2: the side rooms `a`, `b` of the main section before it
     room: u8,
+    /// a main section's way on (a GDOR door id): it leads to the next main section's entry, or past the last one to
+    /// the level's next story step (`STORY`). 0: the level-exit block's (GMSJ) door, else none.
+    exit: u32,
 }
 
-/// The map (notes/sse-stage.md: The Lake, step 3; Brawl's own model names call the Diddy arc "Jungle"): `080103`, a
-/// short, mostly flat corridor with a raised slab and a ledge, its doors into the side rooms `080103a` (the hut) and
-/// `080103b`, and an arrow door (the section's exit). Door targets come from the doors' own data (`link_doors`).
-const SECS: [SecDef; 3] = [
-    SecDef { file: "080103.pac", off: [0.0, 0.0], model: "081mAdvJungle03", room: 0 },
-    SecDef { file: "080103a.pac", off: [1500.0, 0.0], model: "081mAdvJungle03a", room: 1 },
-    SecDef { file: "080103b.pac", off: [3000.0, 0.0], model: "081mAdvJungle03b", room: 2 },
+const fn sec(file: &'static str, x: f32, y: f32, model: &'static str, room: u8, exit: u32) -> SecDef {
+    SecDef { file, off: [x, y], model, room, exit }
+}
+
+/// The Lake from step 3 (notes/sse-stage.md): `080103` (+ the hut `a`, room `b`) -> `080104` (+ `a`, `b`) ->
+/// `080105` (+ `a`), then Rayquaza. Main sections 8000 apart on x, side rooms 4000 below their main. The exit ids
+/// are the sections' own door ids (names and numbers only; the doors' data is read from the owner's files).
+const SECS: [SecDef; 8] = [
+    sec("080103.pac", 0.0, 0.0, "081mAdvJungle03", 0, 0x0801_0300),
+    sec("080103a.pac", 1500.0, 0.0, "081mAdvJungle03a", 1, 0),
+    sec("080103b.pac", 3000.0, 0.0, "081mAdvJungle03b", 2, 0),
+    sec("080104.pac", 8000.0, 0.0, "081mAdvJungle04", 0, 0x0801_0400),
+    sec("080104a.pac", 8000.0, -4000.0, "081mAdvJungle04a", 1, 0),
+    sec("080104b.pac", 9500.0, -4000.0, "081mAdvJungle04b", 2, 0),
+    sec("080105.pac", 16000.0, 0.0, "081mAdvJungle05", 0, 0),
+    sec("080105a.pac", 16000.0, -4000.0, "081mAdvJungle05a", 1, 0),
 ];
-/// The Jungle, step 2 (`060002`) and its side room (`060002a`, the water wheel), its own GD stage slot.
-const JUNGLE_SECS: [SecDef; 2] = [
-    SecDef { file: "060002.pac", off: [0.0, 0.0], model: "060mAdvJungle02", room: 0 },
-    SecDef { file: "060002a.pac", off: [3000.0, 0.0], model: "060mAdvJungle02a", room: 1 },
+/// The Jungle in story order: `060001` -> `060002` (+ the water-wheel room `a`) -> `060003` -> the climb `060004`
+/// (+ `a`), then its scene slot.
+const JUNGLE_SECS: [SecDef; 6] = [
+    sec("060001.pac", 0.0, 0.0, "060mAdvJungle01", 0, 0x0600_0101),
+    sec("060002.pac", 8000.0, 0.0, "060mAdvJungle02", 0, 0x0600_0202),
+    sec("060002a.pac", 11000.0, 0.0, "060mAdvJungle02a", 1, 0),
+    sec("060003.pac", 16000.0, 0.0, "060mAdvJungle03", 0, 0x0600_0301),
+    sec("060004.pac", 24000.0, 0.0, "060mAdvJungle04", 0, 0x0600_0402),
+    sec("060004a.pac", 24000.0, -4000.0, "060mAdvJungle04a", 1, 0),
 ];
 /// The sections of GD stage `id`.
 fn secs_of(id: i32) -> &'static [SecDef] {
     if id == GD_STAGE_SSE_JUNGLE { &JUNGLE_SECS } else { &SECS }
 }
-/// Petey's arena (the boss fight, `ARENA_WANT`): the adventure stage of his fight, one section at the origin.
-const ARENA_SECS: [SecDef; 1] = [SecDef { file: "030101.pac", off: [0.0, 0.0], model: "030vAdvStadium", room: 0 }];
+
+const ARENA_SECS: [SecDef; 1] = [sec("030101.pac", 0.0, 0.0, "030vAdvStadium", 0, 0)];
 
 /// Brawl's enemy kind (GEG1 +0x1C; names: BrawlCrate's public `EnemyList`, ids matched to the per-file counts in
 /// notes/sse-audit.md) -> the nearest of our four Subspace kinds (`subspace::K_*`), or None for a boss (not spawned).
@@ -127,11 +144,22 @@ pub struct Map {
     /// per section: (rig, posed triangles, offset); presentation only
     models: Vec<(pm::Rig, Vec<pm::Vert>, [f32; 2])>,
     door_models: Vec<(pm::Rig, Vec<pm::Vert>)>,
+    /// the bricks' looks (`Block::model`): name, rig, bind-pose triangles
+    brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)>,
+    /// moving platforms' bone positions per frame (section space; `Block::path`)
+    paths: Vec<Vec<[f32; 2]>>,
+    /// what the loader left out or moved (printed with the load report)
+    notes: Vec<String>,
     /// From the stage position model (arena only): camera limit and blast zones (left, right, top, bottom) and the
     /// player spawn points.
     pub cam: Option<[f32; 4]>,
     pub blast: Option<[f32; 4]>,
     pub players: Vec<[f32; 2]>,
+    /// per section: where a party arriving from the section before stands (its first player spawn, else its first
+    /// door, else its left floor end)
+    pub entries: Vec<[f32; 2]>,
+    /// per GD stage map: a digest of its collision (the content mask's per-section check, envoy-sse-design slice 0)
+    pub digest: u64,
 }
 
 fn be16(d: &[u8], o: usize) -> u16 {
@@ -186,6 +214,11 @@ pub struct Block {
     pub y: f32,
     pub hw: f32,
     pub hh: f32,
+    /// its look: index into `Map::brick_models` (drawn at `at` until broken); usize::MAX none
+    pub model: usize,
+    pub at: [f32; 2],
+    /// a moving platform (never breaks): index into `Map::paths`; usize::MAX a brick
+    pub path: usize,
 }
 
 fn load(id: i32) -> Result<Map, String> {
@@ -200,40 +233,74 @@ fn load(id: i32) -> Result<Map, String> {
 /// and the second takes over once the first room has been seen, see `room_tick`); a side room's way-back door
 /// returns to the main door that led in; the exit (GMSJ, else an arrow door) has no target.
 fn link_doors(m: &mut Map, secs: &[SecDef]) {
-    let room_sec = |r: u8| secs.iter().position(|s| s.room == r);
-    let mut next_room = 1u8;
-    for i in 0..m.doors.len() {
-        let d = m.doors[i];
-        if secs[d.sec].room != 0 || !d.into_room || d.exit {
-            continue;
-        }
-        let Some(rs) = room_sec(next_room) else { continue };
-        next_room += 1;
-        if let Some(t) = m.doors.iter().position(|o| o.sec == rs && o.back) {
-            m.doors[i].to = t as i32;
-            if m.doors[t].to < 0 {
-                m.doors[t].to = i as i32;
+    let mains: Vec<usize> = (0..secs.len()).filter(|&k| secs[k].room == 0).collect();
+    for (mi, &ms) in mains.iter().enumerate() {
+        let rooms: Vec<usize> = (ms + 1..secs.len()).take_while(|&k| secs[k].room != 0).collect();
+        let mut ri = 0usize;
+        for i in 0..m.doors.len() {
+            let d = m.doors[i];
+            if d.sec != ms || !d.into_room || d.exit {
+                continue;
+            }
+            let Some(&rs) = rooms.get(ri) else { continue };
+            ri += 1;
+            if let Some(t) = m.doors.iter().position(|o| o.sec == rs && o.back) {
+                m.doors[i].to = t as i32;
+                if m.doors[t].to < 0 {
+                    m.doors[t].to = i as i32;
+                }
             }
         }
-    }
-    // a section whose doors carry neither flag (The Jungle's `060002` and its wheel room): a side room still unreached
-    // is paired with the first free main door (a way-back-flagged one first) through its own first free door
-    for r in next_room..=secs.iter().map(|s| s.room).max().unwrap_or(0) {
-        let Some(rs) = room_sec(r) else { continue };
-        if m.doors.iter().any(|d| d.sec == rs && d.to >= 0) {
-            continue;
-        }
-        let free = |m: &Map, main: bool, back: bool| {
-            m.doors.iter().position(|d| (d.sec == 0) == main && (main || d.sec == rs) && d.to < 0 && !d.exit && (!back || d.back))
+        // the way on: the section's exit door leads to the next main section's entry, past the last one to the
+        // level's next story step; any other door the arrow rule called an exit stays shut
+        let way = if secs[ms].exit != 0 {
+            m.doors.iter().position(|d| d.sec == ms && d.id == secs[ms].exit)
+        } else {
+            m.doors.iter().position(|d| d.sec == ms && d.exit)
         };
-        let Some(i) = free(m, true, true).or_else(|| free(m, true, false)) else { continue };
-        let Some(t) = free(m, false, false) else { continue };
-        m.doors[i].to = t as i32;
-        m.doors[i].into_room = true;
-        m.doors[t].to = i as i32;
-        m.doors[t].back = true;
+        if let Some(e) = way {
+            for d in m.doors.iter_mut().filter(|d| d.sec == ms) {
+                d.exit = false;
+            }
+            m.doors[e].into_room = false;
+            m.doors[e].back = false;
+            match mains.get(mi + 1) {
+                Some(&n) => {
+                    let at = m.entries.get(n).copied().unwrap_or([0.0, 0.0]);
+                    m.doors.push(Door { sec: n, x: at[0], y: at[1], kind: ENTRY, to: -1, id: 0, back: false, into_room: false, exit: false });
+                    m.doors[e].to = m.doors.len() as i32 - 1;
+                }
+                None => {
+                    m.doors[e].to = STORY_NEXT;
+                    m.doors[e].exit = true;
+                }
+            }
+        }
+        // a section whose doors carry neither flag (The Jungle's `060002` and its wheel room): a side room still
+        // unreached is paired with the first free main door (a way-back-flagged one first) through its own first
+        // free door
+        for &rs in rooms.iter().skip(ri) {
+            if m.doors.iter().any(|d| d.sec == rs && d.to >= 0) {
+                continue;
+            }
+            let free = |m: &Map, main: bool, back: bool| {
+                m.doors.iter().position(|d| if main { d.sec == ms } else { d.sec == rs } && d.to == -1 && d.kind != ENTRY && !d.exit && (!back || d.back))
+            };
+            let Some(i) = free(m, true, true).or_else(|| free(m, true, false)) else { continue };
+            let Some(t) = free(m, false, false) else { continue };
+            m.doors[i].to = t as i32;
+            m.doors[i].into_room = true;
+            m.doors[t].to = i as i32;
+            m.doors[t].back = true;
+        }
     }
 }
+
+/// A door kind of our own: a section's entry point (where the way on from the section before arrives); never drawn,
+/// never opened.
+const ENTRY: u8 = 0xFF;
+/// `Door::to` of the last main section's way on: the level's next story step (`story_next`).
+pub const STORY_NEXT: i32 = -2;
 
 /// `whole`: every collision file of a section, welded (the arena's centre floor is its own file).
 /// `objects`: the map's way: every collision object by its bone (world objects static, bricks as block joints).
@@ -250,14 +317,22 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut exits: Vec<u32> = vec![];
     let mut models = vec![];
     let mut door_models = vec![];
+    let mut brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)> = vec![];
+    let mut paths: Vec<Vec<[f32; 2]>> = vec![];
+    // load notes, printed by the game thread with the map's report (never printed from a loader thread)
+    let mut notes: Vec<String> = vec![];
     let mut cam = None;
     let mut blast = None;
     let mut players = vec![];
+    let mut entries: Vec<[f32; 2]> = vec![];
     for (si, s) in secs.iter().enumerate() {
+        let p_first = players.len();
+        let mut prop_cache: Option<Vec<pm::Rig>> = None;
         let Some(leaves) = pm::pac_leaves(s.file) else {
             if si > 0 {
                 // a missing side room: the main section still plays (its doors into it stay shut)
                 ext.push([0.0; 4]);
+                entries.push(s.off);
                 continue;
             }
             return Err("map archive not readable".into());
@@ -286,20 +361,50 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         ([s.off[0], s.off[1]], 0usize)
                     } else if name.starts_with(b"AdvGdtPunBrick") {
                         match leaves.iter().find_map(|b| pm::bone_trans(b, name)) {
+                            // a brick bone at the origin: its place comes from Brawl's block data (GBLK), whose bone
+                            // reference is not decoded (notes/sse-stage.md); left out rather than put at the origin
+                            Some(t) if t[0] == 0.0 && t[1] == 0.0 => {
+                                notes.push(format!("explore: section {si}: brick {} has no place (GBLK); left out", String::from_utf8_lossy(name)));
+                                continue;
+                            }
                             Some(t) => {
                                 let bb = [bef(c, o + 0x14), bef(c, o + 0x18), bef(c, o + 0x1C), bef(c, o + 0x20)];
                                 let (x, y) = (t[0] + s.off[0] + (bb[0] + bb[2]) / 2.0, t[1] + s.off[1] + (bb[1] + bb[3]) / 2.0);
-                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0 });
+                                let nm = String::from_utf8_lossy(name).into_owned();
+                                // the brick's own model (an MDL0 of the brick's name in the section archive), posed at the
+                                // same bone
+                                let model = match brick_models.iter().position(|(n, _, _)| *n == nm) {
+                                    Some(i) => i,
+                                    None => match pm::static_models(&leaves, &[nm.as_str()]).pop() {
+                                        Some((n, r, t)) => {
+                                            brick_models.push((n, r, t));
+                                            brick_models.len() - 1
+                                        }
+                                        None => usize::MAX,
+                                    },
+                                };
+                                let at = [t[0] + s.off[0], t[1] + s.off[1]];
+                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX });
                                 ([t[0] + s.off[0], t[1] + s.off[1]], blocks.len())
                             }
                             None => {
-                                eprintln!("explore: section {si}: a brick's bone not found; left out");
+                                notes.push(format!("explore: section {si}: a brick's bone not found; left out"));
                                 continue;
                             }
                         }
+                    } else if let Some(path) = mover_path(&leaves, &mut prop_cache, name) {
+                        // a platform riding an animated bone (060002a's sfyuka00-03 on the water wheel `st02asuisha`):
+                        // its own joint, its points moved along the bone's path every frame (`movers_tick`)
+                        let at = [path[0][0] + s.off[0], path[0][1] + s.off[1]];
+                        let bb = [bef(c, o + 0x14), bef(c, o + 0x18), bef(c, o + 0x1C), bef(c, o + 0x20)];
+                        let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
+                        paths.push(path);
+                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model: usize::MAX, at, path: paths.len() - 1 });
+                        notes.push(format!("explore: section {si}: {} moves ({} frames)", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0)));
+                        (at, blocks.len())
                     } else {
                         if !name.starts_with(b"AdvGdtItemBox") {
-                            eprintln!("explore: section {si}: a collision object riding a moving part left out ({} lines)", pc);
+                            notes.push(format!("explore: section {si}: a collision object riding a moving part left out ({} lines)", pc));
                         }
                         continue;
                     };
@@ -415,6 +520,13 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 crates.push(Crate { sec: si, x: bef(b, e + 0x30) + s.off[0], y: bef(b, e + 0x34) + s.off[1], size: be32(b, e + 0x38) });
             }
         }
+        entries.push(
+            players
+                .get(p_first)
+                .copied()
+                .or_else(|| doors.iter().find(|d: &&Door| d.sec == si).map(|d| [d.x, d.y]))
+                .unwrap_or([e[0] + 40.0, e[3]]),
+        );
         for (_, r, t) in pm::static_models(&leaves, &[s.model]) {
             models.push((r, t, s.off));
         }
@@ -553,6 +665,23 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         joints.push(mj);
         vstart = vend;
     }
+    // FNV-1a over the collision as the game gets it (points, then each line's ends, links and flags): two players'
+    // maps are the same map only when this matches (their own Brawl files make it)
+    let mut digest: u64 = 0xcbf2_9ce4_8422_2325;
+    let mut eat = |x: u32| {
+        for b in x.to_le_bytes() {
+            digest = (digest ^ b as u64).wrapping_mul(0x0100_0000_01b3);
+        }
+    };
+    for p in &verts {
+        eat(p[0].to_bits());
+        eat(p[1].to_bits());
+    }
+    for l in &lines {
+        eat(l.v0_idx as u32 | (l.v1_idx as u32) << 16);
+        eat(l.prev_id0 as u16 as u32 | (l.next_id0 as u16 as u32) << 16);
+        eat(l.hi_flags as u32 | (l.lo_flags as u32) << 16);
+    }
     Ok(Map {
         verts: verts.iter().map(|p| Vec2 { x: p[0], y: p[1] }).collect(),
         lines,
@@ -566,9 +695,14 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         crates,
         models,
         door_models,
+        brick_models,
+        paths,
+        notes,
         cam,
         blast,
         players,
+        entries,
+        digest,
     })
 }
 
@@ -594,18 +728,31 @@ pub const GD_STAGES: [GdStage; 2] = [
     GdStage { id: GD_STAGE_SSE_JUNGLE, name: "The Jungle (SSE)", files: &["060002.pac", "060002a.pac"] },
 ];
 
-/// Whether any GD stage can be played.
+/// Whether any GD stage's files are here (the hooks go in at engine start on this, before any netplay agreement).
 fn any_available() -> bool {
-    GD_STAGES.iter().any(|g| available(g.id))
+    GD_STAGES.iter().any(|g| files_present(g.id))
 }
 
 pub fn is_gd_stage(id: i32) -> bool {
     (GD_STAGE_FIRST..=GD_STAGE_LAST).contains(&id)
 }
 
-/// Whether GD stage `id` can be played: its archives are in the owner's Brawl folder (`MELEE_BRAWL_ABSENT` hides it).
-pub fn available(id: i32) -> bool {
+/// Whether GD stage `id`'s archives are in the owner's Brawl folder (`MELEE_BRAWL_ABSENT` hides it).
+pub fn files_present(id: i32) -> bool {
     GD_STAGES.iter().any(|g| g.id == id && g.files.iter().all(|f| pm::adventure_present(f)))
+}
+
+/// The content this session may play (slice 0): `u32::MAX` = whatever this machine's files allow; a netplay session
+/// sets the AND of both peers' masks (a stage whose collision digests differ is dropped), a replay its header's. Set
+/// before the match (at connect / replay load), constant through it.
+pub static mut ALLOW: u32 = u32::MAX;
+
+/// Whether GD stage `id` can be played: its files are here and the session allows it (`ALLOW`). A peer without the
+/// stage (or with other files) makes it unavailable on both sides: the stage select drops the row, a pick falls back
+/// to Final Destination itself.
+pub fn available(id: i32) -> bool {
+    let k = GD_STAGES.iter().position(|g| g.id == id);
+    files_present(id) && k.is_some_and(|k| unsafe { ALLOW } & 1u32.pshl(k as i64) != 0)
 }
 
 pub fn gd_name(id: i32) -> Option<&'static str> {
@@ -644,32 +791,94 @@ pub fn map() -> Option<&'static Map> {
     map_of(if id != 0 { id } else { GD_STAGE_SSE_LAKE3 })
 }
 
-/// GD stage `id`'s map, loaded once on a helper thread.
-pub fn map_of(id: i32) -> Option<&'static Map> {
-    static M: [std::sync::OnceLock<Option<Map>>; 2] = [const { std::sync::OnceLock::new() }; 2];
-    let k = if id == GD_STAGE_SSE_JUNGLE { 1 } else { 0 };
-    M[k].get_or_init(|| {
-        if !available(id) {
-            return None;
+/// The loaded maps and their load reports. Like `subspace_model`'s state, this must survive every rollback load (a
+/// snapshot rewrites the executable's statics, and a static `OnceLock` filled by a loader mid-synctest was rewritten
+/// under it): one block leaked on the system heap, found through a thread-local of the game thread and handed to the
+/// loader threads. The report is printed by the game thread (`map_of`): printing from a loader raced the rewrite of
+/// std's own statics and hung a synctest one run in six.
+struct Maps {
+    m: [std::sync::OnceLock<Option<Map>>; 2],
+    msg: [std::sync::Mutex<String>; 2],
+    told: [std::sync::atomic::AtomicBool; 2],
+}
+
+std::thread_local! {
+    static MAPS: std::cell::Cell<Option<&'static Maps>> = const { std::cell::Cell::new(None) };
+}
+
+fn maps() -> &'static Maps {
+    MAPS.with(|c| {
+        if let Some(s) = c.get() {
+            return s;
         }
-        let t = std::time::Instant::now();
-        let r = std::thread::spawn(move || load(id)).join().unwrap_or_else(|_| Err("loader panicked".into()));
-        match &r {
-            Ok(m) => eprintln!(
-                "explore: map loaded ({} sections, {} verts, {} lines, {} doors, {} spawns, {} crates, {} blocks, {} tris) in {} ms",
-                m.ext.len(), m.verts.len(), m.lines.len(), m.doors.len(), m.spawns.len(), m.crates.len(), m.blocks.len(),
-                m.models.iter().map(|(_, t, _)| t.len() / 3).sum::<usize>(), t.elapsed().as_millis()
-            ),
-            Err(e) => eprintln!("explore: no map ({e}); Final Destination as usual"),
-        }
-        if let Ok(m) = &r {
-            for (i, d) in m.doors.iter().enumerate() {
-                eprintln!("explore: door {i} section {} at ({:.0},{:.0}) type {} to {}", d.sec, d.x, d.y, d.kind, d.to);
-            }
-        }
-        r.ok()
+        let s: &'static Maps = std::thread::spawn(|| {
+            &*Box::leak(Box::new(Maps {
+                m: [const { std::sync::OnceLock::new() }; 2],
+                msg: [const { std::sync::Mutex::new(String::new()) }; 2],
+                told: [const { std::sync::atomic::AtomicBool::new(false) }; 2],
+            }))
+        })
+        .join()
+        .expect("explore map state");
+        c.set(Some(s));
+        s
     })
-    .as_ref()
+}
+
+fn slot_of(id: i32) -> usize {
+    if id == GD_STAGE_SSE_JUNGLE { 1 } else { 0 }
+}
+
+/// Load GD stage `id`'s map into `st` (any thread; once).
+fn load_into(st: &'static Maps, id: i32) -> Option<&'static Map> {
+    let k = slot_of(id);
+    st.m[k]
+        .get_or_init(|| {
+            if !available(id) {
+                return None;
+            }
+            let t = std::time::Instant::now();
+            let r = load(id);
+            let mut rep = String::new();
+            use std::fmt::Write as _;
+            match &r {
+                Ok(m) => {
+                    let _ = writeln!(
+                        rep,
+                        "explore: map loaded ({} sections, {} verts, {} lines, {} doors, {} spawns, {} crates, {} blocks, {} tris) in {} ms",
+                        m.ext.len(), m.verts.len(), m.lines.len(), m.doors.len(), m.spawns.len(), m.crates.len(), m.blocks.len(),
+                        m.models.iter().map(|(_, t, _)| t.len() / 3).sum::<usize>(), t.elapsed().as_millis()
+                    );
+                    for n in &m.notes {
+                        let _ = writeln!(rep, "{n}");
+                    }
+                    for (i, d) in m.doors.iter().enumerate() {
+                        let _ = writeln!(rep, "explore: door {i} section {} at ({:.0},{:.0}) type {} to {}", d.sec, d.x, d.y, d.kind, d.to);
+                    }
+                    for (i, b) in m.blocks.iter().enumerate() {
+                        let look = m.brick_models.get(b.model).map(|x| x.0.as_str()).unwrap_or("none");
+                        let _ = writeln!(rep, "explore: block {i} section {} at ({:.0},{:.0}) size {:.0}x{:.0} model {look}", b.sec, b.x, b.y, 2.0 * b.hw, 2.0 * b.hh);
+                    }
+                }
+                Err(e) => {
+                    let _ = writeln!(rep, "explore: no map ({e}); Final Destination as usual");
+                }
+            }
+            *st.msg[k].lock().unwrap_or_else(|e| e.into_inner()) = rep;
+            r.ok()
+        })
+        .as_ref()
+}
+
+/// GD stage `id`'s map (game thread). Waits for a loader still running (only at the stage load that needs it).
+pub fn map_of(id: i32) -> Option<&'static Map> {
+    let st = maps();
+    let r = load_into(st, id);
+    let k = slot_of(id);
+    if !st.told[k].swap(true, std::sync::atomic::Ordering::Relaxed) {
+        eprint!("{}", st.msg[k].lock().unwrap_or_else(|e| e.into_inner()));
+    }
+    r
 }
 
 /// Petey's arena, loaded once on a helper thread; `None` without the owner's files.
@@ -730,6 +939,7 @@ const FADE_LEN: i32 = 2 * FADE_IN + HOLD;
 /// `ground::EXPLORE_COLL`: at every stage load, before the script layer and `mpLibLoad`. Returns the exploration
 /// collision (a fresh copy in the game heap) for Final Destination with the mode on, else null (the stage's own).
 pub unsafe fn coll_override() -> *mut MapCollData {
+    melee_core::hash::CONTENT_WORD.store(0, core::sync::atomic::Ordering::Relaxed);
     ACTIVE = false;
     SEC = 0;
     FADE = 0;
@@ -739,6 +949,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     DOORS_USED = 0;
     VISITED = 1;
     BROKEN = 0;
+    CARD = 0;
     ARENA = false;
     if sg::stage_info.grkind as i32 != 37 {
         return core::ptr::null_mut();
@@ -754,6 +965,13 @@ pub unsafe fn coll_override() -> *mut MapCollData {
         }
         CUR_ID = want;
         let Some(m) = map() else { return core::ptr::null_mut() };
+        // the content word the session hash carries (slice 0): pick, mask, digest
+        let mut h = melee_core::hash::StateHasher::new();
+        h.write(&want.to_be_bytes());
+        h.write(&effective_mask().to_be_bytes());
+        h.write(&m.digest.to_be_bytes());
+        let w = (h.finish() as u32 ^ (h.finish() >> 32) as u32) | 1;
+        melee_core::hash::CONTENT_WORD.store(w, core::sync::atomic::Ordering::Relaxed);
         m
     };
     let alloc = |n: usize| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(n as _) };
@@ -941,6 +1159,8 @@ pub unsafe fn room_tick() {
         screen_kos(m);
     }
     blocks_tick(m);
+    movers_tick(m);
+    card_tick();
     if CLOCK % 10 == 0 && std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
         each_fighter(|_, fp| {
             let p = (*fp).cur_pos;
@@ -982,7 +1202,7 @@ pub unsafe fn room_tick() {
     }
     // checks only (`MELEE_EXPLORE_GOTO=door@frame[,door@frame..]`): the party goes through to `door` at room frame
     // `frame`, as if it had opened the door leading there (screenshots inside the side rooms without a walk)
-    if let Some(&(_, to)) = goto_list().iter().find(|&&(f, to)| f == CLOCK && (to as usize) < m.doors.len()) {
+    if let Some(&(_, to)) = goto_list("MELEE_EXPLORE_GOTO").iter().find(|&&(f, to)| f == CLOCK && (to as usize) < m.doors.len()) {
         DEST = to;
         FADE = 1;
         eprintln!("explore: test goto door {to} at room frame {CLOCK}");
@@ -1010,7 +1230,7 @@ pub unsafe fn room_tick() {
         for (di, d) in m.doors.iter().enumerate() {
             // overlapping doors (080103 has its two room doors at one spot): a linked one wins over an unlinked
             // one, and a door into a room not yet seen over one into a seen room
-            let near = d.sec as i32 == SEC && (p.x - d.x).abs() <= 15.0 && p.y >= d.y - 55.0 && p.y <= d.y + 20.0;
+            let near = d.kind != ENTRY && d.sec as i32 == SEC && (p.x - d.x).abs() <= 15.0 && p.y >= d.y - 55.0 && p.y <= d.y + 20.0;
             let score = |d: &Door| if d.to < 0 { if d.exit { 1 } else { 0 } } else if VISITED & 1u32.pshl(m.doors[d.to as usize].sec.min(31) as i64) == 0 { 3 } else { 2 };
             if near && (want < 0 || score(d) > score(&m.doors[want as usize])) {
                 want = di as i32;
@@ -1018,10 +1238,21 @@ pub unsafe fn room_tick() {
             }
         }
     });
+    // checks only (`MELEE_EXPLORE_OPEN=door@frame,..`): door `door` of the party's section is opened at room frame
+    // `frame`, as a player's up tilt at it would (a story walk takes the way on with it)
+    if let Some(&(_, d)) = goto_list("MELEE_EXPLORE_OPEN").iter().find(|&&(f, d)| f == CLOCK && (d as usize) < m.doors.len()) {
+        if m.doors[d as usize].sec as i32 == SEC {
+            want = d;
+            eprintln!("explore: test open door {d} at room frame {CLOCK}");
+        }
+    }
     if want >= 0 {
         let d = m.doors[want as usize];
         DEST = if d.to >= 0 {
             d.to
+        } else if d.to == STORY_NEXT {
+            story_next();
+            -1
         } else if !d.exit {
             -1 // an unlinked door stays shut
         } else {
@@ -1039,11 +1270,13 @@ pub unsafe fn room_tick() {
     }
 }
 
-/// `MELEE_EXPLORE_GOTO` as (room frame, door) pairs; empty when unset.
-fn goto_list() -> &'static [(i32, i32)] {
+/// `MELEE_EXPLORE_GOTO` / `MELEE_EXPLORE_OPEN` as (room frame, door) pairs; empty when unset.
+fn goto_list(var: &'static str) -> &'static [(i32, i32)] {
     static G: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
-    G.get_or_init(|| {
-        std::env::var("MELEE_EXPLORE_GOTO")
+    static O: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
+    let cell = if var == "MELEE_EXPLORE_OPEN" { &O } else { &G };
+    cell.get_or_init(|| {
+        std::env::var(var)
             .unwrap_or_default()
             .split(',')
             .filter_map(|p| {
@@ -1056,6 +1289,11 @@ fn goto_list() -> &'static [(i32, i32)] {
 
 /// Section `s`'s enemy points, each as its own Brawl kind's nearest Subspace kind (`enemy_kind`); the previous
 /// section's enemies go (Brawl rebuilds a room's generators on entry too). At most the pool's size.
+/// The enemy spawn hook (the Geno enemy actors): (Brawl kind, x, y, facing, section) -> whether it spawned the enemy.
+/// Called at each map enemy point when its section is entered, within the same pool cap; the room's own clear on a
+/// door (`subspace::clear_room`) stays the caller's to mirror.
+pub static mut ENEMY_HOOK: Option<unsafe fn(u16, f32, f32, i32, usize) -> bool> = None;
+
 unsafe fn spawn_section(m: &Map, s: usize) {
     use crate::tu::subspace as ss;
     // only the map's own: the Envoy sim's enemies (its foes for the fight) stay, and keep half the pool free for it
@@ -1065,6 +1303,14 @@ unsafe fn spawn_section(m: &Map, s: usize) {
     for &(si, x, y, face, id) in &m.spawns {
         if si != s || n >= cap {
             continue;
+        }
+        // the Geno enemy lane's actors take a point first (Brawl kind, place, facing, section); the hand-made
+        // Subspace kinds are the stand-in until they do
+        if let Some(hook) = ENEMY_HOOK {
+            if hook(id, x, y, face, s) {
+                n += 1;
+                continue;
+            }
         }
         let (k, name) = enemy_kind(id);
         let Some(k) = k else {
@@ -1097,6 +1343,149 @@ unsafe fn spawn_crates(m: &Map) {
     }
 }
 
+/// The path of the bone named `name` in the section's models, from the first CHR0 that moves it: its model-space
+/// (x, y) at every frame. None when no model has such a bone or nothing animates it.
+fn mover_path(leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8]) -> Option<Vec<[f32; 2]>> {
+    let rigs = cache.get_or_insert_with(|| {
+        let mut names: Vec<String> = vec![];
+        for b in leaves.iter().filter(|b| b.len() >= 0x10 && &b[..4] == b"bres") {
+            for (n, off) in pm::brres_entries(b).unwrap_or_default() {
+                if b.get(off..off + 4) == Some(b"MDL0") && !names.contains(&n) {
+                    names.push(n);
+                }
+            }
+        }
+        let want: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
+        pm::prop_rigs(leaves, &want).into_iter().flatten().collect()
+    });
+    let name = std::str::from_utf8(name).ok()?;
+    for r in rigs.iter() {
+        let Some(k) = (0..r.bones.len()).find(|&k| r.bone_name(k) == name) else { continue };
+        let Some((_, a)) = r.anims.iter().find(|(_, a)| a.tracks.iter().any(|t| t.0 == name)) else { continue };
+        let n = fctiwz_f32(a.frames).clamp(1, 3600) as usize;
+        let path: Vec<[f32; 2]> = (0..n).map(|f| {
+            let p = r.bone_point(Some(a), f as f32, k, [0.0; 3]);
+            [p[0], p[1]]
+        }).collect();
+        if path.iter().any(|p| (p[0] - path[0][0]).abs() > 0.01 || (p[1] - path[0][1]).abs() > 0.01) {
+            return Some(path);
+        }
+    }
+    None
+}
+
+/// The moving platforms of the party's section: each joint's points follow its bone's path (the frame is the room
+/// clock), the previous place kept for the riders (`mpLib_80057424`), the joint's bounds refreshed.
+unsafe fn movers_tick(m: &Map) {
+    use melee_world::tu::mplib as mp;
+    for (k, b) in m.blocks.iter().enumerate() {
+        if b.path == usize::MAX || b.sec as i32 != SEC {
+            continue;
+        }
+        let Some(path) = m.paths.get(b.path) else { continue };
+        let f = CLOCK.max(0).prem(path.len() as i32) as usize;
+        let (dx, dy) = (path[f][0] - path[0][0], path[f][1] - path[0][1]);
+        let j = k + 1;
+        let Some(mj) = m.joints.get(j) else { continue };
+        mp::mpLib_80057424(j as i32);
+        for v in mj.vtx_start as usize..(mj.vtx_start as usize + mj.vtx_count as usize) {
+            let (Some(base), vx) = (m.verts.get(v), mp::groundCollVtx.add(v)) else { continue };
+            (*vx).pos.x = base.x + dx;
+            (*vx).pos.y = base.y + dy;
+        }
+        mp::mpJointUpdateBounding(j as i32);
+        ride_check(k, mj, path.len() as i32);
+        if CLOCK % 100 == 0 && std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
+            let v = mp::groundCollVtx.add(mj.vtx_start as usize);
+            eprintln!("explore: frame {} platform {k} at ({:.1},{:.1})", CLOCK, (*v).pos.x, (*v).pos.y);
+        }
+    }
+}
+
+/// Checks only (`MELEE_EXPLORE_RIDE=block@frame`): at that room frame player 1 is set down just above moving block
+/// `block`'s top, then for one full loop of its path the fighter's place relative to the platform is tracked: it must
+/// stay grounded, never fall below the top, and move with the platform (no jitter). One summary line at the end.
+/// The rider is the first fighter in play (player 1 of a `--match`).
+unsafe fn ride_check(k: usize, mj: &MapJoint, len: i32) {
+    use melee_world::tu::mplib as mp;
+    static mut AT: i32 = i32::MIN;
+    static mut WHO: usize = 0;
+    // (frames tracked, frames airborne after landing, min/max rel x, min/max rel y, max per-frame step of rel y, last)
+    static mut ST: (i32, i32, f32, f32, f32, f32, f32, f32, bool) = (0, 0, f32::MAX, f32::MIN, f32::MAX, f32::MIN, 0.0, 0.0, false);
+    static SPEC: std::sync::OnceLock<Option<(usize, i32)>> = std::sync::OnceLock::new();
+    let Some((want, at)) = *SPEC.get_or_init(|| {
+        let v = std::env::var("MELEE_EXPLORE_RIDE").ok()?;
+        let (b, f) = v.split_once('@')?;
+        Some((b.trim().parse().ok()?, f.trim().parse().ok()?))
+    }) else { return };
+    if k != want {
+        return;
+    }
+    let top = || {
+        let mut t = f32::MIN;
+        let (mut l, mut r) = (f32::MAX, f32::MIN);
+        for v in mj.vtx_start as usize..(mj.vtx_start as usize + mj.vtx_count as usize) {
+            let p = (*mp::groundCollVtx.add(v)).pos;
+            t = fmax(t, p.y);
+            l = fmin(l, p.x);
+            r = fmax(r, p.x);
+        }
+        ((l + r) * 0.5, t)
+    };
+    if CLOCK == at {
+        let (cx, ty) = top();
+        let mut done = false;
+        each_fighter(|g, fp| {
+            if !done {
+                WHO = g as usize;
+                place(g, fp, cx, ty + 4.0);
+                done = true;
+            }
+        });
+        AT = at;
+        ST = (0, 0, f32::MAX, f32::MIN, f32::MAX, f32::MIN, 0.0, 0.0, false);
+        eprintln!("explore: ride: the first fighter set on platform {k} at ({cx:.1},{:.1}), room frame {CLOCK}", ty + 4.0);
+        return;
+    }
+    // 30 frames to land, then one loop
+    if AT == i32::MIN || CLOCK < AT + 30 || CLOCK > AT + 30 + len {
+        return;
+    }
+    each_fighter(|g, fp| {
+        if g as usize != WHO {
+            return;
+        }
+        // relative to the platform's first point (it moves rigidly): constant while the fighter rides it
+        let v0 = (*mp::groundCollVtx.add(mj.vtx_start as usize)).pos;
+        let (rx, ry) = ((*fp).cur_pos.x - v0.x, (*fp).cur_pos.y - v0.y);
+        let (_, ty) = top();
+        let ground = (*fp).ground_or_air as i32 == GA_Ground as i32;
+        let st = &mut *core::ptr::addr_of_mut!(ST);
+        if st.0 > 0 {
+            st.6 = fmax(st.6, (ry - st.7).abs());
+        }
+        st.7 = ry;
+        st.0 += 1;
+        if !ground {
+            st.1 += 1;
+        }
+        st.2 = fmin(st.2, rx);
+        st.3 = fmax(st.3, rx);
+        let _ = ty;
+        st.4 = fmin(st.4, ry);
+        st.5 = fmax(st.5, ry);
+        if CLOCK == AT + 30 + len {
+            // the fighter is placed from the platform's previous frame (mpLib_80057424's prev_pos), so its place on the
+            // platform swings by about one frame's travel round the loop (~1.3 here); a jitter or a slip is a jump
+            let ok = st.1 == 0 && st.5 - st.4 < 2.0 && st.6 < 0.1 && st.3 - st.2 < 2.0;
+            eprintln!(
+                "explore: ride {}: platform {k}, {} frames (one loop), airborne {}, height over the platform's first point {:.2}..{:.2}, x on the platform {:.2}..{:.2}, worst step {:.3}",
+                if ok { "OK" } else { "FAILED" }, st.0, st.1, st.4, st.5, st.2, st.3, st.6
+            );
+        }
+    });
+}
+
 /// The breakable blocks: a live hitbox of any fighter (or a fighter's item) touching an unbroken block breaks it,
 /// and its collision joint goes off (`mpLib_80057BC0`, as Melee's stages switch a joint off). One hit breaks one,
 /// as Brawl's bricks under a normal attack.
@@ -1106,7 +1495,7 @@ unsafe fn blocks_tick(m: &Map) {
     }
     let touches = |b: &Block, x: f32, y: f32, r: f32| (x - b.x).abs() <= b.hw + r && (y - b.y).abs() <= b.hh + r;
     for (k, b) in m.blocks.iter().enumerate().take(64) {
-        if BROKEN & 1u64.pshl(k as i64) != 0 || b.sec as i32 != SEC {
+        if b.path != usize::MAX || BROKEN & 1u64.pshl(k as i64) != 0 || b.sec as i32 != SEC {
             continue;
         }
         let mut hit = false;
@@ -1130,6 +1519,9 @@ pub fn hide_ground() -> bool {
     unsafe { ACTIVE }
 }
 
+/// Room frames between two more section models joining the draw (`draw`).
+const WARM_STEP: usize = 2;
+
 /// `ftdrawcommon::MAP_DRAW`: the section models, the doors and the transition fade, once per frame (player 1's
 /// opaque pass). Presentation only.
 pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
@@ -1138,9 +1530,12 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     // once per frame: in the first in-play fighter's pass
     let mut first: *mut HSD_GObj = core::ptr::null_mut();
-    each_fighter(|fg, _| {
+    let (mut fx, mut fy) = (0.0f32, 0.0f32);
+    each_fighter(|fg, fp| {
         if first.is_null() {
             first = fg;
+            fx = (*fp).cur_pos.x;
+            fy = (*fp).cur_pos.y;
         }
     });
     if first != g {
@@ -1148,13 +1543,53 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     let Some(m) = cur() else { return };
     let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("explore map draw"));
-    for (r, t, off) in &m.models {
+    // The section models come in one at a time over the room's first frames, nearest the party first: every section is
+    // drawn from then on (its textures stay in the renderer's cache, so a door never uploads anything), but no one
+    // frame converts and uploads the whole map's textures (Lake 50 / 14.8 MB, Jungle 67 / 18.5 MB: the setup frame's
+    // biggest part). Counted off the room clock (sim state), so nothing presentation-side is kept.
+    let (px, py) = (fx, fy);
+    let mut order: [(f32, u16); 32] = [(f32::MAX, 0); 32];
+    let n = m.models.len().min(32);
+    for (i, (_, _, off)) in m.models.iter().take(n).enumerate() {
+        order[i] = ((off[0] - px).abs() + (off[1] - py).abs(), i as u16);
+    }
+    order[..n].sort_by(|a, b| a.0.total_cmp(&b.0));
+    // checks only: MELEE_EXPLORE_WARM=all draws every section from the first frame (the old way, for an A/B profile)
+    static ALL: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    let all = *ALL.get_or_init(|| std::env::var("MELEE_EXPLORE_WARM").is_ok_and(|v| v == "all"));
+    let warm = if all { n } else { ((CLOCK.max(0) as usize) / WARM_STEP + 1).min(n) };
+    // Only the party's section is drawn whole; every other one is drawn as one triangle per material, out of the
+    // camera's view, so its textures stay in the renderer's cache (a texture unused for 120 frames is dropped) and its
+    // first full draw after a door uploads nothing. Full draws of every section cost 3-4 ms a frame (52-62 k
+    // immediate-mode triangles).
+    let e = m.ext.get(SEC.max(0) as usize).copied();
+    let here = |off: &[f32; 2]| all || e.map_or(true, |e| off[0] >= e[0] - 500.0 && off[0] <= e[1] + 500.0 && off[1] <= e[2] + 500.0 && off[1] >= e[3] - 500.0);
+    for &(_, i) in &order[..warm] {
+        let (r, t, off) = &m.models[i as usize];
+        pm::SAMPLE = !here(off);
+        pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);
+        pm::SAMPLE = false;
+    }
+    for (r, t, off) in m.models.iter().skip(32) {
         pm::draw_tris(r, t, [0.0, 0.0], [off[0], off[1], 0.0], 1.0, 0.0, false);
     }
+    // the bricks still standing in the party's section (a broken one's model goes with its collision)
+    for (k, b) in m.blocks.iter().enumerate() {
+        let broken = k < 64 && BROKEN & 1u64.pshl(k as i64) != 0;
+        if broken || b.sec as i32 != SEC {
+            continue;
+        }
+        if let Some((_, r, t)) = m.brick_models.get(b.model) {
+            pm::draw_tris(r, t, [0.0, 0.0], [b.at[0], b.at[1], 0.0], 1.0, 0.0, false);
+        }
+    }
     if let Some((r, t)) = m.door_models.first() {
-        for d in &m.doors {
+        for d in m.doors.iter().filter(|d| d.kind != ENTRY) {
             pm::draw_tris(r, t, [0.0, 0.0], [d.x, d.y, 0.0], 1.0, 0.0, false);
         }
+    }
+    if CARD > 0 {
+        pm::draw_fade(255);
     }
     if FADE > 0 {
         let a = if FADE < FADE_IN {
@@ -1166,6 +1601,275 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
         };
         pm::draw_fade(a as u8);
     }
+}
+
+// ---------------------------------------------------------------- the story table (data) and its entry points
+
+/// What Brawl does at a story point. Brawl plays a cutscene at each `Scene`; the port never plays one: a scene slot
+/// names the game scene that runs there (`SceneKind`), so the owner (or Envoy) can choose per slot later.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Step {
+    /// a GD stage map (its sections chained in story order, `secs_of`)
+    Map(i32),
+    /// a boss fight (the Geno boss lane plugs in through `boss::BOSS_HOOK`)
+    Boss(BossKind),
+    /// a cutscene spot: our slot id and what runs there
+    Scene(u8, SceneKind),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BossKind {
+    Petey,
+    Rayquaza,
+    Porky,
+    Galleom,
+    Ridley,
+    Duon,
+    MetaRidley,
+    Tabuu,
+}
+
+/// What runs in a scene slot.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SceneKind {
+    /// a plain placeholder card (black, 2 s)
+    Card,
+    /// an Envoy fight
+    EnvoyFight,
+    /// Envoy's camp (rest, shop)
+    Camp,
+    /// a results card
+    Results,
+}
+
+/// How the party's state carries into a step: stocks and damage as they are, or damage cleared (a rest).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Carry {
+    Keep,
+    Rest,
+}
+
+/// The story table: (step, carry) in story order, for the levels the port has. Scene slots sit where Brawl's level
+/// data starts or ends a level or a boss (the level-exit block GMSJ, a level's last door, a boss stage's EPBM boss
+/// mark); Brawl's cutscenes themselves (`movie/`) are never read. Slot ids are ours.
+pub const STORY: &[(Step, Carry)] = &[
+    (Step::Scene(1, SceneKind::Card), Carry::Keep),    // Jungle opening (before 060001)
+    (Step::Map(GD_STAGE_SSE_JUNGLE), Carry::Keep),     // 060001 -> 060002 (+a) -> 060003 -> 060004 (+a)
+    (Step::Scene(2, SceneKind::Camp), Carry::Rest),    // Jungle end (060004's last door, 06000402)
+    (Step::Scene(3, SceneKind::Card), Carry::Keep),    // Lake opening (before 080101)
+    (Step::Map(GD_STAGE_SSE_LAKE3), Carry::Keep),      // 080103 (+a, b) -> 080104 (+a, b) -> 080105 (+a)
+    (Step::Scene(4, SceneKind::Camp), Carry::Rest),    // before Rayquaza (080105's GMSJ exit)
+    (Step::Boss(BossKind::Rayquaza), Carry::Keep),     // 080001
+    (Step::Scene(5, SceneKind::Results), Carry::Keep), // after Rayquaza
+];
+
+/// The story step the party is on (index into `STORY`; -1 outside the story). Snapshot covered.
+pub static mut STORY_AT: i32 = -1;
+/// The running placeholder card: frames left (0 none) and what it is (a slot id, or 100 + boss kind).
+pub static mut CARD: i32 = 0;
+pub static mut CARD_WHAT: i32 = 0;
+/// The end event of the last thing started through an entry point; read and cleared by the caller (Envoy, Story).
+pub static mut END: i32 = 0;
+pub const END_NONE: i32 = 0;
+/// the party left by the level's way on (its last main section's exit door)
+pub const END_EXIT: i32 = 1;
+pub const END_SCENE: i32 = 2;
+pub const END_BOSS: i32 = 3;
+/// every player out of stocks (the caller's own rule raises it; the map never ends a match)
+pub const END_WIPED: i32 = 4;
+const CARD_FRAMES: i32 = 120;
+
+/// Start story step `k` when it is a scene slot or a boss (a map step needs a new stage: the caller's).
+unsafe fn story_run(k: usize) {
+    let Some((step, _)) = STORY.get(k) else { return };
+    STORY_AT = k as i32;
+    match *step {
+        Step::Scene(slot, _) => scene::start(slot),
+        Step::Boss(b) => boss::start(b, 0, 1.0),
+        Step::Map(id) => eprintln!("explore: story step {k}: map {id:#x} (a new stage; the caller's)"),
+    }
+}
+
+/// The level's way on was taken: the end event, then the story step after the current map.
+unsafe fn story_next() {
+    END = END_EXIT;
+    eprintln!("explore: way on taken (end event exit) at room frame {CLOCK}");
+    let here = if STORY_AT >= 0 { Some(STORY_AT as usize) } else { STORY.iter().position(|(s, _)| *s == Step::Map(CUR_ID)) };
+    if let Some(h) = here {
+        story_run(h + 1);
+    }
+}
+
+/// Every room frame: a running card counts down, ends with its event and runs on into a following scene / boss step.
+unsafe fn card_tick() {
+    if CARD <= 0 {
+        return;
+    }
+    CARD -= 1;
+    if CARD > 0 {
+        return;
+    }
+    END = if CARD_WHAT >= 100 { END_BOSS } else { END_SCENE };
+    eprintln!("explore: {} {} ended (placeholder card) at room frame {CLOCK}", if CARD_WHAT >= 100 { "boss" } else { "scene slot" }, CARD_WHAT % 100);
+    if STORY_AT >= 0 {
+        if let Some((Step::Scene(..) | Step::Boss(_), _)) = STORY.get(STORY_AT as usize + 1) {
+            story_run(STORY_AT as usize + 1);
+        }
+    }
+}
+
+/// Envoy / Story entry: play GD stage `id`'s map (every section loaded before the first frame; the party starts in its
+/// first section). Returns the retail stage that carries it (Final Destination), or `id` itself when it is not an
+/// available GD stage. The end event is `END_EXIT` when the party leaves by the level's way on.
+pub fn enter_section(id: i32) -> i32 {
+    unsafe {
+        END = END_NONE;
+        STORY_AT = STORY.iter().position(|(s, _)| *s == Step::Map(id)).map(|i| i as i32).unwrap_or(-1);
+    }
+    carrier(id)
+}
+
+/// The content this player's files allow (envoy-sse-design slice 0): bit k for `GD_STAGES[k]`, bit 30 when the enemy
+/// looks are there. 0 with `MELEE_BRAWL_ABSENT`. Netplay plays the AND of both peers' masks.
+pub fn content_mask() -> u32 {
+    let mut m = 0u32;
+    for (k, g) in GD_STAGES.iter().enumerate() {
+        if files_present(g.id) {
+            m |= 1u32.pshl(k as i64);
+        }
+    }
+    if m != 0 && pm::adventure_present("060001.pac") {
+        m |= 1 << 30;
+    }
+    // checks only: MELEE_SSE_TEST_MASK=<hex> ANDs this machine's mask (a peer "without" a stage, files kept)
+    if let Some(t) = std::env::var("MELEE_SSE_TEST_MASK").ok().and_then(|v| u32::from_str_radix(&v, 16).ok()) {
+        m &= t;
+    }
+    m
+}
+
+/// GD stage `id`'s collision digest (0 when not available). A section set counts in netplay only when both peers'
+/// digests match. Waits for the map's loader (call it before a match, never inside one).
+pub fn digest(id: i32) -> u64 {
+    if !files_present(id) {
+        return 0;
+    }
+    map_of(id).map(|m| m.digest).unwrap_or(0)
+}
+
+/// The mask this session plays: this machine's content AND the session's allowance.
+pub fn effective_mask() -> u32 {
+    content_mask() & unsafe { ALLOW }
+}
+
+/// This machine's slice-0 token for a netplay handshake / a record: `m<mask>` then `.k:<digest>` per GD stage it has
+/// (hex). `melee_net::app::room::content_and` combines two of these.
+pub fn content_token() -> String {
+    let m = content_mask();
+    let mut t = format!("m{m:x}");
+    for (k, g) in GD_STAGES.iter().enumerate() {
+        if m & 1u32.pshl(k as i64) != 0 {
+            // folded to 32 bits: the HELLO's guest info is 64 bytes on the wire
+            let d = digest(g.id);
+            t += &format!(".{k}:{:x}", (d ^ (d >> 32)) as u32);
+        }
+    }
+    t
+}
+
+/// The replay header's / run record's SSE line: the pick, the mask played and the picked map's digest
+/// (`p<pick>.m<mask>.d<digest>`, hex).
+pub fn header_token() -> String {
+    let p = unsafe { PICK };
+    format!("p{p:x}.m{:x}.d{:x}", effective_mask(), if p != 0 { digest(p) } else { 0 })
+}
+
+/// Apply a replay header's SSE line: its mask becomes the allowance and its pick the pick. A pick whose map is not
+/// here, or whose digest differs from this machine's, is dropped (the replay then plays Final Destination, and the
+/// hash, which carries the content word, says so at once).
+pub fn apply_header_token(t: &str) {
+    let mut p = 0i32;
+    let mut m = 0u32;
+    let mut d = 0u64;
+    for f in t.split('.') {
+        let (k, v) = f.split_at(1.min(f.len()));
+        match k {
+            "p" => p = i32::from_str_radix(v, 16).unwrap_or(0),
+            "m" => m = u32::from_str_radix(v, 16).unwrap_or(0),
+            "d" => d = u64::from_str_radix(v, 16).unwrap_or(0),
+            _ => {}
+        }
+    }
+    unsafe {
+        ALLOW = m;
+        PICK = if p != 0 && available(p) && digest(p) == d { p } else { 0 };
+        eprintln!("explore: replay header sse {t}: pick {:#x}, mask {:x}", PICK, effective_mask());
+    }
+}
+
+/// Apply a netplay session's agreed mask (`;sse=` of the agreed scene: the host's pick and the AND of both peers'
+/// masks). `None` (an older host, or a host with no Brawl content): no SSE content on either side.
+pub fn apply_netplay(agreed: Option<(i32, u32)>) {
+    unsafe {
+        let (p, m) = agreed.unwrap_or((0, 0));
+        ALLOW = m;
+        PICK = if p != 0 && available(p) { p } else { 0 };
+        eprintln!("explore: netplay content: mask {:x} (this machine {:x}), pick {:#x}", effective_mask(), content_mask(), PICK);
+    }
+}
+
+/// Boss fights. No boss runs here: the Geno boss lane plugs its actors in through `BOSS_HOOK`; with no hook a boss
+/// step shows a placeholder card, is logged as blocked and ends with `END_BOSS` (never a faked fight).
+pub mod boss {
+    use super::*;
+    /// (kind, tier, hp scale) -> whether the hook took the fight (it then raises `END = END_BOSS` itself).
+    pub static mut BOSS_HOOK: Option<unsafe fn(BossKind, i32, f32) -> bool> = None;
+    pub fn start(kind: BossKind, tier: i32, hp_scale: f32) {
+        unsafe {
+            END = END_NONE;
+            if let Some(h) = BOSS_HOOK {
+                if h(kind, tier, hp_scale) {
+                    eprintln!("explore: boss {kind:?} started (tier {tier}, hp x{hp_scale})");
+                    return;
+                }
+            }
+            eprintln!("explore: boss {kind:?}: no boss runner yet (Geno boss lane); placeholder card");
+            CARD = CARD_FRAMES;
+            CARD_WHAT = 100 + kind as i32;
+        }
+    }
+}
+
+/// Scene slots: a placeholder card for every kind for now (a caller may run its own scene instead and raise
+/// `END = END_SCENE` itself).
+pub mod scene {
+    use super::*;
+    pub fn start(slot: u8) {
+        unsafe {
+            END = END_NONE;
+            let kind = STORY.iter().find_map(|(s, _)| if let Step::Scene(k, kind) = s { (*k == slot).then_some(*kind) } else { None });
+            eprintln!("explore: scene slot {slot} ({kind:?}) started");
+            // a camp is a rest (`Carry::Rest`): every fighter's damage goes to 0 as the slot starts (stocks kept).
+            // The camp itself is still a card until the Envoy camp is wired in; the rest is applied either way.
+            let rest = STORY.iter().any(|(s, c)| matches!(s, Step::Scene(k, _) if *k == slot) && *c == Carry::Rest);
+            if rest {
+                rest_party();
+            }
+            CARD = CARD_FRAMES;
+            CARD_WHAT = slot as i32;
+        }
+    }
+}
+
+/// `Carry::Rest`: every fighter's percent (and its HUD number) back to 0.
+unsafe fn rest_party() {
+    let mut n = 0;
+    each_fighter(|_, fp| {
+        (*fp).dmg.x1830_percent = 0.0;
+        melee_fighter::tu::player::Player_SetHUDDamage((*fp).player_idx as i32, 0);
+        n += 1;
+    });
+    eprintln!("explore: rest: {n} fighters at 0% (room frame {CLOCK})");
 }
 
 /// Install the hooks (the engine start). Nothing is hooked without the owner's Brawl files (or Petey's mode).
@@ -1180,14 +1884,21 @@ pub fn install() {
         melee_fighter::tu::ftdrawcommon::MAP_DRAW = Some(draw);
     }
     // start loading now, in the background (the first stage load that needs it waits for it there)
-    for g in GD_STAGES.iter() {
-        if available(g.id) {
-            let id = g.id;
-            std::thread::spawn(move || {
-                let _ = map_of(id);
-            });
+    // the loaders are started from a short-lived helper thread, so their handles and result packets are system-heap
+    // allocations: a loader spawned straight from the game thread puts them in the arena, and a rollback load during
+    // the (now longer: moving parts) load rewrote them under it (a synctest hung one run in three)
+    let st = maps();
+    let _ = std::thread::spawn(move || {
+        for g in GD_STAGES.iter() {
+            if available(g.id) {
+                let id = g.id;
+                let _ = std::thread::Builder::new().name("explore-map".into()).spawn(move || {
+                    let _ = load_into(st, id);
+                });
+            }
         }
-    }
+    })
+    .join();
     if crate::tu::petey::selected() || crate::tu::petey::vs_selected() {
         let _ = arena();
     }
@@ -1254,6 +1965,8 @@ mod lake3_tests {
         }
         eprintln!("crates {} blocks {} joints {} lines {}", m.crates.len(), m.blocks.len(), m.joints.len(), m.lines.len());
         assert!(m.doors.iter().any(|d| d.exit), "no exit");
+        assert!(m.doors.iter().any(|d| d.to == super::STORY_NEXT), "no way on");
+        assert_eq!(m.doors.iter().filter(|d| d.kind == super::ENTRY).count(), 2, "sections not chained");
         for d in m.doors.iter().filter(|d| d.into_room || d.back) {
             assert!(d.to >= 0, "room door unlinked");
         }
@@ -1274,8 +1987,12 @@ mod jungle_tests {
             eprintln!("door {i} sec {} type {} to {} exit {} back {} room {}", d.sec, d.kind, d.to, d.exit, d.back, d.into_room);
         }
         eprintln!("spawns {} crates {} blocks {} lines {}", m.spawns.len(), m.crates.len(), m.blocks.len(), m.lines.len());
-        assert!(m.doors.iter().any(|d| d.sec == 0 && d.into_room && d.to >= 0), "no room door linked");
-        assert!(m.doors.iter().any(|d| d.sec == 1 && d.back && d.to >= 0), "no way back");
+        // 060002 (section 1) into its wheel room (section 2) and back
+        assert!(m.doors.iter().any(|d| d.sec == 1 && d.into_room && d.to >= 0), "no room door linked");
+        assert!(m.doors.iter().any(|d| d.sec == 2 && d.back && d.to >= 0), "no way back");
+        // chained: every main section but the last leads on to the next one's entry, the last to the story
+        assert!(m.doors.iter().any(|d| d.to == super::STORY_NEXT), "no way on");
+        assert_eq!(m.doors.iter().filter(|d| d.kind == super::ENTRY).count(), 3, "sections not chained");
         assert!(m.spawns.iter().all(|s| super::enemy_kind(s.4).1 != "unmapped"));
     }
 }

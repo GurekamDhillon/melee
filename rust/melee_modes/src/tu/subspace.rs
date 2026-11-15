@@ -1426,6 +1426,11 @@ unsafe fn floater(i: usize) {
         if fabs(dx) < d.sight[0] && fabs(dy) < d.sight[1] {
             tx = fclamp(e.x + dx, e.home[0] - 40.0, e.home[0] + 40.0);
             ty = fclamp(e.y + dy + 6.0, e.home[1] - 60.0, e.home[1] + 40.0);
+        } else {
+            // out of sight, its hanging place creeps after the player (a Jyk left at the far edge of a room would
+            // otherwise never be met, and the room never cleared)
+            e.home[0] += fclamp(dx, -0.1, 0.1);
+            tx = e.home[0];
         }
     }
     e.vx = fclamp(tx - e.x, -d.walk, d.walk);

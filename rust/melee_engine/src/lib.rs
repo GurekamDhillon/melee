@@ -1,6 +1,12 @@
 //! Engine host (consolidation plan step 5): the OS heaps, the DVD seam and the archive images the game's own
 //! loaders (`lbFile`, `lbArchive`, `HSD_ArchiveParse`) run on. No game logic lives here.
 #![allow(static_mut_refs, non_snake_case, clippy::missing_safety_doc)]
+// every `eprintln!` in this crate goes through `logq` (a worker thread never touches stdio; see there)
+macro_rules! eprintln {
+    () => { $crate::logq::line(::std::string::String::new()) };
+    ($($t:tt)*) => { $crate::logq::line(::std::format!($($t)*)) };
+}
+pub mod logq;
 pub mod arena;
 pub mod asset;
 pub mod recheap;

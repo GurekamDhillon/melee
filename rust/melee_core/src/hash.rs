@@ -118,3 +118,9 @@ mod tests {
         assert_eq!(hash_of(&1.0f32), hash_of(&0x3f80_0000u32));
     }
 }
+
+/// The content word of the match in play (envoy-sse-design slice 0): the GD stage pick, the content mask both sides
+/// play and that map's collision digest folded together, 0 when no GD content is in play (a retail stage), so every
+/// vanilla hash and golden is unchanged. Set once at the stage load (`explore::coll_override`), read by the session
+/// hash (`melee_modhost::session_hash`): two peers or a replay whose maps differ fail the hash at once.
+pub static CONTENT_WORD: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);

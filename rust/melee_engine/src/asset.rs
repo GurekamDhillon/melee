@@ -934,6 +934,7 @@ pub fn init(iso: Option<String>) {
     }));
     SVC.store(s, core::sync::atomic::Ordering::Release);
     game_io(); // boot hints wait for the first load burst (the title's first frame) to end
+    crate::logq::init(); // before the worker can log
     if worker {
         std::thread::Builder::new().name("asset-worker".into()).spawn(worker_main).expect("asset worker");
     }
@@ -962,6 +963,7 @@ fn now_ms() -> u64 {
 
 fn worker_main() {
     crate::arena::mark_foreign_thread();
+    crate::logq::mark_worker();
     let s = svc().unwrap();
     let mut f = s.iso.as_ref().and_then(|p| std::fs::File::open(p).ok());
     loop {

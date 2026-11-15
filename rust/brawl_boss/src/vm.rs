@@ -209,7 +209,7 @@ pub const RUN_IDS: &[u16] = &[
     0x1901, 0x1902, 0x1B02, 0x6500, 0x6504, 0x6505, 0x6507, 0x6509, 0x6514, 0x6516, 0x651E, 0x651F, 0x6523, 0x6600,
     0x6601, 0x6602, 0x6603, 0x6607, 0x6609, 0x660A, 0x660B, 0x660C, 0x6612, 0x6614, 0x6616, 0x6617, 0x661A, 0x661B, 0x6900, 0x6901, 0x6902, 0x6907, 0x6908, 0x6909, 0x690A, 0x6A00, 0x6A01,
     0x6A02, 0x6A03, 0x6B03, 0x1405, 0x6524, 0x6B01, 0x6604, 0x6605, 0x660E, 0x6905, 0x6906, 0x6520, 0x0502, 0x660F, 0x6506, 0x6510, 0x6511, 0x6515, 0x030A, 0x661C,
-    0x661D, 0x661E, 0x6D00, 0x100D, 0x6508, 0x651B, 0x6521,
+    0x661D, 0x661E, 0x6D00, 0x100D, 0x6508, 0x651B, 0x6521, 0x6613, 0x0200,
 ];
 
 /// Commands forwarded to the host as presentation events, not interpreted: motion-module rate / partial-motion
@@ -231,19 +231,19 @@ pub const RUN_IDS: &[u16] = &[
 pub fn forwarded(id: u16) -> bool {
     let m = id >> 8;
     (matches!(m, 0x04 | 0x06 | 0x08 | 0x0A | 0x0D | 0x11 | 0x18 | 0x1A | 0x0E | 0x14 | 0x1C | 0x1D | 0x1E | 0x6C | 0x6E) && !RUN_IDS.contains(&id))
-        || matches!(id, 0x650E | 0x650F | 0x6513 | 0x651A | 0x651D | 0x6502 | 0x6517 | 0x651C | 0x6525 | 0x6528 | 0x6529 | 0x0302 | 0x0304 | 0x0306 | 0x6527 | 0x6519 | 0x0F00 | 0x0F01 | 0x0F02)
+        || matches!(id, 0x650E | 0x650F | 0x6513 | 0x651A | 0x651D | 0x6502 | 0x6517 | 0x651C | 0x6525 | 0x6528 | 0x6529 | 0x0302 | 0x0304 | 0x0306 | 0x6527 | 0x6519 | 0x0F00 | 0x0F01 | 0x0F02 | 0x0300 | 0x2200)
 }
 
 /// Requirement ids the VM answers.
 pub const REQ_IDS: &[u32] = &[
     1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 15, 16, 17, 18, 19, 20, 22, 23, 47, 73, 10000, 10001, 10002, 10003, 10004, 10006, 10007, 10021, 10022, 10023, 37, 10005, 10008, 10009, 10010, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020,
     10050, 10051, 10052, 10053, 10054, 10055, 10057, 10059, 56, 60, 75, 63, 64, 65, 66, 67, 68, 69, 10024, 10025, 10026, 10027, 10028, 10029, 10030, 10031, 10032, 10033, 10034, 10035, 10036, 10037, 10038, 10039, 10040, 10041, 10042,
-    10043, 10044, 10045, 10046, 10047,
+    10043, 10044, 10045, 10046, 10047, 21, 24, 28, 39,
 ];
 
 /// Engine values (memory 0) the VM answers.
 fn known_value(id: u32) -> bool {
-    matches!(id, 3 | 4 | 1003 | 8 | 9 | 15 | 21 | 20000 | 1020 | 1021 | 1022 | 1023 | 1024 | 1025 | 1026 | 1049 | 1050 | 1051 | 1052 | 1028 | 1029 | 3056 | 3057 | 20001 | 20003 | 21000 | 21001 | 21002 | 21004 | 21007 | 21008 | 21009 | 21010 | 41000)
+    matches!(id, 3 | 4 | 1003 | 8 | 9 | 15 | 21 | 20000 | 1020 | 1021 | 1022 | 1023 | 1024 | 1025 | 1026 | 1049 | 1050 | 1051 | 1052 | 1028 | 1029 | 3056 | 3057 | 20001 | 20003 | 21000 | 21001 | 21002 | 21004 | 21007 | 21008 | 21009 | 21010 | 21012 | 41000)
         || (23000..=23099).contains(&id)
 }
 
@@ -582,7 +582,18 @@ impl<'a> Builder<'a> {
             let Ok(cmd) = f.decode_cmd(at) else { break };
             let id = cmd.id();
             let a = self.p.args.len() as u32;
+            // R21 / R24 / R28 read their first argument's raw value word; R21 / R24 only for an int (type 0) argument,
+            // and for R28 any other type's word is not an article kind [M]. Any other type is kept raw: false
+            let mut raw_next = false;
             for x in &cmd.args {
+                if core::mem::take(&mut raw_next) && !matches!(*x, Arg::Int(_)) {
+                    let (t, v) = x.to_pair();
+                    self.p.args.push(A::Raw(t, v));
+                    continue;
+                }
+                if let Arg::Req { id: 21 | 24 | 28, .. } = *x {
+                    raw_next = true;
+                }
                 let c = match *x {
                     Arg::Int(i) => A::K(i as f32),
                     Arg::Scalar(s) => A::K(s.raw() as f32 / 60000.0),

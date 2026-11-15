@@ -59,8 +59,11 @@ pub struct Kin {
     /// [off]: 1 = loop, else the path's end finishes the unit)
     pub pf: f32,
     pub pmode: i32,
+    /// kinds 21 / 22: the start's second path word (unit [off], read by 6613): a 6602 / 6603's argument 6 as an
+    /// integer (default 0); another start of a path kind gives 0 [M: their start vectors are the module's constants]
+    pub pn: f32,
 }
-pub const KIN0: Kin = Kin { kind: -1, ang: 0.0, dir_set: 0, spd: 0.0, acc: 0.0, max: f32::MAX, done: 0, paused: 0, ek: -1, min: f32::MIN, rec: 0, max_l: 0.0, face: 0.0, seek: 0, pf: 0.0, pmode: 0 };
+pub const KIN0: Kin = Kin { kind: -1, ang: 0.0, dir_set: 0, spd: 0.0, acc: 0.0, max: f32::MAX, done: 0, paused: 0, ek: -1, min: f32::MIN, rec: 0, max_l: 0.0, face: 0.0, seek: 0, pf: 0.0, pmode: 0, pn: 0.0 };
 
 /// The placement path a Subspace placement hands its enemy (create parameter [off], stored at Enemy [off] and read
 /// as value 41000): a stage gimmick of class grGimmickMotionPath. `frames` is its frame count ([off]); `pos(id, f)`
@@ -304,6 +307,26 @@ pub struct Input {
     /// the enemy's centre (getCenterPos: the global position of the model node param 0x59E6 names), for 1051 / 1052
     /// and R10024-R10047; None: the actor's position [L]
     pub center: Option<[f32; 2]>,
+    /// the article manager's live articles, in its list's order (soGenerateArticleManageModuleImpl, accessor slot
+    /// [off]): R21 and R24 walk it
+    pub articles: [Article; 8],
+    /// R28: the enemy class's article table (the per-class object the Enemy constructor takes, e.g. an
+    /// soArticleMediatorImpl over its weapon pools) per article kind: bit a = its vfunc [off] answers true for kind a
+    /// (a pooled instance of the kind answers 0 to its vfunc [off]) [M: read as "a free instance"]. Kinds at or past
+    /// the table's count are clear (the null table has none)
+    pub article_pool: u32,
+    /// 21012: the linked enemy's status (the actor's manager entry's link handle, its object's work-module status
+    /// getter); None: the chain is broken (value -1)
+    pub partner_status: Option<i32>,
+}
+
+/// One live article for R21 / R24: `id` its vfunc [off] answer (an article id [L]), `q` its vfunc [off] with 0
+/// answers 1 [L: meaning not traced].
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Article {
+    pub on: bool,
+    pub id: i32,
+    pub q: bool,
 }
 
 /// One model node's global rotation (rows of the 3x3 part of its matrix) for R10024-R10047; `id` is the node id the
@@ -398,7 +421,7 @@ impl Actor {
         a.ti.iter().for_each(|&v| mix(v as u32));
         a.tf.iter().for_each(|v| mix(v.to_bits()));
         for k in &a.kin {
-            for v in [k.kind as u32, k.ang.to_bits(), k.dir_set, k.spd.to_bits(), k.acc.to_bits(), k.max.to_bits(), k.done, k.paused, k.pf.to_bits(), k.pmode as u32] {
+            for v in [k.kind as u32, k.ang.to_bits(), k.dir_set, k.spd.to_bits(), k.acc.to_bits(), k.max.to_bits(), k.done, k.paused, k.pf.to_bits(), k.pmode as u32, k.pn.to_bits()] {
                 mix(v);
             }
         }
@@ -900,6 +923,7 @@ impl<'a> Cx<'a> {
             // getter 0x81A03678 reads it 1-5 with the difficulty; 6523's setter 0x81A037D8 writes it)
             21009 => self.p.place_word as f32,
             21010 => a.strength as f32,
+            21012 => self.i.partner_status.map_or(-1.0, |s| s as f32),
             // 23000-23033 (0x81A227C0): words of the enemy's data blocks, placed by the local value table
             // (`Program::block_values`) [L: which block the second pointer is was not traced]. A word below 0x10000 is
             // an int, else a float.
@@ -1065,6 +1089,39 @@ impl<'a> Cx<'a> {
             // R56 (sora_melee requirement switch, case 0x38 -> 0x8107A918): the link module (accessor [off]) vfunc
             // 0x168; emLinkModuleImpl's (0x81A28530): its partner id is not -1: linked to another actor
             56 => self.i.linked,
+            // R21 a (generic switch case 0x15): an int argument only (any other type: false); the article manager
+            // (accessor [off]) vfunc [off]: some live entry of its list answers a to its vfunc [off]
+            21 => match self.arg(ins, k + 1) {
+                A::K(v) => self.i.articles.iter().any(|t| t.on && t.id == v as i32),
+                _ => false,
+            },
+            // R24 a [b] (case 0x18): an int a only; the manager's vfunc [off] gathers the live articles answering a
+            // (b = 0: all, 1: the first, 2: the last, else none), true when one answers 1 to its vfunc [off] with 0
+            24 => match self.arg(ins, k + 1) {
+                A::K(v) => {
+                    let mut m = self.i.articles.iter().filter(|t| t.on && t.id == v as i32);
+                    match x(1) as i32 {
+                        0 => m.any(|t| t.q),
+                        1 => m.next().is_some_and(|t| t.q),
+                        2 => m.last().is_some_and(|t| t.q),
+                        _ => false,
+                    }
+                }
+                _ => false,
+            },
+            // R28 a (case 0x1C): the manager's vfunc [off]: a below the class table's count asks that table's vfunc
+            // [off] (an extra table the manager can hold is never set by the enemy constructor [M]), else false
+            28 => match self.arg(ins, k + 1) {
+                A::K(v) => (0..32).contains(&(v as i32)) && self.i.article_pool & (1 << v as i32) != 0,
+                _ => false,
+            },
+            // R39 n (case 0x27): the motion module's vfunc [off] on motion slot n: false when the slot is flagged,
+            // else its frame is at or past its last frame (the clip's frame count - 1). Slot 0 is the main motion;
+            // the others and the slot flags are not modelled [L]
+            39 => x(0) as i32 == 0 && {
+                let len = self.p.motion_len.get(a.motion as usize).copied().unwrap_or(60).max(1) as i32;
+                self.motion_frame().0 >= len - 1
+            },
             63..=69 => self.i.ground_q & (1 << (id - 63)) != 0,
             73 => a.lock >= 0,
             10004 => a.kin.iter().any(|k| k.kind >= 0 && k.done != 0),
@@ -2031,7 +2088,9 @@ impl<'a> Cx<'a> {
                 let prev = self.a.kin[si].pf;
                 self.kin_start(slot, kind, Some(ang));
                 let snap = ins.n > 3 && v(self, 3) != 0.0;
-                let f = if ins.n > 5 { v(self, 5) } else { -1.0 };
+                let f = if ins.n > 5 { libm::truncf(v(self, 5)) } else { -1.0 };
+                // argument 6 (integer, default 0): the path word 6613 reads
+                let pn = if ins.n > 6 { libm::truncf(v(self, 6)) } else { 0.0 };
                 let (g0, g1) = (self.p.general[22], self.p.general[23]);
                 let path = self.i.path;
                 let u = &mut self.a.kin[si];
@@ -2041,6 +2100,7 @@ impl<'a> Cx<'a> {
                     // -1, 0x81A18944), else 0 when argument 3 (the snap flag) is set, else kept; with the flag the
                     // actor is put on the path point + the offset (values 3054 / 3055) at once
                     u.seek = 0;
+                    u.pn = pn;
                     u.pf = if f > -1.0 {
                         f
                     } else if snap {
@@ -2097,6 +2157,21 @@ impl<'a> Cx<'a> {
                     self.set(self.arg(ins, 1), f);
                 }
             }
+            // 6613 slot var (same case as 6612): the unit's second path word (`Kin::pn`) for engine kinds 21 / 22, else 0
+            0x6613 => {
+                if ins.n == 2 {
+                    let s = v(self, 0) as i32;
+                    let f = if s == -1 {
+                        0.0
+                    } else {
+                        let k = &self.a.kin[if (0..KIN as i32).contains(&s) { s as usize } else { 0 }];
+                        if k.kind >= 0 && (k.ek == 21 || k.ek == 22) { k.pn } else { 0.0 }
+                    };
+                    self.set(self.arg(ins, 1), f);
+                }
+            }
+            // 0200: no module observes command kind 0x02 [M: the two enemy files' 0200s are records read as scripts]
+            0x0200 => {}
             0x660C => {
                 let s = v(self, 0) as usize & (KIN - 1);
                 self.a.kin[s].ang = v(self, 1);

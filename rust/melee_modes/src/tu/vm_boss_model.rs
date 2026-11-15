@@ -261,6 +261,13 @@ pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash
         (None, None) => m.rig.skin_vis(anim, f as f32, &[], &mut b),
     }
     pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [a.pos[0], a.pos[1], 0.0], 1.0, model_mat(a), flash);
+    // MELEE_VMBOSS_VIS_LOG=n: every n-th tick, the drawn motion, its frame and the hidden draw-list objects (captures)
+    static VLOG: OnceLock<u32> = OnceLock::new();
+    let n = *VLOG.get_or_init(|| std::env::var("MELEE_VMBOSS_VIS_LOG").ok().and_then(|v| v.parse().ok()).unwrap_or(0));
+    if n > 0 && a.tick % n == 0 {
+        let name = p.motion_names.get(mi).map(String::as_str).unwrap_or("?");
+        eprintln!("vm_boss_model: t{} motion {mi} {name} frame {f} vis0 {} hidden {}/{}", a.tick, main.is_some(), b.hide.iter().filter(|h| **h).count(), b.hide.len());
+    }
     true
 }
 

@@ -146,3 +146,36 @@ change was needed.
 
 Release `cargo build -p melee`: clean 350 s; edit melee_modes 152 s; edit melee_engine 152 s (incl. the engine's 29 s rebuild after
 genbloat; was 130 s). `check_split.py` against linkdrift's single-file table: IDENTICAL. `gate.sh` and `RELEASE=1 gate.sh`: GATE OK.
+
+## Nightly toolchain pin (branch port/nightly, Nov 15)
+The repo is pinned to `nightly-2026-11-13` (rustc 1.102.0-nightly) by `rust-toolchain.toml` at the repo root (rust/ and the wasm mods
+inherit it): components `rust-src`, `llvm-tools`, target `wasm32-unknown-unknown`, profile minimal. `rustup` installs it on first use.
+The global default toolchain is untouched; `RUSTUP_TOOLCHAIN=stable` overrides the pin for a comparison build. Cargo.lock and the
+game crates are unchanged (no `#![feature]` is used: the gain, where there is one, comes from the compiler).
+`semantics_lint.py` keeps its own `SEMLINT_TOOLCHAIN` (nightly-2026-02-14, needs clippy).
+
+### Determinism: stable 1.96 vs the pin, same tree (port/buildspeed2), release, byte for byte
+- four golden CSVs (3601 frames, whole NHV1 files): identical; audio wav and mix hash `6106 0xf4956676e79a4037`: identical;
+- `synctest --engine tu` depth 4 and 7: identical result lines, 0 mismatches;
+- `run_modes_check.sh` camp route, 6000 ticks, headless and window: tick.log (6000 lines) and hash.log (4904 lines) identical
+  between the two toolchains (each used the wasm mods built by its own toolchain; the wasm files themselves differ in bytes);
+- Geno VM on a throwaway merge of port/geno-vm4 + buildspeed2 (not pushed): Ridley fight csv identical, NHV1 last row
+  `2999,9D2E0FF4,FAD1A1DD` in both, synctest d4/d7 0 mismatches; Tabuu/Bucculus (`geno_grab_check.sh` hold/chase/sync/nhv1):
+  every csv identical, last rows `623146CA,DE51755F` and `D656E509,072E830F`. (`geno_vm_check.sh` with BOSS=tabuu does not run
+  the VM: Tabuu is a grab actor there, so its VM rows FAIL on both toolchains alike.)
+
+### Desktop timings, `-j 3`, other lanes building (noisy), own target dir per toolchain, no sccache
+| case | stable 1.96 | nightly pin |
+|---|---|---|
+| clean release `cargo build -p melee --release` | 303 s (324 s on the geno merge) | 300 s (307 s) |
+| clean fast | 367 s | 398 s / 310 s (second run, quieter) |
+| fast, edit `melee_modes` (2 runs) | 66 / 57 s | 58 / 60 s and 42 / 43 s |
+Result: on the desktop the pin is no faster than 1.96 (the laptop's 30% was against Arch's packaged 1.99). Exe size 42.00 MB vs 42.13 MB.
+
+### Faster options tried on the pin (fast profile only; release unchanged)
+| option | result | decision |
+|---|---|---|
+| `-Zshare-generics=y` | clean 588 s, edit 85 / 79 s vs 398 / 58 / 60 s | slower; not kept |
+| Cranelift (`-Zcodegen-backend=cranelift`, component `rustc-codegen-cranelift-preview`) | compiles in 290 s (195 s with `-Zshare-generics=n`) but the exe does not link: LNK1120, 8,601 unresolved externals (the generic `cabi` closure instances of `melee_link_abi` used by `melee_link` and its part crates). Hashes therefore not testable | not adopted |
+| `rust-lld` (`CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=rust-lld`) | edit rebuild 43 s vs 42 / 43 s with link.exe | no signal; not kept |
+| `-Zthreads=8` (laptop) | no gain | not kept |

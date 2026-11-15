@@ -270,6 +270,8 @@ pub struct Input {
     pub root_move2: [f32; 2],
     /// the area module's contacts (R10055): bit n = the actor touches area n of the area kind R10055 asks about (13)
     pub area: u32,
+    /// the article manager's free room per article kind 0..3 (100D): the kind's maximum count less the live ones
+    pub article_room: [i32; 4],
 }
 
 // work variables the engine itself maintains (engine.md 5 / engine-ops.md)
@@ -1427,6 +1429,14 @@ impl<'a> Cx<'a> {
                     }
                 }
                 self.ev(EV_HURT, pc, s);
+            }
+            // 100D kind var (soGenerateArticleManageModuleImpl, command kind 0x10, case 13 at 0x81097190): var = the
+            // module's vfunc 0x64 (0x810977A0): the article manager's maximum count for the kind (vfunc 0x60) less
+            // its live count (vfunc 0x5C), the room for more; the host keeps the articles and reports the room
+            0x100D => {
+                let k = v(self, 0) as i32;
+                let room = if (0..4).contains(&k) { self.i.article_room[k as usize] } else { 0 };
+                self.set(self.arg(ins, 1), room as f32);
             }
             0x0808 => {
                 if self.i.ground {

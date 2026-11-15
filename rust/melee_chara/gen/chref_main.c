@@ -155,10 +155,10 @@ static int bf_get(int i)
     switch (i) {
     case 0: return fp.fall_fast;
     case 1: return fp.x2219_b5;
-    case 2: return fp.x221F_b3;
+    case 2: return fp.is_sleeping;
     case 3: return fp.x2223_b4;
-    case 4: return fp.throw_flags_b0;
-    case 5: return fp.x2070.x2071_b6;
+    case 4: return fp.x2210.x0.throw_flags_b0;
+    case 5: return fp.x2070.x0.x2071_b6;
     case 6: return fp.mv.ca.specialhi.x2_b0;
     case 7: return fp.mv.ca.specialhi.x2_b1;
     case 8: return fp.is_sub_fighter;
@@ -177,10 +177,10 @@ static void bf_set(int i, int v)
     switch (i) {
     case 0: fp.fall_fast = v; break;
     case 1: fp.x2219_b5 = v; break;
-    case 2: fp.x221F_b3 = v; break;
+    case 2: fp.is_sleeping = v; break;
     case 3: fp.x2223_b4 = v; break;
-    case 4: fp.throw_flags_b0 = v; break;
-    case 5: fp.x2070.x2071_b6 = v; break;
+    case 4: fp.x2210.x0.throw_flags_b0 = v; break;
+    case 5: fp.x2070.x0.x2071_b6 = v; break;
     case 6: fp.mv.ca.specialhi.x2_b0 = v; break;
     case 7: fp.mv.ca.specialhi.x2_b1 = v; break;
     case 8: fp.is_sub_fighter = v; break;

@@ -282,6 +282,9 @@ pub struct Map {
     pub blocks: Vec<Block>,
     /// per section: collision extent (left, right, top, bottom), world space
     pub ext: Vec<[f32; 4]>,
+    /// per section: the static collision's extent alone (which models `draw` draws whole: the moving parts' wider
+    /// extent pulled neighbouring sections into full draws)
+    draw_ext: Vec<[f32; 4]>,
     pub doors: Vec<Door>,
     /// enemy spawn points (section, x, y, facing, Brawl kind)
     pub spawns: Vec<(usize, f32, f32, i32, u16)>,
@@ -525,7 +528,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
                         paths.push(path);
                         blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model: usize::MAX, at, path: paths.len() - 1 });
-                        notes.push(format!("explore: section {si}: {} moves ({} frames{})", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0), if paths.last().map_or(0, |p| p.len()) == 1 { ", held at rest" } else { "" }));
+                        notes.push(format!("explore: section {si}: {} moves ({} frames{}) at ({:.0},{:.0}) size {:.0}x{:.0}", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0), if paths.last().map_or(0, |p| p.len()) == 1 { ", held at rest" } else { "" }, x, y, bb[2] - bb[0], bb[3] - bb[1]));
                         (at, blocks.len())
                     } else {
                         if !name.starts_with(b"AdvGdtItemBox") {
@@ -784,6 +787,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
             m
         })
         .collect();
+    let draw_ext = ext.clone();
     // a section's extent takes in its moving parts too (The Lake's 080105 floor is the raft: its static collision is a
     // ledge, and the camera and blast zones built from that alone left the arrival spot outside them)
     for b in blocks.iter() {
@@ -836,6 +840,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         joints,
         blocks,
         ext,
+        draw_ext,
         doors,
         spawns,
         crates,
@@ -1338,7 +1343,9 @@ unsafe fn floor_at(x: f32, y: f32) -> Option<f32> {
 unsafe fn camera_party() {
     let human = |slot: i32| melee_fighter::tu::player::Player_GetPlayerSlotType(slot) as i32 == 0;
     let party = |slot: i32| if crate::tu::envoy::armed() != 0 { slot < if crate::tu::envoy::PLAN[crate::tu::envoy::P_COOP] == 1 { 2 } else { 1 } } else { human(slot) };
-    if !(0..6).any(|s| party(s)) {
+    // checks only: `MELEE_EXPLORE_VS_CAMERA=1` keeps Melee's VS framing (before/after shots of this)
+    static VS_CAM: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if !(0..6).any(|s| party(s)) || *VS_CAM.get_or_init(|| std::env::var_os("MELEE_EXPLORE_VS_CAMERA").is_some()) {
         return;
     }
     let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
@@ -1380,6 +1387,19 @@ unsafe fn ko_watch() {
                     eprintln!("explore: test KO player {who} at room frame {CLOCK}");
                     (*fp).cur_pos.y = e[3] - BLAST_MARGIN - 40.0;
                     (*fp).prev_pos = (*fp).cur_pos;
+                }
+            });
+        }
+    }
+    // checks only (`MELEE_EXPLORE_FAR=player@frame,..`): the fighter in slot `player` set down at its section's far
+    // right end at room frame `frame` (a far-off CPU for the camera shots)
+    if let Some(&(_, who)) = goto_list("MELEE_EXPLORE_FAR").iter().find(|&&(f, _)| f == CLOCK) {
+        if let Some(e) = cur().and_then(|m| m.ext.get(SEC as usize).copied()) {
+            each_fighter(|g, fp| {
+                if (*fp).player_idx as i32 == who {
+                    let x = e[1] - 40.0;
+                    eprintln!("explore: test far player {who} at room frame {CLOCK}");
+                    place(g, fp, x, floor_near(x, e[3] + 200.0));
                 }
             });
         }
@@ -1521,7 +1541,10 @@ pub unsafe fn room_tick() {
         CRATE_NEXT = 0;
     }
     // one enemy and one crate a frame (all at once was 2-4 ms in the match's setup tick)
-    spawn_step(m);
+    {
+        let _z = melee_core::tracy::zone("explore: spawn step");
+        spawn_step(m);
+    }
     if CLOCK >= 2 && (CRATE_NEXT as usize) < m.crates.len() {
         spawn_crate(&m.crates[CRATE_NEXT as usize]);
         CRATE_NEXT += 1;
@@ -1529,14 +1552,29 @@ pub unsafe fn room_tick() {
     // outside an Envoy run nothing else ticks the enemy pool (the mod host's post chain does inside one); its own
     // frame latch keeps it to one step per logic frame either way
     if crate::tu::envoy::armed() == 0 {
-        crate::tu::subspace::sub_tick();
+        {
+            let _z = melee_core::tracy::zone("explore: subspace tick");
+            crate::tu::subspace::sub_tick();
+        }
     }
     if FADE == 0 {
-        screen_kos(m);
+        {
+            let _z = melee_core::tracy::zone("explore: screen KOs");
+            screen_kos(m);
+        }
     }
-    camera_party();
-    blocks_tick(m);
-    movers_tick(m);
+    {
+        let _z = melee_core::tracy::zone("explore: camera party");
+        camera_party();
+    }
+    {
+        let _z = melee_core::tracy::zone("explore: blocks");
+        blocks_tick(m);
+    }
+    {
+        let _z = melee_core::tracy::zone("explore: movers");
+        movers_tick(m);
+    }
     card_tick();
     ko_watch();
     if CLOCK % 10 == 0 && std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
@@ -1656,9 +1694,11 @@ fn goto_list(var: &'static str) -> &'static [(i32, i32)] {
     static G: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
     static O: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
     static K: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
+    static F: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
     let cell = match var {
         "MELEE_EXPLORE_OPEN" => &O,
         "MELEE_EXPLORE_KO" => &K,
+        "MELEE_EXPLORE_FAR" => &F,
         _ => &G,
     };
     cell.get_or_init(|| {
@@ -1870,6 +1910,10 @@ unsafe fn movers_tick(m: &Map) {
             continue;
         }
         let Some(path) = m.paths.get(b.path) else { continue };
+        // a part held at rest (a one-point path) never moves: its points stay where the load put them
+        if path.len() < 2 {
+            continue;
+        }
         let f = CLOCK.max(0).prem(path.len() as i32) as usize;
         let (dx, dy) = (path[f][0] - path[0][0], path[f][1] - path[0][1]);
         let j = k + 1;
@@ -2049,7 +2093,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     // camera's view, so its textures stay in the renderer's cache (a texture unused for 120 frames is dropped) and its
     // first full draw after a door uploads nothing. Full draws of every section cost 3-4 ms a frame (52-62 k
     // immediate-mode triangles).
-    let e = m.ext.get(SEC.max(0) as usize).copied();
+    let e = m.draw_ext.get(SEC.max(0) as usize).copied();
     let here = |off: &[f32; 2]| all || e.map_or(true, |e| off[0] >= e[0] - 500.0 && off[0] <= e[1] + 500.0 && off[1] <= e[2] + 500.0 && off[1] >= e[3] - 500.0);
     for &(_, i) in &order[..warm] {
         let (r, t, off) = &m.models[i as usize];

@@ -1134,6 +1134,7 @@ unsafe fn call_hook(host: *mut Host, e: Entry, args: &[Val], nres: usize) -> Opt
     c.data_mut().cur_module = e.module;
     c.set_fuel(HOOK_FUEL).ok()?;
     let mut out = [Val::I32(0)];
+    let _z = melee_core::tracy::zone_dyn(|| format!("mod hook: {}", (&(*host).mods)[e.module].id));
     let prof = melee_core::frameprof::on().then(std::time::Instant::now);
     let r = e.func.call(&mut c, args, &mut out[..nres]);
     if let Some(t) = prof {
@@ -1348,7 +1349,10 @@ fn frame_hook(post: bool) {
             }
             // a queued tag swap and the transition clock: between logic frames, outside the procs
             melee_modes::tu::tag_swap::tick();
-            melee_modes::tu::petey::tick();
+            {
+                let _z = melee_core::tracy::zone("boss host step (petey / Geno VM)");
+                melee_modes::tu::petey::tick();
+            }
             melee_modes::tu::envoy::tick();
         }
     }

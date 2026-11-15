@@ -317,6 +317,7 @@ impl RbGame for ModesGame {
         ModesSnap { mem: self.with_base(|b| b.save()), frames: self.e.frames, ended: self.e.ended }
     }
     fn load(&mut self, s: &ModesSnap) {
+        let _z = melee_core::tracy::zone("netplay snapshot load (rollback)");
         // the held frame's blocks belong to the timeline being discarded: the load decides what they are now
         std::mem::forget(self.raw.take());
         self.with_base(|b| b.load(&s.mem));
@@ -340,6 +341,7 @@ impl RbGame for ModesGame {
         melee_modhost::session_hash_with(self.e.neutral_row()[0], w)
     }
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool) {
+        let _z = melee_core::tracy::zone(if resim { "netplay resim frame" } else { "netplay frame" });
         if self.e.ended {
             return;
         }

@@ -76,6 +76,8 @@ pub static PARSE_NS: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU
 pub static PARSE_N: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 
 pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
+    let _z = melee_core::tracy::zone("archive parse");
+    _z.value(file_size as u64);
     let t0 = std::time::Instant::now();
     let r = host_parse_timed(archive, src, file_size);
     PARSE_NS.fetch_add(t0.elapsed().as_nanos() as u64, core::sync::atomic::Ordering::Relaxed);

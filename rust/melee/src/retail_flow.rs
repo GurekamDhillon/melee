@@ -732,6 +732,7 @@ impl RetailPlay {
         if melee_core::frameprof::on() {
             melee_core::frameprof::test_tick(self.tick_no as u64);
         }
+        let zstep = melee_core::tracy::zone("sim (engine step)");
         let t_step = std::time::Instant::now();
         let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
         self.scene_tick = entered && !self.headless;
@@ -751,6 +752,7 @@ impl RetailPlay {
             pr.observe();
         }
         let t_step = t_step.elapsed();
+        drop(zstep);
         if melee_core::frameprof::on() {
             melee_core::frameprof::add(melee_core::frameprof::C::EngineNs, t_step.as_nanos() as u64);
         }
@@ -777,6 +779,7 @@ impl RetailPlay {
                 log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3));
             }
         }
+        let zcap = melee_core::tracy::zone("capture / decode");
         let _cap = melee_core::frameprof::on().then(std::time::Instant::now);
         let _zh_cap = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "tick: frame capture");
         if let Some(f) = melee_engine::gxbridge::take_frame() {
@@ -801,6 +804,7 @@ impl RetailPlay {
             self.frame_aspect = melee_engine::view::aspect();
         }
         drop(_zh_cap);
+        drop(zcap);
         if let Some(t) = _cap {
             melee_core::frameprof::add(melee_core::frameprof::C::CaptureNs, t.elapsed().as_nanos() as u64);
         }
@@ -1377,6 +1381,7 @@ impl RetailPlay {
         if let Some(u) = self.ui.as_mut() {
             let (w, h) = p.size();
             u.set_window(w, h);
+            let _z = melee_core::tracy::zone("ui (gd_ui frame)");
             let t = std::time::Instant::now();
             u.with_frame(|f, a| p.renderer.set_ui(Some(f), a));
             u.stages[5].push(t.elapsed().as_nanos().min(u32::MAX as u128) as u32);

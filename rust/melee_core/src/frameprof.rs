@@ -72,6 +72,29 @@ pub enum C {
     /// Wasm mod time, all mods (the per-mod split is in the frame's mod slots).
     ModNs,
 }
+impl C {
+    /// The Tracy zone name of a timed part.
+    pub const fn zone_name(self) -> &'static str {
+        match self {
+            C::TickNs => "tick",
+            C::PrepareNs => "prepare",
+            C::DrawNs => "draw",
+            C::InterpNs => "interp",
+            C::AcquireNs => "acquire (swapchain)",
+            C::PresentNs => "present (queue.submit + present)",
+            C::UiNs => "ui",
+            C::SleepNs => "pacing sleep",
+            C::FileNs => "disc read",
+            C::ParseNs => "archive parse",
+            C::PipeNs => "pipeline create",
+            C::TexNs => "texture upload",
+            C::EngineNs => "sim (engine step)",
+            C::CaptureNs => "capture",
+            C::ModNs => "mods",
+            _ => "frameprof",
+        }
+    }
+}
 pub const NC: usize = C::ModNs as usize + 1;
 /// Mods the per-mod split keeps apart.
 pub const MAX_MODS: usize = 8;
@@ -195,6 +218,8 @@ struct Frame {
     mods: [u64; MAX_MODS],
     interp: bool,
     expected_us: u32,
+    /// Cumulative CPU clocks at this present (the contention flag: the writer takes the differences).
+    clk: sys::Clocks,
 }
 
 /// Start-up options (see `melee::play`).
@@ -218,6 +243,12 @@ struct ModSlot {
 
 struct State {
     t0: Instant,
+    /// The system's cumulative (idle, total) CPU time, refreshed every ~10 ms by the sampler thread (GetSystemTimes
+    /// costs ~50 µs, too much for the game thread's every present).
+    sys_idle: AtomicU64,
+    sys_total: AtomicU64,
+    /// The TSC at `t0` (the cycle -> ns rate for the per-frame thread clocks).
+    tsc0: u64,
     cfg: Config,
     c: [AtomicU64; NC],
     mod_ns: [AtomicU64; MAX_MODS],
@@ -277,6 +308,9 @@ pub fn start(cfg: Config) -> Result<String, String> {
     std::fs::write(&probe, "profiling...\n").map_err(|e| format!("profiles folder not writable: {e}"))?;
     let s = Box::new(State {
         t0: Instant::now(),
+        tsc0: sys::tsc(),
+        sys_idle: AtomicU64::new(0),
+        sys_total: AtomicU64::new(0),
         cfg,
         c: Default::default(),
         mod_ns: Default::default(),
@@ -307,6 +341,16 @@ pub fn start(cfg: Config) -> Result<String, String> {
     let st2 = stem.clone();
     let h = std::thread::Builder::new().name("frame profiler".into()).spawn(move || writer::run(s, st2)).map_err(|e| e.to_string())?;
     *s.writer.lock().unwrap() = Some(h);
+    if sys::sys_times().1 > 0 {
+        let _ = std::thread::Builder::new().name("frame profiler load".into()).spawn(move || {
+            while !s.stop.load(Relaxed) {
+                let (i, t) = sys::sys_times();
+                s.sys_idle.store(i, Relaxed);
+                s.sys_total.store(t, Relaxed);
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        });
+    }
     Ok(stem)
 }
 
@@ -352,7 +396,9 @@ pub fn tick_done(ns: u64) {
 
 /// Time a closure into `c` when recording (the closure runs either way).
 #[inline]
+#[track_caller]
 pub fn time<R>(c: C, f: impl FnOnce() -> R) -> R {
+    let _z = crate::tracy::zone(c.zone_name());
     if !on() {
         return f();
     }
@@ -449,12 +495,19 @@ pub fn alloc(size: usize, arena: bool) {
 }
 
 /// An event that times the scope it lives in (recorded when dropped). Inert when not recording.
-pub struct Span(Option<(Kind, Text, Instant)>);
+/// With `profile-tracy` the same scope is also a Tracy zone named by its text.
+pub struct Span(Option<(Kind, Text, Instant)>, #[allow(dead_code)] crate::tracy::Zone);
 
 impl Span {
     #[inline]
+    #[track_caller]
     pub fn new(kind: Kind, text: impl FnOnce() -> Text) -> Span {
-        Span(if on() { Some((kind, text(), Instant::now())) } else { None })
+        if crate::tracy::enabled() {
+            let t = text();
+            let z = crate::tracy::zone_dyn(|| format!("{}: {}", kind.name(), t.as_str()));
+            return Span(if on() { Some((kind, t, Instant::now())) } else { None }, z);
+        }
+        Span(if on() { Some((kind, text(), Instant::now())) } else { None }, crate::tracy::zone_dyn(String::new))
     }
 }
 
@@ -502,7 +555,11 @@ pub fn end_frame() {
     let t = now_us(s);
     let last = s.last_present.swap(t, Relaxed);
     let interval = if last == 0 { 0 } else { (t - last).min(u32::MAX as u64) as u32 };
-    let mut f = Frame { t_us: t, interval_us: interval, scene: s.scene.load(Relaxed) as u16, tick: s.tick.load(Relaxed), c: [0; NC], mods: [0; MAX_MODS], interp: s.interp.load(Relaxed), expected_us: s.expected_us.load(Relaxed) as u32 };
+    let tsc_hz = if t > 1000 { sys::tsc().wrapping_sub(s.tsc0) as f64 * 1e6 / t as f64 } else { 0.0 };
+    let mut clk = sys::frame_clocks(tsc_hz);
+    clk.sys_idle = s.sys_idle.load(Relaxed);
+    clk.sys_total = s.sys_total.load(Relaxed);
+    let mut f = Frame { t_us: t, interval_us: interval, scene: s.scene.load(Relaxed) as u16, tick: s.tick.load(Relaxed), c: [0; NC], mods: [0; MAX_MODS], interp: s.interp.load(Relaxed), expected_us: s.expected_us.load(Relaxed) as u32, clk };
     for (i, c) in s.c.iter().enumerate() {
         f.c[i] = c.swap(0, Relaxed);
     }

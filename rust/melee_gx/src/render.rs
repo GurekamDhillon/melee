@@ -926,6 +926,7 @@ impl PipeFactory {
             return Ok(p.clone());
         }
         // the warm thread's start-up compiles are no frame's work: kept out of the frame profile
+        let _z = melee_core::tracy::zone("pipeline create");
         let prof = (melee_core::frameprof::on() && !warmlist::WARMING.with(|w| w.get())).then(std::time::Instant::now);
         let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
         let wgsl = adapt_wgsl(&src);
@@ -1853,6 +1854,7 @@ impl Renderer {
         if w == 0 || h == 0 {
             return None;
         }
+        let ztex = melee_core::tracy::zone("texture decode + upload");
         let prof = melee_core::frameprof::on().then(std::time::Instant::now);
         // a registered override (cosmetics: a skin's portrait / stock icon) is uploaded instead, at its own size
         let ovr = if crate::tex_override::active() {
@@ -1927,6 +1929,8 @@ impl Renderer {
             mh = (mh >> 1).max(1);
         }
         self.tex_bytes += bytes;
+        ztex.value(bytes);
+        ztex.text(|| format!("{w}x{h} mips {mips} {} KB", bytes / 1024));
         if let Some(t) = prof {
             use melee_core::frameprof as fp;
             fp::add(fp::C::Textures, 1);
@@ -2073,11 +2077,14 @@ impl Renderer {
         regroup |= ensure_buf(&self.device, &mut fc.ga, fc.abuf.len() as u64 + 4, st, "GX abuf");
         ensure_buf(&self.device, &mut fc.gi, fc.ibuf.len() as u64 + 4, wgpu::BufferUsages::INDEX, "GX indices");
         let ugrown = ensure_buf(&self.device, &mut fc.gu, ubytes, wgpu::BufferUsages::UNIFORM, "GX uniforms");
+        let zb = melee_core::tracy::zone("buffer upload (vertex/attr/index)");
+        zb.value((fc.vbuf.len() + fc.abuf.len() + fc.ibuf.len()) as u64);
         for (g, b) in [(&fc.gv, &fc.vbuf), (&fc.ga, &fc.abuf), (&fc.gi, &fc.ibuf)] {
             if !b.is_empty() {
                 self.queue.write_buffer(&g.as_ref().unwrap().buf, 0, b);
             }
         }
+        drop(zb);
         if regroup || fc.storage_bg.is_none() {
             fc.storage_bg = Some(self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("GX storage"),
@@ -2330,6 +2337,8 @@ impl Renderer {
         // draw, then `fill(i, block)` may rewrite it (it must write every byte it ever changes, from its own inputs,
         // each time it is called). Alignment gaps are zeroed so the upload never carries stale staging bytes.
         if let Some(g) = fc.gu.as_ref().filter(|_| fc.ubytes > 0) {
+            let zu = melee_core::tracy::zone("uniform upload");
+            zu.value(fc.ubytes);
             let tf = std::time::Instant::now();
             let mut view = self.queue.write_buffer_with(&g.buf, 0, std::num::NonZeroU64::new(fc.ubytes).unwrap()).expect("uniform upload");
             let buf: &mut [u8] = &mut view; // write only: reading the staging through `view` panics

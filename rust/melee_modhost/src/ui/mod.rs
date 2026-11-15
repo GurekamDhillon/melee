@@ -1687,6 +1687,7 @@ impl PresHost {
             return None;
         }
         let _ = m.store.set_fuel(UI_FUEL);
+        let _z = melee_core::tracy::zone_dyn(|| format!("ui mod: {}", m.id));
         let prof = melee_core::frameprof::on().then(std::time::Instant::now);
         let r = f(&mut m.store);
         if let Some(t) = prof {

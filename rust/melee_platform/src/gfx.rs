@@ -251,6 +251,7 @@ impl Presenter {
 
     /// Prepare the current frame (its own decode-thread packing when it still has one), timed into `times[0]`.
     fn prepare_cur(&mut self, state: &GxState) {
+        let _z = melee_core::tracy::zone("prepare");
         let Some(cur) = self.cur.as_mut() else { return };
         let t0 = std::time::Instant::now();
         if let Some(pk) = cur.packed.take() {
@@ -388,6 +389,7 @@ impl Presenter {
             }
             let cur = self.cur.as_ref().unwrap();
             self.undrawn = false;
+            let _z = melee_core::tracy::zone("draw");
             let t0 = std::time::Instant::now();
             if moving || widen.is_some() {
                 let prev = self.prev.as_ref();
@@ -497,6 +499,7 @@ impl Presenter {
     }
 
     fn swap_present(&mut self) {
+        let za = melee_core::tracy::zone("acquire (get_current_texture)");
         let prof = melee_core::frameprof::on().then(std::time::Instant::now);
         let tex = match self.surface.get_current_texture() {
             Ok(t) => t,
@@ -515,6 +518,8 @@ impl Presenter {
                 return;
             }
         };
+        drop(za);
+        let _zp = melee_core::tracy::zone("present (blit + overlay + submit + present)");
         let acquired = prof.map(|t| {
             melee_core::frameprof::add(melee_core::frameprof::C::AcquireNs, t.elapsed().as_nanos() as u64);
             std::time::Instant::now()

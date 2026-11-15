@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Zero-hitch gate: read one frame profile (MELEE_PROFILE=1 output) and FAIL if any frame is over budget.
 
-  python zero_hitch_check.py PROFILE.csv [--budget 16.7] [--label NAME] [--skip-ms 0]
+  python zero_hitch_check.py PROFILE.csv [--budget 16.0] [--label NAME] [--skip-ms 0]
 
 Budget rules (docs/rust-port/notes/zero-hitch.md):
-  * owner line: no frame with more than 16.7 ms of game work (its interval minus pacing sleep and display wait) and
-    no tick longer than 16.7 ms (a tick must finish in its slot);
+  * owner line: no frame with more than 16 ms of game work (its interval minus pacing sleep and display wait) and
+    no tick longer than 16 ms (the owner's number is 16, not the 16.7 ms slot);
   * tighter line, reported but not failed on: no present over 1.5x the display interval.
 Each offender is printed with the frame's split (file read+parse, GPU pipelines, textures, big allocations, pacing
 sleep, wasm mods, ui, draw, unaccounted) and the events that fell inside it (scene, stage, fighter, envoy, file), and is
@@ -24,7 +24,7 @@ def main():
         print(__doc__); return 2
     path = a[0]
     opt = lambda k, d: a[a.index(k) + 1] if k in a else d
-    budget = float(opt("--budget", "16.7"))
+    budget = float(opt("--budget", "16.0"))
     label = opt("--label", os.path.basename(path))
     strict_start = "--strict-start" in a
     jl = path[:-4] + ".jsonl"

@@ -33,6 +33,8 @@ extern "C" {
 
 const DPAD: u32 = 0x000F;
 const ABANDON_BIT: u32 = 0x2000;
+// Items / Run / Fight / Options are the L / R cycle (the order the pad checks rely on); Words and Combos sit past
+// them on the tab bar and are reached with up on the tab row
 const PAGES: [&str; 6] = ["Items", "Run", "Fight", "Options", "Words", "Combos"];
 const PG_ITEMS: usize = 0;
 const PG_RUN: usize = 1;
@@ -733,15 +735,16 @@ unsafe fn combos_page(l: &mut Lay, v: &[i32; VW], p: usize, pn: &Panel) -> N {
         ks.push(l.boxed(St::row().w_pct(0.5).pad4(2.0, 1.0, 4.0, 1.0).gap(4.0).align(A::Center), hover, &[dot, k_n]));
     }
     let grid = l.node(St::row().wrap().fixed(), &ks);
-    let (title, recipe_a, recipe_b, line, rgba) = if sel < procs::SYNERGIES.len() {
+    // the selected one's emblem: em_syn_<key>.png / em_evo_<key>.png (envoy-models1.md)
+    let (title, recipe_a, recipe_b, line, rgba, pre, key) = if sel < procs::SYNERGIES.len() {
         let sy = &procs::SYNERGIES[sel];
-        (sy.name, item_name(sy.a), item_name(sy.b), sy.line, sy.rgba)
+        (sy.name, item_name(sy.a), item_name(sy.b), sy.line, sy.rgba, "syn_", sy.key)
     } else if sel < COMBOS {
         let ev = &procs::EVOLUTIONS[sel - procs::SYNERGIES.len()];
-        (ev.name, item_name(ev.base), item_name(ev.partner), ev.line, ev.rgba)
+        (ev.name, item_name(ev.base), item_name(ev.partner), ev.line, ev.rgba, "evo_", ev.key)
     } else {
         let (kw, gl) = procs::KEYWORDS[sel - COMBOS];
-        (kw, "", "", gl, SUNNY)
+        (kw, "", "", gl, SUNNY, "", "")
     };
     // the selected entry's card: as high as its line needs
     let mut cs = Vec::new();
@@ -758,6 +761,12 @@ unsafe fn combos_page(l: &mut Lay, v: &[i32; VW], p: usize, pn: &Panel) -> N {
     cs.push(l.para(line, bs, ts(10), INK, 4));
     let bar = l.leaf(St::row().w(5.0).fixed(), P::Fill(rgba, 2.5));
     let words = l.node(St::col().grow(1.0).min_w(0.0).gap(2.0), &cs);
-    let card = l.boxed(St::row().pad4(6.0, 6.0, 9.0, 7.0).gap(7.0).min_h(60.0).fixed(), P::Face(S_FACE_WHITE), &[bar, words]);
+    let emh = if key.is_empty() { 0 } else { em_tex(pre, key) };
+    let card = if emh != 0 {
+        let em = l.leaf(St::boxed(34.0, 34.0), P::Tex(emh));
+        l.boxed(St::row().pad4(6.0, 6.0, 9.0, 7.0).gap(7.0).min_h(60.0).fixed(), P::Face(S_FACE_WHITE), &[bar, words, em])
+    } else {
+        l.boxed(St::row().pad4(6.0, 6.0, 9.0, 7.0).gap(7.0).min_h(60.0).fixed(), P::Face(S_FACE_WHITE), &[bar, words])
+    };
     l.node(St::col().grow(1.0).gap(9.0), &[grid, card])
 }

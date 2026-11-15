@@ -45,8 +45,8 @@ const EM_FILES: &[&[u8]] = &include!("../../../../pc/scripts/examples/envoy_mode
 pub const EM_COUNT: usize = EM_FILES.len();
 pub static EM_KEYS: &str = include_str!("../../../../pc/scripts/examples/envoy_models/models/envoy_models.txt");
 pub const MODEL_COUNT: usize = EM_FIRST + EM_COUNT;
-// a model id travels as a u8 (Inst::Model)
-const _: () = assert!(MODEL_COUNT <= 256);
+// a model id travels as a u16 (Inst::Model, melee_gx::fx::WorldDraw)
+const _: () = assert!(MODEL_COUNT <= 65536);
 /// The model id of Envoy model `key` (`"spark_ring"`, `"node_boss"`, `"frame_devil"`...), None if there is none.
 pub fn em_model(key: &str) -> Option<usize> {
     EM_KEYS.lines().position(|k| k == key).map(|n| EM_FIRST + n)
@@ -311,7 +311,8 @@ fn rotator(yaw: f32, pitch: f32) -> impl Fn([f32; 3]) -> [f32; 3] {
 pub enum Inst {
     /// model id, centre, yaw, diameter (world units), alpha 0..1, material (melee_gx::fx::MAT_*), its parameters
     /// (glow, charge, Heat state, extra) and colour
-    Model { model: u8, at: [f32; 3], yaw: f32, scale: f32, alpha: f32, mat: u8, p: [f32; 4], rgba: u32 },
+    /// `roll`: a turn in the model's own plane before the yaw (a shot laid along its velocity); 0 for a drive
+    Model { model: u16, at: [f32; 3], yaw: f32, roll: f32, scale: f32, alpha: f32, mat: u8, p: [f32; 4], rgba: u32 },
     /// an additive effect shape: kind, centre, three numbers, colour RGBA
     Fx { kind: u8, at: [f32; 3], a: f32, b: f32, c: f32, rgba: u32 },
 }
@@ -501,14 +502,14 @@ pub fn camera() -> Option<Camera> {
     CAM.lock().ok().and_then(|c| *c)
 }
 
-/// The shown list as the effects layer's inputs: each model draw (`f(model, at, yaw, scale, alpha, mat, p, rgba)`)
+/// The shown list as the effects layer's inputs: each model draw (`f(model, at, yaw, roll, scale, alpha, mat, p, rgba)`)
 /// and the fire shapes as additive triangles in `tris`. Presenter side only.
-pub fn world_frame(mut f: impl FnMut(u8, [f32; 3], f32, f32, f32, u8, [f32; 4], u32), tris: &mut Vec<Tri>) {
+pub fn world_frame(mut f: impl FnMut(u16, [f32; 3], f32, f32, f32, f32, u8, [f32; 4], u32), tris: &mut Vec<Tri>) {
     tris.clear();
     let Ok(list) = SHOW.lock() else { return };
     for i in list.iter() {
         match *i {
-            Inst::Model { model, at, yaw, scale, alpha, mat, p, rgba } => f(model, at, yaw, scale, alpha, mat, p, rgba),
+            Inst::Model { model, at, yaw, roll, scale, alpha, mat, p, rgba } => f(model, at, yaw, roll, scale, alpha, mat, p, rgba),
             Inst::Fx { kind, at, a, b, c, rgba } => fx_tris(kind, at, a, b, c, rgba, tris),
         }
     }

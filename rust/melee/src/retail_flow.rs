@@ -729,8 +729,12 @@ impl RetailPlay {
             melee_core::frameprof::test_tick(self.tick_no as u64);
         }
         let t_step = std::time::Instant::now();
-        let entered = if lab_hold { false } else { self.step(four) };
+        let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
+        if self.cur.1 == melee_types::GS_SSS as u8 {
+            // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
+            melee_engine::asset::sss_hover(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() });
+        }
         if melee_core::frameprof::on() {
             self.profile_test_stage();
         }
@@ -758,7 +762,7 @@ impl RetailPlay {
             // a rollback run: the sound state is a static the load restores, so what it allocates must be in the arena too
             let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
             let t = std::time::Instant::now();
-            au.tick();
+            { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "tick: audio tick"); au.tick(); }
             if melee_core::frameprof::on() {
                 melee_core::frameprof::set_audio_underruns(au.underruns() as u64);
             }
@@ -767,6 +771,7 @@ impl RetailPlay {
             }
         }
         let _cap = melee_core::frameprof::on().then(std::time::Instant::now);
+        let _zh_cap = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "tick: frame capture");
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             // a frame no present showed (several ticks ran first): its EFB copies still have to happen
             if let (Some(old), Some(p)) = (self.frame.take(), self.presenter.as_mut()) {
@@ -788,10 +793,12 @@ impl RetailPlay {
             // the view the frame was drawn for (its cameras' projection and the target shape must agree)
             self.frame_aspect = melee_engine::view::aspect();
         }
+        drop(_zh_cap);
         if let Some(t) = _cap {
             melee_core::frameprof::add(melee_core::frameprof::C::CaptureNs, t.elapsed().as_nanos() as u64);
         }
         // gd-ui-v1 present (A3 order: events, gd_ui_frame, node trees), after the logic frame
+        let _zh_ui = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "tick: ui present (mod frame)");
         match (self.ui.as_mut(), self.settings.as_mut()) {
             (Some(u), Some(o)) => u.present_with(&pres_frame, |b, a| o.draw(b, a)),
             (Some(u), None) => u.present(&pres_frame),
@@ -808,6 +815,7 @@ impl RetailPlay {
             }
             _ => {}
         }
+        drop(_zh_ui);
         self.browser_tick();
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
         if let Some(n) = std::env::var("MELEE_RETAIL_CSSDBG").ok().and_then(|v| v.parse::<u64>().ok()) {

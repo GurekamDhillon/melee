@@ -322,6 +322,8 @@ pub enum P {
     TextEdge(u32, i32, f32),
     /// a kit sprite contained in the box (never stretched): S_*
     Spr(usize),
+    /// a loaded texture contained in the box at its own proportions (`kit::tex_in`): handle
+    Tex(u32),
     /// an item's icon (frame and sprite) filling the box: item id
     Item(i32),
     /// a disc filling the box: colour
@@ -598,6 +600,7 @@ impl Lay {
                 e.outline(0.0, 0);
             }
             P::Spr(id) => spr(e, id, r.x, r.y, r.w, r.h, alpha(WHITE, a)),
+            P::Tex(h) => tex_in(e, h, r.x, r.y, r.w, r.h, alpha(WHITE, a)),
             // the icon's frame cell is 4/3 of the size it is asked for: the cell fills the box
             P::Item(id) => item_icon(e, id, r.cx(), r.cy(), r.w.min(r.h) * 0.75, a),
             P::Disc(col) => disc(e, r.cx(), r.cy(), r.w.min(r.h), alpha(col, a), 0.0, 0),

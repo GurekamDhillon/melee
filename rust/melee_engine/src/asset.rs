@@ -503,64 +503,115 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
         }
     };
     let lay = |k: usize| Layout::from_size_align_unchecked(p.blocks[k].1, p.blocks[k].2);
+    // a block's last contents just before its free: all of it, unless the free drops them anyway (a trimmed big
+    // block: its pages are decommitted, as after the in-place decode's free)
+    let last_write = |a: usize, addr: &Vec<usize>| {
+        if !crate::arena::free_drops_contents(p.blocks[a].1) {
+            write(a, addr);
+            return;
+        }
+        // only the bytes the decommit keeps: up to the first page boundary past +16, and the last partial page
+        let (at, size, _) = p.blocks[a];
+        let dst = addr[a];
+        let head = ((dst + 16 + 0xFFF) & !0xFFF).min(dst + size) - dst;
+        let tail = (((dst + size) & !0xFFF).max(dst + head)) - dst;
+        for (lo, hi) in [(0, head), (tail, size)] {
+            if hi > lo {
+                core::ptr::copy_nonoverlapping((at + lo) as *const u8, (dst + lo) as *mut u8, hi - lo);
+            }
+        }
+        // (a block's fixups are in offset order: the ones wholly inside the dropped middle are skipped at once)
+        let fx = &p.fixes[p.fix_at[a] as usize..p.fix_at[a + 1] as usize];
+        let lo = fx.partition_point(|f| (f.off as usize) < head);
+        let hi = fx.partition_point(|f| f.off as usize + 8 <= tail).max(lo);
+        for f in fx[..lo].iter().chain(fx[hi..].iter()) {
+            let o = f.off as usize;
+            let v = match f.tgt {
+                Tgt::Blk(j, d) => addr[j as usize] + d as usize,
+                Tgt::Raw(d) => srcu + d as usize,
+                Tgt::Null => 0,
+                Tgt::RawRel(d) => (srcu + d as usize).wrapping_sub(dst),
+            }
+            .to_le_bytes();
+            // the bytes of the word inside the kept ranges (a word may straddle a range's edge)
+            for (k, &byte) in v.iter().enumerate() {
+                let b = o + k;
+                if b < head || (b >= tail && b < size) {
+                    ((dst + b) as *mut u8).write(byte);
+                }
+            }
+        }
+    };
     // the recorded calls, in order, through the process allocator (the arena decides exactly as it did for the
     // in-place decode: same blocks, same free lists)
     crate::arena::set_asset_path(true, digest_on());
     let mut t_temp = 0.0f64;
+    let diag = log_on();
+    let mut cat = [(0u32, 0u64, 0u64); 4];
+    let (mut nfree, mut nrealloc) = (0u32, 0u32);
     for &e in &p.events {
         let (kind, a, b) = recheap::ev::unpack(e);
         match kind {
             recheap::ev::ALLOC => {
+                if diag {
+                    // MELEE_ASSET_LOG: where the allocation time goes (fresh bump / recycled, small / 64 KB and up)
+                    let t = std::time::Instant::now();
+                    let q = std::alloc::alloc(lay(a));
+                    let ns = t.elapsed().as_nanos() as u64;
+                    let c = (!crate::arena::last_fresh()) as usize * 2 + (p.blocks[a].1 >= SPARSE_MIN) as usize;
+                    cat[c].0 += 1;
+                    cat[c].1 += ns;
+                    cat[c].2 += p.blocks[a].1 as u64;
+                    assert!(!q.is_null(), "asset: replay out of memory");
+                    addr[a] = q as usize;
+                    continue;
+                }
                 let q = std::alloc::alloc(lay(a));
                 assert!(!q.is_null(), "asset: replay out of memory");
                 addr[a] = q as usize;
             }
             recheap::ev::FREE => {
-                let t = std::time::Instant::now();
-                // a temporary's last contents, unless the free drops them anyway (a trimmed big block: its pages are
-                // decommitted, as after the in-place decode's free)
-                if !crate::arena::free_drops_contents(p.blocks[a].1) {
-                    write(a, &addr);
-                } else {
-                    // only the bytes the decommit keeps: up to the first page boundary past +16, and the last
-                    // partial page
-                    let (at, size, _) = p.blocks[a];
-                    let dst = addr[a];
-                    let head = ((dst + 16 + 0xFFF) & !0xFFF).min(dst + size) - dst;
-                    let tail = (((dst + size) & !0xFFF).max(dst + head)) - dst;
-                    for (lo, hi) in [(0, head), (tail, size)] {
-                        if hi > lo {
-                            core::ptr::copy_nonoverlapping((at + lo) as *const u8, (dst + lo) as *mut u8, hi - lo);
-                        }
-                    }
-                    for f in &p.fixes[p.fix_at[a] as usize..p.fix_at[a + 1] as usize] {
-                        let o = f.off as usize;
-                        let v = match f.tgt {
-                            Tgt::Blk(j, d) => addr[j as usize] + d as usize,
-                            Tgt::Raw(d) => src as usize + d as usize,
-                            Tgt::Null => 0,
-                            Tgt::RawRel(d) => (src as usize + d as usize).wrapping_sub(dst),
-                        }
-                        .to_le_bytes();
-                        // the bytes of the word inside the kept ranges (a word may straddle a range's edge)
-                        for (k, &byte) in v.iter().enumerate() {
-                            let b = o + k;
-                            if b < head || (b >= tail && b < size) {
-                                ((dst + b) as *mut u8).write(byte);
-                            }
-                        }
-                    }
-                }
+                let t = diag.then(std::time::Instant::now);
+                last_write(a, &addr);
                 std::alloc::dealloc(addr[a] as *mut u8, lay(a));
-                t_temp += t.elapsed().as_secs_f64();
+                if let Some(t) = t {
+                    t_temp += t.elapsed().as_secs_f64();
+                    nfree += 1;
+                }
             }
             _ => {
-                let t = std::time::Instant::now();
-                write(a, &addr);
-                let q = std::alloc::realloc(addr[a] as *mut u8, lay(a), p.blocks[b].1);
-                assert!(!q.is_null(), "asset: replay out of memory");
-                addr[b] = q as usize;
-                t_temp += t.elapsed().as_secs_f64();
+                let t = diag.then(std::time::Instant::now);
+                let (sa, sb) = (p.blocks[a].1, p.blocks[b].1);
+                if !crate::arena::contains(addr[a] as *const u8) {
+                    // not an arena block (the arena refused the request): the process allocator's own realloc
+                    write(a, &addr);
+                    let q = std::alloc::realloc(addr[a] as *mut u8, lay(a), sb);
+                    assert!(!q.is_null(), "asset: replay out of memory");
+                    addr[b] = q as usize;
+                } else if crate::arena::same_class(sa, sb) {
+                    // the realloc stays in place. Growing: every byte of the block up to its new size is written
+                    // again with the new block's last contents (a realloc's block is written whole, at its free or
+                    // at the end), so the old contents and the zeroed growth need not be written first. Shrinking:
+                    // the old block's bytes past the new size stay in memory, so they are written.
+                    if sb < sa {
+                        write(a, &addr);
+                    }
+                    addr[b] = addr[a];
+                } else {
+                    // what the process allocator's realloc does for an arena block of another class: allocate the
+                    // new block, copy, free the old one. The copy is left out: the new block is written whole with
+                    // its own last contents (at its free, or at the end), and nothing reads it before. The old
+                    // block is written as any freed temporary is (only what its free keeps).
+                    let q = std::alloc::alloc(Layout::from_size_align_unchecked(sb, p.blocks[a].2));
+                    assert!(!q.is_null(), "asset: replay out of memory");
+                    addr[b] = q as usize;
+                    last_write(a, &addr);
+                    std::alloc::dealloc(addr[a] as *mut u8, lay(a));
+                }
+                if let Some(t) = t {
+                    t_temp += t.elapsed().as_secs_f64();
+                    nrealloc += 1;
+                }
             }
         }
     }
@@ -620,6 +671,13 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
         core::ptr::copy_nonoverlapping(v.to_le_bytes().as_ptr(), src.add(off), n);
     }
     APPLY_SPLIT.with(|c| c.set(((ta - t0).as_secs_f64() * 1e3, ta.elapsed().as_secs_f64() * 1e3, t_temp * 1e3)));
+    if diag {
+        let d = crate::arena::diag_take();
+        let g = |c: (u64, u64, u64)| format!("{} x {:.2} ms {} KB", c.0, c.1 as f64 / 1e6, c.2 >> 10);
+        eprintln!("asset: arena big blocks in this apply: decommit at free {}; recommit {}; kept-block take (zeroing) {}; tail decommit {}; frees kept {}", g(d[0]), g(d[1]), g(d[2]), g(d[3]), g(d[4]));
+        let f = |c: (u32, u64, u64)| format!("{} allocs {:.2} ms {} KB", c.0, c.1 as f64 / 1e6, c.2 >> 10);
+        eprintln!("asset: apply allocs: fresh small {}; fresh big {}; recycled small {}; recycled big {}; {nfree} frees, {nrealloc} reallocs", f(cat[0]), f(cat[1]), f(cat[2]), f(cat[3]));
+    }
     let out = Box::from_raw(addr[p.out as usize] as *mut Decoded);
     {
         let _s = crate::arena::SysScope::enter();
@@ -886,6 +944,8 @@ pub fn init(iso: Option<String>) {
 /// never competes with the decodes of the same load burst (Envoy's no-lead fight start decodes ~10 files in a frame).
 static GAME_DECODE_AT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 const BYTES_QUIET_MS: u64 = 150;
+/// The longest a load waits for the worker to finish preparing the same file (see [`load`]).
+const WAIT_MAX: std::time::Duration = std::time::Duration::from_micros(1500);
 /// A disc hint (a coming load, or a boot file) waits until the game thread has neither decoded nor read a file for
 /// this long: it must never compete with a load burst in progress (the title's first frame reads the demo match's
 /// files; a no-lead fight start decodes ~10 files in a frame). The service is started with the clock stamped, so boot
@@ -1054,6 +1114,34 @@ pub fn hint_stage(gr: i32) {
     }
 }
 
+/// The stage select, once per tick (the play loop): `stkind` is the stage of the icon under the cursor (-1: none or
+/// Random). Once the cursor has rested on a stage for [`HOVER_TICKS`] its file is hinted, so the worker has the
+/// plan before the player confirms (the retail flow registers the stage with the preload cache only at the confirm,
+/// in the tick that loads it: no lead). Host state only; never sim-visible.
+pub fn sss_hover(stkind: i32) {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    const HOVER_TICKS: i32 = 12;
+    static LAST: AtomicI32 = AtomicI32::new(-1);
+    static SINCE: AtomicI32 = AtomicI32::new(0);
+    if LAST.swap(stkind, Relaxed) != stkind {
+        SINCE.store(0, Relaxed);
+        return;
+    }
+    if stkind < 0 || SINCE.fetch_add(1, Relaxed) + 1 != HOVER_TICKS {
+        return;
+    }
+    // a GD stage (explore.rs: a custom map) plays on the Final Destination carrier: that is the file its match loads
+    let stkind = if melee_modes::tu::explore::is_gd_stage(stkind) { melee_modes::tu::explore::FD_STKIND } else { stkind };
+    let gr = unsafe {
+        let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+        if stkind as usize >= map.len() {
+            return;
+        }
+        map[stkind as usize].grkind as i32
+    };
+    hint_stage(gr);
+}
+
 pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
     use melee_modes::tu::envoy as ev;
     // not only an armed plan: the sim publishes the coming fight's plan from mod load on, and the camp door to that
@@ -1136,10 +1224,71 @@ const BOOT_FILES: &[&str] = &[
     "EfCoData.dat", "ItCo.usd", "ItCo.dat", "IfAll.usd", "IfAll.dat", "PlCo.dat",
 ];
 
+/// Disc warm-up (boot, once; `MELEE_DISC_WARM=off` keeps it off): a below-normal thread reads every game data file
+/// of the image once through its own handle and throws the bytes away, so the operating system's file cache holds
+/// them when the game thread asks. A scene change reads its files inside one tick (the port completes a disc read
+/// at once): from the cache that is a memory copy (~0.3 ms per 1.5 MB measured), from the drive it was 1.2-1.4 ms
+/// per 1.5 MB (5.7 ms of reads in the VS scene change's tick). Music streams and movies are left out (never read
+/// inside a tick). The game's reads, their bytes and their order are unchanged: never sim-visible. It waits while the
+/// game thread is reading ([`game_io`]) so it never competes with a load burst.
+fn disc_warm(files: Vec<(u64, usize)>) {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    let Some(iso) = svc().and_then(|s| s.iso.clone()) else { return };
+    if files.is_empty() || std::env::var("MELEE_DISC_WARM").is_ok_and(|v| v == "off") {
+        return;
+    }
+    ONCE.call_once(|| {
+        let _s = crate::arena::SysScope::enter();
+        let _ = std::thread::Builder::new().name("disc-warm".into()).spawn(move || {
+            crate::arena::mark_foreign_thread();
+            #[cfg(windows)]
+            unsafe {
+                extern "system" {
+                    fn GetCurrentThread() -> *mut core::ffi::c_void;
+                    fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
+                }
+                SetThreadPriority(GetCurrentThread(), -1);
+            }
+            use std::io::{Read, Seek, SeekFrom};
+            let Ok(mut f) = std::fs::File::open(&iso) else { return };
+            let t0 = std::time::Instant::now();
+            let mut buf = vec![0u8; 1 << 20];
+            let (mut bytes, mut n) = (0usize, 0usize);
+            for (off, len) in files {
+                if f.seek(SeekFrom::Start(off)).is_err() {
+                    return;
+                }
+                let mut left = len;
+                while left > 0 {
+                    // never while the game thread is in a load burst
+                    while now_ms().saturating_sub(GAME_DECODE_AT.load(core::sync::atomic::Ordering::Relaxed)) < DISC_QUIET_MS {
+                        std::thread::sleep(std::time::Duration::from_millis(DISC_QUIET_MS / 2));
+                    }
+                    let k = left.min(buf.len());
+                    if f.read_exact(&mut buf[..k]).is_err() {
+                        return;
+                    }
+                    left -= k;
+                    bytes += k;
+                }
+                n += 1;
+            }
+            if log_on() || std::env::var_os("MELEE_BOOT_TIMES").is_some() {
+                eprintln!("asset: disc warm-up: {n} files, {} MB read in {:.0} ms", bytes >> 20, t0.elapsed().as_secs_f64() * 1e3);
+            }
+        });
+    });
+}
+
 /// Boot hints ([`BOOT_FILES`]); the heap test is skipped (the game's heaps are not set up yet; the service never
 /// allocates them anyway).
 pub fn boot_hints() {
     let Some(h) = crate::host::Host::try_get() else { return };
+    // `melee play` offline only (trim mode is its mark: the tests' golden / synctest / netplay runs do not warm)
+    if crate::arena::trim() {
+        let _s = crate::arena::SysScope::enter();
+        disc_warm(h.disc.files_with_ext(&[".dat", ".usd", ".ssm", ".sem"]));
+    }
     for f in BOOT_FILES {
         let e = h.disc.disc_entry(f);
         if e > 0 {
@@ -1183,10 +1332,16 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
             if hit.is_some() {
                 break hit;
             }
-            // a hinted file of this length being prepared right now: wait for it (a readiness miss, counted)
-            if g.entries.iter().any(|e| e.pending && e.started && e.len == len) {
+            // a hinted file of this length being prepared right now: wait for it (a readiness miss, counted), but only
+            // for a moment. The wait had no bound: a stage picked on the stage select is hinted in the tick that loads
+            // it, and the game thread then sat out the worker's whole prepare (35 ms of the VS match's setup tick on
+            // Final Destination, a file that decodes in place in a few ms). Past the bound the file is decoded in
+            // place, which gives the same arena sequence as the replay (the service's rule), and the worker's plan
+            // serves the next load.
+            let left = WAIT_MAX.saturating_sub(t0.elapsed());
+            if !left.is_zero() && g.entries.iter().any(|e| e.pending && e.started && e.len == len) {
                 waited = true;
-                g = s.cv.wait(g).unwrap();
+                g = s.cv.wait_timeout(g, left).unwrap().0;
                 continue;
             }
             break None;
@@ -1261,6 +1416,12 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         eprintln!("asset selftest: {} KB {how}: {} {why} [ok {} bad {}]", len >> 10, if ok { "SAME" } else { "DIFFERENT" }, g.stats.self_ok, g.stats.self_bad);
         drop(g);
         drop(other);
+    }
+    if log_on() {
+        crate::arena::DIAG_ON.store(true, core::sync::atomic::Ordering::Relaxed);
+        let d = crate::arena::diag_take();
+        let f = |c: (u64, u64, u64)| format!("{} x {:.2} ms {} KB", c.0, c.1 as f64 / 1e6, c.2 >> 10);
+        eprintln!("asset: arena big blocks since the last apply: decommit at free {}; recommit {}; kept-block take (zeroing) {}; tail decommit {}; frees kept {}", f(d[0]), f(d[1]), f(d[2]), f(d[3]), f(d[4]));
     }
     let t1 = std::time::Instant::now();
     let pf0 = if log_on() { archive::page_faults() } else { 0 };

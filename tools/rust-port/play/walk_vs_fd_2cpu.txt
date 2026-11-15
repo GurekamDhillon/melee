@@ -1,6 +1,6 @@
 # Real-menu walk, vanilla disc (fresh test card): opening -> title -> main menu -> VS -> Melee -> CSS: P1 takes HMN and picks Fox,
 # P2 and P3 set to CPU by clicking their N/A plates (auto-picked), Start -> SSS -> Final Destination -> 2-minute match -> results.
-# With MELEE_ENVOY_EXPLORE=1 the FD match is the stage1 exploration room. Windowed, real time; hand moves are tuned by screenshots.
+# Final Destination stays Final Destination (the Brawl room is its own slot: walk_vs_sse_2cpu.txt). Windowed, real time; hand moves are tuned by screenshots.
 # opening -> title -> main menu (as camp_pad) -> Down: VS -> A -> A (Melee) -> CSS
 300 0000 0 0
 3 1000 0 0

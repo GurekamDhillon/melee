@@ -66,11 +66,15 @@ pub struct Post {
 /// One world draw (a drive model with a material).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct WorldDraw {
-    pub model: u8,
+    /// The model's index in the meshes the layer was armed with (u16: the Envoy model set passed 256).
+    pub model: u16,
     /// MAT_* (| MAT_TRAIL).
     pub mat: u8,
     pub at: [f32; 3],
     pub yaw: f32,
+    /// A turn in the model's own plane (about its Z axis, radians), applied before the yaw: a shot or a beam laid
+    /// along its velocity. 0 for a drive.
+    pub roll: f32,
     /// Diameter in world units.
     pub scale: f32,
     pub alpha: f32,
@@ -885,6 +889,9 @@ fn model_rows(d: &WorldDraw) -> [[f32; 4]; 3] {
     let (sy, cy) = d.yaw.sin_cos();
     let (sp, cp) = 0.35f32.sin_cos();
     let r = [[cy, 0.0, sy], [sy * sp, cp, -cy * sp], [-sy * cp, sp, cy * cp]];
+    // the roll first (model space, about Z): column 0 and 1 of the rotation turn into each other
+    let (sr, cr) = d.roll.sin_cos();
+    let r: [[f32; 3]; 3] = std::array::from_fn(|i| [r[i][0] * cr + r[i][1] * sr, r[i][1] * cr - r[i][0] * sr, r[i][2]]);
     let s = d.scale;
     std::array::from_fn(|i| [r[i][0] * s, r[i][1] * s, r[i][2] * s, d.at[i]])
 }
@@ -903,6 +910,14 @@ impl Renderer {
             f.armed = true;
             return;
         }
+        if let Some(h) = self.fx_build.take() {
+            // the start-up build is still running (a run began within its first moments): wait for it
+            if let Ok(mut f) = h.join() {
+                f.armed = true;
+                self.fx = Some(f);
+                return;
+            }
+        }
         let mut f = FxGpu::new(&self.device, &self.queue, meshes, self.samples);
         let mut fmts: Vec<wgpu::TextureFormat> = self.blit.keys().copied().collect();
         fmts.push(wgpu::TextureFormat::Rgba8Unorm);
@@ -911,6 +926,41 @@ impl Renderer {
         }
         f.targets(&self.device, self.width, self.height, self.samples);
         self.fx = Some(Box::new(f));
+    }
+
+    /// Build the layer's buffers and pipelines on a background thread (start-up, a UI mod is loaded), DISARMED: the
+    /// shader compiles and the model decode (~20 ms together) then never sit on a present. `meshes` runs on that
+    /// thread. [`Self::fx_prewarm_poll`] installs the result; an arm that comes first waits for it. Returns false
+    /// when the layer exists or is being built already.
+    pub fn fx_prewarm_start(&mut self, meshes: impl FnOnce() -> Vec<FxMesh<'static>> + Send + 'static) -> bool {
+        if self.fx.is_some() || self.fx_build.is_some() {
+            return false;
+        }
+        let (device, queue, samples, w, h) = (self.device.clone(), self.queue.clone(), self.samples, self.width, self.height);
+        let mut fmts: Vec<wgpu::TextureFormat> = self.blit.keys().copied().collect();
+        fmts.push(wgpu::TextureFormat::Rgba8Unorm);
+        let t = std::thread::Builder::new().name("fx-prewarm".into()).spawn(move || {
+            let m = meshes();
+            let mut f = FxGpu::new(&device, &queue, &m, samples);
+            for fmt in fmts {
+                f.post_pipeline(&device, fmt);
+            }
+            f.targets(&device, w, h, samples);
+            f.armed = false;
+            Box::new(f)
+        });
+        self.fx_build = t.ok();
+        self.fx_build.is_some()
+    }
+
+    /// Install a finished [`Self::fx_prewarm_start`] build (never blocks). True once the layer exists.
+    pub fn fx_prewarm_poll(&mut self) -> bool {
+        if self.fx_build.as_ref().is_some_and(|h| h.is_finished()) {
+            if let Ok(f) = self.fx_build.take().unwrap().join() {
+                self.fx = Some(f);
+            }
+        }
+        self.fx.is_some()
     }
 
     /// Disarm (the run ended): every pass is skipped from the next present; the GPU objects are kept.
@@ -1188,7 +1238,7 @@ impl Renderer {
                 // oldest first, shrinking and fading toward the tail
                 let p = tr.0[(tr.1 + j) % TRAIL_LEN];
                 let age = 1.0 - j as f32 / TRAIL_LEN as f32;
-                let ghost = WorldDraw { model: d.model, mat: MAT_UNLIT_ADD, at: p, yaw: d.yaw, scale: d.scale * (0.85 - 0.5 * age), alpha: (1.0 - age) * 0.22, p: [0.0; 4], rgba: d.rgba | 0xFF };
+                let ghost = WorldDraw { model: d.model, mat: MAT_UNLIT_ADD, at: p, yaw: d.yaw, roll: d.roll, scale: d.scale * (0.85 - 0.5 * age), alpha: (1.0 - age) * 0.22, p: [0.0; 4], rgba: d.rgba | 0xFF };
                 push(&mut f.inst_scratch, &ghost, 0.0);
                 lists[2].push((start, count, ni));
                 ni += 1;

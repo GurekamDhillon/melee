@@ -11,7 +11,7 @@
 # non-cacheable), and cargo only makes workspace/path crates incremental. So the dependencies (wgpu, naga, lua-src, ...) come out of
 # sccache across worktrees and target dirs, and the workspace crates come out of each worktree's incremental dir. Never delete a
 # worktree's build/cargo/fast/incremental if you want the one-file edit loop to stay fast.
-# Does not touch the release profile; `--release` / `--profile release|perf` pass through unchanged.
+# Does not touch the release profile; `--release` / `--profile release|perf` pass through unchanged. RELEASE=1: release instead of fast.
 # One cargo target dir per worktree (notes/buildspeed.md): a CARGO_TARGET_DIR shared by worktrees makes lanes overwrite each
 # other's rlibs (cargo hashes workspace crates by workspace-relative path, so two trees get the same file names).
 # A target dir outside this worktree is ignored (build/cargo here, from .cargo/config.toml) unless ALLOW_SHARED_TARGET=1.
@@ -31,5 +31,16 @@ if [ -z "${NO_SCCACHE:-}" ]; then
 fi
 [ -n "${FAST_NO_INCR:-}" ] && export CARGO_INCREMENTAL=0
 export CARGO_PROFILE_DEV_DEBUG="${CARGO_PROFILE_DEV_DEBUG:-0}" CARGO_PROFILE_TEST_DEBUG="${CARGO_PROFILE_TEST_DEBUG:-0}"
+# Default profile (notes/buildspeed.md): `build` and `run` without --release/--profile get `--profile fast`; RELEASE=1 gets
+# `--release` instead. Candidate, packaging and perf/frame-time builds do not come through here: they run plain
+# `cargo build --release` (package.sh, zero_hitch_gate.sh, the exe handed to the owner) and must say so.
+sub="${1:-}"
+case "$sub" in
+  build|run)
+    case " $* " in
+      *" --release "*|*" --profile "*|*" --profile="*|*" -r "*) ;;
+      *) if [ -n "${RELEASE:-}" ]; then set -- "$sub" --release "${@:2}"; else set -- "$sub" --profile fast "${@:2}"; fi ;;
+    esac ;;
+esac
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$here/../../rust" && exec cargo "$@"

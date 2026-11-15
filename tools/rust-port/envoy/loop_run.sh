@@ -10,7 +10,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
-exe=${EXE:-$repo/build/cargo/release/melee.exe}
+exe=${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}
 out=${OUT:?OUT}
 mods=${MODS:?MODS}; mods=$(cd "$mods" && pwd)  # absolute: the runs below cd into OUT
 [ -d "$mods/envoy_ui" ] || echo "loop_run: warning: no envoy_ui/ art folder in MODS (the UI draws without its textures)"

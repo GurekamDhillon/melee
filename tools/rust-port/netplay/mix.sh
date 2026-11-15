@@ -4,7 +4,7 @@ ROLE=$1; P=$2; shift 2
 export GW_ROOT="E:/Projects/Melee Workspace" GW_MELEE="E:/Projects/Melee Workspace/worktrees/plat-net" GW_BUILD_ROOT="E:/Projects/Melee Workspace/_build/agents/plat-net"
 set -a; . "$GW_ROOT/.env"; set +a
 S="${NP_SCRATCH:-$TEMP/np}"
-B="$GW_MELEE/build/cargo/release/melee.exe"; O="${NP_SCRATCH:-$TEMP/np}"
+B="$GW_MELEE/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe"; O="${NP_SCRATCH:-$TEMP/np}"
 EXE=$(grep -a -o "exe=[0-9a-f]*" "$GW_BUILD_ROOT/runs/cnet-c-host/melee-pc.log" | head -1 | cut -d= -f2)
 MODS=$(grep -a -o "mods=[0-9a-f]*" "$GW_BUILD_ROOT/runs/cnet-c-host/melee-pc.log" | head -1 | cut -d= -f2)
 export MELEE_NP_GLOBAL_HASH=$MODS

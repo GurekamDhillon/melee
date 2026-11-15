@@ -7,7 +7,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/heap_leak.sh [EXE] [SHIFTS] [PERIOD]
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
-exe="${1:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
+exe="${1:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 shifts="${2:-100}"; period="${3:-60}"
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "heap_leak: GW_ISO_VANILLA not set"; exit 2; }
 out="${OUT:-$(mktemp -d)}"; mkdir -p "$out/mods"

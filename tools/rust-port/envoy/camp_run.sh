@@ -8,7 +8,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 # and checks the log: every VS match is a rewritten Envoy match, fights 1, 2 and 3 are fought and won, the run is
 # never disarmed or over before fight 3.
 #
-#   EXE=build/cargo/release/melee.exe MODS=build/mods-camp OUT=... bash tools/rust-port/envoy/camp_run.sh
+#   EXE=build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe MODS=build/mods-camp OUT=... bash tools/rust-port/envoy/camp_run.sh
 # PAD: the pad script (default camp_pad.txt; camp_pad_ace.txt with GW_ISO_VANILLA pointed at the ACE disc).
 # MAX_FIGHT (default 3): the fights that must be fought and won (the last one only fought).
 # CARD: a memory card folder with a save (copied). GW_ISO_VANILLA must be set (never printed). Needs envoy_sim.wasm
@@ -17,7 +17,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
-exe=${EXE:-$repo/build/cargo/release/melee.exe}
+exe=${EXE:-$repo/build/cargo/${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}/melee.exe}
 out=${OUT:-$repo/build/envoy-camp}
 frames=${FRAMES:-45000}
 mods=${MODS:-}

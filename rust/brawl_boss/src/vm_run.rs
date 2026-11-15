@@ -295,6 +295,9 @@ pub struct Input {
     /// not traced]; `gated` is the static object's answer (its vfunc 0x0C on a) that forces the count to 0. An a not
     /// listed counts 0
     pub enemy_ids: [EnemyCount; 4],
+    /// R10057: a live enemy (in the manager, its enemy present, work flag 0 clear) is linked to the actor (its link id
+    /// is the actor's id in the enemy manager)
+    pub child_alive: bool,
 }
 
 /// One R10054 count (0x81A0CF8C).
@@ -324,6 +327,8 @@ const WB_IN_DAMAGE: u32 = 4;
 const WB_CAUGHT: u32 = 6;
 const WB_FIGURE_DEAD: u32 = 15;
 const WB_FIGURE_MODE: u32 = 18;
+/// work flag 17: R10057 sets it, a live enemy linked to the actor clears it (0x81A06EB4 / 0x81A06DDC)
+const WB_NO_CHILD: u32 = 17;
 const TB_REACTION_END: u32 = 0;
 const TB_DAMAGED: u32 = 2;
 const TB_TRUE: u32 = 4;
@@ -924,7 +929,7 @@ impl<'a> Cx<'a> {
     }
 
     /// The requirement at args[k..] (the first is the `Req`).
-    fn cond(&self, ins: &Ins, k: u32) -> bool {
+    fn cond(&mut self, ins: &Ins, k: u32) -> bool {
         let A::Req { not, id } = self.arg(ins, k) else { return false };
         let x = |j: u32| self.av(ins, k + 1 + j);
         let a = &*self.a;
@@ -1105,9 +1110,10 @@ impl<'a> Cx<'a> {
                         Some(g) => (0..32).contains(&gb) && g.present & (1 << gb) != 0,
                     }
             }
-            // 10053 (0x81A14E70, no arguments -> 0x81A0B34C): the enemy manager looks up the actor's linked enemy
-            // (0x81A0D044, then 0x81A0D0A8): true when there is none, else when that enemy's work flag 0 (0x12000000,
-            // its work module's flag query) is set: the partner is gone
+            // 10053 (0x81A14E70, no arguments -> 0x81A0B34C on the actor itself, the 0x803F0F44 call being a
+            // __dynamic_cast of the actor): the enemy manager reads the link id of the actor's own entry (0x81A0D044,
+            // none when unset or not live), then (0x81A0D0A8) true when that entry is absent or has no enemy, else
+            // when that enemy's work flag 0 (0x12000000, work vfunc 0x4C) is set: the partner is gone
             10053 => !self.i.partner_alive,
             // 10054 a b f (0x81A14EB0, each a variable or a constant -> 0x81A0B5EC): X = the enemy manager's live
             // entries, Y = those whose enemy's id word is a (0 when the static object gates a); d = b - (X - Y) * f
@@ -1122,10 +1128,18 @@ impl<'a> Cx<'a> {
                 let d = gb as u32 as f32 - xl.wrapping_sub(y) as f32 * f;
                 !(d <= 0.0) && !(d <= y as f32)
             }
+            // 10057 (0x81A15204, no arguments -> 0x81A06EB4 on the actor itself): sets the actor's work flag 17, then
+            // the enemy manager walks its other live entries (0x81A0CC44) and the callback (0x81A06DDC) clears the
+            // flag for one linked to the actor (its link id is the actor's id, 0x81A0CB10) whose enemy exists and
+            // whose work flag 0 (dead) is clear; the result is the flag. The write is applied below
+            10057 => !self.i.child_alive,
             // 10059 (0x81A15284): no arguments (else false); the global object's flag byte
             10059 => self.i.global_flag,
             _ => false,
         };
+        if id == 10057 {
+            self.a.wb_set(WB_NO_CHILD, r);
+        }
         r != not
     }
 
@@ -1172,8 +1186,9 @@ impl<'a> Cx<'a> {
     }
 
     /// `if` / `elif` with the `and` / `or` commands after it, left to right: (value, pc after the chain).
-    fn chain(&self, at: u32) -> (bool, u32) {
-        let c = &self.p.code;
+    fn chain(&mut self, at: u32) -> (bool, u32) {
+        let p: &'a Program = self.p;
+        let c = &p.code;
         let mut v = self.cond(&c[at as usize], 0);
         let mut pc = at + 1;
         loop {
@@ -1326,7 +1341,7 @@ impl<'a> Cx<'a> {
     }
 
     /// After a false `if` / `elif` with branch point `j`: the next `elif` that holds, the `else`, or past `endif`.
-    fn skip_false(&self, mut j: u32) -> u32 {
+    fn skip_false(&mut self, mut j: u32) -> u32 {
         loop {
             let ins = &self.p.code[j as usize];
             match ins.id {

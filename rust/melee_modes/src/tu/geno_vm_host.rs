@@ -235,7 +235,6 @@ static mut ROOT_TRAVEL: f32 = 0.0;
 static mut SEC: (i32, u32) = (-1, 0);
 
 pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, ground: bool, fighter_of: unsafe fn(i32) -> *mut Fighter, log: bool) -> Out {
-    crate::tu::vm_boss_model::sim_frame_begin();
     let mut i = input(carrier, damage, ground, fighter_of);
     // out of the boss area (the program's box, the stage's camera bounds): the AreaOut rule (-300) turns the boss back
     {

@@ -1104,6 +1104,24 @@ impl Rig {
     pub fn pose_into(&self, anim: Option<&Anim>, frame: f32, b: &mut DrawBufs) {
         self.pose_bones_into(anim, frame, &mut b.world);
     }
+    /// Buffers for [`Self::pose_keyed`]: the bone matrices plus one tag entry. Make them off the game thread.
+    pub fn sim_bufs(&self) -> DrawBufs {
+        let mut b = self.draw_bufs();
+        b.world = Vec::with_capacity(self.bones.len() + 1);
+        b
+    }
+
+    /// [`Self::pose_into`] unless `b` already holds the pose tagged `key` (the caller's (clip, frame)). The tag is an
+    /// entry after the bones, in the same memory as the pose, so a rollback that restores one restores the other.
+    pub fn pose_keyed(&self, anim: Option<&Anim>, frame: f32, key: [u32; 2], b: &mut DrawBufs) {
+        let n = self.bones.len();
+        if b.world.len() == n + 1 && b.world[n][0][0].to_bits() == key[0] && b.world[n][0][1].to_bits() == key[1] {
+            return;
+        }
+        self.pose_bones_into(anim, frame, &mut b.world);
+        b.world.push([[f32::from_bits(key[0]), f32::from_bits(key[1]), 0.0, 0.0], [0.0; 4], [0.0; 4]]);
+    }
+
     /// A point in bone `slot`'s local space, in model space, from bones posed by [`Self::pose_into`].
     pub fn posed_point(b: &DrawBufs, slot: usize, local: [f32; 3]) -> [f32; 3] {
         b.world.get(slot).map(|m| xf(m, local, 1.0)).unwrap_or(local)

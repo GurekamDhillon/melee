@@ -37,9 +37,9 @@ pub struct Model {
     /// the axis it faces; empty: no clip / no root track)
     pub root: Vec<Vec<[f32; 2]>>,
     pub bufs: Mutex<pm::DrawBufs>,
-    /// the pose buffer for bone lookups in the sim (made on the loader's thread) and the (clip, frame) it holds this
-    /// host frame (None after [`sim_frame_begin`]): the lookups of one frame share one pose
-    pub sim: Mutex<(Option<(Option<usize>, usize)>, pm::DrawBufs)>,
+    /// the pose buffer for bone lookups in the sim (made on the loader's thread), tagged with the (clip, frame) it
+    /// holds (`Rig::pose_keyed`): the lookups of one frame share one pose
+    pub sim: Mutex<pm::DrawBufs>,
     pub note: String,
 }
 
@@ -131,7 +131,7 @@ fn read(name: &str) -> Option<Model> {
         crate::tu::geno_vm::set_motion_lengths(name, &lens);
     }
     let bufs = Mutex::new(rig.draw_bufs());
-    let sim = Mutex::new((None, rig.draw_bufs()));
+    let sim = Mutex::new(rig.sim_bufs());
     let note = format!(
         "vm_boss_model: {name}: model loaded ({} clips, {with} of {} VM motions have one, {moving} carry root travel on {})",
         rig.anims.len(),
@@ -203,27 +203,14 @@ fn model_mat(a: &brawl_boss::vm::Actor) -> [[f32; 3]; 3] {
     o
 }
 
-/// Forget the sim pose: called at the start of every VM host frame. The pose buffer's memory is rolled back with the
-/// game state by a load while the remembered (clip, frame) is not, so a pose is shared only inside one frame.
-pub fn sim_frame_begin() {
-    if let Some(Some(m)) = M.get() {
-        if let Ok(mut g) = m.sim.lock() {
-            g.0 = None;
-        }
-    }
-}
-
-/// The sim's pose buffer posed at the actor's current clip frame; inside one host frame ([`sim_frame_begin`]) posed
-/// again only when the (clip, frame) changed.
-fn posed<'m>(p: &brawl_boss::vm::Program, m: &'m Model, a: &brawl_boss::vm::Actor) -> Option<std::sync::MutexGuard<'m, (Option<(Option<usize>, usize)>, pm::DrawBufs)>> {
+/// The sim's pose buffer posed at the actor's current clip frame; posed again only when the (clip, frame) changed.
+fn posed<'m>(p: &brawl_boss::vm::Program, m: &'m Model, a: &brawl_boss::vm::Actor) -> Option<std::sync::MutexGuard<'m, pm::DrawBufs>> {
     let mut g = m.sim.lock().ok()?;
     let mi = a.motion.max(0) as usize;
     let clip = m.clip.get(mi).copied().flatten();
     let (f, _) = frame_of(p, mi, a.tick.wrapping_sub(a.motion_t0));
-    if g.0 != Some((clip, f)) {
-        m.rig.pose_into(clip.map(|c| &m.rig.anims[c].1), f as f32, &mut g.1);
-        g.0 = Some((clip, f));
-    }
+    let key = [clip.map_or(u32::MAX, |c| c as u32), f as u32];
+    m.rig.pose_keyed(clip.map(|c| &m.rig.anims[c].1), f as f32, key, &mut g);
     Some(g)
 }
 
@@ -234,7 +221,7 @@ pub fn bone_world(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: 
     let m = M.get()?.as_ref()?;
     let slot = m.rig.bone_by_index(u32::try_from(bone).ok()?)?;
     let g = posed(p, m, a)?;
-    let b = &g.1;
+    let b = &*g;
     let q = pm::Rig::posed_point(b, slot, local);
     let r = model_mat(a);
     Some([a.pos[0] + r[0][0] * q[0] + r[0][1] * q[1] + r[0][2] * q[2], a.pos[1] + r[1][0] * q[0] + r[1][1] * q[1] + r[1][2] * q[2]])
@@ -246,7 +233,7 @@ pub fn bone_rot(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i3
     let m = M.get()?.as_ref()?;
     let slot = m.rig.bone_by_index(u32::try_from(bone).ok()?)?;
     let g = posed(p, m, a)?;
-    let b = &g.1;
+    let b = &*g;
     let q = pm::Rig::posed_rot(b, slot)?;
     let r = model_mat(a);
     Some(core::array::from_fn(|i| core::array::from_fn(|j| (0..3).map(|k| r[i][k] * q[k][j]).sum())))

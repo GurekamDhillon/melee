@@ -368,6 +368,7 @@ pub unsafe fn tick() {
             let st = std::env::var("MELEE_VS_BOSS_STATUS").ok().and_then(|v| v.parse().ok())
                 .or_else(vm_start_status)
                 .unwrap_or(2);
+            arena_blast_zones();
             let p = vm_arena(p);
             crate::tu::geno_vm_host::reset();
             // a check's placement knob (MELEE_VS_BOSS_X, like MELEE_VS_BOSS_STATUS): the boss's start x
@@ -427,17 +428,7 @@ pub unsafe fn tick() {
         bz.top = z[2];
         bz.bottom = z[3];
     }
-    // a boss fought in his arena (vm_arena: Meta Ridley on the Falcon Flyer): the Brawl stage's own blast zones, read
-    // from the boss archive (vm_brawl_arena), so his moves keep their arena box and the players die where Brawl's do
-    if crate::tu::vm_arena::live() {
-        if let Some([l, r, t, b]) = vm_brawl_arena() {
-            let bz = &mut *core::ptr::addr_of_mut!(crate::tu::script_game::stage_info.blast_zone);
-            bz.left = l;
-            bz.right = r;
-            bz.top = t;
-            bz.bottom = b;
-        }
-    }
+    arena_blast_zones();
     let cf = &mut *carrier;
     if !B.ko_done {
         cf.set_invisible(1);
@@ -644,6 +635,22 @@ unsafe fn follow_camera() {
     }
 }
 
+/// A boss fought in his arena (vm_arena: Meta Ridley on the Falcon Flyer): the Brawl stage's own blast zones, read
+/// from the boss archive (vm_brawl_arena), so his moves keep their whole arena box and the players die where Brawl's
+/// do. Every frame of the fight (idempotent, rollback-safe); the next stage load restores Final Destination's.
+unsafe fn arena_blast_zones() {
+    if crate::tu::vm_arena::partner().is_none() || crate::tu::vm_arena::program().is_none() {
+        return;
+    }
+    if let Some([l, r, t, b]) = vm_brawl_arena() {
+        let bz = &mut *core::ptr::addr_of_mut!(crate::tu::script_game::stage_info.blast_zone);
+        bz.left = l;
+        bz.right = r;
+        bz.top = t;
+        bz.bottom = b;
+    }
+}
+
 /// The arena fight's camera (vm_arena): frames the players, the ship's deck and the boss together, inside the stage's
 /// blast zones, so the boss stays on screen through his whole fight (Brawl's stage camera frames the ship and lets
 /// him leave the frame for his entries; the owner wants him in view, so he is always inside the box here). The box's
@@ -685,9 +692,12 @@ unsafe fn arena_camera() {
     if gc.mode != CAMERA_BOSS_INTRO as u32 {
         cm::Camera_8002FE38();
     }
-    B.cam[0] += (tx - B.cam[0]) * EASE;
-    B.cam[1] += (ty - B.cam[1]) * EASE;
-    B.cam[2] += (want_d - B.cam[2]) * EASE;
+    // widening is quick (the boss must not leave the frame), narrowing slow
+    let ez = if want_d > B.cam[2] { 0.35 } else { EASE };
+    let ec = if want_d > B.cam[2] { 0.25 } else { EASE };
+    B.cam[0] += (tx - B.cam[0]) * ec;
+    B.cam[1] += (ty - B.cam[1]) * ec;
+    B.cam[2] += (want_d - B.cam[2]) * ez;
     let interest = Vec3 { x: B.cam[0], y: B.cam[1], z: 0.0 };
     let eye = Vec3 { x: B.cam[0], y: B.cam[1], z: B.cam[2] };
     gc.set_x341_b1_b2(2);

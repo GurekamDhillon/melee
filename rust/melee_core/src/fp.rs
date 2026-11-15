@@ -3,6 +3,26 @@
 //! Source of truth: `pc/gameworld/gekko_fp.c`. Its `__frsqrte`/`__fres` table estimates and the
 //! sinf/cosf/tanf polynomials are ported in `melee_runtime` (group 1), not here.
 
+/// Gekko's default NaN, what an invalid operation with no NaN operand gives (inf - inf, 0 * inf, 0 / 0): a positive quiet
+/// NaN, `0x7FC0_0000` in single and `0x7FF8_0000_0000_0000` in double. x86 (and so a plain Rust op) gives the negative
+/// one; Dolphin's Gekko and the PPC 750 manual give this (tools/rust-port/referee, nan probe rows 24..27).
+pub const DEFAULT_NAN32: u32 = 0x7FC0_0000;
+pub const DEFAULT_NAN64: u64 = 0x7FF8_0000_0000_0000;
+
+/// `r` with an x86 default NaN made Gekko's: a NaN result from operands none of which is a NaN is an invalid
+/// operation, and the console gives [`DEFAULT_NAN32`]. A NaN operand propagates as it is (sign and payload kept), on both.
+/// Known gap, not modelled: with two or more NaN operands Gekko returns the first (frA, then frB, then frC) and x86 the
+/// one its instruction order picks (referee rows 6, 7, 13, 14, 18, 20); NaN does not occur in normal play.
+#[inline(always)]
+pub fn invalid_nan(r: f32, a: f32, b: f32) -> f32 {
+    if r.is_nan() && !a.is_nan() && !b.is_nan() { f32::from_bits(DEFAULT_NAN32) } else { r }
+}
+
+#[inline(always)]
+fn invalid_nan3(r: f32, a: f32, c: f32, b: f32) -> f32 {
+    if r.is_nan() && !a.is_nan() && !c.is_nan() && !b.is_nan() { f32::from_bits(DEFAULT_NAN32) } else { r }
+}
+
 /// Gekko `fmadds` as the C build models it (`gk_fmadds` in gekko_fp.c):
 /// `(float)((double)a * (double)c + (double)b)`.
 ///
@@ -12,7 +32,7 @@
 #[inline(always)]
 #[cfg_attr(feature = "disc", track_caller)]
 pub fn fmadds(a: f32, c: f32, b: f32) -> f32 {
-    let r = (a as f64 * c as f64 + b as f64) as f32;
+    let r = invalid_nan3((a as f64 * c as f64 + b as f64) as f32, a, c, b);
     #[cfg(feature = "disc")]
     crate::disc::fma(a, c, b, false, r);
     #[cfg(fptrace)]
@@ -31,6 +51,7 @@ impl Fmadd for f64 {
     #[inline(always)]
     fn fmadd(self, c: f64, b: f64) -> f64 {
         let r = self.mul_add(c, b);
+        let r = if r.is_nan() && !self.is_nan() && !c.is_nan() && !b.is_nan() { f64::from_bits(DEFAULT_NAN64) } else { r };
         #[cfg(fptrace)]
         crate::fptrace::log_helper("fmadd", &[self, c, b], r, true);
         r
@@ -46,7 +67,7 @@ pub fn fmadd(a: f64, c: f64, b: f64) -> f64 {
 #[inline(always)]
 #[cfg_attr(feature = "disc", track_caller)]
 pub fn fmsubs(a: f32, c: f32, b: f32) -> f32 {
-    let r = (a as f64 * c as f64 - b as f64) as f32;
+    let r = invalid_nan3((a as f64 * c as f64 - b as f64) as f32, a, c, b);
     #[cfg(feature = "disc")]
     crate::disc::fma(a, c, b, true, r);
     #[cfg(fptrace)]
@@ -60,7 +81,7 @@ pub fn fmsubs(a: f32, c: f32, b: f32) -> f32 {
 #[inline(always)]
 #[cfg_attr(feature = "disc", track_caller)]
 pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
-    let r = (a as f64 * c as f64 + (-(b as f64))) as f32;
+    let r = invalid_nan3((a as f64 * c as f64 + (-(b as f64))) as f32, a, c, b);
     #[cfg(feature = "disc")]
     crate::disc::fma(a, c, b, true, r);
     #[cfg(fptrace)]
@@ -77,7 +98,9 @@ pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
 #[inline(always)]
 #[cfg_attr(feature = "disc", track_caller)]
 pub fn fnmsubs(a: f32, c: f32, b: f32) -> f32 {
-    let r = -((a as f64 * c as f64 - b as f64) as f32);
+    // a NaN comes out un-negated: the console's fnmsubs leaves a NaN result's sign alone (referee rows 21..23)
+    let t = invalid_nan3((a as f64 * c as f64 - b as f64) as f32, a, c, b);
+    let r = if t.is_nan() { t } else { -t };
     #[cfg(feature = "disc")]
     crate::disc::fnm(a, c, b, true, r);
     #[cfg(fptrace)]
@@ -90,7 +113,9 @@ pub fn fnmsubs(a: f32, c: f32, b: f32) -> f32 {
 #[inline(always)]
 #[cfg_attr(feature = "disc", track_caller)]
 pub fn fnmadds(a: f32, c: f32, b: f32) -> f32 {
-    let r = -((a as f64 * c as f64 + b as f64) as f32);
+    // a NaN comes out un-negated, as for fnmsubs
+    let t = invalid_nan3((a as f64 * c as f64 + b as f64) as f32, a, c, b);
+    let r = if t.is_nan() { t } else { -t };
     #[cfg(feature = "disc")]
     crate::disc::fnm(a, c, b, false, r);
     #[cfg(fptrace)]
@@ -248,6 +273,33 @@ pub fn force25(d: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn gekko_nan_rules() {
+        // pinned to Dolphin's Gekko (tools/rust-port/referee/nanprobe.c): (a) fnmsubs / fnmadds leave a NaN un-negated,
+        // (b) an invalid op with no NaN operand gives the positive default NaN
+        // through black_box: constant-folded NaN arithmetic has no defined sign in LLVM; the game's values are run-time ones
+        let bb = std::hint::black_box::<f32>;
+        let (qp, qn, one, inf, z) = (bb(f32::from_bits(0x7FC0_0000)), bb(f32::from_bits(0xFFC0_0000)), bb(1.0), bb(f32::INFINITY), bb(0.0));
+        let b = |x: f32| x.to_bits();
+        assert_eq!(b(fnmsubs(qp, one, one)), 0x7FC0_0000);
+        assert_eq!(b(fnmsubs(one, one, qp)), 0x7FC0_0000);
+        assert_eq!(b(fnmsubs(one, qp, one)), 0x7FC0_0000);
+        assert_eq!(b(fnmsubs(qn, one, one)), 0xFFC0_0000);
+        assert_eq!(b(fnmadds(qp, one, one)), 0x7FC0_0000);
+        assert_eq!(b(fnmadds(one, one, qn)), 0xFFC0_0000);
+        assert_eq!(b(fmadds(z, inf, one)), DEFAULT_NAN32);
+        assert_eq!(b(fmsubs(inf, one, inf)), DEFAULT_NAN32);
+        assert_eq!(b(fnmsubs(inf, one, inf)), DEFAULT_NAN32);
+        assert_eq!(b(fnmadds(z, inf, one)), DEFAULT_NAN32);
+        assert_eq!(b(invalid_nan(std::hint::black_box(inf) - std::hint::black_box(inf), inf, inf)), DEFAULT_NAN32);
+        assert_eq!(b(invalid_nan(std::hint::black_box(z) * std::hint::black_box(inf), z, inf)), DEFAULT_NAN32);
+        assert_eq!(b(invalid_nan(std::hint::black_box(z) / std::hint::black_box(z), z, z)), DEFAULT_NAN32);
+        assert_eq!(b(invalid_nan(one + qn, one, qn)), 0xFFC0_0000); // a NaN operand propagates as it is
+        assert_eq!(fmadd(0.0, f64::INFINITY, 1.0).to_bits(), DEFAULT_NAN64);
+        // non-NaN results unchanged: the exact cancellation's -0 stays
+        assert_eq!(b(fnmsubs(one, one, one)), 0x8000_0000);
+    }
 
     #[test]
     fn fmadds_is_double_rounded_not_fused() {

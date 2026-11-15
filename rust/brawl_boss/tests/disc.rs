@@ -366,9 +366,13 @@ fn timeline_baskets() {
             let want = 12_124_000 + id;
             assert!(p.log.iter().any(|e| e.0 == 70 && matches!(&e.3, Event::Effect(_, a) if a.id == want)), "effect {id}");
         }
-        // sound at frame 17; the variant voice needs 24000 == 2, which is 0 here
+        // sound at frame 17; then the file's `wait 59` (relative, so frame 76) and `if compare(24000, ==, 0.0)` guard the variant
+        // voice. Compare operands are (a, op, b) with op 2 = == (engine-ops.md: R7 compare, native-verified), so the 2 in the dump is
+        // the operator, not the constant: the param is 0 here, the test is true and the voice plays (9606 left basket, 9605 right).
         assert!(p.log.iter().any(|e| e.0 == 17 && matches!(e.3, Event::Sound(..))));
-        assert!(p.sound(9606).is_empty() && p.sound(9605).is_empty());
+        let (voice, other) = if m == 1 { (9606, 9605) } else { (9605, 9606) };
+        assert_eq!(p.sound(voice), vec![76]);
+        assert!(p.sound(other).is_empty());
     }
 }
 

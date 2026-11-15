@@ -3327,6 +3327,9 @@ pub unsafe fn RB_NeutralHashWord(i: i32) -> u32 {
     if (0..16).contains(&i) { nh_out[i as usize] } else { 0 }
 }
 
+/// Set by a mode that runs a Geno boss actor: its state word for NHV1 (None when no actor is live).
+pub static mut BOSS_HASH: Option<fn() -> Option<u32>> = None;
+
 /// `RB_NeutralHash` (NHV1).
 pub unsafe fn RB_NeutralHash() -> u32 {
     melee_core::ct!("RB_NeutralHash");
@@ -3360,6 +3363,11 @@ pub unsafe fn RB_NeutralHash() -> u32 {
     h = nh_mix(h, 0x4954_434E);
     h = nh_mix(h, n);
     h = nh_mix(h, sum);
+    // a live Geno boss actor's state (geno-v5.2-boss.md §5): only while one runs, so no other row changes
+    if let Some(w) = BOSS_HASH.and_then(|f| f()) {
+        h = nh_mix(h, 0x474E_4242);
+        h = nh_mix(h, w);
+    }
     nh_out[0] = h;
     h
 }

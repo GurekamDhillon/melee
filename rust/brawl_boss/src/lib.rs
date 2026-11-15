@@ -20,6 +20,7 @@ pub mod params;
 pub mod rng;
 pub mod runner;
 pub mod script;
+pub mod vm;
 pub mod world;
 
 pub use error::{Error, Result};

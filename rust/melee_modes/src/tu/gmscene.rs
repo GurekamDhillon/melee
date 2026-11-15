@@ -980,7 +980,10 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
             // mod host (melee_modhost, hooks-v1 `frame.run_procs`): pre = frame begin, post = frame end, before the NHV1 sample
             if let Some(m) = MOD_FRAME { m(false) }
             ext::HSD_GObj_RunProcs();
-            if let Some(m) = MOD_FRAME { m(true) }
+            if let Some(m) = MOD_FRAME { m(true) } else if crate::tu::petey::vs_selected() {
+                // a VS boss without any mod mounted: the actor still ticks at frame end (the mod host's post chain does it otherwise)
+                crate::tu::petey::tick();
+            }
             if let Some(f) = ext::AUDIO_PROCS { f() }
             ext::Netplay_Background(); // an online lobby stays connected on the CSS too
             ext::Camera_RefreshViewingMtx();

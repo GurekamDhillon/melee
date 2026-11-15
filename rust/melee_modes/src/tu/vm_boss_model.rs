@@ -218,6 +218,21 @@ pub fn bone_world(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: 
     Some([a.pos[0] + r[0][0] * q[0] + r[0][1] * q[1] + r[0][2] * q[2], a.pos[1] + r[1][0] * q[0] + r[1][1] * q[1] + r[1][2] * q[2]])
 }
 
+/// Bone `bone`'s world rotation (rows; column n is its axis n) at the actor's current clip frame: the model's turn
+/// times the posed bone's rotation (getNodeGlobalMtx's 3x3 part). None without the model or the bone.
+pub fn bone_rot(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i32) -> Option<[[f32; 3]; 3]> {
+    let m = M.get()?.as_ref()?;
+    let slot = m.rig.bone_by_index(u32::try_from(bone).ok()?)?;
+    let mut b = m.sim.lock().ok()?;
+    let mi = a.motion.max(0) as usize;
+    let anim = m.clip.get(mi).copied().flatten().map(|c| &m.rig.anims[c].1);
+    let (f, _) = frame_of(p, mi, a.tick.wrapping_sub(a.motion_t0));
+    m.rig.pose_into(anim, f as f32, &mut b);
+    let q = pm::Rig::posed_rot(&b, slot)?;
+    let r = model_mat(a);
+    Some(core::array::from_fn(|i| core::array::from_fn(|j| (0..3).map(|k| r[i][k] * q[k][j]).sum())))
+}
+
 /// Draw the boss: its clip at the actor's motion frame, the model's origin at the actor's position, turned by its
 /// facing and rotation (the same transform as [`bone_world`]).
 pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash: bool) -> bool {

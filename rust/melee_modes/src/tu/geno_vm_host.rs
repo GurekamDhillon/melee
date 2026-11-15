@@ -173,6 +173,9 @@ unsafe fn input(carrier: i32, damage: i32, ground: bool, fighter_of: unsafe fn(i
         let f = fighter_of(s);
         if s != carrier && !f.is_null() {
             i.targets[s as usize] = Some([(*f).cur_pos.x, (*f).cur_pos.y]);
+            // 6901 / 6902 / R10024-R10047's per-target factors: its facing and its model scale
+            i.target_lr[s as usize] = (*f).facing_dir;
+            i.target_scale[s as usize] = (*f).x34_scale.y;
         }
     }
     i.damage = damage as f32;
@@ -250,6 +253,7 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
         }
         ROOT_TRAVEL += mv[0].abs() + mv[1].abs();
     }
+    model_nodes(p, &mut i);
     let last = crate::tu::geno_vm::actor().status;
     crate::tu::geno_vm::tick(p, &i);
     let a = crate::tu::geno_vm::actor();
@@ -320,6 +324,40 @@ pub unsafe fn frame(p: &'static Program, carrier: i32, frame: u32, damage: i32, 
     weapons_step(carrier, fighter_of, frame, log);
     let a = crate::tu::geno_vm::actor();
     Out { status: a.status, x: a.pos[0], y: a.pos[1], lr: a.lr, dead: a.dead() || a.live == 0 }
+}
+
+/// The model's answers for a boss with a skeleton: the enemy's centre (getCenterPos: the node value 23014 names) and
+/// the node rotations R10006 / R10007 / R10024-R10047 ask for (their constant node arguments, the first two found;
+/// node ids are MDL0 bone indices). Without the model the VM's fallbacks stay.
+fn model_nodes(p: &Program, i: &mut vr::Input) {
+    let a = crate::tu::geno_vm::actor();
+    if let Some(&(_, t, off)) = p.block_values.iter().find(|v| v.0 == 23014) {
+        let at = (if t == 0 { 0 } else { p.tuning_at } + off) as usize;
+        if let Some(w) = p.data.get(at..at + 4) {
+            let node = u32::from_be_bytes([w[0], w[1], w[2], w[3]]) as i32;
+            i.center = crate::tu::vm_boss_model::bone_world(p, a, node, [0.0; 3]);
+        }
+    }
+    let mut n = 0;
+    for ins in &p.code {
+        if n == i.nodes.len() {
+            break;
+        }
+        for k in 0..ins.n as u32 {
+            let Some(&A::Req { id, .. }) = p.args.get((ins.a + k) as usize) else { continue };
+            if !matches!(id, 10006 | 10007 | 10024..=10047) {
+                continue;
+            }
+            let Some(&A::K(v)) = p.args.get((ins.a + k + 1) as usize) else { continue };
+            let node = v as i32;
+            if n < i.nodes.len() && !i.nodes[..n].iter().any(|x| x.id == node) {
+                if let Some(rot) = crate::tu::vm_boss_model::bone_rot(p, a, node) {
+                    i.nodes[n] = vr::NodeRot { on: true, id: node, rot };
+                    n += 1;
+                }
+            }
+        }
+    }
 }
 
 unsafe fn reset_boxes() {

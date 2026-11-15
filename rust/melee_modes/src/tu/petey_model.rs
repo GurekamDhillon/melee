@@ -1109,6 +1109,11 @@ impl Rig {
         b.world.get(slot).map(|m| xf(m, local, 1.0)).unwrap_or(local)
     }
 
+    /// The rotation part (rows) of bone `slot`'s posed model-space matrix; None before a pose or past the bones.
+    pub fn posed_rot(b: &DrawBufs, slot: usize) -> Option<[[f32; 3]; 3]> {
+        b.world.get(slot).map(|m| core::array::from_fn(|i| [m[i][0], m[i][1], m[i][2]]))
+    }
+
     /// Buffers sized for [`Self::skin_with`]: (bone matrices, skin matrices, vertices). Make them off the game thread
     /// (a helper thread) so that drawing never allocates inside the game scope, which rollback rewrites.
     pub fn draw_bufs(&self) -> DrawBufs {

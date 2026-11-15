@@ -473,6 +473,8 @@ pub struct State {
     pub coll_x: f32,
     /// the enemy-command VM's actor (`geno_vm`): bosses whose scripts run from the player's files, not from a define
     pub vm: brawl_boss::vm::Actor,
+    /// the boss's arena actor run by the same VM (vm_arena: the Falcon Flyer beside Meta Ridley); OFF otherwise
+    pub vm2: brawl_boss::vm::Actor,
 }
 
 /// Points of one boss-carried line set (geno_boss_coll).
@@ -488,6 +490,7 @@ pub const OFF: State = State {
     grab: crate::tu::geno_boss_grab::OFF,
     coll_n: 0, coll_pts: [[0.0; 2]; MAX_COLL_PTS], coll_clock: 0, coll_x: 0.0,
     vm: brawl_boss::vm::OFF,
+    vm2: brawl_boss::vm::OFF,
 };
 
 pub static mut S: State = OFF;
@@ -528,6 +531,23 @@ pub fn state_hash() -> Option<u32> {
         // (and its projectile pool, mixed only while a projectile is live)
         return (s.vm.live != 0).then(|| {
             let mut h = s.vm.vm_hash();
+            // the arena actor and its deck (vm_arena), only while one runs: the other bosses hash as before
+            if s.vm2.live != 0 {
+                for v in [s.vm2.vm_hash(), s.coll_n as u32] {
+                    for b in v.to_le_bytes() {
+                        h ^= b as u32;
+                        h = h.wrapping_mul(0x0100_0193);
+                    }
+                }
+                for p in &s.coll_pts[..(s.coll_n as usize).min(MAX_COLL_PTS)] {
+                    for v in [p[0].to_bits(), p[1].to_bits()] {
+                        for b in v.to_le_bytes() {
+                            h ^= b as u32;
+                            h = h.wrapping_mul(0x0100_0193);
+                        }
+                    }
+                }
+            }
             crate::tu::geno_boss_spawn::hash_into(s, &mut |v: u32| {
                 for b in v.to_le_bytes() {
                     h ^= b as u32;

@@ -154,7 +154,16 @@ pub fn vs_selected() -> bool {
 /// run on stand-in shapes on Final Destination). Lower-case, fixed for the process.
 pub fn vs_boss() -> Option<&'static str> {
     static V: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
-    V.get_or_init(|| std::env::var("MELEE_VS_BOSS").ok().map(|v| v.trim().to_ascii_lowercase()).filter(|v| !v.is_empty() && v.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'))).as_deref()
+    V.get_or_init(|| {
+        let v = std::env::var("MELEE_VS_BOSS").ok().map(|v| v.trim().to_ascii_lowercase()).filter(|v| !v.is_empty() && v.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_'))?;
+        // the Falcon Flyer is Meta Ridley's ship (his arena actor, vm_arena), not a boss: its name runs his arena
+        if crate::tu::vm_arena::is_arena_actor(&v) {
+            eprintln!("petey: VS boss {v} is Meta Ridley's arena (the ship he is fought on), not a boss: running the Meta Ridley arena");
+            return Some("metaridley".to_string());
+        }
+        Some(v)
+    })
+    .as_deref()
 }
 
 /// The boss this process runs: the VS boss, else Envoy's (Petey).
@@ -366,6 +375,10 @@ pub unsafe fn tick() {
                 B.px = x;
             }
             crate::tu::geno_vm::begin(p, 1, B.diff, B.rng, st, B.px);
+            // the arena actor (Meta Ridley's Falcon Flyer), linked to him; started only when its files loaded
+            if crate::tu::vm_arena::partner().is_some() {
+                crate::tu::vm_arena::begin(B.diff, B.rng);
+            }
             B.cage = [0; 2];
             B.cage_max = 0;
             B.st = crate::tu::geno_vm::actor().status;
@@ -413,6 +426,17 @@ pub unsafe fn tick() {
         bz.right = z[1];
         bz.top = z[2];
         bz.bottom = z[3];
+    }
+    // a boss fought in his arena (vm_arena: Meta Ridley on the Falcon Flyer): the Brawl stage's own blast zones, read
+    // from the boss archive (vm_brawl_arena), so his moves keep their arena box and the players die where Brawl's do
+    if crate::tu::vm_arena::live() {
+        if let Some([l, r, t, b]) = vm_brawl_arena() {
+            let bz = &mut *core::ptr::addr_of_mut!(crate::tu::script_game::stage_info.blast_zone);
+            bz.left = l;
+            bz.right = r;
+            bz.top = t;
+            bz.bottom = b;
+        }
     }
     let cf = &mut *carrier;
     if !B.ko_done {
@@ -468,6 +492,7 @@ pub unsafe fn tick() {
     if cf.dmg.x195c_hitlag_frames <= 0.0 || B.cause != 0 {
         if let Some(p) = vm() {
             vm_frame(vm_run(p));
+            crate::tu::vm_arena::frame(B.last_frame, log_on());
         } else if let Some(g) = geno() {
             let grab = grab_actor().is_some();
             let driving = grab && crate::tu::geno_boss_grab::body_before(cf);
@@ -538,6 +563,9 @@ unsafe fn vm_capture_camera() {
 /// scripted (boss intro) mode with fixed interest and eye. State is in `B` and `game_camera` (statics): rollback-safe.
 /// A define without a camera block keeps Melee's own camera.
 unsafe fn follow_camera() {
+    if crate::tu::vm_arena::live() && std::env::var("MELEE_PETEY_CAM").as_deref() != Ok("boss") {
+        return arena_camera();
+    }
     let Some(cd) = geno().and_then(|g| g.camera) else { return vm_capture_camera() };
     use melee_world::tu::camera as cm;
     // the player: the first fighter that is not the carrier
@@ -613,6 +641,80 @@ unsafe fn follow_camera() {
     }
     if B.last_frame % 120 == 0 && std::env::var_os("MELEE_PETEY_LOG").is_some() {
         eprintln!("petey: f{} camera centre ({:.1}, {:.1}) dist {:.1} mode {} player {:?}", B.last_frame, B.cam[0], B.cam[1], B.cam[2], gc.mode, tgt);
+    }
+}
+
+/// The arena fight's camera (vm_arena): frames the players, the ship's deck and the boss together, inside the stage's
+/// blast zones, so the boss stays on screen through his whole fight (Brawl's stage camera frames the ship and lets
+/// him leave the frame for his entries; the owner wants him in view, so he is always inside the box here). The box's
+/// centre and distance ease toward the target each frame (state in `B.cam` and `game_camera`: rollback-safe), through
+/// Melee's scripted (boss intro) mode, as `follow_camera`.
+unsafe fn arena_camera() {
+    use melee_world::tu::camera as cm;
+    const FOV: f32 = 30.0;
+    const EASE: f32 = 0.08;
+    const MARGIN: f32 = 30.0;
+    let a = crate::tu::geno_vm::actor();
+    // the boss's body: its centre bone when the model has one, else its position, with his size around it
+    let (bx, by) = vm().and_then(|p| crate::tu::vm_boss_model::bone_world(vm_run(p), a, 0, [0.0; 3])).map(|q| (q[0], q[1])).unwrap_or((a.pos[0], a.pos[1]));
+    let mut b = [fmin(a.pos[0], bx) - 25.0, fmax(a.pos[0], bx) + 25.0, fmin(a.pos[1], by) - 25.0, fmax(a.pos[1], by) + 25.0];
+    if let Some(f) = crate::tu::vm_arena::bounds() {
+        b = [fmin(b[0], f[0]), fmax(b[1], f[1]), fmin(b[2], f[2]), fmax(b[3], f[3])];
+    }
+    for s in 0..4 {
+        if s == B.carrier_slot {
+            continue;
+        }
+        let f = fighter_of(s, 0);
+        if !f.is_null() && (*f).is_sleeping() == 0 {
+            let p = (*f).cur_pos;
+            b = [fmin(b[0], p.x - 10.0), fmax(b[1], p.x + 10.0), fmin(b[2], p.y - 5.0), fmax(b[3], p.y + 25.0)];
+        }
+    }
+    let bz = &*core::ptr::addr_of!(crate::tu::script_game::stage_info.blast_zone);
+    b = [fmax(b[0] - MARGIN, bz.left), fmin(b[1] + MARGIN, bz.right), fmax(b[2] - MARGIN, bz.bottom), fmin(b[3] + MARGIN, bz.top)];
+    let th = melee_runtime::gekko::tanf(0.5 * FOV * 0.017453292);
+    let asp = cm::cm_803BCB64.aspect;
+    let want_d = fmax(fmax((b[1] - b[0]) * 0.5 / (th * asp), (b[3] - b[2]) * 0.5 / th), 120.0);
+    let (tx, ty) = (0.5 * (b[0] + b[1]), 0.5 * (b[2] + b[3]));
+    let gc = &mut *core::ptr::addr_of_mut!(cm::game_camera);
+    if !B.cam_on {
+        B.cam = [tx, ty, want_d];
+        B.cam_on = true;
+    }
+    if gc.mode != CAMERA_BOSS_INTRO as u32 {
+        cm::Camera_8002FE38();
+    }
+    B.cam[0] += (tx - B.cam[0]) * EASE;
+    B.cam[1] += (ty - B.cam[1]) * EASE;
+    B.cam[2] += (want_d - B.cam[2]) * EASE;
+    let interest = Vec3 { x: B.cam[0], y: B.cam[1], z: 0.0 };
+    let eye = Vec3 { x: B.cam[0], y: B.cam[1], z: B.cam[2] };
+    gc.set_x341_b1_b2(2);
+    gc.set_x341_b3_b4(1);
+    gc.set_x341_b5_b6(0);
+    gc.x344.vec = interest;
+    gc.x35C.vec = eye;
+    gc.x350 = interest;
+    gc.x368.vec = eye;
+    gc.x374 = FOV;
+    gc.transform.target_interest = interest;
+    gc.transform.interest = interest;
+    gc.transform.target_position = eye;
+    gc.transform.position = eye;
+    gc.transform.target_fov = FOV;
+    gc.transform.fov = FOV;
+    let mut qb = CameraBounds::zeroed();
+    qb.z_pos = B.cam[2];
+    cm::Camera_UpdateQuakes(&mut qb);
+    cm::Camera_ApplyQuake(&mut qb, core::ptr::addr_of_mut!(gc.transform) as *mut CameraTransformState);
+    if B.last_frame % 120 == 0 && log_on() {
+        let half_w = B.cam[2] * th * asp;
+        let on = (a.pos[0] - B.cam[0]).abs() <= half_w && (a.pos[1] - B.cam[1]).abs() <= B.cam[2] * th;
+        eprintln!(
+            "petey: f{} arena camera centre ({:.1}, {:.1}) dist {:.1}; boss at {:.1} {:.1} {}",
+            B.last_frame, B.cam[0], B.cam[1], B.cam[2], a.pos[0], a.pos[1], if on { "in view" } else { "OUT OF VIEW" }
+        );
     }
 }
 
@@ -1208,6 +1310,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
         return;
     }
     if let Some(p) = vm() {
+        crate::tu::vm_arena::draw();
         if crate::tu::vm_boss_model::draw(vm_run(p), crate::tu::geno_vm::actor(), B.flash[0] > 0)
             && std::env::var_os("MELEE_PETEY_SHAPES").is_none()
         {

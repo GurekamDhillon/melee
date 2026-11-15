@@ -2087,6 +2087,7 @@ pub fn install() {
             crate::tu::vm_boss_model::prefetch(name);
             let _ = crate::tu::petey::vm_start_status();
             let _ = crate::tu::petey::vm_brawl_arena();
+            crate::tu::vm_arena::prefetch();
         });
     }
 }

@@ -42,6 +42,7 @@ pub mod geno_boss_grab;
 pub mod geno_boss_coll;
 pub mod geno_vm;
 pub mod geno_vm_host;
+pub mod vm_arena;
 pub mod petey;
 pub mod petey_model;
 pub mod vm_boss_model;

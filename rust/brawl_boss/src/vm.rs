@@ -835,6 +835,8 @@ pub const FILES: &[(&str, &str, &str, u64)] = &[
     ("duon", "duon", "350001.pac", 0),
     ("porky", "porky", "090101.pac", 0),
     ("metaridley", "metaridley", "370301.pac", 0),
+    // Meta Ridley's arena actor (the Falcon Flyer, his ship), run beside him (melee_modes vm_arena), not a boss
+    ("falconflyer", "falconflyer", "370301.pac", 0x8b37188b98c77474),
     ("tabuu", "tabuu", "920801.pac", 0),
     ("petey", "petey", "030101.pac", 0),
     ("auroros", "enemies/auroros", "080101.pac", 0x230490a0a78dda00),
@@ -961,6 +963,7 @@ pub fn class_of(name: &str) -> &'static str {
         "duon" => "Duon",
         "porky" => "Porky",
         "metaridley" => "Metaridley",
+        "falconflyer" => "Falconflyer",
         "tabuu" => "Taboo",
         "petey" => "Bosspackun",
         "auroros" => "Aroaros",

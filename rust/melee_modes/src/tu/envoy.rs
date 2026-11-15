@@ -676,7 +676,19 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         // a boss other than Petey needs its Geno define (no hand-coded fallback): without it the match stays plain VS
         let ok = crate::tu::petey::is_petey() || crate::tu::petey::geno().is_some() || crate::tu::petey::vm().is_some();
         if !ok {
-            eprintln!("petey: VS boss {} unavailable (no Geno define); plain VS", crate::tu::petey::boss_name());
+            // never a silent plain match in its place: the owner asked for this boss, so the run stops with the reason
+            // (the loader's own line above says why: no VM files / an IR the define lowering refuses)
+            let n = crate::tu::petey::boss_name();
+            eprintln!("petey: ERROR: MELEE_VS_BOSS={n} cannot load (not a VM boss with the player's files, and no Geno define from its IR); refusing to start a plain match instead");
+            if !crate::tu::petey::vm_boss(n) {
+                let known: std::vec::Vec<&str> = brawl_boss::vm::FILES.iter().map(|f| f.0).filter(|n| !crate::tu::vm_arena::is_arena_actor(n)).collect();
+                eprintln!("petey: the VS bosses with VM files: {}", known.join(", "));
+            }
+            std::process::exit(3);
+        }
+        // the boss's arena actor (Meta Ridley's Falcon Flyer): its deck's line set is asked for before the stage loads
+        if ok && crate::tu::vm_arena::partner().is_some() {
+            crate::tu::vm_arena::want();
         }
         // MELEE_VS_BOSS_SLOT picks the carrier (else the first CPU slot)
         let slot = std::env::var("MELEE_VS_BOSS_SLOT").ok().and_then(|v| v.parse::<usize>().ok()).filter(|&v| v < 4 && d.players[v].slot_type <= 1);

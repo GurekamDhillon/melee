@@ -318,6 +318,26 @@ pub struct Input {
     /// 21012: the linked enemy's status (the actor's manager entry's link handle, its object's work-module status
     /// getter); None: the chain is broken (value -1)
     pub partner_status: Option<i32>,
+    /// 6519 var (0x81A09860 -> 0x81A0B438 -> 0x81A0B1E8, through the enemy manager 0x81A0C804): the linked enemy
+    /// whose variable the command copies into this actor's same variable at once (int, float or flag by its kind), so
+    /// the condition that follows reads the copied value (the Falcon Flyer's rule 3 reads Meta Ridley's attack id).
+    /// [M from use: the copy direction, partner -> actor, is the only one the two files' scripts work with; the ship's
+    /// file has the 6519 and Meta Ridley's writes the variable.] None: no linked enemy, the command only forwards.
+    pub partner_vars: Option<PartnerVars>,
+}
+
+/// The linked enemy's work variables as 6519 reads them (the host copies them from its actor before this step).
+#[derive(Clone, Copy, Debug)]
+pub struct PartnerVars {
+    pub wi: [i32; NI],
+    pub wf: [f32; NF],
+    pub wb: u64,
+}
+
+impl PartnerVars {
+    pub fn of(a: &Actor) -> Self {
+        PartnerVars { wi: a.wi, wf: a.wf, wb: a.wb }
+    }
 }
 
 /// One live article for R21 / R24: `id` its vfunc [off] answer (an article id [L]), `q` its vfunc [off] with 0
@@ -2240,6 +2260,21 @@ impl<'a> Cx<'a> {
             0x650E => {
                 let r = v(self, 0) as i32;
                 self.ev(EV_WEAPON, pc, r);
+            }
+            0x6519 => {
+                if let Some(pa) = self.i.partner_vars {
+                    for k in 0..ins.n as u32 {
+                        let x = self.arg(ins, k);
+                        let v = match x {
+                            A::Wi(i) => pa.wi[i as usize] as f32,
+                            A::Wf(i) => pa.wf[i as usize],
+                            A::Wb(i) => (pa.wb >> (i as u32 & 63) & 1) as f32,
+                            _ => continue,
+                        };
+                        self.set(x, v);
+                    }
+                }
+                self.ev(EV_CMD, pc, 0);
             }
             id if forwarded(id) => self.ev(EV_CMD, pc, 0),
             _ => {}

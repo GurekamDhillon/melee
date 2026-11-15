@@ -35,6 +35,8 @@ const MODELS: &[(&str, &str, &str)] = &[
     ("porky", "EnmPorky", "Wait"),
     ("metaridley", "EnmMetaridley", "Wait1"),
     ("tabuu", "EnmTaboo", "Wait"),
+    // the Falcon Flyer: Meta Ridley's arena, a second VM actor beside him (vm_arena)
+    ("falconflyer", "EnmFalconflyer", "Wait"),
     // enemies: Bucculus (an SSE enemy run by its grab define, drawn from the define's motion)
     ("bucculus", "EnmBucyulus", "Wait"),
 ];
@@ -58,6 +60,17 @@ pub struct Model {
 }
 
 static M: OnceLock<Option<Model>> = OnceLock::new();
+/// The arena actor's model (vm_arena: the Falcon Flyer beside Meta Ridley), kept apart from the boss's.
+static M2: OnceLock<Option<Model>> = OnceLock::new();
+
+fn slot(name: &str) -> &'static OnceLock<Option<Model>> {
+    if crate::tu::vm_arena::is_arena_actor(name) { &M2 } else { &M }
+}
+
+/// The arena actor's model once loaded (None until then, or without one).
+pub fn arena_model() -> Option<&'static Model> {
+    M2.get()?.as_ref()
+}
 static NOTE_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 fn off() -> bool {
@@ -93,7 +106,7 @@ fn load(name: &str) -> Option<&'static Model> {
     if off() {
         return None;
     }
-    M.get_or_init(|| {
+    slot(name).get_or_init(|| {
         let n = name.to_string();
         std::thread::spawn(move || read(&n)).join().ok().flatten()
     })
@@ -104,7 +117,7 @@ fn read(name: &str) -> Option<Model> {
     let &(_, mdl, idle) = MODELS.iter().find(|m| m.0 == name)?;
     let &(_, _, arc, _) = brawl_boss::vm::FILES.iter().find(|f| f.0 == name)?;
     // the VM program names the motions the root tracks follow; a define-path actor (no VM run) keeps none
-    let vm_run = crate::tu::petey::vm_boss(name);
+    let vm_run = crate::tu::petey::vm_boss(name) || crate::tu::vm_arena::is_arena_actor(name);
     let p = if vm_run { Some(crate::tu::geno_vm::program(name)?) } else { None };
     let names: Vec<String> = p.map(|p| p.motion_names.clone()).unwrap_or_default();
     let mut rig = pm::load_rigs_with(&["stage", "adventure", arc], &[(mdl, mdl, idle)], false).ok()?.into_iter().next()??;
@@ -203,7 +216,11 @@ fn root_delta(p: &brawl_boss::vm::Program, m: &Model, mi: i32, el: u32) -> [f32;
 
 /// The root move for the VM step about to run (the actor's motion and frame).
 pub fn root_move(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor) -> Option<[f32; 2]> {
-    let m = M.get()?.as_ref()?;
+    root_move_m(M.get()?.as_ref()?, p, a)
+}
+
+/// [`root_move`] on a given model (the arena actor's).
+pub fn root_move_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor) -> Option<[f32; 2]> {
     Some(root_delta(p, m, a.motion, a.tick.wrapping_sub(a.motion_t0)))
 }
 
@@ -254,7 +271,11 @@ fn posed<'m>(p: &brawl_boss::vm::Program, m: &'m Model, a: &brawl_boss::vm::Acto
 /// space, in the world (x, y). None without the model or the bone. The joint -> node lookup for attack boxes and
 /// weapon spawns; allocates nothing (the pose buffer is the loader's).
 pub fn bone_world(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i32, local: [f32; 3]) -> Option<[f32; 2]> {
-    let m = M.get()?.as_ref()?;
+    bone_world_m(M.get()?.as_ref()?, p, a, bone, local)
+}
+
+/// [`bone_world`] on a given model (the arena actor's).
+pub fn bone_world_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i32, local: [f32; 3]) -> Option<[f32; 2]> {
     let slot = m.rig.bone_by_index(u32::try_from(bone).ok()?)?;
     let g = posed(p, m, a)?;
     let b = &*g;
@@ -279,6 +300,11 @@ pub fn bone_rot(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i3
 /// facing and rotation (the same transform as [`bone_world`]).
 pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash: bool) -> bool {
     let Some(Some(m)) = M.get() else { return false };
+    draw_m(m, p, a, flash, crate::tu::geno_vm_host::vis_slot())
+}
+
+/// [`draw`] on a given model with its own extra visibility slot (the arena actor's: (-1, 0) for none).
+pub unsafe fn draw_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash: bool, vis_slot: (i32, u32)) -> bool {
     let Ok(mut b) = m.bufs.lock() else { return false };
     let mi = a.motion.max(0) as usize;
     let anim = m.clip.get(mi).copied().flatten().map(|c| &m.rig.anims[c].1);
@@ -286,7 +312,7 @@ pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash
     // the motion's VIS0 at the motion's frame, then the extra visibility slot a forwarded 0410 set (its own frame)
     let vis_of = |k: i32| m.vis.get(usize::try_from(k).ok()?).copied().flatten().map(|i| &m.rig.vis[i].1);
     let main = vis_of(a.motion).filter(|_| !no_vis()).map(|v| (v, f as f32));
-    let (sm, st0) = crate::tu::geno_vm_host::vis_slot();
+    let (sm, st0) = vis_slot;
     let slot = vis_of(sm).filter(|_| !no_vis()).map(|v| (v, a.tick.wrapping_sub(st0) as f32));
     match (main, slot) {
         (Some(x), Some(y)) => m.rig.skin_vis(anim, f as f32, &[x, y], &mut b),

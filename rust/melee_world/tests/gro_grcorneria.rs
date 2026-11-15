@@ -8,48 +8,11 @@ use melee_world::tu::grcorneria as t;
 use melee_types::*;
 use oracle_common::*;
 static mut NN: i32 = 0;
+static mut CN_SCALE_BIG: i32 = 0;
 static mut NIDM: u32 = 0;
 static mut OPAD: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
-static mut OSIS: [*mut SIS; 5] = [core::ptr::null_mut(); 5];
+static mut OSIS: [*mut *mut u8; 5] = [core::ptr::null_mut(); 5];
 use core::ptr::null_mut;
-
-pub fn gr_lg_ps(p: *const u8, n: usize, d: &[ODesc]) {
-    lg_c('@');
-    lg_hmin(normptr(p as usize));
-    if !p.is_null() {
-        let mut tmp = unsafe { core::slice::from_raw_parts(p, n) }.to_vec();
-        unsafe { onorm(&mut tmp, d) };
-        for &(off, size, kind) in d {
-            if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }
-        }
-        lg_c('{');
-        lg_hx(fnv(FNV0, &tmp), 16);
-        lg_c('}');
-    }
-    lg_c(',');
-}
-pub fn lg_str(s: *const i8) {
-    lg_c('"');
-    if !s.is_null() {
-        let mut i = 0;
-        loop {
-            let c = unsafe { *s.add(i) };
-            if i >= 80 || c == 0 { break; }
-            lg_c(c as u8 as char);
-            i += 1;
-        }
-    } else {
-        lg_s("null");
-    }
-    lg_c('"');
-    lg_c(',');
-}
-pub fn lg_vaw(w: u64, c: u8) {
-    if c == b'i' { lg_int(w as u32); }
-    else if c == b's' { lg_str(w as usize as *const i8); }
-    else { lg_ptr(w as usize); }
-}
-
 static D_HSD_GObj: &[ODesc] = &[(0, 2, b'S'), (2, 1, b'C'), (3, 1, b'C'), (4, 1, b'C'), (5, 1, b'C'), (6, 1, b'C'), (7, 1, b'C'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'q'), (64, 8, b'p'), (72, 8, b'p'), (80, 8, b'p'), (88, 8, b'p')];
 static F_HSD_GObj: &[ODesc] = &[(0, 2, b'S'), (2, 1, b'C'), (3, 1, b'C'), (4, 1, b'C'), (5, 1, b'C'), (6, 1, b'C'), (7, 1, b'C'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'q'), (64, 8, b'p'), (72, 8, b'p'), (80, 8, b'p'), (88, 8, b'p')];
 static D_HSD_JObj: &[ODesc] = &[(0, 8, b'p'), (8, 2, b'S'), (10, 2, b'S'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 4, b'u'), (48, 8, b'p'), (48, 8, b'p'), (48, 8, b'p'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 4, b'f'), (72, 4, b'f'), (76, 4, b'f'), (80, 4, b'f'), (84, 4, b'f'), (88, 4, b'f'), (92, 4, b'f'), (96, 4, b'f'), (100, 4, b'f'), (104, 4, b'f'), (108, 4, b'f'), (112, 4, b'f'), (116, 4, b'f'), (120, 4, b'f'), (124, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (140, 4, b'f'), (144, 8, b'p'), (152, 8, b'p'), (160, 8, b'p'), (168, 8, b'p'), (176, 8, b'q')];
@@ -90,273 +53,35 @@ unsafe fn bf_fill_Ground_0(p: *mut Ground) {
 }
 unsafe fn bf_hash_Ground_0(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
-    if DUMP_N != 0 { print!("
-  BFV:"); }
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC4.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC4.flags.b0()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC4.flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC4.flags.b1()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC4.flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC4.flags.b2()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC6.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC6.flags.b0()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.offset_y.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.offset_y.flags.b0()) as u32); }
-    h = fnv(h, &(((*p).u.corneria2.xC4.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria2.xC4.flags.b0()) as u32); }
-    h = fnv(h, &(((*p).u.starfox.xC4.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.starfox.xC4.flags.b0()) as u32); }
-    h
-}
-static D_Ground_1: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'b'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'b'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'b'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'b'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-static F_Ground_1: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-unsafe fn bf_fill_Ground_1(p: *mut Ground) {
-    let _ = p;
-    (*p).x10_flags.set_b0((rnd() & 1) as _);
-    (*p).x10_flags.set_b1((rnd() & 1) as _);
-    (*p).x10_flags.set_b2((rnd() & 1) as _);
-    (*p).x10_flags.set_b3((rnd() & 1) as _);
-    (*p).x10_flags.set_b4((rnd() & 1) as _);
-    (*p).x10_flags.set_b5((rnd() & 1) as _);
-    (*p).x10_flags.set_b6((rnd() & 1) as _);
-    (*p).x10_flags.set_b7((rnd() & 1) as _);
-    (*p).x11_flags.set_b012((rnd() & 7) as _);
-    (*p).x11_flags.set_b3((rnd() & 1) as _);
-    (*p).x11_flags.set_b4((rnd() & 1) as _);
-    (*p).x11_flags.set_b5((rnd() & 1) as _);
-    (*p).x11_flags.set_b6((rnd() & 1) as _);
-    (*p).x11_flags.set_b7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_color_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag2((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_light_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag4((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag5((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag6((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag8((rnd() & 1) as _);
-    (*p).u.corneria.xC6.flags.set_b0((rnd() & 1) as _);
-}
-unsafe fn bf_hash_Ground_1(mut h: u64, p: *const Ground) -> u64 {
-    let _ = p;
-    if DUMP_N != 0 { print!("
-  BFV:"); }
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC6.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC6.flags.b0()) as u32); }
-    h
-}
-static D_Ground_2: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'b'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'b'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (296, 1, b'b'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'b'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'b'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-static F_Ground_2: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-unsafe fn bf_fill_Ground_2(p: *mut Ground) {
-    let _ = p;
-    (*p).x10_flags.set_b0((rnd() & 1) as _);
-    (*p).x10_flags.set_b1((rnd() & 1) as _);
-    (*p).x10_flags.set_b2((rnd() & 1) as _);
-    (*p).x10_flags.set_b3((rnd() & 1) as _);
-    (*p).x10_flags.set_b4((rnd() & 1) as _);
-    (*p).x10_flags.set_b5((rnd() & 1) as _);
-    (*p).x10_flags.set_b6((rnd() & 1) as _);
-    (*p).x10_flags.set_b7((rnd() & 1) as _);
-    (*p).x11_flags.set_b012((rnd() & 7) as _);
-    (*p).x11_flags.set_b3((rnd() & 1) as _);
-    (*p).x11_flags.set_b4((rnd() & 1) as _);
-    (*p).x11_flags.set_b5((rnd() & 1) as _);
-    (*p).x11_flags.set_b6((rnd() & 1) as _);
-    (*p).x11_flags.set_b7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_color_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag2((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_light_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag4((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag5((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag6((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag8((rnd() & 1) as _);
-    (*p).u.corneria.xC6.flags.set_b0((rnd() & 1) as _);
-    (*p).u.corneria.offset_y.flags.set_b0((rnd() & 1) as _);
-}
-unsafe fn bf_hash_Ground_2(mut h: u64, p: *const Ground) -> u64 {
-    let _ = p;
-    if DUMP_N != 0 { print!("
-  BFV:"); }
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC6.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC6.flags.b0()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.offset_y.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.offset_y.flags.b0()) as u32); }
-    h
-}
-static D_Ground_3: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'b'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'b'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'b'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-static F_Ground_3: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-unsafe fn bf_fill_Ground_3(p: *mut Ground) {
-    let _ = p;
-    (*p).x10_flags.set_b0((rnd() & 1) as _);
-    (*p).x10_flags.set_b1((rnd() & 1) as _);
-    (*p).x10_flags.set_b2((rnd() & 1) as _);
-    (*p).x10_flags.set_b3((rnd() & 1) as _);
-    (*p).x10_flags.set_b4((rnd() & 1) as _);
-    (*p).x10_flags.set_b5((rnd() & 1) as _);
-    (*p).x10_flags.set_b6((rnd() & 1) as _);
-    (*p).x10_flags.set_b7((rnd() & 1) as _);
-    (*p).x11_flags.set_b012((rnd() & 7) as _);
-    (*p).x11_flags.set_b3((rnd() & 1) as _);
-    (*p).x11_flags.set_b4((rnd() & 1) as _);
-    (*p).x11_flags.set_b5((rnd() & 1) as _);
-    (*p).x11_flags.set_b6((rnd() & 1) as _);
-    (*p).x11_flags.set_b7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_color_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag2((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_light_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag4((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag5((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag6((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag8((rnd() & 1) as _);
-    (*p).u.corneria.xC4.flags.set_b0((rnd() & 1) as _);
-    (*p).u.corneria.xC4.flags.set_b1((rnd() & 1) as _);
-    (*p).u.corneria.xC4.flags.set_b2((rnd() & 1) as _);
-    (*p).u.corneria2.xC4.flags.set_b0((rnd() & 1) as _);
-    (*p).u.starfox.xC4.flags.set_b0((rnd() & 1) as _);
-}
-unsafe fn bf_hash_Ground_3(mut h: u64, p: *const Ground) -> u64 {
-    let _ = p;
-    if DUMP_N != 0 { print!("
-  BFV:"); }
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC4.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC4.flags.b0()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC4.flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC4.flags.b1()) as u32); }
-    h = fnv(h, &(((*p).u.corneria.xC4.flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria.xC4.flags.b2()) as u32); }
-    h = fnv(h, &(((*p).u.corneria2.xC4.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.corneria2.xC4.flags.b0()) as u32); }
-    h = fnv(h, &(((*p).u.starfox.xC4.flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.starfox.xC4.flags.b0()) as u32); }
-    h
-}
-static D_Ground_4: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-static F_Ground_4: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (248, 4, b'f'), (256, 4, b'u'), (260, 4, b'u'), (264, 4, b'u'), (268, 4, b'u'), (272, 4, b'i'), (276, 4, b'i'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'u'), (340, 4, b'i'), (344, 4, b'i'), (348, 4, b'f'), (352, 1, b'c'), (353, 1, b'C'), (354, 1, b'C'), (355, 1, b'C'), (356, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i'), (256, 2, b's'), (258, 2, b's'), (260, 2, b's'), (262, 2, b's'), (264, 4, b'i'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 2, b's'), (298, 2, b's'), (300, 2, b's'), (304, 8, b'p'), (312, 4, b'f'), (316, 4, b'f'), (256, 1, b'C'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'i'), (276, 4, b'i'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 4, b'i'), (324, 4, b'i'), (328, 4, b'i'), (332, 4, b'i'), (336, 4, b'i')];
-unsafe fn bf_fill_Ground_4(p: *mut Ground) {
-    let _ = p;
-    (*p).x10_flags.set_b0((rnd() & 1) as _);
-    (*p).x10_flags.set_b1((rnd() & 1) as _);
-    (*p).x10_flags.set_b2((rnd() & 1) as _);
-    (*p).x10_flags.set_b3((rnd() & 1) as _);
-    (*p).x10_flags.set_b4((rnd() & 1) as _);
-    (*p).x10_flags.set_b5((rnd() & 1) as _);
-    (*p).x10_flags.set_b6((rnd() & 1) as _);
-    (*p).x10_flags.set_b7((rnd() & 1) as _);
-    (*p).x11_flags.set_b012((rnd() & 7) as _);
-    (*p).x11_flags.set_b3((rnd() & 1) as _);
-    (*p).x11_flags.set_b4((rnd() & 1) as _);
-    (*p).x11_flags.set_b5((rnd() & 1) as _);
-    (*p).x11_flags.set_b6((rnd() & 1) as _);
-    (*p).x11_flags.set_b7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_color_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag2((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_light_enable((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag4((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag5((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag6((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag7((rnd() & 1) as _);
-    (*p).color_overlay.set_x7C_flag8((rnd() & 1) as _);
-}
-unsafe fn bf_hash_Ground_4(mut h: u64, p: *const Ground) -> u64 {
-    let _ = p;
-    if DUMP_N != 0 { print!("
-  BFV:"); }
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).u.corneria.xC4.flags.b0()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).u.corneria.xC4.flags.b1()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).u.corneria.xC4.flags.b2()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).u.corneria.xC6.flags.b0()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).u.corneria.offset_y.flags.b0()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).u.corneria2.xC4.flags.b0()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).u.starfox.xC4.flags.b0()) as u32).to_le_bytes());
     h
 }
 static D_StageInfo: &[ODesc] = &[(0, 4, b'f'), (4, 4, b'f'), (8, 4, b'f'), (12, 4, b'f'), (16, 4, b'f'), (20, 4, b'f'), (24, 4, b'f'), (28, 4, b'f'), (32, 4, b'f'), (36, 4, b'f'), (40, 4, b'f'), (44, 4, b'f'), (48, 4, b'f'), (52, 4, b'f'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 4, b'f'), (72, 4, b'f'), (76, 4, b'f'), (80, 4, b'f'), (84, 4, b'f'), (88, 4, b'f'), (92, 4, b'f'), (96, 4, b'f'), (100, 4, b'f'), (104, 4, b'f'), (108, 4, b'f'), (112, 4, b'f'), (116, 4, b'f'), (120, 4, b'f'), (124, 4, b'f'), (128, 4, b'f'), (132, 4, b'u'), (136, 4, b'u'), (140, 1, b'b'), (144, 8, b'p'), (152, 8, b'p'), (160, 4, b'i'), (164, 4, b'u'), (168, 4, b'i'), (172, 1, b'C'), (173, 1, b'C'), (174, 1, b'C'), (175, 1, b'C'), (176, 1, b'C'), (177, 1, b'C'), (178, 1, b'C'), (179, 1, b'C'), (180, 1, b'C'), (181, 1, b'C'), (182, 1, b'C'), (183, 1, b'C'), (184, 1, b'C'), (185, 1, b'C'), (186, 1, b'C'), (187, 1, b'C'), (188, 1, b'C'), (189, 1, b'C'), (190, 1, b'C'), (191, 1, b'C'), (192, 1, b'C'), (193, 1, b'C'), (194, 1, b'C'), (195, 1, b'C'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 1, b'C'), (201, 1, b'C'), (202, 1, b'C'), (203, 1, b'C'), (204, 1, b'C'), (205, 1, b'C'), (206, 1, b'C'), (207, 1, b'C'), (208, 1, b'C'), (209, 1, b'C'), (210, 1, b'C'), (211, 1, b'C'), (212, 1, b'C'), (213, 1, b'C'), (214, 1, b'C'), (215, 1, b'C'), (216, 1, b'C'), (217, 1, b'C'), (218, 1, b'C'), (219, 1, b'C'), (220, 1, b'C'), (221, 1, b'C'), (222, 1, b'C'), (223, 1, b'C'), (224, 1, b'C'), (225, 1, b'C'), (226, 1, b'C'), (227, 1, b'C'), (228, 1, b'C'), (229, 1, b'C'), (230, 1, b'C'), (231, 1, b'C'), (232, 1, b'C'), (233, 1, b'C'), (234, 1, b'C'), (235, 1, b'C'), (236, 1, b'C'), (237, 1, b'C'), (238, 1, b'C'), (239, 1, b'C'), (240, 1, b'C'), (241, 1, b'C'), (242, 1, b'C'), (243, 1, b'C'), (244, 1, b'C'), (245, 1, b'C'), (246, 1, b'C'), (247, 1, b'C'), (248, 1, b'C'), (249, 1, b'C'), (250, 1, b'C'), (251, 1, b'C'), (252, 1, b'C'), (253, 1, b'C'), (254, 1, b'C'), (255, 1, b'C'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 1, b'C'), (261, 1, b'C'), (262, 1, b'C'), (263, 1, b'C'), (264, 1, b'C'), (265, 1, b'C'), (266, 1, b'C'), (267, 1, b'C'), (268, 1, b'C'), (269, 1, b'C'), (270, 1, b'C'), (271, 1, b'C'), (272, 1, b'C'), (273, 1, b'C'), (274, 1, b'C'), (275, 1, b'C'), (276, 1, b'C'), (277, 1, b'C'), (278, 1, b'C'), (279, 1, b'C'), (280, 1, b'C'), (281, 1, b'C'), (282, 1, b'C'), (283, 1, b'C'), (284, 1, b'C'), (285, 1, b'C'), (286, 1, b'C'), (287, 1, b'C'), (288, 1, b'C'), (289, 1, b'C'), (290, 1, b'C'), (291, 1, b'C'), (292, 1, b'C'), (293, 1, b'C'), (294, 1, b'C'), (295, 1, b'C'), (296, 1, b'C'), (297, 1, b'C'), (298, 1, b'C'), (299, 1, b'C'), (300, 1, b'C'), (301, 1, b'C'), (302, 1, b'C'), (303, 1, b'C'), (304, 1, b'C'), (305, 1, b'C'), (306, 1, b'C'), (307, 1, b'C'), (312, 8, b'p'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 4, b'f'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (364, 4, b'f'), (368, 4, b'f'), (372, 4, b'f'), (376, 4, b'f'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 8, b'p'), (400, 8, b'p'), (408, 8, b'p'), (416, 8, b'p'), (424, 8, b'p'), (432, 8, b'p'), (440, 8, b'p'), (448, 8, b'p'), (456, 8, b'p'), (464, 8, b'p'), (472, 8, b'p'), (480, 8, b'p'), (488, 8, b'p'), (496, 8, b'p'), (504, 8, b'p'), (512, 8, b'p'), (520, 8, b'p'), (528, 8, b'p'), (536, 8, b'p'), (544, 8, b'p'), (552, 8, b'p'), (560, 8, b'p'), (568, 8, b'p'), (576, 8, b'p'), (584, 8, b'p'), (592, 8, b'p'), (600, 8, b'p'), (608, 8, b'p'), (616, 8, b'p'), (624, 8, b'p'), (632, 8, b'p'), (640, 8, b'p'), (648, 8, b'p'), (656, 8, b'p'), (664, 8, b'p'), (672, 8, b'p'), (680, 8, b'p'), (688, 8, b'p'), (696, 8, b'p'), (704, 8, b'p'), (712, 8, b'p'), (720, 8, b'p'), (728, 8, b'p'), (736, 8, b'p'), (744, 8, b'p'), (752, 8, b'p'), (760, 8, b'p'), (768, 8, b'p'), (776, 8, b'p'), (784, 8, b'p'), (792, 8, b'p'), (800, 8, b'p'), (808, 8, b'p'), (816, 8, b'p'), (824, 8, b'p'), (832, 8, b'p'), (840, 8, b'p'), (848, 8, b'p'), (856, 8, b'p'), (864, 8, b'p'), (872, 8, b'p'), (880, 8, b'p'), (888, 8, b'p'), (896, 8, b'p'), (904, 8, b'p'), (912, 8, b'p'), (920, 8, b'p'), (928, 8, b'p'), (936, 8, b'p'), (944, 8, b'p'), (952, 8, b'p'), (960, 8, b'p'), (968, 8, b'p'), (976, 8, b'p'), (984, 8, b'p'), (992, 8, b'p'), (1000, 8, b'p'), (1008, 8, b'p'), (1016, 8, b'p'), (1024, 8, b'p'), (1032, 8, b'p'), (1040, 8, b'p'), (1048, 8, b'p'), (1056, 8, b'p'), (1064, 8, b'p'), (1072, 8, b'p'), (1080, 8, b'p'), (1088, 8, b'p'), (1096, 8, b'p'), (1104, 8, b'p'), (1112, 8, b'p'), (1120, 8, b'p'), (1128, 8, b'p'), (1136, 8, b'p'), (1144, 8, b'p'), (1152, 8, b'p'), (1160, 8, b'p'), (1168, 8, b'p'), (1176, 8, b'p'), (1184, 8, b'p'), (1192, 8, b'p'), (1200, 8, b'p'), (1208, 8, b'p'), (1216, 8, b'p'), (1224, 8, b'p'), (1232, 8, b'p'), (1240, 8, b'p'), (1248, 8, b'p'), (1256, 8, b'p'), (1264, 8, b'p'), (1272, 8, b'p'), (1280, 8, b'p'), (1288, 8, b'p'), (1296, 8, b'p'), (1304, 8, b'p'), (1312, 8, b'p'), (1320, 8, b'p'), (1328, 8, b'p'), (1336, 8, b'p'), (1344, 8, b'p'), (1352, 8, b'p'), (1360, 8, b'p'), (1368, 8, b'p'), (1376, 8, b'p'), (1384, 8, b'p'), (1392, 8, b'p'), (1400, 8, b'p'), (1408, 8, b'p'), (1416, 8, b'p'), (1424, 8, b'p'), (1432, 8, b'p'), (1440, 8, b'p'), (1448, 8, b'p'), (1456, 8, b'p'), (1464, 8, b'p'), (1472, 8, b'p'), (1480, 8, b'p'), (1488, 8, b'p'), (1496, 8, b'p'), (1504, 8, b'p'), (1512, 8, b'p'), (1520, 8, b'p'), (1528, 8, b'p'), (1536, 8, b'p'), (1544, 8, b'p'), (1552, 8, b'p'), (1560, 8, b'p'), (1568, 8, b'p'), (1576, 8, b'p'), (1584, 8, b'p'), (1592, 8, b'p'), (1600, 8, b'p'), (1608, 8, b'p'), (1616, 8, b'p'), (1624, 8, b'p'), (1632, 8, b'p'), (1640, 8, b'p'), (1648, 8, b'p'), (1656, 8, b'p'), (1664, 8, b'p'), (1672, 8, b'p'), (1680, 8, b'p'), (1688, 8, b'p'), (1696, 8, b'p'), (1704, 8, b'p'), (1712, 8, b'p'), (1720, 8, b'p'), (1728, 8, b'p'), (1736, 8, b'p'), (1744, 8, b'p'), (1752, 8, b'p'), (1760, 8, b'p'), (1768, 8, b'p'), (1776, 8, b'p'), (1784, 8, b'p'), (1792, 8, b'p'), (1800, 8, b'p'), (1808, 8, b'p'), (1816, 8, b'p'), (1824, 8, b'p'), (1832, 8, b'p'), (1840, 8, b'p'), (1848, 8, b'p'), (1856, 8, b'p'), (1864, 8, b'p'), (1872, 8, b'p'), (1880, 8, b'p'), (1888, 8, b'p'), (1896, 8, b'p'), (1904, 8, b'p'), (1912, 8, b'p'), (1920, 8, b'p'), (1928, 8, b'p'), (1936, 8, b'p'), (1944, 8, b'p'), (1952, 8, b'p'), (1960, 8, b'p'), (1968, 8, b'p'), (1976, 8, b'p'), (1984, 8, b'p'), (1992, 8, b'p'), (2000, 8, b'p'), (2008, 8, b'p'), (2016, 8, b'p'), (2024, 8, b'p'), (2032, 8, b'p'), (2040, 8, b'p'), (2048, 8, b'p'), (2056, 8, b'p'), (2064, 8, b'p'), (2072, 8, b'p'), (2080, 8, b'p'), (2088, 8, b'p'), (2096, 8, b'p'), (2104, 8, b'p'), (2112, 8, b'p'), (2120, 8, b'p'), (2128, 8, b'p'), (2136, 8, b'p'), (2144, 8, b'p'), (2152, 8, b'p'), (2160, 8, b'p'), (2168, 8, b'p'), (2176, 8, b'p'), (2184, 8, b'p'), (2192, 8, b'p'), (2200, 8, b'p'), (2208, 8, b'p'), (2216, 8, b'p'), (2224, 8, b'p'), (2232, 8, b'p'), (2240, 8, b'p'), (2248, 8, b'p'), (2256, 8, b'p'), (2264, 8, b'p'), (2272, 8, b'p'), (2280, 8, b'p'), (2288, 8, b'p'), (2296, 8, b'p'), (2304, 8, b'p'), (2312, 8, b'p'), (2320, 8, b'p'), (2328, 8, b'p'), (2336, 8, b'p'), (2344, 8, b'p'), (2352, 8, b'p'), (2360, 8, b'p'), (2368, 8, b'p'), (2376, 8, b'p'), (2384, 8, b'p'), (2392, 8, b'p'), (2400, 8, b'p'), (2408, 8, b'p'), (2416, 8, b'p'), (2424, 8, b'p'), (2432, 8, b'p'), (2440, 8, b'p'), (2448, 8, b'p'), (2456, 8, b'p'), (2464, 8, b'p'), (2472, 8, b'p'), (2480, 8, b'p'), (2488, 8, b'p'), (2496, 8, b'p'), (2504, 8, b'p'), (2512, 8, b'p'), (2520, 8, b'p'), (2528, 8, b'p'), (2536, 8, b'p'), (2544, 8, b'p'), (2552, 8, b'p'), (2560, 8, b'p'), (2568, 8, b'p'), (2576, 8, b'p'), (2584, 8, b'p'), (2592, 8, b'p'), (2600, 8, b'p'), (2608, 8, b'p'), (2616, 8, b'p'), (2624, 8, b'p'), (2632, 8, b'p'), (2640, 8, b'p'), (2648, 8, b'p'), (2656, 8, b'p'), (2664, 8, b'p'), (2672, 8, b'p'), (2680, 8, b'p'), (2688, 8, b'p'), (2696, 8, b'p'), (2704, 8, b'p'), (2712, 8, b'p'), (2720, 8, b'p'), (2728, 8, b'p'), (2736, 8, b'p'), (2744, 8, b'p'), (2752, 8, b'p'), (2760, 8, b'p'), (2768, 8, b'p'), (2776, 8, b'p'), (2784, 8, b'p'), (2792, 8, b'p'), (2800, 8, b'p'), (2808, 8, b'p'), (2816, 8, b'p'), (2824, 8, b'p'), (2832, 8, b'p'), (2840, 8, b'p'), (2848, 8, b'p'), (2856, 8, b'p'), (2864, 8, b'p'), (2872, 8, b'p'), (2880, 8, b'p'), (2888, 8, b'p'), (2896, 8, b'p'), (2904, 8, b'p'), (2912, 8, b'p'), (2920, 8, b'p'), (2928, 8, b'p'), (2936, 8, b'p'), (2944, 8, b'p'), (2952, 8, b'p'), (2960, 8, b'p'), (2968, 8, b'p'), (2976, 8, b'p'), (2984, 8, b'p'), (2992, 8, b'p'), (3000, 8, b'p'), (3008, 8, b'p'), (3016, 8, b'p'), (3024, 8, b'p'), (3032, 8, b'p'), (3040, 8, b'p'), (3048, 8, b'p'), (3056, 8, b'p'), (3064, 8, b'p'), (3072, 8, b'p'), (3080, 8, b'p'), (3088, 8, b'p'), (3096, 8, b'p'), (3104, 8, b'p'), (3112, 8, b'p'), (3120, 8, b'p'), (3128, 2, b's'), (3130, 2, b's'), (3132, 2, b's'), (3134, 2, b's'), (3136, 4, b'i'), (3140, 2, b's'), (3142, 2, b's'), (3144, 4, b'f'), (3148, 4, b'i'), (3152, 4, b'i'), (3156, 1, b'C'), (3157, 1, b'C'), (3158, 1, b'C'), (3159, 1, b'C'), (3160, 1, b'C'), (3161, 1, b'C'), (3162, 1, b'C'), (3163, 1, b'C'), (3164, 1, b'C'), (3165, 1, b'C'), (3166, 1, b'C'), (3167, 1, b'C'), (3168, 1, b'C'), (3169, 1, b'C'), (3170, 1, b'C'), (3171, 1, b'C'), (3172, 1, b'C'), (3173, 1, b'C'), (3174, 1, b'C'), (3175, 1, b'C'), (3176, 1, b'C'), (3177, 1, b'C'), (3178, 1, b'C'), (3179, 1, b'C'), (3180, 1, b'C'), (3181, 1, b'C'), (3182, 1, b'C'), (3183, 1, b'C'), (3184, 2, b's'), (3188, 4, b'f'), (3192, 4, b'f'), (3196, 4, b'i'), (3200, 4, b'f'), (3204, 4, b'f'), (3208, 4, b'i'), (3212, 4, b'f'), (3216, 4, b'f'), (3224, 8, b'p'), (3232, 4, b'f'), (3236, 4, b'f'), (3240, 4, b'f'), (3244, 4, b'f'), (3248, 4, b'i'), (3252, 1, b'C'), (3253, 1, b'C'), (3254, 1, b'C'), (3255, 1, b'C')];
@@ -374,22 +99,20 @@ unsafe fn bf_fill_StageInfo(p: *mut StageInfo) {
 }
 unsafe fn bf_hash_StageInfo(mut h: u64, p: *const StageInfo) -> u64 {
     let _ = p;
-    if DUMP_N != 0 { print!("
-  BFV:"); }
-    h = fnv(h, &(((*p).unk8C.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b0()) as u32); }
-    h = fnv(h, &(((*p).unk8C.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b1()) as u32); }
-    h = fnv(h, &(((*p).unk8C.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b2()) as u32); }
-    h = fnv(h, &(((*p).unk8C.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b3()) as u32); }
-    h = fnv(h, &(((*p).unk8C.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b4()) as u32); }
-    h = fnv(h, &(((*p).unk8C.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b5()) as u32); }
-    h = fnv(h, &(((*p).unk8C.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b6()) as u32); }
-    h = fnv(h, &(((*p).unk8C.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b7()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b0()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk8C.b1()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk8C.b2()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk8C.b3()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk8C.b4()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk8C.b5()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk8C.b6()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk8C.b7()) as u32).to_le_bytes());
     h
 }
 static D_StageCallbacks: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 4, b'u'), (32, 1, b'b')];
 static F_StageCallbacks: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 4, b'u')];
-static D_StageData: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 4, b'u')];
-static F_StageData: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 4, b'u')];
+static D_StageData: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 8, b'u')];
+static F_StageData: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 8, b'u')];
 static D_GrJoint: &[ODesc] = &[(0, 2, b's'), (2, 2, b's'), (4, 2, b's')];
 static F_GrJoint: &[ODesc] = &[(0, 2, b's'), (2, 2, b's'), (4, 2, b's')];
 static D_Vec3: &[ODesc] = &[(0, 4, b'f'), (4, 4, b'f'), (8, 4, b'f')];
@@ -407,14 +130,14 @@ unsafe fn bf_fill_HSD_GObjProc(p: *mut HSD_GObjProc) {
 }
 unsafe fn bf_hash_HSD_GObjProc(mut h: u64, p: *const HSD_GObjProc) -> u64 {
     let _ = p;
-    if DUMP_N != 0 { print!("
-  BFV:"); }
-    h = fnv(h, &(((*p).flags_1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_1()) as u32); }
-    h = fnv(h, &(((*p).flags_2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_2()) as u32); }
-    h = fnv(h, &(((*p).flags_3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_3()) as u32); }
-    h = fnv(h, &(((*p).flags_4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_4()) as u32); }
+    h = fnv(h, &(((*p).flags_1()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).flags_2()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).flags_3()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).flags_4()) as u32).to_le_bytes());
     h
 }
+static D_HSD_Generator: &[ODesc] = &[(0, 8, b'p'), (8, 4, b'u'), (12, 4, b'f'), (16, 4, b'f'), (24, 8, b'p'), (32, 2, b'S'), (34, 2, b'S'), (36, 1, b'C'), (37, 1, b'C'), (38, 1, b'C'), (39, 1, b'C'), (40, 2, b'S'), (42, 2, b'S'), (48, 8, b'p'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 4, b'f'), (72, 4, b'f'), (76, 4, b'f'), (80, 4, b'f'), (84, 4, b'f'), (88, 4, b'f'), (92, 4, b'f'), (96, 4, b'f'), (100, 4, b'u'), (104, 8, b'p'), (112, 8, b'p'), (120, 8, b'p'), (128, 4, b'f'), (132, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (128, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (140, 4, b'f'), (144, 4, b'f'), (148, 4, b'f'), (152, 4, b'f'), (156, 4, b'f'), (160, 4, b'f'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 2, b'S'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (140, 4, b'f'), (144, 4, b'f')];
+static F_HSD_Generator: &[ODesc] = &[(0, 8, b'p'), (8, 4, b'u'), (12, 4, b'f'), (16, 4, b'f'), (24, 8, b'p'), (32, 2, b'S'), (34, 2, b'S'), (36, 1, b'C'), (37, 1, b'C'), (38, 1, b'C'), (39, 1, b'C'), (40, 2, b'S'), (42, 2, b'S'), (48, 8, b'p'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 4, b'f'), (72, 4, b'f'), (76, 4, b'f'), (80, 4, b'f'), (84, 4, b'f'), (88, 4, b'f'), (92, 4, b'f'), (96, 4, b'f'), (100, 4, b'u'), (104, 8, b'p'), (112, 8, b'p'), (120, 8, b'p'), (128, 4, b'f'), (132, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (128, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (140, 4, b'f'), (144, 4, b'f'), (148, 4, b'f'), (152, 4, b'f'), (156, 4, b'f'), (160, 4, b'f'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 2, b'S'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (140, 4, b'f'), (144, 4, b'f')];
 static D_grZakoGenerator_Config: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 4, b'i'), (24, 8, b'p'), (32, 4, b'f'), (40, 8, b'p'), (48, 4, b'i')];
 static F_grZakoGenerator_Config: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 4, b'i'), (24, 8, b'p'), (32, 4, b'f'), (40, 8, b'p'), (48, 4, b'i')];
 static D_lb_80011A50_t: &[ODesc] = &[(0, 1, b'C'), (1, 1, b'C'), (2, 1, b'c'), (3, 1, b'c'), (4, 4, b'f'), (8, 4, b'f'), (12, 4, b'f'), (16, 4, b'f'), (20, 4, b'f'), (24, 4, b'f'), (28, 4, b'f'), (32, 4, b'f'), (36, 4, b'f'), (40, 4, b'i'), (44, 4, b'f'), (48, 4, b'i'), (56, 8, b'p')];
@@ -425,6 +148,45 @@ static D_UnkArchiveStruct: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 4, b'u'
 static F_UnkArchiveStruct: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 4, b'u')];
 static D_HSD_Text: &[ODesc] = &[(0, 4, b'f'), (4, 4, b'f'), (8, 4, b'f'), (12, 4, b'f'), (16, 4, b'f'), (20, 4, b'f'), (24, 4, b'f'), (28, 4, b'f'), (32, 4, b'f'), (36, 4, b'f'), (40, 4, b'f'), (44, 1, b'C'), (45, 1, b'C'), (46, 1, b'C'), (47, 1, b'C'), (48, 1, b'C'), (49, 1, b'C'), (50, 1, b'C'), (51, 1, b'C'), (52, 4, b'f'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 2, b'S'), (70, 2, b'S'), (72, 1, b'C'), (73, 1, b'C'), (74, 1, b'C'), (75, 1, b'C'), (76, 1, b'C'), (77, 1, b'C'), (78, 1, b'C'), (79, 1, b'C'), (80, 8, b'p'), (88, 8, b'p'), (96, 8, b'p'), (104, 8, b'p'), (112, 8, b'p'), (120, 8, b'p'), (128, 8, b'p'), (136, 2, b'S'), (138, 2, b'S'), (140, 4, b'f'), (144, 4, b'f'), (148, 4, b'f'), (152, 4, b'f'), (156, 4, b'f'), (160, 4, b'f'), (164, 4, b'f'), (168, 1, b'C'), (169, 1, b'C'), (170, 1, b'C'), (171, 1, b'C'), (172, 2, b'S'), (174, 2, b'S'), (176, 4, b'u'), (180, 4, b'u'), (184, 1, b'C'), (185, 1, b'C'), (186, 1, b'C'), (187, 1, b'C')];
 static F_HSD_Text: &[ODesc] = &[(0, 4, b'f'), (4, 4, b'f'), (8, 4, b'f'), (12, 4, b'f'), (16, 4, b'f'), (20, 4, b'f'), (24, 4, b'f'), (28, 4, b'f'), (32, 4, b'f'), (36, 4, b'f'), (40, 4, b'f'), (44, 1, b'C'), (45, 1, b'C'), (46, 1, b'C'), (47, 1, b'C'), (48, 1, b'C'), (49, 1, b'C'), (50, 1, b'C'), (51, 1, b'C'), (52, 4, b'f'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 2, b'S'), (70, 2, b'S'), (72, 1, b'C'), (73, 1, b'C'), (74, 1, b'C'), (75, 1, b'C'), (76, 1, b'C'), (77, 1, b'C'), (78, 1, b'C'), (79, 1, b'C'), (80, 8, b'p'), (88, 8, b'p'), (96, 8, b'p'), (104, 8, b'p'), (112, 8, b'p'), (120, 8, b'p'), (128, 8, b'p'), (136, 2, b'S'), (138, 2, b'S'), (140, 4, b'f'), (144, 4, b'f'), (148, 4, b'f'), (152, 4, b'f'), (156, 4, b'f'), (160, 4, b'f'), (164, 4, b'f'), (168, 1, b'C'), (169, 1, b'C'), (170, 1, b'C'), (171, 1, b'C'), (172, 2, b'S'), (174, 2, b'S'), (176, 4, b'u'), (180, 4, b'u'), (184, 1, b'C'), (185, 1, b'C'), (186, 1, b'C'), (187, 1, b'C')];
+static D_ColorOverlay_x8_t: &[ODesc] = &[(0, 1, b'C'), (1, 1, b'C'), (2, 1, b'C'), (3, 1, b'C'), (0, 1, b'b'), (1, 1, b'b'), (2, 1, b'b'), (3, 1, b'b'), (0, 1, b'b'), (1, 1, b'b'), (2, 1, b'b'), (3, 1, b'b'), (0, 1, b'b'), (1, 1, b'b'), (2, 1, b'b'), (3, 1, b'b')];
+static F_ColorOverlay_x8_t: &[ODesc] = &[(0, 1, b'C'), (1, 1, b'C'), (2, 1, b'C'), (3, 1, b'C')];
+unsafe fn bf_fill_ColorOverlay_x8_t(p: *mut ColorOverlay_x8_t) {
+    let _ = p;
+    (*p).light_rot1.set_unk((rnd() & 31) as _);
+    (*p).light_rot1.set_x((rnd() & 4095) as _);
+    (*p).light_rot1.set_yz((rnd() & 4095) as _);
+    (*p).light_rot2.set_x0_0((rnd() & 1) as _);
+    (*p).light_rot2.set_x0_1((rnd() & 1) as _);
+    (*p).light_rot2.set_x0_2((rnd() & 1) as _);
+    (*p).light_rot2.set_x0_3((rnd() & 1) as _);
+    (*p).light_rot2.set_x0_4((rnd() & 1) as _);
+    (*p).light_rot2.set_x0_5((rnd() & 1) as _);
+    (*p).light_rot2.set_light_enable((rnd() & 1) as _);
+    (*p).light_rot2.set_x0_7((rnd() & 1) as _);
+    (*p).light_rot2.set_x((rnd() & 2047) as _);
+    (*p).light_rot2.set_yz((rnd() & 2047) as _);
+    (*p).unk.set_unk((rnd() & 63) as _);
+    (*p).unk.set_timer((rnd() & 67108863) as _);
+}
+unsafe fn bf_hash_ColorOverlay_x8_t(mut h: u64, p: *const ColorOverlay_x8_t) -> u64 {
+    let _ = p;
+    h = fnv(h, &(((*p).light_rot1.unk()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot1.x()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot1.yz()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x0_0()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x0_1()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x0_2()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x0_3()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x0_4()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x0_5()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.light_enable()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x0_7()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.x()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).light_rot2.yz()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk.unk()) as u32).to_le_bytes());
+    h = fnv(h, &(((*p).unk.timer()) as u32).to_le_bytes());
+    h
+}
 static D__GXColor: &[ODesc] = &[(0, 1, b'C'), (1, 1, b'C'), (2, 1, b'C'), (3, 1, b'C')];
 static F__GXColor: &[ODesc] = &[(0, 1, b'C'), (1, 1, b'C'), (2, 1, b'C'), (3, 1, b'C')];
 static D_grZakoGenerator_Spawn: &[ODesc] = &[(0, 4, b'f'), (4, 4, b'f'), (8, 4, b'f'), (12, 4, b'f'), (16, 4, b'f'), (20, 4, b'f')];
@@ -451,8 +213,8 @@ static D_st8: &[ODesc] = &[(0, 4, b'i'), (4, 4, b'i'), (8, 4, b'i')];
 static F_st8: &[ODesc] = &[(0, 4, b'i'), (4, 4, b'i'), (8, 4, b'i')];
 static D_st9: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 4, b'u'), (32, 1, b'b'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 4, b'u'), (72, 1, b'b'), (80, 8, b'p'), (88, 8, b'p'), (96, 8, b'p'), (104, 8, b'p'), (112, 4, b'u'), (112, 1, b'b'), (120, 8, b'p'), (128, 8, b'p'), (136, 8, b'p'), (144, 8, b'p'), (152, 4, b'u'), (152, 1, b'b'), (160, 8, b'p'), (168, 8, b'p'), (176, 8, b'p'), (184, 8, b'p'), (192, 4, b'u'), (192, 1, b'b'), (200, 8, b'p'), (208, 8, b'p'), (216, 8, b'p'), (224, 8, b'p'), (232, 4, b'u'), (232, 1, b'b'), (240, 8, b'p'), (248, 8, b'p'), (256, 8, b'p'), (264, 8, b'p'), (272, 4, b'u'), (272, 1, b'b'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 4, b'u'), (312, 1, b'b'), (320, 8, b'p'), (328, 8, b'p'), (336, 8, b'p'), (344, 8, b'p'), (352, 4, b'u'), (352, 1, b'b'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (392, 4, b'u'), (392, 1, b'b'), (400, 8, b'p'), (408, 8, b'p'), (416, 8, b'p'), (424, 8, b'p'), (432, 4, b'u'), (432, 1, b'b'), (440, 8, b'p'), (448, 8, b'p'), (456, 8, b'p'), (464, 8, b'p'), (472, 4, b'u'), (472, 1, b'b'), (480, 8, b'p'), (488, 8, b'p'), (496, 8, b'p'), (504, 8, b'p'), (512, 4, b'u'), (512, 1, b'b'), (520, 8, b'p'), (528, 8, b'p'), (536, 8, b'p'), (544, 8, b'p'), (552, 4, b'u'), (552, 1, b'b'), (560, 8, b'p'), (568, 8, b'p'), (576, 8, b'p'), (584, 8, b'p'), (592, 4, b'u'), (592, 1, b'b'), (600, 8, b'p'), (608, 8, b'p'), (616, 8, b'p'), (624, 8, b'p'), (632, 4, b'u'), (632, 1, b'b'), (640, 8, b'p'), (648, 8, b'p'), (656, 8, b'p'), (664, 8, b'p'), (672, 4, b'u'), (672, 1, b'b'), (680, 8, b'p'), (688, 8, b'p'), (696, 8, b'p'), (704, 8, b'p'), (712, 4, b'u'), (712, 1, b'b'), (720, 8, b'p'), (728, 8, b'p'), (736, 8, b'p'), (744, 8, b'p'), (752, 4, b'u'), (752, 1, b'b')];
 static F_st9: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 4, b'u'), (80, 8, b'p'), (88, 8, b'p'), (96, 8, b'p'), (104, 8, b'p'), (112, 4, b'u'), (120, 8, b'p'), (128, 8, b'p'), (136, 8, b'p'), (144, 8, b'p'), (152, 4, b'u'), (160, 8, b'p'), (168, 8, b'p'), (176, 8, b'p'), (184, 8, b'p'), (192, 4, b'u'), (200, 8, b'p'), (208, 8, b'p'), (216, 8, b'p'), (224, 8, b'p'), (232, 4, b'u'), (240, 8, b'p'), (248, 8, b'p'), (256, 8, b'p'), (264, 8, b'p'), (272, 4, b'u'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 4, b'u'), (320, 8, b'p'), (328, 8, b'p'), (336, 8, b'p'), (344, 8, b'p'), (352, 4, b'u'), (360, 8, b'p'), (368, 8, b'p'), (376, 8, b'p'), (384, 8, b'p'), (392, 4, b'u'), (400, 8, b'p'), (408, 8, b'p'), (416, 8, b'p'), (424, 8, b'p'), (432, 4, b'u'), (440, 8, b'p'), (448, 8, b'p'), (456, 8, b'p'), (464, 8, b'p'), (472, 4, b'u'), (480, 8, b'p'), (488, 8, b'p'), (496, 8, b'p'), (504, 8, b'p'), (512, 4, b'u'), (520, 8, b'p'), (528, 8, b'p'), (536, 8, b'p'), (544, 8, b'p'), (552, 4, b'u'), (560, 8, b'p'), (568, 8, b'p'), (576, 8, b'p'), (584, 8, b'p'), (592, 4, b'u'), (600, 8, b'p'), (608, 8, b'p'), (616, 8, b'p'), (624, 8, b'p'), (632, 4, b'u'), (640, 8, b'p'), (648, 8, b'p'), (656, 8, b'p'), (664, 8, b'p'), (672, 4, b'u'), (680, 8, b'p'), (688, 8, b'p'), (696, 8, b'p'), (704, 8, b'p'), (712, 4, b'u'), (720, 8, b'p'), (728, 8, b'p'), (736, 8, b'p'), (744, 8, b'p'), (752, 4, b'u')];
-static D_st10: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 4, b'u')];
-static F_st10: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 4, b'u')];
+static D_st10: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 8, b'u')];
+static F_st10: &[ODesc] = &[(0, 4, b'u'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 8, b'p'), (80, 4, b'u'), (88, 8, b'p'), (96, 8, b'u')];
 static D_st11: &[ODesc] = &[(0, 2, b's'), (2, 2, b's'), (4, 2, b's'), (6, 2, b's'), (8, 2, b's'), (10, 2, b's'), (12, 2, b's'), (14, 2, b's'), (16, 2, b's'), (18, 2, b's'), (20, 2, b's'), (22, 2, b's'), (24, 2, b's'), (26, 2, b's'), (28, 2, b's'), (30, 2, b's'), (32, 2, b's'), (34, 2, b's'), (36, 2, b's'), (38, 2, b's'), (40, 2, b's'), (42, 2, b's'), (44, 2, b's'), (46, 2, b's')];
 static F_st11: &[ODesc] = &[(0, 2, b's'), (2, 2, b's'), (4, 2, b's'), (6, 2, b's'), (8, 2, b's'), (10, 2, b's'), (12, 2, b's'), (14, 2, b's'), (16, 2, b's'), (18, 2, b's'), (20, 2, b's'), (22, 2, b's'), (24, 2, b's'), (26, 2, b's'), (28, 2, b's'), (30, 2, b's'), (32, 2, b's'), (34, 2, b's'), (36, 2, b's'), (38, 2, b's'), (40, 2, b's'), (42, 2, b's'), (44, 2, b's'), (46, 2, b's')];
 static D_st12: &[ODesc] = &[(0, 4, b'f'), (4, 4, b'f'), (8, 4, b'f'), (12, 4, b'f'), (16, 4, b'f'), (20, 4, b'f'), (24, 4, b'f'), (28, 4, b'f'), (32, 4, b'f'), (36, 4, b'f'), (40, 4, b'f'), (44, 4, b'f'), (48, 4, b'f'), (52, 4, b'f'), (56, 4, b'f')];
@@ -465,12 +227,13 @@ static D_st15: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b
 static F_st15: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p')];
 const NGO: usize = 6;
 const NJO: usize = 24;
-static GVAR: &[usize] = &[0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 4, 4, 0, 4, 4, 4, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0];
+static GVAR: &[usize] = &[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 static mut OGO: [HSD_GObj; NGO] = unsafe { core::mem::zeroed() };
 static mut OGP: [Ground; NGO] = unsafe { core::mem::zeroed() };
 static mut OJO: [HSD_JObj; NJO] = unsafe { core::mem::zeroed() };
 static mut G_stage_info: [u64; 407] = [0; 407];
 static mut OP_HSD_GObjProc: [[u64; 6]; 2] = [[0; 6]; 2];
+static mut OP_HSD_Generator: [[u64; 23]; 2] = [[0; 23]; 2];
 static mut OP_grZakoGenerator_Config: [[u64; 7]; 2] = [[0; 7]; 2];
 static mut OP_lb_80011A50_t: [[u64; 8]; 2] = [[0; 8]; 2];
 static mut OP_grCorneria_YakumonoParam: [[u64; 19]; 2] = [[0; 19]; 2];
@@ -486,6 +249,7 @@ unsafe fn gen_gobj() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k != 
 unsafe fn gen_jobj() -> *mut c_void { let k = rnd() % (NJO as u32 + 1); if k != 0 { addr_of_mut!(OJO[(k - 1) as usize]) as *mut c_void } else { core::ptr::null_mut() } }
 unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k != 0 { addr_of_mut!(OGP[(k - 1) as usize]) as *mut c_void } else { core::ptr::null_mut() } }
 unsafe fn gen_rec_HSD_GObjProc() -> *mut c_void { let k = rnd() % 3; if k != 0 { addr_of_mut!(OP_HSD_GObjProc[(k - 1) as usize]) as *mut c_void } else { core::ptr::null_mut() } }
+unsafe fn gen_rec_HSD_Generator() -> *mut c_void { let k = rnd() % 3; if k != 0 { addr_of_mut!(OP_HSD_Generator[(k - 1) as usize]) as *mut c_void } else { core::ptr::null_mut() } }
 unsafe fn gen_rec_grZakoGenerator_Config() -> *mut c_void { let k = rnd() % 3; if k != 0 { addr_of_mut!(OP_grZakoGenerator_Config[(k - 1) as usize]) as *mut c_void } else { core::ptr::null_mut() } }
 unsafe fn gen_rec_lb_80011A50_t() -> *mut c_void { let k = rnd() % 3; if k != 0 { addr_of_mut!(OP_lb_80011A50_t[(k - 1) as usize]) as *mut c_void } else { core::ptr::null_mut() } }
 unsafe fn gen_rec_grCorneria_YakumonoParam() -> *mut c_void { let k = rnd() % 3; if k != 0 { addr_of_mut!(OP_grCorneria_YakumonoParam[(k - 1) as usize]) as *mut c_void } else { core::ptr::null_mut() } }
@@ -498,6 +262,8 @@ unsafe fn world_reg() {
     oreg(addr_of!(G_stage_info), core::mem::size_of_val(&*addr_of!(G_stage_info)));
     oreg(addr_of!(OP_HSD_GObjProc[0]), core::mem::size_of_val(&*addr_of!(OP_HSD_GObjProc[0])));
     oreg(addr_of!(OP_HSD_GObjProc[1]), core::mem::size_of_val(&*addr_of!(OP_HSD_GObjProc[1])));
+    oreg(addr_of!(OP_HSD_Generator[0]), core::mem::size_of_val(&*addr_of!(OP_HSD_Generator[0])));
+    oreg(addr_of!(OP_HSD_Generator[1]), core::mem::size_of_val(&*addr_of!(OP_HSD_Generator[1])));
     oreg(addr_of!(OP_grZakoGenerator_Config[0]), core::mem::size_of_val(&*addr_of!(OP_grZakoGenerator_Config[0])));
     oreg(addr_of!(OP_grZakoGenerator_Config[1]), core::mem::size_of_val(&*addr_of!(OP_grZakoGenerator_Config[1])));
     oreg(addr_of!(OP_lb_80011A50_t[0]), core::mem::size_of_val(&*addr_of!(OP_lb_80011A50_t[0])));
@@ -602,6 +368,7 @@ unsafe fn world_fill(fi: usize) {
     OGO = core::mem::zeroed(); OGP = core::mem::zeroed(); OJO = core::mem::zeroed();
     G_stage_info.fill(0);
     OP_HSD_GObjProc = [[0; 6]; 2];
+    OP_HSD_Generator = [[0; 23]; 2];
     OP_grZakoGenerator_Config = [[0; 7]; 2];
     OP_lb_80011A50_t = [[0; 8]; 2];
     OP_grCorneria_YakumonoParam = [[0; 19]; 2];
@@ -616,6 +383,10 @@ unsafe fn world_fill(fi: usize) {
     core::ptr::write_bytes(addr_of_mut!(t::arwing_gobjs) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::arwing_gobjs)));
     core::ptr::write_bytes(addr_of_mut!(t::arwing_types) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::arwing_types)));
     core::ptr::write_bytes(addr_of_mut!(t::arwing_groups) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::arwing_groups)));
+    core::ptr::write_bytes(addr_of_mut!(t::grCn_StageCallbacks) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grCn_StageCallbacks)));
+    core::ptr::write_bytes(addr_of_mut!(t::grCn_StageData) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grCn_StageData)));
+    core::ptr::write_bytes(addr_of_mut!(t::grCn_803E1D38) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grCn_803E1D38)));
+    core::ptr::write_bytes(addr_of_mut!(t::grCn_803E1F70) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grCn_803E1F70)));
     core::ptr::write_bytes(addr_of_mut!(t::grCn_803E1FAC) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grCn_803E1FAC)));
     core::ptr::write_bytes(addr_of_mut!(OPAD) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(OPAD)));
     core::ptr::write_bytes(addr_of_mut!(OSIS) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(OSIS)));
@@ -624,16 +395,13 @@ unsafe fn world_fill(fi: usize) {
     for i in 0..NGO {
         match GVAR[fi] {
             0 => { ofill(addr_of_mut!(OGP[i]) as *mut u8, F_Ground_0); bf_fill_Ground_0(addr_of_mut!(OGP[i]) as *mut Ground); }
-            1 => { ofill(addr_of_mut!(OGP[i]) as *mut u8, F_Ground_1); bf_fill_Ground_1(addr_of_mut!(OGP[i]) as *mut Ground); }
-            2 => { ofill(addr_of_mut!(OGP[i]) as *mut u8, F_Ground_2); bf_fill_Ground_2(addr_of_mut!(OGP[i]) as *mut Ground); }
-            3 => { ofill(addr_of_mut!(OGP[i]) as *mut u8, F_Ground_3); bf_fill_Ground_3(addr_of_mut!(OGP[i]) as *mut Ground); }
-            4 => { ofill(addr_of_mut!(OGP[i]) as *mut u8, F_Ground_4); bf_fill_Ground_4(addr_of_mut!(OGP[i]) as *mut Ground); }
             _ => unreachable!(),
         }
     }
     for i in 0..NJO { ofill(addr_of_mut!(OJO[i]) as *mut u8, F_HSD_JObj);  }
     ofill(addr_of_mut!(G_stage_info) as *mut u8, F_StageInfo); bf_fill_StageInfo(addr_of_mut!(G_stage_info) as *mut StageInfo);
     ofill(addr_of_mut!(OP_HSD_GObjProc[0]) as *mut u8, F_HSD_GObjProc); bf_fill_HSD_GObjProc(addr_of_mut!(OP_HSD_GObjProc[0]) as *mut HSD_GObjProc); ofill(addr_of_mut!(OP_HSD_GObjProc[1]) as *mut u8, F_HSD_GObjProc); bf_fill_HSD_GObjProc(addr_of_mut!(OP_HSD_GObjProc[1]) as *mut HSD_GObjProc);
+    ofill(addr_of_mut!(OP_HSD_Generator[0]) as *mut u8, F_HSD_Generator);  ofill(addr_of_mut!(OP_HSD_Generator[1]) as *mut u8, F_HSD_Generator); 
     ofill(addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut u8, F_grZakoGenerator_Config);  ofill(addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut u8, F_grZakoGenerator_Config); 
     ofill(addr_of_mut!(OP_lb_80011A50_t[0]) as *mut u8, F_lb_80011A50_t);  ofill(addr_of_mut!(OP_lb_80011A50_t[1]) as *mut u8, F_lb_80011A50_t); 
     ofill(addr_of_mut!(OP_grCorneria_YakumonoParam[0]) as *mut u8, F_grCorneria_YakumonoParam);  ofill(addr_of_mut!(OP_grCorneria_YakumonoParam[1]) as *mut u8, F_grCorneria_YakumonoParam); 
@@ -660,7 +428,6 @@ unsafe fn world_fill(fi: usize) {
         OJO[NGO + i].parent = addr_of_mut!(OJO[i]);
         OJO[2 * NGO + i].parent = addr_of_mut!(OJO[i]);
     }
-    for i in 0..5 { OGO[i].next = if true { addr_of_mut!(OGO[i + 1]) } else { core::ptr::null_mut() }; } OGO[5].next = core::ptr::null_mut();
     NN = 0; NIDM = 0; t::yakumono_param = addr_of_mut!(OP_grCorneria_YakumonoParam[0]) as *mut _;
 }
 struct Fn_ { name: &'static str, n: u32 }
@@ -890,13 +657,13 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::CAMERA_GETTRANSFORMINTEREST = Some(|a0: *mut Vec| { lg_s("Camera_GetTransformInterest("); lg_v3(a0 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a0 as *mut _); lg_c(';'); });
         melee_world::tu::grcorneria::ext::CAMERA_REQUESTQUAKE = Some(|a0: CmQuakeKind, a1: *mut Vec| { lg_s("Camera_RequestQuake("); lg_int(a0 as u32); lg_v3(a1 as *const _ as *const Vec3); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GOBJ_SETUPGXLINK = Some(|a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32| { lg_s("GObj_SetupGXLink("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_int(a2 as u32); lg_int(a3 as u32); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_801C0498 = Some(|| -> f32 { lg_s("Ground_801C0498("); lg_s(")"); { let r = ((4 + rnd() % 4) as f32 / 4.0); lg_retf(r); lg_c(';'); r } });
-        melee_world::tu::grcorneria::ext::GROUND_801C055C = Some(|a0: *mut GXColor| { lg_s("Ground_801C055C("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_801C0574 = Some(|a0: *mut GXColor| { lg_s("Ground_801C0574("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_801C058C = Some(|a0: *mut GXColor| { lg_s("Ground_801C058C("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_801C05A4 = Some(|a0: *mut GXColor| { lg_s("Ground_801C05A4("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_801C05BC = Some(|a0: *mut GXColor| { lg_s("Ground_801C05BC("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_801C05EC = Some(|a0: *mut GXColor| { lg_s("Ground_801C05EC("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GROUND_801C0498 = Some(|| -> f32 { lg_s("Ground_801C0498("); lg_s(")"); { let r = (if CN_SCALE_BIG != 0 { 1000.0 } else { rf() }); lg_retf(r); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GROUND_801C055C = Some(|a0: *mut GXColor| { lg_s("Ground_801C055C("); lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GROUND_801C0574 = Some(|a0: *mut GXColor| { lg_s("Ground_801C0574("); lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GROUND_801C058C = Some(|a0: *mut GXColor| { lg_s("Ground_801C058C("); lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GROUND_801C05A4 = Some(|a0: *mut GXColor| { lg_s("Ground_801C05A4("); lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GROUND_801C05BC = Some(|a0: *mut GXColor| { lg_s("Ground_801C05BC("); lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GROUND_801C05EC = Some(|a0: *mut GXColor| { lg_s("Ground_801C05EC("); lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C10B8 = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("Ground_801C10B8("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C11AC = Some(|a0: *mut HSD_GObj| { lg_s("Ground_801C11AC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C39C0 = Some(|| { lg_s("Ground_801C39C0("); lg_s(")"); lg_c(';'); });
@@ -908,12 +675,12 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::GROUND_801C5440 = Some(|a0: *mut Ground, a1: s32, a2: u32| { lg_s("Ground_801C5440("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C54DC = Some(|a0: *mut Ground, a1: s32| -> i32 { lg_s("Ground_801C54DC("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GROUND_801C5544 = Some(|a0: *mut Ground, a1: s32| { lg_s("Ground_801C5544("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_GETMAPGOBJ = Some(|a0: i32| -> *mut HSD_GObj { lg_s("Ground_GetMapGObj("); lg_int(a0 as u32); lg_s(")"); { let r = (if (NIDM >> a0) & 1 == 0 || rnd() % 2 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) as *mut _ } else { null_mut() }) as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GROUND_GETMAPGOBJ = Some(|a0: i32| -> *mut HSD_GObj { lg_s("Ground_GetMapGObj("); lg_int(a0 as u32); lg_s(")"); { let r = (if CN_SCALE_BIG != 0 || (NIDM >> a0) & 1 == 0 || rnd() % 2 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) as *mut _ } else { null_mut() }) as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GROUND_GETSTAGEGOBJ = Some(|a0: i32| -> *mut HSD_GObj { lg_s("Ground_GetStageGObj("); lg_int(a0 as u32); lg_s(")"); { let r = (if NN != 0 || rnd() % 4 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) as *mut _ } else { null_mut() }) as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GROUND_GETYAKUMONOPARAM = Some(|| -> *mut c_void { lg_s("Ground_GetYakumonoParam("); lg_s(")"); { let r = addr_of_mut!(OP_grCorneria_YakumonoParam[0]) as *mut c_void as *mut c_void; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GROUND_INITMAPCOLL = Some(|a0: *mut HSD_JObj, a1: s32| -> i32 { lg_s("Ground_InitMapColl("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GROUND_UPDATEMAPCOLL = Some(|a0: *mut HSD_GObj| -> i32 { lg_s("Ground_UpdateMapColl("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
-        melee_world::tu::grcorneria::ext::HSD_ARCHIVEGETPUBLICADDRESS = Some(|a0: *mut HSD_Archive, a1: *const i8| -> *mut c_void { lg_s("HSD_ArchiveGetPublicAddress("); lg_ptr(a0 as *const u8 as usize); lg_str(a1); lg_s(")"); { let r = gen_p() as *mut c_void; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::HSD_ARCHIVEGETPUBLICADDRESS = Some(|a0: *mut HSD_Archive, a1: *const i8| -> *mut c_void { lg_s("HSD_ArchiveGetPublicAddress("); lg_ptr(a0 as *const u8 as usize); lg_ptr(a1 as *const u8 as usize); lg_s(")"); { let r = gen_p() as *mut c_void; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::HSD_GOBJGXLINK_80390908 = Some(|a0: *mut HSD_GObj, a1: u8, a2: u8| { lg_s("HSD_GObjGXLink_80390908("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::HSD_GOBJ_SETUPPROC = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8| -> *mut HSD_GObjProc { lg_s("HSD_GObj_SetupProc("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_int(a2 as u32); lg_s(")"); { let r = gen_rec_HSD_GObjProc() as *mut HSD_GObjProc; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::HSD_JOBJANIMALL = Some(|a0: *mut HSD_JObj| { lg_s("HSD_JObjAnimAll("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
@@ -930,7 +697,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::HSD_SISLIB_803A611C = Some(|a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32| -> i32 { lg_s("HSD_SisLib_803A611C("); lg_int(a0 as u32); lg_ptr(a1 as *const u8 as usize); lg_int(a2 as u32); lg_int(a3 as u32); lg_int(a4 as u32); lg_int(a5 as u32); lg_int(a6 as u32); lg_int(a7 as u32); lg_s(")"); { let r = gen_i() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::HSD_SISLIB_803A6368 = Some(|a0: *mut HSD_Text, a1: i32| { lg_s("HSD_SisLib_803A6368("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::ITEM_80268E5C = Some(|a0: *mut HSD_GObj, a1: enum_t, a2: Item_StateChangeFlags| { lg_s("Item_80268E5C("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::OSREPORT = Some(|a0: *const i8, a1: &[usize]| { lg_s("OSReport("); lg_ptr(a0 as *const u8 as usize); for (k, &w) in a1.iter().enumerate() { lg_vaw(w as u64, b"pii"[k.min(2)]); } lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::OSREPORT = Some(|a0: *const i8, a1: &[usize]| { lg_s("OSReport("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::PLAYER_GETPLAYERSLOTTYPE = Some(|a0: s32| -> Gm_PKind { lg_s("Player_GetPlayerSlotType("); lg_int(a0 as u32); lg_s(")"); { let r = gen_i() as Gm_PKind; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::PLAYER_LOADPLAYERCOORDS = Some(|a0: s32, a1: *mut Vec| { lg_s("Player_LoadPlayerCoords("); lg_int(a0 as u32); lg_v3(a1 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a1 as *mut _); lg_c(';'); });
         melee_world::tu::grcorneria::ext::STAGE_80225194 = Some(|| -> StKind { lg_s("Stage_80225194("); lg_s(")"); { let r = ((if rnd() % 4 == 0 { 0xE9 } else if rnd() % 4 == 0 { 0x47 } else if rnd() % 4 == 0 { 0x46 } else { rnd() % 100 })) as StKind; lg_retu(r as u32); lg_c(';'); r } });
@@ -950,8 +717,9 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::GRANIME_801C83D0 = Some(|a0: *mut HSD_GObj, a1: i32, a2: enum_t| -> i32 { lg_s("grAnime_801C83D0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GRANIME_801C8780 = Some(|a0: *mut HSD_GObj, a1: u32, a2: u32, a3: f32, a4: f32| { lg_s("grAnime_801C8780("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_f(a3); lg_f(a4); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GRDATFILES_GETARCHIVE = Some(|| -> *mut UnkArchiveStruct { lg_s("grDatFiles_GetArchive("); lg_s(")"); { let r = addr_of_mut!(OP_UnkArchiveStruct[(rnd() % 2) as usize]) as *mut c_void as *mut UnkArchiveStruct; lg_retp(r as usize); lg_c(';'); r } });
-        melee_world::tu::grcorneria::ext::GRLIB_801C96F8 = Some(|a0: i32, a1: i32, a2: *mut Vec| -> *mut HSD_Generator { lg_s("grLib_801C96F8("); lg_int(a0 as u32); lg_int(a1 as u32); lg_v3(a2 as *const _ as *const Vec3); lg_s(")"); { let r = gen_p() as *mut HSD_Generator; lg_retp(r as usize); lg_c(';'); r } });
-        melee_world::tu::grcorneria::ext::GRLIB_801C9808 = Some(|a0: i32, a1: i32, a2: *mut HSD_JObj| -> *mut HSD_Generator { lg_s("grLib_801C9808("); lg_int(a0 as u32); lg_int(a1 as u32); lg_ptr(a2 as *const u8 as usize); lg_s(")"); { let r = gen_p() as *mut HSD_Generator; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: isize| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(((a1 as u64) >> 32) as u32); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GRLIB_801C96F8 = Some(|a0: i32, a1: i32, a2: *mut Vec| -> *mut HSD_Generator { lg_s("grLib_801C96F8("); lg_int(a0 as u32); lg_int(a1 as u32); lg_v3(a2 as *const _ as *const Vec3); lg_s(")"); { let r = gen_rec_HSD_Generator() as *mut HSD_Generator; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GRLIB_801C9808 = Some(|a0: i32, a1: i32, a2: *mut HSD_JObj| -> *mut HSD_Generator { lg_s("grLib_801C9808("); lg_int(a0 as u32); lg_int(a1 as u32); lg_ptr(a2 as *const u8 as usize); lg_s(")"); { let r = gen_rec_HSD_Generator() as *mut HSD_Generator; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GRMATERIAL_801C87D0 = Some(|a0: *mut HSD_JObj, a1: u32| { lg_s("grMaterial_801C87D0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GRMATERIAL_801C8858 = Some(|a0: *mut HSD_JObj, a1: u32| { lg_s("grMaterial_801C8858("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GRMATERIAL_801C8A04 = Some(|a0: *mut HSD_JObj, a1: u32| { lg_s("grMaterial_801C8A04("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
@@ -959,12 +727,12 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::GRMATERIAL_801C8DE0 = Some(|a0: *mut HSD_GObj, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32| { lg_s("grMaterial_801C8DE0("); lg_ptr(a0 as *const u8 as usize); lg_f(a1); lg_f(a2); lg_f(a3); lg_f(a4); lg_f(a5); lg_f(a6); lg_f(a7); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GRMATERIAL_801C8E08 = Some(|a0: *mut HSD_GObj| { lg_s("grMaterial_801C8E08("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GRMATERIAL_801C8E28 = Some(|a0: *mut HSD_GObj| { lg_s("grMaterial_801C8E28("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GRMATERIAL_801C9604 = Some(|a0: *mut HSD_GObj, a1: *mut c_void, a2: i32| { lg_s("grMaterial_801C9604("); lg_ptr(a0 as *const u8 as usize); lg_ptr(a1 as *const u8 as usize); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::GRMATERIAL_801C9604 = Some(|a0: *mut HSD_GObj, a1: *mut c_void, a2: i32| { lg_s("grMaterial_801C9604("); lg_ptr(a0 as *const u8 as usize); lg_ps(a1 as *const u8, core::mem::size_of::<c_void>(), D_ColorOverlay_x8_t); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GRVENOM_80206BF0 = Some(|a0: i32| -> i32 { lg_s("grVenom_80206BF0("); lg_int(a0 as u32); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GRVENOM_80206CB0 = Some(|a0: i32| { lg_s("grVenom_80206CB0("); lg_int(a0 as u32); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GRZAKOGENERATOR_801CA394 = Some(|a0: *mut grZakoGenerator_Spawn, a1: i32, a2: grZakoGenerator_SpawnFunc, a3: f32| -> *mut grZakoGenerator_Config { lg_s("grZakoGenerator_801CA394("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_Spawn>(), D_grZakoGenerator_Spawn); lg_int(a1 as u32); lg_ptr(fnaddr(a2)); lg_f(a3); lg_s(")"); { let r = gen_rec_grZakoGenerator_Config() as *mut grZakoGenerator_Config; lg_retp(r as usize); lg_c(';'); r } });
-        melee_world::tu::grcorneria::ext::GRZAKOGENERATOR_801CA43C = Some(|a0: *mut grZakoGenerator_Config, a1: *mut HSD_JObj, a2: f32| -> i32 { lg_s("grZakoGenerator_801CA43C("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_Config>(), D_grZakoGenerator_Config); lg_ptr(a1 as *const u8 as usize); lg_f(a2); lg_s(")"); { let r = gen_i() as i32; lg_retu(r as u32); lg_c(';'); r } });
-        melee_world::tu::grcorneria::ext::GRZAKOGENERATOR_801CAE04 = Some(|a0: *mut grZakoGenerator_SpawnDesc| -> *mut HSD_GObj { lg_s("grZakoGenerator_801CAE04("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_SpawnDesc>(), D_grZakoGenerator_SpawnDesc); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GRZAKOGENERATOR_801CA394 = Some(|a0: *mut grZakoGenerator_Spawn, a1: i32, a2: grZakoGenerator_SpawnFunc, a3: f32| -> *mut grZakoGenerator_Config { lg_s("grZakoGenerator_801CA394("); lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_Spawn>(), D_grZakoGenerator_Spawn); lg_int(a1 as u32); lg_ptr(fnaddr(a2)); lg_f(a3); lg_s(")"); { let r = gen_rec_grZakoGenerator_Config() as *mut grZakoGenerator_Config; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GRZAKOGENERATOR_801CA43C = Some(|a0: *mut grZakoGenerator_Config, a1: *mut HSD_JObj, a2: f32| -> i32 { lg_s("grZakoGenerator_801CA43C("); lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_Config>(), D_grZakoGenerator_Config); lg_ptr(a1 as *const u8 as usize); lg_f(a2); lg_s(")"); { let r = gen_i() as i32; lg_retu(r as u32); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GRZAKOGENERATOR_801CAE04 = Some(|a0: *mut grZakoGenerator_SpawnDesc| -> *mut HSD_GObj { lg_s("grZakoGenerator_801CAE04("); lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_SpawnDesc>(), D_grZakoGenerator_SpawnDesc); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::HSD_8039D580 = Some(|a0: *mut HSD_JObj| { lg_s("hsd_8039D580("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::IFSTATUS_802F6898 = Some(|| { lg_s("ifStatus_802F6898("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::IFSTATUS_802F68F0 = Some(|| { lg_s("ifStatus_802F68F0("); lg_s(")"); lg_c(';'); });
@@ -990,7 +758,7 @@ unsafe fn install_hooks() {
 }
 unsafe fn case_pre(fi: usize, a: &mut Args) {
     match fi {
-        0 => { NN = 1; {
+        0 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1001,7 +769,25 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        1 => { NN = 1; {
+        1 => { NN = 1; CN_SCALE_BIG = 0; {
+  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
+  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
+  for j_ in 0..3usize {
+      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
+      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
+  }
+  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
+  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
+  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
+  NIDM = 0; } { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
+  OGP[0].u.corneria.xC6.value = if rnd() % 2 != 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 };
+  OGP[0].u.corneria.x128 = addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]);
+  OGP[0].u.corneria.x12C = if rnd() % 2 != 0 { addr_of_mut!(OJO[0]) } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) };
+  OGP[0].u.corneria.x108 = rnd() % 6; OGP[0].u.corneria.x10C = (rnd() % 4) as i32 - 1; OGP[0].u.corneria.x110 = (rnd() % 12) as i32 - 1;
+  OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
+  OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
+  OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; } CN_SCALE_BIG = 1;  }
+        2 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1019,7 +805,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        2 => { NN = 1; {
+        3 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1037,7 +823,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        3 => { NN = 1; {
+        4 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1055,25 +841,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        4 => { NN = 1; {
-  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
-  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
-  for j_ in 0..3usize {
-      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
-      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
-  }
-  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
-  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
-  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
-  NIDM = 0; } { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
-  OGP[0].u.corneria.xC6.value = if rnd() % 2 != 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 };
-  OGP[0].u.corneria.x128 = addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]);
-  OGP[0].u.corneria.x12C = if rnd() % 2 != 0 { addr_of_mut!(OJO[0]) } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) };
-  OGP[0].u.corneria.x108 = rnd() % 6; OGP[0].u.corneria.x10C = (rnd() % 4) as i32 - 1; OGP[0].u.corneria.x110 = (rnd() % 12) as i32 - 1;
-  OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
-  OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
-  OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        5 => { NN = 1; {
+        5 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1084,7 +852,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        6 => { NN = 1; {
+        6 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1095,7 +863,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        7 => { NN = 1; {
+        7 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1113,7 +881,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        8 => { NN = 1; {
+        8 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1124,7 +892,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        9 => { NN = 1; {
+        9 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1135,7 +903,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        10 => { NN = 1; {
+        10 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1146,7 +914,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        11 => { NN = 1; {
+        11 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1157,7 +925,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        12 => { NN = 1; {
+        12 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1168,7 +936,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        13 => { NN = 1; {
+        13 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1179,7 +947,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        14 => { NN = 1; {
+        14 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1190,7 +958,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        15 => { NN = 1; {
+        15 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1201,7 +969,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        16 => { NN = 1; {
+        16 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1212,7 +980,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        17 => { NN = 1; {
+        17 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1223,7 +991,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        18 => { NN = 1; {
+        18 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1234,7 +1002,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        19 => { NN = 1; {
+        19 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1245,7 +1013,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        20 => { NN = 1; {
+        20 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1256,7 +1024,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        21 => { NN = 1; {
+        21 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1267,7 +1035,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        22 => { NN = 1; {
+        22 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1278,7 +1046,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        23 => { NN = 1; {
+        23 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1289,7 +1057,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        24 => { NN = 1; {
+        24 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1300,7 +1068,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        25 => { NN = 1; {
+        25 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1311,7 +1079,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        26 => { NN = 1; {
+        26 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1322,7 +1090,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        27 => { NN = 1; {
+        27 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1333,7 +1101,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        28 => { NN = 1; {
+        28 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1344,7 +1112,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        29 => { NN = 1; {
+        29 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1355,7 +1123,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        30 => { NN = 1; {
+        30 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1366,7 +1134,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        31 => { NN = 1; {
+        31 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1377,7 +1145,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        32 => { NN = 1; {
+        32 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1388,7 +1156,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        33 => { NN = 1; {
+        33 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1399,7 +1167,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        34 => { NN = 1; {
+        34 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1410,7 +1178,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        35 => { NN = 1; {
+        35 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1421,7 +1189,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        36 => { NN = 1; {
+        36 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1432,7 +1200,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        37 => { NN = 1; {
+        37 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1443,7 +1211,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        38 => { NN = 1; {
+        38 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1454,7 +1222,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        39 => { NN = 1; {
+        39 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1465,7 +1233,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        40 => { NN = 1; {
+        40 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1476,7 +1244,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        41 => { NN = 1; {
+        41 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1494,7 +1262,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        42 => { NN = 1; {
+        42 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1512,7 +1280,25 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        43 => { NN = 1; {
+        43 => { NN = 1; CN_SCALE_BIG = 0; {
+  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
+  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
+  for j_ in 0..3usize {
+      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
+      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
+  }
+  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
+  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
+  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
+  NIDM = 0; } CN_SCALE_BIG = 1; { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
+  OGP[0].u.corneria.xC6.value = if rnd() % 2 != 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 };
+  OGP[0].u.corneria.x128 = addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]);
+  OGP[0].u.corneria.x12C = if rnd() % 2 != 0 { addr_of_mut!(OJO[0]) } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) };
+  OGP[0].u.corneria.x108 = rnd() % 6; OGP[0].u.corneria.x10C = (rnd() % 4) as i32 - 1; OGP[0].u.corneria.x110 = (rnd() % 12) as i32 - 1;
+  OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
+  OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
+  OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
+        44 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1530,25 +1316,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        44 => { NN = 1; {
-  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
-  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
-  for j_ in 0..3usize {
-      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
-      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
-  }
-  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
-  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
-  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
-  NIDM = 0; } { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
-  OGP[0].u.corneria.xC6.value = if rnd() % 2 != 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 };
-  OGP[0].u.corneria.x128 = addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]);
-  OGP[0].u.corneria.x12C = if rnd() % 2 != 0 { addr_of_mut!(OJO[0]) } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) };
-  OGP[0].u.corneria.x108 = rnd() % 6; OGP[0].u.corneria.x10C = (rnd() % 4) as i32 - 1; OGP[0].u.corneria.x110 = (rnd() % 12) as i32 - 1;
-  OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
-  OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
-  OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        45 => { NN = 1; {
+        45 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1559,7 +1327,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        46 => { NN = 1; {
+        46 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1570,7 +1338,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        47 => { NN = 1; {
+        47 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1588,7 +1356,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        48 => { NN = 1; {
+        48 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1606,7 +1374,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        49 => { NN = 1; {
+        49 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1624,7 +1392,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        50 => { NN = 1; {
+        50 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1642,7 +1410,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        51 => { NN = 1; {
+        51 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1660,7 +1428,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        52 => { NN = 1; {
+        52 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1678,7 +1446,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria2.xE8 = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xEC = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xC8 = (rnd() % 3) as i32; }  }
-        53 => { NN = 1; {
+        53 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1689,7 +1457,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        54 => { NN = 1; {
+        54 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1700,7 +1468,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        55 => { NN = 1; {
+        55 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1725,7 +1493,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria2.xE8 = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xEC = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xC8 = (rnd() % 3) as i32; }  }
-        56 => { NN = 1; {
+        56 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1743,7 +1511,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria2.xE8 = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xEC = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xC8 = (rnd() % 3) as i32; }  }
-        57 => { NN = 1; {
+        57 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1768,7 +1536,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria2.xE8 = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xEC = if rnd() % 2 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) } else { null_mut() };
   OGP[0].u.corneria2.xC8 = (rnd() % 3) as i32; }  }
-        58 => { NN = 1; {
+        58 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1786,7 +1554,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        59 => { NN = 1; {
+        59 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1804,7 +1572,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        60 => { NN = 1; {
+        60 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1822,7 +1590,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        61 => { NN = 1; {
+        61 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1840,7 +1608,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        62 => { NN = 1; {
+        62 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1858,7 +1626,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        63 => { NN = 1; {
+        63 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1876,7 +1644,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        64 => { NN = 1; {
+        64 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1894,7 +1662,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; } { const I_: [u32; 5] = [8, 9, 4, 5, 1]; a.i[0] = I_[(rnd() % 5) as usize]; }  }
-        65 => { NN = 1; {
+        65 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1912,7 +1680,36 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        66 => { NN = 1; {
+        66 => { NN = 1; CN_SCALE_BIG = 0; {
+  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
+  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
+  for j_ in 0..3usize {
+      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
+      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
+  }
+  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
+  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
+  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
+  NIDM = 0; } CN_SCALE_BIG = 1; { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
+  OGP[0].u.corneria.xC6.value = if rnd() % 2 != 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 };
+  OGP[0].u.corneria.x128 = addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]);
+  OGP[0].u.corneria.x12C = if rnd() % 2 != 0 { addr_of_mut!(OJO[0]) } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) };
+  OGP[0].u.corneria.x108 = rnd() % 6; OGP[0].u.corneria.x10C = (rnd() % 4) as i32 - 1; OGP[0].u.corneria.x110 = (rnd() % 12) as i32 - 1;
+  OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
+  OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
+  OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
+        67 => { NN = 1; CN_SCALE_BIG = 0; {
+  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
+  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
+  for j_ in 0..3usize {
+      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
+      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
+  }
+  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
+  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
+  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
+  NIDM = 0; } CN_SCALE_BIG = 1;  }
+        68 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1930,7 +1727,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        67 => { NN = 1; {
+        69 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1941,36 +1738,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        68 => { NN = 1; {
-  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
-  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
-  for j_ in 0..3usize {
-      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
-      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
-  }
-  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
-  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
-  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
-  NIDM = 0; } { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
-  OGP[0].u.corneria.xC6.value = if rnd() % 2 != 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 };
-  OGP[0].u.corneria.x128 = addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]);
-  OGP[0].u.corneria.x12C = if rnd() % 2 != 0 { addr_of_mut!(OJO[0]) } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) };
-  OGP[0].u.corneria.x108 = rnd() % 6; OGP[0].u.corneria.x10C = (rnd() % 4) as i32 - 1; OGP[0].u.corneria.x110 = (rnd() % 12) as i32 - 1;
-  OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
-  OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
-  OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        69 => { NN = 1; {
-  (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
-  (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
-  for j_ in 0..3usize {
-      t::arwing_types[j_] = (rnd() % 14) as i32; t::arwing_groups[j_] = (rnd() % 5) as i32;
-      t::arwing_gobjs[j_] = if rnd() % 3 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) } else { null_mut() };
-  }
-  t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
-  for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
-  for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
-  NIDM = 0; }  }
-        70 => { NN = 1; {
+        70 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -1987,7 +1755,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.smashtaunt.jobj2 = if rnd() % 3 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) } else { null_mut() };
   OGP[0].u.smashtaunt.joint_idx0 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx1 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx2 = (rnd() % 9) as i16;
   OGP[0].u.smashtaunt.text = if rnd() % 3 != 0 { addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut HSD_Text } else { null_mut() }; }  }
-        71 => { NN = 1; {
+        71 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2004,7 +1772,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.smashtaunt.jobj2 = if rnd() % 3 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) } else { null_mut() };
   OGP[0].u.smashtaunt.joint_idx0 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx1 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx2 = (rnd() % 9) as i16;
   OGP[0].u.smashtaunt.text = if rnd() % 3 != 0 { addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut HSD_Text } else { null_mut() }; }  }
-        72 => { NN = 1; {
+        72 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2015,7 +1783,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } NIDM = 4096u32;  }
-        73 => { NN = 1; {
+        73 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2026,7 +1794,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } a.i[0] = ((rnd() % 30) as i32 - 5) as u32;  }
-        74 => { NN = 1; {
+        74 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2037,7 +1805,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } { OGP[0].u.starfox.xC4.word = rnd() % 20; OGP[0].u.starfox.arwing_slot = (rnd() % 5) as i32; OGP[0].u.starfox.xCC = (rnd() % 4) as i32 - 1; } NIDM = 32u32;  }
-        75 => { NN = 1; {
+        75 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2048,7 +1816,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        76 => { NN = 1; {
+        76 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2059,7 +1827,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        77 => { NN = 1; {
+        77 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2070,7 +1838,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        78 => { NN = 1; {
+        78 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2088,7 +1856,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        79 => { NN = 1; {
+        79 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2106,7 +1874,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        80 => { NN = 1; {
+        80 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2124,7 +1892,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        81 => { NN = 1; {
+        81 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2142,7 +1910,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        82 => { NN = 1; {
+        82 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2153,7 +1921,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        83 => { NN = 1; {
+        83 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2163,8 +1931,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
-  NIDM = 0; }  }
-        84 => { NN = 1; {
+  NIDM = 0; } CN_SCALE_BIG = 1;  }
+        84 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2174,7 +1942,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   t::grCn_804D69A4 = rnd() % 3; t::grCn_804D69A8 = (rnd() % 6) as i32 - 2; t::grCn_804D69AC = (rnd() % 3 == 0) as i32; t::grCn_804D69B0 = (rnd() % 2) as i32;
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
-  NIDM = 0; } { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
+  NIDM = 0; } CN_SCALE_BIG = 1; { OGP[0].u.corneria.xC4.value = if rnd() % 3 == 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 }; OGP[0].u.corneria.xC5 = (rnd() % 3) as u8;
   OGP[0].u.corneria.xC6.value = if rnd() % 2 != 0 { 0 } else { ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }) as u8 };
   OGP[0].u.corneria.x128 = addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]);
   OGP[0].u.corneria.x12C = if rnd() % 2 != 0 { addr_of_mut!(OJO[0]) } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) };
@@ -2182,7 +1950,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        85 => { NN = 1; {
+        85 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2193,7 +1961,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        86 => { NN = 1; {
+        86 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2204,7 +1972,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        87 => { NN = 1; {
+        87 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2221,7 +1989,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.smashtaunt.jobj2 = if rnd() % 3 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) } else { null_mut() };
   OGP[0].u.smashtaunt.joint_idx0 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx1 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx2 = (rnd() % 9) as i16;
   OGP[0].u.smashtaunt.text = if rnd() % 3 != 0 { addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut HSD_Text } else { null_mut() }; }  }
-        88 => { NN = 1; {
+        88 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2238,7 +2006,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.smashtaunt.jobj2 = if rnd() % 3 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) } else { null_mut() };
   OGP[0].u.smashtaunt.joint_idx0 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx1 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx2 = (rnd() % 9) as i16;
   OGP[0].u.smashtaunt.text = if rnd() % 3 != 0 { addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut HSD_Text } else { null_mut() }; }  }
-        89 => { NN = 1; {
+        89 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2249,7 +2017,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } a.i[0] = rnd() % 20; a.i[1] = rnd() % 5;  }
-        90 => { NN = 1; {
+        90 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2266,7 +2034,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.smashtaunt.jobj2 = if rnd() % 3 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) } else { null_mut() };
   OGP[0].u.smashtaunt.joint_idx0 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx1 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx2 = (rnd() % 9) as i16;
   OGP[0].u.smashtaunt.text = if rnd() % 3 != 0 { addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut HSD_Text } else { null_mut() }; } a.i[0] = rnd() % 5;  }
-        91 => { NN = 1; {
+        91 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2283,7 +2051,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.smashtaunt.jobj2 = if rnd() % 3 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) } else { null_mut() };
   OGP[0].u.smashtaunt.joint_idx0 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx1 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx2 = (rnd() % 9) as i16;
   OGP[0].u.smashtaunt.text = if rnd() % 3 != 0 { addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut HSD_Text } else { null_mut() }; } a.i[0] = rnd() % 20; a.i[1] = rnd() % 5;  }
-        92 => { NN = 1; {
+        92 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2300,7 +2068,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.smashtaunt.jobj2 = if rnd() % 3 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) } else { null_mut() };
   OGP[0].u.smashtaunt.joint_idx0 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx1 = (rnd() % 9) as i16; OGP[0].u.smashtaunt.joint_idx2 = (rnd() % 9) as i16;
   OGP[0].u.smashtaunt.text = if rnd() % 3 != 0 { addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut HSD_Text } else { null_mut() }; }  }
-        93 => { NN = 1; {
+        93 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2311,7 +2079,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom }; NIDM = 4128u32;  }
-        94 => { NN = 1; {
+        94 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2322,7 +2090,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom }; NIDM = 4128u32;  }
-        95 => { NN = 1; {
+        95 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2333,7 +2101,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom }; NIDM = 4096u32; NN = (rnd() % 4 != 0) as i32; NN = 1;  }
-        96 => { NN = 1; {
+        96 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2344,7 +2112,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom }; NIDM = 4096u32; NN = 1;  }
-        97 => { NN = 1; {
+        97 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2355,7 +2123,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom };  }
-        98 => { NN = 1; {
+        98 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2366,7 +2134,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom }; NIDM = 4352u32;  }
-        99 => { NN = 1; {
+        99 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2377,7 +2145,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom };  }
-        100 => { NN = 1; {
+        100 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2388,7 +2156,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; } (*(addr_of_mut!(G_stage_info) as *mut StageInfo)).grkind = if rnd() % 3 != 0 { Gr_Kind_Corneria } else { Gr_Kind_Venom };  }
-        101 => { NN = 1; {
+        101 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2406,7 +2174,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        102 => { NN = 1; {
+        102 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2417,7 +2185,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   for j_ in 0..NGO { OGP[j_].u.arwing.xC8 = rnd() % 3; }
   for j_ in 0..NGO { let f_ = rf(); let w_ = (f_.to_bits() & !0xFFu32) | ({ let n_ = rnd() % 16; n_ | ((n_ & 1) << 7) | ((n_ & 2) << 5) | ((n_ & 4) << 3) | ((n_ & 8) << 1) }); *(addr_of_mut!(OGP[j_].u.corneria.offset_y) as *mut u32) = w_; }
   NIDM = 0; }  }
-        103 => { NN = 1; {
+        103 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2435,7 +2203,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   OGP[0].u.corneria.x118 = ((rnd() % 4) as i32 - 1) as i8; OGP[0].u.corneria.x119 = (rnd() % 2) as u8; OGP[0].u.corneria.x11A = (rnd() % 2) as u8;
   OGP[0].u.corneria.x100 = (rnd() % 0x400) as i32; OGP[0].u.corneria.x104 = (rnd() % 5) as i32 - 1;
   OGP[0].u.corneria.xC8 = addr_of_mut!(OP_grZakoGenerator_Config[0]) as *mut grZakoGenerator_Config; OGP[0].u.corneria.xCC = addr_of_mut!(OP_grZakoGenerator_Config[1]) as *mut grZakoGenerator_Config; }  }
-        104 => { NN = 1; {
+        104 => { NN = 1; CN_SCALE_BIG = 0; {
   (*t::yakumono_param).x74 = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x78 = (rnd() % 4) as i32;
   (*t::yakumono_param).x7C = 1 + (rnd() % 5) as i32; (*t::yakumono_param).x80 = (rnd() % 4) as i32;
   for j_ in 0..3usize {
@@ -2456,22 +2224,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
         _ => {}
     }
 }
-static mut DUMP_N: usize = 0;
 unsafe fn img_hash(h: u64, img: &[u8], d: &[ODesc]) -> u64 {
     let mut tmp: std::vec::Vec<u8> = img.to_vec();
-    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from("  RAWG:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
     onorm(&mut tmp, d);
-    for &(off, size, kind) in d {
-        if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }
-        else if kind == b'P' {
-            let o = off as usize;
-            let mut v = u32::from_le_bytes(tmp[o..o + 4].try_into().unwrap());
-            if v != 0 { let r = normptr(v as usize); v = ((r >> 32) as u32).wrapping_mul(0x10000).wrapping_add(r as u32); }
-            tmp[o..o + 4].copy_from_slice(&v.to_le_bytes());
-        }
-    }
-    if DUMP_N != 0 && tmp.len() == core::mem::size_of::<HSD_JObj>() { let mut line = std::string::String::from("  IMGJ:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
-    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from("  IMGG:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
+    for &(off, size, kind) in d { if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } } }
     fnv(h, &tmp)
 }
 unsafe fn word_hash(mut h: u64, img: &[u8]) -> u64 {
@@ -2489,66 +2245,41 @@ unsafe fn word_hash(mut h: u64, img: &[u8]) -> u64 {
     }
     h
 }
-static mut WH: std::vec::Vec<u64> = std::vec::Vec::new();
 unsafe fn world_hash(fi: usize) -> u64 {
     let mut h = FNV0;
-    WH.clear();
     for i in 0..NGO { h = img_hash(h, core::slice::from_raw_parts(addr_of!(OGO[i]) as *const u8, core::mem::size_of_val(&*addr_of!(OGO[i]))), D_HSD_GObj);  }
-    WH.push(h);
     for i in 0..NGO {
         match GVAR[fi] {
             0 => { h = img_hash(h, core::slice::from_raw_parts(addr_of!(OGP[i]) as *const u8, core::mem::size_of_val(&*addr_of!(OGP[i]))), D_Ground_0); h = bf_hash_Ground_0(h, addr_of!(OGP[i]) as *const Ground); }
-            1 => { h = img_hash(h, core::slice::from_raw_parts(addr_of!(OGP[i]) as *const u8, core::mem::size_of_val(&*addr_of!(OGP[i]))), D_Ground_1); h = bf_hash_Ground_1(h, addr_of!(OGP[i]) as *const Ground); }
-            2 => { h = img_hash(h, core::slice::from_raw_parts(addr_of!(OGP[i]) as *const u8, core::mem::size_of_val(&*addr_of!(OGP[i]))), D_Ground_2); h = bf_hash_Ground_2(h, addr_of!(OGP[i]) as *const Ground); }
-            3 => { h = img_hash(h, core::slice::from_raw_parts(addr_of!(OGP[i]) as *const u8, core::mem::size_of_val(&*addr_of!(OGP[i]))), D_Ground_3); h = bf_hash_Ground_3(h, addr_of!(OGP[i]) as *const Ground); }
-            4 => { h = img_hash(h, core::slice::from_raw_parts(addr_of!(OGP[i]) as *const u8, core::mem::size_of_val(&*addr_of!(OGP[i]))), D_Ground_4); h = bf_hash_Ground_4(h, addr_of!(OGP[i]) as *const Ground); }
             _ => unreachable!(),
         }
     }
-    WH.push(h);
     for i in 0..NJO { h = img_hash(h, core::slice::from_raw_parts(addr_of!(OJO[i]) as *const u8, core::mem::size_of_val(&*addr_of!(OJO[i]))), D_HSD_JObj);  }
-    WH.push(h);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(G_stage_info) as *const u8, 3256), D_StageInfo); h = bf_hash_StageInfo(h, addr_of!(G_stage_info) as *const StageInfo); WH.push(h);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_GObjProc[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_GObjProc[0]))), D_HSD_GObjProc); h = bf_hash_HSD_GObjProc(h, addr_of!(OP_HSD_GObjProc[0]) as *const HSD_GObjProc); h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_GObjProc[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_GObjProc[1]))), D_HSD_GObjProc); h = bf_hash_HSD_GObjProc(h, addr_of!(OP_HSD_GObjProc[1]) as *const HSD_GObjProc); WH.push(h);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grZakoGenerator_Config[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grZakoGenerator_Config[0]))), D_grZakoGenerator_Config);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grZakoGenerator_Config[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grZakoGenerator_Config[1]))), D_grZakoGenerator_Config);  WH.push(h);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_lb_80011A50_t[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_lb_80011A50_t[0]))), D_lb_80011A50_t);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_lb_80011A50_t[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_lb_80011A50_t[1]))), D_lb_80011A50_t);  WH.push(h);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grCorneria_YakumonoParam[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grCorneria_YakumonoParam[0]))), D_grCorneria_YakumonoParam);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grCorneria_YakumonoParam[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grCorneria_YakumonoParam[1]))), D_grCorneria_YakumonoParam);  WH.push(h);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_UnkArchiveStruct[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_UnkArchiveStruct[0]))), D_UnkArchiveStruct);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_UnkArchiveStruct[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_UnkArchiveStruct[1]))), D_UnkArchiveStruct);  WH.push(h);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_Text[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_Text[0]))), D_HSD_Text);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_Text[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_Text[1]))), D_HSD_Text);  WH.push(h);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(G_stage_info) as *const u8, 3256), D_StageInfo); h = bf_hash_StageInfo(h, addr_of!(G_stage_info) as *const StageInfo);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_GObjProc[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_GObjProc[0]))), D_HSD_GObjProc); h = bf_hash_HSD_GObjProc(h, addr_of!(OP_HSD_GObjProc[0]) as *const HSD_GObjProc); h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_GObjProc[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_GObjProc[1]))), D_HSD_GObjProc); h = bf_hash_HSD_GObjProc(h, addr_of!(OP_HSD_GObjProc[1]) as *const HSD_GObjProc);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_Generator[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_Generator[0]))), D_HSD_Generator);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_Generator[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_Generator[1]))), D_HSD_Generator); 
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grZakoGenerator_Config[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grZakoGenerator_Config[0]))), D_grZakoGenerator_Config);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grZakoGenerator_Config[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grZakoGenerator_Config[1]))), D_grZakoGenerator_Config); 
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_lb_80011A50_t[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_lb_80011A50_t[0]))), D_lb_80011A50_t);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_lb_80011A50_t[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_lb_80011A50_t[1]))), D_lb_80011A50_t); 
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grCorneria_YakumonoParam[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grCorneria_YakumonoParam[0]))), D_grCorneria_YakumonoParam);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_grCorneria_YakumonoParam[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_grCorneria_YakumonoParam[1]))), D_grCorneria_YakumonoParam); 
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_UnkArchiveStruct[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_UnkArchiveStruct[0]))), D_UnkArchiveStruct);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_UnkArchiveStruct[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_UnkArchiveStruct[1]))), D_UnkArchiveStruct); 
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_Text[0]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_Text[0]))), D_HSD_Text);  h = img_hash(h, core::slice::from_raw_parts(addr_of!(OP_HSD_Text[1]) as *const u8, core::mem::size_of_val(&*addr_of!(OP_HSD_Text[1]))), D_HSD_Text); 
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::yakumono_param) as *const u8, core::mem::size_of_val(&*addr_of!(t::yakumono_param))), D_st0);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_804D69A4) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_804D69A4))), D_st1);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_804D69A8) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_804D69A8))), D_st2);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_804D69AC) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_804D69AC))), D_st3);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_804D69B0) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_804D69B0))), D_st4);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_804D466C) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_804D466C))), D_st5);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::arwing_gobjs) as *const u8, core::mem::size_of_val(&*addr_of!(t::arwing_gobjs))), D_st6);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::arwing_types) as *const u8, core::mem::size_of_val(&*addr_of!(t::arwing_types))), D_st7);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::arwing_groups) as *const u8, core::mem::size_of_val(&*addr_of!(t::arwing_groups))), D_st8);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_StageCallbacks) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_StageCallbacks))), D_st9);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_StageData) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_StageData))), D_st10);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_803E1D38) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_803E1D38))), D_st11);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_803E1F70) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_803E1F70))), D_st12);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grCn_803E1FAC) as *const u8, core::mem::size_of_val(&*addr_of!(t::grCn_803E1FAC))), D_st13);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(OPAD) as *const u8, core::mem::size_of_val(&*addr_of!(OPAD))), D_st14);
-    WH.push(h);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(OSIS) as *const u8, core::mem::size_of_val(&*addr_of!(OSIS))), D_st15);
-    WH.push(h);
     h = word_hash(h, core::slice::from_raw_parts(addr_of!(OSCR) as *const u8, core::mem::size_of_val(&*addr_of!(OSCR))));
-    WH.push(h);
     h
 }
 #[test]
@@ -2556,7 +2287,7 @@ fn state_matches_c() {
     unsafe {
         let want = include_str!("data/gro_grcorneria.txt");
         let mut lines = want.lines();
-        let verbose = std::env::var("ORACLE_VERBOSE").ok(); if verbose.is_some() { DUMP_N = core::mem::size_of::<Ground>(); }
+        let verbose = std::env::var("ORACLE_VERBOSE").ok();
         let hdr: std::vec::Vec<usize> = lines.next().unwrap().split_whitespace().skip(1).map(|s| s.parse().unwrap()).collect();
         let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grCn_804D69A4)), core::mem::size_of_val(&*addr_of!(t::grCn_804D69A8)), core::mem::size_of_val(&*addr_of!(t::grCn_804D69AC)), core::mem::size_of_val(&*addr_of!(t::grCn_804D69B0)), core::mem::size_of_val(&*addr_of!(t::grCn_804D466C)), core::mem::size_of_val(&*addr_of!(t::arwing_gobjs)), core::mem::size_of_val(&*addr_of!(t::arwing_types)), core::mem::size_of_val(&*addr_of!(t::arwing_groups)), core::mem::size_of_val(&*addr_of!(t::grCn_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grCn_StageData)), core::mem::size_of_val(&*addr_of!(t::grCn_803E1D38)), core::mem::size_of_val(&*addr_of!(t::grCn_803E1F70)), core::mem::size_of_val(&*addr_of!(t::grCn_803E1FAC)), core::mem::size_of_val(&*addr_of!(OPAD)), core::mem::size_of_val(&*addr_of!(OSIS))];
         assert_eq!(hdr, sizes, "struct sizes (C native layout vs the Rust port)");
@@ -2567,9 +2298,9 @@ fn state_matches_c() {
         for (fi, fnn) in FNS.iter().enumerate() {
             let mut agg = FNV0;
             let vb = verbose.as_deref() == Some(fnn.name);
-            DUMP_N = if vb { core::mem::size_of::<Ground>() } else { 0 };
-
-
+            if verbose.is_some() && !vb {
+                continue;
+            }
             for k in 0..fnn.n {
                 let mut h = FNV0;
                 RS = 0x9E37_79B9u32 ^ ((fi as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1));
@@ -2581,7 +2312,7 @@ fn state_matches_c() {
                 for i in 0..2 { a.v2[i].x = rf(); a.v2[i].y = rf(); }
                 for i in 0..2 { a.pf[i] = rf(); }
                 for i in 0..2 { a.pi[i] = (rnd() % 8) as i32; }
-                case_pre(fi, &mut a); if vb { println!("PRE"); world_hash(fi); println!("ENDPRE"); }
+                case_pre(fi, &mut a);
                 LG.clear();
                 let (rv, _rb) = call_fn(fi, &mut a);
                 let ho = fnv(FNV0, LG.as_bytes());
@@ -2594,10 +2325,7 @@ fn state_matches_c() {
                 h = fnv(h, &canon_f32_bytes(&a.pf));
                 h = fnv(h, bytes(&a.pi));
                 if vb {
-                    let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
-                    println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}
-  {}", k, h, rv, hw, ho, hs.concat(), LG); println!("  ARGS: {}", a.v3.iter().flat_map(|v| [v.x, v.y, v.z]).chain(a.v2.iter().flat_map(|v| [v.x, v.y])).chain(a.pf.iter().copied()).map(|f| format!("{:08x}", f.to_bits())).collect::<std::vec::Vec<_>>().join(" "));
-                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+                    println!("{} {:016x} ret={:x} W={:016x} L={:016x}\n  {}", k, h, rv, hw, ho, LG);
                 }
                 agg = fnv(agg, &h.to_le_bytes());
             }

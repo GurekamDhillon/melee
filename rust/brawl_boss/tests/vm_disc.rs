@@ -498,7 +498,7 @@ fn vm_bullet_bill() {
 
 /// The batch-2 SSE enemies (and any other enemy named in MELEE_VM_ENEMIES, comma-separated) headless from every start
 /// status for 1200 frames against the scripted players, with area contacts (R10055) on for a few frames and article room
-/// (100D) on half the time: prints the
+/// (100D) and a link (R56) on half the time: prints the
 /// statuses each start reaches and the ops still missing, and a replay from the frame-600 snapshot must give identical
 /// hashes.
 const BATCH2: &[&str] = &[
@@ -516,7 +516,7 @@ fn vm_enemy_statuses() {
     let extra = std::env::var("MELEE_VM_ENEMIES").unwrap_or_default();
     let names: Vec<&str> = if extra.is_empty() { BATCH2.to_vec() } else { extra.split(',').collect() };
     let path = vm::Path { id: 0, frames: 120, pos: circle };
-    let inp = |f: u32| Input { path: Some(path), home: Some([40.0, 30.0]), area: if (300..340).contains(&f) || (900..940).contains(&f) { u32::MAX } else { 0 }, article_room: if f % 200 < 100 { [1; 4] } else { [0; 4] }, ..targets(f) };
+    let inp = |f: u32| Input { path: Some(path), home: Some([40.0, 30.0]), area: if (300..340).contains(&f) || (900..940).contains(&f) { u32::MAX } else { 0 }, article_room: if f % 200 < 100 { [1; 4] } else { [0; 4] }, linked: f % 300 < 150, ..targets(f) };
     for name in names {
         let p = d.program(name, &common).expect(name);
         let mut seen = std::collections::BTreeSet::new();

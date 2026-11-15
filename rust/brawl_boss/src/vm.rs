@@ -206,7 +206,7 @@ pub const RUN_IDS: &[u16] = &[
     0x1901, 0x1902, 0x1B02, 0x6500, 0x6504, 0x6505, 0x6507, 0x6509, 0x6514, 0x6516, 0x651E, 0x651F, 0x6523, 0x6600,
     0x6601, 0x6602, 0x6603, 0x6607, 0x6609, 0x660A, 0x660B, 0x660C, 0x6616, 0x6617, 0x661A, 0x661B, 0x6900, 0x6901, 0x6907, 0x6908, 0x6909, 0x690A, 0x6A00, 0x6A01,
     0x6A02, 0x6A03, 0x6B03, 0x1405, 0x6524, 0x6B01, 0x6604, 0x6605, 0x660E, 0x6905, 0x6906, 0x6520, 0x0502, 0x660F, 0x6506, 0x6510, 0x6511, 0x6515, 0x030A, 0x661C,
-    0x661D, 0x661E, 0x6D00, 0x100D,
+    0x661D, 0x661E, 0x6D00, 0x100D, 0x6508, 0x651B, 0x6521,
 ];
 
 /// Commands forwarded to the host as presentation events, not interpreted: motion-module rate / partial-motion
@@ -216,19 +216,25 @@ pub const RUN_IDS: &[u16] = &[
 /// model toward a target angle, 0x81A2A888 [M]), the link events (6E), weapon / helper spawns (650E, 650F,
 /// 651A), stage notices with a value (6513), the common effects (651D), and the kind-65 ids that act on other modules
 /// or objects: 6502 (emInfo node query), 6517, 651C (an effect), 6525 (0x81A04EB8, a ground-module helper), 6528
-/// (0x81A06F3C, creates a kind-0xB object), 6529 [L]. Also the model-node transforms 0302 / 0304 / 0306
+/// (0x81A06F3C, creates a kind-0xB object), 6529 [L], 6527 flag (0x81A08E0C -> emGroundModuleImpl 0x81A2B630: walks the
+/// ground module's shape pairs through 0x81A2B52C with the flag, in reverse when the module's float is 0 and work flag
+/// 0x12000003 is clear: ground-collision shapes, the host's).
+/// Links between actors, kept by the host: the link module's commands 0F00 / 0F01 / 0F02 (command kind 0x0F,
+/// soLinkModuleImpl, isObserv 0x8106FD18) and 6519 var (0x81A09860 -> 0x81A0B438 -> 0x81A0B1E8: through the enemy
+/// manager (0x81A0C804) copies the variable's value (int, float or flag by its kind) into the same variable of the
+/// linked enemy). Also the model-node transforms 0302 / 0304 / 0306
 /// (kind 0x03, the model-node module: a node's rotation / translation / scale from variables) [M from their use: set
 /// every frame from random values, never read back].
 pub fn forwarded(id: u16) -> bool {
     let m = id >> 8;
     (matches!(m, 0x04 | 0x06 | 0x08 | 0x0A | 0x0D | 0x11 | 0x18 | 0x1A | 0x0E | 0x14 | 0x1C | 0x1D | 0x1E | 0x6C | 0x6E) && !RUN_IDS.contains(&id))
-        || matches!(id, 0x650E | 0x650F | 0x6513 | 0x651A | 0x651D | 0x6502 | 0x6517 | 0x651C | 0x6525 | 0x6528 | 0x6529 | 0x0302 | 0x0304 | 0x0306)
+        || matches!(id, 0x650E | 0x650F | 0x6513 | 0x651A | 0x651D | 0x6502 | 0x6517 | 0x651C | 0x6525 | 0x6528 | 0x6529 | 0x0302 | 0x0304 | 0x0306 | 0x6527 | 0x6519 | 0x0F00 | 0x0F01 | 0x0F02)
 }
 
 /// Requirement ids the VM answers.
 pub const REQ_IDS: &[u32] = &[
     1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 15, 16, 17, 18, 19, 20, 22, 47, 73, 10000, 10001, 10002, 10003, 10004, 10021, 10022, 10023, 37, 10005, 10008, 10009, 10010, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020,
-    10050, 10051, 10055, 60, 75, 63, 64, 65, 66, 67, 68, 69, 10024, 10025, 10026, 10027, 10028, 10029, 10030, 10031, 10032, 10033, 10034, 10035,
+    10050, 10051, 10055, 56, 60, 75, 63, 64, 65, 66, 67, 68, 69, 10024, 10025, 10026, 10027, 10028, 10029, 10030, 10031, 10032, 10033, 10034, 10035,
 ];
 
 /// Engine values (memory 0) the VM answers.

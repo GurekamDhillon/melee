@@ -272,6 +272,8 @@ pub struct Input {
     pub area: u32,
     /// the article manager's free room per article kind 0..3 (100D): the kind's maximum count less the live ones
     pub article_room: [i32; 4],
+    /// the link module has a partner (R56)
+    pub linked: bool,
 }
 
 // work variables the engine itself maintains (engine.md 5 / engine-ops.md)
@@ -937,6 +939,9 @@ impl<'a> Cx<'a> {
             // reflector's id, stored by the hit callback 0x81A640AC when a kind-3 (reflector) collision lands and the
             // power check passes, and reset to -1 by vfuncs 0x20 / 0x24: the actor was reflected
             75 => self.i.reflected,
+            // R56 (sora_melee requirement switch, case 0x38 -> 0x8107A918): the link module (accessor [off]) vfunc
+            // 0x168; emLinkModuleImpl's (0x81A28530): its partner id is not -1: linked to another actor
+            56 => self.i.linked,
             63..=69 => self.i.ground_q & (1 << (id - 63)) != 0,
             73 => a.lock >= 0,
             10004 => a.kin.iter().any(|k| k.kind >= 0 && k.done != 0),
@@ -1591,6 +1596,44 @@ impl<'a> Cx<'a> {
                 if let A::Rec(r) = self.arg(ins, 0) {
                     let x = self.p.rec_f(r, 0) + self.p.rec_f(r, 1) * self.a.level();
                     self.set(self.arg(ins, 1), x);
+                }
+            }
+            // 651B a b var flag (0x81A0872C): a percentage of a, with the module's constants 0 and 100: t = 100 - b;
+            // flag set: var = 0 when t <= 0, else a * t / 100; flag clear: var = a when t <= 0, else a * b / 100.
+            // Stored through the work module's float setter
+            0x651B => {
+                let (a, b) = (v(self, 0), v(self, 1));
+                let t = 100.0 - b;
+                let x = if v(self, 3) != 0.0 {
+                    if t <= 0.0 { 0.0 } else { a * t / 100.0 }
+                } else if t <= 0.0 {
+                    a
+                } else {
+                    a * b / 100.0
+                };
+                self.set(self.arg(ins, 2), x);
+            }
+            // 6521 node vx vy vz (0x81A089DC -> 0x81A06C44): a model node's position (the motion module's node
+            // transform, vfunc 0x98, through the enemy's matrix); a node past the part count gives (0, 0, 0). Stored
+            // through the work module's float setter [L: no skeleton: the node is the actor's position, as 10024]
+            0x6521 => {
+                if v(self, 0) as i32 != -1 {
+                    for k in 0..3u32 {
+                        let x = self.a.pos[k as usize];
+                        self.set(self.arg(ins, 1 + k), x);
+                    }
+                }
+            }
+            // 6508 rec var (0x81A08444 -> 0x81A06660): the integer form of 6509: n = trunc(word 0); when word 1 is
+            // not 0, n = trunc(n + word 1 * level); stored through the work module's int setter
+            0x6508 => {
+                if let A::Rec(r) = self.arg(ins, 0) {
+                    let mut n = self.p.rec_f(r, 0) as i32;
+                    let k = self.p.rec_f(r, 1);
+                    if k != 0.0 {
+                        n = (n as f32 + k * self.a.level()) as i32;
+                    }
+                    self.set(self.arg(ins, 1), n as f32);
                 }
             }
             0x651F => {

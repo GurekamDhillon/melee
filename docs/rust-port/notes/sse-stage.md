@@ -271,3 +271,28 @@ async decode of that frame). The present side adds ~6 ms (prepare 2, draw 1, una
 spreading on_enter is sim work (the arena apply and fighter creates write game memory), so the remaining lever on the
 host side is the capture/decode and the present's unaccounted time. Synctest d4/d7 Jungle and Lake, door at 600:
 1797/7188 and 1794/12558, 0 mismatches.
+
+## Match-start texture preloads and EFB reshape (Nov 15, sse5)
+
+Two host-side costs in a match's first frames (`scratch/sse5/quiet.sh`, `an.py`; quiet machine, hidden, real menu walk):
+
+- The SSE maps' preloads (`melee_gx::render::preload`) are queued when the match starts (the walk picks within the
+  stage select's first frames, before a map has loaded), and `preload_some` converted ~1 MB of texels on the presenting
+  thread each frame: 2.5-4.7 ms of `texture_ms` in ticks 10-23 (Jungle tick 17 34 ms of work with a 30 ms tick). The
+  conversion now runs on one thread of its own (`gx-tex-preload`); a frame only creates and uploads converted ones, at
+  most `PRELOAD_MS` = 1 ms / 2 MB, and none in a frame that converts a burst of its own (`convert_ahead`).
+- The 3.5-4.8 ms "unaccounted" of the setup frame's present was `Presenter::set_content_aspect`: the 4:3 -> 16:9 switch
+  made new EFB targets (and freed the old) outside the timed parts. `Renderer::set_target` keeps the replaced targets as
+  a spare, and the stage select prewarms the match's shape (`Presenter::prewarm_aspect`, `view::wide_aspect`).
+
+Setup frame (tick / work ms) and the worst other frame, after:
+
+| | setup tick | setup work | setup unaccounted | worst early frame (ticks 9-23) |
+|---|---|---|---|---|
+| Lake | 18.0 (31.3 cold first run) | 21.5 (34.4 cold) | 3.7-3.9 -> 0.07-0.08 | 15.3 (was 16.4-17.2) |
+| Jungle | 19.4-20.9 | 23.5-24.8 | 3.7-4.1 -> 0.08 | under 15.5 (was 15.5-34) |
+| Final Destination | 15.8 | 19.5 | 4.2 -> 0.8 | 11.2 |
+
+Still over: the setup tick itself (scene on_enter 9-11 ms of sim work, the frame capture 2-4 ms), and isolated
+steady frames at 16-19 ms of work whose tick is 13-15 ms (sim). Synctest d4/d7 Jungle and Lake, door at 600:
+1797/7188 and 1794/12558, 0 mismatches.

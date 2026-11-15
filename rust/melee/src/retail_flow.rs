@@ -1370,6 +1370,10 @@ impl RetailPlay {
         // the decode thread's packing travels with its frame (the presenter may prepare it at a later present)
         let packed = if frame.is_some() { self.packed.take() } else { None };
         p.set_content_aspect(self.frame_aspect);
+        if self.cur.1 == melee_types::GS_SSS as u8 {
+            // the match's EFB shape is made while the stage select is open, not in the match's setup frame
+            p.prewarm_aspect(melee_engine::view::wide_aspect());
+        }
         if let Some(u) = self.ui.as_mut() {
             let (w, h) = p.size();
             u.set_window(w, h);

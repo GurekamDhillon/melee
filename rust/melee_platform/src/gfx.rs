@@ -225,6 +225,12 @@ impl Presenter {
         }
     }
 
+    /// Make the EFB targets of a coming content aspect ahead ([`Presenter::set_content_aspect`] then only swaps).
+    pub fn prewarm_aspect(&mut self, aspect: f32) {
+        let scale = if self.auto_scale { Renderer::scale_for_window_aspect(self.config.width, self.config.height, aspect) } else { self.renderer.scale };
+        self.renderer.prewarm_target(scale, aspect);
+    }
+
     /// Render `frame` (if the game finished one) into the EFB, then present the EFB.
     pub fn present(&mut self, state: &GxState, frame: Option<&[DrawCmd]>) {
         if let Some(draws) = frame {

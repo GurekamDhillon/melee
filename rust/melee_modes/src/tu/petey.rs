@@ -95,7 +95,7 @@ pub struct Boss {
     /// absolute world goal x set by rule 13 (spec §7.2); `has_goal` false = unset
     pub has_goal: bool,
     pub goal_x: f32,
-    /// Envoy endless loops: each cage's full HP this fight (CAGE_HP x the plan's P_BOSS_HP, set as the fight begins)
+    /// Envoy endless loops: each cage's full HP this fight (the define's part HP x the plan's P_BOSS_HP, set as the fight begins)
     pub cage_max: i32,
     /// the carrier's hitlag last frame (a rise = one of Petey's boxes connected this frame)
     pub lag_prev: f32,
@@ -361,6 +361,10 @@ pub unsafe fn tick() {
                 .unwrap_or(2);
             let p = vm_arena(p);
             crate::tu::geno_vm_host::reset();
+            // a check's placement knob (MELEE_VS_BOSS_X, like MELEE_VS_BOSS_STATUS): the boss's start x
+            if let Some(x) = std::env::var("MELEE_VS_BOSS_X").ok().and_then(|v| v.parse::<f32>().ok()) {
+                B.px = x;
+            }
             crate::tu::geno_vm::begin(p, 1, B.diff, B.rng, st, B.px);
             B.cage = [0; 2];
             B.cage_max = 0;
@@ -489,6 +493,44 @@ pub unsafe fn tick() {
     }
 }
 
+/// `MELEE_PETEY_CAM=boss` for a VM boss (no define camera block; captures only, never in a check or a play): a fixed
+/// scripted camera on the VM actor, `MELEE_PETEY_CAM_DIST` away (default 420) and `MELEE_PETEY_CAM_Y` above its feet
+/// (default 70), so a screenshot frames the whole model. Without the knob Melee's own camera runs, as before.
+unsafe fn vm_capture_camera() {
+    static ON: std::sync::OnceLock<Option<(f32, f32)>> = std::sync::OnceLock::new();
+    let Some((dist, up)) = *ON.get_or_init(|| {
+        let n = |k: &str, d: f32| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
+        (std::env::var("MELEE_PETEY_CAM").as_deref() == Ok("boss")).then(|| (n("MELEE_PETEY_CAM_DIST", 420.0), n("MELEE_PETEY_CAM_Y", 70.0)))
+    }) else {
+        return;
+    };
+    if vm().is_none() {
+        return;
+    }
+    use melee_world::tu::camera as cm;
+    let a = crate::tu::geno_vm::actor();
+    let gc = &mut *core::ptr::addr_of_mut!(cm::game_camera);
+    if gc.mode != CAMERA_BOSS_INTRO as u32 {
+        cm::Camera_8002FE38();
+    }
+    let interest = Vec3 { x: a.pos[0], y: a.pos[1] + up, z: 0.0 };
+    let eye = Vec3 { x: a.pos[0], y: a.pos[1] + up, z: dist };
+    gc.set_x341_b1_b2(2);
+    gc.set_x341_b3_b4(1);
+    gc.set_x341_b5_b6(0);
+    gc.x344.vec = interest;
+    gc.x35C.vec = eye;
+    gc.x350 = interest;
+    gc.x368.vec = eye;
+    gc.x374 = 30.0;
+    gc.transform.target_interest = interest;
+    gc.transform.interest = interest;
+    gc.transform.target_position = eye;
+    gc.transform.position = eye;
+    gc.transform.target_fov = 30.0;
+    gc.transform.fov = 30.0;
+}
+
 /// The boss's stage camera from the define's camera block (Petey's IR: the adventure follow camera): it follows the
 /// player only, at the block's eye distance approached by its ease per frame, its tilt and FOV, keeping the visible
 /// rectangle inside the block's limit box (the arena's own in his arena). The centre eases in too. Width uses the
@@ -496,7 +538,7 @@ pub unsafe fn tick() {
 /// scripted (boss intro) mode with fixed interest and eye. State is in `B` and `game_camera` (statics): rollback-safe.
 /// A define without a camera block keeps Melee's own camera.
 unsafe fn follow_camera() {
-    let Some(cd) = geno().and_then(|g| g.camera) else { return };
+    let Some(cd) = geno().and_then(|g| g.camera) else { return vm_capture_camera() };
     use melee_world::tu::camera as cm;
     // the player: the first fighter that is not the carrier
     let mut tgt = None;
@@ -1336,8 +1378,11 @@ unsafe fn world() -> crate::tu::geno_boss::World {
 }
 
 /// The VS bosses built by geno_boss_grab (their grab define, not the full IR or the VM).
+/// Actors run by a grab define (geno_boss_grab): the enemy Bucculus; Tabuu only with `MELEE_TABUU_DEFINE` (the
+/// define-path grab checks; he is a VM boss, his catches on the VM's catch host)
 fn is_grab_actor(name: &str) -> bool {
-    matches!(name, "tabuu" | "bucculus")
+    static T: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    name == "bucculus" || (name == "tabuu" && *T.get_or_init(|| std::env::var_os("MELEE_TABUU_DEFINE").is_some()))
 }
 
 fn grab_actor() -> Option<&'static crate::tu::geno_boss::Define> {

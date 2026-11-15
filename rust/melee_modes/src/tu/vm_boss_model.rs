@@ -26,7 +26,7 @@ fn fmax(a: f32, b: f32) -> f32 {
     if a > b { a } else { b }
 }
 
-/// (VM boss name, MDL0 name; the clips are named `<MDL0><motion>`, the idle clip gives the extent)
+/// (VM boss or enemy name, MDL0 name; the clips are named `<MDL0><motion>`, the idle clip gives the extent)
 const MODELS: &[(&str, &str, &str)] = &[
     ("rayquaza", "EnmRayquaza", "Wait1"),
     ("ridley", "EnmRidley", "Wait1"),
@@ -35,7 +35,7 @@ const MODELS: &[(&str, &str, &str)] = &[
     ("porky", "EnmPorky", "Wait"),
     ("metaridley", "EnmMetaridley", "Wait1"),
     ("tabuu", "EnmTaboo", "Wait"),
-    // the grab-define actors (geno_boss_grab) are drawn from their define's motion; Bucculus is an SSE enemy
+    // enemies: Bucculus (an SSE enemy run by its grab define, drawn from the define's motion)
     ("bucculus", "EnmBucyulus", "Wait"),
 ];
 
@@ -46,6 +46,10 @@ pub struct Model {
     /// per VM motion: the root bone's (forward, up) model-space position per frame 0..=len (forward = the model's z,
     /// the axis it faces; empty: no clip / no root track)
     pub root: Vec<Vec<[f32; 2]>>,
+    /// per VM motion: its VIS0 (an index in `rig.vis`; None: the motion's file has none). Brawl binds the motion
+    /// file's VIS0 with its CHR0 at the same frame (petey_model::Vis), so attack-only parts (Tabuu's sword, cannon,
+    /// chain, lasers; Porky's sparks) show only where the file turns them on
+    pub vis: Vec<Option<usize>>,
     pub bufs: Mutex<pm::DrawBufs>,
     /// the pose buffer for bone lookups in the sim (made on the loader's thread), tagged with the (clip, frame) it
     /// holds (`Rig::pose_keyed`): the lookups of one frame share one pose
@@ -58,6 +62,13 @@ static NOTE_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool
 
 fn off() -> bool {
     std::env::var_os("MELEE_VMBOSS_NO_MODEL").is_some() || std::env::var_os("MELEE_BRAWL_ABSENT").is_some()
+}
+
+/// `MELEE_VMBOSS_NO_VIS`: draw every mesh regardless of visibility (the old look; for before / after shots and for
+/// showing that visibility is drawing only)
+fn no_vis() -> bool {
+    static V: OnceLock<bool> = OnceLock::new();
+    *V.get_or_init(|| std::env::var_os("MELEE_VMBOSS_NO_VIS").is_some())
 }
 
 /// Load `name`'s model (blocking; for the engine-start helper thread). The program's motion lengths are set from the
@@ -101,6 +112,17 @@ fn read(name: &str) -> Option<Model> {
     let tops: Vec<(String, usize)> = rig.bone_depths().into_iter().filter(|(_, d)| *d <= 2).collect();
     let pick = |suf: &str| tops.iter().filter(|(n, _)| n.ends_with(suf)).min_by_key(|(_, d)| *d).map(|(n, _)| n.clone());
     let bone = pick("TransN").or_else(|| pick("TopN"));
+    // the motion's VIS0: by the motion files' order when they match the motion list one to one (Brawl's own lookup:
+    // the n-th motion's BRRES, its first VIS0; Porky's spark motions name their VIS0 differently), else by name
+    let by_file = rig.motion_files.len() == names.len();
+    let vis: Vec<Option<usize>> = names
+        .iter()
+        .enumerate()
+        .map(|(k, mn)| {
+            let suf = if by_file { rig.motion_files[k].1.clone() } else { Some(mn.strip_prefix(mdl).unwrap_or(mn).to_string()) };
+            suf.and_then(|s| rig.vis.iter().position(|(n, _)| *n == s))
+        })
+        .collect();
     let mut clip = Vec::with_capacity(names.len());
     let mut root = Vec::with_capacity(names.len());
     let mut lens: Vec<(String, u16)> = Vec::new();
@@ -143,12 +165,14 @@ fn read(name: &str) -> Option<Model> {
     let bufs = Mutex::new(rig.draw_bufs());
     let sim = Mutex::new(rig.sim_bufs());
     let note = format!(
-        "vm_boss_model: {name}: model loaded ({} clips, {with} of {} VM motions have one, {moving} carry root travel on {})",
+        "vm_boss_model: {name}: model loaded ({} clips, {with} of {} VM motions have one, {moving} carry root travel on {}; {} VM motions have a VIS0{})",
         rig.anims.len(),
         names.len(),
-        bone.as_deref().unwrap_or("no root bone")
+        bone.as_deref().unwrap_or("no root bone"),
+        vis.iter().filter(|v| v.is_some()).count(),
+        if by_file { ", by motion file" } else { "" }
     );
-    Some(Model { rig, clip, root, bufs, sim, note })
+    Some(Model { rig, clip, root, vis, bufs, sim, note })
 }
 
 /// The frame of the actor's motion `el` frames after it began (the VM's own motion-frame rule).
@@ -259,8 +283,24 @@ pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash
     let mi = a.motion.max(0) as usize;
     let anim = m.clip.get(mi).copied().flatten().map(|c| &m.rig.anims[c].1);
     let (f, _) = frame_of(p, mi, a.tick.wrapping_sub(a.motion_t0));
-    m.rig.skin_with(anim, f as f32, &mut b);
-    pm::draw_tris_m(&m.rig, &b.tris, [0.0, 0.0], [a.pos[0], a.pos[1], 0.0], 1.0, model_mat(a), flash);
+    // the motion's VIS0 at the motion's frame, then the extra visibility slot a forwarded 0410 set (its own frame)
+    let vis_of = |k: i32| m.vis.get(usize::try_from(k).ok()?).copied().flatten().map(|i| &m.rig.vis[i].1);
+    let main = vis_of(a.motion).filter(|_| !no_vis()).map(|v| (v, f as f32));
+    let (sm, st0) = crate::tu::geno_vm_host::vis_slot();
+    let slot = vis_of(sm).filter(|_| !no_vis()).map(|v| (v, a.tick.wrapping_sub(st0) as f32));
+    match (main, slot) {
+        (Some(x), Some(y)) => m.rig.skin_vis(anim, f as f32, &[x, y], &mut b),
+        (Some(x), None) | (None, Some(x)) => m.rig.skin_vis(anim, f as f32, &[x], &mut b),
+        (None, None) => m.rig.skin_vis(anim, f as f32, &[], &mut b),
+    }
+    pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [a.pos[0], a.pos[1], 0.0], 1.0, model_mat(a), flash);
+    // MELEE_VMBOSS_VIS_LOG=n: every n-th tick, the drawn motion, its frame and the hidden draw-list objects (captures)
+    static VLOG: OnceLock<u32> = OnceLock::new();
+    let n = *VLOG.get_or_init(|| std::env::var("MELEE_VMBOSS_VIS_LOG").ok().and_then(|v| v.parse().ok()).unwrap_or(0));
+    if n > 0 && a.tick % n == 0 {
+        let name = p.motion_names.get(mi).map(String::as_str).unwrap_or("?");
+        eprintln!("vm_boss_model: t{} motion {mi} {name} frame {f} vis0 {} hidden {}/{}", a.tick, main.is_some(), b.hide.iter().filter(|h| **h).count(), b.hide.len());
+    }
     true
 }
 
@@ -273,8 +313,12 @@ pub unsafe fn draw_named(motion: &str, frame: i32, x: f32, lr: f32, flash: bool)
     }
     let Ok(mut b) = m.bufs.lock() else { return false };
     let anim = m.rig.anim(motion);
-    m.rig.skin_with(anim, frame.max(0) as f32, &mut b);
+    let f = frame.max(0) as f32;
+    match m.rig.vis_named(motion).filter(|_| !no_vis()) {
+        Some(v) => m.rig.skin_vis(anim, f, &[(v, f)], &mut b),
+        None => m.rig.skin_vis(anim, f, &[], &mut b),
+    }
     let s = if lr < 0.0 { -1.0 } else { 1.0 };
-    pm::draw_tris_m(&m.rig, &b.tris, [0.0, 0.0], [x, 0.0, 0.0], 1.0, [[0.0, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, 0.0]], flash);
+    pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [x, 0.0, 0.0], 1.0, [[0.0, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, 0.0]], flash);
     true
 }

@@ -171,12 +171,39 @@ fn seg_point(p: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
     melee_runtime::gekko::sqrtf(ex * ex + ey * ey)
 }
 
+/// A throw's box as the host applies it (numbers already at the actor's L).
+#[derive(Clone, Copy, Debug)]
+pub struct Throw {
+    pub damage: f32,
+    pub angle: i32,
+    pub kbg: i32,
+    pub wkb: i32,
+    pub bkb: i32,
+}
+
 /// The host's grab work for one frame, after `geno_boss::tick`: escapes, releases, then a catch. `slot` is the
 /// carrier's player slot. Returns what happened (for the host's log).
 pub unsafe fn host_frame(d: &Define, slot: i32, frame: u32) {
-    let cf = fighter_of(slot);
-    if cf.is_null() || !gb::S.live {
+    if !gb::S.live {
         return;
+    }
+    let box_of = |i: i32| -> Option<(Throw, &str)> {
+        let a = d.attacks.get(usize::try_from(i).ok()?)?;
+        let b = a.boxes.first().copied()?;
+        let t = Throw { damage: gb::num(d, b.damage), angle: b.angle, kbg: h_x24(b, d), wkb: melee_core::ppc::fctiwz_f32(gb::num(d, b.wkb)), bkb: h_x2c(b, d) };
+        Some((t, a.name.as_str()))
+    };
+    let catch = catch_live().map(|(_, _, r)| (None, r));
+    host_core(slot, frame, &box_of, catch);
+}
+
+/// The grab host for any actor (the define path's [`host_frame`], the VM's `geno_vm_host`): `box_of(i)` gives
+/// throw / chew box `i`; `catch`: a live catch box this frame, at a world point (None: the carrier's hold joint) with
+/// its radius. True when a fighter was caught this frame.
+pub unsafe fn host_core<'a>(slot: i32, frame: u32, box_of: &dyn Fn(i32) -> Option<(Throw, &'a str)>, catch: Option<(Option<[f32; 2]>, f32)>) -> bool {
+    let cf = fighter_of(slot);
+    if cf.is_null() {
+        return false;
     }
     let cf = &mut *cf;
     let g = &mut gb::S.grab;
@@ -209,15 +236,15 @@ pub unsafe fn host_frame(d: &Define, slot: i32, frame: u32) {
     if g.victim >= 0 && g.hit >= 0 {
         // a chew: the attack's damage on the held fighter and Melee's capture-damage reaction (ftCo_800DC284 / 3A4)
         let v = &mut *fighter_of(g.victim);
-        if let Some(b) = d.attacks.get(g.hit as usize).and_then(|a| a.boxes.first()).copied() {
-            let dmg = melee_core::ppc::fctiwz_f32(gb::num(d, b.damage)) as f32;
+        if let Some((b, name)) = box_of(g.hit) {
+            let dmg = melee_core::ppc::fctiwz_f32(b.damage) as f32;
             melee_fighter::tu::fighter::Fighter_TakeDamage_8006CC7C(v, dmg);
             if v.ground_or_air == GA_Ground {
                 melee_fighter::tu::ftco_0dc2::ftco_800dc3a4(v.gobj);
             } else {
                 melee_fighter::tu::ftco_0dc2::ftco_800dc284(v.gobj);
             }
-            eprintln!("geno_grab: f{frame} chew: slot {} with {} ({dmg} dmg) -> {:.0}%", g.victim, d.attacks[g.hit as usize].name, v.dmg.x1830_percent);
+            eprintln!("geno_grab: f{frame} chew: slot {} with {name} ({dmg} dmg) -> {:.0}%", g.victim, v.dmg.x1830_percent);
         }
         g.hit = -1;
     }
@@ -226,23 +253,22 @@ pub unsafe fn host_frame(d: &Define, slot: i32, frame: u32) {
         let v = &mut *fighter_of(g.victim);
         let (vg, cg) = (v.gobj, cf.gobj);
         if g.pending == GRAB_THROW {
-            let a = d.attacks.get(g.throw as usize).and_then(|a| a.boxes.first()).copied();
-            if let Some(b) = a {
+            if let Some((b, name)) = box_of(g.throw) {
                 // Melee's throw release: the throw slot's box (ftAction_80071E04 fields) on the victim, then the launch
-                let dmg = gb::num(d, b.damage);
+                let dmg = b.damage;
                 let h = &mut cf.xDF4[0];
                 *h = core::mem::zeroed();
                 h.damage = dmg;
                 h.unk_count = melee_core::ppc::fctiwz_f32(dmg) as u32;
                 h.kb_angle = b.angle;
-                h.x24 = melee_core::ppc::fctiwz_f32(gb::num(d, b.kbg)) as u32;
-                h.x28 = melee_core::ppc::fctiwz_f32(gb::num(d, b.wkb)) as u32;
-                h.x2C = melee_core::ppc::fctiwz_f32(gb::num(d, b.bkb)) as u32;
+                h.x24 = b.kbg as u32;
+                h.x28 = b.wkb as u32;
+                h.x2C = b.bkb as u32;
                 h.sfx_severity = 1;
                 cf.facing_dir = if v.cur_pos.x >= cf.cur_pos.x { 1.0 } else { -1.0 };
                 melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(cg, vg);
                 melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(vg, cg, false);
-                eprintln!("geno_grab: f{frame} throw: slot {} with {} ({:.1} dmg, angle {}, kbg {}, bkb {}) -> {:.0}%", g.victim, d.attacks[g.throw as usize].name, dmg, b.angle, h_x24(b, d), h_x2c(b, d), v.dmg.x1830_percent);
+                eprintln!("geno_grab: f{frame} throw: slot {} with {name} ({:.1} dmg, angle {}, kbg {}, bkb {}) -> {:.0}%", g.victim, dmg, b.angle, b.kbg, b.bkb, v.dmg.x1830_percent);
             } else {
                 melee_fighter::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter(vg);
                 eprintln!("geno_grab: f{frame} throw without a box: dropped slot {}", g.victim);
@@ -255,15 +281,18 @@ pub unsafe fn host_frame(d: &Define, slot: i32, frame: u32) {
         g.victim = -1;
         g.pending = 0;
         g.throw = -1;
-        return;
+        return false;
     }
-    let Some((_part, _joint, r)) = catch_live() else { return };
+    let Some((at, r)) = catch else { return false };
     let j = hold_joint(cf);
     if j.is_null() {
-        return;
+        return false;
     }
     let mut c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, core::ptr::null_mut(), &mut c as *mut Vec3 as _);
+    match at {
+        Some(p) => (c.x, c.y) = (p[0], p[1]),
+        None => melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, core::ptr::null_mut(), &mut c as *mut Vec3 as _),
+    }
     for s in 0..4i32 {
         if s == slot {
             continue;
@@ -302,8 +331,9 @@ pub unsafe fn host_frame(d: &Define, slot: i32, frame: u32) {
         g.armed = false;
         g.catches += 1;
         eprintln!("geno_grab: f{frame} catch: slot {s} held (status {} motion frame {}, radius {r}, grab timer {:.1})", gb::S.status, gb::S.tl_mf, (*fighter_of(s)).grab_timer);
-        return;
+        return true;
     }
+    false
 }
 
 fn h_x24(b: HitboxDef, d: &Define) -> i32 {

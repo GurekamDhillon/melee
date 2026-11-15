@@ -288,6 +288,7 @@ pub fn load_rigs_with(rel: &[&str], wants: &[(&str, &str, &str)], strip: bool) -
     let mut plt_at: Vec<(String, usize, usize)> = vec![];
     let mut mdls: Vec<(String, usize, usize)> = vec![];
     let mut chrs: Vec<(String, usize, usize)> = vec![];
+    let mut viss: Vec<(String, usize, usize)> = vec![];
     for (li, b) in leaves.iter().enumerate() {
         if b.len() < 0x10 || &b[..4] != b"bres" {
             continue;
@@ -298,6 +299,7 @@ pub fn load_rigs_with(rel: &[&str], wants: &[(&str, &str, &str)], strip: bool) -
                 Some(b"TEX0") => &mut tex_at,
                 Some(b"PLT0") => &mut plt_at,
                 Some(b"CHR0") => &mut chrs,
+                Some(b"VIS0") => &mut viss,
                 Some(b"MDL0") => &mut mdls,
                 _ => continue,
             };
@@ -323,6 +325,28 @@ pub fn load_rigs_with(rel: &[&str], wants: &[(&str, &str, &str)], strip: bool) -
                     if !suf.is_empty() {
                         r.anims.push((suf.to_string(), chr0(&leaves[*cl], *co)));
                     }
+                }
+            }
+            for (n, vl, vo) in &viss {
+                if let Some(suf) = n.strip_prefix(prefix) {
+                    if !suf.is_empty() {
+                        r.vis.push((suf.to_string(), vis0(&leaves[*vl], *vo)));
+                    }
+                }
+            }
+            // the motion files: Brawl keeps one BRRES per motion, in the motion list's order (an animation-only
+            // BRRES whose every entry carries the model's name: CHR0, VIS0, CLR0, PAT0, SRT0)
+            for b in &leaves {
+                if b.len() < 0x10 || &b[..4] != b"bres" {
+                    continue;
+                }
+                let Some(es) = brres_entries(b) else { continue };
+                let kind = |o: usize| b.get(o..o + 4);
+                let anim_only = !es.is_empty()
+                    && es.iter().all(|(n, o)| n.starts_with(prefix) && matches!(kind(*o), Some(b"CHR0" | b"VIS0" | b"CLR0" | b"PAT0" | b"SRT0" | b"SHP0")));
+                if anim_only {
+                    let of = |k: &[u8]| es.iter().find(|(_, o)| kind(*o) == Some(k)).and_then(|(n, _)| n.strip_prefix(prefix)).map(str::to_string);
+                    r.motion_files.push((of(b"CHR0"), of(b"VIS0")));
                 }
             }
             if strip {
@@ -939,6 +963,58 @@ fn chr0(d: &[u8], c: usize) -> Anim {
     Anim { frames: frames.max(1) as f32, tracks }
 }
 
+// ---------------------------------------------------------------- VIS0
+
+/// One bone's visibility channel: a fixed value, or one bit per frame (most significant bit first).
+enum VisTrack {
+    Fixed(bool),
+    Bits(Vec<u32>),
+}
+
+/// A VIS0: per bone name, whether that bone shows at a frame. Brawl binds it with the motion's CHR0 and gives both
+/// the same frame (the motion file's anim set: sora_melee 0x8101FA94 builds it, 0x81020084 sets every member's
+/// frame); a draw-list entry whose visibility bone is off is not drawn.
+pub struct Vis {
+    pub frames: u32,
+    pub looped: bool,
+    tracks: Vec<(String, VisTrack)>,
+}
+
+impl Vis {
+    /// `bone`'s visibility at `frame` (None: the VIS0 has no channel for it). The frame follows the anim object's
+    /// play policy: wrapped when the VIS0 loops, held at its last frame otherwise.
+    pub fn at(&self, bone: &str, frame: f32) -> Option<bool> {
+        let (_, t) = self.tracks.iter().find(|(n, _)| n == bone)?;
+        Some(match t {
+            VisTrack::Fixed(v) => *v,
+            VisTrack::Bits(w) => {
+                let n = self.frames.max(1);
+                let f = frame.max(0.0) as u32;
+                let f = if self.looped { f % n } else { f.min(n - 1) };
+                w.get((f / 32) as usize).is_some_and(|x| x & (0x8000_0000 >> (f % 32)) != 0)
+            }
+        })
+    }
+}
+
+fn vis0(d: &[u8], v: usize) -> Vis {
+    let ver = be32(d, v + 8);
+    // v4 adds a user-data offset before the name: the fields after it move by 4
+    let h = if ver >= 4 { 4 } else { 0 };
+    let frames = be16(d, v + 0x1C + h) as u32;
+    let looped = be32(d, v + 0x20 + h) != 0;
+    let data = at(v, bei(d, v + 0x10));
+    let words = frames.div_ceil(32).clamp(1, 4096) as usize;
+    let mut tracks = vec![];
+    for (name, e) in group(d, data) {
+        let flags = be32(d, e + 4);
+        // flags: bit 1 = a fixed value (bit 0); else the frame bits follow the entry header
+        let t = if flags & 2 != 0 { VisTrack::Fixed(flags & 1 != 0) } else { VisTrack::Bits((0..words).map(|i| be32(d, e + 8 + 4 * i)).collect()) };
+        tracks.push((name, t));
+    }
+    Vis { frames, looped, tracks }
+}
+
 // ---------------------------------------------------------------- MDL0 -> skinned rig
 
 pub struct Bone {
@@ -948,6 +1024,8 @@ pub struct Bone {
     srt: [[f32; 3]; 3],
     parent: Option<usize>,
     inv: M34,
+    /// the bone's default visibility (its MDL0 flags' visible bit): what shows without a VIS0 channel
+    visible: bool,
 }
 
 /// Where a vertex's matrix comes from.
@@ -965,6 +1043,8 @@ pub struct DrawBufs {
     world: Vec<M34>,
     mats: Vec<M34>,
     pub tris: Vec<Vert>,
+    /// per batch: hidden by its visibility bone at the skinned frame (filled by [`Rig::skin_vis`]; empty: all shown)
+    pub hide: Vec<bool>,
 }
 
 /// A posed vertex: model-space position, lit colour (the rasterised colour TEV sees), texture coordinate.
@@ -986,6 +1066,8 @@ pub struct Batch {
     lit: bool,
     /// BP 0x41 blend (src factor, dst factor) when the material blends (shadow decals, light shafts); None: opaque
     blend: Option<(u8, u8)>,
+    /// the draw-list entry's visibility bone (a bone slot): the object is drawn only while that bone is visible
+    vis_bone: Option<usize>,
 }
 
 pub struct Rig {
@@ -996,6 +1078,11 @@ pub struct Rig {
     batches: Vec<Batch>,
     /// animations by suffix (the CHR0 name after the model name: `Wait1`, `BasketAttackL`, ...)
     pub anims: Vec<(String, Anim)>,
+    /// visibility animations by suffix, like `anims`
+    pub vis: Vec<(String, Vis)>,
+    /// the animation-only BRRES files in archive order (one per motion, in Brawl's motion-list order): their CHR0
+    /// and VIS0 suffixes
+    pub motion_files: Vec<(Option<String>, Option<String>)>,
     /// Extent in the first frame of `Wait1` (size and depth centre stay fixed while animating; the ground is y 0).
     pub min: [f32; 3],
     pub max: [f32; 3],
@@ -1135,19 +1222,43 @@ impl Rig {
     /// Buffers sized for [`Self::skin_with`]: (bone matrices, skin matrices, vertices). Make them off the game thread
     /// (a helper thread) so that drawing never allocates inside the game scope, which rollback rewrites.
     pub fn draw_bufs(&self) -> DrawBufs {
-        DrawBufs { world: Vec::with_capacity(self.bones.len()), mats: Vec::with_capacity(self.srcs.len()), tris: Vec::with_capacity(self.verts.len()) }
+        DrawBufs {
+            world: Vec::with_capacity(self.bones.len()),
+            mats: Vec::with_capacity(self.srcs.len()),
+            tris: Vec::with_capacity(self.verts.len()),
+            hide: Vec::with_capacity(self.batches.len()),
+        }
     }
 
     /// Skin the triangle list for `frame` of `anim` into `out` (model space, lit colour).
     pub fn skin(&self, anim: Option<&Anim>, frame: f32, out: &mut Vec<Vert>) {
-        let mut b = DrawBufs { world: Vec::new(), mats: Vec::new(), tris: core::mem::take(out) };
+        let mut b = DrawBufs { world: Vec::new(), mats: Vec::new(), tris: core::mem::take(out), hide: Vec::new() };
         self.skin_with(anim, frame, &mut b);
         *out = b.tris;
     }
 
+    pub fn vis_named(&self, name: &str) -> Option<&Vis> {
+        self.vis.iter().find(|(n, _)| n == name).map(|(_, v)| v)
+    }
+
+    /// [`Self::skin_with`] plus the draw list's visibility: each batch whose visibility bone is off is marked in
+    /// `b.hide` ([`draw_tris_vis`] skips it). A bone's visibility is the last of `vis` (a VIS0 and its frame) with a
+    /// channel for it, else the bone's MDL0 default (nw4r: the AnmObjVis result, else the node's own flag).
+    pub fn skin_vis(&self, anim: Option<&Anim>, frame: f32, vis: &[(&Vis, f32)], b: &mut DrawBufs) {
+        self.skin_with(anim, frame, b);
+        b.hide.clear();
+        for bt in &self.batches {
+            let shown = bt
+                .vis_bone
+                .and_then(|s| self.bones.get(s))
+                .is_none_or(|bone| vis.iter().rev().find_map(|(v, f)| v.at(&bone.name, *f)).unwrap_or(bone.visible));
+            b.hide.push(!shown);
+        }
+    }
+
     /// [`Self::skin`] into `b.tris`, with no allocation when `b` came from [`Self::draw_bufs`].
     pub fn skin_with(&self, anim: Option<&Anim>, frame: f32, b: &mut DrawBufs) {
-        let DrawBufs { world, mats, tris: out } = b;
+        let DrawBufs { world, mats, tris: out, .. } = b;
         self.pose_bones_into(anim, frame, world);
         let world = &*world;
         mats.clear();
@@ -1286,7 +1397,7 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
             }
         }
         let bi = bones.len();
-        bones.push(Bone { name: name.clone(), index: be32(d, b + 0x0C), srt: [rd(0x20), rd(0x2C), rd(0x38)], parent, inv });
+        bones.push(Bone { name: name.clone(), index: be32(d, b + 0x0C), srt: [rd(0x20), rd(0x2C), rd(0x38)], parent, inv, visible: be32(d, b + 0x14) & 0x100 != 0 });
         offs.push(b);
         let id = be32(d, b + 0x10);
         srcs.push(Src::Bone(bi));
@@ -1316,17 +1427,17 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
         }
     }
     let src_of = |id: u32| node_src.iter().rev().find(|(i, _)| *i == id).map(|(_, s)| *s).unwrap_or(0);
-    // object index -> material header offset, from DrawOpa / DrawXlu
-    let mut obj_mat: Vec<(usize, usize)> = vec![];
+    // object index -> (material header offset, visibility bone index), from DrawOpa / DrawXlu
+    let mut obj_mat: Vec<(usize, usize, u32)> = vec![];
     for (n, o) in &defs {
         if !n.starts_with("Draw") {
             continue;
         }
         let mut p = *o;
         while d.get(p) == Some(&4) {
-            let (mi, oi) = (be16(d, p + 1) as usize, be16(d, p + 3) as usize);
+            let (mi, oi, vb) = (be16(d, p + 1) as usize, be16(d, p + 3) as usize, be16(d, p + 5) as u32);
             if let Some((_, mo)) = mats.iter().find(|(_, mo)| be32(d, mo + 0xC) as usize == mi) {
-                obj_mat.push((oi, *mo));
+                obj_mat.push((oi, *mo, vb));
             }
             p += 8;
         }
@@ -1344,9 +1455,10 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
         let clr = idx_of(id(2), &cols);
         let uv = idx_of(id(4), &uvs).map(|a| arr(d, a));
         let Some(pos) = pos else { continue };
-        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None };
-        if let Some((_, mo)) = obj_mat.iter().find(|(i, _)| *i == oi) {
+        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None, vis_bone: None };
+        if let Some((_, mo, vb)) = obj_mat.iter().find(|(i, _, _)| *i == oi) {
             material(d, *mo, texs, &mut bt);
+            bt.vis_bone = bones.iter().position(|b| b.index == *vb);
         }
         let (lo, hi) = (be32(d, o + 0xC), be32(d, o + 0x10));
         // per-vertex attribute byte sizes in display-list order
@@ -1470,7 +1582,7 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
     if tris.is_empty() && need_tris {
         return None;
     }
-    Some(Rig { bones, srcs, verts: tris, batches, anims: vec![], min: [0.0; 3], max: [0.0; 3], motion_log: String::new() })
+    Some(Rig { bones, srcs, verts: tris, batches, anims: vec![], vis: vec![], motion_files: vec![], min: [0.0; 3], max: [0.0; 3], motion_log: String::new() })
 }
 
 /// Extent of a posed triangle list; y from the 1st..99th percentile (a few far-off vertices must not set the feet
@@ -1563,6 +1675,12 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
 
 /// [`draw_tris`] with a full model rotation `m` (row-major, applied to the model-space point) in place of the yaw.
 pub unsafe fn draw_tris_m(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, m: [[f32; 3]; 3], flash: bool) {
+    draw_tris_vis(rig, tris, &[], org, at, scale, m, flash)
+}
+
+/// [`draw_tris_m`] skipping the batches `hide` marks (from [`Rig::skin_vis`]; empty: every batch is drawn).
+#[allow(clippy::too_many_arguments)]
+pub unsafe fn draw_tris_vis(rig: &Rig, tris: &[Vert], hide: &[bool], org: [f32; 2], at: [f32; 3], scale: f32, m: [[f32; 3]; 3], flash: bool) {
     use melee_runtime::tu::displayfunc_native::ext as gx;
     use melee_runtime::tu::lbrefract::ext as gi;
     use melee_runtime::tu::sobjlib::ext as gs;
@@ -1599,10 +1717,11 @@ pub unsafe fn draw_tris_m(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3],
     gx::GXSetCurrentMtx(0);
     let mut start = 0usize;
     for (bi, bt) in rig.batches.iter().enumerate() {
+        let k = bi;
         let end = (bt.end as usize).min(tris.len());
         let run = &tris[start.min(end)..end];
         start = end;
-        if run.is_empty() {
+        if run.is_empty() || hide.get(k).copied().unwrap_or(false) {
             continue;
         }
         let textured = !flash && bt.tex.is_some();

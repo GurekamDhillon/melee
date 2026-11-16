@@ -96,40 +96,50 @@ pub fn prefetch() {
     }
 }
 
-/// The fight's own background: the boss archive's stage model (Meta Ridley's 370301 holds one besides the stage
-/// position model), the MDL0 whose name starts with the level's 3-digit prefix and `vAdv`, in its bind pose. Loaded
-/// once on the engine-start helper. None: the archive has none (the stage's clear colour shows).
-fn backdrop() -> Option<&'static (String, crate::tu::petey_model::Rig, Vec<crate::tu::petey_model::Vert>)> {
-    static B: std::sync::OnceLock<Option<(String, crate::tu::petey_model::Rig, Vec<crate::tu::petey_model::Vert>)>> = std::sync::OnceLock::new();
+/// The fight's own background: the boss archive's stage models (Meta Ridley's 370301 holds them besides the stage
+/// position model): every MDL0 of each BRRES that holds one named "<3 digits>vAdv...", in their bind pose (as the
+/// explore arenas: one BRRES can hold the backdrop's other parts). Loaded once on the engine-start helper; every
+/// MDL0 of the archive is logged with whether it is drawn. Empty: the archive has none (the stage's clear colour
+/// shows).
+type Static = (String, crate::tu::petey_model::Rig, Vec<crate::tu::petey_model::Vert>);
+fn backdrop() -> &'static [Static] {
+    static B: std::sync::OnceLock<Vec<Static>> = std::sync::OnceLock::new();
     B.get_or_init(|| {
-        let name = partner()?;
-        let arc = brawl_boss::vm::FILES.iter().find(|f| f.0 == name)?.2;
+        let Some(name) = partner() else { return vec![] };
+        let Some(arc) = brawl_boss::vm::FILES.iter().find(|f| f.0 == name).map(|f| f.2) else { return vec![] };
         let r = std::thread::spawn(move || {
-            let leaves = crate::tu::petey_model::pac_leaves(arc)?;
-            // the background's MDL0: named "<3 digits>vAdv..." (the stage position model is "StagePosition")
+            let Some(leaves) = crate::tu::petey_model::pac_leaves(arc) else { return (vec![], vec![]) };
+            let stage = |n: &str| n.len() > 7 && n.as_bytes()[..3].iter().all(u8::is_ascii_digit) && n[3..].starts_with("vAdv");
             let mut names = vec![];
+            let mut all = vec![];
             for b in &leaves {
                 if b.len() >= crate::tu::petey_model::BRRES_HEADER_LEN && &b[..4] == b"bres" {
-                    for (n, o) in crate::tu::petey_model::brres_entries(b).unwrap_or_default() {
-                        if b.get(o..o + 4) == Some(b"MDL0") && n.len() > 7 && n.as_bytes()[..3].iter().all(u8::is_ascii_digit) && n[3..].starts_with("vAdv") && !names.contains(&n) {
-                            names.push(n);
+                    let es = crate::tu::petey_model::brres_entries(b).unwrap_or_default();
+                    let mdls: Vec<String> = es.iter().filter(|(_, o)| b.get(*o..*o + 4) == Some(b"MDL0")).map(|(n, _)| n.clone()).collect();
+                    let keep = mdls.iter().any(|n| stage(n));
+                    for n in mdls {
+                        if keep && n != "StagePosition" && !names.contains(&n) {
+                            names.push(n.clone());
                         }
+                        all.push((n, keep));
                     }
                 }
             }
             let want: Vec<&str> = names.iter().map(String::as_str).collect();
-            crate::tu::petey_model::static_models(&leaves, &want).into_iter().next()
+            (crate::tu::petey_model::static_models(&leaves, &want), all)
         })
         .join()
-        .ok()
-        .flatten();
-        match &r {
-            Some((n, _, t)) => eprintln!("vm_arena: backdrop {n} ({} vertices)", t.len()),
-            None => eprintln!("vm_arena: no backdrop model in the boss archive; the stage's clear colour shows"),
+        .unwrap_or_default();
+        let (r, all) = r;
+        for (n, keep) in &all {
+            let drawn = r.iter().find(|(m, _, _)| m == n).map(|(_, _, t)| t.len());
+            eprintln!("vm_arena: archive MDL0 {n}: {}", match (keep, drawn) { (_, Some(v)) => format!("drawn ({v} vertices)"), (true, None) => "not drawn (no geometry read)".into(), (false, None) => "not drawn (actor model)".into() });
+        }
+        if r.is_empty() {
+            eprintln!("vm_arena: no backdrop model in the boss archive; the stage's clear colour shows");
         }
         r
     })
-    .as_ref()
 }
 
 /// Final Destination's own model (and its background) is not drawn while the arena runs (grdisplay::HIDE_GROUND, via
@@ -325,12 +335,37 @@ pub fn bounds() -> Option<[f32; 4]> {
 
 /// Draw the Flyer (the boss's draw pass).
 pub unsafe fn draw() {
-    if let Some((_, r, t)) = backdrop().filter(|_| live()) {
-        crate::tu::petey_model::draw_tris(r, t, [0.0, 0.0], [0.0, 0.0, 0.0], 1.0, 0.0, false);
+    if live() {
+        for (_, r, t) in backdrop() {
+            crate::tu::petey_model::draw_tris(r, t, [0.0, 0.0], [0.0, 0.0, 0.0], 1.0, 0.0, false);
+        }
     }
     let (Some(p), Some(m)) = (program(), crate::tu::vm_boss_model::arena_model()) else { return };
     if live() {
         crate::tu::vm_boss_model::draw_m(m, p, actor(), false, (-1, 0));
+        if coll_draw() {
+            draw_deck_lines();
+        }
+    }
+}
+
+/// `MELEE_ARENA_COLL_DRAW`: draw the deck's collision lines over the ship (thin yellow capsules, drawn after it so
+/// they show through; presentation only, for comparing the floor with the drawn deck).
+fn coll_draw() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var_os("MELEE_ARENA_COLL_DRAW").is_some())
+}
+
+unsafe fn draw_deck_lines() {
+    use melee_runtime::tu::lbcollision::lbColl_80008FC8;
+    let s = &*core::ptr::addr_of!(S);
+    let n = (s.coll_n as usize).min(MAX_COLL_PTS);
+    let c = melee_types::GXColor { r: 255, g: 230, b: 0, a: 255 };
+    let d = melee_types::GXColor { r: 200, g: 120, b: 0, a: 255 };
+    for k in 1..n {
+        let (a, b) = (s.coll_pts[k - 1], s.coll_pts[k]);
+        let v = |q: [f32; 2]| melee_types::Vec3 { x: q[0], y: q[1], z: 0.0 };
+        lbColl_80008FC8(v(a), v(b), &c, &d, 0.8);
     }
 }
 

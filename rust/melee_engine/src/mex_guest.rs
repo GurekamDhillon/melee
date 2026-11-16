@@ -1216,7 +1216,8 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
             if r.store {
                 eprintln!("mextrace: slot {slot} store {}+{:#x} ({} bytes)", r.rec, r.gc_off, r.size);
             } else if std::env::var("MELEE_MEX_TRACE").is_ok_and(|v| v == "2") {
-                eprintln!("mextrace: slot {slot} load {}+{:#x} ({} bytes) @{:08X} {:X?}", r.rec, r.gc_off, r.size, r.ea, s.space.regions_at(r.ea));
+                let v = if r.size == 1 { s.space.ld8(r.ea).map(|v| v as u32).ok() } else { s.space.ld32(r.ea).ok() };
+                eprintln!("mextrace: slot {slot} load {}+{:#x} ({} bytes) @{:08X} = {v:X?} {:X?}", r.rec, r.gc_off, r.size, r.ea, s.space.regions_at(r.ea));
             }
         }
     }

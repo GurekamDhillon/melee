@@ -379,7 +379,6 @@ pub const UNHANDLED_WRITES: &[(u32, &str)] = &[
     (0x800C_0AB4, "ftCo_800C0A98: +0x2324 < 30 check skipped"),
     (0x8018_2FBC, "fn_80182F40: (r3&0xff)==3 path skipped"),
     (0x804D_C49C, "@2315: float 26.0 -> 29.0"),
-    (0x8002_6EF0, "lbAudioAx_80026EBC: stage sound-bank mask table from MxDt"),
     (0x801A_3F24, "gm_801A3EF4: major-scene stride 0x18 (m-ex scene table)"),
     (0x801A_4560, "gm_801A4510: major-scene stride 0x18 (m-ex scene table)"),
     (0x8017_A890, "1P per-fighter table 0x803D7058 from MxDt"),

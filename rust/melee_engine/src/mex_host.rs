@@ -567,6 +567,27 @@ pub fn SsmSize(i: i32) -> u32 {
         Err(_) => table,
     }
 }
+/// `Arch_Map.Audio` (MexStageSound {ssm, reverb, x2}, stride 3, per internal stage id): the table codes.gct points
+/// lbAudioAx_80026EBC / lbAudioAx_8002785C at (C `gw_mex_graudio.c`). Its count, when the table spans every row.
+fn gr_audio() -> Option<(&'static Mex, u32, i32)> {
+    let m = m()?;
+    let (meta, map) = (m.meta(), m.r32(m.root + OFF_MAP));
+    if !m.inr(meta, 0x3C) || !m.inr(map, 0x18) {
+        return None;
+    }
+    let n = m.r32(meta + META_INT_STAGES) as i32;
+    let t = m.r32(map + 4);
+    (n > 71 && n <= 256 && m.inr(t, n as u32 * 3)).then_some((m, t, n))
+}
+pub fn GrAudioCount() -> i32 {
+    gr_audio().map_or(0, |g| g.2)
+}
+pub fn GrAudioByte(i: i32, k: i32) -> i32 {
+    match gr_audio() {
+        Some((m, t, n)) if i >= 0 && i < n && (0..3).contains(&k) => m.r8(t + 3 * i as u32 + k as u32).map_or(-1, |v| v as i32),
+        _ => -1,
+    }
+}
 pub fn SsmLookup(i: i32, k: i32) -> i32 {
     m().map_or(0, |m| {
         let t = ssm_table(m, 8);
@@ -988,6 +1009,9 @@ pub fn install() {
         au::Mex_SsmFile = Some(|i| SsmFile(i) as _);
         au::Mex_SsmForPortCKind = Some(SsmForPortCKind);
         au::Mex_SsmLookup = Some(SsmLookup);
+        au::Mex_GrAudioCount = Some(GrAudioCount);
+        au::Mex_GrAudioByte = Some(GrAudioByte);
+        au::Mex_GrAudioFirst = Some(|| 0);
         au::Mex_SsmSize = Some(|i| SsmSize(i) as _);
         melee_fighter::hooks::MEX_SSM_FOR_PORT_KIND = Some(SsmForPortKind);
         melee_items::tu::item::ext::hook::Mex_SsmForPortKind = Some(SsmForPortKind);

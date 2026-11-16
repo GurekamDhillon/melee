@@ -55,6 +55,8 @@ mod gen {
 }
 
 /// Unions of per-owner variables kept as native 32-bit words (see [`Layouts::locate`]).
+/// Unions accessed natively through a GC-byte-order bitfield member (see [`Layouts::locate`]).
+const BYTE_UNIONS: [&str; 1] = ["Fighter_x2210"];
 const WORD_UNIONS: [&str; 3] = ["Fighter_MotionVars", "Fighter_FighterVars", "Item_ItemVars"];
 
 /// Native layout tables by GC record name.
@@ -142,6 +144,13 @@ impl Layouts {
         if WORD_UNIONS.contains(&rec) {
             let w = (off & !3) as usize + 3 - (off & 3) as usize;
             return if w < nsz { Loc::Byte(w) } else { Loc::Pad };
+        }
+        // Unions whose native code works through a bitfield-byte member (kept in GC byte order) while the generated
+        // layout lists only the scalar member (native little-endian): byte k is native byte k. Fighter_x2210:
+        // ftAction_80071974 sets x0.throw_flags_b0 (native byte 0), and through the u32 a guest read of GC byte 0 hit
+        // native byte 3, so Liu Kang's SpecialN accessory callback never saw the flag and spawned no item.
+        if BYTE_UNIONS.contains(&rec) {
+            return if (off as usize) < nsz { Loc::Byte(off as usize) } else { Loc::Pad };
         }
         match fields.iter().find(|f| off >= f.gc && off < f.gc + f.ty.gc.max(1)) {
             Some(f) => self.ty_locate(f.ty, off - f.gc, f.nat),

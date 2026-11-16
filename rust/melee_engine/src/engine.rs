@@ -223,7 +223,7 @@ impl Engine {
             // `gw_view_projection_scale(16/9, wide)` = aspect * (60/73) scales every perspective camera's aspect, which
             // reaches the simulation through Camera_LogicToScreen (offscreen flags) and the stage Display procs
             // (Stadium's nametag placement). A window that is actually drawn keeps 4:3 (the seam default).
-            if !RENDER || melee_runtime::tu::gobj_native::HEADLESS_RENDER {
+            if (!RENDER || melee_runtime::tu::gobj_native::HEADLESS_RENDER) && !PLAY_VIEW {
                 if std::env::var_os("MELEE_ENGINE_NO_WIDE").is_none() {
                     let aspect: f32 = 1920.0f32 / 1080.0f32;
                     let scale: f32 = aspect * (60.0f32 / 73.0f32);
@@ -715,6 +715,12 @@ fn spike_ms() -> Option<f64> {
 pub static mut POST_LINK: Option<fn()> = None;
 /// Draw into melee_gx (`gxbridge`): set before `boot_vs` by the viewers and `--shots`; goldens leave the GX hooks silent (faster).
 pub static mut RENDER: bool = false;
+/// A `play` run (rendered or `--headless`): the view hooks follow the windowed policy ([`crate::view`]) whether or not
+/// a window is drawn. The aspect reaches the simulation (Camera_LogicToScreen, Stadium's display procs), so a headless
+/// peer or a headless replay of a rendered session must see what the rendered peer saw: with the golden policy (the C
+/// recordings' 16:9 camera scale) a Pokemon Stadium replay diverged from its recording (CPU-struct words of the
+/// fighters, from ~tick 900-2700). Golden / gate / slpcheck runs leave it off.
+pub static mut PLAY_VIEW: bool = false;
 static mut WIDE_SCALE_BITS: i32 = 0x3f800000;
 const WIDE_SCALE_BITS_FN: fn() -> i32 = || unsafe { WIDE_SCALE_BITS };
 static mut FRAME_ROW: Option<[u32; 16]> = None;

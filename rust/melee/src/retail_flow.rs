@@ -191,6 +191,7 @@ impl RetailPlay {
         let t_disc = t_boot.elapsed();
         unsafe {
             melee_engine::engine::RENDER = !self.headless;
+            melee_engine::engine::PLAY_VIEW = true;
             // a scene's first frame runs in the tick that enters it, as the C build's scene loop (frame-exact vs its shots)
             melee_engine::engine::ENTRY_RUNS_FRAME = true;
         }

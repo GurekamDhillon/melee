@@ -877,6 +877,7 @@ impl Play {
                 let disc = crate::engine_disc(&self.iso)?;
                 unsafe {
                     melee_engine::engine::RENDER = !self.headless;
+            melee_engine::engine::PLAY_VIEW = true;
                     std::env::set_var("MELEE_TEST_SEED", "12345");
                     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
                         std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");

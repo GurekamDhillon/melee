@@ -350,6 +350,9 @@ pub unsafe fn vm_frame(p: &'static Program, carrier: i32, frame: u32, damage: i3
                 }
                 if log {
                     eprintln!("petey: f{frame} status {last} -> {} px {:.1} hp {:.1}", e.v, a.pos[0], a.hp());
+                    if a.rot != [0.0; 3] {
+                        eprintln!("petey: f{frame} posture rot {:.0} {:.0} {:.0}", a.rot[0], a.rot[1], a.rot[2]);
+                    }
                     if ROOT_TRAVEL > 0.0 {
                         eprintln!("petey: f{frame} vm root travel {:.1} in status {last} (py {:.1})", ROOT_TRAVEL, a.pos[1]);
                     }

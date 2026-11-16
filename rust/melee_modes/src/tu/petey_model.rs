@@ -1608,6 +1608,24 @@ impl Rig {
 /// The material state Petey's materials use (see [`Batch`]), from a v9 MDL0 material header at `mo`.
 fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mut Batch) {
     bt.sh = shade_of(d, mo, texs);
+    if std::env::var_os("MELEE_MDL_LOG").is_some() {
+        if let Some(s) = &bt.sh {
+            let st: Vec<String> = (0..s.stages as usize)
+                .map(|k| format!("[o {:?} c {:06x} a {:06x} k {} {}]", s.order[k], s.cenv[k], s.aenv[k], s.kc[k], s.ka[k]))
+                .collect();
+            eprintln!(
+                "mdl0: shade {} stages {} gens {} maps {:?} swap {:?} creg {:?} kreg {:?} {}",
+                cstr(d, at(mo, bei(d, mo + 8))),
+                s.stages,
+                s.gens.iter().map(|g| (g.env, g.ident)).collect::<Vec<_>>().len(),
+                s.maps.iter().map(|m| m.0).collect::<Vec<_>>(),
+                s.swap,
+                s.creg,
+                s.kreg,
+                st.join(" ")
+            );
+        }
+    }
     // texture 0 of the material's texture references (name, then wrap S / T)
     if std::env::var_os("MELEE_MDL_LOG").is_some() {
         let n = be32(d, mo + 0x2C) as usize;

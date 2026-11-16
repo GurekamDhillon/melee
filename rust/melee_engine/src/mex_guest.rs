@@ -1445,7 +1445,15 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
     let (d, a, n) = (cpu.gpr[3], cpu.gpr[4], cpu.gpr[5]);
     let ok = match target {
         MEMCPY => {
-            if d <= a {
+            if (d | a | n) & 3 == 0 && (d.wrapping_add(n) <= a || a.wrapping_add(n) <= d) {
+                // word by word when aligned: a callback field of a native record reads only as a whole word (its
+                // vanilla address); Meta Knight's and Skull Kid's onLoad memcpy the common MotionState table (341
+                // rows, 0x2AA0 bytes) into their own heap block, and the byte reads faulted at row 0's anim_cb
+                for k in (0..n).step_by(4) {
+                    let w = mem.ld32(a.wrapping_add(k))?;
+                    mem.st32(d.wrapping_add(k), w)?;
+                }
+            } else if d <= a {
                 for k in 0..n {
                     let b = mem.ld8(a.wrapping_add(k))?;
                     mem.st8(d.wrapping_add(k), b)?;
@@ -1638,6 +1646,16 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 return Ok(());
             }
             Some(name) => {
+                if name == "Fighter_ChangeMotionState" && std::env::var_os("MELEE_MEX_DBG_MAT").is_some() {
+                    eprintln!("mexdbg: ChangeMotionState r3..r6 {:08X?}", &cpu.gpr[3..7]);
+                    if let Some(g) = mem.native(cpu.gpr[3]) {
+                        let fp = unsafe { (*(g as G)).user_data as *mut Fighter };
+                        unsafe {
+                            let ms = (*fp).x20_actionStateList;
+                            eprintln!("mexdbg:   x1C {:p} x20 {:p} x24 {:p} x20[0].anim_id {} guest x1C {:?} x20 {:?}", (*fp).x1C_actionStateList, ms, (*fp).x24, if ms.is_null() { -9 } else { (*ms).anim_id }, mem.handle_of((*fp).x1C_actionStateList as _), mem.handle_of(ms as _));
+                        }
+                    }
+                }
                 let mut c = Call { cpu, mem, fix: Vec::new(), fixw: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
                 let mut hit = unsafe { crate::mex_bridge::call(name, &mut c) };
                 // a gobj callback the generator bridges only as a function pointer (GOBJ_FN_NAMES), called directly:

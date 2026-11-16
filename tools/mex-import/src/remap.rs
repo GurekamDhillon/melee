@@ -514,24 +514,56 @@ impl GuestSpace {
     fn materialize(&mut self, h: u32, rec: &'static str) -> Option<usize> {
         let gs = self.layouts.gc_size(rec)?;
         let ns = self.layouts.native_size(rec)?;
-        let bytes: Vec<Option<u8>> = (0..gs).map(|k| self.load(h + k, 1).ok().map(|v| v as u8)).collect();
-        let mut buf = vec![0u64; ns.div_ceil(8).max(1)].into_boxed_slice();
+        // a MotionState pointer names a table (the native code indexes rows by state): every whole row the guest
+        // block holds. Meta Knight's onLoad copies the common table (341 rows) into its heap and installs the copy;
+        // one decoded row left the native reading the rest as raw big-endian bytes (a jump through a flags word)
+        let rows = if rec == "MotionState" {
+            match self.find(h, 1) {
+                Ok(i) => ((self.regions[i].base + self.regions[i].size - h) / gs).clamp(1, 4096),
+                Err(_) => 1,
+            }
+        } else {
+            1
+        };
+        let nsa = ns;
+        if std::env::var_os("MELEE_MEX_DBG_MAT").is_some() {
+            eprintln!("mexdbg: materialize {rec} at {h:08X}: {rows} rows");
+        }
+        let bytes: Vec<Option<u8>> = (0..gs * rows).map(|k| self.load(h + k, 1).ok().map(|v| v as u8)).collect();
+        let mut buf = vec![0u64; (nsa * rows as usize).div_ceil(8).max(1)].into_boxed_slice();
         let ptr = buf.as_mut_ptr() as *mut u8;
         self.owned.push(buf);
-        self.regions.insert(0, Region { base: h, size: gs, backing: Backing::Native { rec, ptr, shadow: vec![0; gs as usize] } });
-        let mut k = 0;
-        while k < gs {
-            match self.layouts.locate(rec, k) {
-                Loc::Ptr(_, 0, _) if k + 4 <= gs => {
-                    let w = (0..4).fold(0u32, |a, j| a << 8 | bytes[(k + j) as usize].unwrap_or(0) as u32);
-                    let _ = self.store(h + k, 4, w as u64);
-                    k += 4;
-                }
-                _ => {
-                    if let Some(b) = bytes[k as usize] {
-                        let _ = self.store(h + k, 1, b as u64);
+        for r in (0..rows).rev() {
+            // SAFETY: inside buf (rows * nsa bytes)
+            let rp = unsafe { ptr.add(r as usize * nsa) };
+            self.regions.insert(0, Region { base: h + r * gs, size: gs, backing: Backing::Native { rec, ptr: rp, shadow: vec![0; gs as usize] } });
+        }
+        for r in 0..rows {
+            let hb = h + r * gs;
+            let bo = (r * gs) as usize;
+            let mut k = 0;
+            while k < gs {
+                match self.layouts.locate(rec, k) {
+                    Loc::Ptr(_, 0, _) if k + 4 <= gs => {
+                        let w = (0..4).fold(0u32, |a, j| a << 8 | bytes[bo + (k + j) as usize].unwrap_or(0) as u32);
+                        let _ = self.store(hb + k, 4, w as u64);
+                        k += 4;
                     }
-                    k += 1;
+                    _ => {
+                        if let Some(b) = bytes[bo + k as usize] {
+                            let _ = self.store(hb + k, 1, b as u64);
+                        }
+                        k += 1;
+                    }
+                }
+            }
+        }
+        if std::env::var_os("MELEE_MEX_DBG_MAT").is_some() {
+            for r in [0u32, 1, 14, 340] {
+                if r < rows {
+                    let g: Vec<u8> = bytes[(r * gs) as usize..(r * gs + 12) as usize].iter().map(|b| b.unwrap_or(0xEE)).collect();
+                    let n = unsafe { core::slice::from_raw_parts(ptr.add(r as usize * nsa), 12) };
+                    eprintln!("mexdbg:   row {r}: gc {g:02x?} native {n:02x?}");
                 }
             }
         }

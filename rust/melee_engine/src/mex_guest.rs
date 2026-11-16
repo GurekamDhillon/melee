@@ -475,7 +475,11 @@ fn line_native(a: u32) -> Option<LineFn> {
 fn fn_native(a: u32) -> Option<usize> {
     let Some(kind) = kind_of_code(a) else {
         // a retail callback the guest installs (fp->cb = ftCo_..., the vanilla address in its code): the port's
-        return vanilla_gobj_fn(a).map(|f| f as usize).or_else(|| ef_update_fn(a));
+        let r = vanilla_gobj_fn(a).map(|f| f as usize).or_else(|| item_i32_fn(a)).or_else(|| ef_update_fn(a));
+        if r.is_none() && mex_import::layout::vanilla_name(a).is_some() {
+            eprintln!("mexguest: vanilla callback {a:08X} {} has no native port; left NULL", mex_import::layout::vanilla_name(a).unwrap_or("?"));
+        }
+        return r;
     };
     let s = st();
     let i = match s.pool.iter().position(|&(k, x)| k == kind && x == a) {
@@ -490,6 +494,16 @@ fn fn_native(a: u32) -> Option<usize> {
         }
     };
     Some(POOL[i] as usize)
+}
+
+/// A vanilla item state callback that returns a value (`ItemStateTable.animated` / `.collided`, `bool(Item_GObj*)`) a
+/// custom item's state row names by its retail address. `GOBJ_FN` holds only `void(gobj)` functions, so these were
+/// left NULL and the item skipped its collision pass (Charizard's kind 262 row 0 coll = itKoopaFlame_UnkMotion0_Coll).
+fn item_i32_fn(a: u32) -> Option<usize> {
+    Some(match mex_import::layout::vanilla_name(a)? {
+        "itKoopaFlame_UnkMotion0_Coll" => melee_items::tu::itkoopaflame::itKoopaFlame_UnkMotion0_Coll as usize,
+        _ => return None,
+    })
 }
 
 /// A vanilla EF_Effect update callback (`EF_Effect.update`, `void(EF_Effect*)`) the guest stores into an effect it

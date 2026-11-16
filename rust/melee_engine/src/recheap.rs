@@ -26,6 +26,8 @@ const STEP: usize = 1 << 20;
 struct State {
     base: usize,
     used: AtomicU64,
+    /// MELEE_ASSET_TRAP, read at init (a lazy static here was host state the snapshot check saw change).
+    trap: usize,
     /// Per slot: bytes from its start that the last user committed (and wrote). A released slot keeps its pages
     /// (a fresh page costs a fault per 4 KB on first touch, which made a prepare ~1.8x the old decode); the next
     /// taker zeroes this much instead, and pages past [`KEEP_COMMITTED`] are given back.
@@ -154,7 +156,7 @@ pub fn init() -> bool {
     }
     let base = (base + SLOT - 1) & !(SLOT - 1);
     let st = unsafe { std::alloc::GlobalAlloc::alloc(&std::alloc::System, Layout::new::<State>()) } as *mut State;
-    unsafe { st.write(State { base, used: AtomicU64::new(0), dirty: [const { core::sync::atomic::AtomicUsize::new(0) }; NSLOT] }) };
+    unsafe { st.write(State { base, used: AtomicU64::new(0), trap: std::env::var("MELEE_ASSET_TRAP").ok().and_then(|v| v.parse().ok()).unwrap_or(0), dirty: [const { core::sync::atomic::AtomicUsize::new(0) }; NSLOT] }) };
     STATE.store(st, Release);
     true
 }
@@ -392,10 +394,13 @@ pub fn written_pages(a: usize, n: usize) -> Option<Vec<usize>> {
 
 /// `MELEE_ASSET_TRAP=<size>` (debug): print a backtrace for every recorded allocation of exactly that size.
 fn trap(n: usize) {
-    static T: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    let st = STATE.load(Acquire);
+    let t = if st.is_null() { 0 } else { unsafe { (*st).trap } };
+    if t == 0 || n != t {
+        return;
+    }
     let r = CUR.with(|c| c.replace(core::ptr::null_mut()));
-    let t = *T.get_or_init(|| std::env::var("MELEE_ASSET_TRAP").ok().and_then(|v| v.parse().ok()).unwrap_or(0));
-    if t != 0 && n == t {
+    {
         eprintln!("asset trap: recorded alloc of {n}:
 {}", std::backtrace::Backtrace::force_capture());
     }

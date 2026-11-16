@@ -207,6 +207,8 @@ fn bits(v: &[u64], limit: usize) -> Vec<u32> {
 /// MELEE_SNAP_STATIC_SCAN.
 const HOST: usize = 1;
 const STATIC0: usize = 2;
+/// A game-crate static only MELEE_SNAP_CHECK_POKE writes (see `load`).
+static CHECK_POKE: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
 
 /// A static page that faulted stays writable ("hot", counted as written in every interval) for this many intervals,
 /// then is made read-only again: a page written every frame faults once per HOT_AGE saves/loads, not every frame.
@@ -278,6 +280,10 @@ pub struct Base {
     no_inc: bool,
     /// MELEE_SNAP_CHECK=N: every Nth save and load is checked page by page against the full state (see `check`).
     check_every: u64,
+    /// MELEE_SNAP_CHECK's host-only statics pages (snapmask.rs), skipped by the load check.
+    host_mask: Option<Vec<Vec<u64>>>,
+    /// MELEE_SNAP_CHECK_POKE: write [`CHECK_POKE`] before each load check (the mask's self-test).
+    poke: bool,
     /// Per-page digests of the hashed range (the host block), so `page_hash` only rehashes pages written since its
     /// previous call.
     hcache: std::cell::RefCell<HashCache>,
@@ -560,6 +566,7 @@ impl Base {
         let arena_len = ranges[0].1;
         let n = ranges.len();
         let scan = std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_some();
+        let host_mask = if std::env::var_os("MELEE_SNAP_CHECK").is_some() && std::env::var_os("MELEE_SNAP_CHECK_NOMASK").is_none() { crate::snapmask::host_only(&ranges, STATIC0) } else { None };
         let b = Base {
             dirty: std::cell::RefCell::new(vec![Default::default(); n]),
             since: std::cell::RefCell::new(vec![Default::default(); n]),
@@ -574,6 +581,8 @@ impl Base {
             pool: Rc::new(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX))), next_id: std::cell::Cell::new(1),
             no_inc: std::env::var_os("MELEE_SNAP_NOINC").is_some(),
             check_every: std::env::var("MELEE_SNAP_CHECK").ok().map(|v| v.parse().unwrap_or(1).max(1)).unwrap_or(0),
+            host_mask,
+            poke: std::env::var_os("MELEE_SNAP_CHECK_POKE").is_some(),
             hcache: Default::default(),
             hash_verify: std::env::var_os("MELEE_HASH_VERIFY").is_some(),
             stats: Default::default(),
@@ -965,7 +974,11 @@ impl Base {
             arena::set_active(was);
             drop(st);
             if self.check_every > 0 && self.stats.borrow().loads % self.check_every == 0 {
-                self.check(s, "load", None);
+                if self.poke {
+                    // MELEE_SNAP_CHECK_POKE: a game-crate static written behind the load's back; the check must catch it
+                    CHECK_POKE.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+                }
+                self.check(s, "load", self.host_mask.as_deref());
             }
         }
         // the live state is `s` now (the load's own writes show up as written in the next epoch: compared once)

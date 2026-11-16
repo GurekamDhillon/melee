@@ -88,7 +88,6 @@ const DUON_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("350001.pac", 0
 const RIDLEY_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("280301.pac", 0.0, 0.0, "283vAdvFactory01MS", 0, 0) }];
 /// Tabuu's fight stage (SSE 920801, his boss archive): the dimension model, its world floor and its stage position
 /// model.
-#[allow(dead_code)]
 const TABUU_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("920801.pac", 0.0, 0.0, "421vAdvDimension01", 0, 0) }];
 const RAYQUAZA_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("080001.pac", 0.0, 0.0, "080vAdvJungle01", 0, 0) }];
 
@@ -101,8 +100,7 @@ fn arena_secs() -> Option<&'static [SecDef]> {
         "galleom" => Some(&GALLEOM_SECS),
         "duon" => Some(&DUON_SECS),
         "ridley" => Some(&RIDLEY_SECS),
-        // Tabuu's arena is held back: with it the synctest hangs at the first rollback (no CPU use; arena off, it
-        // passes; his camera and the texture preload are not the cause) [L]. He fights on Final Destination.
+        "tabuu" => Some(&TABUU_SECS),
         _ => None,
     }
 }
@@ -2176,16 +2174,20 @@ pub fn install() {
     if (crate::tu::petey::selected() || crate::tu::petey::vs_selected()) && boss_has_arena() {
         let _ = arena();
     }
-    // the VS boss's enemy scripts compile on a helper thread at the engine start, not in the match's first frame
+    // the VS boss's enemy scripts compile on a helper thread at the engine start, not in the match's first frame.
+    // The start waits for it: its loads fill static `OnceLock`s, and one still filling when a synctest took its first
+    // snapshot came back from the rollback load as "running" and every later get waited on it forever (Tabuu with his
+    // arena: the arena load made the start slow enough to overlap)
     if crate::tu::petey::vs_selected() && !crate::tu::petey::is_petey() {
         let name = crate::tu::petey::boss_name();
-        std::thread::spawn(move || {
+        let _ = std::thread::spawn(move || {
             crate::tu::geno_vm::prefetch(name);
             crate::tu::vm_boss_model::prefetch(name);
             let _ = crate::tu::petey::vm_start_status();
             let _ = crate::tu::petey::vm_brawl_arena();
             crate::tu::vm_arena::prefetch();
-        });
+        })
+        .join();
     }
 }
 

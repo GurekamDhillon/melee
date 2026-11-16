@@ -194,6 +194,8 @@ impl Exporter {
         ev[0x1A4] = 2; // major scene: VS mode
         ev[0x2BD] = 1; // English
         raw.extend_from_slice(&ev);
+        // live spectator output (live_out.rs): every byte `raw` gets goes out as it is appended
+        crate::live_out::game_start(&raw);
         let mut present = [false; 4];
         for (i, p) in present.iter_mut().enumerate() {
             *p = gi[0x61 + 0x24 * i] != 3;
@@ -226,7 +228,9 @@ impl Exporter {
         for (k, &p) in order.iter().enumerate() {
             place[p] = k as i8;
         }
-        m.raw.extend_from_slice(&[0x39, method, 0xFF, place[0] as u8, place[1] as u8, place[2] as u8, place[3] as u8]);
+        let end = [0x39, method, 0xFF, place[0] as u8, place[1] as u8, place[2] as u8, place[3] as u8];
+        m.raw.extend_from_slice(&end);
+        crate::live_out::game_end(&end);
         let mut o = b"{U\x03raw[$U#l".to_vec();
         o.extend_from_slice(&(m.raw.len() as u32).to_be_bytes());
         o.extend_from_slice(&m.raw);
@@ -269,6 +273,10 @@ impl Exporter {
         ub_str(&mut o, &self.played_on);
         o.push(b'}');
         o.push(b'}');
+        if self.spec.is_empty() {
+            // the live spectator output's exporter (live_out.rs) with no --slp: nothing to write
+            return;
+        }
         let path = self.path_for();
         if let Some(d) = std::path::Path::new(&path).parent().filter(|d| !d.as_os_str().is_empty()) {
             let _ = std::fs::create_dir_all(d);
@@ -428,6 +436,7 @@ fn flush_frame(m: &mut Match) {
         return;
     }
     m.started = true;
+    let at = m.raw.len();
     m.frame += 1;
     m.frames += 1;
     let f = m.frame as u32;
@@ -455,6 +464,7 @@ fn flush_frame(m: &mut Match) {
     put32(&mut bk, 1, f);
     put32(&mut bk, 5, f);
     m.raw.extend_from_slice(&bk);
+    crate::live_out::frame(&m.raw[at..]);
 }
 
 /// The run ends: a match still open is written as a no contest.

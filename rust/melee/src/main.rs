@@ -70,6 +70,7 @@ mod netplay;
 mod slippi_np;
 mod play_net;
 mod slp_export;
+mod live_out;
 mod spectate;
 mod replay_ctl;
 mod replays;

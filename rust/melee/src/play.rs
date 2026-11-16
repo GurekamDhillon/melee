@@ -1439,7 +1439,9 @@ pub(crate) fn window_title(spec: Option<&str>) -> String {
 }
 
 const USAGE: &str = "usage: melee play --iso DISC.iso [--time-secs N | --stocks N] [--items OFF|LOW|..] [--teams] [--match a,b/cpu9,..,STAGE] [--quit-after-matches N] [--shots] [--shot-dir DIR] [--quit-at-results] [--max-frames N] [--skip-intro] [--headless] [--no-audio]
-       [--widescreen] [--fullscreen[=exclusive]] [--window WxH] [--render-scale N|auto] [--msaa N] [--vsync on|off] [--save-display]";
+       [--widescreen] [--fullscreen[=exclusive]] [--window WxH] [--render-scale N|auto] [--msaa N] [--vsync on|off] [--save-display]
+       netplay host live output (display only, finalised frames): [--spectate-port N [--spectate-bind IP]] (Slippi spectate
+       protocol, as Slippi Dolphin's 51441) [--relay-url ws(s)://.. --relay-key KEYFILE] (outbound to the bracket server)";
 
 pub fn play(args: &[String]) -> ExitCode {
     // `--replay FILE`: the file's play options decide the boot (the command line's window options still apply)
@@ -1817,12 +1819,24 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         // `--np-spectate PORT [--np-spectate-bind ADDR]` / `--np-spectate-relay HOST:PORT [--np-spectate-code C]`: the
         // match host serves read-only spectators (spectate.rs); the stream is the confirmed replay
-        if net.as_ref().is_some_and(|n| n.host) && (get("--np-spectate").is_some() || get("--np-spectate-relay").is_some()) {
+        // `--spectate-port N` / `--relay-url URL` (live_out.rs): the live .slp output needs the confirmed stream, so the
+        // host serves it (on an ephemeral loopback port unless --np-spectate gave one) to its headless output child
+        let live_out = get("--spectate-port").is_some() || get("--relay-url").is_some();
+        if net.as_ref().is_some_and(|n| n.host) && (get("--np-spectate").is_some() || get("--np-spectate-relay").is_some() || live_out) {
             let port: u16 = get("--np-spectate").and_then(|v| v.parse().ok()).unwrap_or(0);
             let bind = get("--np-spectate-bind").unwrap_or_else(|| "127.0.0.1".into());
             let mods = crate::play_net::mods_identity(args).map(|m| m.0).unwrap_or(0);
             match crate::spectate::SpecServer::open(&bind, port, get("--np-spectate-relay").as_deref(), get("--np-spectate-code").as_deref(), crate::play_net::build_hash(), mods) {
-                Ok(s) => rp.spec_server = Some(s),
+                Ok(s) => {
+                    if live_out {
+                        let ip = if bind == "0.0.0.0" { "127.0.0.1".to_string() } else { bind.clone() };
+                        if let Err(e) = spawn_live_child(args, &game.iso, &format!("{ip}:{}", s.local_port())) {
+                            eprintln!("play: live output: {e}");
+                            return ExitCode::FAILURE;
+                        }
+                    }
+                    rp.spec_server = Some(s)
+                }
                 Err(e) => {
                     eprintln!("play: {e}");
                     return ExitCode::FAILURE;
@@ -1882,8 +1896,30 @@ pub fn play(args: &[String]) -> ExitCode {
                 crate::slp_export::install(&spec, if online { "network" } else { "console" }, ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
             }
         }
+        // the live output child (a spectator with --spectate-port / --relay-url): the exporter feeds live_out.rs
+        let live_child = spec_target.is_some() && (get("--spectate-port").is_some() || get("--relay-url").is_some());
+        if live_child {
+            let o = crate::live_out::Opts {
+                slippi_port: get("--spectate-port").and_then(|v| v.parse().ok()),
+                bind: get("--spectate-bind").unwrap_or_else(|| "127.0.0.1".into()),
+                relay_url: get("--relay-url"),
+                relay_key: get("--relay-key"),
+                nick: get("--spectate-nick").unwrap_or_else(|| "GD Melee".into()),
+            };
+            if let Err(e) = crate::live_out::start(o) {
+                eprintln!("play: live output: {e}");
+                return ExitCode::FAILURE;
+            }
+            if !crate::slp_export::active() {
+                crate::slp_export::install("", "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+            }
+        }
         rp.net = net;
-        return crate::retail_flow::run(rp, has("--headless"));
+        let code = crate::retail_flow::run(rp, has("--headless"));
+        if live_child {
+            crate::live_out::finish(get("--live-linger").and_then(|v| v.parse().ok()).unwrap_or(10));
+        }
+        return code;
     }
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
     // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
@@ -1954,6 +1990,44 @@ pub fn play(args: &[String]) -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// The netplay host's live output (`--spectate-port`, `--relay-url`): a headless spectator of its own confirmed stream
+/// (`spectator` = the loopback spectate address) that runs the Slippi exporter and the output threads (live_out.rs).
+/// A separate process at below-normal priority: nothing of it runs on, or can stall, the host's game thread.
+fn spawn_live_child(args: &[String], iso: &str, spectator: &str) -> Result<(), String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let mut a: Vec<String> = vec!["play".into(), "--iso".into(), iso.into(), "--headless".into(), "--no-audio".into(), "--spectate".into(), spectator.into(), "--spec-delay".into(), "0".into()];
+    for k in ["--spectate-port", "--spectate-bind", "--spectate-nick", "--relay-url", "--relay-key", "--mods", "--live-linger", "--spec-timeout"] {
+        if let Some(i) = args.iter().position(|x| x == k) {
+            if let Some(v) = args.get(i + 1) {
+                a.push(k.into());
+                a.push(v.clone());
+            }
+        }
+    }
+    if let Ok(p) = std::env::var("MELEE_LIVE_CHILD_SLP") {
+        a.push("--slp".into());
+        a.push(p);
+    }
+    let mut c = std::process::Command::new(exe);
+    c.args(&a).env("MELEE_WINDOW_UNFOCUSED", "1").env_remove("MELEE_PAD_SCRIPT").env_remove("MELEE_PROFILE");
+    if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
+        c.env("MELEE_WINDOW_TITLE", format!("{t} (live output)"));
+    }
+    if let Ok(l) = std::env::var("MELEE_LIVE_CHILD_LOG") {
+        let f = std::fs::File::create(&l).map_err(|e| format!("{l}: {e}"))?;
+        c.stderr(f.try_clone().map_err(|e| e.to_string())?).stdout(f);
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const BELOW_NORMAL_PRIORITY_CLASS: u32 = 0x4000;
+        c.creation_flags(BELOW_NORMAL_PRIORITY_CLASS);
+    }
+    let ch = c.spawn().map_err(|e| format!("live output child: {e}"))?;
+    log(&format!("live output: child {} spectating {spectator}", ch.id()));
+    Ok(())
 }
 
 fn rp_feed_css(feed: &Option<crate::play_net::ReplayFeed>) -> bool {

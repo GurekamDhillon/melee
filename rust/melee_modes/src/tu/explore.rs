@@ -396,6 +396,8 @@ pub struct Block {
     /// a moving platform's rest place (section space): its collision points are loaded there and moved by
     /// `path[frame] - rest` (an animated bone: its path's first point; a GMOV lift: its bone's bind place)
     pub rest: [f32; 2],
+    /// a GMOV mode-2 path: played once from the frame a fighter first stands on it (`MOVER_START`), then held
+    pub once: bool,
 }
 
 fn load(id: i32) -> Result<Map, String> {
@@ -547,7 +549,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                                     },
                                 };
                                 let at = [t[0] + s.off[0], t[1] + s.off[1]];
-                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2] });
+                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2], once: false });
                                 ([t[0] + s.off[0], t[1] + s.off[1]], blocks.len())
                             }
                             None => {
@@ -555,7 +557,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                                 continue;
                             }
                         }
-                    } else if let Some((path, rest, lift_model)) = gmov_path(&gmovs, &leaves, &mut prop_cache, name, inst).or_else(|| mover_path(&leaves, &mut prop_cache, name).map(|p| { let r = p[0]; (p.iter().map(|q| [1.0, 0.0, 0.0, 1.0, q[0] - r[0], q[1] - r[1]]).collect(), r, None) })) {
+                    } else if let Some((path, rest, lift_model, once)) = gmov_path(&gmovs, &leaves, &mut prop_cache, name, inst).or_else(|| mover_path(&leaves, &mut prop_cache, name).map(|p| { let r = p[0]; (p.iter().map(|q| [1.0, 0.0, 0.0, 1.0, q[0] - r[0], q[1] - r[1]]).collect(), r, None, false) })) {
                         // a platform riding an animated bone (060002a's sfyuka00-03 on the water wheel `st02asuisha`), or
                         // a GMOV lift (grAdventureMoveGround: 270002's p_yuka01/02, idouyuka1) on its path model's
                         // `path_locator`: its own joint, its points moved along the path every frame (`movers_tick`)
@@ -576,7 +578,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         let bb = [0, 4, 8, 12].map(|i| bef(c, o + of.obj_box + i));
                         let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
                         paths.push(path);
-                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest });
+                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest, once });
                         notes.push(format!("explore: section {si}: {} moves ({} frames{}) at ({:.0},{:.0}) size {:.0}x{:.0}", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0), if paths.last().map_or(0, |p| p.len()) == 1 { ", held at rest" } else { "" }, x, y, bb[2] - bb[0], bb[3] - bb[1]));
                         (at, blocks.len())
                     } else {
@@ -1174,13 +1176,6 @@ fn load_into(st: &'static Maps, id: i32) -> Option<&'static Map> {
             }
             let t = std::time::Instant::now();
             let r = load(id);
-            // the room's VM enemies: programs and models read now (the stage load, before the first frame)
-            if let Ok(m) = &r {
-                let mut ks: Vec<u16> = m.spawns.iter().map(|s| s.4).collect();
-                ks.sort_unstable();
-                ks.dedup();
-                crate::tu::explore_vm::prefetch(&ks);
-            }
             let mut rep = String::new();
             use std::fmt::Write as _;
             match &r {
@@ -1305,6 +1300,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     SPAWN_NEXT = 0;
     SPAWN_N = 0;
     CRATE_NEXT = i32::MAX;
+    MOVER_START = [-1; 64];
     crate::tu::explore_vm::reset();
     VISITED = 1;
     BROKEN = 0;
@@ -1326,6 +1322,14 @@ pub unsafe fn coll_override() -> *mut MapCollData {
         }
         CUR_ID = want;
         let Some(m) = map() else { return core::ptr::null_mut() };
+        // the room's VM enemies: programs and models read now, on the game thread at the stage load (before the first
+        // frame and its snapshot; never from the maps' helper threads, whose late writes a rollback would undo)
+        {
+            let mut ks: Vec<u16> = m.spawns.iter().map(|s| s.4).collect();
+            ks.sort_unstable();
+            ks.dedup();
+            crate::tu::explore_vm::prefetch(&ks);
+        }
         // the content word the session hash carries (slice 0): pick, mask, digest
         let mut h = melee_core::hash::StateHasher::new();
         h.write(&want.to_be_bytes());
@@ -2073,7 +2077,7 @@ fn gmov_list(leaves: &[Vec<u8>], tags: &[Vec<(u16, u16)>], si: usize, notes: &mu
 /// (one transform a frame), the bone's rest place, and the model to draw. Brawl puts the carried model's root on the
 /// path's `path_locator` (translation and turn), so a point at `rest + local` goes to `M(f) local`. Path mode 1
 /// (endless loop) only; the others hold at rest.
-fn gmov_path(gmovs: &[Gmov], leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8], inst: usize) -> Option<(Vec<[f32; 6]>, [f32; 2], Option<String>)> {
+fn gmov_path(gmovs: &[Gmov], leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8], inst: usize) -> Option<(Vec<[f32; 6]>, [f32; 2], Option<String>, bool)> {
     let name = std::str::from_utf8(name).ok()?;
     let g = gmovs.iter().filter(|g| g.bones.iter().any(|b| b == name)).nth(inst)?;
     let rigs = cache.get_or_insert_with(|| all_prop_rigs(leaves));
@@ -2081,8 +2085,11 @@ fn gmov_path(gmovs: &[Gmov], leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>
     let k = (0..mr.bones.len()).find(|&k| mr.bone_name(k) == name)?;
     let rp = mr.bone_point(None, 0.0, k, [0.0; 3]);
     let rest = [rp[0], rp[1]];
-    let Some((lr, pk)) = g.loc.as_ref().filter(|_| g.mode == 1) else {
-        return Some((vec![IDENT], rest, Some(g.model_mdl.clone())));
+    // mode 1: an endless loop; mode 2: played once, from the frame a fighter first stands on it, then held at its end
+    // [L: a guess from the data: 230 of the 231 mode-2 paths have a non-looping CHR0, 241 of the 314 mode-1 paths a
+    // looping one; Brawl's mode switch in grGimmickMotionPath is not read. Local notes: sse-inventory.md]
+    let Some((lr, pk)) = g.loc.as_ref().filter(|_| g.mode == 1 || g.mode == 2) else {
+        return Some((vec![IDENT], rest, Some(g.model_mdl.clone()), false));
     };
     let (_, a) = &lr.anims[0];
     let n = fctiwz_f32(a.frames).clamp(1, 3600) as usize;
@@ -2096,7 +2103,7 @@ fn gmov_path(gmovs: &[Gmov], leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>
             [la, lb, lc, ld, fo[0] - (la * rest[0] + lb * rest[1]), fo[1] - (lc * rest[0] + ld * rest[1])]
         })
         .collect();
-    Some((path, rest, Some(g.model_mdl.clone())))
+    Some((path, rest, Some(g.model_mdl.clone()), g.mode == 2))
 }
 
 /// How many GMOV lifts carry bone `name` (at least 1: an object no lift carries is loaded once).
@@ -2236,6 +2243,29 @@ pub fn enemy_vm_place(id: i32, k: usize) -> Option<(Option<brawl_boss::vm::Path>
 
 /// The moving platforms of the party's section: each joint's points follow its bone's path (the frame is the room
 /// clock), the previous place kept for the riders (`mpLib_80057424`), the joint's bounds refreshed.
+/// Per moving block: the room frame its one-way (GMOV mode 2) path started, -1 not yet. Sim state (statics).
+static mut MOVER_START: [i32; 64] = [-1; 64];
+
+/// A fighter stands on joint `mj`'s top (grounded, its feet within a unit of the top, inside its x range).
+unsafe fn stood_on(mj: &MapJoint) -> bool {
+    use melee_world::tu::mplib as mp;
+    let (mut l, mut r, mut t) = (f32::MAX, f32::MIN, f32::MIN);
+    for v in mj.vtx_start as usize..(mj.vtx_start as usize + mj.vtx_count as usize) {
+        let p = (*mp::groundCollVtx.add(v)).pos;
+        l = fmin(l, p.x);
+        r = fmax(r, p.x);
+        t = fmax(t, p.y);
+    }
+    let mut on = false;
+    each_fighter(|_, fp| {
+        let f = &*fp;
+        if f.ground_or_air == GA_Ground && f.cur_pos.x >= l && f.cur_pos.x <= r && (f.cur_pos.y - t).abs() <= 1.0 {
+            on = true;
+        }
+    });
+    on
+}
+
 unsafe fn movers_tick(m: &Map) {
     use melee_world::tu::mplib as mp;
     for (k, b) in m.blocks.iter().enumerate() {
@@ -2247,7 +2277,18 @@ unsafe fn movers_tick(m: &Map) {
         if path.len() < 2 {
             continue;
         }
-        let f = CLOCK.max(0).prem(path.len() as i32) as usize;
+        let f = if b.once {
+            if k < MOVER_START.len() && MOVER_START[k] < 0 && m.joints.get(k + 1).is_some_and(|mj| stood_on(mj)) {
+                MOVER_START[k] = CLOCK;
+                eprintln!("explore: platform {k} starts its one-way path ({} frames) at room frame {CLOCK}", path.len());
+            }
+            match MOVER_START.get(k) {
+                Some(&s0) if s0 >= 0 => (CLOCK - s0).clamp(0, path.len() as i32 - 1) as usize,
+                _ => 0,
+            }
+        } else {
+            CLOCK.max(0).prem(path.len() as i32) as usize
+        };
         let t = path[f];
         let (ox, oy) = (b.at[0] - b.rest[0], b.at[1] - b.rest[1]);
         let j = k + 1;

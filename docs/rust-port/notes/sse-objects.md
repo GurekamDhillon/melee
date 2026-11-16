@@ -19,7 +19,10 @@ must set alike.
 The VM lane's host (ours, not Brawl data): the ground / air switch (a floor within 4 units below holds a walker,
 walking off one drops it), a fall of 0.1 a frame up to 2.5 in falling / damage motions (the VM's own gravity is 0),
 a hurt capsule from the model's rest extent, the start status 0 (Brawl's start status comes from the generator
-record, not read yet). Checked: Lake 3 (Mite, Bucculus) and level 22 with synctest depth 4 / 7, 0 mismatches;
+record, not read yet). Programs and models are read on the game thread at the stage load (`coll_override`), never from the maps' helper
+threads (a late write there was undone by a rollback: a crash in round 2). The pool is folded into the neutral
+hash (`fighter::BOSS_HASH` while no boss uses it). Checked: Lake 3 (Mite, Bucculus) and level 22 with synctest
+depth 4 / 7, 0 neutral mismatches with the pool in the hash;
 enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on him.
 
 | kind | what | placed | files | port |
@@ -28,7 +31,7 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | GET2 | area triggers (2) | 1175 | 119 | dropped |
 | GFG1 | fighter spawns (ally/CPU fights) | 720 | 44 | dropped |
 | GET1 | area triggers (1) | 564 | 162 | dropped |
-| GMOV | moving map parts / lifts | 545 | 117 | mode 1 supported (314); mode 2 static (231) |
+| GMOV | moving map parts / lifts | 545 | 117 | mode 1 loops (314); mode 2 plays once from the frame a fighter stands on it (231, a guess from the data) |
 | EPSP | enemy spawn points | 417 | 134 | dropped |
 | GDOR | doors | 305 | 140 | supported |
 | GFT2 | triggers (GFT2) | 191 | 53 | dropped |
@@ -159,3 +162,11 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | Meta Ridley (boss) | 5 | boss: own boss fight |
 | Falcon Flyer (boss) | 3 | boss: own boss fight |
 | Tabuu (boss) | 2 | boss: own boss fight |
+
+## Lift path modes (round 2)
+
+Mode 1 loops; mode 2 plays its path once, starting the first frame a fighter stands on the platform, then holds at
+its end. Mode 2's meaning is inferred from the path data, not read from Brawl's code: almost every mode-2 path is a
+non-looping clip and almost every mode-1 path a looping one. Lake 3's raft (`080105`) now carries the party across
+(synctest depth 4 / 7 on it, 0 neutral mismatches). Mode-2 parts started by something other than a rider (lids,
+cracks) stay at rest until switches and triggers exist.

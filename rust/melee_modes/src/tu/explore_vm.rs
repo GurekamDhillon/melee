@@ -185,6 +185,10 @@ pub unsafe fn spawn(kind: u16, x: f32, y: f32, face: i32, sec: usize, stage: i32
     vr::begin(p, &mut A[i], 1, 5, seed, st, true);
     A[i].pos = [x, y, 0.0];
     A[i].lr = if face < 0 { -1.0 } else { 1.0 };
+    // in the neutral (gameplay) hash, so a synctest / netplay check sees the actors themselves
+    if melee_fighter::tu::fighter::BOSS_HASH.is_none() {
+        melee_fighter::tu::fighter::BOSS_HASH = Some(hash_word);
+    }
     // drawn in the Subspace pool's fighter draw pass (the hook a boss stage keeps for itself)
     if melee_fighter::tu::ftdrawcommon::BOSS_DRAW.is_none() {
         melee_fighter::tu::ftdrawcommon::BOSS_DRAW = Some(crate::tu::subspace::sub_draw);
@@ -534,4 +538,12 @@ pub fn state_hash() -> u64 {
         }
     }
     h
+}
+
+/// `fighter::BOSS_HASH`: the pool's hash folded to a word while any actor is live.
+pub fn hash_word() -> Option<u32> {
+    (alive() > 0).then(|| {
+        let h = state_hash();
+        (h as u32) ^ (h >> 32) as u32
+    })
 }

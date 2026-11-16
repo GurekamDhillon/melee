@@ -154,6 +154,16 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   The engine and the C build both push the decomp's locals (the Rust engine pushes 0, which is what the goldens
   carry), so goldens are unaffected; this is retail code, so vanilla CPU replays that reach this path with
   near-zero knockback also diverge. No vanilla replay hitting it was checked this round.
+- Akaneia corpus rerun (slpcheck, `run_all.sh`, the 51 files of Hero's 2026-11-06 set that `replay_codes.py --disc`
+  puts on Akaneia, port/ace201 at the thrown-flag commit): **32 of 51 match** (Round 7 of dolphin-oracle.md: 17).
+  The 19 divergers (file, roster, first slippi frame, port, field): 0411T223211 0+28 7017 percent; 0411T223434 0+27
+  5124 action; 0411T223810 0+31 1031 x; 0502T230601 31+26 1098 action; 0502T232612 27+0 1264 action; 0704T231714
+  7+28 3085 percent; 0704T232232 15+31 790 x; 0710T231752 0+28 2949 percent; 0710T233221 7+31 2122 action (p2);
+  0710T233518 7+31 1882 x; 0710T233854 7+28 3907 action; 0718T225033 28+20 916 last_attack; 0718T225603 31+0 81
+  action; 0801T234358 9+27 132 percent; 0814T223533 20+28 4551 action; 0814T232949 0+27 2065 action; 0815T231817
+  28+1 1061 combo; 0815T232950 31+15 1207 x; 0822T002252 0+28 1596 percent. Not oracled in Dolphin this round.
+- Not done this round: Liu Kang frame-112 rand order (item 4) and the Meta Knight multi-table `build_move_table`
+  (item 5).
 
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 

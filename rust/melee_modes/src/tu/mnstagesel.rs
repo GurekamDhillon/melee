@@ -3608,6 +3608,26 @@ pub unsafe fn mnStageSel_HoverStKind() -> i32 {
         -1
     }
 }
+/// Host-side read for the asset prefetch: when the cursor is on the Random icon, the stkinds a Random pick can land on
+/// (the same filter the picker uses), else `None`. Reads only; writes no game state.
+pub unsafe fn mnStageSel_HoverRandomPool() -> Option<std::vec::Vec<i32>> {
+    let i = mnStageSel_804D6CAE;
+    let on_random = if mnStageSel_MexActive != 0 {
+        i >= 0 && i < mnStageSel_IconCount && i < SSS_ICON_MAX && mnStageSel_803F06D0[i as usize].x8 as i32 == 3
+    } else {
+        i == mnStageSel_NumStages
+    };
+    if !on_random {
+        return None;
+    }
+    let mut v = std::vec::Vec::new();
+    for j in 0..mnStageSel_NumStages.min(SSS_ICON_MAX) {
+        if mnStageSel_803F06D0[j as usize].x4 >= 0 && sss_random_ok(j) != 0 {
+            v.push(mnStageSel_803F06D0[j as usize].stkind);
+        }
+    }
+    Some(v)
+}
 pub unsafe extern "C" fn mnStageSel_802599EC() -> i32 {
     melee_core::ct!("mnStageSel_802599EC");
     let mut var_r0: i32 = 0;

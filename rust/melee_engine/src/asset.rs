@@ -1030,6 +1030,12 @@ pub fn hint_entry(entry: i32, heap: i32) {
 }
 
 fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
+    hint_entry_pri(entry, heap, gr, false)
+}
+
+/// `low`: a speculative hint (the Random pool) that never evicts a cached plan and queues behind the others; a later
+/// normal hint for the same entry moves its job to the front of the queue.
+fn hint_entry_pri(entry: i32, heap: i32, gr: Option<i32>, low: bool) {
     let Some(s) = svc() else { return };
     if !s.worker {
         return;
@@ -1042,10 +1048,16 @@ fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
     let _sys = crate::arena::SysScope::enter();
     let mut g = s.m.lock().unwrap();
     if g.entries.iter().any(|e| e.entry == entry) || g.unplannable.contains(&len) {
+        if !low {
+            if let Some(k) = g.jobs.iter().position(|j| j.entry == entry) {
+                let j = g.jobs.remove(k).unwrap();
+                g.jobs.push_front(j);
+            }
+        }
         return;
     }
     // a hint outranks a cached plan nobody asked for lately: make room (least recently used first)
-    while g.entries.len() >= KEEP || g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + 8 * len > KEEP_BYTES {
+    while !low && (g.entries.len() >= KEEP || g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + 8 * len > KEEP_BYTES) {
         let Some(old) = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).min_by_key(|&i| g.entries[i].used) else { break };
         g.entries.remove(old);
     }
@@ -1266,6 +1278,47 @@ pub fn sss_hover(stkind: i32) {
     hint_stage(gr);
 }
 
+/// The stage select, once per tick: while the cursor rests on Random, the legal random pool's stage files are hinted
+/// at low priority (no eviction, queued last), so a Random confirm (decided a tick before the load) finds a plan.
+/// Bounded to [`POOL_MAX`] stages: a bigger pool is skipped (the disc warm keeps its bytes in the page cache).
+/// `pool` is a host-side read of the stage select; host state only, never sim-visible.
+pub fn sss_random_pool(pool: Option<Vec<i32>>) {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    const POOL_MAX: usize = 8;
+    const HOVER_TICKS: i32 = 12;
+    static SINCE: AtomicI32 = AtomicI32::new(0);
+    let Some(pool) = pool else {
+        SINCE.store(0, Relaxed);
+        return;
+    };
+    if SINCE.fetch_add(1, Relaxed) + 1 != HOVER_TICKS || pool.is_empty() || pool.len() > POOL_MAX {
+        return;
+    }
+    let mut n = 0;
+    for st in &pool {
+        let gr = unsafe {
+            let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+            if *st < 0 || *st as usize >= map.len() {
+                continue;
+            }
+            map[*st as usize].grkind as i32
+        };
+        unsafe {
+            let sd = &*core::ptr::addr_of!(melee_world::tu::ground::stage_datas);
+            if gr > 0 && (gr as usize) < sd.len() && !sd[gr as usize].is_null() {
+                let e = entry_of((*sd[gr as usize]).data1 as *const i8);
+                if e > 0 {
+                    hint_entry_pri(e, -1, Some(gr), true);
+                    n += 1;
+                }
+            }
+        }
+    }
+    if log_on() {
+        eprintln!("asset: sss random pool hinted ({n} of {} stages)", pool.len());
+    }
+}
+
 pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
     use melee_modes::tu::envoy as ev;
     // not only an armed plan: the sim publishes the coming fight's plan from mod load on, and the camp door to that
@@ -1388,15 +1441,16 @@ fn disc_warm(files: Vec<(u64, usize)>) {
 pub fn boot_hints() {
     let Some(h) = crate::host::Host::try_get() else { return };
     // `melee play` offline only (trim mode is its mark: the tests' golden / synctest / netplay runs do not warm)
-    if crate::arena::trim() {
-        let _s = crate::arena::SysScope::enter();
-        disc_warm(h.disc.files_with_ext(&[".dat", ".usd", ".ssm", ".sem"]));
-    }
+    // the boot files first: the warm thread (below normal) then reads behind them, not ahead
     for f in BOOT_FILES {
         let e = h.disc.disc_entry(f);
         if e > 0 {
             hint_entry(e, -1);
         }
+    }
+    if crate::arena::trim() {
+        let _s = crate::arena::SysScope::enter();
+        disc_warm(h.disc.files_with_ext(&[".dat", ".usd", ".ssm", ".sem"]));
     }
 }
 
@@ -1409,6 +1463,19 @@ pub fn hints_busy() -> bool {
     }
     let g = s.m.lock().unwrap();
     g.entries.iter().any(|e| e.pending)
+}
+
+/// True while any [`BOOT_FILES`] hint is still queued or being prepared (false without a worker). The boot hold waits
+/// on this only, not on other hints or the whole-disc warm, so a solo boot is not held for unrelated work. Host state only.
+pub fn boot_hints_busy() -> bool {
+    let Some(s) = svc() else { return false };
+    if !s.worker {
+        return false;
+    }
+    let Some(h) = crate::host::Host::try_get() else { return false };
+    let ids: Vec<i32> = BOOT_FILES.iter().map(|f| h.disc.disc_entry(f)).filter(|&e| e > 0).collect();
+    let g = s.m.lock().unwrap();
+    g.entries.iter().any(|e| e.pending && ids.contains(&e.entry))
 }
 
 /// The `stage_info.grkind` a hinted file will be loaded under: the coming scene's stage when the preload cache names

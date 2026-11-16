@@ -743,6 +743,7 @@ impl RetailPlay {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
             let hover = unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() };
             melee_engine::asset::sss_hover(hover);
+            melee_engine::asset::sss_random_pool(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverRandomPool() });
             melee_engine::asset::sss_confirm_tick();
             // a hovered SSE map's textures go up a few per tick (vanilla stage select entry costs nothing)
             melee_modes::tu::explore::sss_preload(hover);
@@ -1483,7 +1484,7 @@ impl Game for RetailPlay {
             }
             return false;
         }
-        !melee_engine::asset::hints_busy()
+        !melee_engine::asset::boot_hints_busy()
     }
 
     fn take_hud_request(&mut self) -> Option<bool> {

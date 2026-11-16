@@ -1464,7 +1464,7 @@ unsafe fn draw_weapons() {
         let Some(rc) = recs.get(p.rec as usize) else { continue };
         let boxes: &[crate::tu::geno_boss_spawn::SpawnBox] = if p.phase == 0 { &rc.fly } else { rc.explode.as_ref().map_or(&[], |e| &e.1[..]) };
         let r = boxes.iter().map(|b| b.size).fold(0.0f32, fmax);
-        let r = if r > 0.0 { r } else { 6.0 * rc.scale.max(0.5) };
+        let r = if r > 0.0 { r } else { 6.0 * fmax(rc.scale, 0.5) };
         let (c, d) = if p.phase == 0 {
             (GXColor { r: 255, g: 200, b: 60, a: 255 }, GXColor { r: 160, g: 90, b: 20, a: 255 })
         } else {
@@ -1724,7 +1724,7 @@ unsafe fn vm_frame(p: &'static brawl_boss::vm::Program) {
     // the HP bar (presentation only: melee_core::bossbar, drawn by the overlay)
     {
         let a = crate::tu::geno_vm::actor();
-        let tenth = |v: f32| melee_core::ppc::fcvt_u32(v.max(0.0) * 10.0);
+        let tenth = |v: f32| melee_core::ppc::fcvt_u32(fmax(v, 0.0) * 10.0);
         melee_core::bossbar::set(boss_name(), if o.dead { 0 } else { tenth(a.hp()) }, tenth(a.hp_max()));
     }
     B.st = o.status;

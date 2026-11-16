@@ -1174,6 +1174,34 @@ fn hint_vs_picks(with_stage: bool) {
     }
 }
 
+/// The stage select, once per tick: the VS data's stage once the stage select has set it (the confirm; a Random pick
+/// is decided there too) is hinted at once, ahead of the match's load. Read-only on sim data; host state only.
+pub fn sss_confirm_tick() {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    static LAST: AtomicI32 = AtomicI32::new(-1);
+    let st = unsafe {
+        let m = *core::ptr::addr_of!(melee_world::gmmain::gmMainLib_804D3EE0);
+        if m.is_null() {
+            return;
+        }
+        (*m).modes.table[melee_types::GmVsMode_Melee as usize].start.rules.stkind as i32
+    };
+    if LAST.swap(st, Relaxed) == st {
+        return;
+    }
+    let gr = unsafe {
+        let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+        if st < 0 || st as usize >= map.len() {
+            return;
+        }
+        map[st as usize].grkind as i32
+    };
+    hint_stage(gr);
+    if log_on() {
+        eprintln!("asset: sss stage {st} hinted (gr {gr})");
+    }
+}
+
 /// A disc entry for a game file name (`PlFx.dat`; a name without an extension tries the locale's `.usd`, then `.dat`).
 /// Pure: unlike `lbFileGetFullName` it writes no game static.
 fn entry_of(name: *const i8) -> i32 {

@@ -543,3 +543,23 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
   backdrop's disc, so black shows around it. None fixed here.
 - Build note: two worktrees sharing one target dir mixed artifacts (a "base" exe with the base banner carried this
   branch's code); base exes now build in their own target dir.
+
+## Tabuu's arena on; the Falcon Flyer's floor (2026-11-15, port/boss-arena-porky)
+
+- The Tabuu synctest hang: the VS boss's engine-start helper (scripts, model, start status, arena box, the arena
+  actor) ran detached. With Tabuu's arena the start was slow enough that the helper was still filling a static
+  `OnceLock` when the synctest took its first snapshot; the rollback load wrote that lock back as "running", and the
+  next get waited on it forever (no CPU). `explore::install` now joins the helper. Tabuu's arena is on; synctest
+  depth 1 / 2 / 4 and the seven-boss check pass.
+- The Flyer's floor (owner: "walking on air"): `MELEE_ARENA_COLL_DRAW=1` draws the deck lines over the ship and logs
+  each deck joint next to the drawn top of the Wait pose. The joints sit on the drawn top (within 2 units, except the
+  canopy front joint, 8 up). The fault was the upper envelope: it dropped the joint at the foot of the tail fin (14
+  under the line from the canopy to the fin's top), so the floor was a ramp in the air over the hull. The Flyer now
+  uses a 24-unit dip (`upper_envelope_dip`), which keeps that joint; Porky and Duon keep 12.
+- The Flyer's archive MDL0s: the stage BRRES holds only `373vAdvEscape01` (drawn) and `StagePosition`. Not drawn:
+  Meta Ridley's effect models (smoke, effect), his weapons (the large and small fireballs, the Vulcan) and the
+  Flyer's effect model. Those are the missing pieces; they need the weapon / effect hosts [L].
+- Tabuu's materials are multi-texture, multi-stage TEV (Body: 5 texture references; Cannon, Chain, Cage: 3-4;
+  SparkBit: the environment map alone, sampled by normal). The one-stage drawer cannot show them. Reading stage 0's
+  scale and texture map from the shader was tried and made no visible change; it was taken back. A fix needs the
+  material's TEV stages and texture-coordinate generators [L].

@@ -247,3 +247,31 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   big-endian attributes there, and the clone base's native specials read them as f32. As plain bytes, PlDl's
   Luigi-base SpecialSStart read byte-swapped floats and its ECB went NaN (`mpCollInterpolateECB` assert); the assert's
   report now also names the fighter kind, motion, anim and frame.
+
+### Round 9 (Nov 16)
+
+- Ext fighter 28 group fixed (Charizard, PlLz, internal kind 35). Its article (item kind 262, itFunction[0]) has one
+  state row whose coll callback is a retail address, 0x802AD1E4 `itKoopaFlame_UnkMotion0_Coll`. `fn_native` resolves
+  retail callbacks through `GOBJ_FN`, which only holds `void(gobj)` functions, so the row's `collided` was NULL: the
+  item skipped its coll proc every frame (the spawn-time `it_8026D9A0` the guest calls itself was the only pass, so
+  Rust coll = console's previous pass). `item_i32_fn` (mex_guest.rs, by hand, not generated) now maps the
+  bool-returning item callbacks; a named retail callback that still resolves to nothing logs
+  `mexguest: vanilla callback ... has no native port` once. None logged on the 51 after the fix.
+- Akaneia 51 after it: **41 match** (33 before; all eight ext-28 files). Divergers (file, roster, first slippi, port,
+  field): 223434 0+27 5124 action; 223810 0+31 1088 x; 230601 31+26 1135 x; 232612 27+0 1264 action; 232232 15+31
+  913 x; 233221 7+31 2122 action; 233518 7+31 2194 action; 225603 31+0 4537 action; 232949 0+27 2065 action;
+  232950 31+15 3246 action. Largest group now ext 31 (Dedede, PlDe, internal 38): 7 files.
+- 232232 oracled (scratch r9_o232, `--at 913`): Dedede inhales ext 15 (s0). Guest calls
+  `Fighter_ChangeMotionState(victim, 0x122, 0x100)`, `ftCommon_8007E2F4(vfp, 0x1FF)`, `ftColl_8007B62C(victim, 2)`,
+  `ftCommon_InitGrab`, `ftAnim_8006EBA4`, `ftCommon_8007D5D4`, `ftCommon_SetAccessory` (no guest stores to the
+  victim's CollData, MELEE_MEX_TRACE=1). On that frame the console's victim ECB collapses (bottom/left/right 0, top
+  4.95, prev_ecb 6.42) and prev_pos is one full 3.87 step back; Rust's ECB is ill-formed (top 0.94, left.y 12.55) and
+  prev_pos half a step back (the coll substep count follows ECB size). Not fixed: the next look is which native call
+  on that frame gives the console a zero ECB (victim jobj scale after `Fighter_UpdateModelScale`, or the ECB pass
+  with the victim's bones hidden).
+- 225603 oracled (scratch r9_o603, `--at 4537`): Dedede enters 382 at anim frame 14 (`ChangeMotionState(.., 0x17E,
+  0x4000, f1=14)` from the landing callback), both sides reach frame 16 with the same position; the console's anim
+  callback (`ftAnim_IsFramesRemaining` false) moves it to 383 at 4537, Rust says frames remain. So the bone AObj end
+  test (`lb_8000B074` over the parts) differs for Dedede's anim 328 started mid-way; not looked at further. Baseline
+  there also has an item (it0) hitbox live in Rust and cleared in the console from before 4534.
+- Not done: Liu Kang rand order, Meta Knight multi-table.

@@ -190,6 +190,44 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   (near_zero=1 is the uninitialised-register path). The replays-ext count was not run.
 - Not done: the 51-file rerun, the other 18 divergers, Liu Kang rand order, Meta Knight multi-table.
 
+### Round 8 (Nov 16)
+
+- Untyped pointer args, audited (13 arms passed `c.ptr(i, None)`). Strings (`HSD_ArchiveGetPublicAddress` name,
+  `__assert`), `HSD_StateInitTev` (a native render object) and the Item_GObj firsts of `it_802F23AC` / `it_802F28C8`
+  (registered native gobjs) are safe. Fixed: `Call::words(i, n)` marshals n plain words (native object field as is,
+  guest memory word by word through `ld32`/`st32`, written back in `finish`) for `HSD_MtxSRT` m, `PSMTXConcat` a/b/ab
+  (12 words each), `ftColl_80076640` / `ftColl_80078710` f32 outs and `mpCheckAllRemap` line/flags outs;
+  `Item_8026AC74`, `it_8026BB68`, `it_8027429C` now pass their Vec3 args as `Some("Vec")`. gen_mex_bridge.py has the
+  same rule (`WORD_ARGS`). Akaneia 51 after it: **33 match** (32 before; 0801T234358 now matches, five divergers
+  moved later: 223810 1031->1088, 230601 1098->1135, 232232 790->913, 233518 1882->2194, 232950 1207->3246).
+- **Regen bug, still open:** a full `gen_mex_bridge.py` run drops unrelated arms (atan2f, ft_8008A1FC,
+  gm_8016B168 seen in Round 7), so every bridge change this round was made to `mex_bridge.rs` by hand, with the
+  generator edited to match. Do not regenerate until that is fixed.
+- 225603 slippi 127 (Dedede walk-with-victim): two misses. (1) `GOBJ_FN` rows carry the port's snake-case names
+  (`ftwalkcommon_800e0060`), while `vanilla_name` gives `ftWalkCommon_800E0060`; the binary search missed, the call
+  was dropped and Dedede never moved in SpecialNEatWalk (Rust gr_vel 0, console -0.088875 = accel with accel_mul 0.6
+  from ftData+0x48). `gobj_fn` / `gobj2_fn` now fall back to a case-blind match (generator too). (2)
+  `ftWalkCommon_800DFEC8(gobj, cb)` (the walk-type resync, cb = guest `SpecialN_ASWalk`, called from the IASA through
+  a data word) was not bridged; hand_bridge now runs the native function with a trampoline that runs the guest
+  callback with the frame in f1 (`run_at_f1`). 225603: 127 -> 4537 (action 382 vs 383, not looked at).
+  `MELEE_MEX_CALLTRACE=1` showed both (a call listed, no native effect).
+- Rerun after both: still **33 of 51** (the gobj_fn fix only moved 225603). Divergers (file, roster, first slippi,
+  port, field): 223211 0+28 7017 percent; 223434 0+27 5124 action; 223810 0+31 1088 x; 230601 31+26 1135 x;
+  232612 27+0 1264 action; 231714 7+28 3085 percent; 232232 15+31 913 x; 231752 0+28 2949 percent; 233221 7+31 2122
+  action; 233518 7+31 2194 action; 233854 7+28 3907 action; 225033 28+20 916 last_attack; 225603 31+0 4537 action;
+  223533 20+28 4551 action; 232949 0+27 2065 action; 231817 28+1 1061 combo; 232950 31+15 3246 action;
+  002252 0+28 1596 percent. Largest group: ext fighter 28 (7 files, 4 of them `percent`).
+- 0822T002252 oracled (`--at 1580`, scratch r8_o252b): the first difference is slippi 1580, an m-ex custom article
+  (item kind 262, fighter 28's) on its spawn frame. Its spawn position is one ulp off (pos.x 15.900756 vs 15.900755)
+  and its itemColl was not updated on the spawn frame: Rust cur_pos = the console's last_pos, `x378_itemColl.x38`
+  one less. So the console runs one item collision pass at spawn that the port skips (or runs before the position
+  is set). Not fixed; that is the next item for the group of 28.
+- Behaviour 18 (`MELEE_CPU_TRACE=1`, scratch/replays-ext, 125 vanilla replays, all 125 match): 4 replays reach
+  behaviour 18, **2 reach near_zero=1** (3 events in all); both still match, so the uninitialised-register stick did
+  not change the outcome there.
+- Not done: Liu Kang rand order (probe_lk_rand), Meta Knight multi-table, the other groups. Akaneia's added-stage
+  grFunction blobs (ext:288-290) stay a separate item.
+
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 
 - Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline

@@ -12,6 +12,8 @@ publish.workspace = true
 calltrace = []
 # Discrimination bits at the fp/int helper call sites (disc.rs): the covtest build only (notes/coverage-testing.md).
 disc = []
+# Union-drift checker (mvshadow.rs, tools/rust-port/mvshadow/instrument.py): an instrumented scratch build only.
+mvshadow = []
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }

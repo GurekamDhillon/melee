@@ -8,6 +8,7 @@
 
 pub mod codes;
 pub mod ct;
+pub mod mvshadow;
 pub mod fp;
 pub mod fptrace;
 pub mod frameprof;

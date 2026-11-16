@@ -262,6 +262,7 @@ impl Engine {
             melee_items::tu::itmaterial::it_mobj_static_init(); // the C data initialiser of the item material class
             
         }
+        crate::workers::warm(); // the asset replay's pool threads, made before any timed frame
         melee_link::install();
         melee_link::install_retail();
         unsafe { melee_runtime::tu::generator::GEN_TRACE = std::env::var_os("MELEE_PS_TRACE").is_some(); }

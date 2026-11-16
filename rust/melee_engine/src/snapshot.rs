@@ -348,6 +348,22 @@ pub fn prewarm() {
     });
 }
 
+/// The host block's base is copied by a helper thread behind a write fault (cow::bg; MELEE_SNAP_BGCOPY=0: on the game
+/// thread at capture, as before).
+#[cfg(windows)]
+fn bg_copy() -> bool {
+    std::env::var("MELEE_SNAP_BGCOPY").map_or(true, |v| v != "0")
+}
+
+/// The host block's write faults while its base was being copied in the background (stats line).
+fn bg_faults_note() -> String {
+    #[cfg(windows)]
+    if crate::cow::bg::active() || crate::cow::bg::faults() > 0 {
+        return format!("; host base copy: {} write faults", crate::cow::bg::faults());
+    }
+    String::new()
+}
+
 /// Copy `src` into `dst` (same length), split over a few threads when big.
 fn par_fill(dst: &mut [u8], src: &[u8]) {
     const THREADS: usize = 4;
@@ -507,6 +523,8 @@ impl Drop for Base {
             if self.static_watch {
                 crate::pagewatch::release();
             }
+            #[cfg(windows)]
+            crate::cow::bg::end();
             crate::cow::release()
         };
     }
@@ -584,6 +602,21 @@ impl Base {
         let mut warm = PREWARM.lock().map(|mut g| std::mem::take(&mut *g)).unwrap_or_default();
         for i in 1..n {
             let (a, l) = b.ranges[i];
+            // the host block (64 MB, most of the copy): read-only now, copied by a helper thread (cow::bg)
+            #[cfg(windows)]
+            if i == HOST && bg_copy() && l % PAGE == 0 {
+                let mut v = match warm.get_mut(i).map(std::mem::take) {
+                    Some(v) if v.len() == l => v,
+                    _ => vec![0u8; l],
+                };
+                match unsafe { crate::cow::bg::begin(a, l, v.as_mut_ptr()) } {
+                    Ok(()) => {
+                        b.data[i] = v;
+                        continue;
+                    }
+                    Err(e) => eprintln!("snapshot: host block copied in place ({e})"),
+                }
+            }
             let src = unsafe { bytes(a, l) };
             b.data[i] = match warm.get_mut(i).map(std::mem::take) {
                 Some(mut v) if v.len() == l => {
@@ -725,6 +758,12 @@ impl Base {
             let at = self.ranges[0].0 + pi * PAGE;
             // never written since the capture: the live page IS the base page
             return unsafe { crate::cow::saved(at).unwrap_or_else(|| bytes(at, PAGE)) };
+        }
+        #[cfg(windows)]
+        if ri == HOST && crate::cow::bg::active() && !crate::cow::bg::copied(pi) {
+            // not copied yet, so not written since the capture (a write copies it first): the live page is the base
+            let (a, l) = self.ranges[HOST];
+            return if (pi + 1) * PAGE <= l { unsafe { bytes(a + pi * PAGE, PAGE) } } else { &ZERO };
         }
         let d = &self.data[ri];
         let s = pi * PAGE;
@@ -1018,6 +1057,7 @@ impl Base {
             s.loads, s.load_full, per(s.load_cand, s.loads), per(s.load_copied, s.loads),
             if self.static_watch { "watched" } else { "scanned" }, s.static_faults, s.static_reprotects, s.checks, s.checked_pages, s.hashes, s.hashes_cached, per(s.hash_digests, s.hashes)
         )
+        + &bg_faults_note()
     }
 
     /// A hash of the OS-heap block (the C-layout game state: fighters, items, gobjs, jobjs). The arena holds Rust

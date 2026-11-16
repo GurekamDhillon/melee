@@ -642,19 +642,10 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
             }
         }
         cuts.push(p.blocks.len());
-        let (w, a) = (&write, &addr);
-        std::thread::scope(|sc| {
-            for c in cuts.windows(2).skip(1) {
-                let (lo, hi) = (c[0], c[1]);
-                sc.spawn(move || {
-                    for k in lo..hi {
-                        if p.live(k) {
-                            w(k, a);
-                        }
-                    }
-                });
-            }
-            for k in cuts[0]..cuts[1] {
+        let (w, a, cuts) = (&write, &addr, &cuts);
+        // the persistent pool (workers.rs): a wake-up per part, not a thread spawn per part
+        crate::workers::run(cuts.len() - 1, &|i| {
+            for k in cuts[i]..cuts[i + 1] {
                 if p.live(k) {
                     w(k, a);
                 }

@@ -276,6 +276,8 @@ impl Exporter {
         match std::fs::write(&path, &o) {
             Ok(()) => {
                 eprintln!("gw: slp: {} frames ({}..{}) written to {path}", m.frames, -123, m.frame);
+                // the bracket client's auto-upload queue (a netplay game, setting bracket_upload=1; no network here)
+                crate::bracket::replay_written(&path, &self.played_on);
                 self.written.push(path);
             }
             Err(e) => eprintln!("gw: slp: {path}: {e}"),

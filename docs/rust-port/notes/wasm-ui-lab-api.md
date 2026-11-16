@@ -295,6 +295,44 @@ d-pad cycles a character or the keyboard types; left / right the tab; Y the sort
 installs the queue, Y asks for a sync. `MELEE_NUCLEUS_PERF=1` logs the game-thread pump cost and the frame interval
 every 600 presents.
 
+#### A6.2 Brackets (gd-ui-v1.4): the in-game bracket client
+
+`gdmod_ui_abi` 1.4 (minor bump; 1.2 / 1.3 mods still load). Three catalogs and six requests under `UI_HOST`
+(records in `gd-ui-lab-v1.h`). The host is a native service, `rust/melee/src/bracket/` (no separate client to
+download); the screen is the bundled first-party mod `rust/mods/bracket` (`build/mods/bracket.wasm`, shipped in the
+release's mods folder, never fetched). Y on the main menu opens it.
+
+| | |
+|---|---|
+| `GD_UI_LIST_BRACKET` (9) | one record: key fingerprint (first 16 hex digits of the public key, grouped), linked (0/1), server reachable (0 not asked yet, 1 yes, 2 no), server origin, auto-upload (0/1), event (`bracket_event`, "" none), last message, message is an error (0/1) |
+| `GD_UI_LIST_BRACKET_QUEUE` (10) | the upload queue, newest first, at most 60: file name, state (queued / uploading / done / failed), attempts, `event/set/game` once decided, reason |
+| `GD_UI_LIST_BRACKET_SETS` (11) | my sets: empty until the server's (b) API |
+| `GD_UI_REQ_BRACKET_STATUS` (13) | (no argument) starts the service on first use (key, queue) and probes the server (`GET /`) |
+| `GD_UI_REQ_BRACKET_LINK` (14) | link code (A-Z 0-9 '-', at most 32). Until the server has a link route: STATUS error "not available yet" |
+| `GD_UI_REQ_BRACKET_MY_SETS` (15), `_READY` (16, set id), `_JOIN` (17, set id) | stubs: STATUS error "not available yet" until (b) |
+| `GD_UI_REQ_BRACKET_AUTO` (18) | "1" / "0": writes `bracket_upload=` in settings.cfg |
+
+The service: an Ed25519 key made on first use in `<settings.cfg folder>/bracket/client.key` (user-only: 0600, or on
+Windows an ACL for the current user only); only the worker thread reads it; it is never given to a mod and never
+logged. Requests are signed with the server repo's own scheme (`rust/autobracket_proto`, vendored from
+melee-autobracket `crates/proto/src/sign.rs`, AGPL-3.0-or-later in its own crate; tests check byte-equal signatures
+against upstream). HTTPS goes to one pinned origin, `https://bracket.gsd.sh`, or `MELEE_BRACKET_SERVER` (https, or
+plain http to 127.0.0.1 / localhost for a test server), Nucleus style: WinHTTP on Windows, the system curl elsewhere
+(body and headers in user-only temp files), the final address after redirects re-checked, 10 s connect, 30 s per
+request (120 s for an upload), the Nucleus User-Agent. One worker thread; the game thread only `try_lock`s for the
+lists and never waits on the network.
+
+Auto-upload (setting `bracket_upload=1`, `MELEE_BRACKET_UPLOAD`; default off): a netplay run with no `--slp` of its
+own records and exports its games (`--record auto --slp auto`; the .slp comes from the headless playback at the end of
+the run, as for any rollback run). Each .slp the exporter writes for a netplay game drops a line into
+`bracket/inbox/`; the worker moves it into `bracket/queue.tsv` (rewritten atomically; a restart re-queues an
+interrupted upload), asks `GET /v1/me/next?event=<bracket_event>` for the set and game, and uploads with the phase-1
+route `POST /v1/sets/{event}/{set}/games/{n}/replay` (header `x-ab-build`: the first line of `melee version`, `+`, 12
+hex digits of the exe's SHA-256, as the reference client sends). Transport errors, 408, 429 and 5xx retry after 5,
+15, 45, 135, then every 300 s (or Retry-After); another 4xx fails the item with the server's message. At the end of a
+run the queue gets up to `MELEE_BRACKET_FLUSH_SECS` (20) to go out; the rest uploads at the next launch. Tests:
+`MELEE_BRACKET_DIR` moves the folder.
+
 ### A5. Scene flow (`UI_SCENE`)
 
 | import | signature |

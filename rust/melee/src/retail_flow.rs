@@ -1234,6 +1234,8 @@ impl RetailPlay {
         }
         self.save_replay();
         crate::slp_export::finish();
+        // the bracket client: this run's netplay games are in its queue now; give the uploads a bounded moment
+        self.bracket_at_quit();
         if let Some(f) = &self.failed {
             log(&format!("failed: {f}"));
             crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);

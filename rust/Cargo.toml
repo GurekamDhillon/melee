@@ -12,7 +12,7 @@
 [workspace]
 resolver = "2"
 members = ["melee_core", "melee_fptrace", "melee_types", "melee_runtime", "melee_world", "melee_fighter",
-           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee_link", "melee_link_abi", "melee_link_p0", "melee_link_p1", "melee_link_p2", "melee_link_p3", "melee_link_p4", "melee_link_p5", "melee_engine", "melee_modhost", "melee", "melee_corev1", "melee_relay", "brawl_boss",
+           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee_link", "melee_link_abi", "melee_link_p0", "melee_link_p1", "melee_link_p2", "melee_link_p3", "melee_link_p4", "melee_link_p5", "melee_engine", "melee_modhost", "melee", "melee_corev1", "melee_relay", "brawl_boss", "autobracket_proto",
            "../tools/mex-import"]
 
 [workspace.package]

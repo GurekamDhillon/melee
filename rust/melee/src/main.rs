@@ -34,6 +34,7 @@ mod geno_suite;
 mod cosmetics;
 mod cosmetics_import;
 mod nucleus;
+mod bracket;
 mod settings_overlay;
 mod crash;
 mod hang;

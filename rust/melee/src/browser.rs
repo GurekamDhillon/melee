@@ -29,6 +29,9 @@ pub struct State {
     modes: Vec<(String, Launch)>,
     /// The SSBM Nucleus engine (gd-ui-v1.3): threads start when the browser's Nucleus view first asks.
     nc: Option<crate::nucleus::Engine>,
+    /// The bracket client (gd-ui-v1.4, src/bracket): started by the first bracket request, or at the first present when
+    /// auto-upload is on.
+    bk: Option<crate::bracket::Service>,
     perf: Option<Perf>,
 }
 
@@ -120,6 +123,7 @@ impl RetailPlay {
         }
         let t0 = std::time::Instant::now();
         self.nucleus_tick();
+        self.bracket_tick();
         if let Some(p) = self.browser.perf.as_mut() {
             let now = std::time::Instant::now();
             p.pump_us.push((now - t0).as_secs_f64() * 1e6);
@@ -169,6 +173,45 @@ impl RetailPlay {
         }
     }
 
+    /// The bracket lists when the worker's state moved (`try_lock` only: never waits on the worker).
+    fn bracket_tick(&mut self) {
+        let Some(b) = self.browser.bk.as_mut() else { return };
+        let Some((st, q)) = b.view() else { return };
+        let server = b.server().to_string();
+        let auto = crate::bracket::auto_upload();
+        let ev = crate::bracket::event().map_or(String::new(), |e| e.to_string());
+        let reach = st.reachable.to_string();
+        let u = self.ui.as_mut().unwrap();
+        u.set_list(mui::LIST_BRACKET, vec![rec(&[&st.fingerprint, if st.linked { "1" } else { "0" }, &reach, &server, if auto { "1" } else { "0" }, &ev, &st.message, if st.error { "1" } else { "0" }])]);
+        let recs = q
+            .iter()
+            .rev()
+            .take(60)
+            .map(|t| {
+                let name = std::path::Path::new(&t.file).file_name().map_or(String::new(), |f| f.to_string_lossy().into_owned());
+                let tgt = t.target.map_or(String::new(), |(e, s, g)| format!("{e}/{s}/{g}"));
+                rec(&[&name, t.state.name(), &t.attempts.to_string(), &tgt, &t.reason])
+            })
+            .collect();
+        u.set_list(mui::LIST_BRACKET_QUEUE, recs);
+    }
+
+    fn bracket(&mut self) -> &mut crate::bracket::Service {
+        self.browser.bk.get_or_insert_with(crate::bracket::Service::start)
+    }
+
+    /// The end of the run (after the replay and its .slp are written): with auto-upload on, give the queue up to
+    /// `MELEE_BRACKET_FLUSH_SECS` (default 20) to go out; what is left uploads at the next launch.
+    pub(super) fn bracket_at_quit(&mut self) {
+        if !crate::bracket::auto_upload() {
+            return;
+        }
+        let secs = std::env::var("MELEE_BRACKET_FLUSH_SECS").ok().and_then(|v| v.parse().ok()).unwrap_or(20u64);
+        let b = self.bracket();
+        b.flush(std::time::Duration::from_secs(secs));
+        self.browser.bk = None;
+    }
+
     fn nucleus(&mut self) -> &mut crate::nucleus::Engine {
         if self.browser.nc.is_none() {
             let dir = self.mods_dir.clone().or_else(|| crate::cfg::text("mods_dir"));
@@ -189,6 +232,9 @@ impl RetailPlay {
         let u = self.ui.as_mut().unwrap();
         u.set_list(mui::LIST_ONLINE, vec![rec(&[if srv.is_some() { "1" } else { "0" }, if srv.is_some() { "Room codes via the configured server." } else { "No server set: join and spectate take HOST:PORT." }])]);
         status(u, 0, "ready");
+        if crate::bracket::auto_upload() {
+            self.bracket();
+        }
     }
 
     fn browser_fill_modes(&mut self) {
@@ -451,6 +497,29 @@ impl RetailPlay {
                 e.open();
                 e.refresh();
                 st(self, 0, "Checking SSBM Nucleus for changes.");
+            }
+            mui::REQ_BRACKET_STATUS => {
+                self.bracket().probe();
+                st(self, 0, "Checking the bracket server.");
+            }
+            mui::REQ_BRACKET_AUTO => {
+                let on = arg == "1";
+                crate::cfg::open().set_str("bracket_upload", if on { "1" } else { "0" });
+                self.bracket().wake();
+                if let Some(b) = self.browser.bk.as_mut() {
+                    b.touch();
+                }
+                st(self, 0, if on { "Auto-upload on: netplay games upload after the session." } else { "Auto-upload off." });
+            }
+            mui::REQ_BRACKET_LINK => {
+                let ok = !arg.is_empty() && arg.len() <= 32 && arg.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-');
+                self.bracket();
+                st(self, 1, if ok { crate::bracket::NOT_YET } else { "Type the link code from the bracket site." });
+            }
+            mui::REQ_BRACKET_MY_SETS | mui::REQ_BRACKET_READY | mui::REQ_BRACKET_JOIN => {
+                self.bracket();
+                self.ui.as_mut().unwrap().set_list(mui::LIST_BRACKET_SETS, Vec::new());
+                st(self, 1, crate::bracket::NOT_YET);
             }
             mui::REQ_REFRESH => {
                 match arg {

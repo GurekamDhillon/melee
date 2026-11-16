@@ -43,6 +43,8 @@ font8x8 = "0.3.1"
 # cosmetics imports: ZIP members (deflate) and portrait / stock icon PNGs
 miniz_oxide = "0.8"
 png = "0.18"
+# the bracket client (src/bracket): the server repo's request signing, vendored (AGPL-3.0-or-later, its own crate)
+autobracket_proto = { path = "../autobracket_proto" }
 
 [dev-dependencies]
 # the Geno lab end-to-end test (lab/geno.rs) builds its tiny Lab mod from text, as melee_modhost's tests do

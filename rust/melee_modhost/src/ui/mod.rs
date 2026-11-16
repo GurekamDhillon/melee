@@ -194,7 +194,12 @@ pub const LIST_ONLINE: usize = 5;
 pub const LIST_NC: usize = 6;
 pub const LIST_NC_QUEUE: usize = 7;
 pub const LIST_NC_STATE: usize = 8;
-pub const LIST_KINDS: usize = 9;
+/// gd-ui-v1.4: the bracket client (rust/melee/src/bracket): its state line, the upload queue, my sets (empty until
+/// the server's (b) API).
+pub const LIST_BRACKET: usize = 9;
+pub const LIST_BRACKET_QUEUE: usize = 10;
+pub const LIST_BRACKET_SETS: usize = 11;
+pub const LIST_KINDS: usize = 12;
 /// gd-ui-v1.2 request ops (`GD_UI_REQ_*`).
 pub const REQ_LAUNCH: i32 = 1;
 pub const REQ_MOD_SET: i32 = 2;
@@ -210,6 +215,14 @@ pub const REQ_NC_SEARCH: i32 = 9;
 pub const REQ_NC_QUEUE: i32 = 10;
 pub const REQ_NC_PROCESS: i32 = 11;
 pub const REQ_NC_SYNC: i32 = 12;
+/// gd-ui-v1.4 bracket requests: status (re-probe the server), link (code; "not available yet" until (b)), my sets,
+/// ready (set id), join (set id) (the last three also "not available yet"), auto-upload ("1" on / "0" off).
+pub const REQ_BRACKET_STATUS: i32 = 13;
+pub const REQ_BRACKET_LINK: i32 = 14;
+pub const REQ_BRACKET_MY_SETS: i32 = 15;
+pub const REQ_BRACKET_READY: i32 = 16;
+pub const REQ_BRACKET_JOIN: i32 = 17;
+pub const REQ_BRACKET_AUTO: i32 = 18;
 pub const REQ_MAX_ARG: u32 = 256;
 pub const REQ_MAX_PENDING: usize = 8;
 
@@ -1397,7 +1410,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if !feat(&c, FEATURE_UI_HOST) {
             return GD_ECAP;
         }
-        if !(REQ_LAUNCH..=REQ_NC_SYNC).contains(&op) || len > REQ_MAX_ARG {
+        if !(REQ_LAUNCH..=REQ_BRACKET_AUTO).contains(&op) || len > REQ_MAX_ARG {
             return GD_EINVAL;
         }
         let Some(arg) = read_str(&c, s, len) else { return GD_EINVAL };

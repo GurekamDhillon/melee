@@ -1,0 +1,16 @@
+# Vendored from github.com/GurekamDhillon/melee-autobracket crates/proto (src/sign.rs) at 277d8998, AGPL-3.0-or-later
+# like that repo (LICENSE here). The bracket server's request-signing scheme, shared byte for byte with the server and
+# its reference client (crates/client), so the engine's bracket host (rust/melee/src/bracket) signs exactly as they do.
+# Only the signing module is vendored: the rest of `proto` is serde types the engine reads with its own JSON reader,
+# and crates/client is a tokio/reqwest Linux CLI (the engine has its own WinHTTP / curl transport, nucleus-style).
+[package]
+name = "autobracket_proto"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[dependencies]
+ed25519-dalek = { version = "2", default-features = false, features = ["std", "zeroize"] }
+sha2 = "0.10"
+getrandom = "0.2"

@@ -1,0 +1,20 @@
+# Brackets (wasm-ui-lab-api.md A6.2): the bracket client's screen, a gd-ui-v1.4 presentation mod bundled with the game. Built by tools/rust-port/modhost/build_mods.sh.
+[package]
+name = "bracket"
+version = "0.1.0"
+edition = "2021"
+license = "CC0-1.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gd_ui_enc = { path = "../gd_ui_enc" }
+
+[profile.release]
+opt-level = 3
+panic = "abort"
+lto = true
+
+[workspace]

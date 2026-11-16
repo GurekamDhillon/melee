@@ -1843,7 +1843,14 @@ pub fn play(args: &[String]) -> ExitCode {
             }
         }
         rp.sync = sync_k.map(|k| crate::play_net::PlaySync { st: melee_net::session::SyncTest::new(k), g: None });
-        if let Some(path) = get("--record") {
+        // the bracket client's auto-upload (setting bracket_upload=1, default off): a netplay run with no --slp of its
+        // own records and exports its games (`--record auto --slp auto`), so each one reaches the upload queue
+        let slp_own = get("--slp").or_else(|| std::env::var("MELEE_SLP_RECORD").ok().filter(|s| !s.is_empty()));
+        let bracket_auto = net.is_some() && slp_own.is_none() && crate::bracket::auto_upload();
+        if bracket_auto {
+            log("bracket: auto-upload on: this netplay run records its games and exports them as .slp");
+        }
+        if let Some(path) = get("--record").or_else(|| bracket_auto.then(|| "auto".to_string())) {
             let path = if path == "auto" {
                 let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
                 format!("Replays/melee-{t}.mrpl")
@@ -1868,7 +1875,7 @@ pub fn play(args: &[String]) -> ExitCode {
         // `--slp FILE|auto`: Slippi export. Live only when nothing rolls back; otherwise from the .mrpl playback (play_net).
         // MELEE_SLP_RECORD=<file> (the C build's recording variable) is the same export when --slp is not given: Game Start,
         // Frame Start, Pre-Frame, Post-Frame, Frame Bookend, Game End and metadata, so the file plays in Slippi Dolphin.
-        if let Some(spec) = get("--slp").or_else(|| std::env::var("MELEE_SLP_RECORD").ok().filter(|s| !s.is_empty())) {
+        if let Some(spec) = slp_own.or_else(|| bracket_auto.then(|| "auto".to_string())) {
             if rollback_mode && rp.feed.is_none() {
                 if net.is_some() && rp.rec.is_some() {
                     crate::play_net::SLP_AFTER.with(|c| *c.borrow_mut() = Some(spec.clone()));

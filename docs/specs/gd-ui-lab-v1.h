@@ -187,6 +187,16 @@ int      gd_ui_request(int op, const char* arg, unsigned len);    /* GD_OK queue
  *   NC_QUEUE(post id: queue / unqueue)  NC_PROCESS("1" start / "0" pause; saved: a restart resumes)  NC_SYNC() */
 enum { GD_UI_LIST_NC = 6, GD_UI_LIST_NC_QUEUE, GD_UI_LIST_NC_STATE };
 enum { GD_UI_REQ_NC_SEARCH = 9, GD_UI_REQ_NC_QUEUE, GD_UI_REQ_NC_PROCESS, GD_UI_REQ_NC_SYNC };
+/* ---- gd-ui-v1.4 (UI_HOST): the bracket client (wasm-ui-lab-api.md A6.2; host rust/melee/src/bracket; mod rust/mods/bracket) ----
+ *   BRACKET        one record: key fingerprint, linked (0/1), reachable (0 unknown / 1 / 2 no), server, auto-upload (0/1),
+ *                  event ("" none), last message, message is an error (0/1)
+ *   BRACKET_QUEUE  newest first, <= 60: file name, state (queued / uploading / done / failed), attempts, "event/set/game", reason
+ *   BRACKET_SETS   my sets (empty until the server's (b) API)
+ * Requests: BRACKET_STATUS() (starts the service, probes the server)  BRACKET_LINK(code)  BRACKET_MY_SETS()
+ *   BRACKET_READY(set)  BRACKET_JOIN(set)  (LINK..JOIN: "not available yet" until (b))  BRACKET_AUTO("1" / "0") */
+enum { GD_UI_LIST_BRACKET = 9, GD_UI_LIST_BRACKET_QUEUE, GD_UI_LIST_BRACKET_SETS };
+enum { GD_UI_REQ_BRACKET_STATUS = 13, GD_UI_REQ_BRACKET_LINK, GD_UI_REQ_BRACKET_MY_SETS, GD_UI_REQ_BRACKET_READY,
+       GD_UI_REQ_BRACKET_JOIN, GD_UI_REQ_BRACKET_AUTO };
 /* texture handle (for GD_UI_OP_TEX) of host picture `key`, 96 x 72 RGBA fitted, 0 while not on hand (ask every frame
  * the picture is on screen: the ask renews it, an unknown key is fetched off the game thread; <= 2 uploads per present,
  * 16 slots recycled least recently used, so a handle shows whatever key was last asked through it) */

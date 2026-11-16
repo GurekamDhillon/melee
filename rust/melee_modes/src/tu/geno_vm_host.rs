@@ -135,15 +135,25 @@ fn arg(a: &vr::Actor, x: A) -> f32 {
 /// A forwarded 0619: (id, part, bone, damage + per-L, angle, growth + per-L, set + per-L, base + per-L, size + per-L,
 /// offset x y z, ...), the numbers taken at the actor's L.
 unsafe fn set_box(p: &Program, a: &vr::Actor, ins: &vr::Ins) {
+    INST = INST.wrapping_add(1);
+    let Some(nb) = box_of(p, a, ins, INST) else { return };
+    let id = nb.id;
+    let slot = BOXES.iter().position(|b| b.on && b.id == id).or_else(|| BOXES.iter().position(|b| !b.on));
+    if let Some(s) = slot {
+        BOXES[s] = nb;
+    }
+}
+
+/// The box a forwarded 0619 opens (its numbers at the actor's L), `inst` its hit group. None: a short command.
+pub fn box_of(p: &Program, a: &vr::Actor, ins: &vr::Ins, inst: u32) -> Option<VmBox> {
     if ins.n < 17 {
-        return;
+        return None;
     }
     let v = |k: u32| p.args.get((ins.a + k) as usize).map_or(0.0, |&x| arg(a, x));
     let l = a.level();
     let lin = |k: u32| v(k) + v(k + 1) * l;
     let id = melee_core::ppc::fctiwz_f32(v(0)) as u8;
-    INST = INST.wrapping_add(1);
-    let nb = VmBox {
+    Some(VmBox {
         on: true,
         id,
         bone: melee_core::ppc::fctiwz_f32(v(2)),
@@ -154,12 +164,8 @@ unsafe fn set_box(p: &Program, a: &vr::Actor, ins: &vr::Ins) {
         bkb: lin(10),
         size: lin(12),
         offset: [v(14), v(15), v(16)],
-        inst: INST,
-    };
-    let slot = BOXES.iter().position(|b| b.on && b.id == id).or_else(|| BOXES.iter().position(|b| !b.on));
-    if let Some(s) = slot {
-        BOXES[s] = nb;
-    }
+        inst,
+    })
 }
 
 /// What the host mirrors after a VM frame.

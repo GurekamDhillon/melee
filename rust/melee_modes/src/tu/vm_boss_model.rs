@@ -39,6 +39,40 @@ const MODELS: &[(&str, &str, &str)] = &[
     ("bucculus", "EnmBucyulus", "Wait"),
 ];
 
+/// The room enemies' models (explore_vm), one per `vm::FILES` row, the MDL0 `Enm<class>` of the enemy's archive.
+/// Loaded at the stage load ([`enemy_prefetch`], before the match's first frame, so every snapshot already has
+/// them); [`enemy_get`] never waits.
+const EMAX: usize = 64;
+static EM: [OnceLock<Option<Model>>; EMAX] = [const { OnceLock::new() }; EMAX];
+
+fn enemy_row(name: &str) -> Option<usize> {
+    brawl_boss::vm::FILES.iter().position(|f| f.0 == name).filter(|&k| k < EMAX)
+}
+
+/// Load room enemy `name`'s model (blocking: the stage load's helper / setup only). Its program's motion lengths are
+/// set from the clips here.
+pub fn enemy_prefetch(name: &str) {
+    if off() {
+        return;
+    }
+    let Some(k) = enemy_row(name) else { return };
+    EM[k].get_or_init(|| {
+        let n = name.to_string();
+        std::thread::spawn(move || {
+            let mdl = format!("Enm{}", brawl_boss::vm::class_of(&n));
+            read_with(&n, &mdl, "Wait", true).or_else(|| read_with(&n, &mdl, "Wait1", true))
+        })
+        .join()
+        .ok()
+        .flatten()
+    });
+}
+
+/// Room enemy `name`'s model once loaded (never waits; None: not loaded, absent, or no model).
+pub fn enemy_get(name: &str) -> Option<&'static Model> {
+    EM[enemy_row(name)?].get()?.as_ref()
+}
+
 pub struct Model {
     pub rig: pm::Rig,
     /// per VM motion: the clip index in `rig.anims` (None: the model has no clip of that name)
@@ -102,9 +136,12 @@ fn load(name: &str) -> Option<&'static Model> {
 
 fn read(name: &str) -> Option<Model> {
     let &(_, mdl, idle) = MODELS.iter().find(|m| m.0 == name)?;
+    read_with(name, mdl, idle, crate::tu::petey::vm_boss(name))
+}
+
+fn read_with(name: &str, mdl: &str, idle: &str, vm_run: bool) -> Option<Model> {
     let &(_, _, arc, _) = brawl_boss::vm::FILES.iter().find(|f| f.0 == name)?;
     // the VM program names the motions the root tracks follow; a define-path actor (no VM run) keeps none
-    let vm_run = crate::tu::petey::vm_boss(name);
     let p = if vm_run { Some(crate::tu::geno_vm::program(name)?) } else { None };
     let names: Vec<String> = p.map(|p| p.motion_names.clone()).unwrap_or_default();
     let mut rig = pm::load_rigs_with(&["stage", "adventure", arc], &[(mdl, mdl, idle)], false).ok()?.into_iter().next()??;
@@ -207,6 +244,20 @@ pub fn root_move(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor) -> Opti
     Some(root_delta(p, m, a.motion, a.tick.wrapping_sub(a.motion_t0)))
 }
 
+/// [`root_move`] for a given model (the room enemies').
+pub fn root_move_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor) -> [f32; 2] {
+    root_delta(p, m, a.motion, a.tick.wrapping_sub(a.motion_t0))
+}
+
+/// [`bone_world`] for a given model (the room enemies').
+pub fn bone_world_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i32, local: [f32; 3]) -> Option<[f32; 2]> {
+    let slot = m.rig.bone_by_index(u32::try_from(bone).ok()?)?;
+    let g = posed(p, m, a)?;
+    let q = pm::Rig::posed_point(&g, slot, local);
+    let r = model_mat(a);
+    Some([a.pos[0] + r[0][0] * q[0] + r[0][1] * q[1] + r[0][2] * q[2], a.pos[1] + r[1][0] * q[0] + r[1][1] * q[1] + r[1][2] * q[2]])
+}
+
 /// The second motion channel's root move (kind 24): motion `mi`, begun at tick `t0` (the forwarded 040A).
 pub fn root_move2(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, mi: i32, t0: u32) -> [f32; 2] {
     match M.get() {
@@ -279,6 +330,11 @@ pub fn bone_rot(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i3
 /// facing and rotation (the same transform as [`bone_world`]).
 pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash: bool) -> bool {
     let Some(Some(m)) = M.get() else { return false };
+    draw_m(m, p, a, flash, crate::tu::geno_vm_host::vis_slot(), 1.0)
+}
+
+/// [`draw`] for any loaded model (the room enemies' too): `slot` the extra visibility slot (-1 none), `scale` the size.
+pub unsafe fn draw_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash: bool, slot: (i32, u32), scale: f32) -> bool {
     let Ok(mut b) = m.bufs.lock() else { return false };
     let mi = a.motion.max(0) as usize;
     let anim = m.clip.get(mi).copied().flatten().map(|c| &m.rig.anims[c].1);
@@ -286,14 +342,14 @@ pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash
     // the motion's VIS0 at the motion's frame, then the extra visibility slot a forwarded 0410 set (its own frame)
     let vis_of = |k: i32| m.vis.get(usize::try_from(k).ok()?).copied().flatten().map(|i| &m.rig.vis[i].1);
     let main = vis_of(a.motion).filter(|_| !no_vis()).map(|v| (v, f as f32));
-    let (sm, st0) = crate::tu::geno_vm_host::vis_slot();
+    let (sm, st0) = slot;
     let slot = vis_of(sm).filter(|_| !no_vis()).map(|v| (v, a.tick.wrapping_sub(st0) as f32));
     match (main, slot) {
         (Some(x), Some(y)) => m.rig.skin_vis(anim, f as f32, &[x, y], &mut b),
         (Some(x), None) | (None, Some(x)) => m.rig.skin_vis(anim, f as f32, &[x], &mut b),
         (None, None) => m.rig.skin_vis(anim, f as f32, &[], &mut b),
     }
-    pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [a.pos[0], a.pos[1], 0.0], 1.0, model_mat(a), flash);
+    pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [a.pos[0], a.pos[1], 0.0], scale, model_mat(a), flash);
     // MELEE_VMBOSS_VIS_LOG=n: every n-th tick, the drawn motion, its frame and the hidden draw-list objects (captures)
     static VLOG: OnceLock<u32> = OnceLock::new();
     let n = *VLOG.get_or_init(|| std::env::var("MELEE_VMBOSS_VIS_LOG").ok().and_then(|v| v.parse().ok()).unwrap_or(0));

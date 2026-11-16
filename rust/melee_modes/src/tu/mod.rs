@@ -48,6 +48,7 @@ pub mod vm_boss_model;
 pub mod subspace;
 pub mod subspace_model;
 pub mod explore;
+pub mod explore_vm;
 pub mod drive_draw;
 pub mod envoy_tint;
 // Per-TU native ports of the game's gm/mn/lb/if translation units (one module per `.c` file,

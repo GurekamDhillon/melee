@@ -1174,6 +1174,13 @@ fn load_into(st: &'static Maps, id: i32) -> Option<&'static Map> {
             }
             let t = std::time::Instant::now();
             let r = load(id);
+            // the room's VM enemies: programs and models read now (the stage load, before the first frame)
+            if let Ok(m) = &r {
+                let mut ks: Vec<u16> = m.spawns.iter().map(|s| s.4).collect();
+                ks.sort_unstable();
+                ks.dedup();
+                crate::tu::explore_vm::prefetch(&ks);
+            }
             let mut rep = String::new();
             use std::fmt::Write as _;
             match &r {
@@ -1298,6 +1305,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     SPAWN_NEXT = 0;
     SPAWN_N = 0;
     CRATE_NEXT = i32::MAX;
+    crate::tu::explore_vm::reset();
     VISITED = 1;
     BROKEN = 0;
     STOCKS_SEEN = [-1; 6];
@@ -1679,6 +1687,10 @@ pub unsafe fn room_tick() {
         let _z = melee_core::tracy::zone("explore: spawn step");
         spawn_step(m);
     }
+    {
+        let _z = melee_core::tracy::zone("explore: vm enemies");
+        crate::tu::explore_vm::tick();
+    }
     if CLOCK >= 2 && (CRATE_NEXT as usize) < m.crates.len() {
         spawn_crate(&m.crates[CRATE_NEXT as usize]);
         CRATE_NEXT += 1;
@@ -1866,6 +1878,7 @@ static mut CRATE_NEXT: i32 = i32::MAX;
 unsafe fn spawn_section(_m: &Map, s: usize) {
     // only the map's own: the Envoy sim's enemies (its foes for the fight) stay, and keep half the pool free for it
     crate::tu::subspace::clear_room();
+    crate::tu::explore_vm::clear_room();
     // checks only: `MELEE_EXPLORE_NO_ENEMIES=1` leaves the map's enemy points empty (a pad walk of the way through)
     static NONE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     if *NONE.get_or_init(|| std::env::var_os("MELEE_EXPLORE_NO_ENEMIES").is_some()) {
@@ -1899,6 +1912,11 @@ unsafe fn spawn_step(m: &Map) {
                 *n += 1;
                 return;
             }
+        }
+        // Brawl's own enemy scripts (the VM lane, explore_vm) for the kinds with no hand-made actor
+        if crate::tu::explore_vm::spawn(id, x, y, face, s, CUR_ID, SPAWN_NEXT as usize - 1) {
+            *n += 1;
+            return;
         }
         let (k, name) = enemy_kind(id);
         let Some(k) = k.filter(|_| has_actor(id) || standins()) else {

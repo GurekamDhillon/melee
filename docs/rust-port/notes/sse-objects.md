@@ -8,14 +8,23 @@ BrawlCrate categories (`sse-audit.md` section 1); "?" kinds are not identified y
 Port column: **supported** = loaded and live; **static** = its collision is in the room but held still (no
 switch / path logic yet); **dropped** = not loaded at all.
 
-Enemies: only Brawl kinds that have an actor of their own (`explore::has_actor`: Goomba, Jyk, Giant Goomba,
-Bullet Bill, Hammer Bro, Primid, Koopa) are spawned. Every other kind is logged and not spawned
-(`MELEE_SSE_STANDINS=1` brings back the old nearest-actor stand-ins; a boot option, both players of a netplay
-session must agree on it).
+Enemies (2392 generator points): 635 are kinds with a hand-made actor of their own (`subspace.rs`: Goomba, Jyk,
+Giant Goomba, Bullet Bill, Hammer Bro, Primid, Koopa); 1489 are run by the enemy-command VM (`explore_vm.rs`, Brawl's
+own enemy scripts compiled from the owner's files: Mite, Bucculus, Roturret, Floow, Bytan, Spaak, Feyesh, Glunder,
+the R.O.B.s and the rest with a VM program); 170 (the Primid variants without a program, kinds 28/31/33/34) are
+logged and not spawned; 98 are boss parts (their own boss fights). `MELEE_SSE_STANDINS=1` puts the nearest hand-made
+actor in place of the 170; `MELEE_SSE_VM=0` turns the VM lane off. Both are boot options that both netplay peers
+must set alike.
+
+The VM lane's host (ours, not Brawl data): the ground / air switch (a floor within 4 units below holds a walker,
+walking off one drops it), a fall of 0.1 a frame up to 2.5 in falling / damage motions (the VM's own gravity is 0),
+a hurt capsule from the model's rest extent, the start status 0 (Brawl's start status comes from the generator
+record, not read yet). Checked: Lake 3 (Mite, Bucculus) and level 22 with synctest depth 4 / 7, 0 mismatches;
+enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on him.
 
 | kind | what | placed | files | port |
 |---|---|---|---|---|
-| GEG1 | enemy generators | 2392 | 162 | 635 with an actor; rest listed, not spawned |
+| GEG1 | enemy generators | 2392 | 162 | 635 with an actor; 1489 more by the VM, 170 listed |
 | GET2 | area triggers (2) | 1175 | 119 | dropped |
 | GFG1 | fighter spawns (ally/CPU fights) | 720 | 44 | dropped |
 | GET1 | area triggers (1) | 564 | 162 | dropped |
@@ -90,57 +99,57 @@ session must agree on it).
 | enemy | placed | port |
 |---|---|---|
 | Primid | 204 | actor |
-| Mite | 140 | listed (no actor) |
-| Sword Primid | 103 | listed (no actor) |
+| Mite | 140 | VM (explore_vm) when it has a program, else listed |
+| Sword Primid | 103 | VM (explore_vm) when it has a program, else listed |
 | Jyk | 102 | actor |
 | Koopa | 97 | actor |
-| Feyesh | 93 | listed (no actor) |
+| Feyesh | 93 | VM (explore_vm) when it has a program, else listed |
 | Goomba | 93 | actor |
 | Bullet Bill | 84 | actor |
-| Bytan | 74 | listed (no actor) |
-| Auroros | 71 | listed (no actor) |
-| Floow | 68 | listed (no actor) |
-| Primid variant 34 | 67 | listed (no actor) |
-| R.O.B. Sentry | 65 | listed (no actor) |
-| Boomerang Primid | 62 | listed (no actor) |
-| Spaak | 60 | listed (no actor) |
-| Buckot | 56 | listed (no actor) |
-| Puppit | 56 | listed (no actor) |
-| Primid variant 33 | 55 | listed (no actor) |
-| Borboras | 50 | listed (no actor) |
+| Bytan | 74 | VM (explore_vm) when it has a program, else listed |
+| Auroros | 71 | VM (explore_vm) when it has a program, else listed |
+| Floow | 68 | VM (explore_vm) when it has a program, else listed |
+| Primid variant 34 | 67 | VM (explore_vm) when it has a program, else listed |
+| R.O.B. Sentry | 65 | VM (explore_vm) when it has a program, else listed |
+| Boomerang Primid | 62 | VM (explore_vm) when it has a program, else listed |
+| Spaak | 60 | VM (explore_vm) when it has a program, else listed |
+| Buckot | 56 | VM (explore_vm) when it has a program, else listed |
+| Puppit | 56 | VM (explore_vm) when it has a program, else listed |
+| Primid variant 33 | 55 | VM (explore_vm) when it has a program, else listed |
+| Borboras | 50 | VM (explore_vm) when it has a program, else listed |
 | Hammer Bro | 44 | actor |
-| Bombed | 43 | listed (no actor) |
-| Ticken | 40 | listed (no actor) |
-| Glunder 44 | 38 | listed (no actor) |
-| Glunder 45 | 37 | listed (no actor) |
-| Glunder 43 | 36 | listed (no actor) |
-| Shaydas | 35 | listed (no actor) |
-| Cymul | 32 | listed (no actor) |
-| R.O.B. Launcher | 32 | listed (no actor) |
-| Roader | 29 | listed (no actor) |
-| Trowlon | 29 | listed (no actor) |
-| R.O.B. Blaster | 28 | listed (no actor) |
-| Armight | 27 | listed (no actor) |
-| Primid variant 28 | 26 | listed (no actor) |
-| Bucculus | 25 | listed (no actor) |
-| Shellpod | 25 | listed (no actor) |
-| Towtow | 22 | listed (no actor) |
-| Primid variant 31 | 22 | listed (no actor) |
-| Poppant | 20 | listed (no actor) |
-| Roturret | 17 | listed (no actor) |
-| Nagagog | 17 | listed (no actor) |
-| Autolance | 16 | listed (no actor) |
-| R.O.B. Distance | 15 | listed (no actor) |
-| Greap | 11 | listed (no actor) |
+| Bombed | 43 | VM (explore_vm) when it has a program, else listed |
+| Ticken | 40 | VM (explore_vm) when it has a program, else listed |
+| Glunder 44 | 38 | VM (explore_vm) when it has a program, else listed |
+| Glunder 45 | 37 | VM (explore_vm) when it has a program, else listed |
+| Glunder 43 | 36 | VM (explore_vm) when it has a program, else listed |
+| Shaydas | 35 | VM (explore_vm) when it has a program, else listed |
+| Cymul | 32 | VM (explore_vm) when it has a program, else listed |
+| R.O.B. Launcher | 32 | VM (explore_vm) when it has a program, else listed |
+| Roader | 29 | VM (explore_vm) when it has a program, else listed |
+| Trowlon | 29 | VM (explore_vm) when it has a program, else listed |
+| R.O.B. Blaster | 28 | VM (explore_vm) when it has a program, else listed |
+| Armight | 27 | VM (explore_vm) when it has a program, else listed |
+| Primid variant 28 | 26 | VM (explore_vm) when it has a program, else listed |
+| Bucculus | 25 | VM (explore_vm) when it has a program, else listed |
+| Shellpod | 25 | VM (explore_vm) when it has a program, else listed |
+| Towtow | 22 | VM (explore_vm) when it has a program, else listed |
+| Primid variant 31 | 22 | VM (explore_vm) when it has a program, else listed |
+| Poppant | 20 | VM (explore_vm) when it has a program, else listed |
+| Roturret | 17 | VM (explore_vm) when it has a program, else listed |
+| Nagagog | 17 | VM (explore_vm) when it has a program, else listed |
+| Autolance | 16 | VM (explore_vm) when it has a program, else listed |
+| R.O.B. Distance | 15 | VM (explore_vm) when it has a program, else listed |
+| Greap | 11 | VM (explore_vm) when it has a program, else listed |
 | Giant Goomba | 11 | actor |
-| Gamyga | 10 | listed (no actor) |
-| Gamyga base | 10 | listed (no actor) |
-| Gamyga base | 10 | listed (no actor) |
-| Gamyga base | 10 | listed (no actor) |
-| Gamyga base | 10 | listed (no actor) |
+| Gamyga | 10 | VM (explore_vm) when it has a program, else listed |
+| Gamyga base | 10 | VM (explore_vm) when it has a program, else listed |
+| Gamyga base | 10 | VM (explore_vm) when it has a program, else listed |
+| Gamyga base | 10 | VM (explore_vm) when it has a program, else listed |
+| Gamyga base | 10 | VM (explore_vm) when it has a program, else listed |
 | Galleom (boss) | 9 | boss: own boss fight |
 | Master Hand (boss) | 8 | boss: own boss fight |
-| Armank | 7 | listed (no actor) |
+| Armank | 7 | VM (explore_vm) when it has a program, else listed |
 | Crazy Hand (boss) | 6 | boss: own boss fight |
 | Petey (boss) | 5 | boss: own boss fight |
 | Rayquaza (boss) | 5 | boss: own boss fight |

@@ -744,7 +744,7 @@ pub unsafe fn clear_room() {
 
 // ---------------------------------------------------------------- players
 
-unsafe fn humans() -> i32 {
+pub(crate) unsafe fn humans() -> i32 {
     if crate::tu::envoy::PLAN[crate::tu::envoy::P_COOP] == 1 { 2 } else { 1 }
 }
 
@@ -761,7 +761,7 @@ unsafe fn in_play(slot: i32) -> *mut Fighter {
     if g.is_null() || (*g).user_data.is_null() { core::ptr::null_mut() } else { (*g).user_data as *mut Fighter }
 }
 
-unsafe fn entity(slot: i32, i: usize) -> *mut Fighter {
+pub(crate) unsafe fn entity(slot: i32, i: usize) -> *mut Fighter {
     let p = pl::Player_GetPtrForSlot(slot);
     if p.is_null() {
         return core::ptr::null_mut();
@@ -771,7 +771,7 @@ unsafe fn entity(slot: i32, i: usize) -> *mut Fighter {
 }
 
 /// A player's fighter an enemy can see and hit: in play, not dead, asleep or on the revival platform.
-unsafe fn target(slot: i32) -> *mut Fighter {
+pub(crate) unsafe fn target(slot: i32) -> *mut Fighter {
     let f = in_play(slot);
     if f.is_null() {
         return f;
@@ -812,7 +812,7 @@ unsafe fn floor_between(x: f32, top: f32, bottom: f32) -> Option<f32> {
 }
 
 /// Outside the stage's blast zone.
-unsafe fn out_of_bounds(x: f32, y: f32) -> bool {
+pub(crate) unsafe fn out_of_bounds(x: f32, y: f32) -> bool {
     use melee_world::tu::stage as st;
     x > st::Stage_GetBlastZoneRightOffset() || x < st::Stage_GetBlastZoneLeftOffset() || y > st::Stage_GetBlastZoneTopOffset() || y < st::Stage_GetBlastZoneBottomOffset()
 }
@@ -820,7 +820,7 @@ unsafe fn out_of_bounds(x: f32, y: f32) -> bool {
 // ---------------------------------------------------------------- geometry
 
 /// 2D distance between segments pq and ab.
-fn seg_dist(p: (f32, f32), q: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
+pub(crate) fn seg_dist(p: (f32, f32), q: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
     fn pt(p: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
         let (dx, dy) = (b.0 - a.0, b.1 - a.1);
         let l = dx * dx + dy * dy;
@@ -1019,7 +1019,7 @@ struct EnvHit {
 }
 
 /// An enemy's attack lands on `f`: Melee's own damage path with an environment source, launched away from `from_x`.
-unsafe fn strike(f: *mut Fighter, from_x: f32, dmg: i32, angle: i32, kbg: i32, wkb: i32, bkb: i32) -> bool {
+pub(crate) unsafe fn strike(f: *mut Fighter, from_x: f32, dmg: i32, angle: i32, kbg: i32, wkb: i32, bkb: i32) -> bool {
     let fp = &mut *f;
     let m = fp.motion_id as i32;
     if (ftCo_MS_GuardOn as i32..=ftCo_MS_GuardSetOff as i32).contains(&m) {
@@ -1056,7 +1056,7 @@ unsafe fn strike(f: *mut Fighter, from_x: f32, dmg: i32, angle: i32, kbg: i32, w
 }
 
 /// A player's body for an enemy's box: a vertical segment through the fighter and a radius.
-unsafe fn body_of(f: *mut Fighter) -> ((f32, f32), (f32, f32), f32) {
+pub(crate) unsafe fn body_of(f: *mut Fighter) -> ((f32, f32), (f32, f32), f32) {
     let s = (*f).x34_scale.y;
     let (x, y) = ((*f).cur_pos.x, (*f).cur_pos.y);
     ((x, y + 3.0 * s), (x, y + 9.0 * s), 3.5 * s)
@@ -1682,7 +1682,12 @@ unsafe fn is_drawer(g: usize) -> bool {
 
 /// The fighter draw-pass hook (`ftdrawcommon::BOSS_DRAW`): the owner's models when loaded, else plain capsules.
 pub unsafe fn sub_draw(g: *mut HSD_GObj, pass: i32) {
-    if pass != 0 || !ON || g.is_null() || !is_drawer(g as usize) {
+    if pass != 0 || g.is_null() || !is_drawer(g as usize) {
+        return;
+    }
+    // the map rooms' VM enemies (explore_vm) draw in the same pass
+    crate::tu::explore_vm::draw();
+    if !ON {
         return;
     }
     use crate::tu::petey_model as pm;

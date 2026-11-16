@@ -4374,7 +4374,7 @@ pub unsafe extern "C" fn test_geno_v2_states() -> i32 {
     r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 0 as i32);
     if r.is_null() || (*r).anim_id != 10 as i32
         || (*r).x4_flags != 0x1234 as i32
-        || (*r).cam_cb != Some(t_cam as unsafe extern "C" fn(*mut Fighter_GObj) -> ())
+        || !(*r).cam_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, t_cam as unsafe extern "C" fn(*mut Fighter_GObj) -> ()))
         || (*r).phys_cb.is_none() || (*r).anim_cb.is_none() || (*r).coll_cb.is_none()
     {
         TestFail(
@@ -4401,7 +4401,7 @@ pub unsafe extern "C" fn test_geno_v2_states() -> i32 {
         rc = 1 as i32;
     }
     r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 8 as i32);
-    if (*r).input_cb != Some(t_input as unsafe extern "C" fn(*mut Fighter_GObj) -> ())
+    if !(*r).input_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, t_input as unsafe extern "C" fn(*mut Fighter_GObj) -> ()))
         || (*r).x4_flags != 0x55 as i32 || (*r).phys_cb.is_none()
     {
         TestFail(
@@ -5050,9 +5050,8 @@ pub unsafe extern "C" fn test_geno_lab_mode_table() -> i32 {
         {
             found += 1;
             if (*m).states != &raw mut gm_Mode_Lab_States as *mut GameModeState
-                || (*m).on_load
-                    // the mode table's entry for LAB's on_load (gmscdata's call-through to geno_lab_mode's)
-                    != Some(crate::tu::gmscdata::ext::gm_Mode_Lab_OnLoad as unsafe extern "C" fn() -> ())
+                // the mode table's entry for LAB's on_load (gmscdata's call-through to geno_lab_mode's)
+                || !(*m).on_load.is_some_and(|p| core::ptr::fn_addr_eq(p, crate::tu::gmscdata::ext::gm_Mode_Lab_OnLoad as unsafe extern "C" fn() -> ()))
             {
                 TestFail(
                     b"the GM_LAB row does not point at LAB's states / on_load\0"

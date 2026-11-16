@@ -133,7 +133,7 @@ pub fn ftSk_SpecialN_80111FBC(gobj: *mut HSD_GObj) {
                 (*fp).u.sk.x0 -= 1;
             }
             let cb = crate::tu::ftseak::cb_ftSk_Init_80110198 as unsafe extern "C" fn(*mut HSD_GObj);
-            if (*fp).death2_cb == Some(cb) || (*fp).take_dmg_cb == Some(cb) {
+            if (*fp).death2_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, cb)) || (*fp).take_dmg_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, cb)) {
                 ftSk_SpecialN_801120D4(gobj);
             }
         }

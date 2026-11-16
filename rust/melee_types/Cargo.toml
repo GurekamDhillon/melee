@@ -7,3 +7,6 @@ publish.workspace = true
 
 [dependencies]
 melee_core.workspace = true
+
+[lints]
+workspace = true

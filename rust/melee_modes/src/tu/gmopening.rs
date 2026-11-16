@@ -467,7 +467,9 @@ unsafe fn sprint(dst: *mut i8, s: &str) {
     *dst.add(s.len()) = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_801A9FCC() -> *mut c_void {
+    core::hint::black_box(0x8455EE61u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801A9FCC");
     let lines: *mut PerfLabelLine = gm_80480B38.as_mut_ptr();
 

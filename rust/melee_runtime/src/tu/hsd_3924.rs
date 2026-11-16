@@ -105,7 +105,7 @@ impl Hsd3924 {
         let mut cur = self.hsd_804D7850;
         while !cur.is_null() {
             let ret = (*cur).data as *mut EventPriority;
-            if event != (*ret).event {
+            if !match (event, (*ret).event) { (Some(a), Some(b)) => core::ptr::fn_addr_eq(a, b), (a, b) => a.is_none() && b.is_none() } {
                 if (*ret).priority <= priority {
                     prev = cur;
                 }

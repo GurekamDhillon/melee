@@ -45,3 +45,6 @@ png = "0.18"
 [dev-dependencies]
 # the Geno lab end-to-end test (lab/geno.rs) builds its tiny Lab mod from text, as melee_modhost's tests do
 wat = "1"
+
+[lints]
+workspace = true

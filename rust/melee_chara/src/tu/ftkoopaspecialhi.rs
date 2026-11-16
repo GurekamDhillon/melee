@@ -63,7 +63,8 @@ unsafe fn set_damage_callback(fp: *mut Fighter) {
 }
 
 /// `ftKp_Init_80132B38` (ftkoopa.c): the empty damage callback, as a Fighter callback entry.
-pub unsafe extern "C" fn cb_ftKp_Init_80132B38(_g: *mut HSD_GObj) { melee_core::ct!("cb_ftKp_Init_80132B38");}
+#[inline(never)]
+pub unsafe extern "C" fn cb_ftKp_Init_80132B38(_g: *mut HSD_GObj) { core::hint::black_box(0x0084B61Cu32); /* fn identity */ melee_core::ct!("cb_ftKp_Init_80132B38");}
 
 /// `Fighter_SetEffectHitlagCallbacks` (ft/inlines.h).
 #[inline(always)]

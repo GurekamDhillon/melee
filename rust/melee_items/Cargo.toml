@@ -13,6 +13,8 @@ melee_runtime.workspace = true
 melee_world.workspace = true
 
 [lints.rust]
+# workspace.lints is not inherited where a crate has its own table (rust/Cargo.toml: function identity)
+unpredictable_function_pointer_comparisons = "deny"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }
 
 [dev-dependencies]

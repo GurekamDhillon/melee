@@ -29,8 +29,16 @@ MARK = "// fn identity (tools/rust-port/fn_identity.py)"
 RULES = [
     ("melee_chara", "src/chars/cb.rs", r"\w+"),
     ("melee_chara", "src/tu/*.rs", r"cb_\w+"),
+    # compared by address in game code
+    ("melee_modes", "src/tu/geno_game.rs", r"geno_cb_nothing"),        # row.input_cb == geno_cb_nothing (empty body)
+    ("melee_modes", "src/tu/geno_lab_mode.rs", r"fly_phys|fly_input"),  # phys_cb == fly_phys; fly_input is empty
+    # HSD event list (hsd_3924 fn_80392480): a registration is found again by its address
+    ("melee_runtime", "src/tu/hsd_3982.rs", r"fn_80392A3C_cb"),
+    ("melee_modes", "src/tu/gm_1601.rs", r"fn_801652D8"),
+    ("melee_modes", "src/tu/gmopening.rs", r"fn_801A9FCC"),
 ]
-FN = r'(?P<pre>(?:#\[[^\]]*\]\s*\n\s*|///[^\n]*\n\s*)*)pub unsafe extern "C" fn (?P<name>{pat})\((?P<args>[^)]*)\)(?P<ret>[^{{]*)\{{\n'
+FN = (r'(?P<pre>(?:#\[[^\]]*\]\s*\n\s*|///[^\n]*\n\s*)*)(?P<indent>[ \t]*)pub unsafe extern "C" fn (?P<name>(?:{pat}))\b'
+      r'\((?P<args>[^)]*)\)(?P<ret>[^{{;\n]*)\{{(?P<nl>\n?)')
 
 
 def fnv32(s):
@@ -92,15 +100,22 @@ def mark(text, pat, path_prefix, ids):
             raise SystemExit(f"fn_identity: id clash {ids[i]} / {key}")
         ids[i] = key
         pre = m.group("pre")
+        pub = m.start("indent") + len(m.group("indent"))
+        indent = text[text.rfind("\n", 0, pub) + 1:pub]
         head = text[m.start():m.end()]
         if "#[inline(never)]" not in pre:
-            indent = re.match(r"\s*", text[m.start() + len(pre):]).group(0) if pre else ""
-            head = head.replace(f"{pre}pub unsafe", f"{pre}#[inline(never)]\n{indent}pub unsafe", 1)
-        line = f"    core::hint::black_box(0x{i:08X}u32); {MARK}\n"
+            k = pub - m.start()
+            head = head[:k] + f"#[inline(never)]\n{indent}" + head[k:]
         rest_start = m.end()
-        nxt = text[rest_start:rest_start + 200].split("\n", 1)[0]
-        if MARK in nxt:
-            rest_start += len(nxt) + 1
+        if m.group("nl"):
+            line = f"{indent}    core::hint::black_box(0x{i:08X}u32); {MARK}\n"
+            nxt = text[rest_start:rest_start + 200].split("\n", 1)[0]
+            if MARK in nxt:
+                rest_start += len(nxt) + 1
+        else:  # one-line body: a block comment, the rest of the line is code
+            line = f" core::hint::black_box(0x{i:08X}u32); /* fn identity */"
+            if text.startswith(line, rest_start):
+                rest_start += len(line)
         out.append(text[pos:m.start()] + head + line)
         pos = rest_start
         n += 1

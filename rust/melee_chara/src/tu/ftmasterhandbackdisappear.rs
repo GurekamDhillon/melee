@@ -39,8 +39,8 @@ pub mod ext {
     }
     /// `ftMh_MS_388_80155A58` as the `grabbed_cb` (`HSD_GObjInteraction`) value.
     #[inline(never)]
-pub unsafe extern "C" fn cb_ftMh_MS_388_80155A58(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
-    core::hint::black_box(0x92AC2B57u32); // fn identity (tools/rust-port/fn_identity.py)
+    pub unsafe extern "C" fn cb_ftMh_MS_388_80155A58(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
+        core::hint::black_box(0x92AC2B57u32); // fn identity (tools/rust-port/fn_identity.py)
         ftMh_MS_388_80155A58(gobj, gobj2)
     }
     /// `ftMh_CaptureWaitMasterHand_80155D1C(gobj)` (ftmasterhandthrownmasterhand.c).

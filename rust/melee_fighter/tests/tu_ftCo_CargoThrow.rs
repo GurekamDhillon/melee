@@ -30,8 +30,8 @@ fn ftCo_CargoThrow_matches_c() {
         hk::ftCommon_8007E2F4 = Some(|f, v| { t(11); t(pi(f as *const Fighter)); t(v as i32 as u32) });
         hk::ftCo_800DE3FC = Some(|g, ms, s| { t(12); t(pi(g)); t(ms as u32); t(b(s)) });
         hk::ftAnim_IsFramesRemaining = Some(|g| { t(14); t(pi(g)); sr(14) });
-        hk::ft_8008403C = Some(|g, cb| { t(27); t(pi(g)); t((cb == Some(m::ftCo_8009C170_cb as unsafe extern "C" fn(*mut HSD_GObj))) as u32) });
-        hk::ft_80082C74 = Some(|g, cb| { t(29); t(pi(g)); t((cb == Some(m::ftCo_8009C45C_cb as unsafe extern "C" fn(*mut HSD_GObj))) as u32) });
+        hk::ft_8008403C = Some(|g, cb| { t(27); t(pi(g)); t((cb.is_some_and(|p| core::ptr::fn_addr_eq(p, m::ftCo_8009C170_cb as unsafe extern "C" fn(*mut HSD_GObj)))) as u32) });
+        hk::ft_80082C74 = Some(|g, cb| { t(29); t(pi(g)); t((cb.is_some_and(|p| core::ptr::fn_addr_eq(p, m::ftCo_8009C45C_cb as unsafe extern "C" fn(*mut HSD_GObj)))) as u32) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_CargoThrow.txt"));
     for op in 0..27u32 {

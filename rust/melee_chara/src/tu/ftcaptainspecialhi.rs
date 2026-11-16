@@ -96,8 +96,8 @@ pub mod ext {
 
     /// `ftCo_8009CA0C` as a grabbed (interaction) callback entry.
     #[inline(never)]
-pub unsafe extern "C" fn cb_ftCo_8009CA0C(g: *mut HSD_GObj, v: *mut HSD_GObj) {
-    core::hint::black_box(0x35D09AB5u32); // fn identity (tools/rust-port/fn_identity.py)
+    pub unsafe extern "C" fn cb_ftCo_8009CA0C(g: *mut HSD_GObj, v: *mut HSD_GObj) {
+        core::hint::black_box(0x35D09AB5u32); // fn identity (tools/rust-port/fn_identity.py)
         ftCo_8009CA0C(g, v);
     }
 }

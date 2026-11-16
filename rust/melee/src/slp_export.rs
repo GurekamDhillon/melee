@@ -20,6 +20,9 @@ const SZ_POST: usize = 0x54;
 const SZ_FSTART: usize = 0xC;
 const SZ_BOOK: usize = 8;
 const SZ_END: usize = 6;
+/// Message Splitter (0x10): a fixed 512-byte block, its used size (u16), the internal command (0x3D: Gecko List) and
+/// the last-message flag
+const SZ_SPLIT: usize = 0x204;
 
 struct Pre {
     port: u8,
@@ -53,6 +56,10 @@ pub struct Exporter {
     m: Option<Match>,
     count: u32,
     pub written: Vec<String>,
+    /// The Gecko List (0x3D) body: the codes the disc itself boots with (`codes.gct`, which m-ex loads at boot and the
+    /// engine's m-ex port runs), F0 terminator included. Empty: the disc carries no code list and the engine runs no
+    /// Gecko codes, so no list is written (a 3.x file without one, as before Slippi 2.0).
+    gecko: Vec<u8>,
 }
 
 static mut EXP: Option<Exporter> = None;
@@ -98,7 +105,10 @@ pub fn game_info(sm: &melee_types::StartMeleeData) -> Vec<u8> {
     putf(&mut g, 0x34, r.game_speed);
     for (i, p) in sm.players.iter().enumerate() {
         let b = 0x60 + 0x24 * i;
-        let head = [p.ckind as u8, p.slot_type, p.stocks as u8, p.color, p.slot, p.spawn_pos as u8, p.spawn_dir as u8, p.sub_color, p.handicap as u8, p.team, p.nametag, p.xB];
+        // the console writes the external character id; the engine's own kind for an m-ex fighter (0x22 + its slot) is
+        // not one, so it goes out as the disc's external id (MxDt.dat), as Akaneia's console records it
+        let ck = if p.ckind > 25 && melee_engine::mex_host::on() { melee_engine::mex_host::PortCKindToExt(p.ckind as i32) as u8 } else { p.ckind as u8 };
+        let head = [ck, p.slot_type, p.stocks as u8, p.color, p.slot, p.spawn_pos as u8, p.spawn_dir as u8, p.sub_color, p.handicap as u8, p.team, p.nametag, p.xB];
         g[b..b + 12].copy_from_slice(&head);
         g[b + 0xC..b + 0xE].copy_from_slice(&p.bf_c);
         g[b + 0xE] = p.cpu_kind;
@@ -171,8 +181,8 @@ impl Exporter {
     }
 
     fn start(&mut self, sm: &melee_types::StartMeleeData, seed: u32) {
-        let mut raw = vec![0x35, 1 + 3 * 6];
-        for (c, s) in [(0x36u8, SZ_START), (0x37, SZ_PRE), (0x38, SZ_POST), (0x39, SZ_END), (0x3A, SZ_FSTART), (0x3C, SZ_BOOK)] {
+        let mut raw = vec![0x35, 1 + 3 * 7];
+        for (c, s) in [(0x36u8, SZ_START), (0x37, SZ_PRE), (0x38, SZ_POST), (0x39, SZ_END), (0x3A, SZ_FSTART), (0x3C, SZ_BOOK), (0x10, SZ_SPLIT)] {
             raw.push(c);
             raw.extend_from_slice(&(s as u16).to_be_bytes());
         }
@@ -194,6 +204,17 @@ impl Exporter {
         ev[0x1A4] = 2; // major scene: VS mode
         ev[0x2BD] = 1; // English
         raw.extend_from_slice(&ev);
+        // the Gecko List right after Game Start, in 512-byte Message Splitter blocks, as Slippi Dolphin writes it
+        let chunks: Vec<&[u8]> = self.gecko.chunks(512).collect();
+        for (k, c) in chunks.iter().enumerate() {
+            let mut b = vec![0u8; 1 + SZ_SPLIT];
+            b[0] = 0x10;
+            b[1..1 + c.len()].copy_from_slice(c);
+            b[0x201..0x203].copy_from_slice(&(c.len() as u16).to_be_bytes());
+            b[0x203] = 0x3D;
+            b[0x204] = (k + 1 == chunks.len()) as u8;
+            raw.extend_from_slice(&b);
+        }
         let mut present = [false; 4];
         for (i, p) in present.iter_mut().enumerate() {
             *p = gi[0x61 + 0x24 * i] != 3;
@@ -287,13 +308,33 @@ impl Exporter {
 pub fn install(spec: &str, played_on: &str, names: [String; 4]) {
     use melee_fighter::platform::hook as h;
     unsafe {
-        EXP = Some(Exporter { spec: spec.to_string(), played_on: played_on.to_string(), names, m: None, count: 0, written: Vec::new() });
+        EXP = Some(Exporter { spec: spec.to_string(), played_on: played_on.to_string(), names, m: None, count: 0, written: Vec::new(), gecko: Vec::new() });
         melee_modes::tu::gmvs::ext::hook::Replay_RecordMatch = Some(record_match);
         h::Replay_RecordInput = Some(record_input);
         h::Replay_Tracing = Some(|| exp().map_or(0, |x| x.m.is_some() as i32));
         h::Replay_TraceAtProcMap = Some(|| 0);
         h::Replay_TraceFighter = Some(trace_fighter);
     }
+}
+
+/// The disc the match boots: its own Gecko code list (`codes.gct` at the disc root, `00D0C0DE 00D0C0DE` header, the
+/// codes, an `F0000000 00000000` terminator; an m-ex disc such as Akaneia loads it at boot) becomes the replay's Gecko
+/// List, header dropped, exactly as the disc carries it. Nothing is added or filtered: a disc without the file (vanilla)
+/// leaves the list empty.
+pub fn set_disc(iso: &str) {
+    let Some(x) = exp() else { return };
+    x.gecko.clear();
+    let Ok(mut g) = melee_engine::gcm::Gcm::open(iso) else { return };
+    let Ok(b) = g.read_vanilla("codes.gct") else { return };
+    if b.len() < 16 || b[0..8] != [0x00, 0xD0, 0xC0, 0xDE, 0x00, 0xD0, 0xC0, 0xDE] {
+        return;
+    }
+    let body = &b[8..];
+    // the codes up to and including the terminator line (the file may be padded after it)
+    let n = melee_data::slp::gecko_codes(body).iter().map(|c| 8 * (1 + c.lines as usize)).sum::<usize>();
+    let end = (n + 8).min(body.len());
+    x.gecko = body[..end].to_vec();
+    eprintln!("gw: slp: Gecko List from the disc's codes.gct: {} codes, {} bytes", melee_data::slp::gecko_codes(&x.gecko).len(), x.gecko.len());
 }
 
 pub fn active() -> bool {

@@ -881,6 +881,23 @@ pub fn preload_textures(id: i32) {
     eprintln!("explore: {n} textures of {id:#x} queued for upload ahead of the match");
 }
 
+/// Queue a boss arena's stage textures for upload at its stage load (the frames before the match's first draw), as
+/// `preload_textures` does for the GD stages: the Halberd's two models made Duon's first arena frame upload them all
+/// at once. Presentation only.
+fn preload_arena_textures(m: &Map) {
+    let Some(f) = (unsafe { TEX_PRELOAD }) else { return };
+    let mut seen = std::collections::HashSet::new();
+    let mut each = |p: *const u8, w: u16, h: u16, fmt: u32, lv: u32| {
+        if seen.insert(p as usize) {
+            unsafe { f(p, w, h, fmt, lv) };
+        }
+    };
+    for (r, _, _) in &m.models {
+        pm::rig_textures(r, &mut each);
+    }
+    eprintln!("explore: {} arena textures queued for upload ahead of the match", seen.len());
+}
+
 /// The GD stages whose textures were queued since the last match began (bit per `GD_STAGES` row; presentation).
 static mut PRELOADED: u32 = 0;
 /// The renderer's "a match began" (set at engine start with `TEX_PRELOAD`): pinned uploads may age out again.
@@ -1089,6 +1106,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     let m = if ARENA_WANT && (crate::tu::envoy::armed() != 0 || crate::tu::petey::vs_selected()) {
         let Some(a) = arena() else { return core::ptr::null_mut() };
         ARENA = true;
+        preload_arena_textures(a);
         a
     } else {
         let want = if crate::tu::envoy::armed() != 0 { if WANT { GD_STAGE_SSE_LAKE3 } else { 0 } } else { PICK };

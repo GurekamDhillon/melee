@@ -499,10 +499,18 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
   file (a single floor line, no walls) and StagePosition (CamLimit, Dead0N / Dead1N, Player1-4N). Played through
   explore's arena mode (the one Petey's 030101 uses): `explore::arena_secs` picks the arena by the process's boss, so
   Final Destination's model and lines are replaced, the zoo is drawn, the players stand on its Player nodes and the
-  blast zones are its Dead nodes. The archive's other collision file rides a bone (his own top, geno_boss_coll's
-  carried surface) and is left out (`SecDef::world_coll`).
+  blast zones are its Dead nodes. The archive's other collision file sits inside his character file (his own top,
+  geno_boss_coll's carried surface) and is left out (`SecDef::world_coll`: stage-level ARC entries only).
 - Camera: petey::arena_camera (his whole mesh per clip plus the players), as Meta Ridley's; the mesh boxes are made
   for any boss with an arena.
 - Hitbox scale: every bone of every VM boss model (Falcon Flyer included) has unit world scale and the models are
   drawn at scale 1 matching the players, so hitbox sizes need no model-unit scale; the Flyer's [val]-size boxes are as
   the file has them [L: a per-enemy posture scale on the box size, if Brawl has one, is not read].
+
+## Rayquaza arena (2026-11-15, port/boss-arena-porky)
+
+- Same pattern: his boss archive (080001) holds the lake shore model (`080vAdvJungle01`), one world floor line and
+  StagePosition; `explore::arena_secs` maps "rayquaza" to it. The archive's water model is not drawn and there is no
+  sky model, so the lake's middle and the sky show the clear colour [L].
+- Gate: `tools/rust-port/gate.sh` (and snapguard) run `GATE_EXE`, else `$CARGO_TARGET_DIR/<profile>/melee.exe`, else
+  `build/cargo/<profile>/melee.exe`, so a private target dir needs no copied exe.

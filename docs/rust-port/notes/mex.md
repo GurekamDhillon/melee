@@ -325,3 +325,30 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
 - Akaneia 51: **49 match** (41 before). Left: 223434 (0+27, slippi 5154, p2 y) and 232949 (0+27, 2099, p2 y), both
   Diddy, no guest fault logged. Vanilla 125: 125 match.
 - Not done: the two Diddy files, Liu Kang rand order, Meta Knight multi-table.
+
+### Round 12 (Nov 16)
+
+- 223434 (5154) and 232949 (2099), Diddy vs Falcon, no guest fault: the first wide difference was the victim's
+  `x221C_u16_y` (0 vs 3) on the frame Diddy's guest re-grabbed it into CaptureCaptain (232949 at 2075). The guest asks for
+  anim row 331 of Diddy's 331-row table (mexData's count). The console reads the authored row that follows in PlDd.dat:
+  its script runs `ft_8008A1B8(3)`, and `ftData_80085CD8` loads no clip (msid >= x58C), so the victim keeps row 330's.
+  Our decode stopped at the count: NULL script, and the `x10` byte pair read past its allocation. `dat_custom` now decodes up
+  to 16 rows past the count of an m-ex fighter's `xC` / `x10` when the raw image holds them. Found with
+  `MELEE_LOG_FTCMD=1` and a Dolphin probe on `ftData_80085CD8` / `ftData_80085FD4` / `lbArq_80014BD0` (no clip load on
+  that frame). Note: `MELEE_DOLPHIN_NHV1_PROBE_CHAIN` caps LEN at 0x1000.
+- Guest-fault sweep on ACE 2.0.1: `synctest --frames 1800 --depth 4`, `MELEE_MEX_REPORT=1`,
+  `p1=mex:N/cpu9;p2=fox/cpu9;stage=fd` (scratch tsv; `mex:N` = kind N+6, so the m-ex fighters are mex:27..58).
+  No synctest mismatch anywhere. Fixed: Lucas (mex:30) with hand bridges `it_80276308`, `ft_80088770`, `ft_80088328`.
+  Open (kind: fault):
+  - crashes (rc 139): Wario 40, Lucas2 42, PlTd 62, and mex:53 (Luigi 58) rc 127 (each logs one fault first:
+    `ftParts_80074A74` on 58, `lbDvd_8001819C` on 40, `it_8026B3F8` on 42, `OSReport` on 62).
+  - unresolved, no generator row: `Item_8026AE84` (51, 52), `PSVECNormalize` (48), `ftColl_8007B1B8` (41),
+    `it_8026B3F8` (41, 42), `lbArchive_LoadArchive` (44, 46, 48), `ftParts_80074A74` (54, 58), `OSReport` (60, 62),
+    `Player_GetPtrForSlot` (49), `GObj_InitUserData` (43), `lbDvd_8001819C` (40).
+  - memory: reads of 0x2C (a NULL record + 0x2C) on 41, 44, 46, 48, 49; 0x90004998 on 44 and 64; 0x900DD9DC on 45
+    and 47 (Meta Knight's onLoad, the multi-table memcpy); 0x20 in `MexCPU_ProcCustom` on 39.
+  - an earlier Lucas run (before `ft_80088328` was bridged) crashed in `it_802799E4` reading 0x37E7C: an item command
+    script goto to an unrelocated word, after `Item_80268E5C(state 0)` from the guest. Not reproduced after the bridge.
+- Verification: Akaneia 51/51 match, vanilla 125/125, synctest 3000 frames depth 4 and 7 on `mex_ace_cpu` and the
+  Akaneia row (ck:17 vs ck:2, FD): 0 mismatches.
+- Not done: Liu Kang rand order (probe_lk_rand), Meta Knight multi-table, the open sweep faults above.

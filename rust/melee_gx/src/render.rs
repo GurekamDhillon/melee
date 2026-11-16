@@ -1132,6 +1132,11 @@ pub mod warmlist {
         }
     }
 
+    /// How many records the list holds (0 when there is none or the warm list is off).
+    pub fn record_count() -> usize {
+        path().and_then(|p| std::fs::metadata(p).ok()).map_or(0, |m| m.len() as usize / (SZ + 4))
+    }
+
     /// The configs recorded by earlier runs of this exe (records whose checksum fails are skipped).
     pub fn load() -> Vec<PipelineConfig> {
         let Some(p) = path() else { return Vec::new() };

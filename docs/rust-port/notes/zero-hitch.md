@@ -505,6 +505,17 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   service (`MELEE_ASSETS=on`, still off by default) takes it to ~29 ms. Getting under 16.7 needs the setup split over
   ticks or the envoy hook's work moved earlier; both change the sim's frame layout and need NHV1/golden proof.
 
+### First-run warm pass (2026-11-16, port/vanilla-zerolag)
+A fresh install's warm list is empty, so its first matches compile pipelines on the frame path. `melee/src/warm_pass.rs`:
+when `play` starts and the list holds fewer than 150 records, a background thread runs a hidden helper (`melee play
+--match a/cpu9,b/cpu9,STAGE --max-frames 900`, MELEE_WARM_CHILD=1, MELEE_WINDOW_HIDDEN=1, MELEE_TURBO=1, no audio,
+BELOW_NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, 120 s hard limit each) per match over the legal stages and the cast,
+from the player's own disc. The helpers append to the same `gpucache/` list (one `write_all` per record, append mode);
+the game thread only spawns the thread. The list is disc-derived local GPU state: never committed, never packaged
+(`launcher/package.sh`'s allow-list has no `gpucache/`). Off with MELEE_WARM_PASS=0 and for every agent/test run
+(MELEE_WINDOW_HIDDEN, MELEE_TURBO, MELEE_PROFILE, MELEE_PAD_SCRIPT, --headless, --max-frames, --replay, --record);
+MELEE_WARM_PASS=1 forces it on (to test it from a hidden run).
+
 ### Round 2 (2026-11-13, port/diverge1 98f8567e2)
 - First Envoy fight setup tick (no lead: camp door -> fight in 3 ticks): 34.7 -> 21.6 ms (shared machine), 19.4 ms quiet.
   - Petey's boss parameters (Brawl files) were read and decoded inside the first fight's tick (envoy_sim

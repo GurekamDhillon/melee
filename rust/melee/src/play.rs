@@ -1553,6 +1553,7 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         return ExitCode::FAILURE;
     }
+    crate::warm_pass::maybe_start(&iso, args); // first run: a hidden below-normal helper fills the pipeline list
     // Optional second disc (Brawl) and the first-run build step (firstrun.rs): a failure is told, Melee still plays.
     let brawl = get("--brawl-disc").or_else(|| std::env::var("MELEE_BRAWL_DISC").ok()).filter(|s| !s.is_empty());
     match crate::firstrun::run(brawl.as_deref(), &mut |f, l| eprintln!("first-run: {:3.0}% {l}", f * 100.0)) {

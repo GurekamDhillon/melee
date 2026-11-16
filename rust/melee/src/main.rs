@@ -88,6 +88,7 @@ mod pose_dump;
 mod script_events;
 mod cov1p;
 mod envoy_store;
+mod warm_pass;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {

@@ -201,6 +201,8 @@ pub struct AvOut {
     size: (u32, u32),
     audio: Option<std::io::BufWriter<Box<dyn Write + Send>>>,
     pub frames: u64,
+    /// `slpcheck --from-frame`: the first replay frame that is output; earlier frames only run the sim (no draw, encode or audio out)
+    from: Option<i32>,
 }
 
 impl AvOut {
@@ -234,7 +236,7 @@ impl AvOut {
             unsafe { crate::engine_audio::WAV = Some(Vec::new()) };
             audio = Some(std::io::BufWriter::with_capacity(1 << 16, open(p).map_err(|e| format!("--audio-out {e}"))?));
         }
-        Ok(Some(AvOut { video, view: None, size, audio, frames: 0 }))
+        Ok(Some(AvOut { video, view: None, size, audio, frames: 0, from: None }))
     }
 
     /// After the boot, before the first logic frame: the stage BGM (RNG state kept) and its 29-frame preroll, which is
@@ -254,11 +256,35 @@ impl AvOut {
                 crate::engine_audio::load_frame();
             }
             let pre = unsafe { (*std::ptr::addr_of_mut!(crate::engine_audio::WAV)).as_mut() }.map_or(0, |w| std::mem::take(w).len());
-            eprintln!("audio-out: 32000 Hz s16le stereo; preroll of {} samples ({:.3} s) skipped, audio sample 0 = video frame 0", pre / 2, pre as f64 / 64000.0);
+            eprintln!("audio-out: 32000 Hz s16le stereo; preroll of {} samples ({:.3} s) skipped, audio sample 0 = the first output video frame (the --from-frame frame, else the replay start)", pre / 2, pre as f64 / 64000.0);
         }
         if let Some(v) = &self.video {
             announce(v.w, v.h);
         }
+    }
+
+    /// Output starts at replay frame `f` (the frames before it are simulated, their mix and picture dropped).
+    pub fn set_from(&mut self, f: i32) {
+        self.from = Some(f);
+    }
+
+    /// `push_frame` for replay frame `fr`: before the from frame the audio still runs (its voices feed the game's sound
+    /// queries) and the draw pass still ran inside the tick (its callbacks are part of the sim), but nothing is
+    /// drawn on the GPU, encoded or written.
+    pub fn push_frame_at(&mut self, fr: i32) -> bool {
+        if self.from.is_some_and(|f| fr < f) {
+            if self.audio.is_some() {
+                crate::engine_audio::dsp_frame();
+                if let Some(w) = unsafe { (*std::ptr::addr_of_mut!(crate::engine_audio::WAV)).as_mut() } {
+                    w.clear();
+                }
+            }
+            if self.video.is_some() {
+                drop(melee_engine::gxbridge::take_frame());
+            }
+            return true;
+        }
+        self.push_frame()
     }
 
     /// After each logic frame: its mix and its picture. False once a sink has closed.

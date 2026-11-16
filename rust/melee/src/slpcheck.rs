@@ -369,7 +369,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let Some(path) = get("--slp") else {
-        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--video-out -|PATH [--video-size WxH] [--video-realtime]] [--audio-out PATH]");
+        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--video-out -|PATH [--video-size WxH] [--video-realtime]] [--audio-out PATH] [--from-frame N] [--to-frame M]
+  --from-frame/--to-frame (with --video-out/--audio-out): output only .slp frames N..=M (frame numbers as in the replay, which starts at -123); the sim still runs from the first frame, the earlier frames are not drawn, encoded or mixed out, and the run stops after frame M with exit 0. N <= 0 means from the start. M past the replay's last frame or M < N is an error (exit 2).");
         return ExitCode::from(2);
     };
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
@@ -529,6 +530,44 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             return ExitCode::from(2);
         }
     };
+    // `--from-frame N` / `--to-frame M`: render only that slippi frame range (the sim runs from frame 0 either way)
+    let range_arg = |k: &str| -> Result<Option<i32>, String> {
+        match get(k) {
+            None => Ok(None),
+            Some(v) => v.parse::<i32>().map(Some).map_err(|_| format!("{k} {v}: expected a slippi frame number")),
+        }
+    };
+    let (from_frame, to_frame) = match (range_arg("--from-frame"), range_arg("--to-frame")) {
+        (Ok(a), Ok(b)) => (a, b),
+        (Err(er), _) | (_, Err(er)) => {
+            eprintln!("melee slpcheck: {er}");
+            return ExitCode::from(2);
+        }
+    };
+    if (from_frame.is_some() || to_frame.is_some()) && av.is_none() {
+        eprintln!("melee slpcheck: --from-frame/--to-frame need --video-out or --audio-out");
+        return ExitCode::from(2);
+    }
+    if let Some(t) = to_frame {
+        if t > file.last_frame {
+            eprintln!("melee slpcheck: --to-frame {t} is past the replay's last frame {}", file.last_frame);
+            return ExitCode::from(2);
+        }
+        if t < file.first_frame {
+            eprintln!("melee slpcheck: --to-frame {t} is before the replay's first frame {}", file.first_frame);
+            return ExitCode::from(2);
+        }
+    }
+    let from_eff = from_frame.filter(|&f| f > 0).unwrap_or(i32::MIN);
+    if let Some(f) = from_frame.filter(|&f| f > 0) {
+        if f > file.last_frame || to_frame.is_some_and(|t| f > t) {
+            eprintln!("melee slpcheck: --from-frame {f} is past {}", to_frame.map_or_else(|| format!("the replay's last frame {}", file.last_frame), |t| format!("--to-frame {t}")));
+            return ExitCode::from(2);
+        }
+    }
+    if let (Some(a), true) = (av.as_mut(), from_eff != i32::MIN) {
+        a.set_from(from_eff);
+    }
     let booted = crate::engine_disc(&iso).and_then(|disc| melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), conv.scn.clone()));
     let mut e = match booted {
         Ok(e) => e,
@@ -639,7 +678,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             ticks += 1;
             last_frame = fr;
             if let Some(a) = av.as_mut() {
-                if !a.push_frame() {
+                if !a.push_frame_at(fr) {
                     eprintln!("melee slpcheck: an output closed at frame {fr}; stopping");
                     break;
                 }
@@ -692,6 +731,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             // the first divergent frame is the answer; keep going only to fill the per-field table when asked
             // a render stops at the first divergence whatever --full says: the frames after it are not the game
+            // the clip's last frame is out and compared: stop without simulating further
+            if first.is_none() && to_frame.is_some_and(|t| fr >= t) {
+                break;
+            }
             if first.is_some() && (rendering || (!dump && !args.iter().any(|a| a == "--full"))) {
                 break;
             }

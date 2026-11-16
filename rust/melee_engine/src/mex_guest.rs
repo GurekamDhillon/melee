@@ -1634,8 +1634,35 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 // by hand (the generator has no row): two vanilla functions Akaneia's Dedede reaches through pointers
                 // its own data holds (an SFX callback, `bctrl ft_80088510`; its jump, ftCo_800CB110); unresolved,
                 // each fault dropped the rest of the guest callback
-                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110" | "ftKb_SpecialN_800F597C" | "mpUpdateFloorSkip") {
-                    if name == "mpUpdateFloorSkip" {
+                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110" | "ftKb_SpecialN_800F597C" | "mpUpdateFloorSkip" | "it_80276308" | "ft_80088770" | "ft_80088328") {
+                    if name == "ft_80088328" {
+                        // void(Fighter*, int sfx, u8 vol, u8 pan): ACE 2.0.1's Lucas (sweep, mex:30) starts a looped SFX
+                        let fp = c.ptr(0, Some("Fighter"));
+                        if !fp.is_null() && !c.bad {
+                            let (s, v, p) = (c.int(1) as i32, c.int(2) as u8, c.int(3) as u8);
+                            melee_fighter::tu::ft_0881::ft_80088328_fp(unsafe { &mut *(fp as *mut melee_types::Fighter) }, s, v, p);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "ft_80088770" {
+                        // void(Fighter*): ACE 2.0.1's Lucas (sweep, mex:30) stops its looped SFX
+                        let fp = c.ptr(0, Some("Fighter"));
+                        if !fp.is_null() && !c.bad {
+                            melee_fighter::tu::ft_0881::ft_80088770_fp(unsafe { &mut *(fp as *mut melee_types::Fighter) });
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "it_80276308" {
+                        // s32(Item_GObj*): ACE 2.0.1's Lucas article logic (sweep, mex:30)
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        let ip = if g.is_null() { core::ptr::null_mut() } else { unsafe { (*(g as G)).user_data as *mut melee_types::Item } };
+                        if !ip.is_null() && !c.bad {
+                            let r = melee_items::tu::itmaplib::it_80276308_fp(unsafe { &mut *ip });
+                            c.ret_int(r as u32);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "mpUpdateFloorSkip" {
                         // void(CollData*): Dedede's inhale (223810)
                         let cd = c.ptr(0, Some("CollData"));
                         if !cd.is_null() && !c.bad {

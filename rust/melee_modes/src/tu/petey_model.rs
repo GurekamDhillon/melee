@@ -1965,3 +1965,24 @@ pub unsafe fn draw_fade(a: u8) {
 }
 
 
+
+#[cfg(test)]
+mod water_probe {
+    #[test]
+    fn water_material() {
+        let Some(leaves) = super::pac_leaves("080001.pac") else { return };
+        for b in leaves.iter().filter(|b| b.len() >= 16 && &b[..4] == b"bres") {
+            for (n, o) in super::brres_entries(b).unwrap_or_default() {
+                let k = b.get(o..o + 4).map(|x| String::from_utf8_lossy(x).into_owned()).unwrap_or_default();
+                if k != "MDL0" && k != "TEX0" && k != "PLT0" { println!("PROBE entry {k} {n}"); }
+            }
+        }
+        for (n, r, t) in super::static_models(&leaves, &["080vmizu00", "080vAdvJungle01"]) {
+            println!("PROBE model {n}: {} tris, {} batches", t.len() / 3, r.batches.len());
+            for (i, bt) in r.batches.iter().enumerate() {
+                let s0 = if i == 0 { 0 } else { r.batches[i - 1].end as usize }; let (lo, hi) = super::extent(&t[s0.min(t.len())..(bt.end as usize).min(t.len())]); println!("PROBE  ext {i} {:?} {:?}", lo, hi);
+                println!("PROBE  batch {i} end {} tex {:?} wrap {:?} alpha {:?} blend {:?} amb {} lit {}", bt.end, bt.tex.as_ref().map(|x| (x.w, x.h, x.fmt)), bt.wrap, bt.alpha, bt.blend, bt.amb, bt.lit);
+            }
+        }
+    }
+}

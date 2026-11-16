@@ -80,6 +80,9 @@ const PORKY_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("090101.pac", 
 /// Galleom's fight stage (SSE 240101, his boss archive): the wilds model, its one world floor and its stage position
 /// model.
 const GALLEOM_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("240101.pac", 0.0, 0.0, "241vAdvWild01", 0, 0) }];
+/// Duon's fight stage (SSE 350001, his boss archive): the Halberd's deck outside (terrain and distant-view models),
+/// its world collision and its stage position model.
+const DUON_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("350001.pac", 0.0, 0.0, "350vAdvHalberdOut_Chikei", 0, 0) }];
 const RAYQUAZA_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("080001.pac", 0.0, 0.0, "080vAdvJungle01", 0, 0) }];
 
 /// The arena of the process's boss (fixed per process: the VS boss, else Envoy's Petey), if it has one.
@@ -89,6 +92,7 @@ fn arena_secs() -> Option<&'static [SecDef]> {
         "porky" => Some(&PORKY_SECS),
         "rayquaza" => Some(&RAYQUAZA_SECS),
         "galleom" => Some(&GALLEOM_SECS),
+        "duon" => Some(&DUON_SECS),
         _ => None,
     }
 }

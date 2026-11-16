@@ -365,8 +365,36 @@ pub fn gct_writes(gct: &[u8]) -> Vec<(u32, u32)> {
     v
 }
 
+/// codes.gct 04 writes (ACE 2.0.1 / Akaneia) with a sim or data effect the port does not mirror yet;
+/// each one present on the disc is logged at load. The ported ones are gated at their site through
+/// `disc_writes` (ftswing, ftmewtwospecials, stale, ground Ground_801C24F8, gmMainLib defaults);
+/// the m-ex table redirects are read natively by mex_host; the rest are UI or platform-only.
+pub const UNHANDLED_WRITES: &[(u32, &str)] = &[
+    (0x8002_A124, "Camera_ApplyQuake: 1P-mode check forced false"),
+    (0x8002_B0F8, "Camera_8002B0E0: 1P-mode check forced false"),
+    (0x8002_C6A8, "Camera_8002C5B4: stack stores removed"),
+    (0x8006_AE00, "Fighter_procInput: debug-level branch removed"),
+    (0x8006_AE90, "Fighter_procInput: 1P-mode check forced false"),
+    (0x800C_09D0, "ftCo_800C09B4: +0x2324 < 30 check skipped"),
+    (0x800C_0AB4, "ftCo_800C0A98: +0x2324 < 30 check skipped"),
+    (0x8018_2FBC, "fn_80182F40: (r3&0xff)==3 path skipped"),
+    (0x804D_C49C, "@2315: float 26.0 -> 29.0"),
+    (0x8002_6EF0, "lbAudioAx_80026EBC: stage sound-bank mask table from MxDt"),
+    (0x801A_3F24, "gm_801A3EF4: major-scene stride 0x18 (m-ex scene table)"),
+    (0x801A_4560, "gm_801A4510: major-scene stride 0x18 (m-ex scene table)"),
+    (0x8017_A890, "1P per-fighter table 0x803D7058 from MxDt"),
+    (0x800C_2798, "per-fighter switch bounds for added kinds"),
+    (0x800C_30A4, "per-fighter switch bounds for added kinds"),
+    (0x8017_9DCC, "function entry overwritten (li r4,0)"),
+];
+
 /// Install the disc's 04 writes (empty for a vanilla disc).
 pub fn set_disc_writes(w: Vec<(u32, u32)>) {
+    for &(a, why) in UNHANDLED_WRITES {
+        if let Some(&(_, v)) = w.iter().find(|&&(x, _)| x == a) {
+            eprintln!("codes.gct: unhandled write {a:08X} = {v:08X} ({why})");
+        }
+    }
     if let Ok(mut d) = DISC_WRITES.write() {
         *d = w;
     }

@@ -1881,7 +1881,9 @@ pub unsafe extern "C" fn Ground_801C24F8(stkind: StKind, arg1: u32, arg2: *mut i
                         arg1 |= 1;
                     }
                     2 => {
-                        if (*phi_r30).x16 as i32 > ext::HSD_Randi(RANDI_MAX) || temp_r25 {
+                        // m-ex codes.gct 0x801C26B0 (lha r0,0x16 -> li r0,50): every entry's chance is a fixed 50
+                        let chance = if melee_core::codes::disc_writes(0x801C_26B0, 0x3800_0032) { 50 } else { (*phi_r30).x16 as i32 };
+                        if chance > ext::HSD_Randi(RANDI_MAX) || temp_r25 {
                             arg1 |= 2;
                         } else {
                             arg1 |= 1;

@@ -205,3 +205,14 @@ point.
   in, so no frame builds them all; enemies come in from a fixed room frame after that.
 - perf-ab against candidate12 (Lake, level 22; release; two runs each, interleaved): 0 frames over budget after the
   match-start tick, which is 0.13-0.24 s.
+
+## Known bug: enemy textures in the preload crash the depth-7 synctest
+
+Queueing the VM enemy models' textures through `explore::TEX_PRELOAD` at the stage load
+(`explore_vm::queue_textures`, the `rig_textures` loop) made `MELEE_PLAY_SYNCTEST=7` on Lake, and depth 4 on level
+18, exit silently with code 127 around match frame 80, before any enemy came in. Bisect (fast build, Lake d7, run
+script): 9a0a449bb passes; with the texture queue on it fails whether the enemy prefetch runs on the game thread or
+a helper, with the map preloaders off, with the warm-up draw off and with no early `BOSS_DRAW` hook; with only the
+texture queue skipped it passes. Cause not found (a guess: the queued pointers into the enemy models are read by the
+renderer after a rollback restore). Workaround in d0bbd2b83: no preload for those textures; they go up with the
+warm-up draws, one model every other frame.

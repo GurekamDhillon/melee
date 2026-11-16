@@ -498,6 +498,7 @@ fn arena_misuse(what: &str, p: usize, n: usize) {
     }
 }
 fn main() -> ExitCode {
+    retail_flow::boot_t0();
     let code = main_inner();
     melee_core::frameprof::finish(); // the profiler's last report (a no-op unless MELEE_PROFILE started it)
     // YouGame: the last saves go up before the process (and with it the bridge) ends.

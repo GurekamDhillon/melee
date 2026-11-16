@@ -24,6 +24,31 @@ fn log(msg: &str) {
     eprintln!("play: {msg}");
 }
 
+static BOOT_T0: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+
+/// MELEE_BOOT_TIMES: the process's start point (first line of main). Later `boot_mark`s print their offset from it.
+pub fn boot_t0() {
+    BOOT_T0.get_or_init(std::time::Instant::now);
+    if std::env::var_os("MELEE_BOOT_TIMES").is_some() {
+        log("boot: main entered at +0.0 ms");
+    }
+}
+
+/// MELEE_BOOT_TIMES: one `boot: <what> at +N ms` line (ms since `boot_t0`), the first time each `what` is marked.
+fn boot_mark(what: &str) {
+    static SEEN: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+    if std::env::var_os("MELEE_BOOT_TIMES").is_none() {
+        return;
+    }
+    let mut seen = SEEN.lock().unwrap();
+    if seen.iter().any(|w| w == what) {
+        return;
+    }
+    seen.push(what.to_string());
+    let ms = BOOT_T0.get().map_or(-1.0, |t| t.elapsed().as_secs_f64() * 1e3);
+    log(&format!("boot: {what} at +{ms:.1} ms"));
+}
+
 pub fn scene_name(kind: u8) -> &'static str {
     match kind as u32 {
         0 => "title",
@@ -899,6 +924,7 @@ impl RetailPlay {
                 }
             };
             let onep = onep.map_or(String::new(), |n| format!(", 1P stocks {n}"));
+            boot_mark(&format!("scene {}", scene_name(now.1)));
             log(&format!("tick {}: scene {} (mode {}, scene kind {}, state {}{onep})", self.tick_no, scene_name(now.1), now.0, now.1, unsafe { melee_modes::tu::gm_1A3F::state_machine.routing.curr_state_id }));
             if now.0 == melee_types::GM_EVENT as u8 && std::env::var_os("MELEE_MENU_LOG").is_some() {
                 // Event Match: which event (gmevent.c's level index, 0-based) the scene plays
@@ -1397,7 +1423,12 @@ impl RetailPlay {
         // the Envoy effects layer (envoy-fx.md): nothing unless a run or a queued drive / post arms it
         self.envoy_fx.present(&mut p.renderer, self.net.is_some(), self.ui.is_some());
         p.renderer.ui_tilt = self.menu_cam.update(self.ui.as_ref(), melee_gx::fx::intensity_from_env(self.net.is_some()));
+        let had_frame = frame.is_some();
         p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, packed, a);
+        boot_mark("first present");
+        if had_frame {
+            boot_mark("first present with a game frame");
+        }
         // MELEE_PRESENT_DUMP="TICK,N": the window as shown for N consecutive presents from tick TICK, in-between
         // (interpolated) presents included: present_<tick>_<k>_<alpha>.png in the shot dir (interpolation evidence)
         if let (Some(dir), Ok(v)) = (self.shot_dir.clone(), std::env::var("MELEE_PRESENT_DUMP")) {

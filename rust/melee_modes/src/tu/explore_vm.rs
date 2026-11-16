@@ -188,6 +188,16 @@ pub unsafe fn clear_room() {
     reset();
 }
 
+/// Checks only (`MELEE_EXPLORE_BEAT`): every live VM enemy is set below the blast zone, so the next tick takes it
+/// as beaten (a fall out is a defeat).
+pub unsafe fn test_drop_all() {
+    for i in 0..N {
+        if S[i].file >= 0 {
+            A[i].pos[1] = -1.0e5;
+        }
+    }
+}
+
 pub fn alive() -> usize {
     unsafe { S.iter().filter(|s| s.file >= 0).count() }
 }

@@ -332,6 +332,8 @@ pub struct Map {
     pub locks: Vec<(usize, u16, [u16; 2], [f32; 4], bool)>,
     /// GMWA / GMWO switches: (section, x, y world, trigger): an attack on it or a fighter at it fires the trigger
     pub switches: Vec<(usize, f32, f32, u16)>,
+    /// the trigger bricks' collision boxes (section, x1 y1 x2 y2): a switch inside one is fired by a hit on the box
+    pub sw_boxes: Vec<(usize, [f32; 4])>,
     /// GFT2 timers: (frames, input trigger, output trigger, set): the output is set (or cleared) that many frames after
     /// the input fires
     pub timers: Vec<(i32, u16, u16, bool)>,
@@ -424,6 +426,9 @@ pub struct Block {
     /// a GSHT shutter whose trigger nothing in the port fires: it opens at the room's start (held shut, it would close
     /// the way on)
     pub auto: bool,
+    /// a GSBK explosion brick (one per bone of its record's locator model): not broken by hits; its collision and model
+    /// go when `trig` fires (0: never)
+    pub blast: bool,
 }
 
 fn load(id: i32) -> Result<Map, String> {
@@ -507,6 +512,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut patterns: Vec<(u16, [u16; 5])> = vec![];
     let mut locks: Vec<(usize, u16, [u16; 2], [f32; 4], bool)> = vec![];
     let mut switches: Vec<(usize, f32, f32, u16)> = vec![];
+    let mut sw_boxes: Vec<(usize, [f32; 4])> = vec![];
     let mut timers: Vec<(i32, u16, u16, bool)> = vec![];
     let mut enemy_paths: Vec<EnemyPath> = vec![];
     // load notes, printed by the game thread with the map's report (never printed from a loader thread)
@@ -537,6 +543,44 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         let mut e = [f32::MAX, f32::MIN, f32::MIN, f32::MAX];
         let gmovs = gmov_list(&leaves, &tags, si, &mut notes);
         let of = if objects { off() } else { None };
+        // GSBK explosion bricks: one copy of the shared brick collision object per bone of each record's locator model
+        // (section space), with the record's removal trigger and its brick model's name; GMWA / GMWO switch places for
+        // their trigger brick's collision object
+        let mut blast_at: Vec<([f32; 2], u16, String)> = vec![];
+        let mut sw_at: Vec<[f32; 2]> = vec![];
+        if let Some(of) = of {
+            for b in leaves.iter().filter(|d| d.get(..4) == Some(b"BLOC")) {
+                if let (Some(qm), Some(ql), Some(qt)) = (of.gsbk_model, of.gsbk_loc, of.gsbk_trig) {
+                    for e in bloc_entries(b, b"GSBK") {
+                        let (mid, lid) = (b.get(e + qm).copied().unwrap_or(0) as u16, b.get(e + ql).copied().unwrap_or(0) as u16);
+                        let trig = be16(b, e + qt);
+                        let leaf = |id: u16| leaves.iter().zip(&tags).find(|(_, t)| t.last() == Some(&(2, id))).map(|(l, _)| l);
+                        let mname = leaf(mid).and_then(|l| pm::brres_entries(l)?.into_iter().find(|(_, o)| l.get(*o..*o + 4) == Some(b"MDL0")).map(|(n, _)| n)).unwrap_or_default();
+                        match leaf(lid).and_then(|l| pm::locator_rig(l)) {
+                            Some(r) => {
+                                for k in (0..r.bones.len()).filter(|&k| !r.bone_name(k).contains("_pos")) {
+                                    let p = r.bone_point(None, 0.0, k, [0.0; 3]);
+                                    blast_at.push(([p[0], p[1]], trig, mname.clone()));
+                                }
+                            }
+                            None => notes.push(format!("explore: section {si}: explosion bricks (locator model {lid}) without their locator; left out")),
+                        }
+                    }
+                }
+                if let Some(qp) = of.sw_pos {
+                    for e in bloc_entries(b, b"GMWA").into_iter().chain(bloc_entries(b, b"GMWO")) {
+                        sw_at.push([bef(b, e + qp), bef(b, e + qp + 4)]);
+                    }
+                }
+            }
+            if !blast_at.is_empty() {
+                let mut t: Vec<u16> = blast_at.iter().map(|b| b.1).collect();
+                t.dedup();
+                notes.push(format!("explore: section {si}: {} explosion bricks (GSBK), triggers {:?}", blast_at.len(), t));
+            }
+        }
+        let is_blast = |n: &[u8]| n.starts_with(b"AdvGdtExplosion");
+        let is_trigbrick = |n: &[u8]| n.starts_with(b"AdvGdtTrigger") || n.starts_with(b"Trigger");
         if let Some(of) = of {
             // every collision file of the section, object by object (a collision object names the bone it rides):
             // world objects (no bone) are the static map, welded below; a brick (`AdvGdtPunBrick*`, Brawl's GBLK
@@ -553,7 +597,11 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                     c.get(n0..n0 + name_end).unwrap_or(&[])
                 };
                 // an object carried by several lifts is loaded once per lift
-                let work: Vec<(usize, usize)> = (0..nobj).flat_map(|k| (0..gmov_count(&gmovs, objname(k))).map(move |i| (k, i))).collect();
+                let count = |k: usize| {
+                    let n = objname(k);
+                    if is_blast(n) { blast_at.len() } else if is_trigbrick(n) { sw_at.len() } else { gmov_count(&gmovs, n) }
+                };
+                let work: Vec<(usize, usize)> = (0..nobj).flat_map(|k| (0..count(k)).map(move |i| (k, i))).collect();
                 for (k, inst) in work {
                     let o = oo + of.obj_stride * k;
                     let (p0, pc) = (be16(c, o) as usize, be16(c, o + 2) as usize);
@@ -561,6 +609,31 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                     let name = objname(k);
                     let (place, joint) = if bone == 0xFFFF {
                         ([s.off[0], s.off[1]], 0usize)
+                    } else if is_blast(name) {
+                        // an explosion brick at its locator bone: a joint of its own, off when its trigger fires
+                        let (p, trig, mn) = blast_at[inst].clone();
+                        let at = [p[0] + s.off[0], p[1] + s.off[1]];
+                        let model = match brick_models.iter().position(|(n, _, _)| *n == mn) {
+                            Some(i) => i,
+                            None => match pm::static_models(&leaves, &[mn.as_str()]).pop() {
+                                Some(t) => {
+                                    brick_models.push(t);
+                                    brick_models.len() - 1
+                                }
+                                None => usize::MAX,
+                            },
+                        };
+                        let bb = [0, 4, 8, 12].map(|i| bef(c, o + of.obj_box + i));
+                        let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
+                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2], once: false, trig, auto: false, blast: true });
+                        (at, blocks.len())
+                    } else if is_trigbrick(name) {
+                        // a switch's trigger brick: static collision at its switch's place
+                        let p = [sw_at[inst][0] + s.off[0], sw_at[inst][1] + s.off[1]];
+                        let bb = [0, 4, 8, 12].map(|i| bef(c, o + of.obj_box + i));
+                        sw_boxes.push((si, [p[0] + bb[0], p[1] + bb[1], p[0] + bb[2], p[1] + bb[3]]));
+                        notes.push(format!("explore: section {si}: trigger brick {} at ({:.0},{:.0}) box {:?}", String::from_utf8_lossy(name), p[0], p[1], sw_boxes.last().map(|b| b.1)));
+                        (p, 0usize)
                     } else if name.starts_with(b"AdvGdtPunBrick") {
                         match leaves.iter().find_map(|b| pm::bone_trans(b, name)) {
                             // a brick bone at the origin: its place comes from Brawl's block data (GBLK), whose bone
@@ -586,7 +659,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                                     },
                                 };
                                 let at = [t[0] + s.off[0], t[1] + s.off[1]];
-                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2], once: false, trig: 0, auto: false });
+                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2], once: false, trig: 0, auto: false, blast: false });
                                 ([t[0] + s.off[0], t[1] + s.off[1]], blocks.len())
                             }
                             None => {
@@ -615,7 +688,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         let bb = [0, 4, 8, 12].map(|i| bef(c, o + of.obj_box + i));
                         let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
                         paths.push(path);
-                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest, once, trig: gmov_trig(&gmovs, name, inst).0, auto: gmov_trig(&gmovs, name, inst).1 });
+                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest, once, trig: gmov_trig(&gmovs, name, inst).0, auto: gmov_trig(&gmovs, name, inst).1, blast: false });
                         notes.push(format!("explore: section {si}: {} moves ({} frames{}) at ({:.0},{:.0}) size {:.0}x{:.0}", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0), if paths.last().map_or(0, |p| p.len()) == 1 { ", held at rest" } else { "" }, x, y, bb[2] - bb[0], bb[3] - bb[1]));
                         (at, blocks.len())
                     } else {
@@ -792,7 +865,17 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                     for e in bloc_entries(b, b"GFT2") {
                         let (i, out) = (be16(b, e + qi), be16(b, e + qo));
                         if i != 0 && out != 0 {
-                            timers.push((fctiwz_f32(bef(b, e + qd)).clamp(0, 36000), i, out, b.get(e + qo + 3) == Some(&1)));
+                            timers.push((fctiwz_f32(bef(b, e + qd)).clamp(0, 36000), i, out, b.get(e + qo + o.trig_set.unwrap_or(3)) == Some(&1)));
+                        }
+                    }
+                    // GFRT: the same relay in a longer record (a delay, then the input and output words) [L: read from
+                    // the data, Brawl's code not read; its two middle words are 0 in every file]
+                    if let (Some(fd), Some(fi), Some(fo)) = (o.gfrt_time, o.gfrt_in, o.gfrt_out) {
+                        for e in bloc_entries(b, b"GFRT") {
+                            let (i, out) = (be16(b, e + fi), be16(b, e + fo));
+                            if i != 0 && out != 0 {
+                                timers.push((fctiwz_f32(bef(b, e + fd)).clamp(0, 36000), i, out, b.get(e + fo + o.trig_set.unwrap_or(3)) == Some(&1)));
+                            }
                         }
                     }
                 }
@@ -1073,6 +1156,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         patterns,
         locks,
         switches,
+        sw_boxes,
         timers,
         enemy_paths,
         notes,
@@ -2010,6 +2094,29 @@ pub unsafe fn room_tick() {
             }
         }
     }
+    // checks only (`MELEE_EXPLORE_BEAT=frame`): from that room frame on, every 30 frames, the room's live enemies are
+    // beaten at once (a lock's enemies-gone end without a fight)
+    {
+        static B: std::sync::OnceLock<Option<i32>> = std::sync::OnceLock::new();
+        if let Some(f) = *B.get_or_init(|| std::env::var("MELEE_EXPLORE_BEAT").ok()?.trim().parse().ok()) {
+            if CLOCK >= f && (CLOCK - f) % 30 == 0 && FADE == 0 {
+                let n = crate::tu::explore_vm::alive() + SS_LIVE.iter().filter(|e| e.0 >= 0).count();
+                if n > 0 {
+                    eprintln!("explore: test beats {n} enemies at room frame {CLOCK}");
+                }
+                crate::tu::explore_vm::test_drop_all();
+                crate::tu::subspace::clear_room();
+            }
+        }
+    }
+    // checks only (`MELEE_EXPLORE_FIRE=trigger@frame[,..]`): the trigger fires at that room frame (a switch the pad
+    // script cannot reach)
+    for &(f, t) in goto_list("MELEE_EXPLORE_FIRE").iter() {
+        if f == CLOCK && t > 0 && t <= u16::MAX as i32 {
+            eprintln!("explore: test fires trigger {t} at room frame {CLOCK}");
+            fire(t as u16);
+        }
+    }
     // checks only (`MELEE_EXPLORE_GOTO=door@frame[,door@frame..]`): the party goes through to `door` at room frame
     // `frame`, as if it had opened the door leading there (screenshots inside the side rooms without a walk)
     if let Some(&(_, to)) = goto_list("MELEE_EXPLORE_GOTO").iter().find(|&&(f, to)| f == CLOCK && (to as usize) < m.doors.len()) {
@@ -2109,7 +2216,9 @@ fn goto_list(var: &'static str) -> &'static [(i32, i32)] {
     static O: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
     static K: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
     static F: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
+    static T: std::sync::OnceLock<Vec<(i32, i32)>> = std::sync::OnceLock::new();
     let cell = match var {
+        "MELEE_EXPLORE_FIRE" => &T,
         "MELEE_EXPLORE_OPEN" => &O,
         "MELEE_EXPLORE_KO" => &K,
         "MELEE_EXPLORE_FAR" => &F,
@@ -2411,6 +2520,15 @@ struct Off {
     gft_time: Option<usize>,
     gft_in: Option<usize>,
     gft_out: Option<usize>,
+    /// GSBK explosion bricks: brick model file id, locator model file id (bytes), removal trigger word
+    gsbk_model: Option<usize>,
+    gsbk_loc: Option<usize>,
+    gsbk_trig: Option<usize>,
+    /// the set / clear flag byte within a relay's output trigger word; GFRT relay: delay, input word, output word
+    trig_set: Option<usize>,
+    gfrt_time: Option<usize>,
+    gfrt_in: Option<usize>,
+    gfrt_out: Option<usize>,
 }
 
 fn off() -> Option<&'static Off> {
@@ -2461,6 +2579,13 @@ fn off() -> Option<&'static Off> {
                 gft_time: g("gft_time"),
                 gft_in: g("gft_in"),
                 gft_out: g("gft_out"),
+                gsbk_model: g("gsbk_model"),
+                gsbk_loc: g("gsbk_loc"),
+                gsbk_trig: g("gsbk_trig"),
+                trig_set: g("trig_set"),
+                gfrt_time: g("gfrt_time"),
+                gfrt_in: g("gfrt_in"),
+                gfrt_out: g("gfrt_out"),
             })
         })();
         if o.is_none() {
@@ -2864,9 +2989,24 @@ unsafe fn blocks_tick(m: &Map) {
     if m.blocks.is_empty() || FADE > 0 {
         return;
     }
+    // GSBK explosion bricks: their joint off from the frame their trigger has fired (no state of our own: the trigger
+    // words are sim state, and the joint-off call returns at once for a joint already off)
+    for (k, b) in m.blocks.iter().enumerate() {
+        if b.blast && b.trig != 0 && fired(b.trig) {
+            let j = melee_world::tu::mplib::groundCollJoint;
+            if j.is_null() {
+                break;
+            }
+            let was = (*j.add(k + 1)).flags;
+            melee_world::tu::mplib::mpLib_80057BC0(k as i32 + 1);
+            if was != (*j.add(k + 1)).flags {
+                eprintln!("explore: explosion brick {k} gone (trigger {}) at ({:.0},{:.0}) room frame {CLOCK}", b.trig, b.x, b.y);
+            }
+        }
+    }
     let touches = |b: &Block, x: f32, y: f32, r: f32| (x - b.x).abs() <= b.hw + r && (y - b.y).abs() <= b.hh + r;
     for (k, b) in m.blocks.iter().enumerate().take(64) {
-        if b.path != usize::MAX || BROKEN & 1u64.pshl(k as i64) != 0 || b.sec as i32 != SEC {
+        if b.path != usize::MAX || b.blast || BROKEN & 1u64.pshl(k as i64) != 0 || b.sec as i32 != SEC {
             continue;
         }
         let mut hit = false;
@@ -2918,7 +3058,16 @@ unsafe fn locks_tick(m: &Map) {
             }
             LOCK_ON = -1;
             set_bounds(SEC as usize);
-            eprintln!("explore: camera lock {k} released at room frame {CLOCK}");
+            let why = if sec as i32 != SEC {
+                "the party left"
+            } else if ends.iter().any(|&t| t != 0 && fired(t)) {
+                "an end trigger fired"
+            } else if cleared {
+                "its enemies are gone"
+            } else {
+                "a minute passed"
+            };
+            eprintln!("explore: camera lock {k} released at room frame {CLOCK}: {why}");
             return;
         }
         each_fighter(|_, fp| {
@@ -2966,13 +3115,18 @@ unsafe fn switches_tick(m: &Map) {
             continue;
         }
         let mut on = false;
+        // a trigger brick (its collision box holds the switch's place) is fired by a hit on the box, a floor switch
+        // also by a fighter at it
+        let tb = m.sw_boxes.iter().find(|b| b.0 == sec && x >= b.1[0] - 1.0 && x <= b.1[2] + 1.0 && y >= fmin(b.1[1], b.1[3]) - 1.0 && y <= fmax(b.1[1], b.1[3]) + 1.0).map(|b| b.1);
+        let r = tb.map_or([x - 10.0, y - 10.0, x + 10.0, y + 10.0], |b| [b[0], fmin(b[1], b[3]), b[2], fmax(b[1], b[3])]);
         each_fighter(|_, fp| {
             let p = (*fp).cur_pos;
-            if (p.x - x).abs() <= 10.0 && (p.y - y).abs() <= 15.0 {
+            if tb.is_none() && (p.x - x).abs() <= 10.0 && (p.y - y).abs() <= 15.0 {
                 on = true;
             }
             for h in (*fp).x914.iter() {
-                if h.state != HitCapsule_Disabled && h.damage > 0.0 && ((h.x4C.x - x).abs() <= 10.0 + h.scale && (h.x4C.y - y).abs() <= 10.0 + h.scale) {
+                let s = h.scale;
+                if h.state != HitCapsule_Disabled && h.damage > 0.0 && h.x4C.x >= r[0] - s && h.x4C.x <= r[2] + s && h.x4C.y >= r[1] - s && h.x4C.y <= r[3] + s {
                     on = true;
                 }
             }
@@ -3058,7 +3212,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     // the bricks still standing in the party's section (a broken one's model goes with its collision)
     for (k, b) in m.blocks.iter().enumerate() {
-        let broken = k < 64 && BROKEN & 1u64.pshl(k as i64) != 0;
+        let broken = k < 64 && BROKEN & 1u64.pshl(k as i64) != 0 || b.blast && b.trig != 0 && fired(b.trig);
         if broken || b.sec as i32 != SEC {
             continue;
         }

@@ -34,10 +34,10 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | GMOV | moving map parts / lifts | 545 | 117 | mode 1 loops (314); mode 2 plays once from the frame a fighter stands on it (231, a guess from the data) |
 | EPSP | enemy spawn points | 417 | 134 | dropped |
 | GDOR | doors | 305 | 140 | supported |
-| GFT2 | triggers (GFT2) | 191 | 53 | dropped |
+| GFT2 | timed trigger relays | 191 | 53 | supported (round 4) |
 | GIB2 | item boxes / crates | 180 | 106 | supported (Melee container) |
 | GTIK | GTIK (other) | 179 | 15 | dropped |
-| GASD | GASD trigger | 153 | 81 | dropped |
+| GASD | area sounds (ambient loop in a rect) | 153 | 81 | identified; not played (no Brawl sound bank in the port) |
 | GNDV | GNDV graphics | 148 | 11 | dropped |
 | GMOT | model motion | 136 | 56 | dropped |
 | GBLK | breakable blocks | 131 | 53 | supported (collision breaks; model stays) |
@@ -47,7 +47,7 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | GSPR | springs | 100 | 15 | dropped |
 | GMTA | GMTA objects | 99 | 25 | dropped |
 | GFPR | fire pillars | 95 | 10 | dropped |
-| GSBK | switch blocks | 93 | 22 | static |
+| GSBK | explosion bricks | 93 | 22 | supported (gone when their trigger fires) |
 | GMCA | GMCA hazards | 91 | 22 | dropped |
 | GITM | placed items | 86 | 51 | dropped |
 | GDBF | Halberd/factory doors | 81 | 47 | dropped |
@@ -57,7 +57,7 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | GWAT | water | 66 | 23 | dropped |
 | GEFF | effects | 64 | 24 | dropped |
 | GQUK | quakes | 56 | 25 | dropped |
-| GFRT | triggers (GFRT) | 51 | 12 | dropped |
+| GFRT | timed trigger relays (long record) | 51 | 12 | supported (as GFT2) |
 | GBC2 | cannons (2) | 51 | 6 | dropped |
 | GMPS | moving platforms | 50 | 11 | static |
 | GDMD | GDMD (other) | 49 | 42 | dropped |
@@ -241,3 +241,24 @@ a helper, with the map preloaders off, with the warm-up draw off and with no ear
 texture queue skipped it passes. Cause not found (a guess: the queued pointers into the enemy models are read by the
 renderer after a rollback restore). Workaround in d0bbd2b83: no preload for those textures; they go up with the
 warm-up draws, one model every other frame.
+
+## Explosion bricks, relays, area sounds (round 5)
+
+- **GSBK explosion bricks**: a record names its brick model, a locator model and a trigger word [off]. The section's
+  collision file holds one brick object (`AdvGdtExplosionM`); the loader puts one copy of it, each a joint of its own,
+  at every bone of the locator model (its model-space places; the `*_pos*` bones are the locators' roots and are
+  skipped), drawn with the brick model. When the trigger fires every copy goes (joint off, model hidden). Explosion
+  bricks are not broken by hits. Level 8's section 080102: 50 bricks on one trigger; with it fired the brick wall
+  over the waterfall room opens (`scratch/sse-out/gsbk-l8-*.png`). Level 12's records carry trigger 0: they stay.
+- **Trigger bricks** (`AdvGdtTriggerM`, `Trigger02M`): the switch's own collision, static at its GMWA / GMWO record's
+  place; a switch inside such a box fires on a hit on the box (a floor switch still also on a fighter at it).
+- **Relay set / clear byte**: the round-4 GFT2 reading took the word's last byte for set / clear, which made almost
+  every relay a clear. The data say the third byte (outputs 00 = clear, 01 = set; the last byte 0 / 1 / 2 is something
+  else) [L]; the byte is in the local spec.
+- **GFRT** is the same relay in a longer record (a delay, two words that are 0 in every file, the input and output
+  words); loaded as a timer. Lake 160301: one area fires five GFRTs, each starting a lift (one 225 frames later).
+- **GASD** carries a sound id in Brawl's stage sound range, a rect, two equal fade counts and a gate trigger word: an
+  area ambient sound [L: from the data]. Not played: the port has no Brawl sound bank.
+- Checks only: `MELEE_EXPLORE_FIRE=trigger@frame` fires a trigger; `MELEE_EXPLORE_BEAT=frame` beats the room's live
+  enemies every 30 frames from that frame (a lock's enemies-gone end without a fight). The lock release line now
+  says why it let go.

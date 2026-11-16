@@ -249,6 +249,9 @@ pub fn root_move(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor) -> Opti
 
 /// [`root_move`] on a given model (the arena actor's).
 pub fn root_move_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor) -> Option<[f32; 2]> {
+    // a clip without root travel does not drive the root-motion units: they keep their own speed (Porky's walk
+    // clips move no root bone; with the root on and a zero move he never walked)
+    usize::try_from(a.motion).ok().and_then(|mi| m.root.get(mi)).filter(|t| !t.is_empty())?;
     Some(root_delta(p, m, a.motion, a.tick.wrapping_sub(a.motion_t0)))
 }
 

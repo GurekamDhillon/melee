@@ -1273,6 +1273,13 @@ fn gen_uv(g: &Gen, uv: [f32; 2], nv: [f32; 3]) -> [f32; 2] {
     }
 }
 
+/// `MELEE_BRAWL_SINGLE_LOCAL`: the old reading of NodeMix single-bone entries (skipped: the bone's own matrix),
+/// for before / after shots.
+fn single_bone_local() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var_os("MELEE_BRAWL_SINGLE_LOCAL").is_some())
+}
+
 /// `MELEE_BRAWL_ONE_STAGE`: draw every material with the old single-stage look (before / after shots).
 fn one_stage() -> bool {
     static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
@@ -1725,7 +1732,18 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
         let mut p = *o;
         loop {
             match d.get(p) {
-                Some(5) => p += 5,
+                // a single-bone matrix (node id, bone node id): the bone's world matrix by its inverse bind, as a
+                // weighted one of weight 1 (the object's vertices are in model space)
+                Some(5) => {
+                    let (id, bn) = (be16(d, p + 1) as u32, be16(d, p + 3) as u32);
+                    if !single_bone_local() {
+                        if let Some((_, bi)) = bone_of_node.iter().find(|(i, _)| *i == bn) {
+                            srcs.push(Src::Mix(vec![(*bi, 1.0)]));
+                            node_src.push((id, (srcs.len() - 1) as u16));
+                        }
+                    }
+                    p += 5;
+                }
                 Some(3) => {
                     let (id, n) = (be16(d, p + 1) as u32, d[p + 3] as usize);
                     let mut ws = vec![];

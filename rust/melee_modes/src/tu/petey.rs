@@ -1470,6 +1470,10 @@ unsafe fn draw_weapons() {
         } else {
             (GXColor { r: 255, g: 110, b: 40, a: 255 }, GXColor { r: 150, g: 40, b: 10, a: 255 })
         };
+        // the weapon's own model while it flies (its explosion keeps the sphere)
+        if p.phase == 0 && crate::tu::vm_boss_model::draw_weapon(rc.raw_id, p.x, p.y, if p.vx < 0.0 { -1.0 } else { 1.0 }, p.age, false) {
+            continue;
+        }
         let v = Vec3 { x: p.x, y: p.y, z: 0.0 };
         melee_runtime::tu::lbcollision::lbColl_80008FC8(v, v, &c, &d, r);
     }

@@ -317,6 +317,12 @@ pub fn load_rigs_with(rel: &[&str], wants: &[(&str, &str, &str)], strip: bool) -
             tex0(&leaves[*li], *o, plt).map(|t| (n.clone(), std::sync::Arc::new(t)))
         })
         .collect();
+    if std::env::var_os("MELEE_MDL_LOG").is_some() {
+        let pre = wants.first().map_or("", |w| w.1);
+        let names: Vec<&str> = mdls.iter().map(|m| m.0.as_str()).collect();
+        let cn: Vec<&str> = chrs.iter().map(|m| m.0.as_str()).filter(|n| !n.starts_with(pre)).collect();
+        eprintln!("petey_model: {} MDL0s {:?}; other CHR0s {:?}", rel.join("/"), names, cn);
+    }
     Ok(wants
         .iter()
         .map(|(want, prefix, idle)| {

@@ -66,7 +66,18 @@ pub struct Model {
     pub framing: Option<[f32; 4]>,
     /// drawn with its front to the screen whatever its facing (see `model_mat`)
     pub faces_camera: bool,
+    /// the boss's weapon models (their own MDL0s in the boss archive), by weapon record id
+    pub weapons: Vec<(u32, pm::Rig, Mutex<pm::DrawBufs>)>,
 }
+
+/// Weapon models per boss: (boss, weapon record id, MDL0 name in the boss archive). The record ids are the IR's
+/// weapon records (local data); the names are the archive's.
+const WEAPON_MDLS: &[(&str, u32, &str)] = &[
+    ("porky", 44033, "WpnPorkyrobot"),
+    ("metaridley", 44013, "WpnMetaridleyFireballL"),
+    ("metaridley", 44014, "WpnMetaridleyFireballS"),
+    ("metaridley", 44015, "WpnMetaridleyVulcan"),
+];
 
 /// `MELEE_VMBOSS_BODY_CAM`: the old whole-mesh boss camera (before / after shots). Read once (the prefetch).
 pub fn body_cam() -> bool {
@@ -276,14 +287,27 @@ fn read(name: &str) -> Option<Model> {
                 format!("\n  clip {n}: {} tracks, animated {:?}; trans {}", a.tracks.len(), moving, tr.join(", "))
             })
             .collect();
-        format!("; top bones {:?}\n  tree {:?}{}", tops, tree, chans.concat())
+        let gen = p.map(|p| format!("{:?}", p.general)).unwrap_or_default();
+        format!("; top bones {:?}\n  general {gen}\n  tree {:?}{}", tops, tree, chans.concat())
     } else {
         String::new()
     };
     let part = PARTS.iter().find(|q| q.0 == name).and_then(|q| rig.subtree_mask(q.1));
     let framing = framing_of(name);
     let faces_camera = FACES_CAMERA.contains(&name);
-    Some(Model { rig, clip, root, vis, ext, bufs, sim, note, part, framing, faces_camera })
+    let wants: Vec<(&str, &str, &str)> = WEAPON_MDLS.iter().filter(|w| w.0 == name).map(|w| (w.2, w.2, "Wait")).collect();
+    let mut weapons = Vec::new();
+    if !wants.is_empty() {
+        if let Ok(rigs) = pm::load_rigs_with(&["stage", "adventure", arc], &wants, false) {
+            for (w, r) in WEAPON_MDLS.iter().filter(|w| w.0 == name).zip(rigs) {
+                if let Some(r) = r {
+                    let b = Mutex::new(r.draw_bufs());
+                    weapons.push((w.1, r, b));
+                }
+            }
+        }
+    }
+    Some(Model { rig, clip, root, vis, ext, bufs, sim, note, part, framing, faces_camera, weapons })
 }
 
 /// The frame of the actor's motion `el` frames after it began (the VM's own motion-frame rule).
@@ -482,5 +506,22 @@ pub unsafe fn draw_named(motion: &str, frame: i32, x: f32, lr: f32, flash: bool)
     }
     let s = if lr < 0.0 { -1.0 } else { 1.0 };
     pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [x, 0.0, 0.0], 1.0, [[0.0, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, 0.0]], flash);
+    true
+}
+
+/// Draw weapon record `raw_id`'s own model at (x, y), facing `face` (+1 right), its first clip looping at `age`
+/// frames. False without a model for it (the caller draws its stand-in). Presentation only.
+pub unsafe fn draw_weapon(raw_id: u32, x: f32, y: f32, face: f32, age: i32, flash: bool) -> bool {
+    let Some(Some(m)) = M.get() else { return false };
+    let Some((_, rig, bufs)) = m.weapons.iter().find(|w| w.0 == raw_id) else { return false };
+    let Ok(mut b) = bufs.lock() else { return false };
+    let anim = rig.anims.first().map(|a| &a.1);
+    let f = anim.map_or(0.0, |a| {
+        let n = fcvt_u32(fmax(a.frames, 1.0)).max(1);
+        (age.max(0) as u32).prem(n) as f32
+    });
+    rig.skin_vis(anim, f, &[], &mut b);
+    let s = if face < 0.0 { -1.0 } else { 1.0 };
+    pm::draw_tris_vis(rig, &b.tris, &b.hide, [0.0, 0.0], [x, y, 0.0], 1.0, [[0.0, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, 0.0]], flash);
     true
 }

@@ -83,6 +83,11 @@ pub struct SpawnRecord {
     pub end_contact: bool,
     /// homing: search range and turn per frame (radians)
     pub homing: Option<(f32, f32)>,
+    /// frames before the homing steers (the spark's lock-on; 0: from the start)
+    pub lock: i32,
+    /// a floor walker (Porky's Mini-Porky robot): once on the floor it runs at this speed toward the nearest target,
+    /// falling by the gravity while airborne: (speed, gravity)
+    pub walk: Option<(f32, f32)>,
 }
 
 /// Contact radius of a weapon with no fly box (the 0610 shape in its start script is not decoded).
@@ -210,7 +215,7 @@ pub fn step(recs: &[SpawnRecord], targets: &[Target; 4], out: &mut [Hit; MAX_SPA
         let mut end = false;
         let mut boom = false;
         if q.phase == 0 {
-            if let Some((range, turn)) = rc.homing {
+            if let Some((range, turn)) = rc.homing.filter(|_| q.age > rc.lock) {
                 // the nearest target in range
                 let mut best: Option<(f32, f32, f32)> = None;
                 for t in targets.iter().flatten() {
@@ -224,10 +229,39 @@ pub fn step(recs: &[SpawnRecord], targets: &[Target; 4], out: &mut [Hit; MAX_SPA
                     (q.vx, q.vy) = steer(q.vx, q.vy, dx, dy, turn);
                 }
             }
+            if let Some((speed, grav)) = rc.walk {
+                // a floor walker: on the floor (y 0, the boss arenas' floor line) it runs at its speed toward the
+                // nearest target; in the air it falls
+                if q.y <= 0.0 && q.vy <= 0.0 {
+                    q.y = 0.0;
+                    q.vy = 0.0;
+                    q.ay = 0.0;
+                    q.ax = 0.0;
+                    let mut best: Option<f32> = None;
+                    for t in targets.iter().flatten() {
+                        let dx = t.0 - q.x;
+                        let ab = |v: f32| if v < 0.0 { -v } else { v };
+                        if best.is_none_or(|b| ab(dx) < ab(b)) {
+                            best = Some(dx);
+                        }
+                    }
+                    q.vx = match best {
+                        Some(dx) if dx < 0.0 => -speed,
+                        Some(_) => speed,
+                        None => if q.vx < 0.0 { -speed } else { speed },
+                    };
+                } else if grav > 0.0 {
+                    q.ay = -grav;
+                }
+            }
             q.x += q.vx;
             q.y += q.vy;
             q.vx += q.ax;
             q.vy += q.ay;
+            if rc.walk.is_some() && q.y < 0.0 {
+                q.y = 0.0;
+                q.vy = 0.0;
+            }
             let floor = rc.end_floor && q.vy < 0.0 && q.y <= 0.0;
             let mut contact = false;
             for (t, tg) in targets.iter().enumerate() {
@@ -445,7 +479,20 @@ pub fn lower_records(boss: &J) -> Vec<SpawnRecord> {
             end_floor: ends("floor"),
             end_contact: ends("contact"),
             // turn: the second of the homing set's numbers (0.06 rad for Duon); its role is inferred, not traced
-            homing: if hm.is_null() { None } else { Some((hm.get("range").num().unwrap_or(0.0) as f32, hm.get("numbers").arr().get(1).and_then(|x| x.num()).unwrap_or(0.0) as f32)) },
+            lock: r.get("lock_frames").num().unwrap_or(0.0) as i32, // semantics: allow(load time: IR lowering on a helper thread, never in the sim)
+            walk: {
+                let w = r.get("walk");
+                if w.is_null() { None } else { Some((w.get("speed").num().unwrap_or(1.0) as f32, w.get("gravity").num().unwrap_or(0.0) as f32)) }
+            },
+            // a turn given as {base, per_level} (Porky's spark: 2.2 + 0.3 L, unit not traced) reads as degrees at its
+            // base [I: radians would turn it at once]
+            homing: if hm.is_null() {
+                None
+            } else {
+                let t = hm.get("numbers").arr().get(1);
+                let turn = t.and_then(|x| x.num()).map(|v| v as f32).or_else(|| t.and_then(|x| x.get("base").num()).map(|v| (v as f32).to_radians()));
+                Some((hm.get("range").num().unwrap_or(0.0) as f32, turn.unwrap_or(0.0)))
+            },
         });
     }
     v

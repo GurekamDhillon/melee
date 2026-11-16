@@ -369,7 +369,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let Some(path) = get("--slp") else {
-        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--video-out -|PATH [--video-size WxH] [--video-realtime]] [--audio-out PATH] [--from-frame N] [--to-frame M]
+        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--video-out -|PATH [--video-size WxH] [--video-realtime]] [--audio-out PATH] [--from-frame N] [--to-frame M] [--verify-disc] [--progress]
+  --verify-disc: check the disc image's header first (GALE01, disc 1, rev 2, plain GCM); a bad disc exits 4. --progress: print `progress <frame> <last>` on stderr every 60 frames (frame = the replay frame just simulated, last = --to-frame or the replay's last frame), also during the silent seek, and once at the end.
   --from-frame/--to-frame (with --video-out/--audio-out): output only .slp frames N..=M (frame numbers as in the replay, which starts at -123); the sim still runs from the first frame, the earlier frames are not drawn, encoded or mixed out, and the run stops after frame M with exit 0. N <= 0 means from the start. M past the replay's last frame or M < N is an error (exit 2).");
         return ExitCode::from(2);
     };
@@ -378,6 +379,12 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         eprintln!("melee slpcheck: no disc (--iso or GW_ISO_VANILLA)");
         return ExitCode::from(2);
     };
+    if args.iter().any(|a| a == "--verify-disc") {
+        if let Err(e) = crate::disc::identify(&iso) {
+            eprintln!("melee slpcheck: this disc image can't be used: {e}");
+            return ExitCode::from(4);
+        }
+    }
     let name = std::path::Path::new(&path).file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
     let data = match std::fs::read(&path) {
         Ok(d) => d,
@@ -594,6 +601,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     // the render guard (`--video-out` / `--audio-out`): the engine's match ending before the replay does
     let mut ended_early: Option<i32> = None;
     let rendering = av.is_some();
+    // `--progress`: `progress <frame> <last>` on stderr every 60 replay frames (a worker's heartbeat reads it)
+    let progress = args.iter().any(|a| a == "--progress");
+    let progress_end = to_frame.unwrap_or(file.last_frame);
     // the Dolphin oracle's comparison outputs (notes/dolphin-oracle.md): `--nhv1-out CSV` the NHV1 rows
     // (frame = slippi frame + 123), `--wide-out TXT [--wide]` every named Fighter/Item field per frame
     // (+ game_camera and stage_info with --wide), the same lines `melee dolphin-wide` writes
@@ -677,6 +687,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             ticks += 1;
             last_frame = fr;
+            if progress && (fr % 60 == 0 || fr == progress_end) {
+                eprintln!("progress {fr} {progress_end}");
+            }
             if let Some(a) = av.as_mut() {
                 if !a.push_frame_at(fr) {
                     eprintln!("melee slpcheck: an output closed at frame {fr}; stopping");

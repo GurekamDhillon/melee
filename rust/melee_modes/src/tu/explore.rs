@@ -696,8 +696,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
             for e in bloc_entries(b, b"GDOR").into_iter().chain(bloc_entries(b, b"GDBF")) {
                 doors.push(Door {
                     // a trigger word whose two flag bytes are both set: shut until it fires [L: read from the data;
-                    // other flag pairs (the Great Maze's, Lake's room-pair words) are not locks here]
-                    lock: off().and_then(|o| o.door_lock).filter(|&q| b.get(e + q + 2) == Some(&1) && b.get(e + q + 3) == Some(&1) && b.get(e + 0x51) != Some(&0x13)).map_or(0, |q| be16(b, e + q)),
+                    // other flag pairs (the Great Maze's) are not locks here]
+                    lock: off().and_then(|o| o.door_lock).filter(|&q| b.get(e + q + 2) == Some(&1) && b.get(e + q + 3) == Some(&1)).map_or(0, |q| be16(b, e + q)),
                     sec: si,
                     x: bef(b, e + 0x38) + s.off[0],
                     y: bef(b, e + 0x3C) + s.off[1],
@@ -709,6 +709,10 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                     exit: false,
                     jump: be32(b, e + 0x30),
                 });
+                // a main-section door into a side room keeps its room-pair word (`link_doors`' visiting rule), not a lock
+                if let Some(d) = doors.last_mut().filter(|d| d.into_room) {
+                    d.lock = 0;
+                }
             }
             for e in bloc_entries(b, b"GEG1") {
                 spawn_trig.push(off().map_or((0, 0), |o| (o.geg_spawn_trig.map_or(0, |q| be16(b, e + q)), o.geg_defeat_trig.map_or(0, |q| be16(b, e + q)))));

@@ -97,8 +97,93 @@ pub fn open(path: &str) -> Result<Box<dyn Write + Send>, String> {
             None => Err("--video-out -: stdout is not available".into()),
         };
     }
-    let f = std::fs::OpenOptions::new().write(true).create(true).truncate(!path.starts_with(r"\\.\pipe\")).open(path).map_err(|e| format!("{path}: {e}"))?;
+    #[cfg(windows)]
+    if path.starts_with(r"\\.\pipe\") {
+        // a pipe someone already serves: write to it; else serve it here and wait for the reader (ffmpeg -i \\.\pipe\NAME)
+        if let Ok(f) = std::fs::OpenOptions::new().write(true).open(path) {
+            return Ok(Box::new(f));
+        }
+        // the reader may open it only after it has read the first frames of another stream (ffmpeg probes its
+        // inputs in order): connect and write on a thread, queueing until then, so nothing here waits for it
+        let h = pipe_create(path)?;
+        let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
+        let p = path.to_string();
+        let t = std::thread::Builder::new()
+            .name("pipe out".into())
+            .spawn(move || match pipe_connect(h, &p) {
+                Ok(mut f) => {
+                    while let Ok(v) = rx.recv() {
+                        if let Err(e) = f.write_all(&v) {
+                            eprintln!("melee: {p}: {e}");
+                            return;
+                        }
+                    }
+                }
+                Err(e) => eprintln!("melee: {e}"),
+            })
+            .map_err(|e| e.to_string())?;
+        return Ok(Box::new(QueueWriter(Some(tx), Some(t))));
+    }
+    let f = std::fs::OpenOptions::new().write(true).create(true).truncate(true).open(path).map_err(|e| format!("{path}: {e}"))?;
     Ok(Box::new(f))
+}
+
+/// Bytes handed to a writer thread (never blocks the frame loop).
+struct QueueWriter(Option<std::sync::mpsc::Sender<Vec<u8>>>, Option<std::thread::JoinHandle<()>>);
+
+impl Drop for QueueWriter {
+    /// Everything queued reaches the reader before the process ends.
+    fn drop(&mut self) {
+        drop(self.0.take());
+        if let Some(t) = self.1.take() {
+            let _ = t.join();
+        }
+    }
+}
+
+impl Write for QueueWriter {
+    fn write(&mut self, b: &[u8]) -> std::io::Result<usize> {
+        self.0.as_ref().unwrap().send(b.to_vec()).map_err(|_| std::io::Error::from(std::io::ErrorKind::BrokenPipe))?;
+        Ok(b.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+#[cfg(windows)]
+unsafe extern "system" {
+    fn CreateNamedPipeW(name: *const u16, open: u32, mode: u32, max: u32, out: u32, inb: u32, timeout: u32, sa: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    fn ConnectNamedPipe(h: *mut core::ffi::c_void, ov: *mut core::ffi::c_void) -> i32;
+    fn GetLastError() -> u32;
+}
+
+/// Create the named pipe `path` (outbound, byte mode, one instance). The handle travels as an integer (Send).
+#[cfg(windows)]
+fn pipe_create(path: &str) -> Result<usize, String> {
+    const PIPE_ACCESS_OUTBOUND: u32 = 2;
+    let name: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
+    unsafe {
+        let h = CreateNamedPipeW(name.as_ptr(), PIPE_ACCESS_OUTBOUND, 0, 1, 4 << 20, 0, 0, std::ptr::null_mut());
+        if h.is_null() || h as isize == -1 {
+            return Err(format!("{path}: CreateNamedPipe failed ({})", GetLastError()));
+        }
+        Ok(h as usize)
+    }
+}
+
+/// Block until a reader opens the pipe.
+#[cfg(windows)]
+fn pipe_connect(h: usize, path: &str) -> Result<std::fs::File, String> {
+    use std::os::windows::io::FromRawHandle;
+    const ERROR_PIPE_CONNECTED: u32 = 535;
+    let h = h as *mut core::ffi::c_void;
+    unsafe {
+        if ConnectNamedPipe(h, std::ptr::null_mut()) == 0 && GetLastError() != ERROR_PIPE_CONNECTED {
+            return Err(format!("{path}: ConnectNamedPipe failed ({})", GetLastError()));
+        }
+        Ok(std::fs::File::from_raw_handle(h))
+    }
 }
 
 /// The one stderr line a consumer reads before the first frame.

@@ -1102,13 +1102,17 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
     }
     let mut audio_sink = None;
+    let mut audio_sent = 0usize;
+    let keep_wav = get("--audio-wav").is_some();
     if let Some(p) = &audio_out {
-        // the preroll's mix precedes frame 0: dropped, so sample 0 is the first video frame's
-        if let Some(w) = unsafe { (*std::ptr::addr_of_mut!(engine_audio::WAV)).as_mut() } {
-            w.clear();
-        }
-        match std::fs::File::create(p) {
-            Ok(f) => audio_sink = Some(std::io::BufWriter::new(f)),
+        // the preroll (the BGM start the C's load runs ahead of logic frame 0) precedes frame 0: not sent, so sample 0
+        // is the first video frame's. `--audio-wav` still gets it (the C capture's layout).
+        let pre = unsafe { (*std::ptr::addr_of!(engine_audio::WAV)).as_ref() }.map_or(0, |w| w.len());
+        audio_sent = pre;
+        eprintln!("audio-out: preroll of {} samples ({:.3} s) before video frame 0 skipped; audio sample 0 = video frame 0", pre / 2, pre as f64 / 2.0 / 32000.0);
+        // a file, or a named pipe (\\.\pipe\NAME, served here when no one else does) for ffmpeg's second input
+        match video_sink::open(p) {
+            Ok(f) => audio_sink = Some(std::io::BufWriter::with_capacity(1 << 16, f)),
             Err(er) => {
                 eprintln!("melee: --audio-out {p}: {er}");
                 return ExitCode::FAILURE;
@@ -1191,11 +1195,18 @@ fn golden_engine(args: &[String]) -> ExitCode {
             engine_audio::dsp_frame();
             if let (Some(a), Some(w)) = (audio_sink.as_mut(), unsafe { (*std::ptr::addr_of_mut!(engine_audio::WAV)).as_mut() }) {
                 use std::io::Write;
-                let mut b = Vec::with_capacity(w.len() * 2);
-                for x in w.drain(..) {
+                let mut b = Vec::with_capacity((w.len() - audio_sent.min(w.len())) * 2);
+                for x in &w[audio_sent.min(w.len())..] {
                     b.extend_from_slice(&x.to_le_bytes());
                 }
-                if let Err(er) = a.write_all(&b) {
+                if keep_wav {
+                    audio_sent = w.len();
+                } else {
+                    w.clear(); // nothing else reads it: a live stream does not grow it
+                    audio_sent = 0;
+                }
+                // flushed per frame alongside the video (a pipe reader interleaves the two)
+                if let Err(er) = a.write_all(&b).and_then(|_| if video.is_some() { a.flush() } else { Ok(()) }) {
                     eprintln!("melee: --audio-out: {er}");
                     audio_sink = None;
                 }

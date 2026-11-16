@@ -993,9 +993,13 @@ fn worker_main() {
             Some(v)
             }),
         };
-        let bytes = bytes.filter(|b| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len());
+        // A file whose first word is not its length is not one archive: the fighters' animation banks
+        // (Pl*AJ.dat: entries 0x254 PlFxAJ, 0x2c1 PlMrAJ) are concatenated per-move archives that the game reads
+        // a piece at a time, never whole. Permanent: mark it unplannable so it is not read again every visit.
+        let hdr_ok = |b: &Vec<u8>| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len();
         let res = match bytes {
             None => Err(NoPlan::NoSlot), // the read failed: not the file's fault
+            Some(b) if !hdr_ok(&b) => Err(NoPlan::Unsafe),
             Some(b) => std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).unwrap_or(Err(NoPlan::Unsafe)),
         };
         let (plan, why) = match res { Ok(p) => (Some(p), None), Err(e) => (None, Some(e)) };

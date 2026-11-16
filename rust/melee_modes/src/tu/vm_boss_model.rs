@@ -212,7 +212,7 @@ fn read(name: &str) -> Option<Model> {
         bone.as_deref().unwrap_or("no root bone"),
         vis.iter().filter(|v| v.is_some()).count(),
         if by_file { ", by motion file" } else { "" }
-    );
+    ) + &if std::env::var_os("MELEE_MDL_LOG").is_some() { format!("; top bones {:?}", tops) } else { String::new() };
     Some(Model { rig, clip, root, vis, ext, bufs, sim, note })
 }
 
@@ -352,7 +352,8 @@ pub unsafe fn draw(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash
 pub unsafe fn draw_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, flash: bool, vis_slot: (i32, u32)) -> bool {
     let Ok(mut b) = m.bufs.lock() else { return false };
     let mi = a.motion.max(0) as usize;
-    let anim = m.clip.get(mi).copied().flatten().map(|c| &m.rig.anims[c].1);
+    // MELEE_VMBOSS_BIND: the bind pose (no clip), for checking a model's rest orientation
+    let anim = m.clip.get(mi).copied().flatten().map(|c| &m.rig.anims[c].1).filter(|_| std::env::var_os("MELEE_VMBOSS_BIND").is_none());
     let (f, _) = frame_of(p, mi, a.tick.wrapping_sub(a.motion_t0));
     // the motion's VIS0 at the motion's frame, then the extra visibility slot a forwarded 0410 set (its own frame)
     let vis_of = |k: i32| m.vis.get(usize::try_from(k).ok()?).copied().flatten().map(|i| &m.rig.vis[i].1);

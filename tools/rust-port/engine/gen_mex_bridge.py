@@ -22,6 +22,10 @@ NAMES = os.path.join(os.path.dirname(__file__), 'mex_bridge_names.txt')
 # Rust type aliases of a GC record (melee_types: `pub type Vec3 = Vec`). Unaliased, a `&Vec3` argument went over as
 # untyped plain memory: the callee read the guest's big-endian floats (Dedede's inhale, ftCo_800BD19C, got +inf).
 REC_ALIAS = {'Vec3': 'Vec'}
+# pointer args to plain words (an Mtx, an f32 / int out-param): marshalled word by word (Call::words), not handed over
+# as raw guest bytes (the callee read and wrote big-endian words). (function, arg index) -> word count.
+WORD_ARGS = {('HSD_MtxSRT', 0): 12, ('PSMTXConcat', 0): 12, ('PSMTXConcat', 1): 12, ('PSMTXConcat', 2): 12,
+             ('ftColl_80076640', 1): 1, ('ftColl_80078710', 2): 1, ('mpCheckAllRemap', 1): 1, ('mpCheckAllRemap', 2): 1}
 INTS = {'i8': 'i8', 'i16': 'i16', 'i32': 'i32', 'i64': 'i64', 'u8': 'u8', 'u16': 'u16', 'u32': 'u32', 'u64': 'u64',
         'isize': 'isize', 'usize': 'usize', 'c_int': 'i32', 'c_uint': 'u32', 'c_char': 'i8', 's32': 'i32', 's16': 'i16',
         's8': 'i8', 'BOOL': 'i32', 'bool': 'bool', 'enum_t': 'u32', 'c_long': 'i32', 'c_ulong': 'u32', 'c_uchar': 'u8'}
@@ -167,6 +171,8 @@ def main():
                 p = pointee(ty)
                 p = REC_ALIAS.get(p, p)
                 rec = f'Some("{p}")' if p in recs else 'None'
+                if (name, ni) in WORD_ARGS:
+                    args.append(f'(c.words({ni}, {WORD_ARGS[(name, ni)]}) as _)'); ni += 1; continue
                 args.append(f'(c.ptr({ni}, {rec}) as _)'); ni += 1
             elif re.match(r'^&(mut\s+)?[\w:]+$', ty):
                 # a reference: the same pointer, never null (a null one ends the callback instead of the call)

@@ -35,7 +35,7 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "HSD_JObjSetFlags" => {  let r = melee_items::tu::jobj::HSD_JObjSetFlags((c.ptr(0, Some("HSD_JObj")) as _), (c.int(1) as _)); let _ = r; }
         "HSD_JObjSetFlagsAll" => {  let r = melee_items::tu::jobj::HSD_JObjSetFlagsAll((c.ptr(0, Some("HSD_JObj")) as _), (c.int(1) as _)); let _ = r; }
         "HSD_JObjSetMtxDirtySub" => {  let r = melee_items::tu::jobj::HSD_JObjSetMtxDirtySub((c.ptr(0, Some("HSD_JObj")) as _)); let _ = r; }
-        "HSD_MtxSRT" => {  let r = melee_runtime::tu::mtx::HSD_MtxSRT((c.ptr(0, None) as _), (c.ptr(1, Some("Vec")) as _), (c.ptr(2, Some("Vec")) as _), (c.ptr(3, Some("Vec")) as _), (c.ptr(4, Some("Vec")) as _)); let _ = r; }
+        "HSD_MtxSRT" => {  let r = melee_runtime::tu::mtx::HSD_MtxSRT((c.words(0, 12) as _), (c.ptr(1, Some("Vec")) as _), (c.ptr(2, Some("Vec")) as _), (c.ptr(3, Some("Vec")) as _), (c.ptr(4, Some("Vec")) as _)); let _ = r; }
         "HSD_Randf" => {  let r = melee_fighter::tu::ftCo_0A01::ext::HSD_Randf(); c.ret_flt(r as f64); }
         "HSD_Randi" => {  let r = melee_fighter::tu::fighter::ext::HSD_Randi((c.int(0) as _)); c.ret_int(r as i64 as u32); }
         "HSD_StateInitDirect" => {  let r = melee_runtime::tu::displayfunc_native::HSD_StateInitDirect((c.int(0) as _), (c.int(1) as _)); let _ = r; }
@@ -47,9 +47,9 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "Item_802694CC" => {  let r = melee_items::tu::item::Item_802694CC((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "Item_8026A8EC" => {  let r = melee_items::tu::item::Item_8026A8EC((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "Item_8026AB54" => {  let r = melee_items::tu::item::Item_8026AB54((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("HSD_GObj")) as _), (c.int(2) as _)); let _ = r; }
-        "Item_8026AC74" => {  let r = melee_items::tu::item::Item_8026AC74((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, None) as _), (c.ptr(2, None) as _), (c.flt(0) as f32)); let _ = r; }
+        "Item_8026AC74" => {  let r = melee_items::tu::item::Item_8026AC74((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("Vec")) as _), (c.ptr(2, Some("Vec")) as _), (c.flt(0) as f32)); let _ = r; }
         "Item_8026AE60" => {  let r = melee_items::tu::item::Item_8026AE60(); c.ret_int(r as i64 as u32); }
-        "PSMTXConcat" => {  let r = melee_runtime::tu::mtx_pc::raw::PSMTXConcat((c.ptr(0, None) as _), (c.ptr(1, None) as _), (c.ptr(2, None) as _)); let _ = r; }
+        "PSMTXConcat" => {  let r = melee_runtime::tu::mtx_pc::raw::PSMTXConcat((c.words(0, 12) as _), (c.words(1, 12) as _), (c.words(2, 12) as _)); let _ = r; }
         "PSVECAdd" => {  let r = melee_runtime::tu::mtx_pc::raw::PSVECAdd((c.ptr(0, Some("Vec")) as _), (c.ptr(1, Some("Vec")) as _), (c.ptr(2, Some("Vec")) as _)); let _ = r; }
         "PSVECSubtract" => {  let r = melee_runtime::tu::mtx_pc::raw::PSVECSubtract((c.ptr(0, Some("Vec")) as _), (c.ptr(1, Some("Vec")) as _), (c.ptr(2, Some("Vec")) as _)); let _ = r; }
         "Player_80033BB8" => {  let r = melee_fighter::tu::player::Player_80033BB8((c.int(0) as _)); c.ret_int(r as i64 as u32); }
@@ -122,8 +122,8 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "ftCo_Jump_CheckInput" => {  let r = melee_fighter::tu::ftCo_Jump::ftCo_Jump_CheckInput((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }
         "ftCo_LandingFallSpecial_Enter" => {  let r = melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter((c.ptr(0, Some("HSD_GObj")) as _), (c.int(1) != 0), (c.flt(0) as f32)); let _ = r; }
         "ftCo_Wait_IASA" => {  let r = melee_fighter::tu::ftCo_Wait::ftCo_Wait_IASA((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
-        "ftColl_80076640" => {  let r = melee_fighter::tu::ftCo_Bury::ext::ftColl_80076640((c.ptr(0, Some("Fighter")) as _), (c.ptr(1, None) as _)); c.ret_int(r as i64 as u32); }
-        "ftColl_80078710" => {  let r = melee_fighter::tu::ftCo_CaptureCut::ext::ftColl_80078710((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("HSD_GObj")) as _), (c.ptr(2, None) as _)); let _ = r; }
+        "ftColl_80076640" => {  let r = melee_fighter::tu::ftCo_Bury::ext::ftColl_80076640((c.ptr(0, Some("Fighter")) as _), (c.words(1, 1) as _)); c.ret_int(r as i64 as u32); }
+        "ftColl_80078710" => {  let r = melee_fighter::tu::ftCo_CaptureCut::ext::ftColl_80078710((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("HSD_GObj")) as _), (c.words(2, 1) as _)); let _ = r; }
         "ftColl_8007891C" => {  let r = melee_fighter::tu::ftCo_CaptureCut::ext::ftColl_8007891C((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("HSD_GObj")) as _), (c.flt(0) as f32)); let _ = r; }
         "ftColl_80079AB0" => {  let r = melee_fighter::tu::ftCo_Throw::ext::ftColl_80079AB0((c.ptr(0, Some("Fighter")) as _), (c.ptr(1, Some("HitCapsule")) as _), (c.int(2) as _), (c.flt(0) as f32), (c.flt(1) as f32), (c.flt(2) as f32), (c.flt(3) as f32)); c.ret_flt(r as f64); }
         "ftColl_8007ABD0" => {  let r = melee_fighter::tu::ftcoll::ftColl_8007ABD0((c.ptr(0, Some("HitCapsule")) as _), (c.int(1) as _), (c.ptr(2, Some("HSD_GObj")) as _)); let _ = r; }
@@ -217,7 +217,7 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "itIsHeavy" => {  let r = melee_items::tu::it_26B1::itIsHeavy((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }
         "it_8026B3A8" => {  let r = melee_items::tu::it_26B1::it_8026B3A8((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "it_8026B894" => {  let r = melee_items::tu::it_26B1::it_8026B894((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }
-        "it_8026BB68" => {  let r = melee_items::tu::it_26B1::it_8026BB68((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, None) as _)); let _ = r; }
+        "it_8026BB68" => {  let r = melee_items::tu::it_26B1::it_8026BB68((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("Vec")) as _)); let _ = r; }
         "it_8026D62C" => {  let r = melee_items::tu::itgroundcoll::it_8026D62C((c.ptr(0, Some("HSD_GObj")) as _), core::mem::transmute(c.func(1))); let _ = r; }
         "it_8026D8A4" => {  let r = melee_items::tu::itgroundcoll::it_8026D8A4((c.ptr(0, Some("HSD_GObj")) as _), core::mem::transmute(c.func(1))); c.ret_int(r as i64 as u32); }
         "it_8026D9A0" => {  let r = melee_items::tu::itgroundcoll::it_8026D9A0((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }
@@ -238,7 +238,7 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "it_802731E0" => {  let r = melee_items::tu::it_2725::it_802731E0((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "it_8027321C" => {  let r = melee_items::tu::it_2725::it_8027321C((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "it_80273408" => {  let r = melee_items::tu::it_2725::it_80273408((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
-        "it_8027429C" => {  let r = melee_items::tu::it_2725::it_8027429C((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, None) as _)); let _ = r; }
+        "it_8027429C" => {  let r = melee_items::tu::it_2725::it_8027429C((c.ptr(0, Some("HSD_GObj")) as _), (c.ptr(1, Some("Vec")) as _)); let _ = r; }
         "it_80274658" => {  let r = melee_items::tu::it_2725::it_80274658((c.ptr(0, Some("HSD_GObj")) as _), (c.flt(0) as f32)); c.ret_int(r as i64 as u32); }
         "it_80275158" => {  let r = melee_items::tu::it_2725::it_80275158((c.ptr(0, Some("HSD_GObj")) as _), (c.flt(0) as f32)); let _ = r; }
         "it_802758D4" => {  let r = melee_items::tu::ithitbox::it_802758D4((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_flt(r as f64); }
@@ -257,7 +257,7 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "lb_8000C390" => {  let r = melee_runtime::tu::lb_00B0::lb_8000C390((c.ptr(0, Some("HSD_JObj")) as _)); let _ = r; }
         "lb_800119DC" => {  let r = melee_runtime::tu::lb_00F9::lb_800119DC((c.ptr(0, Some("Vec")) as _), (c.int(1) as _), (c.flt(0) as f32), (c.flt(1) as f32), (c.flt(2) as f32)); let _ = r; }
         "lb_800144C8" => {  let r = melee_modes::tu::lb_013B::lb_800144C8((c.ptr(0, Some("ColorOverlay")) as _), (c.ptr(1, Some("Fighter_804D653C_t")) as _), (c.int(2) as _), (c.int(3) as _)); c.ret_int(r as i64 as u32); }
-        "mpCheckAllRemap" => {  let r = melee_world::tu::mplib::mpCheckAllRemap((c.ptr(0, Some("Vec")) as _), (c.ptr(1, None) as _), (c.ptr(2, None) as _), (c.ptr(3, Some("Vec")) as _), (c.int(4) as _), (c.int(5) as _), (c.flt(0) as f32), (c.flt(1) as f32), (c.flt(2) as f32), (c.flt(3) as f32)); c.ret_int(r as i64 as u32); }
+        "mpCheckAllRemap" => {  let r = melee_world::tu::mplib::mpCheckAllRemap((c.ptr(0, Some("Vec")) as _), (c.words(1, 1) as _), (c.words(2, 1) as _), (c.ptr(3, Some("Vec")) as _), (c.int(4) as _), (c.int(5) as _), (c.flt(0) as f32), (c.flt(1) as f32), (c.flt(2) as f32), (c.flt(3) as f32)); c.ret_int(r as i64 as u32); }
         "mpCollSetFacingDir" => {  let r = melee_world::tu::mpcoll::mpCollSetFacingDir((c.ptr(0, Some("CollData")) as _), (c.int(1) as _)); let _ = r; }
         "mpColl_800471F8" => {  let r = melee_world::tu::mpcoll::mpColl_800471F8((c.ptr(0, Some("CollData")) as _)); c.ret_int(r as i64 as u32); }
         "mpColl_800473CC" => {  let r = melee_world::tu::mpcoll::mpColl_800473CC((c.ptr(0, Some("CollData")) as _)); c.ret_int(r as i64 as u32); }

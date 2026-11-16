@@ -1485,7 +1485,7 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 return Ok(());
             }
             Some(name) => {
-                let mut c = Call { cpu, mem, fix: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
+                let mut c = Call { cpu, mem, fix: Vec::new(), fixw: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
                 let mut hit = unsafe { crate::mex_bridge::call(name, &mut c) };
                 // a gobj callback the generator bridges only as a function pointer (GOBJ_FN_NAMES), called directly:
                 // ACE 2.0.1's Liu Kang onLoad ends in `bctrl ftSk_Init_OnLoad` (its Sheik base's onLoad), which
@@ -1565,7 +1565,7 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
         // ftCommon_CalcSelfAccel_DeaccelAir(Fighter*): Shadow's (PlSd) air physics; a gobj passed for the fighter
         // resolves to its fighter, as the other Fighter* callees do
         "ftCommon_CalcSelfAccel_DeaccelAir" => {
-            let mut c = Call { cpu, mem, fix: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
+            let mut c = Call { cpu, mem, fix: Vec::new(), fixw: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
             let fp = c.ptr(0, Some("Fighter")) as *mut melee_types::Fighter;
             if !fp.is_null() {
                 unsafe { melee_fighter::tu::ftcommon::ftCommon_CalcSelfAccel_DeaccelAir_fp(&mut *fp) };
@@ -1806,6 +1806,8 @@ pub struct Call<'a> {
     mem: &'a mut GuestSpace,
     /// Marshalled records: (guest address, native buffer, record).
     fix: Vec<(u32, Box<[u64]>, &'static str, u32)>,
+    /// Marshalled word arrays (`words`): (guest address, native copy), written back after the call.
+    fixw: Vec<(u32, Box<[u32]>)>,
     pub bad: bool,
     scratch: u32,
 }
@@ -1873,6 +1875,32 @@ impl Call<'_> {
         self.bad = true;
         core::ptr::null_mut()
     }
+    /// Pointer argument `i` to `n` 32-bit words (an Mtx = 12 f32, an `*mut f32` / `*mut i32` out-param): a native
+    /// object's field as is, plain guest memory copied word by word into a native-endian buffer and written back after
+    /// the call. Passed as raw host bytes (`ptr(i, None)`) the callee read and wrote the guest's big-endian words
+    /// (the `&Vec3` bug of Round 7, for HSD_MtxSRT / PSMTXConcat / ftColl_80076640 / mpCheckAllRemap's outs).
+    pub fn words(&mut self, i: usize, n: usize) -> *mut c_void {
+        let h = self.cpu.gpr[3 + i];
+        if h == 0 {
+            return core::ptr::null_mut();
+        }
+        if let Some(nat) = self.mem.interior(h) {
+            return nat as *mut c_void;
+        }
+        let mut buf = vec![0u32; n].into_boxed_slice();
+        for (k, w) in buf.iter_mut().enumerate() {
+            match self.mem.ld32(h + 4 * k as u32) {
+                Ok(v) => *w = v,
+                Err(_) => {
+                    self.bad = true;
+                    return core::ptr::null_mut();
+                }
+            }
+        }
+        let p = buf.as_mut_ptr() as *mut c_void;
+        self.fixw.push((h, buf));
+        p
+    }
     /// A two-gobj callback argument (`HSD_GObjInteraction`, fp->grabbed_cb): guest code as a two-argument trampoline,
     /// a vanilla address as the port's function.
     pub fn func2(&mut self, i: usize) -> Option<unsafe extern "C" fn(G, G)> {
@@ -1922,6 +1950,11 @@ impl Call<'_> {
         }
     }
     fn finish(&mut self) {
+        for (h, buf) in std::mem::take(&mut self.fixw) {
+            for (k, w) in buf.iter().enumerate() {
+                let _ = self.mem.st32(h + 4 * k as u32, *w);
+            }
+        }
         for (h, mut buf, rec, base) in std::mem::take(&mut self.fix) {
             let gs = self.mem.layouts.gc_size(rec).unwrap_or(0);
             copy_record(self.mem, base, h, gs);

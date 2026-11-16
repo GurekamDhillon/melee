@@ -1309,6 +1309,7 @@ dependencies = [
  "melee_gx",
  "melee_items",
  "melee_link",
+ "melee_mex_table",
  "melee_modes",
  "melee_modhost",
  "melee_platform",
@@ -1395,6 +1396,46 @@ name = "melee_link_abi"
 version = "0.1.0"
 dependencies = [
  "melee_items",
+]
+
+[[package]]
+name = "melee_link_ms0"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_link_abi",
+ "melee_types",
+]
+
+[[package]]
+name = "melee_link_ms1"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_link_abi",
+ "melee_types",
+]
+
+[[package]]
+name = "melee_link_ms2"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_link_abi",
+ "melee_types",
+]
+
+[[package]]
+name = "melee_link_ms3"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_link_abi",
+ "melee_types",
 ]
 
 [[package]]
@@ -1487,7 +1528,24 @@ dependencies = [
  "melee_fighter",
  "melee_items",
  "melee_link_abi",
+ "melee_link_ms0",
+ "melee_link_ms1",
+ "melee_link_ms2",
+ "melee_link_ms3",
  "melee_types",
+]
+
+[[package]]
+name = "melee_mex_table"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_fighter",
+ "melee_items",
+ "melee_modes",
+ "melee_runtime",
+ "melee_types",
+ "melee_world",
 ]
 
 [[package]]

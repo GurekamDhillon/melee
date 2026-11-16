@@ -50,9 +50,7 @@ pub mod ext {
 }
 // END GENERATED EXT
 
-macro_rules! pred_i32 {
-    ($($name:ident => $f:ident;)*) => { $( pub unsafe extern "C" fn $name(g: *mut HSD_GObj) -> i32 { $f(g) as i32 } )* };
-}
+use crate::tu::kinds_inl::pred_i32; // the named `_p` shims, recorded for the oracles by address
 
 #[inline]
 unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {

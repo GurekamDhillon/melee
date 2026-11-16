@@ -67,7 +67,7 @@ fn deck() -> Option<&'static [i32]> {
             let refa = m.rig.anim("Wait");
             // the model faces along its z: the side view is (z, y)
             let pts: Vec<[f32; 2]> = slots.iter().map(|&s| { let p = m.rig.bone_point(refa, 0.0, s, [0.0; 3]); [p[2], p[1]] }).collect();
-            let order = crate::tu::geno_boss_coll::upper_envelope(&pts);
+            let order = crate::tu::geno_boss_coll::upper_envelope_dip(&pts, 24.0);
             if std::env::var_os("MELEE_ARENA_COLL_DRAW").is_some() {
                 // the drawn deck's top at each joint (the Wait pose's skinned mesh, the highest vertex within 4 units
                 // along the ship), beside the joint: how far the floor floats over (or sinks into) what is drawn

@@ -232,7 +232,15 @@ pub struct Surface {
 /// h, of points within 1 unit in h the highest kept, then any point more than `DIP` below the line through its
 /// neighbours dropped (underside / ground points), repeated until none is.
 pub fn upper_envelope(pts: &[[f32; 2]]) -> Vec<usize> {
-    const DIP: f32 = 12.0;
+    upper_envelope_dip(pts, 12.0)
+}
+
+/// [`upper_envelope`] with the dip a point may sit under its neighbours' line before it is dropped as an underside
+/// point. The Falcon Flyer takes a deeper one: the joint at the foot of its tail fin sits 14 under the line from the
+/// canopy to the fin's top, and dropping it put a ramp in the air over the hull (the owner's "walking on air").
+pub fn upper_envelope_dip(pts: &[[f32; 2]], dip: f32) -> Vec<usize> {
+    #[allow(non_snake_case)]
+    let DIP = dip;
     let mut ix: Vec<usize> = (0..pts.len()).collect();
     ix.sort_by(|&a, &b| pts[a][0].partial_cmp(&pts[b][0]).unwrap_or(core::cmp::Ordering::Equal).then(a.cmp(&b)));
     let mut out: Vec<usize> = vec![];

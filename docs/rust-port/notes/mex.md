@@ -93,6 +93,13 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   particle-generator draw (`hsd_8039EE24`) earlier relative to the frame boundary. `MELEE_RAND_TRACE_DEPTH=N` (default
   6) lengthens the trace's caller chain; run the target exe (its PDB) for names.
 
+- Stage sound rows: the "lbAudioAx: N stage audio rows from mexData" OSReport can never print in the Rust engine:
+  `lbAudioAx_8002838C` (which calls `lbAudioAx_MexStageAudio`) is not run; the sound is `melee_audio`'s driver, which
+  had only the retail 0x6F rows (an m-ex stage got the out-of-range [55, 1, 1]). mex_host now hands the driver the
+  mexData rows (`melee_audio::lbaudio::MEX_STAGE_AUDIO`); a run on stage ext:357 logs
+  `lbaudio: stage sound rows from mexData (grkind 140: ssm 55 reverb 56 56)`. A row naming a bank past the driver's 55
+  (an m-ex SSM) still loads no stage bank.
+
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 
 - Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline

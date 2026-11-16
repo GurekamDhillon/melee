@@ -1020,6 +1020,14 @@ pub fn install() {
         au::Mex_GrAudioCount = Some(GrAudioCount);
         au::Mex_GrAudioByte = Some(GrAudioByte);
         au::Mex_GrAudioFirst = Some(|| 0);
+        // the engine's sound driver (melee_audio) is what plays; lbAudioAx_8002838C, where the C build copies these
+        // rows, is never run, so the driver reads them here
+        if GrAudioCount() > 0 {
+            melee_audio::lbaudio::MEX_STAGE_AUDIO = Some(|g| {
+                let b: Vec<i32> = (0..3).map(|k| GrAudioByte(g, k)).collect();
+                b.iter().all(|&v| v >= 0).then(|| [b[0] as u8, b[1] as u8, b[2] as u8])
+            });
+        }
         au::Mex_SsmSize = Some(|i| SsmSize(i) as _);
         melee_fighter::hooks::MEX_SSM_FOR_PORT_KIND = Some(SsmForPortKind);
         melee_items::tu::item::ext::hook::Mex_SsmForPortKind = Some(SsmForPortKind);

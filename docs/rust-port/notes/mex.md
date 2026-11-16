@@ -138,6 +138,22 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   mismatches with 25 / 40 thrown-flag reads true; Akaneia (ck:17 vs ck:2 on FD, a scratch scenario
   row; `stage_21_akaneia` crashes at boot in `Ground_EnableMatchCamera` in synctest, unrelated) 0 mismatches with
   45 / 72 thrown sets. `MELEE_SCENARIO_TSV` must point at the coverage tsv when not run from the worktree.
+- Retail uninitialised stick in CPU behaviour 18 (`ftCo_800AC5A0`), traced in the 1.02 DOL. On the nearly-zero
+  knockback path (`bne 0x800AC744` at 0x800AC6D0) the function makes no call before the two pushes, so
+  `SetLstickX` gets r5 as it was on entry and `SetLstickY` gets r30 as it was on entry (r30 is callee-saved and only
+  loaded on the non-zero paths). The dispatcher `ftCo_800B2790` sets r30 = fp (0x800B27A4), so **Y = low byte of the
+  console Fighter address**. Its r5 comes from `ftCo_800ADC28`: every path that pushes ends in
+  `ftCo_800B46B8(fp, cmd, 1)`, which keeps r5 = its argument (`ftCo_800B463C` / `ftCo_800B462C` do not touch r5
+  unless they assert), so **X = 1** after a push; the early exits (0x800ADC44 cpu+0x18 == 10, and the kind/motion
+  checks for kinds 3 and 0xD) leave r5 untouched, and `ftCo_800B462C` (0x800B27EC) does not write it, so X is r5 as
+  `ftCo_800B3900` left it after `ftCo_800B2AFC`, i.e. whatever the last r5-writing instruction in that whole call
+  tree was (Marth/Fox slippi 394: `HSD_Randi`'s seed address 0x804D5F90 -> 0x90).
+- Not ported. Exact needs (a) the console heap address of each Fighter (the port allocates natively; `gc_addr32` is
+  identity over the engine's low heaps, there is no console-heap model) and (b) a register-level model of r5 through
+  `ftCo_800B2AFC`'s call tree. A partial rule (X = 1 after an ADC28 push, else unknown) would still be wrong on Y.
+  The engine and the C build both push the decomp's locals (the Rust engine pushes 0, which is what the goldens
+  carry), so goldens are unaffected; this is retail code, so vanilla CPU replays that reach this path with
+  near-zero knockback also diverge. No vanilla replay hitting it was checked this round.
 
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 

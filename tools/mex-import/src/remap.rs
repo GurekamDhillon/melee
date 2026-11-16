@@ -526,9 +526,6 @@ impl GuestSpace {
             1
         };
         let nsa = ns;
-        if std::env::var_os("MELEE_MEX_DBG_MAT").is_some() {
-            eprintln!("mexdbg: materialize {rec} at {h:08X}: {rows} rows");
-        }
         let bytes: Vec<Option<u8>> = (0..gs * rows).map(|k| self.load(h + k, 1).ok().map(|v| v as u8)).collect();
         let mut buf = vec![0u64; (nsa * rows as usize).div_ceil(8).max(1)].into_boxed_slice();
         let ptr = buf.as_mut_ptr() as *mut u8;
@@ -555,15 +552,6 @@ impl GuestSpace {
                         }
                         k += 1;
                     }
-                }
-            }
-        }
-        if std::env::var_os("MELEE_MEX_DBG_MAT").is_some() {
-            for r in [0u32, 1, 14, 340] {
-                if r < rows {
-                    let g: Vec<u8> = bytes[(r * gs) as usize..(r * gs + 12) as usize].iter().map(|b| b.unwrap_or(0xEE)).collect();
-                    let n = unsafe { core::slice::from_raw_parts(ptr.add(r as usize * nsa), 12) };
-                    eprintln!("mexdbg:   row {r}: gc {g:02x?} native {n:02x?}");
                 }
             }
         }
@@ -603,7 +591,13 @@ impl GuestSpace {
             if n != 4 {
                 return Err(Fault::Mem(ea));
             }
-            let p = match self.fn_native.and_then(|f| f(v as u32)) {
+            // a MotionState table the host owns (an m-ex fighter's MoveLogic rows in its code blob) before the code
+            // pointer path, which would make a call trampoline of a table address
+            let host = match pointee {
+                Some("MotionState") => self.ptr_native.and_then(|f| f(self, v as u32, "MotionState")),
+                _ => None,
+            };
+            let p = match host.or_else(|| self.fn_native.and_then(|f| f(v as u32))) {
                 Some(p) => p,
                 None => match pointee {
                     Some(r) if self.materialize_ok(v as u32, r) => self.materialize(v as u32, r).ok_or(Fault::Mem(ea))?,

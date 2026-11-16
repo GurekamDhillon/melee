@@ -130,6 +130,10 @@ struct Fighter_ {
     move_table: Vec<MotionState>,
     /// Guest callbacks of each MoveLogic row: [anim, input, phys, coll].
     move_guest: Vec<[u32; 4]>,
+    /// The guest address `move_table` was built from.
+    move_addr: u32,
+    /// Tables replaced by a guest install ([`move_table_at`]), kept alive for fighters still pointing at them.
+    retired: Vec<Vec<MotionState>>,
     /// The PlXx.dat file bytes and where its data block sits in guest space ([`dat_joint`]).
     dat_file: Vec<u8>,
     dat_base: u32,
@@ -318,6 +322,9 @@ static mut PSUF: Vec<(u32, *mut melee_types::_PSUserFunc)> = Vec::new();
 /// hookDelete, setUserData) as `gen->userfunc`; the native particle code calls the hooks through a native
 /// `_PSUserFunc`, whose entries are trampolines into the guest words (kept in step with them by `ps_refresh`).
 fn ps_userfunc(sp: &GuestSpace, v: u32, rec: &'static str) -> Option<usize> {
+    if rec == "MotionState" {
+        return move_table_at(v);
+    }
     if rec != "_PSUserFunc" || sp.describe(v)?.0 != "Fighter" {
         return None;
     }
@@ -659,7 +666,7 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
         eprintln!("mexguest: kind {kind}: {file} has no {symbol}");
         return;
     };
-    let mut f = Fighter_ { file: file.into(), blob, code_base, ft_data: dat_base + fd, stats: BTreeMap::new(), move_table: Vec::new(), move_guest: Vec::new(),
+    let mut f = Fighter_ { file: file.into(), blob, code_base, ft_data: dat_base + fd, stats: BTreeMap::new(), move_table: Vec::new(), move_guest: Vec::new(), move_addr: 0, retired: Vec::new(),
                          dat_file: dat.clone(), dat_base, dat_len: ar.data.len() as u32 };
     if std::env::var_os("MELEE_MEX_CALLS").is_some() {
         // every vanilla function the blob links to (its relocations with an absolute 0x8xxxxxxx target)
@@ -684,6 +691,7 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
             wired.push(SLOT_NAMES[slot as usize]);
         } else if slot == SLOT_MOVE_LOGIC {
             build_move_table(&mut f, code_base + off);
+            f.move_addr = code_base + off;
             wired.push("MoveLogic");
         }
     }
@@ -990,6 +998,28 @@ pub fn move_logic_entries(kind: i32) -> i32 {
     unsafe { ST.as_ref() }.and_then(|s| s.kinds.get(&kind)).map_or(0, |f| f.move_table.len() as i32)
 }
 
+/// A MotionState pointer into a fighter's code blob: a MoveLogic table of its own, as a native table. Meta Knight's
+/// onLoad installs `fp->x20` = a second table in its blob (0xEC8, not the MoveLogic slot's), after copying the common
+/// table to x1C; as a blob address the store made a call trampoline of it, and ChangeMotionState(341) read garbage.
+/// The kind's table is rebuilt from that address (move_tramp indexes the same rows); the old rows stay alive for any
+/// fighter of the kind still pointing at them.
+fn move_table_at(v: u32) -> Option<usize> {
+    let s = unsafe { ST.as_mut()? };
+    let f = s.kinds.values_mut().find(|f| v >= f.code_base && v < f.code_base + f.blob.code.len() as u32)?;
+    if f.move_addr != v || f.move_table.is_empty() {
+        let old = (std::mem::take(&mut f.move_table), std::mem::take(&mut f.move_guest));
+        build_move_table(f, v);
+        if f.move_table.is_empty() {
+            (f.move_table, f.move_guest) = old;
+            return None;
+        }
+        eprintln!("mexguest: {}: MotionState table at {v:08X} installed ({} rows)", f.file, f.move_table.len());
+        f.retired.push(old.0);
+        f.move_addr = v;
+    }
+    Some(f.move_table.as_mut_ptr() as usize)
+}
+
 pub fn move_logic_table(kind: i32) -> Option<*mut MotionState> {
     let f = unsafe { ST.as_mut()? }.kinds.get_mut(&kind)?;
     (!f.move_table.is_empty()).then(|| f.move_table.as_mut_ptr())
@@ -1018,6 +1048,10 @@ unsafe extern "C" fn ev_tramp<const E: usize>(g: G) {
     let Some(&(_, off)) = f.blob.overrides.iter().find(|o| o.0 == slot) else { return };
     let a = f.code_base + off;
     let faulted = run_at_f(kind, a, slot, g).1;
+    // an onLoad may install its own table as fp->x20 (move_table_at): its rows as guest rows
+    if !(*g).user_data.is_null() {
+        register_move_table(st(), (*g).user_data as *mut Fighter);
+    }
     // an onLoad that could not finish leaves the fighter half set up: the clone base's onLoad runs after it (its
     // attributes and article tables), as the native match did before the guest code ran
     if faulted && E == melee_fighter::platform::MEX_EVENT_ON_LOAD {
@@ -1088,7 +1122,7 @@ unsafe fn map_common_motion_table(s: &mut State, native: *const melee_types::Mot
 unsafe fn register_move_table(s: &mut State, fp: *mut Fighter) {
     let t = (*fp).x20_actionStateList;
     let Some(f) = s.kinds.get(&((*fp).kind as i32)) else { return };
-    if t.is_null() || t != f.move_table.as_ptr() as *mut _ || f.move_table.is_empty() {
+    if t.is_null() || t != f.move_table.as_ptr() as *mut _ || f.move_table.is_empty() || s.space.handle_of(t as *mut u8).is_some() {
         return;
     }
     let Ok(base) = s.space.handle(t as usize, Some("MotionState")) else { return };
@@ -1646,16 +1680,6 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 return Ok(());
             }
             Some(name) => {
-                if name == "Fighter_ChangeMotionState" && std::env::var_os("MELEE_MEX_DBG_MAT").is_some() {
-                    eprintln!("mexdbg: ChangeMotionState r3..r6 {:08X?}", &cpu.gpr[3..7]);
-                    if let Some(g) = mem.native(cpu.gpr[3]) {
-                        let fp = unsafe { (*(g as G)).user_data as *mut Fighter };
-                        unsafe {
-                            let ms = (*fp).x20_actionStateList;
-                            eprintln!("mexdbg:   x1C {:p} x20 {:p} x24 {:p} x20[0].anim_id {} guest x1C {:?} x20 {:?}", (*fp).x1C_actionStateList, ms, (*fp).x24, if ms.is_null() { -9 } else { (*ms).anim_id }, mem.handle_of((*fp).x1C_actionStateList as _), mem.handle_of(ms as _));
-                        }
-                    }
-                }
                 let mut c = Call { cpu, mem, fix: Vec::new(), fixw: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
                 let mut hit = unsafe { crate::mex_bridge::call(name, &mut c) };
                 // a gobj callback the generator bridges only as a function pointer (GOBJ_FN_NAMES), called directly:
@@ -1812,16 +1836,6 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 }
                 c.finish();
                 if c.bad {
-                    if std::env::var("MELEE_MEX_DBG_PUB").is_ok() && name == "HSD_ArchiveGetPublicAddress" {
-                        let mut s = String::new();
-                        for k in 0..64 {
-                            match c.mem.ld8(a.wrapping_add(k)) {
-                                Ok(0) | Err(_) => break,
-                                Ok(ch) => s.push(ch as char),
-                            }
-                        }
-                        eprintln!("mexdbg: public {s:?} of {d:08X}: {:?} {:?}", c.mem.describe(d), c.mem.regions_at(d));
-                    }
                     let s = st();
                     *s.unresolved.entry(target).or_default() += 1;
                     return Err(Fault::Mem(0));

@@ -756,6 +756,20 @@ pub unsafe fn ftAnim_8006FA58(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint
 /// `ftAnim_8006FB88`: same for the anim skeleton (x4_jobj2).
 pub unsafe fn ftAnim_8006FB88(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint) { melee_core::ct!("ftAnim_8006FB88"); copy_joint_tree(fp, part, joint, true) }
 
+/// The m-ex discs' codes.gct 04 at 0x8006FD08 (`lwz r29,0x14C(r2)` over `lbz r29,0x597(r3)`): the remap path takes
+/// its author kind from m-ex's external fighter count (r2+0x14C), and the `clrlwi r29,r29,26` after it keeps 6 bits.
+/// On ACE 2.0.1 (66 fighters) that is kind 2, Captain Falcon's parts tables, for every victim of every throw: Dolphin
+/// probe at 0x8006FD1C, r29 = 2, r2+0x14C = 0x42 (Marth throwing Fox; the engine's x597 = 33 put Fox's bones one joint
+/// off). A masked value past the retail kinds (Akaneia's 41 fighters: 41) is an m-ex internal kind whose port number
+/// is not the same; that case is left on the vanilla author kind (unverified).
+fn mex_remap_author_kind() -> Option<i32> {
+    if !melee_core::codes::disc_writes(0x8006_FD08, 0x83A2_014C) {
+        return None;
+    }
+    let k = (melee_core::codes::MEX_FT_EXTERNAL_COUNT.load(core::sync::atomic::Ordering::Relaxed) & 63) as i32;
+    (k < 27).then_some(k) // Ft_Kind_MasterHand: the retail kinds, where internal and port numbers agree
+}
+
 /// `ftAnim_8006FCE4`.
 pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
     melee_core::ct!("ftAnim_8006FCE4");
@@ -763,7 +777,7 @@ pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
     let mut node = (*tree).nodes;
     let bits = x594_bits(fp);
     let mut track = (*tree).tracks;
-    let kind = ftAnim_AuthorKind(fp);
+    let kind = mex_remap_author_kind().unwrap_or_else(|| ftAnim_AuthorKind(fp));
     let mut i = 0;
     while *node != -1 {
         loop {

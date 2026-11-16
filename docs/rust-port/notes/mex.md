@@ -71,6 +71,28 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   loads `AltSplitCSS.dat` / `altcssFunction`, called each CSS frame from C2 0x80263334. Running it needs the CSS side of
   the guest interpreter. The Wireframes / Giga Bowser play when launched as `ck:27..29`.
 
+### Round 4 (Nov 16): a vanilla replay on ACE 2.0.1, thrown victims
+
+- A vanilla-fighter replay (Marth CPU 9 vs Fox CPU 9, FD, 900 frames, `MELEE_SLP_RECORD` + run1.sh) oracled on ACE 2.0.1
+  shows the same early camera difference as Liu Kang (`cam x2B4`/`x2B8` two frames behind; their ratio `x2B0`, the
+  only value read, is equal) but not the LbShadow / `x2227_b7` / interest ones: those are Liu Kang's. It diverged at
+  slippi 234, Fox's first ThrownF frame: the bone inputs were one joint off.
+- Cause: codes.gct 04 0x8006FD08 = `lwz r29,0x14C(r2)` over `lbz r29,0x597(r3)` in `ftAnim_8006FCE4` (the
+  thrown/remap path). r2+0x14C is m-ex's copy of the metadata's external fighter count (r2+0x148 internal, +0x150 CSS
+  icons ... = mexData metadata words 1..), and the `clrlwi 26` after it keeps 6 bits: on ACE 2.0.1 (66) every thrown
+  victim decodes with kind 2's (Captain Falcon's) parts tables. Dolphin probe at 0x8006FD1C: r29 = 2, r2+0x14C = 0x42.
+  The engine now does the same when the disc has that write (`mex_remap_author_kind`, counts in
+  `melee_core::codes::MEX_FT_*_COUNT`). Akaneia (41 -> 41, past the retail kinds) keeps the vanilla author kind:
+  unverified, and the likely cause of the Akaneia Tails thrown-pose file. m-ex also gates the remap on fp+0x23EC
+  (C2 0x8006FE20, 0x8006F96C) and gives `ftAnim_8006F628` the unmasked internal count (C2 0x8006F66C): not ported.
+- After it the replay matches to slippi 394 (5 of 900 frames differ): Fox's CPU lstick (0 vs -112, 32) with every
+  dumped CPU field and the seed equal. Open.
+- Liu Kang frame 112 (`cpu.x30` 22 vs 29, `x570`): not a draw-count difference (seed column equal, same callers in
+  the same order: guest onFrame `HSD_Randi(100)`, `ftCo_800B33B0`, `ftCo_800A4BEC`). On the console the CPU's two draws
+  get the values the engine gives the guest call and the CPU's first draw: the guest's per-frame draw sits one
+  particle-generator draw (`hsd_8039EE24`) earlier relative to the frame boundary. `MELEE_RAND_TRACE_DEPTH=N` (default
+  6) lengthens the trace's caller chain; run the target exe (its PDB) for names.
+
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 
 - Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline

@@ -403,5 +403,10 @@ pub fn disc_writes(addr: u32, value: u32) -> bool {
     DISC_WRITES.read().map_or(false, |d| d.iter().any(|&(a, v)| a == addr && v == value))
 }
 
+/// m-ex's runtime copies of the mexData metadata counts it keeps beside `_SDA2_BASE_` (r2+0x148 internal fighters,
+/// r2+0x14C external fighters; 0 on a vanilla disc). Patched instructions read them as values (`ftAnim_8006FCE4`).
+pub static MEX_FT_INTERNAL_COUNT: AtomicU32 = AtomicU32::new(0);
+pub static MEX_FT_EXTERNAL_COUNT: AtomicU32 = AtomicU32::new(0);
+
 /// PowerPC `nop`, the value of a disc write that removes an instruction.
 pub const PPC_NOP: u32 = 0x6000_0000;

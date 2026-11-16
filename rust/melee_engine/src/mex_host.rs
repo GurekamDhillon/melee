@@ -975,6 +975,14 @@ pub fn install() {
         return;
     }
     install_mex_data();
+    if let Some(mx) = m() {
+        let md = mx.meta();
+        if mx.inr(md, 0x0C) {
+            use std::sync::atomic::Ordering::Relaxed;
+            melee_core::codes::MEX_FT_INTERNAL_COUNT.store(mx.r32(md + 4), Relaxed);
+            melee_core::codes::MEX_FT_EXTERNAL_COUNT.store(mx.r32(md + 8), Relaxed);
+        }
+    }
     unsafe {
         use melee_fighter::tu::ftdata::ext as fd;
         fd::MEX_SLOT_INTERNAL = Some(SlotInternal);

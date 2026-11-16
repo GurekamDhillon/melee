@@ -251,7 +251,9 @@ pub unsafe extern "C" fn ifTime_GetCountdownSeconds_dontinline() -> i32 {
 
 /// The match timer and the countdown (the two `GObj_SetupGXLink` sites below): the Atlas retail
 /// mask hides this element's render only (never its proc); empty by default.
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_RenderGuarded(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0x260AAF78u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_RenderGuarded");
     if ext::Ui_RetailHidden(AT_RE_HUD_TIMER) != 0 {
         return;
@@ -259,7 +261,9 @@ pub unsafe extern "C" fn ifTime_RenderGuarded(gobj: *mut HSD_GObj, pass: isize) 
     ext::HSD_GObj_JObjCallback(gobj, pass);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_UpdateCountdown(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x6300BF28u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_UpdateCountdown");
     let x = &raw mut ifTime_data;
     let jobj: *mut HSD_JObj = (*arg0).hsd_obj.cast();
@@ -283,7 +287,9 @@ pub unsafe extern "C" fn ifTime_FreeCountdown() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_UpdateTimers(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xE435D35Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_UpdateTimers");
     let x = &raw mut ifTime_data;
     let jobj: *mut HSD_JObj = (*arg0).hsd_obj.cast();

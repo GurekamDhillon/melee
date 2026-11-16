@@ -245,7 +245,9 @@ unsafe fn jobj_of(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 }
 
 /// `it_802F13B4` (itcoin.c): show the coin's figure or its stack, depending on pause and camera.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F13B4(gobj: *mut HSD_GObj, arg1: i32) {
+    core::hint::black_box(0x2E82EAF1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F13B4");
     let ip = item_of(gobj);
     let attr = sa::<itCoinAttributes>(ip);
@@ -275,7 +277,9 @@ pub unsafe extern "C" fn it_802F13B4(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 /// `itCoin_Logic116_Spawned`: clear the coin's variables and go to motion 0.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_Logic116_Spawned(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9A75DB2Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_Logic116_Spawned");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.coin.x4 = 0;
@@ -285,7 +289,9 @@ pub unsafe extern "C" fn itCoin_Logic116_Spawned(gobj: *mut HSD_GObj) {
 }
 
 /// `itCoin_Logic116_Destroyed`: release the figure, or award the coin if it was collected.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_Logic116_Destroyed(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x30DB930Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_Logic116_Destroyed");
     let ip = item_of(gobj);
     if (*ip).xDD4_itemVar.coin.x4 != 0 {
@@ -298,19 +304,25 @@ pub unsafe extern "C" fn itCoin_Logic116_Destroyed(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802F1588`: enter motion 0 keeping the velocity.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F1588(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x494539D9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F1588");
     ext::Item_80268E5C(gobj, 0, ITEM_UNK_0x1 as u32);
 }
 
 /// `itCoin_UnkMotion0_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC1E7260Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion0_Anim");
     false
 }
 
 /// `itCoin_UnkMotion0_Phys`: fall, or follow the thrown speed while `x4` is set.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x42733DFBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion0_Phys");
     let ip = item_of(gobj);
     if (*ip).xDD4_itemVar.coin.x4 == 0 {
@@ -323,7 +335,9 @@ pub unsafe extern "C" fn itCoin_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itCoin_UnkMotion0_Coll`: detect the landing into `it_802F1630`.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC4B7CBA9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion0_Coll");
     ext::it_8026E414(gobj, Some(it_802F1630));
     false
@@ -339,7 +353,9 @@ pub unsafe fn itCoin_ResetRotation(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802F1630`: come to rest on the floor (motion 1).
+#[inline(never)]
 pub unsafe extern "C" fn it_802F1630(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF684FAE3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F1630");
     let ip = item_of(gobj);
     (*ip).x40_vel.x = 0.0;
@@ -351,23 +367,30 @@ pub unsafe extern "C" fn it_802F1630(gobj: *mut HSD_GObj) {
 }
 
 /// `itCoin_UnkMotion1_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xBF5FF3B7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion1_Anim");
     false
 }
 
 /// `itCoin_UnkMotion1_Phys` (empty).
-pub unsafe extern "C" fn itCoin_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCoin_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itCoin_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x661D024Au32); /* fn identity */ melee_core::ct!("itCoin_UnkMotion1_Phys");}
 
 /// `itCoin_UnkMotion1_Coll`: a hit while resting restarts the bounce.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x49B9B9C0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion1_Coll");
     ext::it_8026D62C(gobj, Some(it_802F1588));
     false
 }
 
 /// `itCoin_Logic116_PickedUp`: show the coin and go to motion 2.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_Logic116_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF0F2DA76u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_Logic116_PickedUp");
     let jobj = jobj_of(gobj);
     let child = (*jobj).child;
@@ -376,23 +399,30 @@ pub unsafe extern "C" fn itCoin_Logic116_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 /// `itCoin_UnkMotion2_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x64AACE94u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion2_Anim");
     false
 }
 
 /// `itCoin_UnkMotion2_Phys` (empty).
-pub unsafe extern "C" fn itCoin_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCoin_UnkMotion2_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itCoin_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x8D87BA99u32); /* fn identity */ melee_core::ct!("itCoin_UnkMotion2_Phys");}
 
 /// `itCoin_Logic116_EvtUnk`: `it_8026B894`.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_Logic116_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x23AE4944u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_Logic116_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `itCoin_Logic116_DmgReceived`: launch the coin from the hit, scaled by the damage and the
 /// coin's kind. Returns false.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_Logic116_DmgReceived(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xA0DEF5AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_Logic116_DmgReceived");
     let ip = item_of(gobj);
     let attr = sa::<itCoinAttributes>(ip);
@@ -448,13 +478,17 @@ pub unsafe extern "C" fn itCoin_Logic116_DmgReceived(gobj: *mut HSD_GObj) -> boo
 }
 
 /// `itCoin_UnkMotion3_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion3_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x15222CA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion3_Anim");
     false
 }
 
 /// `itCoin_UnkMotion3_Phys`: damp the horizontal speed, then fall with the thrown speed.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xED81E7D0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion3_Phys");
     let ip = item_of(gobj);
     let attr = sa::<itCoinAttributes>(ip);
@@ -464,27 +498,35 @@ pub unsafe extern "C" fn itCoin_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itCoin_UnkMotion3_Coll`: land into `it_802F1630`.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC8FE89B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion3_Coll");
     ext::it_8026E15C(gobj, Some(it_802F1630));
     false
 }
 
 /// `itCoin_Logic116_Thrown`: reset the rotation and go to motion 4.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_Logic116_Thrown(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB1BB337Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_Logic116_Thrown");
     itCoin_ResetRotation(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_UNK_0x1 as u32);
 }
 
 /// `itCoin_UnkMotion4_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion4_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x31768792u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion4_Anim");
     false
 }
 
 /// `itCoin_UnkMotion4_Phys`: fall.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE76BEF4Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion4_Phys");
     let ip = item_of(gobj);
     let attr = &*(*ip).xCC_item_attr;
@@ -492,14 +534,18 @@ pub unsafe extern "C" fn itCoin_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itCoin_UnkMotion4_Coll`: land into `it_802F1630`.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x80130085u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion4_Coll");
     ext::it_8026E414(gobj, Some(it_802F1630));
     false
 }
 
 /// `itCoin_Logic116_EnteredAir`: face the direction of travel and set the collision facing.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_Logic116_EnteredAir(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4E9A722Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_Logic116_EnteredAir");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
@@ -512,29 +558,38 @@ pub unsafe extern "C" fn itCoin_Logic116_EnteredAir(gobj: *mut HSD_GObj) {
 }
 
 /// `itCoin_UnkMotion5_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion5_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xFC66E16Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion5_Anim");
     false
 }
 
 /// `itCoin_UnkMotion5_Phys` (empty).
-pub unsafe extern "C" fn itCoin_UnkMotion5_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCoin_UnkMotion5_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itCoin_UnkMotion5_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x81E7166Eu32); /* fn identity */ melee_core::ct!("itCoin_UnkMotion5_Phys");}
 
 /// `itCoin_UnkMotion5_Coll`: land into `it_802F1630`, or back to `it_802F1588`.
+#[inline(never)]
 pub unsafe extern "C" fn itCoin_UnkMotion5_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xA6AD521Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCoin_UnkMotion5_Coll");
     ext::it_8026E8C4(gobj, Some(it_802F1630), Some(it_802F1588));
     false
 }
 
 /// `it_802F2014`: set the item's joint id.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F2014(gobj: *mut HSD_GObj, arg1: i32) {
+    core::hint::black_box(0x7582B87Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F2014");
     (*item_of(gobj)).x378_itemColl.joint_id_only = arg1;
 }
 
 /// `it_802F2020`: the coin's value.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F2020(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x038A53CBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F2020");
     (*item_of(gobj)).xDD4_itemVar.coin.x0
 }

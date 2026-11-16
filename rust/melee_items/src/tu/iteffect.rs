@@ -92,7 +92,9 @@ pub mod ext {
 }
 // END GENERATED EXT
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8027870C(_arg0: i32) {
+    core::hint::black_box(0xC7698858u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027870C");
     if ext::lbLang_IsSettingUS() != 0 {
         ext::lbArchive_80017040(null_mut(), ext::it_803F1EE4.as_ptr(), (&raw mut ext::it_804D6D20) as *mut c_void, ext::it_803F1EF0.as_ptr(), 0);
@@ -116,7 +118,9 @@ pub unsafe extern "C" fn it_802787B4(item_gobj: *mut HSD_GObj, arg1: i32) {
 
 /// `it_80278800_rand_vec` (static inline): `out += 2 * v * (rand - 0.5)` per axis; each `+=` is a fused multiply-add
 /// in the shipping build.
+#[inline(never)]
 pub unsafe extern "C" fn it_80278800_rand_vec(out: *mut Vec3, v: *mut Vec3) {
+    core::hint::black_box(0x203B37D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80278800_rand_vec");
     let mut f = ext::HSD_Randf();
     (*out).x = fmadds(2.0 * (*v).x, f - 0.5, (*out).x);

@@ -154,7 +154,8 @@ pub mod ext {
     hook!(H_it_802E16F8, it_802E16F8, (a0: i32, a1: *mut melee_types::Vec, a2: i32) -> *mut melee_types::HSD_GObj);
     hook!(H_it_802DC4BC, it_802DC4BC, (a0: i32, a1: *mut melee_types::Vec, a2: i32) -> *mut melee_types::HSD_GObj);
     pub static mut H_itGetKind: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32> = None;
-    pub unsafe extern "C" fn itGetKind(a0: *mut melee_types::HSD_GObj) -> i32 { match H_itGetKind { Some(f) => f(a0), None => unsafe { crate::itacc::itGetKind(a0 as _) as _ } } }
+    #[inline(never)]
+    pub unsafe extern "C" fn itGetKind(a0: *mut melee_types::HSD_GObj) -> i32 { core::hint::black_box(0xF5059E63u32); /* fn identity */ match H_itGetKind { Some(f) => f(a0), None => unsafe { crate::itacc::itGetKind(a0 as _) as _ } } }
     hook!(H_it_8027CE18, it_8027CE18, (a0: *mut melee_types::HSD_GObj));
     pub static mut H_GObj_Create: Option<unsafe extern "C" fn(u16, u8, u8) -> *mut melee_types::HSD_GObj> = None;
     pub unsafe extern "C" fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { match H_GObj_Create { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ } } }
@@ -163,7 +164,8 @@ pub mod ext {
     pub static mut H_HSD_GObj_SetupProc: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, u8) -> *mut melee_types::HSD_GObjProc> = None;
     pub unsafe extern "C" fn HSD_GObj_SetupProc(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc { match H_HSD_GObj_SetupProc { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ } } }
     pub static mut H_it_8026C1E8: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32> = None;
-    pub unsafe extern "C" fn it_8026C1E8(a0: *mut melee_types::HSD_GObj) -> i32 { match H_it_8026C1E8 { Some(f) => f(a0), None => unsafe { crate::itacc::it_8026C1E8(a0 as _) as _ } } }
+    #[inline(never)]
+    pub unsafe extern "C" fn it_8026C1E8(a0: *mut melee_types::HSD_GObj) -> i32 { core::hint::black_box(0xF179D6D1u32); /* fn identity */ match H_it_8026C1E8 { Some(f) => f(a0), None => unsafe { crate::itacc::it_8026C1E8(a0 as _) as _ } } }
     hook!(H_Item_8026A8EC, Item_8026A8EC, (a0: *mut melee_types::HSD_GObj));
     // ---- extern globals ----
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;

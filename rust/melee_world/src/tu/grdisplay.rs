@@ -110,7 +110,9 @@ unsafe fn HSD_CObjGetViewingMtxPtrDirect(cobj: *mut HSD_CObj) -> MtxPtr {
 
 /// 1C5B90: draws the joint tree below `jobj`; an instance joint concatenates its child's
 /// inverse matrix, a plain joint lights every fighter's shadow flag first.
+#[inline(never)]
 pub unsafe extern "C" fn grDisplay_801C5B90(mut jobj: *mut HSD_JObj, vmtx: MtxPtr, flags: u32, rendermode: u32) {
+    core::hint::black_box(0x3939F330u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grDisplay_801C5B90");
     let mut mtx: Mtx = [[0.0; 4]; 3];
     let mut fighter_pos: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -160,7 +162,9 @@ pub unsafe extern "C" fn grDisplay_801C5B90(mut jobj: *mut HSD_JObj, vmtx: MtxPt
 }
 
 /// `grDisplay_801C5DB0_surface_impl` (the TARGET_PC body of 1C5DB0).
+#[inline(never)]
 pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, code: i32) {
+    core::hint::black_box(0x66D11694u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grDisplay_801C5DB0_surface_impl");
     // Only the original stage callback is hidden by the workbench option.
     if ext::Wb_RenderOption(WB_RENDER_STAGE, ext::ScriptGame_StageOriginalVisible()) == 0
@@ -229,7 +233,9 @@ pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, co
 pub static mut HIDE_GROUND: Option<fn() -> bool> = None;
 
 /// 1C5DB0 (`TARGET_PC` wrapper): the stage render callback.
+#[inline(never)]
 pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, code: isize) {
+    core::hint::black_box(0x2052D695u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grDisplay_801C5DB0");
     if let Some(h) = HIDE_GROUND {
         if h() {

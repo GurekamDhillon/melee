@@ -184,7 +184,9 @@ pub unsafe extern "C" fn onEnterDebugVs(state: *mut GameModeState) {
 }
 
 /// 1B14A0
+#[inline(never)]
 pub unsafe extern "C" fn onEnterCss(state: *mut GameModeState) {
+    core::hint::black_box(0x0B9A9317u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterCss");
     ext::gmVsMelee_EnterCss(state, ext::gmVsMelee_GetVsData(), VS_MELEE);
     // port: Envoy owns its select (the camp's picker): the players are the run's, the select confirms at once
@@ -197,7 +199,9 @@ pub unsafe extern "C" fn onEnterCss(state: *mut GameModeState) {
 }
 
 /// 1B14DC
+#[inline(never)]
 pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
+    core::hint::black_box(0xFDA1DE3Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitCss");
     if crate::tu::envoy::BYPASSED || crate::tu::envoy::SKIP_SELECT == 2 {
         crate::tu::envoy::BYPASSED = false;
@@ -258,13 +262,17 @@ pub unsafe extern "C" fn onExitLoading(_state: *mut GameModeState) {
 }
 
 /// 1B1588
+#[inline(never)]
 pub unsafe extern "C" fn onEnterVs(state: *mut GameModeState) {
+    core::hint::black_box(0x6ADC6FA3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterVs");
     ext::gmVsMelee_EnterVs(state, ext::gmVsMelee_GetVsData(), None, None);
 }
 
 /// 1B15C8
+#[inline(never)]
 pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
+    core::hint::black_box(0xA60060D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitVs");
     ext::gmVsMelee_ExitVs(state, gmVsMode_State_Results, gmVsMode_State_SuddenDeath);
     // port: an Envoy session goes on (the fight won, the next in the same session): no results screen, straight to

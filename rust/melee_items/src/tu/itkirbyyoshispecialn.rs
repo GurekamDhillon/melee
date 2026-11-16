@@ -84,14 +84,19 @@ pub unsafe extern "C" fn it_802F2D98(gobj: *mut Item_GObj, owner_gobj: *mut Figh
     ext::it_80273408(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x9E6118D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbyyoshispecialn_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itKirbyyoshispecialn_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x5456808Fu32); /* fn identity */ melee_core::ct!("itKirbyyoshispecialn_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xEA84BBC5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbyyoshispecialn_UnkMotion0_Coll");
     0
 }

@@ -70,7 +70,9 @@ unsafe fn HSD_JObjGetParent(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
     if jobj.is_null() { null_mut() } else { (*jobj).parent }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8026EB18(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut Vec3) {
+    core::hint::black_box(0xA2BAFF1Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026EB18");
     let mut m2: Mtx = core::mem::zeroed();
     let mptr: *mut c_void;
@@ -125,7 +127,9 @@ pub unsafe extern "C" fn it_8026EC54(gobj: *mut HSD_GObj, arg1: u16, arg2: *mut 
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8026ECE0(gobj: *mut HSD_GObj, arg1: u32) -> u32 {
+    core::hint::black_box(0xB0F8600Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026ECE0");
     let mut ret = 0u32;
     let ip = item(gobj);

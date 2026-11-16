@@ -289,7 +289,9 @@ pub unsafe extern "C" fn it_802ADDD0(item_gobj: *mut Item_GObj, visibility: i32)
 }
 
 /// `void it_802ADEF0(HSD_GObj*)`: redirects to `it_802ADF10`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802ADEF0(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x60A958D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802ADEF0");
     it_802ADF10(item_gobj);
 }
@@ -316,7 +318,9 @@ pub unsafe fn itFoxBlaster_SetShotAngle(item: *mut Item, fighter_muzzle_pos: *mu
 
 /// `void it_802ADF10(HSD_GObj*)`: if the blaster fired this frame, spawns the muzzle effect at the hold
 /// joints and shifts the six-slot shot history up, clearing the newest slot.
+#[inline(never)]
 pub unsafe extern "C" fn it_802ADF10(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA337E1CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802ADF10");
     let mut ft_cur_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let mut ft_hold_joint_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
@@ -659,7 +663,9 @@ pub unsafe fn clear_blaster(item_gobj: *mut HSD_GObj) {
 
 /// `bool itFoxblaster_UnkMotion8_Anim(HSD_GObj*)`: follows the fighter's SpecialN action (changes the item
 /// state to match), and removes the blaster when the fighter no longer needs it.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x391586DEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxblaster_UnkMotion8_Anim");
     let item = item_of(item_gobj);
 
@@ -722,20 +728,26 @@ pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Anim(item_gobj: *mut HSD_GObj) 
 }
 
 /// `void itFoxblaster_UnkMotion8_Phys(HSD_GObj*)`: the two model transforms.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Phys(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5B9EA92Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxblaster_UnkMotion8_Phys");
     it_802AE63C(item_gobj);
     it_802AE200(item_gobj);
 }
 
 /// `bool itFoxblaster_UnkMotion8_Coll(HSD_GObj*)`: does nothing.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Coll(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xEA290FB9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxblaster_UnkMotion8_Coll");
     0
 }
 
 /// `bool itFoxblaster_UnkMotion9_Anim(HSD_GObj*)`: clears the references and ends the item.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x86699B47u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxblaster_UnkMotion9_Anim");
     ext::efLib_DestroyAll(item_gobj);
     clear_blaster_references(item_gobj);
@@ -743,10 +755,13 @@ pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Anim(item_gobj: *mut HSD_GObj) 
 }
 
 /// `void itFoxblaster_UnkMotion9_Phys(HSD_GObj*)`: does nothing.
-pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Phys(item_gobj: *mut HSD_GObj) { melee_core::ct!("itFoxblaster_UnkMotion9_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Phys(item_gobj: *mut HSD_GObj) { core::hint::black_box(0x8F7D7ABAu32); /* fn identity */ melee_core::ct!("itFoxblaster_UnkMotion9_Phys");}
 
 /// `bool itFoxblaster_UnkMotion9_Coll(HSD_GObj*)`: identical to the Anim callback.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Coll(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x133DCA50u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxblaster_UnkMotion9_Coll");
     ext::efLib_DestroyAll(item_gobj);
     clear_blaster_references(item_gobj);
@@ -754,7 +769,9 @@ pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Coll(item_gobj: *mut HSD_GObj) 
 }
 
 /// `bool itFoxblaster_UnkMotion10_Anim(HSD_GObj*)`: copies the owner's scale onto the item when the owner says so.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xC0A0063Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxblaster_UnkMotion10_Anim");
     if !item_gobj.is_null() {
         let it = item_of(item_gobj);
@@ -770,16 +787,21 @@ pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Anim(item_gobj: *mut HSD_GObj)
 }
 
 /// `void itFoxblaster_UnkMotion10_Phys(HSD_GObj*)`: does nothing.
-pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Phys(item_gobj: *mut HSD_GObj) { melee_core::ct!("itFoxblaster_UnkMotion10_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Phys(item_gobj: *mut HSD_GObj) { core::hint::black_box(0x8F6373B8u32); /* fn identity */ melee_core::ct!("itFoxblaster_UnkMotion10_Phys");}
 
 /// `bool itFoxblaster_UnkMotion10_Coll(HSD_GObj*)`: does nothing.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Coll(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xF62AADAAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxblaster_UnkMotion10_Coll");
     0
 }
 
 /// `void itFoxBlaster_Logic96_EvtUnk(Item_GObj*, HSD_GObj*)`: removes the gobj interaction references.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxBlaster_Logic96_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9186BD15u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxBlaster_Logic96_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

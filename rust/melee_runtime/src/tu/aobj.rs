@@ -98,7 +98,9 @@ pub unsafe extern "C" fn HSD_AObjGetFlags(aobj: *mut HSD_AObj) -> u32 {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
+    core::hint::black_box(0xC550AF38u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjSetFlags");
     // TARGET_PC: an impossibly small pointer is treated as absent.
     if (aobj as usize) < 0x1000 {
@@ -147,7 +149,9 @@ pub unsafe extern "C" fn HSD_AObjInvokeCallBacks() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjReqAnim(aobj: *mut HSD_AObj, frame: f32) {
+    core::hint::black_box(0x5F503664u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjReqAnim");
     if aobj.is_null() {
         return;
@@ -158,7 +162,9 @@ pub unsafe extern "C" fn HSD_AObjReqAnim(aobj: *mut HSD_AObj, frame: f32) {
     ext::HSD_FObjReqAnimAll((*aobj).fobj, frame);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjStopAnim(aobj: *mut HSD_AObj, obj: *mut c_void, func: HSD_ObjUpdateFunc) {
+    core::hint::black_box(0x71376F02u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjStopAnim");
     if aobj.is_null() {
         return;

@@ -75,7 +75,8 @@ pub mod ext {
         use super::*;
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
         pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xD4394572u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::ground::stage_info;
@@ -211,9 +212,12 @@ pub static mut grOy_StageData: StageData = StageData {
     joint_count: 0,
 };
 
-pub unsafe extern "C" fn grOldYoshi_8020E798(_arg: i32) { melee_core::ct!("grOldYoshi_8020E798");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020E798(_arg: i32) { core::hint::black_box(0xFDA7405Bu32); /* fn identity */ melee_core::ct!("grOldYoshi_8020E798");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E79C() {
+    core::hint::black_box(0x46A7B346u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E79C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut OyYakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
@@ -228,14 +232,19 @@ pub unsafe extern "C" fn grOldYoshi_8020E79C() {
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020E824() { melee_core::ct!("grOldYoshi_8020E824");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020E824() { core::hint::black_box(0xD3522A0Du32); /* fn identity */ melee_core::ct!("grOldYoshi_8020E824");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E828() {
+    core::hint::black_box(0xC7521729u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E828");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E84C() -> i32 {
+    core::hint::black_box(0x8460B83Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E84C");
     0
 }
@@ -250,19 +259,27 @@ pub unsafe extern "C" fn grOldYoshi_8020E854(gobj_id: i32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xCB70503Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E968(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x58CE51E6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E968");
     0
 }
-pub unsafe extern "C" fn grOldYoshi_8020E970(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E970");}
-pub unsafe extern "C" fn grOldYoshi_8020E974(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E974");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020E970(_arg: *mut HSD_GObj) { core::hint::black_box(0xE6D17007u32); /* fn identity */ melee_core::ct!("grOldYoshi_8020E970");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020E974(_arg: *mut HSD_GObj) { core::hint::black_box(0xE2D169BBu32); /* fn identity */ melee_core::ct!("grOldYoshi_8020E974");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E978(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDED1636Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E978");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -272,14 +289,20 @@ pub unsafe extern "C" fn grOldYoshi_8020E978(gobj: *mut HSD_GObj) {
     (*gp).x11_flags.set_b012(2);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E9E0(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x5A555525u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E9E0");
     0
 }
-pub unsafe extern "C" fn grOldYoshi_8020E9E8(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E9E8");}
-pub unsafe extern "C" fn grOldYoshi_8020E9EC(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E9EC");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020E9E8(_arg: *mut HSD_GObj) { core::hint::black_box(0x625561BDu32); /* fn identity */ melee_core::ct!("grOldYoshi_8020E9E8");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020E9EC(_arg: *mut HSD_GObj) { core::hint::black_box(0x0754D27Cu32); /* fn identity */ melee_core::ct!("grOldYoshi_8020E9EC");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E9F0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x60579D2Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E9F0");
     let gp = (*gobj).user_data as *mut Ground;
     Ground_InitMapCollAndAnim(gobj);
@@ -287,34 +310,47 @@ pub unsafe extern "C" fn grOldYoshi_8020E9F0(gobj: *mut HSD_GObj) {
     (*gp).x10_flags.set_b5(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EA5C(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x2C465544u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EA5C");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EA64(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xC9498B02u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EA64");
     ext::Ground_UpdateMapColl(arg0);
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020EA88(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EA88");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020EA88(_arg: *mut HSD_GObj) { core::hint::black_box(0xC94E0830u32); /* fn identity */ melee_core::ct!("grOldYoshi_8020EA88");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EA8C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x244E9771u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EA8C");
     let gp = (*gobj).user_data as *mut Ground;
     Ground_InitMapCollAndAnim(gobj);
     (*gp).x11_flags.set_b012(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EAEC(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x0C6EC554u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EAEC");
     0
 }
-pub unsafe extern "C" fn grOldYoshi_8020EAF4(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EAF4");}
-pub unsafe extern "C" fn grOldYoshi_8020EAF8(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EAF8");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020EAF4(_arg: *mut HSD_GObj) { core::hint::black_box(0xC9709A72u32); /* fn identity */ melee_core::ct!("grOldYoshi_8020EAF4");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020EAF8(_arg: *mut HSD_GObj) { core::hint::black_box(0xCD70A0BEu32); /* fn identity */ melee_core::ct!("grOldYoshi_8020EAF8");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EAFC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x347142E3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EAFC");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -334,12 +370,16 @@ pub unsafe extern "C" fn grOldYoshi_8020EAFC(gobj: *mut HSD_GObj) {
     (*gp).x11_flags.set_b012(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EC08(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xA6691A6Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EC08");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EC10(arg: *mut HSD_GObj) {
+    core::hint::black_box(0xA46B55DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EC10");
     let gp = (*arg).user_data as *mut Ground;
     let yp = yakumono_param;
@@ -412,7 +452,8 @@ pub unsafe extern "C" fn grOldYoshi_8020EC10(arg: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(arg);
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020EFC8(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EFC8");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020EFC8(_arg: *mut HSD_GObj) { core::hint::black_box(0xC7B323BEu32); /* fn identity */ melee_core::ct!("grOldYoshi_8020EFC8");}
 
 /// `grOldYoshi_8020EFCC_inline`: the user_data read the C kept out of GET_GROUND
 pub unsafe fn grOldYoshi_8020EFCC_inline(arg0: *mut HSD_GObj) -> *mut Ground {
@@ -420,7 +461,9 @@ pub unsafe fn grOldYoshi_8020EFCC_inline(arg0: *mut HSD_GObj) -> *mut Ground {
     (*arg0).user_data as *mut Ground
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020EFCC(arg: *mut HSD_GObj) {
+    core::hint::black_box(0x2EB3C5E3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020EFCC");
     let jobj = (*arg).hsd_obj as *mut HSD_JObj;
     let gp = grOldYoshi_8020EFCC_inline(arg);
@@ -430,12 +473,16 @@ pub unsafe extern "C" fn grOldYoshi_8020EFCC(arg: *mut HSD_GObj) {
     (*gp).x11_flags.set_b012(2);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020F080(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xA3D80880u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020F080");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020F088(arg: *mut HSD_GObj) {
+    core::hint::black_box(0xABD81518u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020F088");
     let gp = (*arg).user_data as *mut Ground;
     if (*gp).u.oldyoshiguest.xC6 == -1 {
@@ -465,10 +512,13 @@ pub unsafe extern "C" fn grOldYoshi_8020F088(arg: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020F2A4(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020F2A4");}
+#[inline(never)]
+pub unsafe extern "C" fn grOldYoshi_8020F2A4(_arg: *mut HSD_GObj) { core::hint::black_box(0x9345278Bu32); /* fn identity */ melee_core::ct!("grOldYoshi_8020F2A4");}
 
 /// 20F2A8 `mpLib_JointCollisionCallback`
+#[inline(never)]
 pub unsafe extern "C" fn fn_8020F2A8(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, _coll_x50: i32, _ground_kind: u32, _delta_y: f32) {
+    core::hint::black_box(0xEB86BEFBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8020F2A8");
     let gp = user_data as *mut Ground;
     if (*coll).x34_flags.b1234() as i32 != 1 {
@@ -524,12 +574,16 @@ pub unsafe extern "C" fn grOldYoshi_8020F31C(param1: f32, param2: f32, param3: f
     param1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020F404(_arg: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
+    core::hint::black_box(0x6B37ECA8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020F404");
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020F40C(a: *mut Vec3, _arg: i32, joint: *mut HSD_JObj) -> i32 {
+    core::hint::black_box(0x823810DDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020F40C");
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(joint, null_mut(), &mut b);

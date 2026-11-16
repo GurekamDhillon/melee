@@ -128,13 +128,17 @@ unsafe fn dispatch(x8: *mut un_80304138_objalloc_t_x8, code: u32) -> i32 {
 }
 
 /// `int un_80302E00(x8*, int)`: runs the entry's callback, then the menu's.
+#[inline(never)]
 pub unsafe extern "C" fn un_80302E00(arg0: *mut un_80304138_objalloc_t_x8, arg1: i32) -> i32 {
+    core::hint::black_box(0xE36A5B7Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80302E00");
     dispatch(arg0, arg1 as u32)
 }
 
 /// `int un_80302EA4(x8*)`: the width in characters a menu needs (entries end at `x0 == 9`).
+#[inline(never)]
 pub unsafe extern "C" fn un_80302EA4(mut arg0: *mut un_80304138_objalloc_t_x8) -> i32 {
+    core::hint::black_box(0xD98F1C96u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80302EA4");
     let mut x = 1i32;
     let mut y = 1i32;
@@ -510,7 +514,9 @@ pub unsafe extern "C" fn un_80303AC4(arg0: *mut un_80304138_objalloc_t) {
 }
 
 /// `void fn_80303EF4(HSD_GObj*)`: the menu proc, newest menu first.
+#[inline(never)]
 pub unsafe extern "C" fn fn_80303EF4(_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x24D7E63Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_80303EF4");
     let mut q = un_804D6E40;
     while !q.is_null() {
@@ -572,6 +578,7 @@ pub unsafe fn un_80303FD4_count(mut p: *mut un_80304138_objalloc_t_x8) -> i32 {
 }
 
 /// `void un_80303FD4(HSD_GObj*, objalloc_t*, x8*, int, int, int)`: builds a menu at (arg4, arg5).
+#[inline(never)]
 pub unsafe extern "C" fn un_80303FD4(
     arg0: *mut HSD_GObj,
     arg1: *mut un_80304138_objalloc_t,
@@ -580,6 +587,7 @@ pub unsafe extern "C" fn un_80303FD4(
     arg4: i32,
     arg5: i32,
 ) {
+    core::hint::black_box(0x4B13D833u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80303FD4");
     let mut count2 = 0i32;
     (*arg1).x8 = arg2;

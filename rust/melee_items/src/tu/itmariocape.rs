@@ -240,7 +240,9 @@ unsafe fn reset(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMariocape_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x50F17AB3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMariocape_UnkMotion1_Anim");
     inlineA0(gobj);
     let ip = GET_ITEM(gobj);
@@ -257,7 +259,9 @@ pub unsafe extern "C" fn itMariocape_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bo
 }
 
 /// 2B2870
+#[inline(never)]
 pub unsafe extern "C" fn it_802B2870(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xEF66BA24u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B2870");
     ext::it_8026B894(gobj, ref_gobj);
 }

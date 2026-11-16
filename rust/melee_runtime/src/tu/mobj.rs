@@ -57,12 +57,16 @@ pub mod native {
     pub unsafe extern "C" fn HSD_MObjSetCurrent(m: *mut HSD_MObj) {
         current_mobj = m;
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjSetFlags(m: *mut HSD_MObj, flags: u32) {
+        core::hint::black_box(0x081B0A60u32); // fn identity (tools/rust-port/fn_identity.py)
         if !m.is_null() {
             (*m).rendermode |= flags;
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjClearFlags(m: *mut HSD_MObj, flags: u32) {
+        core::hint::black_box(0x8C4452B7u32); // fn identity (tools/rust-port/fn_identity.py)
         if !m.is_null() {
             (*m).rendermode &= !flags;
         }
@@ -111,11 +115,13 @@ pub mod native {
     pub unsafe extern "C" fn HSD_MObjReqAnim(m: *mut HSD_MObj, frame: f32) {
         HSD_MObjReqAnimByFlags(m, frame, 0x7ff);
     }
+    #[inline(never)]
     pub unsafe extern "C" fn MObjUpdateFunc(
         obj: *mut c_void,
         ty: i32,
         v: *mut HSD_ObjData,
     ) {
+        core::hint::black_box(0x7F5DE564u32); // fn identity (tools/rust-port/fn_identity.py)
         let m = obj.cast::<HSD_MObj>();
         if m.is_null() {
             return;
@@ -157,10 +163,12 @@ pub mod native {
         ext::HSD_AObjInterpretAnim((*m).aobj, m.cast(), Some(MObjUpdateFunc));
         ext::HSD_TObjAnimAll((*m).tobj);
     }
+    #[inline(never)]
     pub unsafe extern "C" fn MObjLoad(
         m: *mut HSD_MObj,
         d: *mut HSD_MObjDesc,
     ) -> i32 {
+        core::hint::black_box(0x1FB4D823u32); // fn identity (tools/rust-port/fn_identity.py)
         (*m).rendermode = (*d).rendermode;
         (*m).tobj = ext::HSD_TObjLoadDesc((*d).texdesc);
         (*m).mat = HSD_MaterialAlloc();
@@ -239,19 +247,23 @@ pub mod native {
             *tail = null_mut();
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn MObjSetupTev(
         m: *mut HSD_MObj,
         t: *mut HSD_TObj,
         arg: u32,
     ) {
+        core::hint::black_box(0x24E9FB7Bu32); // fn identity (tools/rust-port/fn_identity.py)
         assert!(!(*m).tevdesc.is_null());
         ext::HSD_TExpSetupTev((*m).tevdesc, (*m).texp);
         ext::HSD_TObjSetupVolatileTev(t, arg);
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjSetup(
         m: *mut HSD_MObj,
         _rendermode: u32,
     ) {
+        core::hint::black_box(0xE8DD914Cu32); // fn identity (tools/rust-port/fn_identity.py)
         ext::HSD_StateInitTev();
         let mode = (*m).rendermode;
         let mat = (*m).mat;
@@ -288,10 +300,12 @@ pub mod native {
             *tail = null_mut();
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjUnset(
         _m: *mut HSD_MObj,
         _rendermode: u32,
     ) {
+        core::hint::black_box(0x91492AE4u32); // fn identity (tools/rust-port/fn_identity.py)
         ext::HSD_TObjSetup(null_mut());
     }
     pub unsafe extern "C" fn HSD_MObjSetToonTextureImage(
@@ -441,11 +455,13 @@ pub mod native {
 
     /// Original MObjMakeTExp graph construction. External TExp allocation/compilation remains
     /// a typed integration hook; every node request and input is compared with the C oracle.
+    #[inline(never)]
     pub unsafe extern "C" fn MObjMakeTExp(
         m: *mut HSD_MObj,
         top: *mut HSD_TObj,
         list: *mut *mut HSD_TExp,
     ) -> *mut HSD_TExp {
+        core::hint::black_box(0x58DB17B6u32); // fn identity (tools/rust-port/fn_identity.py)
         use ext::*;
         const ZERO: *mut HSD_TExp = core::ptr::null_mut();
         const RAS: *mut HSD_TExp = (-2isize) as *mut HSD_TExp;

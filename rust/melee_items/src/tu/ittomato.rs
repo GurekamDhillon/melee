@@ -184,7 +184,9 @@ pub unsafe extern "C" fn itTomato_Logic9_Spawned(gobj: *mut Item_GObj) {
     it_80284358(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_Logic9_Destroyed(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA31C21E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_Logic9_Destroyed");
     let item = GET_ITEM(gobj);
 
@@ -198,25 +200,33 @@ pub unsafe extern "C" fn it_80284358(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x6BD934AAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion0_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2D2A0437u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion0_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD3C2629Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion0_Coll");
     ext::it_8026E15C(gobj, Some(it_802843E4));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802843E4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6E4FCCD4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802843E4");
     let item = GET_ITEM(gobj);
     (*item).x40_vel.x = 0.0;
@@ -225,37 +235,50 @@ pub unsafe extern "C" fn it_802843E4(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xCE7FB523u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion1_Anim");
     false
 }
 
-pub unsafe extern "C" fn itTomato_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTomato_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itTomato_UnkMotion1_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xC3A15116u32); /* fn identity */ melee_core::ct!("itTomato_UnkMotion1_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xF63B5BD4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion1_Coll");
     ext::it_8026D62C(gobj, Some(it_80284458));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80284458(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7503F3DDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80284458");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xBCCED326u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion4_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x363A9963u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2B09D7E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion4_Coll");
     ext::it_8026E15C(gobj, Some(it_802843E4));
     false
@@ -270,12 +293,15 @@ pub unsafe extern "C" fn itTomato_Logic9_PickedUp(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xADE99481u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion3_Anim");
     false
 }
 
-pub unsafe extern "C" fn itTomato_UnkMotion3_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTomato_UnkMotion3_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itTomato_UnkMotion3_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xD265A7CCu32); /* fn identity */ melee_core::ct!("itTomato_UnkMotion3_Phys");}
 
 pub unsafe extern "C" fn itTomato_Logic9_Dropped(gobj: *mut Item_GObj) {
     melee_core::ct!("itTomato_Logic9_Dropped");
@@ -292,20 +318,27 @@ pub unsafe extern "C" fn itTomato_Logic9_EnteredAir(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion5_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB2A2C8CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion5_Anim");
     false
 }
 
-pub unsafe extern "C" fn itTomato_UnkMotion5_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTomato_UnkMotion5_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itTomato_UnkMotion5_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x903F22F2u32); /* fn identity */ melee_core::ct!("itTomato_UnkMotion5_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x663A3F18u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_UnkMotion5_Coll");
     ext::it_8026E8C4(gobj, Some(it_802843E4), Some(it_80284458));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_Logic9_EvtUnk(gobj: *mut Item_GObj, gobj_ref: *mut Item_GObj) {
+    core::hint::black_box(0xDC7B23A5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_Logic9_EvtUnk");
     ext::it_8026B894(gobj, gobj_ref);
 }

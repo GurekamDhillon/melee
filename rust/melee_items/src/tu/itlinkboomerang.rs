@@ -659,7 +659,9 @@ pub unsafe fn it_802A0E70(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x1FD31424u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if !(*ip).xDD4_itemVar.linkboomerang.xF98.is_null() && ext::ftLk_SpecialS_Is2071b0_5to13((*ip).xDD4_itemVar.linkboomerang.xF98) != 0 {
@@ -675,7 +677,9 @@ pub unsafe fn it_802A0F88(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 1, 2);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x05825335u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion1_Anim");
     it_802A0C34(gobj)
 }
@@ -685,7 +689,9 @@ pub unsafe fn itLinkboomerang_get_x18(attrs: *mut itLinkBoomerangAttributes) -> 
     (*attrs).x18
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3DC00940u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
@@ -703,7 +709,9 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xB6E5DA42u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion1_Coll");
     itLinkboomerang_UnkMotion2_Coll(gobj);
     0
@@ -725,12 +733,16 @@ pub unsafe fn it_802A10E4(gobj: *mut Item_GObj) {
     loop_lb_8000BA0C_gobj(gobj, child, attrs);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x2DC76E9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion2_Anim");
     it_802A0C34(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x348B05EBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
@@ -824,7 +836,9 @@ pub unsafe fn it_802A15EC_no_inline(gobj: *mut Item_GObj, arg1: *mut Vec3) {
     it_802A15EC(gobj, arg1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xDEDC8A79u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion2_Coll");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     let ip = GET_ITEM(gobj);
@@ -907,7 +921,9 @@ pub unsafe fn it_802A19E0(gobj: *mut Item_GObj) {
     loop_lb_8000BA0C_gobj_1(gobj, child);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x7B1B8307u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
@@ -953,7 +969,9 @@ pub unsafe fn itLinkboomerang_UnkMotion3_Phys_add_clamp(mut x: f32, y: f32, max:
     x
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6869D77Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkboomerang_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);

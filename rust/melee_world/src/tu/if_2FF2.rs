@@ -61,8 +61,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_803910D8(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_LObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x81C650C9u32); /* fn identity */ super::HSD_GObj_803910D8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x36FC6146u32); /* fn identity */ super::HSD_GObj_LObjCallback(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -163,7 +165,9 @@ pub unsafe fn fn_802FF218_inline(arg0: *mut HSD_GObj) -> i32 {
 }
 
 /// `void fn_802FF218(HSD_GObj*)`: refreshes the player's number (blank while `x10 == 1`).
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FF218(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xB21CB597u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FF218");
     let y = fn_802FF218_inline(arg0);
     if y >= 0 {
@@ -186,7 +190,8 @@ pub unsafe extern "C" fn fn_802FF218(arg0: *mut HSD_GObj) {
 }
 
 /// `void fn_802FF360(void*)`: the texts' render callback (does nothing).
-pub unsafe extern "C" fn fn_802FF360(_arg0: *mut c_void) { melee_core::ct!("fn_802FF360");}
+#[inline(never)]
+pub unsafe extern "C" fn fn_802FF360(_arg0: *mut c_void) { core::hint::black_box(0xA6C00E77u32); /* fn identity */ melee_core::ct!("fn_802FF360");}
 
 /// `void un_802FF364(int slot)`: (re)builds the slot's score text at its HUD position.
 pub unsafe extern "C" fn un_802FF364(slot: i32) {
@@ -285,7 +290,9 @@ pub unsafe extern "C" fn un_802FF710() {
 }
 
 /// `HSD_GObj* un_802FF78C(void)`: sets the DevText overlay up (and its menu allocator).
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF78C() -> *mut HSD_GObj {
+    core::hint::black_box(0x19BF4561u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF78C");
     let gobj = ext::DevText_Setup(21, 24, 0, 17, 0, 11);
     if !gobj.is_null() {

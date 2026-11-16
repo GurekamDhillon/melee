@@ -155,7 +155,9 @@ fn abs_c(x: f32) -> f32 {
 }
 
 /// `Item_GObj* it_802EAF34(HSD_GObj* owner, Vec3* offset, int type)`: spawn a laser at `offset` of `owner`'s joint.
+#[inline(never)]
 pub unsafe extern "C" fn it_802EAF34(owner: *mut HSD_GObj, offset: *mut Vec3, type_: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x45778FC6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EAF34");
     let jobj = (*owner).hsd_obj as *mut HSD_JObj;
     let mut unused: Quaternion = core::mem::zeroed();
@@ -218,7 +220,9 @@ pub unsafe extern "C" fn it_802EB268(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGreatfoxlaser_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xF8F15817u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGreatfoxlaser_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGreatFoxLaser_Attrs;
@@ -242,7 +246,9 @@ pub unsafe extern "C" fn itGreatfoxlaser_UnkMotion1_Anim(gobj: *mut HSD_GObj) ->
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGreatfoxlaser_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8661B1AAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGreatfoxlaser_UnkMotion1_Phys");
     let mut ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.greatfoxlaser.x34 != 0 {
@@ -256,17 +262,23 @@ pub unsafe extern "C" fn itGreatfoxlaser_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGreatFoxLaser_Logic27_DmgDealt(_item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x50E575F4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGreatFoxLaser_Logic27_DmgDealt");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGreatFoxLaser_Logic27_Clanked(_item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xF74EFE92u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGreatFoxLaser_Logic27_Clanked");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGreatFoxLaser_Logic27_Absorbed(_item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x79B23C1Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGreatFoxLaser_Logic27_Absorbed");
     0
 }
@@ -288,7 +300,9 @@ pub unsafe extern "C" fn it_2725_Logic27_Reflected(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802EB5A8(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE8627BDAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EB5A8");
     ext::it_8026B894(gobj, ref_gobj);
 }

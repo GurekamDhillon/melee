@@ -418,7 +418,9 @@ unsafe fn logic_view(p:*mut HSD_TObj)->logic::HsdTObj<*mut HSD_ImageDesc> {
         tev:x.tev.as_ref().map(|v|logic::HsdTObjTev{konst:color(v.konst),tev0:color(v.tev0),tev1:color(v.tev1)}),
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn TObjUpdateFunc(obj:*mut c_void,kind:i32,value:*mut HSD_ObjData) {
+    core::hint::black_box(0x01099B14u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("TObjUpdateFunc");
     if obj.is_null(){return;}
     let p=obj.cast::<HSD_TObj>();
@@ -445,7 +447,9 @@ pub unsafe extern "C" fn HSD_TObjAnim(p:*mut HSD_TObj) {
 }
 pub unsafe extern "C" fn HSD_TObjAnimAll(mut p:*mut HSD_TObj) { melee_core::ct!("HSD_TObjAnimAll");while !p.is_null(){HSD_TObjAnim(p);p=(*p).next;}}
 
+#[inline(never)]
 pub unsafe extern "C" fn TObjLoad(p:*mut HSD_TObj,d:*mut HSD_TObjDesc)->i32 {
+    core::hint::black_box(0x3A498CD3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("TObjLoad");
     (*p).next=HSD_TObjLoadDesc((*d).next);
     (*p).id=(*d).id;(*p).src=(*d).src;(*p).mtxid=GX_IDENTITY;
@@ -479,7 +483,9 @@ pub unsafe extern "C" fn _HSD_TObjGetCurrentByType(from:*mut HSD_TObj,mapping:u3
 }
 /// tobj.c `MakeTextureMtx`: translate, rotate and scale matrices concatenated onto `tobj->mtx` through the
 /// matrix library (callees are hooks, like the C).
+#[inline(never)]
 pub unsafe extern "C" fn MakeTextureMtx(tobj: *mut HSD_TObj) {
+    core::hint::black_box(0x345B9602u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("MakeTextureMtx");
     let t = &mut *tobj;
     assert!(t.repeat_s != 0 && t.repeat_t != 0, "tobj.c:589 tobj->repeat_s && tobj->repeat_t");
@@ -500,7 +506,9 @@ pub unsafe extern "C" fn MakeTextureMtx(tobj: *mut HSD_TObj) {
     ext::PSMTXConcat(mp, mtxp, mtxp);
 }
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn TObjSetupMtx(p: *mut HSD_TObj) {
+    core::hint::black_box(0xAD80005Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("TObjSetupMtx");
     let kind = (*p).flags & 15;
     if kind == super::TEX_COORD_TOON {
@@ -567,7 +575,9 @@ pub unsafe extern "C" fn TObjSetupMtx(p: *mut HSD_TObj) {
         _ => ext::GXLoadTexMtxImm(addr_of_mut!((*p).mtx).cast(), (*p).mtxid, if (*p).flags & super::TEX_BUMP != 0 { GX_MTX2x4 } else { GX_MTX3x4 }),
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn setupTextureCoordGen(p:*mut HSD_TObj){
+    core::hint::black_box(0xB331EB63u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setupTextureCoordGen");
     let x=&*p;
     match x.flags&15{
@@ -630,7 +640,9 @@ pub unsafe extern "C" fn HSD_TObjSetupVolatileTev(mut p:*mut HSD_TObj,_rendermod
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn MakeColorGenTExp(_lightmap:u32,p:*mut HSD_TObj,c:*mut *mut HSD_TExp,a:*mut *mut HSD_TExp,list:*mut *mut HSD_TExp,_repeat:i32){
+    core::hint::black_box(0x3DE12FF4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("MakeColorGenTExp");
     let tev=(*p).tev;let mut used=[false;9];
     let colors=[(*tev).color_a,(*tev).color_b,(*tev).color_c,(*tev).color_d];
@@ -677,7 +689,9 @@ pub unsafe extern "C" fn MakeColorGenTExp(_lightmap:u32,p:*mut HSD_TObj,c:*mut *
         ext::HSD_TExpAlphaIn(e,sel[0],exp[0],sel[1],exp[1],sel[2],exp[2],sel[3],exp[3]);*a=e;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn TObjMakeTExp(p:*mut HSD_TObj,lightmap:u32,done:u32,c:*mut *mut HSD_TExp,a:*mut *mut HSD_TExp,list:*mut *mut HSD_TExp){
+    core::hint::black_box(0x3E166F86u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("TObjMakeTExp");
     let repeat=done&((*p).flags&super::TEX_LIGHTMAP_MASK);
     let mut cs=usize::MAX as *mut HSD_TExp;let mut als=cs;
@@ -705,7 +719,9 @@ pub unsafe extern "C" fn TObjMakeTExp(p:*mut HSD_TObj,lightmap:u32,done:u32,c:*m
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_TObjAssignResources(mut p:*mut HSD_TObj)->i32{
+    core::hint::black_box(0x664F2843u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_TObjAssignResources");
     let mut pointers=std::vec::Vec::new();let mut objects=std::vec::Vec::new();
     while !p.is_null(){
@@ -716,7 +732,9 @@ pub unsafe extern "C" fn HSD_TObjAssignResources(mut p:*mut HSD_TObj)->i32{
     let n=super::assign_resources(&mut objects);
     for (p,x) in pointers.into_iter().zip(objects){(*p).id=x.id;(*p).coord=x.coord;(*p).mtxid=x.mtxid;}n as i32
 }
+#[inline(never)]
 pub unsafe extern "C" fn DifferentTluts(a:*mut HSD_Tlut,b:*mut HSD_Tlut)->i32{
+    core::hint::black_box(0x7739769Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DifferentTluts");
     logic::different_tluts(&logic::HsdTlut{n_entries:(*a).n_entries,..Default::default()},&logic::HsdTlut{n_entries:(*b).n_entries,..Default::default()}) as i32
 }
@@ -779,18 +797,24 @@ pub unsafe extern "C" fn HSD_ImageDescCopyFromEFB(p:*mut HSD_ImageDesc,x:u16,y:u
     if p.is_null(){return;}ext::GXSetTexCopySrc(x,y,(*p).width,(*p).height);ext::GXSetTexCopyDst((*p).width,(*p).height,(*p).format,((*p).mipmap!=0) as u8);
     if clear!=0{ext::HSD_StateSetZMode(1,GX_LEQUAL as i32,1);}ext::GXCopyTex((*p).image_ptr as *mut c_void,clear);if sync!=0{ext::GXPixModeSync();ext::GXInvalidateTexAll();}
 }
+#[inline(never)]
 pub unsafe extern "C" fn TObjRelease(o:*mut HSD_Class){
+    core::hint::black_box(0x6C0AB8E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("TObjRelease");
     let p=o.cast::<HSD_TObj>();ext::HSD_AObjRemove((*p).aobj);HSD_TlutRemove((*p).tlut);HSD_TObjTevRemove((*p).tev);
     if !(*p).tluttbl.is_null(){let mut i=0;while !(*(*p).tluttbl.add(i)).is_null(){HSD_TlutRemove(*(*p).tluttbl.add(i));i+=1;}ext::HSD_Free((*p).tluttbl.cast());}
     ((*hsdTObj.parent.head.parent).release.expect("parent release"))(o);
 }
+#[inline(never)]
 pub unsafe extern "C" fn TObjAmnesia(info:*mut HSD_ClassInfo){
+    core::hint::black_box(0x1227701Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("TObjAmnesia");
     if info==default_class.cast(){default_class=null_mut();}if info==addr_of_mut!(hsdTObj).cast(){tobj_head=null_mut();}
     ((*hsdTObj.parent.head.parent).amnesia.expect("parent amnesia"))(info);
 }
+#[inline(never)]
 pub unsafe extern "C" fn TObjInfoInit(){
+    core::hint::black_box(0x171E7E31u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("TObjInfoInit");
     ext::hsdInitClassInfo(addr_of_mut!(hsdTObj.parent),ext::obj_ptr(),c"sysdolphin_base_library".as_ptr().cast_mut(),c"hsd_tobj".as_ptr().cast_mut(),size_of::<HSD_TObjInfo>() as i32,size_of::<HSD_TObj>() as i32);
     hsdTObj.parent.release=Some(TObjRelease);hsdTObj.parent.amnesia=Some(TObjAmnesia);hsdTObj.load=Some(TObjLoad);hsdTObj.make_texp=Some(TObjMakeTExp);hsdTObj.make_mtx=Some(MakeTextureMtx);

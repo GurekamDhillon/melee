@@ -420,7 +420,9 @@ pub unsafe fn HSD_CObjAddAnim(cobj: *mut HSD_CObj, canim: *mut HSD_CameraAnim) {
 }
 
 /// `CObjUpdateFunc` (static): the AObj track writer (type 5-7 all write `x`, as in the C).
+#[inline(never)]
 pub unsafe extern "C" fn CObjUpdateFunc(obj: *mut c_void, type_: i32, val: *mut HSD_ObjData) {
+    core::hint::black_box(0x8A487FD0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("CObjUpdateFunc");
     let cobj = obj as *mut HSD_CObj;
     if cobj.is_null() {
@@ -822,7 +824,9 @@ unsafe fn CObjResetFlags(cobj: *mut HSD_CObj, flags: u32) {
 }
 
 /// `CObjLoad` (static): the class's `load` method.
+#[inline(never)]
 pub unsafe extern "C" fn CObjLoad(cobj: *mut HSD_CObj, desc: *mut HSD_CObjDesc) -> i32 {
+    core::hint::black_box(0x6A48D54Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("CObjLoad");
     let up = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
     let d = &(*desc).common;
@@ -903,7 +907,9 @@ pub unsafe fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj {
 }
 
 /// `CObjInit` (static): the class's `init` method.
+#[inline(never)]
 pub unsafe extern "C" fn CObjInit(o: *mut HSD_Class) -> i32 {
+    core::hint::black_box(0x4DECE101u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("CObjInit");
     let parent = hsdCObj.parent.parent.head.parent;
     let status = ((*parent).init.unwrap())(o);
@@ -922,7 +928,9 @@ pub unsafe extern "C" fn CObjInit(o: *mut HSD_Class) -> i32 {
 }
 
 /// `CObjRelease`: the class's `release` method.
+#[inline(never)]
 pub unsafe extern "C" fn CObjRelease(o: *mut HSD_Class) {
+    core::hint::black_box(0xDD08494Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("CObjRelease");
     let cobj = o as *mut HSD_CObj;
     ext::HSD_AObjRemove((*cobj).aobj);
@@ -936,7 +944,9 @@ pub unsafe extern "C" fn CObjRelease(o: *mut HSD_Class) {
 }
 
 /// `CObjAmnesia` (static): the class's `amnesia` method.
+#[inline(never)]
 pub unsafe extern "C" fn CObjAmnesia(info: *mut HSD_ClassInfo) {
+    core::hint::black_box(0x62FCA5EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("CObjAmnesia");
     if info == default_class {
         default_class = null_mut();
@@ -949,7 +959,9 @@ pub unsafe extern "C" fn CObjAmnesia(info: *mut HSD_ClassInfo) {
 }
 
 /// `CObjInfoInit` (static).
+#[inline(never)]
 pub unsafe extern "C" fn CObjInfoInit() {
+    core::hint::black_box(0x474A6C8Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("CObjInfoInit");
     ext::hsdInitClassInfo(
         class_of(addr_of_mut!(hsdCObj)),

@@ -251,7 +251,9 @@ pub unsafe extern "C" fn it_2725_Logic77_PickedUp(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchjudge_UnkMotion0_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x3F0F83AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchjudge_UnkMotion0_Anim");
     it_802C78B8(item_gobj);
     let remove: i32 = {
@@ -269,7 +271,9 @@ pub unsafe extern "C" fn itGamewatchjudge_UnkMotion0_Anim(item_gobj: *mut HSD_GO
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchJudge_Logic77_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB7CB7C8Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchJudge_Logic77_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

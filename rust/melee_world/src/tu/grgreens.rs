@@ -141,7 +141,8 @@ pub mod ext {
     pub mod cb {
         use super::*;
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x7C44837Fu32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::ground::stage_info;
@@ -327,13 +328,17 @@ unsafe fn Ground_StartMapAnim(gobj: *mut Ground_GObj) {
 }
 
 /// 213458
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80213458(_arg: i32) {
+    core::hint::black_box(0xF87B634Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80213458");
     grGr_804D6AAC = 1;
 }
 
 /// 213460
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_Init() {
+    core::hint::black_box(0xA6D41E0Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_Init");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grGreens_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
@@ -350,10 +355,13 @@ pub unsafe extern "C" fn grGreens_Init() {
 }
 
 /// 2134F4
-pub unsafe extern "C" fn grGreens_802134F4() { melee_core::ct!("grGreens_802134F4");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_802134F4() { core::hint::black_box(0x03894954u32); /* fn identity */ melee_core::ct!("grGreens_802134F4");}
 
 /// 2134F8
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_802134F8() {
+    core::hint::black_box(0xF7893670u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_802134F8");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
@@ -384,7 +392,9 @@ pub unsafe extern "C" fn grGreens_80213524(id: i32) -> *mut Ground_GObj {
 }
 
 /// 21360C
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_8021360C(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x18538061u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_8021360C");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -406,13 +416,17 @@ pub unsafe extern "C" fn grGreens_8021360C(gobj: *mut Ground_GObj) {
 }
 
 /// 2138B4
-pub unsafe extern "C" fn grGreens_802138B4(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802138B4");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_802138B4(_arg: *mut Ground_GObj) { core::hint::black_box(0xBEBB63ACu32); /* fn identity */ melee_core::ct!("grGreens_802138B4");}
 
 /// 2138B8
-pub unsafe extern "C" fn grGreens_802138B8(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802138B8");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_802138B8(_arg: *mut Ground_GObj) { core::hint::black_box(0xC2BB69F8u32); /* fn identity */ melee_core::ct!("grGreens_802138B8");}
 
 /// 2138BC
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_802138BC(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xEDBBADA9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_802138BC");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -420,50 +434,66 @@ pub unsafe extern "C" fn grGreens_802138BC(gobj: *mut Ground_GObj) {
 }
 
 /// 213908
-pub unsafe extern "C" fn grGreens_80213908(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213908");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_80213908(_arg: *mut Ground_GObj) { core::hint::black_box(0xBEBC5475u32); /* fn identity */ melee_core::ct!("grGreens_80213908");}
 
 /// 21390C
-pub unsafe extern "C" fn grGreens_8021390C(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_8021390C");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_8021390C(_arg: *mut Ground_GObj) { core::hint::black_box(0x93BC10C4u32); /* fn identity */ melee_core::ct!("grGreens_8021390C");}
 
 /// `static stageGObj1_OnInit`
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x3015F735u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 213944
-pub unsafe extern "C" fn grGreens_80213944(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213944");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_80213944(_arg: *mut Ground_GObj) { core::hint::black_box(0x32B27DB5u32); /* fn identity */ melee_core::ct!("grGreens_80213944");}
 
 /// 213948
-pub unsafe extern "C" fn grGreens_80213948(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213948");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_80213948(_arg: *mut Ground_GObj) { core::hint::black_box(0x36B28401u32); /* fn identity */ melee_core::ct!("grGreens_80213948");}
 
 /// `static stageGObj3_OnInit`
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj3_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xF6E1628Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj3_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 213980
-pub unsafe extern "C" fn grGreens_80213980(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213980");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_80213980(_arg: *mut Ground_GObj) { core::hint::black_box(0x36D09915u32); /* fn identity */ melee_core::ct!("grGreens_80213980");}
 
 /// 213984
-pub unsafe extern "C" fn grGreens_80213984(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213984");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_80213984(_arg: *mut Ground_GObj) { core::hint::black_box(0x32D092C9u32); /* fn identity */ melee_core::ct!("grGreens_80213984");}
 
 /// 213988
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80213988(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x3ED0A5ADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80213988");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 /// 2139BC
-pub unsafe extern "C" fn grGreens_802139BC(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802139BC");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_802139BC(_arg: *mut Ground_GObj) { core::hint::black_box(0x43E8B272u32); /* fn identity */ melee_core::ct!("grGreens_802139BC");}
 
 /// 2139C0
-pub unsafe extern "C" fn grGreens_802139C0(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802139C0");}
+#[inline(never)]
+pub unsafe extern "C" fn grGreens_802139C0(_arg: *mut Ground_GObj) { core::hint::black_box(0x2CE64FA6u32); /* fn identity */ melee_core::ct!("grGreens_802139C0");}
 
 /// 2139C4
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_802139C4(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x30E655F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_802139C4");
     let gp = (*gobj).user_data as *mut Ground;
     ext::ftCo_800C06E8(gobj, 9, grGreens_80213B1C as *mut c_void);
@@ -482,7 +512,9 @@ pub unsafe extern "C" fn grGreens_802139C4(gobj: *mut Ground_GObj) {
 }
 
 /// 213AB4
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80213AB4(vec: *mut Vec, max_x: f32, mut min_x: f32, max_y: f32, mut min_y: f32) -> i32 {
+    core::hint::black_box(0xC9CF9A6Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80213AB4");
     let max_y_actual: f32;
     let max_x_actual: f32;
@@ -507,7 +539,9 @@ pub unsafe extern "C" fn grGreens_80213AB4(vec: *mut Vec, max_x: f32, mut min_x:
 }
 
 /// 213B1C (`grGreens_80213B1C`)
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80213B1C(ground_gobj: *mut Ground_GObj, fighter_gobj: *mut Fighter_GObj, vec: *mut Vec) -> i32 {
+    core::hint::black_box(0x38409514u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80213B1C");
     let mut vec2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::ftLib_GetPos(fighter_gobj, &mut vec2);
@@ -570,7 +604,9 @@ unsafe fn next_pattern(gobj: *mut Ground_GObj) {
 }
 
 /// 213C10
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80213C10(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xDF10EFF6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80213C10");
     let bg_gobj = ext::Ground_GetMapGObj(4);
     let gp = GET_GROUND(gobj);
@@ -736,7 +772,9 @@ pub unsafe extern "C" fn grGreens_80213C10(gobj: *mut Ground_GObj) {
 }
 
 /// 214658 (`fn_80214658`)
+#[inline(never)]
 pub unsafe extern "C" fn fn_80214658(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xDD830271u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_80214658");
     let gp = GET_GROUND(gobj);
     (*gp).u.greens.x0_flags.x0.set_b0(0);
@@ -744,7 +782,9 @@ pub unsafe extern "C" fn fn_80214658(gobj: *mut Ground_GObj) {
 }
 
 /// 214674
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80214674(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x57DAF888u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80214674");
     let gp = GET_GROUND(gobj);
     let new_var = gobj;
@@ -766,7 +806,9 @@ pub unsafe extern "C" fn grGreens_80214674(gobj: *mut Ground_GObj) {
 }
 
 /// 21479C
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_8021479C(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xDA571BA8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_8021479C");
     let gp = GET_GROUND(gobj);
     if (*gp).u.greens.x0_flags.x0.b0() == 0 {
@@ -780,7 +822,9 @@ pub unsafe extern "C" fn grGreens_8021479C(gobj: *mut Ground_GObj) {
 }
 
 /// 214804
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80214804(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xC2767E99u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80214804");
     let gp = GET_GROUND(gobj);
 
@@ -790,7 +834,9 @@ pub unsafe extern "C" fn grGreens_80214804(gobj: *mut Ground_GObj) {
 
 /// 21483C
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_8021483C(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x1B79494Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_8021483C");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut left_max: f32 = -3.4028235e38;
@@ -1062,7 +1108,9 @@ pub unsafe extern "C" fn grGreens_80215358(gobj: *mut Ground_GObj, col: i32, row
 }
 
 /// 2159B8
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_802159B8(gp: *mut Ground, i: i32, j: i32, gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1D3BBB85u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_802159B8");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let item_gobj = (*blk(gp, j, i)).x10;
@@ -1115,7 +1163,9 @@ pub unsafe fn find_block(gp: *mut Ground, item_gobj: *mut Item_GObj, row: *mut i
 }
 
 /// 215B84 (`fn_80215B84`)
+#[inline(never)]
 pub unsafe extern "C" fn fn_80215B84(item_gobj: *mut Item_GObj, gp: *mut Ground, _arg2: *mut Vec, gobj: *mut HSD_GObj, _arg4: f32) {
+    core::hint::black_box(0x72FBB441u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_80215B84");
     let ground = gp;
     let mut col: i32 = -1;
@@ -1470,8 +1520,10 @@ pub unsafe extern "C" fn grGreens_80216C20(gobj: *mut Ground_GObj) {
 }
 
 /// 216DE4 (`fn_80216DE4`, an `mpLib_JointCollisionCallback`)
+#[inline(never)]
 pub unsafe extern "C" fn fn_80216DE4(user_data: *mut c_void, joint_id: i32, _coll: *mut CollData, _coll_x50: i32,
                                      _ground_kind: u32, _delta_y: f32) {
+    core::hint::black_box(0xC2BF94D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_80216DE4");
     let gp = user_data as *mut Ground;
     let mut i: i32 = 0;

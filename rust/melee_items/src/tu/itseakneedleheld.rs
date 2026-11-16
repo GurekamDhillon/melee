@@ -164,7 +164,9 @@ pub unsafe extern "C" fn itSeakNeedleHeld_Logic110_PickedUp(gobj: *mut Item_GObj
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xA53468E2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSeakneedleheld_UnkMotion0_Anim");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
@@ -202,14 +204,19 @@ pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Anim(gobj: *mut Item_GObj) 
     false
 }
 
-pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSeakneedleheld_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x9B8B807Fu32); /* fn identity */ melee_core::ct!("itSeakneedleheld_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x0D1F29D5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSeakneedleheld_UnkMotion0_Coll");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSeakNeedleHeld_Logic110_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB5197BFAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSeakNeedleHeld_Logic110_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

@@ -88,7 +88,8 @@ pub mod ext {
     pub mod cb {
         use super::*;
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn mn_8022EB04(a0: *mut c_void) { super::mn_8022EB04(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn mn_8022EB04(a0: *mut c_void) { core::hint::black_box(0x04177CA4u32); /* fn identity */ super::mn_8022EB04(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -185,7 +186,9 @@ pub unsafe extern "C" fn un_802FC9B4(slot: u8, arg1: u8, arg2: u8, arg3: u8) -> 
     18.0 // CP Gray
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn NameTag_RenderCallback(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0x9924DD4Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("NameTag_RenderCallback");
     if ext::Ui_RetailHidden(AT_RE_HUD_NAMETAG) != 0 {
         return;
@@ -193,7 +196,9 @@ pub unsafe extern "C" fn NameTag_RenderCallback(gobj: *mut HSD_GObj, pass: isize
     ext::HSD_GObj_JObjCallback(gobj, pass);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FCAC4(gobj: *mut HSD_GObj, _pass: isize) {
+    core::hint::black_box(0x34301899u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FCAC4");
     // Do not move the live nametag text offscreen just to hide a capture.
     if ext::Wb_RenderActive() != 0 && ext::ifAll_IsHUDHidden() != 0 {
@@ -235,7 +240,9 @@ pub unsafe extern "C" fn has_nametag(slot: i32) -> bool {
     !(ext::Player_GetPlayerSlotType(slot) != Gm_PKind_Human || ext::Player_GetNametagSlotID(slot) == NAMETAG_DISABLED)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD4470AC0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FCC44");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vec2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -284,7 +291,9 @@ pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn inlineA1(var_f31: f32) -> f32 {
+    core::hint::black_box(0x8D3C9CCEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("inlineA1");
     let q = melee_core::ppc::fctiwz_f32(var_f31);
     if q >= 16 {
@@ -329,7 +338,9 @@ pub unsafe extern "C" fn NameTag_Create(slot: i32) {
     ext::HSD_GObj_SetupProc(gobj, Some(fn_802FCC44), 17);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD28C(slot: i32) {
+    core::hint::black_box(0x214C2E20u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD28C");
     let jobj = (*un_804A1EE0[slot as usize]).hsd_obj as *mut HSD_JObj;
     let team = ext::Player_GetTeam(slot) as u8;

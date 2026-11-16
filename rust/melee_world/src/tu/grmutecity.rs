@@ -147,7 +147,8 @@ pub mod ext {
     pub mod cb {
         use super::*;
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x2F406D89u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
@@ -323,9 +324,12 @@ pub static mut yakumono_param: *mut GrMcYakumonoParam = null_mut();
 /// `static s32 grMc_804D69D4`
 pub static mut grMc_804D69D4: i32 = 0;
 
-pub unsafe extern "C" fn grMuteCity_801EFC68(_arg: i32) { melee_core::ct!("grMuteCity_801EFC68");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801EFC68(_arg: i32) { core::hint::black_box(0x9A9E9217u32); /* fn identity */ melee_core::ct!("grMuteCity_801EFC68");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801EFC6C() {
+    core::hint::black_box(0x439E0922u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801EFC6C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut GrMcYakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
@@ -338,14 +342,19 @@ pub unsafe extern "C" fn grMuteCity_801EFC6C() {
     ext::un_802FD65C();
 }
 
-pub unsafe extern "C" fn grMuteCity_801EFCDC() { melee_core::ct!("grMuteCity_801EFCDC");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801EFCDC() { core::hint::black_box(0x52838014u32); /* fn identity */ melee_core::ct!("grMuteCity_801EFCDC");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801EFCE0() {
+    core::hint::black_box(0x9F81BAB4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801EFCE0");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801EFD04() -> i32 {
+    core::hint::black_box(0x0926D488u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801EFD04");
     0
 }
@@ -374,7 +383,9 @@ pub unsafe extern "C" fn grMuteCity_801EFD0C(gobj_id: i32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801EFDF8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x085BE42Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801EFDF8");
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = (*gobj).user_data as *mut Ground;
@@ -451,12 +462,16 @@ static light_ref_br: f32 = 40000.0;
 static light_ref_dist: f32 = 0.99;
 static grMc_804D46CC: i32 = 0x1;
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F0118(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x523D7EA1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F0118");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F0120(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x503FBA12u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F0120");
     let ground = (*gobj).user_data as *mut Ground;
     if !(*ground).u.mutecity.x110.is_null() {
@@ -473,9 +488,12 @@ pub unsafe extern "C" fn grMuteCity_801F0120(gobj: *mut HSD_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grMuteCity_801F01B0(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F01B0");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801F01B0(_arg: *mut HSD_GObj) { core::hint::black_box(0x51062D42u32); /* fn identity */ melee_core::ct!("grMuteCity_801F01B0");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F01B4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4D0626F6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F01B4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -492,7 +510,9 @@ pub unsafe extern "C" fn grMuteCity_801F01B4(gobj: *mut HSD_GObj) {
     (*gp).u.mutecity2.xC4_flags.set_b0(0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F0288(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x192A00D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F0288");
     0
 }
@@ -503,7 +523,9 @@ pub unsafe fn grMuteCity_801F0290_get_target(gp: *mut Ground) -> f32 {
     (*gp).u.mutecity2.xCC
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F0290(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0B27AC30u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F0290");
     let gp = (*gobj).user_data as *mut Ground;
     let target = grMuteCity_801F0290_get_target(gp);
@@ -534,21 +556,28 @@ pub unsafe extern "C" fn grMuteCity_801F0290(gobj: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grMuteCity_801F040C(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F040C");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801F040C(_arg: *mut HSD_GObj) { core::hint::black_box(0x2F6C7C3Au32); /* fn identity */ melee_core::ct!("grMuteCity_801F040C");}
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj36_37_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x627A07A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj36_37_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F043C(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x3F65D9A5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F043C");
     0
 }
 
-pub unsafe extern "C" fn grMuteCity_801F0444(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F0444");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801F0444(_arg: *mut HSD_GObj) { core::hint::black_box(0xEA63153Fu32); /* fn identity */ melee_core::ct!("grMuteCity_801F0444");}
 
-pub unsafe extern "C" fn grMuteCity_801F0448(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F0448");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801F0448(_arg: *mut HSD_GObj) { core::hint::black_box(0xEE631B8Bu32); /* fn identity */ melee_core::ct!("grMuteCity_801F0448");}
 
 /// `s16 grMc_803E34A4[30]`
 pub static mut grMc_803E34A4: [i16; 30] = [
@@ -557,7 +586,9 @@ pub static mut grMc_803E34A4: [i16; 30] = [
     22, 23, 24, 25, 26, 27, 32, 33, 34, 35,
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F044C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x17635C16u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F044C");
     let gp = (*gobj).user_data as *mut Ground;
     ext::grFZeroCar_801CAFBC(gobj, (&raw mut grMc_803E34A4) as *mut c_void, 0x1C, 0);
@@ -565,14 +596,18 @@ pub unsafe extern "C" fn grMuteCity_801F044C(gobj: *mut HSD_GObj) {
     (*gp).u.mutecity.xC4 = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F04A8(_arg: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xF042CB06u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F04A8");
     0
 }
 
-pub unsafe extern "C" fn grMuteCity_801F04B0(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F04B0");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801F04B0(_arg: *mut HSD_GObj) { core::hint::black_box(0xF2408F95u32); /* fn identity */ melee_core::ct!("grMuteCity_801F04B0");}
 
-pub unsafe extern "C" fn grMuteCity_801F04B4(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F04B4");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801F04B4(_arg: *mut HSD_GObj) { core::hint::black_box(0xEE408949u32); /* fn identity */ melee_core::ct!("grMuteCity_801F04B4");}
 
 /// `grMc_CmdEntry`
 #[repr(C)]
@@ -1082,7 +1117,9 @@ pub unsafe fn grMc_DistanceSquared(a: *const Vec3, b: *const Vec3) -> f32 {
     dx * dx + dy * dy + dz * dz
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F1328() {
+    core::hint::black_box(0xE60D64E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F1328");
     let arr = grMc_8049F440();
 
@@ -1176,7 +1213,9 @@ car_age_fns! {
     grMuteCity_801F19DC = 28, grMuteCity_801F19F4 = 29,
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F1A0C(_gobj: *mut HSD_GObj, _gp: *mut Ground) {
+    core::hint::black_box(0xAA1D082Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F1A0C");
     ext::Ground_801C53EC(0x5CC60);
 }
@@ -1532,7 +1571,9 @@ pub unsafe extern "C" fn grMuteCity_801F2AB0(arg0: i32, jobj: *mut HSD_JObj) -> 
 }
 
 /// `mpLib_JointCollisionCallback`
+#[inline(never)]
 pub unsafe extern "C" fn fn_801F2B58(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, coll_x50: i32, ground_kind: u32, delta_y: f32) {
+    core::hint::black_box(0x728407D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801F2B58");
     let b1234 = (*coll).x34_flags.b1234() as i32;
 
@@ -1563,7 +1604,9 @@ pub unsafe extern "C" fn fn_801F2B58(user_data: *mut c_void, joint_id: i32, coll
     (*coll).x34_flags.set_b7(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F2BBC(arg0: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
+    core::hint::black_box(0xB0C19038u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F2BBC");
     if grMc_804D69D4 == 1 {
         if arg0 == 0x31 {
@@ -1579,7 +1622,9 @@ pub unsafe extern "C" fn grMuteCity_801F2BBC(arg0: i32) -> *mut melee_types::lbC
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F2C10(pos: *mut Vec3, arg: i32, jobj: *mut HSD_JObj) -> i32 {
+    core::hint::black_box(0xF7097981u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F2C10");
     let gobj = ext::Ground_GetMapGObj(0x1E);
     if !gobj.is_null() {

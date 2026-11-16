@@ -15,6 +15,9 @@ A profile flag only protects builds that use it, so the identity goes in the sou
     (checked here): no two entries have one body, so nothing can fold them;
   - where `chars::cb` wraps the same port as a TU's own `cb_X`, the cb name re-exports `cb_X` (one fn per C
     callback, so both stores compare equal); `chars::cb::CALLBACKS` is a static (one table).
+The oracle harnesses key the rest: a fn a test registers (`freg(m::f as usize)`, fnsym) that game code also takes
+as a value (a state table, a callback field) gets the same identity (REGISTERED_CRATES), so a state-table pointer
+names one C function on every build. Fns only ever called directly are left alone (no inline(never) on hot paths).
 Idempotent: run it after any generator that rewrites these files.
     python tools/rust-port/fn_identity.py [--check]
 """
@@ -37,8 +40,10 @@ RULES = [
     ("melee_modes", "src/tu/gm_1601.rs", r"fn_801652D8"),
     ("melee_modes", "src/tu/gmopening.rs", r"fn_801A9FCC"),
 ]
+# crates whose src fns the C-oracle harnesses register (tests/**: freg)
+REGISTERED_CRATES = ["melee_items", "melee_world", "melee_modes", "melee_runtime", "melee_fighter", "melee_chara"]
 FN = (r'(?P<pre>(?:#\[[^\]]*\]\s*\n\s*|///[^\n]*\n\s*)*)(?P<indent>[ \t]*)pub unsafe extern "C" fn (?P<name>(?:{pat}))\b'
-      r'\((?P<args>[^)]*)\)(?P<ret>[^{{;\n]*)\{{(?P<nl>\n?)')
+      r'\((?P<args>(?:[^()]|\([^()]*\))*)\)(?P<ret>[^{{;\n]*)\{{(?P<nl>\n?)')
 
 
 def fnv32(s):
@@ -123,24 +128,54 @@ def mark(text, pat, path_prefix, ids):
     return "".join(out), n
 
 
+def registered():
+    """{src file: names}: extern "C" fns a harness registers that game code also takes as a value."""
+    reg = set()
+    for crate in REGISTERED_CRATES:
+        for f in (RUST / crate / "tests").rglob("*.rs"):
+            reg.update(m.split("::")[-1] for m in re.findall(r"\bfreg\(\s*([A-Za-z_][A-Za-z_0-9:]*)", f.read_text(encoding="utf-8", errors="replace")))
+    srcs = {f: f.read_text(encoding="utf-8") for crate in REGISTERED_CRATES for f in sorted((RUST / crate / "src").rglob("*.rs"))}
+    uses, mentions = {}, {}
+    for s in srcs.values():
+        for n in re.findall(r"\b(\w+)\b(?!\s*[(!:])", s):
+            if n in reg:
+                uses[n] = uses.get(n, 0) + 1
+        for n in re.findall(r"\bfn (\w+)\b", s):
+            if n in reg:
+                mentions[n] = mentions.get(n, 0) + 1
+    taken = {n for n in uses if uses[n] > mentions.get(n, 0)}
+    out = {}
+    for f, s in srcs.items():
+        names = {n for n in re.findall(r'pub unsafe extern "C" fn (\w+)\(', s) if n in taken}
+        if names:
+            out[f] = names
+    return out
+
+
 def main():
     check = "--check" in sys.argv
     ids, changed, total, deduped = {}, [], 0, 0
+    pats = {}
     for crate, glob, pat in RULES:
+        for f in sorted((RUST / crate).glob(glob)):
+            pats.setdefault(f, []).append(pat)
+    for f, names in registered().items():
+        pats.setdefault(f, []).append("|".join(sorted(names)))
+    for f in sorted(pats):
+        crate = f.relative_to(RUST).parts[0]
         base = RUST / crate
-        for f in sorted(base.glob(glob)):
-            old = f.read_text(encoding="utf-8")
-            new = old
-            if f.name == "cb.rs" and f.parent.name == "chars":
-                new, d = dedupe_cb(f, base / "src/tu")
-                deduped += d
-            mod = ".".join(f.relative_to(base / "src").with_suffix("").parts)
-            new, n = mark(new, pat, f"{crate}::{mod}", ids)
-            total += n
-            if new != old:
-                changed.append(f)
-                if not check:
-                    f.write_text(new, encoding="utf-8", newline="\n")
+        old = f.read_text(encoding="utf-8")
+        new = old
+        if f.name == "cb.rs" and f.parent.name == "chars":
+            new, d = dedupe_cb(f, base / "src/tu")
+            deduped += d
+        mod = ".".join(f.relative_to(base / "src").with_suffix("").parts)
+        new, n = mark(new, "|".join(pats[f]), f"{crate}::{mod}", ids)
+        total += n
+        if new != old:
+            changed.append(f)
+            if not check:
+                f.write_text(new, encoding="utf-8", newline="\n")
     print(f"fn_identity: {total} entry fns, {deduped} chars::cb wrappers re-exported, {len(changed)} files "
           f"{'would change' if check else 'changed'}")
     if check and changed:

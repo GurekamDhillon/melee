@@ -389,7 +389,9 @@ pub unsafe fn ifStatus_UpdateDamageDisplay(
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F4EDC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA4A3939Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F4EDC");
     let hud = ifStatus_GetHUDInfo();
     let jobj: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -524,7 +526,9 @@ pub unsafe fn find_player_by_entity(gobj: *mut HSD_GObj) -> *mut IfDamageState {
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F5B48(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x13BCD53Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F5B48");
     let p = find_player_by_entity(gobj);
     let mut t = (*p).unk9;
@@ -603,7 +607,9 @@ pub unsafe fn getPlayerByHUDParent(parent: *mut HSD_GObj) -> *mut IfDamageState 
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F5DE0(player: *mut HSD_GObj, arg1: isize) {
+    core::hint::black_box(0xA023F118u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F5DE0");
     // TARGET_PC: the script's HUD switch and the Atlas retail mask
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
@@ -624,7 +630,9 @@ pub unsafe fn getPlayerByNext(gobj: *mut HSD_GObj) -> *mut IfDamageState {
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F5E50(gobj: *mut HSD_GObj, arg1: isize) {
+    core::hint::black_box(0xBCDF1237u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F5E50");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
         return;
@@ -782,7 +790,9 @@ pub unsafe extern "C" fn ifStatus_802F61FC(state: *mut IfDamageState, player_idx
     (*state).next
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6508(arg0: i32) {
+    core::hint::black_box(0x023680E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6508");
     if ext::Player_GetPlayerSlotType(arg0) != Gm_PKind_NA && (ifStatus_804D6D60 as i32) > arg0 {
         let rules = ext::gm_GetStartMeleeRules();

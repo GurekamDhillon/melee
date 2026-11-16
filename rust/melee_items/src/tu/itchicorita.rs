@@ -93,7 +93,8 @@ pub unsafe extern "C" fn it_802C9588(item_gobj: *mut Item_GObj) {
 }
 
 /// 2C9618
-pub unsafe extern "C" fn it_802C9618(_item_gobj: *mut HSD_GObj) { melee_core::ct!("it_802C9618");}
+#[inline(never)]
+pub unsafe extern "C" fn it_802C9618(_item_gobj: *mut HSD_GObj) { core::hint::black_box(0x3821FF7Bu32); /* fn identity */ melee_core::ct!("it_802C9618");}
 
 pub unsafe extern "C" fn itChicorita_Logic1_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
     melee_core::ct!("itChicorita_Logic1_EvtUnk");
@@ -101,7 +102,9 @@ pub unsafe extern "C" fn itChicorita_Logic1_EvtUnk(item_gobj: *mut Item_GObj, re
 }
 
 /// 2C963C
+#[inline(never)]
 pub unsafe extern "C" fn it_802C963C(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF11D1288u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C963C");
     ext::it_80273454(item_gobj);
     it_802C9670(item_gobj);
@@ -120,7 +123,9 @@ pub unsafe extern "C" fn it_802C9670(item_gobj: *mut Item_GObj) {
     (*item).on_accessory = Some(it_802C989C);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion0_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x2A6E1BE0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion0_Anim");
     let mut item_jobj = GET_JOBJ(item_gobj);
     let mut item = GET_ITEM(item_gobj);
@@ -174,12 +179,16 @@ unsafe fn itChicorita_Phys(item_gobj: *mut HSD_GObj) {
     (*item).xDD4_itemVar.chicorita.x64 = 0.0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion0_Phys(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7DAE8875u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion0_Phys");
     itChicorita_Phys(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x1BEBA277u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion0_Coll");
     if (*((*item_gobj).user_data as *mut Item)).ground_or_air == GA_Air {
         ext::it_8026E15C(item_gobj, Some(it_802C9618));
@@ -190,7 +199,9 @@ pub unsafe extern "C" fn itChicorita_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -
 }
 
 /// 2C989C: the accessory callback; throws a leaf when the event script raised the flag.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C989C(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFC980C88u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C989C");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xDBC.xDBC_itcmd_var4.flags.x0() != 0 {
@@ -205,7 +216,9 @@ pub unsafe extern "C" fn it_802C98E4(item_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x2064D1C1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion1_Anim");
     let mut item_jobj = GET_JOBJ(item_gobj);
     let item = GET_ITEM(item_gobj);
@@ -221,12 +234,16 @@ pub unsafe extern "C" fn itChicorita_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion1_Phys(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2E0E990Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion1_Phys");
     itChicorita_Phys(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion1_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x988D6626u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion1_Coll");
     if (*((*item_gobj).user_data as *mut Item)).ground_or_air == GA_Air {
         ext::it_8026E15C(item_gobj, Some(it_802C9618));
@@ -243,18 +260,24 @@ pub unsafe extern "C" fn it_802C9A74(item_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion2_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x0A91EFEAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion2_Anim");
     ext::it_80279FF8(item_gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion2_Phys(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB5107377u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion2_Phys");
     ext::it_8027A09C(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicorita_UnkMotion2_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x592FFBDDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicorita_UnkMotion2_Coll");
     ext::it_8027A118(item_gobj, Some(it_802C963C)) != 0
 }
@@ -316,7 +339,9 @@ pub unsafe extern "C" fn it_802C9CC0(item_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x445E6410u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicoritaleaf_UnkMotion0_Anim");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xD44_lifeTimer <= 0.0 {
@@ -326,9 +351,12 @@ pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Anim(item_gobj: *mut HSD_GOb
     false
 }
 
-pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Phys(_item_gobj: *mut HSD_GObj) { melee_core::ct!("itChicoritaleaf_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Phys(_item_gobj: *mut HSD_GObj) { core::hint::black_box(0xDBF95305u32); /* fn identity */ melee_core::ct!("itChicoritaleaf_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x54FF9D67u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itChicoritaleaf_UnkMotion0_Coll");
     ext::it_8026DFB0(item_gobj) != 0
 }

@@ -299,7 +299,9 @@ pub unsafe fn grInishie2_801FCCDC(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 /// `static void stageGObj0_OnInit(Ground_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF8DC6305u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }

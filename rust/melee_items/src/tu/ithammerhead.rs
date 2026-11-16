@@ -131,7 +131,9 @@ pub unsafe extern "C" fn it_80299C48(parent_gobj: *mut HSD_GObj, pos: *mut Vec3,
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_Spawned(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA2B91D9Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_Spawned");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itHammerheadAttributes;
@@ -156,19 +158,24 @@ pub unsafe extern "C" fn itHammerHead_Logic40_PickedUp(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerhead_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x0164D57Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerhead_UnkMotion1_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHammerhead_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHammerhead_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itHammerhead_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xE8E3431Eu32); /* fn identity */ melee_core::ct!("itHammerhead_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itHammerHead_Logic40_Dropped(gobj: *mut HSD_GObj) {
     melee_core::ct!("itHammerHead_Logic40_Dropped");
     itHammerHead_Logic40_Thrown(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_Thrown(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2660894Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_Thrown");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air != GA_Air as _ {
@@ -178,7 +185,9 @@ pub unsafe extern "C" fn itHammerHead_Logic40_Thrown(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 2, (ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE) as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerhead_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xA8F9E138u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerhead_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
@@ -191,7 +200,9 @@ pub unsafe extern "C" fn itHammerhead_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i3
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerhead_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF33BD0DDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerhead_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
@@ -199,19 +210,25 @@ pub unsafe extern "C" fn itHammerhead_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
     ext::it_80274658(gobj, (*ext::it_804D6D28).x68_float);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerhead_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x3E9EBA8Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerhead_UnkMotion2_Coll");
     ext::it_8026E15C(gobj, Some(it_80299F94));
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80299F94(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x929F3FEFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80299F94");
     it_80299FB4(gobj);
 }
 
 /// `static inline Item* it_80299FB4_get(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn it_80299FB4_get(gobj: *mut HSD_GObj) -> *mut Item {
+    core::hint::black_box(0x0F1D211Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80299FB4_get");
     GET_ITEM(gobj)
 }
@@ -225,7 +242,9 @@ pub unsafe extern "C" fn it_80299FB4(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 3, 1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerhead_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xD0A96479u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerhead_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
@@ -238,41 +257,56 @@ pub unsafe extern "C" fn itHammerhead_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i3
     0
 }
 
-pub unsafe extern "C" fn itHammerhead_UnkMotion3_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHammerhead_UnkMotion3_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itHammerhead_UnkMotion3_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xA7CC7874u32); /* fn identity */ melee_core::ct!("itHammerhead_UnkMotion3_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerhead_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x1F4496BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerhead_UnkMotion3_Coll");
     ext::it_8026D62C(gobj, Some(itHammerHead_Logic40_Thrown));
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_DmgDealt(_arg0: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xC925E19Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_DmgDealt");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_Clanked(_arg0: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xC4DED23Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_Clanked");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_HitShield(_arg0: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xDF46EA89u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_HitShield");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x6B92B41Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_Reflected");
     ext::it_80273030(gobj);
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_DmgReceived(_arg0: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xDCFFE43Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_DmgReceived");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7A9EB814u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

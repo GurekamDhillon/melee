@@ -105,7 +105,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x8EA5AF61u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::shared::gm_80473A18;
@@ -193,10 +194,13 @@ unsafe fn GET_GROUND(gobj: *mut HSD_GObj) -> *mut Ground {
 }
 
 /// 21EF38
-pub unsafe extern "C" fn grHeal_8021EF38(_arg0: i32) { melee_core::ct!("grHeal_8021EF38");}
+#[inline(never)]
+pub unsafe extern "C" fn grHeal_8021EF38(_arg0: i32) { core::hint::black_box(0x41AAF36Du32); /* fn identity */ melee_core::ct!("grHeal_8021EF38");}
 
 /// 21EF3C
+#[inline(never)]
 pub unsafe extern "C" fn grHeal_8021EF3C() {
+    core::hint::black_box(0xC6AA31CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHeal_8021EF3C");
     grHeal_804D6AF0[0] = ext::Ground_GetYakumonoParam() as *mut grHeal_UnkData;
     ext::stage_info.unk8C.set_b4(0);
@@ -211,10 +215,13 @@ pub unsafe extern "C" fn grHeal_8021EF3C() {
 }
 
 /// 21EFBC
-pub unsafe extern "C" fn grHeal_8021EFBC() { melee_core::ct!("grHeal_8021EFBC");}
+#[inline(never)]
+pub unsafe extern "C" fn grHeal_8021EFBC() { core::hint::black_box(0x059232E5u32); /* fn identity */ melee_core::ct!("grHeal_8021EFBC");}
 
 /// 21EFC0
+#[inline(never)]
 pub unsafe extern "C" fn grHeal_8021EFC0() {
+    core::hint::black_box(0x3894C1C5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHeal_8021EFC0");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
@@ -247,7 +254,9 @@ pub unsafe extern "C" fn grHeal_8021EFEC(gobj_id: u32) -> *mut Ground_GObj {
 }
 
 /// 21F0D8
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xC0F6A3C2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     let gp = GET_GROUND(gobj);
 
@@ -263,13 +272,17 @@ pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
 }
 
 /// 21F178
-pub unsafe extern "C" fn stageGObj0_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj0_GObjProc");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj0_GObjProc(_gobj: *mut Ground_GObj) { core::hint::black_box(0x175B762Bu32); /* fn identity */ melee_core::ct!("stageGObj0_GObjProc");}
 
 /// 21F17C
-pub unsafe extern "C" fn stageGObj0_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj0_Callback3");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj0_Callback3(_gobj: *mut Ground_GObj) { core::hint::black_box(0x624C13DFu32); /* fn identity */ melee_core::ct!("stageGObj0_Callback3");}
 
 /// 21F180
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x48E66683u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_OnInit");
     let mut coin_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut next_players = [0u8; 4];
@@ -324,7 +337,9 @@ pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
 }
 
 /// 21F424
+#[inline(never)]
 pub unsafe extern "C" fn fn_8021F424() -> i32 {
+    core::hint::black_box(0x1C81436Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8021F424");
     let ground = ext::Ground_GetMapGObj(1);
     if !ground.is_null() {
@@ -338,7 +353,9 @@ pub unsafe extern "C" fn fn_8021F424() -> i32 {
 
 /// 21F474
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_GObjProc(ground: *mut Ground_GObj) {
+    core::hint::black_box(0x0072CBCAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_GObjProc");
     let gp = (*ground).user_data as *mut Ground;
     ext::Ground_801C3D44(fn_8021F424 as *mut c_void, 10.0, 20.0);
@@ -347,11 +364,14 @@ pub unsafe extern "C" fn stageGObj1_GObjProc(ground: *mut Ground_GObj) {
 }
 
 /// 21F4BC
-pub unsafe extern "C" fn stageGObj1_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj1_Callback3");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj1_Callback3(_gobj: *mut Ground_GObj) { core::hint::black_box(0xE2CF46BCu32); /* fn identity */ melee_core::ct!("stageGObj1_Callback3");}
 
 /// 21F4C0 (`onJointCollision`, an `mpLib_JointCollisionCallback`)
+#[inline(never)]
 pub unsafe extern "C" fn onJointCollision(user_data: *mut c_void, _joint_id: i32, coll: *mut CollData,
                                           _coll_x50: i32, ground_kind: u32, _delta_y: f32) {
+    core::hint::black_box(0x27B5DFB5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onJointCollision");
     let gp = user_data as *mut Ground;
     if (*coll).x34_flags.b1234() as i32 == 1 && ground_kind.wrapping_sub(1) <= 1 {
@@ -374,17 +394,22 @@ pub unsafe extern "C" fn grHeal_8021F4E8(arg0: i32, parent_jobj: *mut HSD_JObj) 
 }
 
 /// 21F5C8
-pub unsafe extern "C" fn stageGObj2_OnInit(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_OnInit");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj2_OnInit(_gobj: *mut Ground_GObj) { core::hint::black_box(0xBCB62704u32); /* fn identity */ melee_core::ct!("stageGObj2_OnInit");}
 
 /// 21F5D4
 #[cfg_attr(fptrace, melee_fptrace::trace)]
-pub unsafe extern "C" fn stageGObj2_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_GObjProc");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj2_GObjProc(_gobj: *mut Ground_GObj) { core::hint::black_box(0x06391BB5u32); /* fn identity */ melee_core::ct!("stageGObj2_GObjProc");}
 
 /// 21F5D8
-pub unsafe extern "C" fn stageGObj2_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_Callback3");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj2_Callback3(_gobj: *mut Ground_GObj) { core::hint::black_box(0x36AF389Du32); /* fn identity */ melee_core::ct!("stageGObj2_Callback3");}
 
 /// 21F5DC
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj3_OnInit(ground: *mut Ground_GObj) {
+    core::hint::black_box(0x7C16650Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj3_OnInit");
     let gp = (*ground).user_data as *mut Ground;
     (*gp).x10_flags.set_b2(0);
@@ -392,10 +417,12 @@ pub unsafe extern "C" fn stageGObj3_OnInit(ground: *mut Ground_GObj) {
 }
 
 /// 21F620
-pub unsafe extern "C" fn stageGObj3_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj3_GObjProc");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj3_GObjProc(_gobj: *mut Ground_GObj) { core::hint::black_box(0x08FF592Cu32); /* fn identity */ melee_core::ct!("stageGObj3_GObjProc");}
 
 /// 21F624
-pub unsafe extern "C" fn stageGObj3_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj3_Callback3");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj3_Callback3(_gobj: *mut Ground_GObj) { core::hint::black_box(0x91F7F74Au32); /* fn identity */ melee_core::ct!("stageGObj3_Callback3");}
 
 /// 21F628
 pub unsafe extern "C" fn grHeal_8021F628(arg0: i32, jobj_parent: *mut HSD_JObj) {
@@ -411,13 +438,16 @@ pub unsafe extern "C" fn grHeal_8021F628(arg0: i32, jobj_parent: *mut HSD_JObj) 
 }
 
 /// 21F6F8
-pub unsafe extern "C" fn stageGObj4_OnInit(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj4_OnInit");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj4_OnInit(_gobj: *mut Ground_GObj) { core::hint::black_box(0xC6380A2Eu32); /* fn identity */ melee_core::ct!("stageGObj4_OnInit");}
 
 /// 21F704
-pub unsafe extern "C" fn stageGObj4_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj4_GObjProc");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj4_GObjProc(_gobj: *mut Ground_GObj) { core::hint::black_box(0x8E2B850Fu32); /* fn identity */ melee_core::ct!("stageGObj4_GObjProc");}
 
 /// 21F708
-pub unsafe extern "C" fn stageGObj4_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj4_Callback3");}
+#[inline(never)]
+pub unsafe extern "C" fn stageGObj4_Callback3(_gobj: *mut Ground_GObj) { core::hint::black_box(0xB0C179D3u32); /* fn identity */ melee_core::ct!("stageGObj4_Callback3");}
 
 /// 21F70C
 pub unsafe extern "C" fn grHeal_8021F70C(mut character_id: enum_t) -> i32 {

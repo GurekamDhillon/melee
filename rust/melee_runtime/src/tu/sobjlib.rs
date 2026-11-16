@@ -255,10 +255,12 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     HSD_SObjLib_803A44D4(gobj, sobj, priority);
     return sobj;
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A49E0(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    core::hint::black_box(0x6BCA2774u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A49E0");
     let mut sobj: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     let _: [::core::ffi::c_uchar; 8] = [0; 8];
@@ -791,10 +793,12 @@ pub static mut lbl_8040C448: HSD_Chan = HSD_Chan {
     attn_fn: GX_AF_NONE,
     aobj: ::core::ptr::null::<HSD_AObj>() as *mut HSD_AObj,
 };
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A54EC(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    core::hint::black_box(0x3C683073u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A54EC");
     let mut viewmtx: Mtx = [[0.; 4]; 3];
     if HSD_CObjSetCurrent(HSD_GObjGetHSDObj(gobj) as *mut HSD_CObj) != 0 {

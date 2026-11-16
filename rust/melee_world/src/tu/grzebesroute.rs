@@ -86,7 +86,9 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_801C5940: Option<unsafe extern "C" fn() -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C5940() -> i32 {
+                core::hint::black_box(0x62362D9Au32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C5940 {
                     Some(f) => f(),
                     None => { return unsafe { crate::tu::ground::Ground_801C5940() as _ }; },
@@ -214,7 +216,9 @@ pub mod ext {
     pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u8, u32)> = None;
     pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
     pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: isize)  {
+                core::hint::black_box(0x45180F89u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_grDisplay_801C5DB0 {
                     Some(f) => f(a0, a1 as isize),
                     None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
@@ -383,7 +387,9 @@ pub unsafe extern "C" fn grZebesRoute_8020B260(gobj_id: i32) -> *mut Ground_GObj
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x0819774Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
@@ -397,7 +403,9 @@ pub unsafe extern "C" fn grZebesRoute_8020B37C(_arg: *mut Ground_GObj) { melee_c
 
 pub unsafe extern "C" fn grZebesRoute_8020B380(_arg: *mut Ground_GObj) { melee_core::ct!("grZebesRoute_8020B380");}
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x663709ACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_OnInit");
     Ground_StartMapAnim(gobj);
 }

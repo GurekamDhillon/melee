@@ -120,14 +120,18 @@ pub unsafe extern "C" fn it_802C027C(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x5273F57Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigifireball_UnkMotion0_Anim");
     let item = GET_ITEM(gobj);
     (*item).xD44_lifeTimer -= 1.0;
     (*item).xD44_lifeTimer <= 0.0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5BB1F5CBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigifireball_UnkMotion0_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
@@ -140,7 +144,9 @@ pub unsafe extern "C" fn calc_dist_2d_accurate(v: *mut Vec3) -> f64 {
     sqrtf_accurate((*v).x * (*v).x + (*v).y * (*v).y) as f64
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x03891159u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigifireball_UnkMotion0_Coll");
     ext::it_8026D9A0(gobj);
     if ext::it_8027781C(gobj) != 0 {
@@ -159,27 +165,37 @@ pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigiFireball_Logic89_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7968FED4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigiFireball_Logic89_DmgDealt");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigiFireball_Logic89_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFBE90C82u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigiFireball_Logic89_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigiFireball_Logic89_Clanked(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xF58E41B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigiFireball_Logic89_Clanked");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigiFireball_Logic89_HitShield(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x33B1A88Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigiFireball_Logic89_HitShield");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigiFireball_Logic89_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7D60CFBEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigiFireball_Logic89_Absorbed");
     true
 }
@@ -189,7 +205,9 @@ pub unsafe extern "C" fn itLuigiFireball_Logic89_ShieldBounced(gobj: *mut Item_G
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLuigiFireball_Logic89_EvtUnk(gobj: *mut Item_GObj, referenced_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9CE9D45Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLuigiFireball_Logic89_EvtUnk");
     ext::it_8026B894(gobj, referenced_gobj);
 }

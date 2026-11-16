@@ -209,7 +209,9 @@ pub unsafe extern "C" fn itGameWatchPanic_Logic78_PickedUp(gobj: *mut HSD_GObj) 
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchpanic_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xC4A36563u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchpanic_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let cond = if !(*ip).owner.is_null() { ext::ftGw_SpecialLw_ItemCheckPanicRemove((*ip).owner) } else { 1 };
@@ -223,7 +225,9 @@ pub unsafe extern "C" fn itGamewatchpanic_UnkMotion1_Anim(gobj: *mut HSD_GObj) -
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchPanic_Logic78_EvtUnk(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    core::hint::black_box(0x7A783131u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchPanic_Logic78_EvtUnk");
     ext::it_8026B894(arg0, arg1);
 }

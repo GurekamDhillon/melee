@@ -285,7 +285,9 @@ unsafe fn isSamusmissile_MotionAnim(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEB9FD636u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusmissile_UnkMotion0_Anim");
     isSamusmissile_MotionAnim(gobj);
     false
@@ -314,7 +316,9 @@ unsafe fn itSamusmissile_SetRotationX(gobj: *mut Item_GObj) {
     HSD_JObjSetRotationX(child, (*ip).xDD4_itemVar.samusmissile.x8);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDE79F1D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusmissile_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let sa0 = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
@@ -335,7 +339,9 @@ pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x33C68EF1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusmissile_UnkMotion0_Coll");
     ext::it_8026E71C(gobj, Some(it_802B701C));
     false
@@ -361,13 +367,17 @@ pub unsafe extern "C" fn it_802B6A60(gobj: *mut Item_GObj) {
     ext::efSync_Spawn(1156, gobj, itGetJObjGrandchild(gobj));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB005551Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusmissile_UnkMotion1_Anim");
     isSamusmissile_MotionAnim(gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2D25E3A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusmissile_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
@@ -388,7 +398,9 @@ pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xDE8800E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusmissile_UnkMotion1_Coll");
     ext::it_8026E71C(gobj, Some(it_802B70A0));
     false
@@ -481,7 +493,9 @@ pub unsafe extern "C" fn it_2725_Logic52_Reflected(gobj: *mut Item_GObj) -> bool
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B701C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x88498048u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B701C");
     ext::it_8026BB44(gobj);
     ext::it_8026BD24(gobj);
@@ -492,12 +506,16 @@ pub unsafe extern "C" fn it_802B701C(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusmissile_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xA3EE2CADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusmissile_UnkMotion3_Anim");
     ext::it_802751D8(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B70A0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDC107621u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B70A0");
     ext::it_8026BB44(gobj);
     ext::it_8026BD24(gobj);
@@ -508,7 +526,9 @@ pub unsafe extern "C" fn it_802B70A0(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic52_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0x9889FF33u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic52_EvtUnk");
     let ip = GET_ITEM(gobj);
     ext::it_8026B894(gobj, arg1);

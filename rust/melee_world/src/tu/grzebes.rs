@@ -160,7 +160,9 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_UpdateMapColl: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_UpdateMapColl(a0: *mut melee_types::HSD_GObj) -> i32 {
+                core::hint::black_box(0x9272FBBCu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_UpdateMapColl {
                     Some(f) => f(a0),
                     None => { return unsafe { crate::tu::ground::Ground_UpdateMapColl(a0 as _) as _ }; },
@@ -366,7 +368,9 @@ pub mod ext {
     pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u8, u32)> = None;
     pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
     pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: isize)  {
+                core::hint::black_box(0x6E8BF60Au32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_grDisplay_801C5DB0 {
                     Some(f) => f(a0, a1 as isize),
                     None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
@@ -1295,7 +1299,9 @@ pub unsafe extern "C" fn grZebes_801D925C(gobj: *mut HSD_GObj) {
 
 pub unsafe extern "C" fn grZebes_801D93D8(_arg: *mut Ground_GObj) { melee_core::ct!("grZebes_801D93D8");}
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj5_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xA0849E3Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj5_OnInit");
     Ground_StartMapAnim(gobj);
 }

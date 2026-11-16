@@ -257,7 +257,9 @@ pub fn Ground_UpdateMapColl(a0: *mut Ground_GObj) -> i32 {
 pub static mut HOOK_HSD_AObjSetFlags: Option<fn(*mut HSD_AObj, u32)> = None;
 
 /// C `HSD_AObjSetFlags` (sysdolphin/baselib/aobj.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) {
+    core::hint::black_box(0xE63F5850u32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_HSD_AObjSetFlags { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetFlags(a0 as _, a1 as _); } return; } }
 }
 
@@ -642,7 +644,9 @@ pub fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct {
 pub static mut HOOK_grDisplay_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
 
 /// C `grDisplay_801C5DB0` (melee/gr/grdisplay.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) {
+    core::hint::black_box(0x39072AEEu32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_grDisplay_801C5DB0 { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; } }
 }
 

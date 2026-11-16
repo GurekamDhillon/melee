@@ -211,7 +211,9 @@ pub unsafe extern "C" fn it_802C6E50(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchparachute_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x09A42AE3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchparachute_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
 
@@ -238,7 +240,9 @@ pub unsafe extern "C" fn itGamewatchparachute_UnkMotion1_Anim(gobj: *mut HSD_GOb
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchParachute_Logic74_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD0559E6Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchParachute_Logic74_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

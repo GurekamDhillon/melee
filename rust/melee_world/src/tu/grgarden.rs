@@ -77,7 +77,8 @@ pub mod ext {
     pub mod cb {
         use super::*;
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x1AC4285Au32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::ground::stage_info;
@@ -180,10 +181,13 @@ unsafe fn Ground_StartMapAnim(gobj: *mut Ground_GObj) {
 }
 
 /// 202B6C
-pub unsafe extern "C" fn grGarden_80202B6C(_arg: i32) { melee_core::ct!("grGarden_80202B6C");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202B6C(_arg: i32) { core::hint::black_box(0x665C3FDDu32); /* fn identity */ melee_core::ct!("grGarden_80202B6C");}
 
 /// 202B70
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202B70() {
+    core::hint::black_box(0x595E69FDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202B70");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grGarden_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
@@ -203,13 +207,17 @@ pub unsafe extern "C" fn grGarden_80202B70() {
 }
 
 /// 202C24
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202C24() {
+    core::hint::black_box(0xAF3083F3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202C24");
     ext::Ground_801C53EC(0x64193);
 }
 
 /// 202C4C
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202C4C() {
+    core::hint::black_box(0xFC21F2A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202C4C");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
@@ -231,25 +239,33 @@ pub unsafe extern "C" fn grGarden_80202C78(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 /// `static stageGObj0_OnInit`
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x232A0263u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 202D94
-pub unsafe extern "C" fn grGarden_80202D94(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202D94");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202D94(_arg: *mut Ground_GObj) { core::hint::black_box(0xC8F29D9Du32); /* fn identity */ melee_core::ct!("grGarden_80202D94");}
 
 /// 202D98
-pub unsafe extern "C" fn grGarden_80202D98(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202D98");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202D98(_arg: *mut Ground_GObj) { core::hint::black_box(0xBCF28AB9u32); /* fn identity */ melee_core::ct!("grGarden_80202D98");}
 
 /// 202D9C
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202D9C(arg: *mut Ground_GObj) {
+    core::hint::black_box(0x31F342E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202D9C");
     ext::ftCo_800C06E8(arg, 4, grGarden_8020349C as *mut c_void);
 }
 
 /// 202DC8
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202DC8(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x390B52D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202DC8");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -261,16 +277,21 @@ pub unsafe extern "C" fn grGarden_80202DC8(gobj: *mut Ground_GObj) {
 }
 
 /// 202E48
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202E48(_arg: *mut Ground_GObj) {
+    core::hint::black_box(0xAD7DD867u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202E48");
     ext::lb_800115F4();
 }
 
 /// 202E68
-pub unsafe extern "C" fn grGarden_80202E68(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202E68");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202E68(_arg: *mut Ground_GObj) { core::hint::black_box(0x31789805u32); /* fn identity */ melee_core::ct!("grGarden_80202E68");}
 
 /// 202E6C
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202E6C(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xA6795034u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202E6C");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -287,13 +308,17 @@ pub unsafe extern "C" fn grGarden_80202E6C(gobj: *mut Ground_GObj) {
 }
 
 /// 202F3C
-pub unsafe extern "C" fn grGarden_80202F3C(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202F3C");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202F3C(_arg: *mut Ground_GObj) { core::hint::black_box(0xB3094724u32); /* fn identity */ melee_core::ct!("grGarden_80202F3C");}
 
 /// 202F40
-pub unsafe extern "C" fn grGarden_80202F40(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202F40");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202F40(_arg: *mut Ground_GObj) { core::hint::black_box(0x14019112u32); /* fn identity */ melee_core::ct!("grGarden_80202F40");}
 
 /// 202F44
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202F44(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x10018AC6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202F44");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -303,13 +328,17 @@ pub unsafe extern "C" fn grGarden_80202F44(gobj: *mut Ground_GObj) {
 }
 
 /// 202F9C
-pub unsafe extern "C" fn grGarden_80202F9C(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202F9C");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202F9C(_arg: *mut Ground_GObj) { core::hint::black_box(0xB3214C0Au32); /* fn identity */ melee_core::ct!("grGarden_80202F9C");}
 
 /// 202FA0
-pub unsafe extern "C" fn grGarden_80202FA0(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202FA0");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202FA0(_arg: *mut Ground_GObj) { core::hint::black_box(0x92D4038Fu32); /* fn identity */ melee_core::ct!("grGarden_80202FA0");}
 
 /// 202FA4
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202FA4(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x8ED3FD43u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202FA4");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -319,13 +348,17 @@ pub unsafe extern "C" fn grGarden_80202FA4(gobj: *mut Ground_GObj) {
 }
 
 /// 202FFC
-pub unsafe extern "C" fn grGarden_80202FFC(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202FFC");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80202FFC(_arg: *mut Ground_GObj) { core::hint::black_box(0xDBC32D59u32); /* fn identity */ melee_core::ct!("grGarden_80202FFC");}
 
 /// 203000
-pub unsafe extern "C" fn grGarden_80203000(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80203000");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80203000(_arg: *mut Ground_GObj) { core::hint::black_box(0x421D5A2Du32); /* fn identity */ melee_core::ct!("grGarden_80203000");}
 
 /// 203004
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80203004(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x3E1D53E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80203004");
     let gp = GET_GROUND(gobj);
     (*gp).u.garden.xc4 = 0;
@@ -339,7 +372,9 @@ pub unsafe extern "C" fn grGarden_80203004(gobj: *mut Ground_GObj) {
 }
 
 /// 203098
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80203098(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x342E8D44u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80203098");
     let gp = GET_GROUND(gobj);
     if ext::grAnime_801C83D0(gobj, 0, 7) != 0 || ext::grAnime_801C84A4(gobj, 0, 7) != 0 {
@@ -363,10 +398,13 @@ pub unsafe extern "C" fn grGarden_80203098(gobj: *mut Ground_GObj) {
 }
 
 /// 2031A0
-pub unsafe extern "C" fn grGarden_802031A0(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_802031A0");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_802031A0(_arg: *mut Ground_GObj) { core::hint::black_box(0xC9FEFD5Bu32); /* fn identity */ melee_core::ct!("grGarden_802031A0");}
 
 /// 2031A4
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_802031A4(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xCDFF03A7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_802031A4");
     let gp = GET_GROUND(gobj);
     let j = ext::Ground_801C3FA4(gobj, 8);
@@ -380,7 +418,9 @@ pub unsafe extern "C" fn grGarden_802031A4(gobj: *mut Ground_GObj) {
 }
 
 /// 203250
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80203250(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xE5F3AB4Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80203250");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = ext::Ground_801C3FA4(gobj, 0);
@@ -424,13 +464,17 @@ pub unsafe extern "C" fn grGarden_80203250(gobj: *mut Ground_GObj) {
 }
 
 /// 203494
-pub unsafe extern "C" fn grGarden_80203494(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80203494");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80203494(_arg: *mut Ground_GObj) { core::hint::black_box(0x74BB2DFCu32); /* fn identity */ melee_core::ct!("grGarden_80203494");}
 
 /// 203498
-pub unsafe extern "C" fn grGarden_80203498(_item_gobj: *mut Item_GObj, _gp: *mut Ground) { melee_core::ct!("grGarden_80203498");}
+#[inline(never)]
+pub unsafe extern "C" fn grGarden_80203498(_item_gobj: *mut Item_GObj, _gp: *mut Ground) { core::hint::black_box(0x78BB3448u32); /* fn identity */ melee_core::ct!("grGarden_80203498");}
 
 /// 20349C
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_8020349C(_unk: u32, player: *mut HSD_GObj, water: *mut Vec3) -> i32 {
+    core::hint::black_box(0xC3BBAA59u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_8020349C");
     let mut current = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut previous = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -468,7 +512,9 @@ pub unsafe extern "C" fn grGarden_80203560(param1: f32, vec: *mut Vec3) {
 }
 
 /// 2035D0
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_802035D0(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    core::hint::black_box(0x0F1A97A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_802035D0");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut vec);

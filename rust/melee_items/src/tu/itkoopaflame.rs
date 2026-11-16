@@ -332,7 +332,9 @@ pub unsafe extern "C" fn itKoopaFlame_Setup(gobj_i: *mut Item_GObj, gobj_f: *mut
     ext::db_80225DD8(gobj_i, gobj_f);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xBDBB9A4Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_UnkMotion0_Anim");
     let it = get_item(gobj);
     let attrs = (*(*it).xC4_article_data).x4_specialAttributes as *mut itKoopaFlame_Attributes;
@@ -367,7 +369,9 @@ pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i
     ext::it_80273130(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8186D2D7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_UnkMotion0_Phys");
     let it = get_item(gobj);
     (*it).xDD4_itemVar.koopaflame.x0_pos = (*it).pos;
@@ -382,7 +386,9 @@ pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     ext::lbVector_Normalize(&mut (*it).xDD4_itemVar.koopaflame.x18_vel);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x0C59A63Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_UnkMotion0_Coll");
     let it = get_item(gobj);
     Item_ClampAngle(&mut (*it).xDD4_itemVar.koopaflame.x24_angle);
@@ -412,7 +418,9 @@ pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Logic111_DmgDealt(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xFFE7D062u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Logic111_DmgDealt");
     0
 }
@@ -428,7 +436,9 @@ pub unsafe extern "C" fn itKoopaFlame_Logic111_Reflected(gobj: *mut Item_GObj) -
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Logic111_Clanked(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x696B38B4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Logic111_Clanked");
     0
 }
@@ -449,12 +459,16 @@ pub unsafe extern "C" fn itKoopaFlame_Logic111_ShieldBounced(gobj: *mut Item_GOb
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Logic111_HitShield(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x1FB074A8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Logic111_HitShield");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Logic111_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x96AA0C03u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Logic111_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

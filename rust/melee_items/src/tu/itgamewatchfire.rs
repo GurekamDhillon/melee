@@ -173,7 +173,9 @@ pub unsafe fn torchRemoveCheck(gobj: *mut HSD_GObj) -> i32 {
     1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_Motion0_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x1E0B387Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_Motion0_Anim");
     let item = GET_ITEM(item_gobj);
     let jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
@@ -198,7 +200,9 @@ pub unsafe extern "C" fn itGamewatchFire_Motion0_Anim(item_gobj: *mut HSD_GObj) 
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_EvtUnk(item_gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0AD86D7Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

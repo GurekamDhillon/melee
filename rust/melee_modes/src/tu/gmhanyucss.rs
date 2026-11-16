@@ -58,7 +58,9 @@ pub static mut gm_Mode_HanyuCss_States: [GameModeState; 2] = [
 ];
 
 /// 1BED3C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BED3C(arg0: *mut GameModeState) {
+    core::hint::black_box(0xC2370CC8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BED3C");
     let temp_r31 = ext::gm_GetGameModeStateEnterData(arg0) as *mut CSSData;
     (*temp_r31).vs = *ext::gmVsMelee_GetVsData();
@@ -69,7 +71,9 @@ pub unsafe extern "C" fn gm_801BED3C(arg0: *mut GameModeState) {
 }
 
 /// 1BEDA8
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEDA8(arg0: *mut GameModeState) {
+    core::hint::black_box(0x0A026CEBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEDA8");
     let css = ext::gm_GetGameModeStateEnterData(arg0) as *mut CSSData;
     let vs = ext::gmVsMelee_GetVsData();

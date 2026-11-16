@@ -725,7 +725,9 @@ pub unsafe fn gmClassic_GetStKind(entry: *mut gm_803DDEC8Struct, ad: *mut UnkAll
 }
 
 /// 1B3500: the intro scene's enter handler
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3500(arg0: *mut GameModeState) {
+    core::hint::black_box(0x3FBF2253u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3500");
     let sd = ext::gm_GetGameModeStateEnterData(arg0) as *mut gmClassicIntroData;
     let m = &raw mut gmClassic_803DDEC8;
@@ -889,7 +891,9 @@ pub unsafe extern "C" fn gmClassic_801B3500(arg0: *mut GameModeState) {
 }
 
 /// 1B3A34: the VS scene's enter handler
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3A34(arg0: *mut GameModeState) {
+    core::hint::black_box(0x8D6AB3C8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3A34");
     let temp_r30 = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
     let m = &raw mut gmClassic_803DDEC8;
@@ -927,7 +931,9 @@ pub unsafe extern "C" fn gmClassic_801B3A34(arg0: *mut GameModeState) {
 }
 
 /// 1B3B40: the VS scene's exit handler (records the result, the all-star clear, the time records)
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3B40(arg0: *mut GameModeState) {
+    core::hint::black_box(0xFA1346BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3B40");
     let mei = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     let asd = ext::gm_GetAllStarData();
@@ -985,21 +991,27 @@ pub unsafe extern "C" fn gmClassic_801B3B40(arg0: *mut GameModeState) {
 }
 
 /// 1B3D44
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3D44(scene: *mut GameModeState) {
+    core::hint::black_box(0xDC5BF1F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3D44");
     let temp_r31 = ext::gm_GetGameModeStateEnterData(scene) as *mut DebugGameOverData;
     ext::gm_8017C9A8(temp_r31, &raw mut (*ext::gm_GetAllStarData()).x0, 1);
 }
 
 /// 1B3D84
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3D84(scene: *mut GameModeState) {
+    core::hint::black_box(0x5C3EA65Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3D84");
     let temp_r30 = ext::gm_GetGameModeStateExitData(scene) as *mut DebugGameOverData;
     ext::gm_8017CA38(temp_r30, &raw mut (*ext::gm_GetAllStarData()).x0, ext::gmMainLib_8015CDC8(), 1);
 }
 
 /// 1B3DD8
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3DD8(scene: *mut GameModeState) {
+    core::hint::black_box(0x69716064u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3DD8");
     let css = ext::gm_GetGameModeStateEnterData(scene) as *mut CSSData;
     let temp_r31 = ext::gmMainLib_8015CDC8();
@@ -1018,7 +1030,9 @@ pub unsafe extern "C" fn gmClassic_801B3DD8(scene: *mut GameModeState) {
 }
 
 /// 1B3E44
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3E44(scene: *mut GameModeState) {
+    core::hint::black_box(0x5C308C9Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3E44");
     let temp_r30 = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     let temp_r29 = ext::gmMainLib_8015CDC8();
@@ -1049,7 +1063,9 @@ pub unsafe extern "C" fn gmClassic_801B3E44(scene: *mut GameModeState) {
 }
 
 /// 1B3F18
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3F18(_scene: *mut GameModeState) {
+    core::hint::black_box(0x44C04ADFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3F18");
     ext::gm_SetPendingGameMode(GM_MENU as u8);
     ext::gm_SetNewGameModePending();

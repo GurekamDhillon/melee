@@ -201,7 +201,9 @@ pub unsafe extern "C" fn itPeachToad_Logic91_PickedUp(item_gobj: *mut Item_GObj)
     ext::it_80274574(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachtoad_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x86396636u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachtoad_UnkMotion0_Anim");
     let mut item = GET_ITEM(item_gobj);
     if (*item).x5CC_currentAnimFrame == 7.0 {
@@ -231,7 +233,9 @@ pub unsafe extern "C" fn it_802BE100(item_gobj: *mut Item_GObj) {
     ext::it_80274574(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachtoad_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4A9EE51Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachtoad_UnkMotion1_Anim");
     let mut item = GET_ITEM(item_gobj);
     if (*item).x5CC_currentAnimFrame >= 60.0 {
@@ -245,7 +249,9 @@ pub unsafe extern "C" fn itPeachtoad_UnkMotion1_Anim(item_gobj: *mut Item_GObj) 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToad_Logic91_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2C166ACEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToad_Logic91_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

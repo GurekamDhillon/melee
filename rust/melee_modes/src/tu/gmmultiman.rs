@@ -100,7 +100,9 @@ pub mod ext {
                 }
             }
     pub static mut H_lbTime_8000AF74: Option<unsafe extern "C" fn(u32, i32) -> u32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbTime_8000AF74(a0: u32, a1: i32) -> u32 {
+                core::hint::black_box(0xB1F52F70u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbTime_8000AF74 {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { crate::lb::lbTime_8000AF74(a0 as _, a1 as _) as _ }; },

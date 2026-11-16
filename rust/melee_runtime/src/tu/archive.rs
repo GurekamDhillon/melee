@@ -65,7 +65,9 @@ unsafe fn Locate(archive: *mut HSD_Archive) {
 }
 
 /// `HSD_ArchiveParse`: the body between the profiler's begin / end calls (`PC_PROF_BEGIN(GW_PROF_DECODE, file_size)`).
+#[inline(never)]
 pub unsafe extern "C" fn HSD_ArchiveParse(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
+    core::hint::black_box(0xD3336FA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_ArchiveParse");
     if let Some(f) = host_parse {
         return f(archive, src, file_size);
@@ -79,7 +81,9 @@ pub unsafe extern "C" fn HSD_ArchiveParse(archive: *mut HSD_Archive, src: *mut u
 }
 
 /// `HSD_ArchiveParse_profile_body`
+#[inline(never)]
 pub unsafe extern "C" fn HSD_ArchiveParse_profile_body(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
+    core::hint::black_box(0xF3AC4FB1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_ArchiveParse_profile_body");
     if archive.is_null() {
         return -1;
@@ -147,7 +151,9 @@ pub unsafe extern "C" fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, 
 }
 
 /// `HSD_ArchiveGetExtern`
+#[inline(never)]
 pub unsafe extern "C" fn HSD_ArchiveGetExtern(archive: *mut HSD_Archive, offset: i32) -> *mut i8 {
+    core::hint::black_box(0x0C36A16Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_ArchiveGetExtern");
     if offset < 0 || (*archive).header.nb_extern <= offset as u32 {
         return null_mut();

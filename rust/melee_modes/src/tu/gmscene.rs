@@ -43,8 +43,10 @@ pub mod ext {
     #[repr(C)]
     #[derive(Clone, Copy)]
     pub struct MenuFlow { pub cur_menu: u8, pub prev_menu: u8, pub hovered_selection: u16, pub confirmed_selection: u8, pub pad_5: [u8; 3], pub rest: [u8; 24] }
-    pub unsafe extern "C" fn Camera_ForgetGameCamera() { if let Some(h) = HOOK { h("Camera_ForgetGameCamera", &[]); return; } melee_world::tu::camera::Camera_ForgetGameCamera() }
-    pub unsafe extern "C" fn Camera_RefreshViewingMtx() { if let Some(h) = HOOK { h("Camera_RefreshViewingMtx", &[]); return; } melee_world::tu::camera::Camera_RefreshViewingMtx() }
+    #[inline(never)]
+    pub unsafe extern "C" fn Camera_ForgetGameCamera() { core::hint::black_box(0xBF13B8F7u32); /* fn identity */ if let Some(h) = HOOK { h("Camera_ForgetGameCamera", &[]); return; } melee_world::tu::camera::Camera_ForgetGameCamera() }
+    #[inline(never)]
+    pub unsafe extern "C" fn Camera_RefreshViewingMtx() { core::hint::black_box(0x2CC7F030u32); /* fn identity */ if let Some(h) = HOOK { h("Camera_RefreshViewingMtx", &[]); return; } melee_world::tu::camera::Camera_RefreshViewingMtx() }
     pub unsafe extern "C" fn Det_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Det_Enabled", &[]); return r as i32; } 0 }
     pub unsafe extern "C" fn Det_LogicFrame(frame: i32) { if let Some(h) = HOOK { h("Det_LogicFrame", &[A::I(frame as u32 as u64)]); return; } () }
     pub unsafe extern "C" fn Det_SetInRender(on: i32) { if let Some(h) = HOOK { h("Det_SetInRender", &[A::I(on as u32 as u64)]); return; } melee_core::ct::IN_RENDER.store(on != 0, core::sync::atomic::Ordering::Relaxed); }
@@ -64,7 +66,8 @@ pub mod ext {
     pub unsafe extern "C" fn DevText_ShowBackground(text: *mut DevText) { if let Some(h) = HOOK { h("DevText_ShowBackground", &[A::P(text as usize)]); return; } { unsafe { melee_world::tu::textlib::DevText_ShowBackground(text as _); } return; } }
     pub unsafe extern "C" fn DevText_ShowText(text: *mut DevText) { if let Some(h) = HOOK { h("DevText_ShowText", &[A::P(text as usize)]); return; } { unsafe { melee_world::tu::textlib::DevText_ShowText(text as _); } return; } }
     pub unsafe extern "C" fn DevText_StoreColorIndex(text: *mut DevText, index: u8) -> u8 { if let Some(h) = HOOK { let r = h("DevText_StoreColorIndex", &[A::P(text as usize), A::I(index as u8 as u64)]); return r as u8; } { return unsafe { melee_world::tu::textlib::DevText_StoreColorIndex(text as _, index as _) as _ }; } }
-    pub unsafe extern "C" fn DevText_Unlink(text: *mut DevText) { if let Some(h) = HOOK { h("DevText_Unlink", &[A::P(text as usize)]); return; } { unsafe { melee_world::tu::textdraw::DevText_Unlink(text as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn DevText_Unlink(text: *mut DevText) { core::hint::black_box(0xA7AA508Bu32); /* fn identity */ if let Some(h) = HOOK { h("DevText_Unlink", &[A::P(text as usize)]); return; } { unsafe { melee_world::tu::textdraw::DevText_Unlink(text as _); } return; } }
     pub unsafe extern "C" fn Frontend_BackToOnline() { if let Some(h) = HOOK { h("Frontend_BackToOnline", &[]); return; } { unsafe { crate::tu::gmfrontend::Frontend_BackToOnline(); } return; } }
     pub unsafe extern "C" fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj { if let Some(h) = HOOK { let r = h("GObj_Create", &[A::I(classifier as u16 as u64), A::I(p_link as u8 as u64), A::I(priority as u8 as u64)]); return r as usize as *mut HSD_GObj; } return unsafe { melee_runtime::tu::gobj_native::GObj_Create(classifier, p_link, priority) }; }
     pub unsafe extern "C" fn GXInvalidateTexAll() { if let Some(h) = HOOK { h("GXInvalidateTexAll", &[]); return; } () }
@@ -87,8 +90,10 @@ pub mod ext {
     pub unsafe extern "C" fn HSD_Init_803755A8() { if let Some(h) = HOOK { h("HSD_Init_803755A8", &[]); return; } { unsafe { melee_runtime::tu::initialize::HSD_Init_803755A8(); } return; } }
     pub unsafe extern "C" fn HSD_Leak_80387DF8(p0: i32) -> i32 { if let Some(h) = HOOK { let r = h("HSD_Leak_80387DF8", &[A::I(p0 as u32 as u64)]); return r as i32; } { return unsafe { melee_runtime::tu::leak::HSD_Leak_80387DF8(p0 as _) as _ }; } }
     pub unsafe extern "C" fn HSD_ObjAllocTopUp() { if let Some(h) = HOOK { h("HSD_ObjAllocTopUp", &[]); return; } { unsafe { melee_runtime::tu::objalloc::HSD_ObjAllocTopUp(); } return; } }
-    pub unsafe extern "C" fn HSD_ObjDumpStat() { if let Some(h) = HOOK { h("HSD_ObjDumpStat", &[]); return; } { unsafe { melee_runtime::tu::initialize::HSD_ObjDumpStat(); } return; } }
-    pub unsafe extern "C" fn HSD_PadFlushQueue(p0: u32) { if let Some(h) = HOOK { h("HSD_PadFlushQueue", &[A::I(p0 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::controller::HSD_PadFlushQueue(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn HSD_ObjDumpStat() { core::hint::black_box(0x894443EAu32); /* fn identity */ if let Some(h) = HOOK { h("HSD_ObjDumpStat", &[]); return; } { unsafe { melee_runtime::tu::initialize::HSD_ObjDumpStat(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn HSD_PadFlushQueue(p0: u32) { core::hint::black_box(0xE747864Bu32); /* fn identity */ if let Some(h) = HOOK { h("HSD_PadFlushQueue", &[A::I(p0 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::controller::HSD_PadFlushQueue(p0 as _); } return; } }
     pub unsafe extern "C" fn HSD_PadGetResetSwitch() -> i32 { if let Some(h) = HOOK { let r = h("HSD_PadGetResetSwitch", &[]); return r as i32; } { return unsafe { melee_runtime::tu::controller::HSD_PadGetResetSwitch() as _ }; } }
     pub unsafe extern "C" fn HSD_PerfInitStat() { if let Some(h) = HOOK { h("HSD_PerfInitStat", &[]); return; } { unsafe { melee_runtime::tu::perf::HSD_PerfInitStat(); } return; } }
     pub unsafe extern "C" fn HSD_PerfSetCPUTime() { if let Some(h) = HOOK { h("HSD_PerfSetCPUTime", &[]); return; } { unsafe { melee_runtime::tu::perf::HSD_PerfSetCPUTime(); } return; } }
@@ -161,11 +166,13 @@ pub mod ext {
     pub unsafe extern "C" fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) { if let Some(h) = HOOK { h("gm_ChangeGameModeAfterCurrentScene", &[A::I(pending_mode as u32 as u64)]); return; } { unsafe { crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(pending_mode as _); } return; } }
     pub unsafe extern "C" fn gm_EvaluateAllControllerInputs() { if let Some(h) = HOOK { h("gm_EvaluateAllControllerInputs", &[]); return; } { unsafe { crate::tu::gm_1A36::gm_EvaluateAllControllerInputs(); } return; } }
     pub unsafe extern "C" fn gm_GetAllGameScenes() -> *mut GameScene { if let Some(h) = HOOK { let r = h("gm_GetAllGameScenes", &[]); return r as usize as *mut GameScene; } super::super::gmscdata::gm_GetAllGameScenes() }
-    pub unsafe extern "C" fn hsdDumpClassStat(info: *mut _HSD_ClassInfo, recursive: i32, level: i32) { if let Some(h) = HOOK { h("hsdDumpClassStat", &[A::P(info as usize), A::I(recursive as u32 as u64), A::I(level as u32 as u64)]); return; } () }
+    #[inline(never)]
+    pub unsafe extern "C" fn hsdDumpClassStat(info: *mut _HSD_ClassInfo, recursive: i32, level: i32) { core::hint::black_box(0x2E63AFBCu32); /* fn identity */ if let Some(h) = HOOK { h("hsdDumpClassStat", &[A::P(info as usize), A::I(recursive as u32 as u64), A::I(level as u32 as u64)]); return; } () }
     pub unsafe extern "C" fn hsd_80392474() { if let Some(h) = HOOK { h("hsd_80392474", &[]); return; } () }
     pub unsafe extern "C" fn hsd_80392E80() -> i32 { if let Some(h) = HOOK { let r = h("hsd_80392E80", &[]); return r as i32; } 0 }
     pub unsafe extern "C" fn ifMagnify_LogicDisarm() { if let Some(h) = HOOK { h("ifMagnify_LogicDisarm", &[]); return; } { unsafe { melee_world::tu::ifmagnify::ifMagnify_LogicDisarm(); } return; } }
-    pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() { if let Some(h) = HOOK { h("ifMagnify_UpdateLogicOffscreen", &[]); return; } { unsafe { melee_world::tu::ifmagnify::ifMagnify_UpdateLogicOffscreen(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() { core::hint::black_box(0x1FD22620u32); /* fn identity */ if let Some(h) = HOOK { h("ifMagnify_UpdateLogicOffscreen", &[]); return; } { unsafe { melee_world::tu::ifmagnify::ifMagnify_UpdateLogicOffscreen(); } return; } }
     /// What the scene loop runs where the C calls `lbAudioAx_80027DF8`: the sound stack's per-frame update (sound objects, deferred sfx, the loop voices), set by the
     /// host's audio driver. Unset = no sound stack.
     pub static mut AUDIO_FRAME: Option<fn()> = None;
@@ -178,12 +185,14 @@ pub mod ext {
     pub unsafe extern "C" fn lbHeap_80015DF8() { if let Some(h) = HOOK { h("lbHeap_80015DF8", &[]); return; } { unsafe { melee_runtime::tu::lbheap::lbHeap_80015DF8(); } return; } }
     pub unsafe extern "C" fn lb_80014534() { if let Some(h) = HOOK { h("lb_80014534", &[]); return; } { unsafe { crate::tu::lb_013B::lb_80014534(); } return; } }
     pub unsafe extern "C" fn lb_800195D0() { if let Some(h) = HOOK { h("lb_800195D0", &[]); return; } { unsafe { crate::tu::lb_0195::lb_800195D0(); } return; } }
-    pub unsafe extern "C" fn lb_80019880(p0: u64) { if let Some(h) = HOOK { h("lb_80019880", &[A::I(p0 as u64 as u64)]); return; } { unsafe { crate::tu::lb_0195::lb_80019880(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn lb_80019880(p0: u64) { core::hint::black_box(0xF96FA866u32); /* fn identity */ if let Some(h) = HOOK { h("lb_80019880", &[A::I(p0 as u64 as u64)]); return; } { unsafe { crate::tu::lb_0195::lb_80019880(p0 as _); } return; } }
     pub unsafe extern "C" fn lb_80019894() -> u8 { if let Some(h) = HOOK { let r = h("lb_80019894", &[]); return r as u8; } { return unsafe { crate::tu::lb_0195::lb_80019894() as _ }; } }
     pub unsafe extern "C" fn lb_800198E0() { if let Some(h) = HOOK { h("lb_800198E0", &[]); return; } { unsafe { crate::tu::lb_0195::lb_800198E0(); } return; } }
     pub unsafe extern "C" fn lb_80019900() { if let Some(h) = HOOK { h("lb_80019900", &[]); return; } { unsafe { crate::tu::lb_0195::lb_80019900(); } return; } }
     pub unsafe extern "C" fn lb_80019A30(p0: i32) -> i32 { if let Some(h) = HOOK { let r = h("lb_80019A30", &[A::I(p0 as u32 as u64)]); return r as i32; } { return unsafe { crate::tu::lb_0195::lb_80019A30(p0 as _) as _ }; } }
-    pub unsafe extern "C" fn un_802FF78C() -> *mut HSD_GObj { if let Some(h) = HOOK { let r = h("un_802FF78C", &[]); return r as usize as *mut HSD_GObj; } { return unsafe { melee_world::tu::if_2FF2::un_802FF78C() as _ }; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn un_802FF78C() -> *mut HSD_GObj { core::hint::black_box(0x9E6B1B91u32); /* fn identity */ if let Some(h) = HOOK { let r = h("un_802FF78C", &[]); return r as usize as *mut HSD_GObj; } { return unsafe { melee_world::tu::if_2FF2::un_802FF78C() as _ }; } }
     /// `void OSReport(char* fmt, ...)`
     pub unsafe fn OSReport(fmt: *const c_char, va: &[A]) {
         if let Some(h) = HOOK { let mut v = vec![A::S(fmt)]; v.extend_from_slice(va); h("OSReport", &v); return; }

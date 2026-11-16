@@ -280,7 +280,9 @@ pub mod ext {
     pub use crate::tu::gmmain_lib::gmMainLib_8046B0F0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(arg0: *mut GameModeState) {
+    core::hint::black_box(0x16B8BFF3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_ModeState_ApproachVs_OnExit");
     let temp_r30 = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     let temp_r31 = ext::gm_GetChallengerData();
@@ -303,7 +305,9 @@ pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(arg0: *mut GameModeState
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(_arg0: *mut GameModeState) {
+    core::hint::black_box(0x78644A4Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_ModeState_Prize_OnExit");
     ext::gm_SetNextGameModeStateId(0);
 }

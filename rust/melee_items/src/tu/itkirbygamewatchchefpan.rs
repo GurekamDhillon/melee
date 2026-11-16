@@ -191,7 +191,9 @@ pub unsafe fn itKirbygamewatchchefpan_UnkMotion0_Anim_inline(item_gobj: *mut Ite
 }
 
 /// `bool itKirbygamewatchchefpan_UnkMotion0_Anim(Item_GObj*)` (2C76E8)
+#[inline(never)]
 pub unsafe extern "C" fn itKirbygamewatchchefpan_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xA5779EC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbygamewatchchefpan_UnkMotion0_Anim");
     let _item = ip_of(item_gobj);
     if itKirbygamewatchchefpan_UnkMotion0_Anim_inline(item_gobj) != 0 {
@@ -202,7 +204,9 @@ pub unsafe extern "C" fn itKirbygamewatchchefpan_UnkMotion0_Anim(item_gobj: *mut
 }
 
 /// `void itKirbyGameWatchChefPan_Logic113_EvtUnk(Item_GObj*, HSD_GObj*)` (2C7754)
+#[inline(never)]
 pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE25EEECDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbyGameWatchChefPan_Logic113_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

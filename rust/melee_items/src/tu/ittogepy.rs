@@ -90,14 +90,17 @@ pub unsafe extern "C" fn itTogepy_Logic21_Spawned(gobj: *mut Item_GObj) {
     ext::Item_8026AE84(it, 0x272C, 0x7F, 0x40);
 }
 
-pub unsafe extern "C" fn it_802D3728(_gobj: *mut Item_GObj) { melee_core::ct!("it_802D3728");}
+#[inline(never)]
+pub unsafe extern "C" fn it_802D3728(_gobj: *mut Item_GObj) { core::hint::black_box(0xD1B2C174u32); /* fn identity */ melee_core::ct!("it_802D3728");}
 
 pub unsafe extern "C" fn itTogepy_Logic21_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itTogepy_Logic21_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x222E7617u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion1_Anim");
     let it = (*gobj).user_data as *mut Item;
 
@@ -112,7 +115,9 @@ pub unsafe extern "C" fn itTogepy_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xAF9ECFAAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion1_Phys");
     let it = (*gobj).user_data as *mut Item;
     if (*it).ground_or_air == GA_Air {
@@ -120,7 +125,9 @@ pub unsafe extern "C" fn itTogepy_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x95B5F020u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion1_Coll");
     let it = (*gobj).user_data as *mut Item;
     if (*it).ground_or_air == GA_Air {
@@ -162,7 +169,9 @@ pub unsafe extern "C" fn it_802D3848(gobj: *mut Item_GObj) {
     (*it).exited_hitlag = None;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xCFB11DC8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion6_Anim");
     let it = (*gobj).user_data as *mut Item;
     if ext::it_80272C6C(gobj) == 0 {
@@ -174,7 +183,9 @@ pub unsafe extern "C" fn itTogepy_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x76FE070Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion6_Phys");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
@@ -182,7 +193,9 @@ pub unsafe extern "C" fn itTogepy_UnkMotion6_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x22DCBC5Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion6_Coll");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
@@ -206,13 +219,17 @@ pub unsafe extern "C" fn it_802D39F8(gobj: *mut Item_GObj) {
     (*it).xDD4_itemVar.pokemon.timer = (*sa).timer;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x8E777F6Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF8314B5Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         let it = (*gobj).user_data as *mut Item;
@@ -223,7 +240,9 @@ pub unsafe extern "C" fn itTogepy_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7A776C09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D3728)) != 0
 }

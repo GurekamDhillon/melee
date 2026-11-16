@@ -92,7 +92,9 @@ pub unsafe extern "C" fn lbArq_80014ABC(arg0: *mut lbArqNode) -> u32 {
 
 /// The ARAM request's completion callback (`ARQCallback`): moves the node to the done list, runs
 /// the node's callback if it has one and then returns the node to the free list.
+#[inline(never)]
 pub unsafe extern "C" fn lbArq_80014AC4(handle: *mut ARQRequest) {
+    core::hint::black_box(0x79B6EBBFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbArq_80014AC4");
     let global = &raw mut lbArq_804316C0;
     let node = (handle as *mut u8).sub(offset_of!(lbArqNode, arq)) as *mut lbArqNode;

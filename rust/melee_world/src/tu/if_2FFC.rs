@@ -8,7 +8,9 @@ use super::soundtest::*;
 use super::soundtest::ext;
 
 /// `void un_802FFCD0(int count, void* data)`: fills `data[0..count]` with `data[count]`.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FFCD0(count: i32, data: *mut c_void) {
+    core::hint::black_box(0x5D6CEB55u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FFCD0");
     let arr = data as *mut i32;
     let mut i = 0;
@@ -19,7 +21,9 @@ pub unsafe extern "C" fn un_802FFCD0(count: i32, data: *mut c_void) {
 }
 
 /// `void un_802FFD94(int arg0, void* arg1, soundtest_callback arg2)`: opens a sub-menu on confirm.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FFD94(arg0: i32, arg1: *mut c_void, arg2: soundtest_callback) {
+    core::hint::black_box(0x56104A81u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FFD94");
     if arg0 == 1 {
         let d = ext::un_80302DF0();
@@ -29,7 +33,9 @@ pub unsafe extern "C" fn un_802FFD94(arg0: i32, arg1: *mut c_void, arg2: soundte
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FFE0C(arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0x2C7CFF83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FFE0C");
     match arg0 {
         0 => {
@@ -46,7 +52,9 @@ pub unsafe extern "C" fn fn_802FFE0C(arg0: soundtest_callback_arg0) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FFE6C(update_scene: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0x4C6E2759u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FFE6C");
     let mut res = update_scene as i32;
     if update_scene == 0 {
@@ -57,7 +65,9 @@ pub unsafe extern "C" fn fn_802FFE6C(update_scene: soundtest_callback_arg0) -> i
     res
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FFEA4(update_scene: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0xBFF0288Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FFEA4");
     if update_scene == 1 {
         sfx_forward();
@@ -68,7 +78,9 @@ pub unsafe extern "C" fn un_802FFEA4(update_scene: soundtest_callback_arg0) -> i
 }
 
 /// `void un_802FFEE0(struct UnkSoundTestData0*)`
+#[inline(never)]
 pub unsafe extern "C" fn un_802FFEE0(arg0: *mut UnkSoundTestData0) {
+    core::hint::black_box(0x43E66AFAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FFEE0");
     let v = un_803FA258.x12C as u16;
     let val: u16 = if (v as i32) < 0x3E { v } else { 0x3E };
@@ -80,7 +92,9 @@ pub unsafe extern "C" fn un_802FFEE0(arg0: *mut UnkSoundTestData0) {
 
 /// `void un_802FFF2C(StartMeleeData*)`: the settings block -> a match start description. The C reads the
 /// block through the `un_803FA128_x130_t` overlay of `&un_803FA258`.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FFF2C(arg0: *mut StartMeleeData) {
+    core::hint::black_box(0x27FBED39u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FFF2C");
     let r = &raw mut (*arg0).rules;
     let s = &raw mut un_803FA258 as *mut un_803FA128_x130_t;
@@ -135,13 +149,17 @@ pub unsafe extern "C" fn un_802FFF2C(arg0: *mut StartMeleeData) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_80300218(_arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0xE9B898EEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80300218");
     ext::lbLang_SetSavedLanguage(un_803FA258.x0);
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_80300248(arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0x67B11083u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80300248");
     if un_803FA258.x4[0] != 0 && arg0 == 1 {
         sfx_forward();
@@ -150,7 +168,9 @@ pub unsafe extern "C" fn un_80300248(arg0: soundtest_callback_arg0) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_80300290(arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0xF1CC2D3Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80300290");
     if arg0 == 1 {
         let x = ext::un_80302DF0();
@@ -161,27 +181,35 @@ pub unsafe extern "C" fn un_80300290(arg0: soundtest_callback_arg0) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_80300338(_arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0x032B1C67u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80300338");
     load_f4(save_base());
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_80300378(_arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0x7B214BF3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80300378");
     un_803FA258.xF0 &= 0xFFFE;
     load_f4(save_base());
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_803003C4(_arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0xF7A1CAD3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_803003C4");
     un_803FA258.xF0 &= 0xFFFC;
     load_f4(save_base());
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_80300410(arg0: soundtest_callback_arg0) -> i32 {
+    core::hint::black_box(0x0489F260u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80300410");
     if arg0 == 1 {
         sfx_forward();

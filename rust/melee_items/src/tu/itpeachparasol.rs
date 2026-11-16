@@ -233,7 +233,9 @@ pub static mut it_803F74F8: [ItemStateTable; 3] = [
 static it_804D5518: [i32; 2] = [15, 16];
 
 /// 2BDA40
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDA40(_item_gobj: *mut Item_GObj, i: i32) -> i32 {
+    core::hint::black_box(0xE061FE02u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDA40");
     let row = (it_803F74F8.as_ptr()).offset(i as isize);
     let anim_id = (*row).anim_id;
@@ -291,13 +293,17 @@ pub unsafe extern "C" fn it_802BDB94(item_gobj: *mut Item_GObj) {
 }
 
 /// 2BDBF8
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDBF8(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7E00DDE5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDBF8");
     ext::it_8026B724(item_gobj);
 }
 
 /// 2BDC18
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDC18(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x88023B71u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDC18");
     ext::it_8026B73C(item_gobj);
 }
@@ -323,7 +329,9 @@ pub unsafe extern "C" fn itPeachParasol_Logic60_PickedUp(item_gobj: *mut Item_GO
     (*item).x5D0_animFrameSpeed = 1.0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachparasol_UnkMotion2_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x174FF7A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachparasol_UnkMotion2_Anim");
     let item = GET_ITEM(item_gobj);
     let var_r3: bool = if !(*item).owner.is_null() {
@@ -339,10 +347,13 @@ pub unsafe extern "C" fn itPeachparasol_UnkMotion2_Anim(item_gobj: *mut Item_GOb
 }
 
 /// 2BDD3C
-pub unsafe extern "C" fn it_802BDD3C(_item_gobj: *mut Item_GObj) { melee_core::ct!("it_802BDD3C");}
+#[inline(never)]
+pub unsafe extern "C" fn it_802BDD3C(_item_gobj: *mut Item_GObj) { core::hint::black_box(0x67515FE3u32); /* fn identity */ melee_core::ct!("it_802BDD3C");}
 
 /// 2BDD40
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDD40(item_gobj: *mut Item_GObj, arg8: f32) {
+    core::hint::black_box(0x7A44B1D9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDD40");
     let item = GET_ITEM(item_gobj);
     ext::Item_8026AE84(item, 0xF7, 0x7F, 0x40);
@@ -352,7 +363,9 @@ pub unsafe extern "C" fn it_802BDD40(item_gobj: *mut Item_GObj, arg8: f32) {
 }
 
 /// 2BDDB4
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDDB4(item_gobj: *mut Item_GObj, arg8: f32) {
+    core::hint::black_box(0xFA2BE373u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDDB4");
     let item = GET_ITEM(item_gobj);
     (*item).x5D0_animFrameSpeed = arg8;
@@ -360,7 +373,9 @@ pub unsafe extern "C" fn it_802BDDB4(item_gobj: *mut Item_GObj, arg8: f32) {
     (*item).on_accessory = Some(it_802BDD3C);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachParasol_Logic60_EvtUnk(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    core::hint::black_box(0x5AEEDE86u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachParasol_Logic60_EvtUnk");
     ext::it_8026B894(item_gobj, arg1);
 }

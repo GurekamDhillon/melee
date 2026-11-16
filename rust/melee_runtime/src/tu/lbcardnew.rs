@@ -289,7 +289,9 @@ unsafe fn strtoul10(s: *const i8) -> u32 {
 }
 
 /// `convertSdkResult`
+#[inline(never)]
 pub unsafe extern "C" fn convertSdkResult(sdk_result: i32) -> u32 {
+    core::hint::black_box(0xB0B2B24Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("convertSdkResult");
     match sdk_result {
         -1 | -2 | -3 => LbCardResult_DeviceError,
@@ -302,7 +304,9 @@ pub unsafe extern "C" fn convertSdkResult(sdk_result: i32) -> u32 {
 }
 
 /// `lb_80019C38_noinline`
+#[inline(never)]
 pub unsafe extern "C" fn lb_80019C38_noinline() -> *mut CardTask {
+    core::hint::black_box(0xAE5B0E45u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_80019C38_noinline");
     getNewTask()
 }
@@ -324,7 +328,9 @@ pub unsafe extern "C" fn getNewTask() -> *mut CardTask {
 }
 
 /// `resetTaskArray`
+#[inline(never)]
 pub unsafe extern "C" fn resetTaskArray() {
+    core::hint::black_box(0x78C000F8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("resetTaskArray");
     for i in 0..TASK_MAX {
         state.task_array[i].r#type = LbCardNewTask_None;
@@ -387,7 +393,9 @@ pub unsafe extern "C" fn executeNextTask(mut result: u32) -> i32 {
 }
 
 /// `resetState`
+#[inline(never)]
 pub unsafe extern "C" fn resetState(chan: i32, save_data: *mut c_void, status_out: *mut i32, callback: LbCardOnFinishedCallback) {
+    core::hint::black_box(0xF39B4003u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("resetState");
     state.chan = chan;
     state.save_data = save_data;
@@ -409,7 +417,9 @@ pub unsafe extern "C" fn resetState(chan: i32, save_data: *mut c_void, status_ou
 }
 
 /// `onCardComplete`
+#[inline(never)]
 pub unsafe extern "C" fn onCardComplete(_chan: i32, result: i32) {
+    core::hint::black_box(0x0696F1D7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onCardComplete");
     let error = convertSdkResult(result) as i32;
     if error != 0 {
@@ -419,7 +429,9 @@ pub unsafe extern "C" fn onCardComplete(_chan: i32, result: i32) {
 }
 
 /// `convertHsdResult`
+#[inline(never)]
 pub unsafe extern "C" fn convertHsdResult(hsd_result: i32) -> i32 {
+    core::hint::black_box(0x533AA600u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("convertHsdResult");
     (match hsd_result {
         0 | 1 => LbCardResult_Ready,
@@ -431,7 +443,9 @@ pub unsafe extern "C" fn convertHsdResult(hsd_result: i32) -> i32 {
 }
 
 /// 01A0B0
+#[inline(never)]
 pub unsafe extern "C" fn fn_8001A0B0(file_idx: i32, hsd_error: i32) {
+    core::hint::black_box(0x3D98A508u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8001A0B0");
     let error = convertHsdResult(hsd_error);
     state.unk_38[file_idx as usize].lb_error = error;
@@ -497,7 +511,9 @@ pub unsafe extern "C" fn taskCheck() -> i32 {
 }
 
 /// `setTaskFilename`
+#[inline(never)]
 pub unsafe extern "C" fn setTaskFilename(filename: *const i8, file_entries: *mut c_void) {
+    core::hint::black_box(0x0C73EF51u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setTaskFilename");
     let task = getNewTask();
     (*task).r#type = LbCardNewTask_Open;
@@ -522,7 +538,9 @@ pub struct SnapshotNode {
 }
 
 /// `setupCardEntries` (static inline in the C)
+#[inline(never)]
 pub unsafe extern "C" fn setupCardEntries(ctx: *mut CardState, icon: *mut c_void, mut entry: *mut LbCardEntry) {
+    core::hint::black_box(0x5E2E721Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setupCardEntries");
     ext::hsd_SetCardIconInfo(ctx, icon as *mut CardIconInfo);
     let mut i = 0;
@@ -676,7 +694,9 @@ pub unsafe extern "C" fn taskCreate(filename: *const i8) -> i32 {
 }
 
 /// `readCardFileSize` (volatile read)
+#[inline(never)]
 pub unsafe extern "C" fn readCardFileSize(file_size: *const i32) -> i32 {
+    core::hint::black_box(0xB4E5F962u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("readCardFileSize");
     core::ptr::read_volatile(file_size)
 }
@@ -863,7 +883,9 @@ pub unsafe extern "C" fn lbCardNew_CompleteAllTasks(mut result: i32) -> i32 {
 }
 
 /// `setupTask` (static inline in the C)
+#[inline(never)]
 pub unsafe extern "C" fn setupTask(r#type: u32, result_mask: i32) -> *mut CardTask {
+    core::hint::black_box(0x56A4BF45u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setupTask");
     let task = getNewTask();
     (*task).r#type = r#type;
@@ -872,7 +894,9 @@ pub unsafe extern "C" fn setupTask(r#type: u32, result_mask: i32) -> *mut CardTa
 }
 
 /// `lb_8001A4CC_dontinline`
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001A4CC_dontinline(filename: *const i8, file_entries: *mut c_void) {
+    core::hint::black_box(0x0EE2B921u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001A4CC_dontinline");
     setTaskFilename(filename, file_entries);
 }
@@ -915,7 +939,9 @@ pub unsafe extern "C" fn lb_8001B8C8(chan: i32) -> i32 {
 }
 
 /// `lbCardNew_DeleteSnap`
+#[inline(never)]
 pub unsafe extern "C" fn lbCardNew_DeleteSnap(chan: i32, filename: *const i8, status_out: *mut c_void) -> i32 {
+    core::hint::black_box(0x836DCD17u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardNew_DeleteSnap");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
@@ -1158,7 +1184,9 @@ pub unsafe extern "C" fn lb_8001C0F4(chan: i32, name_a: *const i8, name_b: *cons
 }
 
 /// 01C2D8
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001C2D8(chan: i32, company: *const i8, game_name: *const i8, filename: *const i8) -> i32 {
+    core::hint::black_box(0xB540C7BCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001C2D8");
     resetState(chan, null_mut(), null_mut(), None);
     setupTask(LbCardNewTask_Mount, 0x10000);
@@ -1216,7 +1244,9 @@ pub unsafe extern "C" fn lbCardNew_ForgetMemory() {
 }
 
 /// `lbCardNew_Init`
+#[inline(never)]
 pub unsafe extern "C" fn lbCardNew_Init() {
+    core::hint::black_box(0x3A63B506u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardNew_Init");
     ext::hsd_803B2374();
     resetState(0, null_mut(), null_mut(), None);

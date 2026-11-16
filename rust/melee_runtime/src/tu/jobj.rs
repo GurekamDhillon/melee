@@ -105,8 +105,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32) { super::HSD_JObjDispSub(a0, a1, a2, a3, a4) }
-        pub unsafe extern "C" fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void) { super::HSD_JObjMakePositionMtx(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32) { core::hint::black_box(0x664FAA3Fu32); /* fn identity */ super::HSD_JObjDispSub(a0, a1, a2, a3, a4) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void) { core::hint::black_box(0x2943B8D1u32); /* fn identity */ super::HSD_JObjMakePositionMtx(a0, a1, a2) }
         pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
@@ -161,7 +163,9 @@ pub unsafe fn JObjLoadJointSub(d:*mut HSD_Joint,parent:*mut HSD_JObj)->*mut HSD_
     let j=if i.is_null(){HSD_JObjAlloc()}else{ext::hsdNew(i).cast::<HSD_JObj>()};
     assert!(!j.is_null()); ((*info(j)).load.expect("JObj load method"))(j,d,parent); j
 }
+#[inline(never)]
 pub unsafe extern "C" fn JObjLoad(j:*mut HSD_JObj,d:*mut HSD_Joint,parent:*mut HSD_JObj)->i32 {
+    core::hint::black_box(0x5B4D7CEFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("JObjLoad");
     if (*d).flags&JOBJ_INSTANCE==0 {(*j).child=JObjLoadJointSub((*d).child,j);}
     (*j).next=JObjLoadJointSub((*d).next,parent); (*j).parent=parent; (*j).flags|=(*d).flags;
@@ -221,7 +225,9 @@ pub unsafe fn HSD_JObjUnrefThis(j:*mut HSD_JObj) {
 }
 pub unsafe fn HSD_JObjSetCurrent(j:*mut HSD_JObj){ melee_core::ct!("HSD_JObjSetCurrent");ref_inc(j);HSD_JObjUnref(current_jobj);current_jobj=j;}
 pub unsafe fn HSD_JObjGetCurrent()->*mut HSD_JObj{ melee_core::ct!("HSD_JObjGetCurrent");current_jobj}
+#[inline(never)]
 pub unsafe extern "C" fn JObjInit(o:*mut _HSD_Class)->i32 {
+    core::hint::black_box(0x3EF31BA1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("JObjInit");
     let status=((*hsdJObj.parent.parent.head.parent).init.expect("parent init"))(o);
     if status<0{return status}
@@ -240,7 +246,9 @@ pub unsafe extern "C" fn JObjReleaseChild(j:*mut HSD_JObj) {
     if !(*j).robj.is_null(){ext::HSD_RObjRemoveAll((*j).robj);(*j).robj=null_mut();}
     if !(*j).aobj.is_null(){ext::HSD_AObjRemove((*j).aobj);(*j).aobj=null_mut();}
 }
+#[inline(never)]
 pub unsafe extern "C" fn JObjRelease(o:*mut _HSD_Class) {
+    core::hint::black_box(0x7E030D6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("JObjRelease");
     let j=o.cast::<HSD_JObj>(); ((*info(j)).release_child.expect("release_child"))(j);
     if ext::HSD_IDGetDataFromTable(null_mut(),(*j).id as u64,null_mut())==j.cast() {ext::HSD_IDRemoveByIDFromTable(null_mut(),(*j).id as u64);}
@@ -248,7 +256,9 @@ pub unsafe extern "C" fn JObjRelease(o:*mut _HSD_Class) {
     if !(*j).envelopemtx.is_null(){ext::HSD_MtxFree((*j).envelopemtx.cast());}
     ((*hsdJObj.parent.parent.head.parent).release.expect("parent release"))(o);
 }
+#[inline(never)]
 pub unsafe extern "C" fn JObjAmnesia(i:*mut _HSD_ClassInfo) {
+    core::hint::black_box(0xDA3CEF0Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("JObjAmnesia");
     if i==default_class{default_class=null_mut();}
     if i==(&raw mut hsdJObj).cast(){ufc_callbacks=null_mut();current_jobj=null_mut();}

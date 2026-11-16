@@ -212,7 +212,9 @@ pub unsafe extern "C" fn un_802FD9D8(slot: u8) {
 }
 
 /// `void fn_802FDA4C(HSD_GObj*, int pass)`: GX callback; draws the arrow unless they are hidden.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FDA4C(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0xEAD92049u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FDA4C");
     if un_804D6D90 == 0 {
         ext::HSD_GObj_JObjCallback(gobj, pass);
@@ -234,7 +236,9 @@ unsafe fn tint(jobj: *mut HSD_JObj, c: _GXColor, depth: usize) {
 
 /// `void fn_802FDA78(HSD_GObj*)`: per-arrow proc (user data points at its slot number). The
 /// `2.6f * j + v[..]` is an f32 fused multiply-add (shipping contraction).
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FDA78(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x81E0C9C3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FDA78");
     let p = &raw mut un_804A1F10;
     let v: [f32; 4] = [0.0, -1.3, -2.6, -3.9];

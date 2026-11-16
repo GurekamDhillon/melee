@@ -50,8 +50,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { super::efLib_PauseAll(a0) }
-        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { super::efLib_ResumeAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0x5E2099BFu32); /* fn identity */ super::efLib_PauseAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { core::hint::black_box(0xF33D319Cu32); /* fn identity */ super::efLib_ResumeAll(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -102,7 +104,8 @@ pub unsafe extern "C" fn itFreezer_802CCF9C(gobj: *mut Item_GObj) {
 }
 
 /// `void itFreezer_802CCFFC(Item_GObj*)`: an empty callback.
-pub unsafe extern "C" fn itFreezer_802CCFFC(gobj: *mut Item_GObj) { melee_core::ct!("itFreezer_802CCFFC");}
+#[inline(never)]
+pub unsafe extern "C" fn itFreezer_802CCFFC(gobj: *mut Item_GObj) { core::hint::black_box(0x4CE4B1A5u32); /* fn identity */ melee_core::ct!("itFreezer_802CCFFC");}
 
 /// `void itFreezer_802CD000(Item_GObj*, Item_GObj*)`: removes the gobj interaction references.
 pub unsafe extern "C" fn itFreezer_802CD000(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
@@ -111,7 +114,9 @@ pub unsafe extern "C" fn itFreezer_802CD000(gobj: *mut Item_GObj, ref_gobj: *mut
 }
 
 /// `bool itFreezer_UnkMotion1_Anim(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xA6DCA2DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         itFreezer_802CD12C(gobj);
@@ -120,10 +125,13 @@ pub unsafe extern "C" fn itFreezer_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 
 }
 
 /// `void itFreezer_UnkMotion1_Phys(Item_GObj*)`.
-pub unsafe extern "C" fn itFreezer_UnkMotion1_Phys(gobj: *mut Item_GObj) { melee_core::ct!("itFreezer_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFreezer_UnkMotion1_Phys(gobj: *mut Item_GObj) { core::hint::black_box(0x3D4B7962u32); /* fn identity */ melee_core::ct!("itFreezer_UnkMotion1_Phys");}
 
 /// `bool itFreezer_UnkMotion1_Coll(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xEEAC03A8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(itFreezer_802CCFFC));
     0
@@ -131,7 +139,9 @@ pub unsafe extern "C" fn itFreezer_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 
 
 /// `void itFreezer_802CD090(Item_GObj*)`: accessory callback of state 1: the effect on bone 5 on request, and
 /// the periodic effect on the item.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_802CD090(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB485155Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_802CD090");
     let item = item_of(gobj);
     if (*item).xDB0_itcmd_var1 != 0 {
@@ -149,7 +159,9 @@ pub unsafe extern "C" fn itFreezer_802CD090(gobj: *mut Item_GObj) {
 }
 
 /// `void itFreezer_802CD12C(HSD_GObj*)`: enters state 2.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_802CD12C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x25A39723u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_802CD12C");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
@@ -169,7 +181,9 @@ pub unsafe fn itFreezer_UnkMotion2_Anim_Inline(gobj: *mut Item_GObj) {
 }
 
 /// `bool itFreezer_UnkMotion2_Anim(Item_GObj*)`: removed once above the top blast zone.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xD1A9019Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion2_Anim");
     let item_temp = item_of(gobj);
     if ext::it_80272C6C(gobj) == 0 {
@@ -182,7 +196,9 @@ pub unsafe extern "C" fn itFreezer_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 
 }
 
 /// `void itFreezer_UnkMotion2_Phys(Item_GObj*)`: the launch impulse and the upward acceleration.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x23D128D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion2_Phys");
     let item = item_of(gobj);
     if (*item).xDAC_itcmd_var0 != 0 {
@@ -198,13 +214,17 @@ pub unsafe extern "C" fn itFreezer_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 /// `bool itFreezer_UnkMotion2_Coll(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x40AF45EBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion2_Coll");
     0
 }
 
 /// `void itFreezer_802CD290(Item_GObj*)`: accessory callback of state 2: the periodic effect.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_802CD290(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x118BD664u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_802CD290");
     let item = item_of(gobj);
     if (*item).xDD4_itemVar.freezer.x60 <= 0 {
@@ -224,7 +244,9 @@ pub unsafe extern "C" fn itFreezer_802CD2EC(gobj: *mut Item_GObj) {
 }
 
 /// `bool itFreezer_UnkMotion0_Anim(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xFBC56BF6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     0
@@ -250,7 +272,9 @@ pub unsafe fn itFreezer_UnkMotion0_Phys_inline1(gobj: *mut Item_GObj) {
 }
 
 /// `void itFreezer_UnkMotion0_Phys(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD2D6D693u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         itFreezer_UnkMotion0_Phys_inline1(gobj);
@@ -258,7 +282,9 @@ pub unsafe extern "C" fn itFreezer_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 /// `bool itFreezer_UnkMotion0_Coll(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x2A9DDCB1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(itFreezer_802CCFFC))
 }

@@ -125,7 +125,8 @@ pub mod ext {
         use super::*;
         pub unsafe extern "C" fn Ground_801C0498() -> f32 { super::Ground_801C0498() }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x3431CF7Fu32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -272,10 +273,13 @@ unsafe fn scale_by_ae4(jobj: *mut HSD_JObj) {
 }
 
 /// 21C750
-pub unsafe extern "C" fn grHomeRun_8021C750(_arg: i32) { melee_core::ct!("grHomeRun_8021C750");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021C750(_arg: i32) { core::hint::black_box(0x830EE23Cu32); /* fn identity */ melee_core::ct!("grHomeRun_8021C750");}
 
 /// 21C754
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021C754() {
+    core::hint::black_box(0x7F0EDBF0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021C754");
     let mut cam_offset = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -296,10 +300,13 @@ pub unsafe extern "C" fn grHomeRun_8021C754() {
 }
 
 /// 21C7FC
-pub unsafe extern "C" fn grHomeRun_8021C7FC() { melee_core::ct!("grHomeRun_8021C7FC");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021C7FC() { core::hint::black_box(0x672B956Au32); /* fn identity */ melee_core::ct!("grHomeRun_8021C7FC");}
 
 /// 21C800
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021C800() {
+    core::hint::black_box(0xE772DB64u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021C800");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
@@ -333,7 +340,9 @@ pub unsafe extern "C" fn grHomeRun_8021C82C(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 /// 21C914
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021C914(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x4407CD72u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021C914");
     let gp = GET_GROUND(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -344,13 +353,17 @@ pub unsafe extern "C" fn grHomeRun_8021C914(gobj: *mut Ground_GObj) {
 }
 
 /// 21CB18
-pub unsafe extern "C" fn grHomeRun_8021CB18(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021CB18");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021CB18(_arg: *mut Ground_GObj) { core::hint::black_box(0xF19AB7A3u32); /* fn identity */ melee_core::ct!("grHomeRun_8021CB18");}
 
 /// 21CB1C
-pub unsafe extern "C" fn grHomeRun_8021CB1C(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021CB1C");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021CB1C(_arg: *mut Ground_GObj) { core::hint::black_box(0x0A9ADEFEu32); /* fn identity */ melee_core::ct!("grHomeRun_8021CB1C");}
 
 /// 21CB20
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021CB20(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x679322A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021CB20");
     let gp = GET_GROUND(gobj);
     let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -487,7 +500,9 @@ unsafe fn set_text_pos(text: *mut HSD_Text, pos: &Vec3) {
 
 /// 21D680
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021D680(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x66142545u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021D680");
     let mut pos1 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut pos2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -626,20 +641,25 @@ pub unsafe extern "C" fn grHomeRun_8021D680(gobj: *mut Ground_GObj) {
 }
 
 /// 21DEB0
-pub unsafe extern "C" fn grHomeRun_8021DEB0(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021DEB0");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021DEB0(_arg: *mut Ground_GObj) { core::hint::black_box(0x2D41C02Eu32); /* fn identity */ melee_core::ct!("grHomeRun_8021DEB0");}
 
 /// 21DEB4
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021DEB4(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x3141C67Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021DEB4");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 /// 21DEE8
-pub unsafe extern "C" fn grHomeRun_8021DEE8(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021DEE8");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021DEE8(_arg: *mut Ground_GObj) { core::hint::black_box(0xA735B449u32); /* fn identity */ melee_core::ct!("grHomeRun_8021DEE8");}
 
 /// 21DEEC
-pub unsafe extern "C" fn grHomeRun_8021DEEC(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021DEEC");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021DEEC(_arg: *mut Ground_GObj) { core::hint::black_box(0xBC35D558u32); /* fn identity */ melee_core::ct!("grHomeRun_8021DEEC");}
 
 /// the on_init shared by the text stages (21DEF0, 21E074, 21E1F8, 21E37C)
 unsafe fn text_stage_init(gobj: *mut Ground_GObj) {
@@ -674,91 +694,121 @@ unsafe fn text_stage_free(gobj: *mut Ground_GObj) {
 }
 
 /// 21DEF0
-pub unsafe extern "C" fn grHomeRun_8021DEF0(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021DEF0"); text_stage_init(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021DEF0(gobj: *mut Ground_GObj) { core::hint::black_box(0xB53808EAu32); /* fn identity */ melee_core::ct!("grHomeRun_8021DEF0"); text_stage_init(gobj) }
 /// 21DF50
 #[cfg_attr(fptrace, melee_fptrace::trace)]
-pub unsafe extern "C" fn grHomeRun_8021DF50(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021DF50"); text_stage_proc(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021DF50(gobj: *mut Ground_GObj) { core::hint::black_box(0xE05B4280u32); /* fn identity */ melee_core::ct!("grHomeRun_8021DF50"); text_stage_proc(gobj) }
 /// 21E008
-pub unsafe extern "C" fn grHomeRun_8021E008(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E008"); text_stage_free(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E008(gobj: *mut Ground_GObj) { core::hint::black_box(0xDEB7A452u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E008"); text_stage_free(gobj) }
 
 /// 21E038
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021E038(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xD8B55C49u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021E038");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 /// 21E06C
-pub unsafe extern "C" fn grHomeRun_8021E06C(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E06C");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E06C(_arg: *mut Ground_GObj) { core::hint::black_box(0xE5BC2C85u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E06C");}
 
 /// 21E070
-pub unsafe extern "C" fn grHomeRun_8021E070(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E070");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E070(_arg: *mut Ground_GObj) { core::hint::black_box(0x58BF2025u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E070");}
 
 /// 21E074
-pub unsafe extern "C" fn grHomeRun_8021E074(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E074"); text_stage_init(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E074(gobj: *mut Ground_GObj) { core::hint::black_box(0x54BF19D9u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E074"); text_stage_init(gobj) }
 /// 21E0D4
 #[cfg_attr(fptrace, melee_fptrace::trace)]
-pub unsafe extern "C" fn grHomeRun_8021E0D4(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E0D4"); text_stage_proc(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E0D4(gobj: *mut Ground_GObj) { core::hint::black_box(0x63382FCAu32); /* fn identity */ melee_core::ct!("grHomeRun_8021E0D4"); text_stage_proc(gobj) }
 /// 21E18C
-pub unsafe extern "C" fn grHomeRun_8021E18C(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E18C"); text_stage_free(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E18C(gobj: *mut Ground_GObj) { core::hint::black_box(0x623B8AA4u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E18C"); text_stage_free(gobj) }
 
 /// 21E1BC
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021E1BC(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xC31A99DAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021E1BC");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 /// 21E1F0
-pub unsafe extern "C" fn grHomeRun_8021E1F0(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E1F0");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E1F0(_arg: *mut Ground_GObj) { core::hint::black_box(0xBA0FFE53u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E1F0");}
 
 /// 21E1F4
-pub unsafe extern "C" fn grHomeRun_8021E1F4(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E1F4");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E1F4(_arg: *mut Ground_GObj) { core::hint::black_box(0xBE10049Fu32); /* fn identity */ melee_core::ct!("grHomeRun_8021E1F4");}
 
 /// 21E1F8
-pub unsafe extern "C" fn grHomeRun_8021E1F8(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E1F8"); text_stage_init(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E1F8(gobj: *mut Ground_GObj) { core::hint::black_box(0xC2100AEBu32); /* fn identity */ melee_core::ct!("grHomeRun_8021E1F8"); text_stage_init(gobj) }
 /// 21E258
 #[cfg_attr(fptrace, melee_fptrace::trace)]
-pub unsafe extern "C" fn grHomeRun_8021E258(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E258"); text_stage_proc(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E258(gobj: *mut Ground_GObj) { core::hint::black_box(0x7E444D71u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E258"); text_stage_proc(gobj) }
 /// 21E310
-pub unsafe extern "C" fn grHomeRun_8021E310(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E310"); text_stage_free(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E310(gobj: *mut Ground_GObj) { core::hint::black_box(0x621E02B6u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E310"); text_stage_free(gobj) }
 
 /// 21E340
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021E340(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xF016937Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021E340");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 /// 21E374
-pub unsafe extern "C" fn grHomeRun_8021E374(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E374");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E374(_arg: *mut Ground_GObj) { core::hint::black_box(0x620EF82Cu32); /* fn identity */ melee_core::ct!("grHomeRun_8021E374");}
 
 /// 21E378
-pub unsafe extern "C" fn grHomeRun_8021E378(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E378");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E378(_arg: *mut Ground_GObj) { core::hint::black_box(0x660EFE78u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E378");}
 
 /// 21E37C
-pub unsafe extern "C" fn grHomeRun_8021E37C(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E37C"); text_stage_init(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E37C(gobj: *mut Ground_GObj) { core::hint::black_box(0x910F4229u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E37C"); text_stage_init(gobj) }
 /// 21E3DC
 #[cfg_attr(fptrace, melee_fptrace::trace)]
-pub unsafe extern "C" fn grHomeRun_8021E3DC(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E3DC"); text_stage_proc(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E3DC(gobj: *mut Ground_GObj) { core::hint::black_box(0xE13D8B4Eu32); /* fn identity */ melee_core::ct!("grHomeRun_8021E3DC"); text_stage_proc(gobj) }
 /// 21E494
-pub unsafe extern "C" fn grHomeRun_8021E494(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E494"); text_stage_free(gobj) }
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E494(gobj: *mut Ground_GObj) { core::hint::black_box(0x9D5AD1B3u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E494"); text_stage_free(gobj) }
 
 /// 21E4C4
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021E4C4(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xA053BD79u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021E4C4");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 /// 21E4F8
-pub unsafe extern "C" fn grHomeRun_8021E4F8(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E4F8");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E4F8(_arg: *mut Ground_GObj) { core::hint::black_box(0x1E47B7E0u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E4F8");}
 
 /// 21E4FC
-pub unsafe extern "C" fn grHomeRun_8021E4FC(_arg: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E4FC");}
+#[inline(never)]
+pub unsafe extern "C" fn grHomeRun_8021E4FC(_arg: *mut Ground_GObj) { core::hint::black_box(0x594814C1u32); /* fn identity */ melee_core::ct!("grHomeRun_8021E4FC");}
 
 /// 21E500
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021E500(arg0: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x89B47C49u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021E500");
     let gobj_id: i32;
 
@@ -798,8 +848,10 @@ pub unsafe extern "C" fn grHomeRun_8021E500(arg0: i32) -> *mut HSD_GObj {
 }
 
 /// 21E994 (`fn_8021E994`, an `mpLib_JointCollisionCallback`)
+#[inline(never)]
 pub unsafe extern "C" fn fn_8021E994(_user_data: *mut c_void, _joint_id: i32, coll: *mut CollData, _coll_x50: i32,
                                      ground_kind: u32, _delta_y: f32) {
+    core::hint::black_box(0x08D87971u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8021E994");
     let coll_kind = (*coll).x34_flags.b1234() as i32;
     let mut gobj = ext::Ground_GetMapGObj(0xA);
@@ -819,7 +871,9 @@ pub unsafe extern "C" fn fn_8021E994(_user_data: *mut c_void, _joint_id: i32, co
 }
 
 /// 21EA30
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021EA30(pos: *const f32) {
+    core::hint::black_box(0x1A0BE0EEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021EA30");
     let mut time = ext::Ground_801C0498();
     let mut result = fnmadds(70.0, grHr_804D6AE4 * time, *pos);
@@ -848,7 +902,9 @@ pub unsafe extern "C" fn grHomeRun_8021EAF8() {
 }
 
 /// 21EB10 (`fn_8021EB10`): copies the main camera into a target camera
+#[inline(never)]
 pub unsafe extern "C" fn fn_8021EB10(target_cam_gobj: *mut HSD_GObj, _code: isize) {
+    core::hint::black_box(0xB98F41FCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8021EB10");
     let mut fov: f32 = 0.0;
     let mut aspect: f32 = 0.0;
@@ -957,7 +1013,9 @@ pub unsafe extern "C" fn grHomeRun_8021EDD4() {
 }
 
 /// 21EEBC
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021EEBC(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    core::hint::black_box(0xB5EB015Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021EEBC");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut vec);

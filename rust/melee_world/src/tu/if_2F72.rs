@@ -127,7 +127,9 @@ pub unsafe fn HSD_JObjSetTranslate(jobj: *mut HSD_JObj, translate: *mut Vec) {
 
 /// `s32 fn_802F7288(HSD_GObj*, Element_803F9628*)`: animates the element's joint and fires its two
 /// sound cues (`x10` / `x11` are the frames); returns whether the animation is still running.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802F7288(gobj: *mut HSD_GObj, entry: *mut Element_803F9628) -> i32 {
+    core::hint::black_box(0x5BBD3B48u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802F7288");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let frame = ext::lbGetJObjCurrFrame(jobj);
@@ -170,7 +172,9 @@ unsafe fn find_entry(gobj: *mut HSD_GObj) -> *mut Element_803F9628 {
 }
 
 /// `void if_802F73C4(HSD_GObj*)`: element proc that frees the gobj when the animation ends.
+#[inline(never)]
 pub unsafe extern "C" fn if_802F73C4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9F511029u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("if_802F73C4");
     let entry = find_entry(gobj);
     let idx = if entry.is_null() {
@@ -196,7 +200,9 @@ pub unsafe extern "C" fn if_802F73C4(gobj: *mut HSD_GObj) {
 }
 
 /// `void if_802F74D0(HSD_GObj*)`: element proc that keeps the gobj (it only clears the end callback).
+#[inline(never)]
 pub unsafe extern "C" fn if_802F74D0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xECC08C9Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("if_802F74D0");
     let entry = find_entry(gobj);
     let idx = if entry.is_null() {
@@ -221,7 +227,9 @@ pub unsafe extern "C" fn if_802F74D0(gobj: *mut HSD_GObj) {
 }
 
 /// `void fn_802F75D4(HSD_GObj*)`: proc of a slot's first model; frees it when its animation ends.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802F75D4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE74FF73Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802F75D4");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if ext::lb_8000B09C(jobj) == 0 {
@@ -238,7 +246,9 @@ pub unsafe extern "C" fn fn_802F75D4(gobj: *mut HSD_GObj) {
 }
 
 /// `void fn_802F7670(HSD_GObj*)`: proc of a slot's second model.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802F7670(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x991A079Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802F7670");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if ext::lb_8000B09C(jobj) == 0 {
@@ -266,7 +276,9 @@ pub unsafe fn GetSlot(gobj: *mut HSD_GObj) -> i32 {
 }
 
 /// `void fn_802F770C(HSD_GObj*, int)`: GX callback; draws the model unless the slot's digits are hidden.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802F770C(gobj: *mut HSD_GObj, callback: isize) {
+    core::hint::black_box(0x8EB467B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802F770C");
     let status = ext::ifStatus_GetHUDInfo();
     let slot = GetSlot(gobj);
@@ -281,7 +293,9 @@ pub unsafe extern "C" fn fn_802F770C(gobj: *mut HSD_GObj, callback: isize) {
 
 /// `HSD_GObj* fn_802F77F8(HSD_GObj* gobj, u8 slot, u16 arg2)`: frees `gobj` and builds a model
 /// (scene model 0, animation `arg2`) at the slot's HUD position; NULL when it cannot.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802F77F8(mut gobj: *mut HSD_GObj, slot: u8, arg2: u16) -> *mut HSD_GObj {
+    core::hint::black_box(0x02BAA441u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802F77F8");
     if scinfstc_models.scene_models.is_null() {
         return null_mut();
@@ -311,7 +325,9 @@ pub unsafe extern "C" fn fn_802F77F8(mut gobj: *mut HSD_GObj, slot: u8, arg2: u1
 
 /// `void fn_802F7994(HSD_GObj*)`: proc of a slot's first model that also spawns the second one
 /// once it passes frame 12.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802F7994(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB69B049Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802F7994");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let frame = ext::lbGetJObjCurrFrame(jobj);

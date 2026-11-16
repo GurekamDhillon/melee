@@ -250,7 +250,9 @@ pub unsafe extern "C" fn it_8027542C(item_gobj: *mut HSD_GObj) {
     (*item(item_gobj)).xDCD_flag.x0.set_b7(0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80275444(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xCCFA646Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80275444");
     let item = item(item_gobj);
     (*item).xDCD_flag.x0.set_b5(1);
@@ -305,7 +307,9 @@ pub unsafe extern "C" fn it_80275534(item_gobj: *mut HSD_GObj, scale: f32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80275594(item_gobj: *mut HSD_GObj, idx: i32, mult: f32) {
+    core::hint::black_box(0xCDACDABAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80275594");
     let item = item(item_gobj);
     let hitcapsule = &mut (*item).x5D4_hitboxes[idx as usize].hit;
@@ -395,7 +399,9 @@ pub unsafe extern "C" fn it_80275820(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80275870(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xB7A63A1Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80275870");
     let item = item(item_gobj);
     let mut var_ctr = 0usize;

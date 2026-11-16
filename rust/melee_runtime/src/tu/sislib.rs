@@ -67,7 +67,9 @@ pub static mut HSD_SisLib_804D1110: [*mut HSD_Archive; 5] = [::core::ptr::null::
 >() as *mut HSD_Archive; 5];
 pub static mut HSD_SisLib_804D1124: [*mut SIS; 5] = [::core::ptr::null::<SIS>()
     as *mut SIS; 5];
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_Alloc(mut size: s32) -> *mut ::core::ffi::c_void {
+    core::hint::black_box(0x9A16D059u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_Alloc");
     let mut best: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut alloc_tail: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
@@ -213,7 +215,9 @@ pub unsafe extern "C" fn HSD_SisLib_Free(mut ptr: *mut ::core::ffi::c_void) {
     }
     sb_write!(alloc_cur, next, ::core::ptr::null_mut::<SisBlock>());
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5A2C(mut ptr: *mut ::core::ffi::c_void) {
+    core::hint::black_box(0x4A90D9BDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5A2C");
     let mut next_text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut alloc: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
@@ -516,7 +520,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A6048(mut size: u32) {
         i += 1;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn fn_803A60EC(mut gobj: *mut ::core::ffi::c_void) {
+    core::hint::black_box(0x6466364Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_803A60EC");
     let mut curr: *mut sislib_UnkAlloc3 = HSD_SisLib_804D797C;
     while !curr.is_null() {
@@ -527,10 +533,12 @@ pub unsafe extern "C" fn fn_803A60EC(mut gobj: *mut ::core::ffi::c_void) {
         curr = (*curr).x0;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn sislib_WideCamera(
     mut gobj: *mut HSD_GObj,
     mut pass: isize,
 ) {
+    core::hint::black_box(0xF1D8CB54u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("sislib_WideCamera");
 
     let aspect = f32::from_bits(View_AspectBits() as u32);
@@ -771,9 +779,11 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_803910D8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { core::hint::black_box(0xA915623Fu32); /* fn identity */ super::HSD_GObj_803910D8(a0, a1) }
         #[cfg_attr(fptrace, melee_fptrace::trace)]
-        pub unsafe extern "C" fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: i32) { super::HSD_SisLib_803A84BC(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: i32) { core::hint::black_box(0x0AEF10AFu32); /* fn identity */ super::HSD_SisLib_803A84BC(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::gobj_native::HSD_GObj_CameraKind;

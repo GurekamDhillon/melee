@@ -274,7 +274,9 @@ pub unsafe extern "C" fn it_2725_Logic108_PickedUp(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x76492C22u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamuschargeshot_UnkMotion0_Anim");
     let mut scale: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -318,9 +320,12 @@ pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Anim(gobj: *mut Item_GObj)
     false
 }
 
-pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSamuschargeshot_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x50D925BFu32); /* fn identity */ melee_core::ct!("itSamuschargeshot_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xC26CCF15u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamuschargeshot_UnkMotion0_Coll");
     false
 }
@@ -344,7 +349,9 @@ pub unsafe extern "C" fn it_802B5CBC(gobj: *mut Item_GObj, _unused: *mut Fighter
     (*ip).on_accessory = Some(it_802B5EDC);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x1FD5A56Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamuschargeshot_UnkMotion8_Anim");
     let mut scale: Vec3 = core::mem::zeroed();
     let ip = (*gobj).user_data as *mut Item;
@@ -358,14 +365,18 @@ pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Anim(gobj: *mut Item_GObj)
     ext::it_80273130(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xCA5428F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamuschargeshot_UnkMotion8_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.samuschargeshot.xDDC * cosf((*ip).xDD4_itemVar.samuschargeshot.xDD8);
     (*ip).x40_vel.y = (*ip).xDD4_itemVar.samuschargeshot.xDDC * sinf((*ip).xDD4_itemVar.samuschargeshot.xDD8);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6E73B15Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamuschargeshot_UnkMotion8_Coll");
     let ip = GET_ITEM(gobj);
     if it_802B5518(gobj, &mut (*ip).x378_itemColl) {
@@ -374,7 +385,9 @@ pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Coll(gobj: *mut Item_GObj)
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B5EDC(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0572227Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B5EDC");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -398,17 +411,23 @@ pub unsafe extern "C" fn it_802B5EDC(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.samuschargeshot.xDF4 = (*ip).xDD4_itemVar.samuschargeshot.xDF4 % 3;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x517FA7ECu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusChargeshot_Logic108_DmgDealt");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_Clanked(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD670138Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusChargeshot_Logic108_Clanked");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4DD9AAE6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusChargeshot_Logic108_Absorbed");
     true
 }
@@ -433,7 +452,9 @@ pub unsafe extern "C" fn it_2725_Logic108_Reflected(gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_HitShield(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7B6F2FA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusChargeshot_Logic108_HitShield");
     true
 }
@@ -459,7 +480,9 @@ pub unsafe extern "C" fn it_2725_Logic108_ShieldBounced(gobj: *mut Item_GObj) ->
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x36473055u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusChargeshot_Logic108_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

@@ -102,8 +102,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { super::efLib_PauseAll(a0) }
-        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { super::efLib_ResumeAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0x397C64B5u32); /* fn identity */ super::efLib_PauseAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { core::hint::black_box(0xCA83292Au32); /* fn identity */ super::efLib_ResumeAll(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -145,14 +147,17 @@ pub unsafe extern "C" fn it_802CF814(gobj: *mut Item_GObj) {
     it_802CFB78(gobj);
 }
 
-pub unsafe extern "C" fn it_802CF880(_gobj: *mut Item_GObj) { melee_core::ct!("it_802CF880");}
+#[inline(never)]
+pub unsafe extern "C" fn it_802CF880(_gobj: *mut Item_GObj) { core::hint::black_box(0x644B5086u32); /* fn identity */ melee_core::ct!("it_802CF880");}
 
 pub unsafe extern "C" fn it_802CF884(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802CF884");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CF8A4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF59B897Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CF8A4");
     let it = GET_ITEM(gobj);
 
@@ -174,7 +179,9 @@ pub unsafe extern "C" fn it_802CF908(gobj: *mut Item_GObj) {
     (*it).xDD4_itemVar.pokemon.timer = (*sa).timer;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRaikou_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFB1BC62Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRaikou_UnkMotion0_Anim");
     let it = (*gobj).user_data as *mut Item;
     let sa: *mut itPokemonAttributes;
@@ -207,7 +214,9 @@ pub unsafe extern "C" fn itRaikou_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRaikou_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x64D5921Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRaikou_UnkMotion0_Phys");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
@@ -215,7 +224,9 @@ pub unsafe extern "C" fn itRaikou_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRaikou_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFDEC6BC9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRaikou_UnkMotion0_Coll");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
@@ -226,7 +237,9 @@ pub unsafe extern "C" fn itRaikou_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CFAFC(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE840569Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CFAFC");
     let it = (*gobj).user_data as *mut Item;
 
@@ -246,18 +259,24 @@ pub unsafe extern "C" fn it_802CFB78(gobj: *mut Item_GObj) {
     Item_EnterAirStateWithHitlag(gobj, 1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRaikou_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6257FDD7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRaikou_UnkMotion1_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRaikou_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x09150C6Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRaikou_UnkMotion1_Phys");
     ext::it_8027A09C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRaikou_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD3650EE0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRaikou_UnkMotion1_Coll");
     ext::it_8027A118(gobj, Some(it_802CF8A4)) != 0
 }

@@ -218,7 +218,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) { super::HSD_AObjSetFlags(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) { core::hint::black_box(0x74509A83u32); /* fn identity */ super::HSD_AObjSetFlags(a0, a1) }
         pub unsafe extern "C" fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) { super::HSD_AObjSetRate(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
         pub unsafe extern "C" fn grDisplay_801C5F60(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5F60(a0, a1) }
@@ -459,7 +460,9 @@ pub static mut Ground_804D6954: i16 = 0;
 // m-ex stage rows (TARGET_PC)
 
 /// A SYNTHESISED ROW MAY HAVE NO StageCallbacks[]: "no table" is "nothing matched".
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexStageCallbacks(grkind: i32) -> *mut StageCallbacks {
+    core::hint::black_box(0x99A9BEA8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexStageCallbacks");
     if stage_datas[grkind as usize].is_null() {
         return null_mut();
@@ -472,36 +475,52 @@ pub unsafe extern "C" fn Ground_MexStageCallbacks(grkind: i32) -> *mut StageCall
     cb
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexOnInit() {
+    core::hint::black_box(0x8D83D3A9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexOnInit");
     ext::Mex_GrOnInit();
 }
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexOnDemoInit(arg: i32) {
+    core::hint::black_box(0x7A059A26u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexOnDemoInit");
     ext::Mex_GrOnDemoInit(arg);
 }
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexOnLoad() {
+    core::hint::black_box(0x672CC047u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexOnLoad");
     ext::Mex_GrOnLoad();
 }
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexOnStart() {
+    core::hint::black_box(0xA72D75E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexOnStart");
     ext::Mex_GrOnStart();
 }
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexCallback4() -> i32 {
+    core::hint::black_box(0xB6AA9C27u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexCallback4");
     (ext::Mex_GrCallback4() != 0) as i32
 }
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexOnTouchLine(index: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
+    core::hint::black_box(0x7A44ADECu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexOnTouchLine");
     ext::Mex_GrOnTouchLine(index) as *mut lbColl_80008D30_arg1
 }
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexOnCheckShadowRender(pos: *mut Vec3, arg1: i32, jobj: *mut HSD_JObj) -> i32 {
+    core::hint::black_box(0x70C6B18Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexOnCheckShadowRender");
     (ext::Mex_GrOnCheckShadowRender(pos as *mut c_void, arg1, jobj as *mut c_void) != 0) as i32
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexInitStages() {
+    core::hint::black_box(0x25D0EF1Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexInitStages");
     if Ground_MexInitStages_done {
         return;
@@ -574,11 +593,15 @@ pub unsafe extern "C" fn Ground_MexInitStages() {
     }
 }
 
-pub unsafe extern "C" fn Ground_OnStart() { melee_core::ct!("Ground_OnStart");}
+#[inline(never)]
+pub unsafe extern "C" fn Ground_OnStart() { core::hint::black_box(0xC53BD5F7u32); /* fn identity */ melee_core::ct!("Ground_OnStart");}
 
-pub unsafe extern "C" fn Ground_801BFFAC(_arg0: i32) { melee_core::ct!("Ground_801BFFAC");}
+#[inline(never)]
+pub unsafe extern "C" fn Ground_801BFFAC(_arg0: i32) { core::hint::black_box(0x83F201A3u32); /* fn identity */ melee_core::ct!("Ground_801BFFAC");}
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801BFFB0() {
+    core::hint::black_box(0xAEF006BDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801BFFB0");
     crate::tu::grzakogenerator::grZakoGenerator_StageInit();
     ext::grDatFiles_801C6288();
@@ -658,7 +681,9 @@ pub unsafe extern "C" fn Ground_801C0378(_arg0: i32) {
     zeroBuffer();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn mem_free(ptr: *mut c_void) {
+    core::hint::black_box(0x3490B0D8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("mem_free");
     ext::HSD_Free(ptr);
 }
@@ -825,7 +850,9 @@ pub unsafe extern "C" fn Ground_801C0754(pair: *mut StageIdPair) {
     ext::ScriptGame_StageSlotRetailCaptureEnd();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_TTMod_BuildCollData(orig: *mut MapCollData, level: i32, nplat: i32) -> *mut MapCollData {
+    core::hint::black_box(0xDEA5AC95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_TTMod_BuildCollData");
     let ovc = (*orig).vert_count;
     let olc = (*orig).line_count;
@@ -919,7 +946,9 @@ pub unsafe extern "C" fn Ground_TTMod_BuildCollData(orig: *mut MapCollData, leve
     merged
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_TTMod_InitLines(merged: *mut MapCollData, nplat: i32) {
+    core::hint::black_box(0xE46DA746u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_TTMod_InitLines");
     let gline = ext::mpGetGroundCollLine();
     let olc = (*merged).line_count - nplat;
@@ -1083,7 +1112,9 @@ pub unsafe extern "C" fn Ground_801C0A70(pos: *mut Vec3) -> i32 {
     (ext::Stage_80224FDC(pos) != 0) as i32
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C0C2C(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x465CF7B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C0C2C");
     // mod host site (hooks-v1 0x801C0C2C, melee_core::modhook): one None check when no mod hooks it
     melee_core::mod_hook!(0x801C0C2C, [melee_core::modhook::Arg::Gobj(arg0 as _)], Ground_801C0C2C__orig(arg0));
@@ -1319,7 +1350,9 @@ pub unsafe extern "C" fn Ground_801C13D0(arg0: i32, depth: i32) -> *mut HSD_JObj
 }
 
 /// `Ground_803B7E0C`: the identity joint `get_jobj_inline` loads with a uniform scale.
+#[inline(never)]
 pub unsafe extern "C" fn get_jobj_inline(phi_f0: f32) -> *mut HSD_JObj {
+    core::hint::black_box(0x7E7D3A52u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("get_jobj_inline");
     let mut sp14: HSD_Joint = core::mem::zeroed();
     sp14.scale = Vec3 { x: 1.0, y: 1.0, z: 1.0 };
@@ -1489,7 +1522,9 @@ pub unsafe extern "C" fn Ground_801C1A20(arg0: *mut HSD_Joint, arg1: i32) -> *mu
     temp_r30
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C1CD0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x69270098u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C1CD0");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
@@ -1501,7 +1536,9 @@ pub unsafe extern "C" fn Ground_801C1CD0(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C1D38(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFFD615D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C1D38");
     let gp = (*gobj).user_data as *mut Ground;
     if let Some(f) = (*gp).xC_callback {
@@ -1548,7 +1585,9 @@ pub unsafe extern "C" fn Ground_801C1DAC() -> u32 {
     stage_info.flags & 0x100
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C1DC0() -> u32 {
+    core::hint::black_box(0x084CE3BAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C1DC0");
     stage_info.flags & 0x80
 }
@@ -1574,7 +1613,9 @@ pub unsafe extern "C" fn Ground_801C1E18() -> i32 {
     stage_info.unk8C.b2() as i32
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C1E2C(gobj: *mut HSD_GObj, code: isize) {
+    core::hint::black_box(0xCA36D3CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C1E2C");
     if ext::Camera_80030A78() != 0 {
         return;
@@ -1595,7 +1636,9 @@ pub unsafe extern "C" fn Ground_801C1E84() -> *mut HSD_GObj {
 }
 
 /// `static inline HSD_FogDesc* foo(void)`: the first fog desc of a model flagged for fog.
+#[inline(never)]
 pub unsafe extern "C" fn foo() -> *mut HSD_FogDesc {
+    core::hint::black_box(0x33C69C60u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("foo");
     ext::grDatFiles_GetArchive();
     let archive = ext::grDatFiles_GetArchive();
@@ -1726,7 +1769,9 @@ pub unsafe extern "C" fn find_light_override_in_dat(dat: *mut UnkStageDat, array
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C20E0(archive: *mut UnkArchiveStruct, lightset: *mut *mut LightList) -> *mut *mut LightList {
+    core::hint::black_box(0xA9380683u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C20E0");
     let mut b6 = 0i32;
     let mut b7 = 0i32;
@@ -1822,7 +1867,9 @@ pub unsafe extern "C" fn Ground_801C247C(arg0: i32, arg1: i32) -> *mut HSD_Splin
 }
 
 /// Resolve the StKind of the row that actually exists (m-ex added stages have a wildcard row).
+#[inline(never)]
 pub unsafe extern "C" fn Ground_MexParamStkind(stkind: StKind) -> StKind {
+    core::hint::black_box(0x2162A25Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_MexParamStkind");
     if stage_info.param.is_null() {
         return stkind;
@@ -1848,7 +1895,9 @@ pub unsafe extern "C" fn Ground_MexParamStkind(stkind: StKind) -> StKind {
     stkind
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C24F8(stkind: StKind, arg1: u32, arg2: *mut i32) -> i32 {
+    core::hint::black_box(0x6ADF4454u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C24F8");
     let mut stkind = stkind;
     let mut arg1 = arg1;
@@ -2221,7 +2270,9 @@ pub unsafe extern "C" fn Ground_InitMapColl(jobj: *mut HSD_JObj, arg1: i32) -> i
     result
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_UpdateMapColl(arg0: *mut Ground_GObj) -> i32 {
+    core::hint::black_box(0x541A411Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_UpdateMapColl");
     if ext::ScriptGame_StageSlotCollision((*((*arg0).user_data as *mut Ground)).map_id as i32) != 0 {
         return 1;
@@ -3040,7 +3091,9 @@ pub unsafe extern "C" fn Ground_TTMod_AddPlatformBoxes(level: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C4210() -> i32 {
+    core::hint::black_box(0x159EA667u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C4210");
     let mut count: i32 = 0;
     {
@@ -3182,12 +3235,16 @@ pub unsafe extern "C" fn Ground_801C445C(lobj: *mut HSD_LObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C461C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA1EAA5F6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C461C");
     Ground_801C445C((*gobj).hsd_obj as *mut HSD_LObj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C4640(gobj: *mut HSD_GObj, _unused: isize) {
+    core::hint::black_box(0xC2F195AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C4640");
     ext::HSD_LObj_803668EC((*gobj).hsd_obj as *mut HSD_LObj);
     ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());
@@ -3238,7 +3295,9 @@ pub static mut Ground_804D451C: LightList = unsafe {
 /// `Ground_803E06C8` (3E06C8)
 pub static mut Ground_803E06C8: [*mut LightList; 3] = unsafe { [&raw mut Ground_804D451C, &raw mut Ground_804D450C, null_mut()] };
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C466C() {
+    core::hint::black_box(0x49EC5A05u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C466C");
     let mut callbacks: *mut StageCallbacks;
     let mut archive: *mut UnkArchiveStruct;
@@ -3434,7 +3493,9 @@ pub unsafe extern "C" fn Ground_801C4A08(gobj: *mut HSD_GObj) {
     ext::HSD_GObjFree(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C4B50(spline: *mut HSD_Spline, arg1: *mut Vec3, result: *mut Vec3, arg8: f32) {
+    core::hint::black_box(0x4B123C73u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C4B50");
     let mut vec0 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vec1 = vec0;
@@ -3712,7 +3773,9 @@ pub unsafe extern "C" fn Ground_801C5630(gp: *mut Ground, i: i32, val: f32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C5694(gp: *mut Ground, i: i32, val: f32) {
+    core::hint::black_box(0xB0B413BAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C5694");
     if i < 0 || i >= 8 {
         return;
@@ -3771,7 +3834,9 @@ pub unsafe extern "C" fn Ground_GetP1Fighter2() -> *mut Fighter_GObj {
 }
 
 /// `arg0` is unused by the implementation; the game's only caller materializes an explicit 0.
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C57F0(_arg0: i32) -> f32 {
+    core::hint::black_box(0x36F0CBA2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C57F0");
     stage_info.x6E0
 }
@@ -3826,7 +3891,9 @@ struct PairListEntry {
     unk8: i32,
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Ground_801C5940() -> i32 {
+    core::hint::black_box(0xF6FE3172u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Ground_801C5940");
     let mut vals = [0i32; 32];
     let vals_count = 32usize;

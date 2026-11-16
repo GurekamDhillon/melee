@@ -130,7 +130,8 @@ pub unsafe extern "C" fn itPippi_Logic20_Spawned(gobj: *mut Item_GObj) {
 }
 
 /// 2D32D8
-pub unsafe extern "C" fn it_802D32D8(_gobj: *mut Item_GObj) { melee_core::ct!("it_802D32D8");}
+#[inline(never)]
+pub unsafe extern "C" fn it_802D32D8(_gobj: *mut Item_GObj) { core::hint::black_box(0xE80CAD59u32); /* fn identity */ melee_core::ct!("it_802D32D8");}
 
 /// 2D32DC
 pub unsafe extern "C" fn it_802D32DC(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
@@ -138,7 +139,9 @@ pub unsafe extern "C" fn it_802D32DC(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GO
     ext::it_8026B894(gobj, ref_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD0351F21u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion1_Anim");
     let it = (*gobj).user_data as *mut Item;
 
@@ -154,7 +157,9 @@ pub unsafe extern "C" fn itPippi_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF72B9B6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion1_Phys");
     let it = (*gobj).user_data as *mut Item;
     if (*it).ground_or_air == GA_Air {
@@ -162,7 +167,9 @@ pub unsafe extern "C" fn itPippi_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x61AA6886u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion1_Coll");
     let it = (*gobj).user_data as *mut Item;
     if (*it).ground_or_air == GA_Air {
@@ -200,7 +207,9 @@ pub unsafe extern "C" fn it_802D33F8(gobj: *mut Item_GObj) {
     (*it).exited_hitlag = None;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB84EC33Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion5_Anim");
     let it = (*gobj).user_data as *mut Item;
     if ext::it_80272C6C(gobj) == 0 {
@@ -212,7 +221,9 @@ pub unsafe extern "C" fn itPippi_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x871230B8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion5_Phys");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
@@ -220,7 +231,9 @@ pub unsafe extern "C" fn itPippi_UnkMotion5_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEDD96AAAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion5_Coll");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
@@ -245,13 +258,17 @@ pub unsafe extern "C" fn it_802D3590(gobj: *mut Item_GObj) {
     (*it).xDD4_itemVar.pokemon.timer = (*sa).timer;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xDD6B95C0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x175F4D55u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         let it = (*gobj).user_data as *mut Item;
@@ -262,7 +279,9 @@ pub unsafe extern "C" fn itPippi_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB59C6757u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D32D8)) != 0
 }

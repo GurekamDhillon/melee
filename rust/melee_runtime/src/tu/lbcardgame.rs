@@ -64,7 +64,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x91FD8A20u32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
@@ -211,7 +212,9 @@ pub unsafe extern "C" fn lb_8001C658() -> *mut i8 {
 }
 
 /// `getCurrentIcon`
+#[inline(never)]
 pub unsafe extern "C" fn getCurrentIcon() -> *mut c_void {
+    core::hint::black_box(0x3B800869u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("getCurrentIcon");
     if ext::Mex_Enabled(b"use_save_banner_1\0".as_ptr() as *const i8) != 0 {
         return *state.icon_data.add(1);
@@ -261,7 +264,9 @@ pub unsafe extern "C" fn lb_8001C8BC() -> i32 {
 }
 
 /// `updateCardStatus`
+#[inline(never)]
 pub unsafe extern "C" fn updateCardStatus() -> u32 {
+    core::hint::black_box(0x3D374A44u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("updateCardStatus");
     let unk_status = state.unk_status;
     state.unk_status = 0;
@@ -317,7 +322,9 @@ pub unsafe extern "C" fn lb_8001CBBC() -> u32 {
 }
 
 /// 01CC30
+#[inline(never)]
 pub unsafe extern "C" fn fn_8001CC30(arg0: i32) {
+    core::hint::black_box(0x812FC914u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8001CC30");
     if arg0 != 0 {
         state.card_status = LbCardStatus_2;
@@ -331,7 +338,9 @@ pub unsafe extern "C" fn lb_8001CC4C() -> i32 {
 }
 
 /// `dont_inline_helper`
+#[inline(never)]
 pub unsafe extern "C" fn dont_inline_helper() -> u32 {
+    core::hint::black_box(0x3ACC1C7Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("dont_inline_helper");
     if updateCardStatus() != 0 {
         return LbCardResult_Invalid;
@@ -405,7 +414,9 @@ pub unsafe extern "C" fn lbCardGame_SaveChanges() {
 }
 
 /// 01CE78
+#[inline(never)]
 pub unsafe extern "C" fn lbCardGame_DecideGameMode() -> u8 {
+    core::hint::black_box(0x49BF0D29u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardGame_DecideGameMode");
     updateCardStatus();
     if state.card_status != LbCardStatus_0 && state.card_status != LbCardStatus_4 {
@@ -415,13 +426,17 @@ pub unsafe extern "C" fn lbCardGame_DecideGameMode() -> u8 {
 }
 
 /// `gobj1_Proc`
+#[inline(never)]
 pub unsafe extern "C" fn gobj1_Proc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x553B5FC3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gobj1_Proc");
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
 /// `gobj0_RenderFunc`
+#[inline(never)]
 pub unsafe extern "C" fn gobj0_RenderFunc(gobj: *mut HSD_GObj, arg1: isize) {
+    core::hint::black_box(0x08631730u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gobj0_RenderFunc");
     if state.x10 == 1 {
         ext::HSD_GObj_803910D8(gobj, arg1);

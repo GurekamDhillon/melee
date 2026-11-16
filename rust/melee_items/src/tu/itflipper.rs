@@ -259,7 +259,9 @@ pub unsafe extern "C" fn itFlipper_UpdateSpin(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_AddSpinImpulse(gobj: *mut Item_GObj, pos: *mut Vec, vel: f32) {
+    core::hint::black_box(0x54BF61C0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_AddSpinImpulse");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
@@ -327,7 +329,9 @@ pub unsafe extern "C" fn itFlipper_SpinFromFighter(gobj: *mut Item_GObj) {
     itFlipper_AddSpinImpulse(gobj, &mut pos, MTXDegToRad(speed));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Repel_inline(gobj: *mut Item_GObj, kind: i32, pos: *mut Vec, vec: *mut Vec) {
+    core::hint::black_box(0x95CC66FCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Repel_inline");
     let ip = get_item(gobj);
     (*vec).z = 0.0;
@@ -345,49 +349,66 @@ pub unsafe extern "C" fn itFlipper_Repel_inline(gobj: *mut Item_GObj, kind: i32,
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Repel(gobj: *mut Item_GObj, kind: i32, pos: *mut Vec) {
+    core::hint::black_box(0x45EBF750u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Repel");
     let mut vec: Vec = core::mem::zeroed();
     itFlipper_Repel_inline(gobj, kind, pos, &mut vec);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_EnterResting(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD70C1AB2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_EnterResting");
     let ip = get_item(gobj);
     Item_StopAndEnterState(gobj, ip, FLIPPER_MS_RESTING as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Resting_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x9177654Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Resting_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFlipper_Resting_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFlipper_Resting_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFlipper_Resting_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x6CAD3321u32); /* fn identity */ melee_core::ct!("itFlipper_Resting_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Resting_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x407E0E5Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Resting_Coll");
     ext::it_8026D62C(gobj, Some(itFlipper_EnterFalling));
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_EnterFalling(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x30896CE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_EnterFalling");
     ext::Item_80268E5C(gobj, FLIPPER_MS_FALLING as _, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Falling_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x5B738D97u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Falling_Anim");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Falling_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE8E3E72Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Falling_Phys");
     let ip = get_item(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Falling_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xCEFB07A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Falling_Coll");
     ext::it_8026E15C(gobj, Some(itFlipper_EnterResting));
     0
@@ -398,12 +419,15 @@ pub unsafe extern "C" fn itFlipper_PickedUp(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, FLIPPER_MS_HELD as _, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Held_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x06BF0C57u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Held_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFlipper_Held_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFlipper_Held_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFlipper_Held_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xAD7C1AEAu32); /* fn identity */ melee_core::ct!("itFlipper_Held_Phys");}
 
 pub unsafe extern "C" fn itFlipper_Dropped(gobj: *mut Item_GObj) {
     melee_core::ct!("itFlipper_Dropped");
@@ -425,7 +449,9 @@ pub unsafe extern "C" fn itFlipper_Thrown(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, FLIPPER_MS_INFLIGHT as _, (ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE) as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Inflight_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x1C021DFDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Inflight_Anim");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.flipper.xDD4_flightTimer -= 1;
@@ -435,7 +461,9 @@ pub unsafe extern "C" fn itFlipper_Inflight_Anim(gobj: *mut Item_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Inflight_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0197D778u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Inflight_Phys");
     let ip = get_item(gobj);
     let item_attr = (*ip).xCC_item_attr;
@@ -449,7 +477,9 @@ pub unsafe extern "C" fn itFlipper_Inflight_Phys(gobj: *mut Item_GObj) {
     ext::it_80274658(gobj, (*ext::it_804D6D28).x68_float);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Inflight_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x6AD97A6Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Inflight_Coll");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
@@ -546,7 +576,9 @@ pub unsafe extern "C" fn itFlipper_UpdateActive(gobj: *mut Item_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Active_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x098898D8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Active_Anim");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE4_spinVel != 0.0 {
@@ -555,7 +587,9 @@ pub unsafe extern "C" fn itFlipper_Active_Anim(gobj: *mut Item_GObj) -> i32 {
     itFlipper_UpdateActive(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Spinning_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xA736D178u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Spinning_Anim");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE4_spinVel == 0.0 {
@@ -564,7 +598,9 @@ pub unsafe extern "C" fn itFlipper_Spinning_Anim(gobj: *mut Item_GObj) -> i32 {
     itFlipper_UpdateActive(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Spinning_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xEEFE581Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Spinning_Phys");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE8_isStageFixed != 0 && !(*ip).xDD4_itemVar.flipper.xDEC_stageAnchor.is_null() {
@@ -572,7 +608,9 @@ pub unsafe extern "C" fn itFlipper_Spinning_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Spinning_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x53AF89CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Spinning_Coll");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE8_isStageFixed == 0 {
@@ -656,7 +694,9 @@ pub unsafe extern "C" fn itFlipper_HitShield(gobj: *mut Item_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Reflected(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xC3E6CC9Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Reflected");
     ext::it_80273030(gobj)
 }
@@ -706,20 +746,27 @@ pub unsafe extern "C" fn itFlipper_EnteredAir(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, FLIPPER_MS_AIRBORNE as _, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Airborne_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x44A3B57Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Airborne_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFlipper_Airborne_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFlipper_Airborne_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFlipper_Airborne_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x96CD6FB1u32); /* fn identity */ melee_core::ct!("itFlipper_Airborne_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_Airborne_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xB13123CBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_Airborne_Coll");
     ext::it_8026E8C4(gobj, Some(itFlipper_EnterResting), Some(itFlipper_EnterFalling));
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFlipper_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA26B5DD5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFlipper_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

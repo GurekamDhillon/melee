@@ -289,7 +289,9 @@ unsafe fn itZeldadinfire_UnkMotion0_Anim_inline(gobj: *mut Item_GObj) {
     (*ip).xD44_lifeTimer = (*attrs).x2C;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x011787A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldadinfire_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -318,7 +320,9 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Anim(gobj: *mut Item_GObj) ->
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x8143C1BBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldadinfire_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -349,7 +353,9 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Anim(gobj: *mut Item_GObj) ->
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDBA7813Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldadinfire_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ItZeldaDinFire_ItemVars;
@@ -382,13 +388,17 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4CFCA45Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldadinfire_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4D3B2A95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldadinfire_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     if it_802C3AFC(gobj, &mut (*ip).x378_itemColl) {
@@ -397,7 +407,9 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Coll(gobj: *mut Item_GObj) ->
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD23D18ACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldadinfire_UnkMotion1_Coll");
     false
 }
@@ -415,17 +427,23 @@ pub unsafe extern "C" fn itZeldaDinFire_Logic65_Reflected(gobj: *mut Item_GObj) 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_Clanked(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xE512F2C4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldaDinFire_Logic65_Clanked");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7D5D63CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldaDinFire_Logic65_Absorbed");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0810F053u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itZeldaDinFire_Logic65_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

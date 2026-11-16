@@ -94,7 +94,9 @@ pub unsafe extern "C" fn it_802BD158(gobj: *mut Item_GObj, pos: *mut Vec3, arg2:
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachExplode_Logic55_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFE4D9563u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachExplode_Logic55_DmgDealt");
     false
 }
@@ -118,12 +120,16 @@ pub unsafe extern "C" fn it_802BD248(item_gobj: *mut Item_GObj, owner: *mut Item
     ext::it_80274574(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachexplode_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x26E1C87Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachexplode_UnkMotion1_Anim");
     ext::it_802751D8(item_gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachExplode_Logic55_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x942F390Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachExplode_Logic55_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

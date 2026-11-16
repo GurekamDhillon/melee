@@ -604,7 +604,9 @@ pub unsafe extern "C" fn gm_PreloadTitleDemo() {
     ext::lbAudioAx_80027168();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
+    core::hint::black_box(0xFE1B585Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterVs");
     let temp_r30: *mut VsModeData = &mut (*ext::gmMainLib_804D3EE0).modes.table[GmVsMode_Opening as usize];
     let md = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;

@@ -63,7 +63,9 @@ pub mod ext {
 kinds_jobj_inl!();
 
 /// `float get_min_life(void)`
+#[inline(never)]
 pub unsafe extern "C" fn get_min_life() -> f32 {
+    core::hint::black_box(0x7ACF3BC6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("get_min_life");
     1.0
 }
@@ -128,7 +130,9 @@ unsafe fn itNesspkfirepillar_INLINE_Anim_SetScale(item_gobj: *mut Item_GObj, sca
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x0E7DF766u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfirepillar_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
@@ -138,7 +142,9 @@ pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Anim(item_gobj: *mut Item
 }
 
 /// @bug sets the item to be in the air
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA134DFA3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfirepillar_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     (*item).ground_or_air = GA_Air;
@@ -149,7 +155,9 @@ pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Phys(item_gobj: *mut Item
 }
 
 /// @bug sets the item to be in the air
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x9605B121u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfirepillar_UnkMotion0_Coll");
     let item = GET_ITEM(item_gobj);
     (*item).ground_or_air = GA_Air;
@@ -161,7 +169,9 @@ pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Coll(item_gobj: *mut Item
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfirepillar_Logic24_DmgReceived(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x371A687Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfirepillar_Logic24_DmgReceived");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
@@ -173,7 +183,9 @@ pub unsafe extern "C" fn itNesspkfirepillar_Logic24_DmgReceived(item_gobj: *mut 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfirepillar_Logic24_EvtUnk(item_gobj: *mut Item_GObj, parent_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x049396C2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfirepillar_Logic24_EvtUnk");
     ext::it_8026B894(item_gobj, parent_gobj);
 }

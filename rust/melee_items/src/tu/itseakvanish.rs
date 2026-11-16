@@ -137,7 +137,9 @@ pub unsafe extern "C" fn it_802B1C60(parent: *mut HSD_GObj, pos: *mut Vec3, dir:
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSeakVanish_Logic42_DmgDealt(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB57DCA27u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSeakVanish_Logic42_DmgDealt");
     false
 }
@@ -155,12 +157,16 @@ pub unsafe extern "C" fn it_802B1D40(item_gobj: *mut Item_GObj, owner: *mut HSD_
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSeakvanish_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xE90BD5A6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSeakvanish_UnkMotion0_Anim");
     ext::it_802751D8(item_gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B1DCC(item_gobj: *mut Item_GObj, gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x05B8152Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B1DCC");
     ext::it_8026B894(item_gobj, gobj);
 }

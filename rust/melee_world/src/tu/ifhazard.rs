@@ -97,7 +97,9 @@ pub unsafe extern "C" fn un_802FD674() {
     un_804D6D8C = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FD680(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5074F97Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FD680");
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     if un_804D6D84 != 0 {
@@ -109,7 +111,9 @@ pub unsafe extern "C" fn fn_802FD680(gobj: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll(jobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FD6CC(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0x01A85881u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FD6CC");
     // TARGET_PC: the Atlas retail mask (empty by default).
     if ext::Ui_RetailHidden(AT_RE_HUD_HAZARD) != 0 {

@@ -121,10 +121,12 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xE7232748u32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
         pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { super::it_802A2474(a0) }
-        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { super::it_802A24A0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x29CBF213u32); /* fn identity */ super::it_802A24A0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -356,12 +358,16 @@ pub unsafe extern "C" fn it_802BE9D8(owner: *mut HSD_GObj, facing_dir: f32, pos:
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessyoyo_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF1F14CE3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessyoyo_UnkMotion0_Phys");
     it_802BF900(GET_ITEM(gobj));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessyoyo_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4BF5D672u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessyoyo_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = ATTRS(ip);
@@ -372,7 +378,9 @@ pub unsafe extern "C" fn itNessyoyo_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     it_802BFAFC(ip, &mut pos);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessyoyo_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBFDB8021u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessyoyo_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = ATTRS(ip);
@@ -383,7 +391,9 @@ pub unsafe extern "C" fn itNessyoyo_UnkMotion2_Phys(gobj: *mut Item_GObj) {
     it_802BFAFC(ip, &mut pos);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessyoyo_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD006A498u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessyoyo_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = ATTRS(ip);
@@ -436,7 +446,9 @@ unsafe fn itNessyoyo_UnkMotion3_Anim_UpdateRotation(ip: *mut Item) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessyoyo_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xE7F6821Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessyoyo_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     itNessyoyo_UnkMotion3_Anim_UpdateRotation(ip);
@@ -855,7 +867,9 @@ pub unsafe extern "C" fn it_802C0010(gobj: *mut Item_GObj, vel: *mut Vec3) {
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic59_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x35720662u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic59_EvtUnk");
     let ip = GET_ITEM(gobj);
     ext::it_8026B894(gobj, ref_gobj);

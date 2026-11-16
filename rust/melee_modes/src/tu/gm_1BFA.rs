@@ -380,7 +380,9 @@ pub fn gm_Mode_ChallengerApproach_States() -> [GameModeState; 4] {
 }
 
 /// `gm_ModeState_Approach_OnEnter`: hand the challenger's CPU kind and the human slot to the vs scene.
+#[inline(never)]
 pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(arg0: *mut GameModeState) {
+    core::hint::black_box(0x01D31BF0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_ModeState_Approach_OnEnter");
     let vs = ext::gm_GetGameModeStateEnterData(arg0) as *mut VsApproachData;
     let challenger = ext::gm_GetChallengerData();
@@ -390,7 +392,9 @@ pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(arg0: *mut GameModeState)
 }
 
 /// `gm_ModeState_ApproachVs_OnEnter`: the stock match against the challenger (human in slot 0, CPU in 1).
+#[inline(never)]
 pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(state: *mut GameModeState) {
+    core::hint::black_box(0x578DEE8Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_ModeState_ApproachVs_OnEnter");
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
     let challenger = ext::gm_GetChallengerData();
@@ -419,7 +423,9 @@ pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(state: *mut GameModeSta
 }
 
 /// `onExitVs` (static): record the match, unlock or re-lock the challenger, then go back or to the prize scene.
+#[inline(never)]
 pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
+    core::hint::black_box(0x63148830u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitVs");
     let mei = ext::gm_GetGameModeStateExitData(state) as *mut MatchExitInfo;
     let challenger = ext::gm_GetChallengerData();
@@ -465,7 +471,9 @@ pub unsafe fn gm_801BFC60(arg0: u32, arg1: i32, arg2: u32, arg3: u32, arg4: *mut
 
 /// `gm_ModeState_Prize_OnEnter`: list the unlocked fighters, then the owned trophies (newly seen ones
 /// first stamped with the time), as a linked list starting at `if_Scene_Prize_EnterData`.
+#[inline(never)]
 pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(arg0: *mut GameModeState) {
+    core::hint::black_box(0xAACBD44Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_ModeState_Prize_OnEnter");
     ext::gm_GetGameModeStateEnterData(arg0);
     let mut var_r31: *mut *mut c_void = null_mut();
@@ -532,7 +540,9 @@ pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(arg0: *mut GameModeState) {
 }
 
 /// `onExitPrize` (static): back to the mode the challenge interrupted.
+#[inline(never)]
 pub unsafe extern "C" fn onExitPrize(_state: *mut GameModeState) {
+    core::hint::black_box(0x7DCCAE8Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitPrize");
     ext::gm_SetPendingGameMode((*ext::gm_GetChallengerData()).curr_mode);
     ext::gm_SetNewGameModePending();

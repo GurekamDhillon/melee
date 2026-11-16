@@ -52,9 +52,12 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn if_802F73C4(a0: *mut HSD_GObj) { super::if_802F73C4(a0) }
-        pub unsafe extern "C" fn if_802F74D0(a0: *mut HSD_GObj) { super::if_802F74D0(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xBE43374Bu32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F73C4(a0: *mut HSD_GObj) { core::hint::black_box(0x2AB444E9u32); /* fn identity */ super::if_802F73C4(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F74D0(a0: *mut HSD_GObj) { core::hint::black_box(0x7A9E2A5Bu32); /* fn identity */ super::if_802F74D0(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;

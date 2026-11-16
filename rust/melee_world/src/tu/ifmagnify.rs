@@ -301,7 +301,9 @@ pub unsafe extern "C" fn ifMagnify_802FB73C(player: *mut ifMagnifyPlayer, pos: *
     player
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: isize) {
+    core::hint::black_box(0x16C76DA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FB8C0");
     let mut screen_pos = S32Vec2 { x: 0, y: 0 };
     let mut edge_pos = Vec2 { x: 0.0, y: 0.0 };
@@ -386,7 +388,9 @@ pub unsafe extern "C" fn ifMagnify_GetCornerColors(colors: *mut _GXColor, world_
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xBC25937Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FBBDC");
     let mut top = 0.0f32;
     let mut bottom = 0.0f32;
@@ -549,7 +553,8 @@ pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn ifMagnify_802FC3BC() { melee_core::ct!("ifMagnify_802FC3BC");}
+#[inline(never)]
+pub unsafe extern "C" fn ifMagnify_802FC3BC() { core::hint::black_box(0xDECC3229u32); /* fn identity */ melee_core::ct!("ifMagnify_802FC3BC");}
 
 pub unsafe extern "C" fn ifMagnify_802FC3C0(slot: i32) {
     melee_core::ct!("ifMagnify_802FC3C0");
@@ -720,7 +725,9 @@ pub unsafe extern "C" fn ifMagnify_LogicDisarm() {
 
 /// TARGET_PC: the render pass's off-screen predicate evaluated by logic (see the C comment),
 /// then the fighters' off-camera flags for the next frame.
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() {
+    core::hint::black_box(0x8E03DC7Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_UpdateLogicOffscreen");
     let magnify = &raw mut ifMagnify_804A1DE0;
     if ifMagnify_LogicArmed == 0 {

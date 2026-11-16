@@ -70,7 +70,9 @@ pub static mut gm_Mode_DebugGOver_States: [GameModeState; 3] = [
 ];
 
 /// 1BEE9C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEE9C(arg0: *mut GameModeState) {
+    core::hint::black_box(0xE23397DAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEE9C");
     let game_mode = (*arg0).info.exit_data as *mut i8;
     let ckind = ext::gm_80173224(gm_801BF030(), 1);
@@ -99,7 +101,9 @@ pub unsafe extern "C" fn gm_801BEE9C(arg0: *mut GameModeState) {
 }
 
 /// 1BEF84
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEF84(_arg: *mut GameModeState) {
+    core::hint::black_box(0xF0993E0Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEF84");
     ext::lbMthp_8001F800();
 }

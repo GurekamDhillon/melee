@@ -109,7 +109,9 @@ melee_core::gc_layout!(lb_804329F0_t, "lb_804329F0_t", size 0x78, align 8, [
 pub static mut lb_804329F0: lb_804329F0_t = unsafe { core::mem::zeroed() };
 
 /// 01955C
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001955C() {
+    core::hint::black_box(0x565F5417u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001955C");
     if ext::HSD_PadGetResetSwitch() != 0 {
         ext::lbAudioAx_80027DBC();
@@ -134,7 +136,9 @@ pub unsafe fn lb_800195D0() {
 }
 
 /// 0195FC
+#[inline(never)]
 pub unsafe extern "C" fn fn_800195FC() {
+    core::hint::black_box(0x34ABD496u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_800195FC");
     ext::HSD_PadRenewRawStatus(0);
     ext::lb_8001C600();

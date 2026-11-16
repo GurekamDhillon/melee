@@ -5246,7 +5246,9 @@ pub unsafe extern "C" fn mn_8022EAE0(mut gobj: *mut HSD_GObj) {
     melee_core::ct!("mn_8022EAE0");
     HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
+#[inline(never)]
 pub unsafe extern "C" fn mn_8022EB04(mut user_data: *mut ::core::ffi::c_void) {
+    core::hint::black_box(0x9D8D26A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("mn_8022EB04");
     // port: the Envoy label dies with the scene's texts (freed in-scene at the menu's exit: fn_8022AFEC)
     if user_data as *mut MainMenuData == ENVOY_OWNER {
@@ -5382,7 +5384,9 @@ pub mod ext {
                 }
             }
     pub static mut H_atan2f: Option<unsafe extern "C" fn(::core::ffi::c_float, ::core::ffi::c_float) -> ::core::ffi::c_float> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn atan2f(a0: ::core::ffi::c_float, a1: ::core::ffi::c_float) -> ::core::ffi::c_float {
+                core::hint::black_box(0x8D5AC3C3u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_atan2f {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { melee_runtime::lbtrigf::atan2f(a0 as _, a1 as _) as _ }; },
@@ -5391,7 +5395,9 @@ pub mod ext {
     hook!(H_HSD_GObj_803910D8, HSD_GObj_803910D8, (a0: *mut HSD_GObj, a1: isize));
     hook!(H_GObj_Create, GObj_Create, (a0: u16_0, a1: u8_0, a2: u8_0) -> *mut HSD_GObj);
     pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize)  {
+                core::hint::black_box(0xF5D73830u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_GObj_JObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
@@ -5399,7 +5405,9 @@ pub mod ext {
             }
     hook!(H_HSD_GObj_80390CD4, HSD_GObj_80390CD4, (a0: *mut HSD_GObj));
     pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize)  {
+                core::hint::black_box(0x85D8D8FEu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_GObj_LObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; },
@@ -5499,7 +5507,9 @@ pub mod ext {
     hook!(H_HSD_CObjGetInterest, HSD_CObjGetInterest, (a0: *mut HSD_CObj, a1: *mut Vec3));
     hook!(H_HSD_CObjGetEyeDistance, HSD_CObjGetEyeDistance, (a0: *mut HSD_CObj) -> f32_0);
     pub static mut H_HSD_CObjInit: Option<unsafe extern "C" fn(*mut HSD_CObj, *mut HSD_CObjDesc) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_CObjInit(a0: *mut HSD_CObj, a1: *mut HSD_CObjDesc)  {
+                core::hint::black_box(0xC02BB5A9u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_CObjInit {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::cobj::HSD_CObjInit(a0 as _, a1 as _); } return; },
@@ -5735,7 +5745,9 @@ pub mod ext {
                 }
             }
     pub static mut H_powi: Option<unsafe extern "C" fn(s32, s32) -> s32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn powi(a0: s32, a1: s32) -> s32 {
+                core::hint::black_box(0xD6726074u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_powi {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { crate::lb::powi(a0 as _, a1 as _) as _ }; },

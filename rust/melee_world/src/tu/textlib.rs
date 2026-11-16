@@ -188,7 +188,9 @@ pub unsafe extern "C" fn DevText_SetCursorXY(text: *mut DevText, mut x: i32, mut
 }
 
 /// `void DevText_SetCursorX(DevText*, int)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_SetCursorX(text: *mut DevText, x: i32) {
+    core::hint::black_box(0xA5DC7488u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_SetCursorX");
     (*text).cursor_x = DevText_Clamp(x, (*text).w as i32) as u8;
 }

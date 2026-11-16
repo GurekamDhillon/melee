@@ -471,7 +471,8 @@ pub mod ext {
         pub unsafe extern "C" fn OSGetArenaLo() -> *mut c_void { super::OSGetArenaLo() }
         pub unsafe extern "C" fn _HSD_AObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_AObjForgetMemory(a0, a1) }
         pub unsafe extern "C" fn _HSD_DispForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_DispForgetMemory(a0, a1) }
-        pub unsafe extern "C" fn _HSD_IDForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_IDForgetMemory(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_IDForgetMemory(a0: *mut c_void, a1: *mut c_void) { core::hint::black_box(0xA05A6539u32); /* fn identity */ super::_HSD_IDForgetMemory(a0, a1) }
         pub unsafe extern "C" fn _HSD_ObjAllocForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_ObjAllocForgetMemory(a0, a1) }
         pub unsafe extern "C" fn _HSD_RObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RObjForgetMemory(a0, a1) }
         pub unsafe extern "C" fn _HSD_RandForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RandForgetMemory(a0, a1) }

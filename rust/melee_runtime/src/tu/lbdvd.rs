@@ -551,7 +551,9 @@ pub unsafe extern "C" fn lbDvd_80017CC4() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80017E64(key: i32, index: usize, value: *mut c_void, cancelflag: bool) {
+    core::hint::black_box(0xFF5B2725u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80017E64");
     let pe = entry_at(index);
     assert!(!cancelflag, "lbdvd.c:827 0");

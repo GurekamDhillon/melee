@@ -224,7 +224,9 @@ pub mod ext {
             }
 
     /// `lbMthp8001F928` (lb/lbmthp.c): the GX-link render callback of the movie; address only.
+    #[inline(never)]
     pub unsafe extern "C" fn lbMthp8001F928(_gobj: *mut HSD_GObj, _code: i32) {
+        core::hint::black_box(0x191AB222u32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { crate::tu::lb_01F8::lbMthp8001F928(_gobj as _, _code as _); } return; };
     }
 }

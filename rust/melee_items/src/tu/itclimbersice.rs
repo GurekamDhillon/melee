@@ -186,7 +186,9 @@ pub unsafe fn itClimbersice_Spawn2(gobj: *mut HSD_GObj) {
 // ---- spawn / lifecycle -----------------------------------------------------------------------
 
 /// `it_802C1590` (itclimbersice.c): spawn an ice block for `parent_gobj`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C1590(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, kind: enum_t, facing_dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x1FCF1D5Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C1590");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
@@ -208,7 +210,9 @@ pub unsafe extern "C" fn it_802C1590(parent_gobj: *mut HSD_GObj, pos: *mut Vec3,
 }
 
 /// `it_802C16F8` (itclimbersice.c): launch the ice along its facing direction.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C16F8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0793EB44u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C16F8");
     let ip = item_of(gobj);
     let sa = sa::<itClimbersIceAttributes>(ip);
@@ -223,13 +227,17 @@ pub unsafe extern "C" fn it_802C16F8(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802C17DC` (itclimbersice.c): `Item_8026A8EC`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C17DC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x876BFA58u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C17DC");
     ext::Item_8026A8EC(gobj);
 }
 
 /// `it_2725_Logic90_Destroyed` (itclimbersice.c): release the owning climber's ice reference.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic90_Destroyed(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA2ABCFCCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic90_Destroyed");
     let ip = item_of(gobj);
     if !(*ip).xDD4_itemVar.climbersice.x0.is_null() {
@@ -243,7 +251,9 @@ pub unsafe extern "C" fn it_2725_Logic90_Destroyed(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802C1854` (itclimbersice.c): bounce off a slope while sliding; true once it stops.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C1854(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x9DC35591u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C1854");
     let ip = item_of(gobj);
     let coll: *mut CollData = &mut (*ip).x378_itemColl;
@@ -275,7 +285,9 @@ pub unsafe extern "C" fn it_802C1854(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_802C1950` (itclimbersice.c): zero the velocity and enter motion 0.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C1950(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF455FF96u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C1950");
     let ip = item_of(gobj);
     itResetVelocity(ip);
@@ -285,7 +297,9 @@ pub unsafe extern "C" fn it_802C1950(gobj: *mut HSD_GObj) {
 // ---- motion 0 --------------------------------------------------------------------------------
 
 /// `itClimbersice_UnkMotion0_Anim`: shrink the ice's scale while it is armed.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC9F96590u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion0_Anim");
     let ip = item_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -303,10 +317,13 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> b
 }
 
 /// `itClimbersice_UnkMotion0_Phys` (empty).
-pub unsafe extern "C" fn itClimbersice_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itClimbersice_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itClimbersice_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x61945485u32); /* fn identity */ melee_core::ct!("itClimbersice_UnkMotion0_Phys");}
 
 /// `itClimbersice_UnkMotion0_Coll`.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xDA9A9EE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_802C1A58));
     ext::it_80276CB8(gobj);
@@ -314,7 +331,9 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> b
 }
 
 /// `it_802C1A58`: enter motion 1.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C1A58(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3E9CEA26u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C1A58");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
@@ -322,13 +341,17 @@ pub unsafe extern "C" fn it_802C1A58(gobj: *mut HSD_GObj) {
 // ---- motion 1 --------------------------------------------------------------------------------
 
 /// `itClimbersice_UnkMotion1_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xAEEE4B71u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion1_Anim");
     false
 }
 
 /// `itClimbersice_UnkMotion1_Phys`: fall.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7660F81Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion1_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
@@ -336,14 +359,18 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itClimbersice_UnkMotion1_Coll`.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x8063F996u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_802C1950));
     false
 }
 
 /// `it_802C1AE4`: spawn the shatter effects and enter motion 2.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C1AE4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4B63703Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C1AE4");
     itClimbersice_Spawn(gobj, 0x4eb, 0x4b0);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
@@ -352,7 +379,9 @@ pub unsafe extern "C" fn it_802C1AE4(gobj: *mut HSD_GObj) {
 // ---- motion 2 --------------------------------------------------------------------------------
 
 /// `itClimbersice_UnkMotion2_Anim`: tick the lifetime.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x759D0ADAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion2_Anim");
     Item_TickLifetime(item_of(gobj))
 }
@@ -367,7 +396,9 @@ pub unsafe fn itClimbersice_Phys_inline(gobj: *mut HSD_GObj) {
 }
 
 /// `itClimbersice_UnkMotion2_Phys`: slide while `it_802C1854` is still false.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x99E40F07u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion2_Phys");
     if it_802C1854(gobj) {
         itClimbersice_Phys_inline(gobj);
@@ -392,7 +423,9 @@ pub unsafe fn itClimbersice_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itClimbersice_UnkMotion2_Coll`.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xDD8638CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion2_Coll");
     ext::it_8026D62C(gobj, Some(fn_802C1D44));
     ext::it_80276CB8(gobj);
@@ -400,7 +433,9 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> b
 }
 
 /// `fn_802C1D44`: enter motion 3 and clear the effects.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802C1D44(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xED4E201Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802C1D44");
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
     ext::efLib_DestroyAll(gobj);
@@ -409,20 +444,26 @@ pub unsafe extern "C" fn fn_802C1D44(gobj: *mut HSD_GObj) {
 // ---- motion 3 --------------------------------------------------------------------------------
 
 /// `itClimbersice_UnkMotion3_Anim`: tick the lifetime.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC2226013u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion3_Anim");
     Item_TickLifetime(item_of(gobj))
 }
 
 /// `itClimbersice_UnkMotion3_Phys`: fall, then the hitbox.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1A025A66u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion3_Phys");
     Item_ApplyFallingPhysics(gobj);
     itClimbersice_Phys_inline(gobj);
 }
 
 /// `itClimbersice_UnkMotion3_Coll`.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersice_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x95A81404u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersice_UnkMotion3_Coll");
     if ext::it_8026DAA8(gobj) & 1 != 0 {
         itClimbersice_Spawn(gobj, 0x4eb, 0x4b0);
@@ -434,25 +475,33 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> b
 // ---- Logic90 hooks ---------------------------------------------------------------------------
 
 /// `itClimbersIce_Logic90_DmgDealt`: always true.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersIce_Logic90_DmgDealt(_arg0: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x22FF2F7Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersIce_Logic90_DmgDealt");
     true
 }
 
 /// `itClimbersIce_Logic90_Reflected`: `it_80273030`.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersIce_Logic90_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x46EEA16Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersIce_Logic90_Reflected");
     ext::it_80273030(gobj)
 }
 
 /// `itClimbersIce_Logic90_Clanked`: always true.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersIce_Logic90_Clanked(_arg0: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xB6FCAADAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersIce_Logic90_Clanked");
     true
 }
 
 /// `it_2725_Logic90_HitShield`: bounce off the victim while slow enough, else break.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic90_HitShield(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC3C27FF7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic90_HitShield");
     let ip = item_of(gobj);
     let attr = &*(*ip).xCC_item_attr;
@@ -476,19 +525,25 @@ pub unsafe extern "C" fn it_2725_Logic90_HitShield(gobj: *mut HSD_GObj) -> bool 
 }
 
 /// `itClimbersIce_Logic90_Absorbed`: always true.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersIce_Logic90_Absorbed(_arg0: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x23BF7656u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersIce_Logic90_Absorbed");
     true
 }
 
 /// `itClimbersIce_Logic90_ShieldBounced`: `itColl_BounceOffShield`.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersIce_Logic90_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x2CB48385u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersIce_Logic90_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// `itClimbersIce_Logic90_EvtUnk`: forget the climber reference, then `it_8026B894`.
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersIce_Logic90_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7F9E8765u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersIce_Logic90_EvtUnk");
     let ip = item_of(gobj);
     if (*ip).xDD4_itemVar.climbersice.x0 as *mut HSD_GObj == ref_gobj {

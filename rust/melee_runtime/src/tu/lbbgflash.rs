@@ -44,7 +44,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_803910D8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { core::hint::black_box(0xAF0A6B7Au32); /* fn identity */ super::HSD_GObj_803910D8(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::gobj_native::HSD_GObj_CameraKind;
@@ -180,7 +181,9 @@ pub unsafe extern "C" fn fn_8001FC08() {
 }
 
 /// 01FEC4
+#[inline(never)]
 pub unsafe extern "C" fn fn_8001FEC4(_gobj: *mut HSD_GObj, _code: i32) {
+    core::hint::black_box(0xAD9710E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8001FEC4");
     let data = &mut *(&raw mut lbl_80433658);
     if data.state.active() != 0 {
@@ -237,7 +240,9 @@ pub unsafe extern "C" fn fn_8001FEC4(_gobj: *mut HSD_GObj, _code: i32) {
 }
 
 /// 0204C8
+#[inline(never)]
 pub unsafe extern "C" fn fn_800204C8() {
+    core::hint::black_box(0xE15F5BACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_800204C8");
     let data = &mut *(&raw mut lbl_80433658);
     let mode = data.state.mode() as i32;

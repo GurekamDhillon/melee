@@ -209,7 +209,9 @@ pub unsafe extern "C" fn it_802C7158(arg0: *mut HSD_GObj) {
     ext::Item_80268E5C(arg0, 1, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchturtle_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xBF1E0797u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchturtle_UnkMotion1_Anim");
     let it = GET_ITEM(item_gobj);
     let cond = if !(*it).owner.is_null() { ext::ftGw_AttackAirN_ItemCheckTurtleRemove((*it).owner) } else { 1 };
@@ -223,7 +225,9 @@ pub unsafe extern "C" fn itGamewatchturtle_UnkMotion1_Anim(item_gobj: *mut HSD_G
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchTurtle_Logic75_EvtUnk(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    core::hint::black_box(0x9404FEA0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchTurtle_Logic75_EvtUnk");
     ext::it_8026B894(arg0, arg1);
 }

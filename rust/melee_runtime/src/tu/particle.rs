@@ -272,6 +272,7 @@ pub unsafe extern "C" fn hsd_80398A08(mut unused: u32) {
     psPointJObj[7 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn psGenerateParticle0(
     mut head: *mut *mut HSD_Particle,
     mut linkNo: ::core::ffi::c_int,
@@ -293,6 +294,7 @@ pub unsafe extern "C" fn psGenerateParticle0(
     mut gp: *mut HSD_Generator,
     mut flgInterpret: ::core::ffi::c_int,
 ) -> *mut HSD_Particle {
+    core::hint::black_box(0xB4E6EEA7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("psGenerateParticle0");
     let mut pp: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
     let mut slot: *mut *mut HSD_Particle = ::core::ptr::null_mut::<*mut HSD_Particle>();
@@ -409,6 +411,7 @@ pub unsafe extern "C" fn psGenerateParticle0(
     return pp;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn hsd_80398F0C(
     mut linkNo: i32,
     mut bank: i32,
@@ -428,6 +431,7 @@ pub unsafe extern "C" fn hsd_80398F0C(
     mut rate: f32,
     mut angle3: f32,
 ) {
+    core::hint::black_box(0x723138B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("hsd_80398F0C");
     psGenerateParticle0(
         ::core::ptr::null_mut::<*mut HSD_Particle>(),
@@ -665,7 +669,9 @@ pub unsafe extern "C" fn HSD_StageSlotParticleLinkClear() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn hsd_8039D0A0(mut gen: *mut HSD_Generator) {
+    core::hint::black_box(0x3669389Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("hsd_8039D0A0");
     let mut prev: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
     let mut prt: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
@@ -1684,7 +1690,8 @@ unsafe fn delete_particle(p:*mut HSD_Particle, prev:*mut HSD_Particle)->*mut HSD
 fn ptr_option<T>(p:*mut T)->Option<*mut T> { if p.is_null(){None}else{Some(p)} }
 unsafe fn remap(bank:u8,idx:i32)->i32 { let r=hsd_804D0948[bank as usize]; if r.is_null(){idx}else{*r.offset(idx as isize) as i32} }
 unsafe fn enable_texture(p:*mut HSD_Particle) { let tg=*psTexGroupArray[(*p).bank as usize].add((*p).texGroup as usize); if !tg.is_null(){psEnableTexture(p,(*tg).texTable.as_ptr());} }
-pub unsafe extern "C" fn hsd_8039930C(p:*mut HSD_Particle,prev:*mut HSD_Particle)->*mut c_void { melee_core::ct!("hsd_8039930C"); interpret(p,prev).cast() }
+#[inline(never)]
+pub unsafe extern "C" fn hsd_8039930C(p:*mut HSD_Particle,prev:*mut HSD_Particle)->*mut c_void { core::hint::black_box(0xD89B0690u32); /* fn identity */ melee_core::ct!("hsd_8039930C"); interpret(p,prev).cast() }
 unsafe fn memset(p:*mut c_void,v:i32,n:u32)->*mut c_void { core::ptr::write_bytes(p,v as u8,n as usize);p }
 fn OSPanic(_file:*const i8,line:i32,_msg:*const i8)->! { panic!("particle.c OSPanic line {line}") }
 fn __assert(_file:*const i8,line:u32,_msg:*const i8)->! { panic!("particle.c assertion line {line}") }

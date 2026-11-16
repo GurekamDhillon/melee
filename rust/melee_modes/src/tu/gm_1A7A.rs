@@ -215,13 +215,19 @@ pub mod ext {
 
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_803910D8` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): the
     /// GX-link render callbacks; address only.
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _unused: isize) {
+        core::hint::black_box(0xDE63811Fu32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _unused as _); } return; };
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: isize) {
+        core::hint::black_box(0x0D70B278u32); // fn identity (tools/rust-port/fn_identity.py)
         unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj, _code as i32) }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: isize) {
+        core::hint::black_box(0xA37B6CE1u32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }

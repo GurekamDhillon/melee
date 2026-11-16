@@ -195,7 +195,9 @@ pub unsafe extern "C" fn it_802C8208(hsd_gobj: *mut HSD_GObj, msid: enum_t) {
     ext::Item_802694CC(hsd_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x8A00AE91u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchrescue_UnkMotion1_Anim");
     let item1 = GET_ITEM(item_gobj);
     let temp_r3 = (*item1).xDD4_itemVar.gamewatchrescue.xDD8;
@@ -234,14 +236,19 @@ pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Anim(item_gobj: *mut HSD_G
     1
 }
 
-pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Phys(gobj: *mut HSD_GObj) { melee_core::ct!("itGamewatchrescue_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Phys(gobj: *mut HSD_GObj) { core::hint::black_box(0x51735B3Cu32); /* fn identity */ melee_core::ct!("itGamewatchrescue_UnkMotion1_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x5DF0C5B6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchrescue_UnkMotion1_Coll");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchRescue_Logic81_EvtUnk(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj) {
+    core::hint::black_box(0xFA9EBB93u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchRescue_Logic81_EvtUnk");
     ext::it_8026B894(item_gobj1, item_gobj2);
 }

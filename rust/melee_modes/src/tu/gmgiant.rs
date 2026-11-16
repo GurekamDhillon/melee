@@ -55,11 +55,16 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(a0: *mut GameModeState) { super::gm_ModeState_ApproachVs_OnEnter(a0) }
-        pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(a0: *mut GameModeState) { super::gm_ModeState_ApproachVs_OnExit(a0) }
-        pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(a0: *mut GameModeState) { super::gm_ModeState_Approach_OnEnter(a0) }
-        pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(a0: *mut GameModeState) { super::gm_ModeState_Prize_OnEnter(a0) }
-        pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(a0: *mut GameModeState) { super::gm_ModeState_Prize_OnExit(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(a0: *mut GameModeState) { core::hint::black_box(0x6F7F7769u32); /* fn identity */ super::gm_ModeState_ApproachVs_OnEnter(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(a0: *mut GameModeState) { core::hint::black_box(0x668657A9u32); /* fn identity */ super::gm_ModeState_ApproachVs_OnExit(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(a0: *mut GameModeState) { core::hint::black_box(0x2B2838EAu32); /* fn identity */ super::gm_ModeState_Approach_OnEnter(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(a0: *mut GameModeState) { core::hint::black_box(0xC9E034E6u32); /* fn identity */ super::gm_ModeState_Prize_OnEnter(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(a0: *mut GameModeState) { core::hint::black_box(0x4F94CD30u32); /* fn identity */ super::gm_ModeState_Prize_OnExit(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_world::gmmain::gmMainLib_804D3EE0;
@@ -103,72 +108,94 @@ pub static mut gm_Mode_GiantVs_States: [GameModeState; 9] = unsafe {
 };
 
 /// 1B8FB8
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B8FB8(scene: *mut GameModeState) {
+    core::hint::black_box(0x0C150CAAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B8FB8");
     ext::gmVsMelee_EnterCss(scene, giant_row(), 4);
     ext::gmFrontend_AtlasSelect(scene, 0, core::ptr::null());
 }
 
 /// 1B8FE4
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B8FE4(scene: *mut GameModeState) {
+    core::hint::black_box(0x921C9B61u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B8FE4");
     ext::gmVsMelee_ExitCss(scene, giant_row());
 }
 
 /// 1B900C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B900C(scene: *mut GameModeState) {
+    core::hint::black_box(0x24613D16u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B900C");
     ext::gmVsMelee_EnterSss(scene, giant_row());
     ext::gmFrontend_AtlasSelect(scene, 1, core::ptr::null());
 }
 
 /// 1B9034
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B9034(scene: *mut GameModeState) {
+    core::hint::black_box(0x85598704u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B9034");
     ext::gmVsMelee_ExitSss(scene, giant_row(), 0);
 }
 
 /// 1B9060: C-ABI entry of the (round-3 verified) `gm_ptr::fn_801B9060`, the per-player setup
 /// callback gmVsMelee_EnterVs / EnterSuddenDeath run.
+#[inline(never)]
 pub unsafe extern "C" fn fn_801B9060(arg0: *mut PlayerInitData, unused: *mut PlayerInitData) {
+    core::hint::black_box(0xDB04AF39u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801B9060");
     crate::gm_ptr::fn_801B9060(&mut *arg0, unused)
 }
 
 /// 1B9084
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B9084(scene: *mut GameModeState) {
+    core::hint::black_box(0x874CBE37u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B9084");
     let data = giant_row();
     ext::gmVsMelee_EnterVs(scene, data, None, Some(fn_801B9060));
 }
 
 /// 1B90B8
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B90B8(scene: *mut GameModeState) {
+    core::hint::black_box(0xFF33E339u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B90B8");
     ext::gmVsMelee_ExitVs(scene, 4, 3);
 }
 
 /// 1B90E0
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B90E0(scene: *mut GameModeState) {
+    core::hint::black_box(0x0540B89Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B90E0");
     let data = giant_row();
     ext::gmVsMelee_EnterSuddenDeath(scene, data, None, Some(fn_801B9060));
 }
 
 /// 1B9114
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B9114(scene: *mut GameModeState) {
+    core::hint::black_box(0x9ECC0A7Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B9114");
     ext::gmVsMelee_ExitSuddenDeath(scene);
 }
 
 /// 1B9134
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B9134(scene: *mut GameModeState) {
+    core::hint::black_box(0x0AD131AFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B9134");
     ext::gmVsMelee_EnterResults(scene);
 }
 
 /// 1B9154
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B9154(scene: *mut GameModeState) {
+    core::hint::black_box(0x0ED5B529u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B9154");
     ext::gmVsMelee_ExitResults(scene, giant_row(), 0);
 }

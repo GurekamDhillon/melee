@@ -155,7 +155,9 @@ pub unsafe extern "C" fn it_8026F3AC() -> ItemKind {
 }
 
 /// `it_8026F3D4_check_kind` (static inline).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026F3D4_check_kind(_ip: *mut Item, it_kind: ItemKind) -> i32 {
+    core::hint::black_box(0xA1A3E73Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026F3D4_check_kind");
     let mut ret = 0;
     if it_kind >= It_Kind_L_Gun_Ray {

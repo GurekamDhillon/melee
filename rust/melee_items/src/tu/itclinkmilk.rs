@@ -83,7 +83,9 @@ unsafe fn Item_ClearCmdVars(ip: *mut Item) {
 }
 
 /// `it_802C8B28` (itclinkmilk.c): spawn the milk bottle for `parent`, bound to `bone`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C8B28(parent: *mut HSD_GObj, pos: *mut Vec3, bone: u32, facing_dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x8E1DAA75u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C8B28");
     if parent.is_null() {
         return null_mut();
@@ -104,7 +106,9 @@ pub unsafe extern "C" fn it_802C8B28(parent: *mut HSD_GObj, pos: *mut Vec3, bone
 }
 
 /// `it_802C8C34` (itclinkmilk.c): detach from the owner and destroy.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C8C34(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1055DEE3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C8C34");
     if !gobj.is_null() {
         let ip = item_of(gobj);
@@ -117,7 +121,9 @@ pub unsafe extern "C" fn it_802C8C34(gobj: *mut HSD_GObj) {
 }
 
 /// `it_2725_Logic80_PickedUp`: pick the anim side from the facing direction.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic80_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x56914A03u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic80_PickedUp");
     let ip = item_of(gobj);
     if (*ip).facing_dir == 1.0 {
@@ -160,7 +166,9 @@ pub unsafe fn itCLinkMilk_Destroy(gobj: *mut HSD_GObj) -> bool {
 
 /// `itClinkmilk_UnkMotion1_Anim`: show the bottle while the flag is set; follow the owner's
 /// state; destroy when the owner is gone.
+#[inline(never)]
 pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x14E1001Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClinkmilk_UnkMotion1_Anim");
     let ip = item_of(gobj);
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
@@ -196,16 +204,21 @@ pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> boo
 }
 
 /// `itClinkmilk_UnkMotion1_Phys` (empty).
-pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itClinkmilk_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xFCF12298u32); /* fn identity */ melee_core::ct!("itClinkmilk_UnkMotion1_Phys");}
 
 /// `itClinkmilk_UnkMotion1_Coll` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Coll(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x63B85C8Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClinkmilk_UnkMotion1_Coll");
     false
 }
 
 /// `itCLinkMilk_Logic80_EvtUnk`: `it_8026B894`.
+#[inline(never)]
 pub unsafe extern "C" fn itCLinkMilk_Logic80_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA4E61A9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCLinkMilk_Logic80_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

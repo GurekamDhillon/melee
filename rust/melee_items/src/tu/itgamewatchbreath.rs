@@ -221,7 +221,9 @@ pub unsafe extern "C" fn it_802C7424(item_gobj: *mut Item_GObj) {
 }
 
 /// `bool itGamewatchbreath_UnkMotion1_Anim(Item_GObj*)`: ends when the fighter's breath is over.
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchbreath_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xBD1E3B5Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchbreath_UnkMotion1_Anim");
     let mut item = item_of(item_gobj);
     let var_r3: i32 = if !(*item).owner.is_null() { ext::ftGw_AttackAirN_ItemCheckSparkyRemove((*item).owner) } else { 1 };
@@ -236,7 +238,9 @@ pub unsafe extern "C" fn itGamewatchbreath_UnkMotion1_Anim(item_gobj: *mut Item_
 }
 
 /// `void itGameWatchBreath_Logic76_EvtUnk(Item_GObj*, Item_GObj*)`: removes the gobj interaction references.
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchBreath_Logic76_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x442668A3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchBreath_Logic76_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

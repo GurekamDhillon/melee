@@ -75,7 +75,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirty(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) { core::hint::black_box(0xF1E1E51Au32); /* fn identity */ super::HSD_JObjSetMtxDirty(a0) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
@@ -190,7 +191,9 @@ pub unsafe fn itDosei_FacingAngle(gobj: *mut HSD_GObj, m: f32) -> f32 {
 pub static it_803F56B8: [i32; 4] = [0x109, 0x10A, 0x10B, 0];
 
 /// `itDosei_Logic7_Spawned`: reset the velocity and the state variables, then motion 8.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_Spawned(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x55809A10u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_Spawned");
     let ip = item_of(gobj);
     let article = (*ip).xC4_article_data;
@@ -206,7 +209,9 @@ pub unsafe extern "C" fn itDosei_Logic7_Spawned(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_80281390`: come to rest (motion 0, owner dropped).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_80281390(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFCFBCF75u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_80281390");
     let ip = item_of(gobj);
     itResetVelocity(ip);
@@ -216,7 +221,9 @@ pub unsafe extern "C" fn itDosei_80281390(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion0_Anim`: track the position; after the countdown, start walking.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xDCEEB8F8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion0_Anim");
     let ip = item_of(gobj);
 
@@ -233,10 +240,13 @@ pub unsafe extern "C" fn itDosei_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion0_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itDosei_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x24B63F9Du32); /* fn identity */ melee_core::ct!("itDosei_UnkMotion0_Phys");}
 
 /// `itDosei_UnkMotion0_Coll`: land into `itDosei_80282074`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x8967714Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(itDosei_80282074));
     ext::it_80276CB8(gobj);
@@ -244,7 +254,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_80281734`: choose the turn by the slope under the facing direction.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_80281734(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC1A144DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_80281734");
     let ip = item_of(gobj);
     if (*ip).facing_dir == 1.0 {
@@ -263,7 +275,9 @@ pub unsafe extern "C" fn itDosei_80281734(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_802817A0`: start walking (motion 1) at the attribute speed.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_802817A0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD213A231u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_802817A0");
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
@@ -286,7 +300,9 @@ pub unsafe extern "C" fn itDosei_802817A0(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion1_Anim`: walk; the frame speed follows the floor slope.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x7428C539u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion1_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -303,7 +319,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion1_Phys`: walk at `unk8` scaled by the frame speed, in the facing direction.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3200B734u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion1_Phys");
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
@@ -312,7 +330,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion1_Coll`: stay walking on a flat floor, turn at a wall or a slope.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC2C58A7Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion1_Coll");
     let ip = item_of(gobj);
 
@@ -348,7 +368,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_80281C6C`: return to the last position (motion 2).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_80281C6C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6E802CFFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_80281C6C");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDD8 = 0;
@@ -362,7 +384,9 @@ pub unsafe extern "C" fn itDosei_80281C6C(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion2_Anim`: reverse direction when the animation ends.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x27326522u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion2_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -376,7 +400,8 @@ pub unsafe extern "C" fn itDosei_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion2_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion2_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itDosei_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x01C25EBFu32); /* fn identity */ melee_core::ct!("itDosei_UnkMotion2_Phys");}
 
 /// `itDosei_SetupWalk_FC` (static inline): walk again after the turn.
 pub unsafe fn itDosei_SetupWalk_FC(gobj: *mut HSD_GObj) {
@@ -403,7 +428,9 @@ pub unsafe fn itDosei_SetupWalk_FC(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion2_Coll`: land into `itDosei_80282074`; restart the walk once counted.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x73560815u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion2_Coll");
     let ip = item_of(gobj);
     ext::it_8026D62C(gobj, Some(itDosei_80282074));
@@ -415,7 +442,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_80282074`: settle (motion 3, owner dropped).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_80282074(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3404E9F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_80282074");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 3, 3);
@@ -424,7 +453,9 @@ pub unsafe extern "C" fn itDosei_80282074(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion3_Anim`: hold the position while the animation plays.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xA75E9F3Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion3_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -435,7 +466,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion3_Phys`: fall.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x731781DEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion3_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
@@ -443,14 +476,18 @@ pub unsafe extern "C" fn itDosei_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion5_Coll`: land into `itDosei_802817A0`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion5_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x5D44ADC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion5_Coll");
     ext::it_8026E15C(gobj, Some(itDosei_802817A0));
     false
 }
 
 /// `itDosei_Logic7_PickedUp`: show the body and set the speed; re-face unless already held.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB330E05Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_PickedUp");
     let jobj = jobj_of(gobj);
     let ip = item_of(gobj);
@@ -497,7 +534,9 @@ pub unsafe fn itDosei_UnkMotion4_GetAttrs(ip: *mut Item) -> *mut itDoseiAttribut
 }
 
 /// `itDosei_UnkMotion4_Anim`: when not yet picked up, show the body and set the animation speed.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC631E7A4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion4_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         let ip = item_of(gobj);
@@ -522,7 +561,8 @@ pub unsafe extern "C" fn itDosei_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion4_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion4_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion4_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itDosei_UnkMotion4_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xA8385549u32); /* fn identity */ melee_core::ct!("itDosei_UnkMotion4_Phys");}
 
 /// `itDosei_GetJObj` (static inline): `gobj->hsd_obj`.
 pub unsafe fn itDosei_GetJObj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
@@ -531,7 +571,9 @@ pub unsafe fn itDosei_GetJObj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 }
 
 /// `itDosei_Logic7_Dropped`: the body reappears at the dropped speed (motion 5).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_Dropped(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF2C55C7Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_Dropped");
     let ip = item_of(gobj);
     let jobj = itDosei_GetJObj(gobj);
@@ -550,7 +592,9 @@ pub unsafe extern "C" fn itDosei_Logic7_Dropped(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_Logic7_Thrown`: launch (motion 5) with the thrown speed `xDE0`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_Thrown(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC5F69344u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_Thrown");
     let jobj = jobj_of(gobj);
     let ip = item_of(gobj);
@@ -569,19 +613,25 @@ pub unsafe extern "C" fn itDosei_Logic7_Thrown(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion5_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion5_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xABE126B5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion5_Anim");
     false
 }
 
 /// `itDosei_UnkMotion5_Phys`: fall.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion5_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE41EDCC0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion5_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 /// `itDosei_Logic7_EnteredAir`: pick the airborne motion (10, or 6 when the item was dropped).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_EnteredAir(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4D67AF27u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_EnteredAir");
     let ip = item_of(gobj);
     let motion_id: i32 = if (*ip).xDC8_word.flags.x19() == 0 { 0xA } else { 6 };
@@ -593,7 +643,9 @@ pub unsafe extern "C" fn itDosei_Logic7_EnteredAir(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion6_Anim`: track the position.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion6_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xD426421Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion6_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -601,10 +653,13 @@ pub unsafe extern "C" fn itDosei_UnkMotion6_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion6_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion6_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion6_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itDosei_UnkMotion6_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xDAE9D96Bu32); /* fn identity */ melee_core::ct!("itDosei_UnkMotion6_Phys");}
 
 /// `itDosei_UnkMotion6_Coll`: keep the floor normal, then choose the turn.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion6_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x853B5DF9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion6_Coll");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDF8 = (*ip).x378_itemColl.floor.normal;
@@ -613,7 +668,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion6_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_80282BFC`: the idle state (motion 8).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_80282BFC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDB621193u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_80282BFC");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 8, 3);
@@ -624,7 +681,9 @@ pub unsafe extern "C" fn itDosei_80282BFC(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion8_Anim`: track the position.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion8_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xF09B0A60u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion8_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -632,7 +691,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion8_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion8_Phys`: fall.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion8_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x43DB76F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion8_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
@@ -640,14 +701,18 @@ pub unsafe extern "C" fn itDosei_UnkMotion8_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion8_Coll`: land into `itDosei_80282CD4`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion8_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xE21890F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion8_Coll");
     ext::it_8026E15C(gobj, Some(itDosei_80282CD4));
     false
 }
 
 /// `itDosei_80282CD4`: stop and enter motion 7.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_80282CD4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3A074723u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_80282CD4");
     let ip = item_of(gobj);
     itResetVelocity(ip);
@@ -660,7 +725,9 @@ pub unsafe extern "C" fn itDosei_80282CD4(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion7_Anim`: count down, then roll (`itDosei_80282DE4`).
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion7_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x217A5687u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion7_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -675,10 +742,13 @@ pub unsafe extern "C" fn itDosei_UnkMotion7_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion7_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion7_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion7_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itDosei_UnkMotion7_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x0EC8AAFAu32); /* fn identity */ melee_core::ct!("itDosei_UnkMotion7_Phys");}
 
 /// `itDosei_UnkMotion7_Coll`: land into `itDosei_80282BFC`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion7_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x92876790u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion7_Coll");
     ext::it_8026D62C(gobj, Some(itDosei_80282BFC));
     ext::it_80276CB8(gobj);
@@ -711,7 +781,9 @@ pub unsafe fn itDosei_80282DE4(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion9_Anim`: advance the roll angle by `PI / unkC` per frame; start walking
 /// when it reaches zero.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion9_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xE691C041u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion9_Anim");
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
@@ -736,10 +808,13 @@ pub unsafe extern "C" fn itDosei_UnkMotion9_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion9_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion9_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion9_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itDosei_UnkMotion9_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xF43B878Cu32); /* fn identity */ melee_core::ct!("itDosei_UnkMotion9_Phys");}
 
 /// `itDosei_UnkMotion9_Coll`: land; once the roll is done, walk again at the captured frame.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion9_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x5EBA54A6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion9_Coll");
     let ip = item_of(gobj);
     ext::it_8026D62C(gobj, Some(itDosei_80282074));
@@ -753,7 +828,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion9_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion10_Anim`: track the position at unit speed.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion10_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x9C01BC5Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion10_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -764,17 +841,22 @@ pub unsafe extern "C" fn itDosei_UnkMotion10_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion10_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion10_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion10_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itDosei_UnkMotion10_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x810753FEu32); /* fn identity */ melee_core::ct!("itDosei_UnkMotion10_Phys");}
 
 /// `itDosei_UnkMotion10_Coll`: land into `itDosei_80282CD4`, or back to `itDosei_80282BFC`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion10_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x08C2314Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion10_Coll");
     ext::it_8026E8C4(gobj, Some(itDosei_80282CD4), Some(itDosei_80282BFC));
     false
 }
 
 /// `itDosei_Logic7_DmgReceived`: launch from the hit (motion 0xB), scaled by the attributes.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_DmgReceived(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x9B04868Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_DmgReceived");
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
@@ -803,7 +885,9 @@ pub unsafe extern "C" fn itDosei_Logic7_DmgReceived(gobj: *mut HSD_GObj) -> i32 
 }
 
 /// `itDosei_UnkMotion11_Anim`: track the position; hold motion 11.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion11_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xF79F7142u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion11_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -814,7 +898,9 @@ pub unsafe extern "C" fn itDosei_UnkMotion11_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion11_Phys`: fall.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion11_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD4A840DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion11_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
@@ -822,14 +908,18 @@ pub unsafe extern "C" fn itDosei_UnkMotion11_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itDosei_UnkMotion11_Coll`: land into `itDosei_80281390`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_UnkMotion11_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x463BEA35u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_UnkMotion11_Coll");
     ext::it_8026E15C(gobj, Some(itDosei_80281390));
     false
 }
 
 /// `itDosei_Logic7_DmgDealt`: the hit sound; a thrown Dosei bounces off its victim.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_DmgDealt(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xD99DAFD0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_DmgDealt");
     let ip = item_of(gobj);
     ext::Item_8026AF0C(ip, it_803F56B8[ext::HSD_Randi(3) as usize], 127, 64);
@@ -841,33 +931,43 @@ pub unsafe extern "C" fn itDosei_Logic7_DmgDealt(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_Logic7_Reflected`: `it_80273030`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xC7059166u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_Reflected");
     ext::it_80273030(gobj)
 }
 
 /// `itDosei_Logic7_Clanked`: bounce off the victim; false.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_Clanked(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xCF7C5D9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_Clanked");
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 /// `itDosei_Logic7_HitShield`: bounce off the victim; false.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_HitShield(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x4EA2C02Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_HitShield");
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 /// `itDosei_Logic7_ShieldBounced`: `itColl_BounceOffShield`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x525BA059u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// `itDosei_Logic7_EvtUnk`: `it_8026B894`.
+#[inline(never)]
 pub unsafe extern "C" fn itDosei_Logic7_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x23A14049u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDosei_Logic7_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

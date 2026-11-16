@@ -269,7 +269,9 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).x40 = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C4D10(gobj: *mut Item_GObj) -> u32 {
+    core::hint::black_box(0x2C375C58u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C4D10");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
@@ -522,7 +524,9 @@ pub unsafe extern "C" fn it_2725_Logic101_PickedUp(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.mewtwoshadowball.x50 = 0.0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xAC2704B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion0_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
@@ -569,14 +573,19 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Anim(gobj: *mut Item_GObj
     false
 }
 
-pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMewtwoshadowball_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x6496D56Fu32); /* fn identity */ melee_core::ct!("itMewtwoshadowball_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFAC510A5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion0_Coll");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C5B18(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0xF9291E83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C5B18");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
@@ -595,7 +604,9 @@ pub unsafe extern "C" fn it_802C5B18(gobj: *mut Item_GObj, arg1: *mut Item_GObj)
     (*sb).x50 = fmadds(0.5f32, (*sb).x18 as f32 / (*sb).x1C as f32, 0.5f32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4ACD7DBAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion8_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let jobj = itGetJObjGrandchild(gobj);
@@ -608,7 +619,9 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Anim(gobj: *mut Item_GObj
     ext::it_80273130(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x55C95FE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion8_Phys");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDD4_itemVar.mewtwoshadowball.x4C > 0 {
@@ -618,7 +631,9 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Phys(gobj: *mut Item_GObj
     it_802C4D10(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x996B89ADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion8_Coll");
     let ip = GET_ITEM(gobj);
     if it_802C4F50(gobj, &mut (*ip).x378_itemColl) {
@@ -627,14 +642,19 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Coll(gobj: *mut Item_GObj
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3E08EEF3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion9_Anim");
     ext::it_80273130(gobj) != 0
 }
 
-pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMewtwoshadowball_UnkMotion9_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x98635246u32); /* fn identity */ melee_core::ct!("itMewtwoshadowball_UnkMotion9_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2D542DE4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion9_Coll");
     let ip = GET_ITEM(gobj);
     if it_802C4F50(gobj, &mut (*ip).x378_itemColl) {
@@ -643,7 +663,9 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Coll(gobj: *mut Item_GObj
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802C5E18(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x90723849u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802C5E18");
     let ip = GET_ITEM(gobj);
 
@@ -677,7 +699,9 @@ pub unsafe extern "C" fn it_802C5E5C(gobj: *mut Item_GObj) {
     ext::Item_8026AE84(ip, 0x74, 127, 64);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x68E3CBB6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion17_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let mut scale: Vec3 = core::mem::zeroed();
@@ -694,33 +718,45 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Anim(gobj: *mut Item_GOb
     ext::it_80273130(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5BBDE753u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion17_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB10A8471u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoshadowball_UnkMotion17_Coll");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x98C0B4F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoShadowball_Logic101_DmgDealt");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_Clanked(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xAE7EECD5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoShadowball_Logic101_Clanked");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x04C8EB77u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoShadowball_Logic101_Absorbed");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic101_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x484CAE80u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic101_Reflected");
     let ip = (*gobj).user_data as *mut Item;
     let sb = &mut (*ip).xDD4_itemVar.mewtwoshadowball as *mut itMewtwoShadowball_ItemVars;
@@ -734,12 +770,16 @@ pub unsafe extern "C" fn it_2725_Logic101_Reflected(gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_HitShield(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x50AEC901u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoShadowball_Logic101_HitShield");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic101_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x58503A9Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic101_ShieldBounced");
     let ip = (*gobj).user_data as *mut Item;
     let sb = &mut (*ip).xDD4_itemVar.mewtwoshadowball as *mut itMewtwoShadowball_ItemVars;
@@ -754,7 +794,9 @@ pub unsafe extern "C" fn it_2725_Logic101_ShieldBounced(gobj: *mut Item_GObj) ->
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3728182Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoShadowball_Logic101_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

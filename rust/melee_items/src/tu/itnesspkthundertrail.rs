@@ -183,7 +183,9 @@ pub unsafe extern "C" fn it_802AC58C(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802AC5D8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5543C36Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802AC5D8");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
@@ -199,7 +201,9 @@ pub unsafe extern "C" fn it_802AC604(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x9FED0532u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkthundertrail_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -218,7 +222,9 @@ pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Anim(gobj: *mut Item_GO
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x585CD5EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkthundertrail_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -244,7 +250,9 @@ pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Phys(gobj: *mut Item_GO
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEE8B1125u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkthundertrail_UnkMotion0_Coll");
     false
 }

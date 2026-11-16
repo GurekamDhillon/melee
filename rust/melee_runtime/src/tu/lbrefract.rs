@@ -190,7 +190,9 @@ unsafe fn tile_base(data: *const lbRefract_CallbackData, c: u32, off: u32) -> *m
 }
 
 /// `lbRefract_WriteTexCoordIA4` (an IA8 texel writer): alpha then intensity.
+#[inline(never)]
 pub unsafe extern "C" fn lbRefract_WriteTexCoordIA4(data: *mut lbRefract_CallbackData, row: u32, col: u32, _arg3: u32, _arg4: u32, intensity: u32, alpha: u32) {
+    core::hint::black_box(0x9F758CBBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbRefract_WriteTexCoordIA4");
     let (row, col) = (row as u32, col as u32);
     let base = tile_base(data, col >> 2, (row >> 2).wrapping_mul(32));
@@ -467,7 +469,9 @@ pub unsafe extern "C" fn fn_80022650() {
 /// `lbRefract_PObjLoad`: the refract PObj's `load`: after the base load, for PObjs with flag
 /// 0x2000 copies each vertex's PNMTXIDX byte into its last TEXnMTXIDX slot throughout the display
 /// list. Returns the base load's error code, else 0.
+#[inline(never)]
 pub unsafe extern "C" fn lbRefract_PObjLoad(pobj: *mut HSD_PObj, desc: *mut HSD_PObjDesc) -> i32 {
+    core::hint::black_box(0x160FC4CBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbRefract_PObjLoad");
     let ret = ((*pobj_info_ptr()).load.expect("hsdPObj.load"))(pobj, desc);
     if ret != 0 {

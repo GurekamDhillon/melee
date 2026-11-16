@@ -427,7 +427,9 @@ pub unsafe extern "C" fn it_802ABA4C(gobj: *mut Item_GObj) {
     ext::db_80225DD8(gobj, (*ip).xDD4_itemVar.pkthunder.xF04);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7BD2005Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkthunderball_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
 
@@ -495,7 +497,9 @@ unsafe fn itNesspkthunderball_ShiftPositions(ip: *mut Item) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9E5B22ABu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkthunderball_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itPKThunderAttributes;
@@ -551,7 +555,9 @@ pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Phys(gobj: *mut Item_GOb
     (*ip).xDD4_itemVar.pkthunder.positions[0] = (*ip).pos;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2CE58939u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkthunderball_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
 
@@ -632,7 +638,9 @@ pub unsafe extern "C" fn it_802AC3F8(gobj: *mut Item_GObj) -> bool {
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802AC41C(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4F325855u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802AC41C");
     ext::it_8026B894(gobj, ref_gobj);
 }

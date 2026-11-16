@@ -500,7 +500,9 @@ pub unsafe extern "C" fn it_8027BA54(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) 
 }
 
 /// `it_8027BB1C`: rotates `arg0` by the Euler angles `arg1` (x, then y, then z).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027BB1C(arg0: *mut Vec3, arg1: *mut Vec3) {
+    core::hint::black_box(0x35A5C372u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027BB1C");
     let mut cos: f32;
     let mut sin: f32;
@@ -534,7 +536,9 @@ pub unsafe extern "C" fn it_8027BB1C(arg0: *mut Vec3, arg1: *mut Vec3) {
 
 /// `it_8027BBF4`: turns the item's jobj so its local up follows the floor (`arg_chk` false) or the
 /// ceiling (`arg_chk` true) normal, easing toward it over `arg9` frames.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: i32, arg8: f64, arg9: f32) {
+    core::hint::black_box(0x1E6D46ACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027BBF4");
     let mut temp_f1: f32;
     let mut temp_f30: f32;
@@ -702,7 +706,9 @@ pub unsafe extern "C" fn it_8027C56C(item_gobj: *mut HSD_GObj, y_rot: f32) {
 }
 
 /// `it_8027C794`: placeholder predicate (always false).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C794(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xB40AF2D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C794");
     let _ = gobj;
     false
@@ -925,7 +931,9 @@ pub unsafe fn gm_IsCurrently1PMode() -> bool {
 }
 
 /// `it_8027CE18`: plays the defeat sound of the item's source player.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CE18(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x585F1B53u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CE18");
     let item = item_of(item_gobj);
     ext::pl_8004049C((*item).xCB0_source_ply as i32, (*item).kind);

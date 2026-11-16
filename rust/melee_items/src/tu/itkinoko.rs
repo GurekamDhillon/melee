@@ -136,7 +136,9 @@ pub unsafe extern "C" fn itKinoko_Logic26_Spawned(gobj: *mut Item_GObj) {
 }
 
 /// `void it_802936E4(Item_GObj*)` (2936E4)
+#[inline(never)]
 pub unsafe extern "C" fn it_802936E4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9E93EDFAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802936E4");
     let it = ip_of(gobj);
     (*it).x40_vel.x = (*it).xDD4_itemVar.kinoko.x0;
@@ -149,13 +151,17 @@ pub unsafe extern "C" fn it_802936E4(gobj: *mut Item_GObj) {
 }
 
 /// `bool itKinoko_UnkMotion0_Anim(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xD84AC21Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_UnkMotion0_Anim");
     0
 }
 
 /// `void itKinoko_UnkMotion0_Phys(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDF0E596Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_UnkMotion0_Phys");
     let it = ip_of(gobj);
     let attrs = (*(*it).xC4_article_data).x4_specialAttributes as *mut KinokoAttrs;
@@ -166,7 +172,9 @@ pub unsafe extern "C" fn itKinoko_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 /// `bool itKinoko_UnkMotion0_Coll(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x895FDDF9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_UnkMotion0_Coll");
     let it = ip_of(gobj);
     let cd = &raw mut (*it).x378_itemColl;
@@ -194,19 +202,25 @@ pub unsafe extern "C" fn it_8029385C(gobj: *mut Item_GObj) {
 }
 
 /// `void it_80293884(Item_GObj*)` (293884)
+#[inline(never)]
 pub unsafe extern "C" fn it_80293884(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB7E8D189u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80293884");
     ext::Item_80268E5C(gobj, 1, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as u32);
 }
 
 /// `bool itKinoko_UnkMotion1_Anim(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x259ED687u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_UnkMotion1_Anim");
     0
 }
 
 /// `void itKinoko_UnkMotion1_Phys(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x12ED2AFAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_UnkMotion1_Phys");
     let it = ip_of(gobj);
     let attr = (*it).xCC_item_attr;
@@ -228,7 +242,9 @@ pub unsafe extern "C" fn itKinoko_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 /// `bool itKinoko_UnkMotion1_Coll(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x96ABE790u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_UnkMotion1_Coll");
     let it = ip_of(gobj);
     let cd = &raw mut (*it).x378_itemColl;
@@ -241,13 +257,17 @@ pub unsafe extern "C" fn itKinoko_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// `bool itKinoko_Logic26_DmgDealt(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_Logic26_DmgDealt(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x20D61C95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_Logic26_DmgDealt");
     1
 }
 
 /// `void itKinoko_Logic26_EvtUnk(Item_GObj*, HSD_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_Logic26_EvtUnk(gobj: *mut Item_GObj, gobj_2: *mut HSD_GObj) {
+    core::hint::black_box(0x02A324CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_Logic26_EvtUnk");
     ext::it_8026B894(gobj, gobj_2);
 }

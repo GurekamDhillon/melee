@@ -559,7 +559,9 @@ pub unsafe fn gm_801BA938(arg0: *mut EventData, lo: i32, hi: i32, arg3: i32) {
 }
 
 /// 1BAA60
+#[inline(never)]
 pub unsafe extern "C" fn onEnterCss(arg0: *mut GameModeState) {
+    core::hint::black_box(0x53E84BEDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterCss");
     let temp_r31 = ev_ptr();
     let css = ext::gm_GetGameModeStateEnterData(arg0) as *mut CSSData;
@@ -572,7 +574,9 @@ pub unsafe extern "C" fn onEnterCss(arg0: *mut GameModeState) {
 }
 
 /// 1BAAD0
+#[inline(never)]
 pub unsafe extern "C" fn onExitCss(arg0: *mut GameModeState) {
+    core::hint::black_box(0x6B76E3BFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitCss");
     let temp_r31 = ev_ptr();
     let temp_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut CSSData;
@@ -662,7 +666,9 @@ pub unsafe fn gm_801BAC9C(arg0: *mut GameModeState, arg1: i32) -> i32 {
 }
 
 /// 1BAD70
+#[inline(never)]
 pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
+    core::hint::black_box(0xDF58CF21u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterVs");
     let ev = gm_GetEventData();
     let md = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
@@ -936,7 +942,9 @@ pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
 }
 
 /// 1BB758
+#[inline(never)]
 pub unsafe extern "C" fn onExitVs(arg0: *mut GameModeState) {
+    core::hint::black_box(0x08BE665Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitVs");
     let ev = ev_ptr();
     let exit = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
@@ -1511,7 +1519,9 @@ unsafe fn timer_expired(ev: *mut EventData, ctl: *mut VsSceneController) -> bool
 }
 
 /// 1BC754
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BC754(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x948FE9BAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BC754");
     let temp_r29 = ev_ptr();
     match (*ext::gmVs_GetSceneController()).start.match_kind() {
@@ -1560,7 +1570,9 @@ pub unsafe extern "C" fn gm_801BC754(gobj: *mut HSD_GObj) {
 }
 
 /// 1BC9E8
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BC9E8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2B25DC38u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BC9E8");
     let temp_r30 = (*(*gm_804D6900[0].add((*ev_ptr()).unk_535 as usize))).x4;
     let coins = ext::Player_GetCoins(0) as u32;
@@ -1578,7 +1590,9 @@ pub unsafe extern "C" fn gm_801BC9E8(gobj: *mut HSD_GObj) {
 }
 
 /// 1BCAF0
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BCAF0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x147AAE43u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BCAF0");
     let mut count = 0;
     let mut i = 1;
@@ -1678,13 +1692,17 @@ pub unsafe extern "C" fn gm_801BCC9C(arg0: *mut HSD_GObj) {
 }
 
 /// 1BCF20
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BCF20(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x331FF08Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BCF20");
     gm_801BCC9C(gobj);
 }
 
 /// 1BCF40
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BCF40(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9F2517BCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BCF40");
     if ext::Player_GetP1Stock() <= 0 {
         failEvent(gobj);
@@ -1699,7 +1717,9 @@ pub unsafe extern "C" fn gm_801BCF40(gobj: *mut HSD_GObj) {
 }
 
 /// 1BD028
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD028(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x5CF57DC7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD028");
     let mut pos: Vec3 = core::mem::zeroed();
     let mut ev = ev_ptr();
@@ -1727,7 +1747,9 @@ pub unsafe extern "C" fn gm_801BD028(arg0: *mut HSD_GObj) {
 }
 
 /// 1BD164
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD164(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x725D6D98u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD164");
     if ext::Player_GetStocks(2) <= 0 {
         let temp_r30 = ext::Player_GetKOsByPlayerIndex(1, 2);
@@ -1750,7 +1772,9 @@ pub unsafe extern "C" fn gm_801BD164(gobj: *mut HSD_GObj) {
 }
 
 /// 1BD30C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD30C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDF3BB6E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD30C");
     if ext::Player_GetStocks(1) <= 0 {
         failEvent(gobj);
@@ -1769,13 +1793,17 @@ pub unsafe extern "C" fn gm_801BD30C(gobj: *mut HSD_GObj) {
 }
 
 /// 1BD44C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD44C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x72AEFA6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD44C");
     gm_801BCC9C(gobj);
 }
 
 /// 1BD46C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD46C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x42B32C0Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD46C");
     let mut count = 0;
     let mut var_r30: i32 = 0;
@@ -1815,7 +1843,9 @@ pub unsafe extern "C" fn gm_801BD46C(gobj: *mut HSD_GObj) {
 }
 
 /// 1BD658
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD658(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4A7DABCEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD658");
     let mut var_r30: i32 = 0;
     let temp_r28 = ev_ptr();
@@ -1847,7 +1877,9 @@ pub unsafe extern "C" fn gm_801BD658(gobj: *mut HSD_GObj) {
 }
 
 /// 1BD7FC
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD7FC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE388E4D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD7FC");
     if ext::Player_GetStocks(1) <= 0 {
         gm_801BC4F4(gobj);
@@ -1866,7 +1898,9 @@ pub unsafe extern "C" fn gm_801BD7FC(gobj: *mut HSD_GObj) {
 }
 
 /// 1BD93C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BD93C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x283C33F8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BD93C");
     if ext::Player_GetStocks(2) <= 0 {
         gm_801BC4F4(gobj);
@@ -1889,13 +1923,17 @@ pub unsafe extern "C" fn gm_801BD93C(gobj: *mut HSD_GObj) {
 }
 
 /// 1BDAD4
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BDAD4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFAAA0FA2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BDAD4");
     gm_801BCC9C(gobj);
 }
 
 /// 1BDAF4
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BDAF4(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x86A4DBD8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BDAF4");
     let temp_r30 = ev_ptr();
     let temp_r3 = ext::gmVs_GetSceneController();
@@ -1912,7 +1950,9 @@ pub unsafe extern "C" fn gm_801BDAF4(arg0: *mut HSD_GObj) {
 }
 
 /// 1BDC08
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BDC08(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x2949EBC4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BDC08");
     if ext::Ground_801C1D84() != 0 {
         gm_801BC4F4(arg0);
@@ -1931,7 +1971,9 @@ pub unsafe extern "C" fn gm_801BDC08(arg0: *mut HSD_GObj) {
 }
 
 /// 1BDD44
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BDD44(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x36BC5C59u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BDD44");
     if ext::Player_GetStocks(2) <= 0 && ext::Player_GetStocks(3) <= 0 {
         gm_801BC4F4(arg0);
@@ -1950,7 +1992,9 @@ pub unsafe extern "C" fn gm_801BDD44(arg0: *mut HSD_GObj) {
 }
 
 /// 1BDE94
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BDE94(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x563127DBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BDE94");
     let mut sp50: PlayerInitData = core::mem::zeroed();
     let tbl = gm_804D6900[0];
@@ -2069,13 +2113,17 @@ pub unsafe extern "C" fn gm_801BDE94(arg0: *mut HSD_GObj) {
 }
 
 /// 1BE37C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BE37C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2F95EC8Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BE37C");
     gm_801BCC9C(gobj);
 }
 
 /// 1BE39C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BE39C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2FAF8475u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BE39C");
     let mut sp40: PlayerInitData = core::mem::zeroed();
     let temp_r28 = gm_804D6900[0];
@@ -2120,13 +2168,17 @@ pub unsafe extern "C" fn gm_801BE39C(gobj: *mut HSD_GObj) {
 }
 
 /// 1BE618
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BE618(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x66BD7C17u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BE618");
     gm_801BCC9C(gobj);
 }
 
 /// 1BE638
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BE638(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xEAB83BB5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BE638");
     let temp_r30 = ev_ptr();
     let temp_r31 = ext::ftBossLib_8015C74C();
@@ -2227,20 +2279,26 @@ pub unsafe extern "C" fn gm_801BE638(gobj: *mut HSD_GObj) {
 }
 
 /// 1BEA10: the event's player-CPU type
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEA10(arg0: i32) {
+    core::hint::black_box(0x27548D1Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEA10");
     let lvl = *gm_804D6900[0].add((*ext::gmMainLib_804D3EE0).vs.unk_530.unk_535 as usize);
     ext::Player_SetPlayerAndEntityCpuType(arg0, (*(*lvl).evbonus).x16 as i32);
 }
 
 /// 1BEA4C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEA4C(arg0: i32) {
+    core::hint::black_box(0x664CA186u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEA4C");
     gm_801BEA10(arg0);
 }
 
 /// 1BEA88
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEA88(arg0: i32, arg1: i32) {
+    core::hint::black_box(0x254340D7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEA88");
     gm_801BEA10(arg0);
     if arg1 == 0 {
@@ -2249,13 +2307,17 @@ pub unsafe extern "C" fn gm_801BEA88(arg0: i32, arg1: i32) {
 }
 
 /// 1BEAF0
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEAF0(arg0: i32) {
+    core::hint::black_box(0xA96F9D41u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEAF0");
     gm_801BEA10(arg0);
 }
 
 /// 1BEB2C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BEB2C(arg0: i32) {
+    core::hint::black_box(0xF29A7C09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BEB2C");
     gm_801BEA10(arg0);
 }

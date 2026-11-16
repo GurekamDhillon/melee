@@ -290,7 +290,9 @@ pub unsafe fn land(gobj: *mut HSD_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8026DC24(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x0039C828u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026DC24");
     let ip = item(gobj);
     let attr = (*ip).xCC_item_attr;
@@ -315,7 +317,9 @@ pub unsafe extern "C" fn it_8026DC24(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8026DD5C(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x9E351457u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026DD5C");
     let ip = item(gobj);
     (*ip).xD50_landNum = 0;
@@ -333,7 +337,9 @@ pub unsafe extern "C" fn it_8026DD5C(gobj: *mut HSD_GObj) -> i32 {
     1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8026DDFC(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x56F8D798u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026DDFC");
     let ip = item(gobj);
     (*ip).xD50_landNum += 1;
@@ -419,7 +425,9 @@ pub unsafe extern "C" fn it_8026E0F4(gobj: *mut HSD_GObj) {
 }
 
 /// `it_8026E_inline` (static inline)
+#[inline(never)]
 pub unsafe extern "C" fn it_8026E_inline(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xB0571A9Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026E_inline");
     let ip = item(gobj);
     let coll = &raw mut (*ip).x378_itemColl;

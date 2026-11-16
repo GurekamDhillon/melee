@@ -207,7 +207,9 @@ pub unsafe extern "C" fn it_3F14_Logic2_Spawned(gobj: *mut Item_GObj) {
 }
 
 /// 2874F0: roll physics.
+#[inline(never)]
 pub unsafe extern "C" fn it_802874F0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE3CC5445u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802874F0");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruAttributes;
@@ -304,7 +306,9 @@ pub unsafe extern "C" fn it_80287690(gobj: *mut Item_GObj) {
     HSD_JObjSetRotationZ(jobj, (*ip).xDD4_itemVar.taru.xDE0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x05E998E2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xD44_lifeTimer <= 1.0 {
@@ -313,9 +317,12 @@ pub unsafe extern "C" fn itTaru_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
     false
 }
 
-pub unsafe extern "C" fn itTaru_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTaru_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itTaru_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xFC40B07Fu32); /* fn identity */ melee_core::ct!("itTaru_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6DD459D5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruAttributes;
@@ -356,19 +363,25 @@ pub unsafe extern "C" fn it_80287D0C(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x8615D2FBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion1_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6D94409Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD98992ECu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion1_Coll");
     let mut ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
@@ -400,12 +413,15 @@ pub unsafe extern "C" fn itTaru_Logic2_PickedUp(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2DAADEB8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion2_Anim");
     false
 }
 
-pub unsafe extern "C" fn itTaru_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTaru_UnkMotion2_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itTaru_UnkMotion2_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x77ECCE5Du32); /* fn identity */ melee_core::ct!("itTaru_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itTaru_Logic2_Dropped(gobj: *mut Item_GObj) {
     melee_core::ct!("itTaru_Logic2_Dropped");
@@ -421,13 +437,17 @@ pub unsafe extern "C" fn itTaru_Logic2_Thrown(gobj: *mut Item_GObj) {
 }
 
 /// 287F20
+#[inline(never)]
 pub unsafe extern "C" fn it_80287F20(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBA97D87Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80287F20");
     ext::it_8026B3A8(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_HIT_PRESERVE | ITEM_DROP_UPDATE | ITEM_UNK_0x1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x555A61F9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
@@ -441,7 +461,9 @@ pub unsafe extern "C" fn itTaru_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2C7D75F4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     ext::it_80272860(gobj, (*(*ip).xCC_item_attr).x10_fall_speed, (*(*ip).xCC_item_attr).x14_fall_speed_max);
@@ -449,7 +471,9 @@ pub unsafe extern "C" fn itTaru_UnkMotion3_Phys(gobj: *mut Item_GObj) {
     it_80287690(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xA3F5943Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion3_Coll");
     let ip = (*gobj).user_data as *mut Item;
     let attrs = (*ip).xCC_item_attr;
@@ -507,7 +531,9 @@ pub unsafe extern "C" fn it_802881FC(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x8528D847u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion5_Anim");
     let mut ip = GET_ITEM(gobj);
     if (*ip).xDAC_itcmd_var0 == 1 {
@@ -526,13 +552,17 @@ pub unsafe extern "C" fn itTaru_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8E3CB7BAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion5_Phys");
     it_802874F0(gobj);
     it_80287690(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x11FD0750u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion5_Coll");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruAttributes;
@@ -565,7 +595,9 @@ pub unsafe extern "C" fn itTaru_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x37D4C3DEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
@@ -590,7 +622,9 @@ unsafe fn itTaru_UnkMotion4_Phys_inline(gobj: *mut Item_GObj) {
     ext::it_80275444(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5A5DE62Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruAttributes;
@@ -614,7 +648,9 @@ pub unsafe extern "C" fn itTaru_UnkMotion4_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xE8E84CB9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion4_Coll");
     itTaru_UnkMotion5_Coll(gobj)
 }
@@ -645,14 +681,19 @@ pub unsafe extern "C" fn it_802885C8(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xBE343D64u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion6_Anim");
     ext::it_802751D8(gobj) != 0
 }
 
-pub unsafe extern "C" fn itTaru_UnkMotion6_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTaru_UnkMotion6_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itTaru_UnkMotion6_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x86EF8909u32); /* fn identity */ melee_core::ct!("itTaru_UnkMotion6_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion6_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4D3AB413u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion6_Coll");
     false
 }
@@ -692,7 +733,9 @@ pub unsafe extern "C" fn it_802886C4(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 7, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x28DC5D75u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion7_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.taru.xDD8 = (*ip).xDD4_itemVar.taru.xDD8.wrapping_sub(1);
@@ -702,9 +745,12 @@ pub unsafe extern "C" fn itTaru_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
     true
 }
 
-pub unsafe extern "C" fn itTaru_UnkMotion7_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTaru_UnkMotion7_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itTaru_UnkMotion7_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x47CBCB80u32); /* fn identity */ melee_core::ct!("itTaru_UnkMotion7_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_UnkMotion7_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xC36C0582u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_UnkMotion7_Coll");
     false
 }
@@ -803,7 +849,9 @@ pub unsafe extern "C" fn it_3F14_Logic2_DmgReceived(gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaru_Logic2_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBFE3BDC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaru_Logic2_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

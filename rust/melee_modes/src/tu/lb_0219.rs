@@ -71,7 +71,9 @@ pub static mut lbl_804D63DC: *mut Fighter_804D653C_t = core::ptr::null_mut();
 pub static mut flash_scale: f32 = 0.0;
 
 /// `lbBgFlash_Free`: the user-data destructor.
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_Free(arg0: *mut c_void) {
+    core::hint::black_box(0xB64FFDCEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_Free");
     ext::HSD_ObjFree(&raw mut bgflash_alloc_data, arg0);
 }
@@ -107,7 +109,9 @@ pub unsafe fn lbBgFlash_Init(arg0: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_Proc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFD995938u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_Proc");
     let data = (*gobj).user_data as *mut BgFlashUserData;
     let was_active = (*data).x4.x7C_color_enable() as i32;
@@ -128,7 +132,8 @@ pub unsafe extern "C" fn lbBgFlash_Proc(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn fn_80021C18(_gobj: *mut HSD_GObj, _cmd: *mut CommandInfo, _arg2: i32) { melee_core::ct!("fn_80021C18");}
+#[inline(never)]
+pub unsafe extern "C" fn fn_80021C18(_gobj: *mut HSD_GObj, _cmd: *mut CommandInfo, _arg2: i32) { core::hint::black_box(0xEB4E52FCu32); /* fn identity */ melee_core::ct!("fn_80021C18");}
 
 pub unsafe fn fn_80021C1C() {
     melee_core::ct!("fn_80021C1C");

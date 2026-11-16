@@ -177,12 +177,16 @@ pub unsafe fn it_8029A498(gobj: *mut Item_GObj, _owner: *mut Fighter_GObj) {
     (*ip).xDCE_flag.x0.set_b7(0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xDCA8E2C0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLipstickspore_UnkMotion0_Anim");
     ext::it_80273130(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x169C9A55u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLipstickspore_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
 
@@ -209,7 +213,9 @@ pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xB4D9B457u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLipstickspore_UnkMotion0_Coll");
     if ext::it_8026DFB0(gobj) != 0 {
         return 1;
@@ -217,18 +223,24 @@ pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Coll(gobj: *mut Item_GObj) -
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLipstickspore_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xCF726C21u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLipstickspore_UnkMotion1_Anim");
     ext::it_80273130(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLipstickspore_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF668E86Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLipstickspore_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLipstickspore_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x60E7B586u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLipstickspore_UnkMotion1_Coll");
     0
 }

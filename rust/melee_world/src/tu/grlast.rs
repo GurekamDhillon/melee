@@ -406,7 +406,9 @@ pub unsafe fn grLast_8021A7F4(id: i32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD1DF1C18u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
@@ -439,7 +441,9 @@ pub unsafe extern "C" fn grLast_8021A968(_gobj: *mut HSD_GObj) { melee_core::ct!
 
 pub unsafe extern "C" fn grLast_8021A96C(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A96C");}
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD8A83536u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_OnInit");
     Ground_StartMapAnim(gobj);
 }

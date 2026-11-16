@@ -95,12 +95,16 @@ pub unsafe extern "C" fn it_80294DC0(pos: *mut Vec3) -> *mut HSD_GObj {
     item_gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80294E78(item_gobj: *mut Item_GObj, arg1: f32) {
+    core::hint::black_box(0x01B85FC6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80294E78");
     ext::it_80272F7C(ext::it_80272CC0(item_gobj, 1), arg1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80294EB0(item_gobj: *mut Item_GObj, input_pos1: *mut Vec3, input_pos2: *mut Vec3) {
+    core::hint::black_box(0xF69B6F33u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80294EB0");
     let mut pos_var: Vec3 = core::mem::zeroed();
 
@@ -134,7 +138,9 @@ pub unsafe extern "C" fn itRabbitC_Logic31_Spawned(item_gobj: *mut Item_GObj) {
     it_802951C0(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80295138(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB7FD32BBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80295138");
     let item = (*item_gobj).user_data as *mut Item;
     (*item).x40_vel.z = 0.0;
@@ -144,36 +150,49 @@ pub unsafe extern "C" fn it_80295138(item_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6E9F537Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itRabbitc_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itRabbitc_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itRabbitc_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { core::hint::black_box(0x77DD53CBu32); /* fn identity */ melee_core::ct!("itRabbitc_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x1FB46F59u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion0_Coll");
     ext::it_8026D62C(item_gobj, Some(it_802951C0));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802951C0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x30C2CFD3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802951C0");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion3_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x0B504815u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion3_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC508DA5Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion1_Phys");
     let attr = (*((*item_gobj).user_data as *mut Item)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion1_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2F7AE1F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion1_Coll");
     ext::it_8026E15C(item_gobj, Some(it_80295138));
     false
@@ -185,7 +204,9 @@ pub unsafe extern "C" fn itRabbitC_Logic31_PickedUp(item_gobj: *mut Item_GObj) {
     ext::it_80272A3C(ext::it_80272CC0(item_gobj, 3));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion2_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x79F7AE04u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion2_Anim");
     false
 }
@@ -196,13 +217,17 @@ pub unsafe extern "C" fn itRabbitC_Logic31_Dropped(item_gobj: *mut Item_GObj) {
     ext::it_80272A18(ext::it_80272CC0(item_gobj, 3));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion3_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x41139520u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion3_Phys");
     let attr = (*((*item_gobj).user_data as *mut Item)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion3_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xBCB23C22u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion3_Coll");
     if ext::it_8026DA08(item_gobj) != 0 {
         return true;
@@ -215,20 +240,27 @@ pub unsafe extern "C" fn itRabbitC_Logic31_EnteredAir(item_gobj: *mut Item_GObj)
     ext::Item_80268E5C(item_gobj, 4, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion4_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFF2FCF82u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itRabbitc_UnkMotion4_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itRabbitc_UnkMotion4_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itRabbitc_UnkMotion4_Phys(_item_gobj: *mut Item_GObj) { core::hint::black_box(0xDC3A321Fu32); /* fn identity */ melee_core::ct!("itRabbitc_UnkMotion4_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitc_UnkMotion4_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4DCDDB75u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitc_UnkMotion4_Coll");
     ext::it_8026E8C4(item_gobj, Some(it_80295138), Some(it_802951C0));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRabbitC_Logic31_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC6842898u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRabbitC_Logic31_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

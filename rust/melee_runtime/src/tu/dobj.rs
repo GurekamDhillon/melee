@@ -223,7 +223,9 @@ pub mod ext {
     }
 
     /// `DObjLoad` (the class `load` method).
+    #[inline(never)]
     pub unsafe extern "C" fn DObjLoad(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc) -> i32 {
+        core::hint::black_box(0xD7AEA9F3u32); // fn identity (tools/rust-port/fn_identity.py)
         (*dobj).next = HSD_DObjLoadDesc((*desc).next);
         (*dobj).mobj = ext::HSD_MObjLoadDesc((*desc).mobjdesc);
         (*dobj).pobj = ext::HSD_PObjLoadDesc((*desc).pobjdesc);
@@ -326,7 +328,9 @@ pub mod ext {
     pub static mut GX_NUM_TEV: Option<fn() -> (u32, u32)> = None;
 
     /// `HSD_DObjDisp` (class `disp` method; TARGET_PC script-parts overrides included).
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_DObjDisp(dobj: *mut HSD_DObj, vmtx: *mut [f32; 4], pmtx: *mut [f32; 4], rendermode: u32) {
+        core::hint::black_box(0x318F8B3Fu32); // fn identity (tools/rust-port/fn_identity.py)
         let mut lab_override = ext::ScriptParts_Draw(dobj);
         if lab_override == 2 {
             return;
@@ -370,7 +374,9 @@ pub mod ext {
     }
 
     /// `DObjRelease` (class `release`).
+    #[inline(never)]
     pub unsafe extern "C" fn DObjRelease(o: *mut HSD_Class) {
+        core::hint::black_box(0xD8BAE080u32); // fn identity (tools/rust-port/fn_identity.py)
         let dobj = o as *mut HSD_DObj;
         ext::ScriptParts_Forget(dobj);
         ext::HSD_MObjRemove((*dobj).mobj);
@@ -383,7 +389,9 @@ pub mod ext {
     }
 
     /// `DObjAmnesia` (class `amnesia`).
+    #[inline(never)]
     pub unsafe extern "C" fn DObjAmnesia(info: *mut HSD_ClassInfo) {
+        core::hint::black_box(0xE09394BBu32); // fn identity (tools/rust-port/fn_identity.py)
         if info == default_class {
             default_class = null_mut();
         }
@@ -394,7 +402,9 @@ pub mod ext {
     }
 
     /// `DObjInfoInit`.
+    #[inline(never)]
     pub unsafe extern "C" fn DObjInfoInit() {
+        core::hint::black_box(0x5775CF11u32); // fn identity (tools/rust-port/fn_identity.py)
         ext::hsdInitClassInfo(
             &mut hsdDObj.parent,
             ext::hsd_class_ptr(),

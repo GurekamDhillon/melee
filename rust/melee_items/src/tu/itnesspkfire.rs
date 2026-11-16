@@ -142,7 +142,9 @@ pub unsafe extern "C" fn it_802AA1D8(item_gobj: *mut Item_GObj) {
     ext::it_80275158(item_gobj, (*attrs).x0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD2C3615Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfire_UnkMotion0_Anim");
     let ip = (*gobj).user_data as *mut Item;
     (*ip).xD44_lifeTimer -= 1.0;
@@ -152,7 +154,9 @@ pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> b
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3AAC8F4Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfire_UnkMotion0_Coll");
     ext::it_8026E058(gobj) != 0
 }
@@ -177,17 +181,23 @@ pub unsafe extern "C" fn it_2725_Logic23_Clanked(gobj: *mut Item_GObj) -> bool {
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessPKFire_Logic23_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x39EA20B6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessPKFire_Logic23_Absorbed");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessPKFire_Logic23_HitShield(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x30964056u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessPKFire_Logic23_HitShield");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessPKFire_Logic23_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7DAC764Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessPKFire_Logic23_Reflected");
     ext::it_80273030(gobj) != 0
 }
@@ -200,7 +210,9 @@ pub unsafe extern "C" fn it_2725_Logic23_ShieldBounced(gobj: *mut Item_GObj) -> 
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802AA474(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC540F80Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802AA474");
     ext::it_8026B894(gobj, ref_gobj);
 }

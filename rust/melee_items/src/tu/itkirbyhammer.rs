@@ -159,7 +159,9 @@ pub unsafe extern "C" fn itKirbyHammer_Logic8_PickedUp(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802ADDB0(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFFC97F40u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802ADDB0");
     ext::it_8026B894(gobj, ref_gobj);
 }

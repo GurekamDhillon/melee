@@ -146,7 +146,9 @@ pub fn my_sqrtf(x: f32) -> f32 {
 
 /// `itDrMarioPill_Spawn` (itdrmariopill.c): spawn a pill from `parent_gobj`, flown with
 /// `attrs->x0` / `x4` (via `itDrMarioPill_802C0B5C`).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Spawn(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, kind: ItemKind, facing_dir: f32) {
+    core::hint::black_box(0xD9D62083u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
@@ -163,7 +165,9 @@ pub unsafe extern "C" fn itDrMarioPill_Spawn(parent_gobj: *mut HSD_GObj, pos: *m
 }
 
 /// `itDrMarioPill_802C061C` (static): follow the held Dr. Mario's position while attached.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_802C061C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0D3E0EE5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_802C061C");
     let ip = item_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -179,7 +183,9 @@ pub unsafe extern "C" fn itDrMarioPill_802C061C(gobj: *mut HSD_GObj) {
 }
 
 /// `itDrMarioPill_Appeal_Spawn`: the Dr. Mario appeal pill, attached to its owner.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Appeal_Spawn(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x68CC08FBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Appeal_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
@@ -211,7 +217,9 @@ pub unsafe extern "C" fn itDrMarioPill_Appeal_Spawn(parent_gobj: *mut HSD_GObj, 
 
 /// `itDrMarioPill_802C09C4`: the Dr. Mario pill spawned for a fighter part `part` (`msid` picks
 /// the motion; msid 2 attaches it to `part`).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_802C09C4(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, kind: ItemKind, msid: i32, part: Fighter_Part, facing_dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0xE7D98497u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_802C09C4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
@@ -245,7 +253,9 @@ pub unsafe extern "C" fn itDrMarioPill_802C09C4(parent_gobj: *mut HSD_GObj, pos:
 }
 
 /// `itDrMarioPill_802C0B5C`: launch the pill along the attribute angle (`x0` speed, `x4` angle).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_802C0B5C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x42830B4Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_802C0B5C");
     let ip = item_of(gobj);
     let attrs = attrs_of(ip);
@@ -260,7 +270,9 @@ pub unsafe extern "C" fn itDrMarioPill_802C0B5C(gobj: *mut HSD_GObj) {
 }
 
 /// `itDrMarioPill_UnkMotion0_Anim` (static): tick the lifetime.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x8BC71FDEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_UnkMotion0_Anim");
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
@@ -269,7 +281,9 @@ pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> b
 }
 
 /// `itDrMarioPill_UnkMotion0_Phys` (static): fall, then the common physics.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xAE50422Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_UnkMotion0_Phys");
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
@@ -279,7 +293,9 @@ pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itDrmariopill_UnkMotion0_Coll` (static): settle once slow enough, else play the bounce sound.
+#[inline(never)]
 pub unsafe extern "C" fn itDrmariopill_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xC42F75F9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrmariopill_UnkMotion0_Coll");
     ext::it_8026D9A0(gobj);
     ext::it_8026B3A8(gobj);
@@ -298,7 +314,9 @@ pub unsafe extern "C" fn itDrmariopill_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> b
 }
 
 /// `itDrMarioPill_802C0DBC`: drop the held reference and free the item.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_802C0DBC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5C6BAAF4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_802C0DBC");
     if !gobj.is_null() {
         let ip = item_of(gobj);
@@ -310,7 +328,9 @@ pub unsafe extern "C" fn itDrMarioPill_802C0DBC(gobj: *mut HSD_GObj) {
 }
 
 /// `itDrMarioPill_802C0DF8`: the appeal pill's flight (motion 1, 1200 units of lifetime).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_802C0DF8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDF61EBD1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_802C0DF8");
     let ip = item_of(gobj);
     ext::it_80275158(gobj, 1200.0);
@@ -321,7 +341,9 @@ pub unsafe extern "C" fn itDrMarioPill_802C0DF8(gobj: *mut HSD_GObj) {
 
 /// `itDrMarioPill_Motion2_Anim_sub` (static inline): forget the held reference and clear the
 /// on-accessory; true.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_sub(arg_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x422AB721u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Motion2_Anim_sub");
     if !arg_gobj.is_null() {
         let ip = item_of(arg_gobj);
@@ -345,7 +367,9 @@ pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_sub(arg_gobj: *mut HSD_GObj)
 }
 
 /// `itDrMarioPill_Motion2_Anim_flags` (static inline): show the child joint while the flag is set.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_flags(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF3C90318u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Motion2_Anim_flags");
     let ip = item_of(gobj);
     let jobj = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
@@ -358,7 +382,9 @@ pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_flags(gobj: *mut HSD_GObj) {
 }
 
 /// `itDrMarioPill_Motion2_Anim` (static): stick to Dr. Mario; release when he lets go.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x8FF89B64u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Motion2_Anim");
     let hobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let ip = item_of(gobj);
@@ -388,14 +414,18 @@ pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim(gobj: *mut HSD_GObj) -> bool
 }
 
 /// `itDrMarioPill_Motion2_Phys` (static): the common physics.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x58B3E709u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Motion2_Phys");
     ext::it_802756D0(gobj);
     ext::it_8026B3A8(gobj);
 }
 
 /// `itDrMariopill_Motion2_Coll` (static): nothing to collide with (false).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMariopill_Motion2_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xB73C46B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMariopill_Motion2_Coll");
     ext::it_802756D0(gobj);
     ext::it_8026B3A8(gobj);
@@ -403,7 +433,9 @@ pub unsafe extern "C" fn itDrMariopill_Motion2_Coll(gobj: *mut HSD_GObj) -> bool
 }
 
 /// `itDrMarioPill_802C1180`: set the motion for `msid` and its speed attribute `x8`.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_802C1180(gobj: *mut HSD_GObj, msid: enum_t) {
+    core::hint::black_box(0x831C19E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_802C1180");
     let ip = item_of(gobj);
     ext::it_80275158(gobj, attrs_of(ip).x8);
@@ -412,7 +444,9 @@ pub unsafe extern "C" fn itDrMarioPill_802C1180(gobj: *mut HSD_GObj, msid: enum_
 }
 
 /// `itDrMarioPill_PickedUp`: motion 6 with the attribute lifetime.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFA87D571u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_PickedUp");
     let ip = item_of(gobj);
     let attrs = attrs_of(ip);
@@ -422,7 +456,9 @@ pub unsafe extern "C" fn itDrMarioPill_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 /// `itDrMarioPill_Motion6_Anim` (static): copy the held Dr. Mario's scale onto the pill's joint.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Motion6_Anim(orig: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xFF6F3CB8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Motion6_Anim");
     let ip = item_of(orig);
     ext::it_8026B3A8(orig);
@@ -439,20 +475,26 @@ pub unsafe extern "C" fn itDrMarioPill_Motion6_Anim(orig: *mut HSD_GObj) -> bool
 }
 
 /// `itDrMarioPill_Motion6_Phys` (static): the common physics.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Motion6_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x49B12C5Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Motion6_Phys");
     ext::it_8026B3A8(gobj);
 }
 
 /// `itDrMarioPill_Motion6_Coll` (static): false.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Motion6_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x9514160Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Motion6_Coll");
     ext::it_8026B3A8(gobj);
     false
 }
 
 /// `itDrMarioPill_DmgDealt`: the hit sound; true.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_DmgDealt(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xA19CCAFEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_DmgDealt");
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
@@ -461,14 +503,18 @@ pub unsafe extern "C" fn itDrMarioPill_DmgDealt(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDrMarioPill_Reflected`: `it_80273030`.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x5EFA7A48u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Reflected");
     ext::it_8026B3A8(gobj);
     ext::it_80273030(gobj)
 }
 
 /// `itDrMarioPill_Clanked` (identical to `itDrMarioPill_DmgDealt`).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Clanked(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x5DB7BEA0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Clanked");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
@@ -478,7 +524,9 @@ pub unsafe extern "C" fn itDrMarioPill_Clanked(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDrMarioPill_HitShield` (identical to `itDrMarioPill_DmgDealt`).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_HitShield(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x396C2504u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_HitShield");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
@@ -488,7 +536,9 @@ pub unsafe extern "C" fn itDrMarioPill_HitShield(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDrMarioPill_Absorbed` (identical to `itDrMarioPill_DmgDealt`).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_Absorbed(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xBFED1448u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_Absorbed");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
@@ -498,7 +548,9 @@ pub unsafe extern "C" fn itDrMarioPill_Absorbed(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDrMarioPill_ShieldBounced` (identical to `itDrMarioPill_DmgDealt`).
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_ShieldBounced(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x29491CE3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_ShieldBounced");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
@@ -508,7 +560,9 @@ pub unsafe extern "C" fn itDrMarioPill_ShieldBounced(gobj: *mut HSD_GObj) -> boo
 }
 
 /// `itDrMarioPill_EvtUnk`: `it_8026B894`.
+#[inline(never)]
 pub unsafe extern "C" fn itDrMarioPill_EvtUnk(gobj: *mut HSD_GObj, hobj: *mut HSD_GObj) {
+    core::hint::black_box(0xEF64EE1Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDrMarioPill_EvtUnk");
     ext::it_8026B894(gobj, hobj);
 }

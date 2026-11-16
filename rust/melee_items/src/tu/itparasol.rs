@@ -138,7 +138,9 @@ pub static mut it_803F5AB0: [ItemStateTable; 11] = [
     st_row(7, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028B08C(_item_gobj: *mut Item_GObj, statenum: i32) -> i32 {
+    core::hint::black_box(0x9C409975u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028B08C");
     // `static int it_803F5B60[]`
     static it_803F5B60: [i32; 8] = [20, 16, 45, 2, 20, 30, 40, 16];
@@ -152,7 +154,9 @@ pub unsafe extern "C" fn itParasol_Logic13_Spawned(item_gobj: *mut Item_GObj) {
     it_8028B17C(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028B0EC(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD4EB8E50u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028B0EC");
     let item = GET_ITEM(item_gobj);
     ext::it_8026B390(item_gobj);
@@ -160,20 +164,27 @@ pub unsafe extern "C" fn it_8028B0EC(item_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEC021EBCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itParasol_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itParasol_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itParasol_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { core::hint::black_box(0x24DF23F1u32); /* fn identity */ melee_core::ct!("itParasol_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x5B08630Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion0_Coll");
     ext::it_8026D62C(item_gobj, Some(it_8028B17C));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028B17C(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE0B2D379u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028B17C");
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
 }
@@ -188,7 +199,9 @@ unsafe fn jobj_child(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion2_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x53A2E216u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion2_Anim");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
@@ -222,7 +235,9 @@ unsafe fn decelerateItemX(item: *mut Item, decel_x: f32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA4F3DBA8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion1_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*item).xCC_item_attr;
@@ -231,7 +246,9 @@ pub unsafe extern "C" fn itParasol_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
     decelerateItemX(item, *attrs);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion2_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x827B52D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion2_Coll");
     ext::it_8026E15C(item_gobj, Some(it_8028B0EC));
     false
@@ -249,7 +266,9 @@ pub unsafe extern "C" fn itParasol_Logic13_Thrown(item_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion2_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2D3048B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion2_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*item).xCC_item_attr;
@@ -258,25 +277,33 @@ pub unsafe extern "C" fn itParasol_UnkMotion2_Phys(item_gobj: *mut Item_GObj) {
     decelerateItemX(item, *attrs.add(1));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_Logic13_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEDDB70EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_Logic13_DmgDealt");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_Logic13_Clanked(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x5A70F8EBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_Logic13_Clanked");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_Logic13_HitShield(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x65307AAFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_Logic13_HitShield");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_Logic13_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x9B8C1CB3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_Logic13_Reflected");
     ext::it_80273030(item_gobj) != 0
 }
@@ -291,14 +318,19 @@ pub unsafe extern "C" fn itParasol_Logic13_EnteredAir(item_gobj: *mut Item_GObj)
     ext::Item_80268E5C(item_gobj, 3, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion3_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x14DB347Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion3_Anim");
     false
 }
 
-pub unsafe extern "C" fn itParasol_UnkMotion3_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itParasol_UnkMotion3_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itParasol_UnkMotion3_Phys(_item_gobj: *mut Item_GObj) { core::hint::black_box(0xAB487802u32); /* fn identity */ melee_core::ct!("itParasol_UnkMotion3_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion3_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x435C4D48u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion3_Coll");
     ext::it_8026E8C4(item_gobj, Some(it_8028B0EC), Some(it_8028B17C));
     false
@@ -309,12 +341,15 @@ pub unsafe extern "C" fn itParasol_Logic13_PickedUp(item_gobj: *mut Item_GObj) {
     it_8028B618(item_gobj, 1.0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_UnkMotion10_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x48D844F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_UnkMotion10_Anim");
     false
 }
 
-pub unsafe extern "C" fn itParasol_UnkMotion10_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itParasol_UnkMotion10_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itParasol_UnkMotion10_Phys(_item_gobj: *mut Item_GObj) { core::hint::black_box(0xEF95538Au32); /* fn identity */ melee_core::ct!("itParasol_UnkMotion10_Phys");}
 
 /// `animSpeed` (static inline)
 #[inline]
@@ -327,7 +362,9 @@ unsafe fn animSpeed(item_gobj: *mut Item_GObj, speed: f32, statenum: i32) {
     ext::Item_80268E5C(item_gobj, statenum, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028B618(item_gobj: *mut Item_GObj, speed: f32) {
+    core::hint::black_box(0x19122FFFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028B618");
     animSpeed(item_gobj, speed, 4);
 }
@@ -342,7 +379,9 @@ pub unsafe extern "C" fn it_8028B6B0(item_gobj: *mut Item_GObj, speed: f32) {
     animSpeed(item_gobj, speed, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028B718(item_gobj: *mut Item_GObj, speed: f32) {
+    core::hint::black_box(0x7C926F88u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028B718");
     animSpeed(item_gobj, speed, 7);
 }
@@ -357,12 +396,16 @@ pub unsafe extern "C" fn it_8028B7E8(item_gobj: *mut Item_GObj, speed: f32) {
     animSpeed(item_gobj, speed, 9);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028B850(item_gobj: *mut Item_GObj, speed: f32) {
+    core::hint::black_box(0x108DA1D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028B850");
     animSpeed(item_gobj, speed, 10);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itParasol_Logic13_EvtUnk(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    core::hint::black_box(0x0109D1F6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itParasol_Logic13_EvtUnk");
     ext::it_8026B894(item_gobj, arg1);
 }

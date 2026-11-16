@@ -194,10 +194,13 @@ unsafe fn Ground_InitMapCollAndAnim(gobj: *mut HSD_GObj) {
 }
 
 /// 20DFDC
-pub unsafe extern "C" fn grFigure1_OnDemoInit(_unused: i32) { melee_core::ct!("grFigure1_OnDemoInit");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_OnDemoInit(_unused: i32) { core::hint::black_box(0xFCB065A8u32); /* fn identity */ melee_core::ct!("grFigure1_OnDemoInit");}
 
 /// 20DFE0
+#[inline(never)]
 pub unsafe extern "C" fn grFigure1_OnInit() {
+    core::hint::black_box(0x3BA624DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigure1_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam();
     ext::stage_info.unk8C.set_b4(0);
@@ -210,10 +213,13 @@ pub unsafe extern "C" fn grFigure1_OnInit() {
 }
 
 /// 20E050
-pub unsafe extern "C" fn grFigure1_OnLoad() { melee_core::ct!("grFigure1_OnLoad");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_OnLoad() { core::hint::black_box(0x62D0F77Du32); /* fn identity */ melee_core::ct!("grFigure1_OnLoad");}
 
 /// 20E054
+#[inline(never)]
 pub unsafe extern "C" fn grFigure1_OnStart() {
+    core::hint::black_box(0x10D31D53u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigure1_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
@@ -231,19 +237,25 @@ pub unsafe extern "C" fn grFigure1_8020E080(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 /// 20E168
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x94D43CADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 20E19C
-pub unsafe extern "C" fn grFigure1_8020E19C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E19C");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_8020E19C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x4FD02B94u32); /* fn identity */ melee_core::ct!("grFigure1_8020E19C");}
 
 /// 20E1A0
-pub unsafe extern "C" fn grFigure1_8020E1A0(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E1A0");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_8020E1A0(_gobj: *mut HSD_GObj) { core::hint::black_box(0x93FA41D5u32); /* fn identity */ melee_core::ct!("grFigure1_8020E1A0");}
 
 /// 20E1A4
+#[inline(never)]
 pub unsafe extern "C" fn grFigure1_8020E1A4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8FFA3B89u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigure1_8020E1A4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -251,29 +263,37 @@ pub unsafe extern "C" fn grFigure1_8020E1A4(gobj: *mut HSD_GObj) {
 }
 
 /// 20E1D8
+#[inline(never)]
 pub unsafe extern "C" fn grFigure1_8020E1D8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8DED6C70u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigure1_8020E1D8");
     ext::Ground_UpdateMapColl(gobj);
     ext::lb_800115F4();
 }
 
 /// 20E1FC
-pub unsafe extern "C" fn grFigure1_8020E1FC(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E1FC");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_8020E1FC(_gobj: *mut HSD_GObj) { core::hint::black_box(0x30F2EA37u32); /* fn identity */ melee_core::ct!("grFigure1_8020E1FC");}
 
 /// 20E200
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF8FD9723u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_OnInit");
     Ground_InitMapCollAndAnim(gobj);
 }
 
 /// 20E258
-pub unsafe extern "C" fn grFigure1_8020E258(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E258");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_8020E258(_gobj: *mut HSD_GObj) { core::hint::black_box(0xD389FBE8u32); /* fn identity */ melee_core::ct!("grFigure1_8020E258");}
 
 /// 20E25C
-pub unsafe extern "C" fn grFigure1_8020E25C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E25C");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_8020E25C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x5E8943B9u32); /* fn identity */ melee_core::ct!("grFigure1_8020E25C");}
 
 /// 20E270 (the non-static one; grfigure2.c stores its address as its demo-init)
-pub unsafe extern "C" fn grFigure1_8020E270(_n: i32) { melee_core::ct!("grFigure1_8020E270");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigure1_8020E270(_n: i32) { core::hint::black_box(0xD78E7F62u32); /* fn identity */ melee_core::ct!("grFigure1_8020E270");}
 
 // ---- folded from grfigure1.rs (consolidation steps 21/22) ----
 /// grFigure1_OnStart_fp (gr/grfigure1.c:81)

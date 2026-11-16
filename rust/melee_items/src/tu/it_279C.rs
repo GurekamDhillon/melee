@@ -593,7 +593,9 @@ pub unsafe extern "C" fn it_80279D38(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_80279D5C`: sets the Pokemon's scale on all three axes and resets its spawn counter.
+#[inline(never)]
 pub unsafe extern "C" fn it_80279D5C(item_gobj: *mut HSD_GObj, scale: f32) {
+    core::hint::black_box(0xC6CBBAE0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279D5C");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = item_of(item_gobj);
@@ -615,7 +617,9 @@ unsafe fn it_80279E24_inline(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_80279E24`: advances the Pokemon's scale animation one frame and sets the next keyframe when due.
+#[inline(never)]
 pub unsafe extern "C" fn it_80279E24(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7A65B311u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279E24");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = (*item_gobj).user_data as *mut Item;
@@ -680,7 +684,9 @@ pub unsafe extern "C" fn it_8027A118(item_gobj: *mut HSD_GObj, arg1: Option<unsa
 }
 
 /// `it_8027A13C`: clears the Pokemon's two vectors (x4 and x10).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A13C(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFFAABA89u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A13C");
     let item = item_of(item_gobj);
     (*item).xDD4_itemVar.pokemon_spawn.x10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -726,7 +732,9 @@ pub unsafe extern "C" fn it_8027A344(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027A364`: the total weight of the kinds that may be picked now (1 plus the weights of the kinds
 /// other than the last two picked).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A364(item: *mut Item) -> i32 {
+    core::hint::black_box(0xFD2C801Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A364");
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
     let mut ret_val = 1i32;
@@ -743,7 +751,9 @@ pub unsafe extern "C" fn it_8027A364(item: *mut Item) -> i32 {
 }
 
 /// `it_8027A4D4`: a random Pokemon by weight (with the two rare spawns checked first). Returns the index.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A4D4(item: *mut Item) -> i32 {
+    core::hint::black_box(0x66E54EB4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A4D4");
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
 
@@ -785,7 +795,9 @@ struct PokemonSpawnWeight {
 
 /// `it_8027A780`: picks a Pokemon from the kind list `arg1` (terminated by `It_PKind_Terminate`), by weight,
 /// skipping the last two picks. Returns the index.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A780(item: *mut Item, arg1: *mut c_void) -> i32 {
+    core::hint::black_box(0xA87D2DA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A780");
     let mut weights: [PokemonSpawnWeight; 30] = [PokemonSpawnWeight { kind: 0, weight: 0 }; 30];
     let mut cnt = 0i32;
@@ -828,7 +840,9 @@ pub unsafe extern "C" fn it_8027A780(item: *mut Item, arg1: *mut c_void) -> i32 
 }
 
 /// `it_8027A9B8`: a Pokemon for the stage's own list (gm_801BEC54), with the rare spawns checked first.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A9B8(item: *mut Item) -> i32 {
+    core::hint::black_box(0x82A84E79u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A9B8");
     let vec = ext::gm_801BEC54();
     if vec.is_null() {
@@ -848,7 +862,9 @@ pub unsafe extern "C" fn it_8027A9B8(item: *mut Item) -> i32 {
 }
 
 /// `it_8027AAA0`: sets up the spawned Pokemon's timers, scales and motion table from its attributes.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027AAA0(item1_gobj: *mut HSD_GObj, item2: *mut Item, arg2: i32) {
+    core::hint::black_box(0xE6A3A012u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027AAA0");
     let it = item_of(item1_gobj);
     let attr = (*(*it).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
@@ -913,7 +929,9 @@ unsafe fn selectPokemonFromList(item: *mut Item, kinds: *mut ItemKind) -> i32 {
 
 /// `it_8027AB64`: spawns a Pokemon for the item (the kind from the mode, the list or the selection) and
 /// returns true when a spawn happened.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027AB64(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x4BF4848Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027AB64");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let item = item_of(item_gobj);
@@ -1014,7 +1032,9 @@ pub unsafe extern "C" fn it_8027AF50(item_gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8027B070`: copies the owner's attack id, attack instance and attack data onto the item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B070(item_gobj: *mut HSD_GObj, owner_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7FCF21ACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B070");
     let item = item_of(item_gobj);
     let fighter = (*owner_gobj).user_data as *mut Fighter;

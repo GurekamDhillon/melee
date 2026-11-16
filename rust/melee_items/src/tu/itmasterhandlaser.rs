@@ -190,7 +190,9 @@ pub unsafe extern "C" fn it_802F0340(
     spawned
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMasterHandLaser_Logic84_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0xD382275Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMasterHandLaser_Logic84_EvtUnk");
     ext::it_8026B894(gobj, arg1);
 }
@@ -214,7 +216,9 @@ pub unsafe extern "C" fn it_802F0484(gobj: *mut HSD_GObj) {
     (*ip).xDD4_itemVar.masterhandlaser.x8 = melee_core::ppc::fctiwz_f32((*attrs).x4);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFEA83854u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMasterhandlaser_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if ext::it_80272C6C(gobj) == 0 {
@@ -227,15 +231,20 @@ pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Anim(gobj: *mut Item_GObj)
     false
 }
 
-pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMasterhandlaser_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x40D1D959u32); /* fn identity */ melee_core::ct!("itMasterhandlaser_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x8DAEAF03u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMasterhandlaser_UnkMotion0_Coll");
     false
 }
 
 /// 2F05A8
+#[inline(never)]
 pub unsafe extern "C" fn it_802F05A8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD66C347Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F05A8");
     let mut sp28: Vec3 = core::mem::zeroed();
     let mut sp1C: Vec3 = core::mem::zeroed();

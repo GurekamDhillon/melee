@@ -235,7 +235,9 @@ pub unsafe extern "C" fn grTiceclimber_UnkStage0_OnStart() {
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn setupStageCallbacks(id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xD3EFAF34u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setupStageCallbacks");
     let callbacks = stage_callbacks().add(id as usize);
     let gobj = ext::Ground_GetStageGObj(id);
@@ -247,23 +249,31 @@ pub unsafe extern "C" fn setupStageCallbacks(id: i32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xCA568E39u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     let gp = inlines::GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7CB0BB60u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_GObjProc");
     
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_Callback3(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE0FD6B1Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_Callback3");
     
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x118D929Fu32); // fn identity (tools/rust-port/fn_identity.py)
         melee_core::ct!("stageGObj2_OnInit");
         inlines::Ground_InitMapCollAndAnim(gobj);
     ext::grAnime_801C7FF8(gobj, 69, 2, 1, 0.0, 1.0);
@@ -271,28 +281,38 @@ pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
 }
 
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x187B413Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_Callback3(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x81170B10u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_Callback3");
     
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA26191A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5FB30219u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_Callback3(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDFED68B1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_Callback3");
     
 }

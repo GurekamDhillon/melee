@@ -63,7 +63,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_803910D8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xCF1B56B8u32); /* fn identity */ super::HSD_GObj_803910D8(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -120,7 +121,9 @@ pub static mut devtext_gobj: *mut HSD_GObj = null_mut();
 pub static mut devtext_drawlist: *mut DevText = null_mut();
 
 /// `int DevText_StrLen(char*)`: NULL gives 0.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_StrLen(mut str: *mut i8) -> i32 {
+    core::hint::black_box(0x8066ED55u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_StrLen");
     if !str.is_null() {
         let mut length = 0i32;
@@ -212,7 +215,9 @@ pub unsafe extern "C" fn DevText_Remove(ptext: *mut *mut DevText) {
 }
 
 /// TARGET_PC `void DevText_Unlink(DevText*)`: unlinks by the box (not by a list-head address).
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Unlink(text: *mut DevText) {
+    core::hint::black_box(0x086B6368u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Unlink");
     if text.is_null() {
         return;
@@ -274,7 +279,9 @@ pub unsafe extern "C" fn DevText_SetupCObj() {
 
 /// `void DevText_Draw(DevText*)`: background boxes, the character grid, the blinking cursor.
 /// The `a * b + c` sites are f32 fused multiply-adds (shipping contraction).
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Draw(text: *mut DevText) {
+    core::hint::black_box(0x0CFFB175u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Draw");
     let t = &mut *text;
     if ext::Wb_RenderActive() != 0 {
@@ -339,7 +346,9 @@ pub unsafe extern "C" fn DevText_Draw(text: *mut DevText) {
 }
 
 /// `void DevText_DrawAll(HSD_GObj*, int pass)`: the bottom-half pass draws the whole list.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_DrawAll(_gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0x481BE634u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_DrawAll");
     if pass as u32 == HSD_RP_BOTTOMHALF as u32 {
         let mut text = devtext_drawlist;
@@ -406,7 +415,9 @@ pub unsafe extern "C" fn DevText_Setup(
 
 /// `void DevText_AddToList(DevText** list, DevText* text)`: inserts into the id-sorted list after the
 /// last entry with id <= the new one (the C never sets `next->prev`).
+#[inline(never)]
 pub unsafe extern "C" fn DevText_AddToList(list: *mut *mut DevText, text: *mut DevText) {
+    core::hint::black_box(0x3AAFC43Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_AddToList");
     if !(*list).is_null() {
         let mut next = *list;

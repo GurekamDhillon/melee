@@ -88,8 +88,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { super::efLib_PauseAll(a0) }
-        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { super::efLib_ResumeAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0x9E0EE2E6u32); /* fn identity */ super::efLib_PauseAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { core::hint::black_box(0x51842EF3u32); /* fn identity */ super::efLib_ResumeAll(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -123,7 +125,9 @@ pub unsafe extern "C" fn it_802D5B14(item_gobj: *mut Item_GObj) {
     Item_SetEffectHitlagCallbacks(item);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPorygon2_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x42B2DEA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPorygon2_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     if ext::it_80272C6C(item_gobj) == 0 {
@@ -133,12 +137,16 @@ pub unsafe extern "C" fn itPorygon2_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPorygon2_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBC1EA4E3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPorygon2_UnkMotion0_Phys");
     ext::it_8027A344(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPorygon2_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB0EDE361u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPorygon2_UnkMotion0_Coll");
     ext::it_8026DA08(item_gobj);
     false
@@ -152,7 +160,9 @@ pub unsafe extern "C" fn it_802D5C00(item_gobj: *mut Item_GObj) {
     ext::Item_8026AE84(item, 0x273F, 0x7F, 0x40);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPorygon2_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3886D44Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPorygon2_UnkMotion1_Anim");
     let item = GET_ITEM(item_gobj);
     if ext::it_80272C6C(item_gobj) == 0 {
@@ -162,12 +172,16 @@ pub unsafe extern "C" fn itPorygon2_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPorygon2_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x16232E72u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPorygon2_UnkMotion1_Phys");
     ext::it_8027A344(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPorygon2_UnkMotion1_Coll(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEC1E4A98u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPorygon2_UnkMotion1_Coll");
     false
 }

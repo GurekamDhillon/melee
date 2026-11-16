@@ -204,10 +204,14 @@ pub mod ext {
     hook!(HSD_PADCOPYSTATUS_TRIGGER, hsd_pad_copy_status_trigger, (idx: usize) -> u32);
 
     /// `HSD_GObj_803910D8` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): GX-link render callbacks; address only.
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: isize) {
+        core::hint::black_box(0xDD1EE618u32); // fn identity (tools/rust-port/fn_identity.py)
         unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj as _, _code as _) };
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: isize) {
+        core::hint::black_box(0xC4620D81u32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }

@@ -130,6 +130,10 @@ struct Fighter_ {
     move_table: Vec<MotionState>,
     /// Guest callbacks of each MoveLogic row: [anim, input, phys, coll].
     move_guest: Vec<[u32; 4]>,
+    /// The PlXx.dat file bytes and where its data block sits in guest space ([`dat_joint`]).
+    dat_file: Vec<u8>,
+    dat_base: u32,
+    dat_len: u32,
 }
 
 struct State {
@@ -652,7 +656,8 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
         eprintln!("mexguest: kind {kind}: {file} has no {symbol}");
         return;
     };
-    let mut f = Fighter_ { file: file.into(), blob, code_base, ft_data: dat_base + fd, stats: BTreeMap::new(), move_table: Vec::new(), move_guest: Vec::new() };
+    let mut f = Fighter_ { file: file.into(), blob, code_base, ft_data: dat_base + fd, stats: BTreeMap::new(), move_table: Vec::new(), move_guest: Vec::new(),
+                         dat_file: dat.clone(), dat_base, dat_len: ar.data.len() as u32 };
     if std::env::var_os("MELEE_MEX_CALLS").is_some() {
         // every vanilla function the blob links to (its relocations with an absolute 0x8xxxxxxx target)
         let mut t: Vec<u32> = f.blob.relocs.iter().filter(|r| r.flag == 0x0A && r.target & 0xF000_0000 == 0x8000_0000).map(|r| r.target).collect();
@@ -1315,6 +1320,37 @@ fn where_(kind: i32, pc: u32) -> String {
     }
 }
 
+/// A guest pointer into a fighter's PlXx.dat (`DAT_BASE` + ...) taken as an `HSD_Joint*`: the joint tree decoded natively
+/// from the file, once per address. Akaneia's Dedede passes `ftCommon_SetAccessory` its star model, a joint behind its
+/// own ftData item table (`ft_data->x48_items[0]->x10[0]`) that the native ftData decode does not type; with a NULL
+/// joint the call faulted, the guest's AS_EnterStarSpitState stopped before it stored the victim's
+/// `thrownkirby.coll_box` (fp+0x2368), and ftCo_800BDA74 ran the ECB pass on a stale box (232232 at 913).
+/// The decoded graph is read-only data (HSD_JObjLoadJoint copies what it changes) and lives for the run.
+fn dat_joint(h: u32) -> Option<*mut melee_types::HSD_Joint> {
+    use std::collections::HashMap;
+    static mut CACHE: Option<HashMap<u32, usize>> = None;
+    #[allow(static_mut_refs)]
+    let cache = unsafe { CACHE.get_or_insert_with(HashMap::new) };
+    if let Some(&p) = cache.get(&h) {
+        return Some(p as *mut melee_types::HSD_Joint);
+    }
+    let f = st().kinds.values().find(|f| h >= f.dat_base && h < f.dat_base + f.dat_len)?;
+    let ar = melee_runtime::dat::DatArchive::parse(&f.dat_file).ok()?;
+    // blob pointers (display lists, vertex arrays, image data) read the big-endian file bytes, as the C's do
+    let raw: &'static [u8] = Box::leak(ar.data.clone().into_boxed_slice());
+    let mut d = ar.decoder();
+    d.set_raw_base(raw.as_ptr() as usize);
+    let root = d.object::<melee_types::HSD_Joint>(h - f.dat_base);
+    let (arena, _issues) = d.finish();
+    core::mem::forget(arena);
+    if root.is_null() {
+        return None;
+    }
+    eprintln!("mexguest: {}: joint at dat+{:#x} decoded for a native call", f.file, h - f.dat_base);
+    cache.insert(h, root as usize);
+    Some(root)
+}
+
 struct Br;
 
 impl Bridge<GuestSpace> for Br {
@@ -1528,6 +1564,29 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 // a gobj callback the generator bridges only as a function pointer (GOBJ_FN_NAMES), called directly:
                 // ACE 2.0.1's Liu Kang onLoad ends in `bctrl ftSk_Init_OnLoad` (its Sheik base's onLoad), which
                 // faulted as unresolved and dropped the whole guest onLoad
+                // by hand (the generator has no row): two vanilla functions Akaneia's Dedede reaches through pointers
+                // its own data holds (an SFX callback, `bctrl ft_80088510`; its jump, ftCo_800CB110); unresolved,
+                // each fault dropped the rest of the guest callback
+                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110") {
+                    if name == "ft_80088510" {
+                        let fp = c.ptr(0, Some("Fighter"));
+                        if !fp.is_null() && !c.bad {
+                            let (s, v, p) = (c.int(1) as i32, c.int(2) as u8, c.int(3) as u8);
+                            melee_fighter::tu::ft_0881::ft_80088510_fp(unsafe { &mut *(fp as *mut melee_types::Fighter) }, s, v, p);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else {
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        if !g.is_null() && !c.bad {
+                            let (a, m) = (c.int(1) != 0, c.flt(0) as f32);
+                            melee_fighter::tu::ftCo_Jump::ftCo_800CB110(g as G, a, m);
+                        } else {
+                            c.bad = true;
+                        }
+                    }
+                    hit = true;
+                }
                 if !hit {
                     if let Some(f) = crate::mex_bridge::gobj_fn(name) {
                         let g = c.ptr(0, Some("HSD_GObj"));
@@ -1914,6 +1973,11 @@ impl Call<'_> {
             let registered = self.mem.regions.iter().any(|r| r.base == h && matches!(r.backing, mex_import::remap::Backing::Native { .. }));
             if registered || rec.is_none() {
                 return nat as *mut c_void;
+            }
+        }
+        if rec == Some("HSD_Joint") {
+            if let Some(p) = dat_joint(h) {
+                return p as *mut c_void;
             }
         }
         if let Some(rec) = rec {

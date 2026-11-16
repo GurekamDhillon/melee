@@ -813,7 +813,14 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDir(mut gfx_id: i
     let mut direction: f32 = 0.0;
     eflib_create_generator_add_appsrt(core::ptr::addr_of_mut!(generator) as *mut *mut HSD_Generator, gfx_id, *((*vlist).arg(8_u32) as *mut *mut HSD_JObj));
     if !generator.is_null() {
-        direction = *(*((*vlist).arg(8_u32) as *mut *mut f32));
+        // an m-ex behaviour-6 effect spawned through efAsync kind 0 passes the jobj alone (efAsync_QueueProcessDeferred):
+        // the C's va_arg reads a stale register (only the generator's rotation, nothing the simulation reads); NULL here
+        // faulted (Akaneia's Dedede, effect 6007)
+        let dir = *((*vlist).arg(8_u32) as *mut *mut f32);
+        if dir.is_null() {
+            return generator;
+        }
+        direction = *dir;
         (*(*generator).appsrt).rot.y = (if direction < 0.0f32 { -(3.141592653589793f64 / (2 as f64)) } else { 3.141592653589793f64 / (2 as f64) }) as f32;
     }
     return generator;
@@ -830,7 +837,14 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(mut gfx_
     jobj = *((*vlist).arg(8_u32) as *mut *mut HSD_JObj);
     eflib_create_generator_add_appsrt(core::ptr::addr_of_mut!(generator) as *mut *mut HSD_Generator, id, jobj);
     if !generator.is_null() {
-        direction = *(*((*vlist).arg(8_u32) as *mut *mut f32));
+        // an m-ex behaviour-6 effect spawned through efAsync kind 0 passes the jobj alone (efAsync_QueueProcessDeferred):
+        // the C's va_arg reads a stale register (only the generator's rotation, nothing the simulation reads); NULL here
+        // faulted (Akaneia's Dedede, effect 6007)
+        let dir = *((*vlist).arg(8_u32) as *mut *mut f32);
+        if dir.is_null() {
+            return generator;
+        }
+        direction = *dir;
         (*(*generator).appsrt).rot.y = (if direction < 0.0f32 { -(3.141592653589793f64 / (2 as f64)) } else { 3.141592653589793f64 / (2 as f64) }) as f32;
         (*(*generator).appsrt).scale.x = { (*(*generator).appsrt).scale.y = { (*(*generator).appsrt).scale.z = *(*((*vlist).arg(8_u32) as *mut *mut f32)); (*(*generator).appsrt).scale.z }; (*(*generator).appsrt).scale.y };
     }

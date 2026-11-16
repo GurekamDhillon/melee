@@ -298,3 +298,30 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   FIRST_PLAY consumed earlier). The it0 hitbox item was not looked at.
 - Akaneia 51 after the layout fix: still **41 match**, the same ten divergers at the same frames.
 - Not done: Liu Kang rand order, Meta Knight multi-table.
+
+### Round 11 (Nov 16)
+
+- 232232 (Dedede inhale, victim ECB at 913) found with Dolphin probes (`PROBE_AT` on the native calls around it,
+  `PROBE_MEM=r2+<fixed fp offset>`; the guest's own code dumped from console memory and disassembled). Motion vars
+  were not the cause: union layouts and the console's 0x2340..0x2380 words matched ours up to 912, and nothing
+  clears motion vars on the state change. On 913 the console's guest (`AS_EnterStarSpitState`) stores the victim's
+  `thrownkirby.coll_box` (fp+0x2368..0x237C = attrs * fp->x34_scale.y) right after `ftCommon_SetAccessory`. Ours
+  never got there: SetAccessory's joint is a pointer into the guest copy of PlDe.dat (`ft_data->x48_items[0]->x10[0]`),
+  which had no native object, so the bridge faulted (MELEE_MEX_REPORT=1 shows these: `mexguest: kind K slot S: ...`)
+  and the rest of the callback was dropped. `dat_joint` now decodes a joint tree from the fighter's dat file once per
+  guest address.
+- 225603 (motion 382 anim end at 4537) needed no change of its own: it matched once the Dedede guest stopped
+  faulting. The one-frame skeleton lag of Round 10 was a symptom.
+- Every remaining divergence of the round was a guest fault. Fixed: hand bridges (no generator row) for
+  `ft_80088510`, `ftCo_800CB110`, `ftKb_SpecialN_800F597C` (bool) and `mpUpdateFloorSkip`, all reached through
+  pointers in the blob's data; `*mut Fighter_GObj` / `*mut Item_GObj` fields were untyped pointers in mex-import's
+  layout (build.rs did not resolve aliases behind a pointer), so loading fp->x1A5C faulted unless that gobj was
+  already registered; an auto-registered array reached 0x2000 bytes, and Diddy's `Fighter_TaroStateChange` reads row
+  275 of fp->x1C (0x2260 in): now 0x4000; the common MotionState table's callbacks are closures with no reverse name
+  (`map_common_motion_table` pairs each row with the DOL's `ftData_MotionStateList`, 0x803C2800); the fighter's own
+  table (fp->x20) holds the shared MOVE_TRAMPS, so `register_move_table` makes those slots read back as the blob's
+  guest addresses. Also: an m-ex behaviour-6 effect queued through efAsync kind 0 has no facing argument
+  (`efLib_CreateGenerator_AppSRT_SetFacingDir`/`SetFacingDirScale` now skip the rotation instead of reading NULL).
+- Akaneia 51: **49 match** (41 before). Left: 223434 (0+27, slippi 5154, p2 y) and 232949 (0+27, 2099, p2 y), both
+  Diddy, no guest fault logged. Vanilla 125: 125 match.
+- Not done: the two Diddy files, Liu Kang rand order, Meta Knight multi-table.

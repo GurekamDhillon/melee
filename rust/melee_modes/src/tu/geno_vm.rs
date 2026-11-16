@@ -97,7 +97,7 @@ fn read(name: &str) -> Result<Program, String> {
     // the accessor map fills the ids the IR leaves out (local, `<ir dir>/enemies/raw/dec/accmap.json`)
     let acc = acc_text(&root).map(|j| vm::acc_map(&j, vm::class_of(name))).unwrap_or_default();
     let pm = vm::merged_map(&pm, &acc);
-    let mut p = Program::build(&main, Some(&common), &pm).map_err(|e| e.to_string())?;
+    let mut p = Program::build_class(&main, Some(&common), &pm, vm::class_of(name)).map_err(|e| e.to_string())?;
     p.inits = ir_text(&root, stem).map(|t| vm::var_inits(&t)).unwrap_or_default();
     match local_text(&root, "vm-values.txt") {
         Some(t) => p.block_values = vm::block_values(&t),

@@ -1350,7 +1350,7 @@ impl<'a> Cx<'a> {
         r != not
     }
 
-    /// Distance band (0x81A242EC): the first i with d <= threshold i (tuning words 14-16), else 3.
+    /// Distance band (81A242EC): the first i with d <= threshold i (tuning words 14-16), else 3.
     fn band(&self, t: [f32; 2]) -> i32 {
         let dx = t[0] - self.a.pos[0];
         let dy = t[1] - self.a.pos[1];
@@ -1596,7 +1596,10 @@ impl<'a> Cx<'a> {
             };
         }
         let A::Rec(r) = self.arg(ins, 1) else { return -1 };
-        let id = self.p.recs[r as usize].0;
+        let mut id = self.p.recs[r as usize].0;
+        if let Some(&(_, kind, ids)) = self.p.natives.iter().find(|n| n.0 == id) {
+            id = self.native_pick(kind, ids);
+        }
         let n = self.av(ins, 2) as usize;
         let p = self.p;
         let Some(list) = p.lists.iter().find(|l| l.id == id) else { return -1 };
@@ -1626,6 +1629,28 @@ impl<'a> Cx<'a> {
             r -= w[k];
         }
         -1
+    }
+
+    /// A native-picked switch's list (`NATIVE_PICKS`): the current AI target (the locked slot) as last found, its
+    /// distance band (81A242EC) and whether it lies on the side the actor faces (81A245B8 / 81A24660 mode 2).
+    /// No target found: band 3, not ahead.
+    fn native_pick(&self, kind: u8, ids: [u32; 4]) -> u32 {
+        let s = if self.a.lock >= 0 { self.a.lock } else { self.a.eval_slot };
+        let t = if (0..4).contains(&s) && self.target(s).is_some() { Some(self.a.found[s as usize]) } else { None };
+        let near = t.is_some_and(|t| self.band(t) == 0);
+        let ahead = t.is_some_and(|t| {
+            let left = t[0] < self.a.pos[0];
+            (self.a.lr == 1.0 && !left) || (self.a.lr == -1.0 && left)
+        });
+        match kind {
+            1 => ids[match (ahead, near) {
+                (true, true) => 0,
+                (true, false) => 1,
+                (false, true) => 2,
+                (false, false) => 3,
+            }],
+            _ => ids[if near { 0 } else { 1 }],
+        }
     }
 
     fn case_pc(&self, sw: u32, end: u32, pick: i32) -> u32 {

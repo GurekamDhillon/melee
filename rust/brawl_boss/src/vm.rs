@@ -149,6 +149,9 @@ pub struct Program {
     /// record parameters: (id, data offset)
     pub recs: Vec<(u32, u32)>,
     pub lists: Vec<WList>,
+    /// weighted-list switches whose list the enemy's param accessor picks in native code (see [`NATIVE_PICKS`]):
+    /// (switch record id, kind, the list ids it picks among)
+    pub natives: Vec<(u32, u8, [u32; 4])>,
     /// the main file's data (record reads: 6507 / 6509 / 651E / 66xx)
     pub data: Vec<u8>,
     pub tuning: [f32; 44],
@@ -249,6 +252,8 @@ fn known_value(id: u32) -> bool {
 
 struct Builder<'a> {
     p: Program,
+    /// the accessor class (`class_of`; empty: none known), for [`NATIVE_PICKS`]
+    class: &'a str,
     pmap: ParamMap<'a>,
     pblock: u32,
     /// (file 0 main / 1 common, data offset) -> placeholder id (0x8000_0000 | queue index)
@@ -264,6 +269,12 @@ impl Program {
     /// Compile a boss / enemy file. `common` is the shared script file (adventure_common leaf 333), parsed with
     /// [`BossFile::parse_raw`]; `params` maps parameter ids to offsets inside the parameter block (from the IR).
     pub fn build(main: &BossFile, common: Option<&BossFile>, params: ParamMap<'_>) -> Result<Program, &'static str> {
+        Self::build_class(main, common, params, "")
+    }
+
+    /// [`Program::build`] for an enemy of accessor class `class` (`class_of`): its native-picked switches
+    /// ([`NATIVE_PICKS`]) get their candidate lists.
+    pub fn build_class(main: &BossFile, common: Option<&BossFile>, params: ParamMap<'_>, class: &str) -> Result<Program, &'static str> {
         let rec = main.root("data").ok_or("no data record")?;
         let w = |i: u32| rec + 4 * i;
         let mut b = Builder {
@@ -282,6 +293,7 @@ impl Program {
                 init: NONE,
                 recs: Vec::new(),
                 lists: Vec::new(),
+                natives: Vec::new(),
                 data: main.data().to_vec(),
                 tuning: [0.0; 44],
                 tuning_at: 0,
@@ -297,6 +309,7 @@ impl Program {
                 diag: Diag::default(),
             },
             pmap: params,
+            class,
             pblock: main.local(w(8)).unwrap_or(0),
             at: BTreeMap::new(),
             common_roots: BTreeMap::new(),
@@ -619,7 +632,18 @@ impl<'a> Builder<'a> {
             // weighted lists (0010 switch): the list param's entries {int base, float slope, ptr cond}
             if id == 0x0010 && cmd.args.len() == 3 {
                 if let (Arg::Var(v), Arg::Int(cnt)) = (cmd.args[1], cmd.args[2]) {
-                    self.list(f, v.id, cnt.max(0) as u32);
+                    let nat = NATIVE_PICKS.iter().find(|n| n.0 == self.class && n.1 == v.id).copied();
+                    match nat {
+                        Some((_, sid, kind, ids)) => {
+                            if !self.p.natives.iter().any(|n| n.0 == sid) {
+                                self.p.natives.push((sid, kind, ids));
+                            }
+                            for l in ids.into_iter().filter(|&l| l != 0) {
+                                self.list(f, l, cnt.max(0) as u32);
+                            }
+                        }
+                        None => self.list(f, v.id, cnt.max(0) as u32),
+                    }
                 }
             }
             self.p.code.push(Ins { id, n: cmd.args.len() as u8, a, j: 0, k: 0 });
@@ -955,6 +979,20 @@ pub fn block_values(txt: &str) -> Vec<(u32, u8, u32)> {
 }
 
 /// The enemy class (`em<Class>ParamAccesser`) of each VM name, for the accessor-derived parameter maps.
+/// Weighted-list switches whose list the enemy's param accessor (`getParamIndefinite`) picks in native code instead
+/// of returning one record: (class, switch record id, kind, candidate list ids). Kind 0 (`emDuonParamAccesser` /
+/// `emPorkyParamAccesser`, 81A61D9C): the locked target's found distance band (81A242EC) is 0 -> ids[0], else
+/// ids[1]. Kind 1 (Porky's MenuA): isTargetFoundDir(target, 2) (81A25778: the found target on the side the actor
+/// faces) and the band: ahead & near ids[0], ahead & far ids[1], behind & near ids[2], behind & far ids[3]. Every
+/// other accessor returns plain records (the only native picks in the seven bosses' accessors).
+pub const NATIVE_PICKS: &[(&str, u32, u8, [u32; 4])] = &[
+    ("Duon", 44010, 0, [44020, 44021, 0, 0]),
+    ("Duon", 44012, 0, [44022, 44023, 0, 0]),
+    ("Duon", 44013, 0, [44024, 44025, 0, 0]),
+    ("Porky", 44024, 1, [44020, 44022, 44021, 44023]),
+    ("Porky", 44028, 0, [44026, 44027, 0, 0]),
+];
+
 pub fn class_of(name: &str) -> &'static str {
     match name {
         "rayquaza" => "Rayquaza",

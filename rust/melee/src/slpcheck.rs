@@ -35,7 +35,10 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     scn.stage = info.stage() as i32;
     // Up-front domain checks (a malformed or synthetic Game Start must be refused, not reach the sim): the VS stage
     // range (external ids 2..=32), and per present player the team (0..=2 in a teams match; a real file's spawn point may be 255, unset)
-    if !(2..=32).contains(&info.stage()) {
+    // an m-ex replay (its disc's codes.gct in the Gecko list) may name the disc's added stages (ACE v2.0.1: up to 365);
+    // an id the mounted disc does not carry resolves to no stage as it mounts
+    let mex_stages = slp::akaneia_codeset(&s.gecko) && info.stage() >= 2;
+    if !(2..=32).contains(&info.stage()) && !mex_stages {
         return Err(format!("stage id {} is not a VS stage (2..=32)", info.stage()));
     }
     for i in 0..4 {
@@ -72,7 +75,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         // on an Akaneia replay (its codes.gct in the Gecko list) the ids past 25 are the disc's m-ex fighters: resolved
         // through MxDt.dat once the disc mounts (needs the Akaneia disc); anywhere else they are refused
         let ckind = if p.ckind > 25 {
-            if !akaneia || p.ckind > 32 {
+            // no fixed upper bound: Akaneia's external ids stop at 32, ACE v2.0.1's reach 65 (Sub-Zero); an id the
+            // mounted disc does not carry fails to resolve as the disc mounts
+            if !akaneia {
                 return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
             }
             melee_engine::scenario::pending_fighter_token(&format!("mexext:{}", p.ckind))

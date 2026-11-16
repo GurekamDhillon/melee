@@ -62,6 +62,10 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
 - Bridged by hand: `ftParts_80074B0C`, `ftCommon_CalcSelfAccel_DeaccelAir` (Shadow now runs clean). Meta Knight's onLoad
   then faults on a `memcpy` of 0x2AA0 bytes out of a native MotionState table (guest bytes of a native record array):
   still the clone base's onLoad.
+- With port/slp-export2 merged (the disc's codes.gct as the replay's Gecko list) slpcheck takes ACE ids past 32
+  (fighters to 65, stages to 365). Our ACE 2.0.1 replays self-check (Liu Kang, stages 357..360) and the oracle Dolphin
+  plays them: the four stages match visually; Liu Kang diverges from slippi frame -12 (Dolphin holds a second item, his
+  custom article kind 352, which the engine's m-ex custom item path does not spawn).
 - Kirby inhaling Knuckles (port kind 55) gets PlKbCpKx and effect bank 50 (pad script, idle Knuckles).
 - Wireframes on L-press: not reachable. The CSS L badge draws, but the alt pick is guest code: codes.gct C2 0x802669DC
   loads `AltSplitCSS.dat` / `altcssFunction`, called each CSS frame from C2 0x80263334. Running it needs the CSS side of

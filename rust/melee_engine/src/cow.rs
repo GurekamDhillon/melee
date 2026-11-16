@@ -231,7 +231,7 @@ pub mod bg {
         HANDLER = AddVectoredExceptionHandler(1, handler);
         let mut old = 0u32;
         if VirtualProtect(start as *mut c_void, len, PAGE_READONLY, &mut old) == 0 {
-            end();
+            release_copy();
             return Err("VirtualProtect failed".into());
         }
         let _s = crate::arena::SysScope::enter();
@@ -282,7 +282,7 @@ pub mod bg {
 
     /// Stop: the helper ends, every page is copied, the range writable and the handler gone. The base buffer is then
     /// complete (the caller keeps using it).
-    pub unsafe fn end() {
+    pub unsafe fn release_copy() {
         let s = START.load(Relaxed);
         if s == 0 {
             return;

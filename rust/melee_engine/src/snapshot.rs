@@ -524,7 +524,7 @@ impl Drop for Base {
                 crate::pagewatch::release();
             }
             #[cfg(windows)]
-            crate::cow::bg::end();
+            crate::cow::bg::release_copy();
             crate::cow::release()
         };
     }

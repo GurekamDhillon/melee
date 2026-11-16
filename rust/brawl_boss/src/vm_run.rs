@@ -126,6 +126,8 @@ pub struct Actor {
     /// the second animated part's motion (0408 part motion blend; -1 none) and its start tick
     pub part_motion: i32,
     pub part_t0: u32,
+    /// bumped by every 0408 (the part's timelines restart; a thread that ran it keeps the new ones)
+    pub gen_part: u32,
     /// the placement point (engine vector 41000, the enemy's create parameter): the host's, else where the actor
     /// stood on its first frame; `home_set` = 1 once taken
     pub home: [f32; 2],
@@ -185,6 +187,7 @@ pub const OFF: Actor = Actor {
     motion: -1,
     motion_t0: 0,
     part_motion: -1,
+    gen_part: 0,
     part_t0: 0,
     home: [0.0; 2],
     home_set: 0,
@@ -411,7 +414,7 @@ impl Actor {
             }
         };
         let a = self;
-        for v in [a.live, a.tick, a.status as u32, a.prev_status as u32, a.status_t0, a.motion as u32, a.motion_t0, a.part_motion as u32, a.part_t0, a.home[0].to_bits(), a.home[1].to_bits(), a.home_set] {
+        for v in [a.live, a.tick, a.status as u32, a.prev_status as u32, a.status_t0, a.motion as u32, a.motion_t0, a.part_motion as u32, a.part_t0, a.gen_part, a.home[0].to_bits(), a.home[1].to_bits(), a.home_set] {
             mix(v);
         }
         for v in [a.pending as u32, a.strength as u32, a.difficulty as u32, a.rng, a.lock as u32, a.last_slot as u32] {
@@ -534,6 +537,8 @@ struct Cx<'a> {
     a: &'a mut Actor,
     i: &'a Input,
     depth: u32,
+    /// the running thread is one of the part motion's timelines: its frame waits (0002) count from the part's start
+    part_th: bool,
 }
 
 /// Start an actor: L from (strength, difficulty), HP = tuning 0 + tuning 1 * L, the init script, then `status`.
@@ -563,7 +568,7 @@ pub fn begin(p: &Program, a: &mut Actor, strength: i32, difficulty: i32, seed: u
         }
     }
     let inp = Input::default();
-    let mut cx = Cx { p, a, i: &inp, depth: 0 };
+    let mut cx = Cx { p, a, i: &inp, depth: 0, part_th: false };
     cx.run_now(p.init);
     cx.change_status(status);
 }
@@ -571,7 +576,7 @@ pub fn begin(p: &Program, a: &mut Actor, strength: i32, difficulty: i32, seed: u
 /// Start movement record `kind` on `slot` as 6600 does (no angle), outside a frame: for tests of the record start.
 #[doc(hidden)]
 pub fn start_unit(p: &Program, a: &mut Actor, i: &Input, slot: i32, kind: i32) {
-    let mut cx = Cx { p, a, i, depth: 0 };
+    let mut cx = Cx { p, a, i, depth: 0, part_th: false };
     cx.kin_start(slot, kind, None);
 }
 
@@ -581,11 +586,14 @@ pub fn step(p: &Program, a: &mut Actor, i: &Input) {
         return;
     }
     a.ev_n = 0;
-    let mut cx = Cx { p, a, i, depth: 0 };
+    let mut cx = Cx { p, a, i, depth: 0, part_th: false };
     cx.input();
     cx.ai();
     cx.run_thread(T_LOOP);
     for t in 1..=9 {
+        cx.run_thread(t);
+    }
+    for t in T_PART..T_PART + 9 {
         cx.run_thread(t);
     }
     if cx.a.dproc != NONE {
@@ -1427,13 +1435,16 @@ impl<'a> Cx<'a> {
         if self.a.th[k].nf == 0 {
             return;
         }
-        let (gs, gm) = (self.a.gen_status, self.a.gen_motion);
+        let (gs, gm, gp) = (self.a.gen_status, self.a.gen_motion, self.a.gen_part);
         let mut t = self.a.th[k];
+        self.part_th = (T_PART..T_PART + 9).contains(&k);
         self.run(&mut t, false);
+        self.part_th = false;
         // a status change replaced the loop thread / a motion change replaced the timelines: keep the new ones
         let replaced = match k {
             T_LOOP => self.a.gen_status != gs,
             1..=9 => self.a.gen_motion != gm,
+            T_PART..=19 => self.a.gen_part != gp,
             _ => false,
         };
         if !replaced {
@@ -1465,7 +1476,8 @@ impl<'a> Cx<'a> {
                     t.resume = now + n;
                 }
                 0x0002 => {
-                    let at = self.a.motion_t0 as f32 + self.av(&ins, 0);
+                    let t0 = if self.part_th { self.a.part_t0 } else { self.a.motion_t0 };
+                    let at = t0 as f32 + self.av(&ins, 0);
                     if immediate && at > now {
                         t.nf = 0;
                         return;
@@ -1691,9 +1703,17 @@ impl<'a> Cx<'a> {
             0x0409 => self.change_motion(v(self, 0) as i32),
             // 0408 part motion blend: a second animated part (Porky's bust) plays a motion of the same list; the host
             // draws it from the forwarded command [L: one part]
+            // The part's motion runs its own timelines (game / effect / sound) from the part's start, as the main
+            // motion's do: Porky's attacks are bust motions, so their boxes, Mini-Porky spawns and sounds live there
             0x0408 => {
-                self.a.part_motion = v(self, 1) as i32;
+                let m = v(self, 1) as i32;
+                self.a.part_motion = m;
                 self.a.part_t0 = self.a.tick;
+                self.a.gen_part = self.a.gen_part.wrapping_add(1);
+                let tl = self.p.timelines.get(m as usize).copied().unwrap_or([0; 9]);
+                for t in 0..9 {
+                    self.a.th[T_PART + t] = thread_at(tl[t], self.a.tick);
+                }
                 self.ev(EV_CMD, pc, 0);
             }
             // 030A node x y z: a model node's world position into three variables (kind 0x03, the model-node module:

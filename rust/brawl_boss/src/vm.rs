@@ -33,10 +33,13 @@ pub const NB: usize = 64;
 pub const TI: usize = 16;
 pub const TF: usize = 16;
 pub const TB: usize = 32;
-/// Threads: 0 = status loop, 1..=9 = the motion's timelines (game / effect / sound x 3), 10 = the damage proc.
-pub const THREADS: usize = 11;
+/// Threads: 0 = status loop, 1..=9 = the motion's timelines (game / effect / sound x 3), 10 = the damage proc,
+/// 11..=19 = the second animated part's motion timelines (0408: Porky's bust plays his attacks, their boxes, spawns
+/// and sounds).
+pub const THREADS: usize = 20;
 const T_LOOP: usize = 0;
 const T_DPROC: usize = 10;
+const T_PART: usize = 11;
 /// Call depth and loop nesting per frame.
 pub const FRAMES: usize = 6;
 pub const LOOPS: usize = 4;

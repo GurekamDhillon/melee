@@ -701,8 +701,14 @@ unsafe fn arena_camera() {
     // Brawl's boss camera follows the players with the boss's small framing box (the IR's), not his whole mesh;
     // Meta Ridley's fight keeps the whole-body framing with the ship (the owner wants him in view through his exits)
     let framed = if ship.is_none() && !crate::tu::vm_boss_model::body_cam() { crate::tu::vm_boss_model::framing_box(a) } else { None };
+    // the box's height is the body's (the IR box's 20 up from his feet cut Porky's dome off); its width the IR's
+    let body = crate::tu::vm_boss_model::body_box(false, a);
+    let framed = match (framed, body) {
+        (Some(f), Some(bb)) => Some([f[0], f[1], fmin(f[2], bb[2]), fmax(f[3], bb[3])]),
+        (f, _) => f,
+    };
     let mut b = framed
-        .or_else(|| crate::tu::vm_boss_model::body_box(false, a))
+        .or(body)
         .unwrap_or([a.pos[0] - 60.0, a.pos[0] + 60.0, a.pos[1] - 60.0, a.pos[1] + 70.0]);
     let him = b;
     if let Some(f) = ship {
@@ -1732,7 +1738,11 @@ fn vm_hits(b: &Boss) -> ([HitDef; LIVE_HITS], usize) {
     let mut v = [HitDef::default(); LIVE_HITS];
     let mut k = 0;
     let a = crate::tu::geno_vm::actor();
-    for bx in unsafe { crate::tu::geno_vm_host::BOXES }.iter().filter(|x| x.on) {
+    // the damaging boxes first: with more than four live, Porky's zero-damage shove boxes (slots 3 / 4 on every
+    // walk / jump clip) must not crowd out his attack boxes
+    let boxes = unsafe { crate::tu::geno_vm_host::BOXES };
+    let live = boxes.iter().filter(|x| x.on && x.damage > 0.0).chain(boxes.iter().filter(|x| x.on && x.damage <= 0.0));
+    for bx in live {
         if k >= 4 {
             break;
         }

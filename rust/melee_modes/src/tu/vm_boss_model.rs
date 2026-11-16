@@ -73,7 +73,8 @@ fn slot(name: &str) -> &'static OnceLock<Option<Model>> {
 pub fn arena_model() -> Option<&'static Model> {
     M2.get()?.as_ref()
 }
-static NOTE_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// The load note, once per model slot (the boss's and the arena actor's)
+static NOTE_SHOWN: [std::sync::atomic::AtomicBool; 2] = [const { std::sync::atomic::AtomicBool::new(false) }; 2];
 
 fn off() -> bool {
     std::env::var_os("MELEE_VMBOSS_NO_MODEL").is_some() || std::env::var_os("MELEE_BRAWL_ABSENT").is_some()
@@ -97,7 +98,7 @@ pub fn prefetch(name: &str) {
 pub fn get(name: &str) -> Option<&'static Model> {
     let m = load(name);
     if let Some(m) = m {
-        if !NOTE_SHOWN.swap(true, std::sync::atomic::Ordering::Relaxed) {
+        if !NOTE_SHOWN[crate::tu::vm_arena::is_arena_actor(name) as usize].swap(true, std::sync::atomic::Ordering::Relaxed) {
             eprintln!("{}", m.note);
         }
     }
@@ -378,7 +379,7 @@ pub unsafe fn draw_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm:
 /// ground, facing `lr`. Presentation only. False until the model has loaded (or without one).
 pub unsafe fn draw_named(motion: &str, frame: i32, x: f32, lr: f32, flash: bool) -> bool {
     let Some(Some(m)) = M.get() else { return false };
-    if !NOTE_SHOWN.swap(true, std::sync::atomic::Ordering::Relaxed) {
+    if !NOTE_SHOWN[0].swap(true, std::sync::atomic::Ordering::Relaxed) {
         eprintln!("{}", m.note);
     }
     let Ok(mut b) = m.bufs.lock() else { return false };

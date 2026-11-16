@@ -464,7 +464,7 @@ fn flush_frame(m: &mut Match) {
     put32(&mut bk, 1, f);
     put32(&mut bk, 5, f);
     m.raw.extend_from_slice(&bk);
-    crate::live_out::frame(&m.raw[at..]);
+    crate::live_out::frame_events(&m.raw[at..]);
 }
 
 /// The run ends: a match still open is written as a no contest.

@@ -68,7 +68,7 @@ pub fn game_start(raw: &[u8]) {
     send(In::Start(raw.to_vec()));
 }
 /// One finalised frame's events.
-pub fn frame(raw: &[u8]) {
+pub fn frame_events(raw: &[u8]) {
     send(In::Data(raw.to_vec()));
 }
 /// Game End.

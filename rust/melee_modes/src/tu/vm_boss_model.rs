@@ -182,7 +182,7 @@ fn read(name: &str) -> Option<Model> {
     // fight (the skinning pass is long for the bigger bosses)
     let mut ext = Vec::with_capacity(names.len());
     let mut tris = Vec::new();
-    let want_ext = crate::tu::vm_arena::partner().is_some();
+    let want_ext = crate::tu::vm_arena::partner().is_some() || crate::tu::explore::boss_has_arena();
     for &ci in clip.iter().filter(|_| want_ext) {
         let a = ci.map(|c| &rig.anims[c].1);
         let last = a.map_or(0.0, |a| fmax(a.frames - 1.0, 0.0));

@@ -34,10 +34,13 @@ struct SecDef {
     /// a main section's way on (a GDOR door id): it leads to the next main section's entry, or past the last one to
     /// the level's next story step (`STORY`). 0: the level-exit block's (GMSJ) door, else none.
     exit: u32,
+    /// only the collision files whose objects are all world objects (no bone): a boss arena whose archive also holds
+    /// the boss's own carried surface (Porky's, geno_boss_coll), which is not the stage
+    world_coll: bool,
 }
 
 const fn sec(file: &'static str, x: f32, y: f32, model: &'static str, room: u8, exit: u32) -> SecDef {
-    SecDef { file, off: [x, y], model, room, exit }
+    SecDef { file, off: [x, y], model, room, exit, world_coll: false }
 }
 
 /// The Lake from step 3 (notes/sse-stage.md): `080103` (+ the hut `a`, room `b`) -> `080104` (+ `a`, `b`) ->
@@ -69,6 +72,23 @@ fn secs_of(id: i32) -> &'static [SecDef] {
 }
 
 const ARENA_SECS: [SecDef; 1] = [sec("030101.pac", 0.0, 0.0, "030vAdvStadium", 0, 0)];
+/// Porky's fight stage (SSE 090101, his boss archive): the ruined zoo's model, its one world floor, its stage position
+/// model (camera limit, blast zones, player spots). The archive's other collision file is his own top (bone-carried).
+const PORKY_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("090101.pac", 0.0, 0.0, "091vAdvZoo01", 0, 0) }];
+
+/// The arena of the process's boss (fixed per process: the VS boss, else Envoy's Petey), if it has one.
+fn arena_secs() -> Option<&'static [SecDef]> {
+    match crate::tu::petey::boss_name() {
+        "petey" => Some(&ARENA_SECS),
+        "porky" => Some(&PORKY_SECS),
+        _ => None,
+    }
+}
+
+/// The process's boss fights in its own Brawl arena (explore's arena mode) instead of on Final Destination.
+pub fn boss_has_arena() -> bool {
+    arena_secs().is_some()
+}
 
 /// Brawl's enemy kind (GEG1 [off]; names: BrawlCrate's public `EnemyList`, ids matched to the per-file counts in
 /// notes/sse-audit.md) -> the nearest of our four Subspace kinds (`subspace::K_*`), or None for a boss (not spawned).
@@ -453,7 +473,13 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 }
             }
         }
-        let colls = if objects { vec![] } else { colls };
+        let colls = if objects {
+            vec![]
+        } else if s.world_coll {
+            colls.into_iter().filter(|c| (0..be16(c, 4) as usize).all(|k| be16(c, be32(c, 0x10) as usize + 0x6C * k + 0x2A) == 0xFFFF)).collect()
+        } else {
+            colls
+        };
         for c in colls {
         let (np, npl) = (be16(c, 0) as usize, be16(c, 2) as usize);
         let (po, pl) = (be32(c, 8) as usize, be32(c, 12) as usize);
@@ -944,17 +970,20 @@ pub fn map_of(id: i32) -> Option<&'static Map> {
     r
 }
 
-/// Petey's arena, loaded once on a helper thread; `None` without the owner's files.
+/// The boss's arena (Petey's, Porky's: `arena_secs`), loaded once on a helper thread; `None` without the owner's
+/// files or for a boss without one.
 pub fn arena() -> Option<&'static Map> {
     static M: std::sync::OnceLock<Option<Map>> = std::sync::OnceLock::new();
     M.get_or_init(|| {
-        let r = std::thread::spawn(|| load_secs(&ARENA_SECS, true, false)).join().unwrap_or_else(|_| Err("loader panicked".into()));
+        let secs = arena_secs()?;
+        let r = std::thread::spawn(move || load_secs(secs, true, false)).join().unwrap_or_else(|_| Err("loader panicked".into()));
+        let who = crate::tu::petey::boss_name();
         match &r {
             Ok(m) => eprintln!(
-                "explore: Petey arena loaded ({} verts, {} lines, {} players, camera {}, blast {})",
+                "explore: {who} arena loaded ({} verts, {} lines, {} players, camera {}, blast {})",
                 m.verts.len(), m.lines.len(), m.players.len(), m.cam.is_some(), m.blast.is_some()
             ),
-            Err(e) => eprintln!("explore: no Petey arena ({e}); Final Destination"),
+            Err(e) => eprintln!("explore: no {who} arena ({e}); Final Destination"),
         }
         r.ok()
     })
@@ -1070,7 +1099,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     *cd = c;
     ACTIVE = true;
     set_bounds(0);
-    eprintln!("explore: {} collision in place ({} lines)", if ARENA { "Petey arena" } else { "room" }, m.lines.len());
+    eprintln!("explore: {} collision in place ({} lines)", if ARENA { "boss arena" } else { "room" }, m.lines.len());
     cd
 }
 
@@ -2078,7 +2107,7 @@ pub fn install() {
         }
     })
     .join();
-    if crate::tu::petey::selected() || crate::tu::petey::vs_selected() {
+    if (crate::tu::petey::selected() || crate::tu::petey::vs_selected()) && boss_has_arena() {
         let _ = arena();
     }
     // the VS boss's enemy scripts compile on a helper thread at the engine start, not in the match's first frame

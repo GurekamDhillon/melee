@@ -554,7 +554,10 @@ unsafe fn vm_capture_camera() {
 /// scripted (boss intro) mode with fixed interest and eye. State is in `B` and `game_camera` (statics): rollback-safe.
 /// A define without a camera block keeps Melee's own camera.
 unsafe fn follow_camera() {
-    if crate::tu::vm_arena::live() && std::env::var("MELEE_PETEY_CAM").as_deref() != Ok("boss") {
+    // the arena fights: Meta Ridley's on the ship (vm_arena), a VM boss in its own Brawl stage (explore's arena:
+    // Porky's zoo) frame the boss's whole mesh and the players
+    let own_stage = crate::tu::explore::ARENA && vm().is_some();
+    if (crate::tu::vm_arena::live() || own_stage) && std::env::var("MELEE_PETEY_CAM").as_deref() != Ok("boss") {
         return arena_camera();
     }
     let Some(cd) = geno().and_then(|g| g.camera) else { return vm_capture_camera() };

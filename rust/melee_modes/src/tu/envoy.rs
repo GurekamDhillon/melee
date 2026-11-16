@@ -697,7 +697,8 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
             p.cpu_kind = 0;
             p.cpu_level = 1;
             p.stocks = 1;
-            crate::tu::explore::ARENA_WANT = crate::tu::petey::is_petey();
+            // Petey and Porky fight in their own Brawl arenas (explore's arena mode)
+            crate::tu::explore::ARENA_WANT = crate::tu::explore::boss_has_arena();
             if crate::tu::stage_hop::supported(GR_FD) {
                 d.rules.stkind = melee_world::tu::stage::Stage_StageSlotSelect(GR_FD) as u16;
             }

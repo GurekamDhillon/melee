@@ -180,7 +180,9 @@ pub struct Out {
 
 /// The world a VM actor reads this frame. `ground`: the carrier stands on a floor.
 unsafe fn input(carrier: i32, damage: i32, ground: bool, fighter_of: unsafe fn(i32) -> *mut Fighter) -> vr::Input {
-    let mut i = vr::Input { ground, ..Default::default() };
+    static TRACE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    let trace = *TRACE.get_or_init(|| std::env::var_os("MELEE_VM_RULES").is_some());
+    let mut i = vr::Input { ground, trace, ..Default::default() };
     collision(&mut i);
     // The search module's slots are not ports: slot 0 is the target the search found (Brawl's boss search keeps
     // the nearest player there; r14 / r15, the MenuA / MenuB moves, need it present), the other players follow in
@@ -331,6 +333,7 @@ pub unsafe fn vm_frame(p: &'static Program, carrier: i32, frame: u32, damage: i3
     let mut box_now: Option<VmBox> = None;
     for e in a.events() {
         match e.kind {
+            vr::EV_RULE => eprintln!("petey: f{frame} rule {} fires (slot {}) in status {}", e.ins, e.v, a.status),
             EV_CATCH_EXIT => {
                 if log {
                     eprintln!("petey: f{frame} vm catch exit (CommonCatchProcExit) in status {}", a.status);

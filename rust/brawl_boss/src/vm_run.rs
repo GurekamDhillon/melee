@@ -109,6 +109,8 @@ pub const EV_CATCH_EXIT: u32 = 9;
 /// 661E: turn a joint about z to the units' movement angle: `ins` = the instruction (the host reads the joint argument
 /// from the program), `v` = the angle in degrees as f32 bits.
 pub const EV_AIM: u32 = 10;
+/// A rule fired (only while `Input::trace`): `ins` = the rule index, `v` = its slot (-1: none).
+pub const EV_RULE: u32 = 11;
 
 /// Everything that changes during a fight. Plain data, fixed size, `Copy`: a snapshot is a copy.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -227,6 +229,8 @@ pub const OFF: Actor = Actor {
 /// The host's view of the world for one frame.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Input {
+    /// debug: report every rule that fires (EV_RULE); presentation only
+    pub trace: bool,
     /// target candidates (players): live position, None = absent
     pub targets: [Option<[f32; 2]>; 4],
     /// damage taken this frame (0 = not hit) and the reaction frames the hit's knockback gives
@@ -759,6 +763,9 @@ impl<'a> Cx<'a> {
     }
 
     fn fire(&mut self, ri: usize, slot: i32) {
+        if self.i.trace {
+            self.ev(EV_RULE, ri as u32, slot);
+        }
         let r = self.p.rules[ri];
         if slot >= 0 {
             self.a.ti[0] = slot;

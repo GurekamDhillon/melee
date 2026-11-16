@@ -1073,6 +1073,9 @@ pub struct Batch {
     vis_bone: Option<usize>,
     /// the material's multi-stage shading (None: no shader read; the single-stage look)
     sh: Option<Box<Shade>>,
+    /// light channel 0's material colour when its control takes it from the register, not the vertex (the shaded
+    /// look's rasterised colour starts from it: Brawl's TEV stages scale it up again, x2 / x4)
+    mat: Option<[u8; 4]>,
 }
 
 /// A material's full pixel shading, read from its MDL0 shader and material display lists (the BP registers the Wii
@@ -1199,8 +1202,8 @@ fn shade_of(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Opti
     for st in 0..stages as usize {
         let tref = r.bp[40 + st / 2] >> (12 * (st & 1));
         let chan = match (tref >> 7) & 7 {
-            0 | 1 => 4, // GX_COLOR0A0 (one lit channel is sent)
-            _ => 6,     // GX_COLOR_ZERO
+            0 => 4, // GX_COLOR0A0
+            _ => 6, // GX_COLOR_ZERO: channel 1 (Brawl's second light set, specular) is not sent [L]
         };
         s.order[st] = if tref & 64 != 0 { [((tref >> 3) & 7) as u8, (tref & 7) as u8, chan] } else { [255, 255, chan] };
         s.cenv[st] = r.bp[192 + 2 * st];
@@ -1587,6 +1590,9 @@ impl Rig {
             let mut c = *c;
             // light channel 0: vertex material colour x clamp(ambient + diffuse) (one fixed key light)
             if let Some(bt) = self.batches.get(bi) {
+                if let (Some(mc), true) = (bt.mat, bt.sh.is_some() && !one_stage()) {
+                    c = mc;
+                }
                 if bt.lit {
                     let mut s = bt.amb;
                     if *n != [0.0; 3] {
@@ -1659,6 +1665,9 @@ fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mu
         let amb = &d[lc + 8..lc + 11];
         bt.amb = (amb[0] as f32 + amb[1] as f32 + amb[2] as f32) / (3.0 * 255.0);
         bt.lit = be32(d, lc + 12) & 2 != 0;
+        if be32(d, lc + 12) & 1 == 0 {
+            bt.mat = Some([d[lc + 4], d[lc + 5], d[lc + 6], d[lc + 7]]);
+        }
     }
 }
 
@@ -1763,7 +1772,7 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
         let clr = idx_of(id(2), &cols);
         let uv = idx_of(id(4), &uvs).map(|a| arr(d, a));
         let Some(pos) = pos else { continue };
-        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None, vis_bone: None, sh: None };
+        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None, vis_bone: None, sh: None, mat: None };
         if let Some((_, mo, vb)) = obj_mat.iter().find(|(i, _, _)| *i == oi) {
             material(d, *mo, texs, &mut bt);
             bt.vis_bone = bones.iter().position(|b| b.index == *vb);

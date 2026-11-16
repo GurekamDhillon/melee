@@ -212,6 +212,16 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
         return None;
     }
     let mut n = extent(p as usize, want);
+    // a texture outside the known ranges already copied whole: that copy, without probing the memory again (the copy
+    // the check below would return; zero-hitch, see `readable`)
+    if n < want && trust {
+        let o = objs();
+        if let Some((d, t)) = o.data.get_mut(&(p as usize, want)) {
+            o.clock += 1;
+            *t = o.clock;
+            return Some(d.clone());
+        }
+    }
     // a texture larger than the heap cap (the 640x480 I8 movie luma plane, 300 KB) is read whole, not cut at it
     if n < want && trust && readable(p as usize, want) {
         n = want;
@@ -513,42 +523,30 @@ pub fn finish_frame() { let _sys = SysScope::enter();
     shim().copy_disp(true)
 }
 
-/// `[p, p + n)` is committed, readable memory of this process (VirtualQuery). A texture image pointer the game got from
-/// an unrelocated DAT offset (for example 0x1D200) is not, and reading it would fault.
+/// `[p, p + n)` is committed, readable memory of this process. A texture image pointer the game got from an
+/// unrelocated DAT offset (for example 0x1D200) is not, and reading it would fault. Checked by reading it with
+/// `ReadProcessMemory` on this process (it fails instead of faulting), not by walking `VirtualQuery`: a query inside
+/// the snapshots' write-watched arena costs ~1 ms (the kernel sizes the whole region), and Pokemon Stadium's first
+/// frame asks for dozens of textures (zero-hitch: ~9 ms of a netplay match-start tick).
 #[cfg(windows)]
 fn readable(p: usize, n: usize) -> bool {
-    #[repr(C)]
-    struct Mbi {
-        base: usize,
-        alloc_base: usize,
-        alloc_protect: u32,
-        partition: u16,
-        region_size: usize,
-        state: u32,
-        protect: u32,
-        ty: u32,
-    }
     extern "system" {
-        fn VirtualQuery(addr: *const c_void, buf: *mut Mbi, len: usize) -> usize;
+        fn GetCurrentProcess() -> *mut c_void;
+        fn ReadProcessMemory(h: *mut c_void, base: *const c_void, buf: *mut c_void, n: usize, read: *mut usize) -> i32;
     }
-    if p < 0x1_0000 {
+    if p < 0x1_0000 || p.checked_add(n).is_none() {
         return false;
     }
-    let end = p.saturating_add(n);
-    let mut a = p;
-    while a < end {
-        let mut m: Mbi = unsafe { core::mem::zeroed() };
-        if unsafe { VirtualQuery(a as *const c_void, &mut m, core::mem::size_of::<Mbi>()) } == 0 {
-            return false;
+    thread_local! { static BUF: core::cell::RefCell<Vec<u8>> = const { core::cell::RefCell::new(Vec::new()) }; }
+    BUF.with(|b| {
+        let mut b = b.borrow_mut();
+        if b.len() < n {
+            b.resize(n, 0);
         }
-        const MEM_COMMIT: u32 = 0x1000;
-        const READ: u32 = 0x02 | 0x04 | 0x08 | 0x20 | 0x40 | 0x80;
-        if m.state != MEM_COMMIT || m.protect & READ == 0 || m.protect & 0x100 != 0 {
-            return false;
-        }
-        a = m.base + m.region_size;
-    }
-    true
+        let mut got = 0usize;
+        let ok = unsafe { ReadProcessMemory(GetCurrentProcess(), p as *const c_void, b.as_mut_ptr() as *mut c_void, n, &mut got) };
+        ok != 0 && got == n
+    })
 }
 #[cfg(not(windows))]
 fn readable(_p: usize, _n: usize) -> bool {

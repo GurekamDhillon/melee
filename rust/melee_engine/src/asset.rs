@@ -1426,7 +1426,9 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
             melee_core::frameprof::Text::new().s("asset apply ").s(how).s(" ").n((len >> 10) as i64).s(" KB")
         });
         SRC_FOR_DIGEST.with(|c| c.set(src as usize));
+        fault_watch::drain(false);
         let o = apply(&plan, src);
+        fault_watch::drain(true);
         end_asset_path(len, "replay");
         o
     };
@@ -1470,4 +1472,59 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         );
     }
     Some(out)
+}
+
+/// Diagnostic (`MELEE_FAULT_WATCH=1`, Windows): where the game thread's page faults during a plan apply land. The
+/// process fault counter in the apply log line counts every thread (the pre-faulter, the worker); this one uses the
+/// working-set watch (`GetWsChangesEx`), keeps the game thread's faults only and sorts them by region. Log only.
+mod fault_watch {
+    std::thread_local! { static BUMP0: core::cell::Cell<usize> = const { core::cell::Cell::new(0) }; }
+    #[cfg(windows)]
+    pub fn drain(report: bool) {
+        use std::sync::OnceLock;
+        static ON: OnceLock<bool> = OnceLock::new();
+        #[repr(C)]
+        #[derive(Clone, Copy)]
+        struct Ws { pc: usize, va: usize, tid: usize, _r: usize }
+        extern "system" {
+            fn GetCurrentProcess() -> *mut core::ffi::c_void;
+            fn GetCurrentThreadId() -> u32;
+            fn K32InitializeProcessForWsWatch(p: *mut core::ffi::c_void) -> i32;
+            fn K32GetWsChangesEx(p: *mut core::ffi::c_void, b: *mut Ws, cb: *mut u32) -> i32;
+        }
+        if !*ON.get_or_init(|| {
+            let _s = crate::arena::SysScope::enter();
+            std::env::var_os("MELEE_FAULT_WATCH").is_some() && unsafe { K32InitializeProcessForWsWatch(GetCurrentProcess()) } != 0
+        }) {
+            return;
+        }
+        let _s = crate::arena::SysScope::enter();
+        let me = unsafe { GetCurrentThreadId() } as usize;
+        let mut buf = vec![Ws { pc: 0, va: 0, tid: 0, _r: 0 }; 1 << 16];
+        let mut cb = (buf.len() * core::mem::size_of::<Ws>()) as u32;
+        let ok = unsafe { K32GetWsChangesEx(GetCurrentProcess(), buf.as_mut_ptr(), &mut cb) } != 0;
+        if !report {
+            BUMP0.with(|c| c.set({ let (b, l) = crate::arena::used_range(); b + l }));
+            return;
+        }
+        let n = if ok { (cb as usize / core::mem::size_of::<Ws>()).min(buf.len()) } else { 0 };
+        let mine: Vec<usize> = buf[..n].iter().filter(|w| w.pc != 0 && w.tid == me).map(|w| w.va).collect();
+        let arena = mine.iter().filter(|&&v| crate::arena::contains(v as *const u8)).count();
+        let (_, bump) = crate::arena::used_range();
+        let above = mine.iter().filter(|&&v| crate::arena::contains(v as *const u8) && v >= BUMP0.with(|c| c.get())).count();
+        let _ = bump;
+        let mut regions: Vec<(usize, usize)> = Vec::new();
+        for &v in mine.iter().filter(|&&v| !crate::arena::contains(v as *const u8)) {
+            let r = v & !0xFF_FFFF;
+            match regions.iter_mut().find(|x| x.0 == r) {
+                Some(x) => x.1 += 1,
+                None => regions.push((r, 1)),
+            }
+        }
+        regions.sort_by_key(|x| core::cmp::Reverse(x.1));
+        let others: Vec<String> = regions.iter().take(6).map(|(r, c)| format!("{r:#x}+16MB: {c}")).collect();
+        eprintln!("asset: fault watch: game thread {} faults ({} other threads; ok {ok}): arena {arena} ({above} past the bump at the apply's start); elsewhere {:?}", mine.len(), n - mine.len(), others);
+    }
+    #[cfg(not(windows))]
+    pub fn drain(_report: bool) {}
 }

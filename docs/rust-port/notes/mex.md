@@ -352,3 +352,27 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
 - Verification: Akaneia 51/51 match, vanilla 125/125, synctest 3000 frames depth 4 and 7 on `mex_ace_cpu` and the
   Akaneia row (ck:17 vs ck:2, FD): 0 mismatches.
 - Not done: Liu Kang rand order (probe_lk_rand), Meta Knight multi-table, the open sweep faults above.
+
+### Round 13 (Nov 16)
+
+- Sweep (r12 table, `synctest --frames 1800 --depth 4`, `MELEE_MEX_REPORT=1`). Note: the r12 table's scene `ace_mexN` is
+  fighter kind N+5 (mex34 is Wario's neighbour; Wario 40 = mex35, Lucas2 42 = mex37, PlLu 58 = mex53, PlTd 62 = mex57).
+- Pushed (0f109ba55): hand bridges `lbDvd_8001819C` / `lbArchive_LoadArchive` (native loader, archive by handle),
+  `Item_8026AE84`, `ftColl_8007B1B8`, `ftParts_80074A74`, `it_8026B3F8` (no-op on a guest article), `OSReport`,
+  `PSVECNormalize`, `fn_8019035C`, `GObj_InitUserData` (a guest heap block as user_data, no remover);
+  `HSD_ArchiveGetPublicAddress` of a `*_scene_models` table returns a BE table of DynamicModelDesc handles, and a public the
+  archive lacks returns NULL; `pl_80037C60` no longer panics on an m-ex attack id >= 118 (PlLu's 236; not counted).
+  Result: Wario, Lucas2, PlLu and Toad run 1800 frames, 0 mismatches, no crash.
+- Local, NOT pushed (MK regression, see below): MEMCPY copies word by word when aligned (a native MotionState's
+  callback reads only as a whole word), and `GuestSpace::materialize` decodes every whole row of a MotionState block
+  (Skull Kid / Meta Knight install a 341-row copy of the common table as `x1C_actionStateList`). Skull Kid (45) then
+  runs clean. Meta Knight (47) gets through its onLoad and then crashes in `Fighter_ChangeMotionState(341)`: its
+  `x20_actionStateList` points into the exe (`Mex_MoveLogicTable` gave the vanilla static for kind 47, anim_id garbage).
+  Before, MK's onLoad faulted at the memcpy and the clone base's onLoad ran (no crash). Next: find who should set MK's
+  x20 (the m-ex MoveLogic table for kind 47) when its guest onLoad completes.
+- Still open: `Player_GetPtrForSlot` (49; StaticPlayer is not a record), null+0x2C reads on 44/46/48/49 (the guest follows
+  a pointer in its own `fv` block whose entry is NULL, likely a custom article spawn the port refuses), 0x90004998 (44),
+  `MexCPU_ProcCustom` +0x20 (39), `sprintf` (48), plus new unresolved calls the fixed fighters now reach (41: ftpickupitem_80094818,
+  itPeachTurnip_*; 42: ftColl_8007AF10, ftColl_CreateAbsorbHit, ftCommon_8007D92C, it_802AA8C0; 62: ftCommon_ClampSelfVelX,
+  ftCommon_FallBasic, ftCommon_Ascend, gm_GetDbPauseFlag). Liu Kang rand order not started.
+- Not run this round: Akaneia 51, vanilla 125, synctest d4/d7 on mex_ace_cpu.

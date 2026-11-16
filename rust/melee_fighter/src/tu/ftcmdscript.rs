@@ -301,9 +301,20 @@ pub fn ftco_800b4a78(fp: &mut Fighter) {
 // C-named entry points for the generated CPU AI (tu::ftCo_0A01).
 pub unsafe fn ftCo_800B3E04(fp: *mut Fighter) { melee_core::ct!("ftCo_800B3E04"); ftco_800b3e04(&mut *fp) }
 pub unsafe fn ftCo_800B462C(fp: *mut Fighter) { melee_core::ct!("ftCo_800B462C"); ftco_800b462c(&mut *fp) }
-pub unsafe fn ftCo_800B463C(fp: *mut Fighter, cmd: u8) { melee_core::ct!("ftCo_800B463C"); ftco_800b463c(&mut *fp, cmd) }
-pub unsafe fn ftCo_800B46B8(fp: *mut Fighter, cmd: u8, arg: u8) { melee_core::ct!("ftCo_800B46B8"); ftco_800b46b8(&mut *fp, cmd, arg) }
-pub unsafe fn ftCo_800B4778(fp: *mut Fighter, cmd: u8, a1: u8, a2: u8) { melee_core::ct!("ftCo_800B4778"); ftco_800b4778(&mut *fp, cmd, a1, a2) }
+pub unsafe fn ftCo_800B463C(fp: *mut Fighter, cmd: u8) { melee_core::ct!("ftCo_800B463C"); cpu_trace(fp, "800B463C", &[cmd]); ftco_800b463c(&mut *fp, cmd) }
+pub unsafe fn ftCo_800B46B8(fp: *mut Fighter, cmd: u8, arg: u8) { melee_core::ct!("ftCo_800B46B8"); cpu_trace(fp, "800B46B8", &[cmd, arg]); ftco_800b46b8(&mut *fp, cmd, arg) }
+pub unsafe fn ftCo_800B4778(fp: *mut Fighter, cmd: u8, a1: u8, a2: u8) { melee_core::ct!("ftCo_800B4778"); cpu_trace(fp, "800B4778", &[cmd, a1, a2]); ftco_800b4778(&mut *fp, cmd, a1, a2) }
+
+/// `MELEE_CPU_TRACE=1`: every CPU command push on stderr (engine frame, player, pusher, bytes), the Rust side of a
+/// Dolphin `PROBE_AT=800B463C,800B46B8,800B4778` run (frame there = engine frame + 1 less the playback offset; compare
+/// by slippi frame).
+fn cpu_trace(fp: *mut Fighter, f: &str, b: &[u8]) {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if *ON.get_or_init(|| std::env::var_os("MELEE_CPU_TRACE").is_some()) {
+        let frame = melee_core::ct::DBG_FRAME.load(core::sync::atomic::Ordering::Relaxed);
+        eprintln!("cputrace frame={} p{} {} {:02x?}", frame, unsafe { (*fp).player_idx }, f, b);
+    }
+}
 pub unsafe fn ftCo_800B4880(fp: *mut Fighter, idx: i32) { melee_core::ct!("ftCo_800B4880"); ftco_800b4880(&mut *fp, idx) }
 pub unsafe fn ftCo_800B49F4(fp: *mut Fighter) { melee_core::ct!("ftCo_800B49F4"); ftco_800b49f4(&mut *fp) }
 pub unsafe fn ftCo_800B4A78(fp: *mut Fighter) { melee_core::ct!("ftCo_800B4A78"); ftco_800b4a78(&mut *fp) }

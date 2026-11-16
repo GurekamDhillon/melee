@@ -114,6 +114,18 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   (open since the step-split rounds, slippi 476) now matches Dolphin over all 10167 frames. ACE 2.0.1 Marth/Fox is
   unchanged (kind 2, first difference still slippi 394).
 
+- Marth/Fox slippi 394 (Fox's CPU lstick 0,0 vs -112,32) is retail undefined behaviour, not m-ex. Fox is in CPU
+  behaviour 18 (`ftCo_800AC5A0`, shield DI from `x8c_kb_vel`). With the knockback nearly zero the console code jumps
+  to the two `ftCo_800B46B8(SetLstickX/Y)` pushes without setting their arguments: X gets whatever r5 the dispatcher
+  (`ftCo_800B2790`, after `ftCo_800ADC28`) left, Y gets the caller's r30 (= fp). On this frame r5 = 0x804D5F90 (the
+  HSD_Rand seed address, from the last rand call) -> 0x90 = -112, and r30 = 0x80E8C220 (Fox's console Fighter) ->
+  0x20 = 32. Shown by the command buffer (`PROBE_AT=800B3E28 PROBE_MEM=r29+0x44C:0x30`: `80 90 81 20 09 8e 01 7f`)
+  and the push probe (r5 = 804d5f90 / 80e8c220 at lr 800ac750 / 800ac760). The engine pushes the C's zero-initialised
+  locals. Not ported: exact needs the console's Fighter address (heap layout) and `ftCo_800ADC28`'s exit r5 on every
+  path. `MELEE_CPU_TRACE=1` lists every CPU command push (engine frame = slippi + 123) to line up with such probes.
+  The Dolphin push hooks log the JIT block's registers, so their argument registers are only right where the logged
+  lr is the call's own return address.
+
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 
 - Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline

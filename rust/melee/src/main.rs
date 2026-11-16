@@ -505,6 +505,21 @@ fn main() -> ExitCode {
     code
 }
 fn main_inner() -> ExitCode {
+    // Packaging: `melee --write-snapmask` writes MELEE_SNAP_CHECK's host-only span list beside the exe from its PDB
+    // (snapmask.rs), so a packaged exe carries the mask without shipping the PDB. Nothing else runs.
+    if std::env::args().nth(1).as_deref() == Some("--write-snapmask") {
+        let r = std::env::current_exe().map_err(|e| e.to_string()).and_then(|e| melee_engine::snapmask::write_sidecar(&e));
+        return match r {
+            Ok(n) => {
+                println!("snapmask: {n} game spans written");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("snapmask: {e}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     // The YouGame app's stdio bridge (notes/yougame.md): first, before anything can print to stdout or open the log.
     let yougame = melee_platform::yougame::init();
     // Saves that follow the account (yougame_saves.rs): before anything reads the card or settings.

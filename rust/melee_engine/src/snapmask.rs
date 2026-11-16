@@ -2,8 +2,10 @@
 //! PDB (its section contributions name the object file each byte of `.data` / `.bss` came from). Those pages are
 //! std's, the runtime libraries' and the platform crates' (allocator counters, once-flags, driver state): host state
 //! a rollback load leaves alone by design, so the check skips them. Every page with any byte of a `melee*` / game crate
-//! is still compared. Dev builds only (a shipped exe has no PDB beside it; the mask is then empty and nothing is
-//! skipped). Windows; elsewhere `None`.
+//! is still compared. The spans come from `<exe>.snapmask` when present (written from the PDB at package time by
+//! `melee --write-snapmask`, so a packaged exe needs no PDB), else from `<exe>.pdb`; with neither the mask is empty
+//! and nothing is skipped. The sidecar carries the exe's size and is ignored when it does not match. Windows;
+//! elsewhere `None`.
 
 /// Crates whose objects are host-only even though their names match the game prefix.
 const HOST_CRATES: &[&str] = &["melee_platform", "melee_audio", "melee_gx", "melee_fptrace"];
@@ -12,9 +14,11 @@ const HOST_CRATES: &[&str] = &["melee_platform", "melee_audio", "melee_gx", "mel
 #[cfg(windows)]
 pub fn host_only(ranges: &[(usize, usize)], first: usize) -> Option<Vec<Vec<u64>>> {
     let exe = std::env::current_exe().ok()?;
-    let pdb = std::fs::read(exe.with_extension("pdb")).ok()?;
     let img = image_base(ranges, first)?;
-    let game = game_spans(&pdb)?;
+    let game = match read_sidecar(&exe) {
+        Some(g) => g,
+        None => game_spans(&std::fs::read(exe.with_extension("pdb")).ok()?)?,
+    };
     let mut out: Vec<Vec<u64>> = ranges.iter().map(|r| vec![0u64; (r.1 / 4096).div_ceil(64)]).collect();
     let (mut host, mut total) = (0usize, 0usize);
     for (ri, &(a, len)) in ranges.iter().enumerate().skip(first) {
@@ -39,6 +43,34 @@ pub fn host_only(ranges: &[(usize, usize)], first: usize) -> Option<Vec<Vec<u64>
     }
     eprintln!("MELEE_SNAP_CHECK: host-only mask {host} of {total} statics pages ({} game contributions)", game.len());
     Some(out)
+}
+
+const SIDECAR_MAGIC: &[u8; 8] = b"MSNPMSK1";
+
+/// `<exe>.snapmask`: magic, the exe's byte length (u64 LE), then (start, end) RVA pairs (u32 LE) of game spans.
+fn read_sidecar(exe: &std::path::Path) -> Option<Vec<(usize, usize)>> {
+    let b = std::fs::read(exe.with_extension("snapmask")).ok()?;
+    let len = std::fs::metadata(exe).ok()?.len();
+    if b.len() < 16 || &b[..8] != SIDECAR_MAGIC || u64::from_le_bytes(b[8..16].try_into().ok()?) != len {
+        return None;
+    }
+    let u = |o: usize| u32::from_le_bytes(b[o..o + 4].try_into().unwrap()) as usize;
+    Some((16..b.len() - 7).step_by(8).map(|o| (u(o), u(o + 4))).collect())
+}
+
+/// Writes `<exe>.snapmask` from `<exe>.pdb` (the packaging step; `melee --write-snapmask`). Returns the span count.
+pub fn write_sidecar(exe: &std::path::Path) -> Result<usize, String> {
+    let pdb = std::fs::read(exe.with_extension("pdb")).map_err(|e| format!("no pdb beside {}: {e}", exe.display()))?;
+    let game = game_spans(&pdb).ok_or("pdb has no readable section contributions")?;
+    let len = std::fs::metadata(exe).map_err(|e| e.to_string())?.len();
+    let mut out = SIDECAR_MAGIC.to_vec();
+    out.extend_from_slice(&len.to_le_bytes());
+    for &(lo, hi) in &game {
+        out.extend_from_slice(&(lo as u32).to_le_bytes());
+        out.extend_from_slice(&(hi as u32).to_le_bytes());
+    }
+    std::fs::write(exe.with_extension("snapmask"), out).map_err(|e| e.to_string())?;
+    Ok(game.len())
 }
 
 #[cfg(not(windows))]

@@ -137,7 +137,7 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
 - Proof (synctest, 3000 frames, depths 4 and 7, with a temporary set/read trace): ACE 2.0.1 `mex_ace_cpu` 0
   mismatches with 25 / 40 thrown-flag reads true; Akaneia (ck:17 vs ck:2 on FD, a scratch scenario
   row; `stage_21_akaneia` crashes at boot in `Ground_EnableMatchCamera` in synctest, unrelated) 0 mismatches with
-  45 / 72 thrown sets. `MELEE_SCENARIO_TSV` must point at the coverage tsv when not run from the worktree.
+  45 / 72 thrown sets. Re-run on the committed build (no trace, df83104a3): all four 0 mismatches. `MELEE_SCENARIO_TSV` must point at the coverage tsv when not run from the worktree.
 - Retail uninitialised stick in CPU behaviour 18 (`ftCo_800AC5A0`), traced in the 1.02 DOL. On the nearly-zero
   knockback path (`bne 0x800AC744` at 0x800AC6D0) the function makes no call before the two pushes, so
   `SetLstickX` gets r5 as it was on entry and `SetLstickY` gets r30 as it was on entry (r30 is callee-saved and only

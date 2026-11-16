@@ -105,8 +105,11 @@ pub fn find(regs: &[usize], addr: usize) -> Option<usize> {
 /// The C function an `int`-returning predicate shim stands for: the type argument of melee_items'
 /// `pred_adapter::<..::f>` (pred_b!), or `f` of a TU's `f_p` (its local pred_i32!).
 fn adapter_target(n: &str) -> Option<&str> {
-    if let Some(i) = n.find("::pred_adapter::<") {
-        return Some(last(n[i + "::pred_adapter::<".len()..].trim_end_matches('>')));
+    // Linux demangles `pred_adapter::<T>`, Windows (dbghelp) `pred_adapter<T>`
+    for pat in ["::pred_adapter::<", "::pred_adapter<"] {
+        if let Some(i) = n.find(pat) {
+            return Some(last(n[i + pat.len()..].trim_end_matches('>')));
+        }
     }
     last(n).strip_suffix("_p")
 }

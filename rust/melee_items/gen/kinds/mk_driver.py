@@ -266,6 +266,10 @@ def build_ops(tu, cfg):
                 sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"
         elif rk == "f32":
             sc, sr = f"ret = B({call_c});", f"ret = ({call_r}).to_bits();"
+        elif rk == "f64":
+            # the callee's double return: hash all 64 bits, then the narrowed value is the op's result word
+            sc = f"{{ double d_ = {call_c}; HM64(d_); ret = B((float) d_); }}"
+            sr = f"{{ let d_ = {call_r}; hm64(d_); ret = (d_ as f32).to_bits(); }}"
         elif rk.startswith("ptr") or rk in ("gobj", "item", "jobj", "vec"):
             sc, sr = f"ret = PI({call_c});", f"ret = pi({call_r});"
         else:

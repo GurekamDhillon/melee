@@ -1050,7 +1050,8 @@ pub struct DrawBufs {
 }
 
 /// A posed vertex: model-space position, lit colour (the rasterised colour TEV sees), texture coordinate.
-pub type Vert = ([f32; 3], [u8; 4], [f32; 2]);
+/// (position, colour, texture coordinate, normal (model space; zero: none))
+pub type Vert = ([f32; 3], [u8; 4], [f32; 2], [f32; 3]);
 
 /// A run of triangles drawn with one material. Brawl material state honoured (what Petey and his cages use; a
 /// future boss extends this): texture 0 with its wrap modes, the alpha compare from the material's pixel display
@@ -1070,6 +1071,292 @@ pub struct Batch {
     blend: Option<(u8, u8)>,
     /// the draw-list entry's visibility bone (a bone slot): the object is drawn only while that bone is visible
     vis_bone: Option<usize>,
+    /// the material's multi-stage shading (None: no shader read; the single-stage look)
+    sh: Option<Box<Shade>>,
+}
+
+/// A material's full pixel shading, read from its MDL0 shader and material display lists (the BP registers the Wii
+/// would receive) and its texture references: every TEV stage's order, colour / alpha combiners, swap and konstant
+/// selections, the TEV colour and konstant registers, the swap tables, every texture map, and per texture
+/// coordinate its source (the vertex UV, or the environment map from the normal) and its SRT matrix (Maya mode).
+/// Drawn through the GX TEV calls the Melee renderer already takes ([`draw_tris_vis`]); the texture coordinates are
+/// made per vertex on the CPU and sent direct.
+pub struct Shade {
+    stages: u8,
+    /// per stage: (texture coordinate, texture map (255: none), GX colour channel)
+    order: [[u8; 3]; 16],
+    /// per stage: the colour and alpha combiner BP values (hardware layout)
+    cenv: [u32; 16],
+    aenv: [u32; 16],
+    /// per stage: konstant colour / alpha selection
+    kc: [u8; 16],
+    ka: [u8; 16],
+    /// swap tables: (r, g, b, a) channel per table
+    swap: [[u8; 4]; 4],
+    /// TEV colour registers PREV, REG0-2 (signed 11-bit) and konstant colours K0-K3, each with its written flag
+    creg: [([i16; 4], bool); 4],
+    kreg: [([u8; 4], bool); 4],
+    /// (texture map, texture, wrap s / t)
+    maps: Vec<(u8, std::sync::Arc<Tex>, [u32; 2])>,
+    /// per texture coordinate
+    gens: Vec<Gen>,
+}
+
+#[derive(Clone, Copy)]
+struct Gen {
+    /// from the normal (environment map) instead of the UV
+    env: bool,
+    /// u' = m0 u + m1 v + m2, v' = m3 u + m4 v + m5
+    m: [f32; 6],
+    ident: bool,
+}
+
+/// BP register file of a display-list run: BP writes under the BP mask register, XF writes kept by address.
+struct Regs {
+    bp: [u32; 256],
+    wr: [bool; 256],
+    xf: Vec<(u16, u32)>,
+}
+
+impl Regs {
+    fn new() -> Self {
+        Regs { bp: [0; 256], wr: [false; 256], xf: vec![] }
+    }
+    /// Run the GX commands in `d[p..end]` (NOP, BP, XF, CP); stops at anything else.
+    fn run(&mut self, d: &[u8], mut p: usize, end: usize) {
+        let end = end.min(d.len());
+        let mut mask = 16777215u32;
+        while p < end {
+            match d[p] {
+                0 => p += 1,
+                97 if p + 5 <= end => {
+                    let v = be32(d, p + 1);
+                    let (r, val) = ((v >> 24) as usize, v & 16777215);
+                    if r == 254 {
+                        mask = val;
+                    } else {
+                        self.bp[r] = (self.bp[r] & !mask) | (val & mask);
+                        self.wr[r] = true;
+                        mask = 16777215;
+                    }
+                    p += 5;
+                }
+                16 if p + 5 <= end => {
+                    let n = be16(d, p + 1) as usize + 1;
+                    let a = be16(d, p + 3);
+                    for k in 0..n {
+                        if p + 5 + 4 * k + 4 <= end {
+                            self.xf.push((a.wrapping_add(k as u16), be32(d, p + 5 + 4 * k)));
+                        }
+                    }
+                    p += 5 + 4 * n;
+                }
+                8 => p += 6,
+                _ => break,
+            }
+        }
+    }
+}
+
+/// The Maya-mode texture matrix of an SRT (BrawlLib's MayaMtxSRT): (u, v) -> (u', v').
+fn maya(s: [f32; 2], r_deg: f32, t: [f32; 2]) -> [f32; 6] {
+    let (sn, cs) = (r_deg.to_radians().sin(), r_deg.to_radians().cos());
+    let (sin, cos) = (0.5 * sn - 0.5, -0.5 * cs);
+    [s[0] * cs, s[0] * sn, s[0] * (cos - sin - t[0]), -s[1] * sn, s[1] * cs, s[1] * (cos + sin + t[1]) + 1.0]
+}
+
+/// The shading of the v9 MDL0 material at `mo` (None: no shader, or a texture map a stage samples is missing).
+fn shade_of(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Option<Box<Shade>> {
+    let so = bei(d, mo + 40);
+    if so == 0 {
+        return None;
+    }
+    let sh = at(mo, so);
+    let stages = d.get(mo + 22).copied()?.clamp(1, 16);
+    let ngen = d.get(mo + 20).copied()?.min(8) as usize;
+    let mut r = Regs::new();
+    r.run(d, sh + 32, sh + be32(d, sh) as usize);
+    // the material's own lists (pixel, TEV colours, konstants, indirect matrices, texture coordinate generation)
+    let dl = at(mo, bei(d, mo + 56));
+    r.run(d, dl, mo + be32(d, mo) as usize);
+    let mut s = Shade {
+        stages,
+        order: [[255, 255, 6]; 16],
+        cenv: [0; 16],
+        aenv: [0; 16],
+        kc: [0; 16],
+        ka: [0; 16],
+        swap: [[0, 1, 2, 3]; 4],
+        creg: [([0; 4], false); 4],
+        kreg: [([0; 4], false); 4],
+        maps: vec![],
+        gens: vec![],
+    };
+    for t in 0..4 {
+        let (a, b) = (r.bp[246 + 2 * t], r.bp[247 + 2 * t]);
+        s.swap[t] = [(a & 3) as u8, ((a >> 2) & 3) as u8, (b & 3) as u8, ((b >> 2) & 3) as u8];
+    }
+    for st in 0..stages as usize {
+        let tref = r.bp[40 + st / 2] >> (12 * (st & 1));
+        let chan = match (tref >> 7) & 7 {
+            0 | 1 => 4, // GX_COLOR0A0 (one lit channel is sent)
+            _ => 6,     // GX_COLOR_ZERO
+        };
+        s.order[st] = if tref & 64 != 0 { [((tref >> 3) & 7) as u8, (tref & 7) as u8, chan] } else { [255, 255, chan] };
+        s.cenv[st] = r.bp[192 + 2 * st];
+        s.aenv[st] = r.bp[193 + 2 * st];
+        let ks = r.bp[246 + st / 2] >> (10 * (st & 1));
+        s.kc[st] = ((ks >> 4) & 31) as u8;
+        s.ka[st] = ((ks >> 9) & 31) as u8;
+    }
+    let s11 = |v: u32| (((v & 2047) as i32) << 21 >> 21) as i16;
+    for k in 0..4 {
+        let (lo, hi) = (r.bp[224 + 2 * k], r.bp[225 + 2 * k]);
+        if !(r.wr[224 + 2 * k] || r.wr[225 + 2 * k]) {
+            continue;
+        }
+        let (rr, a, b, g) = (lo & 2047, (lo >> 12) & 2047, hi & 2047, (hi >> 12) & 2047);
+        if lo & 8388608 != 0 {
+            s.kreg[k] = ([rr as u8, g as u8, b as u8, a as u8], true);
+        } else {
+            s.creg[k] = ([s11(rr), s11(g), s11(b), s11(a)], true);
+        }
+    }
+    // texture references: name, texture map id, wrap; their SRTs and mapping methods
+    let nref = be32(d, mo + 44) as usize;
+    let e0 = at(mo, bei(d, mo + 48));
+    let mref = be32(d, mo + 48);
+    let srt = mo + 416 + if mref == 0 { 4 } else { (mref & 15) as usize };
+    for k in 0..nref.min(8) {
+        let e = e0 + 52 * k;
+        let name = cstr(d, at(e, bei(d, e)));
+        let map = be32(d, e + 16).min(7) as u8;
+        let t = texs.iter().find(|(n, _)| *n == name)?.1.clone();
+        s.maps.push((map, t, [be32(d, e + 24).min(2), be32(d, e + 28).min(2)]));
+    }
+    for g in 0..ngen {
+        let x = r.xf.iter().rev().find(|(a, _)| *a == 4160 + g as u16).map(|(_, v)| *v).unwrap_or(5 << 7);
+        let row = (x >> 7) & 31;
+        let base = srt + 8 + 20 * g;
+        let (sc, rot, tr) = ([bef(d, base), bef(d, base + 4)], bef(d, base + 8), [bef(d, base + 12), bef(d, base + 16)]);
+        let ident = sc == [1.0, 1.0] && rot == 0.0 && tr == [0.0, 0.0];
+        let mode = d.get(srt + 168 + 52 * g + 2).copied().unwrap_or(0);
+        s.gens.push(Gen { env: row == 1 || matches!(mode, 1 | 3 | 4), m: maya(sc, rot, tr), ident });
+    }
+    // every map a stage samples must be loaded
+    for st in 0..stages as usize {
+        let m = s.order[st][1];
+        if m != 255 && !s.maps.iter().any(|(mm, _, _)| *mm == m) {
+            return None;
+        }
+    }
+    Some(Box::new(s))
+}
+
+/// Texture coordinate `g` of a vertex: its UV or its environment-map coordinate (from the view-space normal `nv`),
+/// through the coordinate's SRT matrix.
+fn gen_uv(g: &Gen, uv: [f32; 2], nv: [f32; 3]) -> [f32; 2] {
+    let (u, v) = if g.env {
+        let l = (nv[0] * nv[0] + nv[1] * nv[1] + nv[2] * nv[2]).sqrt().max(1e-6);
+        (0.5 + 0.5 * nv[0] / l, 0.5 - 0.5 * nv[1] / l)
+    } else {
+        (uv[0], uv[1])
+    };
+    if g.ident {
+        [u, v]
+    } else {
+        let m = &g.m;
+        [m[0] * u + m[1] * v + m[2], m[3] * u + m[4] * v + m[5]]
+    }
+}
+
+/// `MELEE_BRAWL_ONE_STAGE`: draw every material with the old single-stage look (before / after shots).
+fn one_stage() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var_os("MELEE_BRAWL_ONE_STAGE").is_some())
+}
+
+/// Set GX up for a shaded batch: texture maps, texture coordinate generators (direct, one per coordinate), and
+/// every TEV stage. The caller sends per vertex the position, colour 0 and the coordinates.
+unsafe fn set_shade(s: &Shade) {
+    use melee_runtime::tu::displayfunc_native::ext as gx;
+    use melee_runtime::tu::lbrefract::ext as gi;
+    use melee_runtime::tu::sobjlib::ext as gs;
+    use melee_runtime::tu::tobj::ext as gt;
+    use melee_types::*;
+    for (map, t, wrap) in &s.maps {
+        let o = t.obj.as_ptr() as *mut _GXTexObj;
+        gs::GXInitTexObj(o, t.data.as_ptr() as *mut _, t.w, t.h, t.fmt, wrap[0], wrap[1], (t.levels > 1) as u8);
+        let min = if t.levels > 1 { GX_LIN_MIP_LIN } else { GX_LINEAR };
+        gt::GXInitTexObjLOD(o, min as _, GX_LINEAR as _, 0.0, (t.levels - 1) as f32, 0.0, 0, 0, GX_ANISO_1 as _);
+        gs::GXLoadTexObj(o, GX_TEXMAP0 as u32 + *map as u32);
+    }
+    gx::GXSetNumTexGens(s.gens.len() as u8);
+    for i in 0..8u32 {
+        if (i as usize) < s.gens.len() {
+            gs::GXSetTexCoordGen2(GX_TEXCOORD0 as u32 + i, GX_TG_MTX2x4 as _, GX_TG_TEX0 as u32 + i, GX_IDENTITY as _, 0, GX_PTIDENTITY as _);
+            gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_TEX0 as u32 + i, GX_TEX_ST as _, GX_F32 as _, 0);
+            gx::GXSetVtxDesc(GX_VA_TEX0 as u32 + i, GX_DIRECT as _);
+        } else {
+            gx::GXSetVtxDesc(GX_VA_TEX0 as u32 + i, GX_NONE as _);
+        }
+    }
+    gx::GXSetNumTevStages(s.stages);
+    for st in 0..s.stages as usize {
+        let n = st as u32;
+        gi::GXSetTevDirect(n);
+        let [c, m, ch] = s.order[st];
+        let (c, m) = if m == 255 { (GX_TEXCOORD_NULL as u32, GX_TEXMAP_NULL as u32) } else { (c as u32, m as u32) };
+        gx::GXSetTevOrder(n, c, m, ch as u32);
+        let ce = s.cenv[st];
+        gs::GXSetTevColorIn(n, (ce >> 12) & 15, (ce >> 8) & 15, (ce >> 4) & 15, ce & 15);
+        let (bias, sub, clamp, scale, dest) = ((ce >> 16) & 3, (ce >> 18) & 1, ((ce >> 19) & 1) as u8, (ce >> 20) & 3, (ce >> 22) & 3);
+        if bias == 3 {
+            gs::GXSetTevColorOp(n, 8 + 2 * scale + sub, 0, 0, clamp, dest);
+        } else {
+            gs::GXSetTevColorOp(n, sub, bias, scale, clamp, dest);
+        }
+        let ae = s.aenv[st];
+        gs::GXSetTevAlphaIn(n, (ae >> 13) & 7, (ae >> 10) & 7, (ae >> 7) & 7, (ae >> 4) & 7);
+        let (bias, sub, clamp, scale, dest) = ((ae >> 16) & 3, (ae >> 18) & 1, ((ae >> 19) & 1) as u8, (ae >> 20) & 3, (ae >> 22) & 3);
+        if bias == 3 {
+            gs::GXSetTevAlphaOp(n, 8 + 2 * scale + sub, 0, 0, clamp, dest);
+        } else {
+            gs::GXSetTevAlphaOp(n, sub, bias, scale, clamp, dest);
+        }
+        gs::GXSetTevSwapMode(n, ae & 3, (ae >> 2) & 3);
+        gs::GXSetTevKColorSel(n, s.kc[st] as u32);
+        gs::GXSetTevKAlphaSel(n, s.ka[st] as u32);
+    }
+    for (t, w) in s.swap.iter().enumerate() {
+        gs::GXSetTevSwapModeTable(t as u32, w[0] as u32, w[1] as u32, w[2] as u32, w[3] as u32);
+    }
+    for (k, (c, on)) in s.creg.iter().enumerate() {
+        if *on {
+            gs::GXSetTevColorS10(k as u32, _GXColorS10 { r: c[0], g: c[1], b: c[2], a: c[3] });
+        }
+    }
+    for (k, (c, on)) in s.kreg.iter().enumerate() {
+        if *on {
+            gs::GXSetTevKColor(k as u32, _GXColor { r: c[0], g: c[1], b: c[2], a: c[3] });
+        }
+    }
+}
+
+/// Back to the single-stage state the plain batches and the Melee draws after ours expect.
+unsafe fn reset_shade() {
+    use melee_runtime::tu::displayfunc_native::ext as gx;
+    use melee_runtime::tu::sobjlib::ext as gs;
+    use melee_types::*;
+    gx::GXSetNumTevStages(1);
+    gs::GXSetTevSwapMode(GX_TEVSTAGE0 as _, GX_TEV_SWAP0 as _, GX_TEV_SWAP0 as _);
+    gs::GXSetTevSwapModeTable(GX_TEV_SWAP0 as _, GX_CH_RED as _, GX_CH_GREEN as _, GX_CH_BLUE as _, GX_CH_ALPHA as _);
+    gs::GXSetTevSwapModeTable(GX_TEV_SWAP1 as _, GX_CH_RED as _, GX_CH_RED as _, GX_CH_RED as _, GX_CH_ALPHA as _);
+    gs::GXSetTevSwapModeTable(GX_TEV_SWAP2 as _, GX_CH_GREEN as _, GX_CH_GREEN as _, GX_CH_GREEN as _, GX_CH_ALPHA as _);
+    gs::GXSetTevSwapModeTable(GX_TEV_SWAP3 as _, GX_CH_BLUE as _, GX_CH_BLUE as _, GX_CH_BLUE as _, GX_CH_ALPHA as _);
+    for i in 1..8u32 {
+        gx::GXSetVtxDesc(GX_VA_TEX0 as u32 + i, GX_NONE as _);
+    }
 }
 
 pub struct Rig {
@@ -1313,13 +1600,14 @@ impl Rig {
                     }
                 }
             }
-            out.push((xf(m, *p, 1.0), c, *uv));
+            out.push((xf(m, *p, 1.0), c, *uv, if *n == [0.0; 3] { *n } else { xf(m, *n, 0.0) }));
         }
     }
 }
 
 /// The material state Petey's materials use (see [`Batch`]), from a v9 MDL0 material header at `mo`.
 fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mut Batch) {
+    bt.sh = shade_of(d, mo, texs);
     // texture 0 of the material's texture references (name, then wrap S / T)
     if std::env::var_os("MELEE_MDL_LOG").is_some() {
         let n = be32(d, mo + 0x2C) as usize;
@@ -1457,7 +1745,7 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
         let clr = idx_of(id(2), &cols);
         let uv = idx_of(id(4), &uvs).map(|a| arr(d, a));
         let Some(pos) = pos else { continue };
-        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None, vis_bone: None };
+        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None, vis_bone: None, sh: None };
         if let Some((_, mo, vb)) = obj_mat.iter().find(|(i, _, _)| *i == oi) {
             material(d, *mo, texs, &mut bt);
             bt.vis_bone = bones.iter().position(|b| b.index == *vb);
@@ -1592,14 +1880,14 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
 pub fn extent(tris: &[Vert]) -> ([f32; 3], [f32; 3]) {
     let mut mn = [f32::MAX; 3];
     let mut mx = [f32::MIN; 3];
-    for (p, _, _) in tris {
+    for (p, ..) in tris {
         for k in 0..3 {
             mn[k] = mn[k].min(p[k]);
             mx[k] = mx[k].max(p[k]);
         }
     }
     if !tris.is_empty() {
-        let mut ys: Vec<f32> = tris.iter().map(|(p, _, _)| p[1]).collect();
+        let mut ys: Vec<f32> = tris.iter().map(|(p, ..)| p[1]).collect();
         ys.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
         mn[1] = ys[ys.len() / 100];
         mx[1] = ys[ys.len() - 1 - ys.len() / 100];
@@ -1639,16 +1927,25 @@ pub fn build_lists(rig: &Rig, tris: &[Vert], at: [f32; 2]) -> Vec<Vec<u8>> {
         let run = &tris[start.min(end)..end];
         start = end;
         let textured = bt.tex.is_some();
-        let mut l = Vec::with_capacity(run.len() * if textured { 24 } else { 16 } + 3 * (run.len() / 60000 + 1) + 32);
+        // a shaded batch: every texture coordinate (an environment map from the model-space normal: a static model
+        // does not turn, and the side camera looks down the z axis)
+        let gens: &[Gen] = bt.sh.as_ref().filter(|_| !one_stage()).map_or(&[], |s| &s.gens[..]);
+        let mut l = Vec::with_capacity(run.len() * (16 + 8 * gens.len().max(textured as usize)) + 3 * (run.len() / 60000 + 1) + 32);
         for chunk in run.chunks(3 * 20000) {
             l.push((melee_types::GX_TRIANGLES | melee_types::GX_VTXFMT0) as u8);
             l.extend_from_slice(&(chunk.len() as u16).to_be_bytes());
-            for (p, col, uv) in chunk {
+            for (p, col, uv, n) in chunk {
                 for v in [at[0] + p[0], at[1] + p[1], p[2]] {
                     l.extend_from_slice(&v.to_bits().to_be_bytes());
                 }
                 l.extend_from_slice(&[col[0], col[1], col[2], 255]);
-                if textured {
+                if bt.sh.is_some() && !one_stage() {
+                    for g in gens {
+                        let q = gen_uv(g, *uv, *n);
+                        l.extend_from_slice(&q[0].to_bits().to_be_bytes());
+                        l.extend_from_slice(&q[1].to_bits().to_be_bytes());
+                    }
+                } else if textured {
                     l.extend_from_slice(&uv[0].to_bits().to_be_bytes());
                     l.extend_from_slice(&uv[1].to_bits().to_be_bytes());
                 }
@@ -1717,6 +2014,9 @@ pub unsafe fn draw_tris_vis(rig: &Rig, tris: &[Vert], hide: &[bool], org: [f32; 
     }
     melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm((&mut (*cobj).view_mtx) as *mut Mtx as _, 0);
     gx::GXSetCurrentMtx(0);
+    // the view's rotation (environment maps take the view-space normal)
+    let vm = (*cobj).view_mtx;
+    let mut shaded_last = false;
     let mut start = 0usize;
     for (bi, bt) in rig.batches.iter().enumerate() {
         let k = bi;
@@ -1726,6 +2026,7 @@ pub unsafe fn draw_tris_vis(rig: &Rig, tris: &[Vert], hide: &[bool], org: [f32; 
         if run.is_empty() || hide.get(k).copied().unwrap_or(false) {
             continue;
         }
+        let shade = bt.sh.as_deref().filter(|_| !flash && !one_stage());
         let textured = !flash && bt.tex.is_some();
         // blending materials (Brawl stage shadows, light shafts) blend and keep the depth buffer as it is
         match bt.blend {
@@ -1738,7 +2039,15 @@ pub unsafe fn draw_tris_vis(rig: &Rig, tris: &[Vert], hide: &[bool], org: [f32; 
                 gx::GXSetZMode(1, GX_LEQUAL as _, 1);
             }
         }
-        if let (Some(t), false) = (&bt.tex, flash) {
+        if shaded_last && shade.is_none() {
+            reset_shade();
+        }
+        shaded_last = shade.is_some();
+        if let Some(sh) = shade {
+            set_shade(sh);
+            let a = bt.alpha;
+            gx::GXSetAlphaCompare(a[0] as _, a[1], a[2] as _, a[3] as _, a[4]);
+        } else if let (Some(t), false) = (&bt.tex, flash) {
             let o = t.obj.as_ptr() as *mut _GXTexObj;
             gs::GXInitTexObj(o, t.data.as_ptr() as *mut _, t.w, t.h, t.fmt, bt.wrap[0], bt.wrap[1], (t.levels > 1) as u8);
             let min = if t.levels > 1 { GX_LIN_MIP_LIN } else { GX_LINEAR };
@@ -1773,7 +2082,7 @@ pub unsafe fn draw_tris_vis(rig: &Rig, tris: &[Vert], hide: &[bool], org: [f32; 
         }
         for chunk in run.chunks(3 * 20000) {
             gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
-            for (p, col, uv) in chunk {
+            for (p, col, uv, n) in chunk {
                 let (x, y, z) = (p[0] * scale, (p[1] - org[0]) * scale, (p[2] - org[1]) * scale);
                 gx::GXPosition3f32(
                     at[0] + m[0][0] * x + m[0][1] * y + m[0][2] * z,
@@ -1785,11 +2094,29 @@ pub unsafe fn draw_tris_vis(rig: &Rig, tris: &[Vert], hide: &[bool], org: [f32; 
                 } else {
                     gx::GXColor4u8(col[0], col[1], col[2], 255);
                 }
-                if textured {
+                if let Some(sh) = shade {
+                    let w = [
+                        m[0][0] * n[0] + m[0][1] * n[1] + m[0][2] * n[2],
+                        m[1][0] * n[0] + m[1][1] * n[1] + m[1][2] * n[2],
+                        m[2][0] * n[0] + m[2][1] * n[1] + m[2][2] * n[2],
+                    ];
+                    let nv = [
+                        vm[0][0] * w[0] + vm[0][1] * w[1] + vm[0][2] * w[2],
+                        vm[1][0] * w[0] + vm[1][1] * w[1] + vm[1][2] * w[2],
+                        vm[2][0] * w[0] + vm[2][1] * w[1] + vm[2][2] * w[2],
+                    ];
+                    for g in &sh.gens {
+                        let q = gen_uv(g, *uv, nv);
+                        gs::GXTexCoord2f32(q[0], q[1]);
+                    }
+                } else if textured {
                     gs::GXTexCoord2f32(uv[0], uv[1]);
                 }
             }
         }
+    }
+    if shaded_last {
+        reset_shade();
     }
     gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
     melee_runtime::tu::state_native::HSD_StateInvalidate(-1);

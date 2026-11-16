@@ -182,14 +182,40 @@ pub struct Out {
 unsafe fn input(carrier: i32, damage: i32, ground: bool, fighter_of: unsafe fn(i32) -> *mut Fighter) -> vr::Input {
     let mut i = vr::Input { ground, ..Default::default() };
     collision(&mut i);
+    // The search module's slots are not ports: slot 0 is the target the search found (Brawl's boss search keeps
+    // the nearest player there; r14 / r15, the MenuA / MenuB moves, need it present), the other players follow in
+    // port order. Filling them by port left slot 0 empty whenever the boss itself held port 0, and the boss
+    // bounced between its menus and its hub [L: the search unit's own shape and range are not modelled].
+    let a = crate::tu::geno_vm::actor();
+    let mut ps: [i32; 4] = [-1; 4];
+    let mut n = 0usize;
     for s in 0..4i32 {
-        let f = fighter_of(s);
-        if s != carrier && !f.is_null() {
-            i.targets[s as usize] = Some([(*f).cur_pos.x, (*f).cur_pos.y]);
-            // 6901 / 6902 / R10024-R10047's per-target factors: its facing and its model scale
-            i.target_lr[s as usize] = (*f).facing_dir;
-            i.target_scale[s as usize] = (*f).x34_scale.y;
+        if s != carrier && !fighter_of(s).is_null() {
+            ps[n] = s;
+            n += 1;
         }
+    }
+    let dist = |s: i32| {
+        let f = fighter_of(s);
+        let (dx, dy) = ((*f).cur_pos.x - a.pos[0], (*f).cur_pos.y - a.pos[1]);
+        dx * dx + dy * dy
+    };
+    // the nearest first (ties: the lower port)
+    let mut near = 0usize;
+    for k in 1..n {
+        if dist(ps[k]) < dist(ps[near]) {
+            near = k;
+        }
+    }
+    if n > 0 {
+        ps.swap(0, near);
+    }
+    for (slot, &s) in ps.iter().take(n).enumerate() {
+        let f = fighter_of(s);
+        i.targets[slot] = Some([(*f).cur_pos.x, (*f).cur_pos.y]);
+        // 6901 / 6902 / R10024-R10047's per-target factors: its facing and its model scale
+        i.target_lr[slot] = (*f).facing_dir;
+        i.target_scale[slot] = (*f).x34_scale.y;
     }
     i.damage = damage as f32;
     // the ground module's surface queries (R63-R69). The IR leaves what each computes unread [L]; read here as:

@@ -32,6 +32,10 @@ pub struct State {
     /// The bracket client (gd-ui-v1.4, src/bracket): started by the first bracket request, or at the first present when
     /// auto-upload is on.
     bk: Option<crate::bracket::Service>,
+    bk_view: Option<(crate::bracket::Status, Vec<crate::bracket::Item>)>,
+    /// MELEE_BRACKET_MOCK=1: made-up set data for the Brackets screens
+    mock: Option<crate::bracket::mock::Mock>,
+    mock_seen: u64,
     perf: Option<Perf>,
 }
 
@@ -173,16 +177,38 @@ impl RetailPlay {
         }
     }
 
-    /// The bracket lists when the worker's state moved (`try_lock` only: never waits on the worker).
+    /// The bracket lists when the worker's state (or the mock's) moved (`try_lock` only: never waits on the worker).
     fn bracket_tick(&mut self) {
-        let Some(b) = self.browser.bk.as_mut() else { return };
-        let Some((st, q)) = b.view() else { return };
-        let server = b.server().to_string();
+        let mut dirty = false;
+        if let Some(b) = self.browser.bk.as_mut() {
+            if let Some(v) = b.view() {
+                self.browser.bk_view = Some(v);
+                dirty = true;
+            }
+        }
+        if let Some(m) = self.browser.mock.as_mut() {
+            m.tick();
+            for l in m.log.drain(..) {
+                log(&format!("bracket {l}"));
+            }
+            if m.ver != self.browser.mock_seen {
+                self.browser.mock_seen = m.ver;
+                dirty = true;
+            }
+        }
+        if !dirty {
+            return;
+        }
+        let Some((st, q)) = self.browser.bk_view.clone() else { return };
+        let server = self.browser.bk.as_ref().map_or(String::new(), |b| b.server().to_string());
         let auto = crate::bracket::auto_upload();
         let ev = crate::bracket::event().map_or(String::new(), |e| e.to_string());
         let reach = st.reachable.to_string();
+        let mock = self.browser.mock.as_ref();
+        let linked = st.linked || mock.is_some();
+        let called = mock.is_some_and(|m| m.phase == crate::bracket::mock::Phase::Called);
         let u = self.ui.as_mut().unwrap();
-        u.set_list(mui::LIST_BRACKET, vec![rec(&[&st.fingerprint, if st.linked { "1" } else { "0" }, &reach, &server, if auto { "1" } else { "0" }, &ev, &st.message, if st.error { "1" } else { "0" }])]);
+        u.set_list(mui::LIST_BRACKET, vec![rec(&[&st.fingerprint, if linked { "1" } else { "0" }, &reach, &server, if auto { "1" } else { "0" }, &ev, &st.message, if st.error { "1" } else { "0" }, if called { "1" } else { "0" }])]);
         let recs = q
             .iter()
             .rev()
@@ -194,9 +220,39 @@ impl RetailPlay {
             })
             .collect();
         u.set_list(mui::LIST_BRACKET_QUEUE, recs);
+        let strs = |v: Vec<String>| rec(&v.iter().map(String::as_str).collect::<Vec<_>>());
+        match mock {
+            Some(m) => {
+                u.set_list(mui::LIST_BRACKET_SETS, m.events().into_iter().map(strs).collect());
+                u.set_list(mui::LIST_BRACKET_NEXT, vec![strs(m.next_rec())]);
+                u.set_list(mui::LIST_BRACKET_SET, vec![strs(m.set_rec())]);
+            }
+            None => {
+                u.set_list(mui::LIST_BRACKET_SETS, Vec::new());
+                u.set_list(mui::LIST_BRACKET_NEXT, Vec::new());
+                u.set_list(mui::LIST_BRACKET_SET, Vec::new());
+            }
+        }
+    }
+
+    /// A set-flow request: the mock answers it; without the mock it waits for the server's (b) API.
+    fn bracket_mock(&mut self, what: &str, arg: &str) {
+        self.bracket();
+        let r = match self.browser.mock.as_mut() {
+            Some(m) => m.request(what, arg),
+            None => Err(crate::bracket::NOT_YET.to_string()),
+        };
+        match r {
+            Ok(t) => self.ui_status(0, &t),
+            Err(t) => self.ui_status(1, &t),
+        }
     }
 
     fn bracket(&mut self) -> &mut crate::bracket::Service {
+        if self.browser.mock.is_none() && std::env::var("MELEE_BRACKET_MOCK").is_ok_and(|v| v == "1") {
+            log("bracket: MELEE_BRACKET_MOCK=1: made-up bracket data (brackets-ui.md)");
+            self.browser.mock = Some(crate::bracket::mock::Mock::new());
+        }
         self.browser.bk.get_or_insert_with(crate::bracket::Service::start)
     }
 
@@ -516,9 +572,15 @@ impl RetailPlay {
                 self.bracket();
                 st(self, 1, if ok { crate::bracket::NOT_YET } else { "Type the link code from the bracket site." });
             }
-            mui::REQ_BRACKET_MY_SETS | mui::REQ_BRACKET_READY | mui::REQ_BRACKET_JOIN => {
+            mui::REQ_BRACKET_READY => self.bracket_mock("ready", arg),
+            mui::REQ_BRACKET_STAGE => self.bracket_mock("stage", arg),
+            mui::REQ_BRACKET_MOCK_STEP => self.bracket_mock(arg, ""),
+            mui::REQ_BRACKET_MY_SETS | mui::REQ_BRACKET_JOIN | mui::REQ_BRACKET_EVENTS => {
                 self.bracket();
-                self.ui.as_mut().unwrap().set_list(mui::LIST_BRACKET_SETS, Vec::new());
+                if self.browser.mock.is_some() {
+                    self.browser.mock_seen = 0;
+                    return st(self, 0, "refreshed (mock)");
+                }
                 st(self, 1, crate::bracket::NOT_YET);
             }
             mui::REQ_REFRESH => {

@@ -311,6 +311,12 @@ release's mods folder, never fetched). Y on the main menu opens it.
 | `GD_UI_REQ_BRACKET_LINK` (14) | link code (A-Z 0-9 '-', at most 32). Until the server has a link route: STATUS error "not available yet" |
 | `GD_UI_REQ_BRACKET_MY_SETS` (15), `_READY` (16, set id), `_JOIN` (17, set id) | stubs: STATUS error "not available yet" until (b) |
 | `GD_UI_REQ_BRACKET_AUTO` (18) | "1" / "0": writes `bracket_upload=` in settings.cfg |
+| `GD_UI_LIST_BRACKET_NEXT` (12), `GD_UI_LIST_BRACKET_SET` (13) | the next-thing card and the set being played; `BRACKET` gains field 8 (set called). Shapes: brackets-ui.md |
+| `GD_UI_REQ_BRACKET_STAGE` (19, stage index), `_EVENTS` (20), `_MOCK_STEP` (21, `css` / `game`) | the set flow's strike / ban / pick, browse events, and the mock's stand-ins |
+
+The screens (main-menu tile, home, account, browse, the set flow) and what the server's (b) API must add are in
+`brackets-ui.md`. `MELEE_BRACKET_MOCK=1` serves made-up data for all of them (`bracket/mock.rs`); without it the set
+requests answer "not available yet". MY_SETS here is "my events" (`BRACKET_SETS`: event id, name, status).
 
 The service: an Ed25519 key made on first use in `<settings.cfg folder>/bracket/client.key` (user-only: 0600, or on
 Windows an ACL for the current user only); only the worker thread reads it; it is never given to a mod and never

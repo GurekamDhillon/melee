@@ -199,7 +199,10 @@ pub const LIST_NC_STATE: usize = 8;
 pub const LIST_BRACKET: usize = 9;
 pub const LIST_BRACKET_QUEUE: usize = 10;
 pub const LIST_BRACKET_SETS: usize = 11;
-pub const LIST_KINDS: usize = 12;
+/// the next-thing card (one record) and the set being played (one record; brackets-ui.md)
+pub const LIST_BRACKET_NEXT: usize = 12;
+pub const LIST_BRACKET_SET: usize = 13;
+pub const LIST_KINDS: usize = 14;
 /// gd-ui-v1.2 request ops (`GD_UI_REQ_*`).
 pub const REQ_LAUNCH: i32 = 1;
 pub const REQ_MOD_SET: i32 = 2;
@@ -223,6 +226,11 @@ pub const REQ_BRACKET_MY_SETS: i32 = 15;
 pub const REQ_BRACKET_READY: i32 = 16;
 pub const REQ_BRACKET_JOIN: i32 = 17;
 pub const REQ_BRACKET_AUTO: i32 = 18;
+/// a stage strike / ban / pick (stage index in the set record's list), browse events, and (MELEE_BRACKET_MOCK=1 only)
+/// the stand-in for a step the engine will drive: "css" (characters locked) or "game" (the game was played)
+pub const REQ_BRACKET_STAGE: i32 = 19;
+pub const REQ_BRACKET_EVENTS: i32 = 20;
+pub const REQ_BRACKET_MOCK_STEP: i32 = 21;
 pub const REQ_MAX_ARG: u32 = 256;
 pub const REQ_MAX_PENDING: usize = 8;
 
@@ -1410,7 +1418,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if !feat(&c, FEATURE_UI_HOST) {
             return GD_ECAP;
         }
-        if !(REQ_LAUNCH..=REQ_BRACKET_AUTO).contains(&op) || len > REQ_MAX_ARG {
+        if !(REQ_LAUNCH..=REQ_BRACKET_MOCK_STEP).contains(&op) || len > REQ_MAX_ARG {
             return GD_EINVAL;
         }
         let Some(arg) = read_str(&c, s, len) else { return GD_EINVAL };

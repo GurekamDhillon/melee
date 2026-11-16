@@ -22,6 +22,7 @@
 //! requests answer "not available yet" (see `stub`).
 
 pub mod http;
+pub mod mock;
 
 use autobracket_proto as proto;
 use std::path::{Path, PathBuf};

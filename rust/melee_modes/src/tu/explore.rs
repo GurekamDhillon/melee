@@ -88,6 +88,7 @@ const DUON_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("350001.pac", 0
 const RIDLEY_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("280301.pac", 0.0, 0.0, "283vAdvFactory01MS", 0, 0) }];
 /// Tabuu's fight stage (SSE 920801, his boss archive): the dimension model, its world floor and its stage position
 /// model.
+#[allow(dead_code)]
 const TABUU_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("920801.pac", 0.0, 0.0, "421vAdvDimension01", 0, 0) }];
 const RAYQUAZA_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("080001.pac", 0.0, 0.0, "080vAdvJungle01", 0, 0) }];
 
@@ -100,7 +101,8 @@ fn arena_secs() -> Option<&'static [SecDef]> {
         "galleom" => Some(&GALLEOM_SECS),
         "duon" => Some(&DUON_SECS),
         "ridley" => Some(&RIDLEY_SECS),
-        "tabuu" => Some(&TABUU_SECS),
+        // Tabuu's arena is held back: with it the synctest hangs at the first rollback (no CPU use; arena off, it
+        // passes; his camera and the texture preload are not the cause) [L]. He fights on Final Destination.
         _ => None,
     }
 }

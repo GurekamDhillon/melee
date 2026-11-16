@@ -523,3 +523,23 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
   `build/cargo/<profile>/melee.exe`, so a private target dir needs no copied exe.
 - Arena textures are queued for upload at the stage load (`explore::preload_arena_textures`, as the GD stages'
   `preload_textures`): without it Duon's fifth frame uploaded the Halberd's textures at once (one 32 ms frame).
+
+## Ridley and Tabuu arenas, VM boss sounds (2026-11-15, port/boss-arena-porky)
+
+- Ridley: 280301 (`283vAdvFactory01MS`, one world collision file of 10 lines, StagePosition). Tabuu: 920801
+  (`421vAdvDimension01` and `gr2_ashiba`, 8 lines, StagePosition) is defined but held back: with it the synctest
+  hangs at the first rollback (no CPU use; depth 1 and 2 too; Brawl sound absent it still hangs; his arena camera and
+  the texture preload ruled out; arena off it passes) [L]. Play mode runs it fine.
+- An arena draws every MDL0 of each BRRES that holds a level `<3 digits>v` model. Rayquaza's sky was there all along
+  under other names (`st080vsky00`, `skymoya`, `kumokage00`, beside the shore and water in the same BRRES); it now
+  draws, but its look is off (grey bands): its materials' TEV and SRT0 are not reproduced [L].
+- Sounds: no VM boss played any (only the define path queued sound events). The sound timelines' commands 0A00,
+  0A02, 0A03 and 0A05 (sfx, variants, voice; first argument the sound id) are forwarded by the VM; geno_vm_host now
+  queues them through `petey::vm_sound`, played by the audio host as Petey's. 0A06 (no argument) is not read [L].
+- Tabuu look (both on Final Destination and in the arena; forced statuses 17, 24, 25, 29, 32, 35): his body draws
+  as solid over-bright white under the cyan line layer (the drawer's 2 x texture x colour TEV saturates on his
+  materials); the cannon / chain parts show a camouflage-like texture (texture 0 of those materials is likely not the
+  base map); SparkBit's bits are plain white cubes. Arena only: in Gigant the camera pulls back past the dimension
+  backdrop's disc, so black shows around it. None fixed here.
+- Build note: two worktrees sharing one target dir mixed artifacts (a "base" exe with the base banner carried this
+  branch's code); base exes now build in their own target dir.

@@ -485,7 +485,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         }
         let mut e = [f32::MAX, f32::MIN, f32::MIN, f32::MAX];
         let gmovs = gmov_list(&leaves, &tags, si, &mut notes);
-        if objects {
+        let of = if objects { off() } else { None };
+        if let Some(of) = of {
             // every collision file of the section, object by object (a collision object names the bone it rides):
             // world objects (no bone) are the static map, welded below; a brick (`AdvGdtPunBrick*`, Brawl's GBLK
             // block) at its bone's rest place becomes its own collision joint, so it can break; an item box top
@@ -495,16 +496,17 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 let (pl, oo, nobj) = (be32(c, 12) as usize, be32(c, 0x10) as usize, be16(c, 4) as usize);
                 let po = be32(c, 8) as usize;
                 let objname = |k: usize| -> &[u8] {
-                    let o = oo + 0x6C * k;
-                    let name_end = c.get(o + 0x4C..o + 0x6C).and_then(|n| n.iter().position(|&x| x == 0)).unwrap_or(32);
-                    c.get(o + 0x4C..o + 0x4C + name_end).unwrap_or(&[])
+                    let o = oo + of.obj_stride * k;
+                    let (n0, n1) = (o + of.obj_name, o + of.obj_stride);
+                    let name_end = c.get(n0..n1).and_then(|n| n.iter().position(|&x| x == 0)).unwrap_or(n1.saturating_sub(n0));
+                    c.get(n0..n0 + name_end).unwrap_or(&[])
                 };
                 // an object carried by several lifts is loaded once per lift
                 let work: Vec<(usize, usize)> = (0..nobj).flat_map(|k| (0..gmov_count(&gmovs, objname(k))).map(move |i| (k, i))).collect();
                 for (k, inst) in work {
-                    let o = oo + 0x6C * k;
+                    let o = oo + of.obj_stride * k;
                     let (p0, pc) = (be16(c, o) as usize, be16(c, o + 2) as usize);
-                    let bone = be16(c, o + 0x2A);
+                    let bone = be16(c, o + of.obj_bone);
                     let name = objname(k);
                     let (place, joint) = if bone == 0xFFFF {
                         ([s.off[0], s.off[1]], 0usize)
@@ -517,7 +519,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                                 continue;
                             }
                             Some(t) => {
-                                let bb = [bef(c, o + 0x14), bef(c, o + 0x18), bef(c, o + 0x1C), bef(c, o + 0x20)];
+                                let bb = [0, 4, 8, 12].map(|i| bef(c, o + of.obj_box + i));
                                 let (x, y) = (t[0] + s.off[0] + (bb[0] + bb[2]) / 2.0, t[1] + s.off[1] + (bb[1] + bb[3]) / 2.0);
                                 let nm = String::from_utf8_lossy(name).into_owned();
                                 // the brick's own model (an MDL0 of the brick's name in the section archive), posed at the
@@ -559,7 +561,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                             },
                             None => usize::MAX,
                         };
-                        let bb = [bef(c, o + 0x14), bef(c, o + 0x18), bef(c, o + 0x1C), bef(c, o + 0x20)];
+                        let bb = [0, 4, 8, 12].map(|i| bef(c, o + of.obj_box + i));
                         let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
                         paths.push(path);
                         blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest });
@@ -608,7 +610,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 }
             }
         }
-        let colls = if objects { vec![] } else { colls };
+        let colls = if of.is_some() { vec![] } else { colls };
         for c in colls {
         let (np, npl) = (be16(c, 0) as usize, be16(c, 2) as usize);
         let (po, pl) = (be32(c, 8) as usize, be32(c, 12) as usize);
@@ -694,7 +696,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 .unwrap_or([e[0] + 40.0, e[3]]),
         );
         // the room camera's distance range (ADPM, read by the stage setup 0x81A067A8 into the camera's range object)
-        sec_cam.push(leaves.iter().find(|b| b.get(..4) == Some(b"ADPM") && b.len() >= ADPM_FAR + 4).map(|b| [bef(b, ADPM_NEAR), bef(b, ADPM_FAR)]).filter(|c| c[0] > 0.0 && c[1] >= c[0]));
+        sec_cam.push(off().and_then(|of| leaves.iter().find(|b| b.get(..4) == Some(b"ADPM") && b.len() >= of.adpm_far + 4).map(|b| [bef(b, of.adpm_near), bef(b, of.adpm_far)])).filter(|c| c[0] > 0.0 && c[1] >= c[0]));
         for n in &s.starts {
             if let Some(p) = leaves.iter().find_map(|b| pm::bone_trans(b, n.as_bytes())) {
                 starts.push((si, n.clone(), [p[0] + s.off[0], p[1] + s.off[1]]));
@@ -1874,18 +1876,67 @@ struct Gmov {
     bones: Vec<String>,
 }
 
-/// ADPM (a section's camera parameters) bytes ([off], local notes "Round 3"): the camera's near and far distance.
-const ADPM_NEAR: usize = 0x7C;
-const ADPM_FAR: usize = 0x80;
+/// Brawl struct field offsets the room loader reads, [off] all: loaded at run time from the local-only
+/// `sse-room-offsets.txt` in the boss IR directory (`geno_boss_ir::ir_dir`; lines `key 0xOFF`), never in the
+/// source. Without it a room still loads: its collision welded whole (no lifts, bricks or moving parts) and Final
+/// Destination's camera range.
+struct Off {
+    /// collision object table entry: size, name, bounding box, bone index
+    obj_stride: usize,
+    obj_name: usize,
+    obj_box: usize,
+    obj_bone: usize,
+    /// ADPM camera leaf: near and far distance
+    adpm_near: usize,
+    adpm_far: usize,
+    /// GMOV entry: path mode, path BRRES id, carried model BRRES id
+    gmov_mode: usize,
+    gmov_path: usize,
+    gmov_model: usize,
+}
+
+fn off() -> Option<&'static Off> {
+    static O: std::sync::OnceLock<Option<Off>> = std::sync::OnceLock::new();
+    O.get_or_init(|| {
+        let text = crate::tu::geno_boss_ir::ir_dir().and_then(|d| std::fs::read_to_string(d.join("sse-room-offsets.txt")).ok());
+        let Some(text) = text else {
+            eprintln!("explore: no room offset spec (sse-room-offsets.txt in the boss IR dir): rooms load welded whole, no lifts, FD camera range");
+            return None;
+        };
+        let mut kv = std::collections::HashMap::new();
+        for l in text.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')) {
+            let mut w = l.split_whitespace();
+            if let (Some(k), Some(v)) = (w.next(), w.next()) {
+                if let Ok(n) = usize::from_str_radix(v.trim_start_matches("0x").trim_start_matches("0X"), 16) {
+                    kv.insert(k.to_string(), n);
+                }
+            }
+        }
+        let g = |k: &str| kv.get(k).copied();
+        let o = (|| {
+            Some(Off {
+                obj_stride: g("obj_stride")?,
+                obj_name: g("obj_name")?,
+                obj_box: g("obj_box")?,
+                obj_bone: g("obj_bone")?,
+                adpm_near: g("adpm_near")?,
+                adpm_far: g("adpm_far")?,
+                gmov_mode: g("gmov_mode")?,
+                gmov_path: g("gmov_path")?,
+                gmov_model: g("gmov_model")?,
+            })
+        })();
+        if o.is_none() {
+            eprintln!("explore: room offset spec incomplete: rooms load welded whole, no lifts, FD camera range");
+        }
+        o
+    })
+    .as_ref()
+}
 
 /// The identity motion (a part at rest).
 const IDENT: [f32; 6] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0];
 
-/// GMOV entry bytes ([off] in the local notes, `_build/boss-ir/sse-door-transition.md` "Round 3"): path mode, path
-/// BRRES id, carried model BRRES id (archive file ids of type 2).
-const GMOV_MODE: usize = 5;
-const GMOV_PATH: usize = 6;
-const GMOV_MODEL: usize = 0x44;
 
 /// The section's GMOV lifts, from its BLOC leaves (creator 0x81A09EFC; motion grGimmickMotionPath::processAnim
 /// 0x8126E43C).
@@ -1897,9 +1948,10 @@ fn gmov_list(leaves: &[Vec<u8>], tags: &[Vec<(u16, u16)>], si: usize, notes: &mu
         pm::brres_entries(b).unwrap_or_default().into_iter().filter(|(_, o)| b.get(*o..*o + 4) == Some(b"MDL0")).map(|(n, _)| n).collect()
     };
     let mut v = vec![];
+    let Some(of) = off() else { return v };
     for b in leaves {
         for e in bloc_entries(b, b"GMOV") {
-            let (Some(&mode), Some(&pid), Some(&mid)) = (b.get(e + GMOV_MODE), b.get(e + GMOV_PATH), b.get(e + GMOV_MODEL)) else { continue };
+            let (Some(&mode), Some(&pid), Some(&mid)) = (b.get(e + of.gmov_mode), b.get(e + of.gmov_path), b.get(e + of.gmov_model)) else { continue };
             let (Some(pb), Some(mb)) = (brres(pid), brres(mid)) else {
                 notes.push(format!("explore: section {si}: lift (path file {pid}, model file {mid}) not found; it stays still"));
                 continue;

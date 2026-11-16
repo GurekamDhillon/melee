@@ -376,3 +376,27 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   itPeachTurnip_*; 42: ftColl_8007AF10, ftColl_CreateAbsorbHit, ftCommon_8007D92C, it_802AA8C0; 62: ftCommon_ClampSelfVelX,
   ftCommon_FallBasic, ftCommon_Ascend, gm_GetDbPauseFlag). Liu Kang rand order not started.
 - Not run this round: Akaneia 51, vanilla 125, synctest d4/d7 on mex_ace_cpu.
+
+### Round 14 (Nov 16)
+
+- Meta Knight (47): its onLoad stores `fp->x20` = a second MoveLogic table in its own code blob (0x81800EC8, 368 rows),
+  not the MoveLogic slot's. The store took the code-pointer path (`fn_native`, a call trampoline), so
+  `Fighter_ChangeMotionState(341)` read garbage. A MotionState pointer field now asks the host first
+  (`move_table_at`): a blob address rebuilds that kind's native table from it (old rows kept alive) and the event
+  trampoline registers the new rows for the guest. MK and Skull Kid: 1800 frames d4, rc 0, 0 mismatches. Pushed
+  9c9f0e67a with 669c97546 (debug switches removed).
+- Local, NOT pushed (kind 46 regression): hand bridges `ftColl_8007AF10`, `ftColl_CreateAbsorbHit`, `ftCommon_8007D92C`,
+  `ftCo_800C0200`, `it_802AA8C0`, `ftCommon_ClampSelfVelX` / `FallBasic` / `Ascend`, `gm_GetDbPauseFlag`,
+  `ftpickupitem_80094818`, `itPeachTurnip_Logic56_*`, `Player_GetPtrForSlot` (`_StaticPlayer` by handle), `sprintf`
+  (hand_bridge); `Player_GetStocks`, `mpColl_8004B21C`, `ftCommon_ClampGroundVel`,
+  `ftCommon_CalcGroundAccel_AccelToLStickX`, `it_80272C6C`, `it_802AA7E4`, `atanf`, `Camera_80029020`,
+  `ftColl_8007B760`, `HSD_JObjLoadJoint` (call_out); a custom article's state table is decoded to the item's own
+  state count (PlLb's article 325 entered state 10 past the 8-row record and crashed in Item_80268D34); an `Item_*` /
+  `it_*` call on a non-item gobj is refused.
+- Sweep with that build (mex28..59, 1800 d4): all rc 0 / 0 mismatches except mex41 (kind 46): crash in
+  `Item_802697D4` called by the guest (read of -1). Not the state-table change (A/B). Likely exposed by the new
+  Fighter bridges (it calls Player_GetStocks, ftCommon_FallBasic, gm_GetDbPauseFlag): its guest now runs further.
+- Remaining faults: 33 `MexCPU_ProcCustom`+0x20; 37 `it_802AA7F0`; 38/39/40 null and null+0x2C reads; 39/59
+  0x90004998 and Fighter+0x988; 39 `it_80276174`; 39/41/57 `ifAll_GetPlayerHUDPosition`; 40 `lbVector_Add_xy`;
+  44 `lbGetJObjEndFrame`, `PSVECDotProduct`, `HSD_AObjSetRate`. Clean: the rest.
+- Not run: Akaneia 51, vanilla 125, synctest d4/d7 on mex_ace_cpu, Liu Kang rand order.

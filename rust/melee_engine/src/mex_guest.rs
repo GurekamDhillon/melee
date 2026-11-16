@@ -882,7 +882,14 @@ fn index_item(kind: u32, desc: u32, n: u32) {
         d.set_raw_base(raw.as_ptr() as usize);
         d.set_roots(ar.publics.iter().map(|q| q.offset).collect());
         let root = d.object::<melee_types::Article>(desc - *b);
+        // the state table as long as the item's own (its logic's state count): the record types it as 8 rows, and
+        // PlLb's article 325 entering state 10 read past them (Item_80268D34 on a garbage anim joint, kind 49 crash)
+        let cnt = s.items.get(&global).map_or(0, |i| i.states.len());
+        let arr = (cnt > 8).then(|| d.ptr_array::<melee_types::ItemStateDesc>(desc - *b + 0xC, cnt));
         Box::leak(Box::new(d.finish()));
+        if let Some(arr) = arr.filter(|a| !a.is_null()) {
+            unsafe { (*root).xC_itemStates = arr as *mut melee_types::ItemStateArray };
+        }
         unsafe { crate::dat_custom::fix_custom_article(root, raw.as_ptr() as usize, desc - *b) };
         root
     });
@@ -1679,6 +1686,14 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 cpu.gpr[3] = 0;
                 return Ok(());
             }
+            // an item function on a gobj that is not an item (kind 46 passed a non-item gobj to Item_802697D4, whose
+            // user_data read as an Item crashed): a guest fault, as an unresolved call is
+            Some(n) if (n.starts_with("Item_") || n.starts_with("it_")) && mem.native(d).is_some_and(|p| {
+                matches!(mem.describe(d), Some(("HSD_GObj", 0))) && unsafe { (*(p as G)).classifier as i32 != melee_types::HSD_GOBJ_CLASS_ITEM }
+            }) => {
+                eprintln!("mexguest: {n} on a non-item gobj {d:08X}: refused");
+                return Err(Fault::Mem(d));
+            }
             Some(name) => {
                 let mut c = Call { cpu, mem, fix: Vec::new(), fixw: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
                 let mut hit = unsafe { crate::mex_bridge::call(name, &mut c) };
@@ -1727,6 +1742,72 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                         "it_8026B3F8" => {}
                         // a debug print: nothing observable on the console's screen (mex:60, 62)
                         "OSReport" => {}
+                        // Round 14 (the ACE 2.0.1 sweep's next unresolved callees)
+                        // s32(slot) (Toad)
+                        "Player_GetStocks" => c.ret_int(unsafe { melee_fighter::tu::player::Player_GetStocks(c.int(0) as i32) } as u32),
+                        // bool(CollData*, ftCollisionBox*) (Toad)
+                        "mpColl_8004B21C" => {
+                            let (cd, b) = (c.ptr(0, Some("CollData")), c.ptr(1, Some("ftCollisionBox")));
+                            if cd.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_world::tu::mpcoll::mpColl_8004B21C(cd as _, b as _) };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Fighter*, f32, f32, f32), void(Fighter*, f32) (Toad)
+                        "ftCommon_CalcGroundAccel_AccelToLStickX" | "ftCommon_ClampGroundVel" => {
+                            let fp = c.ptr(0, Some("Fighter")) as *mut melee_types::Fighter;
+                            if fp.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let fp = unsafe { &mut *fp };
+                                if name == "ftCommon_ClampGroundVel" {
+                                    melee_fighter::tu::ftcommon::ftCommon_ClampGroundVel_fp(fp, c.flt(0) as f32);
+                                } else {
+                                    melee_fighter::tu::ftcommon::ftCommon_CalcGroundAccel_AccelToLStickX_fp(fp, c.flt(0) as f32, c.flt(1) as f32, c.flt(2) as f32);
+                                }
+                            }
+                        }
+                        // bool(Item_GObj*), Fighter_GObj*(Item_GObj*) (Lucas2's PK Flash)
+                        "it_80272C6C" | "it_802AA7E4" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else if name == "it_80272C6C" {
+                                let r = unsafe { melee_items::tu::it_2725::it_80272C6C(g as _) };
+                                c.ret_int(r as u32);
+                            } else {
+                                let r = unsafe { melee_items::tu::itnesspkflash::it_802AA7E4(g as _) };
+                                c.ret_ptr(r as _, Some("HSD_GObj"));
+                            }
+                        }
+                        // f32(f32) (kind 49)
+                        "atanf" => c.ret_flt(melee_runtime::tu::lbtrigf::atanf_fp(c.flt(0) as f32) as f64),
+                        // CmSubject*(void) (kind 49)
+                        "Camera_80029020" => {
+                            let r = unsafe { melee_world::tu::camera::Camera_80029020() };
+                            c.ret_ptr(r as _, Some("CmSubject"));
+                        }
+                        // void(gobj, int) (Skull Kid)
+                        "ftColl_8007B760" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                melee_fighter::tu::ftcoll::ftColl_8007B760(g as G, c.int(1) as i32);
+                            }
+                        }
+                        // HSD_JObj*(HSD_Joint*) (Skull Kid)
+                        "HSD_JObjLoadJoint" => {
+                            let j = c.ptr(0, Some("HSD_Joint"));
+                            if j.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(j as _) };
+                                c.ret_ptr(r as _, Some("HSD_JObj"));
+                            }
+                        }
                         // HSD_GObj*(bool, DynamicModelDesc*, gx_link, p_link, ..., cb, f32): a model gobj (gmtoulib);
                         // ACE 2.0.1's Toad (PlTd) makes one from its "Relax_scene_models" in its onLoad
                         "fn_8019035C" => {
@@ -1885,6 +1966,18 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
         Ok(())
     }
     let gobj = |mem: &GuestSpace, h: u32| -> G { if h == 0 { core::ptr::null_mut() } else { mem.native(h).unwrap_or(0) as G } };
+    // a Fighter* argument: the fighter, or a gobj passed for it (its user_data)
+    let fpn = |mem: &GuestSpace, h: u32| -> *mut melee_types::Fighter {
+        if h == 0 {
+            return core::ptr::null_mut();
+        }
+        let p = mem.native(h).unwrap_or(0);
+        match mem.describe(h) {
+            Some(("HSD_GObj", 0)) if p != 0 => unsafe { (*(p as G)).user_data as *mut melee_types::Fighter },
+            Some(("Fighter", 0)) => p as *mut melee_types::Fighter,
+            _ => core::ptr::null_mut(),
+        }
+    };
     let r = |i: usize| cpu.gpr[3 + i];
     match name {
         // ftWalkCommon_800DFEC8(gobj, cb): the walk-type resync, whose callback (gobj, anim frame in f1) is guest code
@@ -2141,6 +2234,181 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
             wr_vec(mem, b, &o)?;
         }
         "Player_GetTeam" => cpu.gpr[3] = unsafe { melee_fighter::tu::player::Player_GetTeam(r(0) as i32) } as u32,
+        // Round 14: vanilla callees the ACE 2.0.1 sweep's fixed fighters reach (the generator has no row)
+        // void(gobj): absorb_hit.skip_update_pos = false (Lucas2)
+        "ftColl_8007AF10" => {
+            let fp = fpn(mem, r(0));
+            if fp.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe { (*fp).absorb_hit.set_skip_update_pos(0) };
+        }
+        // void(gobj, AbsorbDesc*) (Lucas2's PSI Magnet)
+        "ftColl_CreateAbsorbHit" => {
+            let g = gobj(mem, r(0));
+            let d = if r(1) == 0 { 0 } else { mem.native(r(1)).unwrap_or(0) };
+            if g.is_null() || d == 0 {
+                return Err(Fault::Mem(r(1)));
+            }
+            melee_fighter::tu::ftcoll::ftColl_CreateAbsorbHit(g, d as _);
+        }
+        // void(gobj) (Lucas2)
+        "ftCommon_8007D92C" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe {
+                let _ = melee_fighter::ftcommon3::ftcommon_8007d92c(g as _);
+            }
+        }
+        // void(Fighter*, int) (Lucas2)
+        "ftCo_800C0200" => {
+            let fp = fpn(mem, r(0));
+            if fp.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe { melee_fighter::tu::ftcolanimlist::ftco_800c0200(&mut *fp, r(1) as i32) };
+        }
+        // void(Fighter*, f32), void(Fighter*), void(Fighter*, f32, f32) (Toad)
+        "ftCommon_ClampSelfVelX" | "ftCommon_FallBasic" | "ftCommon_Ascend" => {
+            let fp = fpn(mem, r(0));
+            if fp.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            let (f1, f2) = (f64::from_bits(cpu.fpr[1]) as f32, f64::from_bits(cpu.fpr[2]) as f32);
+            let fp = unsafe { &mut *fp };
+            match name {
+                "ftCommon_ClampSelfVelX" => melee_fighter::tu::ftcommon::ftCommon_ClampSelfVelX_fp(fp, f1),
+                "ftCommon_FallBasic" => melee_fighter::tu::ftcommon::ftCommon_FallBasic_fp(fp),
+                _ => melee_fighter::tu::ftcommon::ftCommon_Ascend(fp, f1, f2),
+            }
+        }
+        // bool(bit): the debug pause flags (Toad); 0 outside the debug menu
+        "gm_GetDbPauseFlag" => cpu.gpr[3] = unsafe { melee_modes::tu::gmscene::gm_GetDbPauseFlag(r(0) as i32) } as u32,
+        // void(gobj, bool) (kind 41)
+        "ftpickupitem_80094818" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(g, r(1) != 0);
+        }
+        // void(Item_GObj*): Peach turnip callbacks a guest article calls (kind 41)
+        "itPeachTurnip_Logic56_Destroyed" | "itPeachTurnip_Logic56_PickedUp" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe {
+                if name.ends_with("Destroyed") {
+                    melee_items::tu::itpeachturnip::itPeachTurnip_Logic56_Destroyed(g as _)
+                } else {
+                    melee_items::tu::itpeachturnip::itPeachTurnip_Logic56_PickedUp(g as _)
+                }
+            }
+        }
+        // HSD_GObj*(owner, Vec3*, kind, f32 facing) (Lucas2's PK Flash item)
+        "it_802AA8C0" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() || r(1) == 0 {
+                return Err(Fault::Mem(r(1)));
+            }
+            let mut v = rd_vec(mem, r(1))?;
+            let f = f64::from_bits(cpu.fpr[1]) as f32;
+            let it = unsafe { melee_items::tu::itnesspkflash::it_802AA8C0(g as _, &mut v, r(2) as _, f) };
+            cpu.gpr[3] = if it.is_null() { 0 } else { mem.handle(it as usize, Some("HSD_GObj")).unwrap_or(0) };
+        }
+        // StaticPlayer*(slot) (kind 49): the native record, by handle
+        "Player_GetPtrForSlot" => {
+            let p = unsafe { melee_fighter::tu::player::Player_GetPtrForSlot(r(0) as i32) };
+            cpu.gpr[3] = if p.is_null() { 0 } else { mem.handle(p as usize, Some("_StaticPlayer")).map_err(|_| Fault::Mem(0))? };
+        }
+        // int(buf, fmt, ...) (kind 48): %d %i %u %x %X %c %s %f %% with flags, width and precision; ints from r5..r10,
+        // floats from f1..f8 (the varargs ABI with CR6 set)
+        "sprintf" => {
+            let (buf, fmt) = (r(0), r(1));
+            fn rd_str(mem: &mut GuestSpace, mut a: u32) -> Result<Vec<u8>, Fault> {
+                let mut v = Vec::new();
+                while v.len() < 4096 {
+                    let b = mem.ld8(a)? as u8;
+                    if b == 0 {
+                        break;
+                    }
+                    v.push(b);
+                    a += 1;
+                }
+                Ok(v)
+            }
+            let f = rd_str(mem, fmt)?;
+            let (mut gi, mut fi, mut out, mut k) = (2usize, 1usize, Vec::<u8>::new(), 0usize);
+            while k < f.len() {
+                let c = f[k];
+                k += 1;
+                if c != b'%' {
+                    out.push(c);
+                    continue;
+                }
+                let st = k;
+                while k < f.len() && b"-+ #0123456789.lh".contains(&f[k]) {
+                    k += 1;
+                }
+                let Some(&conv) = f.get(k) else { break };
+                k += 1;
+                let spec = std::str::from_utf8(&f[st..k - 1]).unwrap_or("").replace(['l', 'h'], "");
+                let left = spec.contains('-');
+                let zero = spec.trim_start_matches(['-', '+', ' ', '#']).starts_with('0');
+                let mut parts = spec.trim_start_matches(['-', '+', ' ', '#', '0']).splitn(2, '.');
+                let width: usize = parts.next().and_then(|w| w.parse().ok()).unwrap_or(0);
+                let prec: Option<usize> = parts.next().map(|p| p.parse().unwrap_or(0));
+                let mut next_i = || {
+                    let v = if gi < 8 { cpu.gpr[3 + gi] } else { 0 };
+                    gi += 1;
+                    v
+                };
+                let body: Vec<u8> = match conv {
+                    b'%' => b"%".to_vec(),
+                    b'd' | b'i' => (next_i() as i32).to_string().into_bytes(),
+                    b'u' => next_i().to_string().into_bytes(),
+                    b'x' => format!("{:x}", next_i()).into_bytes(),
+                    b'X' => format!("{:X}", next_i()).into_bytes(),
+                    b'c' => vec![next_i() as u8],
+                    b's' => {
+                        let a = next_i();
+                        let mut v = rd_str(mem, a)?;
+                        if let Some(p) = prec {
+                            v.truncate(p);
+                        }
+                        v
+                    }
+                    b'f' | b'F' => {
+                        let v = if fi < 9 { f64::from_bits(cpu.fpr[fi]) } else { 0.0 };
+                        fi += 1;
+                        format!("{:.*}", prec.unwrap_or(6), v).into_bytes()
+                    }
+                    _ => return Err(Fault::Unresolved(target)),
+                };
+                let pad = width.saturating_sub(body.len());
+                if left {
+                    out.extend(&body);
+                    out.extend(std::iter::repeat_n(b' ', pad));
+                } else if zero && conv != b's' {
+                    let neg = body.first() == Some(&b'-');
+                    if neg {
+                        out.push(b'-');
+                    }
+                    out.extend(std::iter::repeat_n(b'0', pad));
+                    out.extend(&body[neg as usize..]);
+                } else {
+                    out.extend(std::iter::repeat_n(b' ', pad));
+                    out.extend(&body);
+                }
+            }
+            for (i, &b) in out.iter().chain(std::iter::once(&0)).enumerate() {
+                mem.st8(buf + i as u32, b)?;
+            }
+            cpu.gpr[3] = out.len() as u32;
+        }
         _ => return Ok(false),
     }
     Ok(true)

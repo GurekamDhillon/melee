@@ -425,3 +425,9 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   its x20/x24 float arrays and x4..x1C attack-list tables get big-endian guest copies (ptr_override); `fp->cpu.csP`
   (an s8* into the fighter's own buffer) loads as that interior's guest address; `table_list` gives an empty list when
   an m-ex kind's AI-like row has none (native ftCo_800B6208 read NULL once PlTs's custom CPU ran to the end).
+- Verification (3ab047cfc build): sweep mex28..59, 1800 frames depth 4: 32/32 rc 0, 0 mismatches, 0 guest faults or
+  unresolved calls. Akaneia 51/51 match, vanilla 125/125 match, synctest 3000 frames depth 4 and 7 on `mex_ace_cpu`:
+  0 mismatches. Pushed.
+- Caveat: `it_80276174`'s NULL-pos fallback and `table_list`'s empty list are guesses where the console reads a
+  leftover register / an m-ex table we do not build; not checked against Dolphin.
+- Not done: Liu Kang rand order.

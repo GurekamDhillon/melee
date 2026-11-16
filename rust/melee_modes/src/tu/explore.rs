@@ -1126,16 +1126,6 @@ fn enemies_prefetch_start(id: i32) {
     if PREFETCH_STARTED.swap(id, SeqCst) == id {
         return;
     }
-    if std::env::var_os("MELEE_EXPLORE_SYNC_PREFETCH").is_some() {
-        if let Some(m) = map_of(id) {
-            let mut ks: Vec<u16> = m.spawns.iter().map(|s| s.4).collect();
-            ks.sort_unstable();
-            ks.dedup();
-            crate::tu::explore_vm::prefetch(&ks);
-        }
-        PREFETCH_DONE.store(id, SeqCst);
-        return;
-    }
     // started from a short-lived helper so the loader's handle and packet are system-heap allocations (the arena
     // pattern of subspace_model)
     // the calling thread's map state (MAPS is per thread): the helper loads into it, not into a copy of its own
@@ -3165,9 +3155,6 @@ pub fn install() {
                 loop {
                 let k = NEXT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                 let Some(g) = GD_STAGES.get(k) else { break };
-                if std::env::var_os("MELEE_EXPLORE_NO_PRELOAD").is_some() {
-                    break;
-                }
                 if available(g.id) {
                     let _ = load_into(st, g.id);
                 }

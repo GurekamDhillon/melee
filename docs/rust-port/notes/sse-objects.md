@@ -200,7 +200,7 @@ point.
   once starved the picked level: its load took about 3 s inside the match's first tick). The picked level loads on
   its own helper from the pick (`carrier`), together with its VM enemies' programs and models; the stage load waits
   for both (about 0.1 s), so nothing is written after the first frame.
-- The VM enemy textures are queued for upload with the map's. Each enemy model is drawn once, far off screen, one
+- Each VM enemy model (its textures uploaded then: queueing them with the map's broke the depth-7 synctest) is drawn once, far off screen, one
   every other frame after the sections and the part models (lifts, bricks; each on a frame of its own) have come
   in, so no frame builds them all; enemies come in from a fixed room frame after that.
 - perf-ab against candidate12 (Lake, level 22; release; two runs each, interleaved): 0 frames over budget after the

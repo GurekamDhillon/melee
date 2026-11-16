@@ -285,7 +285,11 @@ warm-up draws, one model every other frame.
   the ledge at 30.
 - **GBC1 / GBC2 barrel cannons**: a centre, a size and a first aim angle [off]; a fighter inside is shot out at that
   angle. Turning barrels (GBC2's second angle and speed table) and the barrel models are not done. Jungle section 0:
-  the first barrel shoots fox up and right.
+  the first barrel shoots fox up and right. The GBC record names no model (no id or name field); the section's barrel
+  leaves (`TaruCanon##` with `taru_locator##` / paths) are locators only, so the barrel mesh comes from a file the
+  port does not read yet: still drawn as nothing.
+- Jungle walk, frame 800: the camera holds fox below the screen at (188,-30); ac586344e shows the same frame, so it
+  predates the cannons/springs commit (not fixed yet).
 - **GBLT conveyor belts**: loaded (a centre, a size, a speed, a direction byte [off]) and carry a standing fighter, but
   their two files (levels 37 and the Great Maze) are not GD stages yet, so not seen in a run.
 - **GMCA / GENC / GHPE**: records dumped, meaning not found yet: GMCA (612 bytes) is a table of equal floats then

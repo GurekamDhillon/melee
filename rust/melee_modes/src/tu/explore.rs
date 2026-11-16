@@ -1116,6 +1116,57 @@ pub fn gd_name(id: i32) -> Option<&'static str> {
 
 /// The VS match about to start asked for the SSE stage (set by the stage select / `--match ...,sse`, read at the
 /// stage load). Plain static: set before the match, constant through it.
+/// The VM enemies' programs and models of the picked stage, read ahead on a helper (`enemies_prefetch_start`, at the
+/// pick) and waited for at the stage load: the stage id started / finished (system atomics, outside the snapshot).
+static PREFETCH_STARTED: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+static PREFETCH_DONE: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+
+fn enemies_prefetch_start(id: i32) {
+    use std::sync::atomic::Ordering::SeqCst;
+    if PREFETCH_STARTED.swap(id, SeqCst) == id {
+        return;
+    }
+    if std::env::var_os("MELEE_EXPLORE_SYNC_PREFETCH").is_some() {
+        if let Some(m) = map_of(id) {
+            let mut ks: Vec<u16> = m.spawns.iter().map(|s| s.4).collect();
+            ks.sort_unstable();
+            ks.dedup();
+            crate::tu::explore_vm::prefetch(&ks);
+        }
+        PREFETCH_DONE.store(id, SeqCst);
+        return;
+    }
+    // started from a short-lived helper so the loader's handle and packet are system-heap allocations (the arena
+    // pattern of subspace_model)
+    // the calling thread's map state (MAPS is per thread): the helper loads into it, not into a copy of its own
+    let st = maps();
+    let _ = std::thread::spawn(move || {
+        let _ = std::thread::Builder::new().name("sse-enemies".into()).spawn(move || {
+            if let Some(m) = load_into(st, id) {
+                let mut ks: Vec<u16> = m.spawns.iter().map(|s| s.4).collect();
+                ks.sort_unstable();
+                ks.dedup();
+                crate::tu::explore_vm::prefetch(&ks);
+            }
+            PREFETCH_DONE.store(id, SeqCst);
+        });
+    })
+    .join();
+}
+
+/// The stage load: wait for the pick's prefetch (started now if the pick came another way).
+fn enemies_prefetch_wait(id: i32) {
+    use std::sync::atomic::Ordering::SeqCst;
+    enemies_prefetch_start(id);
+    let t = std::time::Instant::now();
+    while PREFETCH_DONE.load(SeqCst) != id && t.elapsed().as_secs() < 30 {
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
+    if t.elapsed().as_millis() > 2 {
+        eprintln!("explore: waited {} ms for the room enemies' programs and models", t.elapsed().as_millis());
+    }
+}
+
 /// The GD stage id picked (0 none).
 pub static mut PICK: i32 = 0;
 /// The GD stage id of the map in play (set at each stage load; 0 none).
@@ -1127,6 +1178,7 @@ pub fn carrier(id: i32) -> i32 {
     unsafe {
         PICK = if is_gd_stage(id) && available(id) { id } else { 0 };
         if PICK != 0 {
+            enemies_prefetch_start(PICK);
             preload_textures(PICK);
             eprintln!("explore: stage {id:#x} ({}) on the Final Destination carrier", gd_name(id).unwrap_or("?"));
         }
@@ -1405,14 +1457,10 @@ pub unsafe fn coll_override() -> *mut MapCollData {
         }
         CUR_ID = want;
         let Some(m) = map() else { return core::ptr::null_mut() };
-        // the room's VM enemies: programs and models read now, on the game thread at the stage load (before the first
-        // frame and its snapshot; never from the maps' helper threads, whose late writes a rollback would undo)
-        {
-            let mut ks: Vec<u16> = m.spawns.iter().map(|s| s.4).collect();
-            ks.sort_unstable();
-            ks.dedup();
-            crate::tu::explore_vm::prefetch(&ks);
-        }
+        // the room's VM enemies: their programs and models were read on a helper started at the pick (`carrier`); the
+        // stage load waits for it, so nothing is written after the match's first frame (a rollback would undo it)
+        enemies_prefetch_wait(want);
+        crate::tu::explore_vm::queue_textures(&m.spawns.iter().map(|s| s.4).collect::<Vec<u16>>());
         // the content word the session hash carries (slice 0): pick, mask, digest
         let mut h = melee_core::hash::StateHasher::new();
         h.write(&want.to_be_bytes());
@@ -2124,6 +2172,11 @@ unsafe fn spawn_step(m: &Map) {
     if SPAWN_SEC < 0 || m.spawns.is_empty() {
         return;
     }
+    // no enemy before the draw has brought in every section and built the enemy models' pipelines (`draw`: one model
+    // every other frame after the sections, at most 8 kinds): a fixed room frame, so the sim never reads draw state
+    if CLOCK < warm_after(m) + 2 * 8 + 2 {
+        return;
+    }
     let s = SPAWN_SEC as usize;
     let cap = if crate::tu::envoy::armed() != 0 { ss::MAX / 2 } else { ss::MAX };
     let n = m.spawns.len().min(POINTS);
@@ -2689,6 +2742,11 @@ pub fn hide_ground() -> bool {
 /// Room frames between two more section models joining the draw (`draw`).
 const WARM_STEP: usize = 2;
 
+/// The room frame the enemy models' warm-up draws start: after every section and every part model has come in.
+fn warm_after(m: &Map) -> i32 {
+    (m.models.len().min(32) * WARM_STEP + 2 * m.brick_models.len().min(16) + 2) as i32
+}
+
 /// `ftdrawcommon::MAP_DRAW`: the section models, the doors and the transition fade, once per frame (player 1's
 /// opaque pass). Presentation only.
 pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
@@ -2710,6 +2768,11 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     let Some(m) = cur() else { return };
     let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("explore map draw"));
+    // the room's VM enemy models, one every other frame once the sections are all in (far off screen): their
+    // pipelines are built ahead of the first enemy, never in a frame that also brings in a section
+    if CLOCK >= warm_after(m) && CLOCK % 2 == 0 {
+        crate::tu::explore_vm::warm_draw();
+    }
     // The section models come in one at a time over the room's first frames, nearest the party first: every section is
     // drawn from then on (its textures stay in the renderer's cache, so a door never uploads anything), but no one
     // frame converts and uploads the whole map's textures (Lake 50 / 14.8 MB, Jungle 67 / 18.5 MB: the setup frame's
@@ -2747,6 +2810,11 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     for (k, b) in m.blocks.iter().enumerate() {
         let broken = k < 64 && BROKEN & 1u64.pshl(k as i64) != 0;
         if broken || b.sec as i32 != SEC {
+            continue;
+        }
+        // a part's model first drawn on a frame of its own after the sections (its pipelines built on no section's
+        // frame); the room's first few frames are under the fade-in
+        if !all && CLOCK < (n * WARM_STEP) as i32 + 2 * b.model.min(16) as i32 + 1 {
             continue;
         }
         if let Some((_, r, t)) = m.brick_models.get(b.model) {
@@ -3078,14 +3146,33 @@ pub fn install() {
     // allocations: a loader spawned straight from the game thread puts them in the arena, and a rollback load during
     // the (now longer: moving parts) load rewrote them under it (a synctest hung one run in three)
     let st = maps();
+    // two loaders take the stages in turn (one thread per stage starved the picked stage's own load: 26 maps at once
+    // made its load take seconds); the pick (`carrier`) loads its own straight away on a helper of its own
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let _ = std::thread::spawn(move || {
-        for g in GD_STAGES.iter() {
-            if available(g.id) {
-                let id = g.id;
-                let _ = std::thread::Builder::new().name("explore-map".into()).spawn(move || {
-                    let _ = load_into(st, id);
-                });
-            }
+        for _ in 0..2 {
+            let _ = std::thread::Builder::new().name("explore-map".into()).spawn(move || {
+                // lowest priority: still loading the other levels when a match starts, they never take the CPU from
+                // the game or the driver's pipeline builds (the picked level loads on its own helper)
+                #[cfg(windows)]
+                {
+                    extern "system" {
+                        fn GetCurrentThread() -> *mut core::ffi::c_void;
+                        fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
+                    }
+                    unsafe { SetThreadPriority(GetCurrentThread(), -2) };
+                }
+                loop {
+                let k = NEXT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                let Some(g) = GD_STAGES.get(k) else { break };
+                if std::env::var_os("MELEE_EXPLORE_NO_PRELOAD").is_some() {
+                    break;
+                }
+                if available(g.id) {
+                    let _ = load_into(st, g.id);
+                }
+                }
+            });
         }
     })
     .join();

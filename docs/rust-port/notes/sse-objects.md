@@ -193,3 +193,15 @@ start; field offsets in the local spec only):
 Not done in 4c: GLOK camera / area locks, GSBK / GMWA / GMWO switches and switch walls, GSHT shutters, mode-2 parts
 started by a switch, GFT2 / GASD / GFRT triggers. `MELEE_EXPLORE_TP=x,y@frame` (checks only) sets player 1 down at a
 point.
+
+## Start-up cost (round 3 perf fix)
+
+- The levels' maps are read at the engine start by two lowest-priority loaders, not one thread per level (26 at
+  once starved the picked level: its load took about 3 s inside the match's first tick). The picked level loads on
+  its own helper from the pick (`carrier`), together with its VM enemies' programs and models; the stage load waits
+  for both (about 0.1 s), so nothing is written after the first frame.
+- The VM enemy textures are queued for upload with the map's. Each enemy model is drawn once, far off screen, one
+  every other frame after the sections and the part models (lifts, bricks; each on a frame of its own) have come
+  in, so no frame builds them all; enemies come in from a fixed room frame after that.
+- perf-ab against candidate12 (Lake, level 22; release; two runs each, interleaved): 0 frames over budget after the
+  match-start tick, which is 0.13-0.24 s.

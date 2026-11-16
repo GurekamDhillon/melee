@@ -150,6 +150,40 @@ pub fn prefetch(kinds: &[u16]) {
     }
 }
 
+/// Queue the loaded VM enemy models' textures among `kinds` for upload before the match (the map's own are queued at
+/// the pick): their first draw otherwise uploads them mid-match.
+pub fn queue_textures(kinds: &[u16]) {
+    let Some(f) = (unsafe { crate::tu::explore::TEX_PRELOAD }) else { return };
+    let mut seen: std::vec::Vec<usize> = vec![];
+    let mut n = 0;
+    for &k in kinds {
+        let Some(m) = vm_name(k).filter(|_| has_vm_kind(k)).and_then(crate::tu::vm_boss_model::enemy_get) else { continue };
+        if seen.contains(&(m as *const _ as usize)) {
+            continue;
+        }
+        seen.push(m as *const _ as usize);
+        if let Some(file) = vm_name(k).and_then(row) {
+            if let Ok(mut w) = WARM.lock() {
+                w.push(file as i32);
+            }
+        }
+        crate::tu::petey_model::rig_textures(&m.rig, |p, w, h, fmt, lv| {
+            unsafe { f(p, w, h, fmt, lv) };
+            n += 1;
+        });
+    }
+    if !seen.is_empty() {
+        unsafe {
+            if melee_fighter::tu::ftdrawcommon::BOSS_DRAW.is_none() {
+                melee_fighter::tu::ftdrawcommon::BOSS_DRAW = Some(crate::tu::subspace::sub_draw);
+            }
+        }
+    }
+    if n > 0 {
+        eprintln!("explore: {n} VM enemy textures queued for upload ahead of the match");
+    }
+}
+
 fn prog(file: i32) -> Option<&'static Program> {
     *PROGS.get(usize::try_from(file).ok()?)?.get()?
 }
@@ -527,6 +561,24 @@ unsafe fn player_hits() {
 }
 
 /// Presentation: every live actor's model at its motion frame (called from the Subspace pool's draw pass).
+/// Render-only (outside the snapshot): the picked stage's VM enemy model files not yet drawn once. The match's first
+/// drawn frame draws each far off screen (plain and flashing), so their pipelines are built at the match start, not
+/// on the frame an enemy first comes in.
+static WARM: std::sync::Mutex<std::vec::Vec<i32>> = std::sync::Mutex::new(std::vec::Vec::new());
+
+/// The map's draw (the match's first drawn frame on): build the warm list's pipelines.
+pub unsafe fn warm_draw() {
+    // one model a frame, so no frame builds them all
+    let warm: Option<i32> = WARM.lock().ok().and_then(|mut w| w.pop());
+    for f in warm {
+        let (Some(m), Some(p)) = (model(f), prog(f)) else { continue };
+        // a bare actor (no `begin`: running the program's start would touch the game) in its first motion
+        let mut a = vr::OFF;
+        a.pos = [1.0e5, 1.0e5, 0.0];
+        crate::tu::vm_boss_model::draw_m(m, p, &a, false, (-1, 0), 1.0);
+    }
+}
+
 pub unsafe fn draw() {
     for i in 0..N {
         let s = S[i];

@@ -705,3 +705,43 @@ makes the first write to each page after it fault again (soft). Not standby trim
 must touch the pages after the frame's reset and before the apply, off the game thread: e.g. the worker does a
 `lock xadd 0` on one byte per page of the blocks the plan will land in (same value, coherent on x86) in the tick
 it is applied. Not done in this round; ~0.5 ms at most per apply.
+
+## Cold-stage match starts (2026-11-16, port/vanilla-zerolag)
+
+### The test
+- Solo: `zero_hitch_gate.sh vanilla_zerolag` already plays each legal stage in its own process (a stage never seen
+  in that session; real menus, `play/fastpick_<stage>.txt`). Baseline 2459b09a0: **0 frames over 16 ms on all six**;
+  heaviest start ticks fd 10.6, bf 8.3, ps 11.0, ys 9.4, dl 9.8, fod 13.4 (+ next frame 10.7 with 76 textures).
+  The 21-24 ms cold start is a **netplay** cost.
+- Netplay: `NP_CSS_STAGES=fd,bf bash tools/rust-port/netplay/css_pair.sh` plays one match per listed stage, picked
+  with the fastpick SSS moves. Reliable for two stages (fd,bf and ps,ys pass, hashes equal, replay equal); a third
+  pick drifts (mode 15) and **dl,fod hung both peers on the CSS after match 1 (tick 7560, heartbeats stop on both,
+  base exe too)**: not investigated, a script or netplay CSS hand-off problem to look at.
+- `NP_HOST_ENV="MELEE_SAMPLE=<path without spaces> MELEE_SAMPLE_SLOW_MS=14"`: the sampler on the host, keeping only
+  ticks of 14 ms or more. Symbols: the exe's image base is not printed; find it by symbolizing the stack frame just
+  under BaseThreadInitThunk at 64 KB steps until it reads `__scrt_common_main_seh` (procsym.py on fake events).
+
+### Found and fixed: VirtualQuery in the texture path
+Sampled Pokemon Stadium start (netplay): 9 of 16 slow-tick samples in `grpstadium fn_801D2ED0 -> SisLib ->
+GXInitTexObj -> gxbridge::data_at_ex -> readable() -> VirtualQuery`. Inside the snapshots' write-watched arena a
+query costs ~1 ms. `readable` now probes with `ReadProcessMemory` on this process (fails instead of faulting), and a
+texture already copied whole is returned without a probe. Presentation only (hashes, replays unchanged).
+
+### Numbers (netplay host tick ms at the match start, light slot held; other agents' short runs were on the machine)
+| stage (order in run) | base 2459b09a0 | fix |
+|---|---|---|
+| fd (match 1) | 13.4 | 11.3 |
+| bf (match 2, worst of its first frames) | 20.4 | 16.2 |
+| ps (match 1) | 18.4 (frame 25.7) | 14.9 (frame 22.3: prepare 6.5, 113 textures 3.7 ms) |
+| ps (match 3 of fd,bf,ps) | 41.7 / 30.1 | 30.5 (cache-only build; ReadProcessMemory build not rerun in that order) |
+| ys (match 2) | 16.3 (frame 17.8) | 17.2 (frame 18.8) |
+| dl, fod | netplay pair hangs (above) | solo only |
+
+### Still over 16 ms, where it goes
+- **Fighter data apply**: `ft create: data` -> `asset apply hit 190 KB` 2.4-4.2 ms: a 190 KB file whose plan holds
+  3535 blocks / 16 MB (fresh big 14 MB); game-thread faults only 80-160 (the 1100+ in the log line are the
+  pre-faulter's), so it is the alloc events (0.5-1.5) and the block writes, not faults. Fighter create slot 0 5.6 ms
+  in netplay vs ~1.1 solo.
+- **First frame of the match** (netplay PS 19 ms before the fix): render pass (display lists) 7.4 + the VirtualQuery.
+- **BF match 2, third tick (6241)**: `tick: step` 16-20 ms with no inner span: sample it next (`MELEE_SAMPLE_SLOW_MS`).
+- **First match's first frame**: prepare 6.5 + 113 texture uploads 3.7 ms (PS): stream or worker-stage uploads.

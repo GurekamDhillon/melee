@@ -372,7 +372,6 @@ pub fn gct_writes(gct: &[u8]) -> Vec<(u32, u32)> {
 pub const UNHANDLED_WRITES: &[(u32, &str)] = &[
     (0x8002_A124, "Camera_ApplyQuake: 1P-mode check forced false"),
     (0x8002_B0F8, "Camera_8002B0E0: 1P-mode check forced false"),
-    (0x8002_C6A8, "Camera_8002C5B4: stack stores removed"),
     (0x8006_AE00, "Fighter_procInput: debug-level branch removed"),
     (0x8006_AE90, "Fighter_procInput: 1P-mode check forced false"),
     (0x800C_09D0, "ftCo_800C09B4: +0x2324 < 30 check skipped"),

@@ -53,7 +53,9 @@ const FT_MEX0: i32 = 0x21;
 const CK_MEX0: i32 = 0x22;
 const FIRST_NEW: i32 = 27;
 const CSS_ICON_MAX: i32 = 128;
-const EFFECT_BANK_MAX: u32 = 50;
+/// The particle system's bank table (`efAsync_DatEntries`, 65 rows; efAsync_MexInit fills it from MxDt.dat). The C's
+/// GW_MEX_EFFECT_BANK_MAX is 50; ACE 2.0.1 gives Kirby's copy of internal kind 50 bank 50, which 50 dropped.
+const EFFECT_BANK_MAX: u32 = 65;
 const KIRBY_FUNC_SLOTS: i32 = 9;
 
 pub struct Mex {

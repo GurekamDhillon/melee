@@ -142,6 +142,17 @@ pub fn mexid(args: &[String]) -> ExitCode {
     for e in &t {
         println!("mexid:   {:<7} {:>3} {:016x} {}", "fighter", e.local, e.hash, e.name);
     }
+    // the disc's stage table (MxDt.dat): external id (`stage=ext:N`) -> grkind and its file; `mex` marks a stage past
+    // the retail ones (its GrFunctionInit / row callbacks are guest code the engine does not run)
+    {
+        use melee_engine::mex_host as mx;
+        for ext in 0..mx::GrExternalCount() {
+            let k = mx::GrKindForExt(ext);
+            let f = mx::GrFile(k);
+            let f = if f.is_null() { String::from("-") } else { unsafe { std::ffi::CStr::from_ptr(f) }.to_string_lossy().into_owned() };
+            println!("mexid:   {:<7} {:>3} grkind {:>3} {}{}", "stage", ext, k, f, if mx::GrIsMex(k) != 0 { " mex" } else { "" });
+        }
+    }
     let retail = t.iter().filter(|e| (0..26).contains(&e.local)).count();
     if retail < 26 {
         eprintln!("mexid: only {retail} of the 26 retail fighters have identities");

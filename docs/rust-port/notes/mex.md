@@ -36,6 +36,25 @@ identical). `run_rust.sh` reads the scenario's `iso` (`COV_ISO` -> `GW_ISO_<NAME
 
 Open: FD on the ACE disc draws magenta edges in `view-golden` (a texture the renderer does not decode; render only).
 
+## ACE v2.0.1 (Nov 16, branch port/ace201)
+
+Disc: the release's `patch.xdelta` applied with xdelta3 to a clean 1.02 disc (`GW_ISO_ACE201`; `GW_ISO_ACE` stays the
+older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grkind, file, `mex` for m-ex stages).
+
+- New fighters: Liu Kang (`liukang`, PlKg, ftFunction with 14 overrides) and Sub-Zero (`subzero`) load, move and fight
+  CPU 9 vs Fox; the VS CSS shows the ACE grid with both. Wireframes / Giga Bowser are the vanilla kinds (`ck:27`, `ck:28`,
+  `ck:29`) and play. Liu Kang's and Chun-Li's onLoad end in `bctrl ftSk_Init_OnLoad`; a direct call to a function the
+  generator bridges only as a gobj callback (`GOBJ_FN_NAMES`) now goes through `mex_bridge::gobj_fn` instead of
+  faulting as unresolved (the whole guest onLoad was dropped).
+- Kirby's copy of internal kind 50 uses effect bank 50: the gate is now the particle system's 65 banks
+  (`efAsync_DatEntries`), not the C's 50.
+- New stages: Suzaku Castle (ext 357, GrSuz) runs but draws no stage model; Ganon's Tower (358, GrGt), Mad Monster
+  Mansion (359, GrMm) and Nintendo 64 (360, GrN64) stop in `Ground_801C43C4` (HSD_ASSERT 3652): an m-ex stage has no
+  `StageCallbacks[]` (its StageData comes from the stage's guest GrFunction, not run), so the light scan falls back to
+  the default lights `Ground_803E06C8`, whose anim the map_head loop table does not list. Needs m-ex stage support.
+- Still unbridged: Meta Knight `ftParts_80074B0C` (onLoad falls back to the clone base), Shadow
+  `ftCommon_CalcSelfAccel_DeaccelAir`.
+
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 
 - Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline

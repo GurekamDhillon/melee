@@ -1485,7 +1485,21 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
             }
             Some(name) => {
                 let mut c = Call { cpu, mem, fix: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
-                let hit = unsafe { crate::mex_bridge::call(name, &mut c) };
+                let mut hit = unsafe { crate::mex_bridge::call(name, &mut c) };
+                // a gobj callback the generator bridges only as a function pointer (GOBJ_FN_NAMES), called directly:
+                // ACE 2.0.1's Liu Kang onLoad ends in `bctrl ftSk_Init_OnLoad` (its Sheik base's onLoad), which
+                // faulted as unresolved and dropped the whole guest onLoad
+                if !hit {
+                    if let Some(f) = crate::mex_bridge::gobj_fn(name) {
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        if g.is_null() {
+                            c.bad = true;
+                        } else {
+                            unsafe { f(g as G) };
+                        }
+                        hit = true;
+                    }
+                }
                 c.finish();
                 if c.bad {
                     let s = st();

@@ -3131,6 +3131,11 @@ pub unsafe extern "C" fn Ground_801C43C4(arg0: *mut c_void) -> i32 {
             i += 1;
             phi_r4 = phi_r4.add(1);
         }
+        // the light anim the map_head's loop table does not list: name both sides before the assert (ACE 2.0.1's
+        // new m-ex stages stop here)
+        let t = (*tmp).unk20;
+        let have: std::vec::Vec<*mut c_void> = (0..max as usize).map(|j| (*t.add(j)).unk0 as *mut c_void).collect();
+        eprintln!("ground: Ground_801C43C4 light anim {arg0:p} not in the map_head loop table ({max} entries: {have:?})");
         panic!("ground.c:3652 HSD_ASSERT(3652, 0)");
     }
     0

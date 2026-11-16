@@ -584,15 +584,22 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 .or_else(|| doors.iter().find(|d: &&Door| d.sec == si).map(|d| [d.x, d.y]))
                 .unwrap_or([e[0] + 40.0, e[3]]),
         );
-        // a boss arena draws every stage model of its archive (the level's `<3 digits>v...` MDL0s: Rayquaza's shore
-        // and its water); a map section its one named model
+        // a boss arena draws every model of its stage's BRRES files (those holding a level `<3 digits>v...` MDL0):
+        // Rayquaza's shore, water, cloud shadow, haze and sky; a map section its one named model
         let mut stage_models: Vec<String> = vec![];
         if s.world_coll {
+            let level = |n: &str| {
+                let nb = n.as_bytes();
+                nb.len() > 4 && nb[..3].iter().all(u8::is_ascii_digit) && nb[3] == b'v'
+            };
             for b in leaves.iter().filter(|b| b.len() >= pm::BRRES_HEADER_LEN && &b[..4] == b"bres") {
-                for (n, o) in pm::brres_entries(b).unwrap_or_default() {
-                    let nb = n.as_bytes();
-                    if b.get(o..o + 4) == Some(b"MDL0") && nb.len() > 4 && nb[..3].iter().all(u8::is_ascii_digit) && nb[3] == b'v' && !stage_models.contains(&n) {
-                        stage_models.push(n);
+                let es = pm::brres_entries(b).unwrap_or_default();
+                let mdls: Vec<&String> = es.iter().filter(|(_, o)| b.get(*o..*o + 4) == Some(b"MDL0")).map(|(n, _)| n).collect();
+                if mdls.iter().any(|n| level(n)) {
+                    for n in mdls {
+                        if !stage_models.contains(n) {
+                            stage_models.push(n.clone());
+                        }
                     }
                 }
             }

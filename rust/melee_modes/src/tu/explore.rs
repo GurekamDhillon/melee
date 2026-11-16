@@ -297,7 +297,9 @@ pub struct Map {
     /// the bricks' looks (`Block::model`): name, rig, bind-pose triangles
     brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)>,
     /// moving platforms' bone positions per frame (section space; `Block::path`)
-    paths: Vec<Vec<[f32; 2]>>,
+    /// per moving part: its motion, one 2D transform a frame (a, b, c, d, tx, ty: section space, applied to its rest
+    /// place: x' = a x + b y + tx, y' = c x + d y + ty)
+    paths: Vec<Vec<[f32; 6]>>,
     /// per spawn (`spawns`): index into `enemy_paths`, usize::MAX none
     pub spawn_path: Vec<usize>,
     /// the placements' motion paths (Brawl's grGimmickMotionPath; `enemy_path`)
@@ -314,6 +316,10 @@ pub struct Map {
     pub entries: Vec<[f32; 2]>,
     /// the start-point bones found (section, name, world position): where a jump arrives
     pub starts: Vec<(usize, String, [f32; 2])>,
+    /// the level's start (its start jump's start-point bone, section 0), when found
+    pub first_start: Option<[f32; 2]>,
+    /// per section: Brawl's room camera distance range (near, far) from the section's ADPM file, when found
+    pub sec_cam: Vec<Option<[f32; 2]>>,
     /// per GD stage map: a digest of its collision (the content mask's per-section check, envoy-sse-design slice 0)
     pub digest: u64,
 }
@@ -375,12 +381,18 @@ pub struct Block {
     pub at: [f32; 2],
     /// a moving platform (never breaks): index into `Map::paths`; usize::MAX a brick
     pub path: usize,
+    /// a moving platform's rest place (section space): its collision points are loaded there and moved by
+    /// `path[frame] - rest` (an animated bone: its path's first point; a GMOV lift: its bone's bind place)
+    pub rest: [f32; 2],
 }
 
 fn load(id: i32) -> Result<Map, String> {
     let secs = secs_of(id);
     let mut m = load_secs(secs, true, true)?;
     link_doors(&mut m, secs, &chain_of(id).jumps);
+    // where the level starts: its start jump's start-point bone in the first section (stAdventure2::getFighterStartPos
+    // 0x81A05FD8 takes the bone the jump names, else the stage's player start)
+    m.first_start = chain_of(id).jumps.iter().filter(|j| j.kind == JUMP_START).find_map(|j| m.starts.iter().find(|s| s.0 == 0 && s.1 == j.start).map(|s| s.2));
     Ok(m)
 }
 
@@ -443,7 +455,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut models = vec![];
     let mut door_models = vec![];
     let mut brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)> = vec![];
-    let mut paths: Vec<Vec<[f32; 2]>> = vec![];
+    let mut paths: Vec<Vec<[f32; 6]>> = vec![];
     let mut spawn_path: Vec<usize> = vec![];
     let mut enemy_paths: Vec<EnemyPath> = vec![];
     // load notes, printed by the game thread with the map's report (never printed from a loader thread)
@@ -453,6 +465,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut players = vec![];
     let mut entries: Vec<[f32; 2]> = vec![];
     let mut starts: Vec<(usize, String, [f32; 2])> = vec![];
+    let mut sec_cam: Vec<Option<[f32; 2]>> = vec![];
     for (si, s) in secs.iter().enumerate() {
         let p_first = players.len();
         let mut prop_cache: Option<Vec<pm::Rig>> = None;
@@ -461,6 +474,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 // a missing side room: the main section still plays (its doors into it stay shut)
                 ext.push([0.0; 4]);
                 entries.push(s.off);
+                sec_cam.push(None);
                 continue;
             }
             return Err("map archive not readable".into());
@@ -470,6 +484,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
             return Err("no collision".into());
         }
         let mut e = [f32::MAX, f32::MIN, f32::MIN, f32::MAX];
+        let gmovs = gmov_list(&leaves, &tags, si, &mut notes);
         if objects {
             // every collision file of the section, object by object (a collision object names the bone it rides):
             // world objects (no bone) are the static map, welded below; a brick (`AdvGdtPunBrick*`, Brawl's GBLK
@@ -479,12 +494,18 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
             for c in &colls {
                 let (pl, oo, nobj) = (be32(c, 12) as usize, be32(c, 0x10) as usize, be16(c, 4) as usize);
                 let po = be32(c, 8) as usize;
-                for k in 0..nobj {
+                let objname = |k: usize| -> &[u8] {
+                    let o = oo + 0x6C * k;
+                    let name_end = c.get(o + 0x4C..o + 0x6C).and_then(|n| n.iter().position(|&x| x == 0)).unwrap_or(32);
+                    c.get(o + 0x4C..o + 0x4C + name_end).unwrap_or(&[])
+                };
+                // an object carried by several lifts is loaded once per lift
+                let work: Vec<(usize, usize)> = (0..nobj).flat_map(|k| (0..gmov_count(&gmovs, objname(k))).map(move |i| (k, i))).collect();
+                for (k, inst) in work {
                     let o = oo + 0x6C * k;
                     let (p0, pc) = (be16(c, o) as usize, be16(c, o + 2) as usize);
                     let bone = be16(c, o + 0x2A);
-                    let name_end = c.get(o + 0x4C..o + 0x6C).and_then(|n| n.iter().position(|&x| x == 0)).unwrap_or(32);
-                    let name = c.get(o + 0x4C..o + 0x4C + name_end).unwrap_or(&[]);
+                    let name = objname(k);
                     let (place, joint) = if bone == 0xFFFF {
                         ([s.off[0], s.off[1]], 0usize)
                     } else if name.starts_with(b"AdvGdtPunBrick") {
@@ -512,7 +533,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                                     },
                                 };
                                 let at = [t[0] + s.off[0], t[1] + s.off[1]];
-                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX });
+                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2] });
                                 ([t[0] + s.off[0], t[1] + s.off[1]], blocks.len())
                             }
                             None => {
@@ -520,14 +541,28 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                                 continue;
                             }
                         }
-                    } else if let Some(path) = mover_path(&leaves, &mut prop_cache, name) {
-                        // a platform riding an animated bone (060002a's sfyuka00-03 on the water wheel `st02asuisha`):
-                        // its own joint, its points moved along the bone's path every frame (`movers_tick`)
-                        let at = [path[0][0] + s.off[0], path[0][1] + s.off[1]];
+                    } else if let Some((path, rest, lift_model)) = gmov_path(&gmovs, &leaves, &mut prop_cache, name, inst).or_else(|| mover_path(&leaves, &mut prop_cache, name).map(|p| { let r = p[0]; (p.iter().map(|q| [1.0, 0.0, 0.0, 1.0, q[0] - r[0], q[1] - r[1]]).collect(), r, None) })) {
+                        // a platform riding an animated bone (060002a's sfyuka00-03 on the water wheel `st02asuisha`), or
+                        // a GMOV lift (grAdventureMoveGround: 270002's p_yuka01/02, idouyuka1) on its path model's
+                        // `path_locator`: its own joint, its points moved along the path every frame (`movers_tick`)
+                        let at = [rest[0] + s.off[0], rest[1] + s.off[1]];
+                        let model = match lift_model {
+                            Some(nm) => match brick_models.iter().position(|(n, _, _)| *n == nm) {
+                                Some(i) => i,
+                                None => match pm::static_models(&leaves, &[nm.as_str()]).pop() {
+                                    Some(t) => {
+                                        brick_models.push(t);
+                                        brick_models.len() - 1
+                                    }
+                                    None => usize::MAX,
+                                },
+                            },
+                            None => usize::MAX,
+                        };
                         let bb = [bef(c, o + 0x14), bef(c, o + 0x18), bef(c, o + 0x1C), bef(c, o + 0x20)];
                         let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
                         paths.push(path);
-                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model: usize::MAX, at, path: paths.len() - 1 });
+                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest });
                         notes.push(format!("explore: section {si}: {} moves ({} frames{}) at ({:.0},{:.0}) size {:.0}x{:.0}", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0), if paths.last().map_or(0, |p| p.len()) == 1 { ", held at rest" } else { "" }, x, y, bb[2] - bb[0], bb[3] - bb[1]));
                         (at, blocks.len())
                     } else {
@@ -658,6 +693,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 .or_else(|| doors.iter().find(|d: &&Door| d.sec == si).map(|d| [d.x, d.y]))
                 .unwrap_or([e[0] + 40.0, e[3]]),
         );
+        // the room camera's distance range (ADPM, read by the stage setup 0x81A067A8 into the camera's range object)
+        sec_cam.push(leaves.iter().find(|b| b.get(..4) == Some(b"ADPM") && b.len() >= ADPM_FAR + 4).map(|b| [bef(b, ADPM_NEAR), bef(b, ADPM_FAR)]).filter(|c| c[0] > 0.0 && c[1] >= c[0]));
         for n in &s.starts {
             if let Some(p) = leaves.iter().find_map(|b| pm::bone_trans(b, n.as_bytes())) {
                 starts.push((si, n.clone(), [p[0] + s.off[0], p[1] + s.off[1]]));
@@ -857,6 +894,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         players,
         entries,
         starts,
+        first_start: None,
+        sec_cam,
         digest,
     })
 }
@@ -1315,6 +1354,11 @@ unsafe fn set_bounds(s: usize) {
     ci.cam_bounds.right = e[1] + 20.0 - ox;
     ci.cam_bounds.top = e[2] + 10.0 - oy;
     ci.cam_bounds.bottom = e[3] - 70.0 - oy;
+    // Brawl's room camera range for the section (Final Destination's own zoom range framed the party far too wide)
+    if let Some(Some(c)) = m.sec_cam.get(s) {
+        ci.cam_zoom_rate = c[0];
+        ci.cam_max_depth = c[1];
+    }
     let bz = &mut sg::stage_info.blast_zone;
     bz.left = e[0] - BLAST_MARGIN - ox;
     bz.right = e[1] + BLAST_MARGIN - ox;
@@ -1365,8 +1409,8 @@ unsafe fn log_bounds(what: &str) {
     let c = &ci.cam_bounds;
     let b = &sg::stage_info.blast_zone;
     eprintln!(
-        "explore: {what} section {SEC} room frame {CLOCK}: camera ({:.0},{:.0},{:.0},{:.0}) blast ({:.0},{:.0},{:.0},{:.0})",
-        c.left + ox, c.right + ox, c.top + oy, c.bottom + oy, b.left + ox, b.right + ox, b.top + oy, b.bottom + oy
+        "explore: {what} section {SEC} room frame {CLOCK}: camera ({:.0},{:.0},{:.0},{:.0}) distance {:.0}..{:.0} blast ({:.0},{:.0},{:.0},{:.0})",
+        c.left + ox, c.right + ox, c.top + oy, c.bottom + oy, ci.cam_zoom_rate, ci.cam_max_depth, b.left + ox, b.right + ox, b.top + oy, b.bottom + oy
     );
     each_fighter(|_, fp| {
         let p = (*fp).cur_pos;
@@ -1517,7 +1561,7 @@ pub unsafe fn room_tick() {
     if CLOCK == 1 {
         set_bounds(SEC as usize); // after the stage's own camera data has been read
         // Brawl's section start sets the respawn point to the start position (0x81A06C6C)
-        REBIRTH = m.entries.get(SEC as usize).copied().unwrap_or([0.0, 0.0]);
+        REBIRTH = m.first_start.filter(|_| SEC == 0).or_else(|| m.entries.get(SEC as usize).copied()).unwrap_or([0.0, 0.0]);
         // and the party stands at that start position, as the door warp places it (Final Destination's own spawn
         // points sit at its origin, where a section's floor need not be: sse22 dropped the party through nothing)
         let e = REBIRTH;
@@ -1533,6 +1577,26 @@ pub unsafe fn room_tick() {
             k += 1;
         });
         log_bounds("start");
+        // checks only (`MELEE_EXPLORE_PROBE=section`): the floors under every 20 units of that section, top down
+        if let Some(ps) = std::env::var("MELEE_EXPLORE_PROBE").ok().and_then(|v| v.parse::<usize>().ok()) {
+            if let Some(e) = m.ext.get(ps).copied() {
+                let mut x = e[0];
+                while x <= e[1] {
+                    let mut ys = vec![];
+                    let mut y = e[2] + 20.0;
+                    while y > e[3] - 20.0 {
+                        let mut at: melee_types::Vec = core::mem::zeroed();
+                        if melee_world::tu::mplib::mpCheckMultiple(x, y, x, e[3] - 30.0, &mut at, core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), 1, -1, -1) == 0 {
+                            break;
+                        }
+                        ys.push(format!("{:.0}", at.y));
+                        y = at.y - 2.0;
+                    }
+                    eprintln!("explore: probe section {ps} x {:.0}: floors {}", x, ys.join(" "));
+                    x += 20.0;
+                }
+            }
+        }
     }
     // the section's enemies (the Subspace enemy lane: plain sim entities, no Melee articles, so a VS match spawns
     // them too) and every crate of the map
@@ -1732,6 +1796,12 @@ static mut CRATE_NEXT: i32 = i32::MAX;
 unsafe fn spawn_section(_m: &Map, s: usize) {
     // only the map's own: the Envoy sim's enemies (its foes for the fight) stay, and keep half the pool free for it
     crate::tu::subspace::clear_room();
+    // checks only: `MELEE_EXPLORE_NO_ENEMIES=1` leaves the map's enemy points empty (a pad walk of the way through)
+    static NONE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if *NONE.get_or_init(|| std::env::var_os("MELEE_EXPLORE_NO_ENEMIES").is_some()) {
+        SPAWN_SEC = -1;
+        return;
+    }
     SPAWN_SEC = s as i32;
     SPAWN_NEXT = 0;
     SPAWN_N = 0;
@@ -1793,6 +1863,124 @@ unsafe fn spawn_crate(c: &Crate) {
     }
 }
 
+/// One GMOV entry (Brawl's grAdventureMoveGround, a lift): its path mode, path model and the model it carries.
+struct Gmov {
+    mode: u8,
+    /// the path BRRES's MDL0 name, and its bones-only rig with the `path_locator` bone (its first CHR0 moves it)
+    path_mdl: String,
+    loc: Option<(pm::Rig, usize)>,
+    /// the carried model's MDL0 name and its bone names (a collision object riding one of them rides the lift)
+    model_mdl: String,
+    bones: Vec<String>,
+}
+
+/// ADPM (a section's camera parameters) bytes ([off], local notes "Round 3"): the camera's near and far distance.
+const ADPM_NEAR: usize = 0x7C;
+const ADPM_FAR: usize = 0x80;
+
+/// The identity motion (a part at rest).
+const IDENT: [f32; 6] = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0];
+
+/// GMOV entry bytes ([off] in the local notes, `_build/boss-ir/sse-door-transition.md` "Round 3"): path mode, path
+/// BRRES id, carried model BRRES id (archive file ids of type 2).
+const GMOV_MODE: usize = 5;
+const GMOV_PATH: usize = 6;
+const GMOV_MODEL: usize = 0x44;
+
+/// The section's GMOV lifts, from its BLOC leaves (creator 0x81A09EFC; motion grGimmickMotionPath::processAnim
+/// 0x8126E43C).
+fn gmov_list(leaves: &[Vec<u8>], tags: &[Vec<(u16, u16)>], si: usize, notes: &mut Vec<String>) -> Vec<Gmov> {
+    let brres = |id: u8| -> Option<&Vec<u8>> {
+        leaves.iter().zip(tags).find(|(b, t)| t.last() == Some(&(2, id as u16)) && b.get(..4) == Some(b"bres")).map(|(b, _)| b)
+    };
+    let mdl_names = |b: &Vec<u8>| -> Vec<String> {
+        pm::brres_entries(b).unwrap_or_default().into_iter().filter(|(_, o)| b.get(*o..*o + 4) == Some(b"MDL0")).map(|(n, _)| n).collect()
+    };
+    let mut v = vec![];
+    for b in leaves {
+        for e in bloc_entries(b, b"GMOV") {
+            let (Some(&mode), Some(&pid), Some(&mid)) = (b.get(e + GMOV_MODE), b.get(e + GMOV_PATH), b.get(e + GMOV_MODEL)) else { continue };
+            let (Some(pb), Some(mb)) = (brres(pid), brres(mid)) else {
+                notes.push(format!("explore: section {si}: lift (path file {pid}, model file {mid}) not found; it stays still"));
+                continue;
+            };
+            let (Some(path_mdl), Some(model_mdl)) = (mdl_names(pb).into_iter().next(), mdl_names(mb).into_iter().next()) else { continue };
+            let bones: Vec<String> = pm::prop_rigs(core::slice::from_ref(mb), &[model_mdl.as_str()])
+                .into_iter()
+                .flatten()
+                .flat_map(|r| (0..r.bones.len()).map(|k| r.bone_name(k).to_string()).collect::<Vec<_>>())
+                .collect();
+            notes.push(format!("explore: section {si}: lift {model_mdl} on path {path_mdl} (mode {mode}, bones {})", bones.join(" ")));
+            // the path model is bones only (a locator): `path_locator` along its CHR0
+            let loc = pm::locator_rig(pb).and_then(|r| {
+                let k = (0..r.bones.len()).find(|&k| r.bone_name(k) == "path_locator")?;
+                (!r.anims.is_empty()).then_some((r, k))
+            });
+            if std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
+                if let Some(r) = pm::locator_rig(pb) {
+                    let tr: Vec<String> = r.anims.iter().flat_map(|(_, a)| a.tracks.iter().map(|t| t.0.clone())).collect();
+                    notes.push(format!("explore: section {si}: path {path_mdl} bones {} tracks {}", (0..r.bones.len()).map(|k| r.bone_name(k)).collect::<Vec<_>>().join(" "), tr.join(" ")));
+                }
+            }
+            v.push(Gmov { mode, path_mdl, loc, model_mdl, bones });
+        }
+    }
+    v
+}
+
+/// A collision object riding bone `name` of a GMOV lift's model: the lift's path (section space, one point a frame:
+/// `path_locator`'s place), the bone's rest place, and the model to draw. Brawl moves the carried model's root to the
+/// A collision object riding bone `name` of the `inst`-th GMOV lift carrying it (one archive collision object can be
+/// carried by several lifts: 270001's three swings `branco_move01..03` carry `branco_ashiba01`): the lift's motion
+/// (one transform a frame), the bone's rest place, and the model to draw. Brawl puts the carried model's root on the
+/// path's `path_locator` (translation and turn), so a point at `rest + local` goes to `M(f) local`. Path mode 1
+/// (endless loop) only; the others hold at rest.
+fn gmov_path(gmovs: &[Gmov], leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8], inst: usize) -> Option<(Vec<[f32; 6]>, [f32; 2], Option<String>)> {
+    let name = std::str::from_utf8(name).ok()?;
+    let g = gmovs.iter().filter(|g| g.bones.iter().any(|b| b == name)).nth(inst)?;
+    let rigs = cache.get_or_insert_with(|| all_prop_rigs(leaves));
+    let mr = rigs.iter().find(|r| (0..r.bones.len()).any(|k| r.bone_name(k) == name))?;
+    let k = (0..mr.bones.len()).find(|&k| mr.bone_name(k) == name)?;
+    let rp = mr.bone_point(None, 0.0, k, [0.0; 3]);
+    let rest = [rp[0], rp[1]];
+    let Some((lr, pk)) = g.loc.as_ref().filter(|_| g.mode == 1) else {
+        return Some((vec![IDENT], rest, Some(g.model_mdl.clone())));
+    };
+    let (_, a) = &lr.anims[0];
+    let n = fctiwz_f32(a.frames).clamp(1, 3600) as usize;
+    let path: Vec<[f32; 6]> = (0..n)
+        .map(|f| {
+            let fo = lr.bone_point(Some(a), f as f32, *pk, [0.0; 3]);
+            let fx = lr.bone_point(Some(a), f as f32, *pk, [1.0, 0.0, 0.0]);
+            let fy = lr.bone_point(Some(a), f as f32, *pk, [0.0, 1.0, 0.0]);
+            // M(f): linear part [la lb; lc ld], translation fo; applied to (v - rest)
+            let (la, lb, lc, ld) = (fx[0] - fo[0], fy[0] - fo[0], fx[1] - fo[1], fy[1] - fo[1]);
+            [la, lb, lc, ld, fo[0] - (la * rest[0] + lb * rest[1]), fo[1] - (lc * rest[0] + ld * rest[1])]
+        })
+        .collect();
+    Some((path, rest, Some(g.model_mdl.clone())))
+}
+
+/// How many GMOV lifts carry bone `name` (at least 1: an object no lift carries is loaded once).
+fn gmov_count(gmovs: &[Gmov], name: &[u8]) -> usize {
+    let Ok(name) = std::str::from_utf8(name) else { return 1 };
+    gmovs.iter().filter(|g| g.bones.iter().any(|b| b == name)).count().max(1)
+}
+
+/// Every MDL0 of the section's archive as a prop rig (with every CHR0 of the archive), for `mover_path` / `gmov_path`.
+fn all_prop_rigs(leaves: &[Vec<u8>]) -> Vec<pm::Rig> {
+    let mut names: Vec<String> = vec![];
+    for b in leaves.iter().filter(|b| b.len() >= 0x10 && &b[..4] == b"bres") {
+        for (n, off) in pm::brres_entries(b).unwrap_or_default() {
+            if b.get(off..off + 4) == Some(b"MDL0") && !names.contains(&n) {
+                names.push(n);
+            }
+        }
+    }
+    let want: Vec<&str> = names.iter().map(|s| s.as_str()).collect();
+    pm::prop_rigs(leaves, &want).into_iter().flatten().collect()
+}
+
 /// The path of the bone named `name` in the section's models, from the first CHR0 that moves it: its model-space
 /// (x, y) at every frame. None when no model has such a bone or nothing animates it.
 fn mover_path(leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8]) -> Option<Vec<[f32; 2]>> {
@@ -1830,6 +2018,13 @@ fn mover_path(leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>>, name: &[u8])
         if let Some(k) = (0..r.bones.len()).find(|&k| r.bone_name(k) == name) {
             let p = r.bone_point(None, 0.0, k, [0.0; 3]);
             return Some(vec![[p[0], p[1]]]);
+        }
+    }
+    // a bone only a model without geometry holds (270002's col_attach01/02: Brawl's GMOT motion grounds, a one-bone
+    // model with a one-frame motion: static collision at the bone's place)
+    if keep {
+        if let Some(t) = leaves.iter().find_map(|b| pm::bone_trans(b, name.as_bytes())) {
+            return Some(vec![t]);
         }
     }
     None
@@ -1915,14 +2110,16 @@ unsafe fn movers_tick(m: &Map) {
             continue;
         }
         let f = CLOCK.max(0).prem(path.len() as i32) as usize;
-        let (dx, dy) = (path[f][0] - path[0][0], path[f][1] - path[0][1]);
+        let t = path[f];
+        let (ox, oy) = (b.at[0] - b.rest[0], b.at[1] - b.rest[1]);
         let j = k + 1;
         let Some(mj) = m.joints.get(j) else { continue };
         mp::mpLib_80057424(j as i32);
         for v in mj.vtx_start as usize..(mj.vtx_start as usize + mj.vtx_count as usize) {
             let (Some(base), vx) = (m.verts.get(v), mp::groundCollVtx.add(v)) else { continue };
-            (*vx).pos.x = base.x + dx;
-            (*vx).pos.y = base.y + dy;
+            let (lx, ly) = (base.x - ox, base.y - oy);
+            (*vx).pos.x = t[0] * lx + t[1] * ly + t[4] + ox;
+            (*vx).pos.y = t[2] * lx + t[3] * ly + t[5] + oy;
         }
         mp::mpJointUpdateBounding(j as i32);
         ride_check(k, mj, path.len() as i32);
@@ -2114,7 +2311,15 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
             continue;
         }
         if let Some((_, r, t)) = m.brick_models.get(b.model) {
-            pm::draw_tris(r, t, [0.0, 0.0], [b.at[0], b.at[1], 0.0], 1.0, 0.0, false);
+            match m.paths.get(b.path).filter(|p| !p.is_empty()) {
+                // a lift: its model (posed in model space, the bone at its rest place) moved with its collision
+                Some(p) => {
+                    let q = p[CLOCK.max(0).prem(p.len() as i32) as usize];
+                    let (ox, oy) = (b.at[0] - b.rest[0], b.at[1] - b.rest[1]);
+                    pm::draw_tris_m(r, t, [0.0, 0.0], [ox + q[4], oy + q[5], 0.0], 1.0, [[q[0], q[1], 0.0], [q[2], q[3], 0.0], [0.0, 0.0, 1.0]], false);
+                }
+                None => pm::draw_tris(r, t, [0.0, 0.0], [b.at[0], b.at[1], 0.0], 1.0, 0.0, false),
+            }
         }
     }
     if let Some((r, t)) = m.door_models.first() {

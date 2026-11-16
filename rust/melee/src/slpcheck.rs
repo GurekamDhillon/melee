@@ -369,7 +369,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let Some(path) = get("--slp") else {
-        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai]");
+        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--video-out -|PATH [--video-size WxH] [--video-realtime]] [--audio-out PATH]");
         return ExitCode::from(2);
     };
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
@@ -521,6 +521,14 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if let Some(w) = ws {
         sm.notes = format!("{}{}widescreen code {}..{} x{}/{}", sm.notes, if sm.notes.is_empty() { "" } else { "; " }, w.left, w.right, w.num, w.den);
     }
+    // `--video-out` / `--audio-out` (video_sink::AvOut): the checked run itself rendered and mixed, frame for frame
+    let mut av = match crate::video_sink::AvOut::from_args(args, &iso) {
+        Ok(a) => a,
+        Err(er) => {
+            eprintln!("melee slpcheck: {er}");
+            return ExitCode::from(2);
+        }
+    };
     let booted = crate::engine_disc(&iso).and_then(|disc| melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), conv.scn.clone()));
     let mut e = match booted {
         Ok(e) => e,
@@ -531,6 +539,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     crate::install_replay(pl);
     install_capture(file.version[0] < 3);
+    if let Some(a) = av.as_mut() {
+        a.start();
+    }
     unsafe { RESEED_PRE = !args.iter().any(|a| a == "--no-pre-reseed"); SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None; FS_OFFSET = 0 };
     let ports: Vec<usize> = (0..4).filter(|&i| conv.scn.players[i].is_some()).collect();
     let posts: Vec<Vec<Option<slp::Post>>> = (0..4).map(|p| if ports.contains(&p) { file.post_by_port(p) } else { Vec::new() }).collect();
@@ -621,6 +632,12 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             ticks += 1;
             last_frame = fr;
+            if let Some(a) = av.as_mut() {
+                if !a.frame() {
+                    eprintln!("melee slpcheck: an output closed at frame {fr}; stopping");
+                    break;
+                }
+            }
             if let Some(f) = nh_csv.as_mut() {
                 use std::io::Write;
                 let r = e.neutral_row();
@@ -677,6 +694,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     #[cfg(feature = "disc")]
     if let Ok(p) = std::env::var("MELEE_DISC_OUT") {
         let _ = melee_core::disc::dump(&p);
+    }
+    if let Some(a) = av.take() {
+        a.finish();
     }
     if let Err(p) = run {
         panic_msg = Some(if let Some(s) = p.downcast_ref::<&str>() { (*s).to_string() } else if let Some(s) = p.downcast_ref::<String>() { s.clone() } else { "panic".into() });

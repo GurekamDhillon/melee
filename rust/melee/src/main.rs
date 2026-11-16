@@ -1359,14 +1359,14 @@ fn golden_engine(args: &[String]) -> ExitCode {
 
 /// The offscreen renderer of `golden --video-out` / `--video-size`: the EFB shaped to the video's content aspect, with
 /// the window's renderer-side widescreen (perspective draws widened by melee_gx::interp; presentation only).
-struct GoldenView {
-    rd: melee_gx::render::Renderer,
+pub(crate) struct GoldenView {
+    pub(crate) rd: melee_gx::render::Renderer,
     solver: melee_gx::interp::Solver,
     widen: Option<melee_gx::interp::Widen>,
 }
 
 impl GoldenView {
-    fn new(w: u32, h: u32) -> Self {
+    pub(crate) fn new(w: u32, h: u32) -> Self {
         let mut rd = melee_gx::render::Renderer::new(640, 480).expect("renderer");
         // a replay's own widescreen code widens the camera itself: the renderer stays 4:3 then
         let aspect = if melee_core::codes::replay_widescreen().is_some() { 4.0 / 3.0 } else { video_sink::content_aspect(w, h) };
@@ -1377,7 +1377,7 @@ impl GoldenView {
         GoldenView { rd, solver: melee_gx::interp::Solver::with_mode(Default::default()), widen }
     }
 
-    fn draw(&mut self, draws: Vec<melee_gx::draw::DrawCmd>) {
+    pub(crate) fn draw(&mut self, draws: Vec<melee_gx::draw::DrawCmd>) {
         let state = &melee_engine::gxbridge::shim().gx.state;
         let fr = melee_gx::interp::Frame { draws, pose: None, packed: None };
         self.rd.prepare(state, &fr.draws);

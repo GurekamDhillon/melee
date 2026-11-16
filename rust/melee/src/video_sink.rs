@@ -190,3 +190,115 @@ fn pipe_connect(h: usize, path: &str) -> Result<std::fs::File, String> {
 pub fn announce(w: u32, h: u32) {
     eprintln!("video-out: {w}x{h} rgba 60fps");
 }
+
+/// Video and audio output for a replay run that must not change it (`slpcheck --video-out/--audio-out`): every logic
+/// frame drawn offscreen and streamed, the engine's mix streamed from the first logic frame. The BGM pick's RNG draws
+/// are undone (the replay's pre-draw setup already stands for the console's stage-load draw), so the logic sees the
+/// same random sequence as without output.
+pub struct AvOut {
+    video: Option<melee_gx::video::VideoOut>,
+    view: Option<crate::GoldenView>,
+    size: (u32, u32),
+    audio: Option<std::io::BufWriter<Box<dyn Write + Send>>>,
+    pub frames: u64,
+}
+
+impl AvOut {
+    /// From the command line (`--video-out`, `--video-size`, `--video-realtime`, `--audio-out`); `None` when neither
+    /// output is asked for. Call before the engine boots (the sound stack hooks in at boot).
+    pub fn from_args(args: &[String], iso: &str) -> Result<Option<AvOut>, String> {
+        let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+        let v = opts(args)?;
+        let audio_path = get("--audio-out");
+        if v.is_none() && audio_path.is_none() {
+            return Ok(None);
+        }
+        let size = v.as_ref().map_or((1280, 720), |v| (v.w, v.h));
+        let video = match &v {
+            Some(v) => Some(melee_gx::video::VideoOut::new(open(&v.path).map_err(|e| format!("--video-out {e}"))?, v.w, v.h, v.realtime)),
+            None => None,
+        };
+        // SAFETY: single-threaded start-up, before the engine reads them.
+        unsafe {
+            if video.is_some() {
+                melee_engine::engine::RENDER = true;
+            }
+            if audio_path.is_some() {
+                // the draw pass stays on (its callbacks run either way; MELEE_ENGINE_HEADLESS would drop the frames)
+                std::env::set_var("MELEE_ENGINE_RENDER_AUDIO", "1");
+            }
+        }
+        let mut audio = None;
+        if let Some(p) = &audio_path {
+            crate::engine_audio::install(iso, false).map_err(|e| format!("--audio-out: {}", e.replace(iso, "<disc>")))?;
+            unsafe { crate::engine_audio::WAV = Some(Vec::new()) };
+            audio = Some(std::io::BufWriter::with_capacity(1 << 16, open(p).map_err(|e| format!("--audio-out {e}"))?));
+        }
+        Ok(Some(AvOut { video, view: None, size, audio, frames: 0 }))
+    }
+
+    /// After the boot, before the first logic frame: the stage BGM (RNG state kept) and its 29-frame preroll, which is
+    /// not sent (audio sample 0 = video frame 0).
+    pub fn start(&mut self) {
+        if self.audio.is_some() {
+            let rng = melee_runtime::tu::random::global::state();
+            let seed = rng.logic_seed();
+            crate::engine_audio::start_stage_bgm();
+            rng.set_logic_seed(seed);
+            // the BGM pick's unlock answers are for that pick only
+            unsafe {
+                melee_world::tu::ground::ext::hook::gm_80164ABC = None;
+                melee_world::tu::ground::ext::hook::gm_IsCKindUnlocked = None;
+            }
+            for _ in 0..29 {
+                crate::engine_audio::load_frame();
+            }
+            let pre = unsafe { (*std::ptr::addr_of_mut!(crate::engine_audio::WAV)).as_mut() }.map_or(0, |w| std::mem::take(w).len());
+            eprintln!("audio-out: 32000 Hz s16le stereo; preroll of {} samples ({:.3} s) skipped, audio sample 0 = video frame 0", pre / 2, pre as f64 / 64000.0);
+        }
+        if let Some(v) = &self.video {
+            announce(v.w, v.h);
+        }
+    }
+
+    /// After each logic frame: its mix and its picture. False once a sink has closed.
+    pub fn frame(&mut self) -> bool {
+        let mut ok = true;
+        if let Some(a) = self.audio.as_mut() {
+            crate::engine_audio::dsp_frame();
+            if let Some(w) = unsafe { (*std::ptr::addr_of_mut!(crate::engine_audio::WAV)).as_mut() } {
+                let mut b = Vec::with_capacity(w.len() * 2);
+                for x in w.drain(..) {
+                    b.extend_from_slice(&x.to_le_bytes());
+                }
+                if let Err(e) = a.write_all(&b).and_then(|_| a.flush()) {
+                    eprintln!("audio-out: {e}");
+                    self.audio = None;
+                    ok = false;
+                }
+            }
+        }
+        if let Some(v) = self.video.as_mut() {
+            let (w, h) = self.size;
+            let gv = self.view.get_or_insert_with(|| crate::GoldenView::new(w, h));
+            if let Some(draws) = melee_engine::gxbridge::take_frame() {
+                gv.draw(draws);
+            }
+            ok &= v.capture(&mut gv.rd);
+        }
+        self.frames += 1;
+        ok
+    }
+
+    pub fn finish(mut self) {
+        if let (Some(v), Some(gv)) = (self.video.take(), self.view.as_ref()) {
+            match v.finish(&gv.rd) {
+                Ok(n) => eprintln!("video-out: {n} frames"),
+                Err(e) => eprintln!("video-out: {e}"),
+            }
+        }
+        if let Some(mut a) = self.audio.take() {
+            let _ = a.flush();
+        }
+    }
+}

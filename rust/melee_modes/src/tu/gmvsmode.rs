@@ -209,6 +209,22 @@ pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
         }
     }
     ext::gmVsMelee_ExitCss(state, ext::gmVsMelee_GetVsData());
+    // port: a bracket game (the bracket client's netplay run, MELEE_BRACKET_STAGE on both peers): the server held the
+    // stage selection, so the stage select is skipped and the struck / picked stage goes in, as the SSS's exit would
+    // write it (mnStageSel_Scene_OnExit: the rules' stkind, the preload cache, its load), then its sounds (ExitSss)
+    if BRACKET_STAGE >= 0 && gmVsMelee_CssData.pending_scene_change as i32 != CSSPendingSceneChange_2 as i32 && crate::tu::envoy::SKIP_SELECT != 2 {
+        let vs = ext::gmVsMelee_GetVsData();
+        (*vs).start.rules.stkind = BRACKET_STAGE as u16;
+        let cache = crate::tu::adapt::lbDvd_GetPreloadCacheScene__1ed990();
+        (*cache).game_cache.stkind = BRACKET_STAGE as StKind;
+        crate::tu::adapt::lbDvd_80018254__6be579();
+        crate::tu::adapt::lbAudioAx_80026F2C__c80d0b(24);
+        crate::tu::adapt::lbAudioAx_8002702C__208dc3(8, crate::tu::adapt::lbAudioAx_80026EBC__431bc0(BRACKET_STAGE as StKind));
+        crate::tu::adapt::lbAudioAx_80027168__342616();
+        eprintln!("bracket: the stage select skipped: stage {} (the server's stage selection)", BRACKET_STAGE);
+        ext::gm_SetNextGameModeStateId(if RETAIL_NO_LOADING_SCREEN { gmVsMode_State_Vs } else { gmVsMode_State_Loading });
+        return;
+    }
     // port: Envoy fights 2+ skip the stage select (the run's match rewrite sets the stage)
     if crate::tu::envoy::SKIP_SELECT == 2 {
         crate::tu::envoy::SKIP_SELECT = 0;
@@ -223,6 +239,10 @@ pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
         }
     }
 }
+
+/// The bracket client's netplay run: the stage the server's strike / ban / pick chose (its stable id is the stage kind),
+/// set by `melee play` from MELEE_BRACKET_STAGE on both peers; -1 = the normal stage select.
+pub static mut BRACKET_STAGE: i32 = -1;
 
 /// 1B1514
 pub unsafe extern "C" fn onEnterSss(state: *mut GameModeState) {

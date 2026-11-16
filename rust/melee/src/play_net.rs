@@ -1159,6 +1159,8 @@ fn open_room(p: &mut RoomParams, ch: u32, code: Option<String>) -> Result<(Room,
                 let c = room.code();
                 if p.host && !c.is_empty() && c != shown {
                     log(&format!("netplay host: MATCH CODE {c} (give it to the other player)"));
+                    // a bracket game (MELEE_BRACKET_ROOM): the bracket server hands the code to the guest
+                    crate::bracket::post_room(&c);
                     shown = c;
                 }
                 if let Some(r) = &p.rdv {

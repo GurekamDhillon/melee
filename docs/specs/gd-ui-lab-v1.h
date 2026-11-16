@@ -201,10 +201,11 @@ enum { GD_UI_REQ_NC_SEARCH = 9, GD_UI_REQ_NC_QUEUE, GD_UI_REQ_NC_PROCESS, GD_UI_
  * Requests: BRACKET_STAGE(index: strike / ban / pick)  BRACKET_EVENTS()  BRACKET_MOCK_STEP("css" | "game", mock only)
  * (docs/rust-port/notes/brackets-ui.md) */
 enum { GD_UI_LIST_BRACKET = 9, GD_UI_LIST_BRACKET_QUEUE, GD_UI_LIST_BRACKET_SETS, GD_UI_LIST_BRACKET_NEXT,
-       GD_UI_LIST_BRACKET_SET };
+       GD_UI_LIST_BRACKET_SET, GD_UI_LIST_BRACKET_BROWSE, GD_UI_LIST_BRACKET_EVENT };
 enum { GD_UI_REQ_BRACKET_STATUS = 13, GD_UI_REQ_BRACKET_LINK, GD_UI_REQ_BRACKET_MY_SETS, GD_UI_REQ_BRACKET_READY,
        GD_UI_REQ_BRACKET_JOIN, GD_UI_REQ_BRACKET_AUTO, GD_UI_REQ_BRACKET_STAGE, GD_UI_REQ_BRACKET_EVENTS,
-       GD_UI_REQ_BRACKET_MOCK_STEP, GD_UI_REQ_BRACKET_WATCH /* "0" none, "1" menu, "2" home, "3" set */ };
+       GD_UI_REQ_BRACKET_MOCK_STEP, GD_UI_REQ_BRACKET_WATCH /* "0" none, "1" menu, "2" home, "3" set */,
+       GD_UI_REQ_BRACKET_EVENT_VIEW /* event id */, GD_UI_REQ_BRACKET_START /* the game card: netplay host / join */ };
 /* texture handle (for GD_UI_OP_TEX) of host picture `key`, 96 x 72 RGBA fitted, 0 while not on hand (ask every frame
  * the picture is on screen: the ask renews it, an unknown key is fetched off the game thread; <= 2 uploads per present,
  * 16 slots recycled least recently used, so a handle shows whatever key was last asked through it) */

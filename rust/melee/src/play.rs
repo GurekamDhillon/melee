@@ -1772,6 +1772,13 @@ pub fn play(args: &[String]) -> ExitCode {
             std::env::set_var("MELEE_RETAIL_FIRST", (melee_types::GM_VS as u8).to_string());
             std::env::set_var("MELEE_CARD", "0");
             np_scene = None;
+            // a bracket game: the server's stage selection replaces the stage select (gmvsmode::BRACKET_STAGE); a
+            // replay of one carries it in its meta (the .slp export plays it back)
+            let st = if net.is_some() { std::env::var("MELEE_BRACKET_STAGE").ok() } else { feed.as_ref().and_then(|f| f.r.meta("bracket_stage").map(str::to_string)) };
+            if let Some(v) = st.and_then(|v| v.parse::<i32>().ok()).filter(|v| (0..=255).contains(v)) {
+                unsafe { melee_modes::tu::gmvsmode::BRACKET_STAGE = v };
+                log(&format!("bracket: stage {v} from the server's stage selection (no stage select)"));
+            }
         }
         if let Some(sc) = &np_scene {
             // a netplay replay may name a Geno define (ck >= 34): its mods resolve the scene's fighters
@@ -1831,7 +1838,7 @@ pub fn play(args: &[String]) -> ExitCode {
             if rp.rec.is_none() {
                 let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
                 if np_css {
-                    meta.push(("np_css".into(), "1".into()));
+                    meta.push(("np_css".into(), "1".into())); if let Some(v) = std::env::var("MELEE_BRACKET_STAGE").ok().filter(|_| net.is_some()) { meta.push(("bracket_stage".into(), v)); }
                 }
                 if let Some(sc) = &np_scene {
                     meta.push(("np_scene".into(), sc.clone()));
@@ -1846,7 +1853,7 @@ pub fn play(args: &[String]) -> ExitCode {
         // the bracket client's auto-upload (setting bracket_upload=1, default off): a netplay run with no --slp of its
         // own records and exports its games (`--record auto --slp auto`), so each one reaches the upload queue
         let slp_own = get("--slp").or_else(|| std::env::var("MELEE_SLP_RECORD").ok().filter(|s| !s.is_empty()));
-        let bracket_auto = net.is_some() && slp_own.is_none() && crate::bracket::auto_upload();
+        let bracket_auto = net.is_some() && slp_own.is_none() && crate::bracket::uploads_on();
         if bracket_auto {
             log("bracket: auto-upload on: this netplay run records its games and exports them as .slp");
         }
@@ -1859,7 +1866,7 @@ pub fn play(args: &[String]) -> ExitCode {
             };
             let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
             if np_css {
-                meta.push(("np_css".into(), "1".into()));
+                meta.push(("np_css".into(), "1".into())); if let Some(v) = std::env::var("MELEE_BRACKET_STAGE").ok().filter(|_| net.is_some()) { meta.push(("bracket_stage".into(), v)); }
             }
             if let Some(sc) = &np_scene {
                 meta.push(("np_scene".into(), sc.clone()));

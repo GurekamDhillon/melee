@@ -311,7 +311,8 @@ release's mods folder, never fetched). Y on the main menu opens it.
 | `GD_UI_REQ_BRACKET_LINK` (14) | link code (A-Z 0-9 '-', at most 32). Until the server has a link route: STATUS error "not available yet" |
 | `GD_UI_REQ_BRACKET_MY_SETS` (15), `_READY` (16, set id), `_JOIN` (17, set id) | stubs: STATUS error "not available yet" until (b) |
 | `GD_UI_REQ_BRACKET_AUTO` (18) | "1" / "0": writes `bracket_upload=` in settings.cfg |
-| `GD_UI_LIST_BRACKET_NEXT` (12), `GD_UI_LIST_BRACKET_SET` (13) | the next-thing card and the set being played; `BRACKET` gains field 8 (set called). Shapes: brackets-ui.md |
+| `GD_UI_LIST_BRACKET_NEXT` (12), `GD_UI_LIST_BRACKET_SET` (13) | the next-thing card and the set being played; `BRACKET` gains field 8 (set called) and 9 (back from a bracket game: open the set). Shapes: brackets-ui.md |
+| `GD_UI_LIST_BRACKET_BROWSE` (14), `GD_UI_LIST_BRACKET_EVENT` (15) | BROWSE EVENTS (`REQ_BRACKET_EVENTS`) and one event page (`REQ_BRACKET_EVENT_VIEW` 23); `REQ_BRACKET_JOIN` takes the event id; `REQ_BRACKET_START` (24) starts the current game |
 | `GD_UI_REQ_BRACKET_STAGE` (19, stage index), `_EVENTS` (20), `_MOCK_STEP` (21, `css` / `game`) | the set flow's strike / ban / pick, browse events, and the mock's stand-ins |
 
 The screens (main-menu tile, home, account, browse, the set flow) and what the server's (b) API must add are in

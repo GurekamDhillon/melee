@@ -33,6 +33,10 @@ pub struct State {
     /// auto-upload is on.
     bk: Option<crate::bracket::Service>,
     bk_view: Option<(crate::bracket::Status, Vec<crate::bracket::Item>, crate::bracket::InGame)>,
+    /// a bracket game's run went back to the menus (once)
+    bracket_returned: Option<()>,
+    /// MELEE_BRACKET_OPEN: this run came back from a bracket game: the screens open on the set (sent once)
+    bracket_open: bool,
     /// MELEE_BRACKET_MOCK=1: made-up set data for the Brackets screens
     mock: Option<crate::bracket::mock::Mock>,
     mock_seen: u64,
@@ -211,7 +215,7 @@ impl RetailPlay {
         let linked = st.linked || mock.is_some();
         let called = mock.map_or(ig.badge, |m| m.phase == crate::bracket::mock::Phase::Called);
         let u = self.ui.as_mut().unwrap();
-        u.set_list(mui::LIST_BRACKET, vec![rec(&[&st.fingerprint, if linked { "1" } else { "0" }, &reach, &server, if auto { "1" } else { "0" }, &ev, &st.message, if st.error { "1" } else { "0" }, if called { "1" } else { "0" }])]);
+        u.set_list(mui::LIST_BRACKET, vec![rec(&[&st.fingerprint, if linked { "1" } else { "0" }, &reach, &server, if auto { "1" } else { "0" }, &ev, &st.message, if st.error { "1" } else { "0" }, if called { "1" } else { "0" }, if std::mem::take(&mut self.browser.bracket_open) { "1" } else { "0" }])]);
         let recs = q
             .iter()
             .rev()
@@ -235,8 +239,43 @@ impl RetailPlay {
                 u.set_list(mui::LIST_BRACKET_SETS, ig.events.iter().map(strs2).collect());
                 u.set_list(mui::LIST_BRACKET_NEXT, if ig.next.is_empty() { Vec::new() } else { vec![strs2(&ig.next)] });
                 u.set_list(mui::LIST_BRACKET_SET, if ig.set.is_empty() { Vec::new() } else { vec![strs2(&ig.set)] });
+                u.set_list(mui::LIST_BRACKET_BROWSE, ig.browse.iter().map(strs2).collect());
+                u.set_list(mui::LIST_BRACKET_EVENT, if ig.event.is_empty() { Vec::new() } else { vec![strs2(&ig.event)] });
             }
         }
+        if let Some(m) = self.browser.mock.as_ref() {
+            let strs2 = |v: &Vec<String>| rec(&v.iter().map(String::as_str).collect::<Vec<_>>());
+            u.set_list(mui::LIST_BRACKET_BROWSE, m.browse().iter().map(strs2).collect());
+            u.set_list(mui::LIST_BRACKET_EVENT, vec![strs2(&m.event_rec())]);
+        }
+        // the game card's start: the netplay relaunch (the worker found the room code / the stage)
+        if let Some(l) = self.browser.bk_view.as_mut().and_then(|v| v.2.launch.take()) {
+            self.bracket_launch(l);
+        }
+    }
+
+    /// Start a bracket game: `melee play --netplay host|join` through the set's relay, on the normal character
+    /// select (`--np-css`), the stage from the server's selection (MELEE_BRACKET_STAGE: no stage select), one match,
+    /// then back to the menus with the set flow open (MELEE_BRACKET_RETURN). The host's run posts its match code as
+    /// the room code (MELEE_BRACKET_ROOM).
+    fn bracket_launch(&mut self, l: crate::bracket::Launch) {
+        if !self.browser_offline() {
+            return self.ui_status(1, "Finish the online session first.");
+        }
+        let mut args: Vec<String> = vec!["--netplay".into(), if l.host { "host".into() } else { "join".into() }];
+        if let Some(c) = &l.code {
+            args.push(c.clone());
+        }
+        args.extend(["--np-server".into(), l.relay.clone(), "--np-css".into(), "--quit-at-results".into(), "--quit-after-matches".into(), "1".into()]);
+        std::env::set_var("MELEE_BRACKET_STAGE", l.stage.to_string());
+        std::env::set_var("MELEE_BRACKET_RETURN", format!("{}/{}", l.event, l.set));
+        if l.host {
+            std::env::set_var("MELEE_BRACKET_ROOM", format!("{}/{}", l.event, l.set));
+        } else {
+            std::env::remove_var("MELEE_BRACKET_ROOM");
+        }
+        log(&format!("bracket: starting the game ({}) on stage {}", if l.host { "host" } else { "guest" }, l.stage));
+        self.browser_relaunch(&args, None, "a bracket game");
     }
 
     /// A set-flow request: the mock answers it; without the mock the service does it (phase-2b routes).
@@ -278,14 +317,24 @@ impl RetailPlay {
 
     /// The end of the run (after the replay and its .slp are written): with auto-upload on, give the queue up to
     /// `MELEE_BRACKET_FLUSH_SECS` (default 20) to go out; what is left uploads at the next launch.
+    /// A bracket game's run (MELEE_BRACKET_RETURN) then goes back to the menus with the set flow open.
     pub(super) fn bracket_at_quit(&mut self) {
-        if !crate::bracket::auto_upload() {
-            return;
+        if crate::bracket::uploads_on() {
+            let secs = std::env::var("MELEE_BRACKET_FLUSH_SECS").ok().and_then(|v| v.parse().ok()).unwrap_or(20u64);
+            let b = self.bracket();
+            b.flush(std::time::Duration::from_secs(secs));
+            self.browser.bk = None;
         }
-        let secs = std::env::var("MELEE_BRACKET_FLUSH_SECS").ok().and_then(|v| v.parse().ok()).unwrap_or(20u64);
-        let b = self.bracket();
-        b.flush(std::time::Duration::from_secs(secs));
-        self.browser.bk = None;
+        if std::env::var_os("MELEE_BRACKET_RETURN").is_some() && self.browser.bracket_returned.is_none() {
+            self.browser.bracket_returned = Some(());
+            for k in ["MELEE_BRACKET_RETURN", "MELEE_BRACKET_STAGE", "MELEE_BRACKET_ROOM"] {
+                std::env::remove_var(k);
+            }
+            std::env::set_var("MELEE_BRACKET_OPEN", "1");
+            log("bracket: game over: back to the set");
+            // after the netplay run's own work (replay, .slp, uploads): its options are dropped by the relaunch
+            self.relaunch(&[], None, true, "the bracket set");
+        }
     }
 
     fn nucleus(&mut self) -> &mut crate::nucleus::Engine {
@@ -308,8 +357,13 @@ impl RetailPlay {
         let u = self.ui.as_mut().unwrap();
         u.set_list(mui::LIST_ONLINE, vec![rec(&[if srv.is_some() { "1" } else { "0" }, if srv.is_some() { "Room codes via the configured server." } else { "No server set: join and spectate take HOST:PORT." }])]);
         status(u, 0, "ready");
-        if crate::bracket::auto_upload() {
+        if crate::bracket::uploads_on() {
             self.bracket();
+        }
+        if std::env::var_os("MELEE_BRACKET_OPEN").is_some() {
+            std::env::remove_var("MELEE_BRACKET_OPEN");
+            self.browser.bracket_open = true;
+            self.bracket().watch(crate::bracket::Watch::Set);
         }
     }
 
@@ -613,11 +667,44 @@ impl RetailPlay {
                 if self.browser.mock.is_some() {
                     self.browser.mock_seen = 0;
                 }
-                self.bracket().watch(crate::bracket::Watch::Home);
+                let b = self.bracket();
+                b.watch(crate::bracket::Watch::Home);
+                b.act(crate::bracket::Act::Home);
             }
-            mui::REQ_BRACKET_JOIN | mui::REQ_BRACKET_EVENTS => {
+            mui::REQ_BRACKET_EVENTS => {
                 self.bracket();
-                st(self, 1, crate::bracket::NOT_YET);
+                if self.browser.mock.is_some() {
+                    self.browser.mock_seen = 0;
+                    return;
+                }
+                self.bracket().act(crate::bracket::Act::Browse);
+            }
+            mui::REQ_BRACKET_EVENT_VIEW | mui::REQ_BRACKET_JOIN => {
+                let Ok(id) = arg.parse::<i64>() else { return st(self, 1, "no such event") };
+                self.bracket();
+                if let Some(m) = self.browser.mock.as_mut() {
+                    m.view_event = id;
+                    m.ver += 1;
+                    if op == mui::REQ_BRACKET_JOIN {
+                        return st(self, 1, "This event takes other game builds: melee (rust) 0.2.0 release+1a2b3c4d5e6f. Yours: melee (rust) 0.1.0 development build (mock)");
+                    }
+                    return;
+                }
+                let a = if op == mui::REQ_BRACKET_JOIN { crate::bracket::Act::Join(id) } else { crate::bracket::Act::EventView(id) };
+                if op == mui::REQ_BRACKET_JOIN {
+                    st(self, 0, "Signing up...");
+                }
+                self.bracket().act(a);
+            }
+            mui::REQ_BRACKET_START => {
+                if self.browser.mock.is_some() {
+                    return self.bracket_mock("game", "");
+                }
+                if !self.browser_offline() {
+                    return st(self, 1, "Finish the online session first.");
+                }
+                self.bracket().act(crate::bracket::Act::Start);
+                st(self, 0, "Starting the game...");
             }
             mui::REQ_REFRESH => {
                 match arg {

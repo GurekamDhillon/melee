@@ -100,3 +100,18 @@ browse events (no public listing route in 2b for the client), the live relay's s
 api.md's examples; `bracket::tests::ingame_routes_local_server` against a loopback server built from those types
 (link, ready, flow, a strike by id, the badge's If-None-Match / 304). Not yet run against the real server: its
 handlers are wave 2.
+
+## Round 2 (server phase1 2896956)
+
+- Polling: `/v1/me` every 60 s; the badge every 10 s with If-None-Match (its ETag is the only one); home only on
+  entering Home/Set, after a badge change, after an action, or when a set reaches `done`; the flow every 1 s on the
+  set screen. 403 `key is not registered` clears the tag and shows the link card; 401 is a bad signature.
+- BROWSE EVENTS: public `GET /v1/events` -> `BRACKET_BROWSE` (id, name, state, entrants, starts_at, description;
+  sign-up first). A on one -> `GET /v1/events/{id}` -> `BRACKET_EVENT` (those six, best of, stocks, timer s, stage
+  names `|`, tags). JOIN -> `POST /v1/events/{id}/entrants` `{engine_build}`; a 403 lists the accepted builds.
+- START THE GAME (game card A): the host relaunches as `--netplay host --np-server <relay> --np-css
+  --quit-at-results --quit-after-matches 1` with `MELEE_BRACKET_ROOM=e/s` (its MATCH CODE is posted to
+  `/v1/sets/{e}/{s}/room`); the guest waits for `SetFlow.room_code` and joins it. Both get `MELEE_BRACKET_STAGE`
+  (the server's chosen stage): `gmvsmode::BRACKET_STAGE` skips the stage select after the CSS (written into the
+  replay meta as `bracket_stage`). The game uploads (`uploads_on`), then relaunches to the menus with the set open
+  (`MELEE_BRACKET_OPEN`, `BRACKET` field 9).

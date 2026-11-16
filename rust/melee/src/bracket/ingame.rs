@@ -227,6 +227,91 @@ pub fn set_record(flow: &Json, my_tag: &str, fresh_result: bool, after: &str) ->
     ]
 }
 
+fn when(t: Option<&Json>) -> String {
+    n(t).filter(|x| *x > 0.0).map_or(String::new(), |x| (x as u64).to_string())
+}
+
+/// `GET /v1/events` ([EventSummary]) -> BRACKET_BROWSE records: id, name, state, entrants, starts_at (unix s or ""),
+/// description. Sign-up first, then running, then the rest.
+pub fn browse(j: &Json) -> Vec<Vec<String>> {
+    let mut v: Vec<Vec<String>> = arr(Some(j))
+        .iter()
+        .map(|e| vec![u(e.get("id")).to_string(), s(e.get("name")).into(), s(e.get("state")).into(), u(e.get("entrants")).to_string(), when(e.get("starts_at")), s(e.get("description")).into()])
+        .collect();
+    let rank = |st: &str| match st {
+        "signup" => 0,
+        "running" => 1,
+        _ => 2,
+    };
+    v.sort_by_key(|r| rank(&r[2]));
+    v
+}
+
+/// `GET /v1/events/{id}` (EventView) -> the BRACKET_EVENT record: id, name, state, entrants, starts_at, description,
+/// best of, stocks, timer s, legal stage names ('|'), entrant tags (', ', at most 24).
+pub fn event_view(j: &Json) -> Vec<String> {
+    let sm = j.get("summary");
+    let r = j.get("ruleset");
+    let stages: Vec<String> = arr(r.and_then(|r| r.get("legal_stages"))).iter().map(|x| stage_name(u(Some(x)) as u16)).collect();
+    let tags: Vec<&str> = arr(j.get("tags")).iter().take(24).map(|t| t.str().unwrap_or("")).collect();
+    vec![
+        u(sm.and_then(|x| x.get("id"))).to_string(),
+        s(sm.and_then(|x| x.get("name"))).into(),
+        s(sm.and_then(|x| x.get("state"))).into(),
+        u(sm.and_then(|x| x.get("entrants"))).to_string(),
+        when(sm.and_then(|x| x.get("starts_at"))),
+        s(sm.and_then(|x| x.get("description"))).into(),
+        u(r.and_then(|x| x.get("best_of"))).to_string(),
+        u(r.and_then(|x| x.get("stocks"))).to_string(),
+        u(r.and_then(|x| x.get("timer_secs"))).to_string(),
+        stages.join("|"),
+        tags.join(", "),
+    ]
+}
+
+/// The server's stage table (proto::ingame STAGE_NAMES) for the ids a ruleset lists.
+pub fn stage_name(id: u16) -> String {
+    const T: [(u16, &str); 30] = [
+        (2, "Fountain of Dreams"), (3, "Pokémon Stadium"), (4, "Princess Peach's Castle"), (5, "Kongo Jungle"), (6, "Brinstar"),
+        (7, "Corneria"), (8, "Yoshi's Story"), (9, "Onett"), (10, "Mute City"), (11, "Rainbow Cruise"), (12, "Jungle Japes"),
+        (13, "Great Bay"), (14, "Hyrule Temple"), (15, "Brinstar Depths"), (16, "Yoshi's Island"), (17, "Green Greens"),
+        (18, "Fourside"), (19, "Mushroom Kingdom I"), (20, "Mushroom Kingdom II"), (22, "Venom"), (23, "Poké Floats"),
+        (24, "Big Blue"), (25, "Icicle Mountain"), (26, "Icetop"), (27, "Flat Zone"), (28, "Dream Land N64"),
+        (29, "Yoshi's Island N64"), (30, "Kongo Jungle N64"), (31, "Battlefield"), (32, "Final Destination"),
+    ];
+    T.iter().find(|t| t.0 == id).map_or_else(|| format!("Stage {id}"), |t| t.1.to_string())
+}
+
+/// A sign-up refused for the engine build: 403 `{"error":"engine build not accepted","accepted":[...]}`.
+pub fn accepted_builds(body: &[u8]) -> Option<Vec<String>> {
+    let j = parse(body)?;
+    let a = j.get("accepted")?;
+    Some(arr(Some(a)).iter().filter_map(|x| x.str().map(str::to_string)).collect())
+}
+
+/// 403 `key is not registered`: the key is not a player yet (the link card).
+pub fn not_registered(status: u32, body: &[u8]) -> bool {
+    status == 403 && parse(body).is_some_and(|j| s(j.get("error")) == "key is not registered")
+}
+
+/// What starting the current game needs from the flow: (host?, relay, room code, chosen stage id).
+pub fn start_info(flow: &Json) -> Option<(bool, String, Option<String>, Option<u16>)> {
+    let relay = s(flow.get("relay"));
+    if relay.is_empty() {
+        return None;
+    }
+    let chosen = flow.get("stage").and_then(|st| st.get("chosen")).filter(|c| !matches!(c, Json::Null)).map(|c| u(c.get("id")) as u16);
+    let code = match flow.get("room_code") {
+        Some(Json::Str(c)) if !c.is_empty() => Some(c.clone()),
+        _ => None,
+    };
+    Some((s(flow.get("role")) == "Host", relay.into(), code, chosen))
+}
+
+pub fn room_body(code: &str) -> String {
+    format!("{{\"code\":{}}}", jstr(code))
+}
+
 /// The JSON bodies the client sends.
 pub fn link_body(code: &str) -> String {
     format!("{{\"code\":{}}}", jstr(code))
@@ -292,6 +377,25 @@ mod tests {
         assert_eq!(d[14], "Down to Losers: Losers round 1 vs Hbox, in about 5 min");
         let champ = FLOW.replace(r#""phase":"stage_select""#, r#""phase":"done""#).replace(r#""outcome":null"#, r#""outcome":"Champion""#);
         assert_eq!(set_record(&parse(champ.as_bytes()).unwrap(), "", false, "")[14], "Champion!");
+    }
+
+    #[test]
+    fn browse_and_join() {
+        let ev = br#"[{"id":1,"name":"Weekly #12","state":"running","entrants":2,"starts_at":1795000000,"description":"Bo3, Friday 8pm","created_at":1763200000},{"id":2,"name":"Open","state":"signup","entrants":0,"starts_at":null,"description":null,"created_at":0}]"#;
+        let b = browse(&parse(ev).unwrap());
+        assert_eq!(b[0][..4], ["2", "Open", "signup", "0"], "sign-up first");
+        assert_eq!(b[1][4], "1795000000");
+        let view = br#"{"summary":{"id":1,"name":"Weekly #12","state":"running","entrants":2,"starts_at":1795000000,"description":"Bo3","created_at":1},"ruleset":{"stocks":4,"timer_secs":480,"best_of":3,"best_of_finals":5,"legal_stages":[2,3,8,28,31,32],"banned_characters":[],"allowed_gecko":[]},"tags":["Mango","Armada"],"bracket":null,"scores":[],"decided_by":[],"unverified_games":0}"#;
+        let r = event_view(&parse(view).unwrap());
+        assert_eq!(r[6..9], ["3", "4", "480"]);
+        assert_eq!(r[9], "Fountain of Dreams|Pokémon Stadium|Yoshi's Story|Dream Land N64|Battlefield|Final Destination");
+        assert_eq!(r[10], "Mango, Armada");
+        assert_eq!(accepted_builds(br#"{"error":"engine build not accepted","accepted":["melee (rust) 0.1.0 x+abc"]}"#).unwrap(), vec!["melee (rust) 0.1.0 x+abc".to_string()]);
+        assert!(not_registered(403, br#"{"error":"key is not registered"}"#));
+        assert!(!not_registered(401, br#"{"error":"key is not registered"}"#));
+        let f = parse(FLOW.as_bytes()).unwrap();
+        assert_eq!(start_info(&f), Some((true, "relay.example.org:51600".into(), None, None)));
+        assert_eq!(room_body("KQ7X"), r#"{"code":"KQ7X"}"#);
     }
 
     #[test]

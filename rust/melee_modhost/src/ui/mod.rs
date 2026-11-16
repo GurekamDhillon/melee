@@ -202,7 +202,10 @@ pub const LIST_BRACKET_SETS: usize = 11;
 /// the next-thing card (one record) and the set being played (one record; brackets-ui.md)
 pub const LIST_BRACKET_NEXT: usize = 12;
 pub const LIST_BRACKET_SET: usize = 13;
-pub const LIST_KINDS: usize = 14;
+/// BROWSE EVENTS (the public event list) and one event's page
+pub const LIST_BRACKET_BROWSE: usize = 14;
+pub const LIST_BRACKET_EVENT: usize = 15;
+pub const LIST_KINDS: usize = 16;
 /// gd-ui-v1.2 request ops (`GD_UI_REQ_*`).
 pub const REQ_LAUNCH: i32 = 1;
 pub const REQ_MOD_SET: i32 = 2;
@@ -233,6 +236,9 @@ pub const REQ_BRACKET_EVENTS: i32 = 20;
 pub const REQ_BRACKET_MOCK_STEP: i32 = 21;
 /// what the Brackets screens show: "0" nothing, "1" the main menu (badge), "2" home, "3" the set flow
 pub const REQ_BRACKET_WATCH: i32 = 22;
+/// an event's page (event id), and the game card's start (the netplay host / join relaunch)
+pub const REQ_BRACKET_EVENT_VIEW: i32 = 23;
+pub const REQ_BRACKET_START: i32 = 24;
 pub const REQ_MAX_ARG: u32 = 256;
 pub const REQ_MAX_PENDING: usize = 8;
 
@@ -1420,7 +1426,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if !feat(&c, FEATURE_UI_HOST) {
             return GD_ECAP;
         }
-        if !(REQ_LAUNCH..=REQ_BRACKET_WATCH).contains(&op) || len > REQ_MAX_ARG {
+        if !(REQ_LAUNCH..=REQ_BRACKET_START).contains(&op) || len > REQ_MAX_ARG {
             return GD_EINVAL;
         }
         let Some(arg) = read_str(&c, s, len) else { return GD_EINVAL };

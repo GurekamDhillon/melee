@@ -63,6 +63,12 @@ pub fn auto_upload() -> bool {
     crate::cfg::flag("bracket_upload", false)
 }
 
+/// Netplay games go to the upload queue: auto-upload is on, or this is a bracket game's run (started from the set
+/// flow: its games are the set's, the server needs them to judge).
+pub fn uploads_on() -> bool {
+    auto_upload() || std::env::var_os("MELEE_BRACKET_RETURN").is_some()
+}
+
 /// Setting `bracket_event` (MELEE_BRACKET_EVENT): the event the uploads are for (until linking picks it).
 pub fn event() -> Option<i64> {
     crate::cfg::text("bracket_event").and_then(|s| s.trim().parse().ok()).filter(|&e: &i64| e >= 0)
@@ -71,7 +77,7 @@ pub fn event() -> Option<i64> {
 /// The slp exporter wrote `path`: queue it for upload when it is a netplay game and auto-upload is on. Called at the
 /// end of a match (one small file write; no network).
 pub fn replay_written(path: &str, played_on: &str) {
-    if played_on != "network" || !auto_upload() {
+    if played_on != "network" || !uploads_on() {
         return;
     }
     let full = std::fs::canonicalize(path).map_or_else(|_| PathBuf::from(path), |p| p);
@@ -136,6 +142,32 @@ fn write_private(p: &Path, data: &[u8]) -> std::io::Result<()> {
         }
     }
     Ok(())
+}
+
+/// The bracket host's netplay run (`MELEE_BRACKET_ROOM=event/set`): post the relay's match code as the game's room
+/// code (`POST /v1/sets/{e}/{s}/room`, RoomReq), on a thread of its own (the connect loop never waits on it). The
+/// guest's client reads it from the set's flow.
+pub fn post_room(code: &str) {
+    let Some((e, s)) = std::env::var("MELEE_BRACKET_ROOM").ok().and_then(|v| v.split_once('/').and_then(|(a, b)| Some((a.parse::<i64>().ok()?, b.parse::<u32>().ok()?)))) else { return };
+    let code = code.to_string();
+    let _ = std::thread::Builder::new().name("bracket-room".into()).spawn(move || {
+        let (Ok(o), Ok(sk)) = (origin(), load_or_make_key(&dir())) else { return log("room: no server or key") };
+        let path = format!("/v1/sets/{e}/{s}/room");
+        let body = ingame::room_body(&code);
+        for attempt in 0..5u64 {
+            let h = proto::sign_request(&sk, "POST", &path, now(), body.as_bytes());
+            let hs = [("x-ab-key", h.key), ("x-ab-time", h.time), ("x-ab-nonce", h.nonce), ("x-ab-sig", h.sig), ("content-type", "application/json".to_string())];
+            let r = http::request(&o, "POST", &path, &hs, body.as_bytes(), false);
+            if (200..300).contains(&r.status) {
+                return log(&format!("room code posted for event {e} set {s}"));
+            }
+            log(&format!("room code for event {e} set {s}: {}", server_error(&r)));
+            if !retryable(r.status) {
+                return;
+            }
+            std::thread::sleep(Duration::from_secs(2 << attempt));
+        }
+    });
 }
 
 /// A key exists already (the player has opened Brackets before): the main menu may poll the badge.
@@ -262,6 +294,28 @@ pub enum Act {
     Ready,
     /// a strike / ban / pick of the pool's stage at this index (the turn says which)
     Stage(usize),
+    /// fetch home now (a screen was entered, or asked for a refresh)
+    Home,
+    /// BROWSE EVENTS: the public event list
+    Browse,
+    /// one event's page (its rules and entrants)
+    EventView(i64),
+    /// sign up for an event (SignupReq)
+    Join(i64),
+    /// start the current game: the host hosts a room and posts its code, the guest joins the posted code
+    Start,
+}
+
+/// How the game thread starts the current game (the netplay relaunch), from the set's flow.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Launch {
+    pub host: bool,
+    pub relay: String,
+    /// the guest: the host's posted room code
+    pub code: Option<String>,
+    pub stage: u16,
+    pub event: i64,
+    pub set: u32,
 }
 
 /// The in-game records (brackets-ui.md shapes), built on the worker from the server's answers.
@@ -272,8 +326,13 @@ pub struct InGame {
     pub next: Vec<String>,
     pub events: Vec<Vec<String>>,
     pub set: Vec<String>,
+    /// BROWSE EVENTS records and the event page's record
+    pub browse: Vec<Vec<String>>,
+    pub event: Vec<String>,
     /// the last action's answer (error?, text), taken once by the screen
     pub said: Option<(bool, String)>,
+    /// start the game now (taken once by the game thread)
+    pub launch: Option<Launch>,
 }
 
 #[derive(Default)]
@@ -308,7 +367,7 @@ impl Service {
                 (None, String::new())
             }
         };
-        let w = Worker { sh: sh.clone(), origin: o, dir: dir(), key: None, build: String::new(), poll: Poll::default() };
+        let w = Worker { sh: sh.clone(), origin: o, dir: dir(), key: None, build: String::new(), poll: Poll::default(), start_waiting: false };
         let th = std::thread::Builder::new().name("bracket".into()).spawn(move || w.run()).ok();
         log(&format!("service started (server {server}, auto-upload {})", if auto_upload() { "on" } else { "off" }));
         Service { sh, th, seen: u64::MAX, server }
@@ -374,7 +433,7 @@ impl Service {
                 let g = self.sh.0.lock().unwrap_or_else(|e| e.into_inner());
                 // due before the time is up (a retry a second away counts; one a minute away does not)
                 let end = now() + (limit.saturating_sub(t0.elapsed())).as_secs() as i64;
-                let due = auto_upload() && g.queue.iter().any(|t| t.state == St::Uploading || (t.state == St::Queued && t.next_try <= end));
+                let due = uploads_on() && g.queue.iter().any(|t| t.state == St::Uploading || (t.state == St::Queued && t.next_try <= end));
                 if !g.busy && !g.wake && !due && !inbox_pending() {
                     return;
                 }
@@ -409,6 +468,7 @@ struct Worker {
     key: Option<proto::SigningKey>,
     build: String,
     poll: Poll,
+    start_waiting: bool,
 }
 
 /// The worker's in-game polling state.
@@ -426,6 +486,12 @@ struct Poll {
     flow: Option<crate::cosmetics_import::Json>,
     games_seen: usize,
     result_until: Option<std::time::Instant>,
+    /// the watch at the last poll: entering home / the set fetches home once
+    last_watch: Watch,
+    /// home is wanted at the next poll (screen entered, badge changed, an action changed it)
+    home_due: bool,
+    /// the flow's phase at the last poll ("done" fetches home once, for NEXT)
+    last_phase: String,
 }
 
 /// What the server's answer to `GET /v1/me/next` means for an upload.
@@ -519,7 +585,7 @@ impl Worker {
                 self.act(a);
             }
             wait = wait.min(self.poll_ingame());
-            if auto_upload() {
+            if uploads_on() {
                 while let Some(i) = self.due() {
                     if self.lock().quit {
                         break;
@@ -598,21 +664,50 @@ impl Worker {
         g.ver += 1;
     }
 
+    /// A signed GET. 403 `key is not registered` marks the key as not a player yet (the link card).
     fn get_json(&mut self, path: &str) -> Result<crate::cosmetics_import::Json, String> {
         let r = self.call("GET", path, b"", &[], false);
+        if r.status != 200 {
+            self.check_registered(&r);
+            return Err(server_error(&r));
+        }
+        ingame::parse(&r.body).ok_or_else(|| format!("unexpected answer to {path}"))
+    }
+
+    /// A public GET (no signature: GET /v1/events and /v1/events/{id}).
+    fn get_public(&mut self, path: &str) -> Result<crate::cosmetics_import::Json, String> {
+        let Some(o) = self.origin.clone() else { return Err("no server".into()) };
+        let r = http::request(&o, "GET", path, &[], b"", false);
         if r.status != 200 {
             return Err(server_error(&r));
         }
         ingame::parse(&r.body).ok_or_else(|| format!("unexpected answer to {path}"))
     }
 
-    fn post_json(&mut self, path: &str, body: &str) -> Result<Vec<u8>, String> {
+    fn post_raw(&mut self, path: &str, body: &str) -> http::Resp {
         let r = self.call("POST", path, body.as_bytes(), &[("content-type", "application/json".into())], false);
+        self.check_registered(&r);
+        r
+    }
+
+    fn post_json(&mut self, path: &str, body: &str) -> Result<Vec<u8>, String> {
+        let r = self.post_raw(path, body);
         if (200..300).contains(&r.status) { Ok(r.body) } else { Err(server_error(&r)) }
     }
 
-    /// A screen's action (in order): link, ready, a stage move. Each answer goes to the screen's status line, and the
-    /// state it changed is polled again at once.
+    fn check_registered(&mut self, r: &http::Resp) {
+        if ingame::not_registered(r.status, &r.body) {
+            let mut g = self.lock();
+            if g.status.linked || !g.ig.tag.is_empty() {
+                g.status.linked = false;
+                g.ig.tag.clear();
+                g.ver += 1;
+            }
+        }
+    }
+
+    /// A screen's action (in order). Each answer goes to the screen's status line, and the state it changed is
+    /// fetched again at once.
     fn act(&mut self, a: Act) {
         match a {
             Act::Link(code) => match self.post_json("/v1/me/link", &ingame::link_body(&code)) {
@@ -622,8 +717,10 @@ impl Worker {
                         let mut g = self.lock();
                         g.status.linked = true;
                         g.ig.tag = tag.clone();
+                        g.ver += 1;
                     }
-                    self.poll.home_at = None;
+                    self.poll.home_due = true;
+                    self.poll.me_at = None;
                     self.said(false, format!("Linked: you play as {tag}."));
                 }
                 Err(e) => self.said(true, format!("Link refused: {e}")),
@@ -639,25 +736,88 @@ impl Worker {
                     Err(er) => self.said(true, format!("Ready refused: {er}")),
                 }
                 self.poll.flow_at = None;
-                self.poll.home_at = None;
+                self.poll.home_due = true;
             }
             Act::Stage(i) => {
                 let (Some((e, s, _)), Some(flow)) = (self.poll.set, self.poll.flow.as_ref()) else { return self.said(true, "No stage selection now.".into()) };
                 let (ids, turn, n) = (ingame::pool_ids(flow), ingame::turn(flow), ingame::set_record(flow, "", false, "")[4].clone());
                 let (Some(&id), Some((kind, true, _))) = (ids.get(i), turn) else { return self.said(true, "Not your turn.".into()) };
                 match self.post_json(&format!("/v1/sets/{e}/{s}/games/{n}/stage"), &ingame::stage_body(&kind, id)) {
-                    Ok(_) => self.said(false, format!("{} done.", kind)),
+                    Ok(_) => self.said(false, format!("{} {}.", match kind.as_str() { "strike" => "Struck", "ban" => "Banned", _ => "Picked" }, ingame::stage_name(id))),
                     Err(er) => self.said(true, format!("{kind} refused: {er}")),
                 }
                 self.poll.flow_at = None;
             }
+            Act::Home => self.poll.home_due = true,
+            Act::Browse => match self.get_public("/v1/events") {
+                Ok(j) => {
+                    let mut g = self.lock();
+                    g.ig.browse = ingame::browse(&j);
+                    g.ver += 1;
+                }
+                Err(e) => self.said(true, format!("Events: {e}")),
+            },
+            Act::EventView(id) => match self.get_public(&format!("/v1/events/{id}")) {
+                Ok(j) => {
+                    let mut g = self.lock();
+                    g.ig.event = ingame::event_view(&j);
+                    g.ver += 1;
+                }
+                Err(e) => self.said(true, format!("Event {id}: {e}")),
+            },
+            Act::Join(id) => {
+                if self.build.is_empty() {
+                    self.build = engine_build();
+                }
+                let r = self.post_raw(&format!("/v1/events/{id}/entrants"), &ingame::ready_body(&self.build));
+                if (200..300).contains(&r.status) {
+                    self.poll.home_due = true;
+                    self.said(false, "Signed up. The event shows in MY EVENTS.".into());
+                } else if let Some(acc) = (r.status == 403).then(|| ingame::accepted_builds(&r.body)).flatten() {
+                    self.said(true, format!("This event takes other game builds: {}. Yours: {}", if acc.is_empty() { "none listed".into() } else { acc.join(", ") }, self.build));
+                } else if ingame::not_registered(r.status, &r.body) {
+                    self.said(true, "Link your account first (Brackets home).".into());
+                } else {
+                    self.said(true, format!("Sign-up refused: {}", server_error(&r)));
+                }
+            }
+            Act::Start => {
+                self.poll.flow_at = None;
+                self.start_waiting = true;
+                self.try_start();
+            }
         }
     }
 
-    /// The polls the watched screen needs; returns the seconds until the next one is due.
+    /// The game card's A: hand the game thread a launch when the flow allows it (the guest waits for the room code).
+    fn try_start(&mut self) {
+        if !self.start_waiting {
+            return;
+        }
+        let (Some((e, s, _)), Some(flow)) = (self.poll.set, self.poll.flow.as_ref()) else { return };
+        let Some((host, relay, code, stage)) = ingame::start_info(flow) else { return self.said(true, "The set has no relay yet.".into()) };
+        let Some(stage) = stage else { return self.said(true, "The stage is not chosen yet.".into()) };
+        if !host && code.is_none() {
+            return self.said(false, "Waiting for the host's room code...".into());
+        }
+        self.start_waiting = false;
+        let mut g = self.lock();
+        g.ig.launch = Some(Launch { host, relay, code, stage, event: e, set: s });
+        g.ver += 1;
+    }
+
+    /// The polls the watched screen needs; returns the seconds until the next one is due. The badge is the only route
+    /// with an ETag (If-None-Match, 304); home is fetched on entering a screen, after a badge change or an action,
+    /// never on a timer; the set's flow every second while it is on screen.
     fn poll_ingame(&mut self) -> i64 {
         use std::time::{Duration as D, Instant};
         let watch = self.lock().watch;
+        if watch != self.poll.last_watch {
+            if matches!(watch, Watch::Home | Watch::Set) {
+                self.poll.home_due = true;
+            }
+            self.poll.last_watch = watch;
+        }
         if watch == Watch::None || self.origin.is_none() || self.key.is_none() {
             return 30;
         }
@@ -665,16 +825,22 @@ impl Worker {
         let mut dirty = false;
         if due(self.poll.me_at, 60) {
             self.poll.me_at = Some(Instant::now());
-            if let Ok(j) = self.get_json("/v1/me") {
-                let (tag, linked) = ingame::me(&j);
-                let mut g = self.lock();
-                g.status.linked = linked;
-                g.ig.tag = tag;
-                dirty = true;
+            match self.get_json("/v1/me") {
+                Ok(j) => {
+                    let (tag, linked) = ingame::me(&j);
+                    let mut g = self.lock();
+                    g.status.linked = linked;
+                    g.ig.tag = tag;
+                    dirty = true;
+                }
+                Err(_) => dirty = true, // a 403 cleared the tag (check_registered)
             }
         }
         // the player routes answer only a registered key: nothing more until /v1/me says it is a player
-        if self.poll.me_at.is_some() && self.lock().ig.tag.is_empty() {
+        if self.lock().ig.tag.is_empty() {
+            if dirty {
+                self.lock().ver += 1;
+            }
             return 60;
         }
         if due(self.poll.badge_at, 10) {
@@ -685,12 +851,16 @@ impl Worker {
                 if let Some(j) = ingame::parse(&r.body) {
                     self.poll.etag = r.etag.clone();
                     self.lock().ig.badge = ingame::badge(&j);
+                    // the badge changed: what home shows may have too
+                    self.poll.home_due = true;
                     dirty = true;
                 }
+            } else {
+                // 304: unchanged
+                self.check_registered(&r);
             }
-            // 304: unchanged, nothing to do
         }
-        if matches!(watch, Watch::Home | Watch::Set) && due(self.poll.home_at, 3) {
+        if matches!(watch, Watch::Home | Watch::Set) && std::mem::take(&mut self.poll.home_due) {
             self.poll.home_at = Some(Instant::now());
             if let Ok(j) = self.get_json("/v1/me/home") {
                 let (next, events, badge) = ingame::home(&j);
@@ -727,10 +897,17 @@ impl Worker {
                         }
                         self.poll.games_seen = judged;
                     }
+                    let phase = j.get("phase").and_then(|p| p.str()).unwrap_or("").to_string();
+                    if phase == "done" && self.poll.last_phase != "done" {
+                        // NEXT needs home's word on the next set
+                        self.poll.home_due = true;
+                    }
+                    self.poll.last_phase = phase;
                     let fresh = self.poll.result_until.is_some_and(|t| Instant::now() < t);
                     let tag = self.lock().ig.tag.clone();
                     let rec = ingame::set_record(&j, &tag, fresh, &self.poll.after);
                     self.poll.flow = Some(j);
+                    self.try_start();
                     let mut g = self.lock();
                     if g.ig.set != rec {
                         g.ig.set = rec;
@@ -744,7 +921,6 @@ impl Worker {
         }
         match watch {
             Watch::Set => 1,
-            Watch::Home => 3,
             _ => 10,
         }
     }

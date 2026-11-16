@@ -40,6 +40,8 @@ const L_BKQ: u32 = 10;
 const L_EVENTS: u32 = 11;
 const L_NEXT: u32 = 12;
 const L_SET: u32 = 13;
+const L_BROWSE: u32 = 14;
+const L_EVENT: u32 = 15;
 const R_STATUS: i32 = 13;
 const R_LINK: i32 = 14;
 const R_MY_SETS: i32 = 15;
@@ -49,6 +51,9 @@ const R_STAGE: i32 = 19;
 const R_EVENTS: i32 = 20;
 const R_MOCK_STEP: i32 = 21;
 const R_WATCH: i32 = 22;
+const R_EVENT_VIEW: i32 = 23;
+const R_START: i32 = 24;
+const R_JOIN: i32 = 17;
 
 const DL: u16 = 0x1;
 const DR: u16 = 0x2;
@@ -93,6 +98,7 @@ enum Scr {
     Home,
     Account,
     Browse,
+    Event,
     Set,
 }
 
@@ -216,6 +222,8 @@ struct S {
     stage: usize,
     /// the last BRACKET_WATCH sent (0 nothing, 1 menu, 2 home, 3 set)
     watching: u8,
+    /// the BRACKET generation that opened the screens by itself (back from a game)
+    opened_gen: i32,
     edit: bool,
     code: [u8; CODE],
     n: usize,
@@ -227,14 +235,16 @@ struct S {
     ev: List,
     next: List,
     set: List,
+    browse: List,
+    event: List,
     enc: Enc<16384>,
     b: Buf,
 }
 
 static mut ST: S = S {
-    setup: false, open: false, cap: 0, pad: [0; 16], keys: [0; 32], prev: 0, scr: Scr::Home, sel: 0, stage: 0, watching: 0,
+    setup: false, open: false, cap: 0, pad: [0; 16], keys: [0; 32], prev: 0, scr: Scr::Home, sel: 0, stage: 0, watching: 0, opened_gen: 0,
     edit: false, code: [0; CODE], n: 0, t: 0, bk: List::new(), q: List::new(), st: List::new(), ev: List::new(),
-    next: List::new(), set: List::new(), enc: Enc::new(), b: Buf::new(),
+    next: List::new(), set: List::new(), browse: List::new(), event: List::new(), enc: Enc::new(), b: Buf::new(),
 };
 
 // ---------------------------------------------------------------------------------------------------- drawing
@@ -337,7 +347,7 @@ impl S {
         self.sel = 0;
         self.t = 0;
         self.edit = false;
-        let name = match s { Scr::Home => "home", Scr::Account => "account", Scr::Browse => "browse events", Scr::Set => "set" };
+        let name = match s { Scr::Home => "home", Scr::Account => "account", Scr::Browse => "browse events", Scr::Event => "event", Scr::Set => "set" };
         self.b.clear().s("bracket: screen ").s(name);
         log(self.b.as_str());
     }
@@ -390,6 +400,34 @@ impl S {
                 6 => self.go(Scr::Home),
                 _ => {}
             },
+            Scr::Browse => {
+                let n = self.browse.n.max(1);
+                match a {
+                    1 => self.sel = (self.sel + n - 1) % n,
+                    2 => self.sel = (self.sel + 1) % n,
+                    5 if self.browse.n > 0 => {
+                        let mut b = Buf::new();
+                        b.s(self.browse.f(self.sel, 0));
+                        self.request(R_EVENT_VIEW, &b.b[..b.n]);
+                        self.go(Scr::Event);
+                    }
+                    6 => self.go(Scr::Home),
+                    _ => {}
+                }
+            }
+            Scr::Event => match a {
+                5 if self.event.f(0, 2) == "signup" => {
+                    let mut b = Buf::new();
+                    b.s(self.event.f(0, 0));
+                    self.request(R_JOIN, &b.b[..b.n]);
+                }
+                6 => {
+                    self.go(Scr::Browse);
+                    self.request(R_EVENTS, b"");
+                }
+                _ => {}
+            },
+            #[allow(unreachable_patterns)]
             Scr::Browse => {
                 if a == 6 || a == 5 {
                     self.go(Scr::Home);
@@ -476,7 +514,7 @@ impl S {
                 }
             }
             "css" if a == 5 => self.request(R_MOCK_STEP, b"css"),
-            "game" if a == 5 => self.request(R_MOCK_STEP, b"game"),
+            "game" if a == 5 => self.request(R_START, b""),
             "done" if a == 5 || a == 6 => self.go(Scr::Home),
             _ if a == 6 => self.go(Scr::Home),
             _ => {}
@@ -506,7 +544,9 @@ impl S {
         if !self.open {
             let (held, edge, _) = self.read_input();
             self.prev = held;
-            if edge & BY != 0 {
+            // back from a bracket game: the set flow opens by itself (BRACKET field 9, once)
+            if edge & BY != 0 || (self.bk.f(0, 9) == "1" && self.bk.gen != self.opened_gen) {
+                self.opened_gen = self.bk.gen;
                 self.open_now();
             } else {
                 return self.draw_tile();
@@ -543,6 +583,8 @@ impl S {
         self.st.sync(L_STATUS);
         self.ev.sync(L_EVENTS);
         self.next.sync(L_NEXT);
+        self.browse.sync(L_BROWSE);
+        self.event.sync(L_EVENT);
         let before = self.set.gen;
         self.set.sync(L_SET);
         if self.set.gen != before {
@@ -596,6 +638,7 @@ impl S {
             Scr::Home => self.draw_home(vw),
             Scr::Account => self.draw_account(vw),
             Scr::Browse => self.draw_browse(vw),
+            Scr::Event => self.draw_event(vw),
             Scr::Set => self.draw_set(vw),
         }
         self.draw_status(vw, vh);
@@ -780,9 +823,67 @@ impl S {
         self.header(vw, "BROWSE EVENTS", "B  back");
         let x = (vw - 820.0) * 0.5;
         let e = &mut self.enc;
-        sticker(e, x, 122.0, 820.0, 150.0, CREAM);
-        e.text(x + 28.0, 142.0, DISPLAY, GRAPE, "Coming with the server's next update");
-        e.text_ex(x + 28.0, 190.0, BODY, GRAPE, ALIGN_LEFT, 760.0, "Open events and sign-up will list here. For now, sign up on the bracket site.");
+        if self.browse.n == 0 {
+            sticker(e, x, 122.0, 820.0, 120.0, CREAM);
+            e.text(x + 28.0, 142.0, DISPLAY, GRAPE, "No events listed");
+            e.text_ex(x + 28.0, 190.0, BODY, GRAPE, ALIGN_LEFT, 760.0, "Events the server runs show here, sign-up first.");
+            return;
+        }
+        let n = self.browse.n.min(8);
+        sticker(e, x, 122.0, 820.0, 24.0 + n as f32 * 62.0, PAPER);
+        for i in 0..n {
+            let y = 134.0 + i as f32 * 62.0;
+            if i == self.sel {
+                e.shape(SHAPE_BOX, x + 12.0, y - 4.0, 796.0, 58.0, 12.0, 2.5, 0.0, SUNNY, GRAPE);
+            } else if i > 0 {
+                e.rect(x + 20.0, y - 6.0, 780.0, 2.0, CREAM);
+            }
+            let b = &self.browse;
+            e.text(x + 26.0, y + 2.0, BODY, GRAPE, b.f(i, 1));
+            e.text_ex(x + 26.0, y + 28.0, VALUE, FADED, ALIGN_LEFT, 560.0, b.f(i, 5));
+            let (label, fill) = match b.f(i, 2) {
+                "signup" => ("SIGN-UP OPEN", LIME),
+                "running" => ("RUNNING", SUNNY),
+                _ => ("DONE", CREAM),
+            };
+            let w = measure(label, LABEL) + 22.0;
+            pill(e, x + 796.0 - w, y + 2.0, label, fill, GRAPE);
+            self.b.clear().s(b.f(i, 3)).s(" players");
+            e.text_ex(x + 796.0, y + 32.0, VALUE, FADED, ALIGN_RIGHT, 0.0, self.b.as_str());
+        }
+    }
+
+    fn draw_event(&mut self, vw: f32) {
+        self.header(vw, "EVENT", "B  back");
+        let x = (vw - 820.0) * 0.5;
+        let ev = &self.event;
+        let e = &mut self.enc;
+        if ev.n == 0 {
+            sticker(e, x, 122.0, 820.0, 100.0, CREAM);
+            e.text(x + 28.0, 150.0, DISPLAY, GRAPE, "Loading...");
+            return;
+        }
+        let open = ev.f(0, 2) == "signup";
+        sticker(e, x, 122.0, 820.0, 360.0, PAPER);
+        e.text(x + 28.0, 140.0, BIG, GRAPE, ev.f(0, 1));
+        e.text_ex(x + 28.0, 196.0, BODY, GRAPE, ALIGN_LEFT, 760.0, ev.f(0, 5));
+        self.b.clear().s("Best of ").s(ev.f(0, 6)).s("  \u{00B7}  ").s(ev.f(0, 7)).s(" stocks  \u{00B7}  ").u(num(ev.f(0, 8)) / 60).s(" min  \u{00B7}  ").s(ev.f(0, 3)).s(" players");
+        e.text(x + 28.0, 236.0, LABEL, GRAPE, self.b.as_str());
+        e.text(x + 28.0, 274.0, LABEL, FADED, "STAGES");
+        let mut sx = x + 28.0;
+        let mut sy = 300.0;
+        for name in ev.f(0, 9).split('|').filter(|s| !s.is_empty()) {
+            let w = measure(name, VALUE) + 22.0;
+            if sx + w > x + 796.0 {
+                sx = x + 28.0;
+                sy += 32.0;
+            }
+            e.shape(SHAPE_BOX, sx, sy, w, 26.0, 13.0, 2.0, 0.0, CREAM, GRAPE);
+            e.text(sx + 11.0, sy + 4.0, VALUE, GRAPE, name);
+            sx += w + 8.0;
+        }
+        e.text_ex(x + 28.0, sy + 44.0, VALUE, FADED, ALIGN_LEFT, 760.0, ev.f(0, 10));
+        button(e, x + 28.0, 500.0, 220.0, if open { "JOIN" } else { "SIGN-UP CLOSED" }, open);
     }
 
     /// The set flow, the set score on top throughout.
@@ -798,7 +899,7 @@ impl S {
             e.text(x + 26.0, 40.0, LABEL, FADED, s.f(0, 15));
             e.text(x + 26.0, 60.0, DISPLAY, GRAPE, s.f(0, 5));
             e.text_ex(x + 794.0, 60.0, DISPLAY, GRAPE, ALIGN_RIGHT, 0.0, s.f(0, 6));
-            self.b.clear().u(me).s("  \u{2013}  ").u(opp);
+            self.b.clear().u(me).s("  -  ").u(opp);
             e.shape(SHAPE_BOX, x + 330.0, 42.0, 160.0, 54.0, 14.0, 3.0, 0.0, SUNNY, GRAPE);
             e.text_ex(x + 410.0, 48.0, BIG, GRAPE, ALIGN_CENTER, 0.0, self.b.as_str());
             self.b.clear().s("Best of ").u(bo).s("  \u{00B7}  Game ").u(game);
@@ -819,8 +920,8 @@ impl S {
                 let t = Buf { b: self.b.b, n: self.b.n };
                 let mock = self.set.f(0, 19) == "1";
                 let mut body = Buf::new();
-                body.s(if mock { "Good luck! The game starts from here." } else { self.set.f(0, 14) });
-                self.card(x, y, t.as_str(), body.as_str(), if mock { Some("A  play the game (mock)") } else { None });
+                body.s(if mock { "Good luck! Both players go to the character select; the stage is set." } else { self.set.f(0, 14) });
+                self.card(x, y, t.as_str(), body.as_str(), Some(if mock { "A  START THE GAME (mock: plays it)" } else { "A  START THE GAME" }));
             }
             "result" => self.draw_result(x, y, me, opp),
             "done" => self.draw_done(x, y, me, opp),
@@ -886,7 +987,7 @@ impl S {
         let e = &mut self.enc;
         sticker(e, x + 110.0, y, 600.0, 280.0, if won { SUNNY } else { PAPER });
         e.text_ex(x + 410.0, y + 22.0, BIG, GRAPE, ALIGN_CENTER, 0.0, t.as_str());
-        self.b.clear().u(me).s("  \u{2013}  ").u(opp);
+        self.b.clear().u(me).s("  -  ").u(opp);
         e.text_ex(x + 410.0, y + 82.0, BIG, GRAPE, ALIGN_CENTER, 0.0, self.b.as_str());
         self.b.clear().u(stocks).s(if stocks == 1 { " stock" } else { " stocks" }).s(" left at ").u(pct).s("%");
         e.text_ex(x + 410.0, y + 150.0, BODY, GRAPE, ALIGN_CENTER, 0.0, self.b.as_str());
@@ -905,7 +1006,7 @@ impl S {
         sticker(e, x, y, 820.0, 330.0, if won { SUNNY } else { PAPER });
         e.text(x + 28.0, y + 20.0, LABEL, GRAPE, "FINAL");
         e.text(x + 28.0, y + 44.0, BIG, GRAPE, if won { "SET WON" } else { "SET LOST" });
-        self.b.clear().u(me).s("  \u{2013}  ").u(opp);
+        self.b.clear().u(me).s("  -  ").u(opp);
         e.text_ex(x + 790.0, y + 30.0, BIG, GRAPE, ALIGN_RIGHT, 0.0, self.b.as_str());
         if verified {
             pill(e, x + 28.0, y + 104.0, "\u{2713} verified", LIME, GRAPE);

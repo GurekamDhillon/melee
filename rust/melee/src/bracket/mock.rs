@@ -43,6 +43,8 @@ pub struct Mock {
     pub wait: u32,
     pub ver: u64,
     pub log: Vec<String>,
+    /// the event page shown (BROWSE EVENTS)
+    pub view_event: i64,
 }
 
 pub const BEST_OF: u32 = 3;
@@ -52,7 +54,7 @@ pub const EVENT: &str = "Sunday Melee #12";
 
 impl Mock {
     pub fn new() -> Mock {
-        Mock { phase: Phase::Called, me: 0, opp: 0, game: 1, gone: [0; 6], my_turn: true, left: 0, stage: None, last: None, verified: false, wait: 0, ver: 1, log: Vec::new() }
+        Mock { phase: Phase::Called, me: 0, opp: 0, game: 1, gone: [0; 6], my_turn: true, left: 0, stage: None, last: None, verified: false, wait: 0, ver: 1, log: Vec::new(), view_event: 21 }
     }
 
     fn set(&mut self, p: Phase, wait: u32) {
@@ -194,6 +196,26 @@ impl Mock {
             (ROUND, OPP, "0")
         };
         [kind, EVENT, round, opp, eta, "3", &BEST_OF.to_string()].iter().map(|s| s.to_string()).collect()
+    }
+
+    /// LIST_BRACKET_BROWSE: id, name, state, entrants, starts_at, description.
+    pub fn browse(&self) -> Vec<Vec<String>> {
+        let s = |v: &[&str]| v.iter().map(|x| x.to_string()).collect::<Vec<String>>();
+        vec![
+            s(&["21", "Friday Night Melee", "signup", "14", "1795000000", "Bo3, top 8 Bo5. Doubles after."]),
+            s(&["22", "Beginner Bracket", "signup", "6", "1795090000", "For players new to netplay brackets."]),
+            s(&["12", EVENT, "running", "32", "", "Weekly singles."]),
+            s(&["4", "Monthly #3", "complete", "48", "", ""]),
+        ]
+    }
+
+    /// LIST_BRACKET_EVENT for the event page shown.
+    pub fn event_rec(&self) -> Vec<String> {
+        let b = self.browse();
+        let r = b.iter().find(|r| r[0] == self.view_event.to_string()).unwrap_or(&b[0]);
+        let mut v = r.clone();
+        v.extend(["3".to_string(), "4".into(), "480".into(), "Fountain of Dreams|Pokemon Stadium|Yoshi's Story|Dream Land N64|Battlefield|Final Destination".into(), "Peace, Mango, Hbox, Zain, Cody, Moky".into()]);
+        v
     }
 
     /// LIST_BRACKET_SETS (my events): id, name, status line.

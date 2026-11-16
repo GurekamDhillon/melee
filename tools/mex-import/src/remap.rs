@@ -215,10 +215,11 @@ const AUTO_BASE: u32 = 0x9000_0000;
 const ARRAY_REACH: u32 = 64;
 
 /// The guest address span an auto-registered object of GC size `size` reserves for its array: ARRAY_REACH elements,
-/// and at least 0x2000 bytes (Dedede's fp->parts has more than 64 FighterBones: bone 65 read the next object's
-/// region, a JObj's class_info, and lb_8000B1CC faulted on it).
+/// and at least 0x4000 bytes (Dedede's fp->parts has more than 64 FighterBones: bone 65 read the next object's
+/// region, a JObj's class_info, and lb_8000B1CC faulted on it; Diddy's Fighter_TaroStateChange reads row 275 of
+/// fp->x1C's common MotionState table, 0x2260 bytes in).
 fn reach(size: u32) -> u32 {
-    (size.max(0x10) * ARRAY_REACH).max(0x2000)
+    (size.max(0x10) * ARRAY_REACH).max(0x4000)
 }
 
 pub struct GuestSpace {

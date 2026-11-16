@@ -155,6 +155,8 @@ struct State {
     heap_next: u32,
     /// Native retail callback -> its vanilla address (fn_guest).
     retail: BTreeMap<usize, u32>,
+    /// [`map_common_motion_table`] ran.
+    common_ms_mapped: bool,
     /// The fighters' item articles (itFunction): relocated code of each, owner fighter kind.
     arts: Vec<Art>,
     /// m-ex custom item kinds (>= 237): the native descriptor and logic table Item_80267978 takes.
@@ -216,6 +218,7 @@ fn st() -> &'static mut State {
                 depth: 0,
                 heap_next: HEAP_GUEST,
                 retail: BTreeMap::new(),
+                common_ms_mapped: false,
                 arts: Vec::new(),
                 items: BTreeMap::new(),
                 natdat: BTreeMap::new(),
@@ -1044,6 +1047,68 @@ unsafe extern "C" fn move_tramp<const W: usize>(g: G) {
 
 /// Register the gobj and its fighter (and the fighter's dat_attrs_backup buffer) in the guest space; the gobj's
 /// guest handle.
+/// The common MotionState table's callbacks as their vanilla addresses (fn_guest): the native table's rows hold
+/// closures no name table lists, so a guest copying a row read a callback with no guest address and faulted
+/// (Akaneia's Diddy, Fighter_TaroStateChange, copies row 275 ftCo_CaptureCaptain: 223434, 232612, 232949). Paired
+/// row by row with the DOL's ftData_MotionStateList (GC rows of 0x20 bytes, callbacks at 0xC..0x1C), once.
+unsafe fn map_common_motion_table(s: &mut State, native: *const melee_types::MotionState) {
+    if native.is_null() || s.common_ms_mapped {
+        return;
+    }
+    s.common_ms_mapped = true;
+    const ROWS: usize = 341;
+    // ftData_MotionStateList = .data:0x803C2800, size 0x2AA0 (config/GALE01/symbols.txt; vanilla_addr names functions only)
+    let a = 0x803C_2800u32;
+    let Ok(b) = crate::host::Host::get().disc.dol_bytes(a, ROWS * 0x20) else {
+        eprintln!("mexguest: common motion table: DOL read failed");
+        return;
+    };
+    let mut n = 0;
+    let _ = fn_guest(0); // fills s.retail first
+    for k in 0..ROWS {
+        let r = &*native.add(k);
+        let cbs = [r.anim_cb, r.input_cb, r.phys_cb, r.coll_cb, r.cam_cb];
+        for (j, cb) in cbs.iter().enumerate() {
+            let o = k * 0x20 + 0xC + 4 * j;
+            let w = u32::from_be_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]);
+            if let Some(f) = cb {
+                if w != 0 {
+                    s.retail.entry(*f as usize).or_insert(w);
+                    n += 1;
+                }
+            }
+        }
+    }
+    eprintln!("mexguest: common motion table: {n} callbacks given their vanilla addresses");
+}
+
+/// The fighter's own MotionState table (fp->x20, built from the blob's MoveLogic rows) as guest rows whose blob
+/// callbacks read back as their guest addresses: natively those slots hold the shared MOVE_TRAMPS, which have no
+/// guest address, so Diddy's Fighter_TaroStateChange (it copies its own row and calls through it) faulted.
+unsafe fn register_move_table(s: &mut State, fp: *mut Fighter) {
+    let t = (*fp).x20_actionStateList;
+    let Some(f) = s.kinds.get(&((*fp).kind as i32)) else { return };
+    if t.is_null() || t != f.move_table.as_ptr() as *mut _ || f.move_table.is_empty() {
+        return;
+    }
+    let Ok(base) = s.space.handle(t as usize, Some("MotionState")) else { return };
+    let gs = s.space.layouts.gc_size("MotionState").unwrap_or(0x20);
+    let rows: Vec<[u32; 4]> = f.move_guest.clone();
+    for (k, g) in rows.iter().enumerate() {
+        let h = base + k as u32 * gs;
+        if k > 0 && s.space.add_native(Some(h), "MotionState", t.add(k) as *mut u8).is_err() {
+            continue;
+        }
+        for (w, &a) in g.iter().enumerate() {
+            let r = &*t.add(k);
+            let cb = [r.anim_cb, r.input_cb, r.phys_cb, r.coll_cb][w];
+            if a != 0 && cb.is_some_and(|c| MOVE_TRAMPS.iter().any(|&m| m as usize == c as usize)) {
+                s.space.ptr_override.insert((h, 0xC + 4 * w as u32), a);
+            }
+        }
+    }
+}
+
 unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
     let fp = (*g).user_data as *mut Fighter;
     if fp.is_null() {
@@ -1058,6 +1123,7 @@ unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
             None => s.space.add_native(None, "HSD_GObj", g as *mut u8).ok(),
         };
     }
+    map_common_motion_table(s, (*fp).x1C_actionStateList);
     let gh = match s.space.handle_of(g as *mut u8) {
         Some(h) => h,
         None => s.space.add_native(None, "HSD_GObj", g as *mut u8).ok()?,
@@ -1076,6 +1142,7 @@ unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
             s.attrs.push((ab, base));
         }
         let _ = FT_DAT_ATTRS_BACKUP;
+        register_move_table(s, fp);
     }
     Some(gh)
 }
@@ -1567,8 +1634,16 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 // by hand (the generator has no row): two vanilla functions Akaneia's Dedede reaches through pointers
                 // its own data holds (an SFX callback, `bctrl ft_80088510`; its jump, ftCo_800CB110); unresolved,
                 // each fault dropped the rest of the guest callback
-                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110" | "ftKb_SpecialN_800F597C") {
-                    if name == "ftKb_SpecialN_800F597C" {
+                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110" | "ftKb_SpecialN_800F597C" | "mpUpdateFloorSkip") {
+                    if name == "mpUpdateFloorSkip" {
+                        // void(CollData*): Dedede's inhale (223810)
+                        let cd = c.ptr(0, Some("CollData"));
+                        if !cd.is_null() && !c.bad {
+                            unsafe { melee_world::tu::mpcoll::mpUpdateFloorSkip(cd as *mut melee_types::CollData) };
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "ftKb_SpecialN_800F597C" {
                         // bool(gobj): Dedede's inhale asks whether its victim can be swallowed (223810, 230601)
                         let g = c.ptr(0, Some("HSD_GObj"));
                         if !g.is_null() && !c.bad {

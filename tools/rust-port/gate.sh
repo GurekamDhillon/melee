@@ -149,7 +149,7 @@ if [ "$profile" = release ] && [ "${SNAPGUARD:-1}" = 1 ] && [ -z "$only" ]; then
   bash tools/rust-port/perf/snapguard.sh --exe "$exe" || fail=1
 fi
 # 5. vanilla zero lag (optional, VANILLA_ZEROLAG=1; notes/zero-hitch.md): menu walk to a Final Destination match and
-#    --match starts on Battlefield, Pokemon Stadium, Yoshi's Story, Dream Land N64 and Fountain of Dreams with the Brawl
+#    fast-pick starts (play/fastpick_*.txt: A the frame after the cursor lands) on FD, BF, PS, YS, DL N64 and FoD with the Brawl
 #    files hidden; FAILS on any frame over 16 ms. Needs a quiet machine (zero_hitch_gate.sh refuses otherwise).
 if [ "${VANILLA_ZEROLAG:-0}" = 1 ] && [ -z "$only" ]; then
   vc="${CARD:-$tmp/vzl-card}"

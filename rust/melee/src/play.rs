@@ -1732,7 +1732,8 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
                 Err(e) => {
                     eprintln!("play: {e}");
-                    return ExitCode::FAILURE;
+                    // exit code 5: the host's --np-join-wait expired with no guest (net.md)
+                    return if e == crate::play_net::NO_OPPONENT { ExitCode::from(5) } else { ExitCode::FAILURE };
                 }
             }
         }
@@ -1768,6 +1769,9 @@ pub fn play(args: &[String]) -> ExitCode {
         // --np-css (or a replay of such a run): no agreed scene, the players pick on the retail character select. Both
         // peers boot straight into VS mode with no memory card (a card's unlocks and settings would differ per machine).
         let np_css = net.as_ref().map_or(false, |n| n.css()) || rp_feed_css(&feed);
+        // --np-no-name-entry: a host rule both peers apply (the agreed scene carries it); a replay of such a run reads its meta
+        let no_name_entry = net.as_ref().map_or(false, |n| n.host_rules.no_name_entry) || feed.as_ref().map_or(false, |f| f.r.meta("np_no_name_entry").is_some());
+        melee_modes::tu::mncharsel::NO_NAME_ENTRY.store(no_name_entry && np_css, std::sync::atomic::Ordering::Relaxed);
         if np_css {
             std::env::set_var("MELEE_RETAIL_FIRST", (melee_types::GM_VS as u8).to_string());
             std::env::set_var("MELEE_CARD", "0");
@@ -1833,6 +1837,9 @@ pub fn play(args: &[String]) -> ExitCode {
                 if np_css {
                     meta.push(("np_css".into(), "1".into()));
                 }
+                if no_name_entry {
+                    meta.push(("np_no_name_entry".into(), "1".into()));
+                }
                 if let Some(sc) = &np_scene {
                     meta.push(("np_scene".into(), sc.clone()));
                 }
@@ -1853,6 +1860,9 @@ pub fn play(args: &[String]) -> ExitCode {
             let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
             if np_css {
                 meta.push(("np_css".into(), "1".into()));
+            }
+            if no_name_entry {
+                meta.push(("np_no_name_entry".into(), "1".into()));
             }
             if let Some(sc) = &np_scene {
                 meta.push(("np_scene".into(), sc.clone()));

@@ -1221,16 +1221,19 @@ pub unsafe fn gmMainLib_8015F600(arg0: i32, arg1: i32) {
             if !src.is_null() {
                 let mut k = 0usize;
                 let mut p = src as *const i8;
+                // C copies until the terminator with no bound: a name over 8 bytes runs on through the fields after
+                // `namedata` (raw byte writes, as in mnnamenew's CopyCurrentNameToNametag)
+                let dst = (data as *mut u8).add(core::mem::offset_of!(NameTagData, namedata)) as *mut i8;
                 loop {
                     let c = *p;
                     if gmMainLib_804D3EE4[0] == c {
                         break;
                     }
-                    (*data).namedata[k] = c;
+                    *dst.add(k) = c;
                     k += 1;
                     p = p.add(1);
                 }
-                (*data).namedata[k] = gmMainLib_804D3EE4[0];
+                *dst.add(k) = gmMainLib_804D3EE4[0];
             } else {
                 (*data).namedata[0] = gmMainLib_804D3EE4[0];
             }

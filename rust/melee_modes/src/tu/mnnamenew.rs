@@ -1822,6 +1822,13 @@ unsafe extern "C" fn CopyCurrentNameToNametag(mut nametag: *mut NameTagData) {
     let mut text: *mut u8 = null_mut();
     let mut null_ch: i8 = 0;
     let mut i: i32 = 0;
+    // Retail (and the C build) index `namedata[8]` with a running byte count that is not bounded by 8: each glyph's
+    // copy runs to the next NUL, so kana (3 contiguous bytes each) take it past 8 (up to 30 with four glyphs). Bytes
+    // 8..11 land in the fields after the array (x1A0, rumble_enabled, x1A2, padding_x1A2), the rest in the next
+    // record. Model that as a raw byte write from the array start instead of a bounds-checked index.
+    let name_bytes: *mut c_char = (nametag as *mut u8)
+        .add(core::mem::offset_of!(NameTagData, namedata))
+        as *mut c_char;
     text = &raw mut mnNameNew_CurrentNameText as *mut c_char as *mut u8;
     idx = 0 as i32;
     i = 0 as i32;
@@ -1839,14 +1846,14 @@ unsafe extern "C" fn CopyCurrentNameToNametag(mut nametag: *mut NameTagData) {
             if !(null_ch as i32 != ch as i8 as i32) {
                 break;
             }
-            (*nametag).namedata[idx as usize] = ch as i8 as c_char;
+            *name_bytes.offset(idx as isize) = ch as i8 as c_char;
             idx += 1;
             ptr = ptr.offset(1 as i32 as isize);
         }
         text = text.offset(3 as i32 as isize);
         i += 1;
     }
-    (*nametag).namedata[idx as usize] = *(&raw mut mnNameNew_NullCharacter
+    *name_bytes.offset(idx as isize) = *(&raw mut mnNameNew_NullCharacter
         as *mut c_char) as i8 as c_char;
 }
 pub unsafe extern "C" fn WriteCharactersForNameAtIndex(
@@ -3593,4 +3600,39 @@ pub fn GetAutoNameCharacter_fp(names: &*const u8, char_idx: i32) -> u8 {
     melee_core::ct!("GetAutoNameCharacter_fp");
     // SAFETY: the C indexes the name string unchecked.
     unsafe { *names.offset(char_idx as isize) }
+}
+
+#[cfg(test)]
+mod namedata_overrun_tests {
+    use super::*;
+
+    /// Three 3-byte glyphs (9 contiguous bytes, as kana are): retail's copy loop runs each glyph to the next NUL, so
+    /// it writes 9 + 6 + 3 bytes then the terminator at byte 18 of `namedata`, i.e. past `namedata[8]` through
+    /// x1A0 / rumble_enabled / x1A2 / padding_x1A2 into the next record (idx 8 used to panic here).
+    #[test]
+    fn name_longer_than_8_bytes_spills_into_following_fields() {
+        unsafe {
+            let mut tags: [NameTagData; 2] = [NameTagData::zeroed(), NameTagData::zeroed()];
+            core::ptr::write_bytes(&mut tags as *mut _ as *mut u8, 0xFF, core::mem::size_of_val(&tags));
+            for k in 0..16 {
+                mnNameNew_CurrentNameText[k] = if k < 9 { (0x41 + k) as c_char } else { 0 };
+            }
+            CopyCurrentNameToNametag(&mut tags[0]);
+            let raw = &tags[0] as *const NameTagData as *const u8;
+            let mut want: std::vec::Vec<u8> = (0x41u8..0x4A).collect();
+            want.extend(0x44u8..0x4A);
+            want.extend(0x47u8..0x4A);
+            want.push(0);
+            for (i, w) in want.iter().enumerate() {
+                assert_eq!(*raw.add(0x198 + i), *w, "namedata byte {i}");
+            }
+            // idx 8..11 are the four fields after the array
+            assert_eq!(tags[0].x1A0 as u8, 0x49);
+            assert_eq!(tags[0].rumble_enabled, 0x44);
+            assert_eq!(tags[0].x1A2 as u8, 0x45);
+            assert_eq!(tags[0].padding_x1A2, 0x46);
+            // and the byte after the last written one is untouched
+            assert_eq!(*raw.add(0x198 + want.len()), 0xFF);
+        }
+    }
 }

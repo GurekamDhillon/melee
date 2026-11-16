@@ -40,6 +40,13 @@ fn fighter_mut(p: *const melee_types::Fighter) -> *mut melee_types::Fighter {
 
 pub fn install() {
     unsafe {
+        // ifnametag's name text (`GetNameText`, a Shift-JIS C string): the generated entry casts the `*const u8` format to the
+        // canonical `Option<&str>` (a fat pointer: size mismatch, a panic as soon as a custom name tag is in a match); the TU's
+        // own bytes path formats it as the C does
+        melee_world::tu::ifnametag::ext::hook::HSD_SisLib_803A6B98 = Some(|a0, a1, a2, a3: *const u8| unsafe {
+            let s = melee_runtime::cformat::c_format(a3 as *const i8, &[]);
+            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98_bytes(a0, a1, a2, if a3.is_null() { None } else { Some(&s) })
+        });
         // pc/platform gw_replay.c `gw_Slippi_FrozenStadium` outside playback: `MELEE_SLIPPI_FROZEN_PS=1` enables Slippi's Frozen PS (default off, as the C goldens)
         // in-match stage switching: the visit's own buffers (Fountain's reflection, Pokemon Stadium's jumbotron) are freed
         // when the stage is left (melee_modes::tu::stage_hop; the heap leak fix of the full-game plan's milestone 0)

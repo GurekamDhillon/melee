@@ -843,6 +843,9 @@ pub struct HostRules {
     /// CPU seats on ports 3 and 4 (`--cpu fighter[/level][,fighter[/level]]`, level 1-9, default 9): (CharacterKind,
     /// level), resolved by the host; the guest takes them from the agreed scene like the rest of the rules
     pub cpus: Vec<(i32, i32)>,
+    /// `--np-no-name-entry` (host, with --np-css): the name entry ("New" in the name-tag list) is disabled on both
+    /// peers; encoded `,n1`, absent = retail behaviour
+    pub no_name_entry: bool,
 }
 
 impl HostRules {
@@ -852,6 +855,7 @@ impl HostRules {
             time_secs: arg(args, "--time-secs").and_then(|s| s.parse().ok()),
             items: arg(args, "--items").map(|s| s.trim().replace(' ', "_")),
             cpus: Vec::new(),
+            no_name_entry: args.iter().any(|a| a == "--np-no-name-entry"),
         }
     }
     pub fn encode(&self) -> String {
@@ -860,6 +864,9 @@ impl HostRules {
         // the CPU seats only when there are any, so a two-human scene string is what it always was
         if !self.cpus.is_empty() {
             e += &format!(",c{}", self.cpus.iter().map(|(ck, l)| format!("{ck}.{l}")).collect::<Vec<_>>().join("+"));
+        }
+        if self.no_name_entry {
+            e += ",n1";
         }
         e
     }
@@ -878,6 +885,7 @@ impl HostRules {
                 "c" => {
                     r.cpus = x.split('+').map(|c| c.split_once('.').and_then(|(k, l)| Some((k.parse().ok()?, l.parse().ok()?)))).collect::<Option<Vec<_>>>()?;
                 }
+                "n" => r.no_name_entry = x == "1",
                 _ => {}
             }
         }
@@ -887,6 +895,7 @@ impl HostRules {
         let cpus = if self.cpus.is_empty() { String::new() } else {
             format!(", CPUs {}", self.cpus.iter().map(|(ck, l)| format!("ck {ck} level {l}")).collect::<Vec<_>>().join(" + "))
         };
+        let cpus = if self.no_name_entry { format!("{cpus}, name entry off") } else { cpus };
         format!(
             "stocks {}, time {}, items {}{cpus}",
             self.stocks.map_or("default".into(), |x| x.to_string()),
@@ -1117,6 +1126,8 @@ pub struct RoomParams {
     host: bool,
     rcfg: RbConfig,
     timeout: u64,
+    /// `--np-join-wait SECS` (host): how long the first room waits for a guest (replaces `timeout` there)
+    join_wait: Option<u64>,
     settings: RoomSettings,
     env: PlayEnv,
     /// the run's one socket (np_mux.rs): room 0, the lockstep, the rematch rooms
@@ -1144,6 +1155,9 @@ fn open_room(p: &mut RoomParams, ch: u32, code: Option<String>) -> Result<(Room,
     let t0 = Instant::now();
     let mut shown = String::new();
     loop {
+        if p.host && ch == 0 && p.join_wait.is_some_and(|w| t0.elapsed().as_secs() >= w) {
+            return Err(NO_OPPONENT.into());
+        }
         if t0.elapsed().as_secs() > p.timeout {
             let st = room.sh.borrow().status.clone();
             let hint = if p.host {
@@ -1182,6 +1196,9 @@ fn open_room(p: &mut RoomParams, ch: u32, code: Option<String>) -> Result<(Room,
     }
     Ok((room, sess, nlog))
 }
+
+/// The host's `--np-join-wait` expired with nobody connected (`play` exits with code 4, net.md).
+pub const NO_OPPONENT: &str = "netplay: no opponent joined";
 
 fn arg(args: &[String], k: &str) -> Option<String> {
     args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned()
@@ -1298,6 +1315,7 @@ impl NetDriver {
             host,
             rcfg: RbConfig { net: true, local_port, delay, maxb, src: InputSource::Live, ..RbConfig::default() },
             timeout,
+            join_wait: if host { arg(args, "--np-join-wait").and_then(|s| s.parse().ok()) } else { None },
             settings: RoomSettings {
                 host,
                 ck,

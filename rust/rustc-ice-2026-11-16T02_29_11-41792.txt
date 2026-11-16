@@ -1,0 +1,44 @@
+thread 'rustc' panicked at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\io\stdio.rs:1165:9:
+failed printing to stdout: Insufficient system resources exist to complete the requested service. (os error 1450)
+stack backtrace:
+   0:     0x7ffce7f27a4e - std::backtrace_rs::backtrace::win64::trace
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\..\..\backtrace\src\backtrace\win64.rs:85
+   1:     0x7ffce7f27a4e - std::backtrace_rs::backtrace::trace_unsynchronized
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\..\..\backtrace\src\backtrace\mod.rs:66
+   2:     0x7ffce7f27a4e - std::backtrace::Backtrace::create
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\backtrace.rs:331
+   3:     0x7ffce7f2798a - std::backtrace::Backtrace::force_capture
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\backtrace.rs:312
+   4:     0x7ffce971ab43 - core[481accbcddfbc6fc]::slice::sort::unstable::heapsort::heapsort::<((rustc_lint_defs[c1e5e3f50cfeefed]::Level, &str), usize), <((rustc_lint_defs[c1e5e3f50cfeefed]::Level, &str), usize) as core[481accbcddfbc6fc]::cmp::PartialOrd>::lt>
+   5:     0x7ffce7f3b9f4 - std::panicking::panic_with_hook
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\panicking.rs:833
+   6:     0x7ffce7f21044 - std::panicking::panic_handler::closure$0
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\panicking.rs:698
+   7:     0x7ffce7f1e52f - std::sys::backtrace::__rust_end_short_backtrace<std::panicking::panic_handler::closure_env$0,never$>
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\sys\backtrace.rs:182
+   8:     0x7ffce7f21bfe - std::panicking::panic_handler
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\panicking.rs:689
+   9:     0x7ffcec1b996d - core::panicking::panic_fmt
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\core\src\panicking.rs:80
+  10:     0x7ffce7f3c5b7 - std::io::stdio::print_to
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\io\stdio.rs:1165
+  11:     0x7ffce7f3c5b7 - std::io::stdio::_print
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\io\stdio.rs:1275
+  12:     0x7ffce7d9b2c2 - <rustc_session[a6cc9edcc70f7405]::config::OutFileName>::overwrite
+  13:     0x7ffce9726003 - rustc_driver_impl[590adb766e6d432]::pretty::print
+  14:     0x7ffce971f72c - core[481accbcddfbc6fc]::slice::sort::unstable::heapsort::heapsort::<((rustc_lint_defs[c1e5e3f50cfeefed]::Level, &str), usize), <((rustc_lint_defs[c1e5e3f50cfeefed]::Level, &str), usize) as core[481accbcddfbc6fc]::cmp::PartialOrd>::lt>
+  15:     0x7ffce9711583 - strncpy
+  16:     0x7ffce529b653 - std[36dcee3e70cc59b8]::sys::backtrace::__rust_begin_short_backtrace::<std[36dcee3e70cc59b8]::thread::lifecycle::spawn_unchecked<ctrlc[a2a5bb2293050f3]::set_handler_inner<rustc_driver_impl[590adb766e6d432]::install_ctrlc_handler::{closure#0}>::{closure#0}, ()>::{closure#1}::{closure#0}::{closure#0}, ()>
+  17:     0x7ffce52942f1 - RINvNtNtCs4I28GfXMI0S_3std3sys9backtrace28___rust_begin_short_backtraceNCNCINvNtCs9P5N3LH6IYM_15rustc_interface4util26run_in_thread_with_globalsNCINvB1e_31run_in_thread_pool_with_globalsNCINvNtB1g_9interface12run_compileruNCNvCstCDs352yOI_17rustc_driver_im
+  18:     0x7ffce529fbfa - std[36dcee3e70cc59b8]::sys::backtrace::__rust_begin_short_backtrace::<std[36dcee3e70cc59b8]::thread::lifecycle::spawn_unchecked<ctrlc[a2a5bb2293050f3]::set_handler_inner<rustc_driver_impl[590adb766e6d432]::install_ctrlc_handler::{closure#0}>::{closure#0}, ()>::{closure#1}::{closure#0}::{closure#0}, ()>
+  19:     0x7ffce7f455fc - std::sys::thread::windows::impl$0::new::thread_start
+                               at /rustc/a423f68a0d75656eabab4982a06bed9f316f7109/library\std\src\sys\thread\windows.rs:58
+  20:     0x7ffe0910dda7 - BaseThreadInitThunk
+  21:     0x7ffe09979c5c - RtlUserThreadStart
+
+
+rustc version: 1.95.0-nightly (a423f68a0 2026-02-13)
+platform: x86_64-pc-windows-msvc
+
+query stack during panic:
+end of query stack

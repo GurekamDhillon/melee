@@ -29,6 +29,10 @@ use core::ffi::c_void;
 use core::ptr::{addr_of, addr_of_mut, null, null_mut};
 use std::vec::Vec;
 
+/// `--np-no-name-entry` (netplay host rule, both peers): the nametag list's "New" row does nothing (name entry is
+/// never entered). Off = retail behaviour.
+pub static NO_NAME_ENTRY: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
 use melee_core::fp::fmadds;
 use melee_runtime::cabi::{f2i32, sdiv, srem};
 use melee_runtime::gekko::{cosf, sinf};
@@ -3843,7 +3847,7 @@ pub unsafe extern "C" fn fn_802633B0(gobj: *mut HSD_GObj) {
                     }
 
                     if (*tag).next_tag as i32 == row {
-                        if ext::IsNameListFull() == 0 {
+                        if ext::IsNameListFull() == 0 && !NO_NAME_ENTRY.load(core::sync::atomic::Ordering::Relaxed) {
                             if mnCharSel_804D6CF5 == 1 {
                                 mnCharSel_804D6CF9 = mnCharSel_804D6CF0;
                             } else {

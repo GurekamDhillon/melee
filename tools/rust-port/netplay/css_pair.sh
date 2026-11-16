@@ -3,6 +3,8 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 # Two `melee play --netplay ... --np-css` peers on loopback: the players pick on the retail character select (lockstep
 # menus), two matches on one connection (the second a rematch from the results), scripted pads (no OS input).
 #   bash tools/rust-port/netplay/css_pair.sh NAME LAG_MS LOSS_PCT [extra play args]
+# CSS_HOST_SCRIPT / CSS_GUEST_SCRIPT override the pad scripts; np_css_{host,guest}_name.txt open the name entry (Name > New, three
+# kana, START twice) before the stage select (the name-entry overrun, port/np-nameentry).
 # Writes $NP_SCRATCH/NAME-{host,guest}.{log,csv,mrpl}; compares the per-frame final hashes of both matches on both
 # peers, then plays the host's replay back (menus and both matches) to the same hashes. Exit 0 = all equal.
 set -u
@@ -20,7 +22,7 @@ bind="${NP_BIND:-127.0.0.1}"; case "$bind" in *:*) dial="[$bind]:$port";; *) dia
 srv=(); [ -n "${NP_SERVER:-}" ] && { srv=(--np-server "$NP_SERVER"); case "$bind" in *:*) ;; *) srv+=(--np-lan "$bind");; esac; }
 export MELEE_NP_SCRIPT_NO_START=1 MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_SHOW_FPS=1
 common=(play --iso "$GW_ISO_VANILLA" --np-css --time-secs 60 --quit-after-matches 2 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 20000 "$@")
-MELEE_WINDOW_TITLE="netplay css: $name host" MELEE_PAD_SCRIPT="$out/np_css_host.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+MELEE_WINDOW_TITLE="netplay css: $name host" MELEE_PAD_SCRIPT="${CSS_HOST_SCRIPT:-$out/np_css_host.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
@@ -28,7 +30,7 @@ if [ -n "${NP_SERVER:-}" ]; then
   for _ in $(seq 100); do dial=$(grep -o "MATCH CODE [A-Z0-9]*" "$out/$name-host.log" | head -1 | cut -d" " -f3); [ -n "$dial" ] && break; sleep 0.2; done
   echo "$name: match code $dial"
 fi
-MELEE_WINDOW_TITLE="netplay css: $name guest" MELEE_PAD_SCRIPT="$out/np_css_guest.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+MELEE_WINDOW_TITLE="netplay css: $name guest" MELEE_PAD_SCRIPT="${CSS_GUEST_SCRIPT:-$out/np_css_guest.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" >"$out/$name-guest.log" 2>&1
 rg=$?
 wait $h; rh=$?

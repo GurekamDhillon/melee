@@ -265,6 +265,16 @@ build / mods / protocol; `connection lost: peer timed out (the other player quit
 of silence in a match; `no packets from the other player for 20 s in the menus` in the lockstep menus; DESYNC as
 before. No reconnect.
 
+**Exit codes of `melee play`**: 0 ok; 1 any other failure (printed as `play: <reason>`, including the 60 s
+`--np-timeout` expiring); 2 bad options / mods / usage; 3 unsupported launcher-compat request (`launcher_compat::EXIT_UNSUPPORTED`,
+main.rs); 4 the disc image failed the verify check (`--verify-disc` / YouGame); **5 = the host's `--np-join-wait SECS`
+expired with no guest** (stderr: `play: netplay: no opponent joined`). `--np-join-wait` only replaces the first-room wait
+on the host; without it the `--np-timeout` (default 60 s) applies and the exit code stays 1.
+
+**`--np-no-name-entry`** (host, with `--np-css`): the name tag list's "New" row does nothing on both peers (name entry
+is never entered). It rides the host rules, `;np_rules=...,n1` (absent = retail), and a `np_no_name_entry` replay meta,
+so both peers and a replay agree.
+
 ### What changed
 - `melee_net::transport`: `Addr` gains `ip6` (IPv6; `ip` is then a fold used only as a hash input), `Display`
   (`1.2.3.4:5` / `[v6]:5`), `addr_resolve` (literals of both families and host names). `UdpTransport::open(0, port)`

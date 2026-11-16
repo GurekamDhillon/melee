@@ -76,10 +76,6 @@ pub fn game_end(raw: &[u8]) {
     send(In::End(raw.to_vec()));
 }
 
-pub fn active() -> bool {
-    TX.get().is_some()
-}
-
 // -------------------------------------------------------------------------------------------- messages
 
 pub fn b64(d: &[u8]) -> String {
@@ -189,33 +185,52 @@ static SHARED: OnceLock<Shared> = OnceLock::new();
 /// Start the output threads (before the exporter runs). Errors (a port in use, an unreadable key) are returned.
 pub fn start(o: Opts) -> Result<(), String> {
     let (tx, rx): (Sender<In>, Receiver<In>) = channel();
-    let log: Shared = Arc::new(Mutex::new(Log::default()));
+    let shared: Shared = Arc::new(Mutex::new(Log::default()));
     let key = match &o.relay_key {
         Some(p) => Some(read_key(p)?),
         None if o.relay_url.is_some() => return Err("--relay-url needs --relay-key FILE (the bracket client's key)".into()),
         None => None,
     };
-    let enet = match o.slippi_port {
-        Some(p) => {
-            let ip: std::net::Ipv4Addr = o.bind.parse().map_err(|_| format!("--spectate-bind {}: an IPv4 address", o.bind))?;
-            let tp = melee_net::transport::UdpTransport::open(u32::from(ip), p).map_err(|e| format!("slippi spectate port {p}: {e}"))?;
-            let h = melee_net::enet::Host::new(Box::new(tp), 32, 3);
-            log(&format!("Slippi spectate server on udp {}:{}", o.bind, h.local_port()));
-            Some(h)
-        }
+    let bind: Option<(std::net::Ipv4Addr, u16)> = match o.slippi_port {
+        Some(p) => Some((o.bind.parse().map_err(|_| format!("--spectate-bind {}: an IPv4 address", o.bind))?, p)),
         None => None,
     };
     let mut th = THREADS.lock().unwrap();
     {
-        let log = log.clone();
+        let sh = shared.clone();
         let nick = o.nick.clone();
-        th.push(std::thread::Builder::new().name("live-hub".into()).spawn(move || hub_thread(rx, log, enet, nick)).map_err(|e| e.to_string())?);
+        // the ENet host lives on its thread (its transport is not Send): the bind result comes back here
+        let (ok_tx, ok_rx) = channel::<Result<(), String>>();
+        th.push(
+            std::thread::Builder::new()
+                .name("live-hub".into())
+                .spawn(move || {
+                    let enet = match bind {
+                        Some((ip, p)) => match melee_net::transport::UdpTransport::open(u32::from(ip), p) {
+                            Ok(tp) => {
+                                let h = melee_net::enet::Host::new(Box::new(tp), 32, 3);
+                                log(&format!("Slippi spectate server on udp {ip}:{}", h.local_port()));
+                                Some(h)
+                            }
+                            Err(e) => {
+                                let _ = ok_tx.send(Err(format!("slippi spectate port {p}: {e}")));
+                                return;
+                            }
+                        },
+                        None => None,
+                    };
+                    let _ = ok_tx.send(Ok(()));
+                    hub_thread(rx, sh, enet, nick)
+                })
+                .map_err(|e| e.to_string())?,
+        );
+        ok_rx.recv().map_err(|e| e.to_string())??;
     }
     if let (Some(url), Some(k)) = (o.relay_url.clone(), key) {
-        let log = log.clone();
-        th.push(std::thread::Builder::new().name("live-relay".into()).spawn(move || relay_thread(url, k, log)).map_err(|e| e.to_string())?);
+        let sh = shared.clone();
+        th.push(std::thread::Builder::new().name("live-relay".into()).spawn(move || relay_thread(url, k, sh)).map_err(|e| e.to_string())?);
     }
-    let _ = SHARED.set(log);
+    let _ = SHARED.set(shared);
     let _ = TX.set(Mutex::new(tx));
     Ok(())
 }

@@ -18,10 +18,13 @@ export MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1
 common=(play ${HEADLESS---headless} --no-audio --iso "$GW_ISO_VANILLA" --time-secs ${SECS:-60} --max-frames 9000)
 live=()
 pids=()
+[ "${OFF:-}" = 1 ] && SLIPPI_CMD= RELAY_CMD=
 if [ -n "${SLIPPI_CMD:-}" ]; then
   live+=(--spectate-port $slport)
   c=${SLIPPI_CMD//\{port\}/$slport}; c=${c//\{out\}/$out/$name-slippi.bin}
-  (eval "$c") >"$out/$name-slippi.log" 2>&1 &
+  # a Slippi client dials once: start it when the output child's server is up
+  rm -f "$out/$name-child.log"
+  (for _ in $(seq 600); do grep -q "Slippi spectate server" "$out/$name-child.log" 2>/dev/null && break; sleep 0.2; done; eval "$c") >"$out/$name-slippi.log" 2>&1 &
   pids+=($!)
 fi
 if [ -n "${RELAY_CMD:-}" ]; then
@@ -30,7 +33,6 @@ if [ -n "${RELAY_CMD:-}" ]; then
   (eval "$c") >"$out/$name-relay.log" 2>&1 &
   pids+=($!)
 fi
-[ "${OFF:-}" = 1 ] && live=()
 rm -f "$out/$name-host.slp" "$out/$name-child.slp"
 export MELEE_LIVE_CHILD_LOG="$out/$name-child.log" MELEE_LIVE_CHILD_SLP="$out/$name-child.slp"
 MELEE_WINDOW_TITLE="livespec: $name host" MELEE_PAD_SCRIPT="$here/np_fight.txt" "$exe" "${common[@]}" ${HOST_EXTRA:-} \
@@ -38,7 +40,7 @@ MELEE_WINDOW_TITLE="livespec: $name host" MELEE_PAD_SCRIPT="$here/np_fight.txt" 
   --record "$out/$name-host.mrpl" --slp "$out/$name-host.slp" >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
-MELEE_WINDOW_TITLE="livespec: $name guest" MELEE_PAD_SCRIPT="$here/np_fight2.txt" "$exe" "${common[@]}" \
+MELEE_PROFILE= MELEE_WINDOW_TITLE="livespec: $name guest" MELEE_PAD_SCRIPT="$here/np_fight2.txt" "$exe" "${common[@]}" \
   --netplay join "127.0.0.1:$port" --match fox --np-hash-out "$out/$name-guest.csv" >"$out/$name-guest.log" 2>&1 &
 g=$!
 wait $g; rg=$?

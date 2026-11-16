@@ -103,7 +103,9 @@ pub static it_803F6110: [ItemStateTable; 2] = [
 ];
 
 /// `HSD_AnimJoint* it_80293660(int idx)` (293660)
+#[inline(never)]
 pub unsafe extern "C" fn it_80293660(idx: i32) -> *mut HSD_AnimJoint {
+    core::hint::black_box(0x950860F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80293660");
     // the engine's attribute block keeps the GameCube 4-byte pointer slots; the decoded animation roots are in KINOKO_JOINTS
     // (an image whose block is a native `KinokoAnim` array, as the oracle tests build it, is read directly)
@@ -119,7 +121,9 @@ pub unsafe extern "C" fn it_80293660(idx: i32) -> *mut HSD_AnimJoint {
 pub static mut KINOKO_JOINTS: [*mut HSD_AnimJoint; 32] = [core::ptr::null_mut(); 32];
 
 /// `void itKinoko_Logic26_Spawned(Item_GObj*)` (29366C)
+#[inline(never)]
 pub unsafe extern "C" fn itKinoko_Logic26_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xAA3C9073u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKinoko_Logic26_Spawned");
     let it = ip_of(gobj);
     if (*it).pos.x > 0.0 {
@@ -196,7 +200,9 @@ pub unsafe extern "C" fn itKinoko_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// `void it_8029385C(Item_GObj*)` (29385C)
+#[inline(never)]
 pub unsafe extern "C" fn it_8029385C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x60C7F4E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029385C");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }

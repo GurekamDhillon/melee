@@ -123,7 +123,8 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x149EC095u32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
         #[inline(never)]
         pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x8F7206BBu32); /* fn identity */ super::HSD_GObj_LObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xDEBB9290u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     /// Variadic C callees modelled by hand (fixed arity; the format is applied by the caller).
     pub static mut OSReport_hook: Option<fn(&str)> = None;

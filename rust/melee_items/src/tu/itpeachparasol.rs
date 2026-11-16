@@ -246,7 +246,9 @@ pub unsafe extern "C" fn it_802BDA40(_item_gobj: *mut Item_GObj, i: i32) -> i32 
 }
 
 /// 2BDA64
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDA64(parent: *mut HSD_GObj, pos: *mut Vec3, arg2: u32, dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0x585CAABCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDA64");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -274,7 +276,9 @@ pub unsafe extern "C" fn it_802BDA64(parent: *mut HSD_GObj, pos: *mut Vec3, arg2
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachParasol_Logic60_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC252F764u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachParasol_Logic60_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).owner.is_null() && ext::ftPe_8011D518((*item).owner) != 0 {
@@ -283,7 +287,9 @@ pub unsafe extern "C" fn itPeachParasol_Logic60_Destroyed(item_gobj: *mut Item_G
 }
 
 /// 2BDB94
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDB94(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xFFE5D40Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDB94");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
@@ -309,7 +315,9 @@ pub unsafe extern "C" fn it_802BDC18(item_gobj: *mut Item_GObj) {
 }
 
 /// 2BDC38
+#[inline(never)]
 pub unsafe extern "C" fn it_802BDC38(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x8406B253u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BDC38");
     let item = GET_ITEM(item_gobj);
     if (*item).msid != 2 {
@@ -321,7 +329,9 @@ pub unsafe extern "C" fn it_802BDC38(item_gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachParasol_Logic60_PickedUp(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3D75F864u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachParasol_Logic60_PickedUp");
     let item = GET_ITEM(item_gobj);
     it_802BDDB4(item_gobj, 16.0);

@@ -108,7 +108,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x880D8322u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -163,6 +164,7 @@ pub unsafe fn sqrtf_store(x: f32, y: *mut f32) -> f32 {
 }
 
 /// 2F0340
+#[inline(never)]
 pub unsafe extern "C" fn it_802F0340(
     gobj: *mut Item_GObj,
     prev_pos: *mut Vec3,
@@ -171,6 +173,7 @@ pub unsafe extern "C" fn it_802F0340(
     kind: ItemKind,
     facing_dir: f32,
 ) -> *mut Item_GObj {
+    core::hint::black_box(0xC3387CAFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F0340");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let fp = (*gobj).user_data as *mut Fighter;
@@ -198,7 +201,9 @@ pub unsafe extern "C" fn itMasterHandLaser_Logic84_EvtUnk(gobj: *mut Item_GObj, 
 }
 
 /// 2F046C
+#[inline(never)]
 pub unsafe extern "C" fn it_802F046C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC552F6FDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F046C");
     if !gobj.is_null() {
         (*GET_ITEM(gobj)).xDD4_itemVar.masterhandlaser.x0 = 1;
@@ -206,7 +211,9 @@ pub unsafe extern "C" fn it_802F046C(gobj: *mut Item_GObj) {
 }
 
 /// 2F0484
+#[inline(never)]
 pub unsafe extern "C" fn it_802F0484(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF262485Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F0484");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMasterHandLaserAttributes;
@@ -259,7 +266,9 @@ pub unsafe extern "C" fn it_802F05A8(gobj: *mut Item_GObj) {
 }
 
 /// 2F063C
+#[inline(never)]
 pub unsafe extern "C" fn it_802F063C(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0xAB38BA8Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F063C");
     let mut pos_0: Vec3 = core::mem::zeroed();
     let mut pos_1: Vec3 = core::mem::zeroed();

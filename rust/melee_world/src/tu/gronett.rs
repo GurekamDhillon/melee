@@ -92,8 +92,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x1C7470A0u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { core::hint::black_box(0xDDA4A8ECu32); /* fn identity */ super::HSD_Randi(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xE17064E7u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -269,7 +271,9 @@ pub unsafe extern "C" fn grOnett_801E37EC() -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOnett_801E37F4(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xB27EE3CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOnett_801E37F4");
     let callbacks = (&raw mut grOt_803E27E0 as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -890,7 +894,9 @@ pub unsafe extern "C" fn grOnett_801E5030(_igobj: *mut HSD_GObj, gp: *mut Ground
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOnett_801E5140(idx: i32) {
+    core::hint::black_box(0x1AE8AD92u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOnett_801E5140");
     let table: [u32; 4] = [0x5F370, 0x5F370, 0x5F371, 0x5F372];
     ext::Ground_801C53EC(table[idx as usize]);
@@ -902,7 +908,9 @@ pub unsafe fn grOnett_SfxLookup(table: *mut c_void, idx: i32, ty: i32) -> i32 {
     (*(table as *const [i32; 2]).add(idx as usize))[(ty - 4) as usize]
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOnett_801E5194(gp: *mut Ground, car_idx: i32, sound_type: i32) {
+    core::hint::black_box(0x250910FBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOnett_801E5194");
     let sfx_table: [[i32; 2]; 4] = [
         [0x5F377, 0x5F376],
@@ -914,7 +922,9 @@ pub unsafe extern "C" fn grOnett_801E5194(gp: *mut Ground, car_idx: i32, sound_t
     ext::Ground_801C5440(tmp, sound_type, grOnett_SfxLookup(sfx_table.as_ptr() as *mut c_void, car_idx, sound_type) as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOnett_801E5214(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2A58E2B6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOnett_801E5214");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
@@ -1008,7 +1018,9 @@ pub unsafe extern "C" fn grOnett_801E54B4(user_data: *mut c_void, joint_id: i32,
     (*gp).u.onett.awnings[idx].counter = (*gp).u.onett.awnings[idx].counter.wrapping_add(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOnett_801E5538(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD03BA971u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOnett_801E5538");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
@@ -1035,7 +1047,9 @@ pub unsafe extern "C" fn grOnett_801E5538(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOnett_801E56FC() -> *mut DynamicModelDesc {
+    core::hint::black_box(0x18205C48u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOnett_801E56FC");
     let archive = ext::grDatFiles_801C6330(0x1);
     assert!(!archive.is_null(), "HSD_ASSERT(1319, archive)");

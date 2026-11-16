@@ -1636,7 +1636,9 @@ pub unsafe extern "C" fn gm_801BCAF0(gobj: *mut HSD_GObj) {
 }
 
 /// 1BCC9C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801BCC9C(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x9B4C548Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801BCC9C");
     let temp_r29 = gm_804D6900[0];
     let ev = ev_ptr();

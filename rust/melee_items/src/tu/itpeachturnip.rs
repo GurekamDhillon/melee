@@ -171,12 +171,16 @@ pub unsafe extern "C" fn it_802BD32C(item_gobj: *mut Item_GObj) -> i32 {
 }
 
 /// 2BD45C
+#[inline(never)]
 pub unsafe extern "C" fn it_802BD45C(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD9EC8E09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BD45C");
     ext::Item_8026A8EC(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8211AF39u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachTurnip_Logic56_Destroyed");
     let item = GET_ITEM(item_gobj);
     // TARGET_PC: an m-ex custom article on Peach's turnip logic keeps other data in xDE4; the
@@ -193,7 +197,9 @@ pub unsafe extern "C" fn itPeachTurnip_Logic56_Destroyed(item_gobj: *mut Item_GO
 }
 
 /// Peach_SpawnAndGiveTurnip (2BD4AC)
+#[inline(never)]
 pub unsafe extern "C" fn it_802BD4AC(item_gobj: *mut Item_GObj, pos: *mut Vec3, part: u32, kind: ItemKind, fdir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xD2BBEEFDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BD4AC");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -247,7 +253,9 @@ pub unsafe extern "C" fn it_802BD4AC(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
 }
 
 /// ItemOnSpawn_Turnip
+#[inline(never)]
 pub unsafe extern "C" fn itPeachTurnip_Logic56_PickedUp(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD3A1A1BBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachTurnip_Logic56_PickedUp");
     let item = GET_ITEM(item_gobj);
 
@@ -287,7 +295,9 @@ pub unsafe extern "C" fn itPeachturnip_UnkMotion1_Phys(item_gobj: *mut Item_GObj
     ext::it_80272860(item_gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Thrown(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0EE61798u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachTurnip_Logic56_Thrown");
     let item = GET_ITEM(item_gobj);
     let jobj = GET_JOBJ(item_gobj);
@@ -335,14 +345,18 @@ pub unsafe extern "C" fn itPeachturnip_UnkMotion3_Coll(item_gobj: *mut Item_GObj
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Dropped(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDBB21108u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachTurnip_Logic56_Dropped");
     let item = GET_ITEM(item_gobj);
     ext::Item_80268E5C(item_gobj, 3, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
     ext::it_80273670(item_gobj, 0, (*item).xDD4_itemVar.peachturnip.xDD8 as f32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachTurnip_Logic56_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD7A32B0Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachTurnip_Logic56_DmgDealt");
     ext::itColl_BounceOffVictim(item_gobj);
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
@@ -373,7 +387,9 @@ pub unsafe extern "C" fn itPeachTurnip_Logic56_HitShield(item_gobj: *mut Item_GO
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachTurnip_Logic56_ShieldBounced(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x24711795u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachTurnip_Logic56_ShieldBounced");
     ext::itColl_BounceOffShield(item_gobj);
     false

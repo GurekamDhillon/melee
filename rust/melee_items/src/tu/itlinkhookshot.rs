@@ -229,7 +229,8 @@ pub mod ext {
         use super::*;
         #[inline(never)]
         pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xFA57201Cu32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x684F5D4Fu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -302,7 +303,9 @@ pub unsafe fn it_802A2428(obj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802A2474(arg0: *mut c_void) {
+    core::hint::black_box(0x1F3E5605u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A2474");
     ext::HSD_ObjFree(&raw mut ext::item_link_alloc_data, arg0);
 }
@@ -2072,7 +2075,9 @@ pub unsafe fn it_802A7A04(arg0: *mut HSD_GObj) {
     (*fp).mv.lk.specialn.x0.y = (*lk_attr).xB8 as _;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802A7AAC(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x826E2A1Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A7AAC");
     let fp = (*arg0).user_data as *mut Fighter;
     if !(*fp).u.lk.xC.is_null() {
@@ -2084,7 +2089,9 @@ pub unsafe extern "C" fn it_802A7AAC(arg0: *mut HSD_GObj) {
     (*fp).accessory3_cb = None;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802A7AF0(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xA3660F4Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A7AF0");
     let fp = (*arg0).user_data as *mut Fighter;
     if !(*fp).u.lk.xC.is_null() {
@@ -2115,7 +2122,9 @@ pub unsafe fn it_802A7B34_6944_inline(item: *mut Item) {
     HSD_JObjSetMtxDirty(jobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802A7B34(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xD5FA8F42u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A7B34");
     let mut vec: Vec3 = core::mem::zeroed();
 

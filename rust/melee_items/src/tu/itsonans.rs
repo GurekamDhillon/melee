@@ -189,7 +189,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x39E55888u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0xC26FC910u32); /* fn identity */ super::efLib_PauseAll(a0) }
         #[inline(never)]
@@ -230,7 +231,9 @@ pub static mut it_803F7CA0: [ItemStateTable; 3] = [
     st_row(-1, pred_b!(itSonans_UnkMotion2_Anim), Some(itSonans_UnkMotion2_Phys), pred_b!(itSonans_UnkMotion2_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CD44C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x70E9245Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CD44C");
     let item = GET_ITEM(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itsonansAttributes;
@@ -248,12 +251,16 @@ pub unsafe extern "C" fn it_802CD44C(gobj: *mut Item_GObj) {
 #[inline(never)]
 pub unsafe extern "C" fn it_802CD4D8(_gobj: *mut Item_GObj) { core::hint::black_box(0x7722BC2Fu32); /* fn identity */ melee_core::ct!("it_802CD4D8");}
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CD4DC(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x10221A0Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CD4DC");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CD4FC(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x401DE86Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CD4FC");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itsonansAttributes;
@@ -301,14 +308,18 @@ pub unsafe extern "C" fn it_802CD4FC(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.sonans.x68 -= (*attrs).x20;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSonans_Logic9_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xDA232970u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSonans_Logic9_DmgDealt");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.sonans.x60 *= -1.0;
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CD7D4(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x69F5701Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CD7D4");
     let item = GET_ITEM(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itsonansAttributes;
@@ -358,7 +369,9 @@ pub unsafe extern "C" fn itSonans_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CD9C0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDE9E6927u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CD9C0");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -397,7 +410,9 @@ pub unsafe extern "C" fn itSonans_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CDAA8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4B247065u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CDAA8");
     Item_EnterAirStateWithHitlag(gobj, 2);
 }

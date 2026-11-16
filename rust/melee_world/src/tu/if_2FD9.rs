@@ -55,7 +55,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xAB2789A8u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -163,20 +164,26 @@ pub unsafe fn HSD_GObjGetHSDObj(gobj: *mut HSD_GObj) -> *mut c_void {
 }
 
 /// `void un_802FD910(void)`: hide the arrows.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD910() {
+    core::hint::black_box(0x1D6CECFCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD910");
     un_804D6D90 = 1;
 }
 
 /// `void un_802FD91C(void)`: show the arrows.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD91C() {
+    core::hint::black_box(0x706D6FA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD91C");
     un_804D6D90 = 0;
 }
 
 /// `void un_802FD928(u8 slot, u8 arg1, GXColor* arg2)`: puts a human player's arrow into the first
 /// free of four rows (side `arg1`, tint `*arg2`).
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD928(slot: u8, arg1: u8, arg2: *mut _GXColor) {
+    core::hint::black_box(0xA77481FFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD928");
     if slot >= 4 {
         return;
@@ -201,7 +208,9 @@ pub unsafe extern "C" fn un_802FD928(slot: u8, arg1: u8, arg2: *mut _GXColor) {
 }
 
 /// `void un_802FD9D8(u8 slot)`: drops the player's arrow rows.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD9D8(slot: u8) {
+    core::hint::black_box(0x233D9839u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD9D8");
     for i in 0..4usize {
         if un_804A1F10.x2C[i] == slot {
@@ -288,7 +297,9 @@ pub unsafe extern "C" fn fn_802FDA78(gobj: *mut HSD_GObj) {
 }
 
 /// `void un_802FE260(void)`: loads "Stc_rarwmdls" and builds the four arrow gobjs.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE260() {
+    core::hint::black_box(0x43734E3Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE260");
     let p = &raw mut un_804A1F10;
     un_804D6D90 = 0;
@@ -318,7 +329,9 @@ pub unsafe extern "C" fn un_802FE260() {
 }
 
 /// `void un_802FE390(void)`: frees the arrow gobjs.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE390() {
+    core::hint::black_box(0x55CD649Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE390");
     for i in 0..4usize {
         if !un_804A1F10.x4[i].is_null() {

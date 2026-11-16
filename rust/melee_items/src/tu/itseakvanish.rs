@@ -121,7 +121,9 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 /// `ItemStateTable it_803F70B8[]`
 pub static mut it_803F70B8: [ItemStateTable; 1] = [st_row(0, pred_b!(itSeakvanish_UnkMotion0_Anim), None, None)];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B1C60(parent: *mut HSD_GObj, pos: *mut Vec3, dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xCF710C5Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B1C60");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -144,7 +146,9 @@ pub unsafe extern "C" fn itSeakVanish_Logic42_DmgDealt(_item_gobj: *mut Item_GOb
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B1D40(item_gobj: *mut Item_GObj, owner: *mut HSD_GObj) {
+    core::hint::black_box(0xDB30D164u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B1D40");
     let item = GET_ITEM(item_gobj);
     (*item).owner = owner;

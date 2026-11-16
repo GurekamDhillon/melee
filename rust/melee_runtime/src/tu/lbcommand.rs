@@ -179,7 +179,9 @@ pub static lbCommand_803B9840: [Option<unsafe extern "C" fn(*mut CommandInfo)>; 
     None,
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn Command_Execute(info: *mut CommandInfo, command: u32) -> bool {
+    core::hint::black_box(0x15F27BE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_Execute");
     if command < 10 {
         (lbCommand_803B9840[command as usize].unwrap())(info);

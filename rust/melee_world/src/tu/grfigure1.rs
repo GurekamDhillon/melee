@@ -225,7 +225,9 @@ pub unsafe extern "C" fn grFigure1_OnStart() {
 }
 
 /// 20E080: sets up stage gobj `gobj_id` with its row of the callback table.
+#[inline(never)]
 pub unsafe extern "C" fn grFigure1_8020E080(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xFCA2CE7Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigure1_8020E080");
     let callbacks = &raw mut grEF1_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);

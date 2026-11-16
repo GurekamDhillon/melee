@@ -68,11 +68,16 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn gmCamera_801A3098() { super::gmCamera_801A3098() }
-        pub unsafe extern "C" fn gmCamera_801A30E4() { super::gmCamera_801A30E4() }
-        pub unsafe extern "C" fn gmCamera_801A31FC() { super::gmCamera_801A31FC() }
-        pub unsafe extern "C" fn gm_80165268(a0: i32) { super::gm_80165268(a0) }
-        pub unsafe extern "C" fn gm_CameraModeVSGetPauser() -> i32 { super::gm_CameraModeVSGetPauser() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gmCamera_801A3098() { core::hint::black_box(0x58678A39u32); /* fn identity */ super::gmCamera_801A3098() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gmCamera_801A30E4() { core::hint::black_box(0x6485B231u32); /* fn identity */ super::gmCamera_801A30E4() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gmCamera_801A31FC() { core::hint::black_box(0xE26479E4u32); /* fn identity */ super::gmCamera_801A31FC() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_80165268(a0: i32) { core::hint::black_box(0xA55E18DEu32); /* fn identity */ super::gm_80165268(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_CameraModeVSGetPauser() -> i32 { core::hint::black_box(0x433AE269u32); /* fn identity */ super::gm_CameraModeVSGetPauser() }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_world::gmmain::gmMainLib_804D3EE0;

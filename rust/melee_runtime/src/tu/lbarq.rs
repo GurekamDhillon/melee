@@ -85,7 +85,9 @@ melee_core::gc_layout!(lbArqGlobal, "lbArqGlobal", size 0x1EC, align 4, [
 /// 4316C0
 pub static mut lbArq_804316C0: lbArqGlobal = unsafe { core::mem::zeroed() };
 
+#[inline(never)]
 pub unsafe extern "C" fn lbArq_80014ABC(arg0: *mut lbArqNode) -> u32 {
+    core::hint::black_box(0xFEB3EB87u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbArq_80014ABC");
     (*arg0).state
 }
@@ -145,7 +147,9 @@ pub unsafe extern "C" fn lbArq_80014AC4(handle: *mut ARQRequest) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbArq_80014BD0(source: u32, dest: *mut c_void, length: usize, callback: lbArqCallback, callback_arg: *mut c_void) {
+    core::hint::black_box(0x5730453Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbArq_80014BD0");
     let global = &raw mut lbArq_804316C0;
 
@@ -189,7 +193,9 @@ pub unsafe extern "C" fn lbArq_80014BD0(source: u32, dest: *mut c_void, length: 
     ext::OSRestoreInterrupts(intr);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbArq_80014D2C() {
+    core::hint::black_box(0xBE653E64u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbArq_80014D2C");
     let global = &raw mut lbArq_804316C0;
     let nodes = (&raw mut (*global).nodes) as *mut lbArqNode;

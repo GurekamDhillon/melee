@@ -154,7 +154,9 @@ pub static it_803F7938: [ItemStateTable; 2] = [
 
 /// `HSD_GObj* it_802C720C(HSD_GObj* parent, Vec3* pos, Fighter_Part part, float dir)`: spawns the breath item
 /// and attaches it to the fighter.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C720C(parent: *mut HSD_GObj, pos: *mut Vec, part: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0xB9B4BBBEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C720C");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Breath;
@@ -171,7 +173,9 @@ pub unsafe extern "C" fn it_802C720C(parent: *mut HSD_GObj, pos: *mut Vec, part:
 }
 
 /// `void itGameWatchBreath_Logic76_Destroyed(Item_GObj*)`: tells the owner the breath is gone.
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchBreath_Logic76_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7EE1E083u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchBreath_Logic76_Destroyed");
     let item = item_of(item_gobj);
     if !(*item).owner.is_null() {
@@ -180,7 +184,9 @@ pub unsafe extern "C" fn itGameWatchBreath_Logic76_Destroyed(item_gobj: *mut Ite
 }
 
 /// `void it_802C7340(Item_GObj*)`: tells the owner and destroys the item.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7340(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x40EAB974u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7340");
     let item = item_of(item_gobj);
     if !item.is_null() {
@@ -192,19 +198,25 @@ pub unsafe extern "C" fn it_802C7340(item_gobj: *mut Item_GObj) {
 }
 
 /// `void it_802C738C(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C738C(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6BF3F781u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C738C");
     ext::it_8026B724(item_gobj);
 }
 
 /// `void it_802C73AC(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C73AC(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7BBBB820u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C73AC");
     ext::it_8026B73C(item_gobj);
 }
 
 /// `void itGameWatchBreath_Logic76_PickedUp(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchBreath_Logic76_PickedUp(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8B778745u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchBreath_Logic76_PickedUp");
     let temp_r3 = (*item_gobj).user_data as *mut Item;
     (*temp_r3).xDAC_itcmd_var0 = 0;
@@ -215,7 +227,9 @@ pub unsafe extern "C" fn itGameWatchBreath_Logic76_PickedUp(item_gobj: *mut Item
 }
 
 /// `void it_802C7424(Item_GObj*)`: enters state 1.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7424(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA934A563u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7424");
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
 }

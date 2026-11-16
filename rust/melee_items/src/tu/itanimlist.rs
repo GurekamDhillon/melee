@@ -558,7 +558,9 @@ pub unsafe extern "C" fn it_802799A8(item_gobj: *mut Item_GObj, cmd: *mut Comman
 }
 
 /// `void it_802799E4(Item_GObj*)`: runs the item's script: every command whose timer has run out.
+#[inline(never)]
 pub unsafe extern "C" fn it_802799E4(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x612C03B7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802799E4");
     let item = item_of(item_gobj);
     let cmd = &raw mut (*item).x524_cmd;
@@ -621,25 +623,33 @@ pub unsafe extern "C" fn fn_80279B30(item_gobj: *mut Item_GObj, cmd: *mut Comman
 }
 
 /// `void it_80279B64(Item*)`
+#[inline(never)]
 pub unsafe extern "C" fn it_80279B64(item: *mut Item) {
+    core::hint::black_box(0xBA525159u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279B64");
     ext::lb_80014498(&raw mut (*item).x548_colorOverlay);
 }
 
 /// `void it_80279B88(Item*, s32, s32)`
+#[inline(never)]
 pub unsafe extern "C" fn it_80279B88(item: *mut Item, arg1: i32, arg2: i32) {
+    core::hint::black_box(0x3A3982F3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279B88");
     ext::lb_800144C8(&raw mut (*item).x548_colorOverlay, ext::it_804D6D04, arg1, arg2);
 }
 
 /// `void it_80279BBC(Item*)`
+#[inline(never)]
 pub unsafe extern "C" fn it_80279BBC(item: *mut Item) {
+    core::hint::black_box(0x73BFA888u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279BBC");
     ext::lb_80014498(&raw mut (*item).x548_colorOverlay);
 }
 
 /// `void it_80279BE0(Item_GObj*)`: runs the colour-overlay script until it stops yielding.
+#[inline(never)]
 pub unsafe extern "C" fn it_80279BE0(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC4CB60FEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279BE0");
     let item = item_of(item_gobj);
     while ext::lb_80014258(item_gobj, &raw mut (*item).x548_colorOverlay as *mut c_void, Some(fn_80279B30)) != 0 {

@@ -107,7 +107,9 @@ pub static it_803F7958: [ItemStateTable; 1] = [ItemStateTable {
 }];
 
 /// `Item_GObj* it_802C74D8(HSD_GObj* parent, Vec3* pos, Fighter_Part part, float dir)` (2C74D8)
+#[inline(never)]
 pub unsafe extern "C" fn it_802C74D8(parent: *mut HSD_GObj, pos: *mut Vec3, part: Fighter_Part, dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xA33EE9D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C74D8");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -139,7 +141,9 @@ pub unsafe extern "C" fn it_802C74D8(parent: *mut HSD_GObj, pos: *mut Vec3, part
 }
 
 /// `void itKirbyGameWatchChefPan_Logic113_Destroyed(Item_GObj*)` (2C75DC)
+#[inline(never)]
 pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xABC4F5A1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbyGameWatchChefPan_Logic113_Destroyed");
     let item = ip_of(item_gobj);
     if !(*item).owner.is_null() {
@@ -148,7 +152,9 @@ pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_Destroyed(item_gobj: *
 }
 
 /// `void it_802C760C(Item_GObj*)` (2C760C)
+#[inline(never)]
 pub unsafe extern "C" fn it_802C760C(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0565BABAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C760C");
     let item = ip_of(item_gobj);
     if !item.is_null() {
@@ -158,19 +164,25 @@ pub unsafe extern "C" fn it_802C760C(item_gobj: *mut Item_GObj) {
 }
 
 /// `void it_802C7658(Item_GObj*)` (2C7658)
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7658(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4E5961B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7658");
     ext::it_8026B724(item_gobj);
 }
 
 /// `void it_802C7678(Item_GObj*)` (2C7678)
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7678(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4254D1A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7678");
     ext::it_8026B73C(item_gobj);
 }
 
 /// `void itKirbyGameWatchChefPan_Logic113_PickedUp(Item_GObj*)` (2C7698)
+#[inline(never)]
 pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_PickedUp(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x32CD5553u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbyGameWatchChefPan_Logic113_PickedUp");
     let item = ip_of(item_gobj);
     if !(*item).owner.is_null() {

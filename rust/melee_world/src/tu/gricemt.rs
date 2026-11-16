@@ -122,8 +122,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj { super::Ground_GetMapGObj(a0) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj { core::hint::black_box(0x92D98424u32); /* fn identity */ super::Ground_GetMapGObj(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xE361CDBEu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xF85B6CE5u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -1215,8 +1217,10 @@ pub unsafe extern "C" fn fn_801F8C64(gobj: *mut Item_GObj, _u1: *mut Ground, _u2
 }
 
 /// 1F8CDC: creates the material items and attaches them to the platform JObjs of the map
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801F8CDC(gobj: *mut Ground_GObj, joint_indices: *mut i16, block_num: i32,
                                           output_array: *mut *mut HSD_GObj) {
+    core::hint::black_box(0xE6988925u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801F8CDC");
     let gp = GET_GROUND(gobj);
     let mut parent_jobjs: [*mut HSD_JObj; 20] = [null_mut(); 20];
@@ -1348,8 +1352,10 @@ pub unsafe extern "C" fn fn_801F91A8(gobj: *mut Ground_GObj) -> i32 {
 }
 
 /// 1F91EC
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801F91EC(param_1: *mut HSD_GObj, param_2: *mut i16, param_3: i32, param_4: i32,
                                           param_5: i32, param_6: i32, param_7: i32, param_8: mpLib_JointCollisionCallback) {
+    core::hint::black_box(0xF998985Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801F91EC");
     let gp = GET_GROUND(param_1);
     *param_2 = 0;
@@ -1367,7 +1373,9 @@ pub unsafe extern "C" fn grIceMt_801F91EC(param_1: *mut HSD_GObj, param_2: *mut 
 }
 
 /// 1F929C
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801F929C(arg0: *mut HSD_GObj, arg1: *mut c_void) {
+    core::hint::black_box(0x5E3EE022u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801F929C");
     let p = arg1 as *mut i16;
 
@@ -1436,7 +1444,9 @@ pub unsafe extern "C" fn fn_801F9558(user_data: *mut c_void, joint_id: i32, coll
 }
 
 /// 1F9668
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801F9668(arg0: f32) {
+    core::hint::black_box(0x66A16934u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801F9668");
     let bg_gobj = ext::Ground_GetMapGObj(8);
     assert!(!bg_gobj.is_null(), "gricemt.c:0xA37: bg_gobj");
@@ -1490,7 +1500,9 @@ unsafe fn refresh_joints(gp: *mut Ground) {
 }
 
 /// 1F98A8
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801F98A8(param1: *mut Ground_GObj) {
+    core::hint::black_box(0xF0781461u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801F98A8");
     let gp = (*param1).user_data as *mut Ground;
     refresh_joints(gp);
@@ -1745,7 +1757,9 @@ pub unsafe extern "C" fn fn_801FA4CC(num: i32) -> i32 {
 }
 
 /// 1FA500: the position of `arg1` in the depth-first walk of the map's joints, or -1
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801FA500(arg0: *mut HSD_GObj, arg1: *mut HSD_JObj) -> i32 {
+    core::hint::black_box(0x10A9FE67u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801FA500");
     let mut count = 0;
 
@@ -1784,7 +1798,9 @@ pub unsafe extern "C" fn grIceMt_801FA500(arg0: *mut HSD_GObj, arg1: *mut HSD_JO
 }
 
 /// 1FA6D8
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801FA6D8() {
+    core::hint::black_box(0x6E854C5Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801FA6D8");
     if ext::Stage_80225194() == 0x4C {
         let gobj = ext::Ground_GetMapGObj(0xA);
@@ -1798,7 +1814,9 @@ pub unsafe extern "C" fn grIceMt_801FA6D8() {
 }
 
 /// 1FA728
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801FA728(arg0: *mut Vec3) {
+    core::hint::black_box(0xE18EE3C7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801FA728");
     if ext::Stage_80225194() == 0x4C {
         let temp_r3 = ext::Ground_GetMapGObj(10);
@@ -1849,7 +1867,9 @@ pub unsafe extern "C" fn onJointCollision(_user_data: *mut c_void, _joint_id: i3
 }
 
 /// 1FA854
+#[inline(never)]
 pub unsafe extern "C" fn grIceMt_801FA854() {
+    core::hint::black_box(0xC76ADAC9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grIceMt_801FA854");
     let gobj = ext::Ground_GetMapGObj(0);
 

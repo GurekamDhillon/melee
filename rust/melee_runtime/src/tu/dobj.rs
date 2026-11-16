@@ -104,7 +104,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void { super::hsdNew(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void { core::hint::black_box(0xAFAE7839u32); /* fn identity */ super::hsdNew(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::class::hsdClass;

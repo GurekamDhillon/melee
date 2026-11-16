@@ -98,9 +98,12 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) { super::HSD_TObjReqAnimAll(a0, a1) }
-        pub unsafe extern "C" fn gm_80168BF8(a0: i32) -> f32 { super::gm_80168BF8(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x78BBC694u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) { core::hint::black_box(0x1A1DCCBBu32); /* fn identity */ super::HSD_TObjReqAnimAll(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_80168BF8(a0: i32) -> f32 { core::hint::black_box(0xCAE605F0u32); /* fn identity */ super::gm_80168BF8(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -618,7 +621,9 @@ pub unsafe fn ifStock_802F8298_step_anim(anim: *mut u8) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStock_802F8298(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x646B81E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStock_802F8298");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let stock = &raw mut ifStock_804A1378;
@@ -771,7 +776,9 @@ pub fn ifStock_802F89F8_digit(mut coins: i32, position: i32) -> i32 {
     srem(sdiv(coins, divisor), 10)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStock_802F89F8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC8D02DFFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStock_802F89F8");
     let user_data = ifStock_802F89F8_get_data(gobj);
     let player = (*user_data).player as i32;
@@ -1050,7 +1057,9 @@ pub unsafe fn ifStock_802F98E8_get_match_info(data: *mut VsSceneState, player: i
 const ifStock_802F98E8_color1: GXColor = GXColor { r: 0x08, g: 0x08, b: 0x08, a: 0x80 };
 const ifStock_802F98E8_color2: GXColor = GXColor { r: 0x3C, g: 0x3C, b: 0x46, a: 0x80 };
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStock_802F98E8(player: u8, b: u8) {
+    core::hint::black_box(0x79E70BC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStock_802F98E8");
     let stock = &raw mut ifStock_804A1378;
     let pn = player as usize;

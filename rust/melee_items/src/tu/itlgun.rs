@@ -137,7 +137,9 @@ pub static mut it_803F5CC8: [ItemStateTable; 6] = [
     st_row(-1, pred_b!(itLgun_UnkMotion5_Anim), Some(itLgun_UnkMotion5_Phys), pred_b!(itLgun_UnkMotion5_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGun_Logic16_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9E41D248u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGun_Logic16_Spawned");
     let ip = (*gobj).user_data as *mut Item;
     let item_spec_attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ItLGunAttr;
@@ -146,7 +148,9 @@ pub unsafe extern "C" fn itLGun_Logic16_Spawned(gobj: *mut Item_GObj) {
     it_8028E860(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028E774(gobj: *mut Item_GObj, arg1: *mut Vec3) {
+    core::hint::black_box(0xAE1AF1B7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028E774");
     let da = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut ItLGunAttr;
     (*arg1).x = (*da).pos.x;
@@ -155,7 +159,9 @@ pub unsafe extern "C" fn it_8028E774(gobj: *mut Item_GObj, arg1: *mut Vec3) {
 }
 
 /// Decrease ammo and fire/spawn lgunray.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028E79C(gobj: *mut Item_GObj, pos: *mut Vec3, facing_dir: f32) {
+    core::hint::black_box(0x93345F1Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028E79C");
     let ip = GET_ITEM(gobj);
     if (*ip).xD4C > 0 {
@@ -224,7 +230,9 @@ pub unsafe extern "C" fn itLgun_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
     ext::it_8026DF34(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGun_Logic16_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE5863BF7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGun_Logic16_PickedUp");
     ext::Item_80268E5C(gobj, 2, 2);
 }
@@ -239,7 +247,9 @@ pub unsafe extern "C" fn itLgun_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> bool {
 #[inline(never)]
 pub unsafe extern "C" fn itLgun_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xA414A91Du32); /* fn identity */ melee_core::ct!("itLgun_UnkMotion2_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028E938(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6D1842A5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028E938");
     (*GET_ITEM(gobj)).xDD4_itemVar.lgun.timer = 40;
     ext::Item_80268E5C(gobj, 3, 2);
@@ -260,12 +270,16 @@ pub unsafe extern "C" fn itLgun_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
 #[inline(never)]
 pub unsafe extern "C" fn itLgun_UnkMotion3_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xB15F20B4u32); /* fn identity */ melee_core::ct!("itLgun_UnkMotion3_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGun_Logic16_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x52A272D4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGun_Logic16_Dropped");
     ext::Item_80268E5C(gobj, 4, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGun_Logic16_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0EA6A82Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGun_Logic16_Thrown");
     ext::Item_80268E5C(gobj, 4, 6);
 }
@@ -308,12 +322,16 @@ pub unsafe extern "C" fn itLGun_Logic16_Reflected(gobj: *mut Item_GObj) -> i32 {
     ext::it_80273030(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGun_Logic16_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x787489B1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGun_Logic16_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGun_Logic16_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x02F9D25Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGun_Logic16_EnteredAir");
     ext::Item_80268E5C(gobj, 5, 2);
 }

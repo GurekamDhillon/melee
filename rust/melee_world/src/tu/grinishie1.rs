@@ -101,11 +101,16 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_DObjClearFlags(a0: *mut HSD_DObj, a1: u32) { super::HSD_DObjClearFlags(a0, a1) }
-        pub unsafe extern "C" fn HSD_DObjSetFlags(a0: *mut HSD_DObj, a1: u32) { super::HSD_DObjSetFlags(a0, a1) }
-        pub unsafe extern "C" fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj { super::HSD_JObjGetDObj(a0) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_DObjClearFlags(a0: *mut HSD_DObj, a1: u32) { core::hint::black_box(0x8C04B2A1u32); /* fn identity */ super::HSD_DObjClearFlags(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_DObjSetFlags(a0: *mut HSD_DObj, a1: u32) { core::hint::black_box(0x9122F20Eu32); /* fn identity */ super::HSD_DObjSetFlags(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj { core::hint::black_box(0x8D1389C8u32); /* fn identity */ super::HSD_JObjGetDObj(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x46956472u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { core::hint::black_box(0x68B70F02u32); /* fn identity */ super::HSD_Randi(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x13093919u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -519,7 +524,9 @@ pub unsafe extern "C" fn grInishie1_801FAC58(gobj: *mut Ground_GObj) {
 pub unsafe extern "C" fn grInishie1_801FAD80(_gobj: *mut Ground_GObj) { core::hint::black_box(0x95DD3ABEu32); /* fn identity */ melee_core::ct!("grInishie1_801FAD80");}
 
 /// 1FAD84
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FAD84(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x99DD410Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FAD84");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -623,7 +630,9 @@ pub unsafe extern "C" fn grInishie1_801FAD84(gobj: *mut HSD_GObj) {
 }
 
 /// 1FB0AC
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FB0AC(gobj: *mut HSD_GObj, ix: u32) {
+    core::hint::black_box(0xAD66DC31u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FB0AC");
     let gp = GET_GROUND(gobj);
     let b = (*gp).u.inishie1.block.add(ix as usize);
@@ -696,7 +705,9 @@ unsafe fn hatena_appear_checkloop(gobj: *mut HSD_GObj, vars: *mut Ground, countd
 }
 
 /// 1FB3F0
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FB3F0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x07C42FA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FB3F0");
     let vars = (*gobj).user_data as *mut Ground;
     let mut index: i32;
@@ -824,7 +835,9 @@ pub unsafe extern "C" fn grInishie1_801FB3F0(gobj: *mut HSD_GObj) {
 }
 
 /// 1FBA34: gives item from hatena block upwards velocity, maybe handles spawning it as well
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FBA34(_gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
+    core::hint::black_box(0x9B597EB1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FBA34");
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut sp1c);
@@ -834,7 +847,9 @@ pub unsafe extern "C" fn grInishie1_801FBA34(_gobj: *mut HSD_GObj, jobj: *mut HS
 }
 
 /// 1FBAA0
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FBAA0(gobj: *mut HSD_GObj, ix: i32) {
+    core::hint::black_box(0x8B36D33Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FBAA0");
     let mut position = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mapgp = (*gobj).user_data as *mut Ground;
@@ -862,7 +877,9 @@ pub unsafe extern "C" fn grInishie1_801FBAA0(gobj: *mut HSD_GObj, ix: i32) {
 }
 
 /// 1FBC4C
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FBC4C(gobj: *mut HSD_GObj, index: u32) {
+    core::hint::black_box(0x1336A37Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FBC4C");
     let gp = GET_GROUND(gobj);
     let b = (*gp).u.inishie1.block.add(index as usize);
@@ -873,7 +890,9 @@ pub unsafe extern "C" fn grInishie1_801FBC4C(gobj: *mut HSD_GObj, index: u32) {
 }
 
 /// 1FBCEC
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FBCEC(gobj: *mut HSD_GObj, index: u32) {
+    core::hint::black_box(0xD2739D24u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FBCEC");
     let gp = (*gobj).user_data as *mut Ground;
     let mut effect_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -973,7 +992,9 @@ pub unsafe extern "C" fn fn_801FBF6C(item_gobj: *mut Item_GObj, gp: *mut Ground,
 }
 
 /// 1FC018
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FC018(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3A00F331u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FC018");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -1088,7 +1109,9 @@ pub unsafe extern "C" fn grInishie1_801FC110(gobj: *mut HSD_GObj) {
 }
 
 /// 1FC4A0
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FC4A0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xED743F95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FC4A0");
     let gp = (*gobj).user_data as *mut Ground;
     let mut reached: i32 = 0;
@@ -1119,7 +1142,9 @@ pub unsafe extern "C" fn grInishie1_801FC4A0(gobj: *mut HSD_GObj) {
 }
 
 /// 1FC664
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FC664(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4DBA76D8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FC664");
     let gp = (*gobj).user_data as *mut Ground;
     let mut sp24 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1190,7 +1215,9 @@ pub unsafe extern "C" fn fn_801FC9AC(user_data: *mut c_void, joint_id: i32, _col
 }
 
 /// 1FCAAC
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FCAAC(line_id: i32) -> i32 {
+    core::hint::black_box(0x1D0FBAEFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FCAAC");
     if ext::stage_info.grkind == Gr_Kind_Inishie1 && line_id != -1 {
         let joint = (ext::mpJointFromLine(line_id) as u32).wrapping_sub(20);
@@ -1206,7 +1233,9 @@ pub unsafe extern "C" fn grInishie1_801FCAAC(line_id: i32) -> i32 {
 }
 
 /// 1FCB10
+#[inline(never)]
 pub unsafe extern "C" fn grInishie1_801FCB10(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x98D43BFFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grInishie1_801FCB10");
     let mut time_remaining: u32 = 0;
 

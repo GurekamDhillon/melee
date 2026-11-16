@@ -45,7 +45,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xE124B474u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -99,7 +100,9 @@ pub static mut it_803F70A8: [ItemStateTable; 1] = [
     st_row(-1, pred_b!(itSeakneedleheld_UnkMotion0_Anim), Some(itSeakneedleheld_UnkMotion0_Phys), pred_b!(itSeakneedleheld_UnkMotion0_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B18B0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xCA6FC197u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B18B0");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
@@ -134,6 +137,7 @@ pub unsafe extern "C" fn it_802B18B0(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B19AC(
     parent_gobj: *mut Fighter_GObj,
     cur_pos: *mut Vec3,
@@ -141,6 +145,7 @@ pub unsafe extern "C" fn it_802B19AC(
     kind: ItemKind,
     facing_dir: f32,
 ) -> *mut Item_GObj {
+    core::hint::black_box(0x1548E306u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B19AC");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -159,7 +164,9 @@ pub unsafe extern "C" fn it_802B19AC(
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSeakNeedleHeld_Logic110_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBA5A2E88u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSeakNeedleHeld_Logic110_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }

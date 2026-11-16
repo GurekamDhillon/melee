@@ -107,7 +107,9 @@ pub static mut it_803F78E8: [ItemStateTable; 1] = [
 ];
 
 /// `HSD_GObj* itGamewatchFire_Spawn(HSD_GObj*, Vec3*, Fighter_Part, float)`
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_Spawn(parent: *mut HSD_GObj, pos: *mut Vec, part: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x79787F23u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Fire;
@@ -123,7 +125,9 @@ pub unsafe extern "C" fn itGamewatchFire_Spawn(parent: *mut HSD_GObj, pos: *mut 
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_Destroyed(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5C7BA8EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).owner.is_null() {
@@ -131,7 +135,9 @@ pub unsafe extern "C" fn itGamewatchFire_Destroyed(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_802C6A2C(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x59883A01u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_802C6A2C");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
@@ -140,17 +146,23 @@ pub unsafe extern "C" fn itGamewatchFire_802C6A2C(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_802C6A78(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2C94BF1Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_802C6A78");
     ext::it_8026B724(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_802C6A98(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA07BDDD3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_802C6A98");
     ext::it_8026B73C(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchFire_PickedUp(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x389D3051u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchFire_PickedUp");
     let item = GET_ITEM(item_gobj);
     (*item).xDB0_itcmd_var1 = 0;

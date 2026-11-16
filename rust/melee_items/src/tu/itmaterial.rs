@@ -406,7 +406,9 @@ pub unsafe extern "C" fn it_80278108(item: *mut Item, mobj: *mut HSD_MObj, texp:
 }
 
 /// `it_80278574`: walks the jobj tree under `gobj` and sets every material's diffuse color to `arg1`.
+#[inline(never)]
 pub unsafe extern "C" fn it_80278574(gobj: *mut HSD_GObj, arg1: *mut _GXColor) {
+    core::hint::black_box(0xCB9EC528u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80278574");
     let mut var_r31: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     while !var_r31.is_null() {

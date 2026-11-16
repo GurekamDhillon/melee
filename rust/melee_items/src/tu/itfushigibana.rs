@@ -117,7 +117,9 @@ pub unsafe fn itFushigibana_UnkMotion1_Anim_inline2(gobj: *mut Item_GObj) -> i32
 }
 
 /// `void itFushigibana_Logic29_Spawned(Item_GObj*)`: init from the attributes.
+#[inline(never)]
 pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x35E00072u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFushigibana_Logic29_Spawned");
     let item = item_of(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itFushigibanaAttributes;
@@ -141,7 +143,9 @@ pub unsafe extern "C" fn it_802D705C(gobj: *mut Item_GObj) {
 }
 
 /// `void it_802D70A4(Item_GObj*)`: enters state 0 with the hitlag callbacks.
+#[inline(never)]
 pub unsafe extern "C" fn it_802D70A4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0CAF6217u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D70A4");
     Item_EnterStateWithEffectHitlag(gobj, 0);
     ext::it_80273670(gobj, 0, 0.0);
@@ -174,7 +178,9 @@ pub unsafe extern "C" fn itFushigibana_UnkMotion0_Coll(gobj: *mut Item_GObj) -> 
 }
 
 /// `void it_802D718C(Item_GObj*)`: enters state 1.
+#[inline(never)]
 pub unsafe extern "C" fn it_802D718C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5D91575Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D718C");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);

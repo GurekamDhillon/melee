@@ -114,7 +114,9 @@ pub static mut it_803F7FF8: [ItemStateTable; 6] = [
     st_row(5, pred_b!(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b!(itPippi_UnkMotion5_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itPippi_Logic20_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA48B4627u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPippi_Logic20_Spawned");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
@@ -134,7 +136,9 @@ pub unsafe extern "C" fn itPippi_Logic20_Spawned(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn it_802D32D8(_gobj: *mut Item_GObj) { core::hint::black_box(0xE80CAD59u32); /* fn identity */ melee_core::ct!("it_802D32D8");}
 
 /// 2D32DC
+#[inline(never)]
 pub unsafe extern "C" fn it_802D32DC(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9D0C3748u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D32DC");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -181,7 +185,9 @@ pub unsafe extern "C" fn itPippi_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
 }
 
 /// 2D33F8
+#[inline(never)]
 pub unsafe extern "C" fn it_802D33F8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7D34BF54u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D33F8");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
@@ -245,7 +251,9 @@ pub unsafe extern "C" fn itPippi_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
 }
 
 /// 2D3590
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3590(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x667C3FB9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3590");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;

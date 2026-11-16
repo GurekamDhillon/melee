@@ -377,19 +377,25 @@ pub unsafe extern "C" fn itGetGrabRangeY(gobj: *mut HSD_GObj) -> f32 {
 }
 
 /// `it_8026B390`: sets flag 0x15 of the `0xDC8` word.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B390(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFABCB95Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B390");
     (*item_of(gobj)).xDC8_word.flags.set_x15(1);
 }
 
 /// `it_8026B3A8`: clears flag 0x15 of the `0xDC8` word.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B3A8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF2D0347Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B3A8");
     (*item_of(gobj)).xDC8_word.flags.set_x15(0);
 }
 
 /// `it_8026B3F8`: stores a fighter article in the article table (m-ex clones record instead).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B3F8(article: *mut Article, kind: i32) {
+    core::hint::black_box(0x74D7BCE5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B3F8");
     // TARGET_PC: while an m-ex clone's base onLoad runs in record-only mode the registration is captured.
     if ext::Mex_ItRecord(article, kind) != 0 {
@@ -468,7 +474,9 @@ pub unsafe extern "C" fn Item_StageArticleTableTest() -> i32 {
 }
 
 /// `it_8026B40C`: stores a stage item article (kinds >= 5000 index the stage's item lookup).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B40C(article: *mut Article, kind: i32) {
+    core::hint::black_box(0xB98E5E4Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B40C");
     if kind >= 5000 {
         ext::Mex_IndexStageItem(article as *mut c_void, kind - 5000);
@@ -545,7 +553,9 @@ pub unsafe extern "C" fn it_8026B574(gobj: *mut HSD_GObj) -> f32 {
 }
 
 /// `it_8026B5E4`: finds the fighter nearest `vector` and moves `vector2` to its point.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B5E4(vector: *mut Vec3, vector2: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj {
+    core::hint::black_box(0xEEF1762Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B5E4");
     let unk_gobj = ext::ftLib_FindNearestOpponent(vector, gobj);
     if !unk_gobj.is_null() {
@@ -555,7 +565,9 @@ pub unsafe extern "C" fn it_8026B5E4(vector: *mut Vec3, vector2: *mut Vec3, gobj
 }
 
 /// `it_8026B634`: the fighter gobj for `arg0` within `farg0`, and its point to `arg1`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B634(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mut HSD_GObj, farg0: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0xBA78C98Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B634");
     let gobj = ext::ftLib_FindNearestOpponentInDir(arg0, arg2, farg0);
     if !gobj.is_null() {
@@ -565,7 +577,9 @@ pub unsafe extern "C" fn it_8026B634(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mu
 }
 
 /// `it_8026B684`: the facing direction at `pos` (no fighter).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B684(pos: *mut Vec3) -> f32 {
+    core::hint::black_box(0x385DB968u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B684");
     ext::ftLib_GetOpponentsDir(pos, null_mut())
 }
@@ -579,7 +593,9 @@ pub unsafe extern "C" fn it_8026B6A8(pos: *mut Vec3, arg1: *mut HSD_GObj) -> f32
 }
 
 /// `it_8026B6C8`: true for the stage-item kinds.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B6C8(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x378E1ECFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B6C8");
     let ip = item_of(gobj);
     let kind = (*ip).kind;
@@ -603,13 +619,17 @@ pub unsafe extern "C" fn it_8026B718(gobj: *mut HSD_GObj, hitlagFrames: f32) {
 }
 
 /// `it_8026B724`: sets bit 3 of the `0xDC8` word.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B724(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9C413289u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B724");
     (*item_of(gobj)).xDC8_word.flags.set_x3(1);
 }
 
 /// `it_8026B73C`: sets 0x5 when 0x7 is set, clears 0x3.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B73C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8D3EDC55u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B73C");
     let ip = item_of(gobj);
     if (*ip).xDC8_word.flags.x7() != 0 {
@@ -693,7 +713,9 @@ unsafe fn RunCallbackUnk(proc_: HSD_GObjInteraction, gobj0: *mut HSD_GObj, gobj1
 }
 
 /// `it_8026B894`: clears every reference to `ref_gobj` in the item; true when it was the owner.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B894(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x38171D93u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B894");
     let ip = item_of(gobj);
     let mut result = false;
@@ -808,7 +830,9 @@ pub unsafe extern "C" fn it_8026B9A8(gobj: *mut HSD_GObj, arg1: *mut HSD_GObj, a
 }
 
 /// `it_8026BAE8`: sets the item's scale to `scl_mul` times its attribute scale.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BAE8(gobj: *mut HSD_GObj, scl_mul: f32) {
+    core::hint::black_box(0x5D661904u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BAE8");
     let ip = item_of(gobj);
     let item_jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -818,25 +842,33 @@ pub unsafe extern "C" fn it_8026BAE8(gobj: *mut HSD_GObj, scl_mul: f32) {
 }
 
 /// `it_8026BB20`: clears the JObj flags on the item model.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BB20(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x91E93752u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BB20");
     ext::it_80272A18((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
 /// `it_8026BB44`: sets the JObj flags on the item model.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BB44(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x99EDC118u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BB44");
     ext::it_80272A3C((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
 /// `it_8026BB68`: adjusts the position to the fighter's bone.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BB68(fighter_gobj: *mut HSD_GObj, pos: *mut Vec3) {
+    core::hint::black_box(0x11F2FB2Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BB68");
     ext::ftLib_GetECBCenter(fighter_gobj, pos);
 }
 
 /// `it_8026BB88`: the item's position plus half the ECB's vertical extent.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BB88(gobj: *mut HSD_GObj, pos: *mut Vec3) {
+    core::hint::black_box(0x8DF83B90u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BB88");
     let ip = item_of(gobj);
     let ecb = &raw mut (*ip).x378_itemColl.ecb;
@@ -863,7 +895,9 @@ pub unsafe extern "C" fn it_8026BBCC(gobj: *mut HSD_GObj, pos: *mut Vec3) {
 }
 
 /// `it_8026BC14`: decrements the owner's hitlag while the item is held.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BC14(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7A78F596u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BC14");
     let ip = item_of(gobj);
     if !(*ip).owner.is_null() && ext::ftLib_IsFighter((*ip).owner) != 0 {
@@ -888,7 +922,9 @@ pub unsafe extern "C" fn itGetAttackId(gobj: *mut HSD_GObj) -> i32 {
 }
 
 /// `it_8026BC90`: the ECB-adjusted position when the item's owner is a fighter.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BC90(gobj: *mut HSD_GObj, pos: *mut Vec3) {
+    core::hint::black_box(0x8E8C9CCAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BC90");
     (*pos).z = 0.0;
     (*pos).y = 0.0;
@@ -899,19 +935,25 @@ pub unsafe extern "C" fn it_8026BC90(gobj: *mut HSD_GObj, pos: *mut Vec3) {
 }
 
 /// `it_8026BCF4`: clears `xDCD` bit 2.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BCF4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8C58BE41u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BCF4");
     (*item_of(gobj)).xDCD_flag.x0.set_b2(0);
 }
 
 /// `it_8026BD0C`: sets `xDCD` bit 2.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BD0C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2E9B43DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BD0C");
     (*item_of(gobj)).xDCD_flag.x0.set_b2(1);
 }
 
 /// `it_8026BD24`: sets `xDD0` bit 3.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BD24(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1796A27Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BD24");
     (*item_of(gobj)).xDD0_flag.x0.set_b3(1);
 }
@@ -925,13 +967,17 @@ pub unsafe extern "C" fn it_8026BD3C(gobj: *mut HSD_GObj) {
 }
 
 /// `it_8026BD54`: clears `xDCC` bit 3.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BD54(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x19A7EEC3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BD54");
     (*item_of(gobj)).xDCC_flag.set_b3(0);
 }
 
 /// `it_8026BD6C`: sets `xDCD` bit 3.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BD6C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7EA03EFDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BD6C");
     (*item_of(gobj)).xDCD_flag.x0.set_b3(1);
 }
@@ -945,13 +991,17 @@ pub unsafe extern "C" fn it_8026BD84(gobj: *mut HSD_GObj) {
 }
 
 /// `it_8026BD9C`: sets bit 0x1A of the `0xDC8` word.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BD9C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x86B194B6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BD9C");
     (*item_of(gobj)).xDC8_word.flags.set_x1A(1);
 }
 
 /// `it_8026BDB4`: clears bit 0x1A of the `0xDC8` word.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BDB4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x16D02F4Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BDB4");
     (*item_of(gobj)).xDC8_word.flags.set_x1A(0);
 }
@@ -983,7 +1033,9 @@ pub unsafe extern "C" fn it_8026BE28(gobj: *mut HSD_GObj) {
 }
 
 /// `it_8026BE84`: spawns the bomb-rain item for `bobOmbRain`'s kind and applies its flags.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026BE84(bobOmbRain: *mut BobOmbRain) -> *mut HSD_GObj {
+    core::hint::black_box(0x0A46C429u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026BE84");
     let mut gobj: *mut HSD_GObj = null_mut();
     if ext::gm_8016B238() != 0 && (*bobOmbRain).x14 != 6 {
@@ -1081,7 +1133,9 @@ pub unsafe extern "C" fn it_8026BE84(bobOmbRain: *mut BobOmbRain) -> *mut HSD_GO
 }
 
 /// `it_8026C100`: the item's collision data (the fighter's for a fighter-owned item, else the item's own).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C100(gobj: *mut HSD_GObj) -> *mut CollData {
+    core::hint::black_box(0x04009F0Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C100");
     let mut collDataPtr: *mut CollData = null_mut();
     match ext::it_80272D40(gobj) {
@@ -1142,7 +1196,9 @@ pub unsafe extern "C" fn it_8026C1E8(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8026C220`: records the owner's port number on the item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C220(gobj: *mut HSD_GObj, fighter_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4CBA127Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C220");
     let ip = item_of(gobj);
     (*ip).xCB0_source_ply = ext::ftLib_GetPlayerIndex(fighter_gobj) as _;
@@ -1192,7 +1248,9 @@ pub unsafe extern "C" fn it_8026C334(gobj: *mut HSD_GObj, pos: *mut Vec3) {
 }
 
 /// `it_8026C368`: runs the explosion callback of a bomb that was flagged by its collision (bit 7).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C368(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE4E59D9Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C368");
     let ip = item_of(gobj);
     if (*ip).x378_itemColl.x34_flags.b7() != 0 {
@@ -1241,13 +1299,17 @@ pub unsafe extern "C" fn itGetKind(gobj: *mut HSD_GObj) -> ItemKind {
 }
 
 /// `it_8026B30C`: the attribute's `x0_78` field.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B30C(gobj: *mut HSD_GObj) -> enum_t {
+    core::hint::black_box(0x81AAB1BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B30C");
     (*(*item_of(gobj)).xCC_item_attr).x0_78() as enum_t
 }
 
 /// `itGetHoldKind`: the attribute's `x0_hold_kind` field.
+#[inline(never)]
 pub unsafe extern "C" fn itGetHoldKind(gobj: *mut HSD_GObj) -> Item_HoldKinds {
+    core::hint::black_box(0x0A6ACE32u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGetHoldKind");
     (*(*item_of(gobj)).xCC_item_attr).x0_hold_kind() as Item_HoldKinds
 }
@@ -1293,7 +1355,9 @@ pub unsafe extern "C" fn it_8026B594(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8026B7F8`: runs each item's `evt_unk` callback for `fighter_gobj` and releases the items it owned.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026B7F8(fighter_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1F214FE9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026B7F8");
     let mut cur = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
     while !cur.is_null() {

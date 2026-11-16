@@ -73,12 +73,16 @@ unsafe fn Item_TickLifetime(ip: *mut Item) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroy(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9291C464u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_Destroy");
     ext::Item_8026A8EC(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA7347BD5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).xDD4_itemVar.mdisable.owner.is_null() {
@@ -87,11 +91,13 @@ pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroyed(item_gobj: *mut Item_
     (*item).xDD4_itemVar.mdisable.owner = null_mut();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(
     fighter_gobj: *mut Fighter_GObj,
     offset: *mut Vec3,
     facing_dir: f32,
 ) -> *mut Item_GObj {
+    core::hint::black_box(0x5C096C9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_SpawnMewtwoDisable");
     let mut spawnitem: SpawnItem = core::mem::zeroed();
 
@@ -123,7 +129,9 @@ pub unsafe extern "C" fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(
     item_gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C4B38(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x97FD5F89u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C4B38");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itMDisableAttributes;
@@ -138,7 +146,9 @@ pub unsafe extern "C" fn it_802C4B38(item_gobj: *mut Item_GObj) {
     it_802C4BB8(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C4BB8(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9134A450u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C4BB8");
     let item = GET_ITEM(item_gobj);
 

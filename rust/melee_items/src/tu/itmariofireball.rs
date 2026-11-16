@@ -94,7 +94,9 @@ fn sqrtf_accurate(x: f32) -> f32 {
 }
 
 /// 29B6F8
+#[inline(never)]
 pub unsafe extern "C" fn it_8029B6F8(gobj: *mut Item_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) {
+    core::hint::black_box(0x68414580u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029B6F8");
     let mut spawn_item: SpawnItem = core::mem::zeroed();
     spawn_item.kind = kind;
@@ -111,7 +113,9 @@ pub unsafe extern "C" fn it_8029B6F8(gobj: *mut Item_GObj, pos: *mut Vec3, kind:
 }
 
 /// 29B7C0
+#[inline(never)]
 pub unsafe extern "C" fn it_8029B7C0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD7FC5C22u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029B7C0");
     let it = GET_ITEM(gobj);
     let ap = (*(*it).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
@@ -207,7 +211,9 @@ pub unsafe extern "C" fn itMarioFireball_Logic87_Absorbed(_gobj: *mut Item_GObj)
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMarioFireball_Logic87_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xE9BBF433u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMarioFireball_Logic87_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }

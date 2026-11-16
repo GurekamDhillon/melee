@@ -70,77 +70,99 @@ pub mod ext {
                 }
             }
     pub static mut H_un_802FF7DC: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF7DC()  {
+                core::hint::black_box(0x31AD93D3u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF7DC {
                     Some(f) => f(),
                     None => { unsafe { melee_world::tu::soundtest::un_802FF7DC(); } return; },
                 }
             }
     pub static mut H_un_802FF884: Option<unsafe extern "C" fn(*mut i8) -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF884(a0: *mut i8) -> i32 {
+                core::hint::black_box(0xFBBA6E67u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF884 {
                     Some(f) => f(a0),
                     None => { return unsafe { crate::hud_ptr::un_802FF884(a0 as _) as _ }; },
                 }
             }
     pub static mut H_lbCardNew_AllocWorkArea: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbCardNew_AllocWorkArea()  {
+                core::hint::black_box(0x677EE111u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbCardNew_AllocWorkArea {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
                 }
             }
     pub static mut H_lbCardGame_LoadArchive: Option<unsafe extern "C" fn(i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbCardGame_LoadArchive(a0: i32)  {
+                core::hint::black_box(0xF8BBEFA4u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbCardGame_LoadArchive {
                     Some(f) => f(a0),
                     None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a0 as _); } return; },
                 }
             }
     pub static mut H_lbSnap_8001E218: Option<unsafe extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbSnap_8001E218(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void)  {
+                core::hint::black_box(0xE69EF263u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbSnap_8001E218 {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::lbsnap::lbSnap_8001E218(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_HSD_MemAlloc: Option<unsafe extern "C" fn(i32) -> *mut core::ffi::c_void> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_MemAlloc(a0: i32) -> *mut core::ffi::c_void {
+                core::hint::black_box(0x80013B0Du32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_MemAlloc {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ }; },
                 }
             }
     pub static mut H_lbSnap_8001E204: Option<unsafe extern "C" fn() -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbSnap_8001E204() -> i32 {
+                core::hint::black_box(0x649BE726u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbSnap_8001E204 {
                     Some(f) => f(),
                     None => { return unsafe { crate::lb::lbSnap_8001E204() as _ }; },
                 }
             }
     pub static mut H_lbSnap_8001E210: Option<unsafe extern "C" fn() -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbSnap_8001E210() -> i32 {
+                core::hint::black_box(0xEE9EFEFBu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbSnap_8001E210 {
                     Some(f) => f(),
                     None => { return unsafe { crate::lb::lbSnap_8001E210() as _ }; },
                 }
             }
     pub static mut H_lbDvd_80018C6C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_80018C6C()  {
+                core::hint::black_box(0xA4E3910Fu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_80018C6C {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018C6C(); } return; },
                 }
             }
     pub static mut H_lbDvd_8001823C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_8001823C()  {
+                core::hint::black_box(0x53FB35CDu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_8001823C {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_8001823C(); } return; },
                 }
             }
     pub static mut H_lbDvd_80018254: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_80018254()  {
+                core::hint::black_box(0x10F64F26u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_80018254 {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },

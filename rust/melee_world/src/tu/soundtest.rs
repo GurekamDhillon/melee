@@ -854,7 +854,9 @@ macro_rules! to_mode {
 }
 
 /// `void un_802FF7DC(void)`: loads the sound test archive's symbols into the menu rows.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF7DC() {
+    core::hint::black_box(0x514F5478u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF7DC");
     let data = &raw mut un_803F9FA4;
     ext::lbArchive_LoadSymbols((*data).x160.as_ptr(), &raw mut un_804D6DA8 as *mut c_void, (*data).x16C.as_ptr());
@@ -868,7 +870,9 @@ pub unsafe extern "C" fn un_802FF7DC() {
 }
 
 /// `bool un_802FF884(char*)`
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF884(_arg0: *mut i8) -> i32 {
+    core::hint::black_box(0x1FD38B04u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF884");
     0
 }

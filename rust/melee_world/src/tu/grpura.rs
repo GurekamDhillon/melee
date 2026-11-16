@@ -85,7 +85,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xE29ABC66u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xEA9AAEEDu32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -233,12 +234,16 @@ pub unsafe extern "C" fn grPura_80211E00() -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80211E08_noinline(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x7ECE6EE6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80211E08_noinline");
     setupStageCallbacks(gobj_id)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80211E08_noinline2(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x72F877BCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80211E08_noinline2");
     grPura_80211E08_noinline(gobj_id)
 }
@@ -571,7 +576,9 @@ pub unsafe extern "C" fn stageGObj2_GObjProc(arg0: *mut HSD_GObj) {
 #[inline(never)]
 pub unsafe extern "C" fn stageGObj2_Callback3(_arg0: *mut HSD_GObj) { core::hint::black_box(0x65689EF9u32); /* fn identity */ melee_core::ct!("stageGObj2_Callback3");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_802125F0(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x4E5C88F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_802125F0");
     let mut desc = (&raw mut grPu_803E6AB0) as *mut GrPuModelDesc;
 
@@ -621,7 +628,9 @@ pub unsafe extern "C" fn grPura_802125F0(arg0: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80212CD4(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xCEF5F30Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80212CD4");
     let gp = (*arg0).user_data as *mut Ground;
     let gp2 = gp;
@@ -665,7 +674,9 @@ pub unsafe extern "C" fn grPura_80212CD4(arg0: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80212EF4(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x9A0582F6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80212EF4");
     let gp = (*arg0).user_data as *mut Ground;
     let gp2 = gp;
@@ -700,7 +711,9 @@ pub unsafe extern "C" fn grPura_80212FC0(_arg0: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80213030(_arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x71237999u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80213030");
     let mut sp_c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut var_r30 = 0usize;
@@ -740,7 +753,9 @@ pub unsafe extern "C" fn fn_802130D0(arg0: *mut HSD_GObj, arg1: isize) {
     ext::HSD_MObjSetToonTextureImage(null_mut());
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80213128(dobj: *mut HSD_DObj) {
+    core::hint::black_box(0x6AFF9017u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80213128");
     let next = (*dobj).next;
     if !next.is_null() {
@@ -777,14 +792,18 @@ pub unsafe extern "C" fn grPura_80213128(dobj: *mut HSD_DObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80213224(dobj: *mut HSD_DObj) {
+    core::hint::black_box(0xAA4B6FEAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80213224");
     if !dobj.is_null() {
         ext::HSD_MObjCompileTev((*dobj).mobj);
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grPura_80213250(jobj: *mut HSD_JObj) {
+    core::hint::black_box(0xA83EA0D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grPura_80213250");
     let child = (*jobj).child;
 

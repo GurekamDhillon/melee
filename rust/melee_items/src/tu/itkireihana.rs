@@ -94,7 +94,9 @@ pub static mut it_803F7E28: [ItemStateTable; 5] = [
     ItemStateTable { anim_id: 4, animated: Some(itKireihana_UnkMotion4_Anim), physics_updated: Some(itKireihana_UnkMotion4_Phys), collided: Some(itKireihana_UnkMotion4_Coll) },
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itKireihana_Logic15_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x14AC9B83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKireihana_Logic15_Spawned");
     let item = get_item(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itkireihanaAttributes;
@@ -110,7 +112,9 @@ pub unsafe extern "C" fn itKireihana_Logic15_Spawned(gobj: *mut Item_GObj) {
     (*item).xDD4_itemVar.kireihana.x70 = 0.0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKireihana_Logic15_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2C32ABFCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKireihana_Logic15_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -198,7 +202,9 @@ pub unsafe extern "C" fn itKireihana_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i3
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D03F8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE04C82C3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D03F8");
     let item = get_item(gobj);
     ext::Item_80268E5C(gobj, 2, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as _);
@@ -258,7 +264,9 @@ pub unsafe extern "C" fn itKireihana_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i3
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D05D8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5AF346A7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D05D8");
     let item = get_item(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as _);
@@ -308,14 +316,18 @@ pub unsafe extern "C" fn itKireihana_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i3
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D0774(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBA9BAD2Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D0774");
     let ip = get_item(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as _);
     Item_SetEffectHitlagCallbacks(ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D07C0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3D7BCA8Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D07C0");
     let ip = get_item(gobj);
     ext::Item_80268E5C(gobj, 4, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as _);
@@ -355,7 +367,9 @@ pub unsafe extern "C" fn itKireihana_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i3
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D08F0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0190A8F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D08F0");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }

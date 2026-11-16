@@ -63,10 +63,14 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() { super::_HSD_StateInvalidateColorChannel() }
-        pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() { super::_HSD_StateInvalidateTevRegister() }
-        pub unsafe extern "C" fn _HSD_StateInvalidateTevStage() { super::_HSD_StateInvalidateTevStage() }
-        pub unsafe extern "C" fn _HSD_StateInvalidateTexCoordGen() { super::_HSD_StateInvalidateTexCoordGen() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() { core::hint::black_box(0xA62F5197u32); /* fn identity */ super::_HSD_StateInvalidateColorChannel() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() { core::hint::black_box(0x0E1E21F1u32); /* fn identity */ super::_HSD_StateInvalidateTevRegister() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateTevStage() { core::hint::black_box(0xD9E76BA6u32); /* fn identity */ super::_HSD_StateInvalidateTevStage() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateTexCoordGen() { core::hint::black_box(0x29496483u32); /* fn identity */ super::_HSD_StateInvalidateTexCoordGen() }
     }
     // Data defined in other TUs (the tests set them).
 }

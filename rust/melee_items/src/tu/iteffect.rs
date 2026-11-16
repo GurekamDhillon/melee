@@ -109,7 +109,9 @@ pub unsafe extern "C" fn it_8027870C(_arg0: i32) {
     ext::it_804D6D04 = (*ext::it_804D6D20).x14;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802787B4(item_gobj: *mut HSD_GObj, arg1: i32) {
+    core::hint::black_box(0x2AE562AFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802787B4");
     let mut sp1C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -292,7 +294,9 @@ fn blk_of(ef_id: i32) -> Blk {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80278800(item_gobj: *mut HSD_GObj, ef_id: i32, arg2: i32, arg3: *mut Vec3, arg4: *mut Vec3, arg5: i32, _arg6: f32) {
+    core::hint::black_box(0x90D4DC44u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80278800");
     let item = (*item_gobj).user_data as *mut Item;
     let xbc0 = &raw mut (*item).xBC0 as *mut c_void;

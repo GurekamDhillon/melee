@@ -248,7 +248,9 @@ pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, code: isize) {
 }
 
 /// 1C5F60
+#[inline(never)]
 pub unsafe extern "C" fn grDisplay_801C5F60(gobj: *mut HSD_GObj, _code: isize) {
+    core::hint::black_box(0x7E96CC1Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grDisplay_801C5F60");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     if ext::HSD_CObjSetCurrent(cobj) != 0 {

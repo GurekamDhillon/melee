@@ -132,7 +132,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x20BD5E45u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -197,7 +198,9 @@ pub unsafe extern "C" fn it_802EAF34(owner: *mut HSD_GObj, offset: *mut Vec3, ty
 }
 
 /// `void it_802EB1EC(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn it_802EB1EC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x51B635E7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EB1EC");
     let ip = GET_ITEM(gobj);
     ext::it_8027B730(gobj);
@@ -211,7 +214,9 @@ pub unsafe extern "C" fn it_802EB1EC(gobj: *mut HSD_GObj) {
 }
 
 /// `void it_802EB268(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn it_802EB268(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x04C3796Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EB268");
     let ip = GET_ITEM(gobj);
     ext::it_8026B3A8(gobj);
@@ -283,7 +288,9 @@ pub unsafe extern "C" fn itGreatFoxLaser_Logic27_Absorbed(_item_gobj: *mut HSD_G
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic27_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x778BB398u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic27_Reflected");
     let ip = GET_ITEM(gobj);
     let mut reflect_pos: Vec3 = core::mem::zeroed();

@@ -260,7 +260,9 @@ pub static mut un_804D6D98: *mut HSD_Archive = null_mut();
 /// 4D6D9C .sbss
 pub static mut un_804D6D9C: *mut SceneDesc = null_mut();
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE3F8(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    core::hint::black_box(0x8951611Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE3F8");
     let mut x: *mut un_803F9B30 = &raw mut un_803F9B30[0];
     while (*x).x0 != 66 {
@@ -281,14 +283,18 @@ pub unsafe extern "C" fn un_802FE3F8(a: i32, b: i32, c: *mut i16, d: *mut i16) {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE3F8_inner(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    core::hint::black_box(0x096EB829u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE3F8_inner");
     un_802FE3F8(a, b, c, d);
 }
 
 /// ifPrize_Scene_OnEnter will inline un_802FE3F8 otherwise
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE3F8_noinline(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    core::hint::black_box(0xD91CF291u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE3F8_noinline");
     un_802FE3F8_inner(a, b, c, d);
 }
@@ -359,7 +365,9 @@ pub unsafe extern "C" fn fn_802FE470(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE6A8() {
+    core::hint::black_box(0xC3DCAA92u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE6A8");
     let st = &raw mut un_803F9D48;
     let gobj_camera = ext::GObj_Create(HSD_GOBJ_CLASS_CAMERA as u16, 20, 0);
@@ -399,7 +407,9 @@ pub unsafe extern "C" fn un_802FE6A8() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE8CC() {
+    core::hint::black_box(0xC9148F63u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE8CC");
     let st = &raw mut un_803F9D48;
     if (*st).x0a() == 0 || (*st).x0b() == 0 {
@@ -410,7 +420,9 @@ pub unsafe extern "C" fn un_802FE8CC() {
 }
 
 /// Needed for `.data` ordering
+#[inline(never)]
 pub unsafe extern "C" fn setArchive() {
+    core::hint::black_box(0x768D99B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setArchive");
     un_804D6D98 = ext::lbArchive_80016DBC(
         c"IfPrize".as_ptr().cast(),
@@ -446,7 +458,9 @@ pub unsafe extern "C" fn un_802FE918_update_x3(x3_ptr: *mut u8, r: *mut i32) {
     *x3_ptr = new_x3 as u8;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE918(a: i32, b: i32, c: i32) {
+    core::hint::black_box(0x721792D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE918");
     let st = &raw mut un_803F9D48;
     let i: i32;

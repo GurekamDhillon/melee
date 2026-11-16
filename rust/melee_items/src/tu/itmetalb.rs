@@ -61,7 +61,9 @@ pub static mut it_803F62C0: [ItemStateTable; 5] = [
     st_row(-1, pred_b!(itMetalb_UnkMotion4_Anim), Some(itMetalb_UnkMotion4_Phys), pred_b!(itMetalb_UnkMotion4_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8550EB8Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_Spawned");
     let it = GET_ITEM(gobj);
     (*it).xDCE_flag.x0.set_b7(0);
@@ -130,7 +132,9 @@ pub unsafe extern "C" fn itMetalb_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2CB579B9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
@@ -142,7 +146,9 @@ pub unsafe extern "C" fn itMetalb_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9427F3E2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_Dropped");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
@@ -165,7 +171,9 @@ pub unsafe extern "C" fn itMetalb_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x102B863Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_DmgReceived");
     let it = GET_ITEM(gobj);
     let go = ext::it_8027236C(gobj);
@@ -183,7 +191,9 @@ pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> b
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x20149DFDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }

@@ -209,7 +209,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xEC63CB15u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -595,7 +596,9 @@ pub unsafe extern "C" fn it_802F2020(gobj: *mut HSD_GObj) -> i32 {
 }
 
 /// `it_802F202C`: the landing sound; stop the horizontal speed and cap the fall.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F202C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB489D76Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F202C");
     let ip = item_of(gobj);
     ext::lbAudioAx_800237A8(0xAA, 0x7F, 0x40);
@@ -608,7 +611,9 @@ pub unsafe extern "C" fn it_802F202C(gobj: *mut HSD_GObj) {
 
 /// `it_802F2094` (itcoin.c): spawn a coin (`arg3` is the coin kind; 0 is a stack, else a launched
 /// coin), owned by the figure `arg0`, with value `arg2`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F2094(arg0: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, arg3: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x85965964u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F2094");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Coin;

@@ -185,7 +185,9 @@ pub unsafe extern "C" fn it_80293DCC(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80293E34(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5D936DE0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80293E34");
     let mut sp30: Vec3 = core::mem::zeroed();
     let mut sp24: Vec3 = core::mem::zeroed();
@@ -207,7 +209,9 @@ pub unsafe extern "C" fn it_80293E34(gobj: *mut HSD_GObj) {
     thing(gobj as *mut c_void);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammer_Logic28_Spawned(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC569A8C1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammer_Logic28_Spawned");
     (*GET_ITEM(gobj)).xD4C = 1;
     it_8029402C(gobj);
@@ -278,7 +282,9 @@ pub unsafe extern "C" fn itHammer_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
     ext::it_8026DF34(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammer_Logic28_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4F35CDA4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammer_Logic28_PickedUp");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
@@ -298,13 +304,17 @@ pub unsafe extern "C" fn itHammer_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802941A4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC80513F9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802941A4");
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
     thing(gobj as *mut c_void);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammer_Logic28_Dropped(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0549D2ADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammer_Logic28_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
     thing(gobj as *mut c_void);
@@ -329,7 +339,9 @@ pub unsafe extern "C" fn itHammer_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammer_Logic28_EnteredAir(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x652EDE68u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammer_Logic28_EnteredAir");
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as u32);
     thing(gobj as *mut c_void);

@@ -141,7 +141,9 @@ pub static mut it_803F79C0: [ItemStateTable; 2] = [
 ];
 
 /// `Item_GObj* it_802C8038(Item_GObj* parent, Vec3* arg1, s32 arg2, s32 arg3, f32 farg0, f32 farg1)`
+#[inline(never)]
 pub unsafe extern "C" fn it_802C8038(parent: *mut HSD_GObj, arg1: *mut Vec, arg2: i32, arg3: i32, farg0: f32, farg1: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0xBFCD93F8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C8038");
     let result: *mut HSD_GObj;
     if !parent.is_null() {
@@ -165,7 +167,9 @@ pub unsafe extern "C" fn it_802C8038(parent: *mut HSD_GObj, arg1: *mut Vec, arg2
     result
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C8158(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x600CB365u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C8158");
     let item = GET_ITEM(item_gobj);
     if !item_gobj.is_null() && !item.is_null() {
@@ -179,17 +183,23 @@ pub unsafe extern "C" fn it_802C8158(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C81C8(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD3E04A63u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C81C8");
     ext::it_8026B724(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C81E8(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDFE4DA75u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C81E8");
     ext::it_8026B73C(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C8208(hsd_gobj: *mut HSD_GObj, msid: enum_t) {
+    core::hint::black_box(0x1F03B659u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C8208");
     ext::Item_80268E5C(hsd_gobj, msid, ITEM_ANIM_UPDATE as u32);
     ext::Item_802694CC(hsd_gobj);

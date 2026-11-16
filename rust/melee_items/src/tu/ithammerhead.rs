@@ -113,7 +113,9 @@ pub static it_803F6640: [ItemStateTable; 4] = [
 ];
 
 /// `void it_80299C48(Item_GObj* parent, Vec3* pos, Vec3* velocity, f32 facing_dir)`: throw a head.
+#[inline(never)]
 pub unsafe extern "C" fn it_80299C48(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, velocity: *mut Vec3, facing_dir: f32) {
+    core::hint::black_box(0xDBDE638Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80299C48");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Hammer_Head as _;
@@ -140,7 +142,9 @@ pub unsafe extern "C" fn itHammerHead_Logic40_Spawned(gobj: *mut HSD_GObj) {
     ext::it_80275158(gobj, (*attrs).x4);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80299D7C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE569D896u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80299D7C");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air != GA_Air as _ {
@@ -150,7 +154,9 @@ pub unsafe extern "C" fn it_80299D7C(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 0, (ITEM_UNK_0x1 | ITEM_DROP_UPDATE) as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x600F1246u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_PickedUp");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itHammerheadAttributes;
@@ -168,7 +174,9 @@ pub unsafe extern "C" fn itHammerhead_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> i
 #[inline(never)]
 pub unsafe extern "C" fn itHammerhead_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xE8E3431Eu32); /* fn identity */ melee_core::ct!("itHammerhead_UnkMotion1_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itHammerHead_Logic40_Dropped(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x58113E23u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHammerHead_Logic40_Dropped");
     itHammerHead_Logic40_Thrown(gobj);
 }
@@ -233,7 +241,9 @@ pub unsafe extern "C" fn it_80299FB4_get(gobj: *mut HSD_GObj) -> *mut Item {
     GET_ITEM(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80299FB4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9149D97Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80299FB4");
     let ip = it_80299FB4_get(gobj);
     (*ip).x40_vel.y = 0.0;

@@ -113,7 +113,9 @@ pub mod ext {
             }
     hook!(H_HSD_JObjClearFlagsAll, HSD_JObjClearFlagsAll, (a0: *mut melee_types::HSD_JObj, a1: u32));
     pub static mut H_HSD_SisLib_803A6368: Option<unsafe extern "C" fn(*mut melee_types::HSD_Text, i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_SisLib_803A6368(a0: *mut melee_types::HSD_Text, a1: i32)  {
+                core::hint::black_box(0x00ACD9A2u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_SisLib_803A6368 {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; },
@@ -139,7 +141,9 @@ pub mod ext {
     hook!(H_lbArchive_80016DBC, lbArchive_80016DBC, (a0: *const i8, a1: *mut core::ffi::c_void, a2: *const i8, a3: i32) -> *mut melee_types::HSD_Archive);
     hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
     pub static mut H_HSD_CObjLoadDesc: Option<unsafe extern "C" fn(*mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_CObjLoadDesc(a0: *mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj {
+                core::hint::black_box(0x4D68510Du32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_CObjLoadDesc {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ }; },
@@ -149,7 +153,9 @@ pub mod ext {
     hook!(H_GObj_SetupGXLinkMax, GObj_SetupGXLinkMax, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u32));
     hook!(H_HSD_GObj_803910D8, HSD_GObj_803910D8, (a0: *mut melee_types::HSD_GObj, a1: isize));
     pub static mut H_HSD_SisLib_803A611C: Option<unsafe extern "C" fn(i32, *mut melee_types::HSD_GObj, u16, u8, u8, u8, u8, u32) -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_SisLib_803A611C(a0: i32, a1: *mut melee_types::HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 {
+                core::hint::black_box(0x09D188AEu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_SisLib_803A611C {
                     Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7),
                     None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A611C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _) as _ }; },
@@ -163,21 +169,27 @@ pub mod ext {
                 }
             }
     pub static mut H_HSD_SisLib_803A62A0: Option<unsafe extern "C" fn(i32, *mut i8, *mut i8) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8)  {
+                core::hint::black_box(0x6D1F529Eu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_SisLib_803A62A0 {
                     Some(f) => f(a0, a1, a2),
                     None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A62A0(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
     pub static mut H_HSD_SisLib_803A5ACC: Option<unsafe extern "C" fn(i32, i32, f32, f32, f32, f32, f32) -> *mut melee_types::HSD_Text> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut melee_types::HSD_Text {
+                core::hint::black_box(0xCE294DEFu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_SisLib_803A5ACC {
                     Some(f) => f(a0, a1, a2, a3, a4, a5, a6),
                     None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _) as _ }; },
                 }
             }
     pub static mut H_HSD_JObjLoadJoint: Option<unsafe extern "C" fn(*mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj {
+                core::hint::black_box(0x3B7B7E8Bu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_JObjLoadJoint {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },

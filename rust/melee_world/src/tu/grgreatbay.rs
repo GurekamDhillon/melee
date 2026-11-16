@@ -104,8 +104,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x3843BD6Bu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { core::hint::black_box(0x311FA4DDu32); /* fn identity */ super::HSD_Randi(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xDC41A9E0u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -344,7 +346,9 @@ pub unsafe extern "C" fn grGreatBay_801F42D4() {
 }
 
 /// 1F4300
+#[inline(never)]
 pub unsafe extern "C" fn grGreatBay_801F4300(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xC2629FE2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreatBay_801F4300");
     let callbacks = &raw mut grGb_StageCallbacks[gobj_id as usize];
 
@@ -874,7 +878,9 @@ pub unsafe extern "C" fn grGreatBay_801F5AF8(gobj: *mut Ground_GObj) {
 }
 
 /// 1F5D4C
+#[inline(never)]
 pub unsafe extern "C" fn grGreatBay_801F5D4C(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x9B812243u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreatBay_801F5D4C");
     let gp = GET_GROUND(gobj);
 
@@ -1000,7 +1006,9 @@ pub unsafe extern "C" fn grGreatBay_801F60C4(user_data: *mut c_void, _joint_id: 
 }
 
 /// 1F62F8
+#[inline(never)]
 pub unsafe extern "C" fn grGreatBay_801F62F8(mut current: i32) -> i32 {
+    core::hint::black_box(0xE0E03271u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreatBay_801F62F8");
     let mut result: i32;
     let mut i: i32 = 0;
@@ -1048,7 +1056,9 @@ pub unsafe extern "C" fn grGreatBay_801F62F8(mut current: i32) -> i32 {
 }
 
 /// 1F63F4
+#[inline(never)]
 pub unsafe extern "C" fn grGreatBay_801F63F4(gobj: *mut Ground_GObj) -> i32 {
+    core::hint::black_box(0xECC5BCA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreatBay_801F63F4");
     let mut rot = grGb_803B81C8;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1108,7 +1118,9 @@ pub unsafe extern "C" fn grGreatBay_801F63F4(gobj: *mut Ground_GObj) -> i32 {
 }
 
 /// 1F660C
+#[inline(never)]
 pub unsafe extern "C" fn grGreatBay_801F660C(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xD13E2CD6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreatBay_801F660C");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -1123,7 +1135,9 @@ pub unsafe extern "C" fn grGreatBay_801F660C(gobj: *mut Ground_GObj) {
 }
 
 /// 1F66A4
+#[inline(never)]
 pub unsafe extern "C" fn grGreatBay_801F66A4() -> i32 {
+    core::hint::black_box(0xB751E8CEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreatBay_801F66A4");
     if ext::stage_info.grkind == Gr_Kind_GreatBay {
         let gobj = ext::Ground_GetMapGObj(1);
@@ -1164,7 +1178,9 @@ pub unsafe extern "C" fn grGreatBay_801F6708(_unk: u32, gobj: *mut HSD_GObj) -> 
 }
 
 /// 1F67A4
+#[inline(never)]
 pub unsafe extern "C" fn grGreatBay_801F67A4(vec: *mut Vec3, arg8: f32) {
+    core::hint::black_box(0xCC7036EDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreatBay_801F67A4");
     let temp_r3 = ext::grLib_801C96F8(0x7537, 0x1E, vec);
     if !temp_r3.is_null() {

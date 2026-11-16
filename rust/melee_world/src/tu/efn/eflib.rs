@@ -164,7 +164,9 @@ pub unsafe extern "C" fn eflib_generator_add_appsrt(mut generator: *mut HSD_Gene
 }
 
 /// `efLib_Init`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Init() {
+    core::hint::black_box(0xBBF5B417u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Init");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut i: i32 = 0;
@@ -201,7 +203,9 @@ pub unsafe extern "C" fn efLib_Init() {
 }
 
 /// `efLib_SetFlags`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_SetFlags(mut gobj: *mut HSD_GObj, mut expire_flags: i32) {
+    core::hint::black_box(0x07A8BD16u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_SetFlags");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
@@ -255,7 +259,9 @@ pub unsafe extern "C" fn efLib_Destroy(mut gobj: *mut HSD_GObj) {
 }
 
 /// `efLib_DestroyAll`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_DestroyAll(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x993E83B8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_DestroyAll");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();

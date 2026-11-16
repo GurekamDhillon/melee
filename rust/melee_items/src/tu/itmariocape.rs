@@ -137,6 +137,7 @@ unsafe fn Item_AttachToParent(item_gobj: *mut Item_GObj, parent: *mut HSD_GObj, 
 }
 
 /// 2B2560
+#[inline(never)]
 pub unsafe extern "C" fn it_802B2560(
     parent_gobj: *mut Fighter_GObj,
     facing_dir: f32,
@@ -144,6 +145,7 @@ pub unsafe extern "C" fn it_802B2560(
     part: Fighter_Part,
     kind: ItemKind,
 ) -> *mut Item_GObj {
+    core::hint::black_box(0x90F9E462u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B2560");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
@@ -157,7 +159,9 @@ pub unsafe extern "C" fn it_802B2560(
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMarioCape_Logic41_Destroyed(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6CC4B401u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMarioCape_Logic41_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
@@ -166,7 +170,9 @@ pub unsafe extern "C" fn itMarioCape_Logic41_Destroyed(gobj: *mut Item_GObj) {
 }
 
 /// 2B2674
+#[inline(never)]
 pub unsafe extern "C" fn it_802B2674(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE3FACAAEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B2674");
     let ip = GET_ITEM(gobj);
     if !ip.is_null() {
@@ -178,18 +184,24 @@ pub unsafe extern "C" fn it_802B2674(gobj: *mut Item_GObj) {
 }
 
 /// 2B26C0
+#[inline(never)]
 pub unsafe extern "C" fn it_802B26C0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x60CAFB6Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B26C0");
     ext::it_8026B724(gobj);
 }
 
 /// 2B26E0
+#[inline(never)]
 pub unsafe extern "C" fn it_802B26E0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5CBBEA98u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B26E0");
     ext::it_8026B73C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic41_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x57E077ABu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic41_PickedUp");
     let ip = GET_ITEM(gobj);
     (*ip).xDB0_itcmd_var1 = 0;

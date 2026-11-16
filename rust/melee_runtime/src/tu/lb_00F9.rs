@@ -171,10 +171,12 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xE5DC01A9u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn atan2f(a0: f32, a1: f32) -> f32 { core::hint::black_box(0x5964291Du32); /* fn identity */ super::atan2f(a0, a1) }
-        pub unsafe extern "C" fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 { super::lbVector_Angle(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 { core::hint::black_box(0x678593F6u32); /* fn identity */ super::lbVector_Angle(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
 }

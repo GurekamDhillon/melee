@@ -193,7 +193,8 @@ pub mod ext {
         use super::*;
         #[inline(never)]
         pub unsafe extern "C" fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) { core::hint::black_box(0x99E79F11u32); /* fn identity */ super::HSD_JObjSetMtxDirty(a0) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x6BB48A51u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0x7975378Du32); /* fn identity */ super::efLib_PauseAll(a0) }
         #[inline(never)]
@@ -243,7 +244,9 @@ unsafe fn Item_TickLifetime(ip: *mut Item) -> bool {
 }
 
 /// 2CAFD4
+#[inline(never)]
 pub unsafe extern "C" fn it_802CAFD4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x58E1B967u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CAFD4");
     let item = (*gobj).user_data as *mut Item;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -262,7 +265,9 @@ pub unsafe extern "C" fn it_802CAFD4(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn it_802CB0F4(_gobj: *mut Item_GObj) { core::hint::black_box(0xF5BA9870u32); /* fn identity */ melee_core::ct!("it_802CB0F4");}
 
 /// 2CB0F8
+#[inline(never)]
 pub unsafe extern "C" fn it_802CB0F8(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x01BAAB54u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CB0F8");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -334,7 +339,9 @@ pub unsafe extern "C" fn it_802CB2B0(gobj: *mut Item_GObj) {
 }
 
 /// 2CB350
+#[inline(never)]
 pub unsafe extern "C" fn it_802CB350(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x10EA3922u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CB350");
     Item_EnterAirStateWithHitlag(gobj, 2);
 }
@@ -377,7 +384,9 @@ pub unsafe extern "C" fn itMatadogas_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bo
 }
 
 /// 2CB4F0
+#[inline(never)]
 pub unsafe extern "C" fn it_802CB4F0(gobj: *mut Item_GObj, kind: i32, radius: f32) {
+    core::hint::black_box(0xCE0BFE48u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CB4F0");
     let ip = GET_ITEM(gobj);
     let mut spawn: SpawnItem = core::mem::zeroed();
@@ -409,7 +418,9 @@ pub unsafe extern "C" fn it_802CB4F0(gobj: *mut Item_GObj, kind: i32, radius: f3
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic32_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x98EE120Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic32_Spawned");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut scale: f32 = 1.0;
@@ -418,7 +429,9 @@ pub unsafe extern "C" fn it_2725_Logic32_Spawned(gobj: *mut Item_GObj) {
     it_802CB798(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic33_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8FE21FDBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic33_Spawned");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut scale: f32 = 1.0;
@@ -427,13 +440,17 @@ pub unsafe extern "C" fn it_2725_Logic33_Spawned(gobj: *mut Item_GObj) {
     it_802CB798(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMatadogas_Logic33_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x64E64F86u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMatadogas_Logic33_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// 2CB798
+#[inline(never)]
 pub unsafe extern "C" fn it_802CB798(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x65950E6Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CB798");
     let ip = (*gobj).user_data as *mut Item;
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMatadogasAttributes;

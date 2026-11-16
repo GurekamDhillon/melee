@@ -62,7 +62,9 @@ pub static mut it_803F57B0: [ItemStateTable; 5] = [
 ];
 
 /// 284854: spawns a bat at `pos` (z forced to 0).
+#[inline(never)]
 pub unsafe extern "C" fn it_80284854(pos: *mut Vec3) -> *mut Item_GObj {
+    core::hint::black_box(0x1C11962Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80284854");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -90,7 +92,9 @@ pub unsafe extern "C" fn it_80284854(pos: *mut Vec3) -> *mut Item_GObj {
     item_gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itBat_Logic11_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x18170CF5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itBat_Logic11_Spawned");
     let item = GET_ITEM(gobj);
     let ap = (*(*item).xC4_article_data).x4_specialAttributes as *mut itBatAttributes;
@@ -167,7 +171,9 @@ pub unsafe extern "C" fn itBat_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itBat_Logic11_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF75ECC78u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itBat_Logic11_PickedUp");
     let item = GET_ITEM(gobj);
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
@@ -194,7 +200,9 @@ pub unsafe extern "C" fn itBat_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itBat_Logic11_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xFDBE20F1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itBat_Logic11_Dropped");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
 
@@ -203,7 +211,9 @@ pub unsafe extern "C" fn itBat_Logic11_Dropped(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itBat_Logic11_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC467A427u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itBat_Logic11_Thrown");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
 
@@ -212,7 +222,9 @@ pub unsafe extern "C" fn itBat_Logic11_Thrown(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itBat_Logic11_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x61931054u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itBat_Logic11_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }
@@ -271,7 +283,9 @@ pub unsafe extern "C" fn itBat_Logic11_HitShield(gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itBat_Logic11_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD6DCE2E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itBat_Logic11_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }

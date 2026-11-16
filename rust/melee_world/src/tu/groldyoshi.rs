@@ -73,8 +73,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x86EFDE1Du32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { core::hint::black_box(0x46A5EB8Bu32); /* fn identity */ super::HSD_Randi(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xD4394572u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -249,7 +251,9 @@ pub unsafe extern "C" fn grOldYoshi_8020E84C() -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020E854(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xD15EF2DAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020E854");
     let callbacks = (&raw mut grOy_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -557,7 +561,9 @@ pub unsafe fn grOldYoshi_8020F31C_inline(mut param1: f32, param2: f32, param3: f
     param1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldYoshi_8020F31C(param1: f32, param2: f32, param3: f32, param4: f32, param5: f32, param6: f32) -> f32 {
+    core::hint::black_box(0x5D9D66C9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldYoshi_8020F31C");
     let f_var2 = if param1 < 0.0 { -param1 } else { param1 };
     let f_var3 = f_var2 / param2;

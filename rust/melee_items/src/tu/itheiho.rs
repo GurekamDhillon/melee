@@ -195,7 +195,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xD4C2F87Fu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -241,7 +242,9 @@ pub unsafe extern "C" fn it_802D8618(arg0: i32, arg1: *mut Vec3, arg2: i32, arg3
     it_802D8894(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D8688(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7D9D9FE1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D8688");
     let ip = GET_ITEM(gobj);
     ext::it_8027B730(gobj);
@@ -268,7 +271,9 @@ pub unsafe extern "C" fn it_802D8688(gobj: *mut HSD_GObj) {
     it_802D8894(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D8894(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC8C52F8Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D8894");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y = 0.0;
@@ -302,7 +307,9 @@ pub unsafe extern "C" fn itHeiho_UnkMotion0_Coll(_gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D8918(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5A1ED805u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D8918");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.heiho.x24 = 0;
@@ -449,7 +456,9 @@ pub unsafe extern "C" fn itHeiho_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D8EC8(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xBBE2C533u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D8EC8");
     let mut ip = (*gobj).user_data as *mut Item;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut *mut i32;
@@ -477,7 +486,9 @@ pub unsafe extern "C" fn it_802D8EC8(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D9168(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2B6D329Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D9168");
     let zero: f32 = 0.0;
     let mut sp14: Vec3 = core::mem::zeroed();
@@ -589,7 +600,9 @@ pub unsafe fn it_802D9714_inline(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D9714(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8A8B501Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D9714");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDD4_itemVar.heiho.x22 == 0 {
@@ -619,7 +632,9 @@ pub unsafe extern "C" fn it_802D98AC(arg0: *mut HSD_GObj) {
     (*ip).xDD4_itemVar.heiho.x3C.z = 0.0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D98C4(jobj: *mut HSD_JObj, arg1: *mut Item) {
+    core::hint::black_box(0x1E21ED29u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D98C4");
     itUpdateVelocityFromBone(jobj, arg1, &raw mut (*arg1).xDD4_itemVar.heiho.x3C);
 }

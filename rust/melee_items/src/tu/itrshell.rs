@@ -210,7 +210,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x78B4959Cu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::it_3F14::it_804D6D28;
@@ -264,7 +265,9 @@ unsafe fn Item_UpdateRollingShellRotation(gobj: *mut Item_GObj, ip: *mut Item, j
     HSD_JObjAddRotationY(jobj, *rotation_rate * (if vx < 0.0 { -vx } else { vx }));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028CFE0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD9B371EAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028CFE0");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itRShell_Attrs;
@@ -294,7 +297,9 @@ pub unsafe extern "C" fn it_8028D090(gobj: *mut Item_GObj) {
     ext::it_80272980(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028D100(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9294D8A1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028D100");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itRShell_Attrs;
@@ -333,7 +338,9 @@ pub unsafe extern "C" fn it_8028D100(gobj: *mut Item_GObj) {
     ext::it_802725D4(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028D26C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x08A067B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028D26C");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itRShell_Attrs;
@@ -382,7 +389,9 @@ pub unsafe extern "C" fn it_8028D390(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028D3B8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB13918C1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028D3B8");
     let ip = GET_ITEM(gobj);
 
@@ -465,7 +474,9 @@ pub unsafe extern "C" fn it_8028D56C(gobj: *mut Item_GObj, f1: f32, f2: f32) -> 
     f * (*attrs).x14.z
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic15_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7E14DE56u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic15_Spawned");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itRShell_Attrs;
@@ -558,7 +569,9 @@ pub unsafe extern "C" fn itRshell_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRShell_Logic15_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC467EAE0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRShell_Logic15_PickedUp");
     ext::it_80275474(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
@@ -574,7 +587,9 @@ pub unsafe extern "C" fn itRshell_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool
 #[inline(never)]
 pub unsafe extern "C" fn itRshell_UnkMotion2_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x297D7559u32); /* fn identity */ melee_core::ct!("itRshell_UnkMotion2_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic15_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2236F4FAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic15_Thrown");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itRShell_Attrs;
@@ -616,7 +631,9 @@ pub unsafe extern "C" fn itRshell_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic15_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x584A81AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic15_Dropped");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itRShell_Attrs;
@@ -673,7 +690,9 @@ unsafe fn itRshell_StopInit(gobj: *mut Item_GObj) {
     ext::it_80272980(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028DAE4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x77BDF950u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028DAE4");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y = 0.0;
@@ -813,7 +832,9 @@ pub unsafe extern "C" fn itRshell_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028E170(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC17C00B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028E170");
     let ip = GET_ITEM(gobj);
     itRshell_StopInit(gobj);
@@ -862,7 +883,9 @@ pub unsafe extern "C" fn itRshell_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic15_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xFB2CAD31u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic15_EnteredAir");
     let ip = GET_ITEM(gobj);
     (*ip).xDC8_word.flags.set_x1F(1);
@@ -893,7 +916,9 @@ pub unsafe extern "C" fn itRshell_UnkMotion7_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic15_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x01858242u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic15_DmgDealt");
     let ip = (*gobj).user_data as *mut Item;
     ext::it_80272940(gobj);
@@ -901,7 +926,9 @@ pub unsafe extern "C" fn it_3F14_Logic15_DmgDealt(gobj: *mut Item_GObj) -> bool 
     (*ip).xDD4_itemVar.rshell.xDF0 != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic15_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x974E1707u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic15_DmgReceived");
     let ip = (*gobj).user_data as *mut Item;
     ext::it_80272940(gobj);
@@ -927,7 +954,9 @@ pub unsafe extern "C" fn itRShell_Logic15_Clanked(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic15_HitShield(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2C4EFE08u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic15_HitShield");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).msid == 3 || (*ip).msid == 4 {
@@ -939,7 +968,9 @@ pub unsafe extern "C" fn it_3F14_Logic15_HitShield(gobj: *mut Item_GObj) -> bool
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itRShell_Logic15_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2D956768u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itRShell_Logic15_ShieldBounced");
     let ip = GET_ITEM(gobj);
     if (*ip).msid == 3 || (*ip).msid == 4 {

@@ -82,7 +82,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xE5542536u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x8476791Du32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -259,7 +260,9 @@ pub unsafe extern "C" fn grOldPupupu_802108AC() -> i32 {
 }
 
 /// Spells out `Ground_SetupStageCallbacks` (no `Mex_GrBind`) so that it stays out-of-line.
+#[inline(never)]
 pub unsafe extern "C" fn grOldPupupu_802108B4(arg0: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x502ED7F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldPupupu_802108B4");
     let callbacks = (&raw mut grOp_StageCallbacks as *mut StageCallbacks).add(arg0 as usize);
     let gobj = ext::Ground_GetStageGObj(arg0);
@@ -584,7 +587,9 @@ pub unsafe extern "C" fn grOldPupupu_80211284(_gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldPupupu_8021128C(vec: *mut Vec, max_x: f32, mut min_x: f32, max_y: f32, mut min_y: f32) -> i32 {
+    core::hint::black_box(0xA0BBE03Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldPupupu_8021128C");
     let max_x_actual: f32;
     let max_y_actual: f32;

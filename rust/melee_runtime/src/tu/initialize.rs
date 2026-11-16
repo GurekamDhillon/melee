@@ -454,28 +454,48 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_AObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_AObjGetAllocData() }
-        pub unsafe extern "C" fn HSD_ChanGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_ChanGetAllocData() }
-        pub unsafe extern "C" fn HSD_DListGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_DListGetAllocData() }
-        pub unsafe extern "C" fn HSD_FObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_FObjGetAllocData() }
-        pub unsafe extern "C" fn HSD_IDGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_IDGetAllocData() }
-        pub unsafe extern "C" fn HSD_MtxGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_MtxGetAllocData() }
-        pub unsafe extern "C" fn HSD_RObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RObjGetAllocData() }
-        pub unsafe extern "C" fn HSD_RenderGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RenderGetAllocData() }
-        pub unsafe extern "C" fn HSD_RvalueObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RvalueObjGetAllocData() }
-        pub unsafe extern "C" fn HSD_SListGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_SListGetAllocData() }
-        pub unsafe extern "C" fn HSD_ShadowGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_ShadowGetAllocData() }
-        pub unsafe extern "C" fn HSD_TevRegGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_TevRegGetAllocData() }
-        pub unsafe extern "C" fn HSD_VecGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_VecGetAllocData() }
-        pub unsafe extern "C" fn OSGetArenaHi() -> *mut c_void { super::OSGetArenaHi() }
-        pub unsafe extern "C" fn OSGetArenaLo() -> *mut c_void { super::OSGetArenaLo() }
-        pub unsafe extern "C" fn _HSD_AObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_AObjForgetMemory(a0, a1) }
-        pub unsafe extern "C" fn _HSD_DispForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_DispForgetMemory(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_AObjGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x8EEA5244u32); /* fn identity */ super::HSD_AObjGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_ChanGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x528FC43Cu32); /* fn identity */ super::HSD_ChanGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_DListGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x5EA98A12u32); /* fn identity */ super::HSD_DListGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_FObjGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0xF3D2B94Fu32); /* fn identity */ super::HSD_FObjGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_IDGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0xA6EA59D5u32); /* fn identity */ super::HSD_IDGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_MtxGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x5FC91A69u32); /* fn identity */ super::HSD_MtxGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_RObjGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0xE33BDFE3u32); /* fn identity */ super::HSD_RObjGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_RenderGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x4671DD38u32); /* fn identity */ super::HSD_RenderGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_RvalueObjGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x9D251ACEu32); /* fn identity */ super::HSD_RvalueObjGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_SListGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x162AAC87u32); /* fn identity */ super::HSD_SListGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_ShadowGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x14C19964u32); /* fn identity */ super::HSD_ShadowGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_TevRegGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x97957917u32); /* fn identity */ super::HSD_TevRegGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_VecGetAllocData() -> *mut _HSD_ObjAllocData { core::hint::black_box(0x20B20F88u32); /* fn identity */ super::HSD_VecGetAllocData() }
+        #[inline(never)]
+        pub unsafe extern "C" fn OSGetArenaHi() -> *mut c_void { core::hint::black_box(0x454B462Bu32); /* fn identity */ super::OSGetArenaHi() }
+        #[inline(never)]
+        pub unsafe extern "C" fn OSGetArenaLo() -> *mut c_void { core::hint::black_box(0x4B55DCF9u32); /* fn identity */ super::OSGetArenaLo() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_AObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { core::hint::black_box(0x42CA3C58u32); /* fn identity */ super::_HSD_AObjForgetMemory(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_DispForgetMemory(a0: *mut c_void, a1: *mut c_void) { core::hint::black_box(0x494A7EF4u32); /* fn identity */ super::_HSD_DispForgetMemory(a0, a1) }
         #[inline(never)]
         pub unsafe extern "C" fn _HSD_IDForgetMemory(a0: *mut c_void, a1: *mut c_void) { core::hint::black_box(0xA05A6539u32); /* fn identity */ super::_HSD_IDForgetMemory(a0, a1) }
-        pub unsafe extern "C" fn _HSD_ObjAllocForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_ObjAllocForgetMemory(a0, a1) }
-        pub unsafe extern "C" fn _HSD_RObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RObjForgetMemory(a0, a1) }
-        pub unsafe extern "C" fn _HSD_RandForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RandForgetMemory(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_ObjAllocForgetMemory(a0: *mut c_void, a1: *mut c_void) { core::hint::black_box(0x1A0DF936u32); /* fn identity */ super::_HSD_ObjAllocForgetMemory(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_RObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { core::hint::black_box(0x86286EB7u32); /* fn identity */ super::_HSD_RObjForgetMemory(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_RandForgetMemory(a0: *mut c_void, a1: *mut c_void) { core::hint::black_box(0x0C74ECE3u32); /* fn identity */ super::_HSD_RandForgetMemory(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub static mut GXNtsc480IntDf: GXRenderModeObj = unsafe { core::mem::zeroed() };

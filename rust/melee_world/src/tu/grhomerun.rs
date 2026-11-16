@@ -123,8 +123,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn Ground_801C0498() -> f32 { super::Ground_801C0498() }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C0498() -> f32 { core::hint::black_box(0xECEE6A33u32); /* fn identity */ super::Ground_801C0498() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x578B8318u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x3431CF7Fu32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -312,7 +314,9 @@ pub unsafe extern "C" fn grHomeRun_8021C800() {
 }
 
 /// 21C82C (spells out `Ground_SetupStageCallbacks`)
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021C82C(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x2277B573u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021C82C");
     let callbacks = &raw mut grHr_StageCallbacks[gobj_id as usize];
 
@@ -896,7 +900,9 @@ pub unsafe extern "C" fn grHomeRun_8021EA30(pos: *const f32) {
 }
 
 /// 21EAF8
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021EAF8() {
+    core::hint::black_box(0x0F3EA23Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021EAF8");
     ext::stage_info.flags |= 1 << 7;
 }
@@ -945,7 +951,9 @@ pub unsafe extern "C" fn fn_8021EB10(target_cam_gobj: *mut HSD_GObj, _code: isiz
 }
 
 /// 21EC58
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021EC58(arg: i32) -> *mut HSD_Text {
+    core::hint::black_box(0x3F910E3Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021EC58");
     let color = GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF };
 
@@ -971,7 +979,9 @@ pub unsafe extern "C" fn grHomeRun_8021EC58(arg: i32) -> *mut HSD_Text {
 }
 
 /// 21ED74
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021ED74() {
+    core::hint::black_box(0x7EDCEE0Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021ED74");
     let mut bobomb_rain: BobOmbRain = core::mem::zeroed();
     let jobj = ext::Ground_801C2CF4(0x7F);
@@ -985,7 +995,9 @@ pub unsafe extern "C" fn grHomeRun_8021ED74() {
 }
 
 /// 21EDD4
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021EDD4() {
+    core::hint::black_box(0x7CB81A0Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021EDD4");
     let scale: f32;
     let max_dist: f32;
@@ -1027,7 +1039,9 @@ pub unsafe extern "C" fn grHomeRun_8021EEBC(a: *mut Vec3, _b: i32, jobj: *mut HS
 }
 
 /// 21EF10
+#[inline(never)]
 pub unsafe extern "C" fn grHomeRun_8021EF10() -> f32 {
+    core::hint::black_box(0xA1BD5EA1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHomeRun_8021EF10");
     5.0 * ext::Ground_801C0498()
 }

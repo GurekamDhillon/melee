@@ -86,8 +86,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xE73011E9u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { core::hint::black_box(0x6A876D2Fu32); /* fn identity */ super::HSD_Randi(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x2C68422Eu32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -701,7 +703,9 @@ pub unsafe extern "C" fn grOldKongo_80210454(ground_gobj: *mut HSD_GObj, keep: *
     1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldKongo_802105AC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFCAE30AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldKongo_802105AC");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.taru.xC6 == 1 {
@@ -709,7 +713,9 @@ pub unsafe extern "C" fn grOldKongo_802105AC(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldKongo_802105C8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x47A89691u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldKongo_802105C8");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.taru.xC6 != 1 {
@@ -725,7 +731,9 @@ pub unsafe extern "C" fn grOldKongo_802105C8(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grOldKongo_80210650() -> f32 {
+    core::hint::black_box(0x69CE121Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grOldKongo_80210650");
     let yp = &*yakumono_param;
     let total: i32 = yp.rrate_barrel_ld as i32 + yp.rrate_barrel_l as i32 + yp.rrate_barrel_lu as i32

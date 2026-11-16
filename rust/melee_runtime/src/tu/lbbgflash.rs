@@ -167,7 +167,9 @@ fn quad(x0: f32, y0: f32, x1: f32, y1: f32, c: [u8; 4]) {
 }
 
 /// 01FC08
+#[inline(never)]
 pub unsafe extern "C" fn fn_8001FC08() {
+    core::hint::black_box(0xDDF88769u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8001FC08");
     let data = &mut *(&raw mut lbl_80433658);
     let targets = [data.x8.r, data.x8.g, data.x8.b, data.x8.a];
@@ -276,7 +278,9 @@ pub unsafe extern "C" fn fn_800204C8() {
 }
 
 /// 0205F0
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_800205F0(mut duration: i32) {
+    core::hint::black_box(0xF3CE0D85u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_800205F0");
     if duration < 1 {
         duration = 1;
@@ -286,7 +290,9 @@ pub unsafe extern "C" fn lbBgFlash_800205F0(mut duration: i32) {
 }
 
 /// 02063C
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_8002063C(mut count: i32) {
+    core::hint::black_box(0x8D363FFCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_8002063C");
     if count < 1 {
         count = 1;
@@ -296,7 +302,9 @@ pub unsafe extern "C" fn lbBgFlash_8002063C(mut count: i32) {
 }
 
 /// 020688
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_80020688(mut count: i32) {
+    core::hint::black_box(0xDE25765Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_80020688");
     if count < 1 {
         count = 1;
@@ -306,7 +314,9 @@ pub unsafe extern "C" fn lbBgFlash_80020688(mut count: i32) {
 }
 
 /// 0206D4
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_800206D4(col1: *mut GXColor, col2: *mut GXColor, arg2: i32) {
+    core::hint::black_box(0x6AA60E6Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_800206D4");
     let data = &mut *(&raw mut lbl_80433658);
     let mut count = arg2;
@@ -331,7 +341,9 @@ pub unsafe extern "C" fn lbBgFlash_800206D4(col1: *mut GXColor, col2: *mut GXCol
 }
 
 /// `lbBgFlash_InitState`
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_InitState(color: *mut GXColor) {
+    core::hint::black_box(0xFA92434Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_InitState");
     lbl_80433658.state.set_active(0);
     lbl_80433658.state.set_mode(5);
@@ -339,7 +351,9 @@ pub unsafe extern "C" fn lbBgFlash_InitState(color: *mut GXColor) {
 }
 
 /// 0208B0
+#[inline(never)]
 pub unsafe extern "C" fn fn_800208B0(arg0: u8) {
+    core::hint::black_box(0x3B547909u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_800208B0");
     let data = &mut *(&raw mut lbl_80433658);
     data.state.set_active(0);
@@ -351,7 +365,9 @@ pub unsafe extern "C" fn fn_800208B0(arg0: u8) {
 }
 
 /// 0208EC
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_800208EC(arg0: i32) {
+    core::hint::black_box(0xE8400B18u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_800208EC");
     let flash = &mut *(&raw mut lbl_80433658);
     flash.x44 = ext::GObj_Create(0x14, 0x16, 0);
@@ -368,7 +384,9 @@ pub unsafe extern "C" fn lbBgFlash_800208EC(arg0: i32) {
 }
 
 /// 0209F4
+#[inline(never)]
 pub unsafe extern "C" fn lbBgFlash_800209F4() {
+    core::hint::black_box(0xCC1F735Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbBgFlash_800209F4");
     let flash = &mut *(&raw mut lbl_80433658);
     flash.x44 = ext::GObj_Create(0x14, 0x16, 0);

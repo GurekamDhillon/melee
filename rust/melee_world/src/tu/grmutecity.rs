@@ -146,7 +146,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xFF82ED02u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x2F406D89u32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -359,7 +360,9 @@ pub unsafe extern "C" fn grMuteCity_801EFD04() -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801EFD0C(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xE02693FDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801EFD0C");
     let callbacks = (&raw mut grMc_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -670,7 +673,9 @@ pub static mut grMc_803E34E0: [GrMcCmdEntry; 132] = [
     GrMcCmdEntry { frame: 3599, cmd: 18, param: 0, fval: 0.0 }, GrMcCmdEntry { frame: -1, cmd: 7, param: 0, fval: 0.0 }, GrMcCmdEntry { frame: 9999, cmd: 0, param: 0, fval: 0.0 },
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F04B8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFA409C2Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F04B8");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
@@ -841,7 +846,8 @@ pub unsafe extern "C" fn grMuteCity_801F04B8(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grMuteCity_801F0948(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F0948");}
+#[inline(never)]
+pub unsafe extern "C" fn grMuteCity_801F0948(_arg: *mut HSD_GObj) { core::hint::black_box(0xBB2AD654u32); /* fn identity */ melee_core::ct!("grMuteCity_801F0948");}
 
 #[inline(always)]
 pub unsafe fn grMc_SplineEvalWrapped(result: *mut Vec3, spline: *mut HSD_Spline, t: f32) {
@@ -895,7 +901,9 @@ pub unsafe fn grMc_SplineTangentWrapped(result: *mut Vec3, spline: *mut HSD_Spli
     *result = b;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F094C(arg0: *mut HSD_JObj, arg1: *mut HSD_Spline, arg2: *mut Vec3, mut var_f29: f32) -> f32 {
+    core::hint::black_box(0x862A82E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F094C");
     let mut sp78 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp6c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -932,7 +940,9 @@ pub unsafe extern "C" fn grMuteCity_801F094C(arg0: *mut HSD_JObj, arg1: *mut HSD
     var_f29
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F0D20(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xEB3E1615u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F0D20");
     let mut sp28 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1003,7 +1013,9 @@ pub static mut grMc_803E3B7C: [GrMcTrackInitData; 30] = [
     GrMcTrackInitData { pos: 0.9856, speed: 0.87 }, GrMcTrackInitData { pos: 0.9845, speed: 0.37 }, GrMcTrackInitData { pos: 0.9845, speed: 0.87 },
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F0F4C(_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE918B4F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F0F4C");
     for i in 0..30usize {
         let mut pos = grMc_803E3B7C[i].pos;
@@ -1026,7 +1038,9 @@ pub unsafe extern "C" fn grMuteCity_801F0F4C(_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F106C(i: i32) {
+    core::hint::black_box(0xB8EB7C95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F106C");
     let e = ce(i as usize);
     let flags16 = (*e).x20;
@@ -1259,7 +1273,9 @@ pub unsafe fn grMc_RandomWreckOffset() -> f32 {
 }
 
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F1A34(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    core::hint::black_box(0xE71FA6CAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F1A34");
     let mut car_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp_e8 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1463,7 +1479,9 @@ pub unsafe extern "C" fn grMuteCity_801F1A34(arg0: *mut HSD_GObj, arg1: *mut HSD
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F28A8() -> *mut DynamicModelDesc {
+    core::hint::black_box(0x40431740u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F28A8");
     let archive = ext::grDatFiles_801C6330(38);
     if archive.is_null() {
@@ -1484,9 +1502,12 @@ pub struct GrMcStackPadArg {
 }
 
 /// "Fake function: exists only to reproduce the retail stack layout."
-pub unsafe extern "C" fn grMc_StackPad(_arg: GrMcStackPadArg) { melee_core::ct!("grMc_StackPad");}
+#[inline(never)]
+pub unsafe extern "C" fn grMc_StackPad(_arg: GrMcStackPadArg) { core::hint::black_box(0xC9316A0Bu32); /* fn identity */ melee_core::ct!("grMc_StackPad");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F290C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7F25DA83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F290C");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -1546,7 +1567,9 @@ pub unsafe extern "C" fn grMuteCity_801F290C(gobj: *mut HSD_GObj) {
 }
 
 /// "Retail never sets the return value" (the PC build returns the generator or NULL).
+#[inline(never)]
 pub unsafe extern "C" fn grMuteCity_801F2AB0(arg0: i32, jobj: *mut HSD_JObj) -> *mut HSD_Generator {
+    core::hint::black_box(0xC2A7FCACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grMuteCity_801F2AB0");
     let gen = ext::grLib_801C9808(arg0, arg0 / 1000, jobj);
 

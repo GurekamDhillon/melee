@@ -128,7 +128,9 @@ unsafe fn Item_EnterAirStateWithHitlagAndStateDesc(gobj: *mut Item_GObj) {
     ext::it_80273670(gobj, 0, 0.0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMew_Logic22_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xAD69A8B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMew_Logic22_Spawned");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut MewVars;
@@ -138,7 +140,9 @@ pub unsafe extern "C" fn itMew_Logic22_Spawned(gobj: *mut Item_GObj) {
     ext::it_80279CDC(gobj, (*attr).x0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3B6C(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xCF78F625u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3B6C");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -154,7 +158,9 @@ pub unsafe extern "C" fn it_802D3B8C(gobj: *mut Item_GObj) {
     ext::Item_8026AE84(ip, 0x2729, 0x7F, 0x40);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3BE0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8E583C27u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3BE0");
     let ip = GET_ITEM(gobj);
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
@@ -184,7 +190,9 @@ pub unsafe extern "C" fn itMew_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3C9C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2D3184CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3C9C");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut MewVars;
@@ -227,7 +235,9 @@ pub unsafe extern "C" fn itMew_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3D94(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF1E7DFB5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3D94");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }

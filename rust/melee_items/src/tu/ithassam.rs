@@ -68,7 +68,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x23276D1Bu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0xB349ACA7u32); /* fn identity */ super::efLib_PauseAll(a0) }
         #[inline(never)]
@@ -106,7 +107,9 @@ unsafe fn attr_of(ip: *mut Item) -> *mut itHassam_ItemVars {
     (*(*ip).xC4_article_data).x4_specialAttributes as *mut itHassam_ItemVars
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDBE0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF7D41B8Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDBE0");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
@@ -121,7 +124,9 @@ pub unsafe extern "C" fn itHassam_802CDBE0(gobj: *mut HSD_GObj) {
 #[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDC5C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x66562F5Eu32); /* fn identity */ melee_core::ct!("itHassam_802CDC5C");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDC60(gobj: *mut HSD_GObj, r#ref: *mut HSD_GObj) {
+    core::hint::black_box(0x834E0E40u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDC60");
     ext::it_8026B894(gobj, r#ref);
 }
@@ -134,7 +139,9 @@ pub unsafe extern "C" fn itHassam_802CDC80(gobj: *mut HSD_GObj) {
     itHassam_802CDCB4(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDCB4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x16E13048u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDCB4");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
@@ -212,7 +219,9 @@ pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) 
     closest_fgobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDF28(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB6826D97u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDF28");
     let mut sp1c: Vec3 = core::mem::zeroed();
     let mut sp10: Vec3 = core::mem::zeroed();
@@ -237,7 +246,9 @@ pub unsafe extern "C" fn itHassam_802CDF28(gobj: *mut HSD_GObj) {
     ext::it_80272980(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CE008(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x67E29932u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CE008");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
@@ -324,7 +335,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 /// `static inline void itHassam_802CE400_sub(HSD_GObj*, int msid, Item_StateChangeFlags)`
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CE400_sub(gobj: *mut HSD_GObj, msid: i32, flags: u32) {
+    core::hint::black_box(0xB0A320F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CE400_sub");
     let ip = (*gobj).user_data as *mut Item;
     ext::Item_80268E5C(gobj, msid, flags);
@@ -333,7 +346,9 @@ pub unsafe extern "C" fn itHassam_802CE400_sub(gobj: *mut HSD_GObj, msid: i32, f
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[2], ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CE400(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x349725BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CE400");
     let mut cam_pos: Vec3 = core::mem::zeroed();
     let mut sp10: Vec3 = core::mem::zeroed();
@@ -387,7 +402,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion2_Coll(_gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CE640(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x69BC462Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CE640");
     Item_EnterAirStateWithHitlag(gobj, 3);
 }

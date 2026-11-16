@@ -96,7 +96,9 @@ pub unsafe fn set_color(dst: *mut _GXColor, color: _GXColor) {
 
 /// `DevText* DevText_Create(char id, int x, int y, int w, int h, char* buf)`: takes a box off the
 /// free list (NULL when `id` is already listed); a failed allocation is the C `HSD_ASSERTREPORT`.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, buf: *mut i8) -> *mut DevText {
+    core::hint::black_box(0x6A372326u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Create");
     let bg = _GXColor { r: 0x60, g: 0xD0, b: 0xB0, a: 0x70 };
     if !find_by_id(id).is_null() {
@@ -142,7 +144,9 @@ pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, 
 }
 
 /// `void DevText_EraseFirstLine(DevText*)`: scrolls the buffer up one line and clears the last.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_EraseFirstLine(text: *mut DevText) {
+    core::hint::black_box(0x0CDAF7ACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_EraseFirstLine");
     let t = &*text;
     let mut start_of_line = t.buf as *mut u8;
@@ -170,7 +174,9 @@ pub fn DevText_Clamp(val: i32, max: i32) -> i32 {
 }
 
 /// `void DevText_SetCursorXY(DevText*, int, int)`: clamped to the box.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_SetCursorXY(text: *mut DevText, mut x: i32, mut y: i32) {
+    core::hint::black_box(0xEB0BE503u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_SetCursorXY");
     let t = &mut *text;
     if t.w as i32 <= x {
@@ -196,50 +202,66 @@ pub unsafe extern "C" fn DevText_SetCursorX(text: *mut DevText, x: i32) {
 }
 
 /// `void DevText_HideCursor(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_HideCursor(text: *mut DevText) {
+    core::hint::black_box(0xEF1F0F20u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_HideCursor");
     (*text).flags &= !(1 << 4);
 }
 
 /// `void DevText_80302AC0(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_80302AC0(text: *mut DevText) {
+    core::hint::black_box(0x236E9FD3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_80302AC0");
     (*text).flags |= 1 << 5;
 }
 
 /// `void DevText_ShowBackground(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_ShowBackground(text: *mut DevText) {
+    core::hint::black_box(0x651CCF8Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_ShowBackground");
     (*text).flags &= !(1 << 6);
 }
 
 /// `void DevText_HideBackground(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_HideBackground(text: *mut DevText) {
+    core::hint::black_box(0xC0A39112u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_HideBackground");
     (*text).flags |= 1 << 6;
 }
 
 /// `void DevText_ShowText(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_ShowText(text: *mut DevText) {
+    core::hint::black_box(0x10CE4D60u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_ShowText");
     (*text).flags &= !(1 << 7);
 }
 
 /// `void DevText_HideText(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_HideText(text: *mut DevText) {
+    core::hint::black_box(0xF42CDAE9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_HideText");
     (*text).flags |= 1 << 7;
 }
 
 /// `void DevText_SetScale(DevText*, f32, f32)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_SetScale(text: *mut DevText, x: f32, y: f32) {
+    core::hint::black_box(0x1B83FED8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_SetScale");
     (*text).scale_x = x;
     (*text).scale_y = y;
 }
 
 /// `void DevText_SetXY(DevText*, int, int)`: never closer than 8 to the screen's top left.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_SetXY(text: *mut DevText, mut x: i32, mut y: i32) {
+    core::hint::black_box(0x2AD239D5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_SetXY");
     if x < 8 {
         x = 8;
@@ -252,7 +274,9 @@ pub unsafe extern "C" fn DevText_SetXY(text: *mut DevText, mut x: i32, mut y: i3
 }
 
 /// `u8 DevText_StoreColorIndex(DevText*, u8)`: returns the previous index.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_StoreColorIndex(text: *mut DevText, index: u8) -> u8 {
+    core::hint::black_box(0x118C19C6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_StoreColorIndex");
     let old = (*text).current_color();
     (*text).set_current_color(index);
@@ -260,7 +284,9 @@ pub unsafe extern "C" fn DevText_StoreColorIndex(text: *mut DevText, index: u8) 
 }
 
 /// `GXColor DevText_SetTextColor(DevText*, GXColor)`: sets the current index's colour.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_SetTextColor(text: *mut DevText, color: _GXColor) -> _GXColor {
+    core::hint::black_box(0x000EAF6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_SetTextColor");
     let index = (*text).current_color() as usize;
     let old = (*text).text_colors[index];
@@ -269,7 +295,9 @@ pub unsafe extern "C" fn DevText_SetTextColor(text: *mut DevText, color: _GXColo
 }
 
 /// `GXColor DevText_SetBGColor(DevText*, GXColor)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_SetBGColor(text: *mut DevText, color: _GXColor) -> _GXColor {
+    core::hint::black_box(0xB89C88B8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_SetBGColor");
     let old = (*text).bg_color;
     (*text).bg_color = color;
@@ -277,7 +305,9 @@ pub unsafe extern "C" fn DevText_SetBGColor(text: *mut DevText, color: _GXColor)
 }
 
 /// `void DevText_Erase(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Erase(text: *mut DevText) {
+    core::hint::black_box(0x49EA2638u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Erase");
     let t = &*text;
     memzero(t.buf as *mut u8, 2i32.wrapping_mul(t.w as i32).wrapping_mul(t.h as i32));
@@ -296,7 +326,9 @@ pub unsafe fn DevText_AdvanceLine(text: *mut DevText) {
 
 /// `void DevText_Print(DevText*, char*)`: writes each character with the current colour, wrapping
 /// at the right edge (unless NOWRAP) and on `'\n'`.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Print(text: *mut DevText, str: *mut i8) {
+    core::hint::black_box(0x555B2D05u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Print");
     if !str.is_null() {
         let mut cur = str;
@@ -322,7 +354,9 @@ pub unsafe extern "C" fn DevText_Print(text: *mut DevText, str: *mut i8) {
 }
 
 /// `void DevText_PrintInt(DevText*, int)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_PrintInt(text: *mut DevText, num: i32) {
+    core::hint::black_box(0x0D07DE3Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_PrintInt");
     let mut str = [0i8; 16];
     ext::DevText_NumToStr(num, str.as_mut_ptr());
@@ -342,13 +376,17 @@ pub unsafe fn DevText_Printf(text: *mut DevText, format: *const i8, args: &[Prin
 }
 
 /// `struct un_80304138_objalloc_t* un_80302DF0(void)`: the current menu.
+#[inline(never)]
 pub unsafe extern "C" fn un_80302DF0() -> *mut un_80304138_objalloc_t {
+    core::hint::black_box(0xA449AF6Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80302DF0");
     un_804D6E44
 }
 
 /// `void un_80302DF8(struct un_80304138_objalloc_t*, soundtest_callback)`
+#[inline(never)]
 pub unsafe extern "C" fn un_80302DF8(arg0: *mut un_80304138_objalloc_t, arg1: soundtest_callback) {
+    core::hint::black_box(0x9C49A2D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80302DF8");
     (*arg0).xC = arg1;
 }

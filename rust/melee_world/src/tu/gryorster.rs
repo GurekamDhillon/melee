@@ -50,21 +50,27 @@ pub mod ext {
     }
     // ---- callee hooks ----
     pub static mut H_Ground_GetYakumonoParam: Option<unsafe extern "C" fn() -> *mut core::ffi::c_void> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_GetYakumonoParam() -> *mut core::ffi::c_void {
+                core::hint::black_box(0xCB79513Eu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_GetYakumonoParam {
                     Some(f) => f(),
                     None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; },
                 }
             }
     pub static mut H_Ground_801C39C0: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C39C0()  {
+                core::hint::black_box(0x9118A207u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C39C0 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ground::Ground_801C39C0(); } return; },
                 }
             }
     pub static mut H_Ground_801C3BB4: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C3BB4()  {
+                core::hint::black_box(0x961164BBu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C3BB4 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; },
@@ -78,7 +84,9 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_GetStageGObj: Option<unsafe extern "C" fn(i32) -> *mut melee_types::HSD_GObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_GetStageGObj(a0: i32) -> *mut melee_types::HSD_GObj {
+                core::hint::black_box(0x1F5A7430u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_GetStageGObj {
                     Some(f) => f(a0),
                     None => { return unsafe { crate::tu::ground::Ground_GetStageGObj(a0 as _) as _ }; },
@@ -103,7 +111,9 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_InitMapColl: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, i32) -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_InitMapColl(a0: *mut melee_types::HSD_JObj, a1: i32) -> i32 {
+                core::hint::black_box(0x8CE0B6B2u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_InitMapColl {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { crate::tu::ground::Ground_InitMapColl(a0 as _, a1 as _) as _ }; },
@@ -124,14 +134,18 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_801C10B8: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C10B8(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>)  {
+                core::hint::black_box(0x2F2CFE97u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C10B8 {
                     Some(f) => f(a0, a1),
                     None => { unsafe { crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_Ground_801C3FA4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) -> *mut melee_types::HSD_JObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C3FA4(a0: *mut melee_types::HSD_GObj, a1: i32) -> *mut melee_types::HSD_JObj {
+                core::hint::black_box(0xCF31694Cu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C3FA4 {
                     Some(f) => f(a0, a1 as isize),
                     None => { return unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ }; },
@@ -159,7 +173,9 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_801C32D4: Option<unsafe extern "C" fn(i32, i32) -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C32D4(a0: i32, a1: i32) -> i32 {
+                core::hint::black_box(0x3DB3CF2Du32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C32D4 {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { crate::tu::ground::Ground_801C32D4(a0 as _, a1 as _) as _ }; },
@@ -191,21 +207,27 @@ pub mod ext {
                 }
             }
     pub static mut H_lbGetJObjEndFrame: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj) -> f32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbGetJObjEndFrame(a0: *mut melee_types::HSD_JObj) -> f32 {
+                core::hint::black_box(0x9D0F5CFFu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbGetJObjEndFrame {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(a0 as _) as _ }; },
                 }
             }
     pub static mut H_Ground_801C53EC: Option<unsafe extern "C" fn(u32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C53EC(a0: u32)  {
+                core::hint::black_box(0x25A531CCu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C53EC {
                     Some(f) => f(a0),
                     None => { unsafe { crate::tu::ground::Ground_801C53EC(a0 as _); } return; },
                 }
             }
     pub static mut H_mpLib_80057BC0: Option<unsafe extern "C" fn(i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn mpLib_80057BC0(a0: i32)  {
+                core::hint::black_box(0x1AF68B34u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_mpLib_80057BC0 {
                     Some(f) => f(a0),
                     None => { unsafe { crate::tu::mplib::mpLib_80057BC0(a0 as _); } return; },
@@ -219,14 +241,18 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_801C0498: Option<unsafe extern "C" fn() -> f32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C0498() -> f32 {
+                core::hint::black_box(0xD9875A99u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C0498 {
                     Some(f) => f(),
                     None => { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; },
                 }
             }
     pub static mut H_mpJointListAdd: Option<unsafe extern "C" fn(i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn mpJointListAdd(a0: i32)  {
+                core::hint::black_box(0x60A13022u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_mpJointListAdd {
                     Some(f) => f(a0),
                     None => { unsafe { crate::tu::mplib::mpJointListAdd(a0 as _); } return; },
@@ -255,7 +281,9 @@ pub mod ext {
     pub static mut H_HSD_GObj_SetupProc: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, u8) -> *mut melee_types::HSD_GObjProc> = None;
     pub unsafe extern "C" fn HSD_GObj_SetupProc(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc { match H_HSD_GObj_SetupProc { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ } } }
     pub static mut H_lb_800115F4: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lb_800115F4()  {
+                core::hint::black_box(0x7753D4F4u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lb_800115F4 {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lb_00F9::lb_800115F4(); } return; },

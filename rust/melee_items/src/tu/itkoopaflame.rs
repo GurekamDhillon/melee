@@ -68,7 +68,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x9D9A93BBu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub static mut result: i32 = unsafe { core::mem::zeroed() };
@@ -197,7 +198,9 @@ pub static mut ItemStateTable_KoopaFlame: [ItemStateTable; 1] = [ItemStateTable 
     collided: Some(itKoopaFlame_UnkMotion0_Coll),
 }];
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Update_Direction(gobj: *mut Item_GObj, flags: i32) {
+    core::hint::black_box(0x45921F6Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Update_Direction");
     let it = get_item(gobj);
     let mut vec: Vec = (*it).xDD4_itemVar.koopaflame.xC_direction;
@@ -222,7 +225,9 @@ pub unsafe extern "C" fn itKoopaFlame_Update_Direction(gobj: *mut Item_GObj, fla
     (*it).xDD4_itemVar.koopaflame.xC_direction = vec;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Update_Angle(gobj: *mut Item_GObj, flags: i32) {
+    core::hint::black_box(0x435A65E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Update_Angle");
     let it = get_item(gobj);
     if flags != 0 {
@@ -248,6 +253,7 @@ pub unsafe extern "C" fn itKoopaFlame_Update_Angle(gobj: *mut Item_GObj, flags: 
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Spawn(
     parent: *mut Fighter_GObj,
     pos: *mut Vec,
@@ -258,6 +264,7 @@ pub unsafe extern "C" fn itKoopaFlame_Spawn(
     scale: i32,
     kind: i32,
 ) -> *mut Item_GObj {
+    core::hint::black_box(0x91DEEADFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -318,7 +325,9 @@ pub unsafe extern "C" fn itKoopaFlame_Spawn(
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Setup(gobj_i: *mut Item_GObj, gobj_f: *mut Fighter_GObj, _unk: i32) {
+    core::hint::black_box(0xA4E14EEDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Setup");
     let it = get_item(gobj_i);
     Item_ClearFlagsAndEnterState(gobj_i, it, 0);
@@ -425,7 +434,9 @@ pub unsafe extern "C" fn itKoopaFlame_Logic111_DmgDealt(_gobj: *mut Item_GObj) -
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Logic111_Reflected(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x3510A464u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Logic111_Reflected");
     let it = get_item(gobj);
     (*it).xDD4_itemVar.koopaflame.x24_angle = ((*it).xDD4_itemVar.koopaflame.x24_angle as f64 + M_PI) as f32;
@@ -443,13 +454,17 @@ pub unsafe extern "C" fn itKoopaFlame_Logic111_Clanked(_gobj: *mut Item_GObj) ->
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Logic111_Absorbed(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x5F71B39Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Logic111_Absorbed");
     ext::efLib_DestroyAll(gobj);
     1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKoopaFlame_Logic111_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x4C6AF7F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKoopaFlame_Logic111_ShieldBounced");
     let it = get_item(gobj);
     ext::lbVector_Mirror(&mut (*it).x40_vel, &mut (*it).xC58);

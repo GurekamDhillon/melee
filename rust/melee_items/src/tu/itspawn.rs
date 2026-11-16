@@ -302,7 +302,9 @@ pub unsafe extern "C" fn it_8026C65C(table: *mut ItemPickTable) -> ItemKind {
 }
 
 /// `it_8026C704`: true when the M-Ball may not be picked (item cap reached, or the stage has no M-Ball).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C704() -> bool {
+    core::hint::black_box(0xE21231F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C704");
     let mut result = false;
     let obj = &raw const ext::Item_804A0C64;
@@ -646,7 +648,9 @@ unsafe fn it_8026D018_inline3(randf: f32, range: *const i32) {
 }
 
 /// `it_8026D018`: sets up the item spawner for the match (called at match start).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026D018() {
+    core::hint::black_box(0xC83C16C4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026D018");
     if ext::gm_8016B238() == 0 && (ext::gm_8016AE80() as i32) != -1 {
         it_804A0E30.x18 = ext::gm_8016AEA4();
@@ -692,7 +696,9 @@ pub unsafe extern "C" fn it_8026D258(pos: *mut Vec3, kind: ItemKind) -> bool {
 
 /// `it_8026D324`: true when `kind` is allowed on the current stage (the stage has items, a stage table
 /// exists and the match's item frequency is set).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026D324(kind: ItemKind) -> bool {
+    core::hint::black_box(0x793FB3F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026D324");
     let temp_r29 = it_804A0E30.x18;
     let temp_r30 = ext::Ground_801C2AD8();
@@ -709,7 +715,9 @@ pub unsafe extern "C" fn it_8026D324(kind: ItemKind) -> bool {
 }
 
 /// `it_8026D3CC`: true when a heart, a tomato or a food item is allowed on this stage.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026D3CC() -> bool {
+    core::hint::black_box(0xAC1B3362u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026D3CC");
     let mut result = it_8026D324(It_Kind_Heart);
     result |= it_8026D324(It_Kind_Tomato);

@@ -75,7 +75,9 @@ pub static mut it_803F8058: [ItemStateTable; 7] = [
     st_row(6, pred_b!(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b!(itTogepy_UnkMotion6_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_Logic21_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0E11839Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_Logic21_Spawned");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
@@ -93,7 +95,9 @@ pub unsafe extern "C" fn itTogepy_Logic21_Spawned(gobj: *mut Item_GObj) {
 #[inline(never)]
 pub unsafe extern "C" fn it_802D3728(_gobj: *mut Item_GObj) { core::hint::black_box(0xD1B2C174u32); /* fn identity */ melee_core::ct!("it_802D3728");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itTogepy_Logic21_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0F1F33B7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTogepy_Logic21_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -138,7 +142,9 @@ pub unsafe extern "C" fn itTogepy_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3848(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xAA8D7F8Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3848");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
@@ -206,7 +212,9 @@ pub unsafe extern "C" fn itTogepy_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D39F8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x47840152u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D39F8");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;

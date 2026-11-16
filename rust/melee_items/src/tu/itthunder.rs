@@ -148,7 +148,9 @@ unsafe fn itGetJObjGrandchild(gobj: *mut Item_GObj) -> *mut HSD_JObj {
     child
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itThunder_Logic7_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x36898ADCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itThunder_Logic7_Spawned");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itThunderPokemonAttributes;
@@ -161,7 +163,9 @@ pub unsafe extern "C" fn itThunder_Logic7_Spawned(gobj: *mut Item_GObj) {
 #[inline(never)]
 pub unsafe extern "C" fn it_802CCB10(_gobj: *mut Item_GObj) { core::hint::black_box(0x3CDA4EA1u32); /* fn identity */ melee_core::ct!("it_802CCB10");}
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CCB14(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x40DA54EDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CCB14");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -221,7 +225,9 @@ pub unsafe extern "C" fn it_802CCBF8(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CCC68(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA973D70Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CCC68");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
@@ -281,7 +287,9 @@ pub unsafe extern "C" fn itThunder_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CCE28(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB32B0C5Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CCE28");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }

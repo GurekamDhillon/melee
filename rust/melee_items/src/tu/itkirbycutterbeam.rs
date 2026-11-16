@@ -102,7 +102,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x4564B46Fu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub static mut result: i32 = unsafe { core::mem::zeroed() };
@@ -177,7 +178,9 @@ pub static it_803F6798: [ItemStateTable; 1] = [ItemStateTable {
 }];
 
 /// `void it_8029BAB8(HSD_GObj*, Vec3*, float)` (29BAB8)
+#[inline(never)]
 pub unsafe extern "C" fn it_8029BAB8(gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32) {
+    core::hint::black_box(0xE68064CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029BAB8");
     let mut spawn: SpawnItem = core::mem::zeroed();
     (*pos).z = 0.0;
@@ -195,7 +198,9 @@ pub unsafe extern "C" fn it_8029BAB8(gobj: *mut HSD_GObj, pos: *mut Vec3, facing
 }
 
 /// `void it_8029BB90(Item_GObj*, HSD_GObj*)` (29BB90)
+#[inline(never)]
 pub unsafe extern "C" fn it_8029BB90(gobj: *mut Item_GObj, owner: *mut HSD_GObj) {
+    core::hint::black_box(0x1BB66E95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029BB90");
     let ip = ip_of(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itKirbyCutterBeamAttributes;
@@ -317,7 +322,9 @@ pub unsafe extern "C" fn itKirbyCutterBeam_Logic7_Absorbed(_arg0: *mut Item_GObj
 }
 
 /// `bool it_2725_Logic7_Reflected(Item_GObj*)` (29BFCC)
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic7_Reflected(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x2CB2B970u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic7_Reflected");
     let ip = ip_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -343,7 +350,9 @@ pub unsafe extern "C" fn it_2725_Logic7_Reflected(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// `bool it_2725_Logic7_ShieldBounced(Item_GObj*)` (29C208)
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic7_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x9D688BCBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic7_ShieldBounced");
     let ip = ip_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;

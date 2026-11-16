@@ -141,7 +141,9 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).x40 = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802841B4(parent_gobj: *mut Fighter_GObj, pos: *mut Vec3, arg2: i32) -> *mut Item_GObj {
+    core::hint::black_box(0x9A8A2DA1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802841B4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut gobj: *mut Item_GObj = null_mut();
@@ -160,14 +162,18 @@ pub unsafe extern "C" fn it_802841B4(parent_gobj: *mut Fighter_GObj, pos: *mut V
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028428C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA79B160Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028428C");
     let ip = GET_ITEM(gobj);
     let sa = (*(*ip).xC4_article_data).x4_specialAttributes as *mut MaximTomatoSpecialAttr;
     (*ip).xDD4_itemVar.tomato.heal_amount = (*sa).heal_amount_1;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_Logic9_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x295D54DCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_Logic9_Spawned");
     let ip = GET_ITEM(gobj);
     let sa = (*(*ip).xC4_article_data).x4_specialAttributes as *mut MaximTomatoSpecialAttr;
@@ -195,7 +201,9 @@ pub unsafe extern "C" fn itTomato_Logic9_Destroyed(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80284358(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE13A5E60u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80284358");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
@@ -284,7 +292,9 @@ pub unsafe extern "C" fn itTomato_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_Logic9_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDEE6E9ABu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_Logic9_PickedUp");
     let jobj = GET_JOBJ(gobj);
     let child = HSD_JObjGetChild(jobj);
@@ -303,7 +313,9 @@ pub unsafe extern "C" fn itTomato_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool
 #[inline(never)]
 pub unsafe extern "C" fn itTomato_UnkMotion3_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xD265A7CCu32); /* fn identity */ melee_core::ct!("itTomato_UnkMotion3_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_Logic9_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB32A1858u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_Logic9_Dropped");
     let jobj = GET_JOBJ(gobj);
     let jobj2 = HSD_JObjGetChild(jobj);
@@ -313,7 +325,9 @@ pub unsafe extern "C" fn itTomato_Logic9_Dropped(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTomato_Logic9_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB4F2817Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTomato_Logic9_EnteredAir");
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
 }

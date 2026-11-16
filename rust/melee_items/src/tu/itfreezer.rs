@@ -92,7 +92,9 @@ pub static it_803F7C70: [ItemStateTable; 3] = [
 ];
 
 /// `void itFreezer_802CCF9C(Item_GObj*)`: item init.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_802CCF9C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x14A5F0BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_802CCF9C");
     let item = item_of(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itFreezerAttributes;
@@ -108,7 +110,9 @@ pub unsafe extern "C" fn itFreezer_802CCF9C(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn itFreezer_802CCFFC(gobj: *mut Item_GObj) { core::hint::black_box(0x4CE4B1A5u32); /* fn identity */ melee_core::ct!("itFreezer_802CCFFC");}
 
 /// `void itFreezer_802CD000(Item_GObj*, Item_GObj*)`: removes the gobj interaction references.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_802CD000(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xAA73BC7Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_802CD000");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -238,7 +242,9 @@ pub unsafe extern "C" fn itFreezer_802CD290(gobj: *mut Item_GObj) {
 }
 
 /// `void itFreezer_802CD2EC(Item_GObj*)`: enters the air state with hitlag callbacks.
+#[inline(never)]
 pub unsafe extern "C" fn itFreezer_802CD2EC(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7C1EB7E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreezer_802CD2EC");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }

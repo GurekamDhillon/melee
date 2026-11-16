@@ -50,7 +50,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xDB831D90u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -95,7 +96,9 @@ pub static mut it_803F6568: [ItemStateTable; 10] = [
 ];
 
 /// 298DEC: spawns a beam of charge level `arg2` from the fighter `gobj`.
+#[inline(never)]
 pub unsafe extern "C" fn it_80298DEC(gobj: *mut Fighter_GObj, vec: *mut Vec, arg2: i32, arg3: f32) {
+    core::hint::black_box(0x0B6BA501u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80298DEC");
     let mut si: SpawnItem = core::mem::zeroed();
     si.kind = It_Kind_S_Scope_Beam;
@@ -111,7 +114,9 @@ pub unsafe extern "C" fn it_80298DEC(gobj: *mut Fighter_GObj, vec: *mut Vec, arg
 }
 
 /// 298ED0
+#[inline(never)]
 pub unsafe extern "C" fn it_80298ED0(projectile: *mut HSD_GObj, owner: *mut HSD_GObj) {
+    core::hint::black_box(0x6E5E841Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80298ED0");
     let it = GET_ITEM(projectile);
     let jobj = GET_JOBJ(projectile);
@@ -253,7 +258,9 @@ pub unsafe extern "C" fn itSScopeBeam_Logic38_Absorbed(_arg0: *mut Item_GObj) ->
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSScopeBeam_Logic38_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x74660601u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSScopeBeam_Logic38_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }

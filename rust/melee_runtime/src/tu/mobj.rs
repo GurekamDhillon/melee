@@ -54,7 +54,9 @@ pub mod native {
     unsafe fn method(m: *mut HSD_MObj) -> *mut HSD_MObjInfo {
         (*m).parent.class_info.cast()
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjSetCurrent(m: *mut HSD_MObj) {
+        core::hint::black_box(0xC556D3C6u32); // fn identity (tools/rust-port/fn_identity.py)
         current_mobj = m;
     }
     #[inline(never)]
@@ -71,10 +73,12 @@ pub mod native {
             (*m).rendermode &= !flags;
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjRemoveAnimByFlags(
         m: *mut HSD_MObj,
         flags: u32,
     ) {
+        core::hint::black_box(0x56A7154Eu32); // fn identity (tools/rust-port/fn_identity.py)
         if m.is_null() {
             return;
         }
@@ -86,10 +90,12 @@ pub mod native {
             ext::HSD_TObjRemoveAnimAll((*m).tobj);
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjAddAnim(
         m: *mut HSD_MObj,
         a: *mut HSD_MatAnim,
     ) {
+        core::hint::black_box(0x040B0DD7u32); // fn identity (tools/rust-port/fn_identity.py)
         if m.is_null() || a.is_null() {
             return;
         }
@@ -99,11 +105,13 @@ pub mod native {
         (*m).aobj = ext::HSD_AObjLoadDesc((*a).aobjdesc);
         ext::HSD_TObjAddAnimAll((*m).tobj, (*a).texanim);
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjReqAnimByFlags(
         m: *mut HSD_MObj,
         frame: f32,
         flags: u32,
     ) {
+        core::hint::black_box(0x0628DF50u32); // fn identity (tools/rust-port/fn_identity.py)
         if m.is_null() {
             return;
         }
@@ -112,7 +120,9 @@ pub mod native {
         }
         ext::HSD_TObjReqAnimAllByFlags((*m).tobj, frame, flags);
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjReqAnim(m: *mut HSD_MObj, frame: f32) {
+        core::hint::black_box(0x340F2D5Cu32); // fn identity (tools/rust-port/fn_identity.py)
         HSD_MObjReqAnimByFlags(m, frame, 0x7ff);
     }
     #[inline(never)]
@@ -156,7 +166,9 @@ pub mod native {
             _ => {}
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjAnim(m: *mut HSD_MObj) {
+        core::hint::black_box(0x613B7152u32); // fn identity (tools/rust-port/fn_identity.py)
         if m.is_null() {
             return;
         }
@@ -182,9 +194,11 @@ pub mod native {
         (*m).aobj = null_mut();
         0
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjLoadDesc(
         d: *mut HSD_MObjDesc,
     ) -> *mut HSD_MObj {
+        core::hint::black_box(0xE1D0A356u32); // fn identity (tools/rust-port/fn_identity.py)
         if d.is_null() {
             return null_mut();
         }
@@ -204,7 +218,9 @@ pub mod native {
         HSD_MObjCompileTev(m);
         m
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjCompileTev(m: *mut HSD_MObj) {
+        core::hint::black_box(0xD3E6594Fu32); // fn identity (tools/rust-port/fn_identity.py)
         if m.is_null() {
             return;
         }
@@ -308,9 +324,11 @@ pub mod native {
         core::hint::black_box(0x91492AE4u32); // fn identity (tools/rust-port/fn_identity.py)
         ext::HSD_TObjSetup(null_mut());
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjSetToonTextureImage(
         image: *mut HSD_ImageDesc,
     ) {
+        core::hint::black_box(0xAF2B62ADu32); // fn identity (tools/rust-port/fn_identity.py)
         if tobj_toon.is_null() {
             tobj_toon_desc.imagedesc = image;
             tobj_toon = ext::HSD_TObjLoadDesc(addr_of_mut!(tobj_toon_desc));
@@ -318,29 +336,37 @@ pub mod native {
         }
         (*tobj_toon).imagedesc = image;
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjSetDiffuseColor(
         m: *mut HSD_MObj,
         r: u8,
         g: u8,
         b: u8,
     ) {
+        core::hint::black_box(0x796179C4u32); // fn identity (tools/rust-port/fn_identity.py)
         (*(*m).mat).diffuse.r = r;
         (*(*m).mat).diffuse.g = g;
         (*(*m).mat).diffuse.b = b;
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjSetAlpha(m: *mut HSD_MObj, alpha: f32) {
+        core::hint::black_box(0x1B2BBDFFu32); // fn identity (tools/rust-port/fn_identity.py)
         (*(*m).mat).alpha = alpha;
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjGetTObj(
         m: *mut HSD_MObj,
     ) -> *mut HSD_TObj {
+        core::hint::black_box(0x44FFF198u32); // fn identity (tools/rust-port/fn_identity.py)
         if m.is_null() {
             null_mut()
         } else {
             (*m).tobj
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjRemove(m: *mut HSD_MObj) {
+        core::hint::black_box(0xCB4D0B07u32); // fn identity (tools/rust-port/fn_identity.py)
         if !m.is_null() {
             ((*(*m).parent.class_info).release.expect("MObj release"))(
                 m.cast(),
@@ -350,7 +376,9 @@ pub mod native {
             );
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjAlloc() -> *mut HSD_MObj {
+        core::hint::black_box(0x3B0AEA60u32); // fn identity (tools/rust-port/fn_identity.py)
         let p = ext::hsdNew(if default_class.is_null() {
             addr_of_mut!(hsdMObj.parent)
         } else {
@@ -360,7 +388,9 @@ pub mod native {
         assert!(!p.is_null());
         p
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MaterialAlloc() -> *mut HSD_Material {
+        core::hint::black_box(0x1198B3FFu32); // fn identity (tools/rust-port/fn_identity.py)
         let p = ext::hsdAllocMemPiece(size_of::<HSD_Material>() as i32)
             .cast::<HSD_Material>();
         assert!(!p.is_null());
@@ -368,7 +398,9 @@ pub mod native {
         (*p).alpha = 1.0;
         p
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjAddShadowTexture(t: *mut HSD_TObj) {
+        core::hint::black_box(0x4CB470D1u32); // fn identity (tools/rust-port/fn_identity.py)
         assert!(!t.is_null());
         let mut cur = tobj_shadows;
         while !cur.is_null() {
@@ -380,7 +412,9 @@ pub mod native {
         (*t).next = tobj_shadows;
         tobj_shadows = t;
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_MObjDeleteShadowTexture(t: *mut HSD_TObj) {
+        core::hint::black_box(0x7BEEB707u32); // fn identity (tools/rust-port/fn_identity.py)
         if !t.is_null() {
             let mut cur = addr_of_mut!(tobj_shadows);
             while !(*cur).is_null() {
@@ -399,7 +433,9 @@ pub mod native {
             }
         }
     }
+    #[inline(never)]
     pub unsafe extern "C" fn MObjRelease(o: *mut HSD_Class) {
+        core::hint::black_box(0x9F01A310u32); // fn identity (tools/rust-port/fn_identity.py)
         let m = o.cast::<HSD_MObj>();
         ext::HSD_AObjRemove((*m).aobj);
         ext::hsdFreeMemPiece(
@@ -423,7 +459,9 @@ pub mod native {
             .release
             .expect("parent release"))(o);
     }
+    #[inline(never)]
     pub unsafe extern "C" fn MObjAmnesia(info: *mut HSD_ClassInfo) {
+        core::hint::black_box(0xB7D78AABu32); // fn identity (tools/rust-port/fn_identity.py)
         if info == default_class {
             default_class = null_mut();
         }
@@ -435,7 +473,9 @@ pub mod native {
             .amnesia
             .expect("parent amnesia"))(info);
     }
+    #[inline(never)]
     pub unsafe extern "C" fn MObjInfoInit() {
+        core::hint::black_box(0x6A45D1E1u32); // fn identity (tools/rust-port/fn_identity.py)
         ext::hsdInitClassInfo(
             addr_of_mut!(hsdMObj.parent),
             ext::hsd_class_ptr(),

@@ -21,7 +21,17 @@ pub fn name(addr: usize) -> Option<String> {
     if let Some(n) = map.get(&addr) {
         return n.clone();
     }
+    let out = resolve(addr, 2);
+    map.insert(addr, out.clone());
+    out
+}
+
+/// `addr`'s symbol. Where `addr` is not the start of the symbol it lands in but a `jmp rel32` (an MSVC incremental-link
+/// thunk: with /INCREMENTAL every fn pointer is the address of a jump in the thunk table, which has no symbol of its
+/// own, so the lookup returns whatever precedes the table), the jump's target is named instead.
+fn resolve(addr: usize, depth: u32) -> Option<String> {
     let mut out = None;
+    let mut start = None;
     // resolve() looks up `addr - 1` (it takes a return address), so ask for the entry's second byte; with debuginfo the
     // callback lists the frames inlined there first, innermost to outermost: the fn itself is the last one
     backtrace::resolve((addr + 1) as *mut core::ffi::c_void, |s| {
@@ -32,9 +42,19 @@ pub fn name(addr: usize) -> Option<String> {
                 Some(i) => n[..i].to_string(),
                 None => n,
             });
+            start = s.addr().map(|a| a as usize);
         }
     });
-    map.insert(addr, out.clone());
+    // Windows only: the harnesses also name values that are not code (an opaque slot, a fake id), and reading a byte there
+    // faults; only an MSVC incremental link puts a fn pointer anywhere but at its symbol
+    if start != Some(addr) && depth > 0 && cfg!(all(windows, any(target_arch = "x86_64", target_arch = "x86"))) {
+        // SAFETY: on Windows `addr` came from a registered or stored fn pointer: its first bytes are mapped code
+        let op = unsafe { core::ptr::read(addr as *const u8) };
+        if op == 0xE9 {
+            let rel = unsafe { core::ptr::read_unaligned((addr + 1) as *const i32) };
+            return resolve((addr as isize + 5 + rel as isize) as usize, depth - 1).or(out);
+        }
+    }
     out
 }
 

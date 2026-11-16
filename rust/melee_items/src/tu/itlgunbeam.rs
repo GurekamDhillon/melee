@@ -125,7 +125,9 @@ pub static mut it_803F6630: [ItemStateTable; 1] = [
 ];
 
 /// 2993E0: sums the contact normals selected by `flags` into `position1`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802993E0(gobj: *mut Item_GObj, flags: i32) {
+    core::hint::black_box(0x7F33B1E7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802993E0");
     let item = GET_ITEM(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
@@ -154,7 +156,9 @@ pub unsafe extern "C" fn it_802993E0(gobj: *mut Item_GObj, flags: i32) {
 }
 
 /// 299528: turns the beam's heading after a bounce.
+#[inline(never)]
 pub unsafe extern "C" fn it_80299528(gobj: *mut Item_GObj, arg1: i32) {
+    core::hint::black_box(0x6B9CC082u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80299528");
     let ip = GET_ITEM(gobj);
     if arg1 != 0 {
@@ -181,7 +185,9 @@ pub unsafe extern "C" fn it_80299528(gobj: *mut Item_GObj, arg1: i32) {
 }
 
 /// 2996D0: spawns a beam at `pos` heading out of `owner_gobj`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802996D0(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: u32, facing_dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xBC7D4FFDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802996D0");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -241,7 +247,9 @@ pub unsafe extern "C" fn it_802996D0(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, 
 }
 
 /// 2998A0: enters state 0 and spawns the beam's effect.
+#[inline(never)]
 pub unsafe extern "C" fn it_802998A0(gobj: *mut Item_GObj, fighter_gobj: *mut HSD_GObj, arg2: i32) {
+    core::hint::black_box(0xA508EA8Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802998A0");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -331,7 +339,9 @@ pub unsafe extern "C" fn itLGunBeam_Logic39_DmgDealt(_gobj: *mut Item_GObj) -> b
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGunBeam_Logic39_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3C1738E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGunBeam_Logic39_Reflected");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.lgunbeam.angle0 = ((*ip).xDD4_itemVar.lgunbeam.angle0 as f64 + M_PI) as f32;

@@ -42,21 +42,27 @@ pub mod ext {
     }
     // ---- callee hooks ----
     pub static mut H_HSD_Free: Option<unsafe extern "C" fn(*mut core::ffi::c_void) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_Free(a0: *mut core::ffi::c_void)  {
+                core::hint::black_box(0x4404B914u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_Free {
                     Some(f) => f(a0),
                     None => { unsafe { melee_runtime::tu::memory::HSD_Free(a0 as _); } return; },
                 }
             }
     pub static mut H_HSD_MemAlloc: Option<unsafe extern "C" fn(i32) -> *mut core::ffi::c_void> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_MemAlloc(a0: i32) -> *mut core::ffi::c_void {
+                core::hint::black_box(0x22913A78u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_MemAlloc {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ }; },
                 }
             }
     pub static mut H_lb_8000B1CC: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, *mut melee_types::Vec, *mut melee_types::Vec) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lb_8000B1CC(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec)  {
+                core::hint::black_box(0x77A1238Eu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lb_8000B1CC {
                     Some(f) => f(a0, a1, a2),
                     None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; },
@@ -135,14 +141,18 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_801C2D24: Option<unsafe extern "C" fn(i32, *mut melee_types::Vec) -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C2D24(a0: i32, a1: *mut melee_types::Vec) -> i32 {
+                core::hint::black_box(0xA242886Eu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C2D24 {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ }; },
                 }
             }
     pub static mut H_Ground_801C58E0: Option<unsafe extern "C" fn(i32, i32) -> *mut melee_types::HSD_GObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C58E0(a0: i32, a1: i32) -> *mut melee_types::HSD_GObj {
+                core::hint::black_box(0x97EECF66u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C58E0 {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { crate::tu::ground::Ground_801C58E0(a0 as _, a1 as _) as _ }; },

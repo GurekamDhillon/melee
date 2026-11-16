@@ -174,7 +174,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xB06C5132u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn ftCo_Barrel_Enter(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xC6144A60u32); /* fn identity */ super::ftCo_Barrel_Enter(a0, a1) }
     }
@@ -254,7 +255,9 @@ pub unsafe extern "C" fn it_80295ED4(gobj: *mut Item_GObj) {
 }
 
 /// 295F38: launches the fighter inside.
+#[inline(never)]
 pub unsafe extern "C" fn it_80295F38(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x69296DD3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80295F38");
     let mut launch_pos: Vec3 = core::mem::zeroed();
     let mut params: lbColl_80008D30_arg1;
@@ -309,7 +312,9 @@ pub unsafe extern "C" fn it_802960CC(gobj: *mut Item_GObj) -> i32 {
     (*da).x28
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic5_Destroyed(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF5B674D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic5_Destroyed");
     if !gobj.is_null() {
         let ip = (*gobj).user_data as *mut Item;
@@ -319,7 +324,9 @@ pub unsafe extern "C" fn it_3F14_Logic5_Destroyed(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic5_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7D9E6EEFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic5_Spawned");
     let ip = GET_ITEM(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
@@ -346,7 +353,9 @@ pub unsafe extern "C" fn it_3F14_Logic5_Spawned(gobj: *mut Item_GObj) {
 }
 
 /// 2961E8: the common life-timer tick.
+#[inline(never)]
 pub unsafe extern "C" fn it_802961E8(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x821AC123u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802961E8");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -481,7 +490,9 @@ pub unsafe extern "C" fn itTarucann_UnkMotion0_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 /// 296694
+#[inline(never)]
 pub unsafe extern "C" fn it_80296694(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x45F969E2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80296694");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     ext::it_8026B3A8(gobj);
@@ -535,7 +546,9 @@ pub unsafe extern "C" fn itTarucann_UnkMotion1_Coll(gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itTaruCann_Logic5_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5C363A73u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itTaruCann_Logic5_PickedUp");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
@@ -560,7 +573,9 @@ pub unsafe extern "C" fn itTarucann_UnkMotion2_Anim(gobj: *mut Item_GObj) -> boo
 #[inline(never)]
 pub unsafe extern "C" fn itTarucann_UnkMotion2_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x599C4979u32); /* fn identity */ melee_core::ct!("itTarucann_UnkMotion2_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic5_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x925D4327u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic5_Dropped");
     let ip = GET_ITEM(gobj);
     it_802969D8(gobj);
@@ -570,7 +585,9 @@ pub unsafe extern "C" fn it_3F14_Logic5_Dropped(gobj: *mut Item_GObj) {
     (*ip).x40_vel.x = 0.5 * facing;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic5_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD083F199u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic5_Thrown");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -665,13 +682,17 @@ pub unsafe extern "C" fn itTarucann_UnkMotion6_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 /// 296E88
+#[inline(never)]
 pub unsafe extern "C" fn it_80296E88(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0D25E072u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80296E88");
     it_80296EF0(gobj);
 }
 
 /// 296EA8
+#[inline(never)]
 pub unsafe extern "C" fn it_80296EA8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x042AACA3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80296EA8");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -680,7 +701,9 @@ pub unsafe extern "C" fn it_80296EA8(gobj: *mut Item_GObj) {
 }
 
 /// 296EF0
+#[inline(never)]
 pub unsafe extern "C" fn it_80296EF0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x122D0144u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80296EF0");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.tarucann.x10;
@@ -804,7 +827,9 @@ pub unsafe extern "C" fn itTarucann_UnkMotion7_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 /// 2975F4
+#[inline(never)]
 pub unsafe extern "C" fn it_802975F4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8ECBEAFDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802975F4");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 9, ITEM_ANIM_UPDATE);
@@ -866,7 +891,9 @@ pub unsafe extern "C" fn itTarucann_UnkMotion9_Coll(_gobj: *mut Item_GObj) -> bo
 }
 
 /// 297790
+#[inline(never)]
 pub unsafe extern "C" fn it_80297790(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x5691774Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80297790");
     let ip = GET_ITEM(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;

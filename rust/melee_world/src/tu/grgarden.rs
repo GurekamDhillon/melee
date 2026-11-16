@@ -76,7 +76,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x4F6F6285u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x1AC4285Au32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -223,7 +224,9 @@ pub unsafe extern "C" fn grGarden_80202C4C() {
 }
 
 /// 202C78
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80202C78(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xBD23CE0Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80202C78");
     let callbacks = &raw mut grGd_StageCallbacks[gobj_id as usize];
 
@@ -500,7 +503,9 @@ pub unsafe extern "C" fn grGarden_8020349C(_unk: u32, player: *mut HSD_GObj, wat
 }
 
 /// 203560
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80203560(param1: f32, vec: *mut Vec3) {
+    core::hint::black_box(0x842B6320u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80203560");
     let gen = ext::grLib_801C96F8(0x753A, 0x1E, vec);
     if !gen.is_null() {
@@ -526,7 +531,9 @@ pub unsafe extern "C" fn grGarden_802035D0(a: *mut Vec3, _b: i32, jobj: *mut HSD
 }
 
 /// 203624
+#[inline(never)]
 pub unsafe extern "C" fn grGarden_80203624() -> f32 {
+    core::hint::black_box(0xA060B865u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGarden_80203624");
     -20.0
 }

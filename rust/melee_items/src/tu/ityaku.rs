@@ -43,7 +43,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xA5372976u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::it_3F14::it_804D6D38;
@@ -185,7 +186,9 @@ pub unsafe extern "C" fn it_2E6A_UnkMotion19_Phys(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2E6A_Logic117_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x9BE726DDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2E6A_Logic117_DmgDealt");
     let item = GET_ITEM(item_gobj);
     if let (Some(f), false) = ((*item).xDD4_itemVar.yaku.x14, (*item).xDD4_itemVar.yaku.x10.is_null()) {
@@ -194,7 +197,9 @@ pub unsafe extern "C" fn it_2E6A_Logic117_DmgDealt(item_gobj: *mut Item_GObj) ->
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2E6A_Logic117_DmgReceived(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2F124B7Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2E6A_Logic117_DmgReceived");
     let mut sp10: Vec3 = core::mem::zeroed();
     let item = GET_ITEM(item_gobj);

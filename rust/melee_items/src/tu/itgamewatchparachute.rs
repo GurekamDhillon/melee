@@ -150,7 +150,9 @@ pub static mut it_803F78F8: [ItemStateTable; 2] = [
 ];
 
 /// `HSD_GObj* it_802C6C38(Item_GObj* parent, Vec3* pos, enum_t part, float facing_dir)`
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6C38(parent: *mut HSD_GObj, pos: *mut Vec, part: enum_t, facing_dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0xB20C8237u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6C38");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Parachute;
@@ -166,7 +168,9 @@ pub unsafe extern "C" fn it_802C6C38(parent: *mut HSD_GObj, pos: *mut Vec, part:
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchParachute_Logic74_Destroyed(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5B97BC81u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchParachute_Logic74_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
@@ -174,7 +178,9 @@ pub unsafe extern "C" fn itGameWatchParachute_Logic74_Destroyed(gobj: *mut HSD_G
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6D6C(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0E7D3092u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6D6C");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
@@ -185,17 +191,23 @@ pub unsafe extern "C" fn it_802C6D6C(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6DB8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3CAC7A03u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6DB8");
     ext::it_8026B724(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6DD8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC8B1D395u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6DD8");
     ext::it_8026B73C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchParachute_Logic74_PickedUp(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x88850CF3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchParachute_Logic74_PickedUp");
     let temp_r3 = (*item_gobj).user_data as *mut Item;
     (*temp_r3).xDAC_itcmd_var0 = 0;
@@ -205,7 +217,9 @@ pub unsafe extern "C" fn itGameWatchParachute_Logic74_PickedUp(item_gobj: *mut H
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6E50(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC7E14833u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6E50");
     ext::it_8026BB44(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);

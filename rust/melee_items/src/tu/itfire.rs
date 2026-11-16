@@ -95,7 +95,9 @@ pub static mut it_803F7C10: [ItemStateTable; 3] = [
     ItemStateTable { anim_id: 2, animated: Some(itFire_UnkMotion2_Anim), physics_updated: Some(itFire_UnkMotion2_Phys), collided: Some(itFire_UnkMotion2_Coll) },
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itFire_Logic6_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9B659F41u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFire_Logic6_Spawned");
     let ip = get_item(gobj);
     let a = attrs(ip);
@@ -108,7 +110,9 @@ pub unsafe extern "C" fn itFire_Logic6_Spawned(gobj: *mut Item_GObj) {
 #[inline(never)]
 pub unsafe extern "C" fn it_802CC740(_gobj: *mut Item_GObj) { core::hint::black_box(0x71C49E51u32); /* fn identity */ melee_core::ct!("it_802CC740");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itFire_Logic6_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xAA70A346u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFire_Logic6_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -137,7 +141,9 @@ pub unsafe extern "C" fn itFire_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
 #[inline(never)]
 pub unsafe extern "C" fn it_802CC7D4(_gobj: *mut Item_GObj) { core::hint::black_box(0xF5EC7D8Du32); /* fn identity */ melee_core::ct!("it_802CC7D4");}
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CC7D8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE9EC6AA9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CC7D8");
     let ip = get_item(gobj);
     let a = attrs(ip);
@@ -147,7 +153,9 @@ pub unsafe extern "C" fn it_802CC7D8(gobj: *mut Item_GObj) {
     Item_SetEffectHitlagCallbacks(ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFire_UnkMotion2_Anim_inline(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC05573FCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFire_UnkMotion2_Anim_inline");
     let ip = get_item(gobj);
     let a = attrs(ip);
@@ -188,7 +196,9 @@ pub unsafe extern "C" fn itFire_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CC944(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6D3B01F3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CC944");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
@@ -201,7 +211,9 @@ pub unsafe extern "C" fn itFire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFire_UnkMotion0_Phys_inline(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3D24F9B5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFire_UnkMotion0_Phys_inline");
     let ip = get_item(gobj);
     ext::Item_80268E5C(gobj, 1, 2);

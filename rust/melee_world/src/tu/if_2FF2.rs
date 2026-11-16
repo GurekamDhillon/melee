@@ -194,7 +194,9 @@ pub unsafe extern "C" fn fn_802FF218(arg0: *mut HSD_GObj) {
 pub unsafe extern "C" fn fn_802FF360(_arg0: *mut c_void) { core::hint::black_box(0xA6C00E77u32); /* fn identity */ melee_core::ct!("fn_802FF360");}
 
 /// `void un_802FF364(int slot)`: (re)builds the slot's score text at its HUD position.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF364(slot: i32) {
+    core::hint::black_box(0xE241BD5Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF364");
     let base = &raw mut un_804A1F58;
     let thing = &raw mut (*base).x8[slot as usize];
@@ -222,14 +224,18 @@ pub unsafe extern "C" fn un_802FF364(slot: i32) {
 }
 
 /// `void un_802FF498(void)`: clears the state and creates the SisLib text list.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF498() {
+    core::hint::black_box(0x65991138u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF498");
     core::ptr::write_bytes(&raw mut un_804A1F58 as *mut u8, 0, core::mem::size_of::<un_804A1F58_t>());
     un_804A1F58.x0 = ext::HSD_SisLib_803A611C(2, ext::ifAll_GetHUDGObj(), 14, 15, 0, 11, 0, 19) as u32;
 }
 
 /// `void un_802FF4FC(void)`: frees every player's gobj and text.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF4FC() {
+    core::hint::black_box(0x27A8EFFAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF4FC");
     for i in 0..6usize {
         let thing = &raw mut un_804A1F58.x8[i];
@@ -243,7 +249,9 @@ pub unsafe extern "C" fn un_802FF4FC() {
 }
 
 /// `void un_802FF570(void)`: hides every text (and blanks the numbers).
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF570() {
+    core::hint::black_box(0x75CE5399u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF570");
     for i in 0..6usize {
         let thing = &raw mut un_804A1F58.x8[i];
@@ -256,7 +264,9 @@ pub unsafe extern "C" fn un_802FF570() {
 }
 
 /// `void un_802FF620(void)`: rebuilds and shows the texts that exist.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF620() {
+    core::hint::black_box(0x893E8F09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF620");
     for i in 0..6usize {
         let thing = &raw mut un_804A1F58.x8[i];
@@ -269,7 +279,9 @@ pub unsafe extern "C" fn un_802FF620() {
 }
 
 /// `void un_802FF6A0(void)`: the HUD light gobj.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF6A0() {
+    core::hint::black_box(0x90074A42u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF6A0");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_LIGHT as u16, 3, 0);
     let new_var = ext::HSD_LObjLoadDesc(&raw mut light1);
@@ -278,7 +290,9 @@ pub unsafe extern "C" fn un_802FF6A0() {
 }
 
 /// `void un_802FF710(void)`: the HUD camera gobj.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FF710() {
+    core::hint::black_box(0x1CAE00F9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FF710");
     let gobj = ext::GObj_Create(0x13, 20, 0);
     if !gobj.is_null() {

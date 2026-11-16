@@ -312,7 +312,9 @@ pub unsafe extern "C" fn lb_80019C38_noinline() -> *mut CardTask {
 }
 
 /// 019C38
+#[inline(never)]
 pub unsafe extern "C" fn getNewTask() -> *mut CardTask {
+    core::hint::black_box(0xB549B17Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("getNewTask");
     let mut i = 0;
     let mut result = &raw mut state.task_array[0];
@@ -338,7 +340,9 @@ pub unsafe extern "C" fn resetTaskArray() {
 }
 
 /// 019CB0
+#[inline(never)]
 pub unsafe extern "C" fn executeNextTask(mut result: u32) -> i32 {
+    core::hint::black_box(0xF3B9E676u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("executeNextTask");
     loop {
         let mut i = 0;
@@ -457,7 +461,9 @@ pub unsafe extern "C" fn fn_8001A0B0(file_idx: i32, hsd_error: i32) {
 }
 
 /// 01A184
+#[inline(never)]
 pub unsafe extern "C" fn taskMount() -> i32 {
+    core::hint::black_box(0x44722607u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskMount");
     let mut did_disable = false;
     let mut enabled = 0;
@@ -492,7 +498,9 @@ pub unsafe extern "C" fn taskMount() -> i32 {
 }
 
 /// 01A3A4
+#[inline(never)]
 pub unsafe extern "C" fn taskCheck() -> i32 {
+    core::hint::black_box(0x94CE8CA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskCheck");
     state.tasks_remaining = 0;
     let enabled = ext::OSDisableInterrupts();
@@ -554,7 +562,9 @@ pub unsafe extern "C" fn setupCardEntries(ctx: *mut CardState, icon: *mut c_void
 }
 
 /// 01A594
+#[inline(never)]
 pub unsafe extern "C" fn taskOpen(filename: *const i8, entries: *mut LbCardEntry) -> i32 {
+    core::hint::black_box(0x4B68CE06u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskOpen");
     state.tasks_remaining = 0;
     if state.sectorsize != SECTOR_SIZE {
@@ -598,7 +608,9 @@ pub unsafe extern "C" fn taskOpen(filename: *const i8, entries: *mut LbCardEntry
 }
 
 /// 01A860
+#[inline(never)]
 pub unsafe extern "C" fn taskUnk3() -> i32 {
+    core::hint::black_box(0xB290EDFBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskUnk3");
     state.tasks_remaining = 0;
     match state.saved_error {
@@ -609,7 +621,9 @@ pub unsafe extern "C" fn taskUnk3() -> i32 {
 }
 
 /// 01A8A4
+#[inline(never)]
 pub unsafe extern "C" fn taskFormat() -> i32 {
+    core::hint::black_box(0x806D7355u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskFormat");
     let mut did_disable = 0;
     let mut enabled = 0;
@@ -635,7 +649,9 @@ pub unsafe extern "C" fn taskFormat() -> i32 {
 }
 
 /// 01A9CC
+#[inline(never)]
 pub unsafe extern "C" fn taskDelete(filename: *mut i8) -> i32 {
+    core::hint::black_box(0x037BDDC1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskDelete");
     state.tasks_remaining = 0;
     let enabled = ext::OSDisableInterrupts();
@@ -654,7 +670,9 @@ pub unsafe extern "C" fn taskDelete(filename: *mut i8) -> i32 {
 }
 
 /// 01AAE4
+#[inline(never)]
 pub unsafe extern "C" fn taskRename(old_name: *const i8, new_name: *const i8) -> i32 {
+    core::hint::black_box(0x4E51F160u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskRename");
     state.tasks_remaining = 0;
     let enabled = ext::OSDisableInterrupts();
@@ -673,7 +691,9 @@ pub unsafe extern "C" fn taskRename(old_name: *const i8, new_name: *const i8) ->
 }
 
 /// 01AC04
+#[inline(never)]
 pub unsafe extern "C" fn taskCreate(filename: *const i8) -> i32 {
+    core::hint::black_box(0x011A4DE2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskCreate");
     let hsd_result = ext::hsd_803B286C(
         &raw mut state.card_state,
@@ -730,19 +750,25 @@ unsafe fn taskReadWrite(entries: *mut LbCardEntry, write: bool) -> i32 {
 }
 
 /// 01ACEC
+#[inline(never)]
 pub unsafe extern "C" fn taskRead(entries: *mut LbCardEntry) -> i32 {
+    core::hint::black_box(0xB37F95BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskRead");
     taskReadWrite(entries, false)
 }
 
 /// 01AE38
+#[inline(never)]
 pub unsafe extern "C" fn taskWrite(entries: *mut LbCardEntry) -> i32 {
+    core::hint::black_box(0x5D3A2461u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskWrite");
     taskReadWrite(entries, true)
 }
 
 /// 01AF84
+#[inline(never)]
 pub unsafe extern "C" fn taskSetStatus() -> i32 {
+    core::hint::black_box(0x3630F980u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskSetStatus");
     let hsd_result = ext::hsd_803B2928(&raw mut state.card_state, state.comment, state.banner, state.icons, Some(fn_8001A0B0));
     state.saved_error = convertHsdResult(hsd_result);
@@ -756,7 +782,9 @@ pub unsafe extern "C" fn taskSetStatus() -> i32 {
 }
 
 /// 01B068
+#[inline(never)]
 pub unsafe extern "C" fn taskReadHeader() -> i32 {
+    core::hint::black_box(0xA1BC4DCFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskReadHeader");
     let hsd_result = ext::hsd_803B27F4(&raw mut state.card_state, state.comment as *mut c_void, state.banner, state.icons, Some(fn_8001A0B0));
     state.saved_error = convertHsdResult(hsd_result);
@@ -770,7 +798,9 @@ pub unsafe extern "C" fn taskReadHeader() -> i32 {
 }
 
 /// 01B14C
+#[inline(never)]
 pub unsafe extern "C" fn taskListSnapshots() -> i32 {
+    core::hint::black_box(0xFC31D997u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskListSnapshots");
     const NODES_LEN: usize = 127;
     let mut head: *mut SnapshotNode = null_mut();
@@ -824,7 +854,9 @@ pub unsafe extern "C" fn taskListSnapshots() -> i32 {
 }
 
 /// 01B614
+#[inline(never)]
 pub unsafe extern "C" fn taskFindFile(filename: *const i8) -> i32 {
+    core::hint::black_box(0xF10E7D47u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("taskFindFile");
     let mut card_stat: CARDStat = core::mem::zeroed();
     let mut fileno = 0;
@@ -849,13 +881,17 @@ pub unsafe extern "C" fn taskFindFile(filename: *const i8) -> i32 {
 }
 
 /// 01B6E0
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001B6E0(file_idx: i32) -> i32 {
+    core::hint::black_box(0x4A94945Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001B6E0");
     state.unk_38[file_idx as usize].lb_error
 }
 
 /// 01B6F8
+#[inline(never)]
 pub unsafe extern "C" fn lbCardNew_CompleteNextTask() -> i32 {
+    core::hint::black_box(0x7665496Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardNew_CompleteNextTask");
     ext::hsd_803AAA48();
     let enabled = ext::OSDisableInterrupts();
@@ -868,7 +904,9 @@ pub unsafe extern "C" fn lbCardNew_CompleteNextTask() -> i32 {
 }
 
 /// 01B760
+#[inline(never)]
 pub unsafe extern "C" fn lbCardNew_CompleteAllTasks(mut result: i32) -> i32 {
+    core::hint::black_box(0xE1BF8E40u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardNew_CompleteAllTasks");
     if result == LbCardResult_Busy as i32 {
         loop {
@@ -916,7 +954,9 @@ unsafe fn finish(mut result: i32) -> i32 {
 }
 
 /// 01B7E0
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001B7E0(chan: i32, filename: *mut i8, file_entries: *mut c_void, save_data: *mut c_void, status_out: *mut i32) -> u32 {
+    core::hint::black_box(0xE79E9DDBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001B7E0");
     resetState(chan, save_data, status_out, None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
@@ -928,7 +968,9 @@ pub unsafe extern "C" fn lb_8001B7E0(chan: i32, filename: *mut i8, file_entries:
 }
 
 /// 01B8C8
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001B8C8(chan: i32) -> i32 {
+    core::hint::black_box(0x924B10FCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001B8C8");
     resetState(chan, null_mut(), null_mut(), None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
@@ -954,7 +996,9 @@ pub unsafe extern "C" fn lbCardNew_DeleteSnap(chan: i32, filename: *const i8, st
 }
 
 /// 01BA44
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001BA44(chan: i32, filename: *const i8, status_out: *mut c_void) -> i32 {
+    core::hint::black_box(0xD7621634u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001BA44");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     setupTask(LbCardNewTask_Mount, 0x10000);
@@ -967,6 +1011,7 @@ pub unsafe extern "C" fn lb_8001BA44(chan: i32, filename: *const i8, status_out:
 }
 
 /// 01BB48
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001BB48(
     chan: i32,
     filename: *mut i8,
@@ -977,6 +1022,7 @@ pub unsafe extern "C" fn lb_8001BB48(
     icons: *mut c_void,
     status_out: *mut c_void,
 ) -> i32 {
+    core::hint::black_box(0x98163661u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001BB48");
     resetState(chan, save_data, status_out as *mut i32, None);
     let mut task = lb_80019C38_noinline();
@@ -1000,6 +1046,7 @@ pub unsafe extern "C" fn lb_8001BB48(
 }
 
 /// 01BC18
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001BC18(
     chan: i32,
     filename: *mut i8,
@@ -1010,6 +1057,7 @@ pub unsafe extern "C" fn lb_8001BC18(
     icons: *mut c_void,
     status_out: *mut i32,
 ) -> i32 {
+    core::hint::black_box(0xA78AE8B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001BC18");
     resetState(chan, save_data, status_out, None);
     setupTask(LbCardNewTask_Mount, 0x10000);
@@ -1026,7 +1074,9 @@ pub unsafe extern "C" fn lb_8001BC18(
 }
 
 /// 01BD34
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001BD34(chan: i32, filename: *const i8, file_entries: *mut c_void, status_out: *mut c_void) -> i32 {
+    core::hint::black_box(0x8061299Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001BD34");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     setupTask(LbCardNewTask_Mount, 0x10000);
@@ -1039,6 +1089,7 @@ pub unsafe extern "C" fn lb_8001BD34(chan: i32, filename: *const i8, file_entrie
 }
 
 /// 01BE30
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001BE30(
     chan: i32,
     filename: *const i8,
@@ -1049,6 +1100,7 @@ pub unsafe extern "C" fn lb_8001BE30(
     status_out: *mut c_void,
     callback: *mut c_void,
 ) -> i32 {
+    core::hint::black_box(0xA1D836DBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001BE30");
     resetState(chan, null_mut(), status_out as *mut i32, core::mem::transmute::<*mut c_void, LbCardOnFinishedCallback>(callback));
     let mut task = getNewTask();
@@ -1075,6 +1127,7 @@ pub unsafe extern "C" fn lb_8001BE30(
 }
 
 /// 01BF04
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001BF04(
     chan: i32,
     filename: *mut i8,
@@ -1084,6 +1137,7 @@ pub unsafe extern "C" fn lb_8001BF04(
     icons: *mut c_void,
     status_out: *mut c_void,
 ) -> i32 {
+    core::hint::black_box(0xF0D499ADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001BF04");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     let mut task = lb_80019C38_noinline();
@@ -1110,7 +1164,9 @@ pub unsafe extern "C" fn lb_8001BF04(
 }
 
 /// 01BFD8
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001BFD8(chan: i32, snapshot_entries: *mut lbCardNew_SnapshotEntry, free_blocks: *mut i32, free_files: *mut i32) -> i32 {
+    core::hint::black_box(0x6D55188Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001BFD8");
     resetState(chan, null_mut(), null_mut(), None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
@@ -1126,7 +1182,9 @@ pub unsafe extern "C" fn lb_8001BFD8(chan: i32, snapshot_entries: *mut lbCardNew
 }
 
 /// 01C0F4
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001C0F4(chan: i32, name_a: *const i8, name_b: *const i8, name_c: *const i8, status_out: *mut c_void) -> i32 {
+    core::hint::black_box(0x01B8A95Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001C0F4");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     let mut task = lb_80019C38_noinline();
@@ -1202,7 +1260,9 @@ pub unsafe extern "C" fn lb_8001C2D8(chan: i32, company: *const i8, game_name: *
 }
 
 /// `lbCardNew_ProbeEx`
+#[inline(never)]
 pub unsafe extern "C" fn lbCardNew_ProbeEx(chan: i32) -> i32 {
+    core::hint::black_box(0x39DEC293u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardNew_ProbeEx");
     let mut memsize: i32 = 0;
     let mut sectorsize: i32 = 0;
@@ -1210,7 +1270,9 @@ pub unsafe extern "C" fn lbCardNew_ProbeEx(chan: i32) -> i32 {
 }
 
 /// 01C4A8
+#[inline(never)]
 pub unsafe extern "C" fn lb_8001C4A8(file_entries: *mut c_void, icon_data: *mut c_void) -> i32 {
+    core::hint::black_box(0xBCA18C43u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8001C4A8");
     let ctx = &raw mut state.card_state;
     let mut entry = file_entries as *mut LbCardEntry;
@@ -1228,7 +1290,9 @@ pub unsafe extern "C" fn lb_8001C4A8(file_entries: *mut c_void, icon_data: *mut 
 }
 
 /// `lbCardNew_AllocWorkArea`
+#[inline(never)]
 pub unsafe extern "C" fn lbCardNew_AllocWorkArea() {
+    core::hint::black_box(0xFF550E75u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardNew_AllocWorkArea");
     if state.work_area.is_null() {
         state.work_area = ext::HSD_MemAlloc(0xA000);
@@ -1237,7 +1301,9 @@ pub unsafe extern "C" fn lbCardNew_AllocWorkArea() {
 }
 
 /// `lbCardNew_ForgetMemory`
+#[inline(never)]
 pub unsafe extern "C" fn lbCardNew_ForgetMemory() {
+    core::hint::black_box(0x99CAFE7Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbCardNew_ForgetMemory");
     state.lib_area = null_mut();
     state.work_area = null_mut();

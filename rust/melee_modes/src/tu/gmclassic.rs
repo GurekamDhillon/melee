@@ -118,17 +118,28 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn gm_8017EB3C(a0: u8, a1: u8) -> u8 { super::gm_8017EB3C(a0, a1) }
-        pub unsafe extern "C" fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EB64(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EB98(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EBCC(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017EC00(a0: u8, a1: u8) -> f32 { super::gm_8017EC00(a0, a1) }
-        pub unsafe extern "C" fn gm_8017EC50(a0: u8, a1: u8) -> f32 { super::gm_8017EC50(a0, a1) }
-        pub unsafe extern "C" fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ECA0(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ECD4(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ED08(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017ED3C(a0: u8, a1: u8) -> f32 { super::gm_8017ED3C(a0, a1) }
-        pub unsafe extern "C" fn gm_8017ED8C(a0: u8, a1: u8) -> f32 { super::gm_8017ED8C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EB3C(a0: u8, a1: u8) -> u8 { core::hint::black_box(0xCEFB9C87u32); /* fn identity */ super::gm_8017EB3C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xDA0879CBu32); /* fn identity */ super::gm_8017EB64(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xCBE392E8u32); /* fn identity */ super::gm_8017EB98(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0x6ED3F5F7u32); /* fn identity */ super::gm_8017EBCC(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EC00(a0: u8, a1: u8) -> f32 { core::hint::black_box(0x5B620916u32); /* fn identity */ super::gm_8017EC00(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EC50(a0: u8, a1: u8) -> f32 { core::hint::black_box(0xE95A99DBu32); /* fn identity */ super::gm_8017EC50(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0x60ED8FCFu32); /* fn identity */ super::gm_8017ECA0(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xDEE18A36u32); /* fn identity */ super::gm_8017ECD4(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xB065311Fu32); /* fn identity */ super::gm_8017ED08(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ED3C(a0: u8, a1: u8) -> f32 { core::hint::black_box(0x395DBA05u32); /* fn identity */ super::gm_8017ED3C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ED8C(a0: u8, a1: u8) -> f32 { core::hint::black_box(0x795152D2u32); /* fn identity */ super::gm_8017ED8C(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     // gm_17c0.c defines them (CSSData, DebugGameOverData, MatchExitInfo, StartMeleeData): the 8-byte stand-ins here

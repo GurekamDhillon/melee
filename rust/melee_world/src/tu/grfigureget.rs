@@ -200,7 +200,9 @@ pub unsafe extern "C" fn grFigureGet_OnStart() {
 }
 
 /// grFigureGet_802195CC: sets up stage gobj `gobj_id` with its row of the callback table.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_802195CC(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x50780C83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_802195CC");
     let callbacks = &raw mut grFigureGet_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -379,7 +381,9 @@ pub unsafe extern "C" fn grFigureGet_80219B10(
 }
 
 /// grFigureGet_80219C34: one more coin that will never be caught.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_80219C34(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0BC5FD6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_80219C34");
     if gobj.is_null() {
         return;
@@ -389,7 +393,9 @@ pub unsafe extern "C" fn grFigureGet_80219C34(gobj: *mut HSD_GObj) {
 }
 
 /// grFigureGet_80219C50: all three coins are either caught or lost.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_80219C50(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x0BD507F6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_80219C50");
     if gobj.is_null() {
         return 0;

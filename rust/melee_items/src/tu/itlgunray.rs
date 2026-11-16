@@ -46,7 +46,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x9E0A67C6u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -145,7 +146,9 @@ pub static mut it_803F64F8: [ItemStateTable; 1] = [
 ];
 
 /// 298168: fires a ray from `owner_gobj`.
+#[inline(never)]
 pub unsafe extern "C" fn it_80298168(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32) {
+    core::hint::black_box(0x2BB5738Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80298168");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_L_Gun_Ray;
@@ -167,7 +170,9 @@ pub unsafe extern "C" fn it_80298168(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, 
 }
 
 /// 2982AC
+#[inline(never)]
 pub unsafe extern "C" fn it_802982AC(gobj: *mut Item_GObj, owner_gobj: *mut Item_GObj, article: *mut Article) {
+    core::hint::black_box(0x4842B7F1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802982AC");
     let da = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut ItLGunRayAttr;
     ext::it_80275158(gobj, (*da).lifetime);
@@ -233,7 +238,9 @@ pub unsafe extern "C" fn itLGunRay_Logic35_Absorbed(_gobj: *mut Item_GObj) -> bo
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGunRay_Logic35_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x73DF0CCBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGunRay_Logic35_Reflected");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -244,7 +251,9 @@ pub unsafe extern "C" fn itLGunRay_Logic35_Reflected(gobj: *mut Item_GObj) -> bo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLGunRay_Logic35_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFF53B8D4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLGunRay_Logic35_ShieldBounced");
     Item_BounceRayOffShield(gobj)
 }

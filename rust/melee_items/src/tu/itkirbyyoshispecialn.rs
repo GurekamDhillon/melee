@@ -66,7 +66,9 @@ pub static mut it_803F9490: [ItemStateTable; 1] = [ItemStateTable {
     collided: Some(itKirbyyoshispecialn_UnkMotion0_Coll),
 }];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F2D98(gobj: *mut Item_GObj, owner_gobj: *mut Fighter_GObj) {
+    core::hint::black_box(0x4AD460FFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F2D98");
     let item = get_item(gobj);
     (*item).atk_victim = owner_gobj;
@@ -101,7 +103,9 @@ pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Coll(_gobj: *mut Item_G
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F2E7C(gobj: *mut Item_GObj, has_destroy_type: i32) {
+    core::hint::black_box(0x699F689Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F2E7C");
     let item = get_item(gobj);
     ext::it_80275070(gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id);

@@ -50,7 +50,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn gm_80165290(a0: i32) { super::gm_80165290(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_80165290(a0: i32) { core::hint::black_box(0x448FEB88u32); /* fn identity */ super::gm_80165290(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(a0: *mut GameModeState) { core::hint::black_box(0xCE538621u32); /* fn identity */ super::gm_ModeState_ApproachVs_OnEnter(a0) }
         #[inline(never)]

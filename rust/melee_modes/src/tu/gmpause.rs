@@ -81,7 +81,9 @@ pub mod ext {
     hook!(H_lbArchive_80016DBC, lbArchive_80016DBC, (a0: *const i8, a1: *mut core::ffi::c_void, a2: *const i8, a3: i32) -> *mut melee_types::HSD_Archive);
     hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
     pub static mut H_HSD_JObjLoadJoint: Option<unsafe extern "C" fn(*mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj {
+                core::hint::black_box(0x47DD0F1Cu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_JObjLoadJoint {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },

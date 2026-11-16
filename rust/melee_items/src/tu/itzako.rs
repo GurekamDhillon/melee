@@ -236,7 +236,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x51F6200Fu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::it_3F14::it_804D6D28;
@@ -337,7 +338,9 @@ unsafe fn jobj_of(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 }
 
 /// `it_8027B5B0`: spawns a zako item at `pos` (or the jobj's origin when `pos` is NULL).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut HSD_JObj, vel: *mut Vec3, use_init: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xCA3CA0B5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B5B0");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp20: Vec3 = core::mem::zeroed();
@@ -386,7 +389,9 @@ pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut 
 }
 
 /// `it_8027B730`: resets a zako item's motion state.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B730(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9B276936u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B730");
     let item = (*item_gobj).user_data as *mut Item;
     (*item).xDD4_itemVar.zako.jobj = null_mut();
@@ -421,7 +426,9 @@ unsafe fn it_8027B798_CalcAngle(ground_or_air: GroundOrAir, angle: i32, common_d
 }
 
 /// `it_8027B798`: the knockback velocity for a zako item; true when it leaves along the floor.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B798(gobj: *mut HSD_GObj, out_vel: *mut Vec3) -> bool {
+    core::hint::black_box(0x2735BD24u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B798");
     let ip = item_of(gobj);
     let mut result = false;
@@ -454,7 +461,9 @@ pub unsafe extern "C" fn it_8027B798(gobj: *mut HSD_GObj, out_vel: *mut Vec3) ->
 }
 
 /// `it_8027B964`: sets the zako item's velocity (a knockback launch, or the reset-on-hit path when `chk`).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B964(item_gobj: *mut HSD_GObj, chk: i32) {
+    core::hint::black_box(0x7A5844E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B964");
     let mut sp14: Vec3;
     let item = item_of(item_gobj);
@@ -481,7 +490,9 @@ pub unsafe extern "C" fn it_8027B964(item_gobj: *mut HSD_GObj, chk: i32) {
 
 /// `it_8027782C`-style helper of the C file: aims the item velocity at the camera with a random spread.
 /// (The C returns an int without a return statement; the value is not used.)
+#[inline(never)]
 pub unsafe extern "C" fn it_8027BA54(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) -> i32 {
+    core::hint::black_box(0x3613A262u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027BA54");
     let item = item_of(item_gobj);
     let mut sp20: Vec3 = core::mem::zeroed();
@@ -613,19 +624,25 @@ pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: i32, arg
 }
 
 /// `it_8027C0A8`: `it_8027BBF4` on the floor normal.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C0A8(item_gobj: *mut HSD_GObj, arg4: f32, arg5: f32) {
+    core::hint::black_box(0xB5AA7020u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C0A8");
     it_8027BBF4(item_gobj, 0, arg4 as f64, arg5);
 }
 
 /// `it_8027C0CC`: `it_8027BBF4` on the ceiling normal.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C0CC(item_gobj: *mut HSD_GObj, arg4: f32, arg5: f32) {
+    core::hint::black_box(0xB8AEF207u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C0CC");
     it_8027BBF4(item_gobj, 1, arg4 as f64, arg5);
 }
 
 /// `it_8027C0F0`: orients the item to `arg1` (or the reference floor direction) while on the floor.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, arg8: f64, arg9: f32) {
+    core::hint::black_box(0xC7BBD597u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C0F0");
     let vecs = &it_803B85A8;
     let item = item_of(item_gobj);
@@ -691,7 +708,9 @@ pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
 }
 
 /// `it_8027C56C`: resets the jobj's rotation to face `y_rot` and clears the zako's up vector.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C56C(item_gobj: *mut HSD_GObj, y_rot: f32) {
+    core::hint::black_box(0xBF3EAF8Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C56C");
     let item_jobj = jobj_of(item_gobj);
     let item = item_of(item_gobj);
@@ -716,7 +735,9 @@ pub unsafe extern "C" fn it_8027C794(gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027C79C`: counts the zako's timer while it is in a hit-stun state; destroys it when the timer
 /// passes the table limit.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C79C(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x250BA4B4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C79C");
     if ext::it_8026DAA8(item_gobj) & 0xF != 0 {
         let item = item_of(item_gobj);
@@ -733,7 +754,9 @@ pub unsafe extern "C" fn it_8027C79C(item_gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027C824`: runs `arg_func` (when given) once the zako's state is 0xF-masked active; the defeat
 /// path runs otherwise.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C824(item_gobj: *mut HSD_GObj, arg_func: Option<unsafe extern "C" fn(*mut HSD_GObj) -> i32>) -> i32 {
+    core::hint::black_box(0x2A211967u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C824");
     if ext::it_8026DAA8(item_gobj) & 0xF != 0 {
         it_8027CC88(item_gobj);
@@ -751,7 +774,9 @@ pub unsafe extern "C" fn it_8027C824(item_gobj: *mut HSD_GObj, arg_func: Option<
 }
 
 /// `it_2725_Logic9_Destroyed`: the enemy's Destroyed hook (scripted enemies have no generator slot).
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic9_Destroyed(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFEBC6EC9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic9_Destroyed");
     if ext::ScriptGame_EnemyDestroyed(item_gobj) != 0 {
         return;
@@ -788,7 +813,9 @@ fn return_sqrt_value3(v: &Vec3) -> f32 {
 
 /// `it_8027C8D0`: rotates `arg0` (in the XY plane) by the signed angle `arg8`, keeping its length.
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C8D0(arg0: *mut Vec3, arg1: *mut Vec3, arg8: f32) {
+    core::hint::black_box(0x32EC165Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C8D0");
     let dir: f32;
     let var_f6: f32;
@@ -812,7 +839,9 @@ pub unsafe extern "C" fn it_8027C8D0(arg0: *mut Vec3, arg1: *mut Vec3, arg8: f32
 }
 
 /// `it_8027C9D8`: picks a new sound effect (0x131..0x134, never the same one twice) and plays it.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027C9D8(item: *mut Item) {
+    core::hint::black_box(0xBBF18332u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027C9D8");
     let spc: [i32; 4] = [0x131, 0x132, 0x133, 0x134];
     let mut var_r3 = spc[ext::HSD_Randi(4) as usize];
@@ -824,7 +853,9 @@ pub unsafe extern "C" fn it_8027C9D8(item: *mut Item) {
 }
 
 /// `it_8027CA7C`: true for the two motion ids 0x14D and 0x14E.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CA7C(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x2E04AB80u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CA7C");
     let mut chk = false;
     if ext::ftLib_GetMotionId(gobj) == 0x14E {
@@ -837,7 +868,9 @@ pub unsafe extern "C" fn it_8027CA7C(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8027CAD8`: clears the zako's velocity and detaches it from its owner.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CAD8(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xAFCE285Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CAD8");
     let item = item_of(item_gobj);
     (*item).x40_vel.y = 0.0;
@@ -850,7 +883,9 @@ pub unsafe extern "C" fn it_8027CAD8(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_8027CB3C`: attaches the zako to its owner (position and facing).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CB3C(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x01724399u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CB3C");
     let item = item_of(item_gobj);
     ext::it_8026C220(item_gobj, (*item).owner);
@@ -862,7 +897,9 @@ pub unsafe extern "C" fn it_8027CB3C(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_8027CBA4`: follows the owner's facing without re-attaching.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CBA4(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB6EE9F06u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CBA4");
     let item = item_of(item_gobj);
     (*item).facing_dir = ext::ftLib_GetFacingDir((*item).owner);
@@ -872,7 +909,9 @@ pub unsafe extern "C" fn it_8027CBA4(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_8027CBFC`: the per-kind float the zako uses (from `it_804D6D40`), 0 for other kinds.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CBFC(item_gobj: *mut HSD_GObj) -> f32 {
+    core::hint::black_box(0xD9F591E4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CBFC");
     let mut ret_val: i32 = 0;
     match (*item_of(item_gobj)).xCC4 {
@@ -885,7 +924,9 @@ pub unsafe extern "C" fn it_8027CBFC(item_gobj: *mut HSD_GObj) -> f32 {
 
 /// `it_8027CC88`: once per the random counter, spawns a coin (kind chosen from the stage table) at the
 /// zako's position while the 1P mode is on.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CC88(item_gobj_arg: *mut HSD_GObj) -> *mut HSD_GObj {
+    core::hint::black_box(0x49F65A30u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CC88");
     let mut temp_r3: i32;
     let mut temp_r3_2: i32;
@@ -941,7 +982,9 @@ pub unsafe extern "C" fn it_8027CE18(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027CE44`: the defeat transition. Scripted enemies are handled by the script game; the stock path
 /// hands the zako to the grZakoGenerator.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CE44(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD6669D72u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CE44");
     let scripted = ext::ScriptGame_EnemyDefeated(item_gobj);
     if scripted != 0 {
@@ -955,7 +998,9 @@ pub unsafe extern "C" fn it_8027CE44(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027CE64`: the Game&Watch variant: marks the item's flag, copies the fighter's color overlay and
 /// stores the attribute address.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027CE64(item_gobj: *mut HSD_GObj, fighter_gobj: *mut HSD_GObj, arg_attr_address: *mut c_void) {
+    core::hint::black_box(0xE2623328u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027CE64");
     let item = item_of(item_gobj);
     let mut sp18: GXColor = core::mem::zeroed();

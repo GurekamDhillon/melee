@@ -273,14 +273,18 @@ pub fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const core::ffi::c
 pub static mut HOOK_HSD_DObjClearFlags: Option<fn(*mut HSD_DObj, u32)> = None;
 
 /// C `HSD_DObjClearFlags` (sysdolphin/baselib/dobj.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_DObjClearFlags(a0: *mut HSD_DObj, a1: u32) {
+    core::hint::black_box(0x29058092u32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_HSD_DObjClearFlags { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: HSD_DObjClearFlags is not ported") }
 }
 
 pub static mut HOOK_HSD_DObjSetFlags: Option<fn(*mut HSD_DObj, u32)> = None;
 
 /// C `HSD_DObjSetFlags` (sysdolphin/baselib/dobj.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_DObjSetFlags(a0: *mut HSD_DObj, a1: u32) {
+    core::hint::black_box(0xE1A9529Du32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_HSD_DObjSetFlags { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: HSD_DObjSetFlags is not ported") }
 }
 

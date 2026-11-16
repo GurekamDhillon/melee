@@ -127,7 +127,9 @@ unsafe fn Item_EnterAirStateWithHitlagAndStateDesc(gobj: *mut Item_GObj) {
     ext::it_80273670(gobj, 0, 0.0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_Logic23_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF05001E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_Logic23_Spawned");
     let item = GET_ITEM(gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
@@ -137,7 +139,9 @@ pub unsafe extern "C" fn itCerebi_Logic23_Spawned(gobj: *mut Item_GObj) {
 }
 
 /// 2D3F4C
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3F4C(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0x360B5FA2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3F4C");
     ext::it_8026B894(gobj, arg1);
 }
@@ -152,7 +156,9 @@ pub unsafe extern "C" fn it_802D3F6C(gobj: *mut Item_GObj) {
 }
 
 /// 2D3FA0
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3FA0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x05E9B7A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3FA0");
     let item = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -183,7 +189,9 @@ pub unsafe extern "C" fn itCerebi_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool
 }
 
 /// 2D4070
+#[inline(never)]
 pub unsafe extern "C" fn it_802D4070(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xEF6612F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D4070");
     let item = GET_ITEM(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
@@ -225,7 +233,9 @@ pub unsafe extern "C" fn itCerebi_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool
 }
 
 /// 2D4168
+#[inline(never)]
 pub unsafe extern "C" fn it_802D4168(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD7F1540Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D4168");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }

@@ -60,7 +60,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { core::hint::black_box(0x49F58C7Eu32); /* fn identity */ super::hsdIsDescendantOf(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::object::hsdObj;

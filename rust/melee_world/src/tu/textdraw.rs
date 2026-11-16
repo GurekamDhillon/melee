@@ -141,7 +141,9 @@ pub unsafe extern "C" fn DevText_StrLen(mut str: *mut i8) -> i32 {
 }
 
 /// `void DevText_NumToStr(int, char*)`: decimal digits, '-' first for a negative (`-INT_MIN` wraps).
+#[inline(never)]
 pub unsafe extern "C" fn DevText_NumToStr(mut num: i32, mut str: *mut i8) {
+    core::hint::black_box(0xB771C5B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_NumToStr");
     let mut length = 0i32;
     if num < 0 {
@@ -174,13 +176,17 @@ pub unsafe extern "C" fn DevText_NumToStr(mut num: i32, mut str: *mut i8) {
 }
 
 /// `HSD_GObj* DevText_GetGObj(void)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_GetGObj() -> *mut HSD_GObj {
+    core::hint::black_box(0x6E68892Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_GetGObj");
     devtext_gobj
 }
 
 /// `void DevText_InitPool(void)`: chains the 32 boxes into the free list; clears the draw list.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_InitPool() {
+    core::hint::black_box(0xAE23CFC7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_InitPool");
     let e = &raw mut devtext_pool.entries as *mut DevText;
     (*e).prev = null_mut();
@@ -194,7 +200,9 @@ pub unsafe extern "C" fn DevText_InitPool() {
 }
 
 /// `void DevText_Remove(DevText** ptext)`: unlinks `*ptext` (a list head) onto the free list.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Remove(ptext: *mut *mut DevText) {
+    core::hint::black_box(0x5BB42EBBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Remove");
     let text = *ptext;
     let next = (*text).next;
@@ -236,7 +244,9 @@ pub unsafe extern "C" fn DevText_Unlink(text: *mut DevText) {
 }
 
 /// TARGET_PC `bool DevText_IsListed(DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_IsListed(text: *mut DevText) -> i32 {
+    core::hint::black_box(0x62595F12u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_IsListed");
     let mut cur = devtext_drawlist;
     while !cur.is_null() {
@@ -249,7 +259,9 @@ pub unsafe extern "C" fn DevText_IsListed(text: *mut DevText) -> i32 {
 }
 
 /// `void DevText_SetupCObj(void)`: the orthographic camera, built once.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_SetupCObj() {
+    core::hint::black_box(0x3275EF26u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_SetupCObj");
     if devtext_cobj.is_null() {
         let mut viewport = _HSD_RectS16 { xmin: 0, xmax: 640, ymin: 0, ymax: 480 };
@@ -362,7 +374,9 @@ pub unsafe extern "C" fn DevText_DrawAll(_gobj: *mut HSD_GObj, pass: isize) {
 }
 
 /// `void DevText_CreateCObj(...)`: the overlay camera gobj.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_CreateCObj(classifier: i32, p_link: i32, gobj_priority: i32, gx_link: i32, gx_priority: u8) {
+    core::hint::black_box(0xE5AC2E09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_CreateCObj");
     let gobj = ext::GObj_Create(classifier as u16, p_link as u8, gobj_priority as u8);
     if !gobj.is_null() {
@@ -378,6 +392,7 @@ pub unsafe extern "C" fn DevText_CreateCObj(classifier: i32, p_link: i32, gobj_p
 }
 
 /// `HSD_GObj* DevText_Setup(...)`: remembers the arguments, builds camera, pool and the draw gobj.
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Setup(
     classifier: i32,
     p_link: i32,
@@ -386,6 +401,7 @@ pub unsafe extern "C" fn DevText_Setup(
     render_priority: i32,
     camera_priority: u8,
 ) -> *mut HSD_GObj {
+    core::hint::black_box(0x8EB76928u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Setup");
     devtext_setup_classifier = classifier;
     devtext_setup_p_link = p_link;
@@ -444,7 +460,9 @@ pub unsafe extern "C" fn DevText_AddToList(list: *mut *mut DevText, text: *mut D
 }
 
 /// `void DevText_Show(HSD_GObj*, DevText*)`
+#[inline(never)]
 pub unsafe extern "C" fn DevText_Show(_gobj: *mut HSD_GObj, text: *mut DevText) {
+    core::hint::black_box(0x5DF3300Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("DevText_Show");
     DevText_AddToList(&raw mut devtext_drawlist, text);
 }

@@ -56,7 +56,9 @@ pub static mut it_803F6370: [ItemStateTable; 5] = [
     st_row(0, pred_b!(itSpycloak_UnkMotion4_Anim), Some(itSpycloak_UnkMotion4_Phys), pred_b!(itSpycloak_UnkMotion4_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC27165E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_Spawned");
     it_80295D04(gobj);
 }
@@ -126,7 +128,9 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion1_Coll(gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x10FE9404u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
@@ -138,7 +142,9 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBF0617CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
 }
@@ -163,7 +169,9 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion3_Coll(gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF92C00C8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }

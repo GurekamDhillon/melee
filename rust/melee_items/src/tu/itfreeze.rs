@@ -163,7 +163,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x14DDECF3u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::it_3F14::it_804D6D28;
@@ -253,7 +254,9 @@ pub static it_803F5D28: [ItemStateTable; 6] = [
 
 /// `Item_GObj* it_8028EB88(Item_GObj* ref, Vec3* pos, f32 facing_dir, f32 decel)`: spawns the Freeze item at
 /// `pos` (at the reference item's position when there is one) and starts it sliding with `decel`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028EB88(ref_gobj: *mut Item_GObj, pos: *mut Vec, facing_dir: f32, decel: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xD67CB19Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028EB88");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut ip: *mut Item = null_mut(); // uninitialised in the C when `ref_gobj` is NULL (zero in the game build)
@@ -278,7 +281,9 @@ pub unsafe extern "C" fn it_8028EB88(ref_gobj: *mut Item_GObj, pos: *mut Vec, fa
 }
 
 /// `void it_8028EC98(Item_GObj*, f32 vel)`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028EC98(gobj: *mut Item_GObj, vel: f32) {
+    core::hint::black_box(0x404EEB0Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028EC98");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.freeze.x10 = vel;
@@ -286,13 +291,17 @@ pub unsafe extern "C" fn it_8028EC98(gobj: *mut Item_GObj, vel: f32) {
 }
 
 /// `void it_8028ECE0(Item_GObj*)`: forgets the linked item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028ECE0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xCF42A30Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028ECE0");
     (*item_of(gobj)).xDD4_itemVar.freeze.unk_1C = null_mut();
 }
 
 /// `Item* it_8028ECF0(Item_GObj*, Vec3*)`: copies the position out.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028ECF0(gobj: *mut Item_GObj, v: *mut Vec) -> *mut Item {
+    core::hint::black_box(0xC9405B01u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028ECF0");
     let ip = item_of(gobj);
     (*v).x = (*ip).pos.x;
@@ -314,7 +323,9 @@ pub unsafe extern "C" fn itFreeze_Logic17_Destroyed(gobj: *mut Item_GObj) {
 }
 
 /// `void it_3F14_Logic17_Spawned(Item_GObj*)`: faces the centre, clears the vars, enters state 1.
+#[inline(never)]
 pub unsafe extern "C" fn it_3F14_Logic17_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8641BD85u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_3F14_Logic17_Spawned");
     let ip = item_of(gobj);
     if (*ip).pos.x > 0.0 {
@@ -478,7 +489,9 @@ pub unsafe extern "C" fn itFreeze_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// `void itFreeze_Logic17_PickedUp(Item_GObj*)`: releases the linked item, enters the held state (2).
+#[inline(never)]
 pub unsafe extern "C" fn itFreeze_Logic17_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB9E8C3FEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreeze_Logic17_PickedUp");
     let item = (*gobj).user_data as *mut Item;
     let linked = (*item).xDD4_itemVar.freeze.unk_1C;
@@ -498,13 +511,17 @@ pub unsafe extern "C" fn itFreeze_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// `void itFreeze_Logic17_Dropped(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreeze_Logic17_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5290399Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreeze_Logic17_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
 }
 
 /// `void itFreeze_Logic17_Thrown(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreeze_Logic17_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD4CD8C35u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreeze_Logic17_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
@@ -571,7 +588,9 @@ pub unsafe extern "C" fn itFreeze_Logic17_Reflected(gobj: *mut Item_GObj) -> i32
 }
 
 /// `bool itFreeze_Logic17_ShieldBounced(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFreeze_Logic17_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xB3AD0736u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFreeze_Logic17_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
@@ -585,7 +604,9 @@ pub unsafe extern "C" fn itFreeze_Logic17_DmgReceived(arg0: *mut Item_GObj) -> i
 }
 
 /// `void it_8028F434(Item_GObj*, f32 vel, Item_GObj* ref)`: starts the slide with deceleration `|vel|`, linked to `ref`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028F434(gobj: *mut Item_GObj, mut vel: f32, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD4023A12u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028F434");
     let ip = item_of(gobj);
     itResetVelocity(ip);
@@ -702,7 +723,9 @@ pub unsafe extern "C" fn itFreeze_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// `void it_8028F7C8(Item_GObj*)`: stops and enters the 90-frame wait (state 5).
+#[inline(never)]
 pub unsafe extern "C" fn it_8028F7C8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x968CF3AFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028F7C8");
     let ip = item_of(gobj);
     itResetVelocity(ip);
@@ -752,7 +775,9 @@ pub unsafe extern "C" fn itFreeze_Logic17_EvtUnk(gobj: *mut Item_GObj, ref_gobj:
 }
 
 /// `void it_8028F8E4(Item_GObj*)`: marks the flag, stops, and runs the map probe from the current position.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028F8E4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x12DB7C48u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028F8E4");
     let ip = item_of(gobj);
     (*ip).xDCC_flag.set_b3(1);
@@ -763,7 +788,9 @@ pub unsafe extern "C" fn it_8028F8E4(gobj: *mut Item_GObj) {
 }
 
 /// `void it_8028F968(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028F968(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x1AF402F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028F968");
     let ip = item_of(gobj);
     ext::it_80273454(gobj);
@@ -772,7 +799,9 @@ pub unsafe extern "C" fn it_8028F968(gobj: *mut Item_GObj) {
 }
 
 /// `void it_8028F9B8(Item_GObj*)`: destroys the item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8028F9B8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x21E877D4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028F9B8");
     ext::Item_8026A8EC(gobj);
 }

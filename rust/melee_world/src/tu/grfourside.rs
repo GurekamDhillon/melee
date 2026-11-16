@@ -89,7 +89,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x5D8EC05Fu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::ground::stage_info;
@@ -305,7 +306,9 @@ pub unsafe extern "C" fn grFourside_801F2DA4() {
 }
 
 /// 1F2DD0: sets up stage gobj `gobj_id` with its row of the callback table.
+#[inline(never)]
 pub unsafe extern "C" fn grFourside_801F2DD0(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x25FC0B8Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFourside_801F2DD0");
     let callbacks = &raw mut grFs_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -738,7 +741,9 @@ pub unsafe extern "C" fn grFourside_801F3894(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn grFourside_801F3B6C(_arg: *mut HSD_GObj) { core::hint::black_box(0xB65B34A5u32); /* fn identity */ melee_core::ct!("grFourside_801F3B6C");}
 
 /// 1F3B70: while the UFO is above the camera limit, pins the camera subject to its position.
+#[inline(never)]
 pub unsafe extern "C" fn grFourside_801F3B70(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x695CFA05u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFourside_801F3B70");
     let mut local18: Vec = core::mem::zeroed();
     let gp = (*gobj).user_data as *mut Ground;
@@ -844,7 +849,9 @@ pub unsafe extern "C" fn grFourside_801F3CC8(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn grFourside_801F3F0C(_arg: *mut HSD_GObj) { core::hint::black_box(0x2B0AB97Bu32); /* fn identity */ melee_core::ct!("grFourside_801F3F0C");}
 
 /// 1F3F10: is the helicopter in the way of the UFO's building 0/1 sequence?
+#[inline(never)]
 pub unsafe extern "C" fn grFourside_801F3F10() -> i32 {
+    core::hint::black_box(0x420D1C47u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFourside_801F3F10");
     let gobj = ext::Ground_GetMapGObj(3);
     let gp = (*gobj).user_data as *mut Ground;

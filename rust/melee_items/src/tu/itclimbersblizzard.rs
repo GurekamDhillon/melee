@@ -90,7 +90,9 @@ unsafe fn spawn_item_0z(gobj: *mut Item_GObj, kind: ItemKind, pos: *mut Vec3, fa
     ext::Item_80268B18(spawn)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersBlizzard_Spawn(gobj: *mut Item_GObj, pos: *mut Vec3, facing_dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xBC607B7Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersBlizzard_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let spawned = spawn_item_0z(gobj, It_Kind_IceClimber_Blizzard, pos, facing_dir, &mut spawn);
@@ -108,7 +110,9 @@ pub unsafe extern "C" fn itClimbersBlizzard_Spawn(gobj: *mut Item_GObj, pos: *mu
 }
 
 /// 2C2248: random launch angle inside [xC, x10] (1 fused site: `(x10 - xC) * rand + xC`).
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersBlizzard_802C2248(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x667FB73Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersBlizzard_802C2248");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersBlizzardAttributes;
@@ -136,7 +140,9 @@ pub unsafe extern "C" fn itClimbersBlizzard_802C2248(gobj: *mut Item_GObj) {
 }
 
 /// 2C2358
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersBlizzard_802C2358(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xFDEAB24Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersBlizzard_802C2358");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }

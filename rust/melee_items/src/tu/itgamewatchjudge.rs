@@ -89,7 +89,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x6DC91308u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -179,7 +180,9 @@ pub static mut it_803F7968: [ItemStateTable; 1] = [
 ];
 
 /// `HSD_GObj* it_802C7774(float facing_dir, HSD_GObj* parent_gobj, Vec3* pos, s32 part, u32 arg4)`
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7774(facing_dir: f32, parent_gobj: *mut HSD_GObj, pos: *mut Vec, part: i32, arg4: u32) -> *mut HSD_GObj {
+    core::hint::black_box(0xA234A34Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7774");
     let mut si: SpawnItem = core::mem::zeroed();
     si.kind = It_Kind_GameWatch_Judge;
@@ -199,7 +202,9 @@ pub unsafe extern "C" fn it_802C7774(facing_dir: f32, parent_gobj: *mut HSD_GObj
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C78B8(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6B0FFB2Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C78B8");
     let ip = GET_ITEM(item_gobj);
     let jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
@@ -214,7 +219,9 @@ pub unsafe extern "C" fn it_802C78B8(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchJudge_Logic77_Destroyed(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8918965Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchJudge_Logic77_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
@@ -222,7 +229,9 @@ pub unsafe extern "C" fn itGameWatchJudge_Logic77_Destroyed(gobj: *mut HSD_GObj)
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7A84(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x71AB1763u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7A84");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
@@ -231,17 +240,23 @@ pub unsafe extern "C" fn it_802C7A84(item_gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7AD0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6D8CFC03u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7AD0");
     ext::it_8026B724(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7AF0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0187D4D1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7AF0");
     ext::it_8026B73C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic77_PickedUp(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFEE6A00Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic77_PickedUp");
     let it = GET_ITEM(item_gobj);
     (*it).xDB0_itcmd_var1 = 0;

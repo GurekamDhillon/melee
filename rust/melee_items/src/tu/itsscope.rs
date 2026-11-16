@@ -266,7 +266,9 @@ pub static mut it_803F5F40: [ItemStateTable; 5] = [
     st_row(-1, pred_b!(itSscope_UnkMotion4_Anim), Some(itSscope_UnkMotion4_Phys), pred_b!(itSscope_UnkMotion4_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80291BE0(arg0: *mut Vec3) -> *mut HSD_GObj {
+    core::hint::black_box(0xD2D4CAB2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80291BE0");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -280,7 +282,9 @@ pub unsafe extern "C" fn it_80291BE0(arg0: *mut Vec3) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSScope_Logic21_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x236C3E86u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSScope_Logic21_Spawned");
     let ip = GET_ITEM(gobj);
     (*ip).xD4C = *((*(*ip).xC4_article_data).x4_specialAttributes as *mut i32);
@@ -338,7 +342,9 @@ unsafe fn it_80291DAC_level(gobj: *mut Item_GObj, arg1: i32) -> i32 {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80291DAC(gobj: *mut Item_GObj, arg1: i32) -> i32 {
+    core::hint::black_box(0xE0113949u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80291DAC");
     let ip = GET_ITEM(gobj);
 
@@ -365,7 +371,9 @@ pub unsafe extern "C" fn it_80291DAC(gobj: *mut Item_GObj, arg1: i32) -> i32 {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80291F14(gobj: *mut Item_GObj, charge_level: i32) {
+    core::hint::black_box(0xAA7DD26Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80291F14");
     let ip = GET_ITEM(gobj);
     (*ip).xD4C = (*ip).xD4C.wrapping_sub(it_80291D38(gobj, charge_level));
@@ -374,7 +382,9 @@ pub unsafe extern "C" fn it_80291F14(gobj: *mut Item_GObj, charge_level: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80291FA8(gobj: *mut Item_GObj, pos: *mut Vec3, charge_level: i32, scale: f32) {
+    core::hint::black_box(0xA6070AD2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80291FA8");
     let ip = GET_ITEM(gobj);
     it_80291F14(gobj, charge_level);
@@ -440,7 +450,9 @@ pub unsafe extern "C" fn itSscope_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool 
     ext::it_8026DF34(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSScope_Logic21_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xE7B05495u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSScope_Logic21_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
@@ -455,12 +467,16 @@ pub unsafe extern "C" fn itSscope_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool
 #[inline(never)]
 pub unsafe extern "C" fn itSscope_UnkMotion2_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xDA9254D5u32); /* fn identity */ melee_core::ct!("itSscope_UnkMotion2_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itSScope_Logic21_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x88D9AB9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSScope_Logic21_Dropped");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSScope_Logic21_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x74B7454Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSScope_Logic21_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
@@ -503,12 +519,16 @@ pub unsafe extern "C" fn itSScope_Logic21_Reflected(gobj: *mut Item_GObj) -> boo
     ext::it_80273030(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSScope_Logic21_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD531BAE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSScope_Logic21_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSScope_Logic21_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD5754581u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSScope_Logic21_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }

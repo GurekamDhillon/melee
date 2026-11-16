@@ -63,7 +63,9 @@ pub static mut it_803F94A0: [ItemStateTable; 3] = [
     st_row(-1, pred_b!(it_27CF_UnkMotion2_Anim), None, None),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F2F34(gobj: *mut HSD_GObj, attr: *mut itYoshiEggLay_DatAttrs) {
+    core::hint::black_box(0xBDB30146u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F2F34");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -171,7 +173,9 @@ pub unsafe extern "C" fn it_27CF_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F3290(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF9F955A9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F3290");
     let item_jobj = GET_JOBJ(item_gobj);
     let item = GET_ITEM(item_gobj);

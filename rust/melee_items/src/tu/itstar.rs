@@ -52,7 +52,9 @@ pub static mut it_803F57A0: [ItemStateTable; 1] = [
     st_row(0, pred_b!(itStar_UnkMotion0_Anim), Some(itStar_UnkMotion0_Phys), pred_b!(itStar_UnkMotion0_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itStar_Logic10_Spawned(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x44C2A8D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itStar_Logic10_Spawned");
     let item = GET_ITEM(item_gobj);
     let star = (*(*item).xC4_article_data).x4_specialAttributes as *mut itStar_ItemVars;
@@ -65,7 +67,9 @@ pub unsafe extern "C" fn itStar_Logic10_Spawned(item_gobj: *mut Item_GObj) {
 }
 
 /// 2846D4
+#[inline(never)]
 pub unsafe extern "C" fn it_802846D4(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x15DCB5CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802846D4");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }

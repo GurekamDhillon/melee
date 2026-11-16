@@ -140,7 +140,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xAB157718u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x7C44837Fu32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
@@ -367,7 +368,9 @@ pub unsafe extern "C" fn grGreens_802134F8() {
 }
 
 /// 213524
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80213524(id: i32) -> *mut Ground_GObj {
+    core::hint::black_box(0x720D0E97u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80213524");
     let cbs = &raw mut grGr_callbacks[id as usize];
     let gobj = ext::Ground_GetStageGObj(id);
@@ -913,7 +916,9 @@ pub unsafe fn BOMB(idx: i32) {
 }
 
 /// 214B58
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80214B58(_gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xBCAC5F22u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80214B58");
     let mut i = 0usize;
     while i < 24 {
@@ -949,7 +954,9 @@ pub unsafe extern "C" fn grGreens_80214B58(_gobj: *mut Ground_GObj) {
 }
 
 /// 214FA8
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80214FA8(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x89E23A5Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80214FA8");
     let gp = GET_GROUND(gobj);
 
@@ -985,7 +992,9 @@ pub unsafe extern "C" fn grGreens_80214FA8(gobj: *mut Ground_GObj) {
 }
 
 /// 2150C4
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_802150C4(gobj: *mut Ground_GObj, arg1: i32, arg2: i32) {
+    core::hint::black_box(0xCA693F1Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_802150C4");
     let gp = GET_GROUND(gobj);
 
@@ -1030,7 +1039,9 @@ pub unsafe fn get_block_material_params(block_type: i32, duration: *mut f32, sca
 }
 
 /// 215358
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80215358(gobj: *mut Ground_GObj, col: i32, row: i32, arg3: i32, arg4: i32) {
+    core::hint::black_box(0x01F46F68u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80215358");
     let gp = GET_GROUND(gobj);
     let block = blk(gp, row, col);
@@ -1179,7 +1190,9 @@ pub unsafe extern "C" fn fn_80215B84(item_gobj: *mut Item_GObj, gp: *mut Ground,
 }
 
 /// 215D54
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80215D54(gobj: *mut Ground_GObj, arg1: i32, _arg2: i32) -> i32 {
+    core::hint::black_box(0xAECBECA1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80215D54");
     let gp = GET_GROUND(gobj);
 
@@ -1204,7 +1217,9 @@ pub unsafe extern "C" fn grGreens_80215D54(gobj: *mut Ground_GObj, arg1: i32, _a
 }
 
 /// 215ED8
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80215ED8(gobj: *mut Ground_GObj, col: i32, row: i32) {
+    core::hint::black_box(0x93391257u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80215ED8");
     let gp = GET_GROUND(gobj);
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1307,7 +1322,9 @@ pub unsafe extern "C" fn grGreens_80215ED8(gobj: *mut Ground_GObj, col: i32, row
 }
 
 /// 2166C4
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_802166C4(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xADF1D7E6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_802166C4");
     let gp = GET_GROUND(gobj);
     let mut weights = [0u8; 6];
@@ -1484,7 +1501,9 @@ pub unsafe extern "C" fn grGreens_802166C4(gobj: *mut Ground_GObj) {
 }
 
 /// 216C20
+#[inline(never)]
 pub unsafe extern "C" fn grGreens_80216C20(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0x66CAFDB8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grGreens_80216C20");
     let gp = GET_GROUND(gobj);
 

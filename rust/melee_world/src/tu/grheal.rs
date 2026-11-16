@@ -227,7 +227,9 @@ pub unsafe extern "C" fn grHeal_8021EFC0() {
 }
 
 /// 21EFEC
+#[inline(never)]
 pub unsafe extern "C" fn grHeal_8021EFEC(gobj_id: u32) -> *mut Ground_GObj {
+    core::hint::black_box(0xDD8FB556u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHeal_8021EFEC");
     let callbacks = &raw mut stage_callbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id as i32);
@@ -380,7 +382,9 @@ pub unsafe extern "C" fn onJointCollision(user_data: *mut c_void, _joint_id: i32
 }
 
 /// 21F4E8
+#[inline(never)]
 pub unsafe extern "C" fn grHeal_8021F4E8(arg0: i32, parent_jobj: *mut HSD_JObj) {
+    core::hint::black_box(0x5AFEAA2Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHeal_8021F4E8");
     let gobj = grHeal_8021EFEC(4);
     assert!(!gobj.is_null(), "gobj"); // HSD_ASSERT(440, gobj)
@@ -425,7 +429,9 @@ pub unsafe extern "C" fn stageGObj3_GObjProc(_gobj: *mut Ground_GObj) { core::hi
 pub unsafe extern "C" fn stageGObj3_Callback3(_gobj: *mut Ground_GObj) { core::hint::black_box(0x91F7F74Au32); /* fn identity */ melee_core::ct!("stageGObj3_Callback3");}
 
 /// 21F628
+#[inline(never)]
 pub unsafe extern "C" fn grHeal_8021F628(arg0: i32, jobj_parent: *mut HSD_JObj) {
+    core::hint::black_box(0x31B43ACBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHeal_8021F628");
     let gobj = grHeal_8021EFEC(2);
     assert!(!gobj.is_null(), "gobj"); // HSD_ASSERT(513, gobj)
@@ -450,7 +456,9 @@ pub unsafe extern "C" fn stageGObj4_GObjProc(_gobj: *mut Ground_GObj) { core::hi
 pub unsafe extern "C" fn stageGObj4_Callback3(_gobj: *mut Ground_GObj) { core::hint::black_box(0xB0C179D3u32); /* fn identity */ melee_core::ct!("stageGObj4_Callback3");}
 
 /// 21F70C
+#[inline(never)]
 pub unsafe extern "C" fn grHeal_8021F70C(mut character_id: enum_t) -> i32 {
+    core::hint::black_box(0x8E181D33u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHeal_8021F70C");
     let mut frame: i32 = 0;
 
@@ -471,7 +479,9 @@ pub unsafe extern "C" fn grHeal_8021F70C(mut character_id: enum_t) -> i32 {
 }
 
 /// 21F79C
+#[inline(never)]
 pub unsafe extern "C" fn grHeal_8021F79C(arg0: i32, idx: i32, arg2: i32) {
+    core::hint::black_box(0x662DA48Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grHeal_8021F79C");
     let mut bobomb_rain: BobOmbRain = core::mem::zeroed();
 

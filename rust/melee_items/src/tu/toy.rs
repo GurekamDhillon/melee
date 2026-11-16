@@ -204,7 +204,8 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x5D1C6B68u32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
         #[inline(never)]
         pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xBB31E396u32); /* fn identity */ super::HSD_GObj_LObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xA913CD03u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
         #[inline(never)]
         pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xDC1FCD39u32); /* fn identity */ super::HSD_SObjLib_803A49E0(a0, a1) }
     }

@@ -147,7 +147,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x64420D90u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::shared::gm_80473A18;
@@ -170,7 +171,9 @@ pub static it_803F56C8: [ItemStateTable; 5] = [
 ];
 
 /// `Item_GObj* it_80283AE4(Item_GObj*, Vec3*, s32)`: spawn a heart at `pos`.
+#[inline(never)]
 pub unsafe extern "C" fn it_80283AE4(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xC5739A73u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80283AE4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut item_gobj: *mut HSD_GObj = null_mut();
@@ -190,14 +193,18 @@ pub unsafe extern "C" fn it_80283AE4(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: 
 }
 
 /// `void it_80283BD4(Item_GObj*)`
+#[inline(never)]
 pub unsafe extern "C" fn it_80283BD4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5876D86Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80283BD4");
     let ip = GET_ITEM(gobj);
     let vars = (*(*ip).xC4_article_data).x4_specialAttributes as *mut HeartContainerAttr;
     (*ip).xDD4_itemVar.heart.xDD4_heal = (*vars).x4.flags as i32;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHeart_Logic8_Spawned(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC4ED5649u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHeart_Logic8_Spawned");
     let ip = GET_ITEM(gobj);
     let vars = (*(*ip).xC4_article_data).x4_specialAttributes as *mut HeartContainerAttr;
@@ -287,7 +294,9 @@ pub unsafe extern "C" fn itHeart_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHeart_Logic8_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1A6EA16Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHeart_Logic8_PickedUp");
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
     ext::HSD_JObjClearFlagsAll(child, JOBJ_HIDDEN as u32);
@@ -305,7 +314,9 @@ pub unsafe extern "C" fn itHeart_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> i32 {
 #[inline(never)]
 pub unsafe extern "C" fn itHeart_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0x0EEDDB73u32); /* fn identity */ melee_core::ct!("itHeart_UnkMotion2_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itHeart_Logic8_Dropped(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1BCEDE55u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHeart_Logic8_Dropped");
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
     ext::it_8026B390(gobj);
@@ -314,7 +325,9 @@ pub unsafe extern "C" fn itHeart_Logic8_Dropped(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHeart_Logic8_EnteredAir(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x94CB64B0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHeart_Logic8_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as u32);
 }

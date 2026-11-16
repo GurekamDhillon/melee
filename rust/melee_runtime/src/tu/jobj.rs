@@ -109,7 +109,8 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32) { core::hint::black_box(0x664FAA3Fu32); /* fn identity */ super::HSD_JObjDispSub(a0, a1, a2, a3, a4) }
         #[inline(never)]
         pub unsafe extern "C" fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void) { core::hint::black_box(0x2943B8D1u32); /* fn identity */ super::HSD_JObjMakePositionMtx(a0, a1, a2) }
-        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { core::hint::black_box(0x12F05B39u32); /* fn identity */ super::hsdIsDescendantOf(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::object::hsdObj;

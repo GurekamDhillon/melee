@@ -112,7 +112,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x7ABED003u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -217,7 +218,9 @@ pub unsafe fn it_802F23EC_inline(gobj: *mut Item_GObj) {
     HSD_JObjGetScale(jobj, &mut (*ip).xDD4_itemVar.kirby2f23.x1E8);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F23EC(gobj: *mut Item_GObj, owner_gobj: *mut Fighter_GObj, facing_dir: f32) {
+    core::hint::black_box(0x8E30426Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F23EC");
     let ip = get_item(gobj);
     (*ip).atk_victim = owner_gobj;
@@ -319,7 +322,9 @@ pub unsafe extern "C" fn it_802F258C(gobj: *mut Item_GObj) {
     it_802F258C_update(gobj, &mut offset);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F2810(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE0BE277Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F2810");
     let ip = (*gobj).user_data as *mut Item;
     ext::Item_80268E5C(gobj, 1, 0);

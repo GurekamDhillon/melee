@@ -87,17 +87,28 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn itOldottosea_UnkMotion10_Anim(a0: *mut HSD_GObj) -> i32 { super::itOldottosea_UnkMotion10_Anim(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion10_Coll(a0: *mut HSD_GObj) -> i32 { super::itOldottosea_UnkMotion10_Coll(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion10_Phys(a0: *mut HSD_GObj) { super::itOldottosea_UnkMotion10_Phys(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion11_Anim(a0: *mut HSD_GObj) -> i32 { super::itOldottosea_UnkMotion11_Anim(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion11_Coll(a0: *mut HSD_GObj) -> i32 { super::itOldottosea_UnkMotion11_Coll(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion11_Phys(a0: *mut HSD_GObj) { super::itOldottosea_UnkMotion11_Phys(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion8_Anim(a0: *mut HSD_GObj) -> i32 { super::itOldottosea_UnkMotion8_Anim(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion8_Phys(a0: *mut HSD_GObj) { super::itOldottosea_UnkMotion8_Phys(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion9_Anim(a0: *mut HSD_GObj) -> i32 { super::itOldottosea_UnkMotion9_Anim(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion9_Coll(a0: *mut HSD_GObj) -> i32 { super::itOldottosea_UnkMotion9_Coll(a0) }
-        pub unsafe extern "C" fn itOldottosea_UnkMotion9_Phys(a0: *mut HSD_GObj) { super::itOldottosea_UnkMotion9_Phys(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion10_Anim(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x54E350F1u32); /* fn identity */ super::itOldottosea_UnkMotion10_Anim(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion10_Coll(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x2658FF16u32); /* fn identity */ super::itOldottosea_UnkMotion10_Coll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion10_Phys(a0: *mut HSD_GObj) { core::hint::black_box(0x1C55FD9Cu32); /* fn identity */ super::itOldottosea_UnkMotion10_Phys(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion11_Anim(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x6FEE6B10u32); /* fn identity */ super::itOldottosea_UnkMotion11_Anim(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion11_Coll(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x808FA467u32); /* fn identity */ super::itOldottosea_UnkMotion11_Coll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion11_Phys(a0: *mut HSD_GObj) { core::hint::black_box(0x07895A05u32); /* fn identity */ super::itOldottosea_UnkMotion11_Phys(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion8_Anim(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x0FA8DFDAu32); /* fn identity */ super::itOldottosea_UnkMotion8_Anim(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion8_Phys(a0: *mut HSD_GObj) { core::hint::black_box(0x33EFE407u32); /* fn identity */ super::itOldottosea_UnkMotion8_Phys(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion9_Anim(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x5C2E3513u32); /* fn identity */ super::itOldottosea_UnkMotion9_Anim(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion9_Coll(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x2FB3E904u32); /* fn identity */ super::itOldottosea_UnkMotion9_Coll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldottosea_UnkMotion9_Phys(a0: *mut HSD_GObj) { core::hint::black_box(0xB40E2F66u32); /* fn identity */ super::itOldottosea_UnkMotion9_Phys(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::it_3F14::it_804D6D40;
@@ -135,7 +146,9 @@ unsafe fn attrs_of(ip: *mut Item) -> *mut itOldottoseaAttributes {
     (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOldottoseaAttributes
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802E2470(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x05D7ADBEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E2470");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
@@ -163,7 +176,9 @@ pub unsafe extern "C" fn it_802E2470(gobj: *mut Item_GObj) {
     it_802E269C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic8_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x241C34F3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic8_DmgReceived");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
@@ -227,7 +242,9 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion0_Coll(gobj: *mut Item_GObj) -> b
     ext::it_802E35CC(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802E27B4(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB2A52AA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E27B4");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
@@ -391,7 +408,9 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion4_Coll(gobj: *mut Item_GObj) -> b
     ext::it_802E35CC(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802E2C80(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8B5C8BA4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E2C80");
     let ip = GET_ITEM(gobj);
 
@@ -458,7 +477,9 @@ pub unsafe extern "C" fn it_802E2DF4(gobj: *mut Item_GObj) {
     it_802E27B4(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802E2E30(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB83F4A8Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E2E30");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);

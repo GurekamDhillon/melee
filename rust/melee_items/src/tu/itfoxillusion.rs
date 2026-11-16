@@ -103,7 +103,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x27E6393Au32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -173,7 +174,9 @@ pub static it_803F6818: [ItemStateTable; 3] = [
 ];
 
 /// `void it_8029CD18(Item_GObj*, int)`: draws the ghost jobj, when there is one, after the item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029CD18(item_gobj: *mut Item_GObj, arg1: i32) {
+    core::hint::black_box(0x8C423981u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029CD18");
     let item = item_of(item_gobj);
     let jobj = (*item).xDD4_itemVar.foxillusion.xDDC;
@@ -205,7 +208,9 @@ pub unsafe extern "C" fn it_8029CD78(item_gobj: *mut Item_GObj) -> *mut HSD_JObj
 }
 
 /// `Item_GObj* it_8029CEB4(HSD_GObj* parent, Vec3* pos, ItemKind, f32 dir)`: spawns the illusion item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029CEB4(parent: *mut HSD_GObj, pos: *mut Vec, kind: ItemKind, dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xF5498295u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029CEB4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
@@ -232,7 +237,9 @@ pub unsafe extern "C" fn itFoxIllusion_Logic14_DmgDealt(item_gobj: *mut Item_GOb
 }
 
 /// `void itFoxIllusion_Logic14_Destroyed(Item_GObj*)`: removes the ghost jobj and the owner link.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxIllusion_Logic14_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2462BEE1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxIllusion_Logic14_Destroyed");
     let item = item_of(item_gobj);
     if !(*item).xDD4_itemVar.foxillusion.xDDC.is_null() {
@@ -244,7 +251,9 @@ pub unsafe extern "C" fn itFoxIllusion_Logic14_Destroyed(item_gobj: *mut Item_GO
 }
 
 /// `void it_8029CFF0(Item_GObj*)`: item init: lifetime from the attributes, the model joint, the first state.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029CFF0(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5825E130u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029CFF0");
     let item = item_of(item_gobj);
     (*item).xD44_lifeTimer = *((*(*item).xC4_article_data).x4_specialAttributes as *const f32);
@@ -349,7 +358,9 @@ pub unsafe extern "C" fn itFoxillusion_UnkMotion1_Coll(arg0: *mut Item_GObj) -> 
 }
 
 /// `void it_8029D798(Item_GObj*)`: enters the fade-out state with the second lifetime from the attributes.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029D798(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6FC39B0Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029D798");
     let item = item_of(item_gobj);
     let jobj = jobj_of(item_gobj);

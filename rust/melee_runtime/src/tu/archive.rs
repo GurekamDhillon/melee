@@ -130,7 +130,9 @@ pub unsafe extern "C" fn HSD_ArchiveParse_profile_body(archive: *mut HSD_Archive
 }
 
 /// `HSD_ArchiveGetPublicAddress`
+#[inline(never)]
 pub unsafe extern "C" fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, symbols: *const i8) -> *mut c_void {
+    core::hint::black_box(0x84E77928u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_ArchiveGetPublicAddress");
     if let Some(f) = host_public {
         if let Some(p) = f(archive, symbols) {
@@ -162,7 +164,9 @@ pub unsafe extern "C" fn HSD_ArchiveGetExtern(archive: *mut HSD_Archive, offset:
 }
 
 /// `HSD_ArchiveLocateExtern`: patches every slot of the extern's chain with `addr` (low 32 bits).
+#[inline(never)]
 pub unsafe extern "C" fn HSD_ArchiveLocateExtern(archive: *mut HSD_Archive, symbols: *const i8, addr: *mut c_void) {
+    core::hint::black_box(0x8B4B08EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_ArchiveLocateExtern");
     if let Some(f) = host_locate_extern {
         if f(archive, symbols, addr) {

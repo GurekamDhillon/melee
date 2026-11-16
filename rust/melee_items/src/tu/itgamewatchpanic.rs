@@ -150,7 +150,9 @@ pub static mut it_803F79A0: [ItemStateTable; 2] = [
 ];
 
 /// `HSD_GObj* it_802C7D60(Item_GObj* parent, Vec3* pos, Fighter_Part arg2, f32 dir)`
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7D60(parent: *mut HSD_GObj, pos: *mut Vec, arg2: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x604F8DCEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7D60");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Panic;
@@ -166,7 +168,9 @@ pub unsafe extern "C" fn it_802C7D60(parent: *mut HSD_GObj, pos: *mut Vec, arg2:
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchPanic_Logic78_Destroyed(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x69058605u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchPanic_Logic78_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
@@ -174,7 +178,9 @@ pub unsafe extern "C" fn itGameWatchPanic_Logic78_Destroyed(gobj: *mut HSD_GObj)
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7E94(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x41FE5EE6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7E94");
     let ip = GET_ITEM(gobj);
     if !ip.is_null() {
@@ -183,17 +189,23 @@ pub unsafe extern "C" fn it_802C7E94(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7EE0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xCD072B4Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7EE0");
     ext::it_8026B724(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C7F00(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3AAC4B6Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C7F00");
     ext::it_8026B73C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchPanic_Logic78_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE93F65A7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchPanic_Logic78_PickedUp");
     let ip = GET_ITEM(gobj);
     (*ip).xDB0_itcmd_var1 = 0;

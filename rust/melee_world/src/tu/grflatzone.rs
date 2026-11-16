@@ -84,8 +84,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x231FAB65u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { core::hint::black_box(0x081C29B3u32); /* fn identity */ super::HSD_Randi(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::ground::stage_info;
@@ -343,7 +345,9 @@ pub unsafe fn grFlatzone_80216F48_inline(arg0: i32) -> *mut HSD_GObj {
 }
 
 /// 216F48: sets up stage gobj `gobj_id` with its row of the callback table.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80216F48(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x9DA3EA5Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80216F48");
     let callbacks = &raw mut grFz_StageCallbacks[gobj_id as usize];
     let gobj = grFlatzone_80216F48_inline(gobj_id);
@@ -840,7 +844,9 @@ pub unsafe extern "C" fn grFlatzone_80217EF0(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn grFlatzone_8021805C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x0CF7828Du32); /* fn identity */ melee_core::ct!("grFlatzone_8021805C");}
 
 /// 218060: picks the background machine's next (state, step) and starts its animation.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80218060(arg0: i32) {
+    core::hint::black_box(0x4BFEA17Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80218060");
     let gobj = ext::Ground_GetMapGObj(5);
     if !gobj.is_null() {
@@ -905,13 +911,17 @@ pub unsafe fn grFlatzone_802181B4_inline() {
 }
 
 /// 2181B4
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_802181B4() {
+    core::hint::black_box(0x592BED90u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_802181B4");
     grFlatzone_802181B4_inline();
 }
 
 /// 218260
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80218260() {
+    core::hint::black_box(0x75D80425u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80218260");
     let gobj = ext::Ground_GetMapGObj(5);
     if !gobj.is_null() {

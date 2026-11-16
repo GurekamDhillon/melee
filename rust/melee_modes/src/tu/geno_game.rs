@@ -13203,10 +13203,12 @@ pub unsafe extern "C" fn Geno_ItemFamilyEvent(
     );
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Geno_ItemDraw(
     mut g: *mut HSD_GObj,
     mut code: i32,
 ) {
+    core::hint::black_box(0x261B6998u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Geno_ItemDraw");
     let mut i: i32 = 0;
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();

@@ -51,7 +51,8 @@ pub mod ext {
     pub unsafe extern "C" fn lbAudioAx_80026F2C(p0: u32) { if let Some(h) = HOOK { h("lbAudioAx_80026F2C", &[A::I(p0 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(p0 as _); } return; } }
     pub unsafe extern "C" fn lbAudioAx_8002702C(flags: u32, mask: u64) { if let Some(h) = HOOK { h("lbAudioAx_8002702C", &[A::I(flags as u32 as u64), A::I(mask as u64 as u64)]); return; } { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(flags as _, mask as _); } return; } }
     pub unsafe extern "C" fn lbAudioAx_80027168() { if let Some(h) = HOOK { h("lbAudioAx_80027168", &[]); return; } { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168(); } return; } }
-    pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache() { if let Some(h) = HOOK { h("lbDvd_SetupVsPreloadCache", &[]); return; } { unsafe { melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache() { core::hint::black_box(0x719CFD78u32); /* fn identity */ if let Some(h) = HOOK { h("lbDvd_SetupVsPreloadCache", &[]); return; } { unsafe { melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } return; } }
     pub use melee_world::gmmain::gmMainLib_804D3EE0;
     pub use crate::tu::gmvsmelee::gmVsMelee_CssData;
     pub use crate::tu::gmvsmelee::gmVsMelee_SssData;

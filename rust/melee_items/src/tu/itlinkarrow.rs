@@ -138,7 +138,8 @@ pub mod ext {
         use super::*;
         #[inline(never)]
         pub unsafe extern "C" fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) { core::hint::black_box(0x9E9FCBF9u32); /* fn identity */ super::HSD_JObjSetMtxDirty(a0) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x6BB2C669u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -237,7 +238,9 @@ pub static mut it_803F6A28: [ItemStateTable; 5] = [
 ];
 
 /// 2A7D8C: draws the two trail objects.
+#[inline(never)]
 pub unsafe extern "C" fn it_802A7D8C(gobj: *mut HSD_GObj, arg1: i32) {
+    core::hint::black_box(0xD79C96BCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A7D8C");
     let item = GET_ITEM(gobj);
     if !(*item).xDD4_itemVar.linkarrow.xB4[0].is_null() && (*item).xDAC_itcmd_var0 == 1 {
@@ -250,7 +253,9 @@ pub unsafe extern "C" fn it_802A7D8C(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 /// 2A7E40: shifts the trail history and updates the trail objects.
+#[inline(never)]
 pub unsafe extern "C" fn it_802A7E40(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB3FB3276u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A7E40");
     let mut quat: Quaternion = core::mem::zeroed();
     let mut scale: Vec3 = core::mem::zeroed();
@@ -318,7 +323,9 @@ pub unsafe extern "C" fn itLinkArrow_802A81C4(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// 2A8330: removes the trail objects.
+#[inline(never)]
 pub unsafe extern "C" fn it_802A8330(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF8265498u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A8330");
     if !gobj.is_null() {
         let item = GET_ITEM(gobj);
@@ -350,7 +357,9 @@ pub unsafe extern "C" fn it_802A8398(gobj: *mut Item_GObj, pos: *mut Vec3, pos2:
 }
 
 /// 2A83E0: spawns an arrow (`arg4` = item kind) from fighter `arg1`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802A83E0(facing_dir: f32, arg1: *mut Item_GObj, arg2: *mut Vec3, arg3: u32, arg4: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xFB6EF23Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A83E0");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -462,7 +471,9 @@ pub unsafe extern "C" fn itLinkArrow_802A850C(gobj: *mut Item_GObj, arg1: *mut V
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkArrow_Logic98_Destroyed(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x69D98BBFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkArrow_Logic98_Destroyed");
     if !gobj.is_null() {
         let item = GET_ITEM(gobj);
@@ -489,7 +500,9 @@ pub unsafe extern "C" fn itLinkArrow_Logic98_Destroyed(gobj: *mut Item_GObj) {
 }
 
 /// 2A8A7C
+#[inline(never)]
 pub unsafe extern "C" fn it_802A8A7C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3C81AA63u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A8A7C");
     if !gobj.is_null() {
         it_802A8330(gobj);
@@ -497,7 +510,9 @@ pub unsafe extern "C" fn it_802A8A7C(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkArrow_Logic98_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x017A75E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkArrow_Logic98_PickedUp");
     ext::Item_80268E5C(gobj, 0, 2);
 }
@@ -552,7 +567,9 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion0_Coll(_gobj: *mut HSD_GObj) -> bo
 }
 
 /// 2A8C7C
+#[inline(never)]
 pub unsafe extern "C" fn it_802A8C7C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6B9847D5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A8C7C");
     let item = GET_ITEM(gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkArrowAttributes;
@@ -736,7 +753,9 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion3_Coll(_gobj: *mut HSD_GObj) -> bo
 }
 
 /// 2A9458: the arrow sticks into the wall.
+#[inline(never)]
 pub unsafe extern "C" fn it_802A9458(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xCA879526u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802A9458");
     let mut scale: Vec3 = core::mem::zeroed();
 
@@ -871,7 +890,9 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> boo
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkArrow_Logic98_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x686471EEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkArrow_Logic98_DmgDealt");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLinkArrowAttributes;
@@ -898,7 +919,9 @@ unsafe fn itLinkArrow_Logic98_HitShield_inline(gobj: *mut Item_GObj, scale: *mut
     it_802A8330(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkArrow_Logic98_HitShield(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x08CB14B4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkArrow_Logic98_HitShield");
     let ip = GET_ITEM(gobj);
     let mut scale: Vec3 = core::mem::zeroed();
@@ -925,13 +948,17 @@ pub unsafe extern "C" fn itLinkArrow_Logic98_HitShield(gobj: *mut Item_GObj) -> 
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkArrow_Logic98_Clanked(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6DE8C410u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkArrow_Logic98_Clanked");
     it_802A8330(gobj);
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkArrow_Logic98_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4A144538u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkArrow_Logic98_Reflected");
     let item = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);

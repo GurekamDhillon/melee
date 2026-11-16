@@ -78,7 +78,9 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).x40 = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BD158(gobj: *mut Item_GObj, pos: *mut Vec3, arg2: i32, dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xCF54A508u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BD158");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -101,7 +103,9 @@ pub unsafe extern "C" fn itPeachExplode_Logic55_DmgDealt(_arg0: *mut Item_GObj) 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BD248(item_gobj: *mut Item_GObj, owner: *mut Item_GObj, arg2: i32) {
+    core::hint::black_box(0x08A2BA00u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BD248");
     let ip = GET_ITEM(item_gobj);
     (*ip).owner = owner;

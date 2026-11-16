@@ -65,7 +65,9 @@ pub static mut it_803F6220: [ItemStateTable; 5] = [
     st_row(-1, pred_b!(itScball_UnkMotion4_Anim), Some(itScball_UnkMotion4_Phys), pred_b!(itScball_UnkMotion4_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itScball_Logic30_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xCBC21D10u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itScball_Logic30_Spawned");
     it_80294B58(gobj);
 }
@@ -133,7 +135,9 @@ pub unsafe extern "C" fn itScball_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itScball_Logic30_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDC52195Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itScball_Logic30_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
@@ -145,12 +149,16 @@ pub unsafe extern "C" fn itScball_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itScball_Logic30_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6906DF7Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itScball_Logic30_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itScball_Logic30_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9A6CE444u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itScball_Logic30_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
@@ -177,7 +185,9 @@ pub unsafe extern "C" fn itScball_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itScball_Logic30_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x73321027u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itScball_Logic30_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }

@@ -1567,8 +1567,17 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 // by hand (the generator has no row): two vanilla functions Akaneia's Dedede reaches through pointers
                 // its own data holds (an SFX callback, `bctrl ft_80088510`; its jump, ftCo_800CB110); unresolved,
                 // each fault dropped the rest of the guest callback
-                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110") {
-                    if name == "ft_80088510" {
+                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110" | "ftKb_SpecialN_800F597C") {
+                    if name == "ftKb_SpecialN_800F597C" {
+                        // bool(gobj): Dedede's inhale asks whether its victim can be swallowed (223810, 230601)
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        if !g.is_null() && !c.bad {
+                            let r = melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F597C(g as G);
+                            c.ret_int(r as u32);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "ft_80088510" {
                         let fp = c.ptr(0, Some("Fighter"));
                         if !fp.is_null() && !c.bad {
                             let (s, v, p) = (c.int(1) as i32, c.int(2) as u8, c.int(3) as u8);

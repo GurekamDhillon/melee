@@ -275,3 +275,26 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   test (`lb_8000B074` over the parts) differs for Dedede's anim 328 started mid-way; not looked at further. Baseline
   there also has an item (it0) hitbox live in Rust and cleared in the console from before 4534.
 - Not done: Liu Kang rand order, Meta Knight multi-table.
+
+### Round 10 (Nov 16)
+
+- 232232 (Dedede inhale, victim ECB at 913): the native call is `ftCo_800BDA74(victim, &normal)` from Dedede's
+  guest accessory callback (slot 2000; MELEE_MEX_CALLTRACE, scratch r10_ct232). It runs `ft_800824A0` on
+  `fp->mv.co.thrownkirby.coll_box` (fp+0x2368), which Dedede never writes: the box is whatever the victim's motion
+  vars hold, so the console's collapsed ECB (top 4.95, the rest 0) is that leftover box after `mpColl_8004730C`.
+  Found and fixed one cause: natively `thrownkirby.thrower_gobj` is 8 bytes, so every later field sat one word past
+  its GC offset, while guest stores into `Fighter_MotionVars` land at their GC word (WORD_UNIONS). The pointer now
+  sits after the C's 0x40 bytes (gen/native_unions.py, same pattern as itemthrow/Master Hand). Rust's box moved by a
+  word (desired_ecb top 0.94 -> 0.042) but still is not the console's: the leftover words at fp+0x236C..0x2374 are
+  the guest's earlier `capturekirby.scale` stores (MELEE_MEX_TRACE=1), nonzero on our side; the console's box
+  reads 0 there. Next: dump the victim's mv words 0x2340..0x2380 on both sides at 912/913 (Dolphin memory read)
+  to see which writer differs. 913 unchanged.
+- 225603 (motion 382 end check at 4537): `ftAnim_IsFramesRemaining` and `lb_8000B074` match retail (disassembled:
+  part flag byte 0x40 set, 0x80/0x04 clear; jobj2 when x8A4 != 0; AObj present and not NO_ANIM). The data differs:
+  with blend 6, every part's jobj2 AObj (the anim skeleton) is at frame 15 of end 16 at the 4537 check, one frame
+  behind the root (cur_anim_frame 16), so ours says frames remain. `Fighter_ChangeMotionState`'s anim_start path
+  (8006EBE8 with start - rate, then 8006E9B4 twice) reads the same as the C. Not fixed; the next look is which
+  pass advances the skeleton AObjs on the entry frame on the console (an extra HSD_JObjAnimAll(x8AC) or a
+  FIRST_PLAY consumed earlier). The it0 hitbox item was not looked at.
+- Akaneia 51 after the layout fix: still **41 match**, the same ten divergers at the same frames.
+- Not done: Liu Kang rand order, Meta Knight multi-table.

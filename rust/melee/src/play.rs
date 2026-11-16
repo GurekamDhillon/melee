@@ -1650,16 +1650,29 @@ pub fn play(args: &[String]) -> ExitCode {
                 return ExitCode::from(2);
             }
         }
-        if n < 2 {
-            eprintln!("play: --match NAME,NAME[,NAME..][,STAGE]: two fighters or more");
+        // `--solo` (Subspace maps): only the first fighter plays, the rest of the line-up is dropped. A Subspace map with
+        // a single fighter named is solo too. A second human / CPU stays possible for co-op and Envoy (name two, no --solo).
+        let solo = gd && (has("--solo") || n == 1);
+        if solo {
+            for s in slots.iter_mut().skip(1) {
+                *s = Slot::new(SlotKind::Off, 0, 0);
+            }
+            n = 1;
+        }
+        if n < 2 && !solo {
+            eprintln!("play: --match NAME,NAME[,NAME..][,STAGE]: two fighters or more (one on a Subspace map)");
             return ExitCode::from(2);
         }
+        melee_modes::tu::explore::set_solo(solo);
         // a Subspace map plays by Brawl's adventure rules: lives, no time limit (a VS clock ran out mid-level). Explicit
-        // --stocks / --time-secs still win.
+        // --stocks / --time-secs still win; solo starts with 4 lives.
         if gd && get("--stocks").is_none() && get("--time-secs").is_none() {
             game.rules.stock = true;
             game.rules.stock_time_secs = 0;
-            eprintln!("play: --match on a Subspace map: {} lives, no time limit", game.rules.stocks);
+            if solo {
+                game.rules.stocks = 4;
+            }
+            eprintln!("play: --match on a Subspace map: {} lives, no time limit{}", game.rules.stocks, if solo { ", solo" } else { "" });
         }
         game.slots = slots;
         game.setup = Some(MatchSetup { slots, rules: game.rules, stage });

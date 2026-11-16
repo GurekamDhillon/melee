@@ -242,6 +242,18 @@ fn enemy_kind(id: u16) -> (Option<usize>, &'static str) {
     }
 }
 
+/// Brawl enemy kinds that have their own actor (the Subspace kinds of `subspace.rs`): Goomba, Jyk, Giant Goomba,
+/// Bullet Bill, Hammer Bro, Primid, Koopa. Any other kind is listed in the log and not spawned, unless
+/// `MELEE_SSE_STANDINS=1` puts the nearest of those actors in its place (the old stand-in table above).
+pub fn has_actor(id: u16) -> bool {
+    matches!(id, 0 | 3 | 8 | 13 | 19 | 23 | 25)
+}
+
+fn standins() -> bool {
+    static S: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *S.get_or_init(|| std::env::var("MELEE_SSE_STANDINS").is_ok_and(|v| v == "1"))
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Door {
     pub sec: usize,
@@ -913,6 +925,27 @@ pub const GD_STAGE_SSE_JUNGLE: i32 = 0x7002;
 pub const GD_STAGE_SSE_16: i32 = 0x7003;
 pub const GD_STAGE_SSE_22: i32 = 0x7004;
 pub const GD_STAGE_SSE_27: i32 = 0x7005;
+/// Every other level's first playable segment, chained the same way (the inventory: docs/rust-port/notes/sse-objects.md).
+pub const GD_STAGE_SSE_SKYWORLD: i32 = 0x7006;
+pub const GD_STAGE_SSE_SEA: i32 = 0x7007;
+pub const GD_STAGE_SSE_PLAIN: i32 = 0x7008;
+pub const GD_STAGE_SSE_LAKE: i32 = 0x7009;
+pub const GD_STAGE_SSE_ZOO: i32 = 0x700A;
+pub const GD_STAGE_SSE_FORTRESS: i32 = 0x700B;
+pub const GD_STAGE_SSE_FOREST: i32 = 0x700C;
+pub const GD_STAGE_SSE_RESEARCH1: i32 = 0x700D;
+pub const GD_STAGE_SSE_RUINSPATH: i32 = 0x700E;
+pub const GD_STAGE_SSE_CAVE: i32 = 0x700F;
+pub const GD_STAGE_SSE_WILDS: i32 = 0x7010;
+pub const GD_STAGE_SSE_SWAMP: i32 = 0x7011;
+pub const GD_STAGE_SSE_GLACIER: i32 = 0x7012;
+pub const GD_STAGE_SSE_CANYON: i32 = 0x7013;
+pub const GD_STAGE_SSE_ENTRANCE: i32 = 0x7014;
+pub const GD_STAGE_SSE_SUBSPACE1: i32 = 0x7015;
+pub const GD_STAGE_SSE_SUBSPACE2: i32 = 0x7016;
+pub const GD_STAGE_SSE_RESEARCH2: i32 = 0x7017;
+pub const GD_STAGE_SSE_HALBERD: i32 = 0x7018;
+pub const GD_STAGE_SSE_FACTORY: i32 = 0x7019;
 /// Final Destination's external stage id: the carrier of every GD stage (its stage proc, camera and music).
 pub const FD_STKIND: i32 = 0x20;
 
@@ -927,13 +960,35 @@ pub struct GdStage {
     /// the `--match` word that picks it
     pub word: &'static str,
 }
-/// The GD stage table (the stage select appends one icon per available row).
-pub const GD_STAGES: [GdStage; 5] = [
+/// How many GD_STAGES rows the stage select shows (the first ones).
+pub const SSS_ROWS: usize = 5;
+/// The GD stage table (the stage select appends one icon per available row, the first `SSS_ROWS`).
+pub const GD_STAGES: [GdStage; 25] = [
     GdStage { id: GD_STAGE_SSE_LAKE3, name: "The Lake 3 (SSE)", files: &["080103.pac", "080103a.pac", "adventure_common.arc"], level: 8, first: "080103", word: "lake" },
     GdStage { id: GD_STAGE_SSE_JUNGLE, name: "The Jungle (SSE)", files: &["060002.pac", "060002a.pac", "adventure_common.arc"], level: 6, first: "060001", word: "jungle" },
     GdStage { id: GD_STAGE_SSE_16, name: "SSE 16", files: &["160201.pac", "160202.pac", "adventure_common.arc"], level: 16, first: "160201", word: "sse16" },
     GdStage { id: GD_STAGE_SSE_22, name: "SSE 22", files: &["220001.pac", "220002.pac", "adventure_common.arc"], level: 22, first: "220001", word: "sse22" },
     GdStage { id: GD_STAGE_SSE_27, name: "SSE 27", files: &["270001.pac", "270002.pac", "adventure_common.arc"], level: 27, first: "270001", word: "sse27" },
+    GdStage { id: GD_STAGE_SSE_SKYWORLD, name: "Skyworld (SSE 04)", files: &["040201.pac", "adventure_common.arc"], level: 4, first: "040201", word: "sse04" },
+    GdStage { id: GD_STAGE_SSE_SEA, name: "Sea of Clouds (SSE 05)", files: &["050102.pac", "adventure_common.arc"], level: 5, first: "050102", word: "sse05" },
+    GdStage { id: GD_STAGE_SSE_PLAIN, name: "The Plain (SSE 07)", files: &["070001.pac", "adventure_common.arc"], level: 7, first: "070001", word: "sse07" },
+    GdStage { id: GD_STAGE_SSE_LAKE, name: "The Lake (SSE 08)", files: &["080101.pac", "adventure_common.arc"], level: 8, first: "080101", word: "sse08" },
+    GdStage { id: GD_STAGE_SSE_ZOO, name: "The Ruined Zoo (SSE 09)", files: &["090201.pac", "adventure_common.arc"], level: 9, first: "090201", word: "sse09" },
+    GdStage { id: GD_STAGE_SSE_FORTRESS, name: "Battlefield Fortress (SSE 10)", files: &["100001.pac", "adventure_common.arc"], level: 10, first: "100001", word: "sse10" },
+    GdStage { id: GD_STAGE_SSE_FOREST, name: "The Forest (SSE 12)", files: &["120001.pac", "adventure_common.arc"], level: 12, first: "120001", word: "sse12" },
+    GdStage { id: GD_STAGE_SSE_RESEARCH1, name: "Research Facility I (SSE 14)", files: &["140101.pac", "adventure_common.arc"], level: 14, first: "140101", word: "sse14" },
+    GdStage { id: GD_STAGE_SSE_RUINSPATH, name: "Path to the Ruins (SSE 18)", files: &["180001.pac", "adventure_common.arc"], level: 18, first: "180001", word: "sse18" },
+    GdStage { id: GD_STAGE_SSE_CAVE, name: "The Cave (SSE 20)", files: &["200001.pac", "adventure_common.arc"], level: 20, first: "200001", word: "sse20" },
+    GdStage { id: GD_STAGE_SSE_WILDS, name: "The Wilds (SSE 24)", files: &["240001.pac", "adventure_common.arc"], level: 24, first: "240001", word: "sse24" },
+    GdStage { id: GD_STAGE_SSE_SWAMP, name: "The Swamp (SSE 26)", files: &["260001.pac", "adventure_common.arc"], level: 26, first: "260001", word: "sse26" },
+    GdStage { id: GD_STAGE_SSE_GLACIER, name: "Glacier Peak (SSE 29)", files: &["290001.pac", "adventure_common.arc"], level: 29, first: "290001", word: "sse29" },
+    GdStage { id: GD_STAGE_SSE_CANYON, name: "The Canyon (SSE 31)", files: &["310001.pac", "adventure_common.arc"], level: 31, first: "310001", word: "sse31" },
+    GdStage { id: GD_STAGE_SSE_ENTRANCE, name: "Entrance to Subspace (SSE 39)", files: &["390001.pac", "adventure_common.arc"], level: 39, first: "390001", word: "sse39" },
+    GdStage { id: GD_STAGE_SSE_SUBSPACE1, name: "Subspace I (SSE 40)", files: &["400001.pac", "adventure_common.arc"], level: 40, first: "400001", word: "sse40" },
+    GdStage { id: GD_STAGE_SSE_SUBSPACE2, name: "Subspace II (SSE 41)", files: &["410001.pac", "adventure_common.arc"], level: 41, first: "410001", word: "sse41" },
+    GdStage { id: GD_STAGE_SSE_RESEARCH2, name: "Research Facility II (SSE 28)", files: &["280002.pac", "adventure_common.arc"], level: 28, first: "280002", word: "sse28" },
+    GdStage { id: GD_STAGE_SSE_HALBERD, name: "Halberd Exterior (SSE 33)", files: &["330001.pac", "adventure_common.arc"], level: 33, first: "330001", word: "sse33" },
+    GdStage { id: GD_STAGE_SSE_FACTORY, name: "Bomb Factory (SSE 36)", files: &["360001.pac", "adventure_common.arc"], level: 36, first: "360001", word: "sse36" },
 ];
 
 /// The GD stage a `--match` word picks (`lake` / `sse`, `jungle`, `sse16`, ..).
@@ -1036,13 +1091,26 @@ pub static mut TEX_UNPIN: Option<fn()> = None;
 /// Every tick of the stage select: each available GD stage's textures are queued once (the pick comes ~14 frames
 /// before the match's first frame, too late to upload a map's 15-18 MB of texels at about 1 MB a frame).
 pub fn sss_preload() {
-    for (k, g) in GD_STAGES.iter().enumerate() {
+    // only the rows the stage select shows (`SSS_ROWS`); the later levels are `--match` picks
+    for (k, g) in GD_STAGES.iter().enumerate().take(SSS_ROWS) {
         let bit = 1u32.pshl(k as i64);
         if unsafe { PRELOADED } & bit == 0 && available(g.id) && map_of(g.id).is_some() {
             unsafe { PRELOADED |= bit };
             preload_textures(g.id);
         }
     }
+}
+
+/// A Subspace map started solo (`play --match FIGHTER,MAP` or `--solo`): the human alone, no CPU. A boot option
+/// (fixed for the match), not sim state.
+static SOLO: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn set_solo(on: bool) {
+    SOLO.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn solo() -> bool {
+    SOLO.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 /// Envoy's opt-in for its rooms (`MELEE_ENVOY_EXPLORE=1`).
@@ -1833,8 +1901,8 @@ unsafe fn spawn_step(m: &Map) {
             }
         }
         let (k, name) = enemy_kind(id);
-        let Some(k) = k else {
-            eprintln!("explore: enemy point kind {id} ({name}) not spawned");
+        let Some(k) = k.filter(|_| has_actor(id) || standins()) else {
+            eprintln!("explore: enemy point kind {id} ({name}) not spawned (no actor for it yet)");
             continue;
         };
         let h = ss::spawn(k, 0, x, y + 5.0, face);

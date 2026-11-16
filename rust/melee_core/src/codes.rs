@@ -62,6 +62,22 @@ static CONFIGURED: AtomicBool = AtomicBool::new(false);
 /// rollback or lab load rewrites it with the same value. Off: the game's own rules.
 static LAB_UNTIMED: AtomicBool = AtomicBool::new(false);
 
+/// A replay that says which codes its match ran (our own `.slp` export's `gameplayCodes` metadata) without Neutral
+/// Spawn: the spawn stays on the stage's joints instead of the Neutral Spawn every other replay is played with
+/// (Slippi's codesets all carry it). Set before the match boots.
+static REPLAY_NO_NEUTRAL_SPAWN: AtomicBool = AtomicBool::new(false);
+
+/// See [`REPLAY_NO_NEUTRAL_SPAWN`].
+pub fn set_replay_no_neutral_spawn(on: bool) {
+    REPLAY_NO_NEUTRAL_SPAWN.store(on, Ordering::Relaxed);
+}
+
+/// See [`REPLAY_NO_NEUTRAL_SPAWN`].
+#[inline]
+pub fn replay_no_neutral_spawn() -> bool {
+    REPLAY_NO_NEUTRAL_SPAWN.load(Ordering::Relaxed)
+}
+
 /// Make lab matches untimed (see [`LAB_UNTIMED`]).
 pub fn set_lab_untimed(on: bool) {
     LAB_UNTIMED.store(on, Ordering::Relaxed);

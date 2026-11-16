@@ -2008,7 +2008,7 @@ pub unsafe fn fn_8016E2BC() {
                     if !gm_IsCurrently1PMode_inline() && i < 4 {
                         legacy_neutral_spawn(i);
                     }
-                } else if (ext::Mex_Enabled(b"neutral_spawn\0".as_ptr() as *mut i8) != 0 || ext::Replay_Active() != 0 || melee_core::codes::on(melee_core::codes::NEUTRAL_SPAWN))
+                } else if (ext::Mex_Enabled(b"neutral_spawn\0".as_ptr() as *mut i8) != 0 || (ext::Replay_Active() != 0 && !melee_core::codes::replay_no_neutral_spawn()) || melee_core::codes::on(melee_core::codes::NEUTRAL_SPAWN))
                     && !gm_IsCurrently1PMode_inline()
                     && i < 5
                     && ext::Player_GetPlayerSlotType(4) == Gm_PKind_NA

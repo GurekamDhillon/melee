@@ -590,3 +590,19 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
   (large / small fireball, Vulcan shot), from the boss files' record blocks; the existing pool (geno_boss_spawn) flies
   them and the host draws each live one as a sphere of its box size [L: their models; the robot's walk and the spark's
   homing are not read].
+
+### Weapons, Tabuu, Porky's facing (2026-11-16, round 2)
+
+- Weapon models: each boss's weapon MDL0s in its archive (Porky's robot, Meta Ridley's large / small fireball and
+  Vulcan shot) draw live weapons, first clip looping, facing their x velocity; explosions and Porky's spark (part of
+  his own model, SparkN) keep the sphere.
+- Mini-Porky robot (Fall / RoboRun / Down / Explosion procs): launched, falls, then runs along the floor toward the
+  nearest target at its record speed and explodes on contact [L: the ramp-up and the Down slide are not modelled; the
+  floor is y 0]. Spark: straight for its lock frames, then homes within its range (turn read as degrees [I]). Meta
+  Ridley's large fireball explodes on the floor / on contact with its proc set's box.
+- Tabuu "leaving the frame": in Hop (status 13, Teleport motion) his VIS0 hides him between hops; the camera keeps
+  his position in view (0 frames out of view in the run). Brawl's behaviour, not a camera fault.
+- Porky's facing: Brawl turns enemies by the shared posture routine (a base yaw plus a general-param turn, with a
+  per-enemy flag); no Porky-specific override was found in his constructor or scripts. His general block differs from
+  the others' in two flag words only. The front-on draw stays [I]: it matches his clips and Brawl's look, the rule
+  that produces it is not traced.

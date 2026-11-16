@@ -1070,8 +1070,6 @@ pub struct Batch {
     blend: Option<(u8, u8)>,
     /// the draw-list entry's visibility bone (a bone slot): the object is drawn only while that bone is visible
     vis_bone: Option<usize>,
-    /// TEV stage 0's colour scale (GX_CS_*; the shader's stage 0 colour environment; 1, x2, without a shader)
-    scale: u8,
 }
 
 pub struct Rig {
@@ -1329,33 +1327,8 @@ fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mu
         let names: Vec<String> = (0..n.min(8)).map(|k| cstr(d, at(e0 + 0x34 * k, bei(d, e0 + 0x34 * k)))).collect();
         eprintln!("mdl0: material {} texrefs {:?} found {:?}", cstr(d, at(mo, bei(d, mo + 8))), names, names.iter().map(|nm| texs.iter().any(|(t, _)| t == nm)).collect::<Vec<_>>());
     }
-    // the shader's display list (after its header): BP 40 is TEV order 0/1 (stage 0's texture map in bits 0-2,
-    // enabled by bit 6), BP 192 stage 0's colour environment (scale in bits 20-21). The texture stage 0 samples is
-    // the material's reference of that map's index, not always its first (Tabuu's cannon and chain)
-    let mut map0 = 0usize;
-    let so = bei(d, mo + 40);
-    if so != 0 {
-        let sh = at(mo, so);
-        let send = sh + be32(d, sh) as usize;
-        let mut p = sh + 32;
-        while p + 5 <= send.min(d.len()) {
-            match d[p] {
-                97 => {
-                    let v = be32(d, p + 1);
-                    match v >> 24 {
-                        40 if v & 64 != 0 => map0 = (v & 7) as usize,
-                        192 => bt.scale = ((v >> 20) & 3) as u8,
-                        _ => {}
-                    }
-                    p += 5;
-                }
-                _ => p += 1,
-            }
-        }
-    }
-    let nref = be32(d, mo + 44) as usize;
-    if nref > 0 {
-        let e = at(mo, bei(d, mo + 48)) + 52 * if map0 < nref { map0 } else { 0 };
+    if be32(d, mo + 0x2C) > 0 {
+        let e = at(mo, bei(d, mo + 0x30));
         let name = cstr(d, at(e, bei(d, e)));
         bt.tex = texs.iter().find(|(n, _)| *n == name).map(|(_, t)| t.clone());
         bt.wrap = [be32(d, e + 0x18).min(2), be32(d, e + 0x1C).min(2)];
@@ -1484,7 +1457,7 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
         let clr = idx_of(id(2), &cols);
         let uv = idx_of(id(4), &uvs).map(|a| arr(d, a));
         let Some(pos) = pos else { continue };
-        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None, vis_bone: None, scale: 1 };
+        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None, vis_bone: None };
         if let Some((_, mo, vb)) = obj_mat.iter().find(|(i, _, _)| *i == oi) {
             material(d, *mo, texs, &mut bt);
             bt.vis_bone = bones.iter().position(|b| b.index == *vb);
@@ -1776,7 +1749,7 @@ pub unsafe fn draw_tris_vis(rig: &Rig, tris: &[Vert], hide: &[bool], org: [f32; 
             gx::GXSetVtxDesc(GX_VA_TEX0 as _, GX_DIRECT as _);
             gx::GXSetTevOrder(GX_TEVSTAGE0 as _, GX_TEXCOORD0 as _, GX_TEXMAP0 as _, GX_COLOR0A0 as _);
             gs::GXSetTevColorIn(GX_TEVSTAGE0 as _, GX_CC_ZERO as _, GX_CC_TEXC as _, GX_CC_RASC as _, GX_CC_ZERO as _);
-            gs::GXSetTevColorOp(GX_TEVSTAGE0 as _, GX_TEV_ADD as _, GX_TB_ZERO as _, bt.scale as _, 1, GX_TEVPREV as _);
+            gs::GXSetTevColorOp(GX_TEVSTAGE0 as _, GX_TEV_ADD as _, GX_TB_ZERO as _, GX_CS_SCALE_2 as _, 1, GX_TEVPREV as _);
             gs::GXSetTevAlphaIn(GX_TEVSTAGE0 as _, GX_CA_ZERO as _, GX_CA_TEXA as _, GX_CA_RASA as _, GX_CA_ZERO as _);
             gs::GXSetTevAlphaOp(GX_TEVSTAGE0 as _, GX_TEV_ADD as _, GX_TB_ZERO as _, GX_CS_SCALE_1 as _, 1, GX_TEVPREV as _);
             let a = bt.alpha;

@@ -94,9 +94,9 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "ftCo_800B46B8" => {  let r = melee_fighter::tu::ftcmdscript::ftCo_800B46B8((c.ptr(0, Some("Fighter")) as _), (c.int(1) as _), (c.int(2) as _)); let _ = r; }
         "ftCo_800B49F4" => {  let r = melee_fighter::tu::ftcmdscript::ftCo_800B49F4((c.ptr(0, Some("Fighter")) as _)); let _ = r; }
         "ftCo_800B4AB0" => {  let r = melee_fighter::tu::ftcpuattack::ftCo_800B4AB0((c.ptr(0, Some("Fighter")) as _), (c.ptr(1, Some("Fighter")) as _), (c.ptr(2, Some("ftCo_AttackEntry")) as _)); c.ret_int(r as i64 as u32); }
-        "ftCo_800BD19C" => { let p1 = c.ptr(1, None); if p1.is_null() { c.bad = true; return true; } let r = melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD19C((c.ptr(0, Some("HSD_GObj")) as _), (&*(p1 as *const _))); c.ret_flt(r as f64); }
+        "ftCo_800BD19C" => { let p1 = c.ptr(1, Some("Vec")); if p1.is_null() { c.bad = true; return true; } let r = melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD19C((c.ptr(0, Some("HSD_GObj")) as _), (&*(p1 as *const _))); c.ret_flt(r as f64); }
         "ftCo_800BD620" => {  let r = melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_800BD620((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
-        "ftCo_800BDA74" => { let p1 = c.ptr(1, None); if p1.is_null() { c.bad = true; return true; } let r = melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BDA74((c.ptr(0, Some("HSD_GObj")) as _), (&mut *(p1 as *mut _))); let _ = r; }
+        "ftCo_800BDA74" => { let p1 = c.ptr(1, Some("Vec")); if p1.is_null() { c.bad = true; return true; } let r = melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BDA74((c.ptr(0, Some("HSD_GObj")) as _), (&mut *(p1 as *mut _))); let _ = r; }
         "ftCo_800BFFD0" => {  let r = melee_chara::tu::ftsamus::extg::ftCo_800BFFD0((c.ptr(0, Some("Fighter")) as _), (c.int(1) as _), (c.int(2) as _)); c.ret_int(r as i64 as u32); }
         "ftCo_800C3A14" => {  let r = melee_items::tu::itlinkhookshot::ext::ftCo_800C3A14((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }
         "ftCo_800C97A8" => {  let r = melee_fighter::tu::ftCo_Turn::ftCo_800C97A8((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }

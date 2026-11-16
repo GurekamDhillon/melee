@@ -296,6 +296,11 @@ unsafe fn push_snd(id: u16, f: i32) {
     B.snd_seq = B.snd_seq.wrapping_add(1);
 }
 
+/// A VM boss's sound or voice (geno_vm_host, from its sound timelines): queued as the define path's.
+pub unsafe fn vm_sound(id: u16, f: i32) {
+    push_snd(id, f);
+}
+
 /// Presentation only: the Brawl sound ids queued since the last call (at most eight; a rollback or a new fight that
 /// moves the count backwards plays nothing). Never feeds the sim.
 pub fn sfx_drain(out: &mut [u16; 8]) -> usize {

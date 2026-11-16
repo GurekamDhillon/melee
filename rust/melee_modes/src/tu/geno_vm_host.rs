@@ -353,6 +353,16 @@ pub unsafe fn vm_frame(p: &'static Program, carrier: i32, frame: u32, damage: i3
             vr::EV_CMD => {
                 let Some(ins) = p.code.get(e.ins as usize) else { continue };
                 match ins.id {
+                    // the sound timelines' sounds and voices (0A00 sfx, 0A02 / 0A03 variants, 0A05 voice: the first
+                    // argument is the Brawl sound id) go to the presentation's sound queue, as the define path's
+                    // sound events do. Presentation only.
+                    0x0A00 | 0x0A02 | 0x0A03 | 0x0A05 => {
+                        let v = p.args.get(ins.a as usize).map_or(-1.0, |&x| arg(a, x));
+                        let id = melee_core::ppc::fctiwz_f32(v);
+                        if (1..=0xFFFF).contains(&id) {
+                            crate::tu::petey::vm_sound(id as u16, a.tick.wrapping_sub(a.motion_t0) as i32);
+                        }
+                    }
                     0x040A => {
                         let m = p.args.get(ins.a as usize).map_or(-1.0, |&x| arg(a, x));
                         SEC = (melee_core::ppc::fctiwz_f32(m), a.tick.wrapping_sub(1));

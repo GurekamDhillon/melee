@@ -64,6 +64,11 @@ for s in "${scen[@]}"; do
     vanilla_bf)  NEED_MODS= run vanilla_bf 9000 MELEE_PAD_SCRIPT="$repo/tools/rust-port/play/retail_full.txt" -- --skip-intro --time-secs 30;;
     vanilla_walk) NEED_MODS= run vanilla_walk 2600 MELEE_PAD_SCRIPT="$repo/tools/rust-port/play/walk_vs_fd_2cpu.txt" MELEE_PAD_IGNORE_ADAPTER=1 --;;
     vanilla_fod) NEED_MODS= run vanilla_fod 3000 -- --match "fox/cpu9,falco/cpu9,FOUNTAIN OF DREAMS" --time-secs 30 --quit-at-results;;
+    vanilla_zerolag)  # vanilla only (Brawl files hidden): real menus to FD, then a fast match start on each legal stage
+                 NEED_MODS= run vzl_walk 2600 MELEE_BRAWL_ABSENT=1 MELEE_PAD_SCRIPT="$repo/tools/rust-port/play/walk_vs_fd_2cpu.txt" MELEE_PAD_IGNORE_ADAPTER=1 --
+                 for st in "BATTLEFIELD:bf" "POKEMON STADIUM:ps" "YOSHI'S STORY:ys" "DREAM LAND N64:dl" "FOUNTAIN OF DREAMS:fod"; do
+                   NEED_MODS= run "vzl_${st##*:}" 900 MELEE_BRAWL_ABSENT=1 -- --match "fox/cpu9,falco/cpu9,${st%%:*}" --time-secs 10 --quit-at-results
+                 done;;
     envoy)       NEED_MODS=1 run envoy ${ENVOY_TICKS:-9000} MELEE_PAD_SCRIPT="$repo/tools/rust-port/envoy/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
                    MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey "MELEE_ENVOY_TEST_DRIVES=ember,bolt,tagauto,wave2,shift,dropall/ember,bolt" --;;
     items)       all=$(python -c "import re,sys;print(','.join(re.findall(r'Item \{ id: \w+, key: \"([a-z_]+)\"',open(sys.argv[1],encoding='utf-8').read())))" "$repo/rust/mods/envoy_data/src/items.rs")

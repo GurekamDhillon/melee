@@ -950,17 +950,64 @@ pub static mut TEX_PRELOAD: Option<unsafe fn(*const u8, u16, u16, u32, u32)> = N
 /// renderer puts up about a megabyte of texels a frame and keeps them until their first draw, so the match's first
 /// frame and each section's first draw find them made. Called at the pick (presentation only; nothing sim-visible).
 pub fn preload_textures(id: i32) {
-    let Some(f) = (unsafe { TEX_PRELOAD }) else { return };
     let Some(k) = GD_STAGES.iter().position(|g| g.id == id) else { return };
+    let bit = 1u32.pshl(k as i64);
+    if unsafe { PRELOADED } & bit != 0 {
+        return;
+    }
     let Some(m) = map_of(id) else { return };
-    unsafe { PRELOADED |= 1u32.pshl(k as i64) };
-    let mut n = 0;
+    unsafe { PRELOADED |= bit };
+    queue_textures(id, m, std::time::Duration::MAX);
+}
+
+/// The GD stages whose textures were queued since the last match began (bit per `GD_STAGES` row; presentation).
+static mut PRELOADED: u32 = 0;
+/// The renderer's "a match began" (set at engine start with `TEX_PRELOAD`): pinned uploads may age out again.
+pub static mut TEX_UNPIN: Option<fn()> = None;
+
+/// Every tick of the stage select, given the stage kind under the cursor. Vanilla rule (zero lag): nothing happens
+/// unless a GD stage is hovered; then that stage's textures are queued a few at a time (`STEP_BUDGET` of game-thread
+/// time per tick: each queue costs a texel lookup in host memory), never all on one tick. A pick before the queue is
+/// done finishes it at the pick (`carrier`, the Brawl match-start setup). A map whose loader is still running is
+/// skipped this tick, never waited for.
+pub fn sss_preload(hover: i32) {
+    let Some(k) = GD_STAGES.iter().position(|g| g.id == hover) else { return };
+    let bit = 1u32.pshl(k as i64);
+    if unsafe { PRELOADED } & bit != 0 || !available(hover) {
+        return;
+    }
+    let Some(Some(m)) = maps().m[slot_of(hover)].get() else { return };
+    let _z = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, "sss: GD texture preload step");
+    if queue_textures(hover, m, STEP_BUDGET) {
+        unsafe { PRELOADED |= bit };
+    }
+}
+
+/// Game-thread time one stage-select tick may spend queueing GD textures.
+const STEP_BUDGET: std::time::Duration = std::time::Duration::from_micros(1500);
+/// Progress of the GD stage being queued a few textures a tick: (stage id, distinct textures already queued).
+static mut STEP_AT: (i32, usize) = (0, 0);
+
+/// Queue GD stage `id`'s textures from where the last call stopped, until `budget` is spent; true when all are queued.
+fn queue_textures(id: i32, m: &Map, budget: std::time::Duration) -> bool {
+    let Some(f) = (unsafe { TEX_PRELOAD }) else { return true };
+    let t0 = std::time::Instant::now();
+    let skip = unsafe { if STEP_AT.0 == id { STEP_AT.1 } else { 0 } };
+    let mut i = 0usize;
+    let mut done = true;
     let mut seen = std::collections::HashSet::new();
     let mut each = |p: *const u8, w: u16, h: u16, fmt: u32, lv: u32| {
-        if seen.insert(p as usize) {
-            unsafe { f(p, w, h, fmt, lv) };
-            n += 1;
+        if !done || !seen.insert(p as usize) {
+            return;
         }
+        if i >= skip {
+            if t0.elapsed() >= budget {
+                done = false;
+                return;
+            }
+            unsafe { f(p, w, h, fmt, lv) };
+        }
+        i += 1;
     };
     // the party's first section first: it is the match's first frame
     for (r, _, _) in &m.models {
@@ -972,24 +1019,11 @@ pub fn preload_textures(id: i32) {
     for (_, r, _) in &m.brick_models {
         pm::rig_textures(r, &mut each);
     }
-    eprintln!("explore: {n} textures of {id:#x} queued for upload ahead of the match");
-}
-
-/// The GD stages whose textures were queued since the last match began (bit per `GD_STAGES` row; presentation).
-static mut PRELOADED: u32 = 0;
-/// The renderer's "a match began" (set at engine start with `TEX_PRELOAD`): pinned uploads may age out again.
-pub static mut TEX_UNPIN: Option<fn()> = None;
-
-/// Every tick of the stage select: each available GD stage's textures are queued once (the pick comes ~14 frames
-/// before the match's first frame, too late to upload a map's 15-18 MB of texels at about 1 MB a frame).
-pub fn sss_preload() {
-    for (k, g) in GD_STAGES.iter().enumerate() {
-        let bit = 1u32.pshl(k as i64);
-        if unsafe { PRELOADED } & bit == 0 && available(g.id) && map_of(g.id).is_some() {
-            unsafe { PRELOADED |= bit };
-            preload_textures(g.id);
-        }
+    unsafe { STEP_AT = (id, i) };
+    if done {
+        eprintln!("explore: {i} textures of {id:#x} queued for upload ahead of the match");
     }
+    done
 }
 
 /// Envoy's opt-in for its rooms (`MELEE_ENVOY_EXPLORE=1`).
@@ -1156,6 +1190,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     melee_core::hash::CONTENT_WORD.store(0, core::sync::atomic::Ordering::Relaxed);
     // a match begins: the uploads made ahead may age out once unused (presentation only)
     PRELOADED = 0;
+    STEP_AT = (0, 0);
     if let Some(u) = TEX_UNPIN {
         u();
     }

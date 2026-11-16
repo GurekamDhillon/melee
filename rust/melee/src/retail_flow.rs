@@ -739,9 +739,10 @@ impl RetailPlay {
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
-            melee_engine::asset::sss_hover(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() });
-            // the SSE maps' textures go up while the stage select is open (a pick is ~14 frames before the match)
-            melee_modes::tu::explore::sss_preload();
+            let hover = unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() };
+            melee_engine::asset::sss_hover(hover);
+            // a hovered SSE map's textures go up a few per tick (vanilla stage select entry costs nothing)
+            melee_modes::tu::explore::sss_preload(hover);
         }
         if melee_core::frameprof::on() {
             self.profile_test_stage();

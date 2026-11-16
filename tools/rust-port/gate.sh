@@ -48,7 +48,7 @@ export MELEE_WINDOW_UNFOCUSED=1
 case "$engine" in tu) ;; legacy) echo "gate: the legacy model was removed (consolidation step 19)" >&2; exit 2 ;; *) echo "gate: unknown engine '$engine' (tu)" >&2; exit 2 ;; esac
 profile="${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}"
 case "$profile" in release|fast|perf) ;; *) echo "gate: unknown PROFILE '$profile' (release|fast|perf)" >&2; exit 2 ;; esac
-exe="$repo/build/cargo/$profile/melee.exe"
+exe="${CARGO_TARGET_DIR:-$repo/build/cargo}/$profile/melee.exe"
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
 tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
 fail=0
@@ -147,6 +147,14 @@ fi
 #    SNAPGUARD=0 skips it.
 if [ "$profile" = release ] && [ "${SNAPGUARD:-1}" = 1 ] && [ -z "$only" ]; then
   bash tools/rust-port/perf/snapguard.sh --exe "$exe" || fail=1
+fi
+# 5. vanilla zero lag (optional, VANILLA_ZEROLAG=1; notes/zero-hitch.md): menu walk to a Final Destination match and
+#    --match starts on Battlefield, Pokemon Stadium, Yoshi's Story, Dream Land N64 and Fountain of Dreams with the Brawl
+#    files hidden; FAILS on any frame over 16 ms. Needs a quiet machine (zero_hitch_gate.sh refuses otherwise).
+if [ "${VANILLA_ZEROLAG:-0}" = 1 ] && [ -z "$only" ]; then
+  vc="${CARD:-$tmp/vzl-card}"
+  if [ -z "${CARD:-}" ]; then mkdir -p "$vc/USA/Card A"; [ -d "$ws/scratch/test-card-master" ] && cp -r "$ws/scratch/test-card-master/." "$vc/USA/Card A/"; fi
+  EXE="$exe" CARD="$vc" OUT="$tmp/zerolag" bash tools/rust-port/perf/zero_hitch_gate.sh vanilla_zerolag || { echo "FAIL vanilla zero lag"; fail=1; }
 fi
 if [ $update = 1 ] && [ $fail = 0 ]; then
   step=$(awk -F'\t' 'NR>1{s=$1} END{print s+0}' "$progress")

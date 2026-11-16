@@ -190,9 +190,26 @@ start; field offsets in the local spec only):
   (factory doors waiting on their room's enemies). Other flag pairs (the Great Maze's, Lake's room pair) are not
   treated as locks [L].
 
-Not done in 4c: GLOK camera / area locks, GSBK / GMWA / GMWO switches and switch walls, GSHT shutters, mode-2 parts
-started by a switch, GFT2 / GASD / GFRT triggers. `MELEE_EXPLORE_TP=x,y@frame` (checks only) sets player 1 down at a
+Not done in 4c: GFT2 / GASD / GFRT triggers (locks, switches and shutters: next section). `MELEE_EXPLORE_TP=x,y@frame` (checks only) sets player 1 down at a
 point.
+
+## Locks, switches, shutters (round 4, 4c leftovers)
+
+- **GLOK camera / area locks**: a lock's record names its stage position model (its `CamLimit0N` / `CamLimit1N` bones
+  are the box), a start trigger word and two end trigger words. From the start firing until an end fires, the camera
+  bounds are the box and the party is held inside it. A lock is loaded only when one of its end triggers can fire in
+  the port (an area, an enemy defeat, a switch, or an enemy pattern whose inputs can, a few levels deep), and is let
+  go after a minute regardless [L]. On Lake, level 18 and the jungle every lock is left out by that rule: their end
+  triggers come from kinds the port does not run yet (GFT2 / GASD / GFRT), so no lock has been seen live.
+- **GMWA / GMWO**: in the data these are switches (a floor switch model, a trigger brick), not walls: an attack box on
+  one, or a fighter at it, fires its trigger word.
+- **GSHT shutters** have GMOV's record shape: loaded as mode-2 parts that open (play their path once) when their
+  trigger fires; one whose trigger nothing in the port fires opens at the room's start.
+- **Mode-2 GMOV parts** with a start trigger word start when it fires (when it can fire here), else on a rider.
+- **GSBK** are groups of explosion bricks placed at a locator model's bones and removed by a trigger; their collision
+  object is shared by many locators, which the loader does not instance yet: still not loaded.
+
+Synctest d4 / d7 on Lake, level 18 and the jungle: 0 neutral mismatches.
 
 ## Start-up cost (round 3 perf fix)
 

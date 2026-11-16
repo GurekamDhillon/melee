@@ -23,6 +23,9 @@ mod imp {
     struct Shadow {
         nat: Vec<u32>,
         gc: Vec<u32>,
+        // the path id of each byte's last writer, to name it in the log
+        nat_w: Vec<u32>,
+        gc_w: Vec<u32>,
     }
     struct State {
         seq: u32,
@@ -30,13 +33,24 @@ mod imp {
         seen: HashSet<(&'static str, u32, u32)>,
     }
     static ST: Mutex<Option<State>> = Mutex::new(None);
+    /// The engine frame (golden row) being simulated: bumped after each frame's NHV1 row, so a hit logged with frame
+    /// F happened while the row with index F was computed (compare_golden's frame numbers).
+    static FRAME: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    pub fn tick() {
+        FRAME.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
 
     fn with<R>(f: impl FnOnce(&mut State) -> R) -> R {
         let mut g = ST.lock().unwrap_or_else(|e| e.into_inner());
         f(g.get_or_insert_with(|| State { seq: 0, mv: HashMap::new(), seen: HashSet::new() }))
     }
     fn shadow(st: &mut State, base: usize) -> &mut Shadow {
-        st.mv.entry(base).or_insert_with(|| Shadow { nat: vec![0; MV_NATIVE_SIZE], gc: vec![0; MV_GC_SIZE] })
+        st.mv.entry(base).or_insert_with(|| Shadow {
+            nat: vec![0; MV_NATIVE_SIZE],
+            gc: vec![0; MV_GC_SIZE],
+            nat_w: vec![u32::MAX; MV_NATIVE_SIZE],
+            gc_w: vec![u32::MAX; MV_GC_SIZE],
+        })
     }
     fn base(p: usize, id: u32) -> usize {
         p - PATHS[id as usize].1 as usize
@@ -49,8 +63,13 @@ mod imp {
             for &(n, g, nz, gz) in PATHS[id as usize].2 {
                 sh.nat[n as usize..(n + nz) as usize].fill(s);
                 sh.gc[g as usize..(g + gz) as usize].fill(s);
+                sh.nat_w[n as usize..(n + nz) as usize].fill(id);
+                sh.gc_w[g as usize..(g + gz) as usize].fill(id);
             }
         })
+    }
+    fn who(id: u32) -> &'static str {
+        if id == u32::MAX { "(reset)" } else { PATHS[id as usize].0 }
     }
     fn check(base: usize, id: u32, loc: &'static core::panic::Location<'static>) {
         with(|st| {
@@ -62,16 +81,17 @@ mod imp {
                 }
                 for k in 0..z as usize {
                     // the native bytes of a little-endian scalar hold the GameCube bytes in reverse order
-                    let (a, b) = (sh.nat[n as usize + k], sh.gc[g as usize + z as usize - 1 - k]);
-                    if a != b {
-                        bad = Some((n, g, a, b));
+                    let (ni, gi) = (n as usize + k, g as usize + z as usize - 1 - k);
+                    if sh.nat[ni] != sh.gc[gi] {
+                        bad = Some((n, g, sh.nat[ni], sh.gc[gi], sh.nat_w[ni], sh.gc_w[gi]));
                     }
                 }
             }
-            if let Some((n, g, a, b)) = bad {
+            if let Some((n, g, a, b, aw, bw)) = bad {
                 if st.seen.insert((loc.file(), loc.line(), id)) {
-                    eprintln!("MVSHADOW {}:{} {} native+{} gc+{} last write native #{} gc #{}", loc.file(), loc.line(),
-                              PATHS[id as usize].0, n, g, a, b);
+                    eprintln!("MVSHADOW {}:{} {} native+{} gc+{} last write native #{} {} gc #{} {} frame {}", loc.file(),
+                              loc.line(), PATHS[id as usize].0, n, g, a, who(aw), b, who(bw),
+                              FRAME.load(std::sync::atomic::Ordering::Relaxed));
                 }
             }
         })
@@ -108,6 +128,8 @@ mod imp {
             let sh = shadow(st, base);
             sh.nat.fill(s);
             sh.gc.fill(s);
+            sh.nat_w.fill(u32::MAX);
+            sh.gc_w.fill(u32::MAX);
         })
     }
 }

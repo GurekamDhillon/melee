@@ -10,11 +10,13 @@ What it does:
   (powerpc-eabi) layouts, and every prefix of a leaf path (a struct read or written whole covers its leaves), written to
   melee_core/src/mvshadow_table.rs;
 - the transform, in the crates that touch `mv`: each `X.mv.<path>` (X: `(*fp)`, `fp`, `fp(g)`) whose longest resolvable
-  prefix is in the table becomes `(*mvshadow::r(addr_of!(..), ID))` when read, `(*mvshadow::w(addr_of_mut!(..), ID))`
+  prefix is in the table becomes `(*mvshadow::r(unsafe { addr_of!(..) }, ID))` (a union field's address is unsafe even
+  where writing the field is not) when read, `(*mvshadow::w(addr_of_mut!(..), ID))`
   when assigned, borrowed `&mut` / `&raw mut` / addr_of_mut!, or passed to a `.set_*` bitfield setter, and `rw` for a
   compound assignment (it reads the old value). Rust evaluates an assigned value before its place, so the reads on the
   right-hand side see the shadow before the write;
-- Fighter_Create's `write_bytes` of the whole Fighter: `mvshadow::reset` (both shadows agree from there);
+- Fighter_Create's `write_bytes` of the whole Fighter: `mvshadow::reset` (both shadows agree from there); the engine's
+  per-frame NHV1 row: `mvshadow::tick` (a hit is logged with the golden frame it happened in);
 - what it cannot check is listed by file:line (--unchecked): a dynamic array index, a path not in the table, a `.mv`
   it did not match (another base expression), a raw pointer formed from `mv` (cast or offset).
 """
@@ -97,14 +99,19 @@ def transform(text, ids, rel, unchecked):
             if tail.startswith("["):
                 unchecked.append((rel, ln, "dynamic index", m.group(0) + tail[:12]))
                 continue
+            if k < len(toks) and not re.match(r"\.\w+\s*\(", tail):
+                # the chain goes on with a field the table does not name (a Rust-only name, a bitfield struct): checking
+                # the coarser prefix would compare bytes this access never touches
+                unchecked.append((rel, ln, "path partly in the table", m.group(0)))
+                continue
             i = ids[path]
             before = code[:m.start()]
             if MUT_BEFORE.search(before) or re.match(r"\.set_\w+\(", tail) or ASSIGN.match(tail):
-                rep = f"(*{SH}::w(core::ptr::addr_of_mut!({place}), {i}))"
+                rep = f"(*{SH}::w(unsafe {{ core::ptr::addr_of_mut!({place}) }}, {i}))"
             elif COMPOUND.match(tail):
-                rep = f"(*{SH}::rw(core::ptr::addr_of_mut!({place}), {i}))"
+                rep = f"(*{SH}::rw(unsafe {{ core::ptr::addr_of_mut!({place}) }}, {i}))"
             else:
-                rep = f"(*{SH}::r(core::ptr::addr_of!({place}), {i}))"
+                rep = f"(*{SH}::r(unsafe {{ core::ptr::addr_of!({place}) }}, {i}))"
             pieces.append(line[pos:m.start()] + rep)
             pos = end
         # what the pattern did not take: another base expression, or a raw pointer made from mv
@@ -139,6 +146,11 @@ def main():
     assert s.count(z) == 1, "instrument: Fighter_Create's zeroing moved"
     s = s.replace(z, z + f" {SH}::reset(core::ptr::addr_of!((*fp).mv) as usize);")
     fc.write_text(s, encoding="utf-8", newline="\n")
+    eng = repo / "rust/melee_engine/src/engine.rs"
+    s = eng.read_text(encoding="utf-8")
+    z = "FRAME_ROW = Some(Engine::compute_row());"
+    assert s.count(z) == 1, "instrument: the engine's per-frame row moved"
+    eng.write_text(s.replace(z, z + f" {SH}::tick();"), encoding="utf-8", newline="\n")
     print(f"instrument: {len(ids)} paths, {n} access sites wrapped, {len(unchecked)} unchecked")
     if "--unchecked" in sys.argv:
         Path(sys.argv[sys.argv.index("--unchecked") + 1]).write_text(

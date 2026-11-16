@@ -319,6 +319,12 @@ impl RetailPlay {
     fn step(&mut self, mut four: [melee_types::PADStatus; 4]) -> bool {
         use crate::play_net::*;
         if let Some(nd) = self.net.as_mut() {
+            // the test's results presses outlast the results: a START that reaches the stage select picked the stage under
+            // the cursor (Random), so match 2's stage changed from run to run. The scripts pick with A, so
+            // MELEE_NP_SCRIPT_NO_START=1 drops START there too (the local pad, before it is sent and recorded)
+            if self.cur.1 == melee_types::GS_SSS as u8 && std::env::var("MELEE_NP_SCRIPT_NO_START").map_or(false, |v| v == "1") {
+                four[0].button &= !0x1000;
+            }
             match nd.phase {
                 NetPhase::InMatch(_) => {
                     // test pad scripts (css_pair.sh) are timed in render ticks; a START meant for the results that lands in

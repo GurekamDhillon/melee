@@ -76,7 +76,10 @@ const ARENA_SECS: [SecDef; 1] = [sec("030101.pac", 0.0, 0.0, "030vAdvStadium", 0
 /// model (camera limit, blast zones, player spots). The archive's other collision file is his own top (bone-carried).
 const PORKY_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("090101.pac", 0.0, 0.0, "091vAdvZoo01", 0, 0) }];
 /// Rayquaza's fight stage (SSE 080001, his boss archive): the lake's shore model, its one world floor and its stage
-/// position model. The archive's water model is not drawn [L].
+/// position model; its water model is drawn with it (every stage model of the archive is).
+/// Galleom's fight stage (SSE 240101, his boss archive): the wilds model, its one world floor and its stage position
+/// model.
+const GALLEOM_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("240101.pac", 0.0, 0.0, "241vAdvWild01", 0, 0) }];
 const RAYQUAZA_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("080001.pac", 0.0, 0.0, "080vAdvJungle01", 0, 0) }];
 
 /// The arena of the process's boss (fixed per process: the VS boss, else Envoy's Petey), if it has one.
@@ -85,6 +88,7 @@ fn arena_secs() -> Option<&'static [SecDef]> {
         "petey" => Some(&ARENA_SECS),
         "porky" => Some(&PORKY_SECS),
         "rayquaza" => Some(&RAYQUAZA_SECS),
+        "galleom" => Some(&GALLEOM_SECS),
         _ => None,
     }
 }
@@ -568,7 +572,24 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 .or_else(|| doors.iter().find(|d: &&Door| d.sec == si).map(|d| [d.x, d.y]))
                 .unwrap_or([e[0] + 40.0, e[3]]),
         );
-        for (_, r, t) in pm::static_models(&leaves, &[s.model]) {
+        // a boss arena draws every stage model of its archive (the level's `<3 digits>v...` MDL0s: Rayquaza's shore
+        // and its water); a map section its one named model
+        let mut stage_models: Vec<String> = vec![];
+        if s.world_coll {
+            for b in leaves.iter().filter(|b| b.len() >= pm::BRRES_HEADER_LEN && &b[..4] == b"bres") {
+                for (n, o) in pm::brres_entries(b).unwrap_or_default() {
+                    let nb = n.as_bytes();
+                    if b.get(o..o + 4) == Some(b"MDL0") && nb.len() > 4 && nb[..3].iter().all(u8::is_ascii_digit) && nb[3] == b'v' && !stage_models.contains(&n) {
+                        stage_models.push(n);
+                    }
+                }
+            }
+        }
+        if stage_models.is_empty() {
+            stage_models.push(s.model.to_string());
+        }
+        let want: Vec<&str> = stage_models.iter().map(String::as_str).collect();
+        for (_, r, t) in pm::static_models(&leaves, &want) {
             models.push((r, t, s.off));
         }
         if si == 0 {

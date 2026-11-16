@@ -161,6 +161,8 @@ fn local_root() -> Option<PathBuf> {
 
 /// The adventure stage archive that carries the boss (found by scanning; see notes/petey-extract.md).
 const STAGE: &str = "030101.pac";
+/// A BRRES file's fixed header (magic, byte order, version, size, root offset, section count): 16 bytes.
+pub const BRRES_HEADER_LEN: usize = 16;
 
 fn load() -> Result<Model, String> {
     let root = local_root().ok_or("no local Brawl folder")?;

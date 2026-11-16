@@ -109,7 +109,7 @@ fn backdrop() -> Option<&'static (String, crate::tu::petey_model::Rig, Vec<crate
             // the background's MDL0: named "<3 digits>vAdv..." (the stage position model is "StagePosition")
             let mut names = vec![];
             for b in &leaves {
-                if b.len() >= 0x10 && &b[..4] == b"bres" {
+                if b.len() >= crate::tu::petey_model::BRRES_HEADER_LEN && &b[..4] == b"bres" {
                     for (n, o) in crate::tu::petey_model::brres_entries(b).unwrap_or_default() {
                         if b.get(o..o + 4) == Some(b"MDL0") && n.len() > 7 && n.as_bytes()[..3].iter().all(u8::is_ascii_digit) && n[3..].starts_with("vAdv") && !names.contains(&n) {
                             names.push(n);
@@ -232,18 +232,7 @@ pub unsafe fn arena_frame(frame: u32, log: bool) {
     if log {
         for e in a.events() {
             match e.kind {
-                vr::EV_STATUS => eprintln!(
-                    "vm_arena: f{frame} flyer status {last} -> {} at {:.1} {:.1} (boss attack id {})",
-                    e.v, a.pos[0], a.pos[1], boss.wi[0x14]
-                ),
-                vr::EV_CMD => {
-                    if p.code.get(e.ins as usize).is_some_and(|c| c.id == 0x6519) {
-                        // the link copy ran (the value is in the actor already); logged on a change only
-                        if a.wi[0x14] != a.wi[0x06] {
-                            eprintln!("vm_arena: f{frame} flyer link: attack id {}", a.wi[0x14]);
-                        }
-                    }
-                }
+                vr::EV_STATUS => eprintln!("vm_arena: f{frame} flyer status {last} -> {} at {:.1} {:.1}", e.v, a.pos[0], a.pos[1]),
                 _ => {}
             }
         }

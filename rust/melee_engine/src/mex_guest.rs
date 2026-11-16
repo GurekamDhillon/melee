@@ -171,6 +171,11 @@ struct State {
     /// MEX_IndexFighterItem names).
     natdat: BTreeMap<i32, (Box<melee_runtime::dat::DatArchive>, u32)>,
     plinks: bool,
+    /// Guest copies of Fighter_804D64FC's float arrays (x20 per kind, x24 the reaches): their guest addresses.
+    cpu_floats: Option<(u32, u32)>,
+    /// Guest copies of Fighter_804D64FC's seven attack-list tables (x4..x1C): (native record they were built for,
+    /// guest table addresses).
+    cpu_lists: Option<(usize, [u32; 7])>,
 }
 
 struct Art {
@@ -225,6 +230,8 @@ fn st() -> &'static mut State {
                 small_data: false,
                 depth: 0,
                 heap_next: HEAP_GUEST,
+                cpu_floats: None,
+                cpu_lists: None,
                 retail: BTreeMap::new(),
                 common_ms_mapped: false,
                 arts: Vec::new(),
@@ -253,6 +260,24 @@ fn void_pointee(rec: &'static str, off: u32, obj: *mut u8, _p: usize) -> Option<
         } else {
             "HSD_DObj"
         });
+    }
+    // HitCapsule.victims_1/2[12].victim: the user data of what the hitbox hit (lbColl_80008688; a Fighter* for a
+    // fighter). ACE's PlSm (kind 44) and kind 64 walk their hitboxes' victims (read as Fighter+0x988, no pointee)
+    // (Fighter.x914 is HitCapsule[4], 0x138 each; the field comes as the outer record's offset)
+    let hc = match rec {
+        "HitCapsule" => Some(off),
+        "Fighter" if (0x914..0x914 + 4 * 0x138).contains(&off) => Some((off - 0x914) % 0x138),
+        _ => None,
+    };
+    if let Some(off) = hc.filter(|&o| (0x74..0x134).contains(&o) && (o - 0x74) % 8 == 0) {
+        if _p == 0 {
+            return None;
+        }
+        let is_fp = (0..6).any(|s| (0..2).any(|i| {
+            let g = melee_fighter::player::get_entity_at_index(s, i);
+            !g.is_null() && unsafe { (*g).user_data } as usize == _p
+        }));
+        return is_fp.then_some("Fighter");
     }
     if rec != "HSD_GObj" {
         return None;
@@ -526,8 +551,22 @@ fn fn_native(a: u32) -> Option<usize> {
 fn item_i32_fn(a: u32) -> Option<usize> {
     Some(match mex_import::layout::vanilla_name(a)? {
         "itKoopaFlame_UnkMotion0_Coll" => melee_items::tu::itkoopaflame::itKoopaFlame_UnkMotion0_Coll as usize,
+        // GX link callbacks (`GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, ...)`, kinds 43 and 44's model gobjs)
+        "HSD_GObj_JObjCallback" => gx_jobj_cb as usize,
+        "HSD_GObj_LObjCallback" => gx_lobj_cb as usize,
         _ => return None,
     })
+}
+
+/// The remover of a guest-heap block hung on a gobj as its user data: the block is guest memory, left to the guest.
+unsafe extern "C" fn guest_userdata_remove(_: *mut c_void) {}
+
+unsafe extern "C" fn gx_jobj_cb(g: G, pass: i32) {
+    melee_runtime::tu::hsd_3910::HSD_GObj_JObjCallback(g, pass)
+}
+
+unsafe extern "C" fn gx_lobj_cb(g: G, pass: i32) {
+    melee_runtime::tu::hsd_3910::HSD_GObj_LObjCallback(g, pass)
 }
 
 /// A vanilla EF_Effect update callback (`EF_Effect.update`, `void(EF_Effect*)`) the guest stores into an effect it
@@ -1268,13 +1307,91 @@ const ITEM_ARTICLE_DATA: u32 = 0xC4;
 /// written into the r13 / r2 bytes before a run (the DOL's image holds 0 there, the bss).
 unsafe fn sync_globals(s: &mut State) {
     // it_804D6D28: the ItemCommonData (Diddy's Nut_Phys reads its gravity, +0x68)
-    let rows: [(u32, usize, &'static str); 2] = [
+    // Fighter_804D64FC: PlCo's per-fighter table (kind 39's MexCPU_ProcCustom reads +0x20)
+    let rows: [(u32, usize, &'static str); 3] = [
         (0x804D_6554, melee_runtime::shared::p_ftCommonData as usize, "ftCommonData"),
+        (0x804D_64FC, melee_runtime::shared::Fighter_804D64FC as usize, "Fighter_804D64FC_t"),
         (0x804D_6D28, melee_items::tu::it_3F14::it_804D6D28 as usize, "ItemCommonData"),
     ];
     for (a, p, rec) in rows {
         if let Ok(h) = s.space.handle(p, Some(rec)) {
             let _ = s.space.st32(a, h);
+        }
+    }
+    // Fighter_804D64FC's x20 / x24 (`float *`, no record a guest handle can stand for): big-endian guest copies, the
+    // record's two fields answering their addresses (kind 39's MexCPU_ProcCustom reads x20[kind])
+    let f = melee_runtime::shared::Fighter_804D64FC;
+    if !f.is_null() && !(*f).x20.is_null() && !(*f).x24.is_null() {
+        if let Ok(h) = s.space.handle(f as usize, Some("Fighter_804D64FC_t")) {
+            let n20 = melee_types::Ft_Kind_Max as u32;
+            let (g20, g24) = *s.cpu_floats.get_or_insert_with(|| (0, 0));
+            let (g20, g24) = if g20 == 0 {
+                let a = s.heap_next;
+                let b = a + ((4 * n20 + 0x1F) & !0x1F);
+                s.heap_next = b + 0x20;
+                s.space.add_bytes(a, vec![0; 4 * n20 as usize]);
+                s.space.add_bytes(b, vec![0; 4 * 8]);
+                s.cpu_floats = Some((a, b));
+                (a, b)
+            } else {
+                (g20, g24)
+            };
+            for i in 0..n20 {
+                let _ = s.space.st32(g20 + 4 * i, (*(*f).x20.add(i as usize)).to_bits());
+            }
+            for i in 0..8u32 {
+                let _ = s.space.st32(g24 + 4 * i, (*(*f).x24.add(i as usize)).to_bits());
+            }
+            // x4..x1C: `ftCo_AttackEntry*[kind]` (nine words each, 0-terminated by cmd); built once per record
+            if s.cpu_lists.is_none_or(|c| c.0 != f as usize) {
+                let n = melee_types::Ft_Kind_Max as usize;
+                let tabs = [(*f).x4, (*f).x8, (*f).xC, (*f).x10, (*f).x14, (*f).x18, (*f).x1C];
+                let mut seen: BTreeMap<usize, u32> = BTreeMap::new();
+                let mut out = [0u32; 7];
+                for (j, &t) in tabs.iter().enumerate() {
+                    let t = t as *const *const melee_types::ftCo_AttackEntry;
+                    let mut words = vec![0u8; 4 * n];
+                    if !t.is_null() {
+                        for i in 0..n {
+                            let e = *t.add(i);
+                            if e.is_null() {
+                                continue;
+                            }
+                            let g = *seen.entry(e as usize).or_insert_with(|| {
+                                let mut b = Vec::new();
+                                let mut k = 0;
+                                loop {
+                                    let w = e.add(k) as *const u32;
+                                    for x in 0..9 {
+                                        b.extend_from_slice(&(*w.add(x)).to_be_bytes());
+                                    }
+                                    if (*e.add(k)).cmd == 0 || k > 256 {
+                                        break;
+                                    }
+                                    k += 1;
+                                }
+                                let a = s.heap_next;
+                                s.heap_next = (a + b.len() as u32 + 0x1F) & !0x1F;
+                                s.space.add_bytes(a, b);
+                                a
+                            });
+                            words[4 * i..4 * i + 4].copy_from_slice(&g.to_be_bytes());
+                        }
+                    }
+                    let a = s.heap_next;
+                    s.heap_next = (a + words.len() as u32 + 0x1F) & !0x1F;
+                    s.space.add_bytes(a, words);
+                    out[j] = a;
+                }
+                s.cpu_lists = Some((f as usize, out));
+            }
+            if let Some((_, t)) = s.cpu_lists {
+                for (j, a) in t.iter().enumerate() {
+                    s.space.ptr_override.insert((h, 4 + 4 * j as u32), *a);
+                }
+            }
+            s.space.ptr_override.insert((h, 0x20), g20);
+            s.space.ptr_override.insert((h, 0x24), g24);
         }
     }
     // HSD_GObjPLinkHead (0x804D782C), the gobj list heads by p_link: a guest table of their handles, rewritten before
@@ -1500,6 +1617,20 @@ fn dat_joint(h: u32) -> Option<*mut melee_types::HSD_Joint> {
     eprintln!("mexguest: {}: joint at dat+{:#x} decoded for a native call", f.file, h - f.dat_base);
     cache.insert(h, root as usize);
     Some(root)
+}
+
+/// [`crate::archive::joint_at`], cached by native address.
+fn raw_joint(addr: usize) -> Option<*mut melee_types::HSD_Joint> {
+    static mut CACHE: Option<std::collections::HashMap<usize, usize>> = None;
+    #[allow(static_mut_refs)]
+    let cache = unsafe { CACHE.get_or_insert_with(Default::default) };
+    if let Some(&p) = cache.get(&addr) {
+        return Some(p as _);
+    }
+    let p = crate::archive::joint_at(addr)?;
+    eprintln!("mexguest: an archive's joint at {addr:#x} decoded for a native call");
+    cache.insert(addr, p as usize);
+    Some(p)
 }
 
 struct Br;
@@ -1731,7 +1862,9 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
             }
             // an item function on a gobj that is not an item (kind 46 passed a non-item gobj to Item_802697D4, whose
             // user_data read as an Item crashed): a guest fault, as an unresolved call is
-            Some(n) if (n.starts_with("Item_") || n.starts_with("it_")) && mem.native(d).is_some_and(|p| {
+            // (that one only: several `it_*` take a fighter gobj, it_8026BB68 = ftLib_GetECBCenter for Wolf's
+            // Laser_Spawn, and Item_8026AE60 takes no argument at all, r3 is whatever the guest left there)
+            Some(n) if n == "Item_802697D4" && mem.native(d).is_some_and(|p| {
                 matches!(mem.describe(d), Some(("HSD_GObj", 0))) && unsafe { (*(p as G)).classifier as i32 != melee_types::HSD_GOBJ_CLASS_ITEM }
             }) => {
                 eprintln!("mexguest: {n} on a non-item gobj {d:08X}: refused");
@@ -1839,11 +1972,17 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                         // void(Item_GObj*, Vec3* out) (mex:39)
                         "it_80276174" => {
                             let g = c.ptr(0, Some("HSD_GObj"));
-                            let v = c.words(1, 3);
-                            if g.is_null() || v.is_null() || c.bad {
+                            // PlSm's article 308 calls it with one argument (r4 is what it_80274658 left, 0 here; on
+                            // the console a leftover register): NULL reads as the item's own position
+                            let v = if c.int(1) == 0 { core::ptr::null_mut() } else { c.words(1, 3) };
+                            if g.is_null() || c.bad || (c.int(1) != 0 && v.is_null()) {
                                 c.bad = true;
                             } else {
-                                unsafe { melee_items::tu::itmaplib::it_80276174(g as _, v as _) };
+                                unsafe {
+                                    let mut own = (*((*(g as G)).user_data as *mut melee_types::Item)).pos;
+                                    let v = if v.is_null() { &raw mut own as *mut c_void } else { v };
+                                    melee_items::tu::itmaplib::it_80276174(g as _, v as _)
+                                };
                             }
                         }
                         // Vec3*(slot): a static of the HUD (mex:39, 41, 57)
@@ -1889,6 +2028,129 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                                 c.bad = true;
                             } else {
                                 unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a as _, c.flt(0) as f32) };
+                            }
+                        }
+                        // void(gobj, u8 kind, obj): the gobj's object, a registered native one (kinds 43, 44: a jobj)
+                        "HSD_GObjObject_80390A70" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let o = c.ptr(2, None);
+                            if g.is_null() || o.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(g as _, c.int(1) as u8, o as _) };
+                            }
+                        }
+                        // void(Mtx, Vec3* out) (kinds 43, 44, 45)
+                        "HSD_MtxGetRotation" => {
+                            let (m, v) = (c.words(0, 12), c.words(1, 3));
+                            if m.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx::HSD_MtxGetRotation(m as _, v as _) };
+                            }
+                        }
+                        // void(Mtx src, Mtx dst), u32(Mtx src, Mtx inv) (kinds 43, 44, 45)
+                        "PSMTXCopy" | "PSMTXInverse" => {
+                            let (a, b) = (c.words(0, 12), c.words(1, 12));
+                            if a.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else if name == "PSMTXCopy" {
+                                unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXCopy(a as _, b as _) };
+                            } else {
+                                let r = unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXInverse(a as _, b as _) };
+                                c.ret_int(r);
+                            }
+                        }
+                        // s32(CollData*, Vec* out) (kinds 43, 44, 45)
+                        "mpCollGetSpeedCeiling" | "mpCollGetSpeedLeftWall" | "mpCollGetSpeedRightWall" => {
+                            let cd = c.ptr(0, Some("CollData"));
+                            let v = c.words(1, 3);
+                            if cd.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                use melee_world::tu::mpcoll as mc;
+                                let r = unsafe {
+                                    match name {
+                                        "mpCollGetSpeedCeiling" => mc::mpCollGetSpeedCeiling(cd as _, v as _),
+                                        "mpCollGetSpeedLeftWall" => mc::mpCollGetSpeedLeftWall(cd as _, v as _),
+                                        _ => mc::mpCollGetSpeedRightWall(cd as _, v as _),
+                                    }
+                                };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void*(dst, src, n): guest bytes copied in guest memory (kinds 43, 44, 45)
+                        "memcpy" => {
+                            let (d, s, n) = (c.int(0), c.int(1), c.int(2));
+                            let bytes: Option<Vec<u8>> = (0..n).map(|k| c.mem.ld8(s.wrapping_add(k)).ok()).collect();
+                            match bytes {
+                                Some(b) if n <= 0x10_0000 && b.iter().enumerate().all(|(k, &v)| c.mem.st8(d.wrapping_add(k as u32), v).is_ok()) => c.ret_int(d),
+                                _ => c.bad = true,
+                            }
+                        }
+                        "HSD_MtxGetScale" => {
+                            let (m, v) = (c.words(0, 12), c.words(1, 3));
+                            if m.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx_world::HSD_MtxGetScale(m as _, v as _) };
+                            }
+                        }
+                        // void(Vec*, Vec*, Vec* out) (kinds 43, 44, 45)
+                        "PSVECCrossProduct" => {
+                            let (a, b, o) = (c.words(0, 3), c.words(1, 3), c.words(2, 3));
+                            if a.is_null() || b.is_null() || o.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(a as _, b as _, o as _) };
+                            }
+                        }
+                        // void(Mtx, Vec3* out) (kinds 43, 44, 45)
+                        "HSD_MtxGetTranslate" => {
+                            let (m, v) = (c.words(0, 12), c.words(1, 3));
+                            if m.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx::HSD_MtxGetTranslate(m as _, v as _) };
+                            }
+                        }
+                        // void(Item_GObj*, i32) (kind 45)
+                        "it_802787B4" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_items::tu::iteffect::it_802787B4(g as _, c.int(1) as i32) };
+                            }
+                        }
+                        // void(HSD_JObj*, u32) (kind 44, 62)
+                        "HSD_JObjClearFlagsAll" => {
+                            let j = c.ptr(0, Some("HSD_JObj"));
+                            if j.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(j as _, c.int(1)) };
+                            }
+                        }
+                        // s32(CollData*, Vec* out) (kind 45)
+                        "mpCollGetSpeedFloor" => {
+                            let cd = c.ptr(0, Some("CollData"));
+                            let v = c.words(1, 3);
+                            if cd.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_world::tu::mpcoll::mpCollGetSpeedFloor(cd as _, v as _) };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Item_GObj*, ef, i32, Vec3*, Vec3*, i32, f32): an item effect (kind 46)
+                        "it_80278800" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let (a, b) = (c.words(3, 3), c.words(4, 3));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_items::tu::iteffect::it_80278800(g as _, c.int(1) as i32, c.int(2) as i32, a as _, b as _, c.int(5) as i32, c.flt(0) as f32) };
                             }
                         }
                         // f32(f32) (kind 49)
@@ -1941,7 +2203,9 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                             let data = if h == 0 { Some(0) } else { c.mem.native(h) };
                             match (g.is_null() || c.bad, data) {
                                 (false, Some(p)) => unsafe {
-                                    melee_runtime::tu::gobjuserdata::GObj_InitUserData(g as _, c.int(1) as u8, None, p as _)
+                                    // a no-op remover (not None: GObj_RemoveUserData asserts one when the gobj is
+                                    // freed, which kinds 43-45's model gobjs reach)
+                                    melee_runtime::tu::gobjuserdata::GObj_InitUserData(g as _, c.int(1) as u8, Some(guest_userdata_remove), p as _)
                                 },
                                 _ => c.bad = true,
                             }
@@ -2155,6 +2419,20 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
                 Some("HSD_AObjSetCurrentFrame") => ao::HSD_AObjSetCurrentFrame as usize,
                 Some("HSD_AObjSetEndFrame") => ao::HSD_AObjSetEndFrame as usize,
                 Some("HSD_AObjSetRewindFrame") => ao::HSD_AObjSetRewindFrame as usize,
+                // (aobj, obj, update func) with the AOV form: `HSD_ForeachAnim(j, JOBJ_TYPE, mask, HSD_AObjStopAnim,
+                // AOBJ_ARG_AOV, func)` (kind 46; vanilla passes func 0 as gmcamera / mncharsel do)
+                Some("HSD_AObjStopAnim") if r(4) == melee_types::AOBJ_ARG_AOV as u32 => {
+                    let v: usize = match (r(5), mex_import::layout::vanilla_name(r(5))) {
+                        (0, _) => 0,
+                        (_, Some("JObjUpdateFunc")) => melee_runtime::tu::jobj_ptr::JObjUpdateFunc as usize,
+                        (_, Some("TObjUpdateFunc")) => melee_runtime::tu::tobj::TObjUpdateFunc as usize,
+                        _ => return Err(Fault::Unresolved(r(5))),
+                    };
+                    unsafe {
+                        ao::HSD_ForeachAnim(obj, r(1) as _, r(2) as _, ao::HSD_AObjStopAnim as usize as *mut c_void, melee_types::AOBJ_ARG_AOV as _, CallbackArg { v: v as *mut c_void })
+                    };
+                    return Ok(true);
+                }
                 _ => return Err(Fault::Unresolved(r(3))),
             };
             // every callback above is (aobj, f32): on the console it reads f1 whatever the form, so with a *F form the
@@ -2577,6 +2855,9 @@ fn missing_public(mem: &mut GuestSpace, arch: u32, p: u32) -> bool {
     unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(archive as _, cs.as_ptr() as _).is_null() }
 }
 
+/// Archives' data blocks mapped for untyped publics: (guest base, native raw data, length).
+static mut RAW_PUBLICS: Vec<(u32, usize, u32)> = Vec::new();
+
 fn untyped_public(mem: &mut GuestSpace, arch: u32, p: u32) -> Option<u32> {
     let archive = mem.native(arch)? as *mut melee_types::HSD_Archive;
     let mut name = Vec::new();
@@ -2587,13 +2868,20 @@ fn untyped_public(mem: &mut GuestSpace, arch: u32, p: u32) -> Option<u32> {
         }
     }
     let (data, len, off) = crate::archive::untyped_public(archive, std::str::from_utf8(&name).ok()?)?;
-    let base = match mem.regions.iter().find(|r| matches!(r.backing, mex_import::remap::Backing::Raw { ptr } if ptr as usize == data)) {
-        Some(r) => r.base,
+    let mapped = unsafe { &mut *core::ptr::addr_of_mut!(RAW_PUBLICS) };
+    let base = match mapped.iter().find(|r| r.1 == data) {
+        Some(r) => r.0,
         None => {
             let s = st();
             let base = s.heap_next;
             s.heap_next = (base + len + 0x1F) & !0x1F;
-            unsafe { mem.add_raw(base, data as *mut u8, len) };
+            // the guest's own copy relocated for its address (kind 43/44's "trJoint" holds a joint pointer the
+            // guest follows into HSD_JObjLoadJoint); the raw image's words are host-relative
+            match crate::archive::data_relocated_for(data, base) {
+                Some(b) => mem.add_bytes(base, b),
+                None => unsafe { mem.add_raw(base, data as *mut u8, len) },
+            }
+            mapped.push((base, data, len));
             base
         }
     };
@@ -2674,6 +2962,12 @@ impl Call<'_> {
         }
         if rec == Some("HSD_Joint") {
             if let Some(p) = dat_joint(h) {
+                return p as *mut c_void;
+            }
+            // inside a loaded archive's raw data block (an untyped public, kind 43/44's "trJoint" table): the joint
+            // decoded from that archive, once per address
+            let raw = unsafe { &*core::ptr::addr_of!(RAW_PUBLICS) }.iter().find(|r| h >= r.0 && h < r.0 + r.2).map(|r| r.1 + (h - r.0) as usize);
+            if let Some(p) = raw.and_then(raw_joint) {
                 return p as *mut c_void;
             }
         }

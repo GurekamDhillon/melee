@@ -492,6 +492,35 @@ pub fn untyped_public(archive: *mut HSD_Archive, name: &str) -> Option<(usize, u
     Some((image.raw + HEADER_BYTES, image.dat.data.len() as u32, off))
 }
 
+/// A copy of the data block of the archive whose raw data starts at `raw_data`, relocated for guest address `base`
+/// (the raw image's words hold the host block's low 32 bits plus the offset, which a guest cannot follow).
+pub fn data_relocated_for(raw_data: usize, base: u32) -> Option<Vec<u8>> {
+    let image = Host::get().archives.values().find(|i| i.raw + HEADER_BYTES == raw_data)?;
+    let mut b = image.dat.data.clone();
+    for &o in &image.dat.relocs {
+        let o = o as usize;
+        if let Some(w) = b.get_mut(o..o + 4) {
+            let v = u32::from_be_bytes((&*w).try_into().unwrap()).wrapping_add(base);
+            w.copy_from_slice(&v.to_be_bytes());
+        }
+    }
+    Some(b)
+}
+
+/// An HSD_Joint at data offset `off` of a loaded archive's raw data block (an untyped public the guest reads as a
+/// joint, kind 44's "trJoint"): decoded natively for a native call, kept for the process.
+pub fn joint_at(addr: usize) -> Option<*mut melee_types::HSD_Joint> {
+    let image = Host::get().archives.values().find(|i| addr >= i.raw + HEADER_BYTES && addr < i.raw + HEADER_BYTES + i.dat.data.len())?;
+    let off = (addr - image.raw - HEADER_BYTES) as u32;
+    let raw: &'static [u8] = Box::leak(image.dat.data.clone().into_boxed_slice());
+    let mut d = image.dat.decoder();
+    d.set_raw_base(raw.as_ptr() as usize);
+    let root = d.object::<melee_types::HSD_Joint>(off);
+    let (arena, _issues) = d.finish();
+    core::mem::forget(arena);
+    (!root.is_null()).then_some(root)
+}
+
 /// The objects `MELEE_RECLAIM_POISON` filled with 0xDD: (address, bytes, type).
 static mut POISONED: Vec<(usize, usize, &'static str)> = Vec::new();
 

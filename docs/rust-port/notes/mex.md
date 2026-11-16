@@ -400,3 +400,28 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   0x90004998 and Fighter+0x988; 39 `it_80276174`; 39/41/57 `ifAll_GetPlayerHUDPosition`; 40 `lbVector_Add_xy`;
   44 `lbGetJObjEndFrame`, `PSVECDotProduct`, `HSD_AObjSetRate`. Clean: the rest.
 - Not run: Akaneia 51, vanilla 125, synctest d4/d7 on mex_ace_cpu, Liu Kang rand order.
+
+### Round 15 (Nov 16)
+
+- Kind 46 crash (mex41, `Item_802697D4` reading -1): not the new Fighter bridges. Its article 318 (PlFy
+  itFunction[4]) stores a second state table from its code blob (+0x144) as `item->xBC` itself. The store took the
+  code-pointer path (a call trampoline), so `Item_80268E5C` copied x86 bytes as the state's callbacks and
+  `it_802750F8` -> `Item_802697D4` called through garbage. An `ItemStateTable` pointer field now asks the host first
+  (`item_states_at`, as `MotionState` does): native rows built from the blob address, kept for the process. The
+  "Item_* on a non-item gobj" refusal is narrowed to `Item_802697D4` (it refused Item_8026AE60, which takes no
+  argument, and it_8026BB68, which takes a fighter gobj: Wolf's Laser_Spawn and kind 35's SpecialN_Enter faulted).
+- Hand bridges: `it_802AA7F0`, `it_80276174` (PlSm's article passes one argument; NULL reads as the item's own pos),
+  `ifAll_GetPlayerHUDPosition`, `lbVector_Add_xy`, `PSVECDotProduct`, `PSVECCrossProduct`, `lbGetJObjEndFrame`,
+  `HSD_AObjSetRate`, `HSD_GObjObject_80390A70`, `HSD_JObjClearFlagsAll`, `mpCollGetSpeed{Floor,Ceiling,LeftWall,
+  RightWall}`, `it_80278800`, `it_802787B4`, `HSD_Mtx{GetTranslate,GetScale,GetRotation}`, `PSMTXCopy`,
+  `PSMTXInverse`, `memcpy` (guest bytes); `HSD_ForeachAnim(.., HSD_AObjStopAnim, AOV, func)`; GX callbacks
+  `HSD_GObj_JObjCallback` / `LObjCallback` for `GObj_SetupGXLink`; `GObj_InitUserData` gets a no-op remover
+  (GObj_RemoveUserData asserted one when kinds 43-45's model gobjs were freed).
+- Bad reads: null / null+0x2C on 43/44/45 were an untyped public (`trJoint`) mapped as the raw image, whose words are
+  host-relative: the guest followed one to HSD_JObjLoadJoint. Untyped publics now map a copy relocated for their guest
+  address, and an `HSD_Joint` argument inside one is decoded from that archive (`archive::joint_at`). Not the
+  custom-article spawn guess. 0x90004998 / Fighter+0x988 (39, 59) were `HitCapsule.victims[].victim` (void*): a
+  fighter's user data now answers "Fighter". MexCPU_ProcCustom (33): `Fighter_804D64FC` is synced as a guest global;
+  its x20/x24 float arrays and x4..x1C attack-list tables get big-endian guest copies (ptr_override); `fp->cpu.csP`
+  (an s8* into the fighter's own buffer) loads as that interior's guest address; `table_list` gives an empty list when
+  an m-ex kind's AI-like row has none (native ftCo_800B6208 read NULL once PlTs's custom CPU ran to the end).

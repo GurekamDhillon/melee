@@ -425,6 +425,21 @@ impl GuestSpace {
                 _ => {}
             }
         }
+        // a byte pointer into a registered native object (the CPU's command cursor `fp->cpu.csP`, an s8* into
+        // `fp->cpu.buffer`, which ACE's MexCPU_Process reads): the guest address of the GC offset that starts there
+        if matches!(pointee, None | Some("s8" | "u8" | "char")) {
+            for r in &self.regions {
+                if let Backing::Native { rec, ptr, .. } = &r.backing {
+                    let n = self.layouts.native_size(rec).unwrap_or(0);
+                    if p > *ptr as usize && p < *ptr as usize + n {
+                        let want = p - *ptr as usize;
+                        if let Some(g) = (1..r.size).find(|&g| self.layouts.field_start(rec, g) == Some(want)) {
+                            return Ok(r.base + g);
+                        }
+                    }
+                }
+            }
+        }
         match pointee {
             // SAFETY: GuestSpace::add_native's contract: pointers reachable from a registered
             // object are valid.

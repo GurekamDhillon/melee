@@ -738,6 +738,7 @@ impl RetailPlay {
         let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
         self.scene_tick = entered && !self.headless;
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
+        melee_engine::asset::scene_prefetch(self.cur.1 as i32);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
             let hover = unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() };

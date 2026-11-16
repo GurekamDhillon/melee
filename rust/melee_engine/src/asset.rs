@@ -1071,6 +1071,33 @@ fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
     s.cv.notify_all();
 }
 
+/// The shared background file prefetch: hint each named game file (a name as `entry_of` takes it) to the asset
+/// worker, which reads and decodes it off the game thread, so the tick that loads it applies a ready plan. Host
+/// state only; never sim-visible. A name not on the disc is skipped.
+pub fn hint_files(names: &[&str]) {
+    for n in names {
+        let Ok(c) = std::ffi::CString::new(*n) else { continue };
+        let e = entry_of(c.as_ptr());
+        if e > 0 {
+            hint_entry(e, -1);
+        }
+    }
+}
+
+/// Scene-driven prefetch, once per tick from the play loop (`minor` the scene kind):
+/// - a match: the results screen's files (IfCoGet, GmRst, SdRst, TyDatai) while the worker is idle, so the
+///   results entry applies plans instead of reading and parsing 1 MB on the game thread.
+pub fn scene_prefetch(minor: i32) {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    static LAST: AtomicI32 = AtomicI32::new(-1);
+    if LAST.swap(minor, Relaxed) == minor {
+        return;
+    }
+    if minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32 {
+        hint_files(&["IfCoGet.dat", "GmRst", "SdRst", "TyDatai"]);
+    }
+}
+
 /// A disc entry for a game file name (`PlFx.dat`; a name without an extension tries the locale's `.usd`, then `.dat`).
 /// Pure: unlike `lbFileGetFullName` it writes no game static.
 fn entry_of(name: *const i8) -> i32 {
@@ -1205,6 +1232,10 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
 /// Files every session loads early, hinted at boot so the worker starts on them at once: the title's, the menus' and
 /// character select's archives, then the match commons (in the order the game needs them). Either language's name.
 const BOOT_FILES: &[&str] = &[
+    // the effect and item commons first: a session that boots straight to character select (netplay, --match) loads
+    // them at tick 7, ~115 ms after boot; queued behind the menus and Kirby's hats their plans were not ready by then
+    // (tick 7: 30 ms engine step + 5.6 ms read and parse in place)
+    "EfCoData.dat", "ItCo.usd", "ItCo.dat",
     "GmTtAll.usd", "GmTtAll.dat",
     // Kirby's copy hats: every match (the title demo's too) with Kirby decodes the whole set at its load (~22 ms in
     // place at the title's first frame when the demo picked Kirby); small, so prepared early (files < MIN_BYTES skip)
@@ -1214,7 +1245,7 @@ const BOOT_FILES: &[&str] = &[
     "PlKbCpMr.dat", "PlKbCpZd.dat", "PlKbCpGn.dat", "PlKbCpCa.dat", "PlKbCpKp.dat", "PlKbCpLk.dat", "PlKbCpDr.dat",
     "PlKbCpPe.dat", "PlKbCpSs.dat",
     "MnMaAll.usd", "MnMaAll.dat", "MnSlChr.usd", "MnSlChr.dat", "MnExtAll.usd", "MnExtAll.dat", "MnSlMap.usd", "MnSlMap.dat",
-    "EfCoData.dat", "ItCo.usd", "ItCo.dat", "IfAll.usd", "IfAll.dat", "PlCo.dat",
+    "IfAll.usd", "IfAll.dat", "PlCo.dat",
 ];
 
 /// Disc warm-up (boot, once; `MELEE_DISC_WARM=off` keeps it off): a below-normal thread reads every game data file

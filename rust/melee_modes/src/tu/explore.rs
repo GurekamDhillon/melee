@@ -329,9 +329,12 @@ pub struct Map {
     pub patterns: Vec<(u16, [u16; 5])>,
     /// GLOK locks: (section, start trigger, end triggers, box left right top bottom world): from the start firing until
     /// an end fires the camera and the party stay inside the box
-    pub locks: Vec<(usize, u16, [u16; 2], [f32; 4])>,
+    pub locks: Vec<(usize, u16, [u16; 2], [f32; 4], bool)>,
     /// GMWA / GMWO switches: (section, x, y world, trigger): an attack on it or a fighter at it fires the trigger
     pub switches: Vec<(usize, f32, f32, u16)>,
+    /// GFT2 timers: (frames, input trigger, output trigger, set): the output is set (or cleared) that many frames after
+    /// the input fires
+    pub timers: Vec<(i32, u16, u16, bool)>,
     /// the placements' motion paths (Brawl's grGimmickMotionPath; `enemy_path`)
     enemy_paths: Vec<EnemyPath>,
     /// what the loader left out or moved (printed with the load report)
@@ -502,8 +505,9 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut areas: Vec<(usize, u16, [f32; 4])> = vec![];
     let mut spawn_trig: Vec<(u16, u16)> = vec![];
     let mut patterns: Vec<(u16, [u16; 5])> = vec![];
-    let mut locks: Vec<(usize, u16, [u16; 2], [f32; 4])> = vec![];
+    let mut locks: Vec<(usize, u16, [u16; 2], [f32; 4], bool)> = vec![];
     let mut switches: Vec<(usize, f32, f32, u16)> = vec![];
+    let mut timers: Vec<(i32, u16, u16, bool)> = vec![];
     let mut enemy_paths: Vec<EnemyPath> = vec![];
     // load notes, printed by the game thread with the map's report (never printed from a loader thread)
     let mut notes: Vec<String> = vec![];
@@ -770,13 +774,25 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         let id = b.get(e + qc).copied().unwrap_or(0) as u16;
                         // the lock's stage position model (file type 2 next to the BLOC): its camera limit bones
                         let bx = leaves.iter().zip(&tags).find(|(_, t)| t.last() == Some(&(2, id))).and_then(|(l, _)| {
-                            let (a, z) = (pm::bone_trans(l, b"CamLimit0N")?, pm::bone_trans(l, b"CamLimit1N")?);
+                            // the bones' model-space places (their parents carry the lock's place: a bone's own
+                            // translation alone put level 12's box at its section's start)
+                            let r = pm::locator_rig(l)?;
+                            let at = |n: &str| (0..r.bones.len()).find(|&k| r.bone_name(k) == n).map(|k| r.bone_point(None, 0.0, k, [0.0; 3]));
+                            let (a, z) = (at("CamLimit0N")?, at("CamLimit1N")?);
                             Some([fmin(a[0], z[0]) + s.off[0], fmax(a[0], z[0]) + s.off[0], fmax(a[1], z[1]) + s.off[1], fmin(a[1], z[1]) + s.off[1]])
                         });
                         let (st, ends) = (be16(b, e + qs), [be16(b, e + qe), be16(b, e + qe2)]);
                         match bx {
-                            Some(bx) if st != 0 && ends.iter().any(|&t| t != 0) => locks.push((si, st, ends, bx)),
+                            Some(bx) if st != 0 && ends.iter().any(|&t| t != 0) => locks.push((si, st, ends, bx, false)),
                             _ => notes.push(format!("explore: section {si}: a camera lock (model {id}, trigger {st}) without its box or triggers; left out")),
+                        }
+                    }
+                }
+                if let (Some(qd), Some(qi), Some(qo)) = (o.gft_time, o.gft_in, o.gft_out) {
+                    for e in bloc_entries(b, b"GFT2") {
+                        let (i, out) = (be16(b, e + qi), be16(b, e + qo));
+                        if i != 0 && out != 0 {
+                            timers.push((fctiwz_f32(bef(b, e + qd)).clamp(0, 36000), i, out, b.get(e + qo + 3) == Some(&1)));
                         }
                     }
                 }
@@ -854,19 +870,27 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     // a part's start trigger counts only when something the port runs can fire it (an area, an enemy pattern, an enemy's
     // defeat, a switch); otherwise a lift starts on its rider and a shutter opens at the room's start
     {
-        let can = |t: u16| areas.iter().any(|a| a.1 == t) || patterns.iter().any(|p| p.0 == t) || spawn_trig.iter().any(|p| p.1 == t) || switches.iter().any(|w| w.3 == t);
+        let can = |t: u16| areas.iter().any(|a| a.1 == t) || patterns.iter().any(|p| p.0 == t) || spawn_trig.iter().any(|p| p.1 == t) || switches.iter().any(|w| w.3 == t) || timers.iter().any(|w| w.3 && w.2 == t);
         // an enemy pattern can fire when all its inputs can (a few levels deep)
         fn can_deep(t: u16, d: u32, can: &dyn Fn(u16) -> bool, patterns: &[(u16, [u16; 5])]) -> bool {
             can(t) && !patterns.iter().any(|p| p.0 == t) || d > 0 && patterns.iter().any(|p| p.0 == t && p.1.iter().filter(|&&i| i != 0).all(|&i| can_deep(i, d - 1, can, patterns)))
         }
+        let mut patterns = patterns.clone();
+        patterns.extend(timers.iter().filter(|t| t.3).map(|t| (t.2, [t.1, 0, 0, 0, 0])));
         let base = |t: u16| areas.iter().any(|a| a.1 == t) || spawn_trig.iter().any(|p| p.1 == t) || switches.iter().any(|w| w.3 == t);
         // a lock only when one of its end triggers can fire (else the party would be held in its box for good)
-        locks.retain(|l| {
-            let ok = l.2.iter().any(|&t| t != 0 && can_deep(t, 4, &base, &patterns));
-            if !ok {
-                notes.push(format!("explore: section {}: camera lock on trigger {} left out (its end triggers {:?} cannot fire here)", l.0, l.1, l.2));
+        // a lock whose end triggers nothing here fires (Brawl's own end: no object record fires them) ends when the
+        // room's enemies are all gone [L: a guess]; a lock whose start cannot fire is left out
+        locks.retain_mut(|l| {
+            if !can_deep(l.1, 4, &base, &patterns) {
+                notes.push(format!("explore: section {}: camera lock on trigger {} left out (its start cannot fire here)", l.0, l.1));
+                return false;
             }
-            ok
+            l.4 = !l.2.iter().any(|&t| t != 0 && can_deep(t, 4, &base, &patterns));
+            if l.4 {
+                notes.push(format!("explore: section {}: camera lock on trigger {} ends when its enemies are gone (end triggers {:?} not fired here)", l.0, l.1, l.2));
+            }
+            true
         });
         for b in blocks.iter_mut() {
             let ok = b.trig != 0 && can(b.trig);
@@ -1049,6 +1073,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         patterns,
         locks,
         switches,
+        timers,
         enemy_paths,
         notes,
         cam,
@@ -1492,6 +1517,8 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     LOCK_ON = -1;
     LOCK_DONE = 0;
     LOCK_AT = 0;
+    LOCK_CLEAR = 0;
+    LOCK_SEEN = false;
     triggers_reset();
     crate::tu::explore_vm::reset();
     VISITED = 1;
@@ -2150,7 +2177,12 @@ pub unsafe fn fire(id: u16) {
     }
 }
 
+/// per GFT2 timer: the room frame its input fired (-1 not yet, -2 done). Sim state.
+const TIMERS: usize = 128;
+static mut TIMER_AT: [i32; TIMERS] = [-1; TIMERS];
+
 unsafe fn triggers_reset() {
+    TIMER_AT = [-1; TIMERS];
     FIRED = [0; TRIG_IDS / 32];
     POINT_IN = [0; POINTS / 32];
     POINT_BEATEN = [0; POINTS / 32];
@@ -2191,6 +2223,26 @@ unsafe fn triggers_tick(m: &Map) {
     });
     for &id in &inside[..ni] {
         fire(id);
+    }
+    // GFT2 timers: the room frame each one's input was first seen fired; its output goes that many frames later
+    for (k, &(d, i, out, set)) in m.timers.iter().enumerate().take(TIMERS) {
+        if TIMER_AT[k] == -2 || !fired(i) {
+            continue;
+        }
+        if TIMER_AT[k] < 0 {
+            TIMER_AT[k] = CLOCK;
+        }
+        if CLOCK - TIMER_AT[k] >= d {
+            TIMER_AT[k] = -2;
+            if set {
+                fire(out);
+            } else if fired(out) {
+                set_bit(&mut *core::ptr::addr_of_mut!(FIRED), out as usize, false);
+                if std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
+                    eprintln!("explore: trigger {out} cleared at room frame {CLOCK}");
+                }
+            }
+        }
     }
     for &(out, ins) in &m.patterns {
         if !fired(out) && ins.iter().any(|&i| i != 0) && ins.iter().all(|&i| fired(i)) {
@@ -2355,6 +2407,10 @@ struct Off {
     /// GMWA / GMWO switches (a floor switch, a trigger brick): place (x, y floats) and the trigger word they fire
     sw_pos: Option<usize>,
     sw_trig: Option<usize>,
+    /// GFT2 timer: delay (float, frames), input trigger word, output trigger word (its last byte 1: set, 0: clear)
+    gft_time: Option<usize>,
+    gft_in: Option<usize>,
+    gft_out: Option<usize>,
 }
 
 fn off() -> Option<&'static Off> {
@@ -2402,6 +2458,9 @@ fn off() -> Option<&'static Off> {
                 glok_end2: g("glok_end2"),
                 sw_pos: g("sw_pos"),
                 sw_trig: g("sw_trig"),
+                gft_time: g("gft_time"),
+                gft_in: g("gft_in"),
+                gft_out: g("gft_out"),
             })
         })();
         if o.is_none() {
@@ -2830,6 +2889,8 @@ unsafe fn blocks_tick(m: &Map) {
 static mut LOCK_ON: i32 = -1;
 static mut LOCK_DONE: u64 = 0;
 static mut LOCK_AT: i32 = 0;
+static mut LOCK_CLEAR: i32 = 0;
+static mut LOCK_SEEN: bool = false;
 
 /// Brawl's camera / area locks: when a lock of the party's section has its start trigger fired (and no end yet), the
 /// camera bounds become its box (its stage position model's camera limit bones) and the party cannot walk out of it,
@@ -2837,9 +2898,21 @@ static mut LOCK_AT: i32 = 0;
 unsafe fn locks_tick(m: &Map) {
     if LOCK_ON >= 0 {
         let k = LOCK_ON as usize;
-        let Some(&(sec, _, ends, bx)) = m.locks.get(k) else { LOCK_ON = -1; return };
+        let Some(&(sec, _, ends, bx, by_clear)) = m.locks.get(k) else { LOCK_ON = -1; return };
+        // an enemies-gone lock: let go once nothing is left for a second (counted from a second after it came on)
+        let any = crate::tu::explore_vm::alive() != 0 || SS_LIVE.iter().any(|e| e.0 >= 0);
+        if any {
+            LOCK_SEEN = true;
+        }
+        // (only after an enemy has been seen in the lock: the room's enemies come in some frames after its start)
+        if by_clear && LOCK_SEEN && CLOCK - LOCK_AT > 60 && !any {
+            LOCK_CLEAR += 1;
+        } else {
+            LOCK_CLEAR = 0;
+        }
+        let cleared = LOCK_CLEAR > 60;
         // [L: ours] a lock held a minute is let go (an end trigger waiting on an enemy the port does not spawn)
-        if sec as i32 != SEC || ends.iter().any(|&t| t != 0 && fired(t)) || CLOCK - LOCK_AT > 3600 {
+        if sec as i32 != SEC || ends.iter().any(|&t| t != 0 && fired(t)) || cleared || CLOCK - LOCK_AT > 3600 {
             if sec as i32 == SEC {
                 LOCK_DONE |= 1u64.pshl(k.min(63) as i64);
             }
@@ -2864,12 +2937,14 @@ unsafe fn locks_tick(m: &Map) {
         });
         return;
     }
-    for (k, &(sec, st, ends, bx)) in m.locks.iter().enumerate().take(64) {
+    for (k, &(sec, st, ends, bx, _)) in m.locks.iter().enumerate().take(64) {
         if sec as i32 != SEC || LOCK_DONE & 1u64.pshl(k as i64) != 0 || !fired(st) || ends.iter().any(|&t| t != 0 && fired(t)) {
             continue;
         }
         LOCK_ON = k as i32;
         LOCK_AT = CLOCK;
+        LOCK_CLEAR = 0;
+        LOCK_SEEN = false;
         let ci = &mut sg::stage_info.cam_info;
         let (ox, oy) = (ci.cam_x_offset, ci.cam_y_offset);
         ci.cam_bounds.left = bx[0] - ox;

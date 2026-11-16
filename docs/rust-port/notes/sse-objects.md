@@ -199,8 +199,14 @@ point.
   are the box), a start trigger word and two end trigger words. From the start firing until an end fires, the camera
   bounds are the box and the party is held inside it. A lock is loaded only when one of its end triggers can fire in
   the port (an area, an enemy defeat, a switch, or an enemy pattern whose inputs can, a few levels deep), and is let
-  go after a minute regardless [L]. On Lake, level 18 and the jungle every lock is left out by that rule: their end
-  triggers come from kinds the port does not run yet (GFT2 / GASD / GFRT), so no lock has been seen live.
+  go after a minute regardless [L]. (Superseded below: such locks now end when their enemies are gone.)
+- **GFT2 timers**: a delay (frames), an input and an output trigger word; the output is set (or, its last byte 0,
+  cleared) that many frames after the input fires. Counted as a way a trigger can fire.
+- **Locks whose end no record fires** (level 12's: no object record carries trigger 210; Brawl's own code fires it) are
+  kept and end when the room's enemies are gone (after one was seen in the lock) [L: a guess]; a lock whose start
+  cannot fire is left out. The lock box is the camera limit bones' model-space places (their parent carries the place).
+  Seen live: level 12 section 2, the lock comes on at its area (box 8890..9160) and holds the party.
+- **GASD** records carry a trigger and a rect and an id that is no enemy record's; not identified (likely music).
 - **GMWA / GMWO**: in the data these are switches (a floor switch model, a trigger brick), not walls: an attack box on
   one, or a fighter at it, fires its trigger word.
 - **GSHT shutters** have GMOV's record shape: loaded as mode-2 parts that open (play their path once) when their
@@ -209,7 +215,9 @@ point.
 - **GSBK** are groups of explosion bricks placed at a locator model's bones and removed by a trigger; their collision
   object is shared by many locators, which the loader does not instance yet: still not loaded.
 
-Synctest d4 / d7 on Lake, level 18 and the jungle: 0 neutral mismatches.
+Synctest d4 / d7 on Lake, level 18, the jungle and level 12: 0 neutral mismatches; perf-ab (CPU under 25%): 0 frames over
+budget after the match-start tick (the round-1 31 ms GPU-pipeline frame at tick 5 did not come back in 4 runs: a cold
+pipeline cache on a new exe).
 
 ## Start-up cost (round 3 perf fix)
 

@@ -591,10 +591,10 @@ impl GuestSpace {
             if n != 4 {
                 return Err(Fault::Mem(ea));
             }
-            // a MotionState table the host owns (an m-ex fighter's MoveLogic rows in its code blob) before the code
+            // a MotionState / ItemStateTable the host owns (an m-ex fighter's MoveLogic rows or an article's state rows in its code blob) before the code
             // pointer path, which would make a call trampoline of a table address
             let host = match pointee {
-                Some("MotionState") => self.ptr_native.and_then(|f| f(self, v as u32, "MotionState")),
+                Some(r @ ("MotionState" | "ItemStateTable")) => self.ptr_native.and_then(|f| f(self, v as u32, r)),
                 _ => None,
             };
             let p = match host.or_else(|| self.fn_native.and_then(|f| f(v as u32))) {

@@ -163,6 +163,8 @@ struct State {
     common_ms_mapped: bool,
     /// The fighters' item articles (itFunction): relocated code of each, owner fighter kind.
     arts: Vec<Art>,
+    /// Native state rows for article state tables a guest stores as `item->xBC` ([`item_states_at`]), by guest address.
+    item_tables: std::collections::HashMap<u32, usize>,
     /// m-ex custom item kinds (>= 237): the native descriptor and logic table Item_80267978 takes.
     items: BTreeMap<u32, CustomItem>,
     /// Each fighter's PlXx.dat as the native decoder reads it, and its guest base (the ItemDescs
@@ -185,6 +187,8 @@ struct CustomItem {
     desc: *mut melee_types::Article,
     logic: Box<ItemLogicTable>,
     states: Vec<ItemStateTable>,
+    /// The guest address of the state table (itFunction word 0), which a guest may store as `item->xBC` itself.
+    states_guest: u32,
 }
 
 static mut ST: Option<State> = None;
@@ -224,6 +228,7 @@ fn st() -> &'static mut State {
                 retail: BTreeMap::new(),
                 common_ms_mapped: false,
                 arts: Vec::new(),
+                item_tables: Default::default(),
                 items: BTreeMap::new(),
                 natdat: BTreeMap::new(),
                 plinks: false,
@@ -324,6 +329,11 @@ static mut PSUF: Vec<(u32, *mut melee_types::_PSUserFunc)> = Vec::new();
 fn ps_userfunc(sp: &GuestSpace, v: u32, rec: &'static str) -> Option<usize> {
     if rec == "MotionState" {
         return move_table_at(v);
+    }
+    // an article's onSpawn may store its own state table as `item->xBC` (kind 46's article 318 does): the native
+    // rows built from it, not a code trampoline (Item_80268E5C read x86 code as callbacks and Item_802697D4 crashed)
+    if rec == "ItemStateTable" {
+        return item_states_at(v);
     }
     if rec != "_PSUserFunc" || sp.describe(v)?.0 != "Fighter" {
         return None;
@@ -811,14 +821,49 @@ fn load_items(kind: i32, file: &str, ar: &mut mex_import::hsd::Archive) {
                 continue;
             }
         };
-        let mut states = Vec::new();
-        if words[0] != 0 {
+        let states = if words[0] != 0 { item_state_rows(kind, n, &code, &symbols, base, words[0]) } else { Vec::new() };
+        let mut logic = Box::new(ItemLogicTable::zeroed());
+        unsafe {
+            // ItemLogicTable words 1..14: the callbacks by slot, predicates and events alike (a pool trampoline returns
+            // the guest's r3, which an event's caller ignores)
+            let w = &mut *(logic.as_mut() as *mut ItemLogicTable as *mut [usize; 15]);
+            for k in 1..15 {
+                w[k] = guest_fn(words[k]).unwrap_or(0);
+            }
+        }
+        let s = st();
+        let it = s.items.entry(global).or_insert_with(CustomItem::new);
+        it.states = states;
+        it.states_guest = words[0];
+        it.logic = logic;
+        it.logic.states = if it.states.is_empty() { core::ptr::null_mut() } else { it.states.as_mut_ptr() };
+        eprintln!(
+            "mexguest: kind {kind}: {file} itFunction[{n}] -> item kind {global}: {len} bytes at {base:08X}, {} states, {} logic slots",
+            it.states.len(),
+            words.iter().filter(|&&w| w != 0).count()
+        );
+    }
+}
+
+impl CustomItem {
+    fn new() -> Self {
+        CustomItem { desc_guest: 0, desc: core::ptr::null_mut(), logic: Box::new(ItemLogicTable::zeroed()), states: Vec::new(), states_guest: 0 }
+    }
+}
+
+/// An article's state table rows (anim id, animated, physics, collided) at guest address `table` in its code blob:
+/// every row that reads as one (an anim id or -1, callbacks 0 / this article's code / vanilla text), up to the next
+/// function symbol.
+fn item_state_rows(kind: i32, n: u32, code: &[u8], symbols: &[u32], base: u32, table: u32) -> Vec<ItemStateTable> {
+    let mut states = Vec::new();
+    {
             // the state table rows (anim id, animated, physics, collided): every row that reads as one (an anim id
             // or -1, callbacks 0 / this article's code / vanilla text), up to the next function symbol. The debug
             // symbols do not mark the table's end (the first function may follow at any offset), so a bound from
             // them alone cut Charizard's tables to one row and a state change past it read the next item's table.
-            let rel = words[0] - base;
-            let end = symbols.iter().copied().filter(|&o| o > rel).filter(|o| !blob_is_data(&code, *o)).min().unwrap_or(len);
+            let rel = table - base;
+            let len = code.len() as u32;
+            let end = symbols.iter().copied().filter(|&o| o > rel).filter(|o| !blob_is_data(code, *o)).min().unwrap_or(len);
             let rd = |o: u32| code.get(o as usize..o as usize + 4).map(|b| u32::from_be_bytes(b.try_into().unwrap())).unwrap_or(0);
             let cb_ok = |a: u32| a == 0 || (a >= base && a < base + len) || (0x8000_3000..0x8050_0000).contains(&a);
             for i in 0..((end.max(rel) - rel) / 0x10) {
@@ -839,33 +884,31 @@ fn load_items(kind: i32, file: &str, ar: &mut mex_import::hsd::Archive) {
                 }
                 states.push(t);
             }
-        }
-        let mut logic = Box::new(ItemLogicTable::zeroed());
-        unsafe {
-            // ItemLogicTable words 1..14: the callbacks by slot, predicates and events alike (a pool trampoline returns
-            // the guest's r3, which an event's caller ignores)
-            let w = &mut *(logic.as_mut() as *mut ItemLogicTable as *mut [usize; 15]);
-            for k in 1..15 {
-                w[k] = guest_fn(words[k]).unwrap_or(0);
             }
-        }
-        let s = st();
-        let it = s.items.entry(global).or_insert_with(CustomItem::new);
-        it.states = states;
-        it.logic = logic;
-        it.logic.states = if it.states.is_empty() { core::ptr::null_mut() } else { it.states.as_mut_ptr() };
-        eprintln!(
-            "mexguest: kind {kind}: {file} itFunction[{n}] -> item kind {global}: {len} bytes at {base:08X}, {} states, {} logic slots",
-            it.states.len(),
-            words.iter().filter(|&&w| w != 0).count()
-        );
-    }
+    states
 }
 
-impl CustomItem {
-    fn new() -> Self {
-        CustomItem { desc_guest: 0, desc: core::ptr::null_mut(), logic: Box::new(ItemLogicTable::zeroed()), states: Vec::new() }
+/// A state table an article's code stores as `item->xBC` itself (kind 46's article 318 keeps a second table at
+/// +0x144): its native rows, built once per guest address and kept for the process (items point at them).
+fn item_states_at(v: u32) -> Option<usize> {
+    let s = unsafe { ST.as_mut() }?;
+    if let Some(i) = s.items.values_mut().find(|i| i.states_guest == v && !i.states.is_empty()) {
+        return Some(i.states.as_mut_ptr() as usize);
     }
+    if let Some(&p) = s.item_tables.get(&v) {
+        return Some(p);
+    }
+    let a = s.arts.iter().find(|a| v >= a.base && v < a.base + a.blob.code.len() as u32)?;
+    let symbols: Vec<u32> = a.blob.symbols.iter().map(|x| x.0).chain(a.blob.overrides.iter().map(|o| o.1)).collect();
+    let (kind, base, code) = (a.kind, a.base, a.blob.code.clone());
+    let rows = item_state_rows(kind, u32::MAX, &code, &symbols, base, v);
+    let s = st();
+    if rows.is_empty() {
+        return None;
+    }
+    let p = Box::leak(rows.into_boxed_slice()).as_mut_ptr() as usize;
+    s.item_tables.insert(v, p);
+    Some(p)
 }
 
 /// `MEX_IndexFighterItem(fighter kind, ItemDesc *desc, item id)`: item.RuntimeIndex[global - 237] = desc, the native
@@ -1780,6 +1823,72 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                             } else {
                                 let r = unsafe { melee_items::tu::itnesspkflash::it_802AA7E4(g as _) };
                                 c.ret_ptr(r as _, Some("HSD_GObj"));
+                            }
+                        }
+                        // Round 15 (the sweep's remaining unresolved callees)
+                        // bool(Item_GObj*) (mex:37)
+                        "it_802AA7F0" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_items::tu::itnesspkflash::it_802AA7F0(g as _) };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Item_GObj*, Vec3* out) (mex:39)
+                        "it_80276174" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let v = c.words(1, 3);
+                            if g.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_items::tu::itmaplib::it_80276174(g as _, v as _) };
+                            }
+                        }
+                        // Vec3*(slot): a static of the HUD (mex:39, 41, 57)
+                        "ifAll_GetPlayerHUDPosition" => {
+                            let p = unsafe { melee_world::tu::ifall::ifAll_GetPlayerHUDPosition(c.int(0) as i32) };
+                            c.ret_ptr(p as _, Some("Vec"));
+                        }
+                        // Vec*(Vec* a, Vec* b): a.xy += b.xy, returns a (mex:40)
+                        "lbVector_Add_xy" => {
+                            let h = c.int(0);
+                            let (a, b) = (c.words(0, 3), c.words(1, 3));
+                            if a.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::lbvector::lbVector_Add_xy(a as _, b as _) };
+                                c.ret_int(h);
+                            }
+                        }
+                        // f32(Vec*, Vec*) (mex:44)
+                        "PSVECDotProduct" => {
+                            let (a, b) = (c.words(0, 3), c.words(1, 3));
+                            if a.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_runtime::tu::mtx_pc::raw::PSVECDotProduct(a as _, b as _) };
+                                c.ret_flt(r as f64);
+                            }
+                        }
+                        // f32(HSD_JObj*) (mex:44)
+                        "lbGetJObjEndFrame" => {
+                            let j = c.ptr(0, Some("HSD_JObj"));
+                            if j.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(j as _) };
+                                c.ret_flt(r as f64);
+                            }
+                        }
+                        // void(HSD_AObj*, f32) (mex:44); NULL is a no-op in the native one
+                        "HSD_AObjSetRate" => {
+                            let a = c.ptr(0, Some("HSD_AObj"));
+                            if c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a as _, c.flt(0) as f32) };
                             }
                         }
                         // f32(f32) (kind 49)

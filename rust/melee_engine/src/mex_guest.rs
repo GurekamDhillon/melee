@@ -1610,6 +1610,18 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
             cpu.gpr[3] = guest_public(mem, a).unwrap_or(0);
             true
         }
+        _ if mex_import::layout::vanilla_name(target) == Some("HSD_ArchiveGetPublicAddress") && let Some(h) = ptrtable_public(mem, d, a) => {
+            // a NULL-terminated table of DynamicModelDesc* (`*_scene_models`; ACE 2.0.1's Toad reads its
+            // "Relax_scene_models"): a big-endian word table of the descs' handles, as the console's table reads
+            cpu.gpr[3] = h;
+            true
+        }
+        _ if mex_import::layout::vanilla_name(target) == Some("HSD_ArchiveGetPublicAddress") && missing_public(mem, d, a) => {
+            // a symbol the archive does not have (ACE 2.0.1's Toad asks its file for "Relax_scene_models"): the console's
+            // HSD_ArchiveGetPublicAddress returns NULL and the guest goes on (it faulted here, and the fallback onLoad crashed)
+            cpu.gpr[3] = 0;
+            true
+        }
         _ => match mex_import::layout::vanilla_name(target) {
             // an m-ex custom article (global item kind >= CustomItemStart 237, SpawnItem.kind at GC +0x8): the native
             // item system has no m-ex item table (its ItemDesc and itFunction states are the guest's), so the spawn
@@ -1634,6 +1646,77 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 // by hand (the generator has no row): two vanilla functions Akaneia's Dedede reaches through pointers
                 // its own data holds (an SFX callback, `bctrl ft_80088510`; its jump, ftCo_800CB110); unresolved,
                 // each fault dropped the rest of the guest callback
+                // by hand (Round 13, the ACE 2.0.1 sweep's unresolved calls; the generator has no row)
+                if !hit {
+                    hit = true;
+                    match name {
+                        // void(Item*, sfx, pan, vol): an article's SFX (mex:51, 52)
+                        "Item_8026AE84" => {
+                            let ip = c.ptr(0, Some("Item"));
+                            if ip.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_items::tu::item::Item_8026AE84(ip as _, c.int(1) as i32, c.int(2) as u8, c.int(3) as u8) };
+                            }
+                        }
+                        // void(gobj, ShieldDesc*, cb): the shield sphere; the callback may be guest code (mex:41)
+                        "ftColl_8007B1B8" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let s = c.ptr(1, Some("ShieldDesc"));
+                            if g.is_null() || s.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let cb = c.func(2); melee_fighter::tu::ftcoll::ftColl_8007B1B8(g as G, s as _, unsafe { core::mem::transmute(cb) });
+                            }
+                        }
+                        // int(gobj, model): a model part's previous visibility (mex:54, 58)
+                        "ftParts_80074A74" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = melee_fighter::tu::ftparts::ftparts_80074a74(g as G, c.int(1) as i32);
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Article*, kind): the article registration a vanilla fighter's onLoad makes. An m-ex
+                        // fighter's own articles are the guest's (its item table, not it_804D6D38); its copy of a
+                        // vanilla article is already registered by that fighter's native onLoad. Nothing to do (mex:41, 42)
+                        "it_8026B3F8" => {}
+                        // a debug print: nothing observable on the console's screen (mex:60, 62)
+                        "OSReport" => {}
+                        // HSD_GObj*(bool, DynamicModelDesc*, gx_link, p_link, ..., cb, f32): a model gobj (gmtoulib);
+                        // ACE 2.0.1's Toad (PlTd) makes one from its "Relax_scene_models" in its onLoad
+                        "fn_8019035C" => {
+                            let m = c.ptr(1, Some("DynamicModelDesc"));
+                            if m.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let cb = c.func(6);
+                                let g = unsafe {
+                                    melee_modes::tu::gmtoulib::fn_8019035C(c.int(0) as i32, m as _, c.int(2) as i32, c.int(3) as i32, c.int(4) as i32, c.int(5) as i32, core::mem::transmute(cb), c.flt(0) as f32)
+                                };
+                                c.ret_ptr(g as _, Some("HSD_GObj"));
+                            }
+                        }
+                        // void(gobj, kind, remove_fn, data): ACE 2.0.1's Toad hangs a block of its own heap (guest
+                        // bytes) on the model gobj it made, with HSD_Free as the remover. The gobj's user_data is the
+                        // host byte the guest address stands for (the guest reads it back through the gobj); no remover:
+                        // the block is guest memory, not the native heap
+                        "GObj_InitUserData" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let h = c.int(3);
+                            let data = if h == 0 { Some(0) } else { c.mem.native(h) };
+                            match (g.is_null() || c.bad, data) {
+                                (false, Some(p)) => unsafe {
+                                    melee_runtime::tu::gobjuserdata::GObj_InitUserData(g as _, c.int(1) as u8, None, p as _)
+                                },
+                                _ => c.bad = true,
+                            }
+                        }
+                        _ => hit = false,
+                    }
+                }
                 if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110" | "ftKb_SpecialN_800F597C" | "mpUpdateFloorSkip" | "it_80276308" | "ft_80088770" | "ft_80088328") {
                     if name == "ft_80088328" {
                         // void(Fighter*, int sfx, u8 vol, u8 pan): ACE 2.0.1's Lucas (sweep, mex:30) starts a looped SFX
@@ -1711,6 +1794,16 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 }
                 c.finish();
                 if c.bad {
+                    if std::env::var("MELEE_MEX_DBG_PUB").is_ok() && name == "HSD_ArchiveGetPublicAddress" {
+                        let mut s = String::new();
+                        for k in 0..64 {
+                            match c.mem.ld8(a.wrapping_add(k)) {
+                                Ok(0) | Err(_) => break,
+                                Ok(ch) => s.push(ch as char),
+                            }
+                        }
+                        eprintln!("mexdbg: public {s:?} of {d:08X}: {:?} {:?}", c.mem.describe(d), c.mem.regions_at(d));
+                    }
                     let s = st();
                     *s.unresolved.entry(target).or_default() += 1;
                     return Err(Fault::Mem(0));
@@ -1983,6 +2076,38 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
         }
         "Player_GetPlayerCharacter" => cpu.gpr[3] = unsafe { melee_fighter::tu::player::Player_GetPlayerCharacter(r(0) as i32) } as u32,
         "Player_GetPlayerSlotType" => cpu.gpr[3] = unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(r(0) as i32) } as u32,
+        // HSD_Archive*(const char* name): a file the guest loads itself (Wario's onLoad: lbDvd_8001819C, mex:34;
+        // lbArchive_LoadArchive on mex:38, 40, 42). The native loader on the name the guest passes; the archive comes back
+        // by handle, so the guest's HSD_ArchiveGetPublicAddress on it finds it (untyped_public)
+        "lbDvd_8001819C" | "lbArchive_LoadArchive" => {
+            let mut s = Vec::new();
+            for k in 0..128 {
+                match mem.ld8(r(0).wrapping_add(k))? {
+                    0 => break,
+                    c => s.push(c),
+                }
+            }
+            let Ok(cs) = std::ffi::CString::new(s) else { return Err(Fault::Mem(r(0))) };
+            let a = unsafe {
+                if name == "lbDvd_8001819C" {
+                    melee_runtime::tu::lbarchive::ext::lbDvd_8001819C(cs.as_ptr())
+                } else {
+                    melee_runtime::tu::lbarchive::lbArchive_LoadArchive(cs.as_ptr())
+                }
+            };
+            cpu.gpr[3] = if a.is_null() { 0 } else { mem.handle(a as usize, Some("HSD_Archive"))? };
+        }
+        // void(Vec3* src, Vec3* dst): the paired-single normalize, as the port has it (mex:48)
+        "PSVECNormalize" => {
+            let (a, b) = (r(0), r(1));
+            if a == 0 || b == 0 {
+                return Err(Fault::Mem(0));
+            }
+            let mut v = rd_vec(mem, a)?;
+            let mut o = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+            unsafe { melee_runtime::tu::mtx_pc::raw::PSVECNormalize(&mut v as *mut Vec3 as _, &mut o as *mut Vec3 as _) };
+            wr_vec(mem, b, &o)?;
+        }
         "Player_GetTeam" => cpu.gpr[3] = unsafe { melee_fighter::tu::player::Player_GetTeam(r(0) as i32) } as u32,
         _ => return Ok(false),
     }
@@ -1991,6 +2116,58 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
 
 /// The guest address of an untyped public of the archive at guest `arch` (name: C string at guest `p`): the
 /// archive's data block mapped (once) as raw guest bytes.
+/// The guest copy of a `ptrtable_dynmodel` public (`*_scene_models`) of archive `arch`: each entry the desc's handle.
+fn ptrtable_public(mem: &mut GuestSpace, arch: u32, p: u32) -> Option<u32> {
+    let archive = mem.native(arch)?;
+    let mut name = Vec::new();
+    for k in 0..128 {
+        match mem.ld8(p.wrapping_add(k)).ok()? {
+            0 => break,
+            c => name.push(c),
+        }
+    }
+    let n = String::from_utf8(name).ok()?;
+    if !matches!(crate::dat_types::type_of(&n), Some(crate::dat_types::RootType::Custom("ptrtable_dynmodel"))) {
+        return None;
+    }
+    let cs = std::ffi::CString::new(n).ok()?;
+    let t = unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(archive as _, cs.as_ptr() as _) } as *const *mut melee_types::DynamicModelDesc;
+    if t.is_null() {
+        return None;
+    }
+    let mut bytes = Vec::new();
+    let mut i = 0;
+    loop {
+        let e = unsafe { *t.add(i) };
+        if e.is_null() {
+            bytes.extend_from_slice(&0u32.to_be_bytes());
+            break;
+        }
+        bytes.extend_from_slice(&mem.handle(e as usize, Some("DynamicModelDesc")).ok()?.to_be_bytes());
+        i += 1;
+    }
+    let s = st();
+    let base = s.heap_next;
+    s.heap_next = (base + bytes.len() as u32 + 0x1F) & !0x1F;
+    mem.add_bytes(base, bytes);
+    Some(base)
+}
+
+/// Whether archive `arch` (a native HSD_Archive by handle) has no public named by the C string at guest `p`.
+fn missing_public(mem: &mut GuestSpace, arch: u32, p: u32) -> bool {
+    let Some(archive) = mem.native(arch) else { return false };
+    let mut name = Vec::new();
+    for k in 0..128 {
+        match mem.ld8(p.wrapping_add(k)) {
+            Ok(0) => break,
+            Ok(c) => name.push(c),
+            Err(_) => return false,
+        }
+    }
+    let Ok(cs) = std::ffi::CString::new(name) else { return false };
+    unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(archive as _, cs.as_ptr() as _).is_null() }
+}
+
 fn untyped_public(mem: &mut GuestSpace, arch: u32, p: u32) -> Option<u32> {
     let archive = mem.native(arch)? as *mut melee_types::HSD_Archive;
     let mut name = Vec::new();

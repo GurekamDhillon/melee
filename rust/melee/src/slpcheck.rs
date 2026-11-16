@@ -552,6 +552,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     let mut compared = 0i64;
     let mut last_frame = file.first_frame - 1;
     let mut panic_msg: Option<String> = None;
+    // the render guard (`--video-out` / `--audio-out`): the engine's match ending before the replay does
+    let mut ended_early: Option<i32> = None;
+    let rendering = av.is_some();
     // the Dolphin oracle's comparison outputs (notes/dolphin-oracle.md): `--nhv1-out CSV` the NHV1 rows
     // (frame = slippi frame + 123), `--wide-out TXT [--wide]` every named Fighter/Item field per frame
     // (+ game_camera and stage_info with --wide), the same lines `melee dolphin-wide` writes
@@ -628,6 +631,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 e.set_pads(Some(pads));
             }
             if !e.tick() {
+                if fr < file.last_frame {
+                    ended_early = Some(fr);
+                }
                 break;
             }
             ticks += 1;
@@ -685,7 +691,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
             }
             // the first divergent frame is the answer; keep going only to fill the per-field table when asked
-            if first.is_some() && !dump && !args.iter().any(|a| a == "--full") {
+            // a render stops at the first divergence whatever --full says: the frames after it are not the game
+            if first.is_some() && (rendering || (!dump && !args.iter().any(|a| a == "--full"))) {
                 break;
             }
         }
@@ -714,7 +721,22 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         sm.first = Some(f.clone());
     }
     sm.per_field = per_field;
-    finish(args, &name, &sm)
+    let rc = finish(args, &name, &sm);
+    if rendering {
+        if let Some(f) = &sm.first {
+            eprintln!("render: replay diverged at frame {}", f.frame);
+            return ExitCode::from(1);
+        }
+        if let Some(f) = ended_early {
+            eprintln!("render: match ended early at frame {f} of {}", file.last_frame);
+            return ExitCode::from(1);
+        }
+        if sm.status != "match" {
+            eprintln!("render: {} at frame {}", sm.status, sm.last_frame + 1);
+            return ExitCode::from(1);
+        }
+    }
+    rc
 }
 
 fn gecko_hash(g: &[u8]) -> String {

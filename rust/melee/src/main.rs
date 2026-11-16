@@ -1055,6 +1055,10 @@ fn golden_engine(args: &[String]) -> ExitCode {
                     std::env::set_var("MELEE_TEST_SEED", seed.to_string());
                     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1"); }
                 }
+                if video_opts.is_some() || audio_out.is_some() {
+                    // golden --slp has neither slpcheck's replay setup nor its verification: a recorded console game can drift
+                    eprintln!("melee: golden --slp does not apply slpcheck's replay setup; render Slippi games with `melee slpcheck --slp F --video-out ...` (verified in the same pass)");
+                }
                 replay_modes_active(pl.slippi_version());
                 let booted = engine_disc(&iso).and_then(|disc| {
                     melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn)
@@ -1188,6 +1192,17 @@ fn golden_engine(args: &[String]) -> ExitCode {
             e.set_pads(Some(pads));
         }
         if !e.tick() {
+            if replay && video.is_some() {
+                let last = unsafe { REPLAY.as_ref() }.map_or(0, |p| p.last_frame());
+                let fr = unsafe { REPLAY.as_ref() }.map_or(0, |p| p.frame());
+                if fr < last {
+                    eprintln!("render: match ended early at frame {fr} of {last}");
+                    if let Some(v) = video.take() {
+                        drop(v); // no more frames; the sink closes
+                    }
+                    return ExitCode::from(1);
+                }
+            }
             break;
         }
         practice.observe();

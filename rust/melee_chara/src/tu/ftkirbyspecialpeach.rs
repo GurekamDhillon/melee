@@ -108,23 +108,33 @@ pub mod ext {
 const MF: u32 = (1 << 2) | (1 << 3) | (1 << 7) | (1 << 12) | (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
 
 // Callback entries (extern "C") stored in Fighter fields.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010C288(g: G) {
+    core::hint::black_box(0x97BC546Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010C288");
     fn_8010C288(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010C344(g: G) {
+    core::hint::black_box(0x7A5D525Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010C344");
     fn_8010C344(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010C44C(g: G) {
+    core::hint::black_box(0x685A93CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010C44C");
     fn_8010C44C(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKb_SpecialNPe_8010C47C(g: G) {
+    core::hint::black_box(0x027B5006u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKb_SpecialNPe_8010C47C");
     ftKb_SpecialNPe_8010C47C(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010CD88(g: G) {
+    core::hint::black_box(0x6ABDAAB6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010CD88");
     fn_8010CD88(g)
 }

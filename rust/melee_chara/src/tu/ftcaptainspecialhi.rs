@@ -95,7 +95,9 @@ pub mod ext {
     }
 
     /// `ftCo_8009CA0C` as a grabbed (interaction) callback entry.
-    pub unsafe extern "C" fn cb_ftCo_8009CA0C(g: *mut HSD_GObj, v: *mut HSD_GObj) {
+    #[inline(never)]
+pub unsafe extern "C" fn cb_ftCo_8009CA0C(g: *mut HSD_GObj, v: *mut HSD_GObj) {
+    core::hint::black_box(0x35D09AB5u32); // fn identity (tools/rust-port/fn_identity.py)
         ftCo_8009CA0C(g, v);
     }
 }
@@ -109,15 +111,21 @@ unsafe fn da(fp: *mut Fighter) -> *const ftCaptain_DatAttrs {
     (*fp).dat_attrs as *const ftCaptain_DatAttrs
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCa_SpecialLw_800E49FC(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF4E29C5Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCa_SpecialLw_800E49FC");
     ftCa_SpecialLw_800E49FC(&mut *fpp(g));
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCa_SpecialLw_800E5128(g: *mut HSD_GObj) {
+    core::hint::black_box(0x0F164DA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCa_SpecialLw_800E5128");
     ftCa_SpecialLw_800E5128(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCa_SpecialLw_800E550C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD8CF52A6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCa_SpecialLw_800E550C");
     ftCa_SpecialLw_800E550C(g);
 }

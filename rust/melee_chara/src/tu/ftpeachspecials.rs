@@ -92,20 +92,28 @@ pub const start_mf: u32 = Ft_MF_KeepColAnimHitStatus
 pub const end_mf: u32 = Ft_MF_SkipColAnim | Ft_MF_UpdateCmd;
 
 /// Callback entries stored into Fighter (C function pointers).
+#[inline(never)]
 pub unsafe extern "C" fn cb_reset(g: G) {
+    core::hint::black_box(0xBCB4B698u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_reset");
     reset(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_doAirEnd0(g: G) {
+    core::hint::black_box(0xA12E3937u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_doAirEnd0");
     doAirEnd0(g);
 }
 /// `ftCommon_8007F76C` / `ftCommon_8007F7B4` as Fighter callback entries.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCommon_8007F76C(g: G) {
+    core::hint::black_box(0xB7488962u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCommon_8007F76C");
     melee_fighter::ftcommon2::ftcommon_8007f76c(&mut *fpp(g));
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCommon_8007F7B4(g: G) {
+    core::hint::black_box(0x12659AB7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCommon_8007F7B4");
     melee_fighter::ftcommon2::ftcommon_8007f7b4(&mut *fpp(g));
 }

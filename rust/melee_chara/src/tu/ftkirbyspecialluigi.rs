@@ -80,7 +80,9 @@ unsafe fn fpp(gobj: G) -> *mut Fighter {
 }
 
 /// Accessory callback entry for `fn_800F98F4`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F98F4(g: G) {
+    core::hint::black_box(0x6E30AF3Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F98F4");
     fn_800F98F4(g);
 }

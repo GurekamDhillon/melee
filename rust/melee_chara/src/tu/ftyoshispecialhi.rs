@@ -67,12 +67,16 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 /// `fn_8012E110` as a Fighter callback entry (accessory4_cb): the shared `chars::cb` entry, which calls it.
 pub use crate::chars::cb::ftyoshispecialhi__fn_8012E110 as cb_fn_8012E110;
 /// `fn_8012E3B4` as a callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8012E3B4(g: *mut HSD_GObj) {
+    core::hint::black_box(0xCC175B8Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8012E3B4");
     fn_8012E3B4(g);
 }
 /// `fn_8012E44C` as a callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8012E44C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x418FD732u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8012E44C");
     fn_8012E44C(g);
 }

@@ -100,7 +100,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftDr_Init_80149540` as a Fighter callback entry (`take_dmg_cb` / `death2_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftDr_Init_80149540(g: *mut HSD_GObj) {
+    core::hint::black_box(0x66CFD73Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftDr_Init_80149540");
     ftDr_Init_80149540(g);
 }

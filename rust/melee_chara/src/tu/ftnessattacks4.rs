@@ -47,7 +47,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// C-ABI entry for the reflect callback stored by `ftColl_CreateReflectHit`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftNs_AttackS4_OnReflect(g: *mut HSD_GObj) {
+    core::hint::black_box(0x12B8955Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftNs_AttackS4_OnReflect");
     ftNs_AttackS4_OnReflect(g)
 }

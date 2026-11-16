@@ -110,17 +110,23 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftGw_AttackLw3_ItemManholeSetup` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_AttackLw3_ItemManholeSetup(g: *mut HSD_GObj) {
+    core::hint::black_box(0x04768595u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_AttackLw3_ItemManholeSetup");
     ftGw_AttackLw3_ItemManholeSetup(g);
 }
 /// `ftGw_AttackLw3_ItemManholeEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_AttackLw3_ItemManholeEnterHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0x1059E23Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_AttackLw3_ItemManholeEnterHitlag");
     ftGw_AttackLw3_ItemManholeEnterHitlag(g);
 }
 /// `ftGw_AttackLw3_ItemManholeExitHitlag` as a Fighter callback entry (post_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_AttackLw3_ItemManholeExitHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF361D553u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_AttackLw3_ItemManholeExitHitlag");
     ftGw_AttackLw3_ItemManholeExitHitlag(g);
 }

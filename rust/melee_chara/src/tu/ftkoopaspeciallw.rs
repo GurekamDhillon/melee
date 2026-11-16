@@ -89,13 +89,17 @@ pub fn fn_80134590(gobj: *mut HSD_GObj) {
 }
 
 /// `fn_80134590` as a Fighter callback entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80134590(g: *mut HSD_GObj) {
+    core::hint::black_box(0x1C13C4A7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80134590");
     fn_80134590(g);
 }
 
 /// `fn_80134518` as a Fighter callback entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80134518(g: *mut HSD_GObj) {
+    core::hint::black_box(0x14003057u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80134518");
     fn_80134518(g);
 }

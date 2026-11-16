@@ -289,43 +289,63 @@ pub fn ftKp_SpecialS_8013359C(gobj: *mut HSD_GObj) {
 }
 
 /// Fighter callback entries for the static-address helpers above.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013302C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x563128E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_8013302C");
     ftKp_SpecialS_8013302C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801330E4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x282D9923u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_801330E4");
     ftKp_SpecialS_801330E4(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013319C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAADFA645u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_8013319C");
     ftKp_SpecialS_8013319C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013322C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAC1E588Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_8013322C");
     ftKp_SpecialS_8013322C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801332C4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5F98723Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_801332C4");
     ftKp_SpecialS_801332C4(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_80133398(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC19AD5EEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_80133398");
     ftKp_SpecialS_80133398(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801333F8(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4468D189u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_801333F8");
     ftKp_SpecialS_801333F8(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_80133484(g: *mut HSD_GObj) {
+    core::hint::black_box(0x06C1EE5Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_80133484");
     ftKp_SpecialS_80133484(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801334E4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x047F0547u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_801334E4");
     ftKp_SpecialS_801334E4(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013359C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x0F6C7FA9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKp_SpecialS_8013359C");
     ftKp_SpecialS_8013359C(g);
 }

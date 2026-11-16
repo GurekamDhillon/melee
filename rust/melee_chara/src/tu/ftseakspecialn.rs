@@ -106,7 +106,9 @@ unsafe fn set_damage_callback(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) {
     (*fp).death2_cb = cb;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_shootNeedles(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB3E2D6AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_shootNeedles");
     shootNeedles(g);
 }

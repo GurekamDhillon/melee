@@ -188,15 +188,21 @@ pub fn ftPk_SpecialN_80124DC8(gobj: G) {
 
 /// `ftPk_SpecialN_80124DC8` / `ftPk_SpecialN_SpawnEffect0/1` as Fighter callback entries
 /// (`x21EC` and `accessory4_cb`, stored by ftpikachuspecials.c).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPk_SpecialN_80124DC8(g: G) {
+    core::hint::black_box(0xA54A932Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPk_SpecialN_80124DC8");
     ftPk_SpecialN_80124DC8(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPk_SpecialN_SpawnEffect0(g: G) {
+    core::hint::black_box(0x5646F578u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPk_SpecialN_SpawnEffect0");
     ftPk_SpecialN_SpawnEffect0(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPk_SpecialN_SpawnEffect1(g: G) {
+    core::hint::black_box(0x5746F70Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPk_SpecialN_SpawnEffect1");
     ftPk_SpecialN_SpawnEffect1(g);
 }

@@ -48,7 +48,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftNs_SpecialS_ItemPKFireSpawn` as the Accessory4 callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftNs_SpecialS_ItemPKFireSpawn(g: *mut HSD_GObj) {
+    core::hint::black_box(0xA0D31DEDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftNs_SpecialS_ItemPKFireSpawn");
     ftNs_SpecialS_ItemPKFireSpawn(g);
 }

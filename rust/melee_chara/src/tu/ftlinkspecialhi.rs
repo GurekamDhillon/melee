@@ -88,7 +88,9 @@ pub fn onAccessory4(gobj: *mut HSD_GObj) {
 }
 
 /// `onAccessory4` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_onAccessory4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x8AB31859u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_onAccessory4");
     onAccessory4(g);
 }

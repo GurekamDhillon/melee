@@ -52,7 +52,9 @@ pub fn ftDk_MS_346_800E05E4(gobj: *mut HSD_GObj) {
 }
 
 /// `ftDk_MS_346_800E05E4` as a Fighter callback entry (what `chars::cb` points at).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftDk_MS_346_800E05E4(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD073F7E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftDk_MS_346_800E05E4");
     ftDk_MS_346_800E05E4(g);
 }

@@ -21,7 +21,9 @@ pub mod ext {
 }
 
 /// `ftCa_SpecialS_OnDetect` as a Fighter callback entry (`hurtbox_detect_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCa_SpecialS_OnDetect(g: *mut HSD_GObj) {
+    core::hint::black_box(0x02AADA1Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCa_SpecialS_OnDetect");
     ftCa_SpecialS_OnDetect(g);
 }

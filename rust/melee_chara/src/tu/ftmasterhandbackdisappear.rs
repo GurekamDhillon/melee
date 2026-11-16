@@ -38,7 +38,9 @@ pub mod ext {
         }
     }
     /// `ftMh_MS_388_80155A58` as the `grabbed_cb` (`HSD_GObjInteraction`) value.
-    pub unsafe extern "C" fn cb_ftMh_MS_388_80155A58(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
+    #[inline(never)]
+pub unsafe extern "C" fn cb_ftMh_MS_388_80155A58(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
+    core::hint::black_box(0x92AC2B57u32); // fn identity (tools/rust-port/fn_identity.py)
         ftMh_MS_388_80155A58(gobj, gobj2)
     }
     /// `ftMh_CaptureWaitMasterHand_80155D1C(gobj)` (ftmasterhandthrownmasterhand.c).
@@ -99,7 +101,9 @@ pub fn wait1_1_vel(target: &Vec3, cur: &Vec3, da: &ftMasterHand_SpecialAttrs) ->
 }
 
 /// `ftMh_MS_375_80154A2C` as a Fighter callback entry (`grab_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMh_MS_375_80154A2C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x909938E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMh_MS_375_80154A2C");
     crate::chars::r9::ftMasterHand::ftmasterhandbackdisappear::ftMh_MS_375_80154A2C(g)
 }

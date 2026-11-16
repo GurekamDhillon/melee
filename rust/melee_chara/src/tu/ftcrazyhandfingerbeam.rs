@@ -156,7 +156,9 @@ pub fn ftCh_FingerGun1_IASA(gobj: *mut HSD_GObj) {
 }
 
 /// `fn_80159288` as the `grab_cb` (`HSD_GObjEvent`) value.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80159288(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x32ED6194u32); // fn identity (tools/rust-port/fn_identity.py)
     fn_80159288(gobj)
 }
 

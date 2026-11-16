@@ -82,19 +82,27 @@ unsafe fn rot_y(fp: *mut Fighter, part: i32, v: f64) {
     ext::ftPartSetRotY(fp, part, v as f32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPr_SpecialS_8013D658(g: G) {
+    core::hint::black_box(0x5694BC36u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPr_SpecialS_8013D658");
     ftPr_SpecialS_8013D658(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPr_SpecialS_8013D764(g: G) {
+    core::hint::black_box(0xF604410Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPr_SpecialS_8013D764");
     ftPr_SpecialS_8013D764(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPr_SpecialN_8014222C(g: G) {
+    core::hint::black_box(0x2FDA8D6Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPr_SpecialN_8014222C");
     ftPr_SpecialN_8014222C(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPr_SpecialS_8013D8B0(g: G) {
+    core::hint::black_box(0xFBD9DE9Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPr_SpecialS_8013D8B0");
     ftPr_SpecialS_8013D8B0(g)
 }

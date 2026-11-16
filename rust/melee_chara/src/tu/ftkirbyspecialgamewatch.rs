@@ -92,19 +92,27 @@ unsafe fn thumb_bone(fp: *mut Fighter) -> i32 {
     melee_fighter::ftdmgfall::ftparts_get_bone_index(&*fp, FtPart_LThumbNb as i32)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010CE5C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x6B6D9A35u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010CE5C");
     fn_8010CE5C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010CFB0(g: *mut HSD_GObj) {
+    core::hint::black_box(0x767D5B32u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010CFB0");
     fn_8010CFB0(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010D100(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF9F685EAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010D100");
     fn_8010D100(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKb_SpecialNGw_8010D130(g: *mut HSD_GObj) {
+    core::hint::black_box(0x65C686D0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKb_SpecialNGw_8010D130");
     ftKb_SpecialNGw_8010D130(g);
 }

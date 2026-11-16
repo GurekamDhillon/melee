@@ -28,7 +28,9 @@ pub mod ext {
         }
     }
     #[allow(non_snake_case)]
-    pub unsafe extern "C" fn cb_ftDk_SpecialLw_8010E148(gobj: *mut HSD_GObj) {
+    #[inline(never)]
+pub unsafe extern "C" fn cb_ftDk_SpecialLw_8010E148(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1B31F3D6u32); // fn identity (tools/rust-port/fn_identity.py)
         ftDk_SpecialLw_8010E148(gobj)
     }
 }

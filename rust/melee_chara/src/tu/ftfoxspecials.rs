@@ -87,7 +87,9 @@ fn ftGetTemplateKind(fp: &Fighter) -> i32 {
     kind
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialS_CreateGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC273583Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialS_CreateGFX");
     ftFx_SpecialS_CreateGFX(g);
 }

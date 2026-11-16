@@ -110,7 +110,9 @@ pub fn fn_80105FEC(_gobj: *mut HSD_GObj) { melee_core::ct!("fn_80105FEC");}
 pub unsafe extern "C" fn cb_fn_80105FEC(_g: *mut HSD_GObj) { melee_core::ct!("cb_fn_80105FEC");}
 
 /// `fn_80106DB0` as a Fighter callback entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80106DB0(g: *mut HSD_GObj) {
+    core::hint::black_box(0xCB02ACF0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80106DB0");
     fn_80106DB0(g);
 }

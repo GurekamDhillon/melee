@@ -128,23 +128,33 @@ pub const coll_mf: u32 = Ft_MF_KeepColAnimHitStatus
     | Ft_MF_Unk27;
 
 /// Callback entries stored into Fighter (C function pointers).
+#[inline(never)]
 pub unsafe extern "C" fn cb_onAccessory4(g: G) {
+    core::hint::black_box(0xD79D6E5Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_onAccessory4");
     onAccessory4(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_onHitAccessory4(g: G) {
+    core::hint::black_box(0xBBE040BCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_onHitAccessory4");
     onHitAccessory4(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_onEnterHitlag(g: G) {
+    core::hint::black_box(0x7675C17Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_onEnterHitlag");
     onEnterHitlag(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_onExitHitlag(g: G) {
+    core::hint::black_box(0x69D3E542u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_onExitHitlag");
     onExitHitlag(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_onUnkHit(g: G) {
+    core::hint::black_box(0x098CD57Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_onUnkHit");
     onUnkHit(g);
 }

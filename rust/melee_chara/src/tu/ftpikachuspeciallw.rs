@@ -195,7 +195,9 @@ pub fn ftPk_SpecialLw_SpawnEffect(gobj: G) {
     }
 }
 /// `ftPk_SpecialLw_SpawnEffect` as the `accessory4_cb` entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPk_SpecialLw_SpawnEffect(g: G) {
+    core::hint::black_box(0xC4970ED8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPk_SpecialLw_SpawnEffect");
     ftPk_SpecialLw_SpawnEffect(g);
 }

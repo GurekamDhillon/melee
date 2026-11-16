@@ -186,27 +186,37 @@ unsafe fn ftCheckThrowB3(fp: *mut Fighter) -> bool {
 }
 
 /// `ftPe_SpecialHi_8011D620` as an `HSD_GObjEvent` (pre-hitlag callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011D620(g: *mut HSD_GObj) {
+    core::hint::black_box(0x31898F68u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPe_SpecialHi_8011D620");
     ftPe_SpecialHi_8011D620(g);
 }
 /// `ftPe_SpecialHi_8011D650` as an `HSD_GObjEvent` (post-hitlag callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011D650(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3B9AE847u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPe_SpecialHi_8011D650");
     ftPe_SpecialHi_8011D650(g);
 }
 /// `ftPe_SpecialHi_8011D424` as the Accessory4 callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011D424(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD064B302u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPe_SpecialHi_8011D424");
     ftPe_SpecialHi_8011D424(g);
 }
 /// `ftPe_SpecialHi_8011DD8C` as an `HSD_GObjEvent` (landing callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011DD8C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xDB0B8B05u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPe_SpecialHi_8011DD8C");
     ftPe_SpecialHi_8011DD8C(g);
 }
 /// `ftPe_SpecialHi_8011E064` as an `HSD_GObjEvent` (landing callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011E064(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB8296633u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPe_SpecialHi_8011E064");
     ftPe_SpecialHi_8011E064(g);
 }

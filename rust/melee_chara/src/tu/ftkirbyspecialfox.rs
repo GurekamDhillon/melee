@@ -153,13 +153,17 @@ unsafe fn set_cbs(gobj: *mut HSD_GObj) {
 }
 
 /// `ftKb_SpecialNFx_OnChangeAction` as the `HSD_GObjEvent` stored in `x21EC`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKb_SpecialNFx_OnChangeAction(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5A587E76u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKb_SpecialNFx_OnChangeAction");
     ftKb_SpecialNFx_OnChangeAction(g);
 }
 
 /// `ftKb_SpecialNFx_CreateBlasterShot` as the `HSD_GObjEvent` stored in `accessory4_cb`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKb_SpecialNFx_CreateBlasterShot(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4C52D2AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKb_SpecialNFx_CreateBlasterShot");
     ftKb_SpecialNFx_CreateBlasterShot(g);
 }

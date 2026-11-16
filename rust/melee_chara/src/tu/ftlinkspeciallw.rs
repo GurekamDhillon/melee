@@ -92,7 +92,9 @@ pub fn spawnBomb(gobj: *mut HSD_GObj) {
 }
 
 /// `spawnBomb` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_spawnBomb(g: *mut HSD_GObj) {
+    core::hint::black_box(0x1F606223u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_spawnBomb");
     spawnBomb(g);
 }

@@ -74,12 +74,16 @@ pub mod ext {
 }
 
 /// `ftCo_80096CC8` as the `bool (*)(Fighter_GObj*, int)` callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCo_80096CC8(g: *mut HSD_GObj, line_id: isize) -> bool {
+    core::hint::black_box(0x03B2DC29u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCo_80096CC8");
     ext::ftCo_80096CC8(g, line_id as isize)
 }
 /// `ft_80082B1C` as an `HSD_GObjEvent` entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ft_80082B1C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3D8742D0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ft_80082B1C");
     ext::ft_80082B1C(g);
 }

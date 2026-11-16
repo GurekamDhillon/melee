@@ -92,7 +92,9 @@ pub fn lwOnHit(gobj: *mut HSD_GObj) {
 }
 
 /// `lwOnHit` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_lwOnHit(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC0D2C127u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_lwOnHit");
     lwOnHit(g);
 }
@@ -127,7 +129,9 @@ pub fn lwOnAnim(gobj: *mut HSD_GObj) {
 }
 
 /// `lwOnAnim` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_lwOnAnim(g: *mut HSD_GObj) {
+    core::hint::black_box(0x640336CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_lwOnAnim");
     lwOnAnim(g);
 }

@@ -85,7 +85,9 @@ unsafe fn set_cbs(fp: *mut Fighter) {
 }
 
 /// Accessory callback entry for `fn_801090D4`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_801090D4(g: G) {
+    core::hint::black_box(0x80CFD116u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_801090D4");
     fn_801090D4(g);
 }
@@ -101,7 +103,9 @@ pub fn ftKb_SpecialNIc_80108CE8(gobj: G, it_gobj: G) {
 }
 
 /// Callback entry for `ftKb_SpecialNIc_80108D04`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKb_SpecialNIc_80108D04(g: G) {
+    core::hint::black_box(0x627A5CB4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKb_SpecialNIc_80108D04");
     ftKb_SpecialNIc_80108D04(g);
 }

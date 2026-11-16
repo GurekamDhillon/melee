@@ -75,7 +75,9 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 }
 
 /// `ftCa_SpecialHi_800E400C` as a Fighter callback entry (`deal_dmg_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCa_SpecialHi_800E400C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xDBC74968u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCa_SpecialHi_800E400C");
     ftCa_SpecialHi_800E400C(g);
 }

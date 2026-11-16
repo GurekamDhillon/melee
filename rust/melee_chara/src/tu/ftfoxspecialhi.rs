@@ -120,15 +120,21 @@ fn stick_get_dir(x1: f32, x2: f32) -> f32 {
 }
 
 /// `ftCommon_8007F76C` as the `x21F8` callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCommon_8007F76C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD8E66858u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCommon_8007F76C");
     melee_fighter::ftcommon2::ftcommon_8007f76c(&mut *fpp(g));
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialHi_CreateLaunchGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5C96DB95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialHi_CreateLaunchGFX");
     ftFx_SpecialHi_CreateLaunchGFX(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialHi_CreateChargeGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5A5267BCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialHi_CreateChargeGFX");
     ftFx_SpecialHi_CreateChargeGFX(g);
 }

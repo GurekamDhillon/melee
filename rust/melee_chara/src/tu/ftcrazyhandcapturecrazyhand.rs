@@ -32,7 +32,9 @@ pub fn fn_8015B548(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
 }
 
 /// `fn_8015B548` as the `grabbed_cb` (`HSD_GObjInteraction`) value.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8015B548(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
+    core::hint::black_box(0x0ACBFFFEu32); // fn identity (tools/rust-port/fn_identity.py)
     fn_8015B548(gobj, gobj2)
 }
 

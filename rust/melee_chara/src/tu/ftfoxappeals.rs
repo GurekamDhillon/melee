@@ -204,7 +204,9 @@ pub fn ftFx_AppealS_Enter(gobj: *mut HSD_GObj) {
 }
 
 /// `ftFx_AppealS_OnTakeDamage` as a Fighter callback entry (`death1_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_AppealS_OnTakeDamage(g: *mut HSD_GObj) {
+    core::hint::black_box(0xBE5CEF12u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_AppealS_OnTakeDamage");
     ftFx_AppealS_OnTakeDamage(g);
 }

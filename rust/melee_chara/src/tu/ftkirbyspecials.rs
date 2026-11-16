@@ -153,7 +153,9 @@ pub fn fn_800F53AC(gobj: *mut HSD_GObj) {
 }
 
 /// `fn_800F53AC` as the `accessory4_cb` entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F53AC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x948E0096u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F53AC");
     fn_800F53AC(g);
 }

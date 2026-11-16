@@ -131,11 +131,20 @@ pub fn prefetch(kinds: &[u16]) {
     if !enabled() {
         return;
     }
-    for &k in kinds {
-        if crate::tu::explore::has_actor(k) {
-            continue;
+    let names: std::vec::Vec<&'static str> = kinds.iter().filter(|&&k| !crate::tu::explore::has_actor(k)).filter_map(|&k| vm_name(k)).collect();
+    // the kinds side by side (program then model, each kind on a thread of its own): read one after another they
+    // were most of the match's start tick when the match began right at the pick
+    let t = std::time::Instant::now();
+    std::thread::scope(|sc| {
+        for &name in &names {
+            sc.spawn(move || {
+                crate::tu::geno_vm::prefetch(name);
+                crate::tu::vm_boss_model::enemy_prefetch(name);
+            });
         }
-        let Some(name) = vm_name(k) else { continue };
+    });
+    eprintln!("explore: {} room enemy kinds read in {} ms", names.len(), t.elapsed().as_millis());
+    for &name in &names {
         let Some(r) = row(name) else { continue };
         PROGS[r].get_or_init(|| {
             crate::tu::geno_vm::program(name)?;

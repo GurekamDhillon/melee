@@ -113,8 +113,10 @@ pub fn prefetch(name: &str) {
 }
 
 fn load(name: &str) -> Option<&'static Program> {
-    static LOCK: Mutex<()> = Mutex::new(());
-    let _g = LOCK.lock().ok()?;
+    // one lock per name (striped): the room prefetch compiles a level's kinds side by side
+    static LOCK: [Mutex<()>; 16] = [const { Mutex::new(()) }; 16];
+    let k = name.bytes().fold(0usize, |h, b| h.wrapping_mul(31).wrapping_add(b as usize)) % 16;
+    let _g = LOCK[k].lock().ok()?;
     let m = PROGRAMS.get_or_init(|| Mutex::new(HashMap::new()));
     if let Some(p) = m.lock().ok()?.get(name) {
         return Some(*p);

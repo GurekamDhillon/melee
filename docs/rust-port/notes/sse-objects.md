@@ -225,6 +225,12 @@ pipeline cache on a new exe).
   once starved the picked level: its load took about 3 s inside the match's first tick). The picked level loads on
   its own helper from the pick (`carrier`), together with its VM enemies' programs and models; the stage load waits
   for both (about 0.1 s), so nothing is written after the first frame.
+- Round 4: the start tick's "stage init 2" (67-78 ms on Lake via `--match`, where the match starts right at the pick)
+  was all the wait for that helper: the kinds were read one after another and the program compiler held one global
+  lock. The kinds now read side by side (program then model per kind, own thread each) and the compiler locks per name:
+  the read went from about 80 ms to 41 ms and the wait to 17-35 ms (1-2 ms in perf-ab, where Luigi's load covers it).
+  Waiting at the first spawn check instead was tried and dropped: it broke synctest on level 12 and moved the enemy
+  pipeline build to tick 5.
 - Each VM enemy model (its textures uploaded then: queueing them with the map's broke the depth-7 synctest) is drawn once, far off screen, one
   every other frame after the sections and the part models (lifts, bricks; each on a frame of its own) have come
   in, so no frame builds them all; enemies come in from a fixed room frame after that.

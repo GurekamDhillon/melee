@@ -1331,7 +1331,18 @@ fn enemies_prefetch_start(id: i32) {
     .join();
 }
 
-/// The stage load: wait for the pick's prefetch (started now if the pick came another way).
+/// The room's VM enemies are loaded (the stage load): wait for the pick's prefetch and queue the warm-up draws.
+static mut READY: i32 = 0;
+unsafe fn enemies_ready(m: &Map) {
+    if READY == CUR_ID {
+        return;
+    }
+    READY = CUR_ID;
+    enemies_prefetch_wait(CUR_ID);
+    crate::tu::explore_vm::queue_textures(&m.spawns.iter().map(|s| s.4).collect::<Vec<u16>>());
+}
+
+/// Wait for the pick's prefetch (started now if the pick came another way).
 fn enemies_prefetch_wait(id: i32) {
     use std::sync::atomic::Ordering::SeqCst;
     enemies_prefetch_start(id);
@@ -1620,6 +1631,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     triggers_reset();
     crate::tu::explore_vm::reset();
     VISITED = 1;
+    READY = 0;
     BROKEN = 0;
     STOCKS_SEEN = [-1; 6];
     REBIRTH = [0.0, 0.0];
@@ -1638,11 +1650,13 @@ pub unsafe fn coll_override() -> *mut MapCollData {
             return core::ptr::null_mut();
         }
         CUR_ID = want;
-        let Some(m) = map() else { return core::ptr::null_mut() };
+        let Some(m) = ({ let _z = phase("stage init 2: explore map wait"); map() }) else { return core::ptr::null_mut() };
         // the room's VM enemies: their programs and models were read on a helper started at the pick (`carrier`); the
         // stage load waits for it, so nothing is written after the match's first frame (a rollback would undo it)
-        enemies_prefetch_wait(want);
-        crate::tu::explore_vm::queue_textures(&m.spawns.iter().map(|s| s.4).collect::<Vec<u16>>());
+        // the room's VM enemies: their programs and models were read on a helper started at the pick (`carrier`); the
+        // stage load waits for it, so nothing is written after the match's first frame (a rollback would undo it)
+        { let _z = phase("stage init 2: explore enemy prefetch wait"); enemies_ready(m); }
+        let _z = phase("stage init 2: explore hash");
         // the content word the session hash carries (slice 0): pick, mask, digest
         let mut h = melee_core::hash::StateHasher::new();
         h.write(&want.to_be_bytes());
@@ -1652,6 +1666,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
         melee_core::hash::CONTENT_WORD.store(w, core::sync::atomic::Ordering::Relaxed);
         m
     };
+    let _z = phase("stage init 2: explore collision copy");
     let alloc = |n: usize| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(n as _) };
     let cd = alloc(core::mem::size_of::<MapCollData>()) as *mut MapCollData;
     let vs = alloc(core::mem::size_of::<Vec2>() * m.verts.len()) as *mut Vec2;
@@ -1678,6 +1693,11 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     set_bounds(0);
     eprintln!("explore: {} collision in place ({} lines)", if ARENA { "Petey arena" } else { "room" }, m.lines.len());
     cd
+}
+
+/// A profiled phase of the match's start tick (frameprof note span; presentation only).
+fn phase(name: &'static str) -> melee_core::frameprof::Span {
+    melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, move || melee_core::frameprof::Text::new().s(name))
 }
 
 /// How far past a section's extent its blast zones lie.

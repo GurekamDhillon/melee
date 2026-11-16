@@ -7528,6 +7528,7 @@ static GOBJ_FN: &[(&str, unsafe extern "C" fn(G))] = &[
 
 pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
     GOBJ_FN.binary_search_by(|(n, _)| (*n).cmp(name)).ok().map(|i| GOBJ_FN[i].1)
+        .or_else(|| GOBJ_FN.iter().find(|(n, _)| n.eq_ignore_ascii_case(name)).map(|e| e.1))
 }
 
 /// The native port of a two-gobj callback (`HSD_GObjInteraction`), by name.
@@ -7612,6 +7613,7 @@ static GOBJ2_FN: &[(&str, unsafe extern "C" fn(G, G))] = &[
 
 pub fn gobj2_fn(name: &str) -> Option<unsafe extern "C" fn(G, G)> {
     GOBJ2_FN.binary_search_by(|(n, _)| (*n).cmp(name)).ok().map(|i| GOBJ2_FN[i].1)
+        .or_else(|| GOBJ2_FN.iter().find(|(n, _)| n.eq_ignore_ascii_case(name)).map(|e| e.1))
 }
 
 /// Every name `gobj_fn` answers.

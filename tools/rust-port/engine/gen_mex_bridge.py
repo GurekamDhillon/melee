@@ -305,7 +305,11 @@ def main():
             fh.write(f'static {static}: &[(&str, {ty})] = &[\n')
             fh.write('\n'.join(f'    ("{n}", {e}),' for n, e in rows) + '\n];\n\n')
             fh.write(f'pub fn {fn}(name: &str) -> Option<{ty}> {{\n')
-            fh.write(f'    {static}.binary_search_by(|(n, _)| (*n).cmp(name)).ok().map(|i| {static}[i].1)\n}}\n\n')
+            # some rows carry the port's snake-case fn name (ftwalkcommon_800e0060), not the retail one vanilla_name
+            # gives (ftWalkCommon_800E0060): an exact miss falls back to a case-blind match (Dedede's walk-with-victim
+            # Phys bctrl'd ftWalkCommon_800E0060, missed, and never moved him)
+            fh.write(f'    {static}.binary_search_by(|(n, _)| (*n).cmp(name)).ok().map(|i| {static}[i].1)\n')
+            fh.write(f'        .or_else(|| {static}.iter().find(|(n, _)| n.eq_ignore_ascii_case(name)).map(|e| e.1))\n}}\n\n')
         fh.write('/// The native port of a one-argument gobj callback, by name.\n')
         table(gobj, 'GOBJ_FN', 'gobj_fn', 'unsafe extern "C" fn(G)')
         fh.write('/// The native port of a two-gobj callback (`HSD_GObjInteraction`), by name.\n')

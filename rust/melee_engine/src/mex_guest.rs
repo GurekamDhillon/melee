@@ -1154,6 +1154,30 @@ unsafe fn run_at_f(kind: i32, a: u32, slot: u32, g: G) -> (u32, bool) {
     (r.gpr[3], faulted)
 }
 
+thread_local! {
+    /// The guest callback of the ftWalkCommon_800DFEC8 call in flight (hand_bridge).
+    static WALK_CB: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+/// `run_at_f` with a float argument in f1 (a (gobj, f32) guest callback).
+unsafe fn run_at_f1(kind: i32, a: u32, slot: u32, g: G, f1: f32) -> (u32, bool) {
+    let s = st();
+    let Some(gh) = bind_fighter(s, g) else { return (0, true) };
+    sync_globals(s);
+    let mut cpu = Cpu::default();
+    cpu.gpr[1] = STACK_BASE + STACK_SIZE - 0x100 - s.depth * 0x2000;
+    cpu.gpr[2] = R2;
+    cpu.gpr[13] = R13;
+    cpu.gpr[3] = gh;
+    cpu.fpr[1] = (f1 as f64).to_bits();
+    cpu.lr = 0;
+    cpu.pc = a;
+    let before = fighter_kind(g);
+    let (r, faulted) = run_cpu(kind, slot, cpu);
+    guard_kind(g, before, kind, slot, a);
+    (r.gpr[3], faulted)
+}
+
 /// The fighter kind of `g` when it is a fighter gobj.
 unsafe fn fighter_kind(g: G) -> Option<i32> {
     if g.is_null() || (*g).classifier as i32 != melee_types::HSD_GOBJ_CLASS_FIGHTER || (*g).user_data.is_null() {
@@ -1554,6 +1578,27 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
     let gobj = |mem: &GuestSpace, h: u32| -> G { if h == 0 { core::ptr::null_mut() } else { mem.native(h).unwrap_or(0) as G } };
     let r = |i: usize| cpu.gpr[3 + i];
     match name {
+        // ftWalkCommon_800DFEC8(gobj, cb): the walk-type resync, whose callback (gobj, anim frame in f1) is guest code
+        // (Dedede's SpecialN_ASWalk from his walk-with-victim IASA). Not bridged, the call did nothing, so Dedede never
+        // changed walk type (Akaneia 225603 slippi 133: motion 355 vs 356)
+        "ftWalkCommon_800DFEC8" => {
+            let g = gobj(mem, r(0));
+            let cb = r(1);
+            if g.is_null() || !in_code(cb) {
+                return Err(Fault::Unresolved(cb));
+            }
+            fn tramp(g: G, f: f32) {
+                let a = WALK_CB.with(|c| c.get());
+                unsafe {
+                    if let Some(kind) = kind_of_code(a) {
+                        let _ = run_at_f1(kind, a, 1001, g, f);
+                    }
+                }
+            }
+            let prev = WALK_CB.with(|c| c.replace(cb));
+            melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfec8(g as _, tramp);
+            WALK_CB.with(|c| c.set(prev));
+        }
         // ftParts_80074B0C(gobj, model_idx, val): Meta Knight's (PlMk) onLoad; the generator has no native entry for it
         "ftParts_80074B0C" => {
             let g = gobj(mem, r(0));

@@ -644,6 +644,8 @@ pub unsafe fn Fighter_LoadCommonData() {
     Fighter_804D6550 = d(1) as _;
     Fighter_804D654C = d(2) as _;
     Fighter_804D6548 = d(3) as _;
+    h::FT_PARTS_TABLE_RAW = d(4) as _;
+    h::FIGHTER_804D6540_RAW = d(5) as _;
     h::FT_PARTS_TABLE = ftCommonData_ExtendKindTable(d(4) as _, 0) as _;
     h::FIGHTER_804D6540 = ftCommonData_ExtendKindTable(d(5) as _, 1) as _;
     Fighter_804D653C = d(6) as _;
@@ -1473,6 +1475,8 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         fp.x594.x0_1.bf_0 = ((*wait).x10_animCurrFlags as u32).to_be_bytes();
         e::ftCo_8009E7B4(fp, bytes);
         if !mf(flags, Ft_MF_SkipAnim) {
+            // m-ex C2 0x80069CE0: fp+0x23EC = (arg3 != NULL), the flag its remap path keys on
+            crate::tu::ftanim::mex_set_thrown(fp, !arg3.is_null());
             if !arg3.is_null() {
                 e::ftData_80085CD8(fp, if !thrown_tbl.is_null() { thrown_tbl } else { (*arg3).user_data as F }, fp.anim_id);
                 e::ftColl_8007B8CC(fp, arg3);

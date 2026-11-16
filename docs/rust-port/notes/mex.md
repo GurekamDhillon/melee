@@ -100,6 +100,20 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   `lbaudio: stage sound rows from mexData (grkind 140: ssm 55 reverb 56 56)`. A row naming a bank past the driver's 55
   (an m-ex SSM) still loads no stage bank.
 
+### Round 5 (Nov 16): the rest of the 0x8006FD08 family
+
+- The whole family is ported (`ftanim.rs`, gated on the 04 at 0x8006FD08; same codes on ACE 2.0.1 and Akaneia). The
+  flag m-ex keeps at fp+0x23EC is set by C2 0x80069CE0 in `Fighter_ChangeMotionState`, just before
+  `ftData_80085CD8` inside the not-SkipAnim branch: fp+0x23EC = (arg3 != NULL), i.e. "this motion is a thrown pose".
+  `ftAnim_8006FE08` / `ftAnim_8006F954` take the remap path on that flag (not on kind != author kind, so a same-kind
+  throw remaps too); `ftAnim_8006F628` takes the internal count (unmasked) as its author kind when it is set.
+  The engine keeps the flag beside the fighter (`MEX_THROWN`, keyed by the Fighter address; not in a savestate).
+- The author kinds index PlCo's own tables (the disc's internal kinds), now kept as `hooks::FT_PARTS_TABLE_RAW` /
+  `FIGHTER_804D6540_RAW`. Index "count" is a real table: on Akaneia (41/41) the Dolphin probe at ftPartsRemap
+  (Tails 230702, slippi 336) reads `ftPartsTable[41]`, distinct from every fighter's. Akaneia's Tails file 230702
+  (open since the step-split rounds, slippi 476) now matches Dolphin over all 10167 frames. ACE 2.0.1 Marth/Fox is
+  unchanged (kind 2, first difference still slippi 394).
+
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 
 - Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline

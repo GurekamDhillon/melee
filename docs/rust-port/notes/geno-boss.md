@@ -563,3 +563,30 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
   SparkBit: the environment map alone, sampled by normal). The one-stage drawer cannot show them. Reading stage 0's
   scale and texture map from the shader was tried and made no visible change; it was taken back. A fix needs the
   material's TEV stages and texture-coordinate generators [L].
+
+## Porky fixed: front-on, his bust part, walking; boss camera, HP bar, weapons (2026-11-16, port/boss-arena-porky)
+
+- The tilt was the facing, not the skinning. A vertex-level dump (`MELEE_MDL_VTX_LOG=1`: per object its bind node,
+  matrix-index mode and the sources its vertices take; per bone the rest world from the SRT chain against the file's
+  stored world and inverse) shows every source and every rest bone as the file has them (0.001 at most), the body
+  object in BustN's space. Porky's legs spread along the model's x and his clips are MoveL / MoveR, StabL / StabR:
+  he is a sideways walker drawn front-on. Turned by the facing (side-on) his box read as tilted 45 degrees with the
+  legs in the floor. `vm_boss_model::FACES_CAMERA` draws him without the facing turn [L: his posture module's rule is
+  not read]; the dome, Porky in it and the pig face show.
+- The second animated part (0408 part motion): the bones under BustN pose from the part's clip (`Rig::pose_bones_part`;
+  the legs, RotN and HipN keep the main motion). The VM runs the part motion's nine timelines (threads 11..=19, waits
+  counted from the part's start): his attacks are bust motions, so Rush / Stab / Riot / MiniPorkyAttack / Spark boxes,
+  the Mini-Porky spawns (bones 12 / 13) and their sounds only exist there.
+- Walking: his root bone never travels (TransN constant in every clip). A clip whose root track moves less than half a
+  unit on both axes keeps no root track, so root-motion units move by their own speed: WalkFwd / WalkBack / Approach
+  move him, and Fly no longer leaves him at the arena edge.
+- Hit boxes: the damaging boxes go first into the four the host passes (his zero-damage shove boxes crowded them out).
+- Camera (arena fights other than Meta Ridley's): the boss's IR framing box (local IR, read with the model) for the
+  width, the body's mesh box for the height, plus the players. `MELEE_VMBOSS_BODY_CAM=1`: the old whole-mesh camera.
+- HP bar: `melee_core::bossbar` (name, HP x10, full HP) set by the VM host each frame, drawn by the overlay
+  (`overlay::boss_bar`, top centre, the Envoy boss bar's colours, quarter marks). Render-only: not hashed, not in a draw
+  list.
+- Weapons: the local IR now holds weapon records for Porky (Mini-Porky robot, spark, a dropped spark) and Meta Ridley
+  (large / small fireball, Vulcan shot), from the boss files' record blocks; the existing pool (geno_boss_spawn) flies
+  them and the host draws each live one as a sphere of its box size [L: their models; the robot's walk and the spark's
+  homing are not read].

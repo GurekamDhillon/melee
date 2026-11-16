@@ -315,3 +315,51 @@ pub fn replay_widescreen() -> Option<(u16, u16, f32, f32)> {
     }
     Some((b as u16, (b >> 16) as u16, f32::from_bits(WS_NUM.load(Ordering::Relaxed)), f32::from_bits(WS_DEN.load(Ordering::Relaxed))))
 }
+
+/// The mounted disc's own 32-bit writes (codes.gct type 04) to retail game code, for the few a ported function checks
+/// at the instruction they patch (an m-ex disc's codes.gct; ACE v2.0.1 nops two branches). Set once at mount from
+/// the disc ([`set_disc_writes`]), constant afterwards, so rollback and replays see the same value.
+static DISC_WRITES: std::sync::RwLock<Vec<(u32, u32)>> = std::sync::RwLock::new(Vec::new());
+
+/// The 04 writes of a codes.gct image (`00D0C0DE00D0C0DE` header; 04 / C2 / 00 / 02 / 06 skipped as
+/// tools/mex_port/dump_gct.py does). Stops at the terminator or the first unknown type.
+pub fn gct_writes(gct: &[u8]) -> Vec<(u32, u32)> {
+    let be = |o: usize| gct.get(o..o + 4).map(|b| u32::from_be_bytes([b[0], b[1], b[2], b[3]]));
+    let mut v = Vec::new();
+    if gct.get(..8) != Some(&[0x00, 0xD0, 0xC0, 0xDE, 0x00, 0xD0, 0xC0, 0xDE][..]) {
+        return v;
+    }
+    let mut off = 8;
+    while let (Some(w0), Some(w1)) = (be(off), be(off + 4)) {
+        if w0 == 0xF000_0000 {
+            break;
+        }
+        let addr = 0x8000_0000 | (w0 & 0x01FF_FFFF);
+        match (w0 >> 24) & 0xFE {
+            0xC2 => off += 8 + w1 as usize * 8,
+            0x04 => {
+                v.push((addr, w1));
+                off += 8;
+            }
+            0x00 | 0x02 => off += 8,
+            0x06 => off += 8 + ((w1 as usize + 7) & !7),
+            _ => break,
+        }
+    }
+    v
+}
+
+/// Install the disc's 04 writes (empty for a vanilla disc).
+pub fn set_disc_writes(w: Vec<(u32, u32)>) {
+    if let Ok(mut d) = DISC_WRITES.write() {
+        *d = w;
+    }
+}
+
+/// The disc's codes.gct writes `value` to retail address `addr`.
+pub fn disc_writes(addr: u32, value: u32) -> bool {
+    DISC_WRITES.read().map_or(false, |d| d.iter().any(|&(a, v)| a == addr && v == value))
+}
+
+/// PowerPC `nop`, the value of a disc write that removes an instruction.
+pub const PPC_NOP: u32 = 0x6000_0000;

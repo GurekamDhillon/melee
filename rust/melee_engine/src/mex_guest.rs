@@ -1553,6 +1553,27 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
     let gobj = |mem: &GuestSpace, h: u32| -> G { if h == 0 { core::ptr::null_mut() } else { mem.native(h).unwrap_or(0) as G } };
     let r = |i: usize| cpu.gpr[3 + i];
     match name {
+        // ftParts_80074B0C(gobj, model_idx, val): Meta Knight's (PlMk) onLoad; the generator has no native entry for it
+        "ftParts_80074B0C" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            melee_fighter::tu::ftparts::ftParts_80074B0C(g as _, r(1) as i32, r(2) as i32);
+        }
+        // ftCommon_CalcSelfAccel_DeaccelAir(Fighter*): Shadow's (PlSd) air physics; a gobj passed for the fighter
+        // resolves to its fighter, as the other Fighter* callees do
+        "ftCommon_CalcSelfAccel_DeaccelAir" => {
+            let mut c = Call { cpu, mem, fix: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
+            let fp = c.ptr(0, Some("Fighter")) as *mut melee_types::Fighter;
+            if !fp.is_null() {
+                unsafe { melee_fighter::tu::ftcommon::ftCommon_CalcSelfAccel_DeaccelAir_fp(&mut *fp) };
+            }
+            c.finish();
+            if fp.is_null() || c.bad {
+                return Err(Fault::Mem(0));
+            }
+        }
         // lbAnim_8001E8F8(FigaTree*): the animation's frame count (0 for NULL); the tree is the native one the guest
         // read out of the fighter (by handle) or a tree in guest bytes (frames at +8)
         "lbAnim_8001E8F8" => {

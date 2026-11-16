@@ -59,7 +59,9 @@ pub fn get_anim_id_kind(kind: i32, swing_type: i32, arg1: i32) -> i32 {
     }
     let b = crate::hooks::geno_define_base_kind(kind);
     let swing_kind = if b >= 0 { b } else { kind };
-    if swing_kind == Ft_Kind_Captain as i32 {
+    // ACE v2.0.1's codes.gct nops the `b` to the default case at 0x800CD05C (ftCo_Attack_800CCF58's inlined
+    // get_anim_id): every fighter takes the Swing42 motions (the buffed Fighting Wireframes carry them)
+    if swing_kind == Ft_Kind_Captain as i32 || melee_core::codes::disc_writes(0x800C_D05C, melee_core::codes::PPC_NOP) {
         return swing_type + 341;
     }
     panic!("don't have swing42 motion!!!");

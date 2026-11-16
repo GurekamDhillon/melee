@@ -48,12 +48,24 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   faulting as unresolved (the whole guest onLoad was dropped).
 - Kirby's copy of internal kind 50 uses effect bank 50: the gate is now the particle system's 65 banks
   (`efAsync_DatEntries`), not the C's 50.
-- New stages: Suzaku Castle (ext 357, GrSuz) runs but draws no stage model; Ganon's Tower (358, GrGt), Mad Monster
-  Mansion (359, GrMm) and Nintendo 64 (360, GrN64) stop in `Ground_801C43C4` (HSD_ASSERT 3652): an m-ex stage has no
-  `StageCallbacks[]` (its StageData comes from the stage's guest GrFunction, not run), so the light scan falls back to
-  the default lights `Ground_803E06C8`, whose anim the map_head loop table does not list. Needs m-ex stage support.
-- Still unbridged: Meta Knight `ftParts_80074B0C` (onLoad falls back to the clone base), Shadow
-  `ftCommon_CalcSelfAccel_DeaccelAir`.
+- m-ex stage rows (round 2): the engine's `Mex_GrRowCallbacks` / `Mex_GrOn*` hooks were seams_gen stubs, so an added
+  stage got no StageCallbacks[] and no handlers (Suzaku drew nothing; Ganon's Tower, Mad Monster Mansion and N64
+  stopped in `Ground_801C43C4`'s HSD_ASSERT 3652 with the default lights). `mex_host` now matches each row word against
+  the retail StageData rows in the DOL (`stage_datas`, 0x803DFEDC) and hands back the native row's table / handler of
+  that clone base. ACE 2.0.1's four new stages carry no grFunction blob (Suzaku = Battlefield's handlers, the other three
+  Dream Land 64's), so they load, draw and play; the same path serves the other added stages (96..148). A stage WITH a
+  grFunction blob still runs only its row's retail handlers (logged). `MELEE_MEXID_ROWS=1 melee mexid` prints the rows.
+- codes.gct writes: `melee_core::codes::disc_writes` holds the disc's type-04 writes (393 on ACE 2.0.1). The two new in
+  2.0.1 are honoured: 0x800CD05C nop (every fighter takes the Swing42 item-smash motions, `get_anim_id_kind`) and
+  0x80146C58 nop (Mewtwo's Confusion reflect no longer sets `x2218_b4`). The other 391 (also on the older ACE disc) are
+  not applied generally.
+- Bridged by hand: `ftParts_80074B0C`, `ftCommon_CalcSelfAccel_DeaccelAir` (Shadow now runs clean). Meta Knight's onLoad
+  then faults on a `memcpy` of 0x2AA0 bytes out of a native MotionState table (guest bytes of a native record array):
+  still the clone base's onLoad.
+- Kirby inhaling Knuckles (port kind 55) gets PlKbCpKx and effect bank 50 (pad script, idle Knuckles).
+- Wireframes on L-press: not reachable. The CSS L badge draws, but the alt pick is guest code: codes.gct C2 0x802669DC
+  loads `AltSplitCSS.dat` / `altcssFunction`, called each CSS frame from C2 0x80263334. Running it needs the CSS side of
+  the guest interpreter. The Wireframes / Giga Bowser play when launched as `ck:27..29`.
 
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 

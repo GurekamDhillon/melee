@@ -874,8 +874,29 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
         mex_motion_rows(d, off, at("xC"), at("x14"), n, m, kind);
     }
     let mut v = <ftData as GcDecode>::gc_decode(d, off);
-    v.xC = d.ptr_array::<Fighter_WaitAnimData>(at("xC"), n);
-    v.x10 = d.ptr_array::<[u8; 2]>(at("x10"), n);
+    // m-ex fighters: a guest can index past the table's count (Akaneia's Diddy puts a CaptureCaptain victim on its row
+    // n, 331 of 331), and the console reads the bytes that follow in the file (an authored row 331 past mexData's count:
+    // 232949 at 2075 ran its script, ft_8008A1B8; ftData_80085CD8 skips the clip as msid >= x58C, so the victim keeps
+    // row 330's). Decode the rows the raw image holds past the count too (at most 16).
+    let n_main = if kind >= melee_types::Ft_Kind_Mex0 as usize {
+        match d.target(at("xC")) {
+            Some(t) => n + ((d.data_len() as u32).saturating_sub(t + n as u32 * 0x18) / 0x18).min(16) as usize,
+            None => n,
+        }
+    } else {
+        n
+    };
+    v.xC = d.ptr_array::<Fighter_WaitAnimData>(at("xC"), n_main);
+    // its byte pairs (fp->x28, read with the same row index) likewise
+    let n_pairs = if n_main > n {
+        match d.target(at("x10")) {
+            Some(t) => n + ((d.data_len() as u32).saturating_sub(t + n as u32 * 2) / 2).min((n_main - n) as u32) as usize,
+            None => n,
+        }
+    } else {
+        n
+    };
+    v.x10 = d.ptr_array::<[u8; 2]>(at("x10"), n_pairs);
     v.x14 = d.ptr_array::<Fighter_WaitAnimData>(at("x14"), m);
     v.x18 = d.ptr_array::<[u8; 2]>(at("x18"), m);
     // `int* x54`: the random-bone table `ftCo_8009F834` indexes with the 0..4 counter `x2220_b0` (the plain pointer decode would read one `int`)

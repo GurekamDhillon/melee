@@ -350,6 +350,18 @@ pub fn controls_meta() -> Option<(String, String)> {
     }
 }
 
+/// The `sim_view` entry of every recording: the session's sim view (melee_engine view.rs), which its playback adopts.
+pub fn view_meta() -> (String, String) {
+    ("sim_view".into(), melee_engine::view::encode_sim_view(melee_engine::view::sim_view().unwrap_or(0)))
+}
+
+/// Playback: the recorded sim view (a recording without the entry predates it: 4:3, what a play run then simulated
+/// unless it ran in the camera widescreen mode).
+pub fn apply_view_meta(r: &Replay) {
+    let v = r.meta("sim_view").and_then(melee_engine::view::parse_sim_view).unwrap_or(0);
+    melee_engine::view::set_sim_view(v);
+}
+
 /// Playback of a recording with a `controls` entry: the match freezes the recorded words.
 pub fn apply_controls_meta(r: &Replay) {
     let Some(v) = r.meta("controls").and_then(|v| v.strip_prefix("netplay:")) else { return };
@@ -793,6 +805,10 @@ pub struct HostRules {
     /// CPU seats on ports 3 and 4 (`--cpu fighter[/level][,fighter[/level]]`, level 1-9, default 9): (CharacterKind,
     /// level), resolved by the host; the guest takes them from the agreed scene like the rest of the rules
     pub cpus: Vec<(i32, i32)>,
+    /// The session's sim view (melee_engine view.rs: 0 = 4:3, else the wide content aspect's f32 bits): the host's,
+    /// which the guest adopts for the simulation whatever its own window or display options (`v<hex>`, only when wide;
+    /// no field = 4:3).
+    pub view: Option<u32>,
 }
 
 impl HostRules {
@@ -802,6 +818,7 @@ impl HostRules {
             time_secs: arg(args, "--time-secs").and_then(|s| s.parse().ok()),
             items: arg(args, "--items").map(|s| s.trim().replace(' ', "_")),
             cpus: Vec::new(),
+            view: None,
         }
     }
     pub fn encode(&self) -> String {
@@ -810,6 +827,10 @@ impl HostRules {
         // the CPU seats only when there are any, so a two-human scene string is what it always was
         if !self.cpus.is_empty() {
             e += &format!(",c{}", self.cpus.iter().map(|(ck, l)| format!("{ck}.{l}")).collect::<Vec<_>>().join("+"));
+        }
+        // the sim view only when wide, so a 4:3 scene string is what it always was
+        if let Some(v) = self.view.filter(|&v| v != 0) {
+            e += &format!(",v{v:08x}");
         }
         e
     }
@@ -825,6 +846,7 @@ impl HostRules {
                 "s" => r.stocks = x.parse().ok(),
                 "t" => r.time_secs = x.parse().ok(),
                 "i" => r.items = Some(x.to_string()),
+                "v" => r.view = u32::from_str_radix(x, 16).ok(),
                 "c" => {
                     r.cpus = x.split('+').map(|c| c.split_once('.').and_then(|(k, l)| Some((k.parse().ok()?, l.parse().ok()?)))).collect::<Option<Vec<_>>>()?;
                 }
@@ -837,8 +859,12 @@ impl HostRules {
         let cpus = if self.cpus.is_empty() { String::new() } else {
             format!(", CPUs {}", self.cpus.iter().map(|(ck, l)| format!("ck {ck} level {l}")).collect::<Vec<_>>().join(" + "))
         };
+        let view = match self.view {
+            Some(v) if v != 0 => format!(", sim view {}", melee_engine::view::encode_sim_view(v)),
+            _ => String::new(),
+        };
         format!(
-            "stocks {}, time {}, items {}{cpus}",
+            "stocks {}, time {}, items {}{cpus}{view}",
             self.stocks.map_or("default".into(), |x| x.to_string()),
             self.time_secs.map_or("default".into(), |x| format!("{x} s")),
             self.items.clone().unwrap_or_else(|| "default".into())
@@ -1177,6 +1203,8 @@ impl NetDriver {
             if let Some(c) = arg(args, "--cpu") {
                 rules.cpus = HostRules::parse_cpus(&c, ck_of)?;
             }
+            // the host's sim view (its display options, decided when `play` started) is the session's
+            rules.view = Some(melee_engine::view::sim_view().unwrap_or_else(melee_engine::view::local_sim_view));
         }
         let stocks = rules.stocks.unwrap_or(4);
         let minutes = rules.time_secs.map_or(8, |s| (s.max(1) + 59) / 60);
@@ -1294,8 +1322,16 @@ impl NetDriver {
         melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Netplay(room.sh.borrow().controls));
         log(&format!("netplay {tag}: match agreed after {:.2}s: \"{scene_str}\" (seed {seed}, delay {adelay}, rollback window {maxb})", t0.elapsed().as_secs_f32()));
         let host_rules = HostRules::from_scene(&scene).unwrap_or_default();
+        // the sim view: the host's (no field = 4:3), whatever this peer's window; the picture is fitted locally
+        let view = host_rules.view.unwrap_or(0);
+        if !host && melee_engine::view::sim_view().unwrap_or_else(melee_engine::view::local_sim_view) != view {
+            log(&format!("netplay guest: the host's sim view {} wins (yours: {}); the picture is fitted to your window", melee_engine::view::encode_sim_view(view), melee_engine::view::encode_sim_view(melee_engine::view::sim_view().unwrap_or(0))));
+        }
+        melee_engine::view::set_sim_view(view);
+        log(&format!("netplay {tag}: sim view {}", melee_engine::view::encode_sim_view(view)));
         if !host {
-            if rules != HostRules::default() && rules != host_rules {
+            let mine = HostRules { view: host_rules.view, ..rules.clone() };
+            if mine != HostRules::default() && (HostRules { view: None, ..mine.clone() }) != (HostRules { view: None, ..host_rules.clone() }) {
                 log(&format!("netplay guest: the host's rules win: {} (yours: {})", host_rules.describe(), rules.describe()));
             } else {
                 log(&format!("netplay guest: the host's rules: {}", host_rules.describe()));

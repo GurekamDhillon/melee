@@ -140,6 +140,28 @@ fn ub_str(o: &mut Vec<u8>, s: &str) {
     o.push(s.len().min(255) as u8);
     o.extend_from_slice(&s.as_bytes()[..s.len().min(255)]);
 }
+/// The `simView` metadata entry of a .slp this port wrote (None: a console / Dolphin replay, or an older export).
+pub fn sim_view_of(slp: &[u8]) -> Option<u32> {
+    let key = b"UsimView";
+    let at = slp.windows(key.len()).rposition(|w| w == key)? + key.len();
+    let s = slp.get(at..)?;
+    if s.get(..2)? != b"SU" {
+        return None;
+    }
+    let n = *s.get(2)? as usize;
+    melee_engine::view::parse_sim_view(std::str::from_utf8(s.get(3..3 + n)?).ok()?)
+}
+
+/// Before a .slp's match boots (slpcheck, golden --slp): its recorded sim view, or none (the C recordings' fixed
+/// view, as before) for a replay that names none.
+pub fn apply_sim_view(slp: &[u8]) {
+    let v = sim_view_of(slp);
+    melee_engine::view::set_sim_view(v.unwrap_or(melee_engine::view::SIM_UNSET));
+    if let Some(v) = v {
+        eprintln!("slp: sim view {} (from the metadata)", melee_engine::view::encode_sim_view(v));
+    }
+}
+
 fn ub_i32(o: &mut Vec<u8>, v: i32) {
     o.push(b'l');
     o.extend_from_slice(&v.to_be_bytes());
@@ -265,6 +287,11 @@ impl Exporter {
         ub_str(&mut o, &melee_core::codes::encode(cw, cl));
         ub_key(&mut o, "gameplayCodesNames");
         ub_str(&mut o, &melee_core::codes::describe(cw, cl));
+        // the session's sim view (melee_engine view.rs; our own key): slpcheck / golden --slp replay with it
+        if let Some(v) = melee_engine::view::sim_view() {
+            ub_key(&mut o, "simView");
+            ub_str(&mut o, &melee_engine::view::encode_sim_view(v));
+        }
         ub_key(&mut o, "playedOn");
         ub_str(&mut o, &self.played_on);
         o.push(b'}');

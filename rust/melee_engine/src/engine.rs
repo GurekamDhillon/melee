@@ -223,7 +223,9 @@ impl Engine {
             // `gw_view_projection_scale(16/9, wide)` = aspect * (60/73) scales every perspective camera's aspect, which
             // reaches the simulation through Camera_LogicToScreen (offscreen flags) and the stage Display procs
             // (Stadium's nametag placement). A window that is actually drawn keeps 4:3 (the seam default).
-            if (!RENDER || melee_runtime::tu::gobj_native::HEADLESS_RENDER) && !PLAY_VIEW {
+            // A run with a session sim view (every play run; slpcheck / golden --slp of a recording that names one)
+            // takes the view hooks (view.rs): the session's aspect, never the window's.
+            if (!RENDER || melee_runtime::tu::gobj_native::HEADLESS_RENDER) && !PLAY_VIEW && crate::view::sim_view().is_none() {
                 if std::env::var_os("MELEE_ENGINE_NO_WIDE").is_none() {
                     let aspect: f32 = 1920.0f32 / 1080.0f32;
                     let scale: f32 = aspect * (60.0f32 / 73.0f32);
@@ -231,7 +233,10 @@ impl Engine {
                     WIDE_SCALE_BITS = scale.to_bits() as i32;
                 }
             } else {
-                // a drawn window: the view policy follows the widescreen setting and the scene (view.rs; 4:3 when off)
+                // the session's sim view (view.rs; 4:3 unless the camera widescreen mode or a recording says otherwise)
+                if crate::view::sim_view().is_none() {
+                    crate::view::set_sim_view(crate::view::local_sim_view());
+                }
                 crate::view::install();
             }
             // render draws (particle generators created while drawing) use the private render seed, not the logic stream

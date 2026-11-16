@@ -1367,7 +1367,7 @@ impl RetailPlay {
                 "vsync" => p.set_vsync(v == "1"),
                 "render_scale" => p.set_render_scale(v.parse().ok()),
                 "interp_mode" => p.set_interp_mode(melee_gx::interp::Mode::parse(&v).unwrap_or_default()),
-                "widescreen" => p.set_true_widescreen(v == "1"),
+                "widescreen" => p.set_true_widescreen(melee_engine::view::renderer_widen()),
                 _ => {}
             }
             log(&format!("video: {k} = {v} (live)"));
@@ -1375,6 +1375,8 @@ impl RetailPlay {
         p.set_match_scene(melee_engine::view::scene_wide(melee_engine::view::scene()));
         // the decode thread's packing travels with its frame (the presenter may prepare it at a later present)
         let packed = if frame.is_some() { self.packed.take() } else { None };
+        // renderer-side widening only while the session's cameras are 4:3 (a camera-widescreen host's guest: none)
+        p.set_true_widescreen(melee_engine::view::renderer_widen());
         p.set_content_aspect(self.frame_aspect);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the match's EFB shape is made while the stage select is open, not in the match's setup frame

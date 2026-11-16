@@ -1444,7 +1444,7 @@ impl Camera {
             if !(p.fov > 1.0 && p.fov < 170.0) {
                 return None;
             }
-            let wx = if melee_engine::view::camera_mode() { None } else { melee_gx::interp::Widen::for_aspect(melee_engine::view::aspect()) };
+            let wx = if !melee_engine::view::renderer_widen() { None } else { melee_gx::interp::Widen::for_aspect(melee_engine::view::aspect()) };
             Some(Camera { m: (*c).view_mtx, t: (p.fov.to_radians() * 0.5).tan(), aspect: if p.aspect > 0.1 { p.aspect } else { 4.0 / 3.0 }, wx: wx.map_or(1.0, |w| w.factor) })
         }
     }

@@ -1264,6 +1264,7 @@ fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(mel
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
     // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
     let parsed = melee_data::slp::parse(&data, false).ok();
+    crate::slp_export::apply_sim_view(&data);
     let ws = parsed.as_ref().and_then(|f| melee_data::slp::widescreen_code(&f.gecko));
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     melee_core::codes::set_ps_camera_independent_monitor(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_camera_independent_monitor_code(&f.gecko)));

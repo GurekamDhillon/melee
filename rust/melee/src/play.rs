@@ -1281,6 +1281,7 @@ impl Play {
             let frame = self.em.as_mut().and_then(|m| m.frame.take());
             let packed = self.em.as_mut().and_then(|m| m.packed.take());
             let p = self.presenter.as_mut().unwrap();
+            p.set_true_widescreen(melee_engine::view::renderer_widen());
             p.set_content_aspect(melee_engine::view::aspect());
             let pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
             p.set_match_scene(true);
@@ -1670,6 +1671,7 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
         if let Some(f) = feed.as_ref() {
             crate::play_net::apply_controls_meta(&f.r);
+            crate::play_net::apply_view_meta(&f.r);
             // slice 0: the recorded pick and content mask (an older replay has none: the args' pick as before)
             if let Some(t) = f.r.meta("sse") {
                 melee_modes::tu::explore::apply_header_token(t);
@@ -1840,6 +1842,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 meta.push(("np_role".into(), "host".into()));
                 meta.extend(crate::play_net::controls_meta());
             meta.push(crate::play_net::sse_meta());
+            meta.push(crate::play_net::view_meta());
                 rp.rec = Some((String::new(), crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() }));
             }
         }
@@ -1863,6 +1866,7 @@ pub fn play(args: &[String]) -> ExitCode {
             }
             meta.extend(crate::play_net::controls_meta());
             meta.push(crate::play_net::sse_meta());
+            meta.push(crate::play_net::view_meta());
             let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }

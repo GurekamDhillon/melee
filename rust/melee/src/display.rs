@@ -245,6 +245,8 @@ impl Display {
         melee_engine::view::set_camera_mode(self.camera_widescreen);
         melee_engine::view::set_widescreen(self.widescreen);
         melee_engine::view::set_window(self.window.0, self.window.1);
+        // the session's sim view, decided now from the options (not the live window); netplay / a replay may replace it
+        melee_engine::view::set_sim_view(melee_engine::view::local_sim_view());
     }
 
     /// `--save-display`: write [`Display::rows`] to settings.cfg.

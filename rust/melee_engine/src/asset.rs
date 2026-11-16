@@ -1095,6 +1095,82 @@ pub fn scene_prefetch(minor: i32) {
     }
     if minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32 {
         hint_files(&["IfCoGet.dat", "GmRst", "SdRst", "TyDatai"]);
+    } else if minor == melee_types::GS_RESULTS as i32 {
+        hint_vs_picks(true);
+    } else if minor == melee_types::GS_SSS as i32 {
+        hint_vs_picks(false);
+    }
+}
+
+/// Hint each (character kind, costume) pair's fighter data, costume and animation bank (an extra internal kind, such
+/// as Zelda's Sheik, too). Reads only immutable name tables; host state only.
+fn hint_fighters(picks: &[(i32, u8)]) {
+    unsafe {
+        let mapping = &*core::ptr::addr_of!(melee_world::pl::ftMapping_list);
+        let names = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C1F40);
+        let costumes = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C2360);
+        let banks = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C23E4);
+        let lists = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::CostumeListsForeachCharacter);
+        let mut done: Vec<i32> = Vec::new();
+        for &(ck, color) in picks {
+            if ck < 0 || ck as usize >= mapping.len() {
+                continue;
+            }
+            let m = &mapping[ck as usize];
+            for k in [m.internal_id as i32, m.extra_internal_id as i32] {
+                if k < 0 || k as usize >= names.len() || done.contains(&k) {
+                    continue;
+                }
+                done.push(k);
+                let k = k as usize;
+                let mut files = vec![names[k].a as *const i8, banks[k] as *const i8];
+                if !costumes[k].is_null() {
+                    let c = if k < lists.len() && (color as i32) < lists[k].numCostumes as i32 { color as usize } else { 0 };
+                    files.push((*costumes[k].add(c)).dat_filename as *const i8);
+                }
+                for f in files {
+                    let e = entry_of(f);
+                    if e > 0 {
+                        hint_entry_gr(e, -1, None);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Vanilla VS: the picks in the VS mode data (characters and costumes, final once the stage select opens; at the
+/// results screen the match just played, the usual rematch) and, at the results, that match's stage. Read-only on
+/// sim data, host state only: the worker's decoded plans are applied by the tick that loads the file either way.
+fn hint_vs_picks(with_stage: bool) {
+    if svc().is_none_or(|s| !s.worker) {
+        return;
+    }
+    let mut picks: Vec<(i32, u8)> = Vec::new();
+    let mut gr = -1;
+    unsafe {
+        let m = *core::ptr::addr_of!(melee_world::gmmain::gmMainLib_804D3EE0);
+        if m.is_null() {
+            return;
+        }
+        let vs = &(*m).modes.table[melee_types::GmVsMode_Melee as usize];
+        for p in vs.start.players.iter() {
+            if p.slot_type as i32 != melee_types::Gm_PKind_NA as i32 && p.ckind >= 0 && p.ckind as i32 != melee_types::ChKind_None as i32 {
+                picks.push((p.ckind as i32, p.color));
+            }
+        }
+        if with_stage {
+            let st = vs.start.rules.stkind as i32;
+            let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+            if st >= 0 && (st as usize) < map.len() {
+                gr = map[st as usize].grkind as i32;
+            }
+        }
+    }
+    hint_stage(gr);
+    hint_fighters(&picks);
+    if log_on() {
+        eprintln!("asset: vs picks hinted ({} fighters, stage {gr})", picks.len());
     }
 }
 
@@ -1195,35 +1271,8 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
         // the fight's stage and the one a live stage transition goes to (its file in memory before the hand-off)
         hint_stage(gr);
         hint_stage(plan[ev::P_STAGE_NEXT]);
-        let mapping = &*core::ptr::addr_of!(melee_world::pl::ftMapping_list);
-        let names = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C1F40);
-        let costumes = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C2360);
-        let banks = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C23E4);
-        let mut done: Vec<i32> = Vec::new();
-        for ck in cks {
-            if ck < 0 || ck as usize >= mapping.len() {
-                continue;
-            }
-            let m = &mapping[ck as usize];
-            for k in [m.internal_id as i32, m.extra_internal_id as i32] {
-                if k < 0 || k as usize >= names.len() || done.contains(&k) {
-                    continue;
-                }
-                done.push(k);
-                let k = k as usize;
-                let mut files = vec![names[k].a as *const i8, banks[k] as *const i8];
-                if !costumes[k].is_null() {
-                    files.push((*costumes[k]).dat_filename as *const i8);
-                }
-                for f in files {
-                    let e = entry_of(f);
-                    if e > 0 {
-                        hint_entry_gr(e, -1, None);
-                    }
-                }
-            }
-        }
     }
+    hint_fighters(&cks.iter().map(|&c| (c, 0u8)).collect::<Vec<_>>());
     if log_on() {
         eprintln!("asset: envoy plan hinted (stage {gr})");
     }

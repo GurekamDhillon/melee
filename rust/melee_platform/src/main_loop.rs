@@ -412,6 +412,9 @@ struct App<G: Game> {
     present_at: Option<Instant>,
     /// Paced: present before running the due tick (its slot was due within half a period after the tick).
     present_first: bool,
+    /// The tick clock runs from the first present (a window's): the time from window creation to that present
+    /// (device, swapchain, first pipelines) is not owed to the sim, so boot starts without a catch-up burst.
+    clock_started: bool,
     /// VRR detection: the probe's end, the last statistics sample, verdicts in a row.
     vrr_probe_until: Option<Instant>,
     vrr_last: Option<(u64, u64, f64)>,
@@ -548,6 +551,11 @@ impl<G: Game> App<G> {
             }
             let d = t.elapsed();
             self.present_time += d;
+            if !self.clock_started {
+                self.clock_started = true;
+                self.last = Some(Instant::now());
+                self.clock.forgive();
+            }
             if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
                 use std::io::Write;
                 let _ = writeln!(f, "P,{},{:.3},{:.3}", self.frames, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
@@ -596,6 +604,9 @@ impl<G: Game> App<G> {
             // run to run as the load fell (Pokemon Stadium shots at one scene age differed by a tick). The time
             // stays in the clock; the ticks run right after the present.
             return;
+        }
+        if !self.clock_started && self.window.is_some() {
+            return; // the first present starts the clock (pacing only: the ticks are unchanged)
         }
         let dt = self.last.map(|l| now.saturating_duration_since(l)).unwrap_or_default();
         self.last = Some(now);
@@ -1094,6 +1105,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         next_present: None,
         present_at: None,
         present_first: false,
+        clock_started: false,
         vrr_probe_until: None,
         vrr_last: None,
         vrr_votes: (None, 0),

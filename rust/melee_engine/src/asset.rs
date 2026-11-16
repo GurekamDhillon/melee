@@ -1372,6 +1372,17 @@ pub fn boot_hints() {
     }
 }
 
+/// True while hinted files are still queued or being prepared by the worker (false without a worker). The play loop
+/// holds the tick clock at boot until the boot hints drain, so the first ticks apply ready plans. Host state only.
+pub fn hints_busy() -> bool {
+    let Some(s) = svc() else { return false };
+    if !s.worker {
+        return false;
+    }
+    let g = s.m.lock().unwrap();
+    g.entries.iter().any(|e| e.pending)
+}
+
 /// The `stage_info.grkind` a hinted file will be loaded under: the coming scene's stage when the preload cache names
 /// one (the stage-select choice: its file is hinted from there), else the current one.
 fn hint_grkind() -> i32 {

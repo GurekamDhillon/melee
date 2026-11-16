@@ -1472,6 +1472,18 @@ impl Game for RetailPlay {
     fn present_now(&self) -> bool {
         self.shot_pending.is_some() || self.scene_tick
     }
+    fn boot_ready(&mut self) -> bool {
+        // boot the engine here, before the first tick (it would boot inside it): its boot hints then get the hold's
+        // time on the worker, and tick 1's scene applies ready plans. The tick boots it as before if this fails.
+        if self.engine().is_none() && !self.quit && self.failed.is_none() {
+            match self.boot() {
+                Ok(e) => self.e = Some(e),
+                Err(_) => return true,
+            }
+            return false;
+        }
+        !melee_engine::asset::hints_busy()
+    }
 
     fn take_hud_request(&mut self) -> Option<bool> {
         self.hud_request.take()

@@ -669,7 +669,7 @@ The css test's results presses were START; they outlast the results, and one tha
 the stage under the cursor (Random). Match 2 landed on a different stage each run (stages 5, 7, 14, 29, 30 in the
 last five logs), so "match-2 start" measured a different, never-cached stage every time. `MELEE_NP_SCRIPT_NO_START`
 (set only by css_pair.sh) now also drops START from the local pad on the SSS, before it is sent and recorded (both
-peers and the replay see the same inputs); the scripts pick with A. Three runs since: stage 36 in both matches,
+peers and the replay see the same inputs); the scripts pick with A. Four runs since: stage 36 in both matches,
 hashes equal, replay equal. (A instead of START on the results does not work: A does not leave the results.)
 
 ### Numbers (tick ms, host, light slot held; before = the old test at 78ba17ccf as briefed, after = fixed stage)

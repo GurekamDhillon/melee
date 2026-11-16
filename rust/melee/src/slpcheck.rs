@@ -639,7 +639,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             ticks += 1;
             last_frame = fr;
             if let Some(a) = av.as_mut() {
-                if !a.frame() {
+                if !a.push_frame() {
                     eprintln!("melee slpcheck: an output closed at frame {fr}; stopping");
                     break;
                 }

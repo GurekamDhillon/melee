@@ -262,7 +262,7 @@ impl AvOut {
     }
 
     /// After each logic frame: its mix and its picture. False once a sink has closed.
-    pub fn frame(&mut self) -> bool {
+    pub fn push_frame(&mut self) -> bool {
         let mut ok = true;
         if let Some(a) = self.audio.as_mut() {
             crate::engine_audio::dsp_frame();

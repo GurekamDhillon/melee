@@ -327,6 +327,11 @@ pub struct Map {
     /// every area trigger (section, trigger id, rect world) and enemy-pattern trigger (output, inputs)
     pub areas: Vec<(usize, u16, [f32; 4])>,
     pub patterns: Vec<(u16, [u16; 5])>,
+    /// GLOK locks: (section, start trigger, end triggers, box left right top bottom world): from the start firing until
+    /// an end fires the camera and the party stay inside the box
+    pub locks: Vec<(usize, u16, [u16; 2], [f32; 4])>,
+    /// GMWA / GMWO switches: (section, x, y world, trigger): an attack on it or a fighter at it fires the trigger
+    pub switches: Vec<(usize, f32, f32, u16)>,
     /// the placements' motion paths (Brawl's grGimmickMotionPath; `enemy_path`)
     enemy_paths: Vec<EnemyPath>,
     /// what the loader left out or moved (printed with the load report)
@@ -411,6 +416,11 @@ pub struct Block {
     pub rest: [f32; 2],
     /// a GMOV mode-2 path: played once from the frame a fighter first stands on it (`MOVER_START`), then held
     pub once: bool,
+    /// a one-way path's start trigger (GMOV / GSHT trigger words [off]): it starts when this fires, not on a rider; 0 none
+    pub trig: u16,
+    /// a GSHT shutter whose trigger nothing in the port fires: it opens at the room's start (held shut, it would close
+    /// the way on)
+    pub auto: bool,
 }
 
 fn load(id: i32) -> Result<Map, String> {
@@ -492,6 +502,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut areas: Vec<(usize, u16, [f32; 4])> = vec![];
     let mut spawn_trig: Vec<(u16, u16)> = vec![];
     let mut patterns: Vec<(u16, [u16; 5])> = vec![];
+    let mut locks: Vec<(usize, u16, [u16; 2], [f32; 4])> = vec![];
+    let mut switches: Vec<(usize, f32, f32, u16)> = vec![];
     let mut enemy_paths: Vec<EnemyPath> = vec![];
     // load notes, printed by the game thread with the map's report (never printed from a loader thread)
     let mut notes: Vec<String> = vec![];
@@ -570,7 +582,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                                     },
                                 };
                                 let at = [t[0] + s.off[0], t[1] + s.off[1]];
-                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2], once: false });
+                                blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: usize::MAX, rest: [0.0; 2], once: false, trig: 0, auto: false });
                                 ([t[0] + s.off[0], t[1] + s.off[1]], blocks.len())
                             }
                             None => {
@@ -599,7 +611,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         let bb = [0, 4, 8, 12].map(|i| bef(c, o + of.obj_box + i));
                         let (x, y) = (at[0] + (bb[0] + bb[2]) / 2.0, at[1] + (bb[1] + bb[3]) / 2.0);
                         paths.push(path);
-                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest, once });
+                        blocks.push(Block { sec: si, x, y, hw: (bb[2] - bb[0]) / 2.0, hh: (bb[3] - bb[1]) / 2.0, model, at, path: paths.len() - 1, rest, once, trig: gmov_trig(&gmovs, name, inst).0, auto: gmov_trig(&gmovs, name, inst).1 });
                         notes.push(format!("explore: section {si}: {} moves ({} frames{}) at ({:.0},{:.0}) size {:.0}x{:.0}", String::from_utf8_lossy(name), paths.last().map(|p| p.len()).unwrap_or(0), if paths.last().map_or(0, |p| p.len()) == 1 { ", held at rest" } else { "" }, x, y, bb[2] - bb[0], bb[3] - bb[1]));
                         (at, blocks.len())
                     } else {
@@ -752,6 +764,31 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                     exits.push((be32(b, first + 0x30), be32(b, e)));
                 }
             }
+            if let Some(o) = off() {
+                if let (Some(qc), Some(qs), Some(qe), Some(qe2)) = (o.glok_cam, o.glok_start, o.glok_end, o.glok_end2) {
+                    for e in bloc_entries(b, b"GLOK") {
+                        let id = b.get(e + qc).copied().unwrap_or(0) as u16;
+                        // the lock's stage position model (file type 2 next to the BLOC): its camera limit bones
+                        let bx = leaves.iter().zip(&tags).find(|(_, t)| t.last() == Some(&(2, id))).and_then(|(l, _)| {
+                            let (a, z) = (pm::bone_trans(l, b"CamLimit0N")?, pm::bone_trans(l, b"CamLimit1N")?);
+                            Some([fmin(a[0], z[0]) + s.off[0], fmax(a[0], z[0]) + s.off[0], fmax(a[1], z[1]) + s.off[1], fmin(a[1], z[1]) + s.off[1]])
+                        });
+                        let (st, ends) = (be16(b, e + qs), [be16(b, e + qe), be16(b, e + qe2)]);
+                        match bx {
+                            Some(bx) if st != 0 && ends.iter().any(|&t| t != 0) => locks.push((si, st, ends, bx)),
+                            _ => notes.push(format!("explore: section {si}: a camera lock (model {id}, trigger {st}) without its box or triggers; left out")),
+                        }
+                    }
+                }
+                if let (Some(qp), Some(qt)) = (o.sw_pos, o.sw_trig) {
+                    for e in bloc_entries(b, b"GMWA").into_iter().chain(bloc_entries(b, b"GMWO")) {
+                        let t = be16(b, e + qt);
+                        if t != 0 {
+                            switches.push((si, bef(b, e + qp) + s.off[0], bef(b, e + qp + 4) + s.off[1], t));
+                        }
+                    }
+                }
+            }
             for e in bloc_entries(b, b"GIB2") {
                 crates.push(Crate { sec: si, x: bef(b, e + 0x30) + s.off[0], y: bef(b, e + 0x34) + s.off[1], size: be32(b, e + 0x38) });
             }
@@ -812,6 +849,31 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
             let (a, b, k) = (raw[i].a, raw[i].b, raw[i].kind & 0xF);
             raw[i].next = (0..n).find(|&j| j != i && raw[j].a == b && raw[j].kind & 0xF == k).or_else(|| (0..n).find(|&j| j != i && raw[j].a == b)).map(|j| j as i32).unwrap_or(-1);
             raw[i].prev = (0..n).find(|&j| j != i && raw[j].b == a && raw[j].kind & 0xF == k).or_else(|| (0..n).find(|&j| j != i && raw[j].b == a)).map(|j| j as i32).unwrap_or(-1);
+        }
+    }
+    // a part's start trigger counts only when something the port runs can fire it (an area, an enemy pattern, an enemy's
+    // defeat, a switch); otherwise a lift starts on its rider and a shutter opens at the room's start
+    {
+        let can = |t: u16| areas.iter().any(|a| a.1 == t) || patterns.iter().any(|p| p.0 == t) || spawn_trig.iter().any(|p| p.1 == t) || switches.iter().any(|w| w.3 == t);
+        // an enemy pattern can fire when all its inputs can (a few levels deep)
+        fn can_deep(t: u16, d: u32, can: &dyn Fn(u16) -> bool, patterns: &[(u16, [u16; 5])]) -> bool {
+            can(t) && !patterns.iter().any(|p| p.0 == t) || d > 0 && patterns.iter().any(|p| p.0 == t && p.1.iter().filter(|&&i| i != 0).all(|&i| can_deep(i, d - 1, can, patterns)))
+        }
+        let base = |t: u16| areas.iter().any(|a| a.1 == t) || spawn_trig.iter().any(|p| p.1 == t) || switches.iter().any(|w| w.3 == t);
+        // a lock only when one of its end triggers can fire (else the party would be held in its box for good)
+        locks.retain(|l| {
+            let ok = l.2.iter().any(|&t| t != 0 && can_deep(t, 4, &base, &patterns));
+            if !ok {
+                notes.push(format!("explore: section {}: camera lock on trigger {} left out (its end triggers {:?} cannot fire here)", l.0, l.1, l.2));
+            }
+            ok
+        });
+        for b in blocks.iter_mut() {
+            let ok = b.trig != 0 && can(b.trig);
+            if !ok {
+                b.trig = 0;
+            }
+            b.auto = b.auto && !ok;
         }
     }
     // the blocks' own lines and points after the static map's (each block a joint of its own, never welded)
@@ -985,6 +1047,8 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         spawn_trig,
         areas,
         patterns,
+        locks,
+        switches,
         enemy_paths,
         notes,
         cam,
@@ -1425,6 +1489,9 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     SPAWN_N = 0;
     CRATE_NEXT = i32::MAX;
     MOVER_START = [-1; 64];
+    LOCK_ON = -1;
+    LOCK_DONE = 0;
+    LOCK_AT = 0;
     triggers_reset();
     crate::tu::explore_vm::reset();
     VISITED = 1;
@@ -1846,6 +1913,10 @@ pub unsafe fn room_tick() {
         let _z = melee_core::tracy::zone("explore: movers");
         movers_tick(m);
     }
+    if FADE == 0 {
+        switches_tick(m);
+        locks_tick(m);
+    }
     card_tick();
     ko_watch();
     if CLOCK % 10 == 0 && std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
@@ -2239,6 +2310,9 @@ struct Gmov {
     /// the carried model's MDL0 name and its bone names (a collision object riding one of them rides the lift)
     model_mdl: String,
     bones: Vec<String>,
+    /// a mode-2 part's start trigger (the first set one of its two trigger words [off]); 0 none
+    trig: u16,
+    shutter: bool,
 }
 
 /// Brawl struct field offsets the room loader reads, [off] all: loaded at run time from the local-only
@@ -2271,6 +2345,16 @@ struct Off {
     gept_in: Option<usize>,
     /// GDOR / GDBF: the unlock trigger word
     door_lock: Option<usize>,
+    /// GMOV / GSHT: two trigger words, the first set one starts a mode-2 path
+    gmov_trig: Option<usize>,
+    /// GLOK camera / area lock: its stage position model's file id (a byte), the start trigger word, two end trigger words
+    glok_cam: Option<usize>,
+    glok_start: Option<usize>,
+    glok_end: Option<usize>,
+    glok_end2: Option<usize>,
+    /// GMWA / GMWO switches (a floor switch, a trigger brick): place (x, y floats) and the trigger word they fire
+    sw_pos: Option<usize>,
+    sw_trig: Option<usize>,
 }
 
 fn off() -> Option<&'static Off> {
@@ -2311,6 +2395,13 @@ fn off() -> Option<&'static Off> {
                 gept_out: g("gept_out"),
                 gept_in: g("gept_in"),
                 door_lock: g("door_lock"),
+                gmov_trig: g("gmov_trig"),
+                glok_cam: g("glok_cam"),
+                glok_start: g("glok_start"),
+                glok_end: g("glok_end"),
+                glok_end2: g("glok_end2"),
+                sw_pos: g("sw_pos"),
+                sw_trig: g("sw_trig"),
             })
         })();
         if o.is_none() {
@@ -2337,7 +2428,9 @@ fn gmov_list(leaves: &[Vec<u8>], tags: &[Vec<(u16, u16)>], si: usize, notes: &mu
     let mut v = vec![];
     let Some(of) = off() else { return v };
     for b in leaves {
-        for e in bloc_entries(b, b"GMOV") {
+        // GSHT shutters are GMOV records of the same shape (a mode-2 path played once when their trigger fires)
+        let nmov = bloc_entries(b, b"GMOV").len();
+        for (ei, e) in bloc_entries(b, b"GMOV").into_iter().chain(bloc_entries(b, b"GSHT")).enumerate() {
             let (Some(&mode), Some(&pid), Some(&mid)) = (b.get(e + of.gmov_mode), b.get(e + of.gmov_path), b.get(e + of.gmov_model)) else { continue };
             let (Some(pb), Some(mb)) = (brres(pid), brres(mid)) else {
                 notes.push(format!("explore: section {si}: lift (path file {pid}, model file {mid}) not found; it stays still"));
@@ -2361,7 +2454,8 @@ fn gmov_list(leaves: &[Vec<u8>], tags: &[Vec<(u16, u16)>], si: usize, notes: &mu
                     notes.push(format!("explore: section {si}: path {path_mdl} bones {} tracks {}", (0..r.bones.len()).map(|k| r.bone_name(k)).collect::<Vec<_>>().join(" "), tr.join(" ")));
                 }
             }
-            v.push(Gmov { mode, path_mdl, loc, model_mdl, bones });
+            let trig = of.gmov_trig.map_or(0, |q| [be16(b, e + q), be16(b, e + q + 4)].into_iter().find(|&t| t != 0).unwrap_or(0));
+            v.push(Gmov { mode, path_mdl, loc, model_mdl, bones, trig, shutter: ei >= nmov });
         }
     }
     v
@@ -2401,6 +2495,12 @@ fn gmov_path(gmovs: &[Gmov], leaves: &[Vec<u8>], cache: &mut Option<Vec<pm::Rig>
         })
         .collect();
     Some((path, rest, Some(g.model_mdl.clone()), g.mode == 2))
+}
+
+/// The start trigger of the `inst`-th lift carrying bone `name` (mode 2 only; 0 none).
+fn gmov_trig(gmovs: &[Gmov], name: &[u8], inst: usize) -> (u16, bool) {
+    let Ok(name) = std::str::from_utf8(name) else { return (0, false) };
+    gmovs.iter().filter(|g| g.bones.iter().any(|b| b == name)).nth(inst).filter(|g| g.mode == 2).map_or((0, false), |g| (g.trig, g.shutter))
 }
 
 /// How many GMOV lifts carry bone `name` (at least 1: an object no lift carries is loaded once).
@@ -2581,9 +2681,11 @@ unsafe fn movers_tick(m: &Map) {
             continue;
         }
         let f = if b.once {
-            if k < MOVER_START.len() && MOVER_START[k] < 0 && m.joints.get(k + 1).is_some_and(|mj| stood_on(mj)) {
+            // a shutter nothing opens: at once; a part with a start trigger: when it fires; else its first rider
+            let go = if b.auto { true } else if b.trig != 0 { fired(b.trig) } else { m.joints.get(k + 1).is_some_and(|mj| stood_on(mj)) };
+            if k < MOVER_START.len() && MOVER_START[k] < 0 && go {
                 MOVER_START[k] = CLOCK;
-                eprintln!("explore: platform {k} starts its one-way path ({} frames) at room frame {CLOCK}", path.len());
+                eprintln!("explore: platform {k} starts its one-way path ({} frames, trigger {}) at room frame {CLOCK}", path.len(), b.trig);
             }
             match MOVER_START.get(k) {
                 Some(&s0) if s0 >= 0 => (CLOCK - s0).clamp(0, path.len() as i32 - 1) as usize,
@@ -2720,6 +2822,89 @@ unsafe fn blocks_tick(m: &Map) {
             BROKEN |= 1u64.pshl(k as i64);
             melee_world::tu::mplib::mpLib_80057BC0(k as i32 + 1);
             eprintln!("explore: block {k} broken at ({:.0},{:.0}) room frame {}", b.x, b.y, CLOCK);
+        }
+    }
+}
+
+/// The GLOK lock in force (index into `Map::locks`, -1 none) and the locks done (a bit each). Sim state (statics).
+static mut LOCK_ON: i32 = -1;
+static mut LOCK_DONE: u64 = 0;
+static mut LOCK_AT: i32 = 0;
+
+/// Brawl's camera / area locks: when a lock of the party's section has its start trigger fired (and no end yet), the
+/// camera bounds become its box (its stage position model's camera limit bones) and the party cannot walk out of it,
+/// until one of its end triggers fires (the room's enemies beaten). A door out drops it.
+unsafe fn locks_tick(m: &Map) {
+    if LOCK_ON >= 0 {
+        let k = LOCK_ON as usize;
+        let Some(&(sec, _, ends, bx)) = m.locks.get(k) else { LOCK_ON = -1; return };
+        // [L: ours] a lock held a minute is let go (an end trigger waiting on an enemy the port does not spawn)
+        if sec as i32 != SEC || ends.iter().any(|&t| t != 0 && fired(t)) || CLOCK - LOCK_AT > 3600 {
+            if sec as i32 == SEC {
+                LOCK_DONE |= 1u64.pshl(k.min(63) as i64);
+            }
+            LOCK_ON = -1;
+            set_bounds(SEC as usize);
+            eprintln!("explore: camera lock {k} released at room frame {CLOCK}");
+            return;
+        }
+        each_fighter(|_, fp| {
+            let slot = (*fp).player_idx as i32;
+            if melee_fighter::tu::player::Player_GetPlayerSlotType(slot) as i32 != 0 {
+                return;
+            }
+            let x = (*fp).cur_pos.x;
+            let c = fmax(bx[0] + LOCK_EDGE, fmin(bx[1] - LOCK_EDGE, x));
+            if c != x {
+                (*fp).cur_pos.x = c;
+                if ((*fp).self_vel.x > 0.0) == (x > c) {
+                    (*fp).self_vel.x = 0.0;
+                }
+            }
+        });
+        return;
+    }
+    for (k, &(sec, st, ends, bx)) in m.locks.iter().enumerate().take(64) {
+        if sec as i32 != SEC || LOCK_DONE & 1u64.pshl(k as i64) != 0 || !fired(st) || ends.iter().any(|&t| t != 0 && fired(t)) {
+            continue;
+        }
+        LOCK_ON = k as i32;
+        LOCK_AT = CLOCK;
+        let ci = &mut sg::stage_info.cam_info;
+        let (ox, oy) = (ci.cam_x_offset, ci.cam_y_offset);
+        ci.cam_bounds.left = bx[0] - ox;
+        ci.cam_bounds.right = bx[1] - ox;
+        ci.cam_bounds.top = bx[2] - oy;
+        ci.cam_bounds.bottom = bx[3] - oy;
+        eprintln!("explore: camera lock {k} on (trigger {st}) box ({:.0},{:.0},{:.0},{:.0}) at room frame {CLOCK}", bx[0], bx[1], bx[2], bx[3]);
+        return;
+    }
+}
+
+/// How far inside a lock's box the party is held (a fighter's body stays on screen) [L: ours, not Brawl's].
+const LOCK_EDGE: f32 = 8.0;
+
+/// GMWA / GMWO switches of the party's section: an attack box on one, or a fighter at it, fires its trigger.
+unsafe fn switches_tick(m: &Map) {
+    for &(sec, x, y, t) in &m.switches {
+        if sec as i32 != SEC || fired(t) {
+            continue;
+        }
+        let mut on = false;
+        each_fighter(|_, fp| {
+            let p = (*fp).cur_pos;
+            if (p.x - x).abs() <= 10.0 && (p.y - y).abs() <= 15.0 {
+                on = true;
+            }
+            for h in (*fp).x914.iter() {
+                if h.state != HitCapsule_Disabled && h.damage > 0.0 && ((h.x4C.x - x).abs() <= 10.0 + h.scale && (h.x4C.y - y).abs() <= 10.0 + h.scale) {
+                    on = true;
+                }
+            }
+        });
+        if on {
+            eprintln!("explore: switch at ({x:.0},{y:.0}) fires trigger {t} at room frame {CLOCK}");
+            fire(t);
         }
     }
 }

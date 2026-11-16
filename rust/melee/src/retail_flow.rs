@@ -1478,7 +1478,7 @@ impl Game for RetailPlay {
     }
 
     fn present_now(&self) -> bool {
-        self.shot_pending.is_some() || self.scene_tick || self.vout.is_some()
+        self.shot_pending.is_some() || self.scene_tick || (self.vout.is_some() && self.tick_no != self.vout_tick)
     }
 
     fn take_hud_request(&mut self) -> Option<bool> {

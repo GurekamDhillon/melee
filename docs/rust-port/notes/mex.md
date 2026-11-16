@@ -176,6 +176,19 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   That row now stops at `grOldPupupu_80211110` (`__assert: line 1366: archive` in `grAnime_801C8138`); 289 (GrOHy)
   does the same and 290 (GrOSf) faults: Akaneia's added stages carry grFunction blobs, which are still not run (only
   the clone base's retail handlers run, see round 2). That is the next stage item, not a boot-order bug.
+- Game_20260718T225603 (Dedede vs Falcon, first diverger at slippi 81): Dedede's inhale Anim (MoveLogic row 7, console
+  0x80D86B3C) compares `ftCo_800BD19C(victim, &pos)` with attr[0x1C]^2. The bridge passed `&Vec3` untyped (the
+  generator looked up `Vec3`, the GC record is `Vec`), so the native callee read big-endian floats and returned +inf;
+  the swallow never happened. Fixed (REC_ALIAS in gen_mex_bridge.py; ftCo_800BD19C, ftCo_800BDA74): 81 -> 127.
+  At 127 Dedede's walk-with-victim (console 0x80D89724) calls `ftWalkCommon_800DFCA4` through a function-pointer word
+  in the blob (bctrl), which was not bridged; added (Dolphin: CMS 0x163 from 0x800DFD7C, the engine now does the
+  same call). slpcheck still reports slippi 127 (x -42.0 vs -42.0889): not yet oracled after this fix.
+- Still untyped pointer args in the bridge that may carry GC-endian records: HSD_MtxSRT, PSMTXConcat (13 in all).
+  A full gen_mex_bridge.py regen on this branch also changes unrelated arms (atan2f, ft_8008A1FC, gm_8016B168 drop
+  out), so both fixes were applied to the arms by hand.
+- `MELEE_CPU_TRACE=1` now also prints `cpub18 frame=F pN near_zero=0|1` for each behaviour-18 stick push pair
+  (near_zero=1 is the uninitialised-register path). The replays-ext count was not run.
+- Not done: the 51-file rerun, the other 18 divergers, Liu Kang rand order, Meta Knight multi-table.
 
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 

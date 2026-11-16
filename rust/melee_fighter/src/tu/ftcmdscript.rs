@@ -315,6 +315,14 @@ fn cpu_trace(fp: *mut Fighter, f: &str, b: &[u8]) {
         eprintln!("cputrace frame={} p{} {} {:02x?}", frame, unsafe { (*fp).player_idx }, f, b);
     }
 }
+/// `MELEE_CPU_TRACE=1`: one `cpub18` line per behaviour 18 (`ftCo_800AC5A0`) stick push pair.
+pub fn cpu_trace_b18(fp: *mut Fighter, near_zero: bool) {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if *ON.get_or_init(|| std::env::var_os("MELEE_CPU_TRACE").is_some()) {
+        let frame = melee_core::ct::DBG_FRAME.load(core::sync::atomic::Ordering::Relaxed);
+        eprintln!("cpub18 frame={} p{} near_zero={}", frame, unsafe { (*fp).player_idx }, near_zero as u8);
+    }
+}
 pub unsafe fn ftCo_800B4880(fp: *mut Fighter, idx: i32) { melee_core::ct!("ftCo_800B4880"); ftco_800b4880(&mut *fp, idx) }
 pub unsafe fn ftCo_800B49F4(fp: *mut Fighter) { melee_core::ct!("ftCo_800B49F4"); ftco_800b49f4(&mut *fp) }
 pub unsafe fn ftCo_800B4A78(fp: *mut Fighter) { melee_core::ct!("ftCo_800B4A78"); ftco_800b4a78(&mut *fp) }

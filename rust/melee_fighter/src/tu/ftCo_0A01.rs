@@ -5191,7 +5191,11 @@ pub unsafe fn ftCo_800AC5A0(mut fp: *mut Fighter) {
         let mut kb_mag: f32 = 0.0;
         kb_mag = fmadds(kb_x, kb_x, kb_y * kb_y);
         kb_mag = melee_runtime::gekko::sqrtf(kb_mag);
-        if !(ftCo_IsNearlyZero(kb_mag) != 0) {
+        let near_zero = ftCo_IsNearlyZero(kb_mag) != 0;
+        // MELEE_CPU_TRACE: behaviour 18's shield-DI pushes; near_zero=1 is the path whose console arguments are the
+        // uninitialised r5 / r30 (notes/mex.md Round 6), so the stick the engine pushes there is not the console's
+        super::ftcmdscript::cpu_trace_b18(fp, near_zero);
+        if !near_zero {
             let mut x: f32 = kb_x * (1.0f32 / kb_mag);
             let mut y: f32 = kb_y * (1.0f32 / kb_mag);
             if kb_x > 0.0f32 {

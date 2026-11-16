@@ -401,10 +401,14 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     // an Akaneia replay with one of the disc's m-ex fighters runs on the Akaneia disc (GW_ISO_AKANEIA) unless --iso names
     // one; its vanilla-roster games stay on the vanilla disc (the console ran the same retail code for them)
-    let iso = match (get("--iso"), std::env::var("GW_ISO_AKANEIA")) {
-        (None, Ok(ak)) if slp::akaneia_codeset(&file.gecko) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype <= 1 && g.player(i).ckind > 25)) => ak,
-        _ => iso,
+    // which disc this run uses, reported in the summary notes and on stderr (`disc: vanilla|akaneia|explicit`) so a caller can cross-check its own idea of the replay
+    let akaneia_replay = slp::akaneia_codeset(&file.gecko) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype <= 1 && g.player(i).ckind > 25));
+    let (iso, disc_kind) = match (get("--iso"), std::env::var("GW_ISO_AKANEIA")) {
+        (None, Ok(ak)) if akaneia_replay => (ak, "akaneia"),
+        (Some(_), _) => (iso, "explicit"),
+        _ => (iso, "vanilla"),
     };
+    eprintln!("disc: {disc_kind}{}", if akaneia_replay { " (akaneia replay)" } else { "" });
     let mut sm = Summary {
         version: file.version_str(),
         stage: file.info.as_ref().map_or(0, |g| g.stage() as i32),
@@ -440,6 +444,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         }
     };
     sm.notes = conv.notes.join("; ");
+    sm.notes = format!("disc={disc_kind}{}{}{}", if akaneia_replay { " akaneia-replay" } else { "" }, if sm.notes.is_empty() { "" } else { "; " }, sm.notes);
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: !args.iter().any(|a| a == "--no-resync"), identity: None, ..Default::default() });
     if pl.env.slippi_codes.is_none() && slp::online_codeset(&file.gecko) {
         pl.env.slippi_codes = Some("online".into());

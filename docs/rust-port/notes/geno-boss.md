@@ -492,3 +492,17 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
   hit group [L]; 0603 not read [L].
 - Forced statuses for checks: MELEE_VS_BOSS_STATUS=8 Rush, 10 Wingslap, 12 Flameball, 16 Vulcan, 18 Clings, 22 Slap,
   24 Press. NHV1 changes for Meta Ridley only (the arena's state: boss bounds, ship boxes, dead line).
+
+## Porky arena (2026-11-15, port/boss-arena-porky)
+
+- Stage: his boss archive (090101) is his fight's stage: the ruined zoo model (`091vAdvZoo01`), one world collision
+  file (a single floor line, no walls) and StagePosition (CamLimit, Dead0N / Dead1N, Player1-4N). Played through
+  explore's arena mode (the one Petey's 030101 uses): `explore::arena_secs` picks the arena by the process's boss, so
+  Final Destination's model and lines are replaced, the zoo is drawn, the players stand on its Player nodes and the
+  blast zones are its Dead nodes. The archive's other collision file rides a bone (his own top, geno_boss_coll's
+  carried surface) and is left out (`SecDef::world_coll`).
+- Camera: petey::arena_camera (his whole mesh per clip plus the players), as Meta Ridley's; the mesh boxes are made
+  for any boss with an arena.
+- Hitbox scale: every bone of every VM boss model (Falcon Flyer included) has unit world scale and the models are
+  drawn at scale 1 matching the players, so hitbox sizes need no model-unit scale; the Flyer's [val]-size boxes are as
+  the file has them [L: a per-enemy posture scale on the box size, if Brawl has one, is not read].

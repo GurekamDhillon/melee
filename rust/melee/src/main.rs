@@ -8,7 +8,7 @@
 //! ```text
 //! melee selftest
 //! melee hashlog --words GOLDEN.csv --out CANDIDATE.csv [--frames N]
-//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--calltrace OUT [--calltrace-frames A-B]] [--seed-from GOLDEN.csv] [--audio]
+//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--calltrace OUT [--calltrace-frames A-B]] [--seed-from GOLDEN.csv] [--audio] [--shots F,F [--shot-dir DIR]] [--video-out -|PATH [--video-size WxH] [--video-realtime]] [--audio-out PATH]
 //!              [--from-snapshot FILE.snap [--start N]] [--dump-state N:FILE]
 //! melee diff --scenario NAME (--frame N | --first) [--snap FILE] [--max N] [--all]   (docs/rust-port/notes/diff.md)
 //! ```
@@ -28,6 +28,7 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod anim_hot;
+mod video_sink;
 mod controls_store;
 mod firstrun;
 mod geno_suite;
@@ -505,6 +506,8 @@ fn main() -> ExitCode {
     code
 }
 fn main_inner() -> ExitCode {
+    // `--video-out -`: stdout carries the frames; everything printed goes to stderr (before anything can print)
+    video_sink::claim_stdout_if_asked(&std::env::args().collect::<Vec<_>>());
     // The YouGame app's stdio bridge (notes/yougame.md): first, before anything can print to stdout or open the log.
     let yougame = melee_platform::yougame::init();
     // Saves that follow the account (yougame_saves.rs): before anything reads the card or settings.
@@ -969,12 +972,51 @@ fn golden_engine(args: &[String]) -> ExitCode {
     let shots: Vec<usize> = get("--shots").map(|s| s.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default();
     let shot_dir = std::path::PathBuf::from(get("--shot-dir").unwrap_or_else(|| "target/shots".into()));
     let mut renderer: Option<melee_gx::render::Renderer> = None;
-    if !shots.is_empty() {
+    // `--video-out -|PATH [--video-size WxH] [--video-realtime]`: every frame rendered offscreen and streamed as raw RGBA8
+    // (video_sink.rs). `--video-size` alone makes `--shots` render the same way (the size, widescreen, RGB PNG).
+    let video_opts = match video_sink::opts(args) {
+        Ok(v) => v,
+        Err(er) => {
+            eprintln!("melee: {er}");
+            return ExitCode::from(2);
+        }
+    };
+    let video_size = match (&video_opts, get("--video-size")) {
+        (Some(v), _) => Some((v.w, v.h)),
+        (None, Some(s)) => match video_sink::parse_size(&s) {
+            Some(x) => Some(x),
+            None => {
+                eprintln!("melee: --video-size {s}: expected WxH");
+                return ExitCode::from(2);
+            }
+        },
+        (None, None) => None,
+    };
+    let mut video: Option<melee_gx::video::VideoOut> = None;
+    let mut view: Option<GoldenView> = None;
+    if let Some(v) = &video_opts {
+        let sink = match video_sink::open(&v.path) {
+            Ok(s) => s,
+            Err(er) => {
+                eprintln!("melee: --video-out {er}");
+                return ExitCode::FAILURE;
+            }
+        };
+        video = Some(melee_gx::video::VideoOut::new(sink, v.w, v.h, v.realtime));
+    }
+    // `--audio-out PATH`: the engine's mix (as `--audio`), raw s16le stereo at 32 kHz, aligned with the video's frame 0
+    let audio_out = get("--audio-out");
+    if !shots.is_empty() || video.is_some() {
         unsafe { melee_engine::engine::RENDER = true };
         let _ = std::fs::create_dir_all(&shot_dir);
     }
     // `--audio [--audio-wav OUT] [--audio-trace OUT] [--audio-preroll N]`: the sound stack from the same disc, driven by the game's own lbAudioAx calls
-    let audio = args.iter().any(|a| a == "--audio");
+    let audio = args.iter().any(|a| a == "--audio") || audio_out.is_some();
+    if audio && (video.is_some() || !shots.is_empty()) && std::env::var_os("MELEE_ENGINE_RENDER_AUDIO").is_none() {
+        // the frames are wanted: keep the render pass (its draw callbacks' sound side effects come with it)
+        // SAFETY: single-threaded start-up, before the engine reads it.
+        unsafe { std::env::set_var("MELEE_ENGINE_RENDER_AUDIO", "1") };
+    }
     if audio {
         // the C audio captures ran headless (turbo, no render pass): the draw callbacks have sound side effects (the off-screen arrow's)
         // SAFETY: single-threaded start-up, before the engine reads it.
@@ -989,7 +1031,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
             eprintln!("melee: --audio: {er}");
             return ExitCode::FAILURE;
         }
-        if get("--audio-wav").is_some() {
+        if get("--audio-wav").is_some() || audio_out.is_some() {
             unsafe { engine_audio::WAV = Some(Vec::new()) };
         }
     }
@@ -1058,6 +1100,24 @@ fn golden_engine(args: &[String]) -> ExitCode {
         for _ in 0..get("--audio-preroll").and_then(|v| v.parse::<u32>().ok()).unwrap_or(29) {
             engine_audio::load_frame();
         }
+    }
+    let mut audio_sink = None;
+    if let Some(p) = &audio_out {
+        // the preroll's mix precedes frame 0: dropped, so sample 0 is the first video frame's
+        if let Some(w) = unsafe { (*std::ptr::addr_of_mut!(engine_audio::WAV)).as_mut() } {
+            w.clear();
+        }
+        match std::fs::File::create(p) {
+            Ok(f) => audio_sink = Some(std::io::BufWriter::new(f)),
+            Err(er) => {
+                eprintln!("melee: --audio-out {p}: {er}");
+                return ExitCode::FAILURE;
+            }
+        }
+        eprintln!("audio-out: 32000 Hz s16le stereo");
+    }
+    if let Some(v) = &video {
+        video_sink::announce(v.w, v.h);
     }
     let idle = args.iter().any(|a| a == "--idle-pads");
     // `--pause F:T`: START after logic frame F pauses, the pauser's START resumes at T (the audio keeps running on the held frames)
@@ -1129,12 +1189,49 @@ fn golden_engine(args: &[String]) -> ExitCode {
         practice.observe();
         if audio {
             engine_audio::dsp_frame();
+            if let (Some(a), Some(w)) = (audio_sink.as_mut(), unsafe { (*std::ptr::addr_of_mut!(engine_audio::WAV)).as_mut() }) {
+                use std::io::Write;
+                let mut b = Vec::with_capacity(w.len() * 2);
+                for x in w.drain(..) {
+                    b.extend_from_slice(&x.to_le_bytes());
+                }
+                if let Err(er) = a.write_all(&b) {
+                    eprintln!("melee: --audio-out: {er}");
+                    audio_sink = None;
+                }
+            }
         }
         if std::env::var_os("MELEE_PAD_DBG").is_some() {
             let q = unsafe { &melee_runtime::tu::controller::HSD_PadGameStatus[0] };
             eprintln!("PADDBG tick {f} btn {:X} sx {} sy {} nx {} ny {}", q.button, q.stickX, q.stickY, q.nml_stickX, q.nml_stickY);
         }
-        if !shots.is_empty() {
+        if let Some((vw, vh)) = video_size.filter(|_| video.is_some() || !shots.is_empty()) {
+            // every frame drawn (the EFB copies later frames sample exist), widened like the window's renderer widescreen
+            let mut frame = melee_engine::gxbridge::take_frame();
+            if let Some(fr) = frame.as_mut() {
+                practice.decorate(fr);
+            }
+            let gv = view.get_or_insert_with(|| GoldenView::new(vw, vh));
+            if let Some(draws) = frame {
+                gv.draw(draws);
+            } else if shots.contains(&f) {
+                eprintln!("melee: frame {f}: no GX frame was finished (GXCopyDisp not reached); the last one is shown");
+            }
+            if let Some(v) = video.as_mut() {
+                if !v.capture(&mut gv.rd) {
+                    eprintln!("melee: --video-out: the sink closed at frame {f}; stopping");
+                    break;
+                }
+            }
+            if shots.contains(&f) {
+                let px = gv.rd.read_composed_size(vw, vh, &[]);
+                let path = shot_dir.join(format!("engine_{scenario}_{f:04}.png"));
+                match melee_platform::gfx::write_png_rgb(&path, vw, vh, &px) {
+                    Ok(()) => eprintln!("melee: frame {f}: -> {}", path.display()),
+                    Err(er) => eprintln!("melee: screenshot: {er}"),
+                }
+            }
+        } else if !shots.is_empty() {
             let mut frame = melee_engine::gxbridge::take_frame();
             if let Some(fr) = frame.as_mut().filter(|_| shots.contains(&f)) {
                 practice.decorate(fr);
@@ -1145,7 +1242,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
                         let rd = renderer.get_or_insert_with(|| melee_gx::render::Renderer::new(640, 480).expect("renderer"));
                         let px = rd.render(&melee_engine::gxbridge::shim().gx.state, &draws);
                         let path = shot_dir.join(format!("engine_{scenario}_{f:04}.png"));
-                        match melee_platform::gfx::write_png(&path, rd.width, rd.height, &px) {
+                        match melee_platform::gfx::write_png_rgb(&path, rd.width, rd.height, &px) {
                             Ok(()) => eprintln!("melee: frame {f}: {} draws -> {}", draws.len(), path.display()),
                             Err(er) => eprintln!("melee: screenshot: {er}"),
                         }
@@ -1216,6 +1313,16 @@ fn golden_engine(args: &[String]) -> ExitCode {
             Err(er) => eprintln!("melee: {p}: {er}"),
         }
     }
+    if let (Some(v), Some(gv)) = (video.take(), view.as_ref()) {
+        match v.finish(&gv.rd) {
+            Ok(n) => eprintln!("video-out: {n} frames"),
+            Err(er) => eprintln!("video-out: {er}"),
+        }
+    }
+    if let Some(mut a) = audio_sink.take() {
+        use std::io::Write;
+        let _ = a.flush();
+    }
     if audio {
         if let Some(p) = get("--audio-trace") {
             let t = melee_audio::sim::with(|s| s.trace.take()).flatten().unwrap_or_default();
@@ -1237,6 +1344,43 @@ fn golden_engine(args: &[String]) -> ExitCode {
         return ExitCode::FAILURE;
     }
     ExitCode::SUCCESS
+}
+
+/// The offscreen renderer of `golden --video-out` / `--video-size`: the EFB shaped to the video's content aspect, with
+/// the window's renderer-side widescreen (perspective draws widened by melee_gx::interp; presentation only).
+struct GoldenView {
+    rd: melee_gx::render::Renderer,
+    solver: melee_gx::interp::Solver,
+    widen: Option<melee_gx::interp::Widen>,
+}
+
+impl GoldenView {
+    fn new(w: u32, h: u32) -> Self {
+        let mut rd = melee_gx::render::Renderer::new(640, 480).expect("renderer");
+        // a replay's own widescreen code widens the camera itself: the renderer stays 4:3 then
+        let aspect = if melee_core::codes::replay_widescreen().is_some() { 4.0 / 3.0 } else { video_sink::content_aspect(w, h) };
+        let scale = melee_gx::render::Renderer::env_scale().unwrap_or_else(|| melee_gx::render::Renderer::scale_for_window_aspect(w, h, aspect));
+        rd.set_target(scale, aspect);
+        let widen = melee_gx::interp::Widen::for_aspect(aspect);
+        rd.fx_widen = widen.map_or(1.0, |x| x.factor);
+        GoldenView { rd, solver: melee_gx::interp::Solver::with_mode(Default::default()), widen }
+    }
+
+    fn draw(&mut self, draws: Vec<melee_gx::draw::DrawCmd>) {
+        let state = &melee_engine::gxbridge::shim().gx.state;
+        let fr = melee_gx::interp::Frame { draws, pose: None, packed: None };
+        self.rd.prepare(state, &fr.draws);
+        match self.widen {
+            Some(w) => {
+                self.solver.plan(None, &fr, true);
+                let solver = &mut self.solver;
+                let mut f = |i: usize, out: &mut [u8]| solver.patch(&fr, i, out, Some(w), false);
+                self.rd.draw_prepared(state, &fr.draws, Some(&mut f));
+            }
+            None => self.rd.draw_prepared(state, &fr.draws, None),
+        }
+        self.rd.forget(&fr.draws);
+    }
 }
 
 /// `melee golden`: the consolidated engine (step 19 removed the `vs_match` model: `--engine legacy` and the snapshot-resume flags are gone).

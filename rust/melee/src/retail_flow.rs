@@ -58,6 +58,9 @@ pub struct RetailPlay {
     /// (applied at the next present). Presentation only.
     pacing: Option<melee_platform::main_loop::Pacing>,
     video: Vec<(String, String)>,
+    /// `--video-out` (video_sink.rs): each tick's presented EFB, streamed as raw RGBA8; `vout_tick` is the last tick sent.
+    pub vout: Option<melee_gx::video::VideoOut>,
+    vout_tick: u64,
     iso: String,
     mods_dir: Option<String>,
     presets: Presets,
@@ -166,7 +169,7 @@ impl RetailPlay {
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, scene_tick: false, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
-            rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
+            rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(), vout: None, vout_tick: 0,
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
             envoy_fx: Default::default(),
@@ -285,7 +288,7 @@ impl RetailPlay {
         if !self.headless && melee_engine::arena::trim() && std::env::var_os("MELEE_GX_SYNC").is_none() {
             melee_engine::gxbridge::shim().gx.enable_async(melee_engine::arena::mark_foreign_thread);
             // screenshots show exactly their tick: take each frame when it is decoded
-            melee_engine::gxbridge::shim().wait_frame = self.shot_dir.is_some() && std::env::var_os("MELEE_SHOT_NOWAIT").is_none();
+            melee_engine::gxbridge::shim().wait_frame = (self.shot_dir.is_some() || self.vout.is_some()) && std::env::var_os("MELEE_SHOT_NOWAIT").is_none();
         }
         Ok(e)
     }
@@ -1285,7 +1288,7 @@ impl RetailPlay {
         // with UI mods the shot is the window as shown (window-space panels sit outside the EFB)
         let (w, h, px) = if self.ui.is_some() { p.screenshot_window() } else { (p.renderer.width, p.renderer.height, p.screenshot()) };
         let path = dir.join(format!("retail_{name}.png"));
-        match write_png(&path, w, h, &px) {
+        match melee_platform::gfx::write_png_rgb(&path, w, h, &px) {
             Ok(()) => log(&format!("screenshot {}", path.display())),
             Err(e) => log(&format!("screenshot: {e}")),
         }
@@ -1398,6 +1401,16 @@ impl RetailPlay {
         self.envoy_fx.present(&mut p.renderer, self.net.is_some(), self.ui.is_some());
         p.renderer.ui_tilt = self.menu_cam.update(self.ui.as_ref(), melee_gx::fx::intensity_from_env(self.net.is_some()));
         p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, packed, a);
+        // --video-out: one frame per tick (the present right after it, see `present_now`), the EFB as just drawn
+        if let Some(v) = self.vout.as_mut() {
+            if self.tick_no != self.vout_tick {
+                self.vout_tick = self.tick_no;
+                if !v.capture(&mut p.renderer) {
+                    log("video-out: the sink closed; stopping");
+                    self.quit = true;
+                }
+            }
+        }
         // MELEE_PRESENT_DUMP="TICK,N": the window as shown for N consecutive presents from tick TICK, in-between
         // (interpolated) presents included: present_<tick>_<k>_<alpha>.png in the shot dir (interpolation evidence)
         if let (Some(dir), Ok(v)) = (self.shot_dir.clone(), std::env::var("MELEE_PRESENT_DUMP")) {
@@ -1465,7 +1478,7 @@ impl Game for RetailPlay {
     }
 
     fn present_now(&self) -> bool {
-        self.shot_pending.is_some() || self.scene_tick
+        self.shot_pending.is_some() || self.scene_tick || self.vout.is_some()
     }
 
     fn take_hud_request(&mut self) -> Option<bool> {
@@ -1599,6 +1612,12 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
 impl Drop for RetailPlay {
     /// A window closed by hand still writes its `--record` replay.
     fn drop(&mut self) {
+        if let (Some(v), Some(p)) = (self.vout.take(), self.presenter.as_ref()) {
+            match v.finish(&p.renderer) {
+                Ok(n) => eprintln!("video-out: {n} frames"),
+                Err(e) => eprintln!("video-out: {e}"),
+            }
+        }
         if let Some(u) = self.ui.as_ref() {
             let (dc, fr) = self.presenter.as_ref().map_or((0, 0), |p| p.renderer.ui_stats());
             log(&format!("{}; renderer: {dc} UI draw calls over {fr} presents with UI", u.stats_line()));

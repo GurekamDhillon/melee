@@ -1439,7 +1439,8 @@ pub(crate) fn window_title(spec: Option<&str>) -> String {
 }
 
 const USAGE: &str = "usage: melee play --iso DISC.iso [--time-secs N | --stocks N] [--items OFF|LOW|..] [--teams] [--match a,b/cpu9,..,STAGE] [--quit-after-matches N] [--shots] [--shot-dir DIR] [--quit-at-results] [--max-frames N] [--skip-intro] [--headless] [--no-audio]
-       [--widescreen] [--fullscreen[=exclusive]] [--window WxH] [--render-scale N|auto] [--msaa N] [--vsync on|off] [--save-display]";
+       [--widescreen] [--fullscreen[=exclusive]] [--window WxH] [--render-scale N|auto] [--msaa N] [--vsync on|off] [--save-display]
+       [--video-out -|PATH [--video-size WxH] [--video-realtime]]";
 
 pub fn play(args: &[String]) -> ExitCode {
     // `--replay FILE`: the file's play options decide the boot (the command line's window options still apply)
@@ -1798,6 +1799,30 @@ pub fn play(args: &[String]) -> ExitCode {
         let quit_after = has("--quit-after-matches").then_some(game.quit_after).or(game.quit_at_results.then_some(1));
         let mut rp = crate::retail_flow::RetailPlay::new(game.iso.clone(), game.mods_dir.clone(), presets, has("--headless"), game.shot_dir.clone(), game.shot_ages.clone(), quit_after, game.max_frames);
         rp.skip_intro = game.skip_intro;
+        // `--video-out -|PATH [--video-size WxH] [--video-realtime]`: windowed runs only (the presenter's EFB is the
+        // source; MELEE_WINDOW_HIDDEN=1 keeps the window off screen). One frame per tick, scaled to the video size.
+        match crate::video_sink::opts(args) {
+            Ok(Some(v)) if has("--headless") => {
+                let _ = v;
+                eprintln!("play: --video-out needs a window (use MELEE_WINDOW_HIDDEN=1 instead of --headless)");
+                return ExitCode::from(2);
+            }
+            Ok(Some(v)) => match crate::video_sink::open(&v.path) {
+                Ok(sink) => {
+                    crate::video_sink::announce(v.w, v.h);
+                    rp.vout = Some(melee_gx::video::VideoOut::new(sink, v.w, v.h, v.realtime));
+                }
+                Err(e) => {
+                    eprintln!("play: --video-out {e}");
+                    return ExitCode::FAILURE;
+                }
+            },
+            Ok(None) => {}
+            Err(e) => {
+                eprintln!("play: {e}");
+                return ExitCode::from(2);
+            }
+        }
         rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
         rp.rollback_mode = rollback_mode;
         rp.hosted = hosted;

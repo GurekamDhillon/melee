@@ -591,6 +591,22 @@ impl Presenter {
 }
 
 /// Write RGBA8 pixels as a PNG.
+/// [`write_png`] without the alpha channel: RGB8. The EFB's alpha is not the display's, and viewers show an RGBA
+/// shot with alpha 0 as blank.
+pub fn write_png_rgb(path: &std::path::Path, width: u32, height: u32, rgba: &[u8]) -> Result<(), String> {
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    }
+    let rgb: Vec<u8> = rgba.chunks_exact(4).flat_map(|p| [p[0], p[1], p[2]]).collect();
+    let f = std::fs::File::create(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    let mut e = png::Encoder::new(std::io::BufWriter::new(f), width, height);
+    e.set_color(png::ColorType::Rgb);
+    e.set_depth(png::BitDepth::Eight);
+    e.write_header()
+        .and_then(|mut w| w.write_image_data(&rgb))
+        .map_err(|e| format!("{}: {e}", path.display()))
+}
+
 pub fn write_png(path: &std::path::Path, width: u32, height: u32, rgba: &[u8]) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;

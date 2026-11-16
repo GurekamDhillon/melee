@@ -32,6 +32,7 @@ pub mod tex_override;
 pub mod texture;
 pub mod ui;
 pub mod vfx;
+pub mod video;
 pub mod ui_font;
 
 pub use api::{Gx, GxColor, GxLightObj};

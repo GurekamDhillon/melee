@@ -774,7 +774,9 @@ pub unsafe fn gm_GetFFAOutcome() -> MatchOutcome {
             }
         }
 
-        if eliminated_players >= player_count - 1 {
+        // a solo Subspace map (explore::solo): the one player plays on until their own lives are gone
+        let last = if player_count == 1 && crate::tu::explore::solo() { player_count } else { player_count - 1 };
+        if eliminated_players >= last {
             return OUTCOME_ELIMINATION;
         }
     }
@@ -835,7 +837,8 @@ pub unsafe fn gm_GetTeamBattleOutcome() -> MatchOutcome {
                 eliminated_team_count += 1;
             }
         }
-        if eliminated_team_count >= team_count - 1 {
+        let last = if team_count == 1 && crate::tu::explore::solo() { team_count } else { team_count - 1 };
+        if eliminated_team_count >= last {
             return OUTCOME_TEAM_ELIMINATION;
         }
     }

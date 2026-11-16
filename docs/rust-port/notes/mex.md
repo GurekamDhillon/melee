@@ -107,7 +107,7 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   `ftData_80085CD8` inside the not-SkipAnim branch: fp+0x23EC = (arg3 != NULL), i.e. "this motion is a thrown pose".
   `ftAnim_8006FE08` / `ftAnim_8006F954` take the remap path on that flag (not on kind != author kind, so a same-kind
   throw remaps too); `ftAnim_8006F628` takes the internal count (unmasked) as its author kind when it is set.
-  The engine keeps the flag beside the fighter (`MEX_THROWN`, keyed by the Fighter address; not in a savestate).
+  The engine kept the flag in a side table keyed by the Fighter address (not in a savestate); Round 6 moved it.
 - The author kinds index PlCo's own tables (the disc's internal kinds), now kept as `hooks::FT_PARTS_TABLE_RAW` /
   `FIGHTER_804D6540_RAW`. Index "count" is a real table: on Akaneia (41/41) the Dolphin probe at ftPartsRemap
   (Tails 230702, slippi 336) reads `ftPartsTable[41]`, distinct from every fighter's. Akaneia's Tails file 230702
@@ -125,6 +125,19 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
   path. `MELEE_CPU_TRACE=1` lists every CPU command push (engine frame = slippi + 123) to line up with such probes.
   The Dolphin push hooks log the JIT block's registers, so their argument registers are only right where the logged
   lr is the call's own return address.
+
+### Round 6 (Nov 16): rollback safety, retail uninitialised stick
+
+- The thrown flag (m-ex fp+0x23EC, one word past the retail Fighter) now lives where m-ex keeps it: past the fighter.
+  On the m-ex discs `Fighter_800679B0` sizes the fighter pool `size_of::<Fighter>() + 8` and the flag is the word after
+  the native struct, so it is arena memory and rides savestates and rollback. Vanilla discs keep the old pool size.
+  The word is reached through the gobj's `user_data` (the allocation pointer) with volatile access: the first try,
+  through a pointer cast from `&Fighter`, had its store dropped by the optimiser (outside the reference's bytes), so
+  the remap never ran and ACE 2.0.1 Kirby vs Falcon panicked "atree data error" at the first throw.
+- Proof (synctest, 3000 frames, depths 4 and 7, with a temporary set/read trace): ACE 2.0.1 `mex_ace_cpu` 0
+  mismatches with 25 / 40 thrown-flag reads true; Akaneia (ck:17 vs ck:2 on FD, a scratch scenario
+  row; `stage_21_akaneia` crashes at boot in `Ground_EnableMatchCamera` in synctest, unrelated) 0 mismatches with
+  45 / 72 thrown sets. `MELEE_SCENARIO_TSV` must point at the coverage tsv when not run from the worktree.
 
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 

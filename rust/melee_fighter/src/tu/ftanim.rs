@@ -775,31 +775,53 @@ fn mex_remap_family() -> bool { melee_core::codes::disc_writes(0x8006_FD08, 0x83
 
 fn mex_count(c: &core::sync::atomic::AtomicU32) -> i32 { c.load(core::sync::atomic::Ordering::Relaxed) as i32 }
 
-/// fp+0x23EC (past the retail Fighter): kept beside the fighter, keyed by its address.
-static mut MEX_THROWN: [(usize, bool); 16] = [(0, false); 16];
+/// fp+0x23EC (just past the retail Fighter, GC size 0x23EC): m-ex keeps the flag in an extension of the fighter block.
+/// The port does the same: on the m-ex discs the fighter allocator hands out `size_of::<Fighter>() + MEX_FT_EXT` bytes
+/// and the flag is the first word past the native struct, so it lives in the arena and rides savestates/rollback.
+pub const MEX_FT_EXT: usize = 8;
+
+/// Extra bytes the fighter allocator adds (`Fighter_800679B0`); 0 off the m-ex discs so vanilla layout is unchanged.
+/// Remembered so the flag is only touched when the live allocator really carries the extension.
+pub fn mex_ft_ext_bytes() -> usize {
+    let n = if mex_remap_family() { MEX_FT_EXT } else { 0 };
+    MEX_FT_EXT_LIVE.store(n != 0, core::sync::atomic::Ordering::Relaxed);
+    n
+}
+
+static MEX_FT_EXT_LIVE: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
+fn mex_ext_live() -> bool { MEX_FT_EXT_LIVE.load(core::sync::atomic::Ordering::Relaxed) }
+
+/// Reached through the gobj's user_data (the allocation's own pointer), not through `&Fighter`: a pointer derived from
+/// the reference may only touch the struct's bytes, and the optimiser dropped the store past them (seen on ACE 2.0.1).
+#[inline]
+fn mex_ext(fp: &Fighter) -> *mut u32 {
+    unsafe {
+        let base = if fp.gobj.is_null() { fp as *const Fighter as *mut u8 } else { (*fp.gobj).user_data as *mut u8 };
+        core::ptr::read_volatile(&base).add(core::mem::size_of::<Fighter>()) as *mut u32
+    }
+}
+
+/// Clears the extension of a fresh fighter block (`Fighter_Create`, beside the Slippi zeroing).
+pub fn mex_ext_clear(fp: *mut Fighter) {
+    if mex_ext_live() {
+        unsafe { core::ptr::write_bytes((fp as *mut u8).add(core::mem::size_of::<Fighter>()), 0, MEX_FT_EXT) }
+    }
+}
 
 /// `Fighter_ChangeMotionState`'s m-ex store (C2 0x80069CE0); a no-op off the m-ex discs.
 pub fn mex_set_thrown(fp: &Fighter, on: bool) {
     if !mex_remap_family() {
         return;
     }
-    let key = fp as *const Fighter as usize;
-    unsafe {
-        let t = &mut *core::ptr::addr_of_mut!(MEX_THROWN);
-        if let Some(e) = t.iter_mut().find(|e| e.0 == key) {
-            e.1 = on;
-        } else if on {
-            if let Some(e) = t.iter_mut().find(|e| e.0 == 0 || !e.1) {
-                *e = (key, true);
-            }
-        }
+    debug_assert!(mex_ext_live(), "m-ex fighter extension missing");
+    if !mex_ext_live() {
+        return;
     }
+    unsafe { core::ptr::write_volatile(mex_ext(fp), on as u32) }
 }
 
-fn mex_thrown(fp: &Fighter) -> bool {
-    let key = fp as *const Fighter as usize;
-    unsafe { (*core::ptr::addr_of!(MEX_THROWN)).iter().any(|e| e.0 == key && e.1) }
-}
+fn mex_thrown(fp: &Fighter) -> bool { mex_ext_live() && unsafe { core::ptr::read_volatile(mex_ext(fp)) } != 0 }
 
 /// Which branch `ftAnim_8006FE08` / `ftAnim_8006F954` take.
 unsafe fn remap_path(fp: &Fighter) -> bool {

@@ -522,7 +522,7 @@ macro_rules! bits {
 /// `Fighter_800679B0`: allocators, PlCo load, per-kind init hooks.
 pub unsafe fn Fighter_800679B0() {
     melee_core::ct!("Fighter_800679B0");
-    ext::HSD_ObjAllocInit(&mut fighter_alloc_data, core::mem::size_of::<Fighter>() as u32, 4);
+    ext::HSD_ObjAllocInit(&mut fighter_alloc_data, (core::mem::size_of::<Fighter>() + crate::tu::ftanim::mex_ft_ext_bytes()) as u32, 4);
     ext::HSD_ObjAllocInit(&mut fighter_dat_attrs_alloc_data, 0x424, 4);
     ext::ftData_MexInitKinds();
     ext::GenoDefine_InitKinds();
@@ -1144,6 +1144,7 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     ext::GObj_SetupGXLink(g, Some(crate::tu::ftdrawcommon::ftDrawCommon_80080E18), 5, 0);
     let fp = ext::HSD_ObjAlloc(&mut fighter_alloc_data) as F;
     core::ptr::write_bytes(fp, 0, 1); // TARGET_PC: Slippi's Init Player Data zeroes the block
+    crate::tu::ftanim::mex_ext_clear(fp);
     (*fp).dat_attrs_backup = ext::HSD_ObjAlloc(&mut fighter_dat_attrs_alloc_data) as _;
     ext::GObj_InitUserData(g, 4, Some(Fighter_Unload_8006DABC), fp as *mut core::ffi::c_void);
     ph!("data 8008572C", ext::ftData_8008572C(input.internal_id as i32));

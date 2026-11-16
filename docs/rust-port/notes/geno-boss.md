@@ -512,8 +512,14 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
 - Same pattern: his boss archive (080001) holds the lake shore model (`080vAdvJungle01`), one world floor line and
   StagePosition; `explore::arena_secs` maps "rayquaza" to it.
 - Every stage model of a boss arena is drawn (the archive's `<3 digits>v...` MDL0s): Rayquaza's water (`080vmizu00`)
-  with the shore. Drawn static and opaque: its SRT scroll and blending are not applied [L], so the water reads as a
-  dark sparkle sheet. None of the four archives has a sky model; the sky is the clear colour.
+  with the shore. Its material blends (source alpha over the scene, an intensity texture as alpha), which the static
+  drawer applies from the MDL0's blend register; what shows through is the clear colour, as the archive has no sky
+  model (its SRT0 list names one, `st080vsky00`, found in no stage file here). The water's SRT0 scroll is not played
+  [L]: no SRT0 reader exists yet (keyframe tables plus a texture matrix per batch in the drawer).
+- Duon: his boss archive (350001) gives the Halberd's deck outside (`350vAdvHalberdOut_Chikei` terrain and `_Enkei`
+  distant view), its world collision (13 lines, two world objects) and StagePosition.
 - Galleom: his boss archive (240101) gives the wilds model (`241vAdvWild01`), one world floor and StagePosition.
 - Gate: `tools/rust-port/gate.sh` (and snapguard) run `GATE_EXE`, else `$CARGO_TARGET_DIR/<profile>/melee.exe`, else
   `build/cargo/<profile>/melee.exe`, so a private target dir needs no copied exe.
+- Arena textures are queued for upload at the stage load (`explore::preload_arena_textures`, as the GD stages'
+  `preload_textures`): without it Duon's fifth frame uploaded the Halberd's textures at once (one 32 ms frame).

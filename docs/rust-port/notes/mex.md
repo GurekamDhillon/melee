@@ -165,6 +165,18 @@ older build). `melee mexid` now also lists the stage table (`stage=ext:N` -> grk
 - Not done this round: Liu Kang frame-112 rand order (item 4) and the Meta Knight multi-table `build_move_table`
   (item 5).
 
+### Round 7 (Nov 16)
+
+- `stage_21_akaneia` boot crash is not an engine bug. `stage=ext:21` is grkind 26, an unused retail slot:
+  `stage_datas[26]` is null on every disc (Akaneia's `melee mexid` row: `stage 21 grkind 26 -`). Retail
+  `Ground_801C0754` (0x801C0754) has no null check: it loads `stage_datas[kind]->data1` (lwz 8(r30) with r30 = 0) and
+  calls `grDatFiles_801C6038` with garbage; the port returns early, so `stage_info.param` stays null and
+  `Ground_EnableMatchCamera` reads `param->x4C`. The coverage row was a vanilla stage-sweep row (the C build fails the
+  same way, coverage.md). Renamed to `stage_288_akaneia` on `stage=ext:288` (GrOPc, an Akaneia m-ex stage).
+  That row now stops at `grOldPupupu_80211110` (`__assert: line 1366: archive` in `grAnime_801C8138`); 289 (GrOHy)
+  does the same and 290 (GrOSf) faults: Akaneia's added stages carry grFunction blobs, which are still not run (only
+  the clone base's retail handlers run, see round 2). That is the next stage item, not a boot-order bug.
+
 ## Guest-code bridge notes (ACE crash fixes, Nov 13)
 
 - Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline

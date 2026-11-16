@@ -48,7 +48,7 @@ stage_17_greens	PASS	3601	3601	-
 stage_18_fourside	PASS	3601	3601	-
 stage_19_mushroomkingdom	PASS	3601	3601	-
 stage_20_mushroomkingdom2	PASS	3601	3601	-
-stage_21_akaneia	NO_GOLDEN	0	0	-
+stage_288_akaneia	NO_GOLDEN	0	0	-
 stage_22_venom	PASS	3601	3601	-
 stage_23_pokefloats	FAIL	736	3601	frame 736: differs in hash, seed, s2     hash     golden FBAF04E1  candidate F7456F40 
 stage_24_bigblue	PASS	3601	3601	-

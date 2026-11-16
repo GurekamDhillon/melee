@@ -404,13 +404,13 @@
    "kind": "vs",
    "note": "peach vs roy"
   },
-  "stage_21_akaneia": {
+  "stage_288_akaneia": {
    "group": "stages",
-   "scene": "mode=vs;at=match;p1=ck:17/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:21;match=time;minutes=0;items=off",
+   "scene": "mode=vs;at=match;p1=ck:17/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:288;match=time;minutes=0;items=off",
    "pad": "coverage/pads/idle_3600.lua",
    "frames": 3600,
    "kind": "vs",
-   "note": "yoshi vs fox"
+   "note": "yoshi vs fox on an Akaneia m-ex stage (GrOPc); ext:21 is an unused slot (null stage_datas[26]) on every disc"
   },
   "stage_22_venom": {
    "group": "stages",
@@ -1859,7 +1859,7 @@
    "human_pichu_flatzone",
    "human_zelda_garden",
    "items_hi3_yoshiisland",
-   "stage_21_akaneia"
+   "stage_288_akaneia"
   ],
   "2": [
    "human_dk_onett",

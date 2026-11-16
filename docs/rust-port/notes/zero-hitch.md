@@ -661,3 +661,47 @@ triangles), the first draw's upload lands in the same present, and 3 pipelines c
 staying in the warm list). Next steps for that lane: upload the map's textures before the match (they are known
 when the map is loaded at boot; needs a pre-upload entry on the renderer keyed like `tex_key`), draw the map as a
 retained mesh, and find why its first tick runs two logic frames.
+
+## Netplay scene-entry ticks (2026-11-16, port/vanilla-zerolag; light-slot runs, `_build/.../npperf.sh`)
+
+### The test was not repeatable
+The css test's results presses were START; they outlast the results, and one that reached the stage select picked
+the stage under the cursor (Random). Match 2 landed on a different stage each run (stages 5, 7, 14, 29, 30 in the
+last five logs), so "match-2 start" measured a different, never-cached stage every time. `MELEE_NP_SCRIPT_NO_START`
+(set only by css_pair.sh) now also drops START from the local pad on the SSS, before it is sent and recorded (both
+peers and the replay see the same inputs); the scripts pick with A. Three runs since: stage 36 in both matches,
+hashes equal, replay equal. (A instead of START on the results does not work: A does not leave the results.)
+
+### Numbers (tick ms, host, light slot held; before = the old test at 78ba17ccf as briefed, after = fixed stage)
+| frame | before (random stage 2) | after run 1 | after run 2 |
+|---|---|---|---|
+| match-2 start (VS setup tick) | 21-24 | 7.8 | 12.4 (frame work 19: + draw 4.9, texture upload 2.2) |
+| CSS re-entry | 12-17 | 11.7 | 12.1 |
+| results (both) | ~12 | 9.6 / 9.7 | 10.0 / 11.3 |
+| frames over 16 ms | 4 | 0 | 1 (the match-2 start frame, by draw + upload, not by tick) |
+With the stage repeatable the earlier 21-24 ms is gone: it was the cost of a stage first seen in that run.
+
+### Where the time goes (new spans: `scene change: ...` in `Engine::tick_modes`, `slow proc` in `HSD_GObj_RunProcs`)
+- **Results (10 ms)**: previous scene end 0.75, OnEnter 3.0 (archive 0.8, fighters 1.2), then the results' FIRST
+  FRAME 5.8 ms. No single GObj proc in that frame reaches 0.3 ms (`slow proc` events, named by
+  `tools/rust-port/perf/procsym.py PROFILE.jsonl <target>/melee.exe`), and the render pass is 0.5: the 5.8 ms is
+  spread over many procs (first-frame setup of the results' fighters and HUD). Next: a lower `slow_proc` threshold
+  for that one tick, or the sampler (`MELEE_SAMPLE`) on a results-loop run.
+- **CSS re-entry (12 ms)**: OnEnter 6.5 (MnSlChr 3.7 MB and MnExtAll 1.3 MB are already plan HITS, 1.2 + 1.8 ms
+  apply; the rest is the CSS building its GObjs: the 15k allocations), first frame 5.2 (the picks' 8 fighter files
+  re-read for the preload, 1.3 ms of reads, PlMrAJ/PlFxAJ 0.9 of it; the rest spread over procs). Prefetching the
+  CSS files would gain nothing: the two big ones already hit.
+- **Match-2 start**: OnEnter 7.2 (players create 4.1: fighter create 2.5 + 1.4), first frame 3.9, then the frame's
+  draw 4.9 and texture upload 2.2 make the only over-16 frame.
+
+### Page faults of the plan applies: the snapshots' write watch
+Same replay (s1, Battlefield both matches), game-thread faults counted by `MELEE_FAULT_WATCH=1` over the 29 applies:
+| run | game-thread faults | in the arena |
+|---|---|---|
+| netplay host (snapshots every frame) | 5923 | 3722 (up to 431 in one apply) |
+| `melee play --replay` offline, no snapshots | 2277 | **0** |
+The arena faults exist only with snapshots: the arena is MEM_WRITE_WATCH and the per-frame `GetWriteWatch` reset
+makes the first write to each page after it fault again (soft). Not standby trimming, not copy-on-write. A fix
+must touch the pages after the frame's reset and before the apply, off the game thread: e.g. the worker does a
+`lock xadd 0` on one byte per page of the blocks the plan will land in (same value, coherent on x86) in the tick
+it is applied. Not done in this round; ~0.5 ms at most per apply.

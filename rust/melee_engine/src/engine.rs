@@ -921,8 +921,9 @@ impl Engine {
         let _scope = crate::arena::GameScope::enter();
         unsafe {
             let Some(run) = self.run.take() else { return false };
-            gmscene::gm_801A4D34_end();
-            gm_1A3F::gm_801A4014_leave(run);
+            // zero-hitch spans of a scene change (frameprof, logged when slow; no behaviour change)
+            { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: previous scene end"); gmscene::gm_801A4D34_end(); }
+            { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: previous scene leave (OnLeave, heap reset)"); gm_1A3F::gm_801A4014_leave(run); }
             let sm = &raw mut gm_1A3F::state_machine;
             // runGameMode: an override scene (lbCardGame_DecideGameMode -> GM_MEMCARD) restores the routing after it
             if core::mem::take(&mut OVERRIDE_ACTIVE) && !gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
@@ -952,6 +953,7 @@ impl Engine {
             // runGameMode's scene loop: `get_override` (bootOnLeave sets lbCardGame_DecideGameMode) may run another
             // mode's scene first, e.g. the memory-card scene when the card changed
             let over = match (*sm).get_override { Some(f) => f(), None => melee_types::GM_COUNT as u8 };
+            let _zh_enter = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: next scene enter (OnEnter)");
             let run = if over != melee_types::GM_COUNT as u8 {
                 (*sm).backup_routing = (*sm).routing;
                 (*sm).pending_mode_change = 0;
@@ -964,6 +966,7 @@ impl Engine {
                 gm_1A3F::gm_801A4014_enter(LOOP_MODE)
             };
             gmscene::gm_801A4D34_begin(run.info);
+            drop(_zh_enter);
             self.frames = 0;
             self.info = run.info;
             self.on_frame = run.frame_fn;
@@ -976,6 +979,7 @@ impl Engine {
         // (the retail flow's timing, ENTRY_RUNS_FRAME; the 1P coverage runs keep the entry-only tick they were matched with)
         drop(_scope);
         if unsafe { ENTRY_RUNS_FRAME } {
+            let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: next scene first frame");
             self.tick();
         }
         true

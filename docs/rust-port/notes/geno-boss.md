@@ -510,7 +510,10 @@ member's frame). Without a channel a bone keeps its MDL0 visible flag.
 ## Rayquaza arena (2026-11-15, port/boss-arena-porky)
 
 - Same pattern: his boss archive (080001) holds the lake shore model (`080vAdvJungle01`), one world floor line and
-  StagePosition; `explore::arena_secs` maps "rayquaza" to it. The archive's water model is not drawn and there is no
-  sky model, so the lake's middle and the sky show the clear colour [L].
+  StagePosition; `explore::arena_secs` maps "rayquaza" to it.
+- Every stage model of a boss arena is drawn (the archive's `<3 digits>v...` MDL0s): Rayquaza's water (`080vmizu00`)
+  with the shore. Drawn static and opaque: its SRT scroll and blending are not applied [L], so the water reads as a
+  dark sparkle sheet. None of the four archives has a sky model; the sky is the clear colour.
+- Galleom: his boss archive (240101) gives the wilds model (`241vAdvWild01`), one world floor and StagePosition.
 - Gate: `tools/rust-port/gate.sh` (and snapguard) run `GATE_EXE`, else `$CARGO_TARGET_DIR/<profile>/melee.exe`, else
   `build/cargo/<profile>/melee.exe`, so a private target dir needs no copied exe.

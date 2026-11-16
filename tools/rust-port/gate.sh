@@ -3,6 +3,7 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 # The consolidation gate (docs/rust-port/notes/consolidation.md section 4). Run from anywhere; needs GW_ISO_VANILLA
 # (the workspace .env, never printed) and, for the diff part, C snapshots (tools/rust-port/snap/dump.sh).
 #   [PROFILE=fast] bash tools/rust-port/gate.sh [--engine legacy] [--update-progress] [--skip-build] [--scenarios a,b]
+#   GATE_EXE: the exe to test (else $CARGO_TARGET_DIR/<profile>/melee.exe, else build/cargo/<profile>/melee.exe).
 #   PROFILE (default release): cargo profile of the exe under test; `fast` builds through cargo_fast.sh (notes/fastbuild.md).
 # Checks (any failure exits non-zero):
 #   1. each golden scenario matches its CSV from frame 0 for at least the count recorded for the engine in
@@ -36,8 +37,11 @@ export MELEE_WINDOW_UNFOCUSED=1
 case "$engine" in tu) ;; legacy) echo "gate: the legacy model was removed (consolidation step 19)" >&2; exit 2 ;; *) echo "gate: unknown engine '$engine' (tu)" >&2; exit 2 ;; esac
 profile="${PROFILE:-release}"
 case "$profile" in release|fast|perf) ;; *) echo "gate: unknown PROFILE '$profile' (release|fast|perf)" >&2; exit 2 ;; esac
-exe="$repo/build/cargo/$profile/melee.exe"
+# the exe under test: GATE_EXE, else the cargo target dir's (CARGO_TARGET_DIR honoured, as the build step uses it)
+tdir="${CARGO_TARGET_DIR:-$repo/build/cargo}"
+exe="${GATE_EXE:-$tdir/$profile/melee.exe}"
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
+export GATE_EXE="$exe"   # snapguard and the rest run the same exe
 tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
 fail=0
 if [ $build = 1 ]; then

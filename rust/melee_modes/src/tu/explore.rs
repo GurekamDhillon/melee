@@ -34,8 +34,8 @@ struct SecDef {
     /// a main section's way on (a GDOR door id): it leads to the next main section's entry, or past the last one to
     /// the level's next story step (`STORY`). 0: the level-exit block's (GMSJ) door, else none.
     exit: u32,
-    /// only the collision files whose objects are all world objects (no bone): a boss arena whose archive also holds
-    /// the boss's own carried surface (Porky's, geno_boss_coll), which is not the stage
+    /// only the collision files at the archive's stage level: a boss arena whose archive also holds the boss's own
+    /// carried surface (Porky's, geno_boss_coll) inside his character file, which is not the stage
     world_coll: bool,
 }
 
@@ -75,12 +75,16 @@ const ARENA_SECS: [SecDef; 1] = [sec("030101.pac", 0.0, 0.0, "030vAdvStadium", 0
 /// Porky's fight stage (SSE 090101, his boss archive): the ruined zoo's model, its one world floor, its stage position
 /// model (camera limit, blast zones, player spots). The archive's other collision file is his own top (bone-carried).
 const PORKY_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("090101.pac", 0.0, 0.0, "091vAdvZoo01", 0, 0) }];
+/// Rayquaza's fight stage (SSE 080001, his boss archive): the lake's shore model, its one world floor and its stage
+/// position model. The archive's water model is not drawn [L].
+const RAYQUAZA_SECS: [SecDef; 1] = [SecDef { world_coll: true, ..sec("080001.pac", 0.0, 0.0, "080vAdvJungle01", 0, 0) }];
 
 /// The arena of the process's boss (fixed per process: the VS boss, else Envoy's Petey), if it has one.
 fn arena_secs() -> Option<&'static [SecDef]> {
     match crate::tu::petey::boss_name() {
         "petey" => Some(&ARENA_SECS),
         "porky" => Some(&PORKY_SECS),
+        "rayquaza" => Some(&RAYQUAZA_SECS),
         _ => None,
     }
 }
@@ -476,7 +480,9 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         let colls = if objects {
             vec![]
         } else if s.world_coll {
-            colls.into_iter().filter(|c| (0..be16(c, 4) as usize).all(|k| be16(c, be32(c, 0x10) as usize + 0x6C * k + 0x2A) == 0xFFFF)).collect()
+            // the stage's own collision sits at the archive's stage level (a two-step ARC path); a file deeper down
+            // belongs to a character archive inside it (the boss's carried surface)
+            leaves.iter().zip(tags.iter()).filter(|(d, t)| t.len() == 2 && is_coll(d)).map(|(d, _)| d).collect()
         } else {
             colls
         };

@@ -231,6 +231,8 @@ pub const REQ_BRACKET_AUTO: i32 = 18;
 pub const REQ_BRACKET_STAGE: i32 = 19;
 pub const REQ_BRACKET_EVENTS: i32 = 20;
 pub const REQ_BRACKET_MOCK_STEP: i32 = 21;
+/// what the Brackets screens show: "0" nothing, "1" the main menu (badge), "2" home, "3" the set flow
+pub const REQ_BRACKET_WATCH: i32 = 22;
 pub const REQ_MAX_ARG: u32 = 256;
 pub const REQ_MAX_PENDING: usize = 8;
 
@@ -1418,7 +1420,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if !feat(&c, FEATURE_UI_HOST) {
             return GD_ECAP;
         }
-        if !(REQ_LAUNCH..=REQ_BRACKET_MOCK_STEP).contains(&op) || len > REQ_MAX_ARG {
+        if !(REQ_LAUNCH..=REQ_BRACKET_WATCH).contains(&op) || len > REQ_MAX_ARG {
             return GD_EINVAL;
         }
         let Some(arg) = read_str(&c, s, len) else { return GD_EINVAL };

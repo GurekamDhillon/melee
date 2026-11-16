@@ -22,6 +22,7 @@
 //! requests answer "not available yet" (see `stub`).
 
 pub mod http;
+pub mod ingame;
 pub mod mock;
 
 use autobracket_proto as proto;
@@ -137,6 +138,11 @@ fn write_private(p: &Path, data: &[u8]) -> std::io::Result<()> {
     Ok(())
 }
 
+/// A key exists already (the player has opened Brackets before): the main menu may poll the badge.
+pub fn have_key() -> bool {
+    dir().join("client.key").is_file()
+}
+
 pub fn fingerprint(sk: &proto::SigningKey) -> String {
     let h = proto::hex(&sk.verifying_key().to_bytes());
     format!("{} {} {} {}", &h[0..4], &h[4..8], &h[8..12], &h[12..16])
@@ -235,6 +241,41 @@ pub struct Status {
     pub error: bool,
 }
 
+/// What the screens watch (BRACKET_WATCH): the worker polls only for that, and nothing while 0.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Watch {
+    #[default]
+    None,
+    /// the main menu: the badge (ETag / 304), every 10 s
+    Menu,
+    /// Brackets home: /v1/me/home every 3 s (and the badge with it)
+    Home,
+    /// the set flow: /v1/sets/{e}/{s}/flow every second
+    Set,
+}
+
+/// A screen's action, done in order by the worker.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Act {
+    Link(String),
+    /// ready for the home screen's called set
+    Ready,
+    /// a strike / ban / pick of the pool's stage at this index (the turn says which)
+    Stage(usize),
+}
+
+/// The in-game records (brackets-ui.md shapes), built on the worker from the server's answers.
+#[derive(Clone, Debug, Default)]
+pub struct InGame {
+    pub tag: String,
+    pub badge: bool,
+    pub next: Vec<String>,
+    pub events: Vec<Vec<String>>,
+    pub set: Vec<String>,
+    /// the last action's answer (error?, text), taken once by the screen
+    pub said: Option<(bool, String)>,
+}
+
 #[derive(Default)]
 struct Shared {
     quit: bool,
@@ -244,6 +285,9 @@ struct Shared {
     queue: Vec<Item>,
     ver: u64,
     busy: bool,
+    watch: Watch,
+    acts: Vec<Act>,
+    ig: InGame,
 }
 
 pub struct Service {
@@ -264,7 +308,7 @@ impl Service {
                 (None, String::new())
             }
         };
-        let w = Worker { sh: sh.clone(), origin: o, dir: dir(), key: None, build: String::new() };
+        let w = Worker { sh: sh.clone(), origin: o, dir: dir(), key: None, build: String::new(), poll: Poll::default() };
         let th = std::thread::Builder::new().name("bracket".into()).spawn(move || w.run()).ok();
         log(&format!("service started (server {server}, auto-upload {})", if auto_upload() { "on" } else { "off" }));
         Service { sh, th, seen: u64::MAX, server }
@@ -297,13 +341,28 @@ impl Service {
     }
 
     /// The lists when they changed since the last call: `None` when unchanged or the worker holds the lock.
-    pub fn view(&mut self) -> Option<(Status, Vec<Item>)> {
-        let g = self.sh.0.try_lock().ok()?;
+    pub fn view(&mut self) -> Option<(Status, Vec<Item>, InGame)> {
+        let mut g = self.sh.0.try_lock().ok()?;
         if g.ver == self.seen {
             return None;
         }
         self.seen = g.ver;
-        Some((g.status.clone(), g.queue.clone()))
+        let ig = g.ig.clone();
+        g.ig.said = None;
+        Some((g.status.clone(), g.queue.clone(), ig))
+    }
+
+    /// What the screens show now (the worker polls for it).
+    pub fn watch(&self, w: Watch) {
+        let same = self.sh.0.try_lock().is_ok_and(|g| g.watch == w);
+        if !same {
+            self.poke(|s| s.watch = w);
+        }
+    }
+
+    /// A screen's action (link, ready, a stage move): the worker does it next.
+    pub fn act(&self, a: Act) {
+        self.poke(|s| s.acts.push(a));
     }
 
     /// Wait (not on the game thread: at the end of a run) until nothing due is left or `limit` passed.
@@ -349,6 +408,24 @@ struct Worker {
     dir: PathBuf,
     key: Option<proto::SigningKey>,
     build: String,
+    poll: Poll,
+}
+
+/// The worker's in-game polling state.
+#[derive(Default)]
+struct Poll {
+    me_at: Option<std::time::Instant>,
+    badge_at: Option<std::time::Instant>,
+    home_at: Option<std::time::Instant>,
+    flow_at: Option<std::time::Instant>,
+    etag: String,
+    /// the called set from the last home answer: (event, set, game)
+    set: Option<(i64, u32, u32)>,
+    /// the home action's words for the next set ("Losers round 1 vs Hbox, in about 5 min")
+    after: String,
+    flow: Option<crate::cosmetics_import::Json>,
+    games_seen: usize,
+    result_until: Option<std::time::Instant>,
 }
 
 /// What the server's answer to `GET /v1/me/next` means for an upload.
@@ -437,6 +514,11 @@ impl Worker {
                 self.probe();
             }
             let mut wait = 30i64;
+            let acts = std::mem::take(&mut self.lock().acts);
+            for a in acts {
+                self.act(a);
+            }
+            wait = wait.min(self.poll_ingame());
             if auto_upload() {
                 while let Some(i) = self.due() {
                     if self.lock().quit {
@@ -445,14 +527,14 @@ impl Worker {
                     self.upload(i);
                 }
                 if let Some(n) = self.lock().queue.iter().filter(|t| t.state == St::Queued).map(|t| t.next_try).min() {
-                    wait = (n - now()).clamp(1, 30);
+                    wait = wait.min((n - now()).clamp(1, 30));
                 }
             }
             let (m, cv) = &*self.sh;
             let mut g = m.lock().unwrap_or_else(|e| e.into_inner());
             g.busy = false;
             if !g.wake && !g.quit {
-                g = cv.wait_timeout(g, Duration::from_secs(wait as u64)).map(|r| r.0).unwrap_or_else(|e| e.into_inner().0);
+                g = cv.wait_timeout(g, Duration::from_millis(wait.max(0) as u64 * 1000 + if wait == 0 { 250 } else { 0 })).map(|r| r.0).unwrap_or_else(|e| e.into_inner().0);
             }
             drop(g);
         }
@@ -509,6 +591,164 @@ impl Worker {
         log(&format!("server {}: {}", o.base(), if ok { "reachable".to_string() } else { server_error(&r) }));
     }
 
+    fn said(&self, err: bool, m: String) {
+        log(&m);
+        let mut g = self.lock();
+        g.ig.said = Some((err, m));
+        g.ver += 1;
+    }
+
+    fn get_json(&mut self, path: &str) -> Result<crate::cosmetics_import::Json, String> {
+        let r = self.call("GET", path, b"", &[], false);
+        if r.status != 200 {
+            return Err(server_error(&r));
+        }
+        ingame::parse(&r.body).ok_or_else(|| format!("unexpected answer to {path}"))
+    }
+
+    fn post_json(&mut self, path: &str, body: &str) -> Result<Vec<u8>, String> {
+        let r = self.call("POST", path, body.as_bytes(), &[("content-type", "application/json".into())], false);
+        if (200..300).contains(&r.status) { Ok(r.body) } else { Err(server_error(&r)) }
+    }
+
+    /// A screen's action (in order): link, ready, a stage move. Each answer goes to the screen's status line, and the
+    /// state it changed is polled again at once.
+    fn act(&mut self, a: Act) {
+        match a {
+            Act::Link(code) => match self.post_json("/v1/me/link", &ingame::link_body(&code)) {
+                Ok(b) => {
+                    let tag = ingame::parse(&b).map(|j| ingame::me(&j).0).unwrap_or_default();
+                    {
+                        let mut g = self.lock();
+                        g.status.linked = true;
+                        g.ig.tag = tag.clone();
+                    }
+                    self.poll.home_at = None;
+                    self.said(false, format!("Linked: you play as {tag}."));
+                }
+                Err(e) => self.said(true, format!("Link refused: {e}")),
+            },
+            Act::Ready => {
+                let Some((e, s, _)) = self.poll.set else { return self.said(true, "No set is called.".into()) };
+                if self.build.is_empty() {
+                    self.build = engine_build();
+                }
+                let body = ingame::ready_body(&self.build);
+                match self.post_json(&format!("/v1/sets/{e}/{s}/ready"), &body) {
+                    Ok(_) => self.said(false, "Ready.".into()),
+                    Err(er) => self.said(true, format!("Ready refused: {er}")),
+                }
+                self.poll.flow_at = None;
+                self.poll.home_at = None;
+            }
+            Act::Stage(i) => {
+                let (Some((e, s, _)), Some(flow)) = (self.poll.set, self.poll.flow.as_ref()) else { return self.said(true, "No stage selection now.".into()) };
+                let (ids, turn, n) = (ingame::pool_ids(flow), ingame::turn(flow), ingame::set_record(flow, "", false, "")[4].clone());
+                let (Some(&id), Some((kind, true, _))) = (ids.get(i), turn) else { return self.said(true, "Not your turn.".into()) };
+                match self.post_json(&format!("/v1/sets/{e}/{s}/games/{n}/stage"), &ingame::stage_body(&kind, id)) {
+                    Ok(_) => self.said(false, format!("{} done.", kind)),
+                    Err(er) => self.said(true, format!("{kind} refused: {er}")),
+                }
+                self.poll.flow_at = None;
+            }
+        }
+    }
+
+    /// The polls the watched screen needs; returns the seconds until the next one is due.
+    fn poll_ingame(&mut self) -> i64 {
+        use std::time::{Duration as D, Instant};
+        let watch = self.lock().watch;
+        if watch == Watch::None || self.origin.is_none() || self.key.is_none() {
+            return 30;
+        }
+        let due = |at: Option<Instant>, every: u64| at.is_none_or(|t| t.elapsed() >= D::from_secs(every));
+        let mut dirty = false;
+        if due(self.poll.me_at, 60) {
+            self.poll.me_at = Some(Instant::now());
+            if let Ok(j) = self.get_json("/v1/me") {
+                let (tag, linked) = ingame::me(&j);
+                let mut g = self.lock();
+                g.status.linked = linked;
+                g.ig.tag = tag;
+                dirty = true;
+            }
+        }
+        // the player routes answer only a registered key: nothing more until /v1/me says it is a player
+        if self.poll.me_at.is_some() && self.lock().ig.tag.is_empty() {
+            return 60;
+        }
+        if due(self.poll.badge_at, 10) {
+            self.poll.badge_at = Some(Instant::now());
+            let inm = if self.poll.etag.is_empty() { vec![] } else { vec![("if-none-match", self.poll.etag.clone())] };
+            let r = self.call("GET", "/v1/me/badge", b"", &inm, false);
+            if r.status == 200 {
+                if let Some(j) = ingame::parse(&r.body) {
+                    self.poll.etag = r.etag.clone();
+                    self.lock().ig.badge = ingame::badge(&j);
+                    dirty = true;
+                }
+            }
+            // 304: unchanged, nothing to do
+        }
+        if matches!(watch, Watch::Home | Watch::Set) && due(self.poll.home_at, 3) {
+            self.poll.home_at = Some(Instant::now());
+            if let Ok(j) = self.get_json("/v1/me/home") {
+                let (next, events, badge) = ingame::home(&j);
+                if let Some(set) = ingame::home_set(&j) {
+                    self.poll.set = Some(set);
+                }
+                self.poll.after = match next[0].as_str() {
+                    "upcoming" => {
+                        let eta = next[4].parse::<u64>().ok().map_or(String::new(), |e| format!(", in about {} min", e.div_ceil(60).max(1)));
+                        format!("{} vs {}{eta}", next[2], next[3])
+                    }
+                    "called" | "playing" => format!("{} vs {}, now", next[2], next[3]),
+                    _ => String::new(),
+                };
+                let mut g = self.lock();
+                g.ig.next = next;
+                g.ig.events = events;
+                g.ig.badge = badge;
+                dirty = true;
+            }
+        }
+        if watch == Watch::Set && due(self.poll.flow_at, 1) {
+            self.poll.flow_at = Some(Instant::now());
+            if let Some((e, s, _)) = self.poll.set {
+                if let Ok(j) = self.get_json(&format!("/v1/sets/{e}/{s}/flow")) {
+                    // a game newly judged: the ~5 s result card
+                    let judged = match j.get("games") {
+                        Some(crate::cosmetics_import::Json::Arr(v)) => v.iter().filter(|g| matches!(g.get("winner"), Some(crate::cosmetics_import::Json::Str(_)))).count(),
+                        _ => 0,
+                    };
+                    if judged > self.poll.games_seen {
+                        if self.poll.flow.is_some() {
+                            self.poll.result_until = Some(Instant::now() + D::from_secs(5));
+                        }
+                        self.poll.games_seen = judged;
+                    }
+                    let fresh = self.poll.result_until.is_some_and(|t| Instant::now() < t);
+                    let tag = self.lock().ig.tag.clone();
+                    let rec = ingame::set_record(&j, &tag, fresh, &self.poll.after);
+                    self.poll.flow = Some(j);
+                    let mut g = self.lock();
+                    if g.ig.set != rec {
+                        g.ig.set = rec;
+                        dirty = true;
+                    }
+                }
+            }
+        }
+        if dirty {
+            self.lock().ver += 1;
+        }
+        match watch {
+            Watch::Set => 1,
+            Watch::Home => 3,
+            _ => 10,
+        }
+    }
+
     /// Change the item for `file` (items are found by file: finishing one can drop old done ones and move indices).
     fn finish(&self, file: &str, f: impl FnOnce(&mut Item)) {
         let mut g = self.lock();
@@ -557,7 +797,19 @@ impl Worker {
             Some(t) => t,
             None => {
                 let Some(ev) = event() else {
-                    return self.finish(file, |t| (t.next_try, t.state, t.reason) = (now() + 60, St::Queued, "no event set (bracket_event= in settings.cfg)".into()));
+                    // phase 2b: the home screen names the called set (and so the event); no setting needed
+                    let r = self.call("GET", "/v1/me/home", b"", &[], false);
+                    if r.status != 200 {
+                        let why = server_error(&r);
+                        return if retryable(r.status) { self.retry_later(file, why, r.retry_after) } else { self.finish(file, |t| (t.next_try, t.state, t.reason) = (now() + 60, St::Queued, format!("no event set (bracket_event=) and /v1/me/home: {why}"))) };
+                    }
+                    return match ingame::parse(&r.body).as_ref().and_then(ingame::home_set) {
+                        Some((e, s, g)) => {
+                            self.finish(file, |t| t.target = Some((e, s, g)));
+                            self.upload_to(file, &name, bytes, (e, s, g))
+                        }
+                        None => self.finish(file, |t| (t.next_try, t.state, t.reason) = (now() + 30, St::Queued, "no called set to upload for".into())),
+                    };
                 };
                 let r = self.call("GET", &format!("/v1/me/next?event={ev}"), b"", &[], false);
                 if r.status != 200 {
@@ -574,6 +826,10 @@ impl Worker {
                 }
             }
         };
+        self.upload_to(file, &name, bytes, (ev, set, game))
+    }
+
+    fn upload_to(&mut self, file: &str, name: &str, bytes: Vec<u8>, (ev, set, game): (i64, u32, u32)) {
         if self.build.is_empty() {
             self.build = engine_build();
         }
@@ -668,6 +924,20 @@ mod tests {
                     (200, "ok".into())
                 } else if proto::verify_request(&sh, &m, &p, now(), &body).is_err() {
                     (401, r#"{"error":"invalid signature"}"#.into())
+                } else if p == "/v1/me" {
+                    let _ = tx.send((format!("{m} {p}"), body.clone(), String::new()));
+                    (200, r#"{"tag":"Mango","linked":true,"display_name":"m"}"#.into())
+                } else if p == "/v1/me/link" || p == "/v1/sets/1/0/ready" || p == "/v1/sets/1/0/games/1/stage" {
+                    let _ = tx.send((format!("{m} {p}"), body.clone(), String::new()));
+                    (200, r#"{"tag":"Mango"}"#.into())
+                } else if p == "/v1/me/badge" {
+                    let _ = tx.send((format!("{m} {p}"), body.clone(), g("if-none-match")));
+                    if g("if-none-match") == "\"b1\"" { (304, String::new()) } else { (200, r#"{"set_up":true,"event_id":1,"set_id":0}"#.into()) }
+                } else if p == "/v1/me/home" {
+                    (200, ingame_tests::HOME.into())
+                } else if p == "/v1/sets/1/0/flow" {
+                    let _ = tx.send((format!("{m} {p}"), body.clone(), String::new()));
+                    (200, ingame_tests::FLOW1.into())
                 } else if p.starts_with("/v1/me/next?event=7") {
                     (200, r#"{"Play":{"set_id":3,"opponent_tag":"B","role":"Host","relay":"r:1","room_code":"KQ7X","game_no":2,"wins":[1,0],"best_of":3,"stocks":4,"timer_secs":480,"awaiting_verdict":false}}"#.into())
                 } else if m == "POST" && p == "/v1/sets/7/3/games/2/replay" {
@@ -682,7 +952,7 @@ mod tests {
                     (404, r#"{"error":"no route"}"#.into())
                 };
                 let mut c = c;
-                let extra = if code == 503 { "Retry-After: 1\r\n" } else { "" };
+                let extra = if code == 503 { "Retry-After: 1\r\n" } else if p == "/v1/me/badge" { "ETag: \"b1\"\r\n" } else { "" };
                 let _ = write!(c, "HTTP/1.1 {code} X\r\nContent-Length: {}\r\n{extra}Connection: close\r\n\r\n{ans}", ans.len());
             }
         });
@@ -699,6 +969,7 @@ mod tests {
         let slp = d.join("Game_test.slp");
         let data: Vec<u8> = (0..5000u32).map(|i| (i * 7) as u8).collect();
         std::fs::write(&slp, &data).unwrap();
+        let _g = ENV.lock().unwrap_or_else(|e| e.into_inner());
         std::env::set_var("MELEE_BRACKET_DIR", &d);
         std::env::set_var("MELEE_BRACKET_SERVER", &base);
         std::env::set_var("MELEE_BRACKET_UPLOAD", "1");
@@ -713,7 +984,7 @@ mod tests {
         assert_eq!(path, "/v1/sets/7/3/games/2/replay");
         assert_eq!(body, data);
         assert!(build.starts_with("melee (rust) "), "{build}");
-        let (st, q) = s.view().unwrap();
+        let (st, q, _) = s.view().unwrap();
         assert_eq!(st.reachable, 1);
         assert_eq!(st.fingerprint.len(), 19);
         assert_eq!(q.len(), 1);
@@ -728,6 +999,63 @@ mod tests {
         }
         let _ = std::fs::remove_dir_all(&d);
     }
+
+    mod ingame_tests {
+        pub const HOME: &str = r#"{"badge":true,"action":{"SetUp":{"event_id":1,"set_id":0,"side":"Winners","round":1,"round_name":"Final","opponent_tag":"Armada","best_of":3,"game_no":1,"ready":[false,true]}},"events":[{"event":{"id":1,"name":"Sunday","state":"running","entrants":2,"starts_at":null,"description":null,"created_at":0},"next":"Waiting"}]}"#;
+        pub const FLOW1: &str = r#"{"event_id":1,"set_id":0,"side":"Winners","round":1,"opponent_tag":"Armada","role":"Host","relay":"r.example:1","room_code":null,"best_of":3,"wins":[0,0],"game_no":1,"ready":[true,true],"phase":"stage_select","stage":{"mode":"strike","pool":[{"id":3,"name":"Pokemon Stadium"},{"id":8,"name":"Yoshi's Story"},{"id":28,"name":"Dream Land N64"},{"id":31,"name":"Battlefield"},{"id":32,"name":"Final Destination"}],"moves":[],"turn":{"who":"me","kind":"strike","count":1},"chosen":null},"games":[],"verified":false,"outcome":null}"#;
+    }
+
+    /// The phase-2b screens' routes on loopback: /v1/me, the badge with If-None-Match (a 304 the second time), home,
+    /// link, ready, the flow and a strike by stage id (index 3 of the pool = Battlefield, id 31).
+    #[test]
+    fn ingame_routes_local_server() {
+        let _g = ENV.lock().unwrap_or_else(|e| e.into_inner());
+        let (base, rx) = test_server();
+        let d = std::env::temp_dir().join(format!("bracket-ig-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::env::set_var("MELEE_BRACKET_DIR", &d);
+        std::env::set_var("MELEE_BRACKET_SERVER", &base);
+        let mut s = Service::start();
+        s.watch(Watch::Set);
+        let mut seen: Vec<(String, Vec<u8>, String)> = Vec::new();
+        let t0 = std::time::Instant::now();
+        let mut set_rec = Vec::new();
+        while t0.elapsed() < Duration::from_secs(25) {
+            if let Some((_, _, ig)) = s.view() {
+                if !ig.set.is_empty() && set_rec.is_empty() {
+                    set_rec = ig.set.clone();
+                    s.act(Act::Link("ABCD2345".into()));
+                    s.act(Act::Ready);
+                    s.act(Act::Stage(3));
+                }
+            }
+            while let Ok(x) = rx.try_recv() {
+                seen.push(x);
+            }
+            if seen.iter().any(|x| x.0.ends_with("/stage")) && seen.iter().filter(|x| x.0.ends_with("/badge")).count() >= 2 {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        drop(s);
+        let names: Vec<&String> = seen.iter().map(|x| &x.0).collect();
+        let find = |k: &str| seen.iter().find(|x| x.0 == k).unwrap_or_else(|| panic!("{k} not seen: {names:?}"));
+        assert_eq!(set_rec[0], "strike");
+        assert_eq!(set_rec[16], "3|8|28|31|32");
+        assert_eq!(find("POST /v1/me/link").1, br#"{"code":"ABCD2345"}"#);
+        assert!(String::from_utf8_lossy(&find("POST /v1/sets/1/0/ready").1).starts_with(r#"{"engine_build":"melee (rust) "#));
+        assert_eq!(find("POST /v1/sets/1/0/games/1/stage").1, br#"{"kind":"strike","stage":31}"#);
+        let badges: Vec<&String> = seen.iter().filter(|x| x.0.ends_with("/badge")).map(|x| &x.2).collect();
+        assert_eq!(badges[0], "", "the first badge poll has no If-None-Match");
+        assert_eq!(badges[1], "\"b1\"", "later polls send the ETag back");
+        for k in ["MELEE_BRACKET_DIR", "MELEE_BRACKET_SERVER"] {
+            std::env::remove_var(k);
+        }
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    /// The tests that set MELEE_BRACKET_* run one at a time.
+    static ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
     #[test]
     fn key_is_made_once_and_private() {

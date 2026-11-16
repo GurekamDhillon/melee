@@ -77,3 +77,26 @@ Every screen has the status strip at the bottom (the last request's answer, `STA
   `legal_stages` and whatever starter list the server sends.
 - The result card's 5 s and the "verified" delay are the mock's timers; live, the server's state drives them.
 - Opening the set flow: READY on home goes straight to the set screen; reopening the screens mid-set returns to it.
+
+## Live data: built against the server's phase-2b contracts (melee-autobracket phase1 2fb5489)
+
+This replaces the "what the server needs" list above (kept for the history). `rust/melee/src/bracket/ingame.rs` reads
+`proto::ingame` (docs/api.md section 8) with the engine's JSON reader and builds the same records the mock serves:
+
+| screen need | route | notes |
+|---|---|---|
+| linked, my tag | `GET /v1/me` (MeStatus) | every 60 s while a screen watches; badge / home / flow wait until the key is a player |
+| LINK(code) | `POST /v1/me/link` (LinkReq -> LinkResult) | the answer's tag goes on the status strip |
+| tile star | `GET /v1/me/badge` (Badge) | every 10 s on the main menu, `If-None-Match` with the last ETag (304 = unchanged); only once a key exists (a fresh install never calls the server until Brackets is opened) |
+| home | `GET /v1/me/home` (Home) | every 3 s on home and in the set; `HomeAction` -> BRACKET_NEXT (`SetUp` -> called / playing by `ready[0]`, `Upcoming` with `eta_secs`, `Review`, `None`); `MyEvent` -> MY EVENTS with the reference client's status words |
+| READY | `POST /v1/sets/{e}/{s}/ready` (ReadyReq, our engine build) | the set is the home's `SetUp` |
+| set flow | `GET /v1/sets/{e}/{s}/flow` (SetFlow) | every second in the set; `phase` + `stage.turn` -> strike / ban / pick / game / judging / review / done; `games` -> the result card (held 5 s after a game is judged) with `winner_stocks` / `winner_percent`; `outcome` + home's next set -> NEXT; `relay` / `room_code` on the game card |
+| STAGE(index) | `POST /v1/sets/{e}/{s}/games/{n}/stage` (StageMoveReq: `kind` from the turn, `stage` = the pool's stable id) | the mod sends an index into the pool; the host sends the id |
+| auto-upload target | `GET /v1/me/home` `SetUp` (event, set, game) | when `bracket_event` is not set; `/v1/me/next?event=` otherwise |
+
+`BRACKET_WATCH` (22, "0" none / "1" menu / "2" home / "3" set) tells the host what is on screen; the worker polls
+only for that. Not wired yet: starting the netplay game from the set flow (relay + room code are shown), JOIN,
+browse events (no public listing route in 2b for the client), the live relay's send side. Tests: `ingame.rs` on
+api.md's examples; `bracket::tests::ingame_routes_local_server` against a loopback server built from those types
+(link, ready, flow, a strike by id, the badge's If-None-Match / 304). Not yet run against the real server: its
+handlers are wave 2.

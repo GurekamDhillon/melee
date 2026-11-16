@@ -238,6 +238,10 @@ impl Mock {
             if self.verified { "1" } else { "0" }.into(),
             next,
             ROUND.into(),
+            String::new(),
+            String::new(),
+            String::new(),
+            "1".into(),
         ]
     }
 }
@@ -298,6 +302,6 @@ mod tests {
         run(&mut m, 400);
         assert!(m.verified);
         assert_eq!(m.next_rec()[0], "upcoming");
-        assert_eq!(m.set_rec().len(), 16);
+        assert_eq!(m.set_rec().len(), 20);
     }
 }

@@ -60,12 +60,14 @@ pub struct Resp {
     pub status: u32,
     pub body: Vec<u8>,
     pub retry_after: u32,
+    /// The ETag header ("" when none): sent back as If-None-Match (the badge's 304 polling).
+    pub etag: String,
     pub err: String,
 }
 
 impl Resp {
     pub fn fail(e: impl Into<String>) -> Resp {
-        Resp { status: 0, body: Vec::new(), retry_after: 0, err: e.into() }
+        Resp { status: 0, body: Vec::new(), retry_after: 0, etag: String::new(), err: e.into() }
     }
 }
 
@@ -102,6 +104,7 @@ mod imp {
     }
     const QUERY_STATUS_CODE: u32 = 19;
     const QUERY_RETRY_AFTER: u32 = 36;
+    const QUERY_CUSTOM: u32 = 65535;
     const QUERY_FLAG_NUMBER: u32 = 0x2000_0000;
     const OPTION_URL: u32 = 34;
     const FLAG_SECURE: u32 = 0x0080_0000;
@@ -170,6 +173,16 @@ mod imp {
             }
             let Some(status) = num(req, QUERY_STATUS_CODE) else { return Resp::fail("no status") };
             let retry_after = num(req, QUERY_RETRY_AFTER).unwrap_or(0);
+            let etag = {
+                let mut b = [0u16; 256];
+                let mut l = (b.len() * 2) as u32;
+                let name = w("ETag");
+                if WinHttpQueryHeaders(req, QUERY_CUSTOM, name.as_ptr(), b.as_mut_ptr() as *mut c_void, &mut l, std::ptr::null_mut()) != 0 {
+                    String::from_utf16_lossy(&b[..(l as usize / 2).min(b.len())]).trim_end_matches(' ').to_string()
+                } else {
+                    String::new()
+                }
+            };
             let mut out = Vec::new();
             let mut buf = vec![0u8; 16384];
             loop {
@@ -185,7 +198,7 @@ mod imp {
                     return Resp::fail("answer is larger than allowed");
                 }
             }
-            Resp { status, body: out, retry_after, err: String::new() }
+            Resp { status, body: out, retry_after, etag, err: String::new() }
         }
     }
 }
@@ -240,8 +253,10 @@ mod imp {
                 } else if code == 0 {
                     Resp::fail("no answer (is curl installed?)")
                 } else {
-                    let ra = std::fs::read_to_string(&rf).unwrap_or_default().lines().find_map(|l| l.to_ascii_lowercase().strip_prefix("retry-after:").and_then(|v| v.trim().parse().ok())).unwrap_or(0);
-                    Resp { status: code, body: std::fs::read(&of).unwrap_or_default(), retry_after: ra, err: String::new() }
+                    let h = std::fs::read_to_string(&rf).unwrap_or_default();
+                    let ra = h.lines().find_map(|l| l.to_ascii_lowercase().strip_prefix("retry-after:").and_then(|v| v.trim().parse().ok())).unwrap_or(0);
+                    let etag = h.lines().find_map(|l| l.split_once(':').filter(|(k, _)| k.trim().eq_ignore_ascii_case("etag")).map(|(_, v)| v.trim().to_string())).unwrap_or_default();
+                    Resp { status: code, body: std::fs::read(&of).unwrap_or_default(), retry_after: ra, etag, err: String::new() }
                 }
             }
         };

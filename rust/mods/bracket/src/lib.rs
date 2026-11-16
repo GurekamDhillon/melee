@@ -48,6 +48,7 @@ const R_AUTO: i32 = 18;
 const R_STAGE: i32 = 19;
 const R_EVENTS: i32 = 20;
 const R_MOCK_STEP: i32 = 21;
+const R_WATCH: i32 = 22;
 
 const DL: u16 = 0x1;
 const DR: u16 = 0x2;
@@ -213,6 +214,8 @@ struct S {
     sel: usize,
     /// the stage cursor in the strike / ban / pick steps
     stage: usize,
+    /// the last BRACKET_WATCH sent (0 nothing, 1 menu, 2 home, 3 set)
+    watching: u8,
     edit: bool,
     code: [u8; CODE],
     n: usize,
@@ -229,7 +232,7 @@ struct S {
 }
 
 static mut ST: S = S {
-    setup: false, open: false, cap: 0, pad: [0; 16], keys: [0; 32], prev: 0, scr: Scr::Home, sel: 0, stage: 0,
+    setup: false, open: false, cap: 0, pad: [0; 16], keys: [0; 32], prev: 0, scr: Scr::Home, sel: 0, stage: 0, watching: 0,
     edit: false, code: [0; CODE], n: 0, t: 0, bk: List::new(), q: List::new(), st: List::new(), ev: List::new(),
     next: List::new(), set: List::new(), enc: Enc::new(), b: Buf::new(),
 };
@@ -266,6 +269,14 @@ fn star(e: &mut Enc<16384>, cx: f32, cy: f32, d: f32) {
 impl S {
     fn request(&self, op: i32, arg: &[u8]) {
         unsafe { gd_ui_request(op, arg.as_ptr(), arg.len() as u32) };
+    }
+
+    /// Tell the host what is on screen (it polls the server only for that).
+    fn watch(&mut self, w: u8) {
+        if self.watching != w {
+            self.watching = w;
+            self.request(R_WATCH, &[b'0' + w]);
+        }
     }
 
     fn linked(&self) -> bool {
@@ -349,10 +360,11 @@ impl S {
                 3 | 4 if self.sel >= 1 => self.sel = if self.sel == 1 { 2 } else { 1 },
                 5 => match self.sel {
                     0 if !self.linked() => self.edit = true,
-                    0 if self.called() => {
-                        self.request(R_READY, b"3");
+                    0 if self.next.f(0, 0) == "called" => {
+                        self.request(R_READY, b"");
                         self.go(Scr::Set);
                     }
+                    0 if self.next.f(0, 0) == "playing" => self.go(Scr::Set),
                     0 if self.in_set() => self.go(Scr::Set),
                     0 => self.request(R_MY_SETS, b""),
                     1 => {
@@ -437,6 +449,9 @@ impl S {
             "game" => "game",
             "result" => "result",
             "done" => "done",
+            "called" => "called",
+            "judging" => "judging",
+            "review" => "review",
             _ => "",
         }
     }
@@ -481,9 +496,12 @@ impl S {
             if self.open {
                 self.close_now();
             }
+            self.watch(0);
             self.prev = 0;
             return;
         }
+        let w = if !self.open { 1 } else if self.scr == Scr::Set { 3 } else { 2 };
+        self.watch(w);
         self.bk.sync(L_BK);
         if !self.open {
             let (held, edge, _) = self.read_input();
@@ -686,12 +704,20 @@ impl S {
                 button(e, x + 28.0, y + 112.0, 200.0, "REFRESH", on);
                 y + h
             }
+            "review" => {
+                let h = 130.0;
+                sticker(e, x, y, 820.0, h, CREAM);
+                e.text(x + 28.0, y + 18.0, LABEL, FADED, event);
+                e.text(x + 28.0, y + 44.0, DISPLAY, GRAPE, "Your set is with the organiser");
+                e.text(x + 28.0, y + 88.0, BODY, FADED, "Wait here: the decision shows up on its own.");
+                y + h
+            }
             _ => {
                 let h = 130.0;
                 sticker(e, x, y, 820.0, h, CREAM);
                 e.text(x + 28.0, y + 18.0, LABEL, FADED, "NEXT");
                 e.text(x + 28.0, y + 44.0, DISPLAY, GRAPE, "Nothing to play right now");
-                e.text(x + 28.0, y + 88.0, BODY, FADED, "Your sets show here once the server offers them.");
+                e.text(x + 28.0, y + 88.0, BODY, FADED, "Your sets show up here when they are called.");
                 y + h
             }
         }
@@ -782,13 +808,19 @@ impl S {
         match ph {
             "wait_ready" => self.card(x, y, "READY!", "Waiting for your opponent to ready up...", None),
             "css" => self.card(x, y, "PICK YOUR CHARACTER", "Both players go to the normal character select.", Some("A  characters locked (mock)")),
+            "called" => self.card(x, y, "YOUR SET IS UP", "Say ready from Brackets home.", None),
+            "judging" => self.card(x, y, "CHECKING THE GAME", "Both replays are in; the server is judging the game.", None),
+            "review" => self.card(x, y, "WITH THE ORGANISER", "The set is being reviewed. Hang tight.", None),
             "strike" | "ban" | "pick" => self.draw_stages(x, y, ph),
             "game" => {
                 let st = num(self.set.f(0, 11)) as usize;
                 let name = part(self.set.f(0, 9), st);
                 self.b.clear().s("Game ").u(game).s(" on ").s(name);
                 let t = Buf { b: self.b.b, n: self.b.n };
-                self.card(x, y, t.as_str(), "Good luck! The game starts from here.", Some("A  play the game (mock)"));
+                let mock = self.set.f(0, 19) == "1";
+                let mut body = Buf::new();
+                body.s(if mock { "Good luck! The game starts from here." } else { self.set.f(0, 14) });
+                self.card(x, y, t.as_str(), body.as_str(), if mock { Some("A  play the game (mock)") } else { None });
             }
             "result" => self.draw_result(x, y, me, opp),
             "done" => self.draw_done(x, y, me, opp),

@@ -74,7 +74,10 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// Tail both Enters share after the motion change (`capturekoopa.xC` .. `ftAnim_8006EBA4`).
 unsafe fn enter_tail(gobj: *mut HSD_GObj, fp: *mut Fighter) {
-    (*fp).mv.co.capturekoopa.xC = 0.0;
+    // The C zeroes the counter through `capturekoopa.xC` and counts it through `walk.middle_anim_frame`: one GameCube
+    // word (fp+234C). Natively capturekoopa.xC sits 8 bytes further (a pointer before it), so writing it left the
+    // counter at the last state's value (tools/rust-port/mvshadow: ftKp_SpecialHi_Anim). Zero the word that is read.
+    (*fp).mv.co.walk.middle_anim_frame = 0.0;
     (*fp).mv.kp.specials.x10 = 0;
     ext::efSync_Spawn(0x4DA, gobj, &[(*(*fp).parts).joint as *mut _]);
     (*fp).set_x2219_b0(1);

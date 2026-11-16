@@ -1,0 +1,2 @@
+# name	kind	frames	pad	scene   (the mvshadow guard's own scenarios: run with MELEE_SCENARIO_TSV, no C golden)
+pikachu_thunder_self	vs	1800	pikachu_thunder_self.lua	mode=vs;at=match;p1=ck:13/human;p2=ck:0/cpu1;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off

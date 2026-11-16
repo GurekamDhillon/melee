@@ -63,76 +63,17 @@ pub struct Detacher {
     frame: u64,
 }
 
-/// A 128-bit content hash (two independent multiply-xorshift lanes over 8-byte words).
-fn hash128(b: &[u8]) -> (u64, u64) {
-    let (mut h1, mut h2) = (0x9E37_79B9_7F4A_7C15u64 ^ b.len() as u64, 0xC2B2_AE3D_27D4_EB4Fu64);
-    let mut ch = b.chunks_exact(8);
-    for c in &mut ch {
-        let w = u64::from_le_bytes(c.try_into().unwrap());
-        h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD).rotate_left(29);
-        h2 = (h2 ^ w.rotate_left(32)).wrapping_mul(0xC4CE_B9FE_1A85_EC53).rotate_left(31);
-    }
-    let mut t = [0u8; 8];
-    t[..ch.remainder().len()].copy_from_slice(ch.remainder());
-    let w = u64::from_le_bytes(t);
-    h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD);
-    h2 = (h2 ^ w).wrapping_mul(0xC4CE_B9FE_1A85_EC53);
-    (h1 ^ (h1 >> 33), h2 ^ (h2 >> 29))
-}
-
-/// Detached copies not used for this many frames are dropped.
-const DETACH_KEEP: u64 = 120;
-
 impl Detacher {
     /// [`detach_frame`]. Call outside the game scope; the original is freed inside it.
     pub fn detach(&mut self, f: Vec<melee_gx::draw::DrawCmd>) -> Vec<melee_gx::draw::DrawCmd> {
-        use std::collections::HashMap;
-        use std::sync::Arc;
-        debug_assert!(!melee_engine::arena::contains(self as *const Self as *const u8), "Detacher must not live in the arena");
+        // The GX shim's state and its frames live on the system heap, outside the snapshot (gxbridge): a frame shares
+        // nothing a load rewrites, so it is handed over as it is (no copy). The cross-frame cache stays for its
+        // fields' sake (callers own a Detacher) but holds nothing.
         self.frame += 1;
-        let now = self.frame;
-        let mut cfgs: HashMap<usize, Arc<melee_gx::shader::PipelineConfig>> = HashMap::new();
-        // per frame by the arena Arc's address (stable within the frame), across frames by content
-        let mut seen: HashMap<usize, melee_gx::resources::GxData> = HashMap::new();
-        let datas = &mut self.datas;
-        let mut data = |d: &melee_gx::resources::GxData| -> melee_gx::resources::GxData {
-            seen.entry(Arc::as_ptr(d) as *const u8 as usize)
-                .or_insert_with(|| {
-                    let (a, b) = hash128(d);
-                    let e = datas.entry((a, b, d.len())).or_insert_with(|| (Arc::from(&d[..]), now));
-                    e.1 = now;
-                    e.0.clone()
-                })
-                .clone()
-        };
-        let out: Vec<melee_gx::draw::DrawCmd> = f
-            .iter()
-            .map(|c| {
-                let mut n = c.clone();
-                n.config = cfgs.entry(Arc::as_ptr(&c.config) as usize).or_insert_with(|| Arc::new((*c.config).clone())).clone();
-                for a in n.arrays.iter_mut().flatten() {
-                    a.data = data(&a.data);
-                }
-                for t in n.textures.iter_mut() {
-                    if let Some(d) = &t.data {
-                        t.data = Some(data(d));
-                    }
-                }
-                for t in n.tluts.iter_mut() {
-                    if let Some(d) = &t.data {
-                        t.data = Some(data(d));
-                    }
-                }
-                n
-            })
-            .collect();
-        if now % DETACH_KEEP == 0 {
-            self.datas.retain(|_, e| now - e.1 < DETACH_KEEP);
-        }
-        let _s = melee_engine::arena::GameScope::enter();
-        drop(f);
+        self.datas.clear();
+        let _s = melee_engine::arena::SysScope::enter();
         drop(melee_engine::gxbridge::shim().gx.packed.take());
-        out
+        f
     }
 }
 
@@ -211,6 +152,8 @@ impl ModesSnap {
 
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
+        // the snapshot base is captured at the match's first frames: its copy buffers are made ahead (helper thread)
+        melee_engine::snapshot::prewarm();
         ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default() }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
@@ -237,7 +180,7 @@ impl ModesGame {
         if let Some(f) = f {
             // only the newest frame of a tick is shown: detach (copy) it lazily, at the end of the tick
             if let Some(old) = self.raw.replace(f) {
-                let _s = melee_engine::arena::GameScope::enter();
+                let _s = melee_engine::arena::SysScope::enter();
                 drop(old);
             }
         }
@@ -266,7 +209,7 @@ impl ModesGame {
     /// Lets go of the tick's newest frame without copying it (its blocks are the arena's, freed in the game scope).
     pub fn drop_frame(&mut self) {
         if let Some(f) = self.raw.take() {
-            let _s = melee_engine::arena::GameScope::enter();
+            let _s = melee_engine::arena::SysScope::enter();
             drop(f);
         }
     }
@@ -320,8 +263,11 @@ impl RbGame for ModesGame {
     fn load(&mut self, s: &ModesSnap) {
         let _z = melee_core::tracy::zone("netplay snapshot load (rollback)");
         let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot load");
-        // the held frame's blocks belong to the timeline being discarded: the load decides what they are now
-        std::mem::forget(self.raw.take());
+        // the held frame is render state on the system heap (gxbridge), outside the snapshot: freed as usual
+        {
+            let _s = melee_engine::arena::SysScope::enter();
+            drop(self.raw.take());
+        }
         self.with_base(|b| b.load(&s.mem));
         self.e.frames = s.frames;
         self.e.ended = s.ended;

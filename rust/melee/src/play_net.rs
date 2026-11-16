@@ -314,10 +314,12 @@ impl RbGame for ModesGame {
         None
     }
     fn save(&self) -> ModesSnap {
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot save");
         ModesSnap { mem: self.with_base(|b| b.save()), frames: self.e.frames, ended: self.e.ended }
     }
     fn load(&mut self, s: &ModesSnap) {
         let _z = melee_core::tracy::zone("netplay snapshot load (rollback)");
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot load");
         // the held frame's blocks belong to the timeline being discarded: the load decides what they are now
         std::mem::forget(self.raw.take());
         self.with_base(|b| b.load(&s.mem));
@@ -325,6 +327,7 @@ impl RbGame for ModesGame {
         self.e.ended = s.ended;
     }
     fn state_hash(&self) -> u32 {
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: state hash");
         self.with_base(|b| b.page_hash())
     }
     fn game_hash(&self) -> u32 {
@@ -342,6 +345,7 @@ impl RbGame for ModesGame {
     }
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool) {
         let _z = melee_core::tracy::zone(if resim { "netplay resim frame" } else { "netplay frame" });
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, if resim { "netplay: resim frame" } else { "netplay: frame" });
         if self.e.ended {
             return;
         }

@@ -59,7 +59,45 @@ pub struct Model {
     /// holds (`Rig::pose_keyed`): the lookups of one frame share one pose
     pub sim: Mutex<pm::DrawBufs>,
     pub note: String,
+    /// the bones of the second animated part (the 0408 part motion; Porky's bust), when the boss has one
+    pub part: Option<Vec<bool>>,
+    /// the boss camera's framing box from the local IR (front, back, top, bottom about the boss's position; Brawl's
+    /// follow-players camera keeps this box and the players in view [val: loaded at run time, never committed])
+    pub framing: Option<[f32; 4]>,
+    /// drawn with its front to the screen whatever its facing (see `model_mat`)
+    pub faces_camera: bool,
 }
+
+/// `MELEE_VMBOSS_BODY_CAM`: the old whole-mesh boss camera (before / after shots). Read once (the prefetch).
+pub fn body_cam() -> bool {
+    static V: OnceLock<bool> = OnceLock::new();
+    *V.get_or_init(|| std::env::var_os("MELEE_VMBOSS_BODY_CAM").is_some())
+}
+
+/// The IR's camera framing box for `name` (front, back, top, bottom), read from the local IR folder.
+fn framing_of(name: &str) -> Option<[f32; 4]> {
+    let dir = super::geno_boss_ir::ir_dir()?;
+    let t = std::fs::read_to_string(dir.join(format!("{name}.brawl.ir.json"))).ok()?;
+    let ir = super::geno_boss_ir::parse_json(&t.replace("NaN", "null")).ok()?;
+    let b = ir.get("boss").get("camera").get("framing_box");
+    let n = |k: &str| b.get(k).num().map(|v| v as f32);
+    Some([n("front")?, n("back")?, n("top")?, n("bottom")?])
+}
+
+/// The boss's framing box in the world (x min, x max, y min, y max): the IR box about the actor, mirrored by its
+/// facing. None without the model or the IR.
+pub fn framing_box(a: &brawl_boss::vm::Actor) -> Option<[f32; 4]> {
+    let [fr, bk, top, bot] = M.get()?.as_ref()?.framing?;
+    let (x0, x1) = if a.lr < 0.0 { (a.pos[0] - fr, a.pos[0] - bk) } else { (a.pos[0] + bk, a.pos[0] + fr) };
+    Some([x0, x1, a.pos[1] + bot, a.pos[1] + top])
+}
+
+/// The second animated part's top bone per boss (the subtree a forwarded 0408 animates) [L: read from the bone tree,
+/// the part's own node list is not read].
+const PARTS: &[(&str, &str)] = &[("porky", PART_PORKY)];
+const PART_PORKY: &str = "BustN";
+/// Bosses drawn front-on (model_mat).
+const FACES_CAMERA: &[&str] = &["porky"];
 
 static M: OnceLock<Option<Model>> = OnceLock::new();
 /// The arena actor's model (vm_arena: the Falcon Flyer beside Meta Ridley), kept apart from the boss's.
@@ -90,6 +128,7 @@ fn no_vis() -> bool {
 /// Load `name`'s model (blocking; for the engine-start helper thread). The program's motion lengths are set from the
 /// clips here, so they are in place before the match takes the program.
 pub fn prefetch(name: &str) {
+    body_cam();
     let _ = load(name);
 }
 
@@ -161,8 +200,13 @@ fn read(name: &str) -> Option<Model> {
                     f += 1.0;
                 }
                 let (lo, hi) = track.iter().fold((f32::MAX, f32::MIN), |(l, h), v| (fmin(l, v[0]), fmax(h, v[0])));
+                let (ylo, yhi) = track.iter().fold((f32::MAX, f32::MIN), |(l, h), v| (fmin(l, v[1]), fmax(h, v[1])));
                 if hi - lo > 0.5 {
                     moving += 1;
+                } else if yhi - ylo <= 0.5 {
+                    // no travel on either axis: no root track, so the root-motion units keep their own speed
+                    // (root_move_m; Porky's MoveL / MoveR hold TransN still and he walks by his units' speed)
+                    track.clear();
                 }
             }
         }
@@ -212,8 +256,34 @@ fn read(name: &str) -> Option<Model> {
         bone.as_deref().unwrap_or("no root bone"),
         vis.iter().filter(|v| v.is_some()).count(),
         if by_file { ", by motion file" } else { "" }
-    ) + &if std::env::var_os("MELEE_MDL_LOG").is_some() { format!("; top bones {:?}", tops) } else { String::new() };
-    Some(Model { rig, clip, root, vis, ext, bufs, sim, note })
+    ) + &if std::env::var_os("MELEE_MDL_LOG").is_some() {
+        // the whole tree (index, name, parent slot) and, per clip, the bones it has channels for (the parts' split)
+        let tree: Vec<String> = rig.bones.iter().enumerate().map(|(k, b)| format!("{k}:{}<{:?}", b.name, b.parent)).collect();
+        let chans: Vec<String> = rig
+            .anims
+            .iter()
+            .map(|(n, a)| {
+                let moving: Vec<&str> = a.tracks.iter().filter(|(_, t)| t.iter().any(|c| c.as_ref().is_some_and(|c| !matches!(c, pm::Track::Fixed(_))))).map(|(b, _)| b.as_str()).collect();
+                let tr: Vec<String> = ["TransN", "RotN", "XRotN", "HipN", "BustN", "LegN"]
+                    .iter()
+                    .filter_map(|bn| a.trans_range(bn).map(|r| format!("{bn} x {:.1}..{:.1} y {:.1}..{:.1} z {:.1}..{:.1}", r[0].0, r[0].1, r[1].0, r[1].1, r[2].0, r[2].1)))
+                    .collect();
+                let rt: Vec<String> = ["RotN", "XRotN", "HipN", "BustN", "LegN"]
+                    .iter()
+                    .filter_map(|bn| a.rot_at(bn, 0.0).map(|r| format!("{bn} rot0 {:.1} {:.1} {:.1}", r[0], r[1], r[2])))
+                    .collect();
+                let tr = [tr, rt].concat();
+                format!("\n  clip {n}: {} tracks, animated {:?}; trans {}", a.tracks.len(), moving, tr.join(", "))
+            })
+            .collect();
+        format!("; top bones {:?}\n  tree {:?}{}", tops, tree, chans.concat())
+    } else {
+        String::new()
+    };
+    let part = PARTS.iter().find(|q| q.0 == name).and_then(|q| rig.subtree_mask(q.1));
+    let framing = framing_of(name);
+    let faces_camera = FACES_CAMERA.contains(&name);
+    Some(Model { rig, clip, root, vis, ext, bufs, sim, note, part, framing, faces_camera })
 }
 
 /// The frame of the actor's motion `el` frames after it began (the VM's own motion-frame rule).
@@ -265,7 +335,7 @@ pub fn root_move2(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, mi: i3
 
 /// The model's rotation in the world: the facing (a yaw of +-90 degrees: the model faces its z) after the rotation
 /// units' turn (Actor::rot, degrees about x, y, z; applied z, y, x) [L: the posture module's order is not read].
-fn model_mat(a: &brawl_boss::vm::Actor) -> [[f32; 3]; 3] {
+fn model_mat(m: &Model, a: &brawl_boss::vm::Actor) -> [[f32; 3]; 3] {
     // the MSL sinf / cosf (gekko_fp), not the host's
     let sc = |d: f32| (sinf(d.to_radians()), cosf(d.to_radians()));
     let (sx, cx) = sc(a.rot[0]);
@@ -277,7 +347,10 @@ fn model_mat(a: &brawl_boss::vm::Actor) -> [[f32; 3]; 3] {
         [-sy, sx * cy, cx * cy],
     ];
     let s = if a.lr < 0.0 { -1.0 } else { 1.0 };
-    let yaw = [[0.0, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, 0.0]];
+    // a camera-facing boss (Porky: his legs spread along the model's x, his gait clips are MoveL / MoveR and his
+    // stabs StabL / StabR by side) walks sideways with his front to the screen: no facing turn [L: the posture
+    // module's rule for him is not read]
+    let yaw = if m.faces_camera { [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]] } else { [[0.0, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, 0.0]] };
     let mut o = [[0.0f32; 3]; 3];
     for i in 0..3 {
         for j in 0..3 {
@@ -287,14 +360,27 @@ fn model_mat(a: &brawl_boss::vm::Actor) -> [[f32; 3]; 3] {
     o
 }
 
+/// The second part's clip and frame for the actor (its 0408 motion), with the part's bone mask.
+fn part_of<'m>(p: &brawl_boss::vm::Program, m: &'m Model, a: &brawl_boss::vm::Actor) -> Option<(&'m pm::Anim, f32, &'m [bool])> {
+    let mask = m.part.as_deref()?;
+    let mi = usize::try_from(a.part_motion).ok()?;
+    let c = m.clip.get(mi).copied().flatten()?;
+    let (f, _) = frame_of(p, mi, a.tick.wrapping_sub(a.part_t0));
+    Some((&m.rig.anims[c].1, f as f32, mask))
+}
+
 /// The sim's pose buffer posed at the actor's current clip frame; posed again only when the (clip, frame) changed.
 fn posed<'m>(p: &brawl_boss::vm::Program, m: &'m Model, a: &brawl_boss::vm::Actor) -> Option<std::sync::MutexGuard<'m, pm::DrawBufs>> {
     let mut g = m.sim.lock().ok()?;
     let mi = a.motion.max(0) as usize;
     let clip = m.clip.get(mi).copied().flatten();
     let (f, _) = frame_of(p, mi, a.tick.wrapping_sub(a.motion_t0));
-    let key = [clip.map_or(u32::MAX, |c| c as u32), f as u32];
-    m.rig.pose_keyed(clip.map(|c| &m.rig.anims[c].1), f as f32, key, &mut g);
+    // the key packs the part's motion and frame in the high halves, so a part change re-poses
+    const LOW16: u32 = u16::MAX as u32;
+    let part = part_of(p, m, a);
+    let (pm_, pf) = part.map_or((LOW16, 0), |q| ((a.part_motion as u32) & LOW16, fcvt_u32(q.1) & LOW16));
+    let key = [(clip.map_or(LOW16, |c| c as u32) & LOW16) | pm_ << 16, (f as u32 & LOW16) | pf << 16];
+    m.rig.pose_keyed_part(clip.map(|c| &m.rig.anims[c].1), f as f32, part, key, &mut g);
     Some(g)
 }
 
@@ -311,7 +397,7 @@ pub fn bone_world_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::
     let g = posed(p, m, a)?;
     let b = &*g;
     let q = pm::Rig::posed_point(b, slot, local);
-    let r = model_mat(a);
+    let r = model_mat(m, a);
     Some([a.pos[0] + r[0][0] * q[0] + r[0][1] * q[1] + r[0][2] * q[2], a.pos[1] + r[1][0] * q[0] + r[1][1] * q[1] + r[1][2] * q[2]])
 }
 
@@ -321,7 +407,7 @@ pub fn bone_world_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm::
 pub fn body_box(arena: bool, a: &brawl_boss::vm::Actor) -> Option<[f32; 4]> {
     let m = if arena { arena_model()? } else { M.get()?.as_ref()? };
     let [lo, hi] = (*m.ext.get(usize::try_from(a.motion).ok()?)?)?;
-    let r = model_mat(a);
+    let r = model_mat(m, a);
     let mut b = [f32::MAX, f32::MIN, f32::MAX, f32::MIN];
     for k in 0..8 {
         let q = [if k & 1 == 0 { lo[0] } else { hi[0] }, if k & 2 == 0 { lo[1] } else { hi[1] }, if k & 4 == 0 { lo[2] } else { hi[2] }];
@@ -340,7 +426,7 @@ pub fn bone_rot(p: &brawl_boss::vm::Program, a: &brawl_boss::vm::Actor, bone: i3
     let g = posed(p, m, a)?;
     let b = &*g;
     let q = pm::Rig::posed_rot(b, slot)?;
-    let r = model_mat(a);
+    let r = model_mat(m, a);
     Some(core::array::from_fn(|i| core::array::from_fn(|j| (0..3).map(|k| r[i][k] * q[k][j]).sum())))
 }
 
@@ -363,12 +449,13 @@ pub unsafe fn draw_m(m: &Model, p: &brawl_boss::vm::Program, a: &brawl_boss::vm:
     let main = vis_of(a.motion).filter(|_| !no_vis()).map(|v| (v, f as f32));
     let (sm, st0) = vis_slot;
     let slot = vis_of(sm).filter(|_| !no_vis()).map(|v| (v, a.tick.wrapping_sub(st0) as f32));
+    let part = part_of(p, m, a).filter(|_| anim.is_some());
     match (main, slot) {
-        (Some(x), Some(y)) => m.rig.skin_vis(anim, f as f32, &[x, y], &mut b),
-        (Some(x), None) | (None, Some(x)) => m.rig.skin_vis(anim, f as f32, &[x], &mut b),
-        (None, None) => m.rig.skin_vis(anim, f as f32, &[], &mut b),
+        (Some(x), Some(y)) => m.rig.skin_vis_part(anim, f as f32, part, &[x, y], &mut b),
+        (Some(x), None) | (None, Some(x)) => m.rig.skin_vis_part(anim, f as f32, part, &[x], &mut b),
+        (None, None) => m.rig.skin_vis_part(anim, f as f32, part, &[], &mut b),
     }
-    pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [a.pos[0], a.pos[1], 0.0], 1.0, model_mat(a), flash);
+    pm::draw_tris_vis(&m.rig, &b.tris, if no_vis() { &[] } else { &b.hide }, [0.0, 0.0], [a.pos[0], a.pos[1], 0.0], 1.0, model_mat(m, a), flash);
     // MELEE_VMBOSS_VIS_LOG=n: every n-th tick, the drawn motion, its frame and the hidden draw-list objects (captures)
     static VLOG: OnceLock<u32> = OnceLock::new();
     let n = *VLOG.get_or_init(|| std::env::var("MELEE_VMBOSS_VIS_LOG").ok().and_then(|v| v.parse().ok()).unwrap_or(0));

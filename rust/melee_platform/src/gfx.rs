@@ -516,6 +516,7 @@ impl Presenter {
         let view = tex.texture.create_view(&Default::default());
         self.renderer.blit_to(&view, self.config.format, self.config.width, self.config.height);
         let mut hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, self.config.width, self.config.height));
+        crate::overlay::boss_bar(&mut hud, self.config.width, self.config.height);
         if melee_core::frameprof::overlay_on() {
             crate::overlay::profile_readout(&mut hud, self.config.width, self.config.height);
         }
@@ -555,7 +556,8 @@ impl Presenter {
     /// window-space UI (gd-ui-v1 GAP-0), which an EFB-sized shot would cut off.
     pub fn screenshot_window(&mut self) -> (u32, u32, Vec<u8>) {
         let (w, h) = (self.config.width, self.config.height);
-        let hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, w, h));
+        let mut hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, w, h));
+        crate::overlay::boss_bar(&mut hud, w, h);
         let mut px = self.renderer.read_composed_size(w, h, &hud);
         for p in px.chunks_mut(4) {
             p[3] = 255;
@@ -566,12 +568,9 @@ impl Presenter {
     /// The EFB as RGBA8 with alpha forced opaque (what the window shows, before scaling).
     /// With the HUD overlay on, the shot shows it too (drawn over the EFB at its size; the EFB itself is untouched).
     pub fn screenshot(&mut self) -> Vec<u8> {
-        let mut px = if let Some(l) = self.hud.as_ref() {
-            let hud = crate::overlay::layout(l, self.renderer.width, self.renderer.height);
-            self.renderer.read_composed(&hud)
-        } else {
-            self.renderer.read_color()
-        };
+        let mut hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, self.renderer.width, self.renderer.height));
+        crate::overlay::boss_bar(&mut hud, self.renderer.width, self.renderer.height);
+        let mut px = if hud.is_empty() { self.renderer.read_color() } else { self.renderer.read_composed(&hud) };
         for p in px.chunks_mut(4) {
             p[3] = 255;
         }

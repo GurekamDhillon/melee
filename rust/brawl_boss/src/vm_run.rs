@@ -506,6 +506,10 @@ impl Actor {
     pub fn hp(&self) -> f32 {
         self.wf[WF_HP]
     }
+    /// The full HP (the HP the fight began with).
+    pub fn hp_max(&self) -> f32 {
+        self.wf[WF_HP_MAX]
+    }
     pub fn dead(&self) -> bool {
         self.wb_get(WB_DEAD)
     }

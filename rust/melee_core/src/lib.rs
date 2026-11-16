@@ -13,6 +13,7 @@ pub mod fptrace;
 pub mod frameprof;
 pub mod gc;
 pub mod gcdecode;
+pub mod bossbar;
 pub mod hash;
 pub mod heaptrace;
 pub mod modhook;

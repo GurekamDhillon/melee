@@ -846,6 +846,11 @@ impl Anim {
         }
         any.then_some(r)
     }
+    /// `bone`'s rotation channels (degrees) at `frame` (None: no such bone track; an axis without a channel reads 0).
+    pub fn rot_at(&self, bone: &str, frame: f32) -> Option<[f32; 3]> {
+        let (_, v) = self.tracks.iter().find(|(n, _)| n == bone)?;
+        Some(core::array::from_fn(|a| v[3 + a].as_ref().map_or(0.0, |t| t.at(frame))))
+    }
     /// `bone`'s translation at `frame` (None: no such bone track; an axis without a channel reads 0).
     pub fn trans_at(&self, bone: &str, frame: f32) -> Option<[f32; 3]> {
         let (_, v) = self.tracks.iter().find(|(n, _)| n == bone)?;
@@ -1024,7 +1029,7 @@ pub struct Bone {
     /// the bone's own index (MDL0 bone header [off]), what param files refer to
     index: u32,
     srt: [[f32; 3]; 3],
-    parent: Option<usize>,
+    pub parent: Option<usize>,
     inv: M34,
     /// the bone's default visibility (its MDL0 flags' visible bit): what shows without a VIS0 channel
     visible: bool,
@@ -1461,9 +1466,19 @@ impl Rig {
 
     /// [`Self::pose_bones`] into a caller's buffer (no allocation once it holds `bones` matrices).
     fn pose_bones_into(&self, anim: Option<&Anim>, frame: f32, world: &mut Vec<M34>) {
+        self.pose_bones_part(anim, frame, None, world);
+    }
+
+    /// [`Self::pose_bones_into`] with a second animated part: the bones marked in `part.2` take `part.0` at frame
+    /// `part.1` (Brawl's partial motion channel: Porky's bust plays its own motion over the legs' motion).
+    fn pose_bones_part(&self, anim: Option<&Anim>, frame: f32, part: Option<(&Anim, f32, &[bool])>, world: &mut Vec<M34>) {
         world.clear();
-        for b in &self.bones {
+        for (bk, b) in self.bones.iter().enumerate() {
             let mut s = b.srt;
+            let (anim, frame) = match part {
+                Some((pa, pf, mask)) if mask.get(bk).copied().unwrap_or(false) => (Some(pa), pf),
+                _ => (anim, frame),
+            };
             if let Some((_, v)) = anim.and_then(|a| a.tracks.iter().find(|(n, _)| *n == b.name)) {
                 for (k, t) in v.iter().enumerate() {
                     if let Some(t) = t {
@@ -1550,8 +1565,50 @@ impl Rig {
 
     /// [`Self::skin`] into `b.tris`, with no allocation when `b` came from [`Self::draw_bufs`].
     pub fn skin_with(&self, anim: Option<&Anim>, frame: f32, b: &mut DrawBufs) {
+        self.skin_part(anim, frame, None, b);
+    }
+
+    /// The bones in the subtree of the first bone whose name ends with `suffix` (a second animated part's bones).
+    pub fn subtree_mask(&self, suffix: &str) -> Option<Vec<bool>> {
+        let r = self.bone_named(suffix)?;
+        let mut m = vec![false; self.bones.len()];
+        m[r] = true;
+        for k in r + 1..self.bones.len() {
+            if let Some(p) = self.bones[k].parent {
+                if p < k && m[p] {
+                    m[k] = true;
+                }
+            }
+        }
+        Some(m)
+    }
+
+    /// [`Self::skin_vis`] with a second animated part (see [`Self::pose_bones_part`]).
+    pub fn skin_vis_part(&self, anim: Option<&Anim>, frame: f32, part: Option<(&Anim, f32, &[bool])>, vis: &[(&Vis, f32)], b: &mut DrawBufs) {
+        self.skin_part(anim, frame, part, b);
+        b.hide.clear();
+        for bt in &self.batches {
+            let shown = bt
+                .vis_bone
+                .and_then(|s| self.bones.get(s))
+                .is_none_or(|bone| vis.iter().rev().find_map(|(v, f)| v.at(&bone.name, *f)).unwrap_or(bone.visible));
+            b.hide.push(!shown);
+        }
+    }
+
+    /// [`Self::pose_keyed`] with a second animated part; `key` must name both clips and frames.
+    pub fn pose_keyed_part(&self, anim: Option<&Anim>, frame: f32, part: Option<(&Anim, f32, &[bool])>, key: [u32; 2], b: &mut DrawBufs) {
+        let n = self.bones.len();
+        if b.world.len() == n + 1 && b.world[n][0][0].to_bits() == key[0] && b.world[n][0][1].to_bits() == key[1] {
+            return;
+        }
+        self.pose_bones_part(anim, frame, part, &mut b.world);
+        b.world.push([[f32::from_bits(key[0]), f32::from_bits(key[1]), 0.0, 0.0], [0.0; 4], [0.0; 4]]);
+    }
+
+    fn skin_part(&self, anim: Option<&Anim>, frame: f32, part: Option<(&Anim, f32, &[bool])>, b: &mut DrawBufs) {
         let DrawBufs { world, mats, tris: out, .. } = b;
-        self.pose_bones_into(anim, frame, world);
+        self.pose_bones_part(anim, frame, part, world);
         let world = &*world;
         mats.clear();
         mats.extend(self
@@ -1720,6 +1777,30 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
         srcs.push(Src::Bone(bi));
         node_src.push((id, (srcs.len() - 1) as u16));
         bone_of_node.push((id, bi));
+    }
+    // MELEE_MDL_VTX_LOG: each bone's rest world from its SRT chain against the file's stored world (bone header
+    // [off]) and inverse: where the chain and the file disagree, the bone's flags change how it composes
+    if std::env::var_os("MELEE_MDL_VTX_LOG").is_some() && bones.len() > 20 {
+        let mut w: Vec<M34> = vec![];
+        for (k, bn) in bones.iter().enumerate() {
+            let l = srt(bn.srt[0], bn.srt[1], bn.srt[2]);
+            let m = match bn.parent { Some(p) if p < w.len() => mul(&w[p], &l), _ => l };
+            let b = offs[k];
+            let mut st = [[0.0f32; 4]; 3];
+            for (i, row) in st.iter_mut().enumerate() {
+                for (j, x) in row.iter_mut().enumerate() {
+                    *x = bef(d, b + 112 + 16 * i + 4 * j); // [off] the stored world
+                }
+            }
+            let dmax = (0..3).flat_map(|i| (0..4).map(move |j| (i, j))).map(|(i, j)| (m[i][j] - st[i][j]).abs()).fold(0.0f32, f32::max);
+            let id = mul(&m, &bn.inv);
+            let imax = (0..3).flat_map(|i| (0..3).map(move |j| (i, j))).map(|(i, j)| (id[i][j] - if i == j { 1.0 } else { 0.0 }).abs()).fold(0.0f32, f32::max);
+            eprintln!(
+                "mdl0 bone: {k} {} flags {} srt {:?} chain-vs-stored {dmax:.3} chain*inv-vs-I {imax:.3} stored row1 {:?}",
+                bn.name, be32(d, b + 20), bn.srt, st[1]
+            );
+            w.push(m);
+        }
     }
     if let Some((_, o)) = defs.iter().find(|(n, _)| n == "NodeMix") {
         let mut p = *o;
@@ -1893,8 +1974,41 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
                 _ => break,
             }
         }
+        // MELEE_MDL_VTX_LOG: per object, its bind node, the matrix-index mode and which sources its vertices take
+        // (bone / mix / identity, with the bone names and a sample position): the vertex-level check of the skinning
+        if std::env::var_os("MELEE_MDL_VTX_LOG").is_some() {
+            let start = batches.last().map_or(0, |b: &Batch| b.end as usize);
+            let mut used: Vec<(u16, usize, [f32; 3])> = vec![];
+            for v in &tris[start..] {
+                match used.iter_mut().find(|u| u.0 == v.0) {
+                    Some(u) => u.1 += 1,
+                    None => used.push((v.0, 1, v.1)),
+                }
+            }
+            let desc: Vec<String> = used
+                .iter()
+                .map(|(si, n, p0)| {
+                    let k = match srcs.get(*si as usize) {
+                        Some(Src::Ident) => "ident".to_string(),
+                        Some(Src::Bone(b)) => format!("bone {}", bones[*b].name),
+                        Some(Src::Mix(ws)) => format!("mix {:?}", ws.iter().map(|(b, w)| (bones[*b].name.as_str(), *w)).collect::<Vec<_>>()),
+                        None => "?".to_string(),
+                    };
+                    format!("src {si} {k} x{n} first ({:.1} {:.1} {:.1})", p0[0], p0[1], p0[2])
+                })
+                .collect();
+            eprintln!("mdl0 vtx: object {} node {} mtxidx {} -> {}", objs[oi].0, obj_node, lo & 1, desc.join("; "));
+        }
         bt.end = tris.len() as u32;
         batches.push(bt);
+    }
+    if std::env::var_os("MELEE_MDL_VTX_LOG").is_some() {
+        let ids: Vec<String> = node_src.iter().map(|(id, s)| format!("{id}->{s}")).collect();
+        eprintln!("mdl0 vtx: node ids {}", ids.join(" "));
+        if let Some((_, o)) = defs.iter().find(|(n, _)| n == "NodeMix") {
+            let raw: Vec<String> = d[*o..(*o + 96).min(d.len())].iter().map(|b| b.to_string()).collect();
+            eprintln!("mdl0 vtx: NodeMix head {}", raw.join(" "));
+        }
     }
     if tris.is_empty() && need_tris {
         return None;

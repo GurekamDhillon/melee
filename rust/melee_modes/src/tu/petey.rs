@@ -697,9 +697,14 @@ unsafe fn arena_camera() {
     const EASE: f32 = 0.08;
     const MARGIN: f32 = 20.0;
     let a = crate::tu::geno_vm::actor();
-    let mut b = crate::tu::vm_boss_model::body_box(false, a).unwrap_or([a.pos[0] - 60.0, a.pos[0] + 60.0, a.pos[1] - 60.0, a.pos[1] + 70.0]);
-    let him = b;
     let ship = crate::tu::vm_arena::bounds();
+    // Brawl's boss camera follows the players with the boss's small framing box (the IR's), not his whole mesh;
+    // Meta Ridley's fight keeps the whole-body framing with the ship (the owner wants him in view through his exits)
+    let framed = if ship.is_none() && !crate::tu::vm_boss_model::body_cam() { crate::tu::vm_boss_model::framing_box(a) } else { None };
+    let mut b = framed
+        .or_else(|| crate::tu::vm_boss_model::body_box(false, a))
+        .unwrap_or([a.pos[0] - 60.0, a.pos[0] + 60.0, a.pos[1] - 60.0, a.pos[1] + 70.0]);
+    let him = b;
     if let Some(f) = ship {
         b = [fmin(b[0], f[0]), fmax(b[1], f[1]), fmin(b[2], f[2]), fmax(b[3], f[3])];
     }
@@ -1391,6 +1396,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     if let Some(p) = vm() {
         crate::tu::vm_arena::draw();
+        draw_weapons();
         if crate::tu::vm_boss_model::draw(vm_run(p), crate::tu::geno_vm::actor(), B.flash[0] > 0)
             && std::env::var_os("MELEE_PETEY_SHAPES").is_none()
         {
@@ -1436,6 +1442,30 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
         if d.dmg > 0 {
             cap([d.x, d.y, d.x, d.y, d.r], col(0xE0, 0x30, 0x30));
         }
+    }
+}
+
+/// The VM boss's live weapons (geno_boss_spawn's pool: Porky's Mini-Porky robots and sparks, Meta Ridley's
+/// fireballs and Vulcan shots) as spheres the size of their boxes (their own models are not drawn [L]). A flying
+/// weapon with no box (a robot: hurtbox only) takes a fixed size of ours. Presentation only.
+unsafe fn draw_weapons() {
+    let recs = crate::tu::geno_vm_host::WEAPONS;
+    if recs.is_empty() {
+        return;
+    }
+    let s = &*core::ptr::addr_of!(crate::tu::geno_boss::S);
+    for p in s.spawn.iter() {
+        let Some(rc) = recs.get(p.rec as usize) else { continue };
+        let boxes: &[crate::tu::geno_boss_spawn::SpawnBox] = if p.phase == 0 { &rc.fly } else { rc.explode.as_ref().map_or(&[], |e| &e.1[..]) };
+        let r = boxes.iter().map(|b| b.size).fold(0.0f32, fmax);
+        let r = if r > 0.0 { r } else { 6.0 * rc.scale.max(0.5) };
+        let (c, d) = if p.phase == 0 {
+            (GXColor { r: 255, g: 200, b: 60, a: 255 }, GXColor { r: 160, g: 90, b: 20, a: 255 })
+        } else {
+            (GXColor { r: 255, g: 110, b: 40, a: 255 }, GXColor { r: 150, g: 40, b: 10, a: 255 })
+        };
+        let v = Vec3 { x: p.x, y: p.y, z: 0.0 };
+        melee_runtime::tu::lbcollision::lbColl_80008FC8(v, v, &c, &d, r);
     }
 }
 
@@ -1681,6 +1711,12 @@ unsafe fn vm_frame(p: &'static brawl_boss::vm::Program) {
     let d = VM_DMG;
     VM_DMG = 0;
     let o = crate::tu::geno_vm_host::vm_frame(p, B.carrier_slot, B.last_frame, d, true, fo, log_on());
+    // the HP bar (presentation only: melee_core::bossbar, drawn by the overlay)
+    {
+        let a = crate::tu::geno_vm::actor();
+        let tenth = |v: f32| melee_core::ppc::fcvt_u32(v.max(0.0) * 10.0);
+        melee_core::bossbar::set(boss_name(), if o.dead { 0 } else { tenth(a.hp()) }, tenth(a.hp_max()));
+    }
     B.st = o.status;
     B.px = o.x;
     B.aim = if o.lr < 0.0 { -1.0 } else { 1.0 };

@@ -38,6 +38,7 @@ static mut INST: u32 = 0;
 
 /// Not a VM match / a new one: no boxes.
 pub unsafe fn reset() {
+    melee_core::bossbar::clear();
     for b in BOXES.iter_mut() {
         b.on = false;
     }

@@ -56,6 +56,31 @@ fn text_quads(out: &mut Vec<OverlayQuad>, text: &str, x0: f32, y0: f32, s: f32, 
     }
 }
 
+/// The boss HP bar (melee_core::bossbar), top centre: an ink frame, the dark track, the sunny fill cut in quarters
+/// and the boss's name under its left end, as the Envoy HUD's boss bar. Render-only, like the rest of the overlay.
+pub fn boss_bar(out: &mut Vec<OverlayQuad>, tw: u32, th: u32) {
+    let Some((name, hp, max)) = melee_core::bossbar::get() else { return };
+    // 640 x 480 layout units scaled to the target's height, centred across its width
+    let u = th as f32 / 480.0;
+    let w = 300.0 * u;
+    let (x, y, h) = (0.5 * tw as f32 - 0.5 * w, 14.0 * u, 13.0 * u);
+    const INK: [u8; 4] = [42, 26, 110, 255];
+    const TRACK: [u8; 4] = [23, 14, 69, 255];
+    const SUNNY: [u8; 4] = [255, 216, 74, 255];
+    const CORAL: [u8; 4] = [255, 77, 109, 255];
+    out.push(OverlayQuad { x: x - 3.0 * u, y: y - 3.0 * u, w: w + 6.0 * u, h: h + 6.0 * u, c: INK });
+    out.push(OverlayQuad { x, y, w, h, c: TRACK });
+    let f = (hp as f32 / max as f32).clamp(0.0, 1.0);
+    out.push(OverlayQuad { x, y, w: w * f, h, c: if f <= 0.25 { CORAL } else { SUNNY } });
+    for q in 1..4 {
+        out.push(OverlayQuad { x: x + w * q as f32 / 4.0 - u, y, w: 2.0 * u, h, c: INK });
+    }
+    let s = (2.0 * u).round().max(1.0);
+    let ty = y + h + 6.0 * u;
+    text_quads(out, name, x + s, ty + s, s, [0, 0, 0, 200]);
+    text_quads(out, name, x, ty, s, [255, 255, 255, 255]);
+}
+
 /// The frame profiler's readout (MELEE_PROFILE_OVERLAY=1): a graph of the last presented-frame intervals and the
 /// hitch count, top right. Render-only, like the rest of the overlay.
 pub fn profile_readout(out: &mut Vec<OverlayQuad>, tw: u32, th: u32) {

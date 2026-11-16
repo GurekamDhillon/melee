@@ -1816,6 +1816,28 @@ fn mdl0_any(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)], need_tri
             None
         };
         let mut slots = [0u32; 10];
+        // the object's pre-primitive list loads matrix slots too (indexed position-matrix loads): read them first
+        {
+            let pd = at(o + 24, bei(d, o + 32));
+            let pe = pd + be32(d, o + 28) as usize;
+            let mut q = pd;
+            while q + 5 <= pe.min(d.len()) {
+                match d[q] {
+                    32 => {
+                        let v = be32(d, q + 1);
+                        let slot = ((v & 4095) / 12) as usize;
+                        if slot < 10 {
+                            slots[slot] = v >> 16;
+                        }
+                        q += 5;
+                    }
+                    40 | 48 | 56 => q += 5,
+                    8 => q += 6,
+                    16 => q += 5 + 4 * (((be32(d, q + 1) >> 16) & 15) as usize + 1),
+                    _ => q += 1,
+                }
+            }
+        }
         let dl = at(o + 0x24, bei(d, o + 0x2C));
         let dl_end = dl + be32(d, o + 0x28) as usize;
         let mut p = dl;

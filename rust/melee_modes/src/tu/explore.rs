@@ -175,7 +175,9 @@ fn section_model(leaves: &[Vec<u8>], stem: &str) -> String {
             }
         }
     }
-    cands.iter().find(|n| n.ends_with(tail) && !n.ends_with(&format!("{tail}a")) && !n.ends_with(&format!("{tail}b"))).or(if cands.len() == 1 { cands.first() } else { None }).cloned().unwrap_or_default()
+    // the Subspace levels' models carry an `MS` suffix (`400mAdvDimension01MS`)
+    let core = |n: &String| n.strip_suffix("MS").unwrap_or(n).to_string();
+    cands.iter().find(|n| { let c = core(n); c.ends_with(tail) && !c.ends_with(&format!("{tail}a")) && !c.ends_with(&format!("{tail}b")) }).or(if cands.len() == 1 { cands.first() } else { None }).cloned().unwrap_or_default()
 }
 
 fn arena_secs() -> [SecDef; 1] {
@@ -273,6 +275,8 @@ pub struct Door {
     pub exit: bool,
     /// the step jump the door performs (`Jump::id`): a GMSJ block's jump when the door is that block's, else its id
     pub jump: u32,
+    /// the trigger that unlocks it (0: never locked): a door Brawl keeps shut until, e.g., the room's enemies are beaten
+    pub lock: u16,
 }
 
 /// A GIB2 crate generator (section, x, y, Brawl's size: 0 small, 1 crate, 2 big) -> a Melee container item.
@@ -314,6 +318,15 @@ pub struct Map {
     paths: Vec<Vec<[f32; 6]>>,
     /// per spawn (`spawns`): index into `enemy_paths`, usize::MAX none
     pub spawn_path: Vec<usize>,
+    /// per spawn: its start status from the generator record (-1 unknown)
+    pub spawn_status: Vec<i32>,
+    /// `TRIG` doors' areas: (door index, rect x1 y1 x2 y2, world): a player inside fires the door's jump
+    pub trig_areas: Vec<(usize, [f32; 4])>,
+    /// per spawn: (spawn trigger, defeat trigger), 0 none
+    pub spawn_trig: Vec<(u16, u16)>,
+    /// every area trigger (section, trigger id, rect world) and enemy-pattern trigger (output, inputs)
+    pub areas: Vec<(usize, u16, [f32; 4])>,
+    pub patterns: Vec<(u16, [u16; 5])>,
     /// the placements' motion paths (Brawl's grGimmickMotionPath; `enemy_path`)
     enemy_paths: Vec<EnemyPath>,
     /// what the loader left out or moved (printed with the load report)
@@ -438,7 +451,7 @@ fn link_doors(m: &mut Map, secs: &[SecDef], js: &[Jump]) {
             Some(a) => a.2,
             None => {
                 let at = m.starts.iter().find(|s| s.0 == ts && s.1 == j.start).map(|s| s.2).unwrap_or_else(|| m.entries.get(ts).copied().unwrap_or([0.0, 0.0]));
-                m.doors.push(Door { sec: ts, x: at[0], y: at[1], kind: ENTRY, to: -1, id: 0, back: false, into_room: false, exit: false, jump: 0 });
+                m.doors.push(Door { sec: ts, x: at[0], y: at[1], kind: ENTRY, to: -1, id: 0, back: false, into_room: false, exit: false, jump: 0, lock: 0 });
                 arrive.push((ts, j.start.clone(), m.doors.len() - 1));
                 m.doors.len() - 1
             }
@@ -450,6 +463,8 @@ fn link_doors(m: &mut Map, secs: &[SecDef], js: &[Jump]) {
 /// A door kind of our own: a section's entry point (where the way on from the section before arrives); never drawn,
 /// never opened.
 const ENTRY: u8 = 0xFF;
+/// a door made for a GMSJ step jump fired by an area trigger (no up tilt; entering its area takes it)
+const TRIG: u8 = 0xFE;
 /// `Door::to` of the last main section's way on: the level's next story step (`story_next`).
 pub const STORY_NEXT: i32 = -2;
 
@@ -471,6 +486,12 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut brick_models: Vec<(String, pm::Rig, Vec<pm::Vert>)> = vec![];
     let mut paths: Vec<Vec<[f32; 6]>> = vec![];
     let mut spawn_path: Vec<usize> = vec![];
+    let mut spawn_status: Vec<i32> = vec![];
+    // (section, GMSJ jump id, trigger id) and every area trigger (section, trigger id, rect)
+    let mut pending_trig: Vec<(usize, u32, u16)> = vec![];
+    let mut areas: Vec<(usize, u16, [f32; 4])> = vec![];
+    let mut spawn_trig: Vec<(u16, u16)> = vec![];
+    let mut patterns: Vec<(u16, [u16; 5])> = vec![];
     let mut enemy_paths: Vec<EnemyPath> = vec![];
     // load notes, printed by the game thread with the map's report (never printed from a loader thread)
     let mut notes: Vec<String> = vec![];
@@ -671,8 +692,12 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         }
         // doors (GDOR) and enemy spawn points (GEG1)
         for (bi, b) in leaves.iter().enumerate().filter(|(_, d)| d.get(..4) == Some(b"BLOC")) {
-            for e in bloc_entries(b, b"GDOR") {
+            // GDBF (the Halberd / factory sliding doors) are doors of the same record shape
+            for e in bloc_entries(b, b"GDOR").into_iter().chain(bloc_entries(b, b"GDBF")) {
                 doors.push(Door {
+                    // a trigger word whose two flag bytes are both set: shut until it fires [L: read from the data;
+                    // other flag pairs (the Great Maze's, Lake's room-pair words) are not locks here]
+                    lock: off().and_then(|o| o.door_lock).filter(|&q| b.get(e + q + 2) == Some(&1) && b.get(e + q + 3) == Some(&1) && b.get(e + 0x51) != Some(&0x13)).map_or(0, |q| be16(b, e + q)),
                     sec: si,
                     x: bef(b, e + 0x38) + s.off[0],
                     y: bef(b, e + 0x3C) + s.off[1],
@@ -686,11 +711,36 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 });
             }
             for e in bloc_entries(b, b"GEG1") {
+                spawn_trig.push(off().map_or((0, 0), |o| (o.geg_spawn_trig.map_or(0, |q| be16(b, e + q)), o.geg_defeat_trig.map_or(0, |q| be16(b, e + q)))));
+                spawn_status.push(off().and_then(|o| o.geg_status).map_or(-1, |o| be32(b, e + o) as i32));
                 spawn_path.push(placement_path(&leaves, &tags, bi, b.get(e + 6).copied().unwrap_or(0xFF), s.off, &mut enemy_paths, &mut notes));
                 spawns.push((si, bef(b, e + 0x28) + s.off[0], bef(b, e + 0x2C) + s.off[1], if b[e + 0x67] != 0 { 1 } else { -1 }, be16(b, e + 0x1C)));
             }
             // a step-jump block (GMSJ) is fired by the door of the GDOR block right after it: that door performs
             // the block's jump (its first word, a step-jump id)
+            // a GMSJ with no door of its own (a level's walk-off exit, 180001 -> 180002) is fired by its trigger: the
+            // GET1 / GET2 area with that trigger id, entered by a player (`TRIG` doors at the area, linked by jump)
+            if let Some(o) = off().filter(|o| o.gmsj_trig.is_some() && o.get_rect.is_some() && o.get_trig.is_some()) {
+                for e in bloc_entries(b, b"GMSJ") {
+                    if b.get(e + 0xC..e + 0x10) == Some(b"GDOR") {
+                        continue;
+                    }
+                    let trig = be16(b, e + o.gmsj_trig.unwrap_or(0));
+                    pending_trig.push((si, be32(b, e), trig));
+                }
+                if let (Some(go), Some(gi)) = (o.gept_out, o.gept_in) {
+                    for e in bloc_entries(b, b"GEPT") {
+                        patterns.push((be16(b, e + go), core::array::from_fn(|k| be16(b, e + gi + 4 * k))));
+                    }
+                }
+                for tag in [b"GET1", b"GET2"] {
+                    for e in bloc_entries(b, tag) {
+                        let r = o.get_rect.unwrap_or(0);
+                        let q = [bef(b, e + r) + s.off[0], bef(b, e + r + 4) + s.off[1], bef(b, e + r + 8) + s.off[0], bef(b, e + r + 12) + s.off[1]];
+                        areas.push((si, be16(b, e + o.get_trig.unwrap_or(0)), q));
+                    }
+                }
+            }
             for e in bloc_entries(b, b"GMSJ") {
                 if b.get(e + 0xC..e + 0x10) == Some(b"GDOR") {
                     let inner = e + 0xC;
@@ -885,6 +935,29 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         eat(l.prev_id0 as u16 as u32 | (l.next_id0 as u16 as u32) << 16);
         eat(l.hi_flags as u32 | (l.lo_flags as u32) << 16);
     }
+    // a spawn trigger nothing the port runs can fire (a lid opening, a cutscene, a GFT2 / GASD block) would keep its
+    // enemies out for good: those points come in at once instead [L: until those sources exist]
+    {
+        let can: Vec<u16> = areas.iter().map(|a| a.1).chain(patterns.iter().map(|p| p.0)).chain(spawn_trig.iter().map(|t| t.1)).collect();
+        let mut dropped = 0;
+        for t in spawn_trig.iter_mut() {
+            if t.0 != 0 && !can.contains(&t.0) {
+                t.0 = 0;
+                dropped += 1;
+            }
+        }
+        if dropped > 0 {
+            notes.push(format!("explore: {dropped} enemy points wait on a trigger nothing here fires: they come in at once"));
+        }
+    }
+    let mut trig_areas: Vec<(usize, [f32; 4])> = vec![];
+    for &(si, jump, trig) in &pending_trig {
+        for &(_, _, r) in areas.iter().filter(|a| a.0 == si && a.1 == trig) {
+            doors.push(Door { sec: si, x: (r[0] + r[2]) * 0.5, y: r[1], kind: TRIG, to: -1, id: jump, back: false, into_room: false, exit: false, jump, lock: 0 });
+            trig_areas.push((doors.len() - 1, r));
+            notes.push(format!("explore: section {si}: step jump {jump:08x} fired by area trigger {trig} at ({:.0},{:.0})-({:.0},{:.0})", r[0], r[1], r[2], r[3]));
+        }
+    }
     Ok(Map {
         verts: verts.iter().map(|p| Vec2 { x: p[0], y: p[1] }).collect(),
         lines,
@@ -903,6 +976,11 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         brick_models,
         paths,
         spawn_path,
+        spawn_status,
+        trig_areas,
+        spawn_trig,
+        areas,
+        patterns,
         enemy_paths,
         notes,
         cam,
@@ -1301,6 +1379,7 @@ pub unsafe fn coll_override() -> *mut MapCollData {
     SPAWN_N = 0;
     CRATE_NEXT = i32::MAX;
     MOVER_START = [-1; 64];
+    triggers_reset();
     crate::tu::explore_vm::reset();
     VISITED = 1;
     BROKEN = 0;
@@ -1769,6 +1848,28 @@ pub unsafe fn room_tick() {
         }
         return;
     }
+    // checks only (`MELEE_EXPLORE_TP=x,y@frame`, world space): player 1 is set down there at
+    // that room frame (a trigger area or a ledge past a pit a pad walk cannot cross)
+    {
+        static TP: std::sync::OnceLock<Option<(f32, f32, i32)>> = std::sync::OnceLock::new();
+        if let Some((x, y, f)) = *TP.get_or_init(|| {
+            let v = std::env::var("MELEE_EXPLORE_TP").ok()?;
+            let (xy, f) = v.split_once('@')?;
+            let (x, y) = xy.split_once(',')?;
+            Some((x.trim().parse().ok()?, y.trim().parse().ok()?, f.trim().parse().ok()?))
+        }) {
+            if CLOCK == f {
+                let mut done = false;
+                each_fighter(|g, fp| {
+                    if !done {
+                        place(g, fp, x, y);
+                        done = true;
+                    }
+                });
+                eprintln!("explore: test teleport to ({x:.0},{y:.0}) at room frame {CLOCK}");
+            }
+        }
+    }
     // checks only (`MELEE_EXPLORE_GOTO=door@frame[,door@frame..]`): the party goes through to `door` at room frame
     // `frame`, as if it had opened the door leading there (screenshots inside the side rooms without a walk)
     if let Some(&(_, to)) = goto_list("MELEE_EXPLORE_GOTO").iter().find(|&&(f, to)| f == CLOCK && (to as usize) < m.doors.len()) {
@@ -1799,7 +1900,7 @@ pub unsafe fn room_tick() {
         for (di, d) in m.doors.iter().enumerate() {
             // overlapping doors (080103 has its two room doors at one spot): a linked one wins over an unlinked
             // one, and a door into a room not yet seen over one into a seen room
-            let near = d.kind != ENTRY && d.sec as i32 == SEC && (p.x - d.x).abs() <= 15.0 && p.y >= d.y - 55.0 && p.y <= d.y + 20.0;
+            let near = d.kind != ENTRY && d.kind != TRIG && d.sec as i32 == SEC && (p.x - d.x).abs() <= 15.0 && p.y >= d.y - 55.0 && p.y <= d.y + 20.0;
             let score = |d: &Door| if d.to < 0 { if d.exit { 1 } else { 0 } } else if VISITED & 1u32.pshl(m.doors[d.to as usize].sec.min(31) as i64) == 0 { 3 } else { 2 };
             if near && (want < 0 || score(d) > score(&m.doors[want as usize])) {
                 want = di as i32;
@@ -1814,6 +1915,29 @@ pub unsafe fn room_tick() {
             want = d;
             eprintln!("explore: test open door {d} at room frame {CLOCK}");
         }
+    }
+    // an area trigger's step jump: a human of the party standing in its area
+    if want < 0 && !m.trig_areas.is_empty() {
+        each_fighter(|_, fp| {
+            let slot = (*fp).player_idx as i32;
+            let human = melee_fighter::tu::player::Player_GetPlayerSlotType(slot) as i32 == 0;
+            let p = (*fp).cur_pos;
+            if !human || want >= 0 {
+                return;
+            }
+            for &(di, r) in &m.trig_areas {
+                if m.doors[di].sec as i32 == SEC && p.x >= r[0] && p.x <= r[2] && p.y >= r[1] && p.y <= r[3] {
+                    want = di as i32;
+                    break;
+                }
+            }
+        });
+    }
+    if want >= 0 && !fired(m.doors[want as usize].lock) {
+        if CLOCK % 60 == 0 || std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
+            eprintln!("explore: door {want} is locked (trigger {} not fired yet)", m.doors[want as usize].lock);
+        }
+        want = -1;
     }
     if want >= 0 {
         let d = m.doors[want as usize];
@@ -1870,19 +1994,113 @@ fn goto_list(var: &'static str) -> &'static [(i32, i32)] {
 /// door (`subspace::clear_room`) stays the caller's to mirror.
 pub static mut ENEMY_HOOK: Option<unsafe fn(u16, f32, f32, i32, usize) -> bool> = None;
 
-/// The section whose enemy points are being spawned (-1 none), the next point to look at and how many went in.
-/// One a room frame (`spawn_step`). Snapshot covered (statics).
+/// The section whose enemy points are live (-1 none) and the point the round robin looks at next. Snapshot covered.
 static mut SPAWN_SEC: i32 = -1;
 static mut SPAWN_NEXT: i32 = 0;
 static mut SPAWN_N: i32 = 0;
 /// The next crate to place (one a room frame from room frame 2; past the end: done).
 static mut CRATE_NEXT: i32 = i32::MAX;
 
-/// Section `s` was entered: the room's own enemies go now, its points come in one a frame (`spawn_step`).
+/// Brawl's stage trigger manager, as far as the rooms use it (sim statics, reset at the match start): the fired
+/// trigger ids (a bit each), and per enemy point whether it is in now and whether it was beaten. An enemy point comes
+/// in when its spawn trigger has fired (0: at once), its defeat fires its defeat trigger; area triggers (GET1 / GET2)
+/// fire when a player stands in them, enemy-pattern triggers (GEPT) when all their inputs have.
+const TRIG_IDS: usize = 4096;
+const POINTS: usize = 1024;
+static mut FIRED: [u32; TRIG_IDS / 32] = [0; TRIG_IDS / 32];
+static mut POINT_IN: [u32; POINTS / 32] = [0; POINTS / 32];
+static mut POINT_BEATEN: [u32; POINTS / 32] = [0; POINTS / 32];
+/// the hand-made actors' pool handles and their points (to see them go)
+static mut SS_LIVE: [(i32, i32); 16] = [(-1, -1); 16];
+
+fn bit(a: &[u32], i: usize) -> bool {
+    a.get(i / 32).is_some_and(|w| w & 1u32.pshl((i % 32) as i64) != 0)
+}
+
+fn set_bit(a: &mut [u32], i: usize, on: bool) {
+    if let Some(w) = a.get_mut(i / 32) {
+        let m = 1u32.pshl((i % 32) as i64);
+        *w = if on { *w | m } else { *w & !m };
+    }
+}
+
+pub unsafe fn fired(id: u16) -> bool {
+    id == 0 || bit(&*core::ptr::addr_of!(FIRED), id as usize)
+}
+
+pub unsafe fn fire(id: u16) {
+    if id != 0 && !fired(id) {
+        set_bit(&mut *core::ptr::addr_of_mut!(FIRED), id as usize, true);
+        if std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
+            eprintln!("explore: trigger {id} fired at room frame {CLOCK}");
+        }
+    }
+}
+
+unsafe fn triggers_reset() {
+    FIRED = [0; TRIG_IDS / 32];
+    POINT_IN = [0; POINTS / 32];
+    POINT_BEATEN = [0; POINTS / 32];
+    SS_LIVE = [(-1, -1); 16];
+}
+
+/// An enemy of point `k` left (explore_vm or the hand-made pool): beaten, its defeat trigger fires and the point
+/// stays empty; otherwise (out of the room) it may come in again.
+pub unsafe fn enemy_gone(m: &Map, k: usize, beaten: bool) {
+    set_bit(&mut *core::ptr::addr_of_mut!(POINT_IN), k, false);
+    if beaten {
+        set_bit(&mut *core::ptr::addr_of_mut!(POINT_BEATEN), k, true);
+        if let Some(t) = m.spawn_trig.get(k) {
+            fire(t.1);
+        }
+    }
+}
+
+/// The room's triggers this frame: areas the party stands in, enemy patterns complete, hand-made actors gone.
+unsafe fn triggers_tick(m: &Map) {
+    let mut inside = [0u16; 16];
+    let mut ni = 0;
+    each_fighter(|_, fp| {
+        let slot = (*fp).player_idx as i32;
+        if melee_fighter::tu::player::Player_GetPlayerSlotType(slot) as i32 != 0 {
+            return;
+        }
+        let p = (*fp).cur_pos;
+        if CLOCK % 300 == 0 && std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
+            eprintln!("explore: frame {CLOCK} section {SEC} player {slot} at ({:.0},{:.0})", p.x, p.y);
+        }
+        for &(si, id, r) in &m.areas {
+            if si as i32 == SEC && p.x >= r[0] && p.x <= r[2] && p.y >= r[1] && p.y <= r[3] && ni < inside.len() {
+                inside[ni] = id;
+                ni += 1;
+            }
+        }
+    });
+    for &id in &inside[..ni] {
+        fire(id);
+    }
+    for &(out, ins) in &m.patterns {
+        if !fired(out) && ins.iter().any(|&i| i != 0) && ins.iter().all(|&i| fired(i)) {
+            fire(out);
+        }
+    }
+    for i in 0..SS_LIVE.len() {
+        let (h, k) = SS_LIVE[i];
+        if h >= 0 && !crate::tu::subspace::owns(h) {
+            SS_LIVE[i] = (-1, -1);
+            enemy_gone(m, k as usize, true);
+        }
+    }
+}
+
+/// Section `s` was entered: the room's own enemies go now (not beaten: they may come in again), its points come in
+/// as their triggers allow (`spawn_step`).
 unsafe fn spawn_section(_m: &Map, s: usize) {
     // only the map's own: the Envoy sim's enemies (its foes for the fight) stay, and keep half the pool free for it
     crate::tu::subspace::clear_room();
     crate::tu::explore_vm::clear_room();
+    POINT_IN = [0; POINTS / 32];
+    SS_LIVE = [(-1, -1); 16];
     // checks only: `MELEE_EXPLORE_NO_ENEMIES=1` leaves the map's enemy points empty (a pad walk of the way through)
     static NONE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     if *NONE.get_or_init(|| std::env::var_os("MELEE_EXPLORE_NO_ENEMIES").is_some()) {
@@ -1894,45 +2112,55 @@ unsafe fn spawn_section(_m: &Map, s: usize) {
     SPAWN_N = 0;
 }
 
-/// Every room frame: the next enemy point of the section being filled, if any.
+/// Every room frame: the triggers, then at most one enemy point of the party's section comes in (round robin): one
+/// not in, not beaten, whose spawn trigger has fired, while its pool has room.
 unsafe fn spawn_step(m: &Map) {
     use crate::tu::subspace as ss;
-    if SPAWN_SEC < 0 {
+    triggers_tick(m);
+    if SPAWN_SEC < 0 || m.spawns.is_empty() {
         return;
     }
     let s = SPAWN_SEC as usize;
     let cap = if crate::tu::envoy::armed() != 0 { ss::MAX / 2 } else { ss::MAX };
-    while (SPAWN_NEXT as usize) < m.spawns.len() {
-        let (si, x, y, face, id) = m.spawns[SPAWN_NEXT as usize];
-        SPAWN_NEXT += 1;
-        if si != s || SPAWN_N >= cap as i32 {
+    let n = m.spawns.len().min(POINTS);
+    for _ in 0..n {
+        let k = SPAWN_NEXT as usize % n;
+        SPAWN_NEXT = ((k + 1) % n) as i32;
+        let (si, x, y, face, id) = m.spawns[k];
+        if si != s || bit(&*core::ptr::addr_of!(POINT_IN), k) || bit(&*core::ptr::addr_of!(POINT_BEATEN), k) {
             continue;
         }
-        let n = &mut *core::ptr::addr_of_mut!(SPAWN_N);
-        // the Geno enemy lane's actors take a point first (Brawl kind, place, facing, section); the hand-made
-        // Subspace kinds are the stand-in until they do
-        if let Some(hook) = ENEMY_HOOK {
-            if hook(id, x, y, face, s) {
-                *n += 1;
-                return;
-            }
+        if !fired(m.spawn_trig.get(k).map_or(0, |t| t.0)) {
+            continue;
         }
         // Brawl's own enemy scripts (the VM lane, explore_vm) for the kinds with no hand-made actor
-        if crate::tu::explore_vm::spawn(id, x, y, face, s, CUR_ID, SPAWN_NEXT as usize - 1) {
-            *n += 1;
+        if crate::tu::explore_vm::spawn(id, x, y, face, s, CUR_ID, k) {
+            set_bit(&mut *core::ptr::addr_of_mut!(POINT_IN), k, true);
             return;
         }
-        let (k, name) = enemy_kind(id);
-        let Some(k) = k.filter(|_| has_actor(id) || standins()) else {
+        if crate::tu::explore_vm::has_vm_kind(id) {
+            continue; // a VM kind with its pool full: it waits for room
+        }
+        let (kk, name) = enemy_kind(id);
+        let Some(kk) = kk.filter(|_| has_actor(id) || standins()) else {
+            // listed once, then counted as in (never spawned)
             eprintln!("explore: enemy point kind {id} ({name}) not spawned (no actor for it yet)");
+            set_bit(&mut *core::ptr::addr_of_mut!(POINT_IN), k, true);
             continue;
         };
-        let h = ss::spawn(k, 0, x, y + 5.0, face);
-        eprintln!("explore: enemy {name} (Brawl kind {id}) as {} at ({x:.0},{y:.0}) section {s} -> {h}", ss::kind_name(k));
-        *n += 1;
+        if SS_LIVE.iter().filter(|e| e.0 >= 0).count() >= cap {
+            continue;
+        }
+        let h = ss::spawn(kk, 0, x, y + 5.0, face);
+        eprintln!("explore: enemy {name} (Brawl kind {id}) as {} at ({x:.0},{y:.0}) section {s} -> {h}", ss::kind_name(kk));
+        set_bit(&mut *core::ptr::addr_of_mut!(POINT_IN), k, true);
+        if h >= 0 {
+            if let Some(e) = SS_LIVE.iter_mut().find(|e| e.0 < 0) {
+                *e = (h, k as i32);
+            }
+        }
         return;
     }
-    SPAWN_SEC = -1;
 }
 
 /// Every GIB2 crate of the map as a Melee container (small: capsule, crate: box, big: barrel), once per room. Its
@@ -1983,6 +2211,19 @@ struct Off {
     gmov_mode: usize,
     gmov_path: usize,
     gmov_model: usize,
+    /// GEG1 enemy generator record: the enemy's start status (optional: without it the VM enemies start in status 0)
+    geg_status: Option<usize>,
+    /// GMSJ: the trigger id that fires a block with no door of its own; GET1 / GET2 area triggers: rect, trigger id
+    gmsj_trig: Option<usize>,
+    get_rect: Option<usize>,
+    get_trig: Option<usize>,
+    /// GEG1 spawn / defeat trigger words, GEPT output / inputs
+    geg_spawn_trig: Option<usize>,
+    geg_defeat_trig: Option<usize>,
+    gept_out: Option<usize>,
+    gept_in: Option<usize>,
+    /// GDOR / GDBF: the unlock trigger word
+    door_lock: Option<usize>,
 }
 
 fn off() -> Option<&'static Off> {
@@ -2014,6 +2255,15 @@ fn off() -> Option<&'static Off> {
                 gmov_mode: g("gmov_mode")?,
                 gmov_path: g("gmov_path")?,
                 gmov_model: g("gmov_model")?,
+                geg_status: g("geg_status"),
+                gmsj_trig: g("gmsj_trig"),
+                get_rect: g("get_rect"),
+                get_trig: g("get_trig"),
+                geg_spawn_trig: g("geg_spawn_trig"),
+                geg_defeat_trig: g("geg_defeat_trig"),
+                gept_out: g("gept_out"),
+                gept_in: g("gept_in"),
+                door_lock: g("door_lock"),
             })
         })();
         if o.is_none() {
@@ -2229,6 +2479,12 @@ fn enemy_path_pos(id: usize, f: f32) -> [f32; 3] {
         .and_then(|m| m.enemy_paths.get(id & 0xFFFF))
         .map(|p| p.pos(f))
         .unwrap_or([0.0; 3])
+}
+
+/// Spawn `k`'s start status from its generator record (None: no map / the offset spec has no `geg_status`).
+pub fn spawn_status(id: i32, k: usize) -> Option<i32> {
+    let m = maps().m[slot_of(id)].get()?.as_ref()?;
+    m.spawn_status.get(k).copied().filter(|&s| s >= 0)
 }
 
 /// The enemy VM's inputs for spawn `k` of GD stage `id`'s map: its placement path (value 41000) and its home (the
@@ -2903,7 +3159,7 @@ mod lake3_tests {
             let late = gi >= super::SSS_ROWS;
             let Ok(mut m) = super::load_secs(secs, true, true) else { continue };
             super::link_doors(&mut m, secs, &super::chain_of(g.id).jumps);
-            eprintln!("{}: {:?}", g.name, secs.iter().map(|s| s.file.as_str()).collect::<Vec<_>>());
+            eprintln!("{}: {:?} models {}", g.name, secs.iter().map(|s| s.file.as_str()).collect::<Vec<_>>(), m.models.len());
             for (i, d) in m.doors.iter().enumerate() {
                 eprintln!("  door {i} sec {} type {} jump {:08x} to {} exit {}", d.sec, d.kind, d.jump, d.to, d.exit);
             }

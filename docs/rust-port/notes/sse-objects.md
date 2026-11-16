@@ -170,3 +170,26 @@ its end. Mode 2's meaning is inferred from the path data, not read from Brawl's 
 non-looping clip and almost every mode-1 path a looping one. Lake 3's raft (`080105`) now carries the party across
 (synctest depth 4 / 7 on it, 0 neutral mismatches). Mode-2 parts started by something other than a rider (lids,
 cracks) stay at rest until switches and triggers exist.
+
+## Triggers, locks and exits (round 3, 4c)
+
+The rooms now run the part of Brawl's stage trigger manager they need (`explore.rs`, sim statics reset at the match
+start; field offsets in the local spec only):
+
+- **Start status**: each enemy point's own start status (a Koopa on its flight path, a Goomba falling in) for the VM
+  enemies.
+- **Enemy waves**: an enemy point comes in when its spawn trigger has fired (none: at once), one point a frame while
+  its pool has room; beating it fires its defeat trigger. A point whose spawn trigger nothing the port runs can fire
+  (lids, cutscenes, GFT2 / GASD) comes in at once, logged per map.
+- **Area triggers** (GET1 / GET2) fire while a player stands in them; **enemy-pattern triggers** (GEPT) fire when all
+  their inputs have (the waves of 180001).
+- **Exits without a door**: a GMSJ step jump with no door of its own is fired by the area trigger with its id (level
+  18's walk-off exits); GDBF sliding doors (levels 14, 28, 33, 36) are doors like GDOR's. Every level's chain now
+  links (the chain test's only remaining gaps are 39 / 40 / 41's section models, which do not load).
+- **Locked doors**: a GDOR / GDBF door whose unlock trigger word has both flag bytes set stays shut until it fires
+  (factory doors waiting on their room's enemies). Other flag pairs (the Great Maze's, Lake's room pair) are not
+  treated as locks [L].
+
+Not done in 4c: GLOK camera / area locks, GSBK / GMWA / GMWO switches and switch walls, GSHT shutters, mode-2 parts
+started by a switch, GFT2 / GASD / GFRT triggers. `MELEE_EXPLORE_TP=x,y@frame` (checks only) sets player 1 down at a
+point.

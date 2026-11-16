@@ -106,6 +106,11 @@ pub fn vm_name(kind: u16) -> Option<&'static str> {
     })
 }
 
+/// A Brawl kind this lane runs (a VM program loaded for it at the stage load).
+pub fn has_vm_kind(kind: u16) -> bool {
+    enabled() && !crate::tu::explore::has_actor(kind) && vm_name(kind).and_then(row).is_some_and(|r| prog(r as i32).is_some())
+}
+
 pub fn enabled() -> bool {
     static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *V.get_or_init(|| std::env::var("MELEE_SSE_VM").map_or(true, |v| v != "0"))
@@ -179,7 +184,11 @@ pub unsafe fn spawn(kind: u16, x: f32, y: f32, face: i32, sec: usize, stage: i32
     let Some(file) = row(name) else { return false };
     let Some(p) = prog(file as i32) else { return false };
     let Some(i) = S.iter().position(|s| s.file < 0) else { return false };
-    let st = crate::tu::geno_boss_ir::ir_start_status(&format!("{}.brawl.ir.json", vr::FILES[file].1)).unwrap_or(0);
+    // the generator record's start status (a Koopa on its flight path, a Goomba falling in), else the IR's / 0
+    let st = crate::tu::explore::spawn_status(stage, spawn)
+        .filter(|&s| s >= 0 && (s as usize) < p.status_enter.len())
+        .or_else(|| crate::tu::geno_boss_ir::ir_start_status(&format!("{}.brawl.ir.json", vr::FILES[file].1)))
+        .unwrap_or(0);
     // the actor's own generator: from its place and slot (no wall clock)
     let seed = x.to_bits() ^ y.to_bits().rotate_left(13) ^ (i as u32).wrapping_mul(0x9E37_79B9) | 1;
     vr::begin(p, &mut A[i], 1, 5, seed, st, true);
@@ -362,6 +371,10 @@ pub unsafe fn tick() {
             S[i].dead += 1;
         }
         if removed || S[i].dead > DEAD_HOLD || crate::tu::subspace::out_of_bounds(a.pos[0], a.pos[1]) {
+            if let Some(m) = crate::tu::explore::map_of(S[i].stage) {
+                // a removal at 0 HP or a fall out is a defeat (its trigger fires); a script's own removal alive is not
+                crate::tu::explore::enemy_gone(m, S[i].spawn as usize, S[i].dead > 0 || !removed);
+            }
             eprintln!("explore: vm enemy {} (slot {i}) gone at ({:.0},{:.0}){}", vr::FILES[S[i].file as usize].0, a.pos[0], a.pos[1], if removed { "" } else if S[i].dead > DEAD_HOLD { ", beaten" } else { ", out of bounds" });
             S[i] = FREE;
             A[i] = vr::OFF;

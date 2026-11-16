@@ -326,7 +326,7 @@ pub struct Map {
     pub spawn_trig: Vec<(u16, u16)>,
     /// every area trigger (section, trigger id, rect world) and enemy-pattern trigger (output, inputs)
     pub areas: Vec<(usize, u16, [f32; 4])>,
-    pub patterns: Vec<(u16, [u16; 5])>,
+    pub patterns: Vec<(usize, u16, [u16; 5])>,
     /// GLOK locks: (section, start trigger, end triggers, box left right top bottom world): from the start firing until
     /// an end fires the camera and the party stay inside the box
     pub locks: Vec<(usize, u16, [u16; 2], [f32; 4], bool)>,
@@ -334,9 +334,11 @@ pub struct Map {
     pub switches: Vec<(usize, f32, f32, u16)>,
     /// the trigger bricks' collision boxes (section, x1 y1 x2 y2): a switch inside one is fired by a hit on the box
     pub sw_boxes: Vec<(usize, [f32; 4])>,
-    /// GFT2 timers: (frames, input trigger, output trigger, set): the output is set (or cleared) that many frames after
+    /// GFT2 timers: (section, frames, input trigger, output trigger, set): the output is set (or cleared) that many frames after
     /// the input fires
-    pub timers: Vec<(i32, u16, u16, bool)>,
+    pub timers: Vec<(usize, i32, u16, u16, bool)>,
+    /// GSPR springs, GBLT conveyor belts, GLAD ladders (`hazards_tick`)
+    pub hazards: Vec<Hazard>,
     /// the placements' motion paths (Brawl's grGimmickMotionPath; `enemy_path`)
     enemy_paths: Vec<EnemyPath>,
     /// what the loader left out or moved (printed with the load report)
@@ -509,11 +511,12 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     let mut pending_trig: Vec<(usize, u32, u16)> = vec![];
     let mut areas: Vec<(usize, u16, [f32; 4])> = vec![];
     let mut spawn_trig: Vec<(u16, u16)> = vec![];
-    let mut patterns: Vec<(u16, [u16; 5])> = vec![];
+    let mut patterns: Vec<(usize, u16, [u16; 5])> = vec![];
     let mut locks: Vec<(usize, u16, [u16; 2], [f32; 4], bool)> = vec![];
     let mut switches: Vec<(usize, f32, f32, u16)> = vec![];
+    let mut hazards: Vec<Hazard> = vec![];
     let mut sw_boxes: Vec<(usize, [f32; 4])> = vec![];
-    let mut timers: Vec<(i32, u16, u16, bool)> = vec![];
+    let mut timers: Vec<(usize, i32, u16, u16, bool)> = vec![];
     let mut enemy_paths: Vec<EnemyPath> = vec![];
     // load notes, printed by the game thread with the map's report (never printed from a loader thread)
     let mut notes: Vec<String> = vec![];
@@ -823,7 +826,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                 }
                 if let (Some(go), Some(gi)) = (o.gept_out, o.gept_in) {
                     for e in bloc_entries(b, b"GEPT") {
-                        patterns.push((be16(b, e + go), core::array::from_fn(|k| be16(b, e + gi + 4 * k))));
+                        patterns.push((si, be16(b, e + go), core::array::from_fn(|k| be16(b, e + gi + 4 * k))));
                     }
                 }
                 for tag in [b"GET1", b"GET2"] {
@@ -865,7 +868,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                     for e in bloc_entries(b, b"GFT2") {
                         let (i, out) = (be16(b, e + qi), be16(b, e + qo));
                         if i != 0 && out != 0 {
-                            timers.push((fctiwz_f32(bef(b, e + qd)).clamp(0, 36000), i, out, b.get(e + qo + o.trig_set.unwrap_or(3)) == Some(&1)));
+                            timers.push((si, fctiwz_f32(bef(b, e + qd)).clamp(0, 36000), i, out, b.get(e + qo + o.trig_set.unwrap_or(3)) == Some(&1)));
                         }
                     }
                     // GFRT: the same relay in a longer record (a delay, then the input and output words) [L: read from
@@ -874,7 +877,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         for e in bloc_entries(b, b"GFRT") {
                             let (i, out) = (be16(b, e + fi), be16(b, e + fo));
                             if i != 0 && out != 0 {
-                                timers.push((fctiwz_f32(bef(b, e + fd)).clamp(0, 36000), i, out, b.get(e + fo + o.trig_set.unwrap_or(3)) == Some(&1)));
+                                timers.push((si, fctiwz_f32(bef(b, e + fd)).clamp(0, 36000), i, out, b.get(e + fo + o.trig_set.unwrap_or(3)) == Some(&1)));
                             }
                         }
                     }
@@ -887,6 +890,9 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
                         }
                     }
                 }
+            }
+            if let Some(o) = off() {
+                hazards_load(o, b, &leaves, &tags, si, s.off, &mut hazards, &mut notes);
             }
             for e in bloc_entries(b, b"GIB2") {
                 crates.push(Crate { sec: si, x: bef(b, e + 0x30) + s.off[0], y: bef(b, e + 0x34) + s.off[1], size: be32(b, e + 0x38) });
@@ -953,30 +959,33 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     // a part's start trigger counts only when something the port runs can fire it (an area, an enemy pattern, an enemy's
     // defeat, a switch); otherwise a lift starts on its rider and a shutter opens at the room's start
     {
-        let can = |t: u16| areas.iter().any(|a| a.1 == t) || patterns.iter().any(|p| p.0 == t) || spawn_trig.iter().any(|p| p.1 == t) || switches.iter().any(|w| w.3 == t) || timers.iter().any(|w| w.3 && w.2 == t);
+        // trigger ids are per section: every match is on (section, id)
+        let defeat = |s: usize, t: u16| spawn_trig.iter().zip(&spawns).any(|(p, sp)| sp.0 == s && p.1 == t);
+        let can = |s: usize, t: u16| areas.iter().any(|a| a.0 == s && a.1 == t) || patterns.iter().any(|p| p.0 == s && p.1 == t) || defeat(s, t) || switches.iter().any(|w| w.0 == s && w.3 == t) || timers.iter().any(|w| w.0 == s && w.4 && w.3 == t);
         // an enemy pattern can fire when all its inputs can (a few levels deep)
-        fn can_deep(t: u16, d: u32, can: &dyn Fn(u16) -> bool, patterns: &[(u16, [u16; 5])]) -> bool {
-            can(t) && !patterns.iter().any(|p| p.0 == t) || d > 0 && patterns.iter().any(|p| p.0 == t && p.1.iter().filter(|&&i| i != 0).all(|&i| can_deep(i, d - 1, can, patterns)))
+        fn can_deep(s: usize, t: u16, d: u32, can: &dyn Fn(usize, u16) -> bool, patterns: &[(usize, u16, [u16; 5])]) -> bool {
+            let is = |p: &&(usize, u16, [u16; 5])| p.0 == s && p.1 == t;
+            can(s, t) && !patterns.iter().any(|p| is(&p)) || d > 0 && patterns.iter().filter(is).any(|p| p.2.iter().filter(|&&i| i != 0).all(|&i| can_deep(s, i, d - 1, can, patterns)))
         }
         let mut patterns = patterns.clone();
-        patterns.extend(timers.iter().filter(|t| t.3).map(|t| (t.2, [t.1, 0, 0, 0, 0])));
-        let base = |t: u16| areas.iter().any(|a| a.1 == t) || spawn_trig.iter().any(|p| p.1 == t) || switches.iter().any(|w| w.3 == t);
+        patterns.extend(timers.iter().filter(|t| t.4).map(|t| (t.0, t.3, [t.2, 0, 0, 0, 0])));
+        let base = |s: usize, t: u16| areas.iter().any(|a| a.0 == s && a.1 == t) || defeat(s, t) || switches.iter().any(|w| w.0 == s && w.3 == t);
         // a lock only when one of its end triggers can fire (else the party would be held in its box for good)
         // a lock whose end triggers nothing here fires (Brawl's own end: no object record fires them) ends when the
         // room's enemies are all gone [L: a guess]; a lock whose start cannot fire is left out
         locks.retain_mut(|l| {
-            if !can_deep(l.1, 4, &base, &patterns) {
+            if !can_deep(l.0, l.1, 4, &base, &patterns) {
                 notes.push(format!("explore: section {}: camera lock on trigger {} left out (its start cannot fire here)", l.0, l.1));
                 return false;
             }
-            l.4 = !l.2.iter().any(|&t| t != 0 && can_deep(t, 4, &base, &patterns));
+            l.4 = !l.2.iter().any(|&t| t != 0 && can_deep(l.0, t, 4, &base, &patterns));
             if l.4 {
                 notes.push(format!("explore: section {}: camera lock on trigger {} ends when its enemies are gone (end triggers {:?} not fired here)", l.0, l.1, l.2));
             }
             true
         });
         for b in blocks.iter_mut() {
-            let ok = b.trig != 0 && can(b.trig);
+            let ok = b.trig != 0 && can(b.sec, b.trig);
             if !ok {
                 b.trig = 0;
             }
@@ -1111,10 +1120,14 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
     // a spawn trigger nothing the port runs can fire (a lid opening, a cutscene, a GFT2 / GASD block) would keep its
     // enemies out for good: those points come in at once instead [L: until those sources exist]
     {
-        let can: Vec<u16> = areas.iter().map(|a| a.1).chain(patterns.iter().map(|p| p.0)).chain(spawn_trig.iter().map(|t| t.1)).collect();
+        // trigger ids are per section (`fired`): note the largest id and section so a file past the bit range shows
+        let top = areas.iter().map(|a| a.1).chain(patterns.iter().flat_map(|p| core::iter::once(p.1).chain(p.2))).chain(spawn_trig.iter().flat_map(|t| [t.0, t.1])).chain(timers.iter().flat_map(|t| [t.2, t.3])).chain(switches.iter().map(|w| w.3)).chain(locks.iter().flat_map(|l| core::iter::once(l.1).chain(l.2))).chain(doors.iter().map(|d| d.lock)).chain(blocks.iter().map(|b| b.trig)).max().unwrap_or(0);
+        notes.push(format!("explore: trigger ids up to {top} in {} sections{}", secs.len(), if top as usize >= TRIG_IDS || secs.len() > TRIG_SECS { " (PAST THE TRIGGER BIT RANGE: those never fire)" } else { "" }));
+        let defeats: Vec<(usize, u16)> = spawn_trig.iter().zip(&spawns).map(|(t, sp)| (sp.0, t.1)).collect();
+        let can: Vec<(usize, u16)> = areas.iter().map(|a| (a.0, a.1)).chain(patterns.iter().map(|p| (p.0, p.1))).chain(defeats).collect();
         let mut dropped = 0;
-        for t in spawn_trig.iter_mut() {
-            if t.0 != 0 && !can.contains(&t.0) {
+        for (t, sp) in spawn_trig.iter_mut().zip(&spawns) {
+            if t.0 != 0 && !can.contains(&(sp.0, t.0)) {
                 t.0 = 0;
                 dropped += 1;
             }
@@ -1158,6 +1171,7 @@ fn load_secs(secs: &[SecDef], whole: bool, objects: bool) -> Result<Map, String>
         switches,
         sw_boxes,
         timers,
+        hazards,
         enemy_paths,
         notes,
         cam,
@@ -2027,6 +2041,7 @@ pub unsafe fn room_tick() {
     if FADE == 0 {
         switches_tick(m);
         locks_tick(m);
+        hazards_tick(m);
     }
     card_tick();
     ko_watch();
@@ -2114,7 +2129,7 @@ pub unsafe fn room_tick() {
     for &(f, t) in goto_list("MELEE_EXPLORE_FIRE").iter() {
         if f == CLOCK && t > 0 && t <= u16::MAX as i32 {
             eprintln!("explore: test fires trigger {t} at room frame {CLOCK}");
-            fire(t as u16);
+            fire(SEC.max(0) as usize, t as u16);
         }
     }
     // checks only (`MELEE_EXPLORE_GOTO=door@frame[,door@frame..]`): the party goes through to `door` at room frame
@@ -2180,7 +2195,7 @@ pub unsafe fn room_tick() {
             }
         });
     }
-    if want >= 0 && !fired(m.doors[want as usize].lock) {
+    if want >= 0 && !fired(m.doors[want as usize].sec, m.doors[want as usize].lock) {
         if CLOCK % 60 == 0 || std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
             eprintln!("explore: door {want} is locked (trigger {} not fired yet)", m.doors[want as usize].lock);
         }
@@ -2254,9 +2269,13 @@ static mut CRATE_NEXT: i32 = i32::MAX;
 /// trigger ids (a bit each), and per enemy point whether it is in now and whether it was beaten. An enemy point comes
 /// in when its spawn trigger has fired (0: at once), its defeat fires its defeat trigger; area triggers (GET1 / GET2)
 /// fire when a player stands in them, enemy-pattern triggers (GEPT) when all their inputs have.
-const TRIG_IDS: usize = 4096;
+/// Trigger ids are per section (each section file numbers its triggers from 101 and reuses them: level 12's
+/// sections all do), so a fired bit is at `section * TRIG_IDS + id`. The largest id in the owner's files is under
+/// `TRIG_IDS` (an id at or over it is noted by the loader and never fires).
+const TRIG_IDS: usize = 1024;
+const TRIG_SECS: usize = 64;
 const POINTS: usize = 1024;
-static mut FIRED: [u32; TRIG_IDS / 32] = [0; TRIG_IDS / 32];
+static mut FIRED: [u32; TRIG_SECS * TRIG_IDS / 32] = [0; TRIG_SECS * TRIG_IDS / 32];
 static mut POINT_IN: [u32; POINTS / 32] = [0; POINTS / 32];
 static mut POINT_BEATEN: [u32; POINTS / 32] = [0; POINTS / 32];
 /// the hand-made actors' pool handles and their points (to see them go)
@@ -2273,16 +2292,27 @@ fn set_bit(a: &mut [u32], i: usize, on: bool) {
     }
 }
 
-pub unsafe fn fired(id: u16) -> bool {
-    id == 0 || bit(&*core::ptr::addr_of!(FIRED), id as usize)
+/// a trigger's fired bit: `None` for an id out of range (never fires)
+fn trig_bit(sec: usize, id: u16) -> Option<usize> {
+    (sec < TRIG_SECS && (id as usize) < TRIG_IDS).then(|| sec * TRIG_IDS + id as usize)
 }
 
-pub unsafe fn fire(id: u16) {
-    if id != 0 && !fired(id) {
-        set_bit(&mut *core::ptr::addr_of_mut!(FIRED), id as usize, true);
+pub unsafe fn fired(sec: usize, id: u16) -> bool {
+    id == 0 || trig_bit(sec, id).is_some_and(|i| bit(&*core::ptr::addr_of!(FIRED), i))
+}
+
+pub unsafe fn fire(sec: usize, id: u16) {
+    if let Some(i) = trig_bit(sec, id).filter(|_| id != 0 && !fired(sec, id)) {
+        set_bit(&mut *core::ptr::addr_of_mut!(FIRED), i, true);
         if std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
-            eprintln!("explore: trigger {id} fired at room frame {CLOCK}");
+            eprintln!("explore: trigger {sec}:{id} fired at room frame {CLOCK}");
         }
+    }
+}
+
+unsafe fn unfire(sec: usize, id: u16) {
+    if let Some(i) = trig_bit(sec, id) {
+        set_bit(&mut *core::ptr::addr_of_mut!(FIRED), i, false);
     }
 }
 
@@ -2292,7 +2322,7 @@ static mut TIMER_AT: [i32; TIMERS] = [-1; TIMERS];
 
 unsafe fn triggers_reset() {
     TIMER_AT = [-1; TIMERS];
-    FIRED = [0; TRIG_IDS / 32];
+    FIRED = [0; TRIG_SECS * TRIG_IDS / 32];
     POINT_IN = [0; POINTS / 32];
     POINT_BEATEN = [0; POINTS / 32];
     SS_LIVE = [(-1, -1); 16];
@@ -2304,15 +2334,15 @@ pub unsafe fn enemy_gone(m: &Map, k: usize, beaten: bool) {
     set_bit(&mut *core::ptr::addr_of_mut!(POINT_IN), k, false);
     if beaten {
         set_bit(&mut *core::ptr::addr_of_mut!(POINT_BEATEN), k, true);
-        if let Some(t) = m.spawn_trig.get(k) {
-            fire(t.1);
+        if let (Some(t), Some(sp)) = (m.spawn_trig.get(k), m.spawns.get(k)) {
+            fire(sp.0, t.1);
         }
     }
 }
 
 /// The room's triggers this frame: areas the party stands in, enemy patterns complete, hand-made actors gone.
 unsafe fn triggers_tick(m: &Map) {
-    let mut inside = [0u16; 16];
+    let mut inside = [(0usize, 0u16); 16];
     let mut ni = 0;
     each_fighter(|_, fp| {
         let slot = (*fp).player_idx as i32;
@@ -2325,17 +2355,17 @@ unsafe fn triggers_tick(m: &Map) {
         }
         for &(si, id, r) in &m.areas {
             if si as i32 == SEC && p.x >= r[0] && p.x <= r[2] && p.y >= r[1] && p.y <= r[3] && ni < inside.len() {
-                inside[ni] = id;
+                inside[ni] = (si, id);
                 ni += 1;
             }
         }
     });
-    for &id in &inside[..ni] {
-        fire(id);
+    for &(si, id) in &inside[..ni] {
+        fire(si, id);
     }
     // GFT2 timers: the room frame each one's input was first seen fired; its output goes that many frames later
-    for (k, &(d, i, out, set)) in m.timers.iter().enumerate().take(TIMERS) {
-        if TIMER_AT[k] == -2 || !fired(i) {
+    for (k, &(ts, d, i, out, set)) in m.timers.iter().enumerate().take(TIMERS) {
+        if TIMER_AT[k] == -2 || !fired(ts, i) {
             continue;
         }
         if TIMER_AT[k] < 0 {
@@ -2344,18 +2374,18 @@ unsafe fn triggers_tick(m: &Map) {
         if CLOCK - TIMER_AT[k] >= d {
             TIMER_AT[k] = -2;
             if set {
-                fire(out);
-            } else if fired(out) {
-                set_bit(&mut *core::ptr::addr_of_mut!(FIRED), out as usize, false);
+                fire(ts, out);
+            } else if fired(ts, out) {
+                unfire(ts, out);
                 if std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
-                    eprintln!("explore: trigger {out} cleared at room frame {CLOCK}");
+                    eprintln!("explore: trigger {ts}:{out} cleared at room frame {CLOCK}");
                 }
             }
         }
     }
-    for &(out, ins) in &m.patterns {
-        if !fired(out) && ins.iter().any(|&i| i != 0) && ins.iter().all(|&i| fired(i)) {
-            fire(out);
+    for &(ps, out, ins) in &m.patterns {
+        if !fired(ps, out) && ins.iter().any(|&i| i != 0) && ins.iter().all(|&i| fired(ps, i)) {
+            fire(ps, out);
         }
     }
     for i in 0..SS_LIVE.len() {
@@ -2409,12 +2439,15 @@ unsafe fn spawn_step(m: &Map) {
         if si != s || bit(&*core::ptr::addr_of!(POINT_IN), k) || bit(&*core::ptr::addr_of!(POINT_BEATEN), k) {
             continue;
         }
-        if !fired(m.spawn_trig.get(k).map_or(0, |t| t.0)) {
+        if !fired(si, m.spawn_trig.get(k).map_or(0, |t| t.0)) {
             continue;
         }
         // Brawl's own enemy scripts (the VM lane, explore_vm) for the kinds with no hand-made actor
         if crate::tu::explore_vm::spawn(id, x, y, face, s, CUR_ID, k) {
             set_bit(&mut *core::ptr::addr_of_mut!(POINT_IN), k, true);
+            if std::env::var_os("MELEE_EXPLORE_LOG").is_some() {
+                eprintln!("explore: VM enemy kind {id} point {k} (spawn trigger {}) in at ({x:.0},{y:.0}) section {s} at room frame {CLOCK}", m.spawn_trig.get(k).map_or(0, |t| t.0));
+            }
             return;
         }
         if crate::tu::explore_vm::has_vm_kind(id) {
@@ -2529,6 +2562,22 @@ struct Off {
     gfrt_time: Option<usize>,
     gfrt_in: Option<usize>,
     gfrt_out: Option<usize>,
+    /// GSPR spring: point (x, y), width / height, power; GBLT belt: centre, size, speed, direction byte; GLAD ladder:
+    /// stage model file id (byte), bone name, width / height
+    spr_pos: Option<usize>,
+    spr_size: Option<usize>,
+    spr_pow: Option<usize>,
+    blt_pos: Option<usize>,
+    blt_size: Option<usize>,
+    blt_speed: Option<usize>,
+    blt_dir: Option<usize>,
+    lad_model: Option<usize>,
+    lad_bone: Option<usize>,
+    lad_size: Option<usize>,
+    /// GBC1 / GBC2 barrel cannon: centre, size, first aim angle (degrees)
+    bc_pos: Option<usize>,
+    bc_size: Option<usize>,
+    bc_ang: Option<usize>,
 }
 
 fn off() -> Option<&'static Off> {
@@ -2586,6 +2635,19 @@ fn off() -> Option<&'static Off> {
                 gfrt_time: g("gfrt_time"),
                 gfrt_in: g("gfrt_in"),
                 gfrt_out: g("gfrt_out"),
+                spr_pos: g("spr_pos"),
+                spr_size: g("spr_size"),
+                spr_pow: g("spr_pow"),
+                blt_pos: g("blt_pos"),
+                blt_size: g("blt_size"),
+                blt_speed: g("blt_speed"),
+                blt_dir: g("blt_dir"),
+                lad_model: g("lad_model"),
+                lad_bone: g("lad_bone"),
+                lad_size: g("lad_size"),
+                bc_pos: g("bc_pos"),
+                bc_size: g("bc_size"),
+                bc_ang: g("bc_ang"),
             })
         })();
         if o.is_none() {
@@ -2866,7 +2928,7 @@ unsafe fn movers_tick(m: &Map) {
         }
         let f = if b.once {
             // a shutter nothing opens: at once; a part with a start trigger: when it fires; else its first rider
-            let go = if b.auto { true } else if b.trig != 0 { fired(b.trig) } else { m.joints.get(k + 1).is_some_and(|mj| stood_on(mj)) };
+            let go = if b.auto { true } else if b.trig != 0 { fired(b.sec, b.trig) } else { m.joints.get(k + 1).is_some_and(|mj| stood_on(mj)) };
             if k < MOVER_START.len() && MOVER_START[k] < 0 && go {
                 MOVER_START[k] = CLOCK;
                 eprintln!("explore: platform {k} starts its one-way path ({} frames, trigger {}) at room frame {CLOCK}", path.len(), b.trig);
@@ -2992,7 +3054,7 @@ unsafe fn blocks_tick(m: &Map) {
     // GSBK explosion bricks: their joint off from the frame their trigger has fired (no state of our own: the trigger
     // words are sim state, and the joint-off call returns at once for a joint already off)
     for (k, b) in m.blocks.iter().enumerate() {
-        if b.blast && b.trig != 0 && fired(b.trig) {
+        if b.blast && b.trig != 0 && fired(b.sec, b.trig) {
             let j = melee_world::tu::mplib::groundCollJoint;
             if j.is_null() {
                 break;
@@ -3052,7 +3114,7 @@ unsafe fn locks_tick(m: &Map) {
         }
         let cleared = LOCK_CLEAR > 60;
         // [L: ours] a lock held a minute is let go (an end trigger waiting on an enemy the port does not spawn)
-        if sec as i32 != SEC || ends.iter().any(|&t| t != 0 && fired(t)) || cleared || CLOCK - LOCK_AT > 3600 {
+        if sec as i32 != SEC || ends.iter().any(|&t| t != 0 && fired(sec, t)) || cleared || CLOCK - LOCK_AT > 3600 {
             if sec as i32 == SEC {
                 LOCK_DONE |= 1u64.pshl(k.min(63) as i64);
             }
@@ -3060,7 +3122,7 @@ unsafe fn locks_tick(m: &Map) {
             set_bounds(SEC as usize);
             let why = if sec as i32 != SEC {
                 "the party left"
-            } else if ends.iter().any(|&t| t != 0 && fired(t)) {
+            } else if ends.iter().any(|&t| t != 0 && fired(sec, t)) {
                 "an end trigger fired"
             } else if cleared {
                 "its enemies are gone"
@@ -3087,7 +3149,7 @@ unsafe fn locks_tick(m: &Map) {
         return;
     }
     for (k, &(sec, st, ends, bx, _)) in m.locks.iter().enumerate().take(64) {
-        if sec as i32 != SEC || LOCK_DONE & 1u64.pshl(k as i64) != 0 || !fired(st) || ends.iter().any(|&t| t != 0 && fired(t)) {
+        if sec as i32 != SEC || LOCK_DONE & 1u64.pshl(k as i64) != 0 || !fired(sec, st) || ends.iter().any(|&t| t != 0 && fired(sec, t)) {
             continue;
         }
         LOCK_ON = k as i32;
@@ -3105,13 +3167,148 @@ unsafe fn locks_tick(m: &Map) {
     }
 }
 
+/// What a stage gimmick does to a fighter inside its rect (`hazards_tick`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum HazardKind {
+    /// GSPR: a fighter standing on it, or falling onto it, is thrown up at `val` a frame
+    Spring,
+    /// GBLT: a fighter standing on it is carried `val` a frame (signed by its direction byte)
+    Belt,
+    /// GLAD: a fighter in it holding up climbs (holding down, in the air: climbs down) at `val` a frame
+    Ladder,
+    /// GBC1 / GBC2: a barrel cannon; a fighter in it is shot out at `val` degrees from straight up (positive: right)
+    Cannon,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Hazard {
+    pub sec: usize,
+    pub kind: HazardKind,
+    /// x1 y1 x2 y2, world
+    pub rect: [f32; 4],
+    pub val: f32,
+}
+
+/// The GSPR / GBLT / GLAD records of one BLOC [off: the local spec's `spr_*`, `blt_*`, `lad_*`]. Read from the data,
+/// Brawl's gimmick code not read [L]: a spring is its record's point with a width and a height and a power, a belt
+/// its centre and size with a speed and a direction byte, a ladder a bone (named in the record) of a stage model, its
+/// centre (jungle 060002: a centre puts the ladder's foot on its floor), with the record's width and height.
+#[allow(clippy::too_many_arguments)]
+fn hazards_load(o: &Off, b: &[u8], leaves: &[Vec<u8>], tags: &[Vec<(u16, u16)>], si: usize, so: [f32; 2], out: &mut Vec<Hazard>, notes: &mut Vec<String>) {
+    let n0 = out.len();
+    if let (Some(qp), Some(qs), Some(qv)) = (o.spr_pos, o.spr_size, o.spr_pow) {
+        for e in bloc_entries(b, b"GSPR") {
+            let (x, y, w, h) = (bef(b, e + qp) + so[0], bef(b, e + qp + 4) + so[1], bef(b, e + qs), bef(b, e + qs + 4));
+            out.push(Hazard { sec: si, kind: HazardKind::Spring, rect: [x - w, y - 2.0, x + w, y + h + 2.0], val: bef(b, e + qv) * SPRING_SCALE });
+        }
+    }
+    if let (Some(qp), Some(qs), Some(qv), Some(qd)) = (o.blt_pos, o.blt_size, o.blt_speed, o.blt_dir) {
+        for e in bloc_entries(b, b"GBLT") {
+            let (x, y, w, h) = (bef(b, e + qp) + so[0], bef(b, e + qp + 4) + so[1], bef(b, e + qs), bef(b, e + qs + 4));
+            let dir = if b.get(e + qd).copied().unwrap_or(0) != 0 { -1.0 } else { 1.0 };
+            out.push(Hazard { sec: si, kind: HazardKind::Belt, rect: [x - w * 0.5, y - h, x + w * 0.5, y + 4.0], val: bef(b, e + qv) * dir });
+        }
+    }
+    if let (Some(qm), Some(qn), Some(qs)) = (o.lad_model, o.lad_bone, o.lad_size) {
+        for e in bloc_entries(b, b"GLAD") {
+            let id = b.get(e + qm).copied().unwrap_or(0) as u16;
+            let name: String = b.get(e + qn..e + qn + 16).unwrap_or(&[]).iter().take_while(|&&c| c != 0).map(|&c| c as char).collect();
+            let at = leaves.iter().zip(tags).find(|(_, t)| t.last() == Some(&(2, id))).and_then(|(l, _)| {
+                let r = pm::locator_rig(l)?;
+                (0..r.bones.len()).find(|&k| r.bone_name(k) == name).map(|k| r.bone_point(None, 0.0, k, [0.0; 3]))
+            });
+            let (w, h) = (bef(b, e + qs), bef(b, e + qs + 4));
+            match at {
+                Some(p) => out.push(Hazard { sec: si, kind: HazardKind::Ladder, rect: [p[0] + so[0] - w * 0.5, p[1] + so[1] - h * 0.5, p[0] + so[0] + w * 0.5, p[1] + so[1] + h * 0.5], val: LADDER_SPEED }),
+                None => notes.push(format!("explore: section {si}: a ladder (model {id}, bone {name}) without its bone; left out")),
+            }
+        }
+    }
+    // GBC1 / GBC2 barrel cannons (the jungle's): centre, size, first aim angle [L: from the data; the barrels' turning
+    // (GBC2's second angle and speed table) and their models are not done]
+    if let (Some(qp), Some(qs), Some(qa)) = (o.bc_pos, o.bc_size, o.bc_ang) {
+        for e in bloc_entries(b, b"GBC1").into_iter().chain(bloc_entries(b, b"GBC2")) {
+            let (x, y, w, h) = (bef(b, e + qp) + so[0], bef(b, e + qp + 4) + so[1], bef(b, e + qs), bef(b, e + qs + 4));
+            out.push(Hazard { sec: si, kind: HazardKind::Cannon, rect: [x - w * 0.5, y - h * 0.5, x + w * 0.5, y + h * 0.5], val: bef(b, e + qa) });
+        }
+    }
+    for h in &out[n0..] {
+        notes.push(format!("explore: section {si}: {:?} at ({:.0},{:.0})-({:.0},{:.0}) value {:.2}", h.kind, h.rect[0], h.rect[1], h.rect[2], h.rect[3], h.val));
+    }
+}
+
+/// A spring's record power -> launch speed, and a ladder's climb speed (units a frame) [L: ours, Brawl's not read].
+const SPRING_SCALE: f32 = 1.0;
+const LADDER_SPEED: f32 = 1.2;
+const CANNON_SPEED: f32 = 4.5;
+
+/// The party's section's springs, belts and ladders, on the fighters' own state (positions and speeds only).
+unsafe fn hazards_tick(m: &Map) {
+    if m.hazards.is_empty() {
+        return;
+    }
+    let log = std::env::var_os("MELEE_EXPLORE_LOG").is_some();
+    each_fighter(|g, fp| {
+        let p = (*fp).cur_pos;
+        let ground = (*fp).ground_or_air as i32 == GA_Ground as i32;
+        for (k, h) in m.hazards.iter().enumerate() {
+            let r = h.rect;
+            if h.sec as i32 != SEC || p.x < r[0] || p.x > r[2] || p.y < r[1] || p.y > r[3] {
+                continue;
+            }
+            match h.kind {
+                HazardKind::Spring if ground || (*fp).self_vel.y <= 0.0 => {
+                    if ground {
+                        sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
+                    }
+                    (*fp).self_vel.y = h.val;
+                    if log {
+                        eprintln!("explore: spring {k} throws player {} up at ({:.0},{:.0}) room frame {CLOCK}", (*fp).player_idx, p.x, p.y);
+                    }
+                }
+                HazardKind::Belt if ground => {
+                    (*fp).cur_pos.x += h.val;
+                    if log && CLOCK % 60 == 0 {
+                        eprintln!("explore: belt {k} carries player {} at ({:.0},{:.0}) room frame {CLOCK}", (*fp).player_idx, p.x, p.y);
+                    }
+                }
+                HazardKind::Ladder => {
+                    let sy = (*fp).input.lstick[0].y;
+                    if sy > 0.5 || sy < -0.5 && !ground {
+                        if ground {
+                            sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
+                        }
+                        (*fp).self_vel.x = 0.0;
+                        (*fp).self_vel.y = if sy > 0.0 { h.val } else { -h.val };
+                        if log && CLOCK % 30 == 0 {
+                            eprintln!("explore: ladder {k} player {} climbs at ({:.0},{:.0}) room frame {CLOCK}", (*fp).player_idx, p.x, p.y);
+                        }
+                    }
+                }
+                HazardKind::Cannon => {
+                    let a = h.val.to_radians();
+                    if ground {
+                        sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
+                    }
+                    (*fp).self_vel.x = CANNON_SPEED * a.sin();
+                    (*fp).self_vel.y = CANNON_SPEED * a.cos();
+                    if log {
+                        eprintln!("explore: cannon {k} shoots player {} at {:.0} degrees from ({:.0},{:.0}) room frame {CLOCK}", (*fp).player_idx, h.val, p.x, p.y);
+                    }
+                }
+                _ => {}
+            }
+        }
+    });
+}
+
 /// How far inside a lock's box the party is held (a fighter's body stays on screen) [L: ours, not Brawl's].
 const LOCK_EDGE: f32 = 8.0;
 
 /// GMWA / GMWO switches of the party's section: an attack box on one, or a fighter at it, fires its trigger.
 unsafe fn switches_tick(m: &Map) {
     for &(sec, x, y, t) in &m.switches {
-        if sec as i32 != SEC || fired(t) {
+        if sec as i32 != SEC || fired(sec, t) {
             continue;
         }
         let mut on = false;
@@ -3133,7 +3330,7 @@ unsafe fn switches_tick(m: &Map) {
         });
         if on {
             eprintln!("explore: switch at ({x:.0},{y:.0}) fires trigger {t} at room frame {CLOCK}");
-            fire(t);
+            fire(sec, t);
         }
     }
 }
@@ -3212,7 +3409,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     // the bricks still standing in the party's section (a broken one's model goes with its collision)
     for (k, b) in m.blocks.iter().enumerate() {
-        let broken = k < 64 && BROKEN & 1u64.pshl(k as i64) != 0 || b.blast && b.trig != 0 && fired(b.trig);
+        let broken = k < 64 && BROKEN & 1u64.pshl(k as i64) != 0 || b.blast && b.trig != 0 && fired(b.sec, b.trig);
         if broken || b.sec as i32 != SEC {
             continue;
         }

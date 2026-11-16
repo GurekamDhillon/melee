@@ -42,9 +42,9 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | GMOT | model motion | 136 | 56 | dropped |
 | GBLK | breakable blocks | 131 | 53 | supported (collision breaks; model stays) |
 | GEPT | enemy-pattern triggers | 119 | 41 | dropped |
-| GLAD | ladders | 111 | 44 | dropped |
+| GLAD | ladders | 111 | 44 | supported (round 6: climb on up) |
 | GMWA | walls (switch gated) | 107 | 36 | static |
-| GSPR | springs | 100 | 15 | dropped |
+| GSPR | springs | 100 | 15 | supported (round 6) |
 | GMTA | GMTA objects | 99 | 25 | dropped |
 | GFPR | fire pillars | 95 | 10 | dropped |
 | GSBK | explosion bricks | 93 | 22 | supported (gone when their trigger fires) |
@@ -58,7 +58,7 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | GEFF | effects | 64 | 24 | dropped |
 | GQUK | quakes | 56 | 25 | dropped |
 | GFRT | timed trigger relays (long record) | 51 | 12 | supported (as GFT2) |
-| GBC2 | cannons (2) | 51 | 6 | dropped |
+| GBC2 | cannons (2) | 51 | 6 | supported, fixed aim (round 6) |
 | GMPS | moving platforms | 50 | 11 | static |
 | GDMD | GDMD (other) | 49 | 42 | dropped |
 | GSTG | GSTG objects | 47 | 7 | dropped |
@@ -68,13 +68,13 @@ enemies are hit and beaten by fox, and level 22's enemies' attack boxes land on 
 | GCAT | GCAT objects | 29 | 13 | dropped |
 | GSHT | shutters | 29 | 5 | static |
 | GENC | GENC hazards | 28 | 14 | dropped |
-| GBC1 | cannons (1) | 27 | 10 | dropped |
+| GBC1 | cannons (1) | 27 | 10 | supported, fixed aim (round 6) |
 | GFRK | falling rocks | 26 | 8 | dropped |
 | GSND | sounds | 23 | 16 | dropped |
 | GMV4 | moving parts (GMV4) | 23 | 9 | dropped |
 | GMOA | GMOA triggers | 22 | 10 | dropped |
 | GWND | wind | 22 | 14 | dropped |
-| GBLT | conveyor belts | 22 | 2 | dropped |
+| GBLT | conveyor belts | 22 | 2 | loaded (round 6; no GD stage has them) |
 | GLK2 | locks (2) | 21 | 13 | dropped |
 | GELA | elevators (A) | 21 | 7 | static |
 | GTRR | trains | 20 | 2 | dropped |
@@ -262,3 +262,26 @@ warm-up draws, one model every other frame.
 - Checks only: `MELEE_EXPLORE_FIRE=trigger@frame` fires a trigger; `MELEE_EXPLORE_BEAT=frame` beats the room's live
   enemies every 30 frames from that frame (a lock's enemies-gone end without a fight). The lock release line now
   says why it let go.
+
+## Per-section triggers and stage gimmicks (round 6)
+
+- **Trigger ids are per section.** Every section file numbers its triggers from 101 and reuses them (level 12's four
+  sections all do), so a fired bit is at `section x 1024 + id` (64 sections at most). Every record that names a
+  trigger is matched on its section and id: areas, patterns, relays, switches, locks, doors, bricks, lifts, the
+  enemies' spawn and defeat triggers, and the load-time "can this fire here" checks. The loader prints the largest id
+  per level (level 12: 1001). Level 12's section-2 enemies wait on trigger 113, which only section 0 fires; scoped,
+  nothing in section 2 fires it, so they come in at once with the section, and the section-2 lock lets go when they
+  are beaten (seen without `MELEE_EXPLORE_FIRE`).
+- **GSPR springs**: a point, a width and height and a power [off]. A fighter on one, or falling onto one, is thrown up
+  at the power a frame. Level 12 section 2: fox bounces on the first spring.
+- **GLAD ladders**: a stage model's bone (named in the record) is the ladder's centre, with a width and height [off].
+  Holding up inside one climbs (down, in the air, climbs down). Jungle section 1: fox climbs from the floor at -50 to
+  the ledge at 30.
+- **GBC1 / GBC2 barrel cannons**: a centre, a size and a first aim angle [off]; a fighter inside is shot out at that
+  angle. Turning barrels (GBC2's second angle and speed table) and the barrel models are not done. Jungle section 0:
+  the first barrel shoots fox up and right.
+- **GBLT conveyor belts**: loaded (a centre, a size, a speed, a direction byte [off]) and carry a standing fighter, but
+  their two files (levels 37 and the Great Maze) are not GD stages yet, so not seen in a run.
+- **GMCA / GENC / GHPE**: records dumped, meaning not found yet: GMCA (612 bytes) is a table of equal floats then
+  model ids; GENC (172 bytes) a table of 1.0s; GHPE (48 bytes) a rect and a small value pair (damage or healing area,
+  a guess). Left dropped.

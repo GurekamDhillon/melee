@@ -317,7 +317,7 @@ pub unsafe fn lbDvd_80017644(heap: i32) -> bool {
 pub unsafe extern "C" fn lbDvd_80017700(arg0: i32) {
     melee_core::ct!("lbDvd_80017700");
     while lbDvd_80017644(arg0) {
-        ext::lb_800195D0();
+        wait_step();
     }
 }
 
@@ -884,11 +884,19 @@ pub unsafe extern "C" fn lbDvd_800187F4(entry_num: i32) -> i32 {
     result
 }
 
+/// One pass of a preload wait (`lb_800195D0`, a retrace of the frame loop). TARGET_PC: the alarm interrupt that steps a
+/// heap compaction (lbmemory.rs COPY_ALARM) fires during the wait, as on the console. These spins only last while a heap
+/// is being compacted (`persistent_heap`; reads complete synchronously), and without the alarm the compaction never
+/// finishes: a scene change soon after the previous one (CSS -> main menu -> CSS -> main menu) spun forever in
+/// lbDvd_80018CF4.
+unsafe fn wait_step() {
+    ext::lb_800195D0();
+    crate::tu::lbmemory::lbMemory_FireCopyAlarm();
+}
+
 unsafe fn lbDvd_800189EC(entry_num: i32) {
     while lbDvd_800187F4(entry_num) == 1 {
-        ext::lb_800195D0();
-        // TARGET_PC: the alarm interrupt that steps a heap compaction (lbmemory.rs COPY_ALARM) fires during the wait
-        crate::tu::lbmemory::lbMemory_FireCopyAlarm();
+        wait_step();
     }
 }
 
@@ -953,7 +961,7 @@ pub unsafe extern "C" fn lbDvd_80018A2C(arg0: u8) -> i32 {
 pub unsafe extern "C" fn lbDvd_80018C2C(arg0: u8) {
     melee_core::ct!("lbDvd_80018C2C");
     while lbDvd_80018A2C(arg0) == 1 {
-        ext::lb_800195D0();
+        wait_step();
     }
 }
 
@@ -981,7 +989,7 @@ unsafe fn inline0() {
         if ext::lbHeap_800158E8(lbDvd_804D37F4[i]) == 1 {
             let tmp = lbDvd_804D37F4[i];
             while lbDvd_80017598(tmp) {
-                ext::lb_800195D0();
+                wait_step();
             }
         }
     }
@@ -1026,12 +1034,12 @@ pub unsafe extern "C" fn lbDvd_80018CF4(arg0: i32) {
     }
     if ext::lbHeap_800158E8(2) == 1 {
         while lbDvd_80017598(2) {
-            ext::lb_800195D0();
+            wait_step();
         }
     }
     if ext::lbHeap_800158E8(3) == 1 {
         while lbDvd_80017598(3) {
-            ext::lb_800195D0();
+            wait_step();
         }
     }
     inline0();

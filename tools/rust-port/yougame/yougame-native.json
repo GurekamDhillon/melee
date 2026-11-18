@@ -3,6 +3,7 @@
   "args": ["play", "--iso", "{disc}", "--brawl-files", "{disc:brawl:files}"],
   "disc": true,
   "discs": { "brawl": "optional" },
+  "embed": { "class": "MeleePortWindow", "title": "Melee Unlocked" },
   "net": "internet",
   "memoryMb": 4096
 }

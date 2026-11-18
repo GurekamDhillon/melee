@@ -72,3 +72,9 @@ inherits = "fast"
 # `DISC=1 build_cov.sh`: cov plus the discrimination bits (feature `disc`), its own output dir.
 [profile.covdisc]
 inherits = "cov"
+
+# cpal 0.15.3's WASAPI audio thread passes a thread ID where a HANDLE is expected
+# (boost_current_thread_priority), which raises STATUS_INVALID_HANDLE inside the YouGame AppContainer.
+# vendor/cpal is the same crate with that one call using GetCurrentThread().
+[patch.crates-io]
+cpal = { path = "vendor/cpal" }

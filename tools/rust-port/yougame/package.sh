@@ -22,14 +22,14 @@ while [ $# -gt 0 ]; do
 done
 # A target of its own: the release exe is built with the CRT linked in (no vcruntime140.dll to ship) and every
 # build-machine path remapped (panic locations and the PDB path would otherwise carry the user's folders).
-target="${YG_TARGET_DIR:-$(cd "$repo/../.." 2>/dev/null && pwd)/_build/cargo-ygpack}"
+target="${YG_TARGET_DIR:-$(cd "$repo/.." 2>/dev/null && pwd)/_build/cargo-ygpack}"
 export CARGO_TARGET_DIR="$target"
 unset RUSTFLAGS
 win() { cygpath -w "$1" 2>/dev/null || echo "$1"; }
 cargo_home="${CARGO_HOME:-$HOME/.cargo}"
 rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"
 flags=("-Ctarget-feature=+crt-static" "-Clink-arg=/PDBALTPATH:melee.pdb")
-ws_root="$(cd "$repo/../.." && pwd)"
+ws_root="$(cd "$repo/.." && pwd)"
 for pair in "$cargo_home/registry/src=crates" "$cargo_home=cargo" "$rustup_home=rustup" "$repo=melee" "$target=target" "$ws_root=workspace"; do
   from="$(win "${pair%%=*}")"; to="${pair#*=}"
   fwd="$(printf '%s' "$from" | tr '\\' '/')"

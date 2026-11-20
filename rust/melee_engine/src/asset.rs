@@ -642,19 +642,10 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
             }
         }
         cuts.push(p.blocks.len());
-        let (w, a) = (&write, &addr);
-        std::thread::scope(|sc| {
-            for c in cuts.windows(2).skip(1) {
-                let (lo, hi) = (c[0], c[1]);
-                sc.spawn(move || {
-                    for k in lo..hi {
-                        if p.live(k) {
-                            w(k, a);
-                        }
-                    }
-                });
-            }
-            for k in cuts[0]..cuts[1] {
+        let (w, a, cuts) = (&write, &addr, &cuts);
+        // the persistent pool (workers.rs): a wake-up per part, not a thread spawn per part
+        crate::workers::run(cuts.len() - 1, &|i| {
+            for k in cuts[i]..cuts[i + 1] {
                 if p.live(k) {
                     w(k, a);
                 }
@@ -1002,9 +993,13 @@ fn worker_main() {
             Some(v)
             }),
         };
-        let bytes = bytes.filter(|b| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len());
+        // A file whose first word is not its length is not one archive: the fighters' animation banks
+        // (Pl*AJ.dat: entries 0x254 PlFxAJ, 0x2c1 PlMrAJ) are concatenated per-move archives that the game reads
+        // a piece at a time, never whole. Permanent: mark it unplannable so it is not read again every visit.
+        let hdr_ok = |b: &Vec<u8>| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len();
         let res = match bytes {
             None => Err(NoPlan::NoSlot), // the read failed: not the file's fault
+            Some(b) if !hdr_ok(&b) => Err(NoPlan::Unsafe),
             Some(b) => std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).unwrap_or(Err(NoPlan::Unsafe)),
         };
         let (plan, why) = match res { Ok(p) => (Some(p), None), Err(e) => (None, Some(e)) };
@@ -1039,6 +1034,12 @@ pub fn hint_entry(entry: i32, heap: i32) {
 }
 
 fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
+    hint_entry_pri(entry, heap, gr, false)
+}
+
+/// `low`: a speculative hint (the Random pool) that never evicts a cached plan and queues behind the others; a later
+/// normal hint for the same entry moves its job to the front of the queue.
+fn hint_entry_pri(entry: i32, heap: i32, gr: Option<i32>, low: bool) {
     let Some(s) = svc() else { return };
     if !s.worker {
         return;
@@ -1051,10 +1052,16 @@ fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
     let _sys = crate::arena::SysScope::enter();
     let mut g = s.m.lock().unwrap();
     if g.entries.iter().any(|e| e.entry == entry) || g.unplannable.contains(&len) {
+        if !low {
+            if let Some(k) = g.jobs.iter().position(|j| j.entry == entry) {
+                let j = g.jobs.remove(k).unwrap();
+                g.jobs.push_front(j);
+            }
+        }
         return;
     }
     // a hint outranks a cached plan nobody asked for lately: make room (least recently used first)
-    while g.entries.len() >= KEEP || g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + 8 * len > KEEP_BYTES {
+    while !low && (g.entries.len() >= KEEP || g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + 8 * len > KEEP_BYTES) {
         let Some(old) = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).min_by_key(|&i| g.entries[i].used) else { break };
         g.entries.remove(old);
     }
@@ -1078,6 +1085,137 @@ fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
         eprintln!("asset: hint entry {entry:#x} ({} KB)", len >> 10);
     }
     s.cv.notify_all();
+}
+
+/// The shared background file prefetch: hint each named game file (a name as `entry_of` takes it) to the asset
+/// worker, which reads and decodes it off the game thread, so the tick that loads it applies a ready plan. Host
+/// state only; never sim-visible. A name not on the disc is skipped.
+pub fn hint_files(names: &[&str]) {
+    for n in names {
+        let Ok(c) = std::ffi::CString::new(*n) else { continue };
+        let e = entry_of(c.as_ptr());
+        if e > 0 {
+            hint_entry(e, -1);
+        }
+    }
+}
+
+/// Scene-driven prefetch, once per tick from the play loop (`minor` the scene kind):
+/// - a match: the results screen's files (IfCoGet, GmRst, SdRst, TyDatai) while the worker is idle, so the
+///   results entry applies plans instead of reading and parsing 1 MB on the game thread.
+pub fn scene_prefetch(minor: i32) {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    static LAST: AtomicI32 = AtomicI32::new(-1);
+    if LAST.swap(minor, Relaxed) == minor {
+        return;
+    }
+    if minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32 {
+        hint_files(&["IfCoGet.dat", "GmRst", "SdRst", "TyDatai"]);
+    } else if minor == melee_types::GS_RESULTS as i32 {
+        hint_vs_picks(true);
+    } else if minor == melee_types::GS_SSS as i32 {
+        hint_vs_picks(false);
+    }
+}
+
+/// Hint each (character kind, costume) pair's fighter data, costume and animation bank (an extra internal kind, such
+/// as Zelda's Sheik, too). Reads only immutable name tables; host state only.
+fn hint_fighters(picks: &[(i32, u8)]) {
+    unsafe {
+        let mapping = &*core::ptr::addr_of!(melee_world::pl::ftMapping_list);
+        let names = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C1F40);
+        let costumes = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C2360);
+        let banks = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C23E4);
+        let lists = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::CostumeListsForeachCharacter);
+        let mut done: Vec<i32> = Vec::new();
+        for &(ck, color) in picks {
+            if ck < 0 || ck as usize >= mapping.len() {
+                continue;
+            }
+            let m = &mapping[ck as usize];
+            for k in [m.internal_id as i32, m.extra_internal_id as i32] {
+                if k < 0 || k as usize >= names.len() || done.contains(&k) {
+                    continue;
+                }
+                done.push(k);
+                let k = k as usize;
+                let mut files = vec![names[k].a as *const i8, banks[k] as *const i8];
+                if !costumes[k].is_null() {
+                    let c = if k < lists.len() && (color as i32) < lists[k].numCostumes as i32 { color as usize } else { 0 };
+                    files.push((*costumes[k].add(c)).dat_filename as *const i8);
+                }
+                for f in files {
+                    let e = entry_of(f);
+                    if e > 0 {
+                        hint_entry_gr(e, -1, None);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Vanilla VS: the picks in the VS mode data (characters and costumes, final once the stage select opens; at the
+/// results screen the match just played, the usual rematch) and, at the results, that match's stage. Read-only on
+/// sim data, host state only: the worker's decoded plans are applied by the tick that loads the file either way.
+fn hint_vs_picks(with_stage: bool) {
+    if svc().is_none_or(|s| !s.worker) {
+        return;
+    }
+    let mut picks: Vec<(i32, u8)> = Vec::new();
+    let mut gr = -1;
+    unsafe {
+        let m = *core::ptr::addr_of!(melee_world::gmmain::gmMainLib_804D3EE0);
+        if m.is_null() {
+            return;
+        }
+        let vs = &(*m).modes.table[melee_types::GmVsMode_Melee as usize];
+        for p in vs.start.players.iter() {
+            if p.slot_type as i32 != melee_types::Gm_PKind_NA as i32 && p.ckind >= 0 && p.ckind as i32 != melee_types::ChKind_None as i32 {
+                picks.push((p.ckind as i32, p.color));
+            }
+        }
+        if with_stage {
+            let st = vs.start.rules.stkind as i32;
+            let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+            if st >= 0 && (st as usize) < map.len() {
+                gr = map[st as usize].grkind as i32;
+            }
+        }
+    }
+    hint_stage(gr);
+    hint_fighters(&picks);
+    if log_on() {
+        eprintln!("asset: vs picks hinted ({} fighters, stage {gr})", picks.len());
+    }
+}
+
+/// The stage select, once per tick: the VS data's stage once the stage select has set it (the confirm; a Random pick
+/// is decided there too) is hinted at once, ahead of the match's load. Read-only on sim data; host state only.
+pub fn sss_confirm_tick() {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    static LAST: AtomicI32 = AtomicI32::new(-1);
+    let st = unsafe {
+        let m = *core::ptr::addr_of!(melee_world::gmmain::gmMainLib_804D3EE0);
+        if m.is_null() {
+            return;
+        }
+        (*m).modes.table[melee_types::GmVsMode_Melee as usize].start.rules.stkind as i32
+    };
+    if LAST.swap(st, Relaxed) == st {
+        return;
+    }
+    let gr = unsafe {
+        let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+        if st < 0 || st as usize >= map.len() {
+            return;
+        }
+        map[st as usize].grkind as i32
+    };
+    hint_stage(gr);
+    if log_on() {
+        eprintln!("asset: sss stage {st} hinted (gr {gr})");
+    }
 }
 
 /// A disc entry for a game file name (`PlFx.dat`; a name without an extension tries the locale's `.usd`, then `.dat`).
@@ -1144,6 +1282,47 @@ pub fn sss_hover(stkind: i32) {
     hint_stage(gr);
 }
 
+/// The stage select, once per tick: while the cursor rests on Random, the legal random pool's stage files are hinted
+/// at low priority (no eviction, queued last), so a Random confirm (decided a tick before the load) finds a plan.
+/// Bounded to [`POOL_MAX`] stages: a bigger pool is skipped (the disc warm keeps its bytes in the page cache).
+/// `pool` is a host-side read of the stage select; host state only, never sim-visible.
+pub fn sss_random_pool(pool: Option<Vec<i32>>) {
+    use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
+    const POOL_MAX: usize = 8;
+    const HOVER_TICKS: i32 = 12;
+    static SINCE: AtomicI32 = AtomicI32::new(0);
+    let Some(pool) = pool else {
+        SINCE.store(0, Relaxed);
+        return;
+    };
+    if SINCE.fetch_add(1, Relaxed) + 1 != HOVER_TICKS || pool.is_empty() || pool.len() > POOL_MAX {
+        return;
+    }
+    let mut n = 0;
+    for st in &pool {
+        let gr = unsafe {
+            let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+            if *st < 0 || *st as usize >= map.len() {
+                continue;
+            }
+            map[*st as usize].grkind as i32
+        };
+        unsafe {
+            let sd = &*core::ptr::addr_of!(melee_world::tu::ground::stage_datas);
+            if gr > 0 && (gr as usize) < sd.len() && !sd[gr as usize].is_null() {
+                let e = entry_of((*sd[gr as usize]).data1 as *const i8);
+                if e > 0 {
+                    hint_entry_pri(e, -1, Some(gr), true);
+                    n += 1;
+                }
+            }
+        }
+    }
+    if log_on() {
+        eprintln!("asset: sss random pool hinted ({n} of {} stages)", pool.len());
+    }
+}
+
 pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
     use melee_modes::tu::envoy as ev;
     // not only an armed plan: the sim publishes the coming fight's plan from mod load on, and the camp door to that
@@ -1177,35 +1356,8 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
         // the fight's stage and the one a live stage transition goes to (its file in memory before the hand-off)
         hint_stage(gr);
         hint_stage(plan[ev::P_STAGE_NEXT]);
-        let mapping = &*core::ptr::addr_of!(melee_world::pl::ftMapping_list);
-        let names = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C1F40);
-        let costumes = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C2360);
-        let banks = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C23E4);
-        let mut done: Vec<i32> = Vec::new();
-        for ck in cks {
-            if ck < 0 || ck as usize >= mapping.len() {
-                continue;
-            }
-            let m = &mapping[ck as usize];
-            for k in [m.internal_id as i32, m.extra_internal_id as i32] {
-                if k < 0 || k as usize >= names.len() || done.contains(&k) {
-                    continue;
-                }
-                done.push(k);
-                let k = k as usize;
-                let mut files = vec![names[k].a as *const i8, banks[k] as *const i8];
-                if !costumes[k].is_null() {
-                    files.push((*costumes[k]).dat_filename as *const i8);
-                }
-                for f in files {
-                    let e = entry_of(f);
-                    if e > 0 {
-                        hint_entry_gr(e, -1, None);
-                    }
-                }
-            }
-        }
     }
+    hint_fighters(&cks.iter().map(|&c| (c, 0u8)).collect::<Vec<_>>());
     if log_on() {
         eprintln!("asset: envoy plan hinted (stage {gr})");
     }
@@ -1214,6 +1366,10 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
 /// Files every session loads early, hinted at boot so the worker starts on them at once: the title's, the menus' and
 /// character select's archives, then the match commons (in the order the game needs them). Either language's name.
 const BOOT_FILES: &[&str] = &[
+    // the effect and item commons first: a session that boots straight to character select (netplay, --match) loads
+    // them at tick 7, ~115 ms after boot; queued behind the menus and Kirby's hats their plans were not ready by then
+    // (tick 7: 30 ms engine step + 5.6 ms read and parse in place)
+    "EfCoData.dat", "ItCo.usd", "ItCo.dat",
     "GmTtAll.usd", "GmTtAll.dat",
     // Kirby's copy hats: every match (the title demo's too) with Kirby decodes the whole set at its load (~22 ms in
     // place at the title's first frame when the demo picked Kirby); small, so prepared early (files < MIN_BYTES skip)
@@ -1223,7 +1379,7 @@ const BOOT_FILES: &[&str] = &[
     "PlKbCpMr.dat", "PlKbCpZd.dat", "PlKbCpGn.dat", "PlKbCpCa.dat", "PlKbCpKp.dat", "PlKbCpLk.dat", "PlKbCpDr.dat",
     "PlKbCpPe.dat", "PlKbCpSs.dat",
     "MnMaAll.usd", "MnMaAll.dat", "MnSlChr.usd", "MnSlChr.dat", "MnExtAll.usd", "MnExtAll.dat", "MnSlMap.usd", "MnSlMap.dat",
-    "EfCoData.dat", "ItCo.usd", "ItCo.dat", "IfAll.usd", "IfAll.dat", "PlCo.dat",
+    "IfAll.usd", "IfAll.dat", "PlCo.dat",
 ];
 
 /// Disc warm-up (boot, once; `MELEE_DISC_WARM=off` keeps it off): a below-normal thread reads every game data file
@@ -1289,16 +1445,41 @@ fn disc_warm(files: Vec<(u64, usize)>) {
 pub fn boot_hints() {
     let Some(h) = crate::host::Host::try_get() else { return };
     // `melee play` offline only (trim mode is its mark: the tests' golden / synctest / netplay runs do not warm)
-    if crate::arena::trim() {
-        let _s = crate::arena::SysScope::enter();
-        disc_warm(h.disc.files_with_ext(&[".dat", ".usd", ".ssm", ".sem"]));
-    }
+    // the boot files first: the warm thread (below normal) then reads behind them, not ahead
     for f in BOOT_FILES {
         let e = h.disc.disc_entry(f);
         if e > 0 {
             hint_entry(e, -1);
         }
     }
+    if crate::arena::trim() {
+        let _s = crate::arena::SysScope::enter();
+        disc_warm(h.disc.files_with_ext(&[".dat", ".usd", ".ssm", ".sem"]));
+    }
+}
+
+/// True while hinted files are still queued or being prepared by the worker (false without a worker). The play loop
+/// holds the tick clock at boot until the boot hints drain, so the first ticks apply ready plans. Host state only.
+pub fn hints_busy() -> bool {
+    let Some(s) = svc() else { return false };
+    if !s.worker {
+        return false;
+    }
+    let g = s.m.lock().unwrap();
+    g.entries.iter().any(|e| e.pending)
+}
+
+/// True while any [`BOOT_FILES`] hint is still queued or being prepared (false without a worker). The boot hold waits
+/// on this only, not on other hints or the whole-disc warm, so a solo boot is not held for unrelated work. Host state only.
+pub fn boot_hints_busy() -> bool {
+    let Some(s) = svc() else { return false };
+    if !s.worker {
+        return false;
+    }
+    let Some(h) = crate::host::Host::try_get() else { return false };
+    let ids: Vec<i32> = BOOT_FILES.iter().map(|f| h.disc.disc_entry(f)).filter(|&e| e > 0).collect();
+    let g = s.m.lock().unwrap();
+    g.entries.iter().any(|e| e.pending && ids.contains(&e.entry))
 }
 
 /// The `stage_info.grkind` a hinted file will be loaded under: the coming scene's stage when the preload cache names
@@ -1435,7 +1616,9 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
             melee_core::frameprof::Text::new().s("asset apply ").s(how).s(" ").n((len >> 10) as i64).s(" KB")
         });
         SRC_FOR_DIGEST.with(|c| c.set(src as usize));
+        fault_watch::drain(false);
         let o = apply(&plan, src);
+        fault_watch::drain(true);
         end_asset_path(len, "replay");
         o
     };
@@ -1479,4 +1662,59 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         );
     }
     Some(out)
+}
+
+/// Diagnostic (`MELEE_FAULT_WATCH=1`, Windows): where the game thread's page faults during a plan apply land. The
+/// process fault counter in the apply log line counts every thread (the pre-faulter, the worker); this one uses the
+/// working-set watch (`GetWsChangesEx`), keeps the game thread's faults only and sorts them by region. Log only.
+mod fault_watch {
+    std::thread_local! { static BUMP0: core::cell::Cell<usize> = const { core::cell::Cell::new(0) }; }
+    #[cfg(windows)]
+    pub fn drain(report: bool) {
+        use std::sync::OnceLock;
+        static ON: OnceLock<bool> = OnceLock::new();
+        #[repr(C)]
+        #[derive(Clone, Copy)]
+        struct Ws { pc: usize, va: usize, tid: usize, _r: usize }
+        extern "system" {
+            fn GetCurrentProcess() -> *mut core::ffi::c_void;
+            fn GetCurrentThreadId() -> u32;
+            fn K32InitializeProcessForWsWatch(p: *mut core::ffi::c_void) -> i32;
+            fn K32GetWsChangesEx(p: *mut core::ffi::c_void, b: *mut Ws, cb: *mut u32) -> i32;
+        }
+        if !*ON.get_or_init(|| {
+            let _s = crate::arena::SysScope::enter();
+            std::env::var_os("MELEE_FAULT_WATCH").is_some() && unsafe { K32InitializeProcessForWsWatch(GetCurrentProcess()) } != 0
+        }) {
+            return;
+        }
+        let _s = crate::arena::SysScope::enter();
+        let me = unsafe { GetCurrentThreadId() } as usize;
+        let mut buf = vec![Ws { pc: 0, va: 0, tid: 0, _r: 0 }; 1 << 16];
+        let mut cb = (buf.len() * core::mem::size_of::<Ws>()) as u32;
+        let ok = unsafe { K32GetWsChangesEx(GetCurrentProcess(), buf.as_mut_ptr(), &mut cb) } != 0;
+        if !report {
+            BUMP0.with(|c| c.set({ let (b, l) = crate::arena::used_range(); b + l }));
+            return;
+        }
+        let n = if ok { (cb as usize / core::mem::size_of::<Ws>()).min(buf.len()) } else { 0 };
+        let mine: Vec<usize> = buf[..n].iter().filter(|w| w.pc != 0 && w.tid == me).map(|w| w.va).collect();
+        let arena = mine.iter().filter(|&&v| crate::arena::contains(v as *const u8)).count();
+        let (_, bump) = crate::arena::used_range();
+        let above = mine.iter().filter(|&&v| crate::arena::contains(v as *const u8) && v >= BUMP0.with(|c| c.get())).count();
+        let _ = bump;
+        let mut regions: Vec<(usize, usize)> = Vec::new();
+        for &v in mine.iter().filter(|&&v| !crate::arena::contains(v as *const u8)) {
+            let r = v & !0xFF_FFFF;
+            match regions.iter_mut().find(|x| x.0 == r) {
+                Some(x) => x.1 += 1,
+                None => regions.push((r, 1)),
+            }
+        }
+        regions.sort_by_key(|x| core::cmp::Reverse(x.1));
+        let others: Vec<String> = regions.iter().take(6).map(|(r, c)| format!("{r:#x}+16MB: {c}")).collect();
+        eprintln!("asset: fault watch: game thread {} faults ({} other threads; ok {ok}): arena {arena} ({above} past the bump at the apply's start); elsewhere {:?}", mine.len(), n - mine.len(), others);
+    }
+    #[cfg(not(windows))]
+    pub fn drain(_report: bool) {}
 }

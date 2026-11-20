@@ -63,76 +63,17 @@ pub struct Detacher {
     frame: u64,
 }
 
-/// A 128-bit content hash (two independent multiply-xorshift lanes over 8-byte words).
-fn hash128(b: &[u8]) -> (u64, u64) {
-    let (mut h1, mut h2) = (0x9E37_79B9_7F4A_7C15u64 ^ b.len() as u64, 0xC2B2_AE3D_27D4_EB4Fu64);
-    let mut ch = b.chunks_exact(8);
-    for c in &mut ch {
-        let w = u64::from_le_bytes(c.try_into().unwrap());
-        h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD).rotate_left(29);
-        h2 = (h2 ^ w.rotate_left(32)).wrapping_mul(0xC4CE_B9FE_1A85_EC53).rotate_left(31);
-    }
-    let mut t = [0u8; 8];
-    t[..ch.remainder().len()].copy_from_slice(ch.remainder());
-    let w = u64::from_le_bytes(t);
-    h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD);
-    h2 = (h2 ^ w).wrapping_mul(0xC4CE_B9FE_1A85_EC53);
-    (h1 ^ (h1 >> 33), h2 ^ (h2 >> 29))
-}
-
-/// Detached copies not used for this many frames are dropped.
-const DETACH_KEEP: u64 = 120;
-
 impl Detacher {
     /// [`detach_frame`]. Call outside the game scope; the original is freed inside it.
     pub fn detach(&mut self, f: Vec<melee_gx::draw::DrawCmd>) -> Vec<melee_gx::draw::DrawCmd> {
-        use std::collections::HashMap;
-        use std::sync::Arc;
-        debug_assert!(!melee_engine::arena::contains(self as *const Self as *const u8), "Detacher must not live in the arena");
+        // The GX shim's state and its frames live on the system heap, outside the snapshot (gxbridge): a frame shares
+        // nothing a load rewrites, so it is handed over as it is (no copy). The cross-frame cache stays for its
+        // fields' sake (callers own a Detacher) but holds nothing.
         self.frame += 1;
-        let now = self.frame;
-        let mut cfgs: HashMap<usize, Arc<melee_gx::shader::PipelineConfig>> = HashMap::new();
-        // per frame by the arena Arc's address (stable within the frame), across frames by content
-        let mut seen: HashMap<usize, melee_gx::resources::GxData> = HashMap::new();
-        let datas = &mut self.datas;
-        let mut data = |d: &melee_gx::resources::GxData| -> melee_gx::resources::GxData {
-            seen.entry(Arc::as_ptr(d) as *const u8 as usize)
-                .or_insert_with(|| {
-                    let (a, b) = hash128(d);
-                    let e = datas.entry((a, b, d.len())).or_insert_with(|| (Arc::from(&d[..]), now));
-                    e.1 = now;
-                    e.0.clone()
-                })
-                .clone()
-        };
-        let out: Vec<melee_gx::draw::DrawCmd> = f
-            .iter()
-            .map(|c| {
-                let mut n = c.clone();
-                n.config = cfgs.entry(Arc::as_ptr(&c.config) as usize).or_insert_with(|| Arc::new((*c.config).clone())).clone();
-                for a in n.arrays.iter_mut().flatten() {
-                    a.data = data(&a.data);
-                }
-                for t in n.textures.iter_mut() {
-                    if let Some(d) = &t.data {
-                        t.data = Some(data(d));
-                    }
-                }
-                for t in n.tluts.iter_mut() {
-                    if let Some(d) = &t.data {
-                        t.data = Some(data(d));
-                    }
-                }
-                n
-            })
-            .collect();
-        if now % DETACH_KEEP == 0 {
-            self.datas.retain(|_, e| now - e.1 < DETACH_KEEP);
-        }
-        let _s = melee_engine::arena::GameScope::enter();
-        drop(f);
+        self.datas.clear();
+        let _s = melee_engine::arena::SysScope::enter();
         drop(melee_engine::gxbridge::shim().gx.packed.take());
-        out
+        f
     }
 }
 
@@ -211,6 +152,8 @@ impl ModesSnap {
 
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
+        // the snapshot base is captured at the match's first frames: its copy buffers are made ahead (helper thread)
+        melee_engine::snapshot::prewarm();
         ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default() }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
@@ -237,7 +180,7 @@ impl ModesGame {
         if let Some(f) = f {
             // only the newest frame of a tick is shown: detach (copy) it lazily, at the end of the tick
             if let Some(old) = self.raw.replace(f) {
-                let _s = melee_engine::arena::GameScope::enter();
+                let _s = melee_engine::arena::SysScope::enter();
                 drop(old);
             }
         }
@@ -266,7 +209,7 @@ impl ModesGame {
     /// Lets go of the tick's newest frame without copying it (its blocks are the arena's, freed in the game scope).
     pub fn drop_frame(&mut self) {
         if let Some(f) = self.raw.take() {
-            let _s = melee_engine::arena::GameScope::enter();
+            let _s = melee_engine::arena::SysScope::enter();
             drop(f);
         }
     }
@@ -314,17 +257,23 @@ impl RbGame for ModesGame {
         None
     }
     fn save(&self) -> ModesSnap {
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot save");
         ModesSnap { mem: self.with_base(|b| b.save()), frames: self.e.frames, ended: self.e.ended }
     }
     fn load(&mut self, s: &ModesSnap) {
         let _z = melee_core::tracy::zone("netplay snapshot load (rollback)");
-        // the held frame's blocks belong to the timeline being discarded: the load decides what they are now
-        std::mem::forget(self.raw.take());
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot load");
+        // the held frame is render state on the system heap (gxbridge), outside the snapshot: freed as usual
+        {
+            let _s = melee_engine::arena::SysScope::enter();
+            drop(self.raw.take());
+        }
         self.with_base(|b| b.load(&s.mem));
         self.e.frames = s.frames;
         self.e.ended = s.ended;
     }
     fn state_hash(&self) -> u32 {
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: state hash");
         self.with_base(|b| b.page_hash())
     }
     fn game_hash(&self) -> u32 {
@@ -342,6 +291,7 @@ impl RbGame for ModesGame {
     }
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool) {
         let _z = melee_core::tracy::zone(if resim { "netplay resim frame" } else { "netplay frame" });
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, if resim { "netplay: resim frame" } else { "netplay: frame" });
         if self.e.ended {
             return;
         }
@@ -398,6 +348,18 @@ pub fn controls_meta() -> Option<(String, String)> {
         melee_engine::fighter_controls::Session::Netplay(w) => Some(("controls".into(), format!("netplay:{}:{}", w[0], w[1]))),
         _ => None,
     }
+}
+
+/// The `sim_view` entry of every recording: the session's sim view (melee_engine view.rs), which its playback adopts.
+pub fn view_meta() -> (String, String) {
+    ("sim_view".into(), melee_engine::view::encode_sim_view(melee_engine::view::sim_view().unwrap_or(0)))
+}
+
+/// Playback: the recorded sim view (a recording without the entry predates it: 4:3, what a play run then simulated
+/// unless it ran in the camera widescreen mode).
+pub fn apply_view_meta(r: &Replay) {
+    let v = r.meta("sim_view").and_then(melee_engine::view::parse_sim_view).unwrap_or(0);
+    melee_engine::view::set_sim_view(v);
 }
 
 /// Playback of a recording with a `controls` entry: the match freezes the recorded words.
@@ -843,6 +805,10 @@ pub struct HostRules {
     /// CPU seats on ports 3 and 4 (`--cpu fighter[/level][,fighter[/level]]`, level 1-9, default 9): (CharacterKind,
     /// level), resolved by the host; the guest takes them from the agreed scene like the rest of the rules
     pub cpus: Vec<(i32, i32)>,
+    /// The session's sim view (melee_engine view.rs: 0 = 4:3, else the wide content aspect's f32 bits): the host's,
+    /// which the guest adopts for the simulation whatever its own window or display options (`v<hex>`, only when wide;
+    /// no field = 4:3).
+    pub view: Option<u32>,
 }
 
 impl HostRules {
@@ -852,6 +818,7 @@ impl HostRules {
             time_secs: arg(args, "--time-secs").and_then(|s| s.parse().ok()),
             items: arg(args, "--items").map(|s| s.trim().replace(' ', "_")),
             cpus: Vec::new(),
+            view: None,
         }
     }
     pub fn encode(&self) -> String {
@@ -860,6 +827,10 @@ impl HostRules {
         // the CPU seats only when there are any, so a two-human scene string is what it always was
         if !self.cpus.is_empty() {
             e += &format!(",c{}", self.cpus.iter().map(|(ck, l)| format!("{ck}.{l}")).collect::<Vec<_>>().join("+"));
+        }
+        // the sim view only when wide, so a 4:3 scene string is what it always was
+        if let Some(v) = self.view.filter(|&v| v != 0) {
+            e += &format!(",v{v:08x}");
         }
         e
     }
@@ -875,6 +846,7 @@ impl HostRules {
                 "s" => r.stocks = x.parse().ok(),
                 "t" => r.time_secs = x.parse().ok(),
                 "i" => r.items = Some(x.to_string()),
+                "v" => r.view = u32::from_str_radix(x, 16).ok(),
                 "c" => {
                     r.cpus = x.split('+').map(|c| c.split_once('.').and_then(|(k, l)| Some((k.parse().ok()?, l.parse().ok()?)))).collect::<Option<Vec<_>>>()?;
                 }
@@ -887,8 +859,12 @@ impl HostRules {
         let cpus = if self.cpus.is_empty() { String::new() } else {
             format!(", CPUs {}", self.cpus.iter().map(|(ck, l)| format!("ck {ck} level {l}")).collect::<Vec<_>>().join(" + "))
         };
+        let view = match self.view {
+            Some(v) if v != 0 => format!(", sim view {}", melee_engine::view::encode_sim_view(v)),
+            _ => String::new(),
+        };
         format!(
-            "stocks {}, time {}, items {}{cpus}",
+            "stocks {}, time {}, items {}{cpus}{view}",
             self.stocks.map_or("default".into(), |x| x.to_string()),
             self.time_secs.map_or("default".into(), |x| format!("{x} s")),
             self.items.clone().unwrap_or_else(|| "default".into())
@@ -1227,6 +1203,8 @@ impl NetDriver {
             if let Some(c) = arg(args, "--cpu") {
                 rules.cpus = HostRules::parse_cpus(&c, ck_of)?;
             }
+            // the host's sim view (its display options, decided when `play` started) is the session's
+            rules.view = Some(melee_engine::view::sim_view().unwrap_or_else(melee_engine::view::local_sim_view));
         }
         let stocks = rules.stocks.unwrap_or(4);
         let minutes = rules.time_secs.map_or(8, |s| (s.max(1) + 59) / 60);
@@ -1344,8 +1322,16 @@ impl NetDriver {
         melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Netplay(room.sh.borrow().controls));
         log(&format!("netplay {tag}: match agreed after {:.2}s: \"{scene_str}\" (seed {seed}, delay {adelay}, rollback window {maxb})", t0.elapsed().as_secs_f32()));
         let host_rules = HostRules::from_scene(&scene).unwrap_or_default();
+        // the sim view: the host's (no field = 4:3), whatever this peer's window; the picture is fitted locally
+        let view = host_rules.view.unwrap_or(0);
+        if !host && melee_engine::view::sim_view().unwrap_or_else(melee_engine::view::local_sim_view) != view {
+            log(&format!("netplay guest: the host's sim view {} wins (yours: {}); the picture is fitted to your window", melee_engine::view::encode_sim_view(view), melee_engine::view::encode_sim_view(melee_engine::view::sim_view().unwrap_or(0))));
+        }
+        melee_engine::view::set_sim_view(view);
+        log(&format!("netplay {tag}: sim view {}", melee_engine::view::encode_sim_view(view)));
         if !host {
-            if rules != HostRules::default() && rules != host_rules {
+            let mine = HostRules { view: host_rules.view, ..rules.clone() };
+            if mine != HostRules::default() && (HostRules { view: None, ..mine.clone() }) != (HostRules { view: None, ..host_rules.clone() }) {
                 log(&format!("netplay guest: the host's rules win: {} (yours: {})", host_rules.describe(), rules.describe()));
             } else {
                 log(&format!("netplay guest: the host's rules: {}", host_rules.describe()));

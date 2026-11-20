@@ -88,6 +88,7 @@ mod pose_dump;
 mod script_events;
 mod cov1p;
 mod envoy_store;
+mod warm_pass;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {
@@ -505,6 +506,21 @@ fn main() -> ExitCode {
     code
 }
 fn main_inner() -> ExitCode {
+    // Packaging: `melee --write-snapmask` writes MELEE_SNAP_CHECK's host-only span list beside the exe from its PDB
+    // (snapmask.rs), so a packaged exe carries the mask without shipping the PDB. Nothing else runs.
+    if std::env::args().nth(1).as_deref() == Some("--write-snapmask") {
+        let r = std::env::current_exe().map_err(|e| e.to_string()).and_then(|e| melee_engine::snapmask::write_sidecar(&e));
+        return match r {
+            Ok(n) => {
+                println!("snapmask: {n} game spans written");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("snapmask: {e}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     // The YouGame app's stdio bridge (notes/yougame.md): first, before anything can print to stdout or open the log.
     let yougame = melee_platform::yougame::init();
     // Saves that follow the account (yougame_saves.rs): before anything reads the card or settings.
@@ -1264,6 +1280,7 @@ fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(mel
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
     // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
     let parsed = melee_data::slp::parse(&data, false).ok();
+    crate::slp_export::apply_sim_view(&data);
     let ws = parsed.as_ref().and_then(|f| melee_data::slp::widescreen_code(&f.gecko));
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     melee_core::codes::set_ps_camera_independent_monitor(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_camera_independent_monitor_code(&f.gecko)));

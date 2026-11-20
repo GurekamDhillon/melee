@@ -877,6 +877,7 @@ impl Play {
                 let disc = crate::engine_disc(&self.iso)?;
                 unsafe {
                     melee_engine::engine::RENDER = !self.headless;
+            melee_engine::engine::PLAY_VIEW = true;
                     std::env::set_var("MELEE_TEST_SEED", "12345");
                     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
                         std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
@@ -1280,6 +1281,7 @@ impl Play {
             let frame = self.em.as_mut().and_then(|m| m.frame.take());
             let packed = self.em.as_mut().and_then(|m| m.packed.take());
             let p = self.presenter.as_mut().unwrap();
+            p.set_true_widescreen(melee_engine::view::renderer_widen());
             p.set_content_aspect(melee_engine::view::aspect());
             let pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
             p.set_match_scene(true);
@@ -1551,6 +1553,7 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         return ExitCode::FAILURE;
     }
+    crate::warm_pass::maybe_start(&iso, args); // first run: a hidden below-normal helper fills the pipeline list
     // Optional second disc (Brawl) and the first-run build step (firstrun.rs): a failure is told, Melee still plays.
     let brawl = get("--brawl-disc").or_else(|| std::env::var("MELEE_BRAWL_DISC").ok()).filter(|s| !s.is_empty());
     match crate::firstrun::run(brawl.as_deref(), &mut |f, l| eprintln!("first-run: {:3.0}% {l}", f * 100.0)) {
@@ -1669,6 +1672,7 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
         if let Some(f) = feed.as_ref() {
             crate::play_net::apply_controls_meta(&f.r);
+            crate::play_net::apply_view_meta(&f.r);
             // slice 0: the recorded pick and content mask (an older replay has none: the args' pick as before)
             if let Some(t) = f.r.meta("sse") {
                 melee_modes::tu::explore::apply_header_token(t);
@@ -1839,6 +1843,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 meta.push(("np_role".into(), "host".into()));
                 meta.extend(crate::play_net::controls_meta());
             meta.push(crate::play_net::sse_meta());
+            meta.push(crate::play_net::view_meta());
                 rp.rec = Some((String::new(), crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() }));
             }
         }
@@ -1862,6 +1867,7 @@ pub fn play(args: &[String]) -> ExitCode {
             }
             meta.extend(crate::play_net::controls_meta());
             meta.push(crate::play_net::sse_meta());
+            meta.push(crate::play_net::view_meta());
             let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }

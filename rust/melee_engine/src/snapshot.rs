@@ -207,6 +207,8 @@ fn bits(v: &[u64], limit: usize) -> Vec<u32> {
 /// MELEE_SNAP_STATIC_SCAN.
 const HOST: usize = 1;
 const STATIC0: usize = 2;
+/// A game-crate static only MELEE_SNAP_CHECK_POKE writes (see `load`).
+static CHECK_POKE: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
 
 /// A static page that faulted stays writable ("hot", counted as written in every interval) for this many intervals,
 /// then is made read-only again: a page written every frame faults once per HOT_AGE saves/loads, not every frame.
@@ -278,6 +280,10 @@ pub struct Base {
     no_inc: bool,
     /// MELEE_SNAP_CHECK=N: every Nth save and load is checked page by page against the full state (see `check`).
     check_every: u64,
+    /// MELEE_SNAP_CHECK's host-only statics pages (snapmask.rs), skipped by the load check.
+    host_mask: Option<Vec<Vec<u64>>>,
+    /// MELEE_SNAP_CHECK_POKE: write [`CHECK_POKE`] before each load check (the mask's self-test).
+    poke: bool,
     /// Per-page digests of the hashed range (the host block), so `page_hash` only rehashes pages written since its
     /// previous call.
     hcache: std::cell::RefCell<HashCache>,
@@ -312,6 +318,112 @@ fn or_into(dst: &mut Vec<u64>, src: &[u64]) {
         *a |= *b;
     }
 }
+
+/// Buffers for the next [`Base::capture`]'s copies (index = range), allocated and touched ahead by [`prewarm`].
+static PREWARM: std::sync::Mutex<Vec<Vec<u8>>> = std::sync::Mutex::new(Vec::new());
+
+/// Make the next capture's copy buffers ahead, on a helper thread (system heap), every page touched: a capture at a
+/// netplay match start otherwise spends ~40 ms in the first-touch faults of ~its fresh buffers, which more threads do
+/// not speed up. Presentation-neutral: the buffers hold nothing until the capture copies the state into them.
+pub fn prewarm() {
+    let sizes: Vec<usize> = ranges().iter().map(|r| r.1).collect();
+    if PREWARM.lock().is_ok_and(|g| g.len() == sizes.len() && g.iter().zip(&sizes).skip(1).all(|(v, &l)| v.len() == l)) {
+        return;
+    }
+    let _s = crate::arena::SysScope::enter();
+    let _ = std::thread::Builder::new().name("snapshot-prewarm".into()).spawn(move || {
+        let bufs: Vec<Vec<u8>> = sizes
+            .iter()
+            .enumerate()
+            .map(|(i, &l)| {
+                if i == 0 {
+                    return Vec::new(); // the arena is copy-on-write, never copied
+                }
+                let mut v = Vec::<u8>::with_capacity(l);
+                // SAFETY: every byte is written before the length covers it
+                unsafe {
+                    core::ptr::write_bytes(v.as_mut_ptr(), 0, l);
+                    v.set_len(l);
+                }
+                v
+            })
+            .collect();
+        if let Ok(mut g) = PREWARM.lock() {
+            *g = bufs;
+        }
+    });
+}
+
+/// The host block's base is copied by a helper thread behind a write fault (cow::bg; MELEE_SNAP_BGCOPY=0: on the game
+/// thread at capture, as before).
+#[cfg(windows)]
+fn bg_copy() -> bool {
+    std::env::var("MELEE_SNAP_BGCOPY").map_or(true, |v| v != "0")
+}
+
+/// The host block's write faults while its base was being copied in the background (stats line).
+fn bg_faults_note() -> String {
+    #[cfg(windows)]
+    if crate::cow::bg::active() || crate::cow::bg::faults() > 0 {
+        return format!("; host base copy: {} write faults", crate::cow::bg::faults());
+    }
+    String::new()
+}
+
+/// Copy `src` into `dst` (same length), split over a few threads when big.
+fn par_fill(dst: &mut [u8], src: &[u8]) {
+    const THREADS: usize = 4;
+    if src.len() < (4 << 20) {
+        dst.copy_from_slice(src);
+        return;
+    }
+    let per = src.len().div_ceil(THREADS).next_multiple_of(PAGE);
+    let _s = crate::arena::SysScope::enter();
+    std::thread::scope(|sc| {
+        for (d, s) in dst.chunks_mut(per).zip(src.chunks(per)) {
+            sc.spawn(move || d.copy_from_slice(s));
+        }
+    });
+}
+
+/// `src.to_vec()`, the copy split over a few threads when it is big (the base capture copies the host block and the
+/// statics at a netplay match start: ~37 ms on one thread, most of it the fresh pages' first-touch faults). The buffer
+/// is allocated where `to_vec` would allocate it (the caller's heap scope); only the threads' own spawns are kept off
+/// the arena.
+fn par_copy(src: &[u8]) -> Vec<u8> {
+    const MIN: usize = 4 << 20;
+    const THREADS: usize = 6;
+    if src.len() < MIN {
+        return src.to_vec();
+    }
+    let mut v: Vec<u8> = Vec::with_capacity(src.len());
+    {
+        let dst = &mut v.spare_capacity_mut()[..src.len()];
+        let per = src.len().div_ceil(THREADS).next_multiple_of(PAGE);
+        let _s = crate::arena::SysScope::enter();
+        std::thread::scope(|sc| {
+            for (d, s) in dst.chunks_mut(per).zip(src.chunks(per)) {
+                sc.spawn(move || {
+                    // SAFETY: MaybeUninit<u8> and u8 have the same layout; every byte of `d` is written here
+                    unsafe { core::ptr::copy_nonoverlapping(s.as_ptr(), d.as_mut_ptr() as *mut u8, s.len()) };
+                });
+            }
+        });
+    }
+    // SAFETY: the threads above wrote all `src.len()` bytes
+    unsafe { v.set_len(src.len()) };
+    v
+}
+
+fn clear_bit(v: &mut [u64], i: usize) {
+    if let Some(w) = v.get_mut(i / 64) {
+        *w &= !(1u64 << (i % 64));
+    }
+}
+
+/// [`Base::page_hash`] digests on [`PAR_DIGEST_THREADS`] threads from this many pages to digest.
+const PAR_DIGEST_MIN: usize = 2048;
+const PAR_DIGEST_THREADS: usize = 6;
 
 fn bit_of(v: &[u64], i: usize) -> bool {
     v.get(i / 64).is_some_and(|w| w >> (i % 64) & 1 != 0)
@@ -417,6 +529,8 @@ impl Drop for Base {
             if self.static_watch {
                 crate::pagewatch::release();
             }
+            #[cfg(windows)]
+            crate::cow::bg::release_copy();
             crate::cow::release()
         };
     }
@@ -452,6 +566,7 @@ impl Base {
         let arena_len = ranges[0].1;
         let n = ranges.len();
         let scan = std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_some();
+        let host_mask = if std::env::var_os("MELEE_SNAP_CHECK").is_some() && std::env::var_os("MELEE_SNAP_CHECK_NOMASK").is_none() { crate::snapmask::host_only(&ranges, STATIC0) } else { None };
         let b = Base {
             dirty: std::cell::RefCell::new(vec![Default::default(); n]),
             since: std::cell::RefCell::new(vec![Default::default(); n]),
@@ -466,28 +581,61 @@ impl Base {
             pool: Rc::new(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX))), next_id: std::cell::Cell::new(1),
             no_inc: std::env::var_os("MELEE_SNAP_NOINC").is_some(),
             check_every: std::env::var("MELEE_SNAP_CHECK").ok().map(|v| v.parse().unwrap_or(1).max(1)).unwrap_or(0),
+            host_mask,
+            poke: std::env::var_os("MELEE_SNAP_CHECK_POKE").is_some(),
             hcache: Default::default(),
             hash_verify: std::env::var_os("MELEE_HASH_VERIFY").is_some(),
             stats: Default::default(),
         };
         let mut b = b;
+        let _z1 = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, "snapshot capture: refresh");
         b.refresh(); // consumes the watch state up to now (the copy above only read)
         // both sets: a since-last set left full here is OR-ed into `dirty` by every later refresh (the whole host block
         // stayed a candidate forever: f82738ca3 made save and load ~7 ms)
         b.dirty.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
         b.since.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
+        drop(_z1);
+        let _z2 = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, "snapshot capture: arena protect");
         // the arena's base is not copied: the first write to each page saves it (cow.rs)
         unsafe { crate::cow::protect(b.ranges[0].0, arena_len).expect("arena copy-on-write") };
+        drop(_z2);
+        let _z3 = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, "snapshot capture: statics watch");
         if !scan {
             match unsafe { crate::pagewatch::watch(&b.ranges[STATIC0.min(n)..]) } {
                 Ok(()) => b.static_watch = true,
                 Err(e) => eprintln!("snapshot: statics compared in full ({e})"),
             }
         }
+        drop(_z3);
+        let _z4 = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, "snapshot capture: copies");
+        let mut warm = PREWARM.lock().map(|mut g| std::mem::take(&mut *g)).unwrap_or_default();
         for i in 1..n {
             let (a, l) = b.ranges[i];
-            b.data[i] = unsafe { bytes(a, l) }.to_vec();
+            // the host block (64 MB, most of the copy): read-only now, copied by a helper thread (cow::bg)
+            #[cfg(windows)]
+            if i == HOST && bg_copy() && l % PAGE == 0 {
+                let mut v = match warm.get_mut(i).map(std::mem::take) {
+                    Some(v) if v.len() == l => v,
+                    _ => vec![0u8; l],
+                };
+                match unsafe { crate::cow::bg::begin(a, l, v.as_mut_ptr()) } {
+                    Ok(()) => {
+                        b.data[i] = v;
+                        continue;
+                    }
+                    Err(e) => eprintln!("snapshot: host block copied in place ({e})"),
+                }
+            }
+            let src = unsafe { bytes(a, l) };
+            b.data[i] = match warm.get_mut(i).map(std::mem::take) {
+                Some(mut v) if v.len() == l => {
+                    par_fill(&mut v, src);
+                    v
+                }
+                _ => par_copy(src),
+            };
         }
+        drop(_z4);
         b
     }
 
@@ -619,6 +767,12 @@ impl Base {
             let at = self.ranges[0].0 + pi * PAGE;
             // never written since the capture: the live page IS the base page
             return unsafe { crate::cow::saved(at).unwrap_or_else(|| bytes(at, PAGE)) };
+        }
+        #[cfg(windows)]
+        if ri == HOST && crate::cow::bg::active() && !crate::cow::bg::copied(pi) {
+            // not copied yet, so not written since the capture (a write copies it first): the live page is the base
+            let (a, l) = self.ranges[HOST];
+            return if (pi + 1) * PAGE <= l { unsafe { bytes(a + pi * PAGE, PAGE) } } else { &ZERO };
         }
         let d = &self.data[ri];
         let s = pi * PAGE;
@@ -753,6 +907,8 @@ impl Base {
         // core v1: the transcoder lets go of the game buffers it holds first (the load rewinds their refcounts)
         #[cfg(feature = "corev1")]
         melee_gx::corev1::snapshot_loaded();
+        // the render state is outside the snapshot: its copies of game memory are dropped (render only)
+        crate::gxbridge::on_state_load();
         self.refresh();
         let was = arena::active();
         let (abase, alen_now) = arena::used_range();
@@ -818,7 +974,11 @@ impl Base {
             arena::set_active(was);
             drop(st);
             if self.check_every > 0 && self.stats.borrow().loads % self.check_every == 0 {
-                self.check(s, "load", None);
+                if self.poke {
+                    // MELEE_SNAP_CHECK_POKE: a game-crate static written behind the load's back; the check must catch it
+                    CHECK_POKE.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+                }
+                self.check(s, "load", self.host_mask.as_deref());
             }
         }
         // the live state is `s` now (the load's own writes show up as written in the next epoch: compared once)
@@ -910,6 +1070,7 @@ impl Base {
             s.loads, s.load_full, per(s.load_cand, s.loads), per(s.load_copied, s.loads),
             if self.static_watch { "watched" } else { "scanned" }, s.static_faults, s.static_reprotects, s.checks, s.checked_pages, s.hashes, s.hashes_cached, per(s.hash_digests, s.hashes)
         )
+        + &bg_faults_note()
     }
 
     /// A hash of the OS-heap block (the C-layout game state: fighters, items, gobjs, jobjs). The arena holds Rust
@@ -918,7 +1079,10 @@ impl Base {
     /// recomputed only when the write watch reports the page written since the previous call (a load's restores are
     /// writes too). The value is compared only within one run (rollback snapshots, synctest), never across builds.
     pub fn page_hash(&self) -> u32 {
-        self.refresh_host();
+        {
+            let _z = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 1000, "state hash: refresh host");
+            self.refresh_host();
+        }
         let (addr, len) = self.ranges[HASHED];
         let live = unsafe { bytes(addr, len) };
         let mut hc = self.hcache.borrow_mut();
@@ -936,7 +1100,47 @@ impl Base {
             hc.base.resize(npages, None);
         }
         let mut h: u64 = 0xcbf29ce484222325;
-        for pi in self.candidates(HASHED, len) {
+        let cands = {
+            let _z = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 1000, "state hash: candidates");
+            self.candidates(HASHED, len)
+        };
+        let _zd = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 1000, "state hash: digests");
+        // Many pages to digest at once (the first hash of a match: every page, ~50 ms on one thread at a netplay
+        // match start): digest them on a few threads first. Digests are pure functions of the bytes, so the result
+        // is the same; the fold below then finds them known.
+        let todo: Vec<usize> = cands.iter().map(|&p| p as usize).filter(|&pi| pi < npages && (bit_of(&hc.stale, pi) || !bit_of(&hc.known, pi))).collect();
+        if todo.len() >= PAR_DIGEST_MIN && !self.hash_verify {
+            let _s = crate::arena::SysScope::enter();
+            let per = todo.len().div_ceil(PAR_DIGEST_THREADS);
+            // (page, its base bytes, the base digest if known): plain data the threads can share
+            let items: Vec<(usize, &[u8], Option<u64>)> = todo.iter().map(|&pi| (pi, self.base_page(HASHED, pi), hc.base[pi])).collect();
+            let res: Vec<Vec<(usize, Option<u64>, u64)>> = std::thread::scope(|sc| {
+                let hs: Vec<_> = items
+                    .chunks(per)
+                    .map(|ch| {
+                        sc.spawn(move || {
+                            ch.iter()
+                                .map(|&(pi, bp, bd)| {
+                                    let d = page_digest(pi, &live[pi * PAGE..(pi + 1) * PAGE]);
+                                    let b = bd.unwrap_or_else(|| page_digest(pi, bp));
+                                    (pi, (d != b).then_some(d), b)
+                                })
+                                .collect()
+                        })
+                    })
+                    .collect();
+                hs.into_iter().map(|h| h.join().expect("page digest thread")).collect()
+            });
+            let mut st = self.stats.borrow_mut();
+            for (pi, f, b) in res.into_iter().flatten() {
+                hc.base[pi] = Some(b);
+                hc.digest[pi] = f;
+                set_bit(&mut hc.known, pi);
+                clear_bit(&mut hc.stale, pi);
+                st.hash_digests += 1;
+            }
+        }
+        for pi in cands {
             let pi = pi as usize;
             let mut fresh = |pi: usize| {
                 let d = page_digest(pi, &live[pi * PAGE..(pi + 1) * PAGE]);

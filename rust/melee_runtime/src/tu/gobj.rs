@@ -136,6 +136,27 @@ unsafe fn watch_proc(pri: i32, cb: usize, after: bool) {
     }
 }
 
+/// zero-hitch diagnostic (frameprof on): a GObj proc that took 0.3 ms or more is noted with its gobj class, priority
+/// and the callback's offset in the executable (`value`; tools/rust-port/perf/procsym.py names it from the PDB).
+#[cold]
+unsafe fn slow_proc(t0: std::time::Instant, pri: i32, gobj: *mut HSD_GObj, cb: usize) {
+    let us = t0.elapsed().as_micros() as u32;
+    if us < 300 {
+        return;
+    }
+    #[cfg(windows)]
+    let base = {
+        extern "system" {
+            fn GetModuleHandleW(n: *const u16) -> usize;
+        }
+        GetModuleHandleW(core::ptr::null())
+    };
+    #[cfg(not(windows))]
+    let base = 0usize;
+    use melee_core::frameprof as fp;
+    fp::event(fp::Kind::Note, fp::Text::new().s("slow proc: class ").n((*gobj).classifier as i64).s(" pri ").n(pri as i64), us, cb.wrapping_sub(base) as u64);
+}
+
 pub unsafe fn HSD_GObj_RunProcs() {
     melee_core::ct!("HSD_GObj_RunProcs");
     let var_r31: u64 = if !HSD_GObjLibInitData.unk_2.is_null() { *HSD_GObjLibInitData.unk_2 } else { 0 };
@@ -162,7 +183,11 @@ pub unsafe fn HSD_GObj_RunProcs() {
                     if gn::ext::ScriptStageHostHidden == 0 || (*gobj).classifier != 3 || owned != 0 {
                         if let Some(cb) = (*proc).on_invoke {
                             watch_proc(i, cb as usize, false);
+                            let t0 = if melee_core::frameprof::on() { Some(std::time::Instant::now()) } else { None };
                             cb((*proc).gobj);
+                            if let Some(t0) = t0 {
+                                slow_proc(t0, i, gobj, cb as usize);
+                            }
                             watch_proc(i, cb as usize, true);
                         }
                     }

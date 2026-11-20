@@ -6,6 +6,9 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 # NP_MATCH_HOST / NP_MATCH_GUEST: the peers' --match (default falcon,32 / fox; e.g. geno:<key>,32 with --mods DIR)
 # NP_HOST_ENV / NP_GUEST_ENV: extra NAME=VALUE words for one peer only (e.g. its own MELEE_CONTROLS_CFG); the replay of
 # the host's recording runs with NP_HOST_ENV (a sim mod the match ran with, MELEE_WASM_MODS, must be there to replay it).
+# NP_REPLAY_ENV: the replay's words instead of NP_HOST_ENV (e.g. a different trace file).
+# NP_HOST_ARGS / NP_GUEST_ARGS: extra play options for one peer only (e.g. "--widescreen --widescreen-mode camera": the
+# camera widescreen sim view, which the guest adopts from the host whatever its own options).
 # They are read as shell words: a value with spaces is quoted inside them (NP_HOST_ENV="A=$(printf %q "$dir") B=1").
 # Each peer delays its INBOUND datagrams by LAG_MS and drops LOSS_PCT % of them (--np-lag-ms / --np-loss-pct), so
 # the round trip is 2 x LAG_MS. Writes $NP_SCRATCH/NAME-{host,guest}.{log,csv,mrpl}; compares the per-frame final hash
@@ -25,8 +28,9 @@ srv=(); [ -n "${NP_SERVER:-}" ] && { srv=(--np-server "$NP_SERVER"); case "$bind
 export MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_SHOW_FPS=1
 common=(play --iso "$GW_ISO_VANILLA" --time-secs "${NP_TIME_SECS:-60}" --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames "${NP_MAX_FRAMES:-9000}" "$@")
 eval "host_env=(${NP_HOST_ENV:-})"; eval "guest_env=(${NP_GUEST_ENV:-})"
+eval "host_args=(${NP_HOST_ARGS:-})"; eval "guest_args=(${NP_GUEST_ARGS:-})"
 env "${host_env[@]}" MELEE_WINDOW_TITLE="netplay: $name host" MELEE_PAD_SCRIPT="${NP_HOST_SCRIPT:-$here/np_fight.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
-  --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --match "${NP_MATCH_HOST:-falcon,32}" --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &
+  --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --match "${NP_MATCH_HOST:-falcon,32}" --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" "${host_args[@]}" >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
 if [ -n "${NP_SERVER:-}" ]; then
@@ -34,7 +38,7 @@ if [ -n "${NP_SERVER:-}" ]; then
   echo "$name: match code $dial"
 fi
 env "${guest_env[@]}" MELEE_WINDOW_TITLE="netplay: $name guest" MELEE_PAD_SCRIPT="${NP_GUEST_SCRIPT:-$here/np_fight2.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
-  --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --match "${NP_MATCH_GUEST:-fox}" --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" >"$out/$name-guest.log" 2>&1
+  --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --match "${NP_MATCH_GUEST:-fox}" --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" "${guest_args[@]}" >"$out/$name-guest.log" 2>&1
 rg=$?
 wait $h; rh=$?
 grep -h "netplay \(host\|guest\): \(match over\|final\|ERROR\|[0-9]* final\)" "$out/$name-host.log" "$out/$name-guest.log"
@@ -47,7 +51,8 @@ common_rows=$(join -t, <(tail -n +2 "$out/$name-host.csv" | sort) <(tail -n +2 "
 diffs=$(join -t, <(tail -n +2 "$out/$name-host.csv" | sort -t, -k1,1) <(tail -n +2 "$out/$name-guest.csv" | sort -t, -k1,1) | awk -F, '$2!=$3' | wc -l)
 echo "$name: host $nh frames, guest $ng frames, $common_rows frames in both, $diffs with different hashes"
 [ "$diffs" -eq 0 ] && [ "$nh" -gt 1000 ] || { echo "FAIL $name: hashes"; fail=1; }
-env "${host_env[@]}" MELEE_WINDOW_TITLE="netplay: $name replay" bash "$here/idle.sh" "$exe" play --headless --no-audio --iso "$GW_ISO_VANILLA" --replay "$out/$name-host.mrpl" >"$out/$name-replay.log" 2>&1 || { echo "FAIL $name: replay"; fail=1; }
+eval "replay_env=(${NP_REPLAY_ENV:-${NP_HOST_ENV:-}})"
+env "${replay_env[@]}" MELEE_WINDOW_TITLE="netplay: $name replay" bash "$here/idle.sh" "$exe" play --headless --no-audio --iso "$GW_ISO_VANILLA" --replay "$out/$name-host.mrpl" >"$out/$name-replay.log" 2>&1 || { echo "FAIL $name: replay"; fail=1; }
 grep -h "^play: replay: " "$out/$name-replay.log"
 [ $fail -eq 0 ] && echo "OK $name" || echo "FAILED $name"
 exit $fail

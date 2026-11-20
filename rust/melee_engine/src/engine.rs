@@ -223,7 +223,9 @@ impl Engine {
             // `gw_view_projection_scale(16/9, wide)` = aspect * (60/73) scales every perspective camera's aspect, which
             // reaches the simulation through Camera_LogicToScreen (offscreen flags) and the stage Display procs
             // (Stadium's nametag placement). A window that is actually drawn keeps 4:3 (the seam default).
-            if !RENDER || melee_runtime::tu::gobj_native::HEADLESS_RENDER {
+            // A run with a session sim view (every play run; slpcheck / golden --slp of a recording that names one)
+            // takes the view hooks (view.rs): the session's aspect, never the window's.
+            if (!RENDER || melee_runtime::tu::gobj_native::HEADLESS_RENDER) && !PLAY_VIEW && crate::view::sim_view().is_none() {
                 if std::env::var_os("MELEE_ENGINE_NO_WIDE").is_none() {
                     let aspect: f32 = 1920.0f32 / 1080.0f32;
                     let scale: f32 = aspect * (60.0f32 / 73.0f32);
@@ -231,7 +233,10 @@ impl Engine {
                     WIDE_SCALE_BITS = scale.to_bits() as i32;
                 }
             } else {
-                // a drawn window: the view policy follows the widescreen setting and the scene (view.rs; 4:3 when off)
+                // the session's sim view (view.rs; 4:3 unless the camera widescreen mode or a recording says otherwise)
+                if crate::view::sim_view().is_none() {
+                    crate::view::set_sim_view(crate::view::local_sim_view());
+                }
                 crate::view::install();
             }
             // render draws (particle generators created while drawing) use the private render seed, not the logic stream
@@ -257,6 +262,7 @@ impl Engine {
             melee_items::tu::itmaterial::it_mobj_static_init(); // the C data initialiser of the item material class
             
         }
+        crate::workers::warm(); // the asset replay's pool threads, made before any timed frame
         melee_link::install();
         melee_link::install_retail();
         unsafe { melee_runtime::tu::generator::GEN_TRACE = std::env::var_os("MELEE_PS_TRACE").is_some(); }
@@ -715,6 +721,12 @@ fn spike_ms() -> Option<f64> {
 pub static mut POST_LINK: Option<fn()> = None;
 /// Draw into melee_gx (`gxbridge`): set before `boot_vs` by the viewers and `--shots`; goldens leave the GX hooks silent (faster).
 pub static mut RENDER: bool = false;
+/// A `play` run (rendered or `--headless`): the view hooks follow the windowed policy ([`crate::view`]) whether or not
+/// a window is drawn. The aspect reaches the simulation (Camera_LogicToScreen, Stadium's display procs), so a headless
+/// peer or a headless replay of a rendered session must see what the rendered peer saw: with the golden policy (the C
+/// recordings' 16:9 camera scale) a Pokemon Stadium replay diverged from its recording (CPU-struct words of the
+/// fighters, from ~tick 900-2700). Golden / gate / slpcheck runs leave it off.
+pub static mut PLAY_VIEW: bool = false;
 static mut WIDE_SCALE_BITS: i32 = 0x3f800000;
 const WIDE_SCALE_BITS_FN: fn() -> i32 = || unsafe { WIDE_SCALE_BITS };
 static mut FRAME_ROW: Option<[u32; 16]> = None;
@@ -909,8 +921,9 @@ impl Engine {
         let _scope = crate::arena::GameScope::enter();
         unsafe {
             let Some(run) = self.run.take() else { return false };
-            gmscene::gm_801A4D34_end();
-            gm_1A3F::gm_801A4014_leave(run);
+            // zero-hitch spans of a scene change (frameprof, logged when slow; no behaviour change)
+            { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: previous scene end"); gmscene::gm_801A4D34_end(); }
+            { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: previous scene leave (OnLeave, heap reset)"); gm_1A3F::gm_801A4014_leave(run); }
             let sm = &raw mut gm_1A3F::state_machine;
             // runGameMode: an override scene (lbCardGame_DecideGameMode -> GM_MEMCARD) restores the routing after it
             if core::mem::take(&mut OVERRIDE_ACTIVE) && !gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
@@ -940,6 +953,7 @@ impl Engine {
             // runGameMode's scene loop: `get_override` (bootOnLeave sets lbCardGame_DecideGameMode) may run another
             // mode's scene first, e.g. the memory-card scene when the card changed
             let over = match (*sm).get_override { Some(f) => f(), None => melee_types::GM_COUNT as u8 };
+            let _zh_enter = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: next scene enter (OnEnter)");
             let run = if over != melee_types::GM_COUNT as u8 {
                 (*sm).backup_routing = (*sm).routing;
                 (*sm).pending_mode_change = 0;
@@ -952,6 +966,7 @@ impl Engine {
                 gm_1A3F::gm_801A4014_enter(LOOP_MODE)
             };
             gmscene::gm_801A4D34_begin(run.info);
+            drop(_zh_enter);
             self.frames = 0;
             self.info = run.info;
             self.on_frame = run.frame_fn;
@@ -964,6 +979,7 @@ impl Engine {
         // (the retail flow's timing, ENTRY_RUNS_FRAME; the 1P coverage runs keep the entry-only tick they were matched with)
         drop(_scope);
         if unsafe { ENTRY_RUNS_FRAME } {
+            let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "scene change: next scene first frame");
             self.tick();
         }
         true

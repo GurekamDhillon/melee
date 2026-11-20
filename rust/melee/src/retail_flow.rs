@@ -191,6 +191,7 @@ impl RetailPlay {
         let t_disc = t_boot.elapsed();
         unsafe {
             melee_engine::engine::RENDER = !self.headless;
+            melee_engine::engine::PLAY_VIEW = true;
             // a scene's first frame runs in the tick that enters it, as the C build's scene loop (frame-exact vs its shots)
             melee_engine::engine::ENTRY_RUNS_FRAME = true;
         }
@@ -318,6 +319,12 @@ impl RetailPlay {
     fn step(&mut self, mut four: [melee_types::PADStatus; 4]) -> bool {
         use crate::play_net::*;
         if let Some(nd) = self.net.as_mut() {
+            // the test's results presses outlast the results: a START that reaches the stage select picked the stage under
+            // the cursor (Random), so match 2's stage changed from run to run. The scripts pick with A, so
+            // MELEE_NP_SCRIPT_NO_START=1 drops START there too (the local pad, before it is sent and recorded)
+            if self.cur.1 == melee_types::GS_SSS as u8 && std::env::var("MELEE_NP_SCRIPT_NO_START").map_or(false, |v| v == "1") {
+                four[0].button &= !0x1000;
+            }
             match nd.phase {
                 NetPhase::InMatch(_) => {
                     // test pad scripts (css_pair.sh) are timed in render ticks; a START meant for the results that lands in
@@ -737,11 +744,15 @@ impl RetailPlay {
         let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
         self.scene_tick = entered && !self.headless;
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
+        melee_engine::asset::scene_prefetch(self.cur.1 as i32);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
-            melee_engine::asset::sss_hover(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() });
-            // the SSE maps' textures go up while the stage select is open (a pick is ~14 frames before the match)
-            melee_modes::tu::explore::sss_preload();
+            let hover = unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() };
+            melee_engine::asset::sss_hover(hover);
+            melee_engine::asset::sss_random_pool(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverRandomPool() });
+            melee_engine::asset::sss_confirm_tick();
+            // a hovered SSE map's textures go up a few per tick (vanilla stage select entry costs nothing)
+            melee_modes::tu::explore::sss_preload(hover);
         }
         if melee_core::frameprof::on() {
             self.profile_test_stage();
@@ -1365,7 +1376,7 @@ impl RetailPlay {
                 "vsync" => p.set_vsync(v == "1"),
                 "render_scale" => p.set_render_scale(v.parse().ok()),
                 "interp_mode" => p.set_interp_mode(melee_gx::interp::Mode::parse(&v).unwrap_or_default()),
-                "widescreen" => p.set_true_widescreen(v == "1"),
+                "widescreen" => p.set_true_widescreen(melee_engine::view::renderer_widen()),
                 _ => {}
             }
             log(&format!("video: {k} = {v} (live)"));
@@ -1373,6 +1384,8 @@ impl RetailPlay {
         p.set_match_scene(melee_engine::view::scene_wide(melee_engine::view::scene()));
         // the decode thread's packing travels with its frame (the presenter may prepare it at a later present)
         let packed = if frame.is_some() { self.packed.take() } else { None };
+        // renderer-side widening only while the session's cameras are 4:3 (a camera-widescreen host's guest: none)
+        p.set_true_widescreen(melee_engine::view::renderer_widen());
         p.set_content_aspect(self.frame_aspect);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the match's EFB shape is made while the stage select is open, not in the match's setup frame
@@ -1466,6 +1479,18 @@ impl Game for RetailPlay {
 
     fn present_now(&self) -> bool {
         self.shot_pending.is_some() || self.scene_tick
+    }
+    fn boot_ready(&mut self) -> bool {
+        // boot the engine here, before the first tick (it would boot inside it): its boot hints then get the hold's
+        // time on the worker, and tick 1's scene applies ready plans. The tick boots it as before if this fails.
+        if self.engine().is_none() && !self.quit && self.failed.is_none() {
+            match self.boot() {
+                Ok(e) => self.e = Some(e),
+                Err(_) => return true,
+            }
+            return false;
+        }
+        !melee_engine::asset::boot_hints_busy()
     }
 
     fn take_hud_request(&mut self) -> Option<bool> {

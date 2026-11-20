@@ -19,8 +19,16 @@ bind="${NP_BIND:-127.0.0.1}"; case "$bind" in *:*) dial="[$bind]:$port";; *) dia
 # NP_SERVER=HOST:PORT: connect by match code through a rendezvous server (rust/melee_relay) instead of the address
 srv=(); [ -n "${NP_SERVER:-}" ] && { srv=(--np-server "$NP_SERVER"); case "$bind" in *:*) ;; *) srv+=(--np-lan "$bind");; esac; }
 export MELEE_NP_SCRIPT_NO_START=1 MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_SHOW_FPS=1
-common=(play --iso "$GW_ISO_VANILLA" --np-css --time-secs 60 --quit-after-matches 2 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 20000 "$@")
-MELEE_WINDOW_TITLE="netplay css: $name host" MELEE_PAD_SCRIPT="$out/np_css_host.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+# NP_CSS_STAGES=fd,bf,ps,ys,dl,fod: one match per listed stage (each never seen before in the session: cold-stage starts)
+nm=2; [ -n "${NP_CSS_STAGES:-}" ] && nm=$(echo "$NP_CSS_STAGES" | tr ',' ' ' | wc -w)
+common=(play --iso "$GW_ISO_VANILLA" --np-css --time-secs 60 --quit-after-matches $nm --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames $((nm * 14000 + 10000)) "$@")
+# NP_PERF=1 (frame times of the host): the host at normal priority with MELEE_PROFILE=1, the guest headless without
+# audio at idle priority, so only one peer renders and the guest never competes with the host for the CPU
+hrun=(bash "$here/idle.sh"); gx=(); hpro=()
+[ -n "${NP_PERF:-}" ] && { hrun=(); gx=(--headless --no-audio); hpro=(MELEE_PROFILE=1); }
+# NP_HOST_ENV="A=1 B=2": extra environment for the host only (e.g. MELEE_SAMPLE=report.txt MELEE_SAMPLE_SLOW_MS=14)
+hpro+=(${NP_HOST_ENV:-})
+env "${hpro[@]}" MELEE_WINDOW_TITLE="netplay css: $name host" MELEE_PAD_SCRIPT="$out/np_css_host.txt" "${hrun[@]}" "$exe" "${common[@]}" \
   --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
@@ -28,7 +36,7 @@ if [ -n "${NP_SERVER:-}" ]; then
   for _ in $(seq 100); do dial=$(grep -o "MATCH CODE [A-Z0-9]*" "$out/$name-host.log" | head -1 | cut -d" " -f3); [ -n "$dial" ] && break; sleep 0.2; done
   echo "$name: match code $dial"
 fi
-MELEE_WINDOW_TITLE="netplay css: $name guest" MELEE_PAD_SCRIPT="$out/np_css_guest.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+MELEE_WINDOW_TITLE="netplay css: $name guest" MELEE_PAD_SCRIPT="$out/np_css_guest.txt" bash "$here/idle.sh" "$exe" "${common[@]}" "${gx[@]}" \
   --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" >"$out/$name-guest.log" 2>&1
 rg=$?
 wait $h; rh=$?

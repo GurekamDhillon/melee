@@ -42,6 +42,11 @@ pub trait Game {
     fn present_now(&self) -> bool {
         false
     }
+    /// False while boot work the first ticks need is still in flight (the asset worker's boot hints): the loop keeps
+    /// presenting the loading frame and starts the tick clock once this is true (or after [`BOOT_WAIT_MAX`]).
+    fn boot_ready(&mut self) -> bool {
+        true
+    }
     /// Extra state for the MELEE_SHOW_FPS title line (netplay: ping, rollbacks), asked once a second.
     fn status_line(&mut self) -> Option<String> {
         None
@@ -136,6 +141,9 @@ pub fn sleep_until(t: Instant) {
         }
     }
 }
+
+/// The longest the tick clock waits at boot for [`Game::boot_ready`].
+const BOOT_WAIT_MAX: Duration = Duration::from_millis(600);
 
 /// One timer wait of `d`: on Windows a per-thread CREATE_WAITABLE_TIMER_HIGH_RESOLUTION timer (no timeBeginPeriod
 /// needed), elsewhere `thread::sleep`.
@@ -412,6 +420,12 @@ struct App<G: Game> {
     present_at: Option<Instant>,
     /// Paced: present before running the due tick (its slot was due within half a period after the tick).
     present_first: bool,
+    /// The tick clock runs from the first present (a window's): the time from window creation to that present
+    /// (device, swapchain, first pipelines) is not owed to the sim, so boot starts without a catch-up burst.
+    clock_started: bool,
+    /// The first present (the boot wait's start).
+    boot_t0: Option<Instant>,
+    boot_done: bool,
     /// VRR detection: the probe's end, the last statistics sample, verdicts in a row.
     vrr_probe_until: Option<Instant>,
     vrr_last: Option<(u64, u64, f64)>,
@@ -548,6 +562,11 @@ impl<G: Game> App<G> {
             }
             let d = t.elapsed();
             self.present_time += d;
+            if !self.clock_started {
+                self.clock_started = true;
+                self.last = Some(Instant::now());
+                self.clock.forgive();
+            }
             if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
                 use std::io::Write;
                 let _ = writeln!(f, "P,{},{:.3},{:.3}", self.frames, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
@@ -583,6 +602,24 @@ impl<G: Game> App<G> {
         }
     }
 
+    /// After the first present (the game may boot its host here, which queues the boot hints): hold the tick clock, presenting the
+    /// loading frame, until [`Game::boot_ready`] or [`BOOT_WAIT_MAX`]; then restart it from now (no catch-up).
+    /// Pacing only: the ticks are unchanged.
+    fn boot_holding(&mut self) -> bool {
+        if self.boot_done || self.window.is_none() || !self.clock_started {
+            return false;
+        }
+        let t0 = *self.boot_t0.get_or_insert_with(Instant::now);
+        if self.game.boot_ready() || t0.elapsed() >= BOOT_WAIT_MAX {
+            self.boot_done = true;
+            self.last = Some(Instant::now());
+            self.clock.forgive();
+            plog!("gw: boot: tick clock held {:.1} ms for the boot hints", t0.elapsed().as_secs_f64() * 1e3);
+            return false;
+        }
+        true
+    }
+
     fn run_due_ticks(&mut self) {
         self.run_due_ticks_at(Instant::now());
     }
@@ -595,6 +632,12 @@ impl<G: Game> App<G> {
             // loop calls here again, and a tick that had come due meanwhile would make the shot the NEXT frame's,
             // run to run as the load fell (Pokemon Stadium shots at one scene age differed by a tick). The time
             // stays in the clock; the ticks run right after the present.
+            return;
+        }
+        if !self.clock_started && self.window.is_some() {
+            return; // the first present starts the clock (pacing only: the ticks are unchanged)
+        }
+        if self.boot_holding() {
             return;
         }
         let dt = self.last.map(|l| now.saturating_duration_since(l)).unwrap_or_default();
@@ -631,6 +674,9 @@ impl<G: Game> App<G> {
             }
             if self.game.present_now() {
                 break; // the rest of the due time stays in the clock
+            }
+            if !self.boot_done && self.window.is_some() {
+                break; // the boot hold decides when the next tick runs
             }
             if el >= LOAD_TICK {
                 // A scene load (archive parse, device open): the real time it took is not owed to the sim. Without
@@ -942,6 +988,13 @@ impl<G: Game> ApplicationHandler for App<G> {
             return;
         }
         self.vrr_tick();
+        if self.boot_holding() {
+            // boot: the loading frame until the boot work is in (pacing only; no tick runs meanwhile)
+            sleep_until(Instant::now() + Duration::from_millis(4));
+            self.ask_redraw(el);
+            el.set_control_flow(ControlFlow::Poll);
+            return;
+        }
         if let (Some(period), true) = (self.cap_period(), self.decoupled && self.window.is_some()) {
             // paced: present on a fixed grid; sleep to the next slot, or to the next tick if that comes first
             let now = Instant::now();
@@ -1094,6 +1147,9 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         next_present: None,
         present_at: None,
         present_first: false,
+        clock_started: false,
+        boot_t0: None,
+        boot_done: false,
         vrr_probe_until: None,
         vrr_last: None,
         vrr_votes: (None, 0),

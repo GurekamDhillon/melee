@@ -17,6 +17,7 @@ use melee_gx::state::{TexObj, TlutObj};
 use melee_gx::GxData;
 use melee_types::{_GXColor, _GXColorS10};
 use std::collections::HashMap;
+use crate::arena::SysScope;
 
 #[derive(Default)]
 struct Objs {
@@ -37,7 +38,13 @@ struct Objs {
     /// Diagnostics: entries evicted, bytes copied.
     evictions: u64,
     copied: u64,
+    /// Frames finished (`finish_frame`), and the copies made in the last [`RECENT`] of them: (frame, key, is a block).
+    epoch: u64,
+    recent: Vec<(u64, (usize, usize), bool)>,
 }
+
+/// How many frames back a rollback load can go (the deepest rollback is 7-8 frames; margin).
+const RECENT: u64 = 32;
 
 /// `data` and `blocks` each evict their least recently used entries when they would hold more than this (keys are
 /// guest addresses that later loads reuse; evicted copies are re-made on the next draw).
@@ -62,16 +69,54 @@ fn evict_lru<K: Copy + Eq + std::hash::Hash>(m: &mut HashMap<K, (GxData, u64)>, 
     }
 }
 
-static mut SHIM: Option<GxShim> = None;
-static mut OBJS: Option<Objs> = None;
+/// The shim and the side tables live in a render-only host block, outside the snapshot: these two pointers are set
+/// once (before the first snapshot) and never change, so a rollback load rewrites them with the same value, and
+/// everything they own is on the system heap (every bridge entry runs in a [`SysScope`]). The game never reads this
+/// state; before, its per-frame buffers sat in the arena and a rendered netplay peer copied 2-7 k dirty pages per
+/// snapshot (10-28 MB a frame) against ~300 for a headless one.
+static mut SHIM: *mut GxShim = core::ptr::null_mut();
+static mut OBJS: *mut Objs = core::ptr::null_mut();
+
+unsafe fn shim_ptr() -> *mut GxShim {
+    if SHIM.is_null() {
+        let _s = SysScope::enter();
+        SHIM = Box::into_raw(Box::new(GxShim::new()));
+    }
+    SHIM
+}
+unsafe fn objs_ptr() -> *mut Objs {
+    if OBJS.is_null() {
+        let _s = SysScope::enter();
+        OBJS = Box::into_raw(Box::new(Objs::default()));
+    }
+    OBJS
+}
+
+/// A snapshot was loaded (rollback): game memory went back, so a copy made since (in the discarded frames) may not
+/// match what is at its address now. The copies of the last [`RECENT`] frames are dropped (re-made at their next
+/// draw); older ones are of data that was already there before the loaded state. The GX state itself is re-set by
+/// the frames that follow, as on any frame.
+pub fn on_state_load() {
+    let _s = SysScope::enter();
+    unsafe {
+        if let Some(o) = OBJS.as_mut() {
+            for (_, k, block) in std::mem::take(&mut o.recent) {
+                let (m, bytes) = if block { (&mut o.blocks, &mut o.blocks_bytes) } else { (&mut o.data, &mut o.data_bytes) };
+                if let Some((d, _)) = m.remove(&k) {
+                    *bytes -= d.len();
+                }
+            }
+        }
+    }
+}
 
 /// A GXBegin is open (the game's GXEnd is a macro that vanished in the port: the bridge ends the primitive itself).
 static mut OPEN: bool = false;
 
 /// The shim every state call lands in (created on first use; `GxShim::new` is `GXInit`). Ends an open primitive first.
-pub fn shim() -> &'static mut GxShim {
+pub fn shim() -> &'static mut GxShim { let _sys = SysScope::enter();
     unsafe {
-        let s = SHIM.get_or_insert_with(GxShim::new);
+        let s = &mut *shim_ptr();
         if OPEN {
             OPEN = false;
             s.end();
@@ -81,14 +126,14 @@ pub fn shim() -> &'static mut GxShim {
 }
 /// The shim for immediate-mode vertex data (does not end the primitive).
 fn vtx() -> &'static mut GxShim {
-    unsafe { SHIM.get_or_insert_with(GxShim::new) }
+    unsafe { &mut *shim_ptr() }
 }
 fn objs() -> &'static mut Objs {
-    unsafe { OBJS.get_or_insert_with(Objs::default) }
+    unsafe { &mut *objs_ptr() }
 }
 
 /// The finished frame (`GXCopyDisp` ends it), for the presenter.
-pub fn take_frame() -> Option<Vec<DrawCmd>> {
+pub fn take_frame() -> Option<Vec<DrawCmd>> { let _sys = SysScope::enter();
     shim().take_frame()
 }
 
@@ -101,7 +146,7 @@ fn col(c: _GXColor) -> GxColor {
 static HOST_RANGES: std::sync::Mutex<Vec<(usize, usize)>> = std::sync::Mutex::new(Vec::new());
 
 /// Let `GXInitTexObj` and friends read `len` bytes at `p` (memory that lives for the rest of the run).
-pub fn register_host_range(p: *const u8, len: usize) {
+pub fn register_host_range(p: *const u8, len: usize) { let _sys = SysScope::enter();
     HOST_RANGES.lock().unwrap().push((p as usize, len));
 }
 
@@ -127,7 +172,7 @@ unsafe fn extent(p: usize, cap: usize) -> usize {
 
 /// Drop the cached copies of game memory starting in `[lo, hi)` (an archive image whose bytes were freed or overwritten:
 /// its copies are stale, and nothing else ever removed them).
-pub fn forget_range(lo: usize, hi: usize) {
+pub fn forget_range(lo: usize, hi: usize) { let _sys = SysScope::enter();
     unsafe {
         if let Some(o) = OBJS.as_mut() {
             o.data.retain(|&(p, _), _| p < lo || p >= hi);
@@ -140,13 +185,13 @@ pub fn forget_range(lo: usize, hi: usize) {
 }
 
 /// Diagnostics: (entries, bytes) of the copied game-memory cache.
-pub fn data_cache_stats() -> (usize, usize) {
+pub fn data_cache_stats() -> (usize, usize) { let _sys = SysScope::enter();
     let o = objs();
     (o.data.len() + o.blocks.len(), o.data_bytes + o.blocks_bytes)
 }
 
 /// Diagnostics: (per-pointer copies, their bytes, block copies, their bytes, evictions, bytes copied so far).
-pub fn data_cache_detail() -> (usize, usize, usize, usize, u64, u64) {
+pub fn data_cache_detail() -> (usize, usize, usize, usize, u64, u64) { let _sys = SysScope::enter();
     let o = objs();
     (o.data.len(), o.data_bytes, o.blocks.len(), o.blocks_bytes, o.evictions, o.copied)
 }
@@ -167,6 +212,16 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
         return None;
     }
     let mut n = extent(p as usize, want);
+    // a texture outside the known ranges already copied whole: that copy, without probing the memory again (the copy
+    // the check below would return; zero-hitch, see `readable`)
+    if n < want && trust {
+        let o = objs();
+        if let Some((d, t)) = o.data.get_mut(&(p as usize, want)) {
+            o.clock += 1;
+            *t = o.clock;
+            return Some(d.clone());
+        }
+    }
     // a texture larger than the heap cap (the 640x480 I8 movie luma plane, 300 KB) is read whole, not cut at it
     if n < want && trust && readable(p as usize, want) {
         n = want;
@@ -187,6 +242,7 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
     o.data_bytes += n;
     o.copied += n as u64;
     o.data.insert(key, (d.clone(), now));
+    o.recent.push((o.epoch, key, false));
     Some(d)
 }
 
@@ -222,6 +278,7 @@ unsafe fn block_data_at(p: usize) -> Option<(GxData, u32)> {
     o.blocks_bytes += n;
     o.copied += n as u64;
     o.blocks.insert((b, n), (d.clone(), now));
+    o.recent.push((o.epoch, (b, n), true));
     Some((d, off))
 }
 
@@ -233,16 +290,16 @@ unsafe fn mtx44<'a>(p: *mut c_void) -> &'a [[f32; 4]; 4] {
 }
 
 // ---- vertex description and immediate geometry
-pub fn GXBegin(prim: u32, fmt: u32, n: u16) {
+pub fn GXBegin(prim: u32, fmt: u32, n: u16) { let _sys = SysScope::enter();
     let s = shim();
     unsafe { OPEN = true };
     s.begin(prim, fmt, n)
 }
-pub fn GXClearVtxDesc() { shim().clear_vtx_desc() }
-pub fn GXInvalidateVtxCache() { shim().invalidate_vtx_cache() }
-pub fn GXSetVtxDesc(attr: u32, ty: u32) { shim().set_vtx_desc(attr, ty) }
-pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u8) { shim().set_vtx_attr_fmt(fmt, attr, cnt, ty, frac) }
-pub unsafe fn GXSetArray(attr: u32, base: *mut c_void, stride: u8) {
+pub fn GXClearVtxDesc() { let _sys = SysScope::enter();  shim().clear_vtx_desc() }
+pub fn GXInvalidateVtxCache() { let _sys = SysScope::enter();  shim().invalidate_vtx_cache() }
+pub fn GXSetVtxDesc(attr: u32, ty: u32) { let _sys = SysScope::enter();  shim().set_vtx_desc(attr, ty) }
+pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u8) { let _sys = SysScope::enter();  shim().set_vtx_attr_fmt(fmt, attr, cnt, ty, frac) }
+pub unsafe fn GXSetArray(attr: u32, base: *mut c_void, stride: u8) { let _sys = SysScope::enter();
     if !base.is_null() {
         if let Some((d, off)) = block_data_at(base as usize) {
             return shim().set_array_at(attr, Some(&d), off, stride);
@@ -256,130 +313,130 @@ pub unsafe fn GXSetArray(attr: u32, base: *mut c_void, stride: u8) {
     }
     shim().set_array(attr, d.as_ref(), stride)
 }
-pub unsafe fn GXCallDisplayList(list: *mut c_void, nbytes: u32) {
+pub unsafe fn GXCallDisplayList(list: *mut c_void, nbytes: u32) { let _sys = SysScope::enter();
     if list.is_null() || nbytes == 0 {
         return;
     }
     shim().call_display_list(core::slice::from_raw_parts(list as *const u8, nbytes as usize))
 }
-pub fn GXPosition3f32(x: f32, y: f32, z: f32) { vtx().gx.position3f32(x, y, z) }
-pub fn GXPosition2f32(x: f32, y: f32) { vtx().gx.position2f32(x, y) }
-pub fn GXNormal3f32(x: f32, y: f32, z: f32) { vtx().gx.normal3f32(x, y, z) }
-pub fn GXColor4u8(r: u8, g: u8, b: u8, a: u8) { vtx().gx.color4u8(r, g, b, a) }
-pub fn GXColor3u8(r: u8, g: u8, b: u8) { let g8 = &mut vtx().gx; g8.cmd1u8(r); g8.cmd1u8(g); g8.cmd1u8(b) } // 3 bytes (GX_RGB8), as the SDK and Aurora write it
-pub fn GXColor1x8(i: u8) { vtx().gx.color1x8(i) }
-pub fn GXColor1x16(i: u16) { vtx().gx.cmd1u16(i) }
-pub fn GXColor1u16(c: u16) { vtx().gx.cmd1u16(c) }
-pub fn GXTexCoord2f32(s: f32, t: f32) { vtx().gx.tex_coord2f32(s, t) }
-pub fn GXTexCoord2u8(s: u8, t: u8) { vtx().gx.cmd1u8(s); vtx().gx.cmd1u8(t) }
-pub fn GXTexCoord1x8(i: u8) { vtx().gx.tex_coord1x8(i) }
-pub fn GXTexCoord1u8(i: u8) { vtx().gx.cmd1u8(i) }
-pub fn GXTexCoord1x16(i: u16) { vtx().gx.cmd1u16(i) }
+pub fn GXPosition3f32(x: f32, y: f32, z: f32) { let _sys = SysScope::enter();  vtx().gx.position3f32(x, y, z) }
+pub fn GXPosition2f32(x: f32, y: f32) { let _sys = SysScope::enter();  vtx().gx.position2f32(x, y) }
+pub fn GXNormal3f32(x: f32, y: f32, z: f32) { let _sys = SysScope::enter();  vtx().gx.normal3f32(x, y, z) }
+pub fn GXColor4u8(r: u8, g: u8, b: u8, a: u8) { let _sys = SysScope::enter();  vtx().gx.color4u8(r, g, b, a) }
+pub fn GXColor3u8(r: u8, g: u8, b: u8) { let _sys = SysScope::enter();  let g8 = &mut vtx().gx; g8.cmd1u8(r); g8.cmd1u8(g); g8.cmd1u8(b) } // 3 bytes (GX_RGB8), as the SDK and Aurora write it
+pub fn GXColor1x8(i: u8) { let _sys = SysScope::enter();  vtx().gx.color1x8(i) }
+pub fn GXColor1x16(i: u16) { let _sys = SysScope::enter();  vtx().gx.cmd1u16(i) }
+pub fn GXColor1u16(c: u16) { let _sys = SysScope::enter();  vtx().gx.cmd1u16(c) }
+pub fn GXTexCoord2f32(s: f32, t: f32) { let _sys = SysScope::enter();  vtx().gx.tex_coord2f32(s, t) }
+pub fn GXTexCoord2u8(s: u8, t: u8) { let _sys = SysScope::enter();  vtx().gx.cmd1u8(s); vtx().gx.cmd1u8(t) }
+pub fn GXTexCoord1x8(i: u8) { let _sys = SysScope::enter();  vtx().gx.tex_coord1x8(i) }
+pub fn GXTexCoord1u8(i: u8) { let _sys = SysScope::enter();  vtx().gx.cmd1u8(i) }
+pub fn GXTexCoord1x16(i: u16) { let _sys = SysScope::enter();  vtx().gx.cmd1u16(i) }
 
 // ---- transform
-pub unsafe fn GXSetProjection(m: *mut c_void, ty: u32) { shim().set_projection(mtx44(m), ty) }
-pub unsafe fn GXLoadPosMtxImm(m: *mut c_void, id: u32) { shim().load_pos_mtx_imm(mtx34(m), id) }
-pub unsafe fn GXLoadNrmMtxImm(m: *mut c_void, id: u32) { shim().load_nrm_mtx_imm(mtx34(m), id) }
-pub unsafe fn GXLoadTexMtxImm(m: *mut c_void, id: u32, ty: u32) { shim().load_tex_mtx_imm(mtx34(m), id, ty) }
-pub fn GXSetCurrentMtx(id: u32) { shim().set_current_mtx(id) }
+pub unsafe fn GXSetProjection(m: *mut c_void, ty: u32) { let _sys = SysScope::enter();  shim().set_projection(mtx44(m), ty) }
+pub unsafe fn GXLoadPosMtxImm(m: *mut c_void, id: u32) { let _sys = SysScope::enter();  shim().load_pos_mtx_imm(mtx34(m), id) }
+pub unsafe fn GXLoadNrmMtxImm(m: *mut c_void, id: u32) { let _sys = SysScope::enter();  shim().load_nrm_mtx_imm(mtx34(m), id) }
+pub unsafe fn GXLoadTexMtxImm(m: *mut c_void, id: u32, ty: u32) { let _sys = SysScope::enter();  shim().load_tex_mtx_imm(mtx34(m), id, ty) }
+pub fn GXSetCurrentMtx(id: u32) { let _sys = SysScope::enter();  shim().set_current_mtx(id) }
 /// `GXAuroraLoadPalette(n, key, data)`: pobj.c's PC matrix palette (native floats, 24 a slot).
-pub unsafe fn GXAuroraLoadPalette(n: u32, key: u32, data: *const f32) {
+pub unsafe fn GXAuroraLoadPalette(n: u32, key: u32, data: *const f32) { let _sys = SysScope::enter();
     if data.is_null() || n == 0 || n > 64 {
         return;
     }
     shim().load_palette(n, key, core::slice::from_raw_parts(data, n as usize * 24))
 }
-pub fn GXAuroraEndPalette() { shim().end_palette() }
-pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, nz: f32, fz: f32) { shim().set_viewport(l, t, w, h, nz, fz) }
-pub fn GXSetViewportJitter(l: f32, t: f32, w: f32, h: f32, nz: f32, fz: f32, field: u32) { shim().set_viewport_jitter(l, t, w, h, nz, fz, field) }
-pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { shim().set_scissor(l, t, w, h) }
-pub unsafe fn GXGetProjectionv(out: *mut f32) {
+pub fn GXAuroraEndPalette() { let _sys = SysScope::enter();  shim().end_palette() }
+pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, nz: f32, fz: f32) { let _sys = SysScope::enter();  shim().set_viewport(l, t, w, h, nz, fz) }
+pub fn GXSetViewportJitter(l: f32, t: f32, w: f32, h: f32, nz: f32, fz: f32, field: u32) { let _sys = SysScope::enter();  shim().set_viewport_jitter(l, t, w, h, nz, fz, field) }
+pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { let _sys = SysScope::enter();  shim().set_scissor(l, t, w, h) }
+pub unsafe fn GXGetProjectionv(out: *mut f32) { let _sys = SysScope::enter();
     let v = shim().get_projectionv();
     core::ptr::copy_nonoverlapping(v.as_ptr(), out, 7);
 }
-pub unsafe fn GXGetViewportv(out: *mut f32) {
+pub unsafe fn GXGetViewportv(out: *mut f32) { let _sys = SysScope::enter();
     let v = shim().get_viewportv();
     core::ptr::copy_nonoverlapping(v.as_ptr(), out, 6);
 }
-pub fn GXSetCullMode(m: u32) { shim().set_cull_mode(m) }
-pub fn GXSetLineWidth(w: u8, offs: u32) { shim().set_line_width(w, offs) }
-pub fn GXSetPointSize(s: u8, offs: u32) { shim().set_point_size(s, offs) }
-pub fn GXEnableTexOffsets(coord: u32, line: u8, point: u8) { shim().enable_tex_offsets(coord, line != 0, point != 0) }
+pub fn GXSetCullMode(m: u32) { let _sys = SysScope::enter();  shim().set_cull_mode(m) }
+pub fn GXSetLineWidth(w: u8, offs: u32) { let _sys = SysScope::enter();  shim().set_line_width(w, offs) }
+pub fn GXSetPointSize(s: u8, offs: u32) { let _sys = SysScope::enter();  shim().set_point_size(s, offs) }
+pub fn GXEnableTexOffsets(coord: u32, line: u8, point: u8) { let _sys = SysScope::enter();  shim().enable_tex_offsets(coord, line != 0, point != 0) }
 
 // ---- pixel state
-pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { shim().set_blend_mode(ty, src, dst, op) }
-pub fn GXSetZMode(enable: u8, func: u32, update: u8) { shim().set_z_mode(enable != 0, func, update != 0) }
-pub fn GXSetZCompLoc(before: u8) { shim().set_z_comp_loc(before != 0) }
-pub fn GXSetColorUpdate(on: u8) { shim().set_color_update(on != 0) }
-pub fn GXSetAlphaUpdate(on: u8) { shim().set_alpha_update(on != 0) }
-pub fn GXSetDither(on: u8) { shim().set_dither(on != 0) }
-pub fn GXSetDstAlpha(enable: u8, a: u8) { shim().set_dst_alpha(enable != 0, a) }
-pub fn GXSetAlphaCompare(c0: u32, r0: u8, op: u32, c1: u32, r1: u8) { shim().set_alpha_compare(c0, r0, op, c1, r1) }
-pub fn GXSetPixelFmt(pix: u32, z: u32) { shim().set_pixel_fmt(pix, z) }
-pub fn GXSetFieldMode(field: u8, half: u8) { shim().set_field_mode(field != 0, half != 0) }
-pub fn GXSetZTexture(op: u32, fmt: u32, bias: u32) {
+pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { let _sys = SysScope::enter();  shim().set_blend_mode(ty, src, dst, op) }
+pub fn GXSetZMode(enable: u8, func: u32, update: u8) { let _sys = SysScope::enter();  shim().set_z_mode(enable != 0, func, update != 0) }
+pub fn GXSetZCompLoc(before: u8) { let _sys = SysScope::enter();  shim().set_z_comp_loc(before != 0) }
+pub fn GXSetColorUpdate(on: u8) { let _sys = SysScope::enter();  shim().set_color_update(on != 0) }
+pub fn GXSetAlphaUpdate(on: u8) { let _sys = SysScope::enter();  shim().set_alpha_update(on != 0) }
+pub fn GXSetDither(on: u8) { let _sys = SysScope::enter();  shim().set_dither(on != 0) }
+pub fn GXSetDstAlpha(enable: u8, a: u8) { let _sys = SysScope::enter();  shim().set_dst_alpha(enable != 0, a) }
+pub fn GXSetAlphaCompare(c0: u32, r0: u8, op: u32, c1: u32, r1: u8) { let _sys = SysScope::enter();  shim().set_alpha_compare(c0, r0, op, c1, r1) }
+pub fn GXSetPixelFmt(pix: u32, z: u32) { let _sys = SysScope::enter();  shim().set_pixel_fmt(pix, z) }
+pub fn GXSetFieldMode(field: u8, half: u8) { let _sys = SysScope::enter();  shim().set_field_mode(field != 0, half != 0) }
+pub fn GXSetZTexture(op: u32, fmt: u32, bias: u32) { let _sys = SysScope::enter();
     // MELEE_GX_ZTEX_LOG=1: every Z-texture state change on stderr (the endings' depth-replace SObjs, task #33)
     if std::env::var_os("MELEE_GX_ZTEX_LOG").is_some() {
         eprintln!("gx: GXSetZTexture op {op} fmt {fmt} bias {bias}");
     }
     shim().set_z_texture(op, fmt, bias)
 }
-pub fn GXSetFog(ty: u32, start: f32, end: f32, near: f32, far: f32, c: _GXColor) { shim().set_fog(ty, start, end, near, far, col(c)) }
-pub unsafe fn GXInitFogAdjTable(table: *mut c_void, width: u16, m: *mut c_void) {
+pub fn GXSetFog(ty: u32, start: f32, end: f32, near: f32, far: f32, c: _GXColor) { let _sys = SysScope::enter();  shim().set_fog(ty, start, end, near, far, col(c)) }
+pub unsafe fn GXInitFogAdjTable(table: *mut c_void, width: u16, m: *mut c_void) { let _sys = SysScope::enter();
     let t = melee_gx::shim::init_fog_adj_table(width, mtx44(m));
     core::ptr::copy_nonoverlapping(t.as_ptr(), table as *mut u16, 10);
 }
-pub unsafe fn GXSetFogRangeAdj(enable: u8, center: u16, table: *mut c_void) {
+pub unsafe fn GXSetFogRangeAdj(enable: u8, center: u16, table: *mut c_void) { let _sys = SysScope::enter();
     let t = if table.is_null() { None } else { Some(&*(table as *const [u16; 10])) };
     shim().set_fog_range_adj(enable != 0, center, t)
 }
 
 // ---- channels, lights
-pub fn GXSetNumChans(n: u8) { shim().set_num_chans(n) }
-pub fn GXSetChanAmbColor(id: u32, c: _GXColor) { shim().set_chan_amb_color(id, col(c)) }
-pub fn GXSetChanMatColor(id: u32, c: _GXColor) { shim().set_chan_mat_color(id, col(c)) }
-pub fn GXSetChanCtrl(chan: u32, enable: u8, amb: u32, mat: u32, lights: u32, diff: u32, attn: u32) { shim().set_chan_ctrl(chan, enable != 0, amb, mat, lights, diff, attn) }
+pub fn GXSetNumChans(n: u8) { let _sys = SysScope::enter();  shim().set_num_chans(n) }
+pub fn GXSetChanAmbColor(id: u32, c: _GXColor) { let _sys = SysScope::enter();  shim().set_chan_amb_color(id, col(c)) }
+pub fn GXSetChanMatColor(id: u32, c: _GXColor) { let _sys = SysScope::enter();  shim().set_chan_mat_color(id, col(c)) }
+pub fn GXSetChanCtrl(chan: u32, enable: u8, amb: u32, mat: u32, lights: u32, diff: u32, attn: u32) { let _sys = SysScope::enter();  shim().set_chan_ctrl(chan, enable != 0, amb, mat, lights, diff, attn) }
 fn light<'a>(o: *mut c_void) -> &'a mut GxLightObj { objs().light.entry(o as usize).or_default() }
-pub unsafe fn GXInitLightAttn(o: *mut c_void, a0: f32, a1: f32, a2: f32, k0: f32, k1: f32, k2: f32) { GxShim::init_light_attn(light(o), a0, a1, a2, k0, k1, k2) }
-pub unsafe fn GXInitLightColor(o: *mut c_void, c: _GXColor) { GxShim::init_light_color(light(o), col(c)) }
-pub unsafe fn GXInitLightDir(o: *mut c_void, x: f32, y: f32, z: f32) { GxShim::init_light_dir(light(o), x, y, z) }
-pub unsafe fn GXInitLightPos(o: *mut c_void, x: f32, y: f32, z: f32) { GxShim::init_light_pos(light(o), x, y, z) }
-pub unsafe fn GXInitLightDistAttn(o: *mut c_void, ref_dist: f32, ref_br: f32, func: i32) { melee_gx::shim::init_light_dist_attn(light(o), ref_dist, ref_br, func as u32) }
-pub unsafe fn GXInitLightSpot(o: *mut c_void, cutoff: f32, func: i32) { melee_gx::shim::init_light_spot(light(o), cutoff, func as u32) }
-pub unsafe fn GXLoadLightObjImm(o: *mut c_void, id: u32) {
+pub unsafe fn GXInitLightAttn(o: *mut c_void, a0: f32, a1: f32, a2: f32, k0: f32, k1: f32, k2: f32) { let _sys = SysScope::enter();  GxShim::init_light_attn(light(o), a0, a1, a2, k0, k1, k2) }
+pub unsafe fn GXInitLightColor(o: *mut c_void, c: _GXColor) { let _sys = SysScope::enter();  GxShim::init_light_color(light(o), col(c)) }
+pub unsafe fn GXInitLightDir(o: *mut c_void, x: f32, y: f32, z: f32) { let _sys = SysScope::enter();  GxShim::init_light_dir(light(o), x, y, z) }
+pub unsafe fn GXInitLightPos(o: *mut c_void, x: f32, y: f32, z: f32) { let _sys = SysScope::enter();  GxShim::init_light_pos(light(o), x, y, z) }
+pub unsafe fn GXInitLightDistAttn(o: *mut c_void, ref_dist: f32, ref_br: f32, func: i32) { let _sys = SysScope::enter();  melee_gx::shim::init_light_dist_attn(light(o), ref_dist, ref_br, func as u32) }
+pub unsafe fn GXInitLightSpot(o: *mut c_void, cutoff: f32, func: i32) { let _sys = SysScope::enter();  melee_gx::shim::init_light_spot(light(o), cutoff, func as u32) }
+pub unsafe fn GXLoadLightObjImm(o: *mut c_void, id: u32) { let _sys = SysScope::enter();
     let l = light(o).clone();
     shim().load_light_obj_imm(&l, id)
 }
 
 // ---- texgen and TEV
-pub fn GXSetNumTexGens(n: u8) { shim().set_num_tex_gens(n) }
-pub fn GXSetTexCoordGen2(dst: u32, func: u32, src: u32, mtx: u32, normalize: u8, pt: u32) { shim().set_tex_coord_gen2(dst, func, src, mtx, normalize != 0, pt) }
-pub fn GXSetNumTevStages(n: u8) { shim().set_num_tev_stages(n) }
-pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { shim().set_tev_order(stage, coord, map, color) }
-pub fn GXSetTevOp(stage: u32, mode: u32) { shim().set_tev_op(stage, mode) }
-pub fn GXSetTevColorIn(s: u32, a: u32, b: u32, c: u32, d: u32) { shim().set_tev_color_in(s, a, b, c, d) }
-pub fn GXSetTevAlphaIn(s: u32, a: u32, b: u32, c: u32, d: u32) { shim().set_tev_alpha_in(s, a, b, c, d) }
-pub fn GXSetTevColorOp(s: u32, op: u32, bias: u32, scale: u32, clamp: u8, out: u32) { shim().set_tev_color_op(s, op, bias, scale, clamp != 0, out) }
-pub fn GXSetTevAlphaOp(s: u32, op: u32, bias: u32, scale: u32, clamp: u8, out: u32) { shim().set_tev_alpha_op(s, op, bias, scale, clamp != 0, out) }
-pub fn GXSetTevColor(id: u32, c: _GXColor) { shim().set_tev_color(id, col(c)) }
-pub fn GXSetTevColorS10(id: u32, c: _GXColorS10) { shim().set_tev_color_s10(id, GxColorS10 { r: c.r, g: c.g, b: c.b, a: c.a }) }
-pub fn GXSetTevKColor(id: u32, c: _GXColor) { shim().set_tev_kcolor(id, col(c)) }
-pub fn GXSetTevKColorSel(id: u32, sel: u32) { shim().set_tev_kcolor_sel(id, sel) }
-pub fn GXSetTevKAlphaSel(id: u32, sel: u32) { shim().set_tev_kalpha_sel(id, sel) }
-pub fn GXSetTevSwapMode(stage: u32, ras: u32, tex: u32) { shim().set_tev_swap_mode(stage, ras, tex) }
-pub fn GXSetTevSwapModeTable(id: u32, r: u32, g: u32, b: u32, a: u32) { shim().set_tev_swap_mode_table(id, r, g, b, a) }
-pub fn GXSetTevClampMode(stage: i32, mode: i32) { shim().set_tev_clamp_mode(stage as u32, mode as u32) }
-pub fn GXSetTevDirect(stage: u32) { shim().set_tev_direct(stage) }
-pub fn GXSetNumIndStages(n: u8) { shim().set_num_ind_stages(n) }
-pub fn GXSetIndTexOrder(stage: u32, coord: u32, map: u32) { shim().set_ind_tex_order(stage, coord, map) }
-pub fn GXSetIndTexCoordScale(stage: u32, s: u32, t: u32) { shim().set_ind_tex_coord_scale(stage, s, t) }
-pub unsafe fn GXSetIndTexMtx(id: u32, m: *mut c_void, scale_exp: i8) { shim().set_ind_tex_mtx(id, &*(m as *const [[f32; 3]; 2]), scale_exp) }
-pub fn GXSetTevIndirect(stage: u32, ind_stage: u32, fmt: u32, bias: u32, mtx: u32, wrap_s: u32, wrap_t: u32, add_prev: u8, utc_lod: u8, alpha: u32) {
+pub fn GXSetNumTexGens(n: u8) { let _sys = SysScope::enter();  shim().set_num_tex_gens(n) }
+pub fn GXSetTexCoordGen2(dst: u32, func: u32, src: u32, mtx: u32, normalize: u8, pt: u32) { let _sys = SysScope::enter();  shim().set_tex_coord_gen2(dst, func, src, mtx, normalize != 0, pt) }
+pub fn GXSetNumTevStages(n: u8) { let _sys = SysScope::enter();  shim().set_num_tev_stages(n) }
+pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { let _sys = SysScope::enter();  shim().set_tev_order(stage, coord, map, color) }
+pub fn GXSetTevOp(stage: u32, mode: u32) { let _sys = SysScope::enter();  shim().set_tev_op(stage, mode) }
+pub fn GXSetTevColorIn(s: u32, a: u32, b: u32, c: u32, d: u32) { let _sys = SysScope::enter();  shim().set_tev_color_in(s, a, b, c, d) }
+pub fn GXSetTevAlphaIn(s: u32, a: u32, b: u32, c: u32, d: u32) { let _sys = SysScope::enter();  shim().set_tev_alpha_in(s, a, b, c, d) }
+pub fn GXSetTevColorOp(s: u32, op: u32, bias: u32, scale: u32, clamp: u8, out: u32) { let _sys = SysScope::enter();  shim().set_tev_color_op(s, op, bias, scale, clamp != 0, out) }
+pub fn GXSetTevAlphaOp(s: u32, op: u32, bias: u32, scale: u32, clamp: u8, out: u32) { let _sys = SysScope::enter();  shim().set_tev_alpha_op(s, op, bias, scale, clamp != 0, out) }
+pub fn GXSetTevColor(id: u32, c: _GXColor) { let _sys = SysScope::enter();  shim().set_tev_color(id, col(c)) }
+pub fn GXSetTevColorS10(id: u32, c: _GXColorS10) { let _sys = SysScope::enter(); shim().set_tev_color_s10(id, GxColorS10 { r: c.r, g: c.g, b: c.b, a: c.a }) }
+pub fn GXSetTevKColor(id: u32, c: _GXColor) { let _sys = SysScope::enter();  shim().set_tev_kcolor(id, col(c)) }
+pub fn GXSetTevKColorSel(id: u32, sel: u32) { let _sys = SysScope::enter();  shim().set_tev_kcolor_sel(id, sel) }
+pub fn GXSetTevKAlphaSel(id: u32, sel: u32) { let _sys = SysScope::enter();  shim().set_tev_kalpha_sel(id, sel) }
+pub fn GXSetTevSwapMode(stage: u32, ras: u32, tex: u32) { let _sys = SysScope::enter();  shim().set_tev_swap_mode(stage, ras, tex) }
+pub fn GXSetTevSwapModeTable(id: u32, r: u32, g: u32, b: u32, a: u32) { let _sys = SysScope::enter();  shim().set_tev_swap_mode_table(id, r, g, b, a) }
+pub fn GXSetTevClampMode(stage: i32, mode: i32) { let _sys = SysScope::enter();  shim().set_tev_clamp_mode(stage as u32, mode as u32) }
+pub fn GXSetTevDirect(stage: u32) { let _sys = SysScope::enter();  shim().set_tev_direct(stage) }
+pub fn GXSetNumIndStages(n: u8) { let _sys = SysScope::enter();  shim().set_num_ind_stages(n) }
+pub fn GXSetIndTexOrder(stage: u32, coord: u32, map: u32) { let _sys = SysScope::enter();  shim().set_ind_tex_order(stage, coord, map) }
+pub fn GXSetIndTexCoordScale(stage: u32, s: u32, t: u32) { let _sys = SysScope::enter();  shim().set_ind_tex_coord_scale(stage, s, t) }
+pub unsafe fn GXSetIndTexMtx(id: u32, m: *mut c_void, scale_exp: i8) { let _sys = SysScope::enter();  shim().set_ind_tex_mtx(id, &*(m as *const [[f32; 3]; 2]), scale_exp) }
+pub fn GXSetTevIndirect(stage: u32, ind_stage: u32, fmt: u32, bias: u32, mtx: u32, wrap_s: u32, wrap_t: u32, add_prev: u8, utc_lod: u8, alpha: u32) { let _sys = SysScope::enter();
     shim().set_tev_indirect(stage, ind_stage, fmt, bias, mtx, wrap_s, wrap_t, add_prev != 0, utc_lod != 0, alpha)
 }
 
 // ---- textures
-pub unsafe fn GXInitTexObj(o: *mut c_void, image: *mut c_void, w: u16, h: u16, fmt: u32, ws: u32, wt: u32, mip: u8) {
+pub unsafe fn GXInitTexObj(o: *mut c_void, image: *mut c_void, w: u16, h: u16, fmt: u32, ws: u32, wt: u32, mip: u8) { let _sys = SysScope::enter();
     let want = get_tex_buffer_size(w, h, fmt, mip != 0, if mip != 0 { 11 } else { 0 }) as usize;
     let d = tex_data_at(image, want.max(32));
     let t = objs().tex.entry(o as usize).or_default();
@@ -389,7 +446,7 @@ pub unsafe fn GXInitTexObj(o: *mut c_void, image: *mut c_void, w: u16, h: u16, f
 /// Queue a texture for upload before its first draw (`melee_gx::render::preload`), made exactly as a draw's
 /// `GXInitTexObj(image, w, h, fmt, .., levels > 1)` + `GXInitTexObjLOD(.., 0, levels - 1, ..)` makes it, so the
 /// renderer's key is the one that draw will compute. Presentation only (the GX objects table is not touched).
-pub unsafe fn preload_tex(image: *const u8, w: u16, h: u16, fmt: u32, levels: u32) {
+pub unsafe fn preload_tex(image: *const u8, w: u16, h: u16, fmt: u32, levels: u32) { let _sys = SysScope::enter();
     let mip = levels > 1;
     let want = get_tex_buffer_size(w, h, fmt, mip, if mip { 11 } else { 0 }) as usize;
     let Some(d) = tex_data_at(image as *const c_void, want.max(32)) else { return };
@@ -400,55 +457,61 @@ pub unsafe fn preload_tex(image: *const u8, w: u16, h: u16, fmt: u32, levels: u3
     melee_gx::render::preload::push(t);
 }
 
-pub unsafe fn GXInitTexObjCI(o: *mut c_void, image: *mut c_void, w: u16, h: u16, fmt: u32, ws: u32, wt: u32, mip: u8, tlut: u32) {
+pub unsafe fn GXInitTexObjCI(o: *mut c_void, image: *mut c_void, w: u16, h: u16, fmt: u32, ws: u32, wt: u32, mip: u8, tlut: u32) { let _sys = SysScope::enter();
     let want = get_tex_buffer_size(w, h, fmt, mip != 0, if mip != 0 { 11 } else { 0 }) as usize;
     let d = tex_data_at(image, want.max(32));
     let t = objs().tex.entry(o as usize).or_default();
     shim().init_tex_obj_ci(t, d, w, h, fmt, ws, wt, mip != 0, tlut);
     t.guest = image as usize as u64;
 }
-pub unsafe fn GXInitTexObjLOD(o: *mut c_void, min_f: u32, mag_f: u32, min_lod: f32, max_lod: f32, bias: f32, bias_clamp: u8, edge: u8, aniso: u32) {
+pub unsafe fn GXInitTexObjLOD(o: *mut c_void, min_f: u32, mag_f: u32, min_lod: f32, max_lod: f32, bias: f32, bias_clamp: u8, edge: u8, aniso: u32) { let _sys = SysScope::enter();
     let t = objs().tex.entry(o as usize).or_default();
     GxShim::init_tex_obj_lod(t, min_f, mag_f, min_lod, max_lod, bias, bias_clamp != 0, edge != 0, aniso);
 }
-pub unsafe fn GXInitTlutObj(o: *mut c_void, lut: *mut c_void, fmt: u32, n: u16) {
+pub unsafe fn GXInitTlutObj(o: *mut c_void, lut: *mut c_void, fmt: u32, n: u16) { let _sys = SysScope::enter();
     let d = data_at(lut, n as usize * 2);
     let t = objs().tlut.entry(o as usize).or_default();
     shim().init_tlut_obj(t, d, fmt, n);
 }
-pub unsafe fn GXLoadTexObj(o: *mut c_void, id: u32) {
+pub unsafe fn GXLoadTexObj(o: *mut c_void, id: u32) { let _sys = SysScope::enter();
     let t = objs().tex.entry(o as usize).or_default();
     shim().load_tex_obj(t, id)
 }
-pub unsafe fn GXLoadTlut(o: *mut c_void, name: u32) {
+pub unsafe fn GXLoadTlut(o: *mut c_void, name: u32) { let _sys = SysScope::enter();
     if let Some(t) = objs().tlut.get(&(o as usize)) {
         shim().load_tlut(t, name)
     }
 }
-pub fn GXInvalidateTexAll() { shim().invalidate_tex_all() }
-pub unsafe fn GXGetTexObjFmt(o: *const c_void) -> u32 { objs().tex.get(&(o as usize)).map_or(0, GxShim::get_tex_obj_fmt) }
-pub unsafe fn GXGetTexObjWidth(o: *const c_void) -> u16 { objs().tex.get(&(o as usize)).map_or(0, GxShim::get_tex_obj_width) }
-pub unsafe fn GXGetTexObjHeight(o: *const c_void) -> u16 { objs().tex.get(&(o as usize)).map_or(0, GxShim::get_tex_obj_height) }
+pub fn GXInvalidateTexAll() { let _sys = SysScope::enter();  shim().invalidate_tex_all() }
+pub unsafe fn GXGetTexObjFmt(o: *const c_void) -> u32 { let _sys = SysScope::enter();  objs().tex.get(&(o as usize)).map_or(0, GxShim::get_tex_obj_fmt) }
+pub unsafe fn GXGetTexObjWidth(o: *const c_void) -> u16 { let _sys = SysScope::enter();  objs().tex.get(&(o as usize)).map_or(0, GxShim::get_tex_obj_width) }
+pub unsafe fn GXGetTexObjHeight(o: *const c_void) -> u16 { let _sys = SysScope::enter();  objs().tex.get(&(o as usize)).map_or(0, GxShim::get_tex_obj_height) }
 
 // ---- copies and the frame
-pub fn GXPixModeSync() { shim().pix_mode_sync() }
-pub fn GXCopyDisp(_dest: *mut c_void, clear: u8) {
+pub fn GXPixModeSync() { let _sys = SysScope::enter();  shim().pix_mode_sync() }
+pub fn GXCopyDisp(_dest: *mut c_void, clear: u8) { let _sys = SysScope::enter();
     shim().gx.frame_pose = melee_runtime::pose_capture::take().map(std::sync::Arc::new);
     shim().copy_disp(clear != 0)
 }
-pub fn GXCopyTex(dest: *mut c_void, clear: u8) { shim().copy_tex(dest as usize as u64, clear != 0) }
-pub fn GXSetCopyClear(c: _GXColor, depth: u32) { shim().set_copy_clear(col(c), depth) }
-pub fn GXSetCopyClamp(c: u32) { shim().set_copy_clamp(c) }
-pub fn GXSetDispCopySrc(l: u16, t: u16, w: u16, h: u16) { shim().set_disp_copy_src(l, t, w, h) }
-pub fn GXSetDispCopyDst(w: u16, h: u16) { shim().set_disp_copy_dst(w, h) }
-pub fn GXSetDispCopyGamma(g: u32) { shim().set_disp_copy_gamma(g) }
-pub fn GXSetDispCopyYScale(v: f32) -> u32 { shim().set_disp_copy_y_scale(v) }
-pub fn GXSetTexCopySrc(l: u16, t: u16, w: u16, h: u16) { shim().set_tex_copy_src(l, t, w, h) }
-pub fn GXSetTexCopyDst(w: u16, h: u16, fmt: u32, mip: u8) { shim().set_tex_copy_dst(w, h, fmt, mip != 0) }
+pub fn GXCopyTex(dest: *mut c_void, clear: u8) { let _sys = SysScope::enter();  shim().copy_tex(dest as usize as u64, clear != 0) }
+pub fn GXSetCopyClear(c: _GXColor, depth: u32) { let _sys = SysScope::enter();  shim().set_copy_clear(col(c), depth) }
+pub fn GXSetCopyClamp(c: u32) { let _sys = SysScope::enter();  shim().set_copy_clamp(c) }
+pub fn GXSetDispCopySrc(l: u16, t: u16, w: u16, h: u16) { let _sys = SysScope::enter();  shim().set_disp_copy_src(l, t, w, h) }
+pub fn GXSetDispCopyDst(w: u16, h: u16) { let _sys = SysScope::enter();  shim().set_disp_copy_dst(w, h) }
+pub fn GXSetDispCopyGamma(g: u32) { let _sys = SysScope::enter();  shim().set_disp_copy_gamma(g) }
+pub fn GXSetDispCopyYScale(v: f32) -> u32 { let _sys = SysScope::enter();  shim().set_disp_copy_y_scale(v) }
+pub fn GXSetTexCopySrc(l: u16, t: u16, w: u16, h: u16) { let _sys = SysScope::enter();  shim().set_tex_copy_src(l, t, w, h) }
+pub fn GXSetTexCopyDst(w: u16, h: u16, fmt: u32, mip: u8) { let _sys = SysScope::enter();  shim().set_tex_copy_dst(w, h, fmt, mip != 0) }
 
 /// End the frame the way `HSD_VICopyXFBAsync` would (`GXCopyDisp`): the engine's VI state has no XFB buffers, so that
 /// function returns before copying; the engine calls this after each scene tick instead.
-pub fn finish_frame() {
+pub fn finish_frame() { let _sys = SysScope::enter();
+    {
+        let o = objs();
+        o.epoch += 1;
+        let e = o.epoch;
+        o.recent.retain(|r| e - r.0 <= RECENT);
+    }
     // video.c HSD_VICopyEFB2XFBPtr: GXSetCopyClear(vi->clear_clr, vi->clear_z) before the copy (initialize.c
     // HSD_InitComponent sets them to black / GX_MAX_Z24; a VI status the engine never initialised is zero, also black)
     unsafe {
@@ -460,42 +523,30 @@ pub fn finish_frame() {
     shim().copy_disp(true)
 }
 
-/// `[p, p + n)` is committed, readable memory of this process (VirtualQuery). A texture image pointer the game got from
-/// an unrelocated DAT offset (for example 0x1D200) is not, and reading it would fault.
+/// `[p, p + n)` is committed, readable memory of this process. A texture image pointer the game got from an
+/// unrelocated DAT offset (for example 0x1D200) is not, and reading it would fault. Checked by reading it with
+/// `ReadProcessMemory` on this process (it fails instead of faulting), not by walking `VirtualQuery`: a query inside
+/// the snapshots' write-watched arena costs ~1 ms (the kernel sizes the whole region), and Pokemon Stadium's first
+/// frame asks for dozens of textures (zero-hitch: ~9 ms of a netplay match-start tick).
 #[cfg(windows)]
 fn readable(p: usize, n: usize) -> bool {
-    #[repr(C)]
-    struct Mbi {
-        base: usize,
-        alloc_base: usize,
-        alloc_protect: u32,
-        partition: u16,
-        region_size: usize,
-        state: u32,
-        protect: u32,
-        ty: u32,
-    }
     extern "system" {
-        fn VirtualQuery(addr: *const c_void, buf: *mut Mbi, len: usize) -> usize;
+        fn GetCurrentProcess() -> *mut c_void;
+        fn ReadProcessMemory(h: *mut c_void, base: *const c_void, buf: *mut c_void, n: usize, read: *mut usize) -> i32;
     }
-    if p < 0x1_0000 {
+    if p < 0x1_0000 || p.checked_add(n).is_none() {
         return false;
     }
-    let end = p.saturating_add(n);
-    let mut a = p;
-    while a < end {
-        let mut m: Mbi = unsafe { core::mem::zeroed() };
-        if unsafe { VirtualQuery(a as *const c_void, &mut m, core::mem::size_of::<Mbi>()) } == 0 {
-            return false;
+    thread_local! { static BUF: core::cell::RefCell<Vec<u8>> = const { core::cell::RefCell::new(Vec::new()) }; }
+    BUF.with(|b| {
+        let mut b = b.borrow_mut();
+        if b.len() < n {
+            b.resize(n, 0);
         }
-        const MEM_COMMIT: u32 = 0x1000;
-        const READ: u32 = 0x02 | 0x04 | 0x08 | 0x20 | 0x40 | 0x80;
-        if m.state != MEM_COMMIT || m.protect & READ == 0 || m.protect & 0x100 != 0 {
-            return false;
-        }
-        a = m.base + m.region_size;
-    }
-    true
+        let mut got = 0usize;
+        let ok = unsafe { ReadProcessMemory(GetCurrentProcess(), p as *const c_void, b.as_mut_ptr() as *mut c_void, n, &mut got) };
+        ok != 0 && got == n
+    })
 }
 #[cfg(not(windows))]
 fn readable(_p: usize, _n: usize) -> bool {

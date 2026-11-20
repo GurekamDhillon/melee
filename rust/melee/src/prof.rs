@@ -93,7 +93,11 @@ mod imp {
                     ResumeThread(th);
                 }
                 if n > 0 {
-                    d2.lock().unwrap().push(frames[..n].to_vec());
+                    // [the gated region's number, then the stack] (MELEE_SAMPLE_SLOW_MS keeps only slow regions' samples)
+                    let mut v = Vec::with_capacity(n + 1);
+                    v.push(super::TICKS.load(Ordering::Relaxed));
+                    v.extend_from_slice(&frames[..n]);
+                    d2.lock().unwrap().push(v);
                 }
                 // MELEE_HANG_SECS=N: a tick that has not returned for N s is a hang: print the main thread's stack, exit 3
                 if let Some(secs) = hang_secs {
@@ -175,7 +179,11 @@ mod imp {
                 let _ = j.join();
             }
             let data = std::mem::take(&mut *self.data.lock().unwrap());
-            let total = data.len();
+            // MELEE_SAMPLE_SLOW_MS=N: only the samples of gated regions (ticks) that took N ms or more
+            let slow: Option<std::collections::HashSet<u64>> =
+                super::slow_ms().map(|_| super::SLOW.lock().unwrap().iter().copied().collect());
+            let data: Vec<Vec<u64>> =
+                data.into_iter().filter(|s| slow.as_ref().map_or(true, |k| k.contains(&s[0]))).map(|mut s| { s.remove(0); s }).collect();
             let names = symbolize(data.iter().flatten().copied());
             let data: Vec<Vec<u64>> = match std::env::var("MELEE_SAMPLE_ROOT") {
                 Ok(r) => data.into_iter().filter(|s| s.iter().any(|a| names[a].contains(&r))).collect(),
@@ -264,10 +272,26 @@ impl Drop for Gate {
 #[inline]
 pub fn gate(inside: bool) {
     IN_GATE.store(inside, Ordering::Release);
+    if let Some(ms) = slow_ms() {
+        let mut t = GATE_T0.lock().unwrap();
+        if inside {
+            *t = Some(std::time::Instant::now());
+        } else if t.take().is_some_and(|t0| t0.elapsed().as_secs_f64() * 1e3 >= ms) {
+            SLOW.lock().unwrap().push(TICKS.load(Ordering::Relaxed));
+        }
+    }
     if !inside {
         TICKS.fetch_add(1, Ordering::Relaxed);
     }
 }
+
+/// `MELEE_SAMPLE_SLOW_MS` (with MELEE_SAMPLE): the report counts only gated regions at least this long.
+fn slow_ms() -> Option<f64> {
+    static V: std::sync::OnceLock<Option<f64>> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var("MELEE_SAMPLE_SLOW_MS").ok().and_then(|v| v.parse().ok()))
+}
+static GATE_T0: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+static SLOW: std::sync::Mutex<Vec<u64>> = std::sync::Mutex::new(Vec::new());
 
 #[cfg(windows)]
 pub fn from_env() -> Option<Guard> {

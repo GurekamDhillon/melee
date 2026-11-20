@@ -507,6 +507,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         crate::replay_modes_active(file.version[0] as i32 * 10000 + file.version[1] as i32 * 100 + file.version[2] as i32);
     }
     // the replay's own widescreen camera code (if its Gecko list has one) changes the logic's off-screen test
+    // the sim view this port's export recorded (metadata `simView`); a console replay names none (the fixed C view)
+    crate::slp_export::apply_sim_view(&data);
     let ws = slp::widescreen_code(&file.gecko);
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     // Slippi's "Disable Wobbling" (C2 800DB880 / C2 800DBBD4, CaptureWait/CaptureDamage, with C2 8008F090): the 4th Ice Climbers

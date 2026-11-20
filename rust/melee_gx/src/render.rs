@@ -883,18 +883,23 @@ pub struct PipeFactory {
     samples: u32,
     pipelines: std::sync::Mutex<FxMap<PipelineKey, wgpu::RenderPipeline>>,
     wgsl_hashes: std::sync::Mutex<FxMap<crate::shader::ShaderConfig, u64>>,
+    /// Async creation (Dolphin's "skip drawing" mode): a miss on the frame path queues the pipeline on the
+    /// compile workers and the draw is left out until it exists (a frame or two), instead of the frame stalling
+    /// 5-10 ms per new pipeline. Rendering only; the simulation never reads it. MELEE_PIPE_ASYNC=0 turns it off.
+    pub(crate) asyncq: std::sync::OnceLock<Option<std::sync::mpsc::Sender<crate::shader::PipelineConfig>>>,
+    pub(crate) pending: std::sync::Mutex<FxMap<PipelineKey, ()>>,
 }
 
 impl PipeFactory {
     /// Create the pipelines `draws` need that do not exist yet (the decode thread, before handing the frame over).
-    pub fn warm(&self, draws: &[DrawCmd]) {
+    pub fn warm(self: &std::sync::Arc<Self>, draws: &[DrawCmd]) {
         let mut last: Option<&std::sync::Arc<crate::shader::PipelineConfig>> = None;
         for d in draws {
             if d.copy.is_some() || d.config.cull_mode == GX_CULL_ALL || last.is_some_and(|l| std::sync::Arc::ptr_eq(l, &d.config)) {
                 continue;
             }
             last = Some(&d.config);
-            let _ = self.get(&d.config);
+            let _ = self.get_or_queue(&d.config);
         }
     }
 
@@ -902,9 +907,49 @@ impl PipeFactory {
         self.pipelines.lock().unwrap().len()
     }
 
-    /// The pipeline of `pc` (created and cached on a miss; Err: the WGSL failed validation, with the source).
-    pub fn get(&self, pc: &crate::shader::PipelineConfig) -> Result<wgpu::RenderPipeline, String> {
-        // Generating the WGSL per draw per frame dominated render time: memoise its hash by config.
+    /// The compile workers' queue (started on first use), or None when async creation is off.
+    fn queue(self: &std::sync::Arc<Self>) -> Option<&std::sync::mpsc::Sender<crate::shader::PipelineConfig>> {
+        self.asyncq
+            .get_or_init(|| {
+                if std::env::var("MELEE_PIPE_ASYNC").is_ok_and(|v| v == "0") {
+                    return None;
+                }
+                let (tx, rx) = std::sync::mpsc::channel::<crate::shader::PipelineConfig>();
+                let rx = std::sync::Arc::new(std::sync::Mutex::new(rx));
+                let me = std::sync::Arc::downgrade(self);
+                for i in 0..3 {
+                    let (rx, me) = (rx.clone(), me.clone());
+                    let _ = std::thread::Builder::new().name(format!("pipeline compile {i}")).spawn(move || {
+                        warmlist::ASYNC.with(|w| w.set(true));
+                        loop {
+                            let Ok(pc) = rx.lock().unwrap().recv() else { return };
+                            let Some(f) = me.upgrade() else { return };
+                            let _ = f.get(&pc);
+                            f.pending.lock().unwrap().remove(&f.key(&pc));
+                        }
+                    });
+                }
+                Some(tx)
+            })
+            .as_ref()
+    }
+
+    /// The pipeline of `pc` if it exists; otherwise queued on the compile workers and None (the draw is skipped
+    /// until it is made). Falls back to [`Self::get`] when async creation is off.
+    pub fn get_or_queue(self: &std::sync::Arc<Self>, pc: &crate::shader::PipelineConfig) -> Result<Option<wgpu::RenderPipeline>, String> {
+        let Some(q) = self.queue() else { return self.get(pc).map(Some) };
+        let key = self.key(pc);
+        if let Some(p) = self.pipelines.lock().unwrap().get(&key) {
+            return Ok(Some(p.clone()));
+        }
+        if self.pending.lock().unwrap().insert(key, ()).is_none() {
+            melee_core::frameprof::add(melee_core::frameprof::C::Pipes, 1);
+            let _ = q.send(pc.clone());
+        }
+        Ok(None)
+    }
+
+    fn key(&self, pc: &crate::shader::PipelineConfig) -> PipelineKey {
         let known = self.wgsl_hashes.lock().unwrap().get(&pc.shader).copied();
         let wgsl_hash = match known {
             Some(h) => h,
@@ -914,20 +959,27 @@ impl PipeFactory {
                 h
             }
         };
-        let key = PipelineKey {
+        PipelineKey {
             wgsl_hash,
             cull: pc.cull_mode,
             blend: (pc.blend_mode, pc.blend_fac_src, pc.blend_fac_dst, pc.blend_op, pc.dst_alpha != u32::MAX),
             depth: (pc.depth_compare, pc.depth_update, pc.depth_func),
             write: (pc.color_update, pc.alpha_update),
             bias: (pc.polygon_offset.to_bits(), pc.polygon_offset_scale.to_bits(), pc.polygon_offset_clamp.to_bits()),
-        };
+        }
+    }
+
+    /// The pipeline of `pc` (created and cached on a miss; Err: the WGSL failed validation, with the source).
+    pub fn get(&self, pc: &crate::shader::PipelineConfig) -> Result<wgpu::RenderPipeline, String> {
+        // Generating the WGSL per draw per frame dominated render time: memoise its hash by config.
+        let key = self.key(pc);
+        let wgsl_hash = key.wgsl_hash;
         if let Some(p) = self.pipelines.lock().unwrap().get(&key) {
             return Ok(p.clone());
         }
         // the warm thread's start-up compiles are no frame's work: kept out of the frame profile
         let _z = melee_core::tracy::zone("pipeline create");
-        let prof = (melee_core::frameprof::on() && !warmlist::WARMING.with(|w| w.get())).then(std::time::Instant::now);
+        let prof = (melee_core::frameprof::on() && !warmlist::WARMING.with(|w| w.get()) && !warmlist::ASYNC.with(|w| w.get())).then(std::time::Instant::now);
         let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
         let wgsl = adapt_wgsl(&src);
         let (pipeline, errs) = guarded(|| {
@@ -1000,6 +1052,9 @@ impl PipeFactory {
         if fresh {
             warmlist::record(pc);
         }
+        if std::env::var_os("MELEE_PIPE_LOG").is_some() && !warmlist::WARMING.with(|w| w.get()) {
+            eprintln!("gx: pipe miss: thread {:?} fresh {fresh} wgsl {wgsl_hash:016x} key {:016x}", std::thread::current().name(), fnv(format!("{:?}", (pc.cull_mode, pc.blend_mode, pc.depth_compare, pc.color_update)).as_bytes()));
+        }
         if let Some(t) = prof {
             melee_core::frameprof::add(melee_core::frameprof::C::Pipes, 1);
             melee_core::frameprof::add(melee_core::frameprof::C::PipeNs, t.elapsed().as_nanos() as u64);
@@ -1022,6 +1077,8 @@ pub mod warmlist {
     thread_local! {
         /// The warm thread: its pipelines are already in the file.
         pub static WARMING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+        /// A compile worker (off the frame path: not counted in the frame profile, but recorded).
+        pub static ASYNC: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
     }
 
     fn path() -> Option<std::path::PathBuf> {
@@ -1073,6 +1130,11 @@ pub mod warmlist {
             rec.extend_from_slice(&checksum(b).to_le_bytes());
             let _ = f.write_all(&rec);
         }
+    }
+
+    /// How many records the list holds (0 when there is none or the warm list is off).
+    pub fn record_count() -> usize {
+        path().and_then(|p| std::fs::metadata(p).ok()).map_or(0, |m| m.len() as usize / (SZ + 4))
     }
 
     /// The configs recorded by earlier runs of this exe (records whose checksum fails are skipped).
@@ -1391,7 +1453,7 @@ impl Renderer {
         });
         let empty_view = empty.create_view(&Default::default());
         let empty_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
-        let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default() });
+        let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default(), asyncq: Default::default(), pending: Default::default() });
         {
             // compile every pipeline earlier runs needed, off the frame path, while the game boots
             let pf = pipes.clone();
@@ -1468,8 +1530,8 @@ impl Renderer {
     }
 
     fn pipeline(&mut self, d: &DrawCmd) -> Option<wgpu::RenderPipeline> {
-        match self.pipes.get(&d.config) {
-            Ok(p) => Some(p),
+        match self.pipes.get_or_queue(&d.config) {
+            Ok(p) => p,
             Err(e) => {
                 self.shader_errors.push(e);
                 None
@@ -2170,8 +2232,10 @@ impl Renderer {
                             miss_pipe += tp.elapsed();
                             n_pipe += 1;
                         }
-                        last_pipe.truncate(RECENT_PIPES - 1);
-                        last_pipe.insert(0, (d.config.clone(), p.clone()));
+                        if p.is_some() {
+                            last_pipe.truncate(RECENT_PIPES - 1);
+                            last_pipe.insert(0, (d.config.clone(), p.clone()));
+                        }
                         p
                     }
                 }

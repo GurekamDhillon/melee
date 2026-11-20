@@ -94,7 +94,7 @@ impl Mirror {
     }
 
     /// A torn-free copy (seqlock), `None` while the helper is mid-write.
-    pub fn snapshot(&self) -> Option<Snapshot> {
+    pub fn read_section(&self) -> Option<Snapshot> {
         for _ in 0..8 {
             let before = self.atomic(OFF_SEQ).load(Ordering::Acquire);
             if before & 1 != 0 {
@@ -124,7 +124,7 @@ impl Mirror {
     /// One poll: a new live report, [`EMPTY`] once when the mirror goes quiet or the adapter goes away, else
     /// nothing new.
     pub fn poll(&self, now: Instant) -> Option<[u8; GC_PAYLOAD_SIZE]> {
-        let snap = self.snapshot()?;
+        let snap = self.read_section()?;
         let mut t = self.track.lock().unwrap();
         let fresh = snap.reports != t.reports;
         if fresh {
@@ -276,7 +276,7 @@ mod tests {
         assert_eq!(m.poll(t0), None, "same report count: nothing new");
         // Mid-write (odd seq): no torn copy.
         f.bytes()[OFF_SEQ] |= 1;
-        assert_eq!(m.snapshot(), None);
+        assert_eq!(m.read_section(), None);
         f.bytes()[OFF_SEQ] &= !1;
         // Quiet for 500 ms: the ports read empty once.
         assert_eq!(m.poll(t0 + STALE), Some(EMPTY));

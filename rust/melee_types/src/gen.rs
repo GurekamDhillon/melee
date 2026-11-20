@@ -24522,7 +24522,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_capturekirby>() =
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ftCommon_MotionVars_thrownkirby {
-    pub thrower_gobj: *mut Fighter_GObj,
+    /// native only (gen/native_unions.py): the C's thrower_gobj word; the pointer is the last field
+    pub _thrower_slot: u32,
     pub x4: f32,
     pub x8: f32,
     pub xC: f32,
@@ -24531,6 +24532,8 @@ pub struct ftCommon_MotionVars_thrownkirby {
     pub x18_u: ftCommon_MotionVars_thrownkirby_x18,
     pub scale: Vec,
     pub coll_box: ftCollisionBox,
+    /// native only (gen/native_unions.py): past the C's 0x40 bytes, so x4..coll_box keep their GC offsets
+    pub thrower_gobj: *mut Fighter_GObj,
 }
 impl ftCommon_MotionVars_thrownkirby { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }

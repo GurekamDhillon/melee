@@ -53,7 +53,9 @@ const FT_MEX0: i32 = 0x21;
 const CK_MEX0: i32 = 0x22;
 const FIRST_NEW: i32 = 27;
 const CSS_ICON_MAX: i32 = 128;
-const EFFECT_BANK_MAX: u32 = 50;
+/// The particle system's bank table (`efAsync_DatEntries`, 65 rows; efAsync_MexInit fills it from MxDt.dat). The C's
+/// GW_MEX_EFFECT_BANK_MAX is 50; ACE 2.0.1 gives Kirby's copy of internal kind 50 bank 50, which 50 dropped.
+const EFFECT_BANK_MAX: u32 = 65;
 const KIRBY_FUNC_SLOTS: i32 = 9;
 
 pub struct Mex {
@@ -137,6 +139,12 @@ fn str_of(p: *const c_char) -> String {
 pub fn load() -> bool {
     unsafe { MEX = None };
     let disc = &mut crate::host::Host::get().disc;
+    // the disc's own codes.gct 32-bit writes the ported functions check (melee_core::codes::disc_writes)
+    let w = disc.read("codes.gct").map(|g| melee_core::codes::gct_writes(&g)).unwrap_or_default();
+    if !w.is_empty() {
+        eprintln!("mexdata: codes.gct: {} 32-bit writes", w.len());
+    }
+    melee_core::codes::set_disc_writes(w);
     let Ok(dat) = disc.read("MxDt.dat") else { return false };
     let be = |o: usize| u32::from_be_bytes(dat[o..o + 4].try_into().unwrap());
     if dat.len() < 0x20 {
@@ -559,6 +567,27 @@ pub fn SsmSize(i: i32) -> u32 {
         Err(_) => table,
     }
 }
+/// `Arch_Map.Audio` (MexStageSound {ssm, reverb, x2}, stride 3, per internal stage id): the table codes.gct points
+/// lbAudioAx_80026EBC / lbAudioAx_8002785C at (C `gw_mex_graudio.c`). Its count, when the table spans every row.
+fn gr_audio() -> Option<(&'static Mex, u32, i32)> {
+    let m = m()?;
+    let (meta, map) = (m.meta(), m.r32(m.root + OFF_MAP));
+    if !m.inr(meta, 0x3C) || !m.inr(map, 0x18) {
+        return None;
+    }
+    let n = m.r32(meta + META_INT_STAGES) as i32;
+    let t = m.r32(map + 4);
+    (n > 71 && n <= 256 && m.inr(t, n as u32 * 3)).then_some((m, t, n))
+}
+pub fn GrAudioCount() -> i32 {
+    gr_audio().map_or(0, |g| g.2)
+}
+pub fn GrAudioByte(i: i32, k: i32) -> i32 {
+    match gr_audio() {
+        Some((m, t, n)) if i >= 0 && i < n && (0..3).contains(&k) => m.r8(t + 3 * i as u32 + k as u32).map_or(-1, |v| v as i32),
+        _ => -1,
+    }
+}
 pub fn SsmLookup(i: i32, k: i32) -> i32 {
     m().map_or(0, |m| {
         let t = ssm_table(m, 8);
@@ -687,6 +716,128 @@ fn gr_row(grkind: i32) -> u32 {
     }
     let p = m.r32(m.gr_desc + 4 * grkind as u32);
     if m.inr(p, GR_SLOT_COUNT * 4) { p } else { 0 }
+}
+// ---- m-ex stage rows with vanilla handlers (gw_mex_grfunction.c gw_Mex_GrRowCallbacks / gw_Mex_GrVanillaFn) ----
+//
+// An added stage's row names a clone base's StageCallbacks[] and handlers by their VANILLA addresses (ACE 2.0.1's
+// Suzaku Castle, Ganon's Tower, Mad Monster Mansion and Nintendo 64 carry no grFunction blob at all). The C turns each
+// through the bridge; here the retail StageData rows in the DOL (`stage_datas`, symbols.txt .data:0x803DFEDC) are
+// matched word for word, and the native row of the same retail stage supplies the native table / function.
+
+/// `stage_datas` in the DOL (config/GALE01/symbols.txt), one word per internal stage.
+const DOL_STAGE_DATAS: u32 = 0x803D_FEDC;
+static mut GR_CUR: i32 = -1;
+
+/// Each retail stage's StageData row as the DOL holds it (guest words), by internal kind.
+fn retail_rows() -> &'static Vec<[u32; GR_SLOT_COUNT as usize]> {
+    static ROWS: std::sync::OnceLock<Vec<[u32; GR_SLOT_COUNT as usize]>> = std::sync::OnceLock::new();
+    ROWS.get_or_init(|| {
+        let disc = &mut crate::host::Host::get().disc;
+        let rd = |d: &mut crate::gcm::Gcm, a: u32| d.dol_bytes(a, 4).ok().map_or(0, |b| u32::from_be_bytes([b[0], b[1], b[2], b[3]]));
+        (0..GR_FIRST_NEW as u32)
+            .map(|k| {
+                let mut row = [0u32; GR_SLOT_COUNT as usize];
+                let p = rd(disc, DOL_STAGE_DATAS + 4 * k);
+                if p & 0xF000_0000 == 0x8000_0000 {
+                    for (s, w) in row.iter_mut().enumerate() {
+                        *w = rd(disc, p + 4 * s as u32);
+                    }
+                }
+                row
+            })
+            .collect()
+    })
+}
+
+/// The retail internal stage whose StageData word `slot` is `w` (the clone base an added row borrows it from).
+fn retail_row_with(slot: u32, w: u32) -> Option<usize> {
+    if w == 0 || w == 0xFFFF_FFFF {
+        return None;
+    }
+    retail_rows().iter().position(|r| r[slot as usize] == w)
+}
+
+/// The native retail StageData of the clone base an added stage's word `slot` names, or None (with one log line).
+fn gr_base(grkind: i32, slot: u32) -> Option<*mut melee_types::StageData> {
+    let w = GrRowWord(grkind, slot);
+    let v = retail_row_with(slot, w);
+    let sd = v.map(|v| unsafe { melee_world::tu::ground::stage_datas[v] }).filter(|p| !p.is_null());
+    if sd.is_none() && w != 0 && w != 0xFFFF_FFFF {
+        static SEEN: std::sync::Mutex<Vec<(i32, u32)>> = std::sync::Mutex::new(Vec::new());
+        if let Ok(mut s) = SEEN.lock() {
+            if !s.contains(&(grkind, slot)) {
+                s.push((grkind, slot));
+                eprintln!("grfunction: stage {grkind} StageData word {slot} = {w:08X} is no retail stage's - left empty");
+            }
+        }
+    }
+    sd
+}
+
+fn gr_row_callbacks(grkind: i32) -> *mut c_void {
+    let cb = gr_base(grkind, 1).map_or(core::ptr::null_mut(), |sd| unsafe { (*sd).callbacks as *mut c_void });
+    if !cb.is_null() {
+        eprintln!("grfunction: stage {grkind} uses retail stage {}'s StageCallbacks", retail_row_with(1, GrRowWord(grkind, 1)).unwrap_or(0));
+    }
+    cb
+}
+fn gr_select(grkind: i32) {
+    unsafe { GR_CUR = grkind };
+}
+fn gr_function_init(_archive: *mut c_void, grkind: i32) {
+    gr_select(grkind);
+    // a grFunction blob (guest stage code) is not run here; ACE 2.0.1's added stages have none
+    if GrIsMex(grkind) != 0 {
+        let f = GrFile(grkind);
+        if !f.is_null() {
+            let name = unsafe { CStr::from_ptr(f) }.to_string_lossy().into_owned();
+            let has = crate::host::Host::get().disc.read(&name).ok().and_then(|d| mex_import::hsd::Archive::parse(&d).ok()).is_some_and(|a| a.public("grFunction").is_some());
+            if has {
+                eprintln!("grfunction: {name} carries a grFunction blob, which is not run: its row's retail handlers only");
+            }
+        }
+    }
+}
+fn cur_base(slot: u32) -> Option<*mut melee_types::StageData> {
+    gr_base(unsafe { GR_CUR }, slot)
+}
+fn gr_on_init() {
+    if let Some(f) = cur_base(3).and_then(|sd| unsafe { (*sd).on_init }) {
+        unsafe { f() }
+    }
+}
+fn gr_on_demo_init(a: i32) {
+    if let Some(f) = cur_base(4).and_then(|sd| unsafe { (*sd).on_demo_init }) {
+        unsafe { f(a) }
+    }
+}
+fn gr_on_load() {
+    if let Some(f) = cur_base(5).and_then(|sd| unsafe { (*sd).on_load }) {
+        unsafe { f() }
+    }
+}
+fn gr_on_start() {
+    if let Some(f) = cur_base(6).and_then(|sd| unsafe { (*sd).on_start }) {
+        unsafe { f() }
+    }
+}
+fn gr_callback4() -> i32 {
+    cur_base(7).and_then(|sd| unsafe { (*sd).callback4 }).map_or(0, |f| unsafe { f() } as i32)
+}
+fn gr_on_touch_line(i: i32) -> *mut c_void {
+    cur_base(8).and_then(|sd| unsafe { (*sd).on_touch_line }).map_or(core::ptr::null_mut(), |f| unsafe { f(i) } as *mut c_void)
+}
+fn gr_on_check_shadow(pos: *mut c_void, a: i32, j: *mut c_void) -> i32 {
+    cur_base(9).and_then(|sd| unsafe { (*sd).on_check_shadow_render }).map_or(0, |f| unsafe { f(pos as _, a, j as _) } as i32)
+}
+
+/// Word `slot` of a stage's StageData row (gw_mex_grfunction.h GW_MEX_GR_SLOT_*): the guest value, 0 for no row.
+pub fn GrRowWord(grkind: i32, slot: u32) -> u32 {
+    let row = gr_row(grkind);
+    if row == 0 || slot >= GR_SLOT_COUNT {
+        return 0;
+    }
+    m().map_or(0, |m| m.r32(row + slot * 4))
 }
 pub fn GrInternalCount() -> i32 {
     m().map_or(0, |m| m.gr_int)
@@ -824,6 +975,14 @@ pub fn install() {
         return;
     }
     install_mex_data();
+    if let Some(mx) = m() {
+        let md = mx.meta();
+        if mx.inr(md, 0x0C) {
+            use std::sync::atomic::Ordering::Relaxed;
+            melee_core::codes::MEX_FT_INTERNAL_COUNT.store(mx.r32(md + 4), Relaxed);
+            melee_core::codes::MEX_FT_EXTERNAL_COUNT.store(mx.r32(md + 8), Relaxed);
+        }
+    }
     unsafe {
         use melee_fighter::tu::ftdata::ext as fd;
         fd::MEX_SLOT_INTERNAL = Some(SlotInternal);
@@ -858,6 +1017,17 @@ pub fn install() {
         au::Mex_SsmFile = Some(|i| SsmFile(i) as _);
         au::Mex_SsmForPortCKind = Some(SsmForPortCKind);
         au::Mex_SsmLookup = Some(SsmLookup);
+        au::Mex_GrAudioCount = Some(GrAudioCount);
+        au::Mex_GrAudioByte = Some(GrAudioByte);
+        au::Mex_GrAudioFirst = Some(|| 0);
+        // the engine's sound driver (melee_audio) is what plays; lbAudioAx_8002838C, where the C build copies these
+        // rows, is never run, so the driver reads them here
+        if GrAudioCount() > 0 {
+            melee_audio::lbaudio::MEX_STAGE_AUDIO = Some(|g| {
+                let b: Vec<i32> = (0..3).map(|k| GrAudioByte(g, k)).collect();
+                b.iter().all(|&v| v >= 0).then(|| [b[0] as u8, b[1] as u8, b[2] as u8])
+            });
+        }
         au::Mex_SsmSize = Some(|i| SsmSize(i) as _);
         melee_fighter::hooks::MEX_SSM_FOR_PORT_KIND = Some(SsmForPortKind);
         melee_items::tu::item::ext::hook::Mex_SsmForPortKind = Some(SsmForPortKind);
@@ -874,6 +1044,16 @@ pub fn install() {
         gr::Mex_GrFlags2 = Some(|k| GrFlags2(k) as _);
         gr::Mex_GrInternalCount = Some(GrInternalCount);
         gr::Mex_GrIsMex = Some(GrIsMex);
+        gr::Mex_GrRowCallbacks = Some(gr_row_callbacks);
+        gr::Mex_GrSelect = Some(gr_select);
+        gr::Mex_GrFunctionInit = Some(gr_function_init);
+        gr::Mex_GrOnInit = Some(gr_on_init);
+        gr::Mex_GrOnDemoInit = Some(gr_on_demo_init);
+        gr::Mex_GrOnLoad = Some(gr_on_load);
+        gr::Mex_GrOnStart = Some(gr_on_start);
+        gr::Mex_GrCallback4 = Some(gr_callback4);
+        gr::Mex_GrOnTouchLine = Some(gr_on_touch_line);
+        gr::Mex_GrOnCheckShadowRender = Some(gr_on_check_shadow);
         use melee_world::tu::stage::ext as st;
         {
             unsafe extern "C" fn ec() -> i32 { GrExternalCount() }

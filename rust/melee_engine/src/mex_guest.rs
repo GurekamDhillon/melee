@@ -130,6 +130,14 @@ struct Fighter_ {
     move_table: Vec<MotionState>,
     /// Guest callbacks of each MoveLogic row: [anim, input, phys, coll].
     move_guest: Vec<[u32; 4]>,
+    /// The guest address `move_table` was built from.
+    move_addr: u32,
+    /// Tables replaced by a guest install ([`move_table_at`]), kept alive for fighters still pointing at them.
+    retired: Vec<Vec<MotionState>>,
+    /// The PlXx.dat file bytes and where its data block sits in guest space ([`dat_joint`]).
+    dat_file: Vec<u8>,
+    dat_base: u32,
+    dat_len: u32,
 }
 
 struct State {
@@ -151,14 +159,23 @@ struct State {
     heap_next: u32,
     /// Native retail callback -> its vanilla address (fn_guest).
     retail: BTreeMap<usize, u32>,
+    /// [`map_common_motion_table`] ran.
+    common_ms_mapped: bool,
     /// The fighters' item articles (itFunction): relocated code of each, owner fighter kind.
     arts: Vec<Art>,
+    /// Native state rows for article state tables a guest stores as `item->xBC` ([`item_states_at`]), by guest address.
+    item_tables: std::collections::HashMap<u32, usize>,
     /// m-ex custom item kinds (>= 237): the native descriptor and logic table Item_80267978 takes.
     items: BTreeMap<u32, CustomItem>,
     /// Each fighter's PlXx.dat as the native decoder reads it, and its guest base (the ItemDescs
     /// MEX_IndexFighterItem names).
     natdat: BTreeMap<i32, (Box<melee_runtime::dat::DatArchive>, u32)>,
     plinks: bool,
+    /// Guest copies of Fighter_804D64FC's float arrays (x20 per kind, x24 the reaches): their guest addresses.
+    cpu_floats: Option<(u32, u32)>,
+    /// Guest copies of Fighter_804D64FC's seven attack-list tables (x4..x1C): (native record they were built for,
+    /// guest table addresses).
+    cpu_lists: Option<(usize, [u32; 7])>,
 }
 
 struct Art {
@@ -175,6 +192,8 @@ struct CustomItem {
     desc: *mut melee_types::Article,
     logic: Box<ItemLogicTable>,
     states: Vec<ItemStateTable>,
+    /// The guest address of the state table (itFunction word 0), which a guest may store as `item->xBC` itself.
+    states_guest: u32,
 }
 
 static mut ST: Option<State> = None;
@@ -211,8 +230,12 @@ fn st() -> &'static mut State {
                 small_data: false,
                 depth: 0,
                 heap_next: HEAP_GUEST,
+                cpu_floats: None,
+                cpu_lists: None,
                 retail: BTreeMap::new(),
+                common_ms_mapped: false,
                 arts: Vec::new(),
+                item_tables: Default::default(),
                 items: BTreeMap::new(),
                 natdat: BTreeMap::new(),
                 plinks: false,
@@ -237,6 +260,24 @@ fn void_pointee(rec: &'static str, off: u32, obj: *mut u8, _p: usize) -> Option<
         } else {
             "HSD_DObj"
         });
+    }
+    // HitCapsule.victims_1/2[12].victim: the user data of what the hitbox hit (lbColl_80008688; a Fighter* for a
+    // fighter). ACE's PlSm (kind 44) and kind 64 walk their hitboxes' victims (read as Fighter+0x988, no pointee)
+    // (Fighter.x914 is HitCapsule[4], 0x138 each; the field comes as the outer record's offset)
+    let hc = match rec {
+        "HitCapsule" => Some(off),
+        "Fighter" if (0x914..0x914 + 4 * 0x138).contains(&off) => Some((off - 0x914) % 0x138),
+        _ => None,
+    };
+    if let Some(off) = hc.filter(|&o| (0x74..0x134).contains(&o) && (o - 0x74) % 8 == 0) {
+        if _p == 0 {
+            return None;
+        }
+        let is_fp = (0..6).any(|s| (0..2).any(|i| {
+            let g = melee_fighter::player::get_entity_at_index(s, i);
+            !g.is_null() && unsafe { (*g).user_data } as usize == _p
+        }));
+        return is_fp.then_some("Fighter");
     }
     if rec != "HSD_GObj" {
         return None;
@@ -311,6 +352,14 @@ static mut PSUF: Vec<(u32, *mut melee_types::_PSUserFunc)> = Vec::new();
 /// hookDelete, setUserData) as `gen->userfunc`; the native particle code calls the hooks through a native
 /// `_PSUserFunc`, whose entries are trampolines into the guest words (kept in step with them by `ps_refresh`).
 fn ps_userfunc(sp: &GuestSpace, v: u32, rec: &'static str) -> Option<usize> {
+    if rec == "MotionState" {
+        return move_table_at(v);
+    }
+    // an article's onSpawn may store its own state table as `item->xBC` (kind 46's article 318 does): the native
+    // rows built from it, not a code trampoline (Item_80268E5C read x86 code as callbacks and Item_802697D4 crashed)
+    if rec == "ItemStateTable" {
+        return item_states_at(v);
+    }
     if rec != "_PSUserFunc" || sp.describe(v)?.0 != "Fighter" {
         return None;
     }
@@ -475,7 +524,11 @@ fn line_native(a: u32) -> Option<LineFn> {
 fn fn_native(a: u32) -> Option<usize> {
     let Some(kind) = kind_of_code(a) else {
         // a retail callback the guest installs (fp->cb = ftCo_..., the vanilla address in its code): the port's
-        return vanilla_gobj_fn(a).map(|f| f as usize).or_else(|| ef_update_fn(a));
+        let r = vanilla_gobj_fn(a).map(|f| f as usize).or_else(|| item_i32_fn(a)).or_else(|| ef_update_fn(a));
+        if r.is_none() && mex_import::layout::vanilla_name(a).is_some() {
+            eprintln!("mexguest: vanilla callback {a:08X} {} has no native port; left NULL", mex_import::layout::vanilla_name(a).unwrap_or("?"));
+        }
+        return r;
     };
     let s = st();
     let i = match s.pool.iter().position(|&(k, x)| k == kind && x == a) {
@@ -490,6 +543,30 @@ fn fn_native(a: u32) -> Option<usize> {
         }
     };
     Some(POOL[i] as usize)
+}
+
+/// A vanilla item state callback that returns a value (`ItemStateTable.animated` / `.collided`, `bool(Item_GObj*)`) a
+/// custom item's state row names by its retail address. `GOBJ_FN` holds only `void(gobj)` functions, so these were
+/// left NULL and the item skipped its collision pass (Charizard's kind 262 row 0 coll = itKoopaFlame_UnkMotion0_Coll).
+fn item_i32_fn(a: u32) -> Option<usize> {
+    Some(match mex_import::layout::vanilla_name(a)? {
+        "itKoopaFlame_UnkMotion0_Coll" => melee_items::tu::itkoopaflame::itKoopaFlame_UnkMotion0_Coll as usize,
+        // GX link callbacks (`GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, ...)`, kinds 43 and 44's model gobjs)
+        "HSD_GObj_JObjCallback" => gx_jobj_cb as usize,
+        "HSD_GObj_LObjCallback" => gx_lobj_cb as usize,
+        _ => return None,
+    })
+}
+
+/// The remover of a guest-heap block hung on a gobj as its user data: the block is guest memory, left to the guest.
+unsafe extern "C" fn guest_userdata_remove(_: *mut c_void) {}
+
+unsafe extern "C" fn gx_jobj_cb(g: G, pass: i32) {
+    melee_runtime::tu::hsd_3910::HSD_GObj_JObjCallback(g, pass)
+}
+
+unsafe extern "C" fn gx_lobj_cb(g: G, pass: i32) {
+    melee_runtime::tu::hsd_3910::HSD_GObj_LObjCallback(g, pass)
 }
 
 /// A vanilla EF_Effect update callback (`EF_Effect.update`, `void(EF_Effect*)`) the guest stores into an effect it
@@ -638,7 +715,8 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
         eprintln!("mexguest: kind {kind}: {file} has no {symbol}");
         return;
     };
-    let mut f = Fighter_ { file: file.into(), blob, code_base, ft_data: dat_base + fd, stats: BTreeMap::new(), move_table: Vec::new(), move_guest: Vec::new() };
+    let mut f = Fighter_ { file: file.into(), blob, code_base, ft_data: dat_base + fd, stats: BTreeMap::new(), move_table: Vec::new(), move_guest: Vec::new(), move_addr: 0, retired: Vec::new(),
+                         dat_file: dat.clone(), dat_base, dat_len: ar.data.len() as u32 };
     if std::env::var_os("MELEE_MEX_CALLS").is_some() {
         // every vanilla function the blob links to (its relocations with an absolute 0x8xxxxxxx target)
         let mut t: Vec<u32> = f.blob.relocs.iter().filter(|r| r.flag == 0x0A && r.target & 0xF000_0000 == 0x8000_0000).map(|r| r.target).collect();
@@ -662,6 +740,7 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
             wired.push(SLOT_NAMES[slot as usize]);
         } else if slot == SLOT_MOVE_LOGIC {
             build_move_table(&mut f, code_base + off);
+            f.move_addr = code_base + off;
             wired.push("MoveLogic");
         }
     }
@@ -781,14 +860,49 @@ fn load_items(kind: i32, file: &str, ar: &mut mex_import::hsd::Archive) {
                 continue;
             }
         };
-        let mut states = Vec::new();
-        if words[0] != 0 {
+        let states = if words[0] != 0 { item_state_rows(kind, n, &code, &symbols, base, words[0]) } else { Vec::new() };
+        let mut logic = Box::new(ItemLogicTable::zeroed());
+        unsafe {
+            // ItemLogicTable words 1..14: the callbacks by slot, predicates and events alike (a pool trampoline returns
+            // the guest's r3, which an event's caller ignores)
+            let w = &mut *(logic.as_mut() as *mut ItemLogicTable as *mut [usize; 15]);
+            for k in 1..15 {
+                w[k] = guest_fn(words[k]).unwrap_or(0);
+            }
+        }
+        let s = st();
+        let it = s.items.entry(global).or_insert_with(CustomItem::new);
+        it.states = states;
+        it.states_guest = words[0];
+        it.logic = logic;
+        it.logic.states = if it.states.is_empty() { core::ptr::null_mut() } else { it.states.as_mut_ptr() };
+        eprintln!(
+            "mexguest: kind {kind}: {file} itFunction[{n}] -> item kind {global}: {len} bytes at {base:08X}, {} states, {} logic slots",
+            it.states.len(),
+            words.iter().filter(|&&w| w != 0).count()
+        );
+    }
+}
+
+impl CustomItem {
+    fn new() -> Self {
+        CustomItem { desc_guest: 0, desc: core::ptr::null_mut(), logic: Box::new(ItemLogicTable::zeroed()), states: Vec::new(), states_guest: 0 }
+    }
+}
+
+/// An article's state table rows (anim id, animated, physics, collided) at guest address `table` in its code blob:
+/// every row that reads as one (an anim id or -1, callbacks 0 / this article's code / vanilla text), up to the next
+/// function symbol.
+fn item_state_rows(kind: i32, n: u32, code: &[u8], symbols: &[u32], base: u32, table: u32) -> Vec<ItemStateTable> {
+    let mut states = Vec::new();
+    {
             // the state table rows (anim id, animated, physics, collided): every row that reads as one (an anim id
             // or -1, callbacks 0 / this article's code / vanilla text), up to the next function symbol. The debug
             // symbols do not mark the table's end (the first function may follow at any offset), so a bound from
             // them alone cut Charizard's tables to one row and a state change past it read the next item's table.
-            let rel = words[0] - base;
-            let end = symbols.iter().copied().filter(|&o| o > rel).filter(|o| !blob_is_data(&code, *o)).min().unwrap_or(len);
+            let rel = table - base;
+            let len = code.len() as u32;
+            let end = symbols.iter().copied().filter(|&o| o > rel).filter(|o| !blob_is_data(code, *o)).min().unwrap_or(len);
             let rd = |o: u32| code.get(o as usize..o as usize + 4).map(|b| u32::from_be_bytes(b.try_into().unwrap())).unwrap_or(0);
             let cb_ok = |a: u32| a == 0 || (a >= base && a < base + len) || (0x8000_3000..0x8050_0000).contains(&a);
             for i in 0..((end.max(rel) - rel) / 0x10) {
@@ -809,33 +923,31 @@ fn load_items(kind: i32, file: &str, ar: &mut mex_import::hsd::Archive) {
                 }
                 states.push(t);
             }
-        }
-        let mut logic = Box::new(ItemLogicTable::zeroed());
-        unsafe {
-            // ItemLogicTable words 1..14: the callbacks by slot, predicates and events alike (a pool trampoline returns
-            // the guest's r3, which an event's caller ignores)
-            let w = &mut *(logic.as_mut() as *mut ItemLogicTable as *mut [usize; 15]);
-            for k in 1..15 {
-                w[k] = guest_fn(words[k]).unwrap_or(0);
             }
-        }
-        let s = st();
-        let it = s.items.entry(global).or_insert_with(CustomItem::new);
-        it.states = states;
-        it.logic = logic;
-        it.logic.states = if it.states.is_empty() { core::ptr::null_mut() } else { it.states.as_mut_ptr() };
-        eprintln!(
-            "mexguest: kind {kind}: {file} itFunction[{n}] -> item kind {global}: {len} bytes at {base:08X}, {} states, {} logic slots",
-            it.states.len(),
-            words.iter().filter(|&&w| w != 0).count()
-        );
-    }
+    states
 }
 
-impl CustomItem {
-    fn new() -> Self {
-        CustomItem { desc_guest: 0, desc: core::ptr::null_mut(), logic: Box::new(ItemLogicTable::zeroed()), states: Vec::new() }
+/// A state table an article's code stores as `item->xBC` itself (kind 46's article 318 keeps a second table at
+/// +0x144): its native rows, built once per guest address and kept for the process (items point at them).
+fn item_states_at(v: u32) -> Option<usize> {
+    let s = unsafe { ST.as_mut() }?;
+    if let Some(i) = s.items.values_mut().find(|i| i.states_guest == v && !i.states.is_empty()) {
+        return Some(i.states.as_mut_ptr() as usize);
     }
+    if let Some(&p) = s.item_tables.get(&v) {
+        return Some(p);
+    }
+    let a = s.arts.iter().find(|a| v >= a.base && v < a.base + a.blob.code.len() as u32)?;
+    let symbols: Vec<u32> = a.blob.symbols.iter().map(|x| x.0).chain(a.blob.overrides.iter().map(|o| o.1)).collect();
+    let (kind, base, code) = (a.kind, a.base, a.blob.code.clone());
+    let rows = item_state_rows(kind, u32::MAX, &code, &symbols, base, v);
+    let s = st();
+    if rows.is_empty() {
+        return None;
+    }
+    let p = Box::leak(rows.into_boxed_slice()).as_mut_ptr() as usize;
+    s.item_tables.insert(v, p);
+    Some(p)
 }
 
 /// `MEX_IndexFighterItem(fighter kind, ItemDesc *desc, item id)`: item.RuntimeIndex[global - 237] = desc, the native
@@ -852,7 +964,14 @@ fn index_item(kind: u32, desc: u32, n: u32) {
         d.set_raw_base(raw.as_ptr() as usize);
         d.set_roots(ar.publics.iter().map(|q| q.offset).collect());
         let root = d.object::<melee_types::Article>(desc - *b);
+        // the state table as long as the item's own (its logic's state count): the record types it as 8 rows, and
+        // PlLb's article 325 entering state 10 read past them (Item_80268D34 on a garbage anim joint, kind 49 crash)
+        let cnt = s.items.get(&global).map_or(0, |i| i.states.len());
+        let arr = (cnt > 8).then(|| d.ptr_array::<melee_types::ItemStateDesc>(desc - *b + 0xC, cnt));
         Box::leak(Box::new(d.finish()));
+        if let Some(arr) = arr.filter(|a| !a.is_null()) {
+            unsafe { (*root).xC_itemStates = arr as *mut melee_types::ItemStateArray };
+        }
         unsafe { crate::dat_custom::fix_custom_article(root, raw.as_ptr() as usize, desc - *b) };
         root
     });
@@ -968,6 +1087,28 @@ pub fn move_logic_entries(kind: i32) -> i32 {
     unsafe { ST.as_ref() }.and_then(|s| s.kinds.get(&kind)).map_or(0, |f| f.move_table.len() as i32)
 }
 
+/// A MotionState pointer into a fighter's code blob: a MoveLogic table of its own, as a native table. Meta Knight's
+/// onLoad installs `fp->x20` = a second table in its blob (0xEC8, not the MoveLogic slot's), after copying the common
+/// table to x1C; as a blob address the store made a call trampoline of it, and ChangeMotionState(341) read garbage.
+/// The kind's table is rebuilt from that address (move_tramp indexes the same rows); the old rows stay alive for any
+/// fighter of the kind still pointing at them.
+fn move_table_at(v: u32) -> Option<usize> {
+    let s = unsafe { ST.as_mut()? };
+    let f = s.kinds.values_mut().find(|f| v >= f.code_base && v < f.code_base + f.blob.code.len() as u32)?;
+    if f.move_addr != v || f.move_table.is_empty() {
+        let old = (std::mem::take(&mut f.move_table), std::mem::take(&mut f.move_guest));
+        build_move_table(f, v);
+        if f.move_table.is_empty() {
+            (f.move_table, f.move_guest) = old;
+            return None;
+        }
+        eprintln!("mexguest: {}: MotionState table at {v:08X} installed ({} rows)", f.file, f.move_table.len());
+        f.retired.push(old.0);
+        f.move_addr = v;
+    }
+    Some(f.move_table.as_mut_ptr() as usize)
+}
+
 pub fn move_logic_table(kind: i32) -> Option<*mut MotionState> {
     let f = unsafe { ST.as_mut()? }.kinds.get_mut(&kind)?;
     (!f.move_table.is_empty()).then(|| f.move_table.as_mut_ptr())
@@ -996,6 +1137,10 @@ unsafe extern "C" fn ev_tramp<const E: usize>(g: G) {
     let Some(&(_, off)) = f.blob.overrides.iter().find(|o| o.0 == slot) else { return };
     let a = f.code_base + off;
     let faulted = run_at_f(kind, a, slot, g).1;
+    // an onLoad may install its own table as fp->x20 (move_table_at): its rows as guest rows
+    if !(*g).user_data.is_null() {
+        register_move_table(st(), (*g).user_data as *mut Fighter);
+    }
     // an onLoad that could not finish leaves the fighter half set up: the clone base's onLoad runs after it (its
     // attributes and article tables), as the native match did before the guest code ran
     if faulted && E == melee_fighter::platform::MEX_EVENT_ON_LOAD {
@@ -1025,6 +1170,68 @@ unsafe extern "C" fn move_tramp<const W: usize>(g: G) {
 
 /// Register the gobj and its fighter (and the fighter's dat_attrs_backup buffer) in the guest space; the gobj's
 /// guest handle.
+/// The common MotionState table's callbacks as their vanilla addresses (fn_guest): the native table's rows hold
+/// closures no name table lists, so a guest copying a row read a callback with no guest address and faulted
+/// (Akaneia's Diddy, Fighter_TaroStateChange, copies row 275 ftCo_CaptureCaptain: 223434, 232612, 232949). Paired
+/// row by row with the DOL's ftData_MotionStateList (GC rows of 0x20 bytes, callbacks at 0xC..0x1C), once.
+unsafe fn map_common_motion_table(s: &mut State, native: *const melee_types::MotionState) {
+    if native.is_null() || s.common_ms_mapped {
+        return;
+    }
+    s.common_ms_mapped = true;
+    const ROWS: usize = 341;
+    // ftData_MotionStateList = .data:0x803C2800, size 0x2AA0 (config/GALE01/symbols.txt; vanilla_addr names functions only)
+    let a = 0x803C_2800u32;
+    let Ok(b) = crate::host::Host::get().disc.dol_bytes(a, ROWS * 0x20) else {
+        eprintln!("mexguest: common motion table: DOL read failed");
+        return;
+    };
+    let mut n = 0;
+    let _ = fn_guest(0); // fills s.retail first
+    for k in 0..ROWS {
+        let r = &*native.add(k);
+        let cbs = [r.anim_cb, r.input_cb, r.phys_cb, r.coll_cb, r.cam_cb];
+        for (j, cb) in cbs.iter().enumerate() {
+            let o = k * 0x20 + 0xC + 4 * j;
+            let w = u32::from_be_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]);
+            if let Some(f) = cb {
+                if w != 0 {
+                    s.retail.entry(*f as usize).or_insert(w);
+                    n += 1;
+                }
+            }
+        }
+    }
+    eprintln!("mexguest: common motion table: {n} callbacks given their vanilla addresses");
+}
+
+/// The fighter's own MotionState table (fp->x20, built from the blob's MoveLogic rows) as guest rows whose blob
+/// callbacks read back as their guest addresses: natively those slots hold the shared MOVE_TRAMPS, which have no
+/// guest address, so Diddy's Fighter_TaroStateChange (it copies its own row and calls through it) faulted.
+unsafe fn register_move_table(s: &mut State, fp: *mut Fighter) {
+    let t = (*fp).x20_actionStateList;
+    let Some(f) = s.kinds.get(&((*fp).kind as i32)) else { return };
+    if t.is_null() || t != f.move_table.as_ptr() as *mut _ || f.move_table.is_empty() || s.space.handle_of(t as *mut u8).is_some() {
+        return;
+    }
+    let Ok(base) = s.space.handle(t as usize, Some("MotionState")) else { return };
+    let gs = s.space.layouts.gc_size("MotionState").unwrap_or(0x20);
+    let rows: Vec<[u32; 4]> = f.move_guest.clone();
+    for (k, g) in rows.iter().enumerate() {
+        let h = base + k as u32 * gs;
+        if k > 0 && s.space.add_native(Some(h), "MotionState", t.add(k) as *mut u8).is_err() {
+            continue;
+        }
+        for (w, &a) in g.iter().enumerate() {
+            let r = &*t.add(k);
+            let cb = [r.anim_cb, r.input_cb, r.phys_cb, r.coll_cb][w];
+            if a != 0 && cb.is_some_and(|c| MOVE_TRAMPS.iter().any(|&m| m as usize == c as usize)) {
+                s.space.ptr_override.insert((h, 0xC + 4 * w as u32), a);
+            }
+        }
+    }
+}
+
 unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
     let fp = (*g).user_data as *mut Fighter;
     if fp.is_null() {
@@ -1039,6 +1246,7 @@ unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
             None => s.space.add_native(None, "HSD_GObj", g as *mut u8).ok(),
         };
     }
+    map_common_motion_table(s, (*fp).x1C_actionStateList);
     let gh = match s.space.handle_of(g as *mut u8) {
         Some(h) => h,
         None => s.space.add_native(None, "HSD_GObj", g as *mut u8).ok()?,
@@ -1057,6 +1265,7 @@ unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
             s.attrs.push((ab, base));
         }
         let _ = FT_DAT_ATTRS_BACKUP;
+        register_move_table(s, fp);
     }
     Some(gh)
 }
@@ -1098,13 +1307,91 @@ const ITEM_ARTICLE_DATA: u32 = 0xC4;
 /// written into the r13 / r2 bytes before a run (the DOL's image holds 0 there, the bss).
 unsafe fn sync_globals(s: &mut State) {
     // it_804D6D28: the ItemCommonData (Diddy's Nut_Phys reads its gravity, +0x68)
-    let rows: [(u32, usize, &'static str); 2] = [
+    // Fighter_804D64FC: PlCo's per-fighter table (kind 39's MexCPU_ProcCustom reads +0x20)
+    let rows: [(u32, usize, &'static str); 3] = [
         (0x804D_6554, melee_runtime::shared::p_ftCommonData as usize, "ftCommonData"),
+        (0x804D_64FC, melee_runtime::shared::Fighter_804D64FC as usize, "Fighter_804D64FC_t"),
         (0x804D_6D28, melee_items::tu::it_3F14::it_804D6D28 as usize, "ItemCommonData"),
     ];
     for (a, p, rec) in rows {
         if let Ok(h) = s.space.handle(p, Some(rec)) {
             let _ = s.space.st32(a, h);
+        }
+    }
+    // Fighter_804D64FC's x20 / x24 (`float *`, no record a guest handle can stand for): big-endian guest copies, the
+    // record's two fields answering their addresses (kind 39's MexCPU_ProcCustom reads x20[kind])
+    let f = melee_runtime::shared::Fighter_804D64FC;
+    if !f.is_null() && !(*f).x20.is_null() && !(*f).x24.is_null() {
+        if let Ok(h) = s.space.handle(f as usize, Some("Fighter_804D64FC_t")) {
+            let n20 = melee_types::Ft_Kind_Max as u32;
+            let (g20, g24) = *s.cpu_floats.get_or_insert_with(|| (0, 0));
+            let (g20, g24) = if g20 == 0 {
+                let a = s.heap_next;
+                let b = a + ((4 * n20 + 0x1F) & !0x1F);
+                s.heap_next = b + 0x20;
+                s.space.add_bytes(a, vec![0; 4 * n20 as usize]);
+                s.space.add_bytes(b, vec![0; 4 * 8]);
+                s.cpu_floats = Some((a, b));
+                (a, b)
+            } else {
+                (g20, g24)
+            };
+            for i in 0..n20 {
+                let _ = s.space.st32(g20 + 4 * i, (*(*f).x20.add(i as usize)).to_bits());
+            }
+            for i in 0..8u32 {
+                let _ = s.space.st32(g24 + 4 * i, (*(*f).x24.add(i as usize)).to_bits());
+            }
+            // x4..x1C: `ftCo_AttackEntry*[kind]` (nine words each, 0-terminated by cmd); built once per record
+            if s.cpu_lists.is_none_or(|c| c.0 != f as usize) {
+                let n = melee_types::Ft_Kind_Max as usize;
+                let tabs = [(*f).x4, (*f).x8, (*f).xC, (*f).x10, (*f).x14, (*f).x18, (*f).x1C];
+                let mut seen: BTreeMap<usize, u32> = BTreeMap::new();
+                let mut out = [0u32; 7];
+                for (j, &t) in tabs.iter().enumerate() {
+                    let t = t as *const *const melee_types::ftCo_AttackEntry;
+                    let mut words = vec![0u8; 4 * n];
+                    if !t.is_null() {
+                        for i in 0..n {
+                            let e = *t.add(i);
+                            if e.is_null() {
+                                continue;
+                            }
+                            let g = *seen.entry(e as usize).or_insert_with(|| {
+                                let mut b = Vec::new();
+                                let mut k = 0;
+                                loop {
+                                    let w = e.add(k) as *const u32;
+                                    for x in 0..9 {
+                                        b.extend_from_slice(&(*w.add(x)).to_be_bytes());
+                                    }
+                                    if (*e.add(k)).cmd == 0 || k > 256 {
+                                        break;
+                                    }
+                                    k += 1;
+                                }
+                                let a = s.heap_next;
+                                s.heap_next = (a + b.len() as u32 + 0x1F) & !0x1F;
+                                s.space.add_bytes(a, b);
+                                a
+                            });
+                            words[4 * i..4 * i + 4].copy_from_slice(&g.to_be_bytes());
+                        }
+                    }
+                    let a = s.heap_next;
+                    s.heap_next = (a + words.len() as u32 + 0x1F) & !0x1F;
+                    s.space.add_bytes(a, words);
+                    out[j] = a;
+                }
+                s.cpu_lists = Some((f as usize, out));
+            }
+            if let Some((_, t)) = s.cpu_lists {
+                for (j, a) in t.iter().enumerate() {
+                    s.space.ptr_override.insert((h, 4 + 4 * j as u32), *a);
+                }
+            }
+            s.space.ptr_override.insert((h, 0x20), g20);
+            s.space.ptr_override.insert((h, 0x24), g24);
         }
     }
     // HSD_GObjPLinkHead (0x804D782C), the gobj list heads by p_link: a guest table of their handles, rewritten before
@@ -1146,6 +1433,30 @@ unsafe fn run_at_f(kind: i32, a: u32, slot: u32, g: G) -> (u32, bool) {
     cpu.gpr[2] = R2;
     cpu.gpr[13] = R13;
     cpu.gpr[3] = gh;
+    cpu.lr = 0;
+    cpu.pc = a;
+    let before = fighter_kind(g);
+    let (r, faulted) = run_cpu(kind, slot, cpu);
+    guard_kind(g, before, kind, slot, a);
+    (r.gpr[3], faulted)
+}
+
+thread_local! {
+    /// The guest callback of the ftWalkCommon_800DFEC8 call in flight (hand_bridge).
+    static WALK_CB: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+/// `run_at_f` with a float argument in f1 (a (gobj, f32) guest callback).
+unsafe fn run_at_f1(kind: i32, a: u32, slot: u32, g: G, f1: f32) -> (u32, bool) {
+    let s = st();
+    let Some(gh) = bind_fighter(s, g) else { return (0, true) };
+    sync_globals(s);
+    let mut cpu = Cpu::default();
+    cpu.gpr[1] = STACK_BASE + STACK_SIZE - 0x100 - s.depth * 0x2000;
+    cpu.gpr[2] = R2;
+    cpu.gpr[13] = R13;
+    cpu.gpr[3] = gh;
+    cpu.fpr[1] = (f1 as f64).to_bits();
     cpu.lr = 0;
     cpu.pc = a;
     let before = fighter_kind(g);
@@ -1216,7 +1527,8 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
             if r.store {
                 eprintln!("mextrace: slot {slot} store {}+{:#x} ({} bytes)", r.rec, r.gc_off, r.size);
             } else if std::env::var("MELEE_MEX_TRACE").is_ok_and(|v| v == "2") {
-                eprintln!("mextrace: slot {slot} load {}+{:#x} ({} bytes) @{:08X} {:X?}", r.rec, r.gc_off, r.size, r.ea, s.space.regions_at(r.ea));
+                let v = if r.size == 1 { s.space.ld8(r.ea).map(|v| v as u32).ok() } else { s.space.ld32(r.ea).ok() };
+                eprintln!("mextrace: slot {slot} load {}+{:#x} ({} bytes) @{:08X} = {v:X?} {:X?}", r.rec, r.gc_off, r.size, r.ea, s.space.regions_at(r.ea));
             }
         }
     }
@@ -1276,6 +1588,51 @@ fn where_(kind: i32, pc: u32) -> String {
     }
 }
 
+/// A guest pointer into a fighter's PlXx.dat (`DAT_BASE` + ...) taken as an `HSD_Joint*`: the joint tree decoded natively
+/// from the file, once per address. Akaneia's Dedede passes `ftCommon_SetAccessory` its star model, a joint behind its
+/// own ftData item table (`ft_data->x48_items[0]->x10[0]`) that the native ftData decode does not type; with a NULL
+/// joint the call faulted, the guest's AS_EnterStarSpitState stopped before it stored the victim's
+/// `thrownkirby.coll_box` (fp+0x2368), and ftCo_800BDA74 ran the ECB pass on a stale box (232232 at 913).
+/// The decoded graph is read-only data (HSD_JObjLoadJoint copies what it changes) and lives for the run.
+fn dat_joint(h: u32) -> Option<*mut melee_types::HSD_Joint> {
+    use std::collections::HashMap;
+    static mut CACHE: Option<HashMap<u32, usize>> = None;
+    #[allow(static_mut_refs)]
+    let cache = unsafe { CACHE.get_or_insert_with(HashMap::new) };
+    if let Some(&p) = cache.get(&h) {
+        return Some(p as *mut melee_types::HSD_Joint);
+    }
+    let f = st().kinds.values().find(|f| h >= f.dat_base && h < f.dat_base + f.dat_len)?;
+    let ar = melee_runtime::dat::DatArchive::parse(&f.dat_file).ok()?;
+    // blob pointers (display lists, vertex arrays, image data) read the big-endian file bytes, as the C's do
+    let raw: &'static [u8] = Box::leak(ar.data.clone().into_boxed_slice());
+    let mut d = ar.decoder();
+    d.set_raw_base(raw.as_ptr() as usize);
+    let root = d.object::<melee_types::HSD_Joint>(h - f.dat_base);
+    let (arena, _issues) = d.finish();
+    core::mem::forget(arena);
+    if root.is_null() {
+        return None;
+    }
+    eprintln!("mexguest: {}: joint at dat+{:#x} decoded for a native call", f.file, h - f.dat_base);
+    cache.insert(h, root as usize);
+    Some(root)
+}
+
+/// [`crate::archive::joint_at`], cached by native address.
+fn raw_joint(addr: usize) -> Option<*mut melee_types::HSD_Joint> {
+    static mut CACHE: Option<std::collections::HashMap<usize, usize>> = None;
+    #[allow(static_mut_refs)]
+    let cache = unsafe { CACHE.get_or_insert_with(Default::default) };
+    if let Some(&p) = cache.get(&addr) {
+        return Some(p as _);
+    }
+    let p = crate::archive::joint_at(addr)?;
+    eprintln!("mexguest: an archive's joint at {addr:#x} decoded for a native call");
+    cache.insert(addr, p as usize);
+    Some(p)
+}
+
 struct Br;
 
 impl Bridge<GuestSpace> for Br {
@@ -1303,7 +1660,15 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
     let (d, a, n) = (cpu.gpr[3], cpu.gpr[4], cpu.gpr[5]);
     let ok = match target {
         MEMCPY => {
-            if d <= a {
+            if (d | a | n) & 3 == 0 && (d.wrapping_add(n) <= a || a.wrapping_add(n) <= d) {
+                // word by word when aligned: a callback field of a native record reads only as a whole word (its
+                // vanilla address); Meta Knight's and Skull Kid's onLoad memcpy the common MotionState table (341
+                // rows, 0x2AA0 bytes) into their own heap block, and the byte reads faulted at row 0's anim_cb
+                for k in (0..n).step_by(4) {
+                    let w = mem.ld32(a.wrapping_add(k))?;
+                    mem.st32(d.wrapping_add(k), w)?;
+                }
+            } else if d <= a {
                 for k in 0..n {
                     let b = mem.ld8(a.wrapping_add(k))?;
                     mem.st8(d.wrapping_add(k), b)?;
@@ -1468,6 +1833,18 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
             cpu.gpr[3] = guest_public(mem, a).unwrap_or(0);
             true
         }
+        _ if mex_import::layout::vanilla_name(target) == Some("HSD_ArchiveGetPublicAddress") && let Some(h) = ptrtable_public(mem, d, a) => {
+            // a NULL-terminated table of DynamicModelDesc* (`*_scene_models`; ACE 2.0.1's Toad reads its
+            // "Relax_scene_models"): a big-endian word table of the descs' handles, as the console's table reads
+            cpu.gpr[3] = h;
+            true
+        }
+        _ if mex_import::layout::vanilla_name(target) == Some("HSD_ArchiveGetPublicAddress") && missing_public(mem, d, a) => {
+            // a symbol the archive does not have (ACE 2.0.1's Toad asks its file for "Relax_scene_models"): the console's
+            // HSD_ArchiveGetPublicAddress returns NULL and the guest goes on (it faulted here, and the fallback onLoad crashed)
+            cpu.gpr[3] = 0;
+            true
+        }
         _ => match mex_import::layout::vanilla_name(target) {
             // an m-ex custom article (global item kind >= CustomItemStart 237, SpawnItem.kind at GC +0x8): the native
             // item system has no m-ex item table (its ItemDesc and itFunction states are the guest's), so the spawn
@@ -1483,9 +1860,434 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                 cpu.gpr[3] = 0;
                 return Ok(());
             }
+            // an item function on a gobj that is not an item (kind 46 passed a non-item gobj to Item_802697D4, whose
+            // user_data read as an Item crashed): a guest fault, as an unresolved call is
+            // (that one only: several `it_*` take a fighter gobj, it_8026BB68 = ftLib_GetECBCenter for Wolf's
+            // Laser_Spawn, and Item_8026AE60 takes no argument at all, r3 is whatever the guest left there)
+            Some(n) if n == "Item_802697D4" && mem.native(d).is_some_and(|p| {
+                matches!(mem.describe(d), Some(("HSD_GObj", 0))) && unsafe { (*(p as G)).classifier as i32 != melee_types::HSD_GOBJ_CLASS_ITEM }
+            }) => {
+                eprintln!("mexguest: {n} on a non-item gobj {d:08X}: refused");
+                return Err(Fault::Mem(d));
+            }
             Some(name) => {
-                let mut c = Call { cpu, mem, fix: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
-                let hit = unsafe { crate::mex_bridge::call(name, &mut c) };
+                let mut c = Call { cpu, mem, fix: Vec::new(), fixw: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
+                let mut hit = unsafe { crate::mex_bridge::call(name, &mut c) };
+                // a gobj callback the generator bridges only as a function pointer (GOBJ_FN_NAMES), called directly:
+                // ACE 2.0.1's Liu Kang onLoad ends in `bctrl ftSk_Init_OnLoad` (its Sheik base's onLoad), which
+                // faulted as unresolved and dropped the whole guest onLoad
+                // by hand (the generator has no row): two vanilla functions Akaneia's Dedede reaches through pointers
+                // its own data holds (an SFX callback, `bctrl ft_80088510`; its jump, ftCo_800CB110); unresolved,
+                // each fault dropped the rest of the guest callback
+                // by hand (Round 13, the ACE 2.0.1 sweep's unresolved calls; the generator has no row)
+                if !hit {
+                    hit = true;
+                    match name {
+                        // void(Item*, sfx, pan, vol): an article's SFX (mex:51, 52)
+                        "Item_8026AE84" => {
+                            let ip = c.ptr(0, Some("Item"));
+                            if ip.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_items::tu::item::Item_8026AE84(ip as _, c.int(1) as i32, c.int(2) as u8, c.int(3) as u8) };
+                            }
+                        }
+                        // void(gobj, ShieldDesc*, cb): the shield sphere; the callback may be guest code (mex:41)
+                        "ftColl_8007B1B8" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let s = c.ptr(1, Some("ShieldDesc"));
+                            if g.is_null() || s.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let cb = c.func(2); melee_fighter::tu::ftcoll::ftColl_8007B1B8(g as G, s as _, unsafe { core::mem::transmute(cb) });
+                            }
+                        }
+                        // int(gobj, model): a model part's previous visibility (mex:54, 58)
+                        "ftParts_80074A74" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = melee_fighter::tu::ftparts::ftparts_80074a74(g as G, c.int(1) as i32);
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Article*, kind): the article registration a vanilla fighter's onLoad makes. An m-ex
+                        // fighter's own articles are the guest's (its item table, not it_804D6D38); its copy of a
+                        // vanilla article is already registered by that fighter's native onLoad. Nothing to do (mex:41, 42)
+                        "it_8026B3F8" => {}
+                        // a debug print: nothing observable on the console's screen (mex:60, 62)
+                        "OSReport" => {}
+                        // Round 14 (the ACE 2.0.1 sweep's next unresolved callees)
+                        // s32(slot) (Toad)
+                        "Player_GetStocks" => c.ret_int(unsafe { melee_fighter::tu::player::Player_GetStocks(c.int(0) as i32) } as u32),
+                        // bool(CollData*, ftCollisionBox*) (Toad)
+                        "mpColl_8004B21C" => {
+                            let (cd, b) = (c.ptr(0, Some("CollData")), c.ptr(1, Some("ftCollisionBox")));
+                            if cd.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_world::tu::mpcoll::mpColl_8004B21C(cd as _, b as _) };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Fighter*, f32, f32, f32), void(Fighter*, f32) (Toad)
+                        "ftCommon_CalcGroundAccel_AccelToLStickX" | "ftCommon_ClampGroundVel" => {
+                            let fp = c.ptr(0, Some("Fighter")) as *mut melee_types::Fighter;
+                            if fp.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let fp = unsafe { &mut *fp };
+                                if name == "ftCommon_ClampGroundVel" {
+                                    melee_fighter::tu::ftcommon::ftCommon_ClampGroundVel_fp(fp, c.flt(0) as f32);
+                                } else {
+                                    melee_fighter::tu::ftcommon::ftCommon_CalcGroundAccel_AccelToLStickX_fp(fp, c.flt(0) as f32, c.flt(1) as f32, c.flt(2) as f32);
+                                }
+                            }
+                        }
+                        // bool(Item_GObj*), Fighter_GObj*(Item_GObj*) (Lucas2's PK Flash)
+                        "it_80272C6C" | "it_802AA7E4" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else if name == "it_80272C6C" {
+                                let r = unsafe { melee_items::tu::it_2725::it_80272C6C(g as _) };
+                                c.ret_int(r as u32);
+                            } else {
+                                let r = unsafe { melee_items::tu::itnesspkflash::it_802AA7E4(g as _) };
+                                c.ret_ptr(r as _, Some("HSD_GObj"));
+                            }
+                        }
+                        // Round 15 (the sweep's remaining unresolved callees)
+                        // bool(Item_GObj*) (mex:37)
+                        "it_802AA7F0" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_items::tu::itnesspkflash::it_802AA7F0(g as _) };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Item_GObj*, Vec3* out) (mex:39)
+                        "it_80276174" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            // PlSm's article 308 calls it with one argument (r4 is what it_80274658 left, 0 here; on
+                            // the console a leftover register): NULL reads as the item's own position
+                            let v = if c.int(1) == 0 { core::ptr::null_mut() } else { c.words(1, 3) };
+                            if g.is_null() || c.bad || (c.int(1) != 0 && v.is_null()) {
+                                c.bad = true;
+                            } else {
+                                unsafe {
+                                    let mut own = (*((*(g as G)).user_data as *mut melee_types::Item)).pos;
+                                    let v = if v.is_null() { &raw mut own as *mut c_void } else { v };
+                                    melee_items::tu::itmaplib::it_80276174(g as _, v as _)
+                                };
+                            }
+                        }
+                        // Vec3*(slot): a static of the HUD (mex:39, 41, 57)
+                        "ifAll_GetPlayerHUDPosition" => {
+                            let p = unsafe { melee_world::tu::ifall::ifAll_GetPlayerHUDPosition(c.int(0) as i32) };
+                            c.ret_ptr(p as _, Some("Vec"));
+                        }
+                        // Vec*(Vec* a, Vec* b): a.xy += b.xy, returns a (mex:40)
+                        "lbVector_Add_xy" => {
+                            let h = c.int(0);
+                            let (a, b) = (c.words(0, 3), c.words(1, 3));
+                            if a.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::lbvector::lbVector_Add_xy(a as _, b as _) };
+                                c.ret_int(h);
+                            }
+                        }
+                        // f32(Vec*, Vec*) (mex:44)
+                        "PSVECDotProduct" => {
+                            let (a, b) = (c.words(0, 3), c.words(1, 3));
+                            if a.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_runtime::tu::mtx_pc::raw::PSVECDotProduct(a as _, b as _) };
+                                c.ret_flt(r as f64);
+                            }
+                        }
+                        // f32(HSD_JObj*) (mex:44)
+                        "lbGetJObjEndFrame" => {
+                            let j = c.ptr(0, Some("HSD_JObj"));
+                            if j.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(j as _) };
+                                c.ret_flt(r as f64);
+                            }
+                        }
+                        // void(HSD_AObj*, f32) (mex:44); NULL is a no-op in the native one
+                        "HSD_AObjSetRate" => {
+                            let a = c.ptr(0, Some("HSD_AObj"));
+                            if c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a as _, c.flt(0) as f32) };
+                            }
+                        }
+                        // void(gobj, u8 kind, obj): the gobj's object, a registered native one (kinds 43, 44: a jobj)
+                        "HSD_GObjObject_80390A70" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let o = c.ptr(2, None);
+                            if g.is_null() || o.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(g as _, c.int(1) as u8, o as _) };
+                            }
+                        }
+                        // void(Mtx, Vec3* out) (kinds 43, 44, 45)
+                        "HSD_MtxGetRotation" => {
+                            let (m, v) = (c.words(0, 12), c.words(1, 3));
+                            if m.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx::HSD_MtxGetRotation(m as _, v as _) };
+                            }
+                        }
+                        // void(Mtx src, Mtx dst), u32(Mtx src, Mtx inv) (kinds 43, 44, 45)
+                        "PSMTXCopy" | "PSMTXInverse" => {
+                            let (a, b) = (c.words(0, 12), c.words(1, 12));
+                            if a.is_null() || b.is_null() || c.bad {
+                                c.bad = true;
+                            } else if name == "PSMTXCopy" {
+                                unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXCopy(a as _, b as _) };
+                            } else {
+                                let r = unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXInverse(a as _, b as _) };
+                                c.ret_int(r);
+                            }
+                        }
+                        // s32(CollData*, Vec* out) (kinds 43, 44, 45)
+                        "mpCollGetSpeedCeiling" | "mpCollGetSpeedLeftWall" | "mpCollGetSpeedRightWall" => {
+                            let cd = c.ptr(0, Some("CollData"));
+                            let v = c.words(1, 3);
+                            if cd.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                use melee_world::tu::mpcoll as mc;
+                                let r = unsafe {
+                                    match name {
+                                        "mpCollGetSpeedCeiling" => mc::mpCollGetSpeedCeiling(cd as _, v as _),
+                                        "mpCollGetSpeedLeftWall" => mc::mpCollGetSpeedLeftWall(cd as _, v as _),
+                                        _ => mc::mpCollGetSpeedRightWall(cd as _, v as _),
+                                    }
+                                };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void*(dst, src, n): guest bytes copied in guest memory (kinds 43, 44, 45)
+                        "memcpy" => {
+                            let (d, s, n) = (c.int(0), c.int(1), c.int(2));
+                            let bytes: Option<Vec<u8>> = (0..n).map(|k| c.mem.ld8(s.wrapping_add(k)).ok()).collect();
+                            match bytes {
+                                Some(b) if n <= 0x10_0000 && b.iter().enumerate().all(|(k, &v)| c.mem.st8(d.wrapping_add(k as u32), v).is_ok()) => c.ret_int(d),
+                                _ => c.bad = true,
+                            }
+                        }
+                        "HSD_MtxGetScale" => {
+                            let (m, v) = (c.words(0, 12), c.words(1, 3));
+                            if m.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx_world::HSD_MtxGetScale(m as _, v as _) };
+                            }
+                        }
+                        // void(Vec*, Vec*, Vec* out) (kinds 43, 44, 45)
+                        "PSVECCrossProduct" => {
+                            let (a, b, o) = (c.words(0, 3), c.words(1, 3), c.words(2, 3));
+                            if a.is_null() || b.is_null() || o.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(a as _, b as _, o as _) };
+                            }
+                        }
+                        // void(Mtx, Vec3* out) (kinds 43, 44, 45)
+                        "HSD_MtxGetTranslate" => {
+                            let (m, v) = (c.words(0, 12), c.words(1, 3));
+                            if m.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::mtx::HSD_MtxGetTranslate(m as _, v as _) };
+                            }
+                        }
+                        // void(Item_GObj*, i32) (kind 45)
+                        "it_802787B4" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_items::tu::iteffect::it_802787B4(g as _, c.int(1) as i32) };
+                            }
+                        }
+                        // void(HSD_JObj*, u32) (kind 44, 62)
+                        "HSD_JObjClearFlagsAll" => {
+                            let j = c.ptr(0, Some("HSD_JObj"));
+                            if j.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(j as _, c.int(1)) };
+                            }
+                        }
+                        // s32(CollData*, Vec* out) (kind 45)
+                        "mpCollGetSpeedFloor" => {
+                            let cd = c.ptr(0, Some("CollData"));
+                            let v = c.words(1, 3);
+                            if cd.is_null() || v.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_world::tu::mpcoll::mpCollGetSpeedFloor(cd as _, v as _) };
+                                c.ret_int(r as u32);
+                            }
+                        }
+                        // void(Item_GObj*, ef, i32, Vec3*, Vec3*, i32, f32): an item effect (kind 46)
+                        "it_80278800" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let (a, b) = (c.words(3, 3), c.words(4, 3));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                unsafe { melee_items::tu::iteffect::it_80278800(g as _, c.int(1) as i32, c.int(2) as i32, a as _, b as _, c.int(5) as i32, c.flt(0) as f32) };
+                            }
+                        }
+                        // f32(f32) (kind 49)
+                        "atanf" => c.ret_flt(melee_runtime::tu::lbtrigf::atanf_fp(c.flt(0) as f32) as f64),
+                        // CmSubject*(void) (kind 49)
+                        "Camera_80029020" => {
+                            let r = unsafe { melee_world::tu::camera::Camera_80029020() };
+                            c.ret_ptr(r as _, Some("CmSubject"));
+                        }
+                        // void(gobj, int) (Skull Kid)
+                        "ftColl_8007B760" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            if g.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                melee_fighter::tu::ftcoll::ftColl_8007B760(g as G, c.int(1) as i32);
+                            }
+                        }
+                        // HSD_JObj*(HSD_Joint*) (Skull Kid)
+                        "HSD_JObjLoadJoint" => {
+                            let j = c.ptr(0, Some("HSD_Joint"));
+                            if j.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let r = unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(j as _) };
+                                c.ret_ptr(r as _, Some("HSD_JObj"));
+                            }
+                        }
+                        // HSD_GObj*(bool, DynamicModelDesc*, gx_link, p_link, ..., cb, f32): a model gobj (gmtoulib);
+                        // ACE 2.0.1's Toad (PlTd) makes one from its "Relax_scene_models" in its onLoad
+                        "fn_8019035C" => {
+                            let m = c.ptr(1, Some("DynamicModelDesc"));
+                            if m.is_null() || c.bad {
+                                c.bad = true;
+                            } else {
+                                let cb = c.func(6);
+                                let g = unsafe {
+                                    melee_modes::tu::gmtoulib::fn_8019035C(c.int(0) as i32, m as _, c.int(2) as i32, c.int(3) as i32, c.int(4) as i32, c.int(5) as i32, core::mem::transmute(cb), c.flt(0) as f32)
+                                };
+                                c.ret_ptr(g as _, Some("HSD_GObj"));
+                            }
+                        }
+                        // void(gobj, kind, remove_fn, data): ACE 2.0.1's Toad hangs a block of its own heap (guest
+                        // bytes) on the model gobj it made, with HSD_Free as the remover. The gobj's user_data is the
+                        // host byte the guest address stands for (the guest reads it back through the gobj); no remover:
+                        // the block is guest memory, not the native heap
+                        "GObj_InitUserData" => {
+                            let g = c.ptr(0, Some("HSD_GObj"));
+                            let h = c.int(3);
+                            let data = if h == 0 { Some(0) } else { c.mem.native(h) };
+                            match (g.is_null() || c.bad, data) {
+                                (false, Some(p)) => unsafe {
+                                    // a no-op remover (not None: GObj_RemoveUserData asserts one when the gobj is
+                                    // freed, which kinds 43-45's model gobjs reach)
+                                    melee_runtime::tu::gobjuserdata::GObj_InitUserData(g as _, c.int(1) as u8, Some(guest_userdata_remove), p as _)
+                                },
+                                _ => c.bad = true,
+                            }
+                        }
+                        _ => hit = false,
+                    }
+                }
+                if !hit && matches!(name, "ft_80088510" | "ftCo_800CB110" | "ftKb_SpecialN_800F597C" | "mpUpdateFloorSkip" | "it_80276308" | "ft_80088770" | "ft_80088328") {
+                    if name == "ft_80088328" {
+                        // void(Fighter*, int sfx, u8 vol, u8 pan): ACE 2.0.1's Lucas (sweep, mex:30) starts a looped SFX
+                        let fp = c.ptr(0, Some("Fighter"));
+                        if !fp.is_null() && !c.bad {
+                            let (s, v, p) = (c.int(1) as i32, c.int(2) as u8, c.int(3) as u8);
+                            melee_fighter::tu::ft_0881::ft_80088328_fp(unsafe { &mut *(fp as *mut melee_types::Fighter) }, s, v, p);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "ft_80088770" {
+                        // void(Fighter*): ACE 2.0.1's Lucas (sweep, mex:30) stops its looped SFX
+                        let fp = c.ptr(0, Some("Fighter"));
+                        if !fp.is_null() && !c.bad {
+                            melee_fighter::tu::ft_0881::ft_80088770_fp(unsafe { &mut *(fp as *mut melee_types::Fighter) });
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "it_80276308" {
+                        // s32(Item_GObj*): ACE 2.0.1's Lucas article logic (sweep, mex:30)
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        let ip = if g.is_null() { core::ptr::null_mut() } else { unsafe { (*(g as G)).user_data as *mut melee_types::Item } };
+                        if !ip.is_null() && !c.bad {
+                            let r = melee_items::tu::itmaplib::it_80276308_fp(unsafe { &mut *ip });
+                            c.ret_int(r as u32);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "mpUpdateFloorSkip" {
+                        // void(CollData*): Dedede's inhale (223810)
+                        let cd = c.ptr(0, Some("CollData"));
+                        if !cd.is_null() && !c.bad {
+                            unsafe { melee_world::tu::mpcoll::mpUpdateFloorSkip(cd as *mut melee_types::CollData) };
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "ftKb_SpecialN_800F597C" {
+                        // bool(gobj): Dedede's inhale asks whether its victim can be swallowed (223810, 230601)
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        if !g.is_null() && !c.bad {
+                            let r = melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F597C(g as G);
+                            c.ret_int(r as u32);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else if name == "ft_80088510" {
+                        let fp = c.ptr(0, Some("Fighter"));
+                        if !fp.is_null() && !c.bad {
+                            let (s, v, p) = (c.int(1) as i32, c.int(2) as u8, c.int(3) as u8);
+                            melee_fighter::tu::ft_0881::ft_80088510_fp(unsafe { &mut *(fp as *mut melee_types::Fighter) }, s, v, p);
+                        } else {
+                            c.bad = true;
+                        }
+                    } else {
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        if !g.is_null() && !c.bad {
+                            let (a, m) = (c.int(1) != 0, c.flt(0) as f32);
+                            melee_fighter::tu::ftCo_Jump::ftCo_800CB110(g as G, a, m);
+                        } else {
+                            c.bad = true;
+                        }
+                    }
+                    hit = true;
+                }
+                if !hit {
+                    if let Some(f) = crate::mex_bridge::gobj_fn(name) {
+                        let g = c.ptr(0, Some("HSD_GObj"));
+                        if g.is_null() {
+                            c.bad = true;
+                        } else {
+                            unsafe { f(g as G) };
+                        }
+                        hit = true;
+                    }
+                }
                 c.finish();
                 if c.bad {
                     let s = st();
@@ -1537,8 +2339,62 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
         Ok(())
     }
     let gobj = |mem: &GuestSpace, h: u32| -> G { if h == 0 { core::ptr::null_mut() } else { mem.native(h).unwrap_or(0) as G } };
+    // a Fighter* argument: the fighter, or a gobj passed for it (its user_data)
+    let fpn = |mem: &GuestSpace, h: u32| -> *mut melee_types::Fighter {
+        if h == 0 {
+            return core::ptr::null_mut();
+        }
+        let p = mem.native(h).unwrap_or(0);
+        match mem.describe(h) {
+            Some(("HSD_GObj", 0)) if p != 0 => unsafe { (*(p as G)).user_data as *mut melee_types::Fighter },
+            Some(("Fighter", 0)) => p as *mut melee_types::Fighter,
+            _ => core::ptr::null_mut(),
+        }
+    };
     let r = |i: usize| cpu.gpr[3 + i];
     match name {
+        // ftWalkCommon_800DFEC8(gobj, cb): the walk-type resync, whose callback (gobj, anim frame in f1) is guest code
+        // (Dedede's SpecialN_ASWalk from his walk-with-victim IASA). Not bridged, the call did nothing, so Dedede never
+        // changed walk type (Akaneia 225603 slippi 133: motion 355 vs 356)
+        "ftWalkCommon_800DFEC8" => {
+            let g = gobj(mem, r(0));
+            let cb = r(1);
+            if g.is_null() || !in_code(cb) {
+                return Err(Fault::Unresolved(cb));
+            }
+            fn tramp(g: G, f: f32) {
+                let a = WALK_CB.with(|c| c.get());
+                unsafe {
+                    if let Some(kind) = kind_of_code(a) {
+                        let _ = run_at_f1(kind, a, 1001, g, f);
+                    }
+                }
+            }
+            let prev = WALK_CB.with(|c| c.replace(cb));
+            melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfec8(g as _, tramp);
+            WALK_CB.with(|c| c.set(prev));
+        }
+        // ftParts_80074B0C(gobj, model_idx, val): Meta Knight's (PlMk) onLoad; the generator has no native entry for it
+        "ftParts_80074B0C" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            melee_fighter::tu::ftparts::ftParts_80074B0C(g as _, r(1) as i32, r(2) as i32);
+        }
+        // ftCommon_CalcSelfAccel_DeaccelAir(Fighter*): Shadow's (PlSd) air physics; a gobj passed for the fighter
+        // resolves to its fighter, as the other Fighter* callees do
+        "ftCommon_CalcSelfAccel_DeaccelAir" => {
+            let mut c = Call { cpu, mem, fix: Vec::new(), fixw: Vec::new(), bad: false, scratch: SCRATCH_BASE + 0x10000 * st().depth };
+            let fp = c.ptr(0, Some("Fighter")) as *mut melee_types::Fighter;
+            if !fp.is_null() {
+                unsafe { melee_fighter::tu::ftcommon::ftCommon_CalcSelfAccel_DeaccelAir_fp(&mut *fp) };
+            }
+            c.finish();
+            if fp.is_null() || c.bad {
+                return Err(Fault::Mem(0));
+            }
+        }
         // lbAnim_8001E8F8(FigaTree*): the animation's frame count (0 for NULL); the tree is the native one the guest
         // read out of the fighter (by handle) or a tree in guest bytes (frames at +8)
         "lbAnim_8001E8F8" => {
@@ -1563,6 +2419,20 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
                 Some("HSD_AObjSetCurrentFrame") => ao::HSD_AObjSetCurrentFrame as usize,
                 Some("HSD_AObjSetEndFrame") => ao::HSD_AObjSetEndFrame as usize,
                 Some("HSD_AObjSetRewindFrame") => ao::HSD_AObjSetRewindFrame as usize,
+                // (aobj, obj, update func) with the AOV form: `HSD_ForeachAnim(j, JOBJ_TYPE, mask, HSD_AObjStopAnim,
+                // AOBJ_ARG_AOV, func)` (kind 46; vanilla passes func 0 as gmcamera / mncharsel do)
+                Some("HSD_AObjStopAnim") if r(4) == melee_types::AOBJ_ARG_AOV as u32 => {
+                    let v: usize = match (r(5), mex_import::layout::vanilla_name(r(5))) {
+                        (0, _) => 0,
+                        (_, Some("JObjUpdateFunc")) => melee_runtime::tu::jobj_ptr::JObjUpdateFunc as usize,
+                        (_, Some("TObjUpdateFunc")) => melee_runtime::tu::tobj::TObjUpdateFunc as usize,
+                        _ => return Err(Fault::Unresolved(r(5))),
+                    };
+                    unsafe {
+                        ao::HSD_ForeachAnim(obj, r(1) as _, r(2) as _, ao::HSD_AObjStopAnim as usize as *mut c_void, melee_types::AOBJ_ARG_AOV as _, CallbackArg { v: v as *mut c_void })
+                    };
+                    return Ok(true);
+                }
                 _ => return Err(Fault::Unresolved(r(3))),
             };
             // every callback above is (aobj, f32): on the console it reads f1 whatever the form, so with a *F form the
@@ -1718,7 +2588,214 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
         }
         "Player_GetPlayerCharacter" => cpu.gpr[3] = unsafe { melee_fighter::tu::player::Player_GetPlayerCharacter(r(0) as i32) } as u32,
         "Player_GetPlayerSlotType" => cpu.gpr[3] = unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(r(0) as i32) } as u32,
+        // HSD_Archive*(const char* name): a file the guest loads itself (Wario's onLoad: lbDvd_8001819C, mex:34;
+        // lbArchive_LoadArchive on mex:38, 40, 42). The native loader on the name the guest passes; the archive comes back
+        // by handle, so the guest's HSD_ArchiveGetPublicAddress on it finds it (untyped_public)
+        "lbDvd_8001819C" | "lbArchive_LoadArchive" => {
+            let mut s = Vec::new();
+            for k in 0..128 {
+                match mem.ld8(r(0).wrapping_add(k))? {
+                    0 => break,
+                    c => s.push(c),
+                }
+            }
+            let Ok(cs) = std::ffi::CString::new(s) else { return Err(Fault::Mem(r(0))) };
+            let a = unsafe {
+                if name == "lbDvd_8001819C" {
+                    melee_runtime::tu::lbarchive::ext::lbDvd_8001819C(cs.as_ptr())
+                } else {
+                    melee_runtime::tu::lbarchive::lbArchive_LoadArchive(cs.as_ptr())
+                }
+            };
+            cpu.gpr[3] = if a.is_null() { 0 } else { mem.handle(a as usize, Some("HSD_Archive"))? };
+        }
+        // void(Vec3* src, Vec3* dst): the paired-single normalize, as the port has it (mex:48)
+        "PSVECNormalize" => {
+            let (a, b) = (r(0), r(1));
+            if a == 0 || b == 0 {
+                return Err(Fault::Mem(0));
+            }
+            let mut v = rd_vec(mem, a)?;
+            let mut o = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+            unsafe { melee_runtime::tu::mtx_pc::raw::PSVECNormalize(&mut v as *mut Vec3 as _, &mut o as *mut Vec3 as _) };
+            wr_vec(mem, b, &o)?;
+        }
         "Player_GetTeam" => cpu.gpr[3] = unsafe { melee_fighter::tu::player::Player_GetTeam(r(0) as i32) } as u32,
+        // Round 14: vanilla callees the ACE 2.0.1 sweep's fixed fighters reach (the generator has no row)
+        // void(gobj): absorb_hit.skip_update_pos = false (Lucas2)
+        "ftColl_8007AF10" => {
+            let fp = fpn(mem, r(0));
+            if fp.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe { (*fp).absorb_hit.set_skip_update_pos(0) };
+        }
+        // void(gobj, AbsorbDesc*) (Lucas2's PSI Magnet)
+        "ftColl_CreateAbsorbHit" => {
+            let g = gobj(mem, r(0));
+            let d = if r(1) == 0 { 0 } else { mem.native(r(1)).unwrap_or(0) };
+            if g.is_null() || d == 0 {
+                return Err(Fault::Mem(r(1)));
+            }
+            melee_fighter::tu::ftcoll::ftColl_CreateAbsorbHit(g, d as _);
+        }
+        // void(gobj) (Lucas2)
+        "ftCommon_8007D92C" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe {
+                let _ = melee_fighter::ftcommon3::ftcommon_8007d92c(g as _);
+            }
+        }
+        // void(Fighter*, int) (Lucas2)
+        "ftCo_800C0200" => {
+            let fp = fpn(mem, r(0));
+            if fp.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe { melee_fighter::tu::ftcolanimlist::ftco_800c0200(&mut *fp, r(1) as i32) };
+        }
+        // void(Fighter*, f32), void(Fighter*), void(Fighter*, f32, f32) (Toad)
+        "ftCommon_ClampSelfVelX" | "ftCommon_FallBasic" | "ftCommon_Ascend" => {
+            let fp = fpn(mem, r(0));
+            if fp.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            let (f1, f2) = (f64::from_bits(cpu.fpr[1]) as f32, f64::from_bits(cpu.fpr[2]) as f32);
+            let fp = unsafe { &mut *fp };
+            match name {
+                "ftCommon_ClampSelfVelX" => melee_fighter::tu::ftcommon::ftCommon_ClampSelfVelX_fp(fp, f1),
+                "ftCommon_FallBasic" => melee_fighter::tu::ftcommon::ftCommon_FallBasic_fp(fp),
+                _ => melee_fighter::tu::ftcommon::ftCommon_Ascend(fp, f1, f2),
+            }
+        }
+        // bool(bit): the debug pause flags (Toad); 0 outside the debug menu
+        "gm_GetDbPauseFlag" => cpu.gpr[3] = unsafe { melee_modes::tu::gmscene::gm_GetDbPauseFlag(r(0) as i32) } as u32,
+        // void(gobj, bool) (kind 41)
+        "ftpickupitem_80094818" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(g, r(1) != 0);
+        }
+        // void(Item_GObj*): Peach turnip callbacks a guest article calls (kind 41)
+        "itPeachTurnip_Logic56_Destroyed" | "itPeachTurnip_Logic56_PickedUp" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() {
+                return Err(Fault::Mem(r(0)));
+            }
+            unsafe {
+                if name.ends_with("Destroyed") {
+                    melee_items::tu::itpeachturnip::itPeachTurnip_Logic56_Destroyed(g as _)
+                } else {
+                    melee_items::tu::itpeachturnip::itPeachTurnip_Logic56_PickedUp(g as _)
+                }
+            }
+        }
+        // HSD_GObj*(owner, Vec3*, kind, f32 facing) (Lucas2's PK Flash item)
+        "it_802AA8C0" => {
+            let g = gobj(mem, r(0));
+            if g.is_null() || r(1) == 0 {
+                return Err(Fault::Mem(r(1)));
+            }
+            let mut v = rd_vec(mem, r(1))?;
+            let f = f64::from_bits(cpu.fpr[1]) as f32;
+            let it = unsafe { melee_items::tu::itnesspkflash::it_802AA8C0(g as _, &mut v, r(2) as _, f) };
+            cpu.gpr[3] = if it.is_null() { 0 } else { mem.handle(it as usize, Some("HSD_GObj")).unwrap_or(0) };
+        }
+        // StaticPlayer*(slot) (kind 49): the native record, by handle
+        "Player_GetPtrForSlot" => {
+            let p = unsafe { melee_fighter::tu::player::Player_GetPtrForSlot(r(0) as i32) };
+            cpu.gpr[3] = if p.is_null() { 0 } else { mem.handle(p as usize, Some("_StaticPlayer")).map_err(|_| Fault::Mem(0))? };
+        }
+        // int(buf, fmt, ...) (kind 48): %d %i %u %x %X %c %s %f %% with flags, width and precision; ints from r5..r10,
+        // floats from f1..f8 (the varargs ABI with CR6 set)
+        "sprintf" => {
+            let (buf, fmt) = (r(0), r(1));
+            fn rd_str(mem: &mut GuestSpace, mut a: u32) -> Result<Vec<u8>, Fault> {
+                let mut v = Vec::new();
+                while v.len() < 4096 {
+                    let b = mem.ld8(a)? as u8;
+                    if b == 0 {
+                        break;
+                    }
+                    v.push(b);
+                    a += 1;
+                }
+                Ok(v)
+            }
+            let f = rd_str(mem, fmt)?;
+            let (mut gi, mut fi, mut out, mut k) = (2usize, 1usize, Vec::<u8>::new(), 0usize);
+            while k < f.len() {
+                let c = f[k];
+                k += 1;
+                if c != b'%' {
+                    out.push(c);
+                    continue;
+                }
+                let st = k;
+                while k < f.len() && b"-+ #0123456789.lh".contains(&f[k]) {
+                    k += 1;
+                }
+                let Some(&conv) = f.get(k) else { break };
+                k += 1;
+                let spec = std::str::from_utf8(&f[st..k - 1]).unwrap_or("").replace(['l', 'h'], "");
+                let left = spec.contains('-');
+                let zero = spec.trim_start_matches(['-', '+', ' ', '#']).starts_with('0');
+                let mut parts = spec.trim_start_matches(['-', '+', ' ', '#', '0']).splitn(2, '.');
+                let width: usize = parts.next().and_then(|w| w.parse().ok()).unwrap_or(0);
+                let prec: Option<usize> = parts.next().map(|p| p.parse().unwrap_or(0));
+                let mut next_i = || {
+                    let v = if gi < 8 { cpu.gpr[3 + gi] } else { 0 };
+                    gi += 1;
+                    v
+                };
+                let body: Vec<u8> = match conv {
+                    b'%' => b"%".to_vec(),
+                    b'd' | b'i' => (next_i() as i32).to_string().into_bytes(),
+                    b'u' => next_i().to_string().into_bytes(),
+                    b'x' => format!("{:x}", next_i()).into_bytes(),
+                    b'X' => format!("{:X}", next_i()).into_bytes(),
+                    b'c' => vec![next_i() as u8],
+                    b's' => {
+                        let a = next_i();
+                        let mut v = rd_str(mem, a)?;
+                        if let Some(p) = prec {
+                            v.truncate(p);
+                        }
+                        v
+                    }
+                    b'f' | b'F' => {
+                        let v = if fi < 9 { f64::from_bits(cpu.fpr[fi]) } else { 0.0 };
+                        fi += 1;
+                        format!("{:.*}", prec.unwrap_or(6), v).into_bytes()
+                    }
+                    _ => return Err(Fault::Unresolved(target)),
+                };
+                let pad = width.saturating_sub(body.len());
+                if left {
+                    out.extend(&body);
+                    out.extend(std::iter::repeat_n(b' ', pad));
+                } else if zero && conv != b's' {
+                    let neg = body.first() == Some(&b'-');
+                    if neg {
+                        out.push(b'-');
+                    }
+                    out.extend(std::iter::repeat_n(b'0', pad));
+                    out.extend(&body[neg as usize..]);
+                } else {
+                    out.extend(std::iter::repeat_n(b' ', pad));
+                    out.extend(&body);
+                }
+            }
+            for (i, &b) in out.iter().chain(std::iter::once(&0)).enumerate() {
+                mem.st8(buf + i as u32, b)?;
+            }
+            cpu.gpr[3] = out.len() as u32;
+        }
         _ => return Ok(false),
     }
     Ok(true)
@@ -1726,6 +2803,61 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
 
 /// The guest address of an untyped public of the archive at guest `arch` (name: C string at guest `p`): the
 /// archive's data block mapped (once) as raw guest bytes.
+/// The guest copy of a `ptrtable_dynmodel` public (`*_scene_models`) of archive `arch`: each entry the desc's handle.
+fn ptrtable_public(mem: &mut GuestSpace, arch: u32, p: u32) -> Option<u32> {
+    let archive = mem.native(arch)?;
+    let mut name = Vec::new();
+    for k in 0..128 {
+        match mem.ld8(p.wrapping_add(k)).ok()? {
+            0 => break,
+            c => name.push(c),
+        }
+    }
+    let n = String::from_utf8(name).ok()?;
+    if !matches!(crate::dat_types::type_of(&n), Some(crate::dat_types::RootType::Custom("ptrtable_dynmodel"))) {
+        return None;
+    }
+    let cs = std::ffi::CString::new(n).ok()?;
+    let t = unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(archive as _, cs.as_ptr() as _) } as *const *mut melee_types::DynamicModelDesc;
+    if t.is_null() {
+        return None;
+    }
+    let mut bytes = Vec::new();
+    let mut i = 0;
+    loop {
+        let e = unsafe { *t.add(i) };
+        if e.is_null() {
+            bytes.extend_from_slice(&0u32.to_be_bytes());
+            break;
+        }
+        bytes.extend_from_slice(&mem.handle(e as usize, Some("DynamicModelDesc")).ok()?.to_be_bytes());
+        i += 1;
+    }
+    let s = st();
+    let base = s.heap_next;
+    s.heap_next = (base + bytes.len() as u32 + 0x1F) & !0x1F;
+    mem.add_bytes(base, bytes);
+    Some(base)
+}
+
+/// Whether archive `arch` (a native HSD_Archive by handle) has no public named by the C string at guest `p`.
+fn missing_public(mem: &mut GuestSpace, arch: u32, p: u32) -> bool {
+    let Some(archive) = mem.native(arch) else { return false };
+    let mut name = Vec::new();
+    for k in 0..128 {
+        match mem.ld8(p.wrapping_add(k)) {
+            Ok(0) => break,
+            Ok(c) => name.push(c),
+            Err(_) => return false,
+        }
+    }
+    let Ok(cs) = std::ffi::CString::new(name) else { return false };
+    unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(archive as _, cs.as_ptr() as _).is_null() }
+}
+
+/// Archives' data blocks mapped for untyped publics: (guest base, native raw data, length).
+static mut RAW_PUBLICS: Vec<(u32, usize, u32)> = Vec::new();
+
 fn untyped_public(mem: &mut GuestSpace, arch: u32, p: u32) -> Option<u32> {
     let archive = mem.native(arch)? as *mut melee_types::HSD_Archive;
     let mut name = Vec::new();
@@ -1736,13 +2868,20 @@ fn untyped_public(mem: &mut GuestSpace, arch: u32, p: u32) -> Option<u32> {
         }
     }
     let (data, len, off) = crate::archive::untyped_public(archive, std::str::from_utf8(&name).ok()?)?;
-    let base = match mem.regions.iter().find(|r| matches!(r.backing, mex_import::remap::Backing::Raw { ptr } if ptr as usize == data)) {
-        Some(r) => r.base,
+    let mapped = unsafe { &mut *core::ptr::addr_of_mut!(RAW_PUBLICS) };
+    let base = match mapped.iter().find(|r| r.1 == data) {
+        Some(r) => r.0,
         None => {
             let s = st();
             let base = s.heap_next;
             s.heap_next = (base + len + 0x1F) & !0x1F;
-            unsafe { mem.add_raw(base, data as *mut u8, len) };
+            // the guest's own copy relocated for its address (kind 43/44's "trJoint" holds a joint pointer the
+            // guest follows into HSD_JObjLoadJoint); the raw image's words are host-relative
+            match crate::archive::data_relocated_for(data, base) {
+                Some(b) => mem.add_bytes(base, b),
+                None => unsafe { mem.add_raw(base, data as *mut u8, len) },
+            }
+            mapped.push((base, data, len));
             base
         }
     };
@@ -1770,6 +2909,8 @@ pub struct Call<'a> {
     mem: &'a mut GuestSpace,
     /// Marshalled records: (guest address, native buffer, record).
     fix: Vec<(u32, Box<[u64]>, &'static str, u32)>,
+    /// Marshalled word arrays (`words`): (guest address, native copy), written back after the call.
+    fixw: Vec<(u32, Box<[u32]>)>,
     pub bad: bool,
     scratch: u32,
 }
@@ -1819,6 +2960,17 @@ impl Call<'_> {
                 return nat as *mut c_void;
             }
         }
+        if rec == Some("HSD_Joint") {
+            if let Some(p) = dat_joint(h) {
+                return p as *mut c_void;
+            }
+            // inside a loaded archive's raw data block (an untyped public, kind 43/44's "trJoint" table): the joint
+            // decoded from that archive, once per address
+            let raw = unsafe { &*core::ptr::addr_of!(RAW_PUBLICS) }.iter().find(|r| h >= r.0 && h < r.0 + r.2).map(|r| r.1 + (h - r.0) as usize);
+            if let Some(p) = raw.and_then(raw_joint) {
+                return p as *mut c_void;
+            }
+        }
         if let Some(rec) = rec {
             if let (Some(ns), Some(gs)) = (self.mem.layouts.native_size(rec), self.mem.layouts.gc_size(rec)) {
                 let mut buf = vec![0u64; ns.div_ceil(8)].into_boxed_slice();
@@ -1836,6 +2988,32 @@ impl Call<'_> {
         }
         self.bad = true;
         core::ptr::null_mut()
+    }
+    /// Pointer argument `i` to `n` 32-bit words (an Mtx = 12 f32, an `*mut f32` / `*mut i32` out-param): a native
+    /// object's field as is, plain guest memory copied word by word into a native-endian buffer and written back after
+    /// the call. Passed as raw host bytes (`ptr(i, None)`) the callee read and wrote the guest's big-endian words
+    /// (the `&Vec3` bug of Round 7, for HSD_MtxSRT / PSMTXConcat / ftColl_80076640 / mpCheckAllRemap's outs).
+    pub fn words(&mut self, i: usize, n: usize) -> *mut c_void {
+        let h = self.cpu.gpr[3 + i];
+        if h == 0 {
+            return core::ptr::null_mut();
+        }
+        if let Some(nat) = self.mem.interior(h) {
+            return nat as *mut c_void;
+        }
+        let mut buf = vec![0u32; n].into_boxed_slice();
+        for (k, w) in buf.iter_mut().enumerate() {
+            match self.mem.ld32(h + 4 * k as u32) {
+                Ok(v) => *w = v,
+                Err(_) => {
+                    self.bad = true;
+                    return core::ptr::null_mut();
+                }
+            }
+        }
+        let p = buf.as_mut_ptr() as *mut c_void;
+        self.fixw.push((h, buf));
+        p
     }
     /// A two-gobj callback argument (`HSD_GObjInteraction`, fp->grabbed_cb): guest code as a two-argument trampoline,
     /// a vanilla address as the port's function.
@@ -1886,6 +3064,11 @@ impl Call<'_> {
         }
     }
     fn finish(&mut self) {
+        for (h, buf) in std::mem::take(&mut self.fixw) {
+            for (k, w) in buf.iter().enumerate() {
+                let _ = self.mem.st32(h + 4 * k as u32, *w);
+            }
+        }
         for (h, mut buf, rec, base) in std::mem::take(&mut self.fix) {
             let gs = self.mem.layouts.gc_size(rec).unwrap_or(0);
             copy_record(self.mem, base, h, gs);

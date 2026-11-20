@@ -86,7 +86,17 @@ fn native(gen: &Path) -> String {
         }
         let t_decl = t;
         let t = rt;
-        let pointee = t.strip_prefix("*mut ").or_else(|| t.strip_prefix("*const "));
+        // a pointer to a type alias points to the record it names (`*mut Fighter_GObj` is an HSD_GObj*: untyped, a
+        // guest load of fp->x1A5C faulted unless that gobj was already registered, Akaneia's Diddy 232612)
+        let pointee = t.strip_prefix("*mut ").or_else(|| t.strip_prefix("*const ")).map(|mut p| {
+            for _ in 0..8 {
+                match al.get(p) {
+                    Some(n) if !names.contains(p) => p = n.as_str(),
+                    _ => break,
+                }
+            }
+            p
+        });
         let kind = if let Some(p) = pointee.filter(|p| names.contains(*p)) {
             format!("Kind::PtrTo({:?})", gcn.get(p).cloned().unwrap_or_else(|| p.to_string()))
         } else if t.starts_with('*') || t.starts_with("Option<") {

@@ -274,7 +274,10 @@ pub fn ftMt_SpecialS_ReflectThink(gobj: *mut HSD_GObj) {
         match reflect_flag {
             CONFUSION_REFLECT_ON => {
                 ext::ftColl_CreateReflectHit(gobj, &(*a).x1C_MEWTWO_CONFUSION_REFLECTION, Some(cb_ftMt_SpecialS_OnReflect));
-                (*fp).set_x2218_b4(1);
+                // ACE v2.0.1's codes.gct nops this store (`stb r0,0x2218(r31)` at 0x80146C58)
+                if !melee_core::codes::disc_writes(0x8014_6C58, melee_core::codes::PPC_NOP) {
+                    (*fp).set_x2218_b4(1);
+                }
                 (*fp).mv.mt.SpecialS.set_isConfusionReflect(1);
                 (*fp).cmd_vars[1] = CONFUSION_REFLECT_NONE;
             }

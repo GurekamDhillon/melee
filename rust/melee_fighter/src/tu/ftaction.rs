@@ -899,6 +899,12 @@ fn runner_ready(cmd: &mut CommandInfo, speed: f32) -> bool {
     true
 }
 
+/// `MELEE_LOG_FTCMD=1`: log every subaction command the exec runner runs (kind, motion, frame, opcode).
+fn cmd_trace() -> bool {
+    static T: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *T.get_or_init(|| std::env::var_os("MELEE_LOG_FTCMD").is_some_and(|v| v != "0"))
+}
+
 /// `ftAction_80073240`: run the subaction script (exec table).
 pub fn ftAction_80073240(g: G) {
     melee_core::ct!("ftAction_80073240");
@@ -918,6 +924,9 @@ pub fn ftAction_80073240(g: G) {
                 break;
             }
             let op = opcode(cmd);
+            if cmd_trace() {
+                eprintln!("ftcmd: kind {} motion {} frame {} op {op} x2210 {:08X}", fpm(g).kind, fpm(g).motion_id, fpm(g).cur_anim_frame, fpm(g).x2210.throw_flags);
+            }
             if !ext::Command_Execute(cmd, op) {
                 if op == GENO_FTCMD_OP {
                     ext::Geno_FtCmd(g, cmd, GENO_MODE_EXEC);
@@ -954,6 +963,9 @@ pub fn ftAction_80073354(g: G) {
             }
             let timer = cmd.timer;
             let op = opcode(cmd);
+            if cmd_trace() {
+                eprintln!("ftcmd: kind {} motion {} frame {} op {op} x2210 {:08X}", fpm(g).kind, fpm(g).motion_id, fpm(g).cur_anim_frame, fpm(g).x2210.throw_flags);
+            }
             if !ext::Command_Execute(cmd, op) {
                 if op == GENO_FTCMD_OP {
                     ext::Geno_FtCmd(g, cmd, GENO_MODE_ANIM);

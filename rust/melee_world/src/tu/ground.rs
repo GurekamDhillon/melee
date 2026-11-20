@@ -2051,7 +2051,9 @@ pub unsafe extern "C" fn Ground_801C24F8(stkind: StKind, arg1: u32, arg2: *mut i
                         arg1 |= 1;
                     }
                     2 => {
-                        if (*phi_r30).x16 as i32 > ext::HSD_Randi(RANDI_MAX) || temp_r25 {
+                        // m-ex codes.gct 0x801C26B0 (lha r0,0x16 -> li r0,50): every entry's chance is a fixed 50
+                        let chance = if melee_core::codes::disc_writes(0x801C_26B0, 0x3800_0032) { 50 } else { (*phi_r30).x16 as i32 };
+                        if chance > ext::HSD_Randi(RANDI_MAX) || temp_r25 {
                             arg1 |= 2;
                         } else {
                             arg1 |= 1;
@@ -3409,6 +3411,11 @@ pub unsafe extern "C" fn Ground_801C43C4(arg0: *mut c_void) -> i32 {
             i += 1;
             phi_r4 = phi_r4.add(1);
         }
+        // the light anim the map_head's loop table does not list: name both sides before the assert (ACE 2.0.1's
+        // new m-ex stages stop here)
+        let t = (*tmp).unk20;
+        let have: std::vec::Vec<*mut c_void> = (0..max as usize).map(|j| (*t.add(j)).unk0 as *mut c_void).collect();
+        eprintln!("ground: Ground_801C43C4 light anim {arg0:p} not in the map_head loop table ({max} entries: {have:?})");
         panic!("ground.c:3652 HSD_ASSERT(3652, 0)");
     }
     0

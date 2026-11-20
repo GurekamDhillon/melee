@@ -49,7 +49,7 @@ stage_17_greens	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:23/cpu9;p2=ck:8/cpu
 stage_18_fourside	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:2/cpu9;p2=ck:13/cpu9;p3=none;p4=none;stage=ext:18;match=time;minutes=0;items=off
 stage_19_mushroomkingdom	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:7/cpu9;p2=ck:18/cpu9;p3=none;p4=none;stage=ext:19;match=time;minutes=0;items=off
 stage_20_mushroomkingdom2	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:12/cpu9;p2=ck:23/cpu9;p3=none;p4=none;stage=ext:20;match=time;minutes=0;items=off
-stage_21_akaneia	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:17/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:21;match=time;minutes=0;items=off
+stage_288_akaneia	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:17/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:288;match=time;minutes=0;items=off
 stage_22_venom	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:22/cpu9;p2=ck:7/cpu9;p3=none;p4=none;stage=ext:22;match=time;minutes=0;items=off
 stage_23_pokefloats	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:1/cpu9;p2=ck:12/cpu9;p3=none;p4=none;stage=ext:23;match=time;minutes=0;items=off
 stage_24_bigblue	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:6/cpu9;p2=ck:17/cpu9;p3=none;p4=none;stage=ext:24;match=time;minutes=0;items=off

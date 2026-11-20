@@ -2234,6 +2234,11 @@ pub unsafe fn Camera_8002C5B4(mut arg0: *mut Camera_x2D0) {
     }
     temp_pos = *{ cam_offset = core::ptr::addr_of_mut!((*cam).x314) as *mut Vec; cam_offset };
     let _ = lbVector_Add(core::ptr::addr_of_mut!(temp_pos) as *mut Vec, cam_pos);
+    // m-ex codes.gct nops the four stfs at Camera_8002C5B4+0xf4/+0x108/+0x11c/+0x130: the interest point
+    // (cam_pos + offset) is no longer clamped to the camera bounds in x and y
+    let unclamped = melee_core::codes::disc_writes(0x8002_C6A8, melee_core::codes::PPC_NOP);
+    if unclamped {
+    } else {
     if temp_pos.x > (*params).x_max {
         temp_pos.x = (*params).x_max;
     } else if temp_pos.x < (*params).x_min {
@@ -2243,6 +2248,7 @@ pub unsafe fn Camera_8002C5B4(mut arg0: *mut Camera_x2D0) {
         temp_pos.y = (*params).y_max;
     } else if temp_pos.y < (*params).y_min {
         temp_pos.y = (*params).y_min;
+    }
     }
     if temp_pos.z > (*params).z_max {
         temp_pos.z = (*params).z_max;

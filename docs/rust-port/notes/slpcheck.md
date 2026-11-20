@@ -380,3 +380,10 @@ Triage of the rest (no fix):
   script_game_t --build`) no longer fits the committed harness (5000 lines differ: the generator follows the current
   melee_types bitfield names, the committed harness the older ones; `numActiveParticles` is not in `script_game::ext`).
   Left as is; the regen needs its own pass.
+
+## Known console-only divergence: CPU behaviour 18 uninitialised stick (Nov 16, port/ace201)
+
+`ftCo_800AC5A0` (CPU shield DI) with near-zero knockback pushes `SetLstickX` = low byte of the r5 left by earlier code
+and `SetLstickY` = low byte of the console Fighter address (r30 = fp from `ftCo_800B2790`). Retail code, so vanilla CPU
+replays are affected too. The engine and the C build push 0 (the goldens). Exact needs a console-heap-address model
+for Fighters and r5 through `ftCo_800B2AFC`'s call tree; not ported. Trace in mex.md, Round 6.

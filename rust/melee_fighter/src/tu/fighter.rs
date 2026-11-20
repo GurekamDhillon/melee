@@ -522,7 +522,7 @@ macro_rules! bits {
 /// `Fighter_800679B0`: allocators, PlCo load, per-kind init hooks.
 pub unsafe fn Fighter_800679B0() {
     melee_core::ct!("Fighter_800679B0");
-    ext::HSD_ObjAllocInit(&mut fighter_alloc_data, core::mem::size_of::<Fighter>() as u32, 4);
+    ext::HSD_ObjAllocInit(&mut fighter_alloc_data, (core::mem::size_of::<Fighter>() + crate::tu::ftanim::mex_ft_ext_bytes()) as u32, 4);
     ext::HSD_ObjAllocInit(&mut fighter_dat_attrs_alloc_data, 0x424, 4);
     ext::ftData_MexInitKinds();
     ext::GenoDefine_InitKinds();
@@ -644,6 +644,8 @@ pub unsafe fn Fighter_LoadCommonData() {
     Fighter_804D6550 = d(1) as _;
     Fighter_804D654C = d(2) as _;
     Fighter_804D6548 = d(3) as _;
+    h::FT_PARTS_TABLE_RAW = d(4) as _;
+    h::FIGHTER_804D6540_RAW = d(5) as _;
     h::FT_PARTS_TABLE = ftCommonData_ExtendKindTable(d(4) as _, 0) as _;
     h::FIGHTER_804D6540 = ftCommonData_ExtendKindTable(d(5) as _, 1) as _;
     Fighter_804D653C = d(6) as _;
@@ -1142,6 +1144,7 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     ext::GObj_SetupGXLink(g, Some(crate::tu::ftdrawcommon::ftDrawCommon_80080E18), 5, 0);
     let fp = ext::HSD_ObjAlloc(&mut fighter_alloc_data) as F;
     core::ptr::write_bytes(fp, 0, 1); // TARGET_PC: Slippi's Init Player Data zeroes the block
+    crate::tu::ftanim::mex_ext_clear(fp);
     (*fp).dat_attrs_backup = ext::HSD_ObjAlloc(&mut fighter_dat_attrs_alloc_data) as _;
     ext::GObj_InitUserData(g, 4, Some(Fighter_Unload_8006DABC), fp as *mut core::ffi::c_void);
     ph!("data 8008572C", ext::ftData_8008572C(input.internal_id as i32));
@@ -1473,6 +1476,8 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         fp.x594.x0_1.bf_0 = ((*wait).x10_animCurrFlags as u32).to_be_bytes();
         e::ftCo_8009E7B4(fp, bytes);
         if !mf(flags, Ft_MF_SkipAnim) {
+            // m-ex C2 0x80069CE0: fp+0x23EC = (arg3 != NULL), the flag its remap path keys on
+            crate::tu::ftanim::mex_set_thrown(fp, !arg3.is_null());
             if !arg3.is_null() {
                 e::ftData_80085CD8(fp, if !thrown_tbl.is_null() { thrown_tbl } else { (*arg3).user_data as F }, fp.anim_id);
                 e::ftColl_8007B8CC(fp, arg3);

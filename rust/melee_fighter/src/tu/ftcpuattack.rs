@@ -165,7 +165,11 @@ fn tables<'a>() -> &'a Fighter_804D64FC_t {
     unsafe { &*cs::ext::Fighter_804D64FC }
 }
 fn table_list(t: *mut *mut core::ffi::c_void, kind: i32) -> *const ftCo_AttackEntry {
-    unsafe { *t.offset(kind as isize) as *const ftCo_AttackEntry }
+    // an m-ex kind whose AI-like row has no list here (ACE 2.0.1's PlTs, kind 39, once its MexCPU_ProcCustom ran to
+    // the end): an empty list (cmd 0 first), "no attack", instead of reading NULL. Vanilla kinds always have one.
+    static EMPTY: [u32; 9] = [0; 9];
+    let p = unsafe { *t.offset(kind as isize) as *const ftCo_AttackEntry };
+    if p.is_null() { EMPTY.as_ptr() as *const ftCo_AttackEntry } else { p }
 }
 
 fn neutral(fp: &mut Fighter) {

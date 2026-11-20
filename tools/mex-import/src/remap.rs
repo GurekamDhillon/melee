@@ -55,6 +55,8 @@ mod gen {
 }
 
 /// Unions of per-owner variables kept as native 32-bit words (see [`Layouts::locate`]).
+/// Unions accessed natively through a GC-byte-order bitfield member (see [`Layouts::locate`]).
+const BYTE_UNIONS: [&str; 1] = ["Fighter_x2210"];
 const WORD_UNIONS: [&str; 3] = ["Fighter_MotionVars", "Fighter_FighterVars", "Item_ItemVars"];
 
 /// Native layout tables by GC record name.
@@ -143,6 +145,13 @@ impl Layouts {
             let w = (off & !3) as usize + 3 - (off & 3) as usize;
             return if w < nsz { Loc::Byte(w) } else { Loc::Pad };
         }
+        // Unions whose native code works through a bitfield-byte member (kept in GC byte order) while the generated
+        // layout lists only the scalar member (native little-endian): byte k is native byte k. Fighter_x2210:
+        // ftAction_80071974 sets x0.throw_flags_b0 (native byte 0), and through the u32 a guest read of GC byte 0 hit
+        // native byte 3, so Liu Kang's SpecialN accessory callback never saw the flag and spawned no item.
+        if BYTE_UNIONS.contains(&rec) {
+            return if (off as usize) < nsz { Loc::Byte(off as usize) } else { Loc::Pad };
+        }
         match fields.iter().find(|f| off >= f.gc && off < f.gc + f.ty.gc.max(1)) {
             Some(f) => self.ty_locate(f.ty, off - f.gc, f.nat),
             None => Loc::Pad,
@@ -206,10 +215,11 @@ const AUTO_BASE: u32 = 0x9000_0000;
 const ARRAY_REACH: u32 = 64;
 
 /// The guest address span an auto-registered object of GC size `size` reserves for its array: ARRAY_REACH elements,
-/// and at least 0x2000 bytes (Dedede's fp->parts has more than 64 FighterBones: bone 65 read the next object's
-/// region, a JObj's class_info, and lb_8000B1CC faulted on it).
+/// and at least 0x4000 bytes (Dedede's fp->parts has more than 64 FighterBones: bone 65 read the next object's
+/// region, a JObj's class_info, and lb_8000B1CC faulted on it; Diddy's Fighter_TaroStateChange reads row 275 of
+/// fp->x1C's common MotionState table, 0x2260 bytes in).
 fn reach(size: u32) -> u32 {
-    (size.max(0x10) * ARRAY_REACH).max(0x2000)
+    (size.max(0x10) * ARRAY_REACH).max(0x4000)
 }
 
 pub struct GuestSpace {
@@ -415,6 +425,21 @@ impl GuestSpace {
                 _ => {}
             }
         }
+        // a byte pointer into a registered native object (the CPU's command cursor `fp->cpu.csP`, an s8* into
+        // `fp->cpu.buffer`, which ACE's MexCPU_Process reads): the guest address of the GC offset that starts there
+        if matches!(pointee, None | Some("s8" | "u8" | "char")) {
+            for r in &self.regions {
+                if let Backing::Native { rec, ptr, .. } = &r.backing {
+                    let n = self.layouts.native_size(rec).unwrap_or(0);
+                    if p > *ptr as usize && p < *ptr as usize + n {
+                        let want = p - *ptr as usize;
+                        if let Some(g) = (1..r.size).find(|&g| self.layouts.field_start(rec, g) == Some(want)) {
+                            return Ok(r.base + g);
+                        }
+                    }
+                }
+            }
+        }
         match pointee {
             // SAFETY: GuestSpace::add_native's contract: pointers reachable from a registered
             // object are valid.
@@ -504,24 +529,44 @@ impl GuestSpace {
     fn materialize(&mut self, h: u32, rec: &'static str) -> Option<usize> {
         let gs = self.layouts.gc_size(rec)?;
         let ns = self.layouts.native_size(rec)?;
-        let bytes: Vec<Option<u8>> = (0..gs).map(|k| self.load(h + k, 1).ok().map(|v| v as u8)).collect();
-        let mut buf = vec![0u64; ns.div_ceil(8).max(1)].into_boxed_slice();
+        // a MotionState pointer names a table (the native code indexes rows by state): every whole row the guest
+        // block holds. Meta Knight's onLoad copies the common table (341 rows) into its heap and installs the copy;
+        // one decoded row left the native reading the rest as raw big-endian bytes (a jump through a flags word)
+        let rows = if rec == "MotionState" {
+            match self.find(h, 1) {
+                Ok(i) => ((self.regions[i].base + self.regions[i].size - h) / gs).clamp(1, 4096),
+                Err(_) => 1,
+            }
+        } else {
+            1
+        };
+        let nsa = ns;
+        let bytes: Vec<Option<u8>> = (0..gs * rows).map(|k| self.load(h + k, 1).ok().map(|v| v as u8)).collect();
+        let mut buf = vec![0u64; (nsa * rows as usize).div_ceil(8).max(1)].into_boxed_slice();
         let ptr = buf.as_mut_ptr() as *mut u8;
         self.owned.push(buf);
-        self.regions.insert(0, Region { base: h, size: gs, backing: Backing::Native { rec, ptr, shadow: vec![0; gs as usize] } });
-        let mut k = 0;
-        while k < gs {
-            match self.layouts.locate(rec, k) {
-                Loc::Ptr(_, 0, _) if k + 4 <= gs => {
-                    let w = (0..4).fold(0u32, |a, j| a << 8 | bytes[(k + j) as usize].unwrap_or(0) as u32);
-                    let _ = self.store(h + k, 4, w as u64);
-                    k += 4;
-                }
-                _ => {
-                    if let Some(b) = bytes[k as usize] {
-                        let _ = self.store(h + k, 1, b as u64);
+        for r in (0..rows).rev() {
+            // SAFETY: inside buf (rows * nsa bytes)
+            let rp = unsafe { ptr.add(r as usize * nsa) };
+            self.regions.insert(0, Region { base: h + r * gs, size: gs, backing: Backing::Native { rec, ptr: rp, shadow: vec![0; gs as usize] } });
+        }
+        for r in 0..rows {
+            let hb = h + r * gs;
+            let bo = (r * gs) as usize;
+            let mut k = 0;
+            while k < gs {
+                match self.layouts.locate(rec, k) {
+                    Loc::Ptr(_, 0, _) if k + 4 <= gs => {
+                        let w = (0..4).fold(0u32, |a, j| a << 8 | bytes[bo + (k + j) as usize].unwrap_or(0) as u32);
+                        let _ = self.store(hb + k, 4, w as u64);
+                        k += 4;
                     }
-                    k += 1;
+                    _ => {
+                        if let Some(b) = bytes[bo + k as usize] {
+                            let _ = self.store(hb + k, 1, b as u64);
+                        }
+                        k += 1;
+                    }
                 }
             }
         }
@@ -561,7 +606,13 @@ impl GuestSpace {
             if n != 4 {
                 return Err(Fault::Mem(ea));
             }
-            let p = match self.fn_native.and_then(|f| f(v as u32)) {
+            // a MotionState / ItemStateTable the host owns (an m-ex fighter's MoveLogic rows or an article's state rows in its code blob) before the code
+            // pointer path, which would make a call trampoline of a table address
+            let host = match pointee {
+                Some(r @ ("MotionState" | "ItemStateTable")) => self.ptr_native.and_then(|f| f(self, v as u32, r)),
+                _ => None,
+            };
+            let p = match host.or_else(|| self.fn_native.and_then(|f| f(v as u32))) {
                 Some(p) => p,
                 None => match pointee {
                     Some(r) if self.materialize_ok(v as u32, r) => self.materialize(v as u32, r).ok_or(Fault::Mem(ea))?,

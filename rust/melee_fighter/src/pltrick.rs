@@ -43,7 +43,12 @@ pub(crate) fn by_attack_hi_inc(acp: &mut plActionStats, id: u8) {
             b = u32::from_be_bytes(b).wrapping_add(1).to_be_bytes();
             unsafe { core::ptr::copy_nonoverlapping(b.as_ptr(), p, 4) };
         }
-        _ => panic!("TODO(group3 pltrick) pl_80037C60: by_attack_hi[{id}] is past plActionStats (GC StaticPlayer layout)"),
+        // an m-ex fighter's own attack id (ACE 2.0.1's PlLu reaches 236): the console's increment lands in StaticPlayer
+        // bytes past plActionStats (match stats, not simulation state; the native layout differs). Not counted
+        _ => {
+            static ONCE: std::sync::Once = std::sync::Once::new();
+            ONCE.call_once(|| eprintln!("pltrick: by_attack_hi[{id}] past plActionStats, not counted"));
+        }
     }
 }
 

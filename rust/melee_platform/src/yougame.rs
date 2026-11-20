@@ -117,6 +117,9 @@ fn apply_data_dir(d: &str) -> Vec<String> {
         ("MELEE_MODS_DIR", "mods", true),
         ("MELEE_NUCLEUS_DIR", "nucleus", true),
         ("MELEE_COSMETICS_DIR", "Cosmetics", true),
+        // Both default to beside the exe, which is read-only in the app: the pipeline cache and the Envoy run file.
+        ("MELEE_GPUCACHE", "gpucache", true),
+        ("MELEE_ENVOY_DIR", "envoy", true),
     ] {
         if std::env::var_os(key).is_some() {
             continue;

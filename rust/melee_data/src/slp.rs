@@ -400,6 +400,15 @@ pub fn online_codeset(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x8006_A880)
 }
 
+/// Our own exporter's `gameplayCodes` metadata (melee/src/slp_export.rs): the opt-in codes word the match ran with, as
+/// `melee_core::codes::encode` wrote it (hex word, `:limit` with LGL). None on any other file (Slippi's never has it).
+pub fn gd_gameplay_codes(d: &[u8]) -> Option<String> {
+    let key = b"U\x0dgameplayCodesSU";
+    let at = d.windows(key.len()).position(|w| w == key)? + key.len();
+    let n = *d.get(at)? as usize;
+    std::str::from_utf8(d.get(at + 1..at + 1 + n)?).ok().map(str::to_string)
+}
+
 /// True when the replay was recorded on Akaneia (an m-ex disc): its Gecko list carries Akaneia's own `codes.gct`
 /// inserts, of which the one at 0x803D7060 is the marker (byte-identical in every file of Hero's Akaneia corpus, absent
 /// from the vanilla Slippi sets). On such a replay the external character ids past 25 are the disc's m-ex fighters

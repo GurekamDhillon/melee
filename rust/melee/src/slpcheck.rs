@@ -397,6 +397,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         (None, Ok(ak)) if slp::akaneia_codeset(&file.gecko) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype <= 1 && g.player(i).ckind > 25)) => ak,
         _ => iso,
     };
+    // which disc the replay is played on: Akaneia when the file carries its marker code (and is played on that disc)
+    let ak_disc = std::env::var("GW_ISO_AKANEIA").is_ok_and(|a| a == iso);
+    println!("slpcheck: {name}: disc={}", if ak_disc { "akaneia" } else if slp::akaneia_codeset(&file.gecko) { "akaneia-codes-on-other-disc" } else if std::env::var("GW_ISO_VANILLA").is_ok_and(|v| v == iso) { "vanilla" } else { "other" });
     let mut sm = Summary {
         version: file.version_str(),
         stage: file.info.as_ref().map_or(0, |g| g.stage() as i32),
@@ -502,7 +505,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             std::env::set_var("MELEE_MEX", "ucf_dbooc_squatrv_fix");
         }
     }
-    // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn (the port's own .slp exports, played without it)
+    // our own export says which codes its match ran (`gameplayCodes`): without Neutral Spawn the fighters stood on the
+    // stage's spawn joints, so the replay is played that way too (Battlefield and Dream Land move port 1 otherwise)
+    crate::apply_recorded_spawn(&data);
+    // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn at all (as if the replay were not one)
     if std::env::var_os("SLPCHECK_VANILLA_SPAWN").is_none() {
         crate::replay_modes_active(file.version[0] as i32 * 10000 + file.version[1] as i32 * 100 + file.version[2] as i32);
     }

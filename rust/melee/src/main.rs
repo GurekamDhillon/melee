@@ -1276,6 +1276,16 @@ pub(crate) fn set_replay_db_level(v: Option<i32>) {
     }
 }
 
+/// A replay our exporter wrote carries the codes word its match ran with (`gameplayCodes`); the spawn follows its
+/// Neutral Spawn bit, not the Neutral Spawn every Slippi replay is played with. Other files: unchanged.
+pub(crate) fn apply_recorded_spawn(data: &[u8]) {
+    let ns = melee_data::slp::gd_gameplay_codes(data).and_then(|s| melee_core::codes::decode(&s)).map(|(w, _)| w & melee_core::codes::NEUTRAL_SPAWN != 0);
+    melee_core::codes::set_replay_no_neutral_spawn(ns == Some(false));
+    if ns == Some(false) {
+        eprintln!("melee: replay recorded without Neutral Spawn (gameplayCodes): fighters spawn on the stage's joints");
+    }
+}
+
 fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
     // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
@@ -1286,6 +1296,7 @@ fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(mel
     melee_core::codes::set_ps_camera_independent_monitor(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_camera_independent_monitor_code(&f.gecko)));
     melee_core::codes::set_ps_preload_transformations(parsed.as_ref().is_some_and(melee_data::slp::ps_preload_transformations));
     melee_core::codes::set_ps_freeze_at_entry(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_freeze_at_entry_code(&f.gecko)));
+    apply_recorded_spawn(&data);
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, identity: gdlp, ..Default::default() });
     if pl.env.slippi_codes.is_none() && parsed.as_ref().is_some_and(|f| melee_data::slp::online_codeset(&f.gecko)) {
         pl.env.slippi_codes = Some("online".into());

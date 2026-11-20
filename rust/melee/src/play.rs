@@ -1886,6 +1886,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 // playedOn: readers take only Slippi's values (py-slippi: console, dolphin, network, nintendont)
                 let online = net.is_some() || rp.feed.as_ref().map_or(false, |f| f.r.meta("np_role").is_some());
                 crate::slp_export::install(&spec, if online { "network" } else { "console" }, ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+                crate::slp_export::set_disc(&game.iso);
             }
         }
         rp.net = net;

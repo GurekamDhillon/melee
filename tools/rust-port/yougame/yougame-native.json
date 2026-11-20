@@ -4,5 +4,6 @@
   "disc": true,
   "discs": { "brawl": "optional" },
   "net": "internet",
+  "controllers": "mirror",
   "memoryMb": 6144
 }

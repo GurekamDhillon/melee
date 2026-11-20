@@ -5,7 +5,7 @@ No network, no YouGame account: spawns the exe with YOUGAME_STDIO=1 and a scratc
 requests from a fake account (Cloud below), then checks
   1. stdout carries only bridge lines (a `melee version` run under the bridge prints nothing to the bridge);
   2. disc supply as the app does it: yougame-native.json passes the app's spec rules (version 1, known fields and
-     placeholders, "disc": true for {disc}, net "internet", no pad mirror, no player box), and the play runs start
+     placeholders, "disc": true for {disc}, net "internet", the pad mirror, no player box), and the play runs start
      from its args with {disc}/{data}/{build} filled in; a wrong disc (a GALP01 header) exits 4 with a `crash:` line
      that gives the reason and no path;
   3. a play run: the first line is the caps line, without pads/rumble/view/volume/fullscreen;
@@ -252,8 +252,8 @@ def main():
             print("BRIDGE FAIL (spec)")
             return 1
         check(spec.get("disc") is True and any("{disc}" in x for x in spec["args"]), "the spec plays on the listing's disc ({disc})")
-        check(spec.get("net") == "internet" and spec.get("controllers", "none") == "none" and "embed" not in spec,
-              "net internet, no pad mirror, own window")
+        check(spec.get("net") == "internet" and spec.get("controllers") == "mirror" and "embed" not in spec,
+              "net internet, pad mirror, own window")
         build_dir = str(Path(a.exe).resolve().parent)
         play = fill(spec["args"], build_dir, str(data), iso) + ["--skip-intro", "--no-audio"]
         bad = Path(tmp) / "wrong-disc.iso"

@@ -383,7 +383,7 @@ pub fn shims() -> std::vec::Vec<(usize, usize)> {
     #[cfg(windows)]
     let all: &[Shim] = unsafe {
         let a = core::ptr::addr_of!(SHIMS_A);
-        let n = (core::ptr::addr_of!(SHIMS_Z) as usize - a as usize) / core::mem::size_of::<Shim>();
+        let n = (core::ptr::addr_of!(SHIMS_Z) as usize - a as usize) / core::mem::size_of::<Shim>();  // semantics: allow(host: shim table length from linker section bounds)
         core::slice::from_raw_parts(a, n)
     };
     #[cfg(not(any(windows, all(unix, not(target_vendor = "apple")))))]

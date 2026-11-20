@@ -78,22 +78,30 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 // ---- Fighter callback entries (extern "C") for the functions this TU stores in Fighter ----
 
 /// `ftLg_SpecialS_SetVars` as a Fighter callback entry (`x21EC`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLg_SpecialS_SetVars(g: *mut HSD_GObj) {
+    core::hint::black_box(0x40DC0759u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLg_SpecialS_SetVars");
     ftLg_SpecialS_SetVars(g);
 }
 /// `ftLg_SpecialS_SetGFX` as a Fighter callback entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLg_SpecialS_SetGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0x319A7B6Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLg_SpecialS_SetGFX");
     ftLg_SpecialS_SetGFX(g);
 }
 /// `ftLg_SpecialS_OnGiveDamage` as a Fighter callback entry (`deal_dmg_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLg_SpecialS_OnGiveDamage(g: *mut HSD_GObj) {
+    core::hint::black_box(0x1A542E1Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLg_SpecialS_OnGiveDamage");
     ftLg_SpecialS_OnGiveDamage(g);
 }
 /// `ftCommon_8007F76C(gobj)` as a Fighter callback entry (`x21F8`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCommon_8007F76C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3DF1FA39u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCommon_8007F76C");
     melee_fighter::ftcommon2::ftcommon_8007f76c(&mut *fpp(g));
 }

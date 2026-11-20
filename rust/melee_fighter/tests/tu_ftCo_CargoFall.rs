@@ -24,7 +24,7 @@ fn ftCo_CargoFall_matches_c() {
         hk::ftCommon_8007D5D4 = Some(|f| { t(3); t(pi(f as *const Fighter)) });
         hk::ftCo_8009C5A4 = Some(|g, ms| { t(4); t(pi(g)); t(ms as u32) });
         hk::ftCo_8009BF3C = Some(|g| { t(5); t(pi(g)); sr(5) });
-        hk::ft_80082C74 = Some(|g, cb| { t(7); t(pi(g)); t((cb == Some(melee_fighter::tu::ftCo_CargoLanding::ftCo_8009BD4C_cb as unsafe extern "C" fn(*mut HSD_GObj))) as u32) });
+        hk::ft_80082C74 = Some(|g, cb| { t(7); t(pi(g)); t((cb.is_some_and(|p| core::ptr::fn_addr_eq(p, melee_fighter::tu::ftCo_CargoLanding::ftCo_8009BD4C_cb as unsafe extern "C" fn(*mut HSD_GObj)))) as u32) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_CargoFall.txt"));
     for op in 0..5u32 {

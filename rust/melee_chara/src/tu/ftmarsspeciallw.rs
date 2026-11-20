@@ -45,7 +45,9 @@ unsafe fn da(fp: *mut Fighter) -> *mut MarsAttributes {
 }
 
 /// `ftMs_SpecialLw_80139140` as a Fighter callback entry (the shield-hit callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMs_SpecialLw_80139140(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9C4313A5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMs_SpecialLw_80139140");
     ftMs_SpecialLw_80139140(g);
 }

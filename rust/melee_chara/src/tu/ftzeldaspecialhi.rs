@@ -107,7 +107,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftZd_SpecialHi_801396AC` / `_8013979C` as accessory4 callback entries.
 pub use crate::chars::cb::ftzeldaspecialhi__ftZd_SpecialHi_801396AC as cb_ftZd_SpecialHi_801396AC;
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftZd_SpecialHi_8013979C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x48DEF2D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftZd_SpecialHi_8013979C");
     ftZd_SpecialHi_8013979C(g);
 }

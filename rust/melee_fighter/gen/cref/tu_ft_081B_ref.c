@@ -77,7 +77,7 @@ int main(void)
                 go[i].user_data = f;
                 f->ft_data = &fd; f->parts = bones;
                 f->ecb_lock = (int) rnd();
-                f->allow_sdi = rnd() & 1; f->x2224_b2 = (rnd() % 3) == 0;
+                f->allow_sdi = rnd() & 1; f->stamina_dead = (rnd() % 3) == 0;
                 f->x2064_ledgeCooldown = (rnd() % 3) == 0 ? 5 : 0;
                 f->cur_pos.x = rf(); f->cur_pos.y = rf(); f->cur_pos.z = rf();
                 f->x34_scale.y = rf(); f->co_attrs.weight = rf(); f->facing_dir = rf();

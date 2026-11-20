@@ -162,7 +162,9 @@ pub static mut it_803F78D8: [ItemStateTable; 1] = [
 ];
 
 /// `HSD_GObj* it_802C65E4(Item_GObj* gobj, Vec* vec, enum Fighter_Part arg2, float arg3)`
+#[inline(never)]
 pub unsafe extern "C" fn it_802C65E4(gobj: *mut HSD_GObj, vec: *mut Vec, arg2: Fighter_Part, arg3: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x98F80730u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C65E4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Manhole;
@@ -178,7 +180,9 @@ pub unsafe extern "C" fn it_802C65E4(gobj: *mut HSD_GObj, vec: *mut Vec, arg2: F
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchManhole_Logic72_Destroyed(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7772F1E3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchManhole_Logic72_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
@@ -186,7 +190,9 @@ pub unsafe extern "C" fn itGameWatchManhole_Logic72_Destroyed(gobj: *mut HSD_GOb
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6718(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xCE5ABB6Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6718");
     let ip = GET_ITEM(gobj);
     if !ip.is_null() {
@@ -197,17 +203,23 @@ pub unsafe extern "C" fn it_802C6718(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6764(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x54624A21u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6764");
     ext::it_8026B724(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C6784(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4071352Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C6784");
     ext::it_8026B73C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchManhole_Logic72_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6DA532E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchManhole_Logic72_PickedUp");
     let ip = GET_ITEM(gobj);
     (*ip).xDAC_itcmd_var0 = 0;
@@ -229,7 +241,9 @@ pub unsafe fn itGamewatchmanhole_UnkMotion0_Anim_inline(gobj: *mut HSD_GObj) -> 
     1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchmanhole_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x6DA586CEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchmanhole_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let mut vec: Vec = Vec { x: 0.0, y: 0.0, z: 0.0 };
@@ -247,7 +261,9 @@ pub unsafe extern "C" fn itGamewatchmanhole_UnkMotion0_Anim(gobj: *mut HSD_GObj)
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchManhole_Logic72_EvtUnk(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
+    core::hint::black_box(0xD95D85C3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchManhole_Logic72_EvtUnk");
     ext::it_8026B894(gobj, gobj2);
 }

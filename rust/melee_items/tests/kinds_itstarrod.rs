@@ -127,30 +127,30 @@ fn itstarrod_matches_c() {
                     1 => {  m::it_80292394(&raw mut GO[0], &raw mut VA[0]); } // it_80292394
                     2 => { let v2: f32 = rw() as f32; let v3: i32 = (rnd() % 4) as i32 as i32; m::it_802923BC(&raw mut GO[0], &raw mut VA[0], v2, v3); } // it_802923BC
                     3 => {  m::it_802923F8(&raw mut GO[0]); } // it_802923F8
-                    4 => {  ret = m::itStarrod_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion0_Anim
+                    4 => {  ret = ((m::itStarrod_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion0_Anim
                     5 => {  m::itStarrod_UnkMotion0_Phys(&raw mut GO[0]); } // itStarrod_UnkMotion0_Phys
-                    6 => {  ret = m::itStarrod_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion0_Coll
+                    6 => {  ret = ((m::itStarrod_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion0_Coll
                     7 => {  m::it_80292488(&raw mut GO[0]); } // it_80292488
-                    8 => {  ret = m::itStarrod_UnkMotion4_Anim(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion4_Anim
+                    8 => {  ret = ((m::itStarrod_UnkMotion4_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion4_Anim
                     9 => {  m::itStarrod_UnkMotion1_Phys(&raw mut GO[0]); } // itStarrod_UnkMotion1_Phys
-                    10 => {  ret = m::itStarrod_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion1_Coll
+                    10 => {  ret = ((m::itStarrod_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion1_Coll
                     11 => {  m::itStarRod_Logic22_PickedUp(&raw mut GO[0]); } // itStarRod_Logic22_PickedUp
-                    12 => {  ret = m::itStarrod_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion2_Anim
+                    12 => {  ret = ((m::itStarrod_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion2_Anim
                     13 => {  m::itStarrod_UnkMotion2_Phys(&raw mut GO[0]); } // itStarrod_UnkMotion2_Phys
                     14 => {  m::itStarRod_Logic22_Dropped(&raw mut GO[0]); } // itStarRod_Logic22_Dropped
-                    15 => {  ret = m::itStarrod_UnkMotion4_Coll(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion4_Coll
+                    15 => {  ret = ((m::itStarrod_UnkMotion4_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion4_Coll
                     16 => {  m::itStarRod_Logic22_Thrown(&raw mut GO[0]); } // itStarRod_Logic22_Thrown
                     17 => {  m::itStarrod_UnkMotion4_Phys(&raw mut GO[0]); } // itStarrod_UnkMotion4_Phys
-                    18 => {  ret = m::itStarrod_UnkMotion3_Coll(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion3_Coll
-                    19 => {  ret = m::itStarRod_Logic22_DmgDealt(&raw mut GO[0]) as u32; } // itStarRod_Logic22_DmgDealt
+                    18 => {  ret = ((m::itStarrod_UnkMotion3_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion3_Coll
+                    19 => {  ret = ((m::itStarRod_Logic22_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itStarRod_Logic22_DmgDealt
                     20 => {  m::itStarRod_Logic22_EnteredAir(&raw mut GO[0]); } // itStarRod_Logic22_EnteredAir
-                    21 => {  ret = m::itStarrod_UnkMotion5_Anim(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion5_Anim
+                    21 => {  ret = ((m::itStarrod_UnkMotion5_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion5_Anim
                     22 => {  m::itStarrod_UnkMotion5_Phys(&raw mut GO[0]); } // itStarrod_UnkMotion5_Phys
-                    23 => {  ret = m::itStarrod_UnkMotion5_Coll(&raw mut GO[0]) as u32; } // itStarrod_UnkMotion5_Coll
-                    24 => {  ret = m::itStarRod_Logic22_Clanked(&raw mut GO[0]) as u32; } // itStarRod_Logic22_Clanked
-                    25 => {  ret = m::itStarRod_Logic22_Reflected(&raw mut GO[0]) as u32; } // itStarRod_Logic22_Reflected
-                    26 => {  ret = m::itStarRod_Logic22_HitShield(&raw mut GO[0]) as u32; } // itStarRod_Logic22_HitShield
-                    27 => {  ret = m::itStarRod_Logic22_ShieldBounced(&raw mut GO[0]) as u32; } // itStarRod_Logic22_ShieldBounced
+                    23 => {  ret = ((m::itStarrod_UnkMotion5_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itStarrod_UnkMotion5_Coll
+                    24 => {  ret = ((m::itStarRod_Logic22_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itStarRod_Logic22_Clanked
+                    25 => {  ret = ((m::itStarRod_Logic22_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itStarRod_Logic22_Reflected
+                    26 => {  ret = ((m::itStarRod_Logic22_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itStarRod_Logic22_HitShield
+                    27 => {  ret = ((m::itStarRod_Logic22_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itStarRod_Logic22_ShieldBounced
                     28 => {  m::itStarRod_Logic22_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itStarRod_Logic22_EvtUnk
                     29 => { for j in 0..6 { let row = &m::it_803F5F90[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

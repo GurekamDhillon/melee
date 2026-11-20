@@ -56,13 +56,17 @@ pub static mut it_803F6370: [ItemStateTable; 5] = [
     st_row(0, pred_b!(itSpycloak_UnkMotion4_Anim), Some(itSpycloak_UnkMotion4_Phys), pred_b!(itSpycloak_UnkMotion4_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC27165E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_Spawned");
     it_80295D04(gobj);
 }
 
 /// 295C68
+#[inline(never)]
 pub unsafe extern "C" fn it_80295C68(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x0509F641u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80295C68");
     let item = GET_ITEM(gobj);
     (*item).x40_vel.z = 0.0;
@@ -72,14 +76,19 @@ pub unsafe extern "C" fn it_80295C68(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7521A7BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itSpycloak_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSpycloak_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itSpycloak_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x97AC5D0Bu32); /* fn identity */ melee_core::ct!("itSpycloak_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3F837899u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_80295D04));
     ext::it_80276CB8(gobj);
@@ -87,17 +96,23 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion0_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 /// 295D04
+#[inline(never)]
 pub unsafe extern "C" fn it_80295D04(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4864E6EAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80295D04");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xA3AF2D55u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion3_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC910C59Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion1_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
@@ -105,28 +120,38 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4CCF8230u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_80295C68));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x10FE9404u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xFB82B444u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion2_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBF0617CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC29E9B60u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion3_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
@@ -134,7 +159,9 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion3_Phys(gobj: *mut Item_GObj) {
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x55112162u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion3_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return true;
@@ -142,25 +169,34 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion3_Coll(gobj: *mut Item_GObj) -> boo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF92C00C8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x1F006BC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itSpycloak_UnkMotion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSpycloak_UnkMotion4_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itSpycloak_UnkMotion4_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xFC093B5Fu32); /* fn identity */ melee_core::ct!("itSpycloak_UnkMotion4_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpycloak_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6D9CE4B5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpycloak_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_80295C68), Some(it_80295D04));
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSpyCloak_Logic33_EvtUnk(gobj: *mut Item_GObj, r: *mut HSD_GObj) {
+    core::hint::black_box(0x788AFE26u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSpyCloak_Logic33_EvtUnk");
     ext::it_8026B894(gobj, r);
 }

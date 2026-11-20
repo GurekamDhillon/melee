@@ -20,3 +20,6 @@ corev1 = []
 
 [dev-dependencies]
 png = "0.18"
+
+[lints]
+workspace = true

@@ -204,13 +204,17 @@ pub static mut gm_Mode_Debug_States: [GameModeState; 16] = unsafe {
 };
 
 /// 1B099C
+#[inline(never)]
 pub unsafe extern "C" fn onExitIntro(_unused: *mut GameModeState) {
+    core::hint::black_box(0x87CAB742u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitIntro");
     ext::gm_SetNextGameModeStateId(0); // onEnterMenu0
 }
 
 /// 1B09C0
+#[inline(never)]
 pub unsafe extern "C" fn onEnterMenu0(arg0: *mut GameModeState) {
+    core::hint::black_box(0xA057897Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterMenu0");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut enterMenu0_Data;
     (*temp_r3).x0 = &raw mut ext::un_803FA4E0 as *mut c_void;
@@ -218,7 +222,9 @@ pub unsafe extern "C" fn onEnterMenu0(arg0: *mut GameModeState) {
 }
 
 /// 1B09F8
+#[inline(never)]
 pub unsafe extern "C" fn fn_801B09F8(arg0: i32) -> i32 {
+    core::hint::black_box(0x4807F4CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801B09F8");
     if arg0 == 0 {
         sfxBack();
@@ -229,7 +235,9 @@ pub unsafe extern "C" fn fn_801B09F8(arg0: i32) -> i32 {
 }
 
 /// 1B0A34
+#[inline(never)]
 pub unsafe extern "C" fn onEnterMenu1(arg0: *mut GameModeState) {
+    core::hint::black_box(0x9F5787E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterMenu1");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut enterMenu0_Data;
     (*temp_r3).x0 = &raw mut ext::un_803FA790 as *mut c_void;
@@ -241,7 +249,9 @@ pub unsafe extern "C" fn onEnterMenu1(arg0: *mut GameModeState) {
 }
 
 /// 1B0A8C
+#[inline(never)]
 pub unsafe extern "C" fn fn_801B0A8C(arg0: i32) -> i32 {
+    core::hint::black_box(0xF0F7ECFFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801B0A8C");
     if arg0 == 0 {
         sfxBack();
@@ -252,7 +262,9 @@ pub unsafe extern "C" fn fn_801B0A8C(arg0: i32) -> i32 {
 }
 
 /// 1B0AC8
+#[inline(never)]
 pub unsafe extern "C" fn onEnterMenu2(arg0: *mut GameModeState) {
+    core::hint::black_box(0xA2578CA1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterMenu2");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut enterMenu0_Data;
     (*temp_r3).x0 = &raw mut ext::un_803FC4CC as *mut c_void;
@@ -260,19 +272,25 @@ pub unsafe extern "C" fn onEnterMenu2(arg0: *mut GameModeState) {
 }
 
 /// 1B0B00
+#[inline(never)]
 pub unsafe extern "C" fn onEnterPrize(arg0: *mut GameModeState) {
+    core::hint::black_box(0x65CF4DD2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterPrize");
     ext::un_802FFEE0(ext::gm_GetGameModeStateEnterData(arg0));
 }
 
 /// 1B0B24
+#[inline(never)]
 pub unsafe extern "C" fn onExitPrize(_arg0: *mut GameModeState) {
+    core::hint::black_box(0x1C1866A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitPrize");
     ext::gm_SetNextGameModeStateId(2);
 }
 
 /// 1B0B48
+#[inline(never)]
 pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
+    core::hint::black_box(0xFADEA329u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterVs");
     ext::un_802FFF2C(ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData);
     ext::lbAudioAx_80026F2C(0x12);
@@ -282,7 +300,9 @@ pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
 }
 
 /// 1B0B8C
+#[inline(never)]
 pub unsafe extern "C" fn onEnterResults0(arg0: *mut GameModeState) {
+    core::hint::black_box(0x8F95DF5Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterResults0");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut ResultsMatchInfo;
     ext::gm_80177724(temp_r3);
@@ -290,14 +310,18 @@ pub unsafe extern "C" fn onEnterResults0(arg0: *mut GameModeState) {
 }
 
 /// 1B0BF0
+#[inline(never)]
 pub unsafe extern "C" fn onExitResults0(arg0: *mut GameModeState) {
+    core::hint::black_box(0xA52BEF2Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitResults0");
     ext::gm_GetGameModeStateExitData(arg0);
     ext::gm_SetNextGameModeStateId(0);
 }
 
 /// 1B0C18
+#[inline(never)]
 pub unsafe extern "C" fn onEnterIntroEasy(arg0: *mut GameModeState) {
+    core::hint::black_box(0x9BCD2C46u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterIntroEasy");
     let temp_r31 = ext::gm_GetGameModeStateEnterData(arg0);
     ext::gm_80168F88();
@@ -305,13 +329,17 @@ pub unsafe extern "C" fn onEnterIntroEasy(arg0: *mut GameModeState) {
 }
 
 /// 1B0C50
+#[inline(never)]
 pub unsafe extern "C" fn onEnterIntroAllstar(arg0: *mut GameModeState) {
+    core::hint::black_box(0xC9F126DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterIntroAllstar");
     ext::un_80301C64(ext::gm_GetGameModeStateEnterData(arg0) as *mut un_80301C64_t);
 }
 
 /// 1B0C74
+#[inline(never)]
 pub unsafe extern "C" fn onEnterGameOver(arg0: *mut GameModeState) {
+    core::hint::black_box(0x2ADE677Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterGameOver");
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut DebugGameOverData;
     (*data).x0 = 0x1869F;
@@ -324,7 +352,9 @@ pub unsafe extern "C" fn onEnterGameOver(arg0: *mut GameModeState) {
 }
 
 /// 1B0CF0
+#[inline(never)]
 pub unsafe extern "C" fn onEnterApproach(arg0: *mut GameModeState) {
+    core::hint::black_box(0xC3259D1Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterApproach");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut u8;
     *temp_r3.add(1) = 0;
@@ -346,7 +376,9 @@ pub unsafe extern "C" fn onEnterApproach(arg0: *mut GameModeState) {
 }
 
 /// 1B0DD0
+#[inline(never)]
 pub unsafe extern "C" fn onEnterResults1(arg0: *mut GameModeState) {
+    core::hint::black_box(0x9095E0EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterResults1");
     let mut sfx_result: u64 = 0;
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut DebugResultsData;
@@ -386,7 +418,9 @@ pub unsafe extern "C" fn onEnterResults1(arg0: *mut GameModeState) {
 }
 
 /// 1B0F1C
+#[inline(never)]
 pub unsafe extern "C" fn onExitResults1(_arg0: *mut GameModeState) {
+    core::hint::black_box(0xA62BF0BDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitResults1");
     ext::lbAudioAx_800236DC();
     if ext::HSD_PadCopyStatus[0].button & HSD_PAD_L != 0 {
@@ -397,7 +431,9 @@ pub unsafe extern "C" fn onExitResults1(_arg0: *mut GameModeState) {
 }
 
 /// 1B0F60
+#[inline(never)]
 pub unsafe extern "C" fn onEnterMemCard(arg0: *mut GameModeState) {
+    core::hint::black_box(0x66CFB725u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterMemCard");
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut DebugMemcardData;
     (*data).x0 = 1;
@@ -405,7 +441,9 @@ pub unsafe extern "C" fn onEnterMemCard(arg0: *mut GameModeState) {
 }
 
 /// 1B0F90
+#[inline(never)]
 pub unsafe extern "C" fn onExitMemCard(arg0: *mut GameModeState) {
+    core::hint::black_box(0x9B839A63u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onExitMemCard");
     ext::gm_GetGameModeStateExitData(arg0);
     ext::gm_SetNextGameModeStateId(0);

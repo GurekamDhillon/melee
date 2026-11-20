@@ -98,8 +98,8 @@ static void init_slot(StaticPlayer* p)
         p->player_poses.byIndex[i].z = rf();
     }
     p->facing_direction = rf();
-    p->costume_id = (u8) rnd(); p->unk45 = (u8) rnd(); p->controller_index = (s8) rnd();
-    p->team = (u8) (rnd() % 3); p->player_id = (u8) rnd(); p->cpu_level = (u8) rnd();
+    p->costume_id = (u8) rnd(); p->unk45 = (u8) rnd(); p->sub_color = (s8) rnd();
+    p->team = (u8) (rnd() % 3); p->pad_port = (u8) rnd(); p->cpu_level = (u8) rnd();
     p->cpu_type = (u8) rnd(); p->handicap = (u8) rnd(); p->unk4C = (s8) rnd();
     p->unk4D = (s8) rnd(); p->unk4E = (s8) rnd();
     p->unk50 = rf(); p->attack_ratio = rf(); p->defense_ratio = rf(); p->model_scale = rf();
@@ -134,7 +134,7 @@ static void dump(int slot)
     for (i = 0; i < 4; i++)
         printf(" %x %x %x", B(p->player_poses.byIndex[i].x), B(p->player_poses.byIndex[i].y), B(p->player_poses.byIndex[i].z));
     printf(" %x %x %x %x %x %x %x %x %x %x %x %x", B(p->facing_direction), p->costume_id, p->unk45,
-           (u32) p->controller_index, p->team, p->player_id, p->cpu_level, p->cpu_type, p->handicap,
+           (u32) p->sub_color, p->team, p->pad_port, p->cpu_level, p->cpu_type, p->handicap,
            (u32) p->unk4C, (u32) p->unk4D, (u32) p->unk4E);
     printf(" %x %x %x %x", B(p->unk50), B(p->attack_ratio), B(p->defense_ratio), B(p->model_scale));
     for (i = 0; i < 4; i++) printf(" %x", (u32) p->staminas.byIndex[i]);
@@ -206,12 +206,12 @@ int main(void)
             case 33: { bool b = (bool) (rnd() % 3); Player_SetFacingDirectionConditional(slot, b, rf()); break; }
             case 34: ret = Player_GetCostumeId(slot); break;
             case 35: Player_SetCostumeId(slot, (int) rnd()); break;
-            case 36: ret = Player_GetControllerIndex(slot); break;
-            case 37: Player_SetControllerIndex(slot, (s8) rnd()); break;
+            case 36: ret = Player_GetSubColor(slot); break;
+            case 37: Player_SetSubColor(slot, (s8) rnd()); break;
             case 38: ret = (u32) Player_GetTeam(slot); break;
             case 39: Player_SetTeam(slot, (s8) rnd()); break;
-            case 40: ret = (u32) Player_GetPlayerId(slot); break;
-            case 41: Player_SetPlayerId(slot, (int) rnd()); break;
+            case 40: ret = (u32) Player_GetPadPort(slot); break;
+            case 41: Player_SetPadPort(slot, (int) rnd()); break;
             case 42: ret = (u32) Player_GetCpuLevel(slot); break;
             case 43: Player_SetPlayerAndEntityCpuLevel(slot, (int) rnd()); break;
             case 44: ret = (u32) Player_GetCpuType(slot); break;

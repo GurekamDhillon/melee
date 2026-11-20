@@ -101,16 +101,26 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn Ground_801C0604() -> *mut _GXColor { super::Ground_801C0604() }
-        pub unsafe extern "C" fn Ground_801C0618() -> *mut _GXColor { super::Ground_801C0618() }
-        pub unsafe extern "C" fn Ground_801C062C() -> *mut _GXColor { super::Ground_801C062C() }
-        pub unsafe extern "C" fn Ground_801C0640() -> *mut _GXColor { super::Ground_801C0640() }
-        pub unsafe extern "C" fn Ground_801C0654() -> *mut _GXColor { super::Ground_801C0654() }
-        pub unsafe extern "C" fn Ground_801C0668() -> *mut _GXColor { super::Ground_801C0668() }
-        pub unsafe extern "C" fn Ground_801C067C() -> *mut _GXColor { super::Ground_801C067C() }
-        pub unsafe extern "C" fn Ground_801C0690() -> *mut _GXColor { super::Ground_801C0690() }
-        pub unsafe extern "C" fn Ground_801C06A4() -> *mut _GXColor { super::Ground_801C06A4() }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C0604() -> *mut _GXColor { core::hint::black_box(0xCD8BE413u32); /* fn identity */ super::Ground_801C0604() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C0618() -> *mut _GXColor { core::hint::black_box(0xD389AEEEu32); /* fn identity */ super::Ground_801C0618() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C062C() -> *mut _GXColor { core::hint::black_box(0xF287A124u32); /* fn identity */ super::Ground_801C062C() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C0640() -> *mut _GXColor { core::hint::black_box(0x5982331Bu32); /* fn identity */ super::Ground_801C0640() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C0654() -> *mut _GXColor { core::hint::black_box(0x4F7FE4C6u32); /* fn identity */ super::Ground_801C0654() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C0668() -> *mut _GXColor { core::hint::black_box(0x557DAFA1u32); /* fn identity */ super::Ground_801C0668() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C067C() -> *mut _GXColor { core::hint::black_box(0x3A7B4689u32); /* fn identity */ super::Ground_801C067C() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C0690() -> *mut _GXColor { core::hint::black_box(0xDB9D433Eu32); /* fn identity */ super::Ground_801C0690() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_801C06A4() -> *mut _GXColor { core::hint::black_box(0xD0501BD2u32); /* fn identity */ super::Ground_801C06A4() }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x2C8C3671u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_804D7814;
@@ -190,12 +200,16 @@ pub fn memzero_default(mem: *mut c_void, size: i32) {
 }
 
 /// The view aspect ratio the window reports, as an int-punned float.
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_ViewAspect() -> f32 {
+    core::hint::black_box(0xFB00E569u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_ViewAspect");
     f32::from_bits(ext::View_AspectBits() as u32)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_VisualOffscreen(fighter: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x889B1FC9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_VisualOffscreen");
     let mut world = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::ftLib_GetCameraSubjectBonePos(fighter, &mut world);
@@ -203,7 +217,9 @@ pub unsafe extern "C" fn ifMagnify_VisualOffscreen(fighter: *mut HSD_GObj) -> bo
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_IsHUDVisible() -> bool {
+    core::hint::black_box(0xCD87B949u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_IsHUDVisible");
     if (*ext::gmVs_GetSceneController()).state.hud_enabled == 0 || ext::ifAll_IsHUDHidden() != 0 || ext::Camera_80030130() != 0 {
         return false;
@@ -212,7 +228,9 @@ pub unsafe extern "C" fn ifMagnify_IsHUDVisible() -> bool {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_GetPlayerColor(color: *mut _GXColor, slot: i32) {
+    core::hint::black_box(0x25BEC6E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_GetPlayerColor");
     let a0 = slot as u8;
     let team = ext::Player_GetTeam(slot);
@@ -221,7 +239,9 @@ pub unsafe extern "C" fn ifMagnify_GetPlayerColor(color: *mut _GXColor, slot: i3
     *color = ext::gm_80160968(ext::gm_80160854(a0, team as u8, g as u8, kind as u8));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FB6E8(slot: i32) -> i32 {
+    core::hint::black_box(0x0959D3B9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FB6E8");
     if ifMagnify_802FC998(slot) as i32 != 0 {
         return ifMagnify_804A1DE0.player[slot as usize].state.edge() as i32;
@@ -229,7 +249,9 @@ pub unsafe extern "C" fn ifMagnify_802FB6E8(slot: i32) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FB73C(player: *mut ifMagnifyPlayer, pos: *mut Vec2, out: *mut Vec2) -> *mut ifMagnifyPlayer {
+    core::hint::black_box(0xE4560D15u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FB73C");
     let mut horizontal_bound: f32 = 252.70001;
     // TARGET_PC: the horizontal bound follows the window's aspect ratio
@@ -301,7 +323,9 @@ pub unsafe extern "C" fn ifMagnify_802FB73C(player: *mut ifMagnifyPlayer, pos: *
     player
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: isize) {
+    core::hint::black_box(0x16C76DA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FB8C0");
     let mut screen_pos = S32Vec2 { x: 0, y: 0 };
     let mut edge_pos = Vec2 { x: 0.0, y: 0.0 };
@@ -358,7 +382,9 @@ pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: isize) {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_GetCornerColors(colors: *mut _GXColor, world_pos: *mut Vec3) {
+    core::hint::black_box(0xDD9D4D09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_GetCornerColors");
     for j in 0..4usize {
         let y_class: f32;
@@ -386,7 +412,9 @@ pub unsafe extern "C" fn ifMagnify_GetCornerColors(colors: *mut _GXColor, world_
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xBC25937Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FBBDC");
     let mut top = 0.0f32;
     let mut bottom = 0.0f32;
@@ -549,9 +577,12 @@ pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn ifMagnify_802FC3BC() { melee_core::ct!("ifMagnify_802FC3BC");}
+#[inline(never)]
+pub unsafe extern "C" fn ifMagnify_802FC3BC() { core::hint::black_box(0xDECC3229u32); /* fn identity */ melee_core::ct!("ifMagnify_802FC3BC");}
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC3C0(slot: i32) {
+    core::hint::black_box(0xB1CE29E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC3C0");
     let player = &raw mut ifMagnify_804A1DE0.player[slot as usize];
     let mut child: *mut HSD_JObj = null_mut();
@@ -602,7 +633,9 @@ pub unsafe extern "C" fn ifMagnify_802FC3C0(slot: i32) {
     (*player).state.set_ignore_offscreen(0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC618() {
+    core::hint::black_box(0x6D41DC60u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC618");
     let player0 = &raw mut ifMagnify_804A1DE0.player[0];
     let mut viewport = _HSD_RectS16 { xmin: 0, xmax: 0, ymin: 0, ymax: 0 };
@@ -632,7 +665,9 @@ pub unsafe extern "C" fn ifMagnify_802FC618() {
     ext::HSD_CObjSetScissorx4(cobj, viewport.xmin as u16, viewport.xmax as u16, viewport.ymin as u16, viewport.ymax as u16);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC750() {
+    core::hint::black_box(0x8AA55B9Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC750");
     let base = &raw mut ifMagnify_804A1DE0;
     for i in 0..6usize {
@@ -643,7 +678,9 @@ pub unsafe extern "C" fn ifMagnify_802FC750() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC7C0(magnify: *mut ifMagnify) {
+    core::hint::black_box(0x97705EDDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC7C0");
     // the C reads this const through a volatile pointer
     let default_val: i32 = core::ptr::read_volatile(&raw const ifMagnify_804DDB60);
@@ -677,7 +714,9 @@ pub unsafe extern "C" fn ifMagnify_802FC7C0(magnify: *mut ifMagnify) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC870() {
+    core::hint::black_box(0x26363DD0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC870");
     // memzero(&ifMagnify_804A1DE0, 0x74): the GameCube head (model_desc .. player[5]) of the record
     ext::memzero((&raw mut ifMagnify_804A1DE0).cast(), core::mem::offset_of!(ifMagnify, image_descs) as i32);
@@ -695,14 +734,18 @@ pub unsafe extern "C" fn ifMagnify_802FC870() {
     ifMagnify_802FC618();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC8E8() {
+    core::hint::black_box(0xBA13018Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC8E8");
     for i in 0..6usize {
         ifMagnify_804A1DE0.player[i].state.set_ignore_offscreen(1);
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC940() {
+    core::hint::black_box(0xB9A5AFC0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC940");
     for i in 0..6usize {
         ifMagnify_804A1DE0.player[i].state.set_ignore_offscreen(0);
@@ -710,7 +753,9 @@ pub unsafe extern "C" fn ifMagnify_802FC940() {
 }
 
 /// TARGET_PC: stop computing the logic-side off-screen flags (scene init).
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_LogicDisarm() {
+    core::hint::black_box(0xEE13E9C0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_LogicDisarm");
     ifMagnify_LogicArmed = 0;
     for i in 0..6usize {
@@ -720,7 +765,9 @@ pub unsafe extern "C" fn ifMagnify_LogicDisarm() {
 
 /// TARGET_PC: the render pass's off-screen predicate evaluated by logic (see the C comment),
 /// then the fighters' off-camera flags for the next frame.
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() {
+    core::hint::black_box(0x8E03DC7Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_UpdateLogicOffscreen");
     let magnify = &raw mut ifMagnify_804A1DE0;
     if ifMagnify_LogicArmed == 0 {
@@ -746,7 +793,9 @@ pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifMagnify_802FC998(ply_slot: i32) -> bool {
+    core::hint::black_box(0xCFC6260Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifMagnify_802FC998");
     if ifMagnify_LogicArmed != 0 {
         return ifMagnify_LogicOffscreen[ply_slot as usize] != 0;

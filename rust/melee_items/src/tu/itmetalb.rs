@@ -61,14 +61,18 @@ pub static mut it_803F62C0: [ItemStateTable; 5] = [
     st_row(-1, pred_b!(itMetalb_UnkMotion4_Anim), Some(itMetalb_UnkMotion4_Phys), pred_b!(itMetalb_UnkMotion4_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8550EB8Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_Spawned");
     let it = GET_ITEM(gobj);
     (*it).xDCE_flag.x0.set_b7(0);
     it_80295498(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802953FC(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB995038Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802953FC");
     let it = (*gobj).user_data as *mut Item;
     itResetVelocity(it);
@@ -77,14 +81,19 @@ pub unsafe extern "C" fn it_802953FC(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x638810AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itMetalb_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMetalb_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itMetalb_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xCD41DC9Bu32); /* fn identity */ melee_core::ct!("itMetalb_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6658B649u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_80295498));
     ext::it_80276CB8(gobj);
@@ -92,51 +101,69 @@ pub unsafe extern "C" fn itMetalb_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_80295498(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6135C04Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80295498");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x65999EC5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion3_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x718156EAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion1_Phys");
     let it = (*gobj).user_data as *mut Item;
     ext::it_80272860(gobj, (*(*it).xCC_item_attr).x10_fall_speed, (*(*it).xCC_item_attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3BD15960u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_802953FC));
 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2CB579B9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x9C89E234u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion2_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9427F3E2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_Dropped");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3B7EF0F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion3_Phys");
     let it = (*gobj).user_data as *mut Item;
     ext::it_80272860(gobj, (*(*it).xCC_item_attr).x10_fall_speed, (*(*it).xCC_item_attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x16FB92D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion3_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return true;
@@ -144,7 +171,9 @@ pub unsafe extern "C" fn itMetalb_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x102B863Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_DmgReceived");
     let it = GET_ITEM(gobj);
     let go = ext::it_8027236C(gobj);
@@ -162,26 +191,35 @@ pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> b
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_EnteredAir(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x20149DFDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xBCF7E9B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itMetalb_UnkMotion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMetalb_UnkMotion4_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itMetalb_UnkMotion4_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x7567BA6Fu32); /* fn identity */ melee_core::ct!("itMetalb_UnkMotion4_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalb_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x0B95F5A5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalb_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_802953FC), Some(it_80295498));
 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMetalB_Logic32_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x339502C7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMetalB_Logic32_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

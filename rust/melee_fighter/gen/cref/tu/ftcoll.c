@@ -6,6 +6,7 @@
  * Recording stubs for the callees; the TARGET_PC echo layer is the identity (4 capsules =
  * fp->x914). Each line: op case hash trace. */
 #include TU_SRC
+#include "ftcoll_extract.inc" /* ftColl_80076528 moved to ft_0763.c: cut verbatim by run_tu.py */
 #include "tu_common.h"
 
 static float RV[8];
@@ -115,7 +116,7 @@ static void cd_rand(void)
 {
     CD.xF4 = rw(); CD.xF8 = rw(); CD.x108 = (rnd() & 1) ? 100000.0f : rw();
     CD.x110 = rw(); CD.x114 = rw(); CD.x118 = rw(); CD.x11C = rw(); CD.x120 = rw();
-    CD.x6D4 = (int) (rnd() % 300); CD.x6D8[0] = (int) (rnd() % 300);
+    CD.x6D4 = (int) (rnd() % 300); CD.x6D8 = (int) (rnd() % 300);
     CD.x128 = rw(); CD.x714 = rw(); CD.x3CC = (int) (rnd() % 10);
     CD.x3D0 = rw(); CD.x3D4 = rw(); CD.x4C8 = (int) (rnd() % 4); CD.x4D0 = rw(); CD.x4D4 = rw();
     CD.x7A8 = rw(); CD.unk_kb_angle_min = rnd() % 400; CD.unk_kb_angle_max = rnd() % 400;
@@ -125,8 +126,8 @@ static void cd_rand(void)
 static void fp_rand(Fighter* f, HSD_GObj* g)
 {
     f->gobj = g;
-    f->player_id = rnd() % 4;
-    f->x2225_b7 = rnd() & 1; f->x2224_b2 = rnd() & 1;
+    f->player_idx = rnd() % 4;
+    f->x2225_b7 = rnd() & 1; f->stamina_dead = rnd() & 1;
     f->dmg.x1830_percent = rw(); f->dmg.x1838_percentTemp = rw();
     f->dmg.x182c_behavior = rw(); f->dmg.x1834 = rw();
     f->dmg.x183C_applied = (int) (rnd() % 20);
@@ -139,7 +140,7 @@ static void fp_rand(Fighter* f, HSD_GObj* g)
     f->x2090 = rnd() % 4; f->x2092 = rnd() % 3;
     f->ground_or_air = rnd() & 1;
     f->motion_id = (rnd() & 1) ? ftCo_MS_DamageIce : 0;
-    f->x221B_b5 = rnd() & 1; f->x221C_b4 = rnd() & 1; f->x221C_b2 = rnd() & 1;
+    f->x221B.x221B_b5 = rnd() & 1; f->x221C_b4 = rnd() & 1; f->x221C_b2 = rnd() & 1;
     f->lightshield_amount = rw(); f->shield_unk0 = (rnd() & 1) ? 0.0f : rw();
     f->x19A4 = (int) (rnd() % 20);
     f->x1988 = (rnd() % 4 == 0); f->x198C = 0;
@@ -195,14 +196,14 @@ int main(void)
                     HURT[i].capsule.a_pos.x = rw(); HURT[i].capsule.a_pos.y = rw();
                     HURT[i].capsule.b_pos.x = rw(); HURT[i].capsule.b_pos.y = rw();
                     HURT[i].height = rnd() % 3;
-                    LOG[i].hurt1 = &HURT[i];
+                    LOG[i].x10.hurt1 = &HURT[i];
                     if (LOG[i].x0 == 1) {
-                        LOG[i].hit0 = &F2.x914[i];
+                        LOG[i].xC.hit0 = &F2.x914[i];
                     } else {
                         ENV[i].e.state = (int) (rnd() % 100);
                         ENV[i].e.kb_angle = (rnd() & 1) ? 0x16A : rnd() % 360;
                         ENV[i].e.element = rnd() % 17;
-                        LOG[i].unk_anim0 = (DynamicsDesc*) &ENV[i];
+                        LOG[i].xC.unk_anim0 = (lbColl_80008D30_arg1*) &ENV[i];
                     }
                     LOG[i].pos.x = rw(); LOG[i].pos.y = rw();
                     LOG[i].x20 = rw();

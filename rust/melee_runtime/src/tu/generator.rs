@@ -215,7 +215,9 @@ pub unsafe extern "C" fn hsd_8039D5DC(mut jobj: *mut HSD_JObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn hsd_8039D688(jobj: *mut HSD_JObj, _unused1: *mut *mut f32, _unused2: i32) {
+    core::hint::black_box(0x5F1A0612u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("hsd_8039D688");
     let mut gen = hsd_804D78FC;
     hsd_804D78F8 = null_mut();

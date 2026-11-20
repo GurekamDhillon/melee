@@ -238,7 +238,9 @@ unsafe fn pick_table_empty(t: *const ItemPickTable) -> bool {
 
 /// `it_8026C47C`: fills the 8-word bitset `arg_struct` with one bit per item kind that
 /// `it_80272828` reports as present (kinds 0..238, 32 kinds per word).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C47C(arg_struct: *mut it_8026C47C_arg0_t) {
+    core::hint::black_box(0x8CDA4460u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C47C");
     let mut it_kind: u32;
     let mut unused: u32;
@@ -290,7 +292,9 @@ unsafe fn bisectValue(val: i32, table: *mut ItemPickTable, lo: i32, hi: i32) -> 
 }
 
 /// `it_8026C65C`: a random kind from a weighted pick table.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C65C(table: *mut ItemPickTable) -> ItemKind {
+    core::hint::black_box(0x8A87D524u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C65C");
     let temp_r6 = (*table).x8 as i32;
     let idx = bisectValue(ext::HSD_Randi(temp_r6), table, 0, (*table).size as i32);
@@ -298,7 +302,9 @@ pub unsafe extern "C" fn it_8026C65C(table: *mut ItemPickTable) -> ItemKind {
 }
 
 /// `it_8026C704`: true when the M-Ball may not be picked (item cap reached, or the stage has no M-Ball).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C704() -> bool {
+    core::hint::black_box(0xE21231F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C704");
     let mut result = false;
     let obj = &raw const ext::Item_804A0C64;
@@ -309,7 +315,9 @@ pub unsafe extern "C" fn it_8026C704() -> bool {
 }
 
 /// `it_8026C75C`: decides the item kind for a spawn from the given pick table. Returns -1 for "none".
+#[inline(never)]
 pub unsafe extern "C" fn it_8026C75C(table: *mut ItemPickTable) -> ItemKind {
+    core::hint::black_box(0x3F198023u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026C75C");
     let mut chk1: bool;
     let mut saved: i32 = 0;
@@ -407,7 +415,9 @@ unsafe fn it_8026C88C_inline(alloc: *mut RandomItemSpawner) {
 }
 
 /// `fn_8026C88C`: the spawner's per-frame proc.
+#[inline(never)]
 pub unsafe extern "C" fn fn_8026C88C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6A35C5E4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8026C88C");
     let _ = gobj;
     let alloc = &raw mut it_804A0E30;
@@ -415,7 +425,9 @@ pub unsafe extern "C" fn fn_8026C88C(gobj: *mut HSD_GObj) {
 }
 
 /// `it_8026CA4C`: total weight of the kinds set in `arg2` (from kind `arg3`) into `alloc.x8`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026CA4C(alloc: *mut ItemPickTable, arg1: *mut i32, arg2: u64, arg3: i32, arg4: f32) {
+    core::hint::black_box(0x845919F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026CA4C");
     let mut mask = arg2;
     let mut p = arg1.add(arg3 as usize);
@@ -436,7 +448,9 @@ pub unsafe extern "C" fn it_8026CA4C(alloc: *mut ItemPickTable, arg1: *mut i32, 
 }
 
 /// `it_8026CB3C`: true when `vec` is over a stage floor that is not blocked by a map collision.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026CB3C(vec: *mut Vec3) -> bool {
+    core::hint::black_box(0x55B595BAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026CB3C");
     if ext::Stage_80224FDC(vec) == 0 {
         return false;
@@ -449,7 +463,9 @@ pub unsafe extern "C" fn it_8026CB3C(vec: *mut Vec3) -> bool {
 }
 
 /// `it_8026CB9C`: builds the first-tier pick table `it_804A0E30.x4` (kinds below `It_Kind_L_Gun_Ray`).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026CB9C(counts: *mut i32, mask: u64, weight: f32) {
+    core::hint::black_box(0x559D90D4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026CB9C");
     let spawner = &raw mut it_804A0E30;
     let mut p: *mut i32;
@@ -501,7 +517,9 @@ pub unsafe extern "C" fn it_8026CB9C(counts: *mut i32, mask: u64, weight: f32) {
 }
 
 /// `it_8026CD50`: builds the second-tier pick table `it_804A0E50` (kinds from `It_Kind_BombHei` on).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026CD50(counts: *mut i32, mask: u64, weight: f32) {
+    core::hint::black_box(0xC378674Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026CD50");
     let mut p: *mut i32;
     let mut cnt: i32;
@@ -555,7 +573,9 @@ pub unsafe extern "C" fn it_8026CD50(counts: *mut i32, mask: u64, weight: f32) {
 
 /// `it_8026CF04`: builds the monster-item weighted pick table `it_804A0E60` from the common data's
 /// first four weights (`x128`).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026CF04() {
+    core::hint::black_box(0x5B140E5Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026CF04");
     let counts: *mut u32 = (*ext::it_804D6D28).x128.as_ptr() as *mut u32;
     let mut sum: i32;
@@ -628,7 +648,9 @@ unsafe fn it_8026D018_inline3(randf: f32, range: *const i32) {
 }
 
 /// `it_8026D018`: sets up the item spawner for the match (called at match start).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026D018() {
+    core::hint::black_box(0xC83C16C4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026D018");
     if ext::gm_8016B238() == 0 && (ext::gm_8016AE80() as i32) != -1 {
         it_804A0E30.x18 = ext::gm_8016AEA4();
@@ -645,7 +667,9 @@ pub unsafe extern "C" fn it_8026D018() {
 }
 
 /// `it_8026D258`: spawns an item of `kind` at `pos` (z forced to 0). False when the item cap is reached.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026D258(pos: *mut Vec3, kind: ItemKind) -> bool {
+    core::hint::black_box(0xF302FC0Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026D258");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut item_spawn_chk = false;
@@ -672,7 +696,9 @@ pub unsafe extern "C" fn it_8026D258(pos: *mut Vec3, kind: ItemKind) -> bool {
 
 /// `it_8026D324`: true when `kind` is allowed on the current stage (the stage has items, a stage table
 /// exists and the match's item frequency is set).
+#[inline(never)]
 pub unsafe extern "C" fn it_8026D324(kind: ItemKind) -> bool {
+    core::hint::black_box(0x793FB3F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026D324");
     let temp_r29 = it_804A0E30.x18;
     let temp_r30 = ext::Ground_801C2AD8();
@@ -689,7 +715,9 @@ pub unsafe extern "C" fn it_8026D324(kind: ItemKind) -> bool {
 }
 
 /// `it_8026D3CC`: true when a heart, a tomato or a food item is allowed on this stage.
+#[inline(never)]
 pub unsafe extern "C" fn it_8026D3CC() -> bool {
+    core::hint::black_box(0xAC1B3362u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8026D3CC");
     let mut result = it_8026D324(It_Kind_Heart);
     result |= it_8026D324(It_Kind_Tomato);

@@ -43,9 +43,12 @@ pub mod ext {
         EF_SYNC_SPAWN efSync_Spawn(id: i32, g: G, pos: &mut Vec3);
     }
     /// TODO(group5 itsamusgrapple.c) callbacks stored in the fighter's accessory / death slots.
-    pub unsafe extern "C" fn it_802BAC80(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itsamusgrapple::it_802BAC80(_g as _); } return; } }
-    pub unsafe extern "C" fn it_802BAC3C(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itsamusgrapple::it_802BAC3C(_g as _); } return; } }
-    pub unsafe extern "C" fn it_802BACC4(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itsamusgrapple::it_802BACC4(_g as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn it_802BAC80(_g: *mut HSD_GObj) { core::hint::black_box(0x84376F9Bu32); /* fn identity */ { unsafe { melee_items::tu::itsamusgrapple::it_802BAC80(_g as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn it_802BAC3C(_g: *mut HSD_GObj) { core::hint::black_box(0x15438CD1u32); /* fn identity */ { unsafe { melee_items::tu::itsamusgrapple::it_802BAC3C(_g as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn it_802BACC4(_g: *mut HSD_GObj) { core::hint::black_box(0x0709E864u32); /* fn identity */ { unsafe { melee_items::tu::itsamusgrapple::it_802BACC4(_g as _); } return; } }
 }
 
 #[inline(always)]

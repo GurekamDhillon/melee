@@ -47,7 +47,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn Snap_NoteRenderPool(a0: *mut c_void) { super::Snap_NoteRenderPool(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn Snap_NoteRenderPool(a0: *mut c_void) { core::hint::black_box(0xE619A8BCu32); /* fn identity */ super::Snap_NoteRenderPool(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }

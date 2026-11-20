@@ -44,9 +44,12 @@ pub mod ext {
         FTLK_INIT_BOOMERANG_EXISTS ftLk_Init_BoomerangExists(g: G) -> bool;
     }
     /// TODO(group5 itlinkhookshot.c) callbacks stored in the fighter's accessory / death slots.
-    pub unsafe extern "C" fn it_802A7AF0(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itlinkhookshot::it_802A7AF0(_g as _); } return; } }
-    pub unsafe extern "C" fn it_802A7AAC(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itlinkhookshot::it_802A7AAC(_g as _); } return; } }
-    pub unsafe extern "C" fn it_802A7B34(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itlinkhookshot::it_802A7B34(_g as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn it_802A7AF0(_g: *mut HSD_GObj) { core::hint::black_box(0x3F7A4427u32); /* fn identity */ { unsafe { melee_items::tu::itlinkhookshot::it_802A7AF0(_g as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn it_802A7AAC(_g: *mut HSD_GObj) { core::hint::black_box(0x88696DF1u32); /* fn identity */ { unsafe { melee_items::tu::itlinkhookshot::it_802A7AAC(_g as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn it_802A7B34(_g: *mut HSD_GObj) { core::hint::black_box(0xF5D4B407u32); /* fn identity */ { unsafe { melee_items::tu::itlinkhookshot::it_802A7B34(_g as _); } return; } }
 }
 
 #[inline(always)]

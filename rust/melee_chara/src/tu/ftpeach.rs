@@ -152,7 +152,9 @@ pub fn ftPe_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 /// `ftPe_Init_OnDeath2` as a Fighter callback entry (`death2_cb` / `death3_cb` / `take_dmg_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPe_Init_OnDeath2(g: *mut HSD_GObj) {
+    core::hint::black_box(0x20897851u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPe_Init_OnDeath2");
     ftPe_Init_OnDeath2(g);
 }

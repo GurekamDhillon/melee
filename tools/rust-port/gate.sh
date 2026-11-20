@@ -50,7 +50,9 @@ profile="${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}"
 case "$profile" in release|fast|perf) ;; *) echo "gate: unknown PROFILE '$profile' (release|fast|perf)" >&2; exit 2 ;; esac
 exe="$repo/build/cargo/$profile/melee.exe"
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
-tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
+# the system temp may not be writable (a sandboxed agent shell: the checks below would compare empty files): probe it
+tmp="${TEMP:-${TMPDIR:-/tmp}}/gate.$$"
+mkdir -p "$tmp" 2>/dev/null && : > "$tmp/.probe" 2>/dev/null || { tmp="$repo/build/tmp/gate.$$"; mkdir -p "$tmp"; }
 fail=0
 if [ $build = 1 ]; then
   if [ "$profile" = release ]; then
@@ -59,6 +61,8 @@ if [ $build = 1 ]; then
     (set -o pipefail && bash tools/rust-port/cargo_fast.sh build -p melee --profile "$profile" 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
   fi
 fi
+# again after the build: on a fresh Linux tree neither name existed above, so `melee.exe` was kept
+[ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
 progress=docs/rust-port/engine_progress.tsv
 declare -A counts
 scenarios="pad_falcon_fox_fd pad_marth_sheik_bf cpu_fox_falco_dl cpu_peach_samus_ys_items"

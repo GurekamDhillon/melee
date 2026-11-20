@@ -12,3 +12,6 @@ libm = "0.2"
 [[bin]]
 name = "brawl_boss_dump"
 path = "src/bin/dump.rs"
+
+[lints]
+workspace = true

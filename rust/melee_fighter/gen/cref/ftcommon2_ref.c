@@ -96,9 +96,9 @@ int main(void)
             rs = 0x2468Bu + (u32) op * 7919u + (u32) k * 104729u;
             fp.gobj = &g;
             fp.kind = rnd() % 34;
-            fp.player_id = (u8) (rnd() % 6);
-            fp.x618_player_id = (u8) (rnd() % 4);
-            fp.x619_costume_id = (u8) (rnd() % 6);
+            fp.player_idx = (u8) (rnd() % 6);
+            fp.pad_port = (u8) (rnd() % 4);
+            fp.costume_id = (u8) (rnd() % 6);
             fp.x8_spawnNum = (int) (rnd() % 8);
             fp.facing_dir = rf();
             fp.gr_vel = rf(); fp.self_vel.x = rf(); fp.self_vel.y = rf();
@@ -137,11 +137,11 @@ int main(void)
             fp.x1980 = (rnd() & 1) ? &item_b : NULL;
             fp.dat_attrs = sandbag;
             sandbag[0] = rf(); sandbag[1] = rf();
-            fp.x594_b0 = rnd() & 1;
+            fp.x594.x0.x594_b0 = rnd() & 1;
             fp.x2219_b0 = rnd() & 1;
-            fp.x221F_b3 = rnd() & 1;
+            fp.is_sleeping = rnd() & 1;
             fp.is_sub_fighter = rnd() & 1;
-            fp.x2224_b2 = rnd() & 1; fp.x2224_b5 = rnd() & 1; fp.x2224_b6 = rnd() & 1;
+            fp.stamina_dead = rnd() & 1; fp.x2224_b5 = rnd() & 1; fp.x2224_b6 = rnd() & 1;
             fp.x2225_b5 = rnd() & 1; fp.x2225_b6 = rnd() & 1;
             fp.x2227_b0 = rnd() & 1;
             cd.x138 = rf(); cd.x13C = rf(); cd.xEC = rf(); cd.xF0 = rf();

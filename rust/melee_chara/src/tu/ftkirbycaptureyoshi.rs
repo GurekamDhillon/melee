@@ -50,7 +50,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftCo_800DB464` as the `HSD_GObjEvent` the C stores in `accessory1_cb`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCo_800DB464(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE165FC08u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCo_800DB464");
     melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB464(g);
 }

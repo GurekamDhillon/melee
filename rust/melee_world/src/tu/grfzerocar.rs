@@ -50,8 +50,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) { super::HSD_AObjSetRate(a0, a1) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) { core::hint::black_box(0x43EB82AEu32); /* fn identity */ super::HSD_AObjSetRate(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xEF77ABA6u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -140,7 +142,9 @@ pub unsafe fn setup_car_child(parent: *mut HSD_JObj, ext_count: i16, offset: i32
 }
 
 /// 1CAFBC
+#[inline(never)]
 pub unsafe extern "C" fn grFZeroCar_801CAFBC(gobj: *mut HSD_GObj, data: *mut c_void, count: i32, mode: i32) {
+    core::hint::black_box(0x5A1FCC90u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFZeroCar_801CAFBC");
     let root = (*gobj).hsd_obj as *mut HSD_JObj;
     let ground_scale = ext::Ground_801C0498();

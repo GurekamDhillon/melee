@@ -5,627 +5,692 @@
 use melee_types::{Fighter, HSD_GObj};
 
 /// `efLib_PauseAll` (defined in ext).
+#[inline(never)]
 pub unsafe extern "C" fn ext__efLib_PauseAll(g: *mut HSD_GObj) {
+    core::hint::black_box(0x41429F1Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_world::tu::efn::eflib::efLib_PauseAll(g);
 }
 
 /// `efLib_ResumeAll` (defined in ext).
+#[inline(never)]
 pub unsafe extern "C" fn ext__efLib_ResumeAll(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5C2978EBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_world::tu::efn::eflib::efLib_ResumeAll(g);
 }
 
 /// `ftCa_Init_800E28C8` (defined in src/melee/ft/kinds/ftCaptain/ftcaptain.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftcaptain__ftCa_Init_800E28C8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB0669D41u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftCaptain::ftcaptain::ftCa_Init_800E28C8(g);
 }
 
 /// `ftCa_SpecialHi_800E400C` (defined in src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftcaptainspeciallw__ftCa_SpecialHi_800E400C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF87B7343u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftcaptainspeciallw::ftCa_SpecialHi_800E400C(g as _);
 }
 
 /// `ftCo_800DB464` (defined in src/melee/ft/kinds/ftCommon/ftCo_CapturePulled.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftCo_CapturePulled__ftCo_800DB464(g: *mut HSD_GObj) {
+    core::hint::black_box(0x914E3DEFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB464(g);
 }
 
 /// `ftCo_LandingAir_EnterWithLag` (defined in src/melee/ft/kinds/ftCommon/ftCo_LandingAir.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftCo_LandingAir__ftCo_LandingAir_EnterWithLag(g: *mut HSD_GObj) {
+    core::hint::black_box(0x12530138u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_fighter::tu::ftCo_LandingAir::ftCo_LandingAir_EnterWithLag(g);
 }
 
 /// `fn_801588B8` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftcrazyhandfingerbeam0__fn_801588B8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB12C7CD6u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftcrazyhandfingerbeam0::fn_801588B8(g);
 }
 
 /// `fn_80158534` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftcrazyhandpoke__fn_80158534(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3E77FEF3u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftcrazyhandpoke::fn_80158534(g);
 }
 
 /// `fn_801577B4` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsweepwait.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftcrazyhandsweepwait__fn_801577B4(g: *mut HSD_GObj) {
+    core::hint::black_box(0xCE2BE839u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftcrazyhandsweepwait::fn_801577B4(g)
 }
 
 /// `ftDk_Init_8010D774` (defined in src/melee/ft/kinds/ftDonkey/ftdonkey.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftdonkey__ftDk_Init_8010D774(g: *mut HSD_GObj) {
+    core::hint::black_box(0xDCB7CF9Fu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftDonkey::ftdonkey::ftDk_Init_8010D774(g);
 }
 
-/// `ftDk_MS_345_800E0294` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyheavyturn.c).
-pub unsafe extern "C" fn ftdonkeyheavyturn__ftDk_MS_345_800E0294(g: *mut HSD_GObj) {
-    crate::tu::ftdonkeyheavyturn::ftDk_MS_345_800E0294(g);
-}
+pub use crate::tu::ftdonkeyheavyturn::cb_ftDk_MS_345_800E0294 as ftdonkeyheavyturn__ftDk_MS_345_800E0294;
 
-/// `ftDk_MS_346_800E05E4` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait1.c).
-pub unsafe extern "C" fn ftdonkeyheavywait1__ftDk_MS_346_800E05E4(g: *mut HSD_GObj) {
-    crate::tu::ftdonkeyheavywait1::ftDk_MS_346_800E05E4(g);
-}
+pub use crate::tu::ftdonkeyheavywait1::cb_ftDk_MS_346_800E05E4 as ftdonkeyheavywait1__ftDk_MS_346_800E05E4;
 
-/// `ftDk_SpecialLw_8010E0CC` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-pub unsafe extern "C" fn ftdonkeyspeciallw__ftDk_SpecialLw_8010E0CC(g: *mut HSD_GObj) {
-    crate::tu::ftdonkeyspeciallw::ftDk_SpecialLw_8010E0CC(g);
-}
+pub use crate::tu::ftdonkeyspeciallw::cb_ftDk_SpecialLw_8010E0CC as ftdonkeyspeciallw__ftDk_SpecialLw_8010E0CC;
 
 /// `ftDk_SpecialN_DestroyAllEffects` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftdonkeyspecialn__ftDk_SpecialN_DestroyAllEffects(g: *mut HSD_GObj) {
+    core::hint::black_box(0xA58DA5F1u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftDonkey::ftdonkeyspecialn::ftDk_SpecialN_DestroyAllEffects(g);
 }
 
-/// `ftFx_SpecialHi_CreateChargeGFX` (defined in src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-pub unsafe extern "C" fn ftfoxspecialhi__ftFx_SpecialHi_CreateChargeGFX(g: *mut HSD_GObj) {
-    crate::tu::ftfoxspecialhi::ftFx_SpecialHi_CreateChargeGFX(g);
-}
+pub use crate::tu::ftfoxspecialhi::cb_ftFx_SpecialHi_CreateChargeGFX as ftfoxspecialhi__ftFx_SpecialHi_CreateChargeGFX;
 
-/// `ftFx_SpecialHi_CreateLaunchGFX` (defined in src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-pub unsafe extern "C" fn ftfoxspecialhi__ftFx_SpecialHi_CreateLaunchGFX(g: *mut HSD_GObj) {
-    crate::tu::ftfoxspecialhi::ftFx_SpecialHi_CreateLaunchGFX(g);
-}
+pub use crate::tu::ftfoxspecialhi::cb_ftFx_SpecialHi_CreateLaunchGFX as ftfoxspecialhi__ftFx_SpecialHi_CreateLaunchGFX;
 
-/// `ftFx_SpecialLwHit_Enter` (defined in src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-pub unsafe extern "C" fn ftfoxspeciallw__ftFx_SpecialLwHit_Enter(g: *mut HSD_GObj) {
-    crate::tu::ftfoxspeciallw::ftFx_SpecialLwHit_Enter(g);
-}
+pub use crate::tu::ftfoxspeciallw::cb_ftFx_SpecialLwHit_Enter as ftfoxspeciallw__ftFx_SpecialLwHit_Enter;
 
-/// `ftGw_Init_OnDamage` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatch.c).
-pub unsafe extern "C" fn ftgamewatch__ftGw_Init_OnDamage(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatch::ftGw_Init_OnDamage(g);
-}
+pub use crate::tu::ftgamewatch::cb_ftGw_Init_OnDamage as ftgamewatch__ftGw_Init_OnDamage;
 
-/// `ftGw_Attack11_DecideAction` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattack11.c).
-pub unsafe extern "C" fn ftgamewatchattack11__ftGw_Attack11_DecideAction(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatchattack11::ftGw_Attack11_DecideAction(g);
-}
+pub use crate::tu::ftgamewatchattack11::cb_ftGw_Attack11_DecideAction as ftgamewatchattack11__ftGw_Attack11_DecideAction;
 
 /// `ftGw_LandingAirB_Enter` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftgamewatchattackair__ftGw_LandingAirB_Enter(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB653F0C7u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftgamewatchattackair::ftGw_LandingAirB_Enter(g);
 }
 
 /// `ftGw_LandingAirHi_Enter` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftgamewatchattackair__ftGw_LandingAirHi_Enter(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAC55DB7Au32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftgamewatchattackair::ftGw_LandingAirHi_Enter(g);
 }
 
 /// `ftGw_LandingAirN_Enter` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftgamewatchattackair__ftGw_LandingAirN_Enter(g: *mut HSD_GObj) {
+    core::hint::black_box(0x2D815763u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftgamewatchattackair::ftGw_LandingAirN_Enter(g);
 }
 
-/// `ftGw_ItemTorchSetup` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c).
-pub unsafe extern "C" fn ftgamewatchattacks4__ftGw_ItemTorchSetup(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatchattacks4::ftGw_ItemTorchSetup(g);
-}
+pub use crate::tu::ftgamewatchattacks4::cb_ftGw_ItemTorchSetup as ftgamewatchattacks4__ftGw_ItemTorchSetup;
 
-/// `ftGw_SpecialHi_ItemRescueSetup` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
-pub unsafe extern "C" fn ftgamewatchspecialhi__ftGw_SpecialHi_ItemRescueSetup(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatchspecialhi::ftGw_SpecialHi_ItemRescueSetup(g);
-}
+pub use crate::tu::ftgamewatchspecialhi::cb_ftGw_SpecialHi_ItemRescueSetup as ftgamewatchspecialhi__ftGw_SpecialHi_ItemRescueSetup;
 
-/// `ftGw_SpecialN_CreateSausage` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialn.c).
-pub unsafe extern "C" fn ftgamewatchspecialn__ftGw_SpecialN_CreateSausage(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatchspecialn::ftGw_SpecialN_CreateSausage(g);
-}
+pub use crate::tu::ftgamewatchspecialn::cb_ftGw_SpecialN_CreateSausage as ftgamewatchspecialn__ftGw_SpecialN_CreateSausage;
 
-/// `ftGw_SpecialS_ItemJudgementEnterHitlag` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
-pub unsafe extern "C" fn ftgamewatchspecials__ftGw_SpecialS_ItemJudgementEnterHitlag(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementEnterHitlag(g);
-}
+pub use crate::tu::ftgamewatchspecials::cb_ftGw_SpecialS_ItemJudgementEnterHitlag as ftgamewatchspecials__ftGw_SpecialS_ItemJudgementEnterHitlag;
 
-/// `ftGw_SpecialS_ItemJudgementExitHitlag` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
-pub unsafe extern "C" fn ftgamewatchspecials__ftGw_SpecialS_ItemJudgementExitHitlag(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementExitHitlag(g);
-}
+pub use crate::tu::ftgamewatchspecials::cb_ftGw_SpecialS_ItemJudgementExitHitlag as ftgamewatchspecials__ftGw_SpecialS_ItemJudgementExitHitlag;
 
-/// `ftGw_SpecialS_ItemJudgementSetup` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
-pub unsafe extern "C" fn ftgamewatchspecials__ftGw_SpecialS_ItemJudgementSetup(g: *mut HSD_GObj) {
-    crate::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementSetup(g);
-}
+pub use crate::tu::ftgamewatchspecials::cb_ftGw_SpecialS_ItemJudgementSetup as ftgamewatchspecials__ftGw_SpecialS_ItemJudgementSetup;
 
 /// `ftKb_Init_800EE74C` (defined in src/melee/ft/kinds/ftKirby/ftkirby.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirby__ftKb_Init_800EE74C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x7E6F84FBu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirby::ftKb_Init_800EE74C(g);
 }
 
 /// `ftKb_Init_800EE7B8` (defined in src/melee/ft/kinds/ftKirby/ftkirby.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirby__ftKb_Init_800EE7B8(g: *mut HSD_GObj) {
+    core::hint::black_box(0x04262C00u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirby::ftKb_Init_800EE7B8(g);
 }
 
 /// `fn_800F1FDC` (defined in src/melee/ft/kinds/ftKirby/ftkirbyattackdash.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyattackdash__fn_800F1FDC(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE1AE38AFu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftKirby::ftkirbyattackdash::fn_800F1FDC(g);
 }
 
 /// `fn_800F20C4` (defined in src/melee/ft/kinds/ftKirby/ftkirbyattackdash.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyattackdash__fn_800F20C4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x7AEA4CC8u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftKirby::ftkirbyattackdash::fn_800F20C4(g);
 }
 
-/// `fn_8010CE5C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
-pub unsafe extern "C" fn ftkirbyspecialgamewatch__fn_8010CE5C(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialgamewatch::fn_8010CE5C(g);
-}
+pub use crate::tu::ftkirbyspecialgamewatch::cb_fn_8010CE5C as ftkirbyspecialgamewatch__fn_8010CE5C;
 
 /// `fn_800F98F4` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialluigi__fn_800F98F4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x05AA37B3u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirbyspecialluigi::fn_800F98F4(g);
 }
 
 /// `fn_800F6450` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6450(g: *mut HSD_GObj) {
+    core::hint::black_box(0xEBC803AFu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6450(g);
 }
 
 /// `fn_800F6528` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6528(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE1950957u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftKirby::ftkirbyspecialn::fn_800F6528(g);
 }
 
 /// `fn_800F6588` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6588(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE5A41A2Du32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirbyspecialn::fn_800F6588(g);
 }
 
 /// `fn_800F6638` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6638(g: *mut HSD_GObj) {
+    core::hint::black_box(0x1AE31E4Fu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirbyspecialn::fn_800F6638(g);
 }
 
 /// `fn_800F66E8` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F66E8(g: *mut HSD_GObj) {
+    core::hint::black_box(0x95BEB1E9u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirbyspecialn::fn_800F66E8(g);
 }
 
 /// `fn_800F6798` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6798(g: *mut HSD_GObj) {
+    core::hint::black_box(0x015D131Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirbyspecialn::fn_800F6798(g);
 }
 
 /// `fn_800F6848` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6848(g: *mut HSD_GObj) {
+    core::hint::black_box(0x294BDF72u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftKirby::ftkirbyspecialn::fn_800F6848(g);
 }
 
 /// `fn_800F68A8` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F68A8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xA86E03CFu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftKirby::ftkirbyspecialn::fn_800F68A8(g);
 }
 
 /// `fn_800F6908` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6908(g: *mut HSD_GObj) {
+    core::hint::black_box(0x90DB2FD1u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6908(g);
 }
 
 /// `fn_800F697C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F697C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB5E83603u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F697C(g);
 }
 
 /// `fn_800F69E8` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F69E8(g: *mut HSD_GObj) {
+    core::hint::black_box(0x121C450Cu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F69E8(g);
 }
 
 /// `fn_800F6A5C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6A5C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3BEAA195u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6A5C(g);
 }
 
 /// `fn_800F6AC8` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6AC8(g: *mut HSD_GObj) {
+    core::hint::black_box(0x550D5B32u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6AC8(g);
 }
 
 /// `fn_800F6B3C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6B3C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xBCE7376Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6B3C(g);
 }
 
 /// `fn_800F6C24` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6C24(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF072EE95u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6C24(g);
 }
 
 /// `fn_800F6C98` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6C98(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFA88C4A2u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6C98(g);
 }
 
 /// `fn_800F6D0C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6D0C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x829745EFu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6D0C(g);
 }
 
 /// `fn_800F6D80` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6D80(g: *mut HSD_GObj) {
+    core::hint::black_box(0x23ABCB1Au32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6D80(g);
 }
 
 /// `fn_800F6DF4` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6DF4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9A875868u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6DF4(g);
 }
 
 /// `fn_800F6E68` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6E68(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFE2A2A33u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6E68(g);
 }
 
 /// `fn_800F6EDC` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6EDC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x865E7E80u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6EDC(g);
 }
 
 /// `fn_800F6F50` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6F50(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4373D4E1u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F6F50(g);
 }
 
 /// `fn_800F6FC4` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6FC4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x43F9A0BBu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftKirby::ftkirbyspecialn::fn_800F6FC4(g);
 }
 
 /// `fn_800F702C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F702C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9A1ABA6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::fn_800F702C(g);
 }
 
 /// `ftKb_SpecialS_800F6BB0` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialn__ftKb_SpecialS_800F6BB0(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE9FC3B8Cu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKirby::ftkirbyspecialn::ftKb_SpecialS_800F6BB0(g);
 }
 
 /// `fn_8010C44C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialpeach__fn_8010C44C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x6D52E45Cu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirbyspecialpeach::fn_8010C44C(g);
 }
 
 /// `ftKb_SpecialNPe_8010C47C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialpeach__ftKb_SpecialNPe_8010C47C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x6CAB25DBu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C47C(g);
 }
 
-/// `fn_800F53AC` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
-pub unsafe extern "C" fn ftkirbyspecials__fn_800F53AC(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecials::fn_800F53AC(g);
-}
+pub use crate::tu::ftkirbyspecials::cb_fn_800F53AC as ftkirbyspecials__fn_800F53AC;
 
-/// `fn_80106DB0` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
-pub unsafe extern "C" fn ftkirbyspecialseak__fn_80106DB0(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialseak::fn_80106DB0(g);
-}
+pub use crate::tu::ftkirbyspecialseak::cb_fn_80106DB0 as ftkirbyspecialseak__fn_80106DB0;
 
-/// `fn_8010984C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
-pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_8010984C(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialyoshi::fn_8010984C(g);
-}
+pub use crate::tu::ftkirbyspecialyoshi::cb_fn_8010984C as ftkirbyspecialyoshi__fn_8010984C;
 
-/// `fn_801098EC` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
-pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_801098EC(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialyoshi::fn_801098EC(g);
-}
+pub use crate::tu::ftkirbyspecialyoshi::cb_fn_801098EC as ftkirbyspecialyoshi__fn_801098EC;
 
-/// `fn_8010998C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
-pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_8010998C(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialyoshi::fn_8010998C(g);
-}
+pub use crate::tu::ftkirbyspecialyoshi::cb_fn_8010998C as ftkirbyspecialyoshi__fn_8010998C;
 
 /// `fn_80109A08` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109A08(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE9D28431u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftKirby::ftkirbyspecialyoshi::fn_80109A08(g);
 }
 
-/// `fn_80109A84` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
-pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109A84(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialyoshi::fn_80109A84(g);
-}
+pub use crate::tu::ftkirbyspecialyoshi::cb_fn_80109A84 as ftkirbyspecialyoshi__fn_80109A84;
 
 /// `fn_80109B00` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109B00(g: *mut HSD_GObj) {
+    core::hint::black_box(0x251E5DB8u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftKirby::ftkirbyspecialyoshi::fn_80109B00(g);
 }
 
-/// `fn_80109B7C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
-pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109B7C(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialyoshi::fn_80109B7C(g);
-}
+pub use crate::tu::ftkirbyspecialyoshi::cb_fn_80109B7C as ftkirbyspecialyoshi__fn_80109B7C;
 
-/// `fn_80109BF8` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
-pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109BF8(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialyoshi::fn_80109BF8(g);
-}
+pub use crate::tu::ftkirbyspecialyoshi::cb_fn_80109BF8 as ftkirbyspecialyoshi__fn_80109BF8;
 
 /// `fn_80109C74` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109C74(g: *mut HSD_GObj) {
+    core::hint::black_box(0x86F507C0u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftKirby::ftkirbyspecialyoshi::fn_80109C74(g);
 }
 
-/// `fn_80109CF0` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
-pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109CF0(g: *mut HSD_GObj) {
-    crate::tu::ftkirbyspecialyoshi::fn_80109CF0(g);
-}
+pub use crate::tu::ftkirbyspecialyoshi::cb_fn_80109CF0 as ftkirbyspecialyoshi__fn_80109CF0;
 
-/// `fn_80134518` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c).
-pub unsafe extern "C" fn ftkoopaspeciallw__fn_80134518(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspeciallw::fn_80134518(g);
-}
+pub use crate::tu::ftkoopaspeciallw::cb_fn_80134518 as ftkoopaspeciallw__fn_80134518;
 
-/// `ftKp_SpecialS_8013319C` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_8013319C(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_8013319C(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_8013319C as ftkoopaspecials__ftKp_SpecialS_8013319C;
 
-/// `ftKp_SpecialS_8013322C` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_8013322C(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_8013322C(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_8013322C as ftkoopaspecials__ftKp_SpecialS_8013322C;
 
-/// `ftKp_SpecialS_801332C4` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_801332C4(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_801332C4(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_801332C4 as ftkoopaspecials__ftKp_SpecialS_801332C4;
 
 /// `ftKp_SpecialS_80133324` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_80133324(g: *mut HSD_GObj) {
+    core::hint::black_box(0x95DEC28Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r5::ftKoopa::ftkoopaspecials::ftKp_SpecialS_80133324(g);
 }
 
-/// `ftKp_SpecialS_80133398` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_80133398(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_80133398(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_80133398 as ftkoopaspecials__ftKp_SpecialS_80133398;
 
-/// `ftKp_SpecialS_801333F8` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_801333F8(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_801333F8(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_801333F8 as ftkoopaspecials__ftKp_SpecialS_801333F8;
 
-/// `ftKp_SpecialS_80133484` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_80133484(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_80133484(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_80133484 as ftkoopaspecials__ftKp_SpecialS_80133484;
 
-/// `ftKp_SpecialS_801334E4` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_801334E4(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_801334E4(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_801334E4 as ftkoopaspecials__ftKp_SpecialS_801334E4;
 
-/// `ftKp_SpecialS_8013359C` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_8013359C(g: *mut HSD_GObj) {
-    crate::tu::ftkoopaspecials::ftKp_SpecialS_8013359C(g);
-}
+pub use crate::tu::ftkoopaspecials::cb_ftKp_SpecialS_8013359C as ftkoopaspecials__ftKp_SpecialS_8013359C;
 
-/// `ftLk_800EAF58` (defined in src/melee/ft/kinds/ftLink/ftlink.c).
-pub unsafe extern "C" fn ftlink__ftLk_800EAF58(g: *mut HSD_GObj) {
-    crate::tu::ftlink::ftLk_800EAF58(g);
-}
+pub use crate::tu::ftlink::cb_ftLk_800EAF58 as ftlink__ftLk_800EAF58;
 
-/// `onAccessory4` (defined in src/melee/ft/kinds/ftLink/ftlinkspecialhi.c).
-pub unsafe extern "C" fn ftlinkspecialhi__onAccessory4(g: *mut HSD_GObj) {
-    crate::tu::ftlinkspecialhi::onAccessory4(g);
-}
+pub use crate::tu::ftlinkspecialhi::cb_onAccessory4 as ftlinkspecialhi__onAccessory4;
 
-/// `spawnBomb` (defined in src/melee/ft/kinds/ftLink/ftlinkspeciallw.c).
-pub unsafe extern "C" fn ftlinkspeciallw__spawnBomb(g: *mut HSD_GObj) {
-    crate::tu::ftlinkspeciallw::spawnBomb(g);
-}
+pub use crate::tu::ftlinkspeciallw::cb_spawnBomb as ftlinkspeciallw__spawnBomb;
 
-/// `onAccessory4` (defined in src/melee/ft/kinds/ftLink/ftlinkspecials.c).
-pub unsafe extern "C" fn ftlinkspecials__onAccessory4(g: *mut HSD_GObj) {
-    crate::tu::ftlinkspecials::onAccessory4(g);
-}
+pub use crate::tu::ftlinkspecials::cb_onAccessory4 as ftlinkspecials__onAccessory4;
 
 /// `ftLg_SpecialN_FireSpawn` (defined in src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftluigispecialn__ftLg_SpecialN_FireSpawn(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF7B64B3Bu32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftluigispecialn::ftLg_SpecialN_FireSpawn(g as _);
 }
 
 /// `updateRot` (defined in src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmariospeciallw__updateRot(g: *mut HSD_GObj) {
+    core::hint::black_box(0xDD2DDD65u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmariospeciallw::updateRot(g as _);
 }
 
 /// `ftMr_SpecialN_ItemFireSpawn` (defined in src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmariospecialn__ftMr_SpecialN_ItemFireSpawn(g: *mut HSD_GObj) {
+    core::hint::black_box(0xEE614B22u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmariospecialn::ftMr_SpecialN_ItemFireSpawn(g as _);
 }
 
 /// `ftMh_MS_362_80152E28` (defined in src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmasterhandfingerbeam__ftMh_MS_362_80152E28(g: *mut HSD_GObj) {
+    core::hint::black_box(0xEA07BA64u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftmasterhandfingerbeam::ftMh_MS_362_80152E28(g);
 }
 
 /// `ftMt_Init_OnDeath2` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwo__ftMt_Init_OnDeath2(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4AA59D66u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmewtwo::ftMt_Init_OnDeath2(g as _);
 }
 
 /// `ftMt_Init_OnTakeDamage` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwo__ftMt_Init_OnTakeDamage(g: *mut HSD_GObj) {
+    core::hint::black_box(0xCD7B9F04u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmewtwo::ftMt_Init_OnTakeDamage(g as _);
 }
 
 /// `ftMt_SpecialHi_CreateGFX` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwospecialhi__ftMt_SpecialHi_CreateGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0x2878BE64u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmewtwospecialhi::ftMt_SpecialHi_CreateGFX(g as _);
 }
 
 /// `ftMt_SpecialHi_SetEndGFX` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwospecialhi__ftMt_SpecialHi_SetEndGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3294A817u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmewtwospecialhi::ftMt_SpecialHi_SetEndGFX(g as _);
 }
 
 /// `ftMt_SpecialAirLw_AirToGround` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwospeciallw__ftMt_SpecialAirLw_AirToGround(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9F724667u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r4::ftMewtwo::ftmewtwospeciallw::ftMt_SpecialAirLw_AirToGround(g);
 }
 
 /// `ftMt_SpecialLw_CreateDisable` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFCEFEF83u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmewtwospeciallw::ftMt_SpecialLw_CreateDisable(g as _);
 }
 
 /// `ftMt_SpecialLw_GroundToAir` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwospeciallw__ftMt_SpecialLw_GroundToAir(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAF1D94D5u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftMewtwo::ftmewtwospeciallw::ftMt_SpecialLw_GroundToAir(g);
 }
 
 /// `ftMt_SpecialAirS_AirToGround` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwospecials__ftMt_SpecialAirS_AirToGround(g: *mut HSD_GObj) {
+    core::hint::black_box(0xBE529427u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmewtwospecials::ftMt_SpecialAirS_AirToGround(g as _);
 }
 
 /// `ftMt_SpecialS_GroundToAir` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftmewtwospecials__ftMt_SpecialS_GroundToAir(g: *mut HSD_GObj) {
+    core::hint::black_box(0x95D2B559u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftmewtwospecials::ftMt_SpecialS_GroundToAir(g as _);
 }
 
 /// `ftNn_Init_80122FAC` (defined in src/melee/ft/kinds/ftNana/ftnana.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftnana__ftNn_Init_80122FAC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9D1CC0C6u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftnana::ftNn_Init_80122FAC(g as _);
 }
 
 /// `fn_80123218` (defined in src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftnanaspecialhi__fn_80123218(g: *mut HSD_GObj) {
+    core::hint::black_box(0x431CCF3Du32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftnanaspecialhi::fn_80123218(g as _);
 }
 
 /// `ftPe_Init_OnDeath2` (defined in src/melee/ft/kinds/ftPeach/ftpeach.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpeach__ftPe_Init_OnDeath2(g: *mut HSD_GObj) {
+    core::hint::black_box(0x98DC73D0u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftpeach::ftPe_Init_OnDeath2(g as _);
 }
 
 /// `handleAirColl` (defined in src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpeachspeciallw__handleAirColl(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD2832A0Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftPeach::ftpeachspeciallw::handleAirColl(g);
 }
 
 /// `handleColl` (defined in src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpeachspeciallw__handleColl(g: *mut HSD_GObj) {
+    core::hint::black_box(0x6AE3D0C2u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftPeach::ftpeachspeciallw::handleColl(g);
 }
 
 /// `spawnVeg` (defined in src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpeachspeciallw__spawnVeg(g: *mut HSD_GObj) {
+    core::hint::black_box(0x930256E9u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftpeachspeciallw::spawnVeg(g as _);
 }
 
 /// `onEnterHitlag` (defined in src/melee/ft/kinds/ftPeach/ftpeachspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpeachspecialn__onEnterHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0x66EED34Bu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpeachspecialn::onEnterHitlag(g);
 }
 
 /// `onExitHitlag` (defined in src/melee/ft/kinds/ftPeach/ftpeachspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpeachspecialn__onExitHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFE5DD4ADu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpeachspecialn::onExitHitlag(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk00` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk00(g: *mut HSD_GObj) {
+    core::hint::black_box(0x393282DAu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk00(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk01` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk01(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3A32846Du32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk01(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk02` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk02(g: *mut HSD_GObj) {
+    core::hint::black_box(0x37327FB4u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r4::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk02(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk03` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk03(g: *mut HSD_GObj) {
+    core::hint::black_box(0x38328147u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk03(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk04` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk04(g: *mut HSD_GObj) {
+    core::hint::black_box(0x35327C8Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk04(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk05` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk05(g: *mut HSD_GObj) {
+    core::hint::black_box(0x36327E21u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk05(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk06` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk06(g: *mut HSD_GObj) {
+    core::hint::black_box(0x33327968u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk06(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk07` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_ChangeMotion_Unk07(g: *mut HSD_GObj) {
+    core::hint::black_box(0x34327AFBu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r6::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk07(g);
 }
 
 /// `ftPk_SpecialLw_SetState_Unk1` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_SetState_Unk1(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4D2FD688u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::chars::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_SetState_Unk1(&mut *((*g).user_data as *mut Fighter));
 }
 
 /// `ftPk_SpecialLw_SpawnEffect` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_SpawnEffect(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4D1CC89Bu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpikachuspeciallw::ftPk_SpecialLw_SpawnEffect(g);
 }
 
 /// `ftPp_Init_8011F060` (defined in src/melee/ft/kinds/ftPopo/ftpopo.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpopo__ftPp_Init_8011F060(g: *mut HSD_GObj) {
+    core::hint::black_box(0x3C927AD3u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpopo::ftPp_Init_8011F060(g);
 }
 
 /// `fn_80122B54` (defined in src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpopospeciallw__fn_80122B54(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9710C186u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpopospeciallw::fn_80122B54(g);
 }
 
 /// `fn_80122D2C` (defined in src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpopospeciallw__fn_80122D2C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD8F3A17Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpopospeciallw::fn_80122D2C(g);
 }
 
 /// `ftPp_SpecialN_8011F500` (defined in src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpopospecialn__ftPp_SpecialN_8011F500(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4128FB8Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpopospecialn::ftPp_SpecialN_8011F500(g);
 }
 
 /// `ftSs_Init_80128428` (defined in src/melee/ft/kinds/ftSamus/ftsamus.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftsamus__ftSs_Init_80128428(g: *mut HSD_GObj) {
+    core::hint::black_box(0x56FE72D3u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftsamus::ftSs_Init_80128428(g);
 }
 
 /// `ftSs_SpecialLw_8012ADF0` (defined in src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5230557Bu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftsamusspeciallw1::ftSs_SpecialLw_8012ADF0(g);
 }
 
 /// `ftSs_SpecialS_8012A074` (defined in src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftsamusspecialn__ftSs_SpecialS_8012A074(g: *mut HSD_GObj) {
+    core::hint::black_box(0x84643D8Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftsamusspecialn::ftSs_SpecialS_8012A074(g);
 }
 
@@ -635,137 +700,179 @@ pub unsafe extern "C" fn ftsamusspecialn__ftSs_SpecialS_8012A074(g: *mut HSD_GOb
 pub use crate::tu::ftseak::cb_ftSk_Init_80110198 as ftseak__ftSk_Init_80110198;
 
 /// `fn_80113038` (defined in src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftseakspecialhi__fn_80113038(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAC313E9Cu32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftseakspecialhi::fn_80113038(g as _);
 }
 
 /// `fn_80114034` (defined in src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftseakspeciallw__fn_80114034(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFF113AC9u32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftseakspeciallw::fn_80114034(g as _);
 }
 
 /// `fn_801140B0` (defined in src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftseakspeciallw__fn_801140B0(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFD36087Cu32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftseakspeciallw::fn_801140B0(g as _);
 }
 
 /// `fn_8011412C` (defined in src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftseakspeciallw__fn_8011412C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC4601A9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftseakspeciallw::fn_8011412C(g as _);
 }
 
-/// `ftSk_SpecialS_8011097C` (defined in src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-pub unsafe extern "C" fn ftseakspecials__ftSk_SpecialS_8011097C(g: *mut HSD_GObj) {
-    crate::chars::r12::ftSeak::ftseakspecials::ftSk_SpecialS_8011097C(g);
-}
+pub use crate::tu::ftseakspecials::cb_ftSk_SpecialS_8011097C as ftseakspecials__ftSk_SpecialS_8011097C;
 
 /// `ftSk_SpecialS_80110EE8` (defined in src/melee/ft/kinds/ftSeak/ftseakspecials.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftseakspecials__ftSk_SpecialS_80110EE8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFEDEA14Du32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftseakspecials::ftSk_SpecialS_80110EE8(g as _);
 }
 
 /// `ftSk_SpecialS_ChainSomething` (defined in src/melee/ft/kinds/ftSeak/ftseakspecials.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftseakspecials__ftSk_SpecialS_ChainSomething(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE545039Eu32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftseakspecials::ftSk_SpecialS_ChainSomething(g as _);
 }
 
 /// `ftYs_Init_8012BA8C` (defined in src/melee/ft/kinds/ftYoshi/ftyoshi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshi__ftYs_Init_8012BA8C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x8E1B806Eu32); // fn identity (tools/rust-port/fn_identity.py)
     let _ = crate::tu::ftyoshi::ftYs_Init_8012BA8C(g as _);
 }
 
 /// `fn_8012E110` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialhi__fn_8012E110(g: *mut HSD_GObj) {
+    core::hint::black_box(0x05DF8EFEu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftyoshispecialhi::fn_8012E110(g);
 }
 
-/// `fn_8012E644` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
-pub unsafe extern "C" fn ftyoshispeciallw__fn_8012E644(g: *mut HSD_GObj) {
-    crate::tu::ftyoshispeciallw::fn_8012E644(g);
-}
+pub use crate::tu::ftyoshispeciallw::cb_fn_8012E644 as ftyoshispeciallw__fn_8012E644;
 
 /// `fn_8012D128` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D128(g: *mut HSD_GObj) {
+    core::hint::black_box(0xDFD337CFu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftyoshispecialn::fn_8012D128(g);
 }
 
 /// `fn_8012D1AC` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D1AC(g: *mut HSD_GObj) {
+    core::hint::black_box(0xA7B60065u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftyoshispecialn::fn_8012D1AC(g);
 }
 
 /// `fn_8012D230` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D230(g: *mut HSD_GObj) {
+    core::hint::black_box(0x90D257CFu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftYoshi::ftyoshispecialn::fn_8012D230(g);
 }
 
 /// `fn_8012D298` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D298(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9CE1753Du32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftYoshi::ftyoshispecialn::fn_8012D298(g);
 }
 
 /// `fn_8012D2F8` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D2F8(g: *mut HSD_GObj) {
+    core::hint::black_box(0x1B3D266Au32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftYoshi::ftyoshispecialn::fn_8012D2F8(g);
 }
 
 /// `fn_8012D360` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D360(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF953D509u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftYoshi::ftyoshispecialn::fn_8012D360(g);
 }
 
 /// `fn_8012D3C0` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D3C0(g: *mut HSD_GObj) {
+    core::hint::black_box(0x0C212054u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftYoshi::ftyoshispecialn::fn_8012D3C0(g);
 }
 
 /// `fn_8012D428` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D428(g: *mut HSD_GObj) {
+    core::hint::black_box(0xBCA97F04u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftYoshi::ftyoshispecialn::fn_8012D428(g);
 }
 
 /// `fn_8012D488` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D488(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB89A6E2Eu32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r3::ftYoshi::ftyoshispecialn::fn_8012D488(g);
 }
 
 /// `fn_8012D4F0` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D4F0(g: *mut HSD_GObj) {
+    core::hint::black_box(0xBC283058u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::chars::r2::ftYoshi::ftyoshispecialn::fn_8012D4F0(g);
 }
 
 /// `ftZd_SpecialHi_801396AC` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftzeldaspecialhi__ftZd_SpecialHi_801396AC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x53E7BDF6u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftzeldaspecialhi::ftZd_SpecialHi_801396AC(g);
 }
 
 /// `ftZd_SpecialLw_8013ADB4` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013ADB4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x329B42D2u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013ADB4(g)
 }
 
 /// `ftZd_SpecialLw_8013AE30` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013AE30(g: *mut HSD_GObj) {
+    core::hint::black_box(0x2E603034u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013AE30(g)
 }
 
 /// `ftZd_SpecialLw_8013AEAC` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013AEAC(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAA7A0113u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013AEAC(g)
 }
 
 /// `ftPr_Init_8013C94C` (defined in src/melee/ft/kinds/ftPurin/ftpurin.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpurin__ftPr_Init_8013C94C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE4AB9250u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpurin::ftPr_Init_8013C94C(g);
 }
 
 /// `ftPr_SpecialHi_8013CE7C` (defined in src/melee/ft/kinds/ftPurin/ftpurinspecialhi.c).
+#[inline(never)]
 pub unsafe extern "C" fn ftpurinspecialhi__ftPr_SpecialHi_8013CE7C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD002EA37u32); // fn identity (tools/rust-port/fn_identity.py)
     crate::tu::ftpurinspecialhi::ftPr_SpecialHi_8013CE7C(g);
 }
 
 /// Every entry with its `<setter tu>:<C name>` key (tests/chars_ref.rs maps stored pointers back).
-pub const CALLBACKS: &[(unsafe extern "C" fn(*mut HSD_GObj), &str)] = &[
+pub static CALLBACKS: &[(unsafe extern "C" fn(*mut HSD_GObj), &str)] = &[
     (ext__efLib_PauseAll, "ext:efLib_PauseAll"),
     (ext__efLib_ResumeAll, "ext:efLib_ResumeAll"),
     (ftcaptain__ftCa_Init_800E28C8, "src/melee/ft/kinds/ftCaptain/ftcaptain.c:ftCa_Init_800E28C8"),

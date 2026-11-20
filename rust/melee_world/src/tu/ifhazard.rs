@@ -46,7 +46,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x84713BEEu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -73,7 +74,9 @@ unsafe fn HSD_GObjGetHSDObj(gobj: *mut HSD_GObj) -> *mut c_void {
     (*gobj).hsd_obj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD604(arg: i32) {
+    core::hint::black_box(0x2A138692u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD604");
     let jobj = HSD_GObjGetHSDObj(un_804D6D80) as *mut HSD_JObj;
     ext::HSD_JObjReqAnimAll(jobj, 0.0);
@@ -82,22 +85,30 @@ pub unsafe extern "C" fn un_802FD604(arg: i32) {
     un_804D6D88 = 1;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD65C() {
+    core::hint::black_box(0xE50C5E2Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD65C");
     un_804D6D88 = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD668() {
+    core::hint::black_box(0x2A047C08u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD668");
     un_804D6D8C = 1;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD674() {
+    core::hint::black_box(0x2C06BDC5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD674");
     un_804D6D8C = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FD680(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5074F97Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FD680");
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     if un_804D6D84 != 0 {
@@ -109,7 +120,9 @@ pub unsafe extern "C" fn fn_802FD680(gobj: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll(jobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FD6CC(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0x01A85881u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FD6CC");
     // TARGET_PC: the Atlas retail mask (empty by default).
     if ext::Ui_RetailHidden(AT_RE_HUD_HAZARD) != 0 {
@@ -120,9 +133,12 @@ pub unsafe extern "C" fn fn_802FD6CC(gobj: *mut HSD_GObj, pass: isize) {
     }
 }
 
-pub unsafe extern "C" fn un_802FD704() { melee_core::ct!("un_802FD704");}
+#[inline(never)]
+pub unsafe extern "C" fn un_802FD704() { core::hint::black_box(0xA8AAECBDu32); /* fn identity */ melee_core::ct!("un_802FD704");}
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD708(desc: *mut DynamicModelDesc, arg1: i32) {
+    core::hint::black_box(0x9CAAD9D9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD708");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_UI as u16, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint((*desc).joint);
@@ -146,19 +162,26 @@ pub unsafe extern "C" fn un_802FD708(desc: *mut DynamicModelDesc, arg1: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD8A0(desc: *mut DynamicModelDesc) {
+    core::hint::black_box(0x0052ED2Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD8A0");
     un_802FD708(desc, 0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD8C4(desc: *mut DynamicModelDesc) {
+    core::hint::black_box(0xE8574493u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD8C4");
     un_802FD708(desc, 1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD8E8(desc: *mut DynamicModelDesc) {
+    core::hint::black_box(0x70491021u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD8E8");
     un_802FD708(desc, 2);
 }
 
-pub unsafe extern "C" fn un_802FD90C() { melee_core::ct!("un_802FD90C");}
+#[inline(never)]
+pub unsafe extern "C" fn un_802FD90C() { core::hint::black_box(0xCAAD6B02u32); /* fn identity */ melee_core::ct!("un_802FD90C");}

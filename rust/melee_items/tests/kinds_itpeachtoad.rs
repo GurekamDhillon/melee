@@ -127,9 +127,9 @@ fn itpeachtoad_matches_c() {
                     3 => {  m::it_802BDFA0(&raw mut GO[0]); } // it_802BDFA0
                     4 => {  m::it_802BDFC0(&raw mut GO[0]); } // it_802BDFC0
                     5 => {  m::itPeachToad_Logic91_PickedUp(&raw mut GO[0]); } // itPeachToad_Logic91_PickedUp
-                    6 => {  ret = m::itPeachtoad_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itPeachtoad_UnkMotion0_Anim
+                    6 => {  ret = ((m::itPeachtoad_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachtoad_UnkMotion0_Anim
                     7 => {  m::it_802BE100(&raw mut GO[0]); } // it_802BE100
-                    8 => {  ret = m::itPeachtoad_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itPeachtoad_UnkMotion1_Anim
+                    8 => {  ret = ((m::itPeachtoad_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachtoad_UnkMotion1_Anim
                     9 => {  m::itPeachToad_Logic91_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itPeachToad_Logic91_EvtUnk
                     10 => { for j in 0..2 { let row = &m::it_803F7528[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

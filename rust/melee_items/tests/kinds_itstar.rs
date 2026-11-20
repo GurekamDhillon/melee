@@ -123,10 +123,10 @@ fn itstar_matches_c() {
                 match op {
                     0 => {  m::itStar_Logic10_Spawned(&raw mut GO[0]); } // itStar_Logic10_Spawned
                     1 => {  m::it_802846D4(&raw mut GO[0]); } // it_802846D4
-                    2 => {  ret = m::itStar_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itStar_UnkMotion0_Anim
+                    2 => {  ret = ((m::itStar_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itStar_UnkMotion0_Anim
                     3 => {  m::itStar_UnkMotion0_Phys(&raw mut GO[0]); } // itStar_UnkMotion0_Phys
-                    4 => {  ret = m::itStar_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itStar_UnkMotion0_Coll
-                    5 => {  ret = m::itStar_Logic10_DmgDealt(&raw mut GO[0]) as u32; } // itStar_Logic10_DmgDealt
+                    4 => {  ret = ((m::itStar_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itStar_UnkMotion0_Coll
+                    5 => {  ret = ((m::itStar_Logic10_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itStar_Logic10_DmgDealt
                     6 => {  m::itStar_Logic10_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itStar_Logic10_EvtUnk
                     7 => { for j in 0..1 { let row = &m::it_803F57A0[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

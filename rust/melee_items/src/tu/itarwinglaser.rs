@@ -74,7 +74,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x4A0363AFu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -121,7 +122,9 @@ unsafe fn itArwinglaser_GetCollArg(ip: *mut Item) -> i32 {
 }
 
 /// 2E70BC: the beam's tip segment against the lines, then four 200-unit probes around it.
+#[inline(never)]
 pub unsafe extern "C" fn it_802E70BC(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x4DB5ED80u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E70BC");
     let mut sp44: i32 = 0;
     let mut sp40: u32 = 0;
@@ -172,7 +175,9 @@ pub unsafe extern "C" fn it_802E70BC(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// 2E72E0: spawns a beam of `type_` (0/2 main, 4/5 accessory) at `bone`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802E72E0(parent: *mut Item_GObj, bone: *mut HSD_JObj, type_: i32, scale: f32, scale_mult: f32) -> *mut Item_GObj {
+    core::hint::black_box(0x9C8FD60Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E72E0");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp24: Vec3 = core::mem::zeroed();
@@ -273,7 +278,9 @@ pub unsafe extern "C" fn it_802E72E0(parent: *mut Item_GObj, bone: *mut HSD_JObj
 }
 
 /// 2E7654: spawns an aimed shot from `bone` toward `target`. (No `return` in the C.)
+#[inline(never)]
 pub unsafe extern "C" fn it_802E7654(owner: *mut Item_GObj, bone: *mut HSD_JObj, target: *mut Vec3, type_: i32, arg4: i32, scale: f32) -> *mut Item_GObj {
+    core::hint::black_box(0x4D2CC8ECu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E7654");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp28: Vec3 = core::mem::zeroed();
@@ -323,7 +330,9 @@ pub unsafe extern "C" fn it_802E7654(owner: *mut Item_GObj, bone: *mut HSD_JObj,
 }
 
 /// 2E79C8: detaches the accessory beams of a main beam.
+#[inline(never)]
 pub unsafe extern "C" fn it_802E79C8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3F11FA3Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E79C8");
     let ip = GET_ITEM(gobj);
     match (*ip).xDD4_itemVar.arwinglaser.xE38 {
@@ -349,7 +358,9 @@ pub unsafe extern "C" fn it_802E79C8(gobj: *mut Item_GObj) {
 }
 
 /// 2E7A4C
+#[inline(never)]
 pub unsafe extern "C" fn it_802E7A4C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6B39F7BDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E7A4C");
     let item = GET_ITEM(gobj);
     ext::it_8026B3A8(gobj);
@@ -361,7 +372,9 @@ pub unsafe extern "C" fn it_802E7A4C(gobj: *mut Item_GObj) {
 /// the predicate is "the life timer ran out". Calling a void function through a bool-returning pointer read whatever
 /// the return register held: Windows happened to see it_80273130's result, Linux (another codegen) a stale value, and
 /// destroyed a live Corneria Arwing laser a frame early (Game_20260613T224702 frame 797). The result is returned here.
+#[inline(never)]
 pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x80757FFCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itArwinglaser_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.arwinglaser.xE24 = (*ip).xDD4_itemVar.arwinglaser.xE18;
@@ -371,7 +384,9 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Anim(gobj: *mut Item_GObj) -> 
     ext::it_80273130(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x07AD9ACDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itArwinglaser_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.arwinglaser.xE24 = (*ip).xDD4_itemVar.arwinglaser.xE18;
@@ -379,7 +394,9 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Anim(gobj: *mut Item_GObj) -> 
     ext::it_80273130(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD29F3A31u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itArwinglaser_UnkMotion2_Phys");
     let mut scale_vec: Vec3 = core::mem::zeroed();
     let jobj = GET_JOBJ(gobj);
@@ -409,7 +426,9 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Phys(gobj: *mut Item_GObj) {
     HSD_JObjSetScale(jobj, &mut scale_vec);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x36EE66E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itArwinglaser_UnkMotion3_Phys");
     let mut scale_vec: Vec3 = core::mem::zeroed();
     let mut corneria_offset: Vec3 = core::mem::zeroed();
@@ -443,7 +462,9 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xED02EE4Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itArwinglaser_UnkMotion2_Coll");
     let mut sp40: Vec3 = core::mem::zeroed();
     let mut prev_pos: Vec3;
@@ -476,7 +497,9 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Coll(gobj: *mut Item_GObj) -> 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x04C96D7Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itArwinglaser_UnkMotion3_Coll");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -502,7 +525,9 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Coll(gobj: *mut Item_GObj) -> 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itArwinglaser_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEC495804u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itArwinglaser_UnkMotion5_Coll");
     let mut trans: Vec3 = core::mem::zeroed();
     let mut scale_vec: Vec3 = core::mem::zeroed();
@@ -530,7 +555,9 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion5_Coll(gobj: *mut Item_GObj) -> 
 }
 
 /// 2E838C
+#[inline(never)]
 pub unsafe extern "C" fn it_802E838C(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x731166C4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E838C");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -542,13 +569,17 @@ pub unsafe extern "C" fn it_802E838C(gobj: *mut Item_GObj) -> bool {
 }
 
 /// 2E8418
+#[inline(never)]
 pub unsafe extern "C" fn it_802E8418(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x1BD8DEB9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E8418");
     true
 }
 
 /// 2E8420: reflected.
+#[inline(never)]
 pub unsafe extern "C" fn it_802E8420(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xA9DBFCDAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E8420");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = (*gobj).user_data as *mut Item;
@@ -579,7 +610,9 @@ pub unsafe extern "C" fn it_802E8420(gobj: *mut Item_GObj) -> bool {
 }
 
 /// 2E85F4: shield-bounced.
+#[inline(never)]
 pub unsafe extern "C" fn it_802E85F4(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x04E9EBA9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E85F4");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = (*gobj).user_data as *mut Item;
@@ -602,7 +635,9 @@ pub unsafe extern "C" fn it_802E85F4(gobj: *mut Item_GObj) -> bool {
 }
 
 /// 2E8784
+#[inline(never)]
 pub unsafe extern "C" fn it_802E8784(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xEE9E645Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E8784");
     true
 }

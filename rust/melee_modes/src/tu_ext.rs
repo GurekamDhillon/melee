@@ -32,7 +32,9 @@ pub fn Camera_8002EEC8(a0: f32) {
 }
 pub static mut HOOK_Camera_800304E0: Option<fn(*mut HSD_GObj)> = None;
 /// C `Camera_800304E0` (melee/cm/camera.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn Camera_800304E0(a0: *mut HSD_GObj) {
+    core::hint::black_box(0xEB186A05u32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_Camera_800304E0 { Some(f) => f(a0), None => melee_core::unported!("TODO: Camera_800304E0 is not ported") }
 }
 pub static mut HOOK_Camera_800313E0: Option<fn(*mut HSD_GObj, u64)> = None;
@@ -272,7 +274,9 @@ pub fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) {
 }
 pub static mut HOOK_HSD_GObj_803910D8: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_GObj_803910D8` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) {
+    core::hint::black_box(0x4CA19057u32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_HSD_GObj_803910D8 { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: HSD_GObj_803910D8 is not ported") }
 }
 pub static mut HOOK_HSD_GObj_FogCallback: Option<fn(*mut HSD_GObj, isize)> = None;
@@ -282,12 +286,16 @@ pub unsafe extern "C" fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: isize) {
 }
 pub static mut HOOK_HSD_GObj_JObjCallback: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) {
+    core::hint::black_box(0x5D57871Au32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_HSD_GObj_JObjCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_GObj_LObjCallback: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_GObj_LObjCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) {
+    core::hint::black_box(0x77B2AB54u32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_HSD_GObj_LObjCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_GObj_SetupProc: Option<fn(*mut HSD_GObj, HSD_GObjEvent, u8) -> *mut HSD_GObjProc> = None;
@@ -367,7 +375,9 @@ pub fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: i32, a
 }
 pub static mut HOOK_HSD_SObjLib_803A49E0: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_SObjLib_803A49E0` (sysdolphin/baselib/sobjlib.h); referenced as a function value, so it is `extern "C"`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: isize) {
+    core::hint::black_box(0x4C6FE56Fu32); // fn identity (tools/rust-port/fn_identity.py)
     match HOOK_HSD_SObjLib_803A49E0 { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_SObjLib_803A54EC: Option<fn(*mut HSD_GObj, isize)> = None;

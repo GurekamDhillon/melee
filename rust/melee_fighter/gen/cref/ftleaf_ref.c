@@ -75,7 +75,7 @@ static u32 state(void)
     u32 h = 0;
     int i, p;
 #define H(v) (h = h * 31u + (u32) (v))
-    H(F.throw_flags_b0); H(F.throw_flags_b1); H(F.throw_flags_b2); H(F.throw_flags_b3);
+    H(F.x2210.x0.throw_flags_b0); H(F.x2210.x0.throw_flags_b1); H(F.x2210.x0.throw_flags_b2); H(F.x2210.x0.throw_flags_b3);
     H(F.allow_interrupt); H(F.x2219_b7); H(F.x221A_b1);
     for (i = 0; i < 5; i++) { H(F.x8B0[i].x10); H(F.x8B0[i].x11); }
     H(Fighter_804D64F8); H(dmg_log0_idx); H(dmg_log1_idx);
@@ -101,11 +101,11 @@ int main(void)
             rs = 0x2468Au + (u32) op * 7919u + (u32) k * 104729u;
             GO.user_data = &F;
             F.gobj = &GO;
-            F.throw_flags_b0 = rnd() & 1; F.throw_flags_b1 = rnd() & 1; F.throw_flags_b2 = rnd() & 1;
-            F.throw_flags_b3 = rnd() & 1;
+            F.x2210.x0.throw_flags_b0 = rnd() & 1; F.x2210.x0.throw_flags_b1 = rnd() & 1; F.x2210.x0.throw_flags_b2 = rnd() & 1;
+            F.x2210.x0.throw_flags_b3 = rnd() & 1;
             F.allow_interrupt = rnd() & 1; F.x2219_b7 = rnd() & 1; F.x221A_b1 = rnd() & 1;
             for (i = 0; i < 5; i++) { F.x8B0[i].x10 = (s8) rnd(); F.x8B0[i].x11 = (s8) rnd(); }
-            F.player_id = (u8) (rnd() % 6);
+            F.player_idx = (u8) (rnd() % 6);
             F.is_sub_fighter = rnd() & 1;
             F.cur_pos.x = rf(); F.cur_pos.y = rf();
             F.input.lstick[0].x = rf(); F.input.lstick[0].y = rf();

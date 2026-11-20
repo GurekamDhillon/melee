@@ -21,6 +21,12 @@ version = "0.1.0"
 license = "GPL-3.0-or-later"
 publish = false
 
+# Function identity (docs/rust-port/notes/fn-identity.md): the game names callbacks by address, which an optimized build
+# does not keep unique on its own; compared fns carry an identity (tools/rust-port/fn_identity.py), and every compare is
+# an explicit core::ptr::fn_addr_eq, so a new `cb == f` fails the build instead of passing on debug only.
+[workspace.lints.rust]
+unpredictable_function_pointer_comparisons = "deny"
+
 [workspace.dependencies]
 melee_core = { path = "melee_core" }
 melee_fptrace = { path = "melee_fptrace" }

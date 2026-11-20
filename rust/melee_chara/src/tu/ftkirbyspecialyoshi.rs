@@ -243,24 +243,34 @@ pub fn ftKb_SpecialNYs_801093B4(gobj: *mut HSD_GObj) {
 }
 
 /// `fn_801095DC`, `fn_80109680`, `fn_80109714`, `fn_801097B8` as Fighter callback entries.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_801095DC(g: *mut HSD_GObj) {
+    core::hint::black_box(0xDF07DEB9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_801095DC");
     fn_801095DC(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80109680(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAF9CFA3Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80109680");
     fn_80109680(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80109714(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAB1C1A6Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80109714");
     fn_80109714(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_801097B8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xADDA4200u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_801097B8");
     fn_801097B8(g);
 }
 /// `fn_8010A930` as a Fighter interaction callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010A930(g: *mut HSD_GObj, attacker: *mut HSD_GObj) {
+    core::hint::black_box(0xC1531C23u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010A930");
     ext::fn_8010A930(g, attacker);
 }
@@ -409,31 +419,45 @@ pub fn fn_80109CF0(gobj: *mut HSD_GObj) {
 /// `fn_8010984C`, `fn_801098EC`, `fn_8010998C`, `fn_80109A84`, `fn_80109B7C`, `fn_80109BF8`,
 /// `fn_80109CF0` as Fighter callback entries (the Coll ports hand them to `ft_8008403C` /
 /// `ft_80082C74`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010984C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x381D3632u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010984C");
     fn_8010984C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_801098EC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x312F7D13u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_801098EC");
     fn_801098EC(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010998C(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD38EF351u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010998C");
     fn_8010998C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80109A84(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9423F96Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80109A84");
     fn_80109A84(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80109B7C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x69F88E53u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80109B7C");
     fn_80109B7C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80109BF8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xE922A447u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80109BF8");
     fn_80109BF8(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80109CF0(g: *mut HSD_GObj) {
+    core::hint::black_box(0x78E05BD8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80109CF0");
     fn_80109CF0(g);
 }

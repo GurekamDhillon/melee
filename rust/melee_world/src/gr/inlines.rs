@@ -21,7 +21,9 @@ pub mod ext {
 
     /// grDisplay_801C5DB0 (gr/grdisplay.c): the render callback `Ground_SetupStageCallbacks` installs.
     /// Only its address is used here.
+    #[inline(never)]
     pub unsafe extern "C" fn grDisplay_801C5DB0(_g: *mut HSD_GObj, _pass: isize) {
+        core::hint::black_box(0x3D74D9C8u32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(_g as _, _pass as _); } return; }
     }
 

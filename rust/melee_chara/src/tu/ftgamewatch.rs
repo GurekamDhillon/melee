@@ -122,7 +122,9 @@ unsafe fn costume_vis_idx(fp: *mut Fighter) -> usize {
 }
 
 /// `ftGw_Init_OnDamage` as a Fighter callback entry (death2_cb / take_dmg_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_Init_OnDamage(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4B988471u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_Init_OnDamage");
     ftGw_Init_OnDamage(g);
 }

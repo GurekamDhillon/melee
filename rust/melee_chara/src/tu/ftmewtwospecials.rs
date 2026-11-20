@@ -75,31 +75,41 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftMt_SpecialS_SetFlags` as an `HSD_GObjEvent` entry (the `ftCommon_8007E2D0` grab callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMt_SpecialS_SetFlags(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9D348D45u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMt_SpecialS_SetFlags");
     ftMt_SpecialS_SetFlags(g)
 }
 
 /// `ftMt_SpecialS_ReflectThink` as an `HSD_GObjEvent` entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMt_SpecialS_ReflectThink(g: *mut HSD_GObj) {
+    core::hint::black_box(0x234C6419u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMt_SpecialS_ReflectThink");
     ftMt_SpecialS_ReflectThink(g)
 }
 
 /// `ftMt_SpecialS_OnReflect` as an `HSD_GObjEvent` entry (`reflect_hit_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMt_SpecialS_OnReflect(g: *mut HSD_GObj) {
+    core::hint::black_box(0x7473B890u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMt_SpecialS_OnReflect");
     ftMt_SpecialS_OnReflect(g)
 }
 
 /// `ftCo_800BCF18` as an `HSD_GObjInteraction` entry (`grabbed_cb`, ground).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCo_800BCF18(g: *mut HSD_GObj, victim: *mut HSD_GObj) {
+    core::hint::black_box(0xE12BD21Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCo_800BCF18");
     melee_fighter::tu::ftCo_CaptureMewtwo::ftCo_800BCF18(g, victim)
 }
 
 /// `ftCo_800BD000` as an `HSD_GObjInteraction` entry (`grabbed_cb`, air).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCo_800BD000(g: *mut HSD_GObj, victim: *mut HSD_GObj) {
+    core::hint::black_box(0x577BD29Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCo_800BD000");
     melee_fighter::tu::ftCo_CaptureMewtwo::ftCo_800BD000(g, victim)
 }

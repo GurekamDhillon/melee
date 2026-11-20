@@ -103,26 +103,36 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `fn_8010AA64` as a Fighter callback entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010AA64(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF4F92EFAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010AA64");
     fn_8010AA64(g);
 }
 /// `fn_8010B16C` as a Fighter callback entry (`take_dmg_2_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010B16C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5AB1CED4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010B16C");
     fn_8010B16C(g);
 }
 /// `fn_8010B1D4` as a Fighter callback entry (`take_dmg_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010B1D4(g: *mut HSD_GObj) {
+    core::hint::black_box(0x158ECFF3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010B1D4");
     fn_8010B1D4(g);
 }
 /// `fn_8010B124` / `fn_8010B148` as Fighter callback entries (landing / leave-ground).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010B124(g: *mut HSD_GObj) {
+    core::hint::black_box(0x99A7A4A5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010B124");
     fn_8010B124(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010B148(g: *mut HSD_GObj) {
+    core::hint::black_box(0xA1B6BBC7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010B148");
     fn_8010B148(g);
 }

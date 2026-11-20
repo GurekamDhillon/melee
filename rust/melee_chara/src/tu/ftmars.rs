@@ -140,11 +140,15 @@ pub fn ftMs_SpecialN_8013666C(gobj: *mut HSD_GObj) {
     unsafe { spawn_n_effect(gobj, 1267, 1298) }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMs_SpecialN_801365A8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xADE11930u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMs_SpecialN_801365A8");
     ftMs_SpecialN_801365A8(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMs_SpecialN_8013666C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x7353A593u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMs_SpecialN_8013666C");
     ftMs_SpecialN_8013666C(g);
 }

@@ -52,9 +52,12 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn if_802F73C4(a0: *mut HSD_GObj) { super::if_802F73C4(a0) }
-        pub unsafe extern "C" fn if_802F74D0(a0: *mut HSD_GObj) { super::if_802F74D0(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xBE43374Bu32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F73C4(a0: *mut HSD_GObj) { core::hint::black_box(0x2AB444E9u32); /* fn identity */ super::if_802F73C4(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F74D0(a0: *mut HSD_GObj) { core::hint::black_box(0x7A9E2A5Bu32); /* fn identity */ super::if_802F74D0(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -92,7 +95,9 @@ const fn elem(x8: unsafe extern "C" fn(*mut HSD_GObj), xc: u32, x10: u8) -> Elem
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6EA4(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: Event, arg5: Event) {
+    core::hint::black_box(0xA07D8292u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6EA4");
     if arg0 == 8 {
         if arg4.is_some() {
@@ -136,7 +141,9 @@ pub unsafe extern "C" fn ifStatus_802F6EA4(arg0: i32, arg1: i32, arg2: i32, arg3
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F7034(arg0: *mut c_void) {
+    core::hint::black_box(0xB32A4B26u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F7034");
     let big_thing = ext::gmVs_GetSceneController();
     let a: i32 = if (*big_thing).state.unk_10 != 0 { (*big_thing).state.unk_10 - 1 } else { -1 };
@@ -165,7 +172,9 @@ pub unsafe extern "C" fn ifStatus_802F7034(arg0: *mut c_void) {
     ifStatus_802F6EA4(5, a, b, c, arg0, None);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F7134() {
+    core::hint::black_box(0xC7A03B29u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F7134");
     for i in 0..8usize {
         ifStatus_803F9628[i].x0 = null_mut();
@@ -187,7 +196,9 @@ pub unsafe extern "C" fn ifStatus_802F7134() {
 }
 
 /// free
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F7220() {
+    core::hint::black_box(0x6706C5A1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F7220");
     for i in 0..8usize {
         if !ifStatus_803F9628[i].x0.is_null() {

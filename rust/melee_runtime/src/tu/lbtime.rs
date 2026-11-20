@@ -25,7 +25,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn OSGetTime() -> i64 { super::OSGetTime() }
+        #[inline(never)]
+        pub unsafe extern "C" fn OSGetTime() -> i64 { core::hint::black_box(0x3442270Fu32); /* fn identity */ super::OSGetTime() }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::perf::__OSBusClock;

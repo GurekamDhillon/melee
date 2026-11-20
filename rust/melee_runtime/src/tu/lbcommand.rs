@@ -55,27 +55,35 @@ unsafe fn next_cmd(info: *mut CommandInfo) {
 }
 
 /// Reset
+#[inline(never)]
 pub unsafe extern "C" fn Command_00(info: *mut CommandInfo) {
+    core::hint::black_box(0xC8BEC9D8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_00");
     (*info).anon_8.u = core::ptr::null_mut();
 }
 
 /// SynchronousTimer
+#[inline(never)]
 pub unsafe extern "C" fn Command_01(info: *mut CommandInfo) {
+    core::hint::black_box(0xC9BECB6Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_01");
     (*info).timer += (*(*info).anon_8.u).Command_00.value() as f32;
     next_cmd(info);
 }
 
 /// AsynchronousTimer
+#[inline(never)]
 pub unsafe extern "C" fn Command_02(info: *mut CommandInfo) {
+    core::hint::black_box(0xCABECCFEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_02");
     (*info).timer = (*(*info).anon_8.u).Command_02.value() as f32 - (*info).frame_count;
     next_cmd(info);
 }
 
 /// SetLoop
+#[inline(never)]
 pub unsafe extern "C" fn Command_03(info: *mut CommandInfo) {
+    core::hint::black_box(0xCBBECE91u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_03");
     let i = &mut *info;
     let lc = i.loop_count as usize;
@@ -86,7 +94,9 @@ pub unsafe extern "C" fn Command_03(info: *mut CommandInfo) {
 }
 
 /// Execute Loop
+#[inline(never)]
 pub unsafe extern "C" fn Command_04(info: *mut CommandInfo) {
+    core::hint::black_box(0xCCBED024u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_04");
     let i = &mut *info;
     let lc = i.loop_count as usize;
@@ -101,7 +111,9 @@ pub unsafe extern "C" fn Command_04(info: *mut CommandInfo) {
 }
 
 /// Subroutine
+#[inline(never)]
 pub unsafe extern "C" fn Command_05(info: *mut CommandInfo) {
+    core::hint::black_box(0xCDBED1B7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_05");
     next_cmd(info);
     let i = &mut *info;
@@ -112,7 +124,9 @@ pub unsafe extern "C" fn Command_05(info: *mut CommandInfo) {
 }
 
 /// Return
+#[inline(never)]
 pub unsafe extern "C" fn Command_06(info: *mut CommandInfo) {
+    core::hint::black_box(0xCEBED34Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_06");
     let i = &mut *info;
     i.loop_count = i.loop_count.wrapping_sub(1);
@@ -120,20 +134,26 @@ pub unsafe extern "C" fn Command_06(info: *mut CommandInfo) {
 }
 
 /// Goto
+#[inline(never)]
 pub unsafe extern "C" fn Command_07(info: *mut CommandInfo) {
+    core::hint::black_box(0xCFBED4DDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_07");
     next_cmd(info);
     (*info).anon_8.u = u32::from_be((*(*info).anon_8.u).Command_07.ptr) as usize as *mut CmdUnion;
 }
 
 /// SetTimerAnimation
+#[inline(never)]
 pub unsafe extern "C" fn Command_08(info: *mut CommandInfo) {
+    core::hint::black_box(0xC0BEBD40u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_08");
     next_cmd(info);
     (*info).timer = F32_MAX;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Command_09(info: *mut CommandInfo) {
+    core::hint::black_box(0xC1BEBED3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_09");
     let w = &(*(*info).anon_8.u).Command_09;
     ext::lbBgFlash_80021C48(w.param_1(), w.param_2());
@@ -159,7 +179,9 @@ pub static lbCommand_803B9840: [Option<unsafe extern "C" fn(*mut CommandInfo)>; 
     None,
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn Command_Execute(info: *mut CommandInfo, command: u32) -> bool {
+    core::hint::black_box(0x15F27BE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Command_Execute");
     if command < 10 {
         (lbCommand_803B9840[command as usize].unwrap())(info);

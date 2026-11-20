@@ -38,7 +38,7 @@ bool ftColl_8007AC68(u32 a) { T(11); T(a); return chk(11); }
 float ftCo_CalcYScaledKnockback(float a, float s, float b) { T(12); T(BN(a)); T(BN(s)); T(BN(b)); return rg(); }
 bool ftCo_800BFFD0(Fighter* f, enum_t a, bool b) { T(13); T(f == &F); T(a); T(b); return chk(13); }
 void lbBgFlash_80021C48(u32 a, u32 b) { T(14); T(a); T(b); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 k, u32 gfx, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 k, u32 gfx, HSD_JObj* j, ...)
 {
     __builtin_va_list ap;
     float* a;
@@ -204,7 +204,7 @@ static void fill_fighter(Fighter* p, HSD_GObj* own)
     p->hitlag_cb = NULL;
     p->pre_hitlag_cb = NULL;
     p->post_hitlag_cb = NULL;
-    p->x1064_thrownHitbox.owner = NULL;
+    p->x1064_thrownHitbox.x134.owner = NULL;
     p->dmg.x190C = NULL;
     p->motion_id = (rnd() % 4 == 0) ? (int) (rnd() % 400) : MSL[rnd() % NMSL];
     p->ground_or_air = rnd() & 1;
@@ -216,8 +216,8 @@ static void fill_fighter(Fighter* p, HSD_GObj* own)
     p->dmg.x18ac_time_since_hit = rnd() % 12;
     p->dmg.facing_dir_1 = (rnd() & 1) ? 1.0f : -1.0f;
     p->facing_dir = (rnd() % 4 == 0) ? rg() : ((rnd() & 1) ? 1.0f : -1.0f);
-    p->x618_player_id = rnd() % 4;
-    p->player_id = rnd() % 4;
+    p->pad_port = rnd() % 4;
+    p->player_idx = rnd() % 4;
     p->active_timer.lstick.x = rnd() % 8; p->active_timer.lstick.y = rnd() % 8;
     p->active_sticky.lstick.x = rnd() % 4; p->active_sticky.lstick.y = rnd() % 4;
     p->x680 = rnd() % 256; p->x684 = rnd() % 256;
@@ -232,7 +232,7 @@ static void fill_fighter(Fighter* p, HSD_GObj* own)
     p->is_sub_fighter = (rnd() & 1);
     p->x2219_b5 = (rnd() & 1);
     p->x221A_b3 = (rnd() & 1);
-    p->x221B_b5 = (rnd() & 1);
+    p->x221B.x221B_b5 = (rnd() & 1);
     p->x221C_b0 = (rnd() & 1);
     p->x221C_b6 = (rnd() & 1);
     p->x221D_b7 = (rnd() & 1);
@@ -240,7 +240,7 @@ static void fill_fighter(Fighter* p, HSD_GObj* own)
     p->x2220_b4 = (rnd() % 4 == 0);
     p->x2221_b1 = (rnd() & 1);
     p->x2222_b0 = (rnd() & 1);
-    p->x2224_b2 = (rnd() & 1);
+    p->stamina_dead = (rnd() & 1);
     p->x2227_b4 = (rnd() & 1);
 }
 
@@ -257,7 +257,7 @@ static void hash_fighter(Fighter* p)
     HM((u32) (unsigned long long) p->dmg.x190C);
     t.gobj = NULL; t.parts = NULL; t.ft_data = NULL; t.victim_gobj = NULL; t.item_gobj = NULL;
     t.hitlag_cb = NULL; t.pre_hitlag_cb = NULL; t.post_hitlag_cb = NULL;
-    t.x1064_thrownHitbox.owner = NULL;
+    t.x1064_thrownHitbox.x134.owner = NULL;
     t.dmg.x190C = NULL;
     for (i = BF; i < BF + 19; i++) ((unsigned char*) &t)[i] = 0;
     HM(p->allow_sdi);
@@ -266,7 +266,7 @@ static void hash_fighter(Fighter* p)
     HM(p->is_sub_fighter);
     HM(p->x2219_b5);
     HM(p->x221A_b3);
-    HM(p->x221B_b5);
+    HM(p->x221B.x221B_b5);
     HM(p->x221C_b0);
     HM(p->x221C_b6);
     HM(p->x221D_b7);
@@ -274,7 +274,7 @@ static void hash_fighter(Fighter* p)
     HM(p->x2220_b4);
     HM(p->x2221_b1);
     HM(p->x2222_b0);
-    HM(p->x2224_b2);
+    HM(p->stamina_dead);
     HM(p->x2227_b4);
     for (i = 0; i < sizeof(Fighter) / 4; i++) HM(hw(w[i]));
 }
@@ -351,7 +351,7 @@ int main(void)
             F.gobj = &GO; F2.gobj = &GO2;
             if (rnd() & 1) F.victim_gobj = &GO2;
             if (rnd() % 3 == 0) F.item_gobj = (Item_GObj*) &IGO;
-            if (rnd() & 1) F.x1064_thrownHitbox.owner = &GO2;
+            if (rnd() & 1) F.x1064_thrownHitbox.x134.owner = &GO2;
             if (rnd() & 1) F2.pre_hitlag_cb = pre_cb;
             if (op != 5 && op != 8 && F.dmg.x1838_percentTemp == 0.0f) F.dmg.x1838_percentTemp = 1.0f;
             ret = run(op);

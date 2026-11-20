@@ -79,17 +79,23 @@ fn hsd_assert(cond: bool, line: u32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjInitAllocData() {
+    core::hint::black_box(0xDE09310Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjInitAllocData");
     ext::HSD_ObjAllocInit(&raw mut aobj_alloc_data, core::mem::size_of::<HSD_AObj>() as u32, 4);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjGetAllocData() -> *mut HSD_ObjAllocData {
+    core::hint::black_box(0xDB32807Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjGetAllocData");
     &raw mut aobj_alloc_data
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjGetFlags(aobj: *mut HSD_AObj) -> u32 {
+    core::hint::black_box(0x3343E4F4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjGetFlags");
     if !aobj.is_null() {
         (*aobj).flags
@@ -98,7 +104,9 @@ pub unsafe extern "C" fn HSD_AObjGetFlags(aobj: *mut HSD_AObj) -> u32 {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
+    core::hint::black_box(0xC550AF38u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjSetFlags");
     // TARGET_PC: an impossibly small pointer is treated as absent.
     if (aobj as usize) < 0x1000 {
@@ -110,7 +118,9 @@ pub unsafe extern "C" fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjClearFlags(aobj: *mut HSD_AObj, flags: u32) {
+    core::hint::black_box(0xA2C8AFBFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjClearFlags");
     if !aobj.is_null() {
         let flags = flags & (AOBJ_LOOP | AOBJ_NO_UPDATE);
@@ -118,7 +128,9 @@ pub unsafe extern "C" fn HSD_AObjClearFlags(aobj: *mut HSD_AObj, flags: u32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetFObj(aobj: *mut HSD_AObj, fobj: *mut HSD_FObj) {
+    core::hint::black_box(0x49DD813Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjSetFObj");
     if aobj.is_null() {
         return;
@@ -129,13 +141,17 @@ pub unsafe extern "C" fn HSD_AObjSetFObj(aobj: *mut HSD_AObj, fobj: *mut HSD_FOb
     (*aobj).fobj = fobj;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjInitEndCallBack() {
+    core::hint::black_box(0x550EFA15u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjInitEndCallBack");
     HSD_AObj_804D762C = 0;
     HSD_AObj_804D7630 = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjInvokeCallBacks() {
+    core::hint::black_box(0x1FDA20CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjInvokeCallBacks");
     if HSD_AObj_804D762C != 0 && HSD_AObj_804D7630 == 0 {
         let mut list = endcallback_list;
@@ -147,7 +163,9 @@ pub unsafe extern "C" fn HSD_AObjInvokeCallBacks() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjReqAnim(aobj: *mut HSD_AObj, frame: f32) {
+    core::hint::black_box(0x5F503664u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjReqAnim");
     if aobj.is_null() {
         return;
@@ -158,7 +176,9 @@ pub unsafe extern "C" fn HSD_AObjReqAnim(aobj: *mut HSD_AObj, frame: f32) {
     ext::HSD_FObjReqAnimAll((*aobj).fobj, frame);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjStopAnim(aobj: *mut HSD_AObj, obj: *mut c_void, func: HSD_ObjUpdateFunc) {
+    core::hint::black_box(0x71376F02u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjStopAnim");
     if aobj.is_null() {
         return;
@@ -174,7 +194,9 @@ pub unsafe extern "C" fn HSD_AObjStopAnim(aobj: *mut HSD_AObj, obj: *mut c_void,
 /// AObjs ending at 100): the console records state frame 100 where a plain 0 return gave 0.
 pub static mut AOBJ_STALE_F1: f32 = 0.0;
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjInterpretAnim(aobj: *mut HSD_AObj, obj: *mut c_void, update_func: HSD_ObjUpdateFunc) {
+    core::hint::black_box(0x41092445u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjInterpretAnim");
     let mut rate: f32;
 
@@ -226,7 +248,9 @@ pub unsafe extern "C" fn HSD_AObjInterpretAnim(aobj: *mut HSD_AObj, obj: *mut c_
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjLoadDesc(aobjdesc: *mut HSD_AObjDesc) -> *mut HSD_AObj {
+    core::hint::black_box(0xE4BAAAFEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjLoadDesc");
     if aobjdesc.is_null() {
         return null_mut();
@@ -258,7 +282,9 @@ pub unsafe extern "C" fn HSD_AObjLoadDesc(aobjdesc: *mut HSD_AObjDesc) -> *mut H
     aobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
+    core::hint::black_box(0x54ACE68Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjRemove");
     if aobj.is_null() {
         return;
@@ -275,7 +301,9 @@ pub unsafe extern "C" fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
     HSD_AObjFree(aobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjAlloc() -> *mut HSD_AObj {
+    core::hint::black_box(0x820AA048u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjAlloc");
     let new = ext::HSD_ObjAlloc(HSD_AObjGetAllocData()) as *mut HSD_AObj;
     hsd_assert(!new.is_null(), 489);
@@ -286,7 +314,9 @@ pub unsafe extern "C" fn HSD_AObjAlloc() -> *mut HSD_AObj {
     new
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjFree(aobj: *mut HSD_AObj) {
+    core::hint::black_box(0x9D48B469u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjFree");
     if aobj.is_null() {
         return;
@@ -469,7 +499,9 @@ pub unsafe extern "C-unwind" fn HSD_ForeachAnim(obj: *mut c_void, type_: HSD_Typ
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32) {
+    core::hint::black_box(0xE6E532D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjSetRate");
     if aobj.is_null() {
         return;
@@ -477,7 +509,9 @@ pub unsafe extern "C" fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32) {
     (*aobj).framerate = rate;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32) {
+    core::hint::black_box(0x5F258FBBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjSetRewindFrame");
     if (aobj as usize) < 0x1000 {
         return;
@@ -488,7 +522,9 @@ pub unsafe extern "C" fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32)
     (*aobj).rewind_frame = frame;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32) {
+    core::hint::black_box(0xB5CC9277u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjSetEndFrame");
     if (aobj as usize) < 0x1000 {
         return;
@@ -499,7 +535,9 @@ pub unsafe extern "C" fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32) {
     (*aobj).end_frame = frame;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn HSD_AObjSetCurrentFrame(aobj: *mut HSD_AObj, frame: f32) {
+    core::hint::black_box(0xF2A61EAFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_AObjSetCurrentFrame");
     if aobj.is_null() {
         return;
@@ -511,7 +549,9 @@ pub unsafe extern "C" fn HSD_AObjSetCurrentFrame(aobj: *mut HSD_AObj, frame: f32
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_AObjForgetMemory(low: *mut c_void, high: *mut c_void) {
+    core::hint::black_box(0x94B92916u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_AObjForgetMemory");
     endcallback_list = null_mut();
 }

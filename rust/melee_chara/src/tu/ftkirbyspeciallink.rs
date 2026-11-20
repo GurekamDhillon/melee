@@ -296,12 +296,16 @@ pub fn ftKb_SpecialNLk800FB6DC(gobj: G) {
 }
 
 /// Callback entry for `ftKb_SpecialNLk800FB800`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKb_SpecialNLk800FB800(g: G) {
+    core::hint::black_box(0xD70EE686u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKb_SpecialNLk800FB800");
     ftKb_SpecialNLk800FB800(g);
 }
 /// Callback entry for `ftKb_SpecialNLk800FB840`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftKb_SpecialNLk800FB840(g: G) {
+    core::hint::black_box(0x5F052F42u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftKb_SpecialNLk800FB840");
     ftKb_SpecialNLk800FB840(g);
 }

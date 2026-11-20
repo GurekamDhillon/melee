@@ -50,9 +50,7 @@ pub mod ext {
 }
 // END GENERATED EXT
 
-macro_rules! pred_i32 {
-    ($($name:ident => $f:ident;)*) => { $( pub unsafe extern "C" fn $name(g: *mut HSD_GObj) -> i32 { $f(g) as i32 } )* };
-}
+use crate::tu::kinds_inl::pred_i32; // the named `_p` shims, recorded for the oracles by address
 
 #[inline]
 unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {
@@ -66,7 +64,9 @@ unsafe fn sa<'a, T>(ip: *mut Item) -> &'a T {
 }
 
 /// `itDKinoko_Logic27_Spawned`: face away from the origin, reset the slide, enter motion 1.
+#[inline(never)]
 pub unsafe extern "C" fn itDKinoko_Logic27_Spawned(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xAFDBE9A4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDKinoko_Logic27_Spawned");
     let it = item_of(gobj);
     if (*it).pos.x > 0.0 {
@@ -83,7 +83,9 @@ pub unsafe extern "C" fn itDKinoko_Logic27_Spawned(gobj: *mut HSD_GObj) {
 }
 
 /// `it_80293A70`: launch along the slide speed and play the landing effect.
+#[inline(never)]
 pub unsafe extern "C" fn it_80293A70(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x260F5705u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80293A70");
     let it = item_of(gobj);
     (*it).x40_vel.x = (*it).xDD4_itemVar.kinoko.x0;
@@ -96,13 +98,17 @@ pub unsafe extern "C" fn it_80293A70(gobj: *mut HSD_GObj) {
 }
 
 /// `itDkinoko_UnkMotion0_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itDkinoko_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x8F076E9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDkinoko_UnkMotion0_Anim");
     false
 }
 
 /// `itDkinoko_UnkMotion0_Phys`: slide at `attrs->x0` in the facing direction while grounded.
+#[inline(never)]
 pub unsafe extern "C" fn itDkinoko_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x95CB05EBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDkinoko_UnkMotion0_Phys");
     let it = item_of(gobj);
     let attrs = sa::<KinokoAttrs>(it);
@@ -113,7 +119,9 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itDkinoko_UnkMotion0_Coll`: bounce off walls, track the floor normal.
+#[inline(never)]
 pub unsafe extern "C" fn itDkinoko_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x401C8A79u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDkinoko_UnkMotion0_Coll");
     let it = item_of(gobj);
     let cd: *mut CollData = &mut (*it).x378_itemColl;
@@ -135,25 +143,33 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool 
 }
 
 /// `it_80293BE8`: enter motion 1.
+#[inline(never)]
 pub unsafe extern "C" fn it_80293BE8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xBEEDCD9Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80293BE8");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 /// `it_80293C10`: enter motion 1 keeping the hitboxes.
+#[inline(never)]
 pub unsafe extern "C" fn it_80293C10(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDCDB95DDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80293C10");
     ext::Item_80268E5C(gobj, 1, (ITEM_UNK_0x1 as u32) | (ITEM_HIT_PRESERVE as u32));
 }
 
 /// `itDkinoko_UnkMotion1_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itDkinoko_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xDC5B8307u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDkinoko_UnkMotion1_Anim");
     false
 }
 
 /// `itDkinoko_UnkMotion1_Phys`: fall, then decelerate the slide by `sa->x4` (snapping to zero).
+#[inline(never)]
 pub unsafe extern "C" fn itDkinoko_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC9A9D77Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDkinoko_UnkMotion1_Phys");
     let it = item_of(gobj);
     let attr = &*(*it).xCC_item_attr;
@@ -175,7 +191,9 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itDkinoko_UnkMotion1_Coll`: floor tracking while grounded.
+#[inline(never)]
 pub unsafe extern "C" fn itDkinoko_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x4D689410u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDkinoko_UnkMotion1_Coll");
     let it = item_of(gobj);
     let cd: *mut CollData = &mut (*it).x378_itemColl;
@@ -188,13 +206,17 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool 
 }
 
 /// `itDKinoko_Logic27_DmgDealt`: always true.
+#[inline(never)]
 pub unsafe extern "C" fn itDKinoko_Logic27_DmgDealt(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x5C87FF64u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDKinoko_Logic27_DmgDealt");
     true
 }
 
 /// `itDKinoko_Logic27_EvtUnk`: `it_8026B894`.
+#[inline(never)]
 pub unsafe extern "C" fn itDKinoko_Logic27_EvtUnk(gobj: *mut HSD_GObj, gobj_2: *mut HSD_GObj) {
+    core::hint::black_box(0x88583F2Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itDKinoko_Logic27_EvtUnk");
     ext::it_8026B894(gobj, gobj_2);
 }

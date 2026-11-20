@@ -327,16 +327,16 @@ static void fill_Fighter(Fighter* p)
     p->x508.x7C_flag7 = fv();
     p->x508.x7C_flag8 = fv();
     p->x58C = fv();
-    p->x594_b0 = fv();
-    p->x594_b1_loop = fv();
-    p->x594_b2 = fv();
-    p->x594_b3 = fv();
-    p->x594_b4 = fv();
-    p->x594_b5 = fv();
-    p->x594_b6 = fv();
-    p->x594_b7 = fv();
-    p->x596_bits.x0 = fv();
-    p->x596_bits.x7 = fv();
+    p->x594.x0.x594_b0 = fv();
+    p->x594.x0.x594_b1_loop = fv();
+    p->x594.x0.x594_b2 = fv();
+    p->x594.x0.x594_b3 = fv();
+    p->x594.x0.x594_b4 = fv();
+    p->x594.x0.x594_b5 = fv();
+    p->x594.x0.x594_b6 = fv();
+    p->x594.x0.x594_b7 = fv();
+    p->x594.x0.x596_bits.x0 = fv();
+    p->x594.x0.x596_bits.x7 = fv();
     p->x5AC.model_num = fv();
     for (i0 = 0; i0 < 5; i0++) {
     p->x5AC.cleared[i0] = fv();
@@ -357,9 +357,9 @@ static void fill_Fighter(Fighter* p)
     p->x610_color_rgba[i0].b = fv();
     p->x610_color_rgba[i0].a = fv();
     }
-    p->x618_player_id = fv();
-    p->x619_costume_id = fv();
-    p->x61A_controller_index = fv();
+    p->pad_port = fv();
+    p->costume_id = fv();
+    p->sub_color = fv();
     p->team = fv();
     p->x61C = fv();
     p->x61D = fv();
@@ -1289,14 +1289,14 @@ static void fill_Fighter(Fighter* p)
     for (i0 = 0; i0 < 4; i0++) {
     p->cmd_vars[i0] = fv();
     }
-    p->throw_flags_b0 = fv();
-    p->throw_flags_b1 = fv();
-    p->throw_flags_b2 = fv();
-    p->throw_flags_b3 = fv();
-    p->throw_flags_b4 = fv();
-    p->throw_flags_b5 = fv();
-    p->throw_flags_b6 = fv();
-    p->throw_flags_b7 = fv();
+    p->x2210.x0.throw_flags_b0 = fv();
+    p->x2210.x0.throw_flags_b1 = fv();
+    p->x2210.x0.throw_flags_b2 = fv();
+    p->x2210.x0.throw_flags_b3 = fv();
+    p->x2210.x0.throw_flags_b4 = fv();
+    p->x2210.x0.throw_flags_b5 = fv();
+    p->x2210.x0.throw_flags_b6 = fv();
+    p->x2210.x0.throw_flags_b7 = fv();
     p->cmd_timer = rg();
     p->allow_interrupt = fv();
     p->x2218_b1 = fv();
@@ -1322,14 +1322,14 @@ static void fill_Fighter(Fighter* p)
     p->x221A_b5 = fv();
     p->x221A_b6 = fv();
     p->x221A_b7 = fv();
-    p->x221B_b0 = fv();
-    p->x221B_b1 = fv();
-    p->x221B_b2 = fv();
-    p->x221B_b3 = fv();
-    p->x221B_b4 = fv();
-    p->x221B_b5 = fv();
-    p->x221B_b6 = fv();
-    p->x221B_b7 = fv();
+    p->x221B.x221B_b0 = fv();
+    p->x221B.x221B_b1 = fv();
+    p->x221B.x221B_b2 = fv();
+    p->x221B.x221B_b3 = fv();
+    p->x221B.x221B_b4 = fv();
+    p->x221B.x221B_b5 = fv();
+    p->x221B.x221B_b6 = fv();
+    p->x221B.x221B_b7 = fv();
     p->x221C_b0 = fv();
     p->x221C_b1 = fv();
     p->x221C_b2 = fv();
@@ -1339,8 +1339,8 @@ static void fill_Fighter(Fighter* p)
     p->x221C_b6 = fv();
     p->x221C_u16_y = fv();
     p->x221D_b2 = fv();
-    p->x221D_b3 = fv();
-    p->x221D_b4 = fv();
+    p->has_prev_input = fv();
+    p->input_disabled = fv();
     p->x221D_b5 = fv();
     p->x221D_b6 = fv();
     p->x221D_b7 = fv();
@@ -1355,7 +1355,7 @@ static void fill_Fighter(Fighter* p)
     p->x221F_b0 = fv();
     p->x221F_b1 = fv();
     p->x221F_b2 = fv();
-    p->x221F_b3 = fv();
+    p->is_sleeping = fv();
     p->is_sub_fighter = fv();
     p->x221F_b5 = fv();
     p->x221F_b6 = fv();
@@ -1392,7 +1392,7 @@ static void fill_Fighter(Fighter* p)
     p->is_metal = fv();
     p->x2224_b0 = fv();
     p->x2224_b1 = fv();
-    p->x2224_b2 = fv();
+    p->stamina_dead = fv();
     p->x2224_b3 = fv();
     p->x2224_b4 = fv();
     p->x2224_b5 = fv();
@@ -1896,9 +1896,9 @@ static void hash_Fighter(const Fighter* p)
     { if (HDBG) printf("N %s%c", "(u32) p->x610_color_rgba[i0].b", 10); HM((u32) p->x610_color_rgba[i0].b); }
     { if (HDBG) printf("N %s%c", "(u32) p->x610_color_rgba[i0].a", 10); HM((u32) p->x610_color_rgba[i0].a); }
     }
-    { if (HDBG) printf("N %s%c", "(u32) p->x618_player_id", 10); HM((u32) p->x618_player_id); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x619_costume_id", 10); HM((u32) p->x619_costume_id); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x61A_controller_index", 10); HM((u32) p->x61A_controller_index); }
+    { if (HDBG) printf("N %s%c", "(u32) p->pad_port", 10); HM((u32) p->pad_port); }
+    { if (HDBG) printf("N %s%c", "(u32) p->costume_id", 10); HM((u32) p->costume_id); }
+    { if (HDBG) printf("N %s%c", "(u32) p->sub_color", 10); HM((u32) p->sub_color); }
     { if (HDBG) printf("N %s%c", "(u32) p->team", 10); HM((u32) p->team); }
     { if (HDBG) printf("N %s%c", "(u32) p->x61C", 10); HM((u32) p->x61C); }
     { if (HDBG) printf("N %s%c", "(u32) p->x61D", 10); HM((u32) p->x61D); }
@@ -2837,14 +2837,14 @@ static void hash_Fighter(const Fighter* p)
     for (i0 = 0; i0 < 4; i0++) {
     { if (HDBG) printf("N %s%c", "(u32) p->cmd_vars[i0]", 10); HM((u32) p->cmd_vars[i0]); }
     }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b0", 10); HM((u32) p->throw_flags_b0); }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b1", 10); HM((u32) p->throw_flags_b1); }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b2", 10); HM((u32) p->throw_flags_b2); }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b3", 10); HM((u32) p->throw_flags_b3); }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b4", 10); HM((u32) p->throw_flags_b4); }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b5", 10); HM((u32) p->throw_flags_b5); }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b6", 10); HM((u32) p->throw_flags_b6); }
-    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b7", 10); HM((u32) p->throw_flags_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b0", 10); HM((u32) p->x2210.x0.throw_flags_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b1", 10); HM((u32) p->x2210.x0.throw_flags_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b2", 10); HM((u32) p->x2210.x0.throw_flags_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b3", 10); HM((u32) p->x2210.x0.throw_flags_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b4", 10); HM((u32) p->x2210.x0.throw_flags_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b5", 10); HM((u32) p->x2210.x0.throw_flags_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b6", 10); HM((u32) p->x2210.x0.throw_flags_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2210.x0.throw_flags_b7", 10); HM((u32) p->x2210.x0.throw_flags_b7); }
     { if (HDBG) printf("N %s%c", "B(p->cmd_timer)", 10); HM(B(p->cmd_timer)); }
     { if (HDBG) printf("N %s%c", "(u32) p->allow_interrupt", 10); HM((u32) p->allow_interrupt); }
     { if (HDBG) printf("N %s%c", "(u32) p->x2218_b1", 10); HM((u32) p->x2218_b1); }
@@ -2870,14 +2870,14 @@ static void hash_Fighter(const Fighter* p)
     { if (HDBG) printf("N %s%c", "(u32) p->x221A_b5", 10); HM((u32) p->x221A_b5); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221A_b6", 10); HM((u32) p->x221A_b6); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221A_b7", 10); HM((u32) p->x221A_b7); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b0", 10); HM((u32) p->x221B_b0); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b1", 10); HM((u32) p->x221B_b1); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b2", 10); HM((u32) p->x221B_b2); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b3", 10); HM((u32) p->x221B_b3); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b4", 10); HM((u32) p->x221B_b4); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b5", 10); HM((u32) p->x221B_b5); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b6", 10); HM((u32) p->x221B_b6); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b7", 10); HM((u32) p->x221B_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b0", 10); HM((u32) p->x221B.x221B_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b1", 10); HM((u32) p->x221B.x221B_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b2", 10); HM((u32) p->x221B.x221B_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b3", 10); HM((u32) p->x221B.x221B_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b4", 10); HM((u32) p->x221B.x221B_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b5", 10); HM((u32) p->x221B.x221B_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b6", 10); HM((u32) p->x221B.x221B_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B.x221B_b7", 10); HM((u32) p->x221B.x221B_b7); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221C_b0", 10); HM((u32) p->x221C_b0); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221C_b1", 10); HM((u32) p->x221C_b1); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221C_b2", 10); HM((u32) p->x221C_b2); }
@@ -2887,8 +2887,8 @@ static void hash_Fighter(const Fighter* p)
     { if (HDBG) printf("N %s%c", "(u32) p->x221C_b6", 10); HM((u32) p->x221C_b6); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221C_u16_y", 10); HM((u32) p->x221C_u16_y); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221D_b2", 10); HM((u32) p->x221D_b2); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b3", 10); HM((u32) p->x221D_b3); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b4", 10); HM((u32) p->x221D_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->has_prev_input", 10); HM((u32) p->has_prev_input); }
+    { if (HDBG) printf("N %s%c", "(u32) p->input_disabled", 10); HM((u32) p->input_disabled); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221D_b5", 10); HM((u32) p->x221D_b5); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221D_b6", 10); HM((u32) p->x221D_b6); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221D_b7", 10); HM((u32) p->x221D_b7); }
@@ -2903,7 +2903,7 @@ static void hash_Fighter(const Fighter* p)
     { if (HDBG) printf("N %s%c", "(u32) p->x221F_b0", 10); HM((u32) p->x221F_b0); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221F_b1", 10); HM((u32) p->x221F_b1); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221F_b2", 10); HM((u32) p->x221F_b2); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b3", 10); HM((u32) p->x221F_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->is_sleeping", 10); HM((u32) p->is_sleeping); }
     { if (HDBG) printf("N %s%c", "(u32) p->is_sub_fighter", 10); HM((u32) p->is_sub_fighter); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221F_b5", 10); HM((u32) p->x221F_b5); }
     { if (HDBG) printf("N %s%c", "(u32) p->x221F_b6", 10); HM((u32) p->x221F_b6); }
@@ -2940,7 +2940,7 @@ static void hash_Fighter(const Fighter* p)
     { if (HDBG) printf("N %s%c", "(u32) p->is_metal", 10); HM((u32) p->is_metal); }
     { if (HDBG) printf("N %s%c", "(u32) p->x2224_b0", 10); HM((u32) p->x2224_b0); }
     { if (HDBG) printf("N %s%c", "(u32) p->x2224_b1", 10); HM((u32) p->x2224_b1); }
-    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b2", 10); HM((u32) p->x2224_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->stamina_dead", 10); HM((u32) p->stamina_dead); }
     { if (HDBG) printf("N %s%c", "(u32) p->x2224_b3", 10); HM((u32) p->x2224_b3); }
     { if (HDBG) printf("N %s%c", "(u32) p->x2224_b4", 10); HM((u32) p->x2224_b4); }
     { if (HDBG) printf("N %s%c", "(u32) p->x2224_b5", 10); HM((u32) p->x2224_b5); }

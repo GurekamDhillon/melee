@@ -75,8 +75,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_803910D8(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_LObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x4BF8D7C6u32); /* fn identity */ super::HSD_GObj_803910D8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x6625F5B5u32); /* fn identity */ super::HSD_GObj_LObjCallback(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -258,7 +260,9 @@ pub static mut un_804D6D98: *mut HSD_Archive = null_mut();
 /// 4D6D9C .sbss
 pub static mut un_804D6D9C: *mut SceneDesc = null_mut();
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE3F8(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    core::hint::black_box(0x8951611Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE3F8");
     let mut x: *mut un_803F9B30 = &raw mut un_803F9B30[0];
     while (*x).x0 != 66 {
@@ -279,21 +283,27 @@ pub unsafe extern "C" fn un_802FE3F8(a: i32, b: i32, c: *mut i16, d: *mut i16) {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE3F8_inner(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    core::hint::black_box(0x096EB829u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE3F8_inner");
     un_802FE3F8(a, b, c, d);
 }
 
 /// ifPrize_Scene_OnEnter will inline un_802FE3F8 otherwise
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE3F8_noinline(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    core::hint::black_box(0xD91CF291u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE3F8_noinline");
     un_802FE3F8_inner(a, b, c, d);
 }
 
 /// The prize counter: the Atlas retail mask hides this element's render only (never its proc);
 /// empty by default.
+#[inline(never)]
 pub unsafe extern "C" fn ifPrize_RenderGuarded(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0xFC244CAEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifPrize_RenderGuarded");
     if ext::Ui_RetailHidden(AT_RE_HUD_PRIZE) != 0 {
         return;
@@ -301,7 +311,9 @@ pub unsafe extern "C" fn ifPrize_RenderGuarded(gobj: *mut HSD_GObj, pass: isize)
     ext::HSD_GObj_JObjCallback(gobj, pass);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FE470(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE6E15DDFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FE470");
     let st = &raw mut un_803F9D48;
     if (*st).x1 != 4 {
@@ -353,7 +365,9 @@ pub unsafe extern "C" fn fn_802FE470(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE6A8() {
+    core::hint::black_box(0xC3DCAA92u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE6A8");
     let st = &raw mut un_803F9D48;
     let gobj_camera = ext::GObj_Create(HSD_GOBJ_CLASS_CAMERA as u16, 20, 0);
@@ -393,7 +407,9 @@ pub unsafe extern "C" fn un_802FE6A8() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE8CC() {
+    core::hint::black_box(0xC9148F63u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE8CC");
     let st = &raw mut un_803F9D48;
     if (*st).x0a() == 0 || (*st).x0b() == 0 {
@@ -404,7 +420,9 @@ pub unsafe extern "C" fn un_802FE8CC() {
 }
 
 /// Needed for `.data` ordering
+#[inline(never)]
 pub unsafe extern "C" fn setArchive() {
+    core::hint::black_box(0x768D99B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setArchive");
     un_804D6D98 = ext::lbArchive_80016DBC(
         c"IfPrize".as_ptr().cast(),
@@ -420,7 +438,9 @@ pub unsafe extern "C" fn setArchive() {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE918_update_x3(x3_ptr: *mut u8, r: *mut i32) {
+    core::hint::black_box(0xB14441A3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE918_update_x3");
     let old_x3 = *x3_ptr as i32;
     // the C leaves `new_x3` uninitialised when no iteration breaks (zero in the build)
@@ -438,7 +458,9 @@ pub unsafe extern "C" fn un_802FE918_update_x3(x3_ptr: *mut u8, r: *mut i32) {
     *x3_ptr = new_x3 as u8;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FE918(a: i32, b: i32, c: i32) {
+    core::hint::black_box(0x721792D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FE918");
     let st = &raw mut un_803F9D48;
     let i: i32;
@@ -492,7 +514,9 @@ pub unsafe extern "C" fn un_802FE918(a: i32, b: i32, c: i32) {
     ext::HSD_SisLib_803A6B98(*text_p, 320.0, 316.0, sp1c.as_ptr());
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifPrize_Scene_OnEnter(arg0_: *mut c_void) {
+    core::hint::black_box(0xC80B3414u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifPrize_Scene_OnEnter");
     let st = &raw mut un_803F9D48;
     let arg0 = arg0_ as *mut un_802FEBE0_OnEnter_arg0;
@@ -523,4 +547,5 @@ pub unsafe extern "C" fn ifPrize_Scene_OnEnter(arg0_: *mut c_void) {
     un_802FE6A8();
 }
 
-pub unsafe extern "C" fn ifPrize_Scene_OnExit(_unused: *mut c_void) { melee_core::ct!("ifPrize_Scene_OnExit");}
+#[inline(never)]
+pub unsafe extern "C" fn ifPrize_Scene_OnExit(_unused: *mut c_void) { core::hint::black_box(0x8E5B105Au32); /* fn identity */ melee_core::ct!("ifPrize_Scene_OnExit");}

@@ -22,6 +22,7 @@ static u32 ftRb_Bits(f32 f)
     return c.u;
 }
 
+int rp_ecb_on(void) { return 0; } void rp_ecb_log(const char* fmt, ...) { }
 #include "nh_extract.inc"
 
 int printf(const char*, ...);

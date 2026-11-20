@@ -147,9 +147,9 @@ fn ityaku_matches_c() {
                 match op {
                     0 => { let a0 = GRD.as_mut_ptr() as *mut Ground; let a1 = fv() as i32; let a2 = (fv() % 20) as i32; let a3: *mut HSD_JObj = if fv() & 1 != 0 { &raw mut JO[3 + (fv() % 3) as usize] } else { null_mut() }; let a4: *mut Vec3 = if fv() & 1 != 0 { &raw mut VA[0] } else { null_mut() }; let a5 = (fv() & 1) as i32; let a6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)> = if fv() & 1 != 0 { Some(cb6) } else { None }; let a7: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)> = if fv() & 1 != 0 { Some(cb7) } else { None }; let a8: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)> = if fv() & 1 != 0 { Some(cb8) } else { None }; ret = pi(m::it_802E6AEC(a0, a1, a2, a3, a4, a5, a6, a7, a8)); } // it_802E6AEC
                     1 => {  m::it_2E6A_UnkMotion19_Phys(&raw mut GO[0]); } // it_2E6A_UnkMotion19_Phys
-                    2 => {  ret = m::it_2E6A_Logic117_DmgDealt(&raw mut GO[0]) as u32; } // it_2E6A_Logic117_DmgDealt
-                    3 => {  ret = m::it_2E6A_Logic117_DmgReceived(&raw mut GO[0]) as u32; } // it_2E6A_Logic117_DmgReceived
-                    4 => {  ret = m::it_802E7054(&raw mut GO[0]) as u32; } // it_802E7054
+                    2 => {  ret = ((m::it_2E6A_Logic117_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // it_2E6A_Logic117_DmgDealt
+                    3 => {  ret = ((m::it_2E6A_Logic117_DmgReceived(&raw mut GO[0])) as i32 != 0) as u32; } // it_2E6A_Logic117_DmgReceived
+                    4 => {  ret = ((m::it_802E7054(&raw mut GO[0])) as i32 != 0) as u32; } // it_802E7054
                     5 => {  m::it_2E6A_Logic117_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // it_2E6A_Logic117_EvtUnk
                     6 => { for j in 0..20 { let row = &m::it_803F8C8C[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

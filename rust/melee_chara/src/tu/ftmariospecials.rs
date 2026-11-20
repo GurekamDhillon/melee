@@ -104,15 +104,21 @@ unsafe fn joint_of(fp: *mut Fighter, part: Fighter_Part) -> *mut HSD_JObj {
     (*(*fp).parts.offset(idx as isize)).joint
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMr_SpecialS_CreateCape(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB6B4F26Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMr_SpecialS_CreateCape");
     ftMr_SpecialS_CreateCape(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMr_SpecialS_EnterHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB732622Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMr_SpecialS_EnterHitlag");
     ftMr_SpecialS_EnterHitlag(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMr_SpecialS_ExitHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC00EC252u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMr_SpecialS_ExitHitlag");
     ftMr_SpecialS_ExitHitlag(g);
 }

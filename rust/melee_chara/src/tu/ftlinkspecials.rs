@@ -86,7 +86,9 @@ pub fn on21EC(gobj: *mut HSD_GObj) {
 }
 
 /// `on21EC` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_on21EC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x79BF5E12u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_on21EC");
     on21EC(g);
 }
@@ -201,7 +203,9 @@ pub fn onAccessory4(gobj: *mut HSD_GObj) {
 }
 
 /// `onAccessory4` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_onAccessory4(g: *mut HSD_GObj) {
+    core::hint::black_box(0xA8A174A1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_onAccessory4");
     onAccessory4(g);
 }

@@ -157,18 +157,18 @@ static void init_slot(int slot)
     for (i = 0; i < 5; i++) { s->x8D8.x4[i].x0 = rnd() % 8; s->x8D8.x4[i].x4_b0 = rnd() & 1; s->x8D8.x4[i].x4_b1 = rnd() & 1; }
     s->xC60 = rf(); s->xC64 = rf(); s->xC68 = (int) rnd(); s->xC6C = rf(); s->xC90 = rnd() % 5;
     s->xCAC = rnd(); s->xCB0 = (int) rnd(); s->xCB4 = (int) rnd(); s->xCB8 = (int) (rnd() % 7);
-    s->xCBC.x3 = (u8) (0x30 + rnd() % 16); s->xCC0.x10_b0 = rnd() & 1;
+    s->xCBC.x0.x2073 = (u8) (0x30 + rnd() % 16); s->xCC0.x10_b0 = rnd() & 1;
     s->xCDC = rf(); s->xCE0 = rf(); s->xCE4 = rnd(); s->xCE8 = rnd(); s->xCEC = (int) z(); s->xCF0 = (int) rnd();
     x->xCF8 = rf(); x->xCFC = (int) rnd(); x->xD00 = (int) rnd(); x->xD04 = rnd(); x->xD20 = rnd(); x->xD24 = rnd();
     x->xD40 = rnd(); x->xD48 = rnd(); x->xD4C = z(); x->xD50 = z(); x->xD54 = z(); x->xD60 = rnd();
     x->xD64 = rnd() % 2 ? 6 : (int) rnd(); x->xD68 = (int) rnd(); x->xD70 = (int) rnd();
     x->xD74 = rf(); x->xD78 = rf(); x->xD7C = rf(); x->xD80 = rf(); x->xD84 = rf(); x->xD88 = rf();
-    x->xDD0.bit0 = rnd() & 1; x->xDD0.bit5 = rnd() & 1;
-    x->xDD1.bit4 = rnd() & 1; x->xDD1.bit6 = rnd() & 1;
+    x->xDD0.x0.bit0 = rnd() & 1; x->xDD0.x0.bit5 = rnd() & 1;
+    x->xDD1.x0.bit4 = rnd() & 1; x->xDD1.x0.bit6 = rnd() & 1;
     a->attacks.total = z(); a->attacks.aerials_count = rnd(); a->attacks.thrown_item_count = rnd();
     a->attacks.specials_count = rnd();
     for (i = 30; i < 70; i++) a->attacks.by_attack_counts[i] = rnd();
-    a->x358_hits.total = rnd();
+    a->x358.x358_hits.total = rnd();
     /* round 10 fields */
     for (i = 0; i < Pl_ItemLog_Terminate; i++) { s->x674[i] = rnd() % 4; s->x710[i] = (int) (rnd() % 4); s->x7AC[i] = (int) (rnd() % 4); }
     s->xCD8 = (int) rnd(); s->xCA8 = rnd() % 4; s->xC70 = rf(); s->xC74 = rf();
@@ -195,7 +195,7 @@ static void hash_slot(int slot)
     for (i = 0; i < 5; i++) { h(s->x8D8.x4[i].x0); h(s->x8D8.x4[i].x4_b0); h(s->x8D8.x4[i].x4_b1); }
     h((u32) s->xC68); h(s->xC90); h(s->xCAC); h((u32) s->xCB0); h(B(s->xCDC)); h(B(s->xCE0)); h(s->xCE4); h(s->xCE8);
     h((u32) s->xCEC); h((u32) s->xCF0); h(B(x->xCF8)); h(x->xD4C); h(x->xD50); h(x->xD60); h((u32) x->xD70);
-    h(x->xDD0.bit0); h(x->xDD0.bit5); h(x->xDD1.bit4); h(x->xDD1.bit6);
+    h(x->xDD0.x0.bit0); h(x->xDD0.x0.bit5); h(x->xDD1.x0.bit4); h(x->xDD1.x0.bit6);
     for (i = 0; i < Pl_ItemLog_Terminate; i++) { h(s->x674[i]); h((u32) s->x710[i]); h((u32) s->x7AC[i]); }
     h((u32) s->xCD8); h(s->xCA8); h(B(s->xC6C)); h(B(s->xC70)); h(B(s->xC74));
     for (i = 0; i < 6; i++) h(B(s->xC78[i]));

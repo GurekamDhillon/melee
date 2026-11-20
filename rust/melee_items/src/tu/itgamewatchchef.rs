@@ -55,7 +55,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x20782405u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -126,7 +127,9 @@ pub static it_803F79E0: [ItemStateTable; 2] = [
 
 /// `HSD_GObj* it_802C837C(Item_GObj* parent, Vec3*, enum_t kind, u32 arg3, float facing_dir)`: spawns the
 /// chef item with launch entry `arg3`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C837C(parent: *mut Item_GObj, pos: *mut Vec, kind: enum_t, arg3: u32, facing_dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x32BAA3DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C837C");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -153,14 +156,18 @@ pub unsafe extern "C" fn it_802C837C(parent: *mut Item_GObj, pos: *mut Vec, kind
 }
 
 /// `bool itGameWatchChef_Logic112_DmgDealt(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchChef_Logic112_DmgDealt(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x62D81B69u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchChef_Logic112_DmgDealt");
     it_802C875C(gobj);
     0
 }
 
 /// `void it_802C84A0(Item_GObj*, s32 index)`: launch with table entry `index`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C84A0(gobj: *mut Item_GObj, index: i32) {
+    core::hint::black_box(0xA2B01789u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C84A0");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGamewatchchefAttributes;
@@ -174,7 +181,9 @@ pub unsafe extern "C" fn it_802C84A0(gobj: *mut Item_GObj, index: i32) {
 }
 
 /// `bool itGamewatchchef_UnkMotion0_Anim(Item_GObj*)`: spin and lifetime countdown.
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchchef_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x1389126Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchchef_UnkMotion0_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -191,7 +200,9 @@ pub unsafe extern "C" fn itGamewatchchef_UnkMotion0_Anim(gobj: *mut Item_GObj) -
 }
 
 /// `void itGamewatchchef_UnkMotion0_Phys(Item_GObj*)`: gravity with the entry's fall values.
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchchef_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7D42DE5Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchchef_UnkMotion0_Phys");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGamewatchchefAttributes;
@@ -200,7 +211,9 @@ pub unsafe extern "C" fn itGamewatchchef_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 /// `bool itGamewatchchef_UnkMotion0_Coll(Item_GObj*)`: wall bounce, floor / ceiling -> state 1.
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchchef_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xFF88FF09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchchef_UnkMotion0_Coll");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGamewatchchefAttributes;
@@ -217,7 +230,9 @@ pub unsafe extern "C" fn itGamewatchchef_UnkMotion0_Coll(gobj: *mut Item_GObj) -
 }
 
 /// `void it_802C875C(Item_GObj*)`: stops and enters state 1 with the second lifetime.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C875C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDF7E0895u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C875C");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGamewatchchefAttributes;
@@ -228,7 +243,9 @@ pub unsafe extern "C" fn it_802C875C(gobj: *mut Item_GObj) {
 }
 
 /// `bool itGamewatchchef_UnkMotion1_Anim(Item_GObj*)`: lifetime countdown with the blink.
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchchef_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xA7400917u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchchef_UnkMotion1_Anim");
     let ip = item_of(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
@@ -245,16 +262,21 @@ pub unsafe extern "C" fn itGamewatchchef_UnkMotion1_Anim(gobj: *mut Item_GObj) -
 }
 
 /// `void itGamewatchchef_UnkMotion1_Phys(Item_GObj*)`.
-pub unsafe extern "C" fn itGamewatchchef_UnkMotion1_Phys(gobj: *mut Item_GObj) { melee_core::ct!("itGamewatchchef_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itGamewatchchef_UnkMotion1_Phys(gobj: *mut Item_GObj) { core::hint::black_box(0x34B062AAu32); /* fn identity */ melee_core::ct!("itGamewatchchef_UnkMotion1_Phys");}
 
 /// `bool itGamewatchchef_UnkMotion1_Coll(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchchef_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x1AC78320u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchchef_UnkMotion1_Coll");
     itGamewatchchef_UnkMotion0_Coll(gobj)
 }
 
 /// `bool it_2725_Logic112_Clanked(Item_GObj*)`: stops and enters state 1.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic112_Clanked(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x99740A47u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic112_Clanked");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGamewatchchefAttributes;
@@ -266,7 +288,9 @@ pub unsafe extern "C" fn it_2725_Logic112_Clanked(gobj: *mut Item_GObj) -> i32 {
 }
 
 /// `bool it_2725_Logic112_HitShield(Item_GObj*)`: same as clanked.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic112_HitShield(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x2729862Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic112_HitShield");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGamewatchchefAttributes;
@@ -278,7 +302,9 @@ pub unsafe extern "C" fn it_2725_Logic112_HitShield(gobj: *mut Item_GObj) -> i32
 }
 
 /// `bool it_2725_Logic112_Absorbed(Item_GObj*)`: as clanked, and the lifetime ends.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic112_Absorbed(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xD940425Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic112_Absorbed");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itGamewatchchefAttributes;
@@ -291,19 +317,25 @@ pub unsafe extern "C" fn it_2725_Logic112_Absorbed(gobj: *mut Item_GObj) -> i32 
 }
 
 /// `bool itGameWatchChef_Logic112_ShieldBounced(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchChef_Logic112_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x0706E46Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchChef_Logic112_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// `bool itGameWatchChef_Logic112_Reflected(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchChef_Logic112_Reflected(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x05AE4331u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchChef_Logic112_Reflected");
     itReflectItemAndUpdateRotation(gobj)
 }
 
 /// `void itGameWatchChef_Logic112_EvtUnk(Item_GObj*, Item_GObj*)`: removes the gobj interaction references.
+#[inline(never)]
 pub unsafe extern "C" fn itGameWatchChef_Logic112_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xDEC147E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGameWatchChef_Logic112_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

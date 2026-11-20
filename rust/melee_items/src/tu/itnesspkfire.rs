@@ -89,7 +89,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xFF2C1136u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -109,7 +110,9 @@ unsafe fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *mut H
 }
 
 /// 2AA054: spawns a PK Fire shot.
+#[inline(never)]
 pub unsafe extern "C" fn it_802AA054(gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut Vec3, facing_dir: f32, angle: f32) {
+    core::hint::black_box(0x75E2681Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802AA054");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -134,7 +137,9 @@ pub unsafe extern "C" fn it_802AA054(gobj: *mut Item_GObj, pos: *mut Vec3, vel: 
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802AA1D8(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD99D6BD9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802AA1D8");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
@@ -142,7 +147,9 @@ pub unsafe extern "C" fn it_802AA1D8(item_gobj: *mut Item_GObj) {
     ext::it_80275158(item_gobj, (*attrs).x0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD2C3615Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfire_UnkMotion0_Anim");
     let ip = (*gobj).user_data as *mut Item;
     (*ip).xD44_lifeTimer -= 1.0;
@@ -152,12 +159,16 @@ pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> b
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3AAC8F4Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNesspkfire_UnkMotion0_Coll");
     ext::it_8026E058(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic23_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x53CE3111u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic23_DmgDealt");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
@@ -167,7 +178,9 @@ pub unsafe extern "C" fn it_2725_Logic23_DmgDealt(gobj: *mut Item_GObj) -> bool 
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic23_Clanked(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x06DB3C61u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic23_Clanked");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
@@ -177,22 +190,30 @@ pub unsafe extern "C" fn it_2725_Logic23_Clanked(gobj: *mut Item_GObj) -> bool {
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessPKFire_Logic23_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x39EA20B6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessPKFire_Logic23_Absorbed");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessPKFire_Logic23_HitShield(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x30964056u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessPKFire_Logic23_HitShield");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itNessPKFire_Logic23_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x7DAC764Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itNessPKFire_Logic23_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic23_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x8A0D0DF2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic23_ShieldBounced");
     let jobj = GET_JOBJ(gobj);
     let rot_z = HSD_JObjGetRotationZ(jobj);
@@ -200,7 +221,9 @@ pub unsafe extern "C" fn it_2725_Logic23_ShieldBounced(gobj: *mut Item_GObj) -> 
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802AA474(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC540F80Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802AA474");
     ext::it_8026B894(gobj, ref_gobj);
 }

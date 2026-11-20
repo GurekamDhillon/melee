@@ -127,7 +127,9 @@ pub static mut it_803F9328: [ItemStateTable; 5] = [
 ];
 
 /// 2EFA44: spawns an egg at `pos` facing `dir` (only when `catherine` is non-null).
+#[inline(never)]
 pub unsafe extern "C" fn it_802EFA44(catherine: *mut Item_GObj, pos: *mut Vec3, dir: f32) {
+    core::hint::black_box(0x21CA516Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EFA44");
     if !catherine.is_null() {
         let egg = ext::it_8027B5B0(It_Kind_Kyasarin_Egg as i32, pos, null_mut(), null_mut(), 1);
@@ -149,7 +151,9 @@ pub unsafe extern "C" fn it_802EFA44(catherine: *mut Item_GObj, pos: *mut Vec3, 
 }
 
 /// 2EFB0C
+#[inline(never)]
 pub unsafe extern "C" fn it_802EFB0C(egg_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7B5882FBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EFB0C");
     let egg = GET_ITEM(egg_gobj);
     let ap = (*(*egg).xC4_article_data).x4_specialAttributes as *mut itKyasarinEggAttributes;
@@ -160,7 +164,9 @@ pub unsafe extern "C" fn it_802EFB0C(egg_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(egg_gobj, 0, 2);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinegg_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x51A5FC01u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinegg_UnkMotion0_Coll");
     if ext::it_8026DAA8(gobj) & 0xF != 0 {
         it_802EFCC0(gobj);
@@ -168,27 +174,37 @@ pub unsafe extern "C" fn itKyasarinegg_UnkMotion0_Coll(gobj: *mut Item_GObj) -> 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinEgg_Logic28_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7ABF1384u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinEgg_Logic28_PickedUp");
     ext::Item_80268E5C(gobj, 2, 2);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinEgg_Logic28_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x1A714A4Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinEgg_Logic28_Dropped");
     itKyasarinEgg_Logic28_Thrown(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinEgg_Logic28_Thrown(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x03C2FA0Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinEgg_Logic28_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinegg_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x21A0F338u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinegg_UnkMotion3_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinegg_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x88682D2Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinegg_UnkMotion3_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return it_2725_Logic28_DmgDealt(gobj);
@@ -197,7 +213,9 @@ pub unsafe extern "C" fn itKyasarinegg_UnkMotion3_Coll(gobj: *mut Item_GObj) -> 
 }
 
 /// 2EFCC0: bounce off a wall.
+#[inline(never)]
 pub unsafe extern "C" fn it_802EFCC0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x70CA40A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EFCC0");
     let egg = GET_ITEM(gobj);
     let ap = (*(*egg).xC4_article_data).x4_specialAttributes as *mut itKyasarinEggAttributes;
@@ -206,18 +224,24 @@ pub unsafe extern "C" fn it_802EFCC0(gobj: *mut Item_GObj) {
     (*egg).x40_vel.y = (*ap).x8;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinegg_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4D197012u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinegg_UnkMotion1_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinegg_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x258EF538u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinegg_UnkMotion1_Coll");
     ext::it_8026DFB0(gobj)
 }
 
 /// 2EFD84: breaks into a stationary egg.
+#[inline(never)]
 pub unsafe extern "C" fn it_802EFD84(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD688EC10u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802EFD84");
     let egg = GET_ITEM(gobj);
     ext::it_8026BB44(gobj);
@@ -233,7 +257,9 @@ pub unsafe extern "C" fn it_802EFD84(gobj: *mut Item_GObj) {
 }
 
 /// No `return` in the C: the result is whatever `it_802751D8` left in r3.
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinegg_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xEB2D95CAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinegg_UnkMotion4_Anim");
     ext::it_802751D8(gobj)
 }
@@ -265,27 +291,37 @@ unsafe fn it_damage_inline(gobj: *mut Item_GObj) -> bool {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic28_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x60399645u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic28_DmgDealt");
     it_damage_inline(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic28_Clanked(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x53A203E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic28_Clanked");
     it_damage_inline(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic28_HitShield(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4BF78F51u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic28_HitShield");
     it_damage_inline(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic28_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD3BCB785u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic28_Reflected");
     it_damage_inline(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKyasarinEgg_Logic28_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x491710CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKyasarinEgg_Logic28_ShieldBounced");
     let ip = GET_ITEM(gobj);
     if (*ip).msid == 3 {
@@ -294,12 +330,16 @@ pub unsafe extern "C" fn itKyasarinEgg_Logic28_ShieldBounced(gobj: *mut Item_GOb
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F022C(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xDB908436u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F022C");
     it_damage_inline(gobj)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802F0320(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x13EFB0C4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F0320");
     ext::it_8026B894(gobj, ref_gobj);
 }

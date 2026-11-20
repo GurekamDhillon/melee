@@ -23,6 +23,8 @@ c2rust-bitfields = { version = "=0.22.1", optional = true }
 c2r = ["dep:c2rust-bitfields"]
 
 [lints.rust]
+# workspace.lints is not inherited where a crate has its own table (rust/Cargo.toml: function identity)
+unpredictable_function_pointer_comparisons = "deny"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }
 
 [dev-dependencies]

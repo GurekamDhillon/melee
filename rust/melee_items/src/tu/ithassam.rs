@@ -68,9 +68,12 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { super::efLib_PauseAll(a0) }
-        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { super::efLib_ResumeAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x23276D1Bu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0xB349ACA7u32); /* fn identity */ super::efLib_PauseAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { core::hint::black_box(0xD11A65E4u32); /* fn identity */ super::efLib_ResumeAll(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
@@ -104,7 +107,9 @@ unsafe fn attr_of(ip: *mut Item) -> *mut itHassam_ItemVars {
     (*(*ip).xC4_article_data).x4_specialAttributes as *mut itHassam_ItemVars
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDBE0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF7D41B8Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDBE0");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
@@ -116,20 +121,27 @@ pub unsafe extern "C" fn itHassam_802CDBE0(gobj: *mut HSD_GObj) {
     ext::Item_8026AE84(ip, 0x2721, 0x7F, 0x40);
 }
 
-pub unsafe extern "C" fn itHassam_802CDC5C(_gobj: *mut HSD_GObj) { melee_core::ct!("itHassam_802CDC5C");}
+#[inline(never)]
+pub unsafe extern "C" fn itHassam_802CDC5C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x66562F5Eu32); /* fn identity */ melee_core::ct!("itHassam_802CDC5C");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDC60(gobj: *mut HSD_GObj, r#ref: *mut HSD_GObj) {
+    core::hint::black_box(0x834E0E40u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDC60");
     ext::it_8026B894(gobj, r#ref);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDC80(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9770BFFEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDC80");
     ext::it_80273454(gobj);
     itHassam_802CDCB4(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDCB4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x16E13048u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDCB4");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
@@ -138,7 +150,9 @@ pub unsafe extern "C" fn itHassam_802CDCB4(gobj: *mut HSD_GObj) {
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[2], ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xB5C04012u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[2], ip);
@@ -148,7 +162,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6BB5A7CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     ext::it_8027A344(gobj);
@@ -158,7 +174,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x045CB905u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air as _ {
@@ -170,7 +188,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 /// `Item_GObj* itHassam_802CDE1C(Vec3* vec, Item_GObj* gobj)`: the nearest fighter above `vec`.
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj {
+    core::hint::black_box(0xF8CC138Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDE1C");
     let mut sp20: Vec3 = core::mem::zeroed();
     let mut min_dist: f32 = F32_MAX;
@@ -199,7 +219,9 @@ pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) 
     closest_fgobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CDF28(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB6826D97u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CDF28");
     let mut sp1c: Vec3 = core::mem::zeroed();
     let mut sp10: Vec3 = core::mem::zeroed();
@@ -224,7 +246,9 @@ pub unsafe extern "C" fn itHassam_802CDF28(gobj: *mut HSD_GObj) {
     ext::it_80272980(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CE008(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x67E29932u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CE008");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
@@ -238,7 +262,9 @@ pub unsafe extern "C" fn itHassam_802CE008(gobj: *mut HSD_GObj) {
     (*ip).xDD4_itemVar.hassam.x5C.z = 0.0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x80B099EBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion1_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let attr = attr_of(ip);
@@ -275,7 +301,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0630CEEEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
@@ -291,7 +319,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
     (*ip).x40_vel.z += (*ip).xDD4_itemVar.hassam.x5C.z;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x2AF70A9Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).xDAC_itcmd_var0 == 0 {
@@ -305,7 +335,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 /// `static inline void itHassam_802CE400_sub(HSD_GObj*, int msid, Item_StateChangeFlags)`
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CE400_sub(gobj: *mut HSD_GObj, msid: i32, flags: u32) {
+    core::hint::black_box(0xB0A320F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CE400_sub");
     let ip = (*gobj).user_data as *mut Item;
     ext::Item_80268E5C(gobj, msid, flags);
@@ -314,7 +346,9 @@ pub unsafe extern "C" fn itHassam_802CE400_sub(gobj: *mut HSD_GObj, msid: i32, f
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[2], ip);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_802CE400(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x349725BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_802CE400");
     let mut cam_pos: Vec3 = core::mem::zeroed();
     let mut sp10: Vec3 = core::mem::zeroed();
@@ -338,7 +372,9 @@ pub unsafe extern "C" fn itHassam_802CE400(gobj: *mut HSD_GObj) {
     HSD_JObjSetRotationY(jobj, 0.0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x04D30668u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[2], ip);
@@ -348,7 +384,9 @@ pub unsafe extern "C" fn itHassam_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC56B11ADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     ext::it_8027A344(gobj);
@@ -357,28 +395,38 @@ pub unsafe extern "C" fn itHassam_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
     (*ip).pos.z += (*ip).xDD4_itemVar.hassam.x5C.z;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion2_Coll(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x73C5C2FFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion2_Coll");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802CE640(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x69BC462Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802CE640");
     Item_EnterAirStateWithHitlag(gobj, 3);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x77EDAD69u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion3_Anim");
     ext::it_80279FF8(gobj);
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xACB98BC4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion3_Phys");
     ext::it_8027A09C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itHassam_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x72F250AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itHassam_UnkMotion3_Coll");
     ext::it_8027A118(gobj, Some(itHassam_802CDC80))
 }

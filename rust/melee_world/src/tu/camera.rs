@@ -1731,7 +1731,9 @@ pub unsafe fn update_bounds(mut bounds: *mut CameraBounds, mut bounds_copy: *mut
 }
 
 /// `Camera_8002B3D4`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_8002B3D4(mut arg0: *mut c_void) {
+    core::hint::black_box(0x5CEDA715u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_8002B3D4");
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     let mut bounds_copy: CameraBounds = unsafe { core::mem::zeroed() };
@@ -2371,7 +2373,9 @@ pub unsafe fn track_subject(mut transform: *mut CameraTransformState, mut intere
 }
 
 /// `Camera_8002C908`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_8002C908(mut arg0: *mut c_void) {
+    core::hint::black_box(0x37217B22u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_8002C908");
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     let mut pad: [u8; 24] = [0; 24];
@@ -2509,7 +2513,9 @@ pub unsafe fn Camera_8002CB0C(mut bounds: *mut CameraBounds) {
 }
 
 /// `Camera_8002CDDC`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_8002CDDC(mut unused: *mut c_void) {
+    core::hint::black_box(0x1C4A153Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_8002CDDC");
     let mut slot_ptr: *mut i8 = null_mut();
     let mut late_transform: *mut CameraTransformState = null_mut();
@@ -2566,7 +2572,9 @@ pub unsafe fn get_subject_x1C(mut subject: *mut CmSubject) -> *mut Vec {
 }
 
 /// `Camera_8002D318`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_8002D318(mut unused: *mut c_void) {
+    core::hint::black_box(0x19B441DEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_8002D318");
     let mut pos: *mut Vec = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
@@ -2639,7 +2647,9 @@ pub unsafe extern "C" fn Camera_8002D318(mut unused: *mut c_void) {
 }
 
 /// `Camera_8002D85C`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_8002D85C(mut unused: *mut c_void) {
+    core::hint::black_box(0xEE73B052u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_8002D85C");
     let mut subject: *mut CmSubject = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
@@ -2743,7 +2753,9 @@ pub unsafe fn smooth_fixed_camera_interest(mut transform_copy: *mut CameraTransf
 }
 
 /// `Camera_8002DDC4`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_8002DDC4(mut unused: *mut c_void) {
+    core::hint::black_box(0xC821CCD9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_8002DDC4");
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     let mut target_interest: *mut Vec = null_mut();
@@ -2949,7 +2961,9 @@ pub unsafe fn Camera_8002E234() -> i32 {
 }
 
 /// `Camera_8002E490`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_8002E490(mut unused: *mut c_void) {
+    core::hint::black_box(0xB2A14EC6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_8002E490");
     let mut sp1C: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp10: Vec3 = unsafe { core::mem::zeroed() };
@@ -3396,7 +3410,9 @@ pub unsafe fn Camera_8002F274() {
 }
 
 /// `fn_8002F360`
+#[inline(never)]
 pub unsafe extern "C" fn fn_8002F360(mut x: *mut HSD_GObj) {
+    core::hint::black_box(0xEF277E62u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8002F360");
     if cm_script.state != 0 {
         game_camera.transform = cm_script.normal;
@@ -3429,7 +3445,9 @@ pub unsafe fn Camera_SetModeToStandard() {
 }
 
 /// `Camera_SetBounds`
+#[inline(never)]
 pub unsafe extern "C" fn Camera_SetBounds(mut arg0: *mut Quaternion) -> i32 {
+    core::hint::black_box(0x955F1F91u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Camera_SetBounds");
     (*arg0).z = cm_fly_left();
     (*arg0).w = cm_fly_right();
@@ -3589,7 +3607,9 @@ pub unsafe fn Camera_SetModeToFixed() {
 }
 
 /// `fn_8002F908`
+#[inline(never)]
 pub unsafe extern "C" fn fn_8002F908(mut arg0: *mut _HSD_RectF32) -> i32 {
+    core::hint::black_box(0xEAB2010Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8002F908");
     let mut half_width: f32 = 0.0;
     let mut half_height: f32 = 0.0;
@@ -3657,7 +3677,9 @@ pub unsafe fn Camera_8002F9E4(mut arg0: i8, mut arg1: i8) {
 }
 
 /// `fn_8002FBA0`
+#[inline(never)]
 pub unsafe extern "C" fn fn_8002FBA0(mut arg0: *mut _HSD_RectF32) -> i32 {
+    core::hint::black_box(0x2391D376u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8002FBA0");
     let mut half_width: f32 = 0.0;
     let mut half_height: f32 = 0.0;
@@ -3904,7 +3926,9 @@ pub unsafe fn render_gxlink_pass(mut gobj: *mut HSD_GObj, mut pass: i32, mut gxl
 }
 
 /// `fn_800301D0`
+#[inline(never)]
 pub unsafe extern "C" fn fn_800301D0(mut gobj: *mut HSD_GObj, mut arg1: isize) {
+    core::hint::black_box(0xDF6C527Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_800301D0");
     let mut prio8_a: i64 = 0;
     let mut prio1_a: i64 = 0;

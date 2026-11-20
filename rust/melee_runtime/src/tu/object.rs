@@ -40,7 +40,9 @@ pub mod ext {
     pub use crate::tu::class::hsdClass;
 }
 // END GENERATED EXT
+#[inline(never)]
 pub unsafe extern "C" fn ObjInfoInit() {
+    core::hint::black_box(0xDCC23037u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ObjInfoInit");
     ext::hsdInitClassInfo(core::ptr::addr_of_mut!(hsdObj), hsd_class_ptr(),
         b"sysdolphin_base_library\0".as_ptr().cast_mut().cast(), b"hsd_obj\0".as_ptr().cast_mut().cast(),

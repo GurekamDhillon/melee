@@ -108,19 +108,27 @@ unsafe fn held_b(fp: *mut Fighter) -> bool {
     (*fp).input.held_buttons[0] as i32 & HSD_PAD_B != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialLw_CreateLoopGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB2E8EC8Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialLw_CreateLoopGFX");
     ftFx_SpecialLw_CreateLoopGFX(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialLw_CreateStartGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0xED31F92Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialLw_CreateStartGFX");
     ftFx_SpecialLw_CreateStartGFX(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialLw_CreateReflectGFX(g: *mut HSD_GObj) {
+    core::hint::black_box(0x92F9567Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialLw_CreateReflectGFX");
     ftFx_SpecialLw_CreateReflectGFX(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialLwHit_Enter(g: *mut HSD_GObj) {
+    core::hint::black_box(0x7E0E5BBCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialLwHit_Enter");
     ftFx_SpecialLwHit_Enter(g);
 }

@@ -235,6 +235,7 @@ def build(stem, verbose_fn=None):
     spec = load_spec(stem)
     O.OUTS.clear(); O.PS_TAGS.clear(); O.RETS.clear()
     O.RETS.update(spec.get("rets", {}))
+    O.FRETS.update(spec.get("frets", {}))
     O.OUTS.update(spec.get("outs", {}))
     src = spec["src"]
     srcpath = (ROOT / src).as_posix()

@@ -53,7 +53,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x393158C5u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub static mut result: i32 = unsafe { core::mem::zeroed() };
@@ -116,7 +117,9 @@ pub static mut it_803F5DB0: [ItemStateTable; 4] = [
     ItemStateTable { anim_id: -1, animated: Some(itFoods_UnkMotion3_Anim), physics_updated: Some(itFoods_UnkMotion3_Phys), collided: Some(itFoods_UnkMotion3_Coll) },
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028F9D8(arg0: *mut Item_GObj, arg1: *mut Vec, arg8: f32) {
+    core::hint::black_box(0x1D162B7Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028F9D8");
     let temp_r30 = get_item(arg0);
     let temp_r6 = (*(*temp_r30).xC4_article_data).x4_specialAttributes as *mut Vec4;
@@ -128,7 +131,9 @@ pub unsafe extern "C" fn it_8028F9D8(arg0: *mut Item_GObj, arg1: *mut Vec, arg8:
     HSD_JObjSetTranslate((*arg0).hsd_obj as *mut HSD_JObj, &mut (*temp_r30).pos);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028FAF4(arg0: *mut Item_GObj, arg1: *mut Vec) -> *mut HSD_GObj {
+    core::hint::black_box(0x78D004DAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028FAF4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     if ext::it_8026D324(It_Kind_Foods as _) == 0 {
@@ -157,7 +162,9 @@ pub unsafe extern "C" fn it_8028FAF4(arg0: *mut Item_GObj, arg1: *mut Vec) -> *m
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn getRandMax(article: *mut Article) -> u32 {
+    core::hint::black_box(0xB9E969DCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("getRandMax");
     let attr = (*article).x4_specialAttributes as *mut itFoodsAttributes;
     (*attr).count as u32
@@ -177,7 +184,9 @@ struct FoodsRow {
     xc: i32,
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_Logic18_Spawned(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE2237672u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_Logic18_Spawned");
     let ip = get_item(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut FoodsRow;
@@ -189,30 +198,40 @@ pub unsafe extern "C" fn itFoods_Logic18_Spawned(gobj: *mut HSD_GObj) {
     it_8028FC5C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028FC5C(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xCCC0F166u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028FC5C");
     ext::Item_80268E5C(arg0, 0, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion0_Anim(_arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x44EA7E86u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion0_Anim");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion0_Phys(arg0: *mut Item_GObj) {
+    core::hint::black_box(0xBE54B1C3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion0_Phys");
     let item = get_item(arg0);
     let temp_r4 = (*item).xCC_item_attr;
     ext::it_80272860(arg0, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion0_Coll(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xB3258341u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion0_Coll");
     ext::it_8026E414(arg0, Some(it_8028FCE8));
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_8028FCE8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x44868CEBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8028FCE8");
     let item = get_item(gobj);
     itResetVelocity(item);
@@ -220,20 +239,27 @@ pub unsafe extern "C" fn it_8028FCE8(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xFABFB22Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion1_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFoods_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFoods_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFoods_UnkMotion1_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0xDAD67552u32); /* fn identity */ melee_core::ct!("itFoods_UnkMotion1_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xB0D19178u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion1_Coll");
     ext::it_8026D62C(gobj, Some(it_8028FC5C));
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_Logic18_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xBF4B0B01u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_Logic18_PickedUp");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let child = HSD_JObjGetChild(jobj);
@@ -241,37 +267,50 @@ pub unsafe extern "C" fn itFoods_Logic18_PickedUp(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x1ACE142Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion2_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFoods_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFoods_UnkMotion2_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itFoods_UnkMotion2_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x0F4F0401u32); /* fn identity */ melee_core::ct!("itFoods_UnkMotion2_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_Logic18_Dropped(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA8B2744Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_Logic18_Dropped");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xB45B79FDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion3_Anim");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x99F13378u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion3_Phys");
     let item = get_item(gobj);
     let temp_r4 = (*item).xCC_item_attr;
     ext::it_80272860(gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x0332D66Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_UnkMotion3_Coll");
     ext::it_8026E414(gobj, Some(it_8028FCE8));
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itFoods_Logic18_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0x498FE46Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoods_Logic18_EvtUnk");
     ext::it_8026B894(gobj, arg1);
 }

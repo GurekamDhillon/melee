@@ -52,7 +52,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x684530D8u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -199,14 +200,18 @@ pub static it_803F67D0: [ItemStateTable; 2] = [
 ];
 
 /// `bool it_8029C4D4(Item_GObj*, CollData*)`: the shot's segment-vs-map probe from the previous to the current position.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029C4D4(item_gobj: *mut Item_GObj, arg1: *mut CollData) -> i32 {
+    core::hint::black_box(0xBA56D3CEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029C4D4");
     let item = item_of(item_gobj);
     ext::it_8026E9A4(item_gobj, &mut (*item).xDD4_itemVar.foxlaser.pos, &mut (*item).pos, null_mut())
 }
 
 /// `void it_8029C504(HSD_GObj* parent, Vec3* pos, enum_t msid, int kind, f32 angle, f32 speed)`: spawns a shot.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029C504(parent: *mut HSD_GObj, pos: *mut Vec, msid: enum_t, kind: i32, mut angle: f32, speed: f32) {
+    core::hint::black_box(0x18CFF285u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029C504");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -233,19 +238,25 @@ pub unsafe extern "C" fn it_8029C504(parent: *mut HSD_GObj, pos: *mut Vec, msid:
 }
 
 /// `void it_8029C6A4(f32 angle, f32 vel, HSD_GObj* parent, Vec3* vec, int kind)`: Fox's laser (item state 0).
+#[inline(never)]
 pub unsafe extern "C" fn it_8029C6A4(angle: f32, vel: f32, parent: *mut HSD_GObj, vec: *mut Vec, kind: i32) {
+    core::hint::black_box(0xE295AB7Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029C6A4");
     it_8029C504(parent, vec, 0, kind, angle, vel);
 }
 
 /// `void it_8029C6CC(f32 angle, f32 vel, HSD_GObj* parent, Vec3* vec, int kind)`: Falco's laser (item state 1).
+#[inline(never)]
 pub unsafe extern "C" fn it_8029C6CC(angle: f32, vel: f32, parent: *mut HSD_GObj, vec: *mut Vec, kind: i32) {
+    core::hint::black_box(0xDB9A1DA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029C6CC");
     it_8029C504(parent, vec, 1, kind, angle, vel);
 }
 
 /// `bool itFoxlaser_UnkMotion1_Anim(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xD04B35F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxlaser_UnkMotion1_Anim");
     let ip = item_of(item_gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut FoxLaserAttr;
@@ -254,14 +265,18 @@ pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -
 }
 
 /// `void itFoxlaser_UnkMotion1_Phys(Item_GObj*)`: remembers the position.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7708448Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxlaser_UnkMotion1_Phys");
     let item = item_of(item_gobj);
     (*item).xDD4_itemVar.foxlaser.pos = (*item).pos;
 }
 
 /// `bool itFoxlaser_UnkMotion1_Coll(Item_GObj*)`: on a map hit, shortens the lifetime to one frame and keeps the position.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Coll(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x43D2B000u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxlaser_UnkMotion1_Coll");
     let item = item_of(item_gobj);
     let pos = (*item).pos;
@@ -273,13 +288,17 @@ pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Coll(item_gobj: *mut Item_GObj) -
 }
 
 /// `bool itFoxLaser_Logic94_Clanked(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxLaser_Logic94_Clanked(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x2800FC5Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxLaser_Logic94_Clanked");
     1
 }
 
 /// `bool itFoxLaser_Logic94_Reflected(Item_GObj*)`: turns around and restarts the ray.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxLaser_Logic94_Reflected(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xFBF5DD2Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxLaser_Logic94_Reflected");
     let item = item_of(item_gobj);
     let jobj = jobj_of(item_gobj);
@@ -292,25 +311,33 @@ pub unsafe extern "C" fn itFoxLaser_Logic94_Reflected(item_gobj: *mut Item_GObj)
 }
 
 /// `bool itFoxLaser_Logic94_Absorbed(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxLaser_Logic94_Absorbed(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x79F89534u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxLaser_Logic94_Absorbed");
     1
 }
 
 /// `bool itFoxLaser_Logic94_ShieldBounced(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxLaser_Logic94_ShieldBounced(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xC9C4AD1Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxLaser_Logic94_ShieldBounced");
     Item_BounceRayOffShield(item_gobj)
 }
 
 /// `bool itFoxLaser_Logic94_HitShield(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxLaser_Logic94_HitShield(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x19848A50u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxLaser_Logic94_HitShield");
     1
 }
 
 /// `void itFoxLaser_Logic94_EvtUnk(Item_GObj*, HSD_GObj*)`: removes the gobj interaction references.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxLaser_Logic94_EvtUnk(item_gobj: *mut Item_GObj, r#ref: *mut HSD_GObj) {
+    core::hint::black_box(0x71A3B00Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxLaser_Logic94_EvtUnk");
     ext::it_8026B894(item_gobj, r#ref);
 }

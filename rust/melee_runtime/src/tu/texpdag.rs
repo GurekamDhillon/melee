@@ -41,7 +41,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_TExpGetType(a0: *mut HSD_TExp) -> u32 { super::HSD_TExpGetType(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_TExpGetType(a0: *mut HSD_TExp) -> u32 { core::hint::black_box(0x1594B999u32); /* fn identity */ super::HSD_TExpGetType(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }

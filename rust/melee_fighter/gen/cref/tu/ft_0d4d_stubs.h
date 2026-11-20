@@ -41,7 +41,7 @@ __typeof__(int) (ftCo_80099A58)(__typeof__(struct HSD_GObj *) a0) { T(1018); T(P
 // stub ftCo_80099A58 = 1018
 void (ftCo_800BFD04)(__typeof__(struct HSD_GObj *) a0) { T(1019); T(PI((const void*) a0)); }
 // stub ftCo_800BFD04 = 1019
-__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1020); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
+__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(enum FtColAnim) a1, __typeof__(int) a2) { T(1020); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
 // stub ftCo_800BFFD0 = 1020
 __typeof__(int) (ftCo_800C3B10)(__typeof__(struct HSD_GObj *) a0) { T(1021); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 // stub ftCo_800C3B10 = 1021

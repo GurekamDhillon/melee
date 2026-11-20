@@ -47,7 +47,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xD1B2C9C0u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -173,7 +174,9 @@ pub unsafe fn itLinkBow_Logic100_PickedUp(arg0: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkbow_UnkMotion5_Anim(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x734935E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkbow_UnkMotion5_Anim");
     let item = GET_ITEM(arg0);
     let jobj = HSD_GObjGetHSDObj(arg0) as *mut HSD_JObj;
@@ -218,9 +221,12 @@ pub unsafe extern "C" fn itLinkbow_UnkMotion5_Anim(arg0: *mut Item_GObj) -> i32 
     0
 }
 
-pub unsafe extern "C" fn itLinkbow_UnkMotion5_Phys(_arg0: *mut HSD_GObj) { melee_core::ct!("itLinkbow_UnkMotion5_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itLinkbow_UnkMotion5_Phys(_arg0: *mut HSD_GObj) { core::hint::black_box(0x2FE1D310u32); /* fn identity */ melee_core::ct!("itLinkbow_UnkMotion5_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkbow_UnkMotion5_Coll(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x0B5E74F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkbow_UnkMotion5_Coll");
     let item = GET_ITEM(arg0);
     let jobj = HSD_GObjGetHSDObj(arg0) as *mut HSD_JObj;
@@ -232,14 +238,19 @@ pub unsafe extern "C" fn itLinkbow_UnkMotion5_Coll(arg0: *mut Item_GObj) -> i32 
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkbow_UnkMotion6_Anim(_arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xF11A9A4Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkbow_UnkMotion6_Anim");
     1
 }
 
-pub unsafe extern "C" fn itLinkbow_UnkMotion6_Phys(_arg0: *mut HSD_GObj) { melee_core::ct!("itLinkbow_UnkMotion6_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itLinkbow_UnkMotion6_Phys(_arg0: *mut HSD_GObj) { core::hint::black_box(0x5AD4663Bu32); /* fn identity */ melee_core::ct!("itLinkbow_UnkMotion6_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itLinkbow_UnkMotion6_Coll(_arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xDD18F3E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itLinkbow_UnkMotion6_Coll");
     1
 }

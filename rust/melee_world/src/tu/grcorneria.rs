@@ -413,7 +413,9 @@ pub mod ext {
     }
     /// `grDisplay_801C5DB0` is passed as a render callback and called by the smash-taunt renderer.
     pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
+    #[inline(never)]
     pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, pass: isize) {
+        core::hint::black_box(0x20146160u32); // fn identity (tools/rust-port/fn_identity.py)
         match GRDISPLAY_801C5DB0 {
             Some(f) => f(gobj, pass),
             None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(gobj as _, pass as _); } return; },
@@ -1688,7 +1690,9 @@ pub unsafe extern "C" fn grCorneria_801DFBCC(arg: *mut Ground_GObj) {
 pub unsafe extern "C" fn grCorneria_801DFBEC(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DFBEC");}
 
 /// `static stageGObj6_OnInit`.
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj6_OnInit(gobj: *mut Ground_GObj) {
+    core::hint::black_box(0xEDF5F34Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj6_OnInit");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);

@@ -64,7 +64,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xEE62CF87u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -124,7 +125,9 @@ pub fn memzero_default(mem: *mut c_void, size: i32) {
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_LoadModels() -> bool {
+    core::hint::black_box(0xA0405C9Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_LoadModels");
     let mut scinftim_scene_models: *mut *mut DynamicModelDesc = null_mut();
     let archive = ext::ifAll_GetArchive();
@@ -143,7 +146,9 @@ pub unsafe extern "C" fn ifTime_LoadModels() -> bool {
     !(*scinftim_scene_models).is_null()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_SetDigit(jobj: *mut HSD_JObj, frame: u32) {
+    core::hint::black_box(0xF6B02089u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_SetDigit");
     let aobj = (*(*(*(*jobj).u.dobj).mobj).tobj).aobj;
     ext::HSD_AObjReqAnim(aobj, (frame & 0xFF) as f32);
@@ -160,7 +165,9 @@ fn tens_digit(x: i32) -> u32 {
     ((x % 100) / 10) as u32
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_SetTime(jobj: *mut HSD_JObj, seconds: i32, centiseconds: i32) {
+    core::hint::black_box(0xE3607A35u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_SetTime");
     let rules = ext::gm_GetStartMeleeRules();
     let hours: i32;
@@ -203,7 +210,9 @@ pub unsafe extern "C" fn ifTime_SetTime(jobj: *mut HSD_JObj, seconds: i32, centi
     ifTime_SetDigit(ifTime_data.digits[IFTIME_CENTISECOND_ONE], ones_digit(centiseconds));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_HideTimers() {
+    core::hint::black_box(0x05C1E02Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_HideTimers");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() {
@@ -214,7 +223,9 @@ pub unsafe extern "C" fn ifTime_HideTimers() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_ShowTimers() {
+    core::hint::black_box(0x3E4CD6B3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_ShowTimers");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() {
@@ -228,7 +239,9 @@ pub unsafe extern "C" fn ifTime_ShowTimers() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_GetCountdownSeconds() -> i32 {
+    core::hint::black_box(0x685CAA18u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_GetCountdownSeconds");
     let centiseconds = ext::gm_8016AF0C() as i32;
     let mut seconds = ext::gm_8016AEEC() as i32;
@@ -244,14 +257,18 @@ pub unsafe extern "C" fn ifTime_GetCountdownSeconds() -> i32 {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_GetCountdownSeconds_dontinline() -> i32 {
+    core::hint::black_box(0xEFDF500Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_GetCountdownSeconds_dontinline");
     ifTime_GetCountdownSeconds()
 }
 
 /// The match timer and the countdown (the two `GObj_SetupGXLink` sites below): the Atlas retail
 /// mask hides this element's render only (never its proc); empty by default.
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_RenderGuarded(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0x260AAF78u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_RenderGuarded");
     if ext::Ui_RetailHidden(AT_RE_HUD_TIMER) != 0 {
         return;
@@ -259,7 +276,9 @@ pub unsafe extern "C" fn ifTime_RenderGuarded(gobj: *mut HSD_GObj, pass: isize) 
     ext::HSD_GObj_JObjCallback(gobj, pass);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_UpdateCountdown(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0x6300BF28u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_UpdateCountdown");
     let x = &raw mut ifTime_data;
     let jobj: *mut HSD_JObj = (*arg0).hsd_obj.cast();
@@ -274,7 +293,9 @@ pub unsafe extern "C" fn ifTime_UpdateCountdown(arg0: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll(jobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_FreeCountdown() {
+    core::hint::black_box(0x9BDDF4A9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_FreeCountdown");
     let x = &raw mut ifTime_data;
     if !(*x).countdown_timer.is_null() {
@@ -283,7 +304,9 @@ pub unsafe extern "C" fn ifTime_FreeCountdown() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_UpdateTimers(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xE435D35Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_UpdateTimers");
     let x = &raw mut ifTime_data;
     let jobj: *mut HSD_JObj = (*arg0).hsd_obj.cast();
@@ -315,7 +338,9 @@ pub unsafe extern "C" fn ifTime_UpdateTimers(arg0: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll(jobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_CreateTimers() {
+    core::hint::black_box(0x78DF9C2Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_CreateTimers");
     let rules = ext::gm_GetStartMeleeRules();
     if (*rules).x1_0() == 0 && (*rules).timer_enabled() == 0 {
@@ -355,13 +380,17 @@ pub unsafe extern "C" fn ifTime_CreateTimers() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_Reset() {
+    core::hint::black_box(0xFBEE234Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_Reset");
     let x = &raw mut ifTime_data;
     ext::memzero(x.cast(), core::mem::size_of::<ifTime_data>() as i32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_FreeTimers() {
+    core::hint::black_box(0x89F068A0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_FreeTimers");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() {
@@ -374,7 +403,9 @@ pub unsafe extern "C" fn ifTime_FreeTimers() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifTime_IsTimerHidden() -> bool {
+    core::hint::black_box(0x84FAB179u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifTime_IsTimerHidden");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() && (ext::HSD_JObjGetFlags((*(*x).match_timer).hsd_obj.cast()) & JOBJ_HIDDEN as u32) != 0 {

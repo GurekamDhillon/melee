@@ -48,7 +48,7 @@ int main(void)
             u32 op = rnd() % 11;
             u32 ret = 0;
             StaleMoveTable* t;
-            fp.player_id = (u8) slot;
+            fp.player_idx = (u8) slot;
             switch (op) {
             case 0: plStale_InitAttackInstance(); break;
             case 1: plStale_ResetStaleMoveTableForPlayer(slot); break;
@@ -79,7 +79,7 @@ int main(void)
                 plActionStats* s = Player_GetActionStats(slot);
                 fill(s, sizeof *s, 0xFF);
                 plAttack_8003759C((u32) slot);
-                ret = s->attacks.total + s->hits.by_attack_counts[5] + s->x358_hits.thrown_item_count +
+                ret = s->attacks.total + s->hits.by_attack_counts[5] + s->x358.x358_hits.thrown_item_count +
                       s->x504[3] + s->x598[7] + s->x5B8[1] + (s->x5BC_b0 << 3 | s->x5BC_b1 << 2 | s->x5BC_b2 << 1 | s->x5BC_b3);
             } break;
             }

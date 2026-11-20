@@ -20,7 +20,7 @@ static void df_fill(void)
         if (rnd() & 1) w[i] = B(rw()); else w[i] = rnd() % 64;
     }
     F.motion_id = DF_MS[rnd() % 7];
-    F.x2224_b2 = rnd() & 1;
+    F.stamina_dead = rnd() & 1;
     F.dmg.x1838_percentTemp = rw();
     if (rnd() % 3 == 0) F.facing_dir = rg(); else if (rnd() & 1) F.facing_dir = 1.0f; else F.facing_dir = -1.0f;
     F.ground_or_air = rnd() & 1;
@@ -37,7 +37,7 @@ static void df_fill(void)
     case 1: F.kind = Ft_Kind_Yoshi; break;
     default: F.kind = rnd() % 27; break;
     }
-    F.throw_flags = (rnd() & 0xFF) << 8; F.throw_flags_b3 = rnd() & 1;
+    F.x2210.throw_flags = (rnd() & 0xFF) << 8; F.x2210.x0.throw_flags_b3 = rnd() & 1;
     F.cmd_vars[0] = rnd() & 1;
     F.x5F4_arr[0].idx = rnd() % 3;
     F.dat_attrs = DF_DAT;
@@ -50,7 +50,7 @@ static void df_fill(void)
     F.x8AC_animSkeleton = (HSD_JObj*) DF_SKEL;
     F.x8_spawnNum = rnd() % 6;
     F.cur_pos.y = rw(); F.x2EC = rw();
-    F.x618_player_id = rnd() % 4;
+    F.pad_port = rnd() % 4;
     F.gr_vel = rw();
     F.gobj = &GO;
 }
@@ -61,9 +61,9 @@ static void df_hash(void)
     u32* w = (u32*) &F.mv;
     for (i = 0; i < 7; i++) HM(w[i]);
     HM(B(F.facing_dir));
-    HM(F.throw_flags >> 8);
-    HM(F.throw_flags_b0); HM(F.throw_flags_b1); HM(F.throw_flags_b2); HM(F.throw_flags_b3);
-    HM(F.throw_flags_b4); HM(F.throw_flags_b5); HM(F.throw_flags_b6); HM(F.throw_flags_b7);
+    HM(F.x2210.throw_flags >> 8);
+    HM(F.x2210.x0.throw_flags_b0); HM(F.x2210.x0.throw_flags_b1); HM(F.x2210.x0.throw_flags_b2); HM(F.x2210.x0.throw_flags_b3);
+    HM(F.x2210.x0.throw_flags_b4); HM(F.x2210.x0.throw_flags_b5); HM(F.x2210.x0.throw_flags_b6); HM(F.x2210.x0.throw_flags_b7);
     HM(F.cmd_vars[0]);
     HM(B(F.self_vel.x)); HM(B(F.self_vel.y)); HM(B(F.self_vel.z));
     HM(B(F.gr_vel)); HM(F.x221D_b5);

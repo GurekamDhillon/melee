@@ -380,7 +380,9 @@ pub unsafe fn ChanUpdateFunc(chan: *mut HSD_Chan, arg1: i32, arg2: *const f32) {
 }
 
 /// `_HSD_StateInvalidateColorChannel`.
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() {
+    core::hint::black_box(0xF2C6D521u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_StateInvalidateColorChannel");
     core::ptr::copy_nonoverlapping(addr_of_mut!(invalid_prev_ch).cast::<HSD_Chan>(), addr_of_mut!(prev_ch).cast::<HSD_Chan>(), 4);
     prev_amb_invalid[0] = 1;
@@ -391,13 +393,17 @@ pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() {
 }
 
 /// `_HSD_StateInvalidateTevStage`.
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_StateInvalidateTevStage() {
+    core::hint::black_box(0x9E6EB980u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_StateInvalidateTevStage");
     current_tev = 0;
 }
 
 /// `_HSD_StateInvalidateTevRegister`.
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() {
+    core::hint::black_box(0xAF31FE2Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_StateInvalidateTevRegister");
     let mut i = 0;
     while i < 4 {
@@ -407,7 +413,9 @@ pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() {
 }
 
 /// `_HSD_StateInvalidateTexCoordGen`.
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_StateInvalidateTexCoordGen() {
+    core::hint::black_box(0x1C722A95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_StateInvalidateTexCoordGen");
     num_tex_gens = 0;
 }

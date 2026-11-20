@@ -448,7 +448,9 @@ pub fn ftYs_Shield_8012C914(gobj: *mut HSD_GObj) {
 pub fn ftYs_Shield_8012CACC(_arg0: *mut HSD_GObj) { melee_core::ct!("ftYs_Shield_8012CACC");}
 
 /// The C `ftYs_Shield_8012CACC` as an `HSD_GObjEvent` callback.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftYs_Shield_8012CACC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x114F02F1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftYs_Shield_8012CACC");
     ftYs_Shield_8012CACC(g);
 }

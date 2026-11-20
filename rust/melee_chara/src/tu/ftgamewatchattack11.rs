@@ -105,22 +105,30 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftGw_Attack11_ItemGreenhouseSetup` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_Attack11_ItemGreenhouseSetup(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9D3A53BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_Attack11_ItemGreenhouseSetup");
     ftGw_Attack11_ItemGreenhouseSetup(g);
 }
 /// `ftGw_Attack11_DecideAction` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_Attack11_DecideAction(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4EEFD3C5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_Attack11_DecideAction");
     ftGw_Attack11_DecideAction(g);
 }
 /// `ftGw_Attack11_ItemGreenhouseEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_Attack11_ItemGreenhouseEnterHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC37B9F4Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_Attack11_ItemGreenhouseEnterHitlag");
     ftGw_Attack11_ItemGreenhouseEnterHitlag(g);
 }
 /// `ftGw_Attack11_ItemGreenhouseExitHitlag` as a Fighter callback entry (post_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_Attack11_ItemGreenhouseExitHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xEBFE0B72u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_Attack11_ItemGreenhouseExitHitlag");
     ftGw_Attack11_ItemGreenhouseExitHitlag(g);
 }

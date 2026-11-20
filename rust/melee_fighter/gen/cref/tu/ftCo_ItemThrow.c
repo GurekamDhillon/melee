@@ -9,7 +9,7 @@
 #include "tu_common.h"
 
 static float TBL[30 * 3];
-int** Fighter_804D6550;
+ftCo_ItemThrowAttrs* Fighter_804D6550;
 static Vec3 V, LBV;
 static bool BOOLV;
 static HSD_JObj JO;
@@ -64,7 +64,7 @@ static u32 state_hash(void)
 {
     H = 0x811C9DC5u;
     HM(cbid(F.accessory4_cb)); HM(cbid(F.take_dmg_cb)); HM(cbid(F.phys_cb)); HM(cbid(F.coll_cb));
-    HM(F.cmd_vars[0]); HM(F.cmd_vars[1]); HM(F.throw_flags_b3); HM(F.throw_flags_b4);
+    HM(F.cmd_vars[0]); HM(F.cmd_vars[1]); HM(F.x2210.x0.throw_flags_b3); HM(F.x2210.x0.throw_flags_b4);
     HM(B(F.facing_dir)); HM(F.x2224_b1); HM(BOOLV);
     HM(B(F.mv.co.itemthrow4.x8.x)); HM(B(F.mv.co.itemthrow4.x8.y)); HM(B(F.mv.co.itemthrow4.x8.z));
     HM(B(F.mv.co.itemthrow4.anim_spd)); HM(F.mv.co.itemthrow4.unk_timer);
@@ -77,7 +77,7 @@ int main(void)
 {
     int op, k, i;
     tu_init();
-    Fighter_804D6550 = (int**) TBL;
+    Fighter_804D6550 = (ftCo_ItemThrowAttrs*) TBL;
     for (op = 0; op < 28; op++) {
         for (k = 0; k < 2000; k++) {
             u32 ret = 0, a12;
@@ -94,10 +94,10 @@ int main(void)
             F.active_sticky.lstick.x = rnd() % 16; F.active_sticky.lstick.y = rnd() % 16;
             F.facing_dir = rg(); F.facing_dir1 = rg();
             F.motion_id = (rnd() % 8) == 0 ? ftCo_MS_EscapeF : 94 + rnd() % 30;
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.is_sub_fighter = rnd() & 1;
             F.x2222_b0 = rnd() & 1;
-            F.throw_flags_b3 = rnd() & 1; F.throw_flags_b4 = rnd() & 1;
+            F.x2210.x0.throw_flags_b3 = rnd() & 1; F.x2210.x0.throw_flags_b4 = rnd() & 1;
             F.ground_or_air = rnd() & 1;
             F.cur_anim_frame = rw(); F.frame_speed_mul = rw(); F.cmd_timer = rw();
             a12 = rnd() & 0xFFF;

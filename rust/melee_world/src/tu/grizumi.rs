@@ -240,7 +240,9 @@ pub mod ext {
     /// `HSD_Free` is stored as a `GObj_InitUserData` remove function: an `extern "C"` fn over a hook.
     pub static mut HSD_FREE: Option<fn(*mut c_void)> = None;
     #[allow(non_snake_case)]
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_Free(ptr: *mut c_void) {
+        core::hint::black_box(0x7CDC7CE0u32); // fn identity (tools/rust-port/fn_identity.py)
         match HSD_FREE {
             Some(f) => f(ptr),
             None => { unsafe { melee_runtime::tu::memory::HSD_Free(ptr as _); } return; },

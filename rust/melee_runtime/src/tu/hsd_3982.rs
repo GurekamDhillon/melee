@@ -25,7 +25,8 @@ pub mod ext {
     pub fn fn_80392A3C() { todo!("fn_80392A3C (baselib/hsd_392A.c)") }
     pub fn fn_80392A08(_a: i32, _b: i32, _c: i32) { todo!("fn_80392A08 (baselib/hsd_392A.c)") }
     /// Address stored as the `Event` callback of the overlay: C-ABI shim over the hook.
-    pub unsafe extern "C" fn fn_80392A3C_cb() { fn_80392A3C() }
+    #[inline(never)]
+    pub unsafe extern "C" fn fn_80392A3C_cb() { core::hint::black_box(0xBB86AF1Fu32); /* fn identity */ fn_80392A3C() }
 }
 
 /// `lbl_8040BF48`

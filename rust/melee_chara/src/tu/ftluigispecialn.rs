@@ -76,7 +76,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftLg_SpecialN_FireSpawn` as a Fighter callback entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLg_SpecialN_FireSpawn(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF59D54F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLg_SpecialN_FireSpawn");
     ftLg_SpecialN_FireSpawn(g);
 }

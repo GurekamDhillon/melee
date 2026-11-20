@@ -125,17 +125,17 @@ fn itmew_matches_c() {
                     1 => {  m::it_802D3B6C(&raw mut GO[0], &raw mut GO[1]); } // it_802D3B6C
                     2 => {  m::it_802D3B8C(&raw mut GO[0]); } // it_802D3B8C
                     3 => {  m::it_802D3BE0(&raw mut GO[0]); } // it_802D3BE0
-                    4 => {  ret = m::itMew_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itMew_UnkMotion1_Anim
+                    4 => {  ret = ((m::itMew_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMew_UnkMotion1_Anim
                     5 => {  m::itMew_UnkMotion1_Phys(&raw mut GO[0]); } // itMew_UnkMotion1_Phys
-                    6 => {  ret = m::itMew_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itMew_UnkMotion1_Coll
+                    6 => {  ret = ((m::itMew_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMew_UnkMotion1_Coll
                     7 => {  m::it_802D3C9C(&raw mut GO[0]); } // it_802D3C9C
-                    8 => {  ret = m::itMew_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itMew_UnkMotion2_Anim
+                    8 => {  ret = ((m::itMew_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMew_UnkMotion2_Anim
                     9 => {  m::itMew_UnkMotion2_Phys(&raw mut GO[0]); } // itMew_UnkMotion2_Phys
-                    10 => {  ret = m::itMew_UnkMotion2_Coll(&raw mut GO[0]) as u32; } // itMew_UnkMotion2_Coll
+                    10 => {  ret = ((m::itMew_UnkMotion2_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMew_UnkMotion2_Coll
                     11 => {  m::it_802D3D94(&raw mut GO[0]); } // it_802D3D94
-                    12 => {  ret = m::itMew_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itMew_UnkMotion0_Anim
+                    12 => {  ret = ((m::itMew_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMew_UnkMotion0_Anim
                     13 => {  m::itMew_UnkMotion0_Phys(&raw mut GO[0]); } // itMew_UnkMotion0_Phys
-                    14 => {  ret = m::itMew_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itMew_UnkMotion0_Coll
+                    14 => {  ret = ((m::itMew_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMew_UnkMotion0_Coll
                     15 => { for j in 0..3 { let row = &m::it_803F80C8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

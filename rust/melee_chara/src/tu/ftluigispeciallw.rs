@@ -80,7 +80,9 @@ const FTLUIGI_SPECIALLW_FLAG: u32 = (Ft_MF_KeepGfx
     | Ft_MF_Unk27) as u32;
 
 /// `ftLg_SpecialLw_UpdateRot` as a Fighter callback entry (`take_dmg_cb` / `death2_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLg_SpecialLw_UpdateRot(g: *mut HSD_GObj) {
+    core::hint::black_box(0x4BEBCC21u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLg_SpecialLw_UpdateRot");
     ftLg_SpecialLw_UpdateRot(g);
 }

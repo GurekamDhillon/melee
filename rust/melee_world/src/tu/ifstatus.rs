@@ -95,11 +95,16 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn if_802F7AF8(a0: i32) { super::if_802F7AF8(a0) }
-        pub unsafe extern "C" fn if_802F7BB4(a0: i32) { super::if_802F7BB4(a0) }
-        pub unsafe extern "C" fn if_802F7C30(a0: i32) { super::if_802F7C30(a0) }
-        pub unsafe extern "C" fn if_802F7D08(a0: i32) { super::if_802F7D08(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x16026178u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F7AF8(a0: i32) { core::hint::black_box(0xC60D12ECu32); /* fn identity */ super::if_802F7AF8(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F7BB4(a0: i32) { core::hint::black_box(0xD31C49E9u32); /* fn identity */ super::if_802F7BB4(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F7C30(a0: i32) { core::hint::black_box(0xF7578EE7u32); /* fn identity */ super::if_802F7C30(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn if_802F7D08(a0: i32) { core::hint::black_box(0xFD7B7869u32); /* fn identity */ super::if_802F7D08(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -145,7 +150,9 @@ pub fn memzero_default(mem: *mut c_void, size: i32) {
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_GetHUDInfo() -> *mut HudIndex {
+    core::hint::black_box(0x0BF4C7F9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_GetHUDInfo");
     &raw mut ifStatus_HudInfo
 }
@@ -187,7 +194,9 @@ pub unsafe fn jobj_get(_jobj: *mut HSD_JObj, value: *mut UnkX, i: usize) -> *mut
     (*value).jobjs[i]
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_PercentOnDeathAnimationThink(value: *mut UnkX, _arg1: i32, _arg2: i32) {
+    core::hint::black_box(0xFB277F38u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_PercentOnDeathAnimationThink");
     if (*value).flags.randomize_velocity() != 0 {
         for i in 0..4usize {
@@ -229,7 +238,9 @@ pub unsafe fn offset_rand() -> f32 {
     ext::HSD_Randf() - 0.5
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F4B84(state: *mut IfDamageState, _is_stamina: i32) {
+    core::hint::black_box(0x83AC5392u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F4B84");
     let frames = (*state).frames_of_shake_remaining;
     if frames != 0 {
@@ -389,7 +400,9 @@ pub unsafe fn ifStatus_UpdateDamageDisplay(
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F4EDC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA4A3939Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F4EDC");
     let hud = ifStatus_GetHUDInfo();
     let jobj: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -524,7 +537,9 @@ pub unsafe fn find_player_by_entity(gobj: *mut HSD_GObj) -> *mut IfDamageState {
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F5B48(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x13BCD53Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F5B48");
     let p = find_player_by_entity(gobj);
     let mut t = (*p).unk9;
@@ -603,7 +618,9 @@ pub unsafe fn getPlayerByHUDParent(parent: *mut HSD_GObj) -> *mut IfDamageState 
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F5DE0(player: *mut HSD_GObj, arg1: isize) {
+    core::hint::black_box(0xA023F118u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F5DE0");
     // TARGET_PC: the script's HUD switch and the Atlas retail mask
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
@@ -624,7 +641,9 @@ pub unsafe fn getPlayerByNext(gobj: *mut HSD_GObj) -> *mut IfDamageState {
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F5E50(gobj: *mut HSD_GObj, arg1: isize) {
+    core::hint::black_box(0xBCDF1237u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F5E50");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
         return;
@@ -656,7 +675,9 @@ pub unsafe fn ifStatus_LoadDamageJObj(hud: *mut HudIndex) -> *mut HSD_JObj {
     ext::HSD_JObjLoadJoint((*hud).damage_num_joint)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F5EC0(state: *mut IfDamageState, player_idx: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x39478C31u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F5EC0");
     let hud = ifStatus_GetHUDInfo();
     let jobj: *mut HSD_JObj;
@@ -702,7 +723,9 @@ pub unsafe extern "C" fn ifStatus_802F5EC0(state: *mut IfDamageState, player_idx
     (*state).HUD_parent_entity
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6194(node: *mut HSD_JObj, n: i32) -> *mut HSD_JObj {
+    core::hint::black_box(0x3BBA5658u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6194");
     if node.is_null() || n < 0 {
         return null_mut();
@@ -718,7 +741,9 @@ pub unsafe extern "C" fn ifStatus_802F6194(node: *mut HSD_JObj, n: i32) -> *mut 
     gx_cur
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F61FC(state: *mut IfDamageState, player_idx: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x1B91DEB6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F61FC");
     let hud = ifStatus_GetHUDInfo();
     let idx = player_idx as u8;
@@ -782,7 +807,9 @@ pub unsafe extern "C" fn ifStatus_802F61FC(state: *mut IfDamageState, player_idx
     (*state).next
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6508(arg0: i32) {
+    core::hint::black_box(0x023680E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6508");
     if ext::Player_GetPlayerSlotType(arg0) != Gm_PKind_NA && (ifStatus_804D6D60 as i32) > arg0 {
         let rules = ext::gm_GetStartMeleeRules();
@@ -816,7 +843,9 @@ pub unsafe extern "C" fn ifStatus_802F6508(arg0: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F665C(arg0: i32) {
+    core::hint::black_box(0x088ED2ECu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F665C");
     ext::ifAll_802F343C(arg0);
     ifStatus_804D6D60 = arg0 as u8;
@@ -825,7 +854,9 @@ pub unsafe extern "C" fn ifStatus_802F665C(arg0: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F66A4() {
+    core::hint::black_box(0x484B1BEDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F66A4");
     let hud = ifStatus_GetHUDInfo();
     let mut mrk: *mut *mut DynamicModelDesc = null_mut();
@@ -849,7 +880,9 @@ pub unsafe extern "C" fn ifStatus_802F66A4() {
     ext::memzero(hud as *mut c_void, core::mem::size_of_val(&(*hud).players) as i32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6788(player_idx: u8) {
+    core::hint::black_box(0x24054993u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6788");
     let p_idx = player_idx as i8;
     let player_hud = &raw mut (*ifStatus_GetHUDInfo()).players[(p_idx as i32 & 0xFF) as usize];
@@ -864,7 +897,9 @@ pub unsafe extern "C" fn ifStatus_802F6788(player_idx: u8) {
     ext::ifStock_802FB650(player_idx as i32 & 0xFF);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6804() {
+    core::hint::black_box(0xDC52F0A6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6804");
     for i in 0..6i32 {
         let v = &raw mut (*ifStatus_GetHUDInfo()).players[(i & 0xFF) as usize];
@@ -881,7 +916,9 @@ pub unsafe extern "C" fn ifStatus_802F6804() {
 }
 
 /// Hide Percentage Digits
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6898() {
+    core::hint::black_box(0x5E69839Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6898");
     let v = ifStatus_GetHUDInfo();
     for i in 0..6usize {
@@ -890,7 +927,9 @@ pub unsafe extern "C" fn ifStatus_802F6898() {
 }
 
 /// Show All Percentage Digits
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F68F0() {
+    core::hint::black_box(0xEC802974u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F68F0");
     let v = ifStatus_GetHUDInfo();
     for i in 0..6usize {
@@ -898,7 +937,9 @@ pub unsafe extern "C" fn ifStatus_802F68F0() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6948(player_idx: i32) {
+    core::hint::black_box(0xCEE08011u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6948");
     let small_thing = ext::gm_GetStartMeleeRules();
     let hud_player = &raw mut (*ifStatus_GetHUDInfo()).players[player_idx as usize];
@@ -940,7 +981,9 @@ pub unsafe fn ifStatus_TriggerStockLoss(player_idx: i32, callback: Option<unsafe
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F69C0(player_idx: i32, arg1: i32) {
+    core::hint::black_box(0xC563FD96u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F69C0");
     let big_thing = ext::gmVs_GetSceneController();
     if (*big_thing).start.match_kind() != 1 && (*big_thing).start.x2_5() != 0 {
@@ -949,27 +992,37 @@ pub unsafe extern "C" fn ifStatus_802F69C0(player_idx: i32, arg1: i32) {
     ifStatus_TriggerStockLoss(player_idx, Some(ext::cb::if_802F7BB4));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6AF8(player_idx: i32) {
+    core::hint::black_box(0x7FC09A3Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6AF8");
     ifStatus_TriggerStockLoss(player_idx, Some(ext::cb::if_802F7AF8));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6C04(player_idx: i32) {
+    core::hint::black_box(0xA21FBC23u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6C04");
     ifStatus_TriggerStockLoss(player_idx, Some(ext::cb::if_802F7C30));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6D10(player_idx: i32) {
+    core::hint::black_box(0xEF6DF097u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6D10");
     ifStatus_TriggerStockLoss(player_idx, Some(ext::cb::if_802F7D08));
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6E1C(slot: i32) {
+    core::hint::black_box(0x15EDD019u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6E1C");
     ifStatus_802F6508(slot);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn ifStatus_802F6E3C(player_num: i32) {
+    core::hint::black_box(0xDDF3881Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("ifStatus_802F6E3C");
     let player = &raw mut (*ifStatus_GetHUDInfo()).players[player_num as usize];
     if !(*player).HUD_parent_entity.is_null() {

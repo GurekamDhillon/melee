@@ -140,10 +140,14 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { super::it_802A2474(a0) }
-        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { super::it_802A24A0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x5288C32Bu32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xDFA1C186u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { core::hint::black_box(0x3B4B290Eu32); /* fn identity */ super::it_802A2474(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xAB7765FCu32); /* fn identity */ super::it_802A24A0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -349,7 +353,9 @@ pub unsafe fn itClimbersstring_Cleanup(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802C2750`: the item's destruction; cleanup, then `Item_8026A8EC`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802C2750(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x20DF0A17u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C2750");
     let ip = item_of(gobj);
     if !ip.is_null() {
@@ -371,7 +377,9 @@ pub unsafe extern "C" fn it_802C2750(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802C27D4`: spawn the gum string from `owner`'s hand (`FtPart_L4thNb`).
+#[inline(never)]
 pub unsafe extern "C" fn it_802C27D4(owner: *mut HSD_GObj, pos: *mut Vec3, _msid: i32, dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0x9EB4EF6Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C27D4");
     let fp = fighter_of(owner);
     let mut spawn: SpawnItem = core::mem::zeroed();
@@ -389,13 +397,17 @@ pub unsafe extern "C" fn it_802C27D4(owner: *mut HSD_GObj, pos: *mut Vec3, _msid
 }
 
 /// `fn_802C28B8`: the on-accessory callback that runs the link-chain solver for the head.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802C28B8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB7C1FC82u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802C28B8");
     it_802C33B8(item_of(gobj));
 }
 
 /// `fn_802C28DC` (static): the first chain solver (`it_802C2EC4`) for the tail link.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802C28DC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1EC71BD5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802C28DC");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
@@ -413,7 +425,9 @@ pub unsafe extern "C" fn fn_802C28DC(gobj: *mut HSD_GObj) {
 }
 
 /// `fn_802C29E8` (static): the second chain solver (`it_802C30E8`) for the tail link.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802C29E8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1B6DF5B6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802C29E8");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
@@ -432,7 +446,9 @@ pub unsafe extern "C" fn fn_802C29E8(gobj: *mut HSD_GObj) {
 
 /// `fn_802C2AF4` (static): the retract (`it_802C32D4`) for the head link; picks up the item when
 /// the chain is fully retracted.
+#[inline(never)]
 pub unsafe extern "C" fn fn_802C2AF4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3A1DAD71u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802C2AF4");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
@@ -452,7 +468,9 @@ pub unsafe extern "C" fn fn_802C2AF4(gobj: *mut HSD_GObj) {
 
 /// `itClimbersstring_UnkMotion3_Anim`: clean up once the owner leaves the grip motions
 /// (0x15B..=0x164).
+#[inline(never)]
 pub unsafe extern "C" fn itClimbersstring_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x37A3F4C9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itClimbersstring_UnkMotion3_Anim");
     let ip = item_of(gobj);
     let should_cleanup: bool = if !(*ip).owner.is_null() {
@@ -728,7 +746,9 @@ pub unsafe fn it_802C3520(ip: *mut Item, target: *mut Vec3) {
 
 /// `it_2725_Logic70_PickedUp`: show the gum string held (motion 0), then its on-accessory is
 /// `fn_802C28B8`.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic70_PickedUp(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC2FA8E22u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic70_PickedUp");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
@@ -737,7 +757,9 @@ pub unsafe extern "C" fn it_2725_Logic70_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802C3810`: motion 2 (on-accessory `fn_802C29E8`).
+#[inline(never)]
 pub unsafe extern "C" fn it_802C3810(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB282E423u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C3810");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 2, 2);
@@ -746,7 +768,9 @@ pub unsafe extern "C" fn it_802C3810(gobj: *mut HSD_GObj) {
 }
 
 /// `it_802C3864`: motion 3 with the retract length set to 2.25 (on-accessory `fn_802C2AF4`).
+#[inline(never)]
 pub unsafe extern "C" fn it_802C3864(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB48525E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C3864");
     let ip = item_of(gobj);
     let link = (*ip).xDD4_itemVar.climbersstring.x8;
@@ -763,7 +787,9 @@ pub unsafe extern "C" fn it_802C3864(gobj: *mut HSD_GObj) {
 
 /// `it_802C3950`: motion 1 with the tail link placed at the owner's hand (on-accessory
 /// `fn_802C28DC`).
+#[inline(never)]
 pub unsafe extern "C" fn it_802C3950(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2D0B3978u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C3950");
     let ip = item_of(gobj);
     let link = (*ip).xDD4_itemVar.climbersstring.x4;
@@ -783,7 +809,9 @@ pub unsafe extern "C" fn it_802C3950(gobj: *mut HSD_GObj) {
 }
 
 /// `it_2725_Logic70_EvtUnk`: `it_8026B894`, then forget the owner if it is the reference.
+#[inline(never)]
 pub unsafe extern "C" fn it_2725_Logic70_EvtUnk(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    core::hint::black_box(0xFED7D540u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_2725_Logic70_EvtUnk");
     let ip = item_of(arg0);
     ext::it_8026B894(arg0, arg1);

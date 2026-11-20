@@ -170,10 +170,13 @@ unsafe fn Ground_StartMapAnim(gobj: *mut HSD_GObj) {
 }
 
 /// grFigureGet_OnDemoInit
-pub unsafe extern "C" fn grFigureGet_OnDemoInit(_unused: i32) { melee_core::ct!("grFigureGet_OnDemoInit");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigureGet_OnDemoInit(_unused: i32) { core::hint::black_box(0x47A9A806u32); /* fn identity */ melee_core::ct!("grFigureGet_OnDemoInit");}
 
 /// grFigureGet_OnInit
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_OnInit() {
+    core::hint::black_box(0x5ED2CFC9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grFigureGet_Params;
     ext::stage_info.unk8C.set_b4(0);
@@ -185,16 +188,21 @@ pub unsafe extern "C" fn grFigureGet_OnInit() {
 }
 
 /// grFigureGet_OnLoad
-pub unsafe extern "C" fn grFigureGet_OnLoad() { melee_core::ct!("grFigureGet_OnLoad");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigureGet_OnLoad() { core::hint::black_box(0x36015367u32); /* fn identity */ melee_core::ct!("grFigureGet_OnLoad");}
 
 /// grFigureGet_OnStart
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_OnStart() {
+    core::hint::black_box(0x4C0FBD85u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// grFigureGet_802195CC: sets up stage gobj `gobj_id` with its row of the callback table.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_802195CC(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x50780C83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_802195CC");
     let callbacks = &raw mut grFigureGet_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -206,20 +214,26 @@ pub unsafe extern "C" fn grFigureGet_802195CC(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 /// stageGObj0_OnInit
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x41E1F1F4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// grFigureGet_802196E8
-pub unsafe extern "C" fn grFigureGet_802196E8(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigureGet_802196E8");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigureGet_802196E8(_gobj: *mut HSD_GObj) { core::hint::black_box(0xE37CB049u32); /* fn identity */ melee_core::ct!("grFigureGet_802196E8");}
 
 /// grFigureGet_802196EC
-pub unsafe extern "C" fn grFigureGet_802196EC(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigureGet_802196EC");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigureGet_802196EC(_gobj: *mut HSD_GObj) { core::hint::black_box(0xF87CD158u32); /* fn identity */ melee_core::ct!("grFigureGet_802196EC");}
 
 /// grFigureGet_802196F0: picks the three trophies, resets the drop state and installs the
 /// joint callback.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_802196F0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF17F04EAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_802196F0");
     let gp = (*gobj).user_data as *mut Ground;
     let mut sp14: i32 = 0;
@@ -265,7 +279,9 @@ pub unsafe extern "C" fn grFigureGet_802196F0(gobj: *mut HSD_GObj) {
 }
 
 /// grFigureGet_80219898: the per-frame drop timer; once every coin is out, scores the catch.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_80219898(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x75A0EFA7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_80219898");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -322,9 +338,11 @@ pub unsafe extern "C" fn grFigureGet_80219898(gobj: *mut HSD_GObj) {
 }
 
 /// grFigureGet_80219B0C
-pub unsafe extern "C" fn grFigureGet_80219B0C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigureGet_80219B0C");}
+#[inline(never)]
+pub unsafe extern "C" fn grFigureGet_80219B0C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x2CF91BF9u32); /* fn identity */ melee_core::ct!("grFigureGet_80219B0C");}
 
 /// grFigureGet_80219B10 (mpLib_JointCollisionCallback): collects a coin that touches the platform.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_80219B10(
     user_data: *mut c_void,
     _joint_id: i32,
@@ -333,6 +351,7 @@ pub unsafe extern "C" fn grFigureGet_80219B10(
     _ground_kind: u32,
     _delta_y: f32,
 ) {
+    core::hint::black_box(0x1FFB4619u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_80219B10");
     let gp = user_data as *mut Ground;
     let item_gobj = (*coll).x0_gobj;
@@ -362,7 +381,9 @@ pub unsafe extern "C" fn grFigureGet_80219B10(
 }
 
 /// grFigureGet_80219C34: one more coin that will never be caught.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_80219C34(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0BC5FD6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_80219C34");
     if gobj.is_null() {
         return;
@@ -372,7 +393,9 @@ pub unsafe extern "C" fn grFigureGet_80219C34(gobj: *mut HSD_GObj) {
 }
 
 /// grFigureGet_80219C50: all three coins are either caught or lost.
+#[inline(never)]
 pub unsafe extern "C" fn grFigureGet_80219C50(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x0BD507F6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFigureGet_80219C50");
     if gobj.is_null() {
         return 0;

@@ -158,11 +158,16 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn Camera_80030A50() -> *mut HSD_GObj { super::Camera_80030A50() }
-        pub unsafe extern "C" fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj { super::Ground_GetMapGObj(a0) }
-        pub unsafe extern "C" fn HSD_Free(a0: *mut c_void) { super::HSD_Free(a0) }
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn Camera_80030A50() -> *mut HSD_GObj { core::hint::black_box(0x4A036778u32); /* fn identity */ super::Camera_80030A50() }
+        #[inline(never)]
+        pub unsafe extern "C" fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj { core::hint::black_box(0x034A9D0Bu32); /* fn identity */ super::Ground_GetMapGObj(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Free(a0: *mut c_void) { core::hint::black_box(0x6AFBF84Fu32); /* fn identity */ super::HSD_Free(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xA639B1B7u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x98D31AECu32); /* fn identity */ super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -295,9 +300,12 @@ pub static mut grPs_StageData: StageData = StageData {
     joint_count: 6,
 };
 
-pub unsafe extern "C" fn grStadium_OnDemoInit(_unused: i32) { melee_core::ct!("grStadium_OnDemoInit");}
+#[inline(never)]
+pub unsafe extern "C" fn grStadium_OnDemoInit(_unused: i32) { core::hint::black_box(0x611E2284u32); /* fn identity */ melee_core::ct!("grStadium_OnDemoInit");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_OnInit() {
+    core::hint::black_box(0x817B646Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut GrPStadiumYakumonoParam;
 
@@ -320,20 +328,27 @@ pub unsafe extern "C" fn grStadium_OnInit() {
     ext::mpLib_800581DC(6, 4);
 }
 
-pub unsafe extern "C" fn grStadium_OnLoad() { melee_core::ct!("grStadium_OnLoad");}
+#[inline(never)]
+pub unsafe extern "C" fn grStadium_OnLoad() { core::hint::black_box(0xCEBCE231u32); /* fn identity */ melee_core::ct!("grStadium_OnLoad");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_OnStart() {
+    core::hint::black_box(0xE57298F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D10F0() -> i32 {
+    core::hint::black_box(0x651C2C7Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D10F0");
     0
 }
 
 /// Creates a specific sub-type of Ground_GObj for Pokemon Stadium (e.g. id=1 for the jumbotron display)
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D10F8(id: u32) -> *mut HSD_GObj {
+    core::hint::black_box(0x5D1C1FE6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D10F8");
     let cb = (&raw mut grPs_StageCallbacks as *mut StageCallbacks).add(id as usize);
     let gobj = ext::Ground_GetStageGObj(id as i32);
@@ -356,7 +371,9 @@ pub unsafe extern "C" fn grStadium_801D10F8(id: u32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_801D11E4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFAD9B4D0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801D11E4");
     let gp = (*gobj).user_data as *mut Ground;
     let cam = ext::Camera_80029020();
@@ -375,7 +392,9 @@ pub unsafe extern "C" fn fn_801D11E4(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1290(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB3B464EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1290");
     let mut mobj: *mut HSD_MObj = null_mut();
     let gp = (*gobj).user_data as *mut Ground;
@@ -394,20 +413,27 @@ pub unsafe extern "C" fn grStadium_801D1290(gobj: *mut HSD_GObj) {
     (*gobj).render_cb = Some(fn_801D5074);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1388(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xA55ED209u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1388");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1390(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x275BCD18u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1390");
     grStadium_801D1E20();
     grStadium_801D2344(gobj);
 }
 
-pub unsafe extern "C" fn grStadium_801D13C4(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D13C4");}
+#[inline(never)]
+pub unsafe extern "C" fn grStadium_801D13C4(_gobj: *mut HSD_GObj) { core::hint::black_box(0x9E870C46u32); /* fn identity */ melee_core::ct!("grStadium_801D13C4");}
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_801D13C8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA4FD82A8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801D13C8");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.stadium.set_xC4_b0(0);
@@ -435,7 +461,9 @@ unsafe fn stage_slot_own_image(p: *mut c_void, entry: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D13E0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xAE8BA2A4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D13E0");
     let gr = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -476,12 +504,16 @@ pub unsafe extern "C" fn grStadium_801D13E0(gobj: *mut HSD_GObj) {
     (*gr).u.stadium.set_xC4_b0(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1518(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xFC76D2BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1518");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1520(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0E74B07Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1520");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.stadium.xC4_b0() == 0 {
@@ -490,9 +522,12 @@ pub unsafe extern "C" fn grStadium_801D1520(gobj: *mut HSD_GObj) {
     Ground_UpdateWindAndMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grStadium_801D156C(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D156C");}
+#[inline(never)]
+pub unsafe extern "C" fn grStadium_801D156C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x236A4430u32); /* fn identity */ melee_core::ct!("grStadium_801D156C");}
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1570(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x70687ED0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1570");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -505,22 +540,30 @@ pub unsafe extern "C" fn grStadium_801D1570(gobj: *mut HSD_GObj) {
     (*gp).x10_flags.set_b5(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D15FC(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x43436720u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D15FC");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj5_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x397EE58Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj5_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1624(_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x72491F14u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1624");
     ext::mpLib_80057BC0(4);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1648(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6A581D06u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1648");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -533,17 +576,23 @@ pub unsafe extern "C" fn grStadium_801D1648(gobj: *mut HSD_GObj) {
     (*gp).x10_flags.set_b5(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D16D4(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xF68008DAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D16D4");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj4_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x879FEDA4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj4_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D16FC(_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB97B2BA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D16FC");
     ext::mpLib_80057BC0(3);
 }
@@ -551,7 +600,9 @@ pub unsafe extern "C" fn grStadium_801D16FC(_gobj: *mut HSD_GObj) {
 /// `static const Vec3 grPs_803B7F68`
 pub static grPs_803B7F68: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1720(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x64EA3637u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1720");
     let mut sp14: Vec3;
     let gp = (*gobj).user_data as *mut Ground;
@@ -568,17 +619,23 @@ pub unsafe extern "C" fn grStadium_801D1720(gobj: *mut HSD_GObj) {
     (*gp).x10_flags.set_b5(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D17E0(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xDB506828u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D17E0");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj6_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0690FA62u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj6_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1808(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x71B07E78u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1808");
     let gp = (*gobj).user_data as *mut Ground;
     if !(*gp).u.stadium9.xC8.is_null() {
@@ -587,7 +644,9 @@ pub unsafe extern "C" fn grStadium_801D1808(gobj: *mut HSD_GObj) {
     ext::mpLib_80057BC0(5);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1840(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x01BA5B84u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1840");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -631,17 +690,23 @@ pub unsafe extern "C" fn grStadium_801D1840(gobj: *mut HSD_GObj) {
     (*gp).x10_flags.set_b5(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D19D0(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x60C8509Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D19D0");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj3_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDD862C87u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj3_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D19F8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6CC3E655u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D19F8");
     let jobj = ext::Ground_801C3FA4(gobj, 0x12);
     if !jobj.is_null() {
@@ -654,7 +719,9 @@ pub unsafe extern "C" fn grStadium_801D19F8(gobj: *mut HSD_GObj) {
 /// `static const Vec3 grPs_803B7F74`
 pub static grPs_803B7F74: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1A38(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x69C5CD20u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1A38");
     let mut sp14: Vec3;
 
@@ -678,12 +745,16 @@ pub unsafe extern "C" fn grStadium_801D1A38(gobj: *mut HSD_GObj) {
     (*gp).x10_flags.set_b5(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1B40(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xEB982C5Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1B40");
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1B48(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE3981FC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1B48");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
@@ -714,7 +785,9 @@ pub unsafe extern "C" fn grStadium_801D1B48(gobj: *mut HSD_GObj) {
     ext::mpLib_8005667C(0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1D84(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xAC94FD70u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1D84");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -730,19 +803,25 @@ pub unsafe extern "C" fn grStadium_801D1D84(gobj: *mut HSD_GObj) {
     ext::mpLib_80057BC0(7);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj7_8_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE2E20D17u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj7_8_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1E10(_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x1A53B576u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1E10");
     0
 }
 
-pub unsafe extern "C" fn grStadium_801D1E18(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D1E18");}
+#[inline(never)]
+pub unsafe extern "C" fn grStadium_801D1E18(_gobj: *mut HSD_GObj) { core::hint::black_box(0x2253C20Eu32); /* fn identity */ melee_core::ct!("grStadium_801D1E18");}
 
-pub unsafe extern "C" fn grStadium_801D1E1C(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D1E1C");}
+#[inline(never)]
+pub unsafe extern "C" fn grStadium_801D1E1C(_gobj: *mut HSD_GObj) { core::hint::black_box(0xA9530393u32); /* fn identity */ melee_core::ct!("grStadium_801D1E1C");}
 
 #[inline(always)]
 pub unsafe fn mul_vec(v: *mut Vec3, m: f32) {
@@ -752,7 +831,9 @@ pub unsafe fn mul_vec(v: *mut Vec3, m: f32) {
     (*v).z *= m;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1E20() {
+    core::hint::black_box(0xB450D64Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1E20");
     if ext::HSD_Randi(200) == 0 {
         let mut sp_c = Vec3 { x: 0.0, y: -100.0, z: -660.0 };
@@ -791,7 +872,9 @@ unsafe fn GET_WRAPPER(g: *mut HSD_GObj) -> *mut ImageDescWrapper {
     (*g).user_data as *mut ImageDescWrapper
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D1EF8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA3319DB1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D1EF8");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -855,7 +938,9 @@ pub unsafe extern "C" fn grStadium_801D1EF8(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D21E4(gobj: *mut HSD_GObj, arg1: i32) {
+    core::hint::black_box(0x2B7AE5F1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D21E4");
     let gp = (*gobj).user_data as *mut Ground;
     let mobj = (*gp).u.display.xCC;
@@ -875,7 +960,9 @@ pub unsafe extern "C" fn grStadium_801D21E4(gobj: *mut HSD_GObj, arg1: i32) {
     ext::HSD_MObjCompileTev(mobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2278(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x6456D276u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2278");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -898,7 +985,9 @@ pub unsafe extern "C" fn grStadium_801D2278(gobj: *mut HSD_GObj) {
     grStadium_801D2528(gobj, 0, 0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2344(g: *mut HSD_GObj) {
+    core::hint::black_box(0x73A8F286u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2344");
     let gobj = g;
     let gp = (*gobj).user_data as *mut Ground;
@@ -1007,7 +1096,9 @@ pub unsafe fn randi_between(a: i32, b: i32) -> i32 {
     b
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2528(gobj: *mut HSD_GObj, mut arg1: i32, arg2: i32) {
+    core::hint::black_box(0x5223CB86u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2528");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
@@ -1174,7 +1265,9 @@ pub unsafe extern "C" fn grStadium_801D2528(gobj: *mut HSD_GObj, mut arg1: i32, 
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2A60(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x47D872C6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2A60");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
@@ -1239,7 +1332,9 @@ pub static mut grPs_803E14FC: HSD_CameraDescPerspective = HSD_CameraDescPerspect
     aspect: 1.3636,
 };
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2BEC() -> *mut HSD_GObj {
+    core::hint::black_box(0x64BE6365u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2BEC");
     let gobj = ext::GObj_Create(0x11, 0x13, 0);
     let cobj = ext::lb_80013B14(&raw mut grPs_803E14FC);
@@ -1265,7 +1360,9 @@ pub unsafe extern "C" fn grStadium_801D2BEC() -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2D78() -> *mut HSD_GObj {
+    core::hint::black_box(0xEBEA9490u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2D78");
     let temp_r3 = ext::GObj_Create(0x11, 0x12, 0);
     ext::GObj_SetupGXLinkMax(temp_r3, Some(grStadium_801D2FD0), 3);
@@ -1278,7 +1375,9 @@ pub unsafe extern "C" fn grStadium_801D2D78() -> *mut HSD_GObj {
     temp_r3
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2E24() -> *mut HSD_GObj {
+    core::hint::black_box(0x8F692A3Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2E24");
     let gobj = ext::GObj_Create(0x11, 0x12, 0);
     ext::GObj_SetupGXLinkMax(gobj, Some(grStadium_801D3084), 3);
@@ -1291,7 +1390,9 @@ pub unsafe extern "C" fn grStadium_801D2E24() -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_801D2ED0(gobj: *mut HSD_GObj, _unused: isize) {
+    core::hint::black_box(0xD34BF6DAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801D2ED0");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     let wrapper = GET_WRAPPER(gobj);
@@ -1314,7 +1415,9 @@ pub unsafe extern "C" fn fn_801D2ED0(gobj: *mut HSD_GObj, _unused: isize) {
     (*gp2).u.display.set_xF8_0(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D2FD0(gobj: *mut HSD_GObj, _unused: isize) {
+    core::hint::black_box(0xC485B7C9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2FD0");
     let wrapper = GET_WRAPPER(gobj);
     let copy = wrapper;
@@ -1334,7 +1437,9 @@ pub unsafe extern "C" fn grStadium_801D2FD0(gobj: *mut HSD_GObj, _unused: isize)
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D3084(gobj: *mut HSD_GObj, _unused: isize) {
+    core::hint::black_box(0x0638E946u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D3084");
     let wrapper = GET_WRAPPER(gobj);
     let new_var = wrapper;
@@ -1353,7 +1458,9 @@ pub unsafe extern "C" fn grStadium_801D3084(gobj: *mut HSD_GObj, _unused: isize)
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D3138(gobj: *mut HSD_GObj, desc: *mut HSD_ImageDesc, arg2: *mut *mut HSD_MObj) -> *mut HSD_TObj {
+    core::hint::black_box(0xF6E6C936u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D3138");
     let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     while !jobj.is_null() {
@@ -1416,7 +1523,9 @@ unsafe fn ps_monitor_check(gobj: *mut HSD_GObj) -> i32 {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D32D0(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x253BE5D0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D32D0");
     let mut sp28 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1468,7 +1577,9 @@ pub static grPs_804DAF3C: _GXColor = _GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0x
 /// `static u8 grPs_8049F040[0x100]`: "Half the size of a #TextGlyphTexture; the stage's I4 glyph scratch."
 pub static mut grPs_8049F040: [u8; 0x100] = [0; 0x100];
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D3460(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDAF1FF98u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D3460");
     let mut sp48: _GXColor;
     let mut sp38: [*const i8; 4] = [core::ptr::null(); 4];
@@ -1570,7 +1681,9 @@ pub unsafe extern "C" fn grStadium_801D3460(gobj: *mut HSD_GObj) {
 /// `const GXColor grPs_804DAF60`
 pub static grPs_804DAF60: _GXColor = _GXColor { r: 0xC0, g: 0xC0, b: 0xFF, a: 0xFF };
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D384C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4A6FDFC3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D384C");
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -1606,7 +1719,9 @@ pub unsafe extern "C" fn grStadium_801D384C(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D39A0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1CC16FD4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D39A0");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.display.xE4 == 1 {
@@ -1621,7 +1736,9 @@ pub unsafe extern "C" fn grStadium_801D39A0(gobj: *mut HSD_GObj) {
 /// `const GXColor grPs_804DAF70`
 pub static grPs_804DAF70: _GXColor = _GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF };
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D3A0C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFEB9864Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D3A0C");
     let mut sp24: _GXColor;
     let gp = (*gobj).user_data as *mut Ground;
@@ -1665,7 +1782,9 @@ pub unsafe extern "C" fn grStadium_801D3A0C(gobj: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D3B4C(arg0: i32, slot_type: i32) {
+    core::hint::black_box(0xEFAC3F19u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D3B4C");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         let gobj = ext::Ground_GetMapGObj(PsType_Display as i32);
@@ -1696,7 +1815,9 @@ pub unsafe fn grStadium_ScaleColor(value: u8) -> u8 {
     f2i32(scaled as f64) as u8
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D3BBC(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xF0320AF3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D3BBC");
     // union { StadiumColor entries[5]; struct { StadiumColor head; StadiumAlphaPresets presets; } s; }
     let mut colors: [[u8; 4]; 5] = [[0; 4]; 5];
@@ -1790,7 +1911,9 @@ pub unsafe extern "C" fn grStadium_801D3BBC(arg0: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D3F40(arg0: *mut HSD_GObj, arg1: i32) {
+    core::hint::black_box(0xF174A6CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D3F40");
     let gp = (*arg0).user_data as *mut Ground;
     let text_gobj = (*gp).u.display.xD4;
@@ -1812,42 +1935,54 @@ pub unsafe extern "C" fn grStadium_801D3F40(arg0: *mut HSD_GObj, arg1: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D4040() {
+    core::hint::black_box(0xB2C7C8C9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4040");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xB, 0);
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D4084() {
+    core::hint::black_box(0x36E51AA9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4084");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xA, 0);
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D40C8() {
+    core::hint::black_box(0x385D135Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D40C8");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xC, 0);
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D410C() {
+    core::hint::black_box(0x5B399A5Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D410C");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xD, 0);
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D4150() {
+    core::hint::black_box(0x4A464B8Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4150");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 1, 0);
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D4194(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xC650091Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4194");
     let gp = (*arg0).user_data as *mut Ground;
     let text_gobj = (*gp).u.display.xD4;
@@ -1864,7 +1999,9 @@ pub unsafe extern "C" fn grStadium_801D4194(arg0: *mut HSD_GObj) {
 }
 
 /// HSD_DevComCallback
+#[inline(never)]
 pub unsafe extern "C" fn fn_801D4220(_dcreq: i32, _args: u32, _buf: *mut c_void, cancelflag: i32) {
+    core::hint::black_box(0xC84EC4BBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801D4220");
     if cancelflag != 0 {
         panic!("HSD_ASSERT(0x969, !cancelflag) grpstadium.c");
@@ -1880,7 +2017,9 @@ pub unsafe extern "C" fn fn_801D4220(_dcreq: i32, _args: u32, _buf: *mut c_void,
     (*gp).u.stadium.set_xC4_b1(0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D42B8() -> i32 {
+    core::hint::black_box(0x69C5A46Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D42B8");
     let map_gobj = ext::Ground_GetMapGObj(2);
     if map_gobj.is_null() {
@@ -1897,7 +2036,9 @@ pub unsafe extern "C" fn grStadium_801D42B8() -> i32 {
     1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D4354(gobj: *mut HSD_GObj) -> *mut Ground {
+    core::hint::black_box(0x0015FD3Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4354");
     (*gobj).user_data as *mut Ground
 }
@@ -1936,7 +2077,9 @@ pub static mut lbl_803E1630: [VecScalar; 9] = [
     vs(-50.0, 5.0, 50.0, 0.0),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D435C(arg0: *mut HSD_GObj) {
+    core::hint::black_box(0xA9157448u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D435C");
     let gp = (*arg0).user_data as *mut Ground;
     let mut sp_c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1975,7 +2118,9 @@ pub unsafe extern "C" fn grStadium_801D435C(arg0: *mut HSD_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA0E4580Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4548");
     let temp_r31 = (*gobj).user_data as *mut Ground;
     let temp_f31 = ext::Ground_801C0498();
@@ -2230,7 +2375,9 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
 }
 
 /// Check if the display is focused on a specific player
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D4FF8(pl_slot: i32) -> i32 {
+    core::hint::black_box(0xA1761365u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4FF8");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         let gobj = ext::Ground_GetMapGObj(PsType_Display as i32);
@@ -2244,18 +2391,24 @@ pub unsafe extern "C" fn grStadium_801D4FF8(pl_slot: i32) -> i32 {
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_801D5074(gobj: *mut HSD_GObj, arg1: isize) {
+    core::hint::black_box(0xD8DE1851u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801D5074");
     grStadium_801D1EF8(gobj);
     ext::grDisplay_801C5DB0(gobj, arg1 as isize);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_OnTouchLine(_unused: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
+    core::hint::black_box(0x098D948Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_OnTouchLine");
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_OnCheckShadowRender(arg0: *mut Vec3, _arg1: i32, jobj: *mut HSD_JObj) -> i32 {
+    core::hint::black_box(0x2741EFCBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_OnCheckShadowRender");
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut sp14);
@@ -2266,7 +2419,9 @@ pub unsafe extern "C" fn grStadium_OnCheckShadowRender(arg0: *mut Vec3, _arg1: i
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn grStadium_801D511C() {
+    core::hint::black_box(0x7F5F63BBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D511C");
     let mut size = ext::GXGetTexBufferSize(0xFA, 0xA0, 4, 0, 0);
     ext::lbDvd_80017740(0, 0x7D2, 4, 4, (size.wrapping_add(31)) & !31u32, 0, 7, 0x10, 0);

@@ -129,9 +129,9 @@ fn itpeachparasol_matches_c() {
                     3 => {  m::it_802BDB94(&raw mut GO[0]); } // it_802BDB94
                     4 => {  m::it_802BDBF8(&raw mut GO[0]); } // it_802BDBF8
                     5 => {  m::it_802BDC18(&raw mut GO[0]); } // it_802BDC18
-                    6 => {  ret = m::it_802BDC38(&raw mut GO[0]) as u32; } // it_802BDC38
+                    6 => {  ret = ((m::it_802BDC38(&raw mut GO[0])) as i32 != 0) as u32; } // it_802BDC38
                     7 => {  m::itPeachParasol_Logic60_PickedUp(&raw mut GO[0]); } // itPeachParasol_Logic60_PickedUp
-                    8 => {  ret = m::itPeachparasol_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itPeachparasol_UnkMotion2_Anim
+                    8 => {  ret = ((m::itPeachparasol_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachparasol_UnkMotion2_Anim
                     9 => {  m::it_802BDD3C(&raw mut GO[0]); } // it_802BDD3C
                     10 => { let v1: f32 = rw() as f32; m::it_802BDD40(&raw mut GO[0], v1); } // it_802BDD40
                     11 => { let v1: f32 = rw() as f32; m::it_802BDDB4(&raw mut GO[0], v1); } // it_802BDDB4

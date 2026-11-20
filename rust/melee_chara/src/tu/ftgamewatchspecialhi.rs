@@ -84,17 +84,23 @@ fn stick_get_dir(x1: f32, x2: f32) -> f32 {
 }
 
 /// `ftGw_SpecialHi_ItemRescueSetup` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialHi_ItemRescueSetup(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5FA45F78u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialHi_ItemRescueSetup");
     ftGw_SpecialHi_ItemRescueSetup(g);
 }
 /// `ftGw_SpecialHi_ItemRescueEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialHi_ItemRescueEnterHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0x23223D54u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialHi_ItemRescueEnterHitlag");
     ftGw_SpecialHi_ItemRescueEnterHitlag(g);
 }
 /// `ftGw_SpecialHi_ItemRescueExitHitlag` as a Fighter callback entry (post_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialHi_ItemRescueExitHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB2724360u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialHi_ItemRescueExitHitlag");
     ftGw_SpecialHi_ItemRescueExitHitlag(g);
 }

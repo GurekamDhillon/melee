@@ -174,8 +174,8 @@ fn itseakchain_matches_c() {
                     8 => {  m::fn_802BB574(&raw mut GO[0]); } // fn_802BB574
                     9 => {  m::fn_802BB694(&raw mut GO[0]); } // fn_802BB694
                     10 => {  m::fn_802BB784(&raw mut GO[0]); } // fn_802BB784
-                    11 => {  ret = m::notInSpecialS(&raw mut GO[0]) as u32; } // notInSpecialS
-                    12 => {  ret = m::itSeakchain_UnkMotion4_Anim(&raw mut GO[0]) as u32; } // itSeakchain_UnkMotion4_Anim
+                    11 => {  ret = ((m::notInSpecialS(&raw mut GO[0])) as i32 != 0) as u32; } // notInSpecialS
+                    12 => {  ret = ((m::itSeakchain_UnkMotion4_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakchain_UnkMotion4_Anim
                     13 => { let v1: i32 = fv() as i32 as i32; let v2: f32 = rw() as f32; ret = m::it_802BB938(&raw mut LK[(rnd() % NL) as usize], v1, v2) as u32; } // it_802BB938
                     14 => { let v1: i32 = fv() as i32 as i32; let v2: f32 = rw() as f32; ret = m::it_802BBAEC(&raw mut LK[(rnd() % NL) as usize], v1, v2) as u32; } // it_802BBAEC
                     15 => { let v3: f32 = rw() as f32; m::it_802BBB0C(&raw mut LK[(rnd() % NL) as usize], &raw mut VA[0], SPECB.0[0].as_mut_ptr() as *mut itSeakChain_Attrs, v3); } // it_802BBB0C
@@ -183,7 +183,7 @@ fn itseakchain_matches_c() {
                     17 => {  ret = m::it_802BBD64(&raw mut LK[(rnd() % NL) as usize], &raw mut VA[0], SPECB.0[0].as_mut_ptr() as *mut itSeakChain_Attrs) as u32; } // it_802BBD64
                     18 => {  ret = m::it_802BBED0(&raw mut LK[(rnd() % NL) as usize], &raw mut VA[0], SPECB.0[0].as_mut_ptr() as *mut itSeakChain_Attrs) as u32; } // it_802BBED0
                     19 => {  m::it_802BC080(&raw mut LK[(rnd() % NL) as usize], &raw mut VA[0], &raw mut IT[0]); } // it_802BC080
-                    20 => { let v3: f32 = rw() as f32; ret = m::it_802BC94C(&raw mut LK[(rnd() % NL) as usize], &raw mut VA[0], SPECB.0[0].as_mut_ptr() as *mut itSeakChain_Attrs, v3) as u32; } // it_802BC94C
+                    20 => { let v3: f32 = rw() as f32; ret = ((m::it_802BC94C(&raw mut LK[(rnd() % NL) as usize], &raw mut VA[0], SPECB.0[0].as_mut_ptr() as *mut itSeakChain_Attrs, v3)) as i32 != 0) as u32; } // it_802BC94C
                     21 => {  m::it_802BCA30(&raw mut IT[0]); } // it_802BCA30
                     22 => {  m::it_802BCB88(&raw mut IT[0], &raw mut VA[0]); } // it_802BCB88
                     23 => {  m::it_2725_Logic54_PickedUp(&raw mut GO[0]); } // it_2725_Logic54_PickedUp

@@ -121,16 +121,16 @@ fn ityoshistar_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => { let v2: f32 = rw() as f32; ret = pi(m::it_802B2FC8(&raw mut GO[0], &raw mut VA[0], v2)); } // it_802B2FC8
-                    1 => {  ret = m::it_802B309C(&raw mut GO[0]) as u32; } // it_802B309C
-                    2 => {  ret = m::it_802B30C0(&raw mut GO[0]) as u32; } // it_802B30C0
-                    3 => {  ret = m::it_802B30E4(&raw mut GO[0]) as u32; } // it_802B30E4
-                    4 => {  ret = m::it_802B3108(&raw mut GO[0]) as u32; } // it_802B3108
-                    5 => {  ret = m::it_802B312C(&raw mut GO[0]) as u32; } // it_802B312C
-                    6 => {  ret = m::it_802B314C(&raw mut GO[0]) as u32; } // it_802B314C
+                    1 => {  ret = ((m::it_802B309C(&raw mut GO[0])) as i32 != 0) as u32; } // it_802B309C
+                    2 => {  ret = ((m::it_802B30C0(&raw mut GO[0])) as i32 != 0) as u32; } // it_802B30C0
+                    3 => {  ret = ((m::it_802B30E4(&raw mut GO[0])) as i32 != 0) as u32; } // it_802B30E4
+                    4 => {  ret = ((m::it_802B3108(&raw mut GO[0])) as i32 != 0) as u32; } // it_802B3108
+                    5 => {  ret = ((m::it_802B312C(&raw mut GO[0])) as i32 != 0) as u32; } // it_802B312C
+                    6 => {  ret = ((m::it_802B314C(&raw mut GO[0])) as i32 != 0) as u32; } // it_802B314C
                     7 => {  m::it_802B322C(&raw mut GO[0], &raw mut GO[1]); } // it_802B322C
-                    8 => {  ret = m::itYoshistar_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itYoshistar_UnkMotion0_Anim
+                    8 => {  ret = ((m::itYoshistar_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itYoshistar_UnkMotion0_Anim
                     9 => {  m::itYoshistar_UnkMotion0_Phys(&raw mut GO[0]); } // itYoshistar_UnkMotion0_Phys
-                    10 => {  ret = m::itYoshistar_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itYoshistar_UnkMotion0_Coll
+                    10 => {  ret = ((m::itYoshistar_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itYoshistar_UnkMotion0_Coll
                     11 => {  m::it_802B3348(&raw mut GO[0], &raw mut GO[1]); } // it_802B3348
                     12 => { for j in 0..1 { let row = &m::it_803F7158[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

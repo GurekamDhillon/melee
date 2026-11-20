@@ -18,7 +18,8 @@ static u32 B(float f) { union { float f; u32 u; } c; c.f = f; return c.u; }
 static void T64(double d) { union { double d; u64_t_ u; } c; c.d = d; T((u32) c.u); T((u32) (c.u >> 32)); }
 static u32 H;
 static int HDBG;
-static void HM(u32 v) { H = H * 0x01000193u ^ v; if (HDBG) printf("H %08X%c", v, 10); }
+/* every f32 NaN bit pattern hashes as one (the Rust kinds_harness hm does the same; see tools/rust-port/referee) */
+static void HM(u32 v) { if ((v & 0x7F800000u) == 0x7F800000u && (v & 0x7FFFFFu)) v = 0x7FC00000u; H = H * 0x01000193u ^ v; if (HDBG) printf("H %08X%c", v, 10); }
 static void HM64(double d) { union { double d; u64_t_ u; } c; c.d = d; HM((u32) c.u); HM((u32) (c.u >> 32)); }
 
 static u32 rs;

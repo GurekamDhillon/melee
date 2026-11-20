@@ -12,7 +12,7 @@ static int SFXA[4];
 Fighter_Part ftParts_GetBoneIndex(Fighter* f, Fighter_Part p) { T(1); T(f == &F); T(p); return (Fighter_Part) (SRV[5] % 2 + 3); }
 void HSD_JObjSetupMatrixSub(HSD_JObj* j) { T(2); T(j == &JO[0]); T(j == &JO[1]); }
 float atan2f(float y, float x) { T(3); T(B(y)); T(B(x)); return ATAN; }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 id, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 id, HSD_JObj* j, ...)
 {
     __builtin_va_list ap;
     float* p;
@@ -83,7 +83,7 @@ int main(void)
             for (i = 0; i < 4; i++) SFXA[i] = rnd() % 30;
             CD.x1F0 = rw(); CD.x1F4 = rw(); CD.x424 = rw();
             F.parts = PARTS;
-            F.x2226_b0 = rnd() & 1; F.x2226_b1 = rnd() & 1; F.x2224_b2 = rnd() & 1;
+            F.x2226_b0 = rnd() & 1; F.x2226_b1 = rnd() & 1; F.stamina_dead = rnd() & 1;
             F.is_sandbag = rnd() & 1;
             F.ground_or_air = rnd() & 1;
             F.motion_id = ms[rnd() % 6];

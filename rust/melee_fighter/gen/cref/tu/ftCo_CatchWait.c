@@ -11,7 +11,7 @@ static struct ftData_x8 X8;
 
 void Fighter_ChangeMotionState(Fighter_GObj* g, FtMotionId m, MotionFlags fl, float a, float b, float c, Fighter_GObj* o)
 { T(1); T(g == &GO); T(m); T(fl); T(B(a)); T(B(b)); T(B(c)); T(o == NULL); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 gfx, HSD_JObj* j, ...)
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 gfx, HSD_JObj* j, ...)
 { T(2); T(g == &GO); T(q == (void*) &F.x60C); T(kind); T(gfx); T((u32) ((unsigned char*) j - JB)); }
 void ftCommon_8007EBAC(Fighter* fp, u32 a, u32 b) { T(3); T(fp == &F); T(a); T(b); }
 void ftCommon_8007E2F4(Fighter* fp, s16 v) { T(4); T(fp == &F); T(v); }
@@ -32,7 +32,7 @@ static u32 state_hash(void)
 {
     H = 0x811C9DC5u;
     HM(B(F.gr_vel)); HM(F.accessory1_cb == fn_800DA4A0); HM(F.take_dmg_cb == fn_800DA490); HM(F.take_dmg_cb == NULL);
-    HM(F.x221B_b7);
+    HM(F.x221B.x221B_b7);
     HM(F.mv.co.capturedamage.x18 == NULL ? 0xFFu : (u32) ((unsigned char*) F.mv.co.capturedamage.x18 - JB));
     return H;
 }
@@ -55,7 +55,7 @@ int main(void)
             F.input.pressed_buttons = rnd() & 0x1FF;
             CD.x64 = rg(); F.co_attrs.ground_friction = rg();
             F.take_dmg_cb = (rnd() & 1) ? dummy : NULL;
-            F.x221B_b7 = rnd() & 1;
+            F.x221B.x221B_b7 = rnd() & 1;
             switch (op) {
             case 0: fn_800DA1D8(&GO); break;
             case 1: fn_800DA2B0(&GO); break;

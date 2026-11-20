@@ -165,15 +165,21 @@ unsafe fn rot_y(fp: *mut Fighter, part: i32, v: f64) {
 }
 
 // Callback entries (extern "C") stored in Fighter fields.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80100E0C(g: G) {
+    core::hint::black_box(0x91FBF4FEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80100E0C");
     fn_80100E0C(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80105978(g: G) {
+    core::hint::black_box(0xC91A3481u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80105978");
     fn_80105978(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80100F60(g: G) {
+    core::hint::black_box(0xDB83FD30u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80100F60");
     fn_80100F60(g)
 }

@@ -240,15 +240,21 @@ pub fn fn_80113038(gobj: *mut HSD_GObj) {
 }
 
 /// The C `fn_80112ED8` / `fn_80113038` / `ftSk_SpecialHi_80113F68` as `HSD_GObjEvent` callbacks.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80112ED8(g: *mut HSD_GObj) {
+    core::hint::black_box(0x2982EC34u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80112ED8");
     fn_80112ED8(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80113038(g: *mut HSD_GObj) {
+    core::hint::black_box(0x8E2A510Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80113038");
     fn_80113038(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftSk_SpecialHi_80113F68(g: *mut HSD_GObj) {
+    core::hint::black_box(0xCFD815FFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftSk_SpecialHi_80113F68");
     ftSk_SpecialHi_80113F68(g);
 }

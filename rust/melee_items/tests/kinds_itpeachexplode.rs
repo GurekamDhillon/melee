@@ -121,9 +121,9 @@ fn itpeachexplode_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => { let v2: i32 = fv() as i32 as i32; let v3: f32 = rw() as f32; ret = pi(m::it_802BD158(&raw mut GO[0], &raw mut VA[0], v2, v3)); } // it_802BD158
-                    1 => {  ret = m::itPeachExplode_Logic55_DmgDealt(&raw mut GO[0]) as u32; } // itPeachExplode_Logic55_DmgDealt
+                    1 => {  ret = ((m::itPeachExplode_Logic55_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachExplode_Logic55_DmgDealt
                     2 => { let v2: i32 = fv() as i32 as i32; m::it_802BD248(&raw mut GO[0], &raw mut GO[1], v2); } // it_802BD248
-                    3 => {  ret = m::itPeachexplode_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itPeachexplode_UnkMotion1_Anim
+                    3 => {  ret = ((m::itPeachexplode_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachexplode_UnkMotion1_Anim
                     4 => {  m::itPeachExplode_Logic55_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itPeachExplode_Logic55_EvtUnk
                     5 => { for j in 0..2 { let row = &m::it_803F7488[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

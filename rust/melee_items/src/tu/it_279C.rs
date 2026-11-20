@@ -312,125 +312,244 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn itCerebi_Logic23_Spawned(a0: *mut HSD_GObj) { super::itCerebi_Logic23_Spawned(a0) }
-        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itChicoritaLeaf_Logic30_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_HitShield(a0: *mut HSD_GObj) -> i32 { super::itChicoritaLeaf_Logic30_HitShield(a0) }
-        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Reflected(a0: *mut HSD_GObj) -> i32 { super::itChicoritaLeaf_Logic30_Reflected(a0) }
-        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Spawned(a0: *mut HSD_GObj) { super::itChicoritaLeaf_Logic30_Spawned(a0) }
-        pub unsafe extern "C" fn itChicorita_Logic1_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itChicorita_Logic1_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itFire_Logic6_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itFire_Logic6_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itFire_Logic6_Spawned(a0: *mut HSD_GObj) { super::itFire_Logic6_Spawned(a0) }
-        pub unsafe extern "C" fn itFreezer_802CCF9C(a0: *mut HSD_GObj) { super::itFreezer_802CCF9C(a0) }
-        pub unsafe extern "C" fn itFreezer_802CD000(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itFreezer_802CD000(a0, a1) }
-        pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(a0: *mut HSD_GObj) { super::itFushigibana_Logic29_Spawned(a0) }
-        pub unsafe extern "C" fn itHassam_802CDBE0(a0: *mut HSD_GObj) { super::itHassam_802CDBE0(a0) }
-        pub unsafe extern "C" fn itHassam_802CDC60(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itHassam_802CDC60(a0, a1) }
-        pub unsafe extern "C" fn itHitodeman_Logic43_Absorbed(a0: *mut HSD_GObj) -> i32 { super::itHitodeman_Logic43_Absorbed(a0) }
-        pub unsafe extern "C" fn itKabigon_Logic2_Destroyed(a0: *mut HSD_GObj) { super::itKabigon_Logic2_Destroyed(a0) }
-        pub unsafe extern "C" fn itKamex_Logic31_DmgDealt(a0: *mut HSD_GObj) -> i32 { super::itKamex_Logic31_DmgDealt(a0) }
-        pub unsafe extern "C" fn itKamex_Logic31_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itKamex_Logic31_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itKamex_Logic31_HitShield(a0: *mut HSD_GObj) -> i32 { super::itKamex_Logic31_HitShield(a0) }
-        pub unsafe extern "C" fn itKireihana_Logic15_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itKireihana_Logic15_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itKireihana_Logic15_Spawned(a0: *mut HSD_GObj) { super::itKireihana_Logic15_Spawned(a0) }
-        pub unsafe extern "C" fn itLizardon_Logic34_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic34_Spawned(a0) }
-        pub unsafe extern "C" fn itLizardon_Logic35_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic35_Spawned(a0) }
-        pub unsafe extern "C" fn itLizardon_Logic36_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic36_Spawned(a0) }
-        pub unsafe extern "C" fn itLizardon_Logic37_Absorbed(a0: *mut HSD_GObj) -> i32 { super::itLizardon_Logic37_Absorbed(a0) }
-        pub unsafe extern "C" fn itLizardon_Logic37_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itLizardon_Logic37_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itLizardon_Logic37_HitShield(a0: *mut HSD_GObj) -> i32 { super::itLizardon_Logic37_HitShield(a0) }
-        pub unsafe extern "C" fn itLizardon_Logic37_Reflected(a0: *mut HSD_GObj) -> i32 { super::itLizardon_Logic37_Reflected(a0) }
-        pub unsafe extern "C" fn itLizardon_Logic37_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic37_Spawned(a0) }
-        pub unsafe extern "C" fn itLucky_Logic44_Dropped(a0: *mut HSD_GObj) { super::itLucky_Logic44_Dropped(a0) }
-        pub unsafe extern "C" fn itLucky_Logic44_EnteredAir(a0: *mut HSD_GObj) { super::itLucky_Logic44_EnteredAir(a0) }
-        pub unsafe extern "C" fn itLucky_Logic44_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itLucky_Logic44_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itLucky_Logic44_PickedUp(a0: *mut HSD_GObj) { super::itLucky_Logic44_PickedUp(a0) }
-        pub unsafe extern "C" fn itLucky_Logic44_Spawned(a0: *mut HSD_GObj) { super::itLucky_Logic44_Spawned(a0) }
-        pub unsafe extern "C" fn itLugia_Logic17_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itLugia_Logic17_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itLugia_Logic39_Spawned(a0: *mut HSD_GObj) { super::itLugia_Logic39_Spawned(a0) }
-        pub unsafe extern "C" fn itLugia_Logic40_Spawned(a0: *mut HSD_GObj) { super::itLugia_Logic40_Spawned(a0) }
-        pub unsafe extern "C" fn itLugia_Logic41_Spawned(a0: *mut HSD_GObj) { super::itLugia_Logic41_Spawned(a0) }
-        pub unsafe extern "C" fn itMaril_Logic28_Spawned(a0: *mut HSD_GObj) { super::itMaril_Logic28_Spawned(a0) }
-        pub unsafe extern "C" fn itMarumine_Logic16_Spawned(a0: *mut HSD_GObj) { super::itMarumine_Logic16_Spawned(a0) }
-        pub unsafe extern "C" fn itMatadogas_Logic33_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itMatadogas_Logic33_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itMetamon_Logic19_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itMetamon_Logic19_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itMew_Logic22_Spawned(a0: *mut HSD_GObj) { super::itMew_Logic22_Spawned(a0) }
-        pub unsafe extern "C" fn itOldKuri_Logic29_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itOldKuri_Logic29_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itPippi_Logic20_Spawned(a0: *mut HSD_GObj) { super::itPippi_Logic20_Spawned(a0) }
-        pub unsafe extern "C" fn itPorygon2_Logic26_Spawned(a0: *mut HSD_GObj) { super::itPorygon2_Logic26_Spawned(a0) }
-        pub unsafe extern "C" fn itSonans_Logic9_DmgDealt(a0: *mut HSD_GObj) -> i32 { super::itSonans_Logic9_DmgDealt(a0) }
-        pub unsafe extern "C" fn itSuikun_Logic14_Spawned(a0: *mut HSD_GObj) { super::itSuikun_Logic14_Spawned(a0) }
-        pub unsafe extern "C" fn itThunder_Logic7_Spawned(a0: *mut HSD_GObj) { super::itThunder_Logic7_Spawned(a0) }
-        pub unsafe extern "C" fn itTogepy_Logic21_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itTogepy_Logic21_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn itTogepy_Logic21_Spawned(a0: *mut HSD_GObj) { super::itTogepy_Logic21_Spawned(a0) }
-        pub unsafe extern "C" fn itTosakinto_Logic0_Destroyed(a0: *mut HSD_GObj) { super::itTosakinto_Logic0_Destroyed(a0) }
-        pub unsafe extern "C" fn itUnknown_Logic38_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itUnknown_Logic38_EvtUnk(a0, a1) }
-        pub unsafe extern "C" fn it_2725_Logic17_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic17_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic18_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic18_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic24_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic24_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic27_DmgReceived(a0: *mut HSD_GObj) -> i32 { super::it_2725_Logic27_DmgReceived(a0) }
-        pub unsafe extern "C" fn it_2725_Logic31_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic31_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic32_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic32_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic33_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic33_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic38_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic38_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic42_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic42_Spawned(a0) }
-        pub unsafe extern "C" fn it_2725_Logic43_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic43_Spawned(a0) }
-        pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) { super::it_8026EECC(a0, a1) }
-        pub unsafe extern "C" fn it_802C8F4C(a0: *mut HSD_GObj) { super::it_802C8F4C(a0) }
-        pub unsafe extern "C" fn it_802C8FC4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802C8FC4(a0, a1) }
-        pub unsafe extern "C" fn it_802C9588(a0: *mut HSD_GObj) { super::it_802C9588(a0) }
-        pub unsafe extern "C" fn it_802C9D40(a0: *mut HSD_GObj) { super::it_802C9D40(a0) }
-        pub unsafe extern "C" fn it_802C9E24(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802C9E24(a0, a1) }
-        pub unsafe extern "C" fn it_802CA49C(a0: *mut HSD_GObj) { super::it_802CA49C(a0) }
-        pub unsafe extern "C" fn it_802CA538(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CA538(a0, a1) }
-        pub unsafe extern "C" fn it_802CAFD4(a0: *mut HSD_GObj) { super::it_802CAFD4(a0) }
-        pub unsafe extern "C" fn it_802CB0F8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CB0F8(a0, a1) }
-        pub unsafe extern "C" fn it_802CB8AC(a0: *mut HSD_GObj) { super::it_802CB8AC(a0) }
-        pub unsafe extern "C" fn it_802CB940(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CB940(a0, a1) }
-        pub unsafe extern "C" fn it_802CCB14(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CCB14(a0, a1) }
-        pub unsafe extern "C" fn it_802CD44C(a0: *mut HSD_GObj) { super::it_802CD44C(a0) }
-        pub unsafe extern "C" fn it_802CD4DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CD4DC(a0, a1) }
-        pub unsafe extern "C" fn it_802CD7D4(a0: *mut HSD_GObj) -> i32 { super::it_802CD7D4(a0) }
-        pub unsafe extern "C" fn it_802CE710(a0: *mut HSD_GObj) { super::it_802CE710(a0) }
-        pub unsafe extern "C" fn it_802CE7D0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CE7D0(a0, a1) }
-        pub unsafe extern "C" fn it_802CF3E0(a0: *mut HSD_GObj) { super::it_802CF3E0(a0) }
-        pub unsafe extern "C" fn it_802CF450(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CF450(a0, a1) }
-        pub unsafe extern "C" fn it_802CF814(a0: *mut HSD_GObj) { super::it_802CF814(a0) }
-        pub unsafe extern "C" fn it_802CF884(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CF884(a0, a1) }
-        pub unsafe extern "C" fn it_802CFCB8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CFCB8(a0, a1) }
-        pub unsafe extern "C" fn it_802D0AB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D0AB0(a0, a1) }
-        pub unsafe extern "C" fn it_802D0AD0(a0: *mut HSD_GObj) -> i32 { super::it_802D0AD0(a0) }
-        pub unsafe extern "C" fn it_802D0D18(a0: *mut HSD_GObj) { super::it_802D0D18(a0) }
-        pub unsafe extern "C" fn it_802D0E30(a0: *mut HSD_GObj) { super::it_802D0E30(a0) }
-        pub unsafe extern "C" fn it_802D0E90(a0: *mut HSD_GObj) { super::it_802D0E90(a0) }
-        pub unsafe extern "C" fn it_802D23D4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D23D4(a0, a1) }
-        pub unsafe extern "C" fn it_802D25BC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D25BC(a0, a1) }
-        pub unsafe extern "C" fn it_802D2ED0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D2ED0(a0, a1) }
-        pub unsafe extern "C" fn it_802D3008(a0: *mut HSD_GObj) { super::it_802D3008(a0) }
-        pub unsafe extern "C" fn it_802D32DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D32DC(a0, a1) }
-        pub unsafe extern "C" fn it_802D3B6C(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D3B6C(a0, a1) }
-        pub unsafe extern "C" fn it_802D3F4C(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D3F4C(a0, a1) }
-        pub unsafe extern "C" fn it_802D43B0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D43B0(a0, a1) }
-        pub unsafe extern "C" fn it_802D4EF4(a0: *mut HSD_GObj) -> i32 { super::it_802D4EF4(a0) }
-        pub unsafe extern "C" fn it_802D4F08(a0: *mut HSD_GObj) -> i32 { super::it_802D4F08(a0) }
-        pub unsafe extern "C" fn it_802D4F28(a0: *mut HSD_GObj) -> i32 { super::it_802D4F28(a0) }
-        pub unsafe extern "C" fn it_802D4F50(a0: *mut HSD_GObj) -> i32 { super::it_802D4F50(a0) }
-        pub unsafe extern "C" fn it_802D4F58(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D4F58(a0, a1) }
-        pub unsafe extern "C" fn it_802D5050(a0: *mut HSD_GObj) { super::it_802D5050(a0) }
-        pub unsafe extern "C" fn it_802D5648(a0: *mut HSD_GObj) -> i32 { super::it_802D5648(a0) }
-        pub unsafe extern "C" fn it_802D56F0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D56F0(a0, a1) }
-        pub unsafe extern "C" fn it_802D5CD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D5CD8(a0, a1) }
-        pub unsafe extern "C" fn it_802D5CF8(a0: *mut HSD_GObj) { super::it_802D5CF8(a0) }
-        pub unsafe extern "C" fn it_802D61A8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D61A8(a0, a1) }
-        pub unsafe extern "C" fn it_802D6808(a0: *mut HSD_GObj) -> i32 { super::it_802D6808(a0) }
-        pub unsafe extern "C" fn it_802D6810(a0: *mut HSD_GObj) -> i32 { super::it_802D6810(a0) }
-        pub unsafe extern "C" fn it_802D6830(a0: *mut HSD_GObj) -> i32 { super::it_802D6830(a0) }
-        pub unsafe extern "C" fn it_802D6838(a0: *mut HSD_GObj) -> i32 { super::it_802D6838(a0) }
-        pub unsafe extern "C" fn it_802D6840(a0: *mut HSD_GObj) -> i32 { super::it_802D6840(a0) }
-        pub unsafe extern "C" fn it_802D6848(a0: *mut HSD_GObj) -> i32 { super::it_802D6848(a0) }
-        pub unsafe extern "C" fn it_802D6850(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D6850(a0, a1) }
-        pub unsafe extern "C" fn it_802D6F00(a0: *mut HSD_GObj) -> i32 { super::it_802D6F00(a0) }
-        pub unsafe extern "C" fn it_802D6FB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D6FB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x6971F6DAu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itCerebi_Logic23_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x7ECC7BBAu32); /* fn identity */ super::itCerebi_Logic23_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xB41F0E27u32); /* fn identity */ super::itChicoritaLeaf_Logic30_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_HitShield(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x3E9477CCu32); /* fn identity */ super::itChicoritaLeaf_Logic30_HitShield(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Reflected(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xFAC85250u32); /* fn identity */ super::itChicoritaLeaf_Logic30_Reflected(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xDA2E09AAu32); /* fn identity */ super::itChicoritaLeaf_Logic30_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itChicorita_Logic1_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x797F91F7u32); /* fn identity */ super::itChicorita_Logic1_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itFire_Logic6_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xDFD4C64Cu32); /* fn identity */ super::itFire_Logic6_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itFire_Logic6_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x5F5DCCF3u32); /* fn identity */ super::itFire_Logic6_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itFreezer_802CCF9C(a0: *mut HSD_GObj) { core::hint::black_box(0x65969DBBu32); /* fn identity */ super::itFreezer_802CCF9C(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itFreezer_802CD000(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x9A580D8Eu32); /* fn identity */ super::itFreezer_802CD000(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xAAF231C7u32); /* fn identity */ super::itFushigibana_Logic29_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itHassam_802CDBE0(a0: *mut HSD_GObj) { core::hint::black_box(0x62470C03u32); /* fn identity */ super::itHassam_802CDBE0(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itHassam_802CDC60(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xD80A4DCFu32); /* fn identity */ super::itHassam_802CDC60(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itHitodeman_Logic43_Absorbed(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x6B50EAFDu32); /* fn identity */ super::itHitodeman_Logic43_Absorbed(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itKabigon_Logic2_Destroyed(a0: *mut HSD_GObj) { core::hint::black_box(0xCDDA11E5u32); /* fn identity */ super::itKabigon_Logic2_Destroyed(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itKamex_Logic31_DmgDealt(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x8D16BBEFu32); /* fn identity */ super::itKamex_Logic31_DmgDealt(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itKamex_Logic31_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x945364F6u32); /* fn identity */ super::itKamex_Logic31_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itKamex_Logic31_HitShield(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x0F878BAFu32); /* fn identity */ super::itKamex_Logic31_HitShield(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itKireihana_Logic15_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x81413158u32); /* fn identity */ super::itKireihana_Logic15_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itKireihana_Logic15_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xAE01013Fu32); /* fn identity */ super::itKireihana_Logic15_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic34_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xDA19B87Bu32); /* fn identity */ super::itLizardon_Logic34_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic35_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xC80CB42Cu32); /* fn identity */ super::itLizardon_Logic35_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic36_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x6B475DEDu32); /* fn identity */ super::itLizardon_Logic36_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic37_Absorbed(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x1490C46Cu32); /* fn identity */ super::itLizardon_Logic37_Absorbed(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic37_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x976BEBB3u32); /* fn identity */ super::itLizardon_Logic37_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic37_HitShield(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xAB380258u32); /* fn identity */ super::itLizardon_Logic37_HitShield(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic37_Reflected(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x7A3F5DD4u32); /* fn identity */ super::itLizardon_Logic37_Reflected(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLizardon_Logic37_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xAA747046u32); /* fn identity */ super::itLizardon_Logic37_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLucky_Logic44_Dropped(a0: *mut HSD_GObj) { core::hint::black_box(0x9F4AB07Bu32); /* fn identity */ super::itLucky_Logic44_Dropped(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLucky_Logic44_EnteredAir(a0: *mut HSD_GObj) { core::hint::black_box(0x42D4DC36u32); /* fn identity */ super::itLucky_Logic44_EnteredAir(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLucky_Logic44_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x55C6770Cu32); /* fn identity */ super::itLucky_Logic44_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLucky_Logic44_PickedUp(a0: *mut HSD_GObj) { core::hint::black_box(0xA4101C1Eu32); /* fn identity */ super::itLucky_Logic44_PickedUp(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLucky_Logic44_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x9E5564B3u32); /* fn identity */ super::itLucky_Logic44_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLugia_Logic17_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x6B9EE572u32); /* fn identity */ super::itLugia_Logic17_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLugia_Logic39_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x417C0539u32); /* fn identity */ super::itLugia_Logic39_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLugia_Logic40_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xBE29D125u32); /* fn identity */ super::itLugia_Logic40_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itLugia_Logic41_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x30B0391Eu32); /* fn identity */ super::itLugia_Logic41_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itMaril_Logic28_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xC09E3C94u32); /* fn identity */ super::itMaril_Logic28_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itMarumine_Logic16_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x49521396u32); /* fn identity */ super::itMarumine_Logic16_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itMatadogas_Logic33_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xFBAFB089u32); /* fn identity */ super::itMatadogas_Logic33_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itMetamon_Logic19_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x66487AA5u32); /* fn identity */ super::itMetamon_Logic19_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itMew_Logic22_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xD9953CA0u32); /* fn identity */ super::itMew_Logic22_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itOldKuri_Logic29_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x94C5824Bu32); /* fn identity */ super::itOldKuri_Logic29_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itPippi_Logic20_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xF0F5A55Bu32); /* fn identity */ super::itPippi_Logic20_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itPorygon2_Logic26_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x4ED4FCD7u32); /* fn identity */ super::itPorygon2_Logic26_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itSonans_Logic9_DmgDealt(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xB67B1A2Eu32); /* fn identity */ super::itSonans_Logic9_DmgDealt(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itSuikun_Logic14_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x75972877u32); /* fn identity */ super::itSuikun_Logic14_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itThunder_Logic7_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x8330DD4Cu32); /* fn identity */ super::itThunder_Logic7_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itTogepy_Logic21_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x2D4EEE13u32); /* fn identity */ super::itTogepy_Logic21_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itTogepy_Logic21_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xADBC14E6u32); /* fn identity */ super::itTogepy_Logic21_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itTosakinto_Logic0_Destroyed(a0: *mut HSD_GObj) { core::hint::black_box(0x76FD0C1Au32); /* fn identity */ super::itTosakinto_Logic0_Destroyed(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn itUnknown_Logic38_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xB3C5ADE7u32); /* fn identity */ super::itUnknown_Logic38_EvtUnk(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic17_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x3EDCE038u32); /* fn identity */ super::it_2725_Logic17_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic18_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xF4198085u32); /* fn identity */ super::it_2725_Logic18_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic24_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xCB7E4B0Au32); /* fn identity */ super::it_2725_Logic24_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic27_DmgReceived(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xB07D25C2u32); /* fn identity */ super::it_2725_Logic27_DmgReceived(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic31_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xD818AF10u32); /* fn identity */ super::it_2725_Logic31_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic32_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xCF9AE0C1u32); /* fn identity */ super::it_2725_Logic32_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic33_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xA406117Au32); /* fn identity */ super::it_2725_Logic33_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic38_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0x55C34C57u32); /* fn identity */ super::it_2725_Logic38_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic42_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xAE4F2A1Au32); /* fn identity */ super::it_2725_Logic42_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_2725_Logic43_Spawned(a0: *mut HSD_GObj) { core::hint::black_box(0xAC2014E1u32); /* fn identity */ super::it_2725_Logic43_Spawned(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x6940910Au32); /* fn identity */ super::it_8026EECC(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802C8F4C(a0: *mut HSD_GObj) { core::hint::black_box(0x2AF4C39Au32); /* fn identity */ super::it_802C8F4C(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802C8FC4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xB45B1374u32); /* fn identity */ super::it_802C8FC4(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802C9588(a0: *mut HSD_GObj) { core::hint::black_box(0x67551D93u32); /* fn identity */ super::it_802C9588(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802C9D40(a0: *mut HSD_GObj) { core::hint::black_box(0xC79699DCu32); /* fn identity */ super::it_802C9D40(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802C9E24(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x461EF57Du32); /* fn identity */ super::it_802C9E24(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CA49C(a0: *mut HSD_GObj) { core::hint::black_box(0xCCA12CA8u32); /* fn identity */ super::it_802CA49C(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CA538(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xBE1B32C8u32); /* fn identity */ super::it_802CA538(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CAFD4(a0: *mut HSD_GObj) { core::hint::black_box(0xDD0AE566u32); /* fn identity */ super::it_802CAFD4(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CB0F8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xD699C551u32); /* fn identity */ super::it_802CB0F8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CB8AC(a0: *mut HSD_GObj) { core::hint::black_box(0x847067ABu32); /* fn identity */ super::it_802CB8AC(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CB940(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x836D36B8u32); /* fn identity */ super::it_802CB940(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CCB14(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x56A1D31Du32); /* fn identity */ super::it_802CCB14(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CD44C(a0: *mut HSD_GObj) { core::hint::black_box(0xA4E34ED8u32); /* fn identity */ super::it_802CD44C(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CD4DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xC55A4288u32); /* fn identity */ super::it_802CD4DC(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CD7D4(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xBE68813Cu32); /* fn identity */ super::it_802CD7D4(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CE710(a0: *mut HSD_GObj) { core::hint::black_box(0xB397A3CCu32); /* fn identity */ super::it_802CE710(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CE7D0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xC07AD901u32); /* fn identity */ super::it_802CE7D0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CF3E0(a0: *mut HSD_GObj) { core::hint::black_box(0x5ED7115Bu32); /* fn identity */ super::it_802CF3E0(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CF450(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xAF5EF49Au32); /* fn identity */ super::it_802CF450(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CF814(a0: *mut HSD_GObj) { core::hint::black_box(0x5EB4259Eu32); /* fn identity */ super::it_802CF814(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CF884(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x5CA2D957u32); /* fn identity */ super::it_802CF884(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802CFCB8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xF19845DCu32); /* fn identity */ super::it_802CFCB8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D0AB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x8CE46471u32); /* fn identity */ super::it_802D0AB0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D0AD0(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x90F37547u32); /* fn identity */ super::it_802D0AD0(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D0D18(a0: *mut HSD_GObj) { core::hint::black_box(0x5465BD05u32); /* fn identity */ super::it_802D0D18(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D0E30(a0: *mut HSD_GObj) { core::hint::black_box(0x42F34624u32); /* fn identity */ super::it_802D0E30(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D0E90(a0: *mut HSD_GObj) { core::hint::black_box(0xBF0C0E3Eu32); /* fn identity */ super::it_802D0E90(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D23D4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x77132907u32); /* fn identity */ super::it_802D23D4(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D25BC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xEA54B55Eu32); /* fn identity */ super::it_802D25BC(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D2ED0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xD5B08F1Du32); /* fn identity */ super::it_802D2ED0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D3008(a0: *mut HSD_GObj) { core::hint::black_box(0x4AC69FD3u32); /* fn identity */ super::it_802D3008(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D32DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xF6B36CACu32); /* fn identity */ super::it_802D32DC(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D3B6C(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x3133C50Au32); /* fn identity */ super::it_802D3B6C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D3F4C(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xEC6676B0u32); /* fn identity */ super::it_802D3F4C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D43B0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xAFEB837Fu32); /* fn identity */ super::it_802D43B0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D4EF4(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xBA9B1E81u32); /* fn identity */ super::it_802D4EF4(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D4F08(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x9955AE0Eu32); /* fn identity */ super::it_802D4F08(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D4F28(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x1D506DACu32); /* fn identity */ super::it_802D4F28(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D4F50(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x1F4E323Bu32); /* fn identity */ super::it_802D4F50(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D4F58(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x174E25A3u32); /* fn identity */ super::it_802D4F58(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D5050(a0: *mut HSD_GObj) { core::hint::black_box(0xFC543FE0u32); /* fn identity */ super::it_802D5050(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D5648(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x00B2E6E7u32); /* fn identity */ super::it_802D5648(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D56F0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x0D253DEDu32); /* fn identity */ super::it_802D56F0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D5CD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x62B8DD90u32); /* fn identity */ super::it_802D5CD8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D5CF8(a0: *mut HSD_GObj) { core::hint::black_box(0x6EBD6DA2u32); /* fn identity */ super::it_802D5CF8(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D61A8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x021BD8C8u32); /* fn identity */ super::it_802D61A8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6808(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x30EC453Eu32); /* fn identity */ super::it_802D6808(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6810(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xAEEF4A2Fu32); /* fn identity */ super::it_802D6810(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6830(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x42EA22FDu32); /* fn identity */ super::it_802D6830(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6838(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0x3AEA1665u32); /* fn identity */ super::it_802D6838(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6840(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xB0E28162u32); /* fn identity */ super::it_802D6840(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6848(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xB8E28DFAu32); /* fn identity */ super::it_802D6848(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6850(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0xB6E4C96Bu32); /* fn identity */ super::it_802D6850(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6F00(a0: *mut HSD_GObj) -> i32 { core::hint::black_box(0xD95015E4u32); /* fn identity */ super::it_802D6F00(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802D6FB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { core::hint::black_box(0x44DE7BC6u32); /* fn identity */ super::it_802D6FB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::item::Item_804A0E24;
@@ -558,7 +677,9 @@ unsafe fn item_of(gobj: *mut HSD_GObj) -> *mut Item {
 }
 
 /// `it_80279C48`: faces the item toward the nearest fighter of its owner (or a random side when there is none).
+#[inline(never)]
 pub unsafe extern "C" fn it_80279C48(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9C08EF25u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279C48");
     let mut v: Vec3 = core::mem::zeroed();
     let item = item_of(item_gobj);
@@ -577,7 +698,9 @@ pub unsafe extern "C" fn it_80279C48(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_80279CDC`: resets the item's state and scale, clears its flags.
+#[inline(never)]
 pub unsafe extern "C" fn it_80279CDC(item_gobj: *mut HSD_GObj, scale: f32) {
+    core::hint::black_box(0x721ED084u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279CDC");
     it_8027A13C(item_gobj);
     it_80279D5C(item_gobj, scale);
@@ -587,13 +710,17 @@ pub unsafe extern "C" fn it_80279CDC(item_gobj: *mut HSD_GObj, scale: f32) {
 }
 
 /// `it_80279D38`: the knockback path (`it_8027B964` with `chk` false).
+#[inline(never)]
 pub unsafe extern "C" fn it_80279D38(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x05DB2897u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279D38");
     ext::it_8027B964(item_gobj, 0);
 }
 
 /// `it_80279D5C`: sets the Pokemon's scale on all three axes and resets its spawn counter.
+#[inline(never)]
 pub unsafe extern "C" fn it_80279D5C(item_gobj: *mut HSD_GObj, scale: f32) {
+    core::hint::black_box(0xC6CBBAE0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279D5C");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = item_of(item_gobj);
@@ -615,7 +742,9 @@ unsafe fn it_80279E24_inline(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_80279E24`: advances the Pokemon's scale animation one frame and sets the next keyframe when due.
+#[inline(never)]
 pub unsafe extern "C" fn it_80279E24(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7A65B311u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279E24");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = (*item_gobj).user_data as *mut Item;
@@ -641,7 +770,9 @@ pub unsafe extern "C" fn it_80279E24(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_80279FF8`: grows the Pokemon to its attribute scale, then runs the scale animation.
+#[inline(never)]
 pub unsafe extern "C" fn it_80279FF8(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xDC90B934u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80279FF8");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xDD4_itemVar.pokemon_spawn.x5C == 0 {
@@ -660,7 +791,9 @@ pub unsafe extern "C" fn it_80279FF8(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_8027A09C`: runs the Pokemon's timed movement; true when it finishes (the scale is then restored).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A09C(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x433107D8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A09C");
     let item = item_of(item_gobj);
     ext::it_80272860(item_gobj, (*item).xDD4_itemVar.pokemon_spawn.x1C, (*item).xDD4_itemVar.pokemon_spawn.x20);
@@ -673,14 +806,18 @@ pub unsafe extern "C" fn it_8027A09C(item_gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8027A118`: forwards the event to `it_8026E4D0`; never reports a removal.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A118(item_gobj: *mut HSD_GObj, arg1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> bool {
+    core::hint::black_box(0x20AF6BAAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A118");
     ext::it_8026E4D0(item_gobj, arg1);
     false
 }
 
 /// `it_8027A13C`: clears the Pokemon's two vectors (x4 and x10).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A13C(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFFAABA89u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A13C");
     let item = item_of(item_gobj);
     (*item).xDD4_itemVar.pokemon_spawn.x10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -688,7 +825,9 @@ pub unsafe extern "C" fn it_8027A13C(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_8027A160`: the bone's translation (scaled, with |v| < 0.001 zeroed) becomes the per-frame delta.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A160(bone: *mut HSD_JObj, item: *mut Item) {
+    core::hint::black_box(0xAAB700ADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A160");
     if !bone.is_null() {
         let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -717,7 +856,9 @@ pub unsafe extern "C" fn it_8027A160(bone: *mut HSD_JObj, item: *mut Item) {
 }
 
 /// `it_8027A344`: the Pokemon's velocity from its per-frame delta.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A344(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF127F009u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A344");
     let item = item_of(item_gobj);
     (*item).x40_vel.x = (*item).xDD4_itemVar.pokemon_spawn.x4.z * (*item).facing_dir;
@@ -726,7 +867,9 @@ pub unsafe extern "C" fn it_8027A344(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027A364`: the total weight of the kinds that may be picked now (1 plus the weights of the kinds
 /// other than the last two picked).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A364(item: *mut Item) -> i32 {
+    core::hint::black_box(0xFD2C801Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A364");
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
     let mut ret_val = 1i32;
@@ -743,7 +886,9 @@ pub unsafe extern "C" fn it_8027A364(item: *mut Item) -> i32 {
 }
 
 /// `it_8027A4D4`: a random Pokemon by weight (with the two rare spawns checked first). Returns the index.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A4D4(item: *mut Item) -> i32 {
+    core::hint::black_box(0x66E54EB4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A4D4");
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
 
@@ -785,7 +930,9 @@ struct PokemonSpawnWeight {
 
 /// `it_8027A780`: picks a Pokemon from the kind list `arg1` (terminated by `It_PKind_Terminate`), by weight,
 /// skipping the last two picks. Returns the index.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A780(item: *mut Item, arg1: *mut c_void) -> i32 {
+    core::hint::black_box(0xA87D2DA5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A780");
     let mut weights: [PokemonSpawnWeight; 30] = [PokemonSpawnWeight { kind: 0, weight: 0 }; 30];
     let mut cnt = 0i32;
@@ -828,7 +975,9 @@ pub unsafe extern "C" fn it_8027A780(item: *mut Item, arg1: *mut c_void) -> i32 
 }
 
 /// `it_8027A9B8`: a Pokemon for the stage's own list (gm_801BEC54), with the rare spawns checked first.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027A9B8(item: *mut Item) -> i32 {
+    core::hint::black_box(0x82A84E79u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027A9B8");
     let vec = ext::gm_801BEC54();
     if vec.is_null() {
@@ -848,7 +997,9 @@ pub unsafe extern "C" fn it_8027A9B8(item: *mut Item) -> i32 {
 }
 
 /// `it_8027AAA0`: sets up the spawned Pokemon's timers, scales and motion table from its attributes.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027AAA0(item1_gobj: *mut HSD_GObj, item2: *mut Item, arg2: i32) {
+    core::hint::black_box(0xE6A3A012u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027AAA0");
     let it = item_of(item1_gobj);
     let attr = (*(*it).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
@@ -913,7 +1064,9 @@ unsafe fn selectPokemonFromList(item: *mut Item, kinds: *mut ItemKind) -> i32 {
 
 /// `it_8027AB64`: spawns a Pokemon for the item (the kind from the mode, the list or the selection) and
 /// returns true when a spawn happened.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027AB64(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x4BF4848Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027AB64");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let item = item_of(item_gobj);
@@ -979,7 +1132,9 @@ pub unsafe extern "C" fn it_8027AB64(item_gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8027ADEC`: spawns effect `arg0` on the jobj `arg2`, scaled by the item's scale over `arg3`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027ADEC(arg0: i32, item_gobj: *mut HSD_GObj, arg2: *mut HSD_JObj, arg3: f32) {
+    core::hint::black_box(0x058F76F8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027ADEC");
     let item = item_of(item_gobj);
     let mut sp1c: f32 = (*(*item).xCC_item_attr).x60_scale * (1.0f32 / arg3);
@@ -987,7 +1142,9 @@ pub unsafe extern "C" fn it_8027ADEC(arg0: i32, item_gobj: *mut HSD_GObj, arg2: 
 }
 
 /// `it_8027AE34`: reverses the item's velocity and facing, resets its life timer and rotates it to face.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027AE34(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x92FFE550u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027AE34");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = item_of(item_gobj);
@@ -1001,7 +1158,9 @@ pub unsafe extern "C" fn it_8027AE34(item_gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8027AF50`: mirrors the velocity off the collision, re-derives the facing and rotates to face.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027AF50(item_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x855BD7EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027AF50");
     let item = item_of(item_gobj);
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
@@ -1014,7 +1173,9 @@ pub unsafe extern "C" fn it_8027AF50(item_gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `it_8027B070`: copies the owner's attack id, attack instance and attack data onto the item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B070(item_gobj: *mut HSD_GObj, owner_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7FCF21ACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B070");
     let item = item_of(item_gobj);
     let fighter = (*owner_gobj).user_data as *mut Fighter;
@@ -1028,7 +1189,9 @@ pub unsafe extern "C" fn it_8027B070(item_gobj: *mut HSD_GObj, owner_gobj: *mut 
 }
 
 /// `it_8027B0C4`: the spawned item's attack data, from its parent or its secondary parent.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B0C4(item_gobj: *mut HSD_GObj, spawn: *mut SpawnItem) {
+    core::hint::black_box(0x8C8B1A64u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B0C4");
     if ext::ftLib_IsFighter((*spawn).x0_parent_gobj) != 0 {
         if ext::ftLib_IsFighter((*spawn).x4_parent_gobj2) != 0 {
@@ -1057,7 +1220,9 @@ pub unsafe extern "C" fn it_8027B0C4(item_gobj: *mut HSD_GObj, spawn: *mut Spawn
 }
 
 /// `it_8027B1F4`: the item's attack data, from its owner or the default when it has none.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B1F4(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA3BAB4CAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B1F4");
     let item = item_of(item_gobj);
     let mut sp10: Struct2070 = core::mem::zeroed();
@@ -1077,7 +1242,9 @@ pub unsafe extern "C" fn it_8027B1F4(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_8027B288`: sets the item's attack data word `arg1`, refreshing the attack id when it changed.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B288(item_gobj: *mut HSD_GObj, arg1: u32) {
+    core::hint::black_box(0xDFFD5409u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B288");
     let item = item_of(item_gobj);
     let mut sp14: Struct2070 = core::mem::zeroed();
@@ -1097,7 +1264,9 @@ pub unsafe extern "C" fn it_8027B288(item_gobj: *mut HSD_GObj, arg1: u32) {
 }
 
 /// `it_8027B330`: sets the item's attack id to `arg1` (a new attack instance unless it repeats).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B330(item_gobj: *mut HSD_GObj, arg1: u32) {
+    core::hint::black_box(0x72612E45u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B330");
     let item = item_of(item_gobj);
     if arg1 == 1 || arg1 as i32 != (*item).xD88_attackID {
@@ -1107,7 +1276,9 @@ pub unsafe extern "C" fn it_8027B330(item_gobj: *mut HSD_GObj, arg1: u32) {
 }
 
 /// `it_8027B378`: the hit sound/rumble for a fighter that picked up the item (for item-class collisions).
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B378(fighter_gobj: *mut HSD_GObj, item_gobj: *mut HSD_GObj, arg2: f32) {
+    core::hint::black_box(0xF2576A69u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B378");
     if ext::it_8026B6C8(item_gobj) != 0 {
         let temp_r30 = (*ext::ft_80089884(fighter_gobj)).x0.x2073;
@@ -1118,7 +1289,9 @@ pub unsafe extern "C" fn it_8027B378(fighter_gobj: *mut HSD_GObj, item_gobj: *mu
 }
 
 /// `it_8027B408`: as `it_8027B378` for the owner of `item_gobj1`.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B408(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj, arg8: f32) {
+    core::hint::black_box(0xBD186647u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B408");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let item1 = item_of(item_gobj1);
@@ -1132,7 +1305,9 @@ pub unsafe extern "C" fn it_8027B408(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
 }
 
 /// `it_8027B4A4`: the fighter's player-state update for an item-class collision.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B4A4(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj) {
+    core::hint::black_box(0x32EE3F02u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B4A4");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let temp_r31 = ext::ft_800898A8(item_gobj1) as *mut c_void;
@@ -1141,7 +1316,9 @@ pub unsafe extern "C" fn it_8027B4A4(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
 }
 
 /// `it_8027B508`: the owner's player-state update from the item's attack data.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B508(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj) {
+    core::hint::black_box(0xCE804FCCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B508");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let item1 = item_of(item_gobj1);
@@ -1152,7 +1329,9 @@ pub unsafe extern "C" fn it_8027B508(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
 }
 
 /// `it_8027B564`: the owner's attack data pushed to the player state.
+#[inline(never)]
 pub unsafe extern "C" fn it_8027B564(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC67BC606u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8027B564");
     let item = item_of(item_gobj);
     if ext::ftLib_IsFighter((*item).owner) != 0 {

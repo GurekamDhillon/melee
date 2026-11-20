@@ -243,8 +243,11 @@ pub unsafe extern "C" fn fly_anim(gobj: *mut HSD_GObj) {
     ext::Fighter_ChangeMotionState(gobj, ftCo_MS_Wait as i32, 0, 0., 1., 0., null_mut());
     hold_callbacks(fp);
 }
-pub unsafe extern "C" fn fly_input(_: *mut HSD_GObj) { melee_core::ct!("fly_input");}
+#[inline(never)]
+pub unsafe extern "C" fn fly_input(_: *mut HSD_GObj) { core::hint::black_box(0x3FA114CCu32); /* fn identity */ melee_core::ct!("fly_input");}
+#[inline(never)]
 pub unsafe extern "C" fn fly_phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x9F533BA8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fly_phys");
     let fp = (*gobj).user_data as *mut Fighter;
     let mut sx = (*fp).input.lstick[0].x;

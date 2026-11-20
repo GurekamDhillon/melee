@@ -11689,8 +11689,7 @@ pub unsafe extern "C" fn ScriptGame_FighterBenchTest() -> ::core::ffi::c_int {
     b.x890_cameraBox = &raw mut cb;
     a.cpu.kind = CpuKind_4;
     b.cpu.kind = CpuKind_5;
-    if script_bench_ops.wait
-        != Some(ft_8008A2BC as unsafe extern "C" fn(*mut Fighter_GObj) -> ())
+    if !script_bench_ops.wait.is_some_and(|p| core::ptr::fn_addr_eq(p, ft_8008A2BC as unsafe extern "C" fn(*mut Fighter_GObj) -> ()))
     {
         rc += 1;
     }

@@ -157,27 +157,27 @@ fn itmewtwoshadowball_matches_c() {
                     5 => {  m::it_2725_Logic101_Destroyed(&raw mut GO[0]); } // it_2725_Logic101_Destroyed
                     6 => {  m::it_802C573C(&raw mut GO[0]); } // it_802C573C
                     7 => {  m::it_2725_Logic101_PickedUp(&raw mut GO[0]); } // it_2725_Logic101_PickedUp
-                    8 => {  ret = m::itMewtwoshadowball_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion0_Anim
+                    8 => {  ret = ((m::itMewtwoshadowball_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion0_Anim
                     9 => {  m::itMewtwoshadowball_UnkMotion0_Phys(&raw mut GO[0]); } // itMewtwoshadowball_UnkMotion0_Phys
-                    10 => {  ret = m::itMewtwoshadowball_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion0_Coll
+                    10 => {  ret = ((m::itMewtwoshadowball_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion0_Coll
                     11 => {  m::it_802C5B18(&raw mut GO[0], &raw mut GO[1]); } // it_802C5B18
-                    12 => {  ret = m::itMewtwoshadowball_UnkMotion8_Anim(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion8_Anim
+                    12 => {  ret = ((m::itMewtwoshadowball_UnkMotion8_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion8_Anim
                     13 => {  m::itMewtwoshadowball_UnkMotion8_Phys(&raw mut GO[0]); } // itMewtwoshadowball_UnkMotion8_Phys
-                    14 => {  ret = m::itMewtwoshadowball_UnkMotion8_Coll(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion8_Coll
-                    15 => {  ret = m::itMewtwoshadowball_UnkMotion9_Anim(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion9_Anim
+                    14 => {  ret = ((m::itMewtwoshadowball_UnkMotion8_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion8_Coll
+                    15 => {  ret = ((m::itMewtwoshadowball_UnkMotion9_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion9_Anim
                     16 => {  m::itMewtwoshadowball_UnkMotion9_Phys(&raw mut GO[0]); } // itMewtwoshadowball_UnkMotion9_Phys
-                    17 => {  ret = m::itMewtwoshadowball_UnkMotion9_Coll(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion9_Coll
+                    17 => {  ret = ((m::itMewtwoshadowball_UnkMotion9_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion9_Coll
                     18 => {  m::fn_802C5E18(&raw mut GO[0]); } // fn_802C5E18
                     19 => {  m::it_802C5E5C(&raw mut GO[0]); } // it_802C5E5C
-                    20 => {  ret = m::itMewtwoshadowball_UnkMotion17_Anim(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion17_Anim
+                    20 => {  ret = ((m::itMewtwoshadowball_UnkMotion17_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion17_Anim
                     21 => {  m::itMewtwoshadowball_UnkMotion17_Phys(&raw mut GO[0]); } // itMewtwoshadowball_UnkMotion17_Phys
-                    22 => {  ret = m::itMewtwoshadowball_UnkMotion17_Coll(&raw mut GO[0]) as u32; } // itMewtwoshadowball_UnkMotion17_Coll
-                    23 => {  ret = m::itMewtwoShadowball_Logic101_DmgDealt(&raw mut GO[0]) as u32; } // itMewtwoShadowball_Logic101_DmgDealt
-                    24 => {  ret = m::itMewtwoShadowball_Logic101_Clanked(&raw mut GO[0]) as u32; } // itMewtwoShadowball_Logic101_Clanked
-                    25 => {  ret = m::itMewtwoShadowball_Logic101_Absorbed(&raw mut GO[0]) as u32; } // itMewtwoShadowball_Logic101_Absorbed
-                    26 => {  ret = m::it_2725_Logic101_Reflected(&raw mut GO[0]) as u32; } // it_2725_Logic101_Reflected
-                    27 => {  ret = m::itMewtwoShadowball_Logic101_HitShield(&raw mut GO[0]) as u32; } // itMewtwoShadowball_Logic101_HitShield
-                    28 => {  ret = m::it_2725_Logic101_ShieldBounced(&raw mut GO[0]) as u32; } // it_2725_Logic101_ShieldBounced
+                    22 => {  ret = ((m::itMewtwoshadowball_UnkMotion17_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoshadowball_UnkMotion17_Coll
+                    23 => {  ret = ((m::itMewtwoShadowball_Logic101_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoShadowball_Logic101_DmgDealt
+                    24 => {  ret = ((m::itMewtwoShadowball_Logic101_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoShadowball_Logic101_Clanked
+                    25 => {  ret = ((m::itMewtwoShadowball_Logic101_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoShadowball_Logic101_Absorbed
+                    26 => {  ret = ((m::it_2725_Logic101_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic101_Reflected
+                    27 => {  ret = ((m::itMewtwoShadowball_Logic101_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itMewtwoShadowball_Logic101_HitShield
+                    28 => {  ret = ((m::it_2725_Logic101_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic101_ShieldBounced
                     29 => {  m::itMewtwoShadowball_Logic101_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itMewtwoShadowball_Logic101_EvtUnk
                     30 => { for j in 0..18 { let row = &m::it_803F7760[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

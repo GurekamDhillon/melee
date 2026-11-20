@@ -132,7 +132,9 @@ pub mod ext {
     }
     pub use crate::tu::grinl::ext::stage_info;
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
+    #[inline(never)]
     pub unsafe extern "C" fn grDisplay_801C5DB0(_gobj: *mut HSD_GObj, _pass: isize) {
+        core::hint::black_box(0x8A8DAAA5u32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(_gobj as _, _pass as _); } return; }
     }
 }

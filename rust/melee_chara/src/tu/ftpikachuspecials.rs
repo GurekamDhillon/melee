@@ -112,7 +112,9 @@ pub fn ftPk_SpecialS_ZeroVelocity(gobj: G) {
     }
 }
 /// `ftPk_SpecialS_ZeroVelocity` as the `deal_dmg_cb` entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPk_SpecialS_ZeroVelocity(g: G) {
+    core::hint::black_box(0x1B9AC4E7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPk_SpecialS_ZeroVelocity");
     ftPk_SpecialS_ZeroVelocity(g);
 }

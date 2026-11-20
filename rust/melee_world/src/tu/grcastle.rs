@@ -284,7 +284,9 @@ pub mod ext {
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
     pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
     /// Called by `grCastle_801D0520` and passed as a render callback (its address is the argument).
+    #[inline(never)]
     pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, pass: isize) {
+        core::hint::black_box(0x8910A023u32); // fn identity (tools/rust-port/fn_identity.py)
         match GRDISPLAY_801C5DB0 {
             Some(f) => f(gobj, pass),
             None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(gobj as _, pass as _); } return; },

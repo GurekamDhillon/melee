@@ -30,3 +30,6 @@ features = ["ring", "std", "tls12", "logging"]
 [dependencies.webpki-roots]
 version = "1"
 optional = true
+
+[lints]
+workspace = true

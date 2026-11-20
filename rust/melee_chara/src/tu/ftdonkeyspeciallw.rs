@@ -167,7 +167,9 @@ pub fn ftDk_SpecialLw_8010E148(gobj: *mut HSD_GObj) {
 }
 
 /// `ftDk_SpecialLw_8010E0CC` as a Fighter callback entry (what `chars::cb` points at).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftDk_SpecialLw_8010E0CC(g: *mut HSD_GObj) {
+    core::hint::black_box(0x314C4CD1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftDk_SpecialLw_8010E0CC");
     ftDk_SpecialLw_8010E0CC(g);
 }

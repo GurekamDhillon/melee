@@ -80,7 +80,9 @@ const transition_flags: u32 = (Ft_MF_KeepGfx
     | Ft_MF_Unk27) as u32;
 
 /// `updateRot` (static) as a Fighter callback entry (`take_dmg_cb` / `death2_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_updateRot(g: *mut HSD_GObj) {
+    core::hint::black_box(0x5AC8854Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_updateRot");
     updateRot(g);
 }

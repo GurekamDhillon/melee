@@ -698,6 +698,7 @@ pub unsafe extern "C" fn lbColl_800067F8(a: *const Vec3, b: *const Vec3, c: *con
     !(sum_pq * sum_pq < distance_sq)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbColl_80006E58(
     hit_start: *const Vec3,
     hit_end: *const Vec3,
@@ -712,6 +713,7 @@ pub unsafe extern "C" fn lbColl_80006E58(
     hurt_radius: f32,
     broadphase_scale: f32,
 ) -> bool {
+    core::hint::black_box(0x906F50E4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbColl_80006E58");
     let broadphase_radius = fmadds(hurt_radius, broadphase_scale, hit_radius);
     let hs = *hit_start;
@@ -961,7 +963,9 @@ pub unsafe extern "C" fn lbColl_80007B78(a: *mut Fighter_x1614_t, b: *mut Fighte
     lbColl_800067F8(&(*b).x14, &(*b).x8, &(*a).x14, &(*a).x8, &raw mut (*b).x20, &raw mut (*a).x20, (*b).x0 * y, (*a).x0 * x)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbColl_80007BCC(arg0: *mut HitCapsule, shield_hit: *mut HitResult, arg2: *const Mtx, arg3: i32, arg4: f32, arg5: f32, arg6: f32) -> bool {
+    core::hint::black_box(0x099A09CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbColl_80007BCC");
     let mut sp74 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp68 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

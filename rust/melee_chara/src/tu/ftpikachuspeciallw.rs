@@ -228,7 +228,7 @@ pub fn ftPk_SpecialLwLoop0_Anim(gobj: G) {
     melee_core::ct!("ftPk_SpecialLwLoop0_Anim");
     unsafe {
         let fp = fpp(gobj);
-        if (*fp).mv.pk.specialhi.x4 == 3 || (*fp).cmd_vars[0] != 0 {
+        if (*fp).mv.pk.speciallw.x4 == 3 || (*fp).cmd_vars[0] != 0 {
             (*fp).take_dmg_cb = None;
             st::Fighter_ChangeMotionState(gobj, 362, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
             return;
@@ -254,7 +254,7 @@ pub fn ftPk_SpecialAirLwLoop0_Anim(gobj: G) {
     melee_core::ct!("ftPk_SpecialAirLwLoop0_Anim");
     unsafe {
         let fp = fpp(gobj);
-        if (*fp).mv.pk.specialhi.x4 == 3 || (*fp).cmd_vars[0] != 0 {
+        if (*fp).mv.pk.speciallw.x4 == 3 || (*fp).cmd_vars[0] != 0 {
             (*fp).take_dmg_cb = None;
             st::Fighter_ChangeMotionState(gobj, 366, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
             return;
@@ -506,10 +506,9 @@ pub fn ftPk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
         (*fp).x2210.throw_flags = 0_u32;
-        (*fp).mv.pk.specialhi.x4 = 1_i32;
-        (*fp).mv.pk.specialhi.x0 = 0_i32;
-        // the C writes the SpecialLw vars through the SpecialHi view (`x0` a 4-byte GObj pointer, `x4` the next word); natively `x0` is
-        // 8 bytes wide, so the SpecialLw view is set as well
+        // the C writes the SpecialLw vars through the SpecialHi view (`x0` the Thunder's 4-byte GObj pointer, `x4` the next
+        // word, the hit flag); natively `x0` is 8 bytes and covers specialhi.x4, so only the SpecialLw view is written
+        // (thunder_flag_set has the rest)
         (*fp).mv.pk.speciallw.x0 = core::ptr::null_mut();
         (*fp).mv.pk.speciallw.x4 = 1_i32;
         st::Fighter_ChangeMotionState(gobj, 359, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
@@ -524,10 +523,9 @@ pub fn ftPk_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
         (*fp).x2210.throw_flags = 0_u32;
-        (*fp).mv.pk.specialhi.x4 = 1_i32;
-        (*fp).mv.pk.specialhi.x0 = 0_i32;
-        // the C writes the SpecialLw vars through the SpecialHi view (`x0` a 4-byte GObj pointer, `x4` the next word); natively `x0` is
-        // 8 bytes wide, so the SpecialLw view is set as well
+        // the C writes the SpecialLw vars through the SpecialHi view (`x0` the Thunder's 4-byte GObj pointer, `x4` the next
+        // word, the hit flag); natively `x0` is 8 bytes and covers specialhi.x4, so only the SpecialLw view is written
+        // (thunder_flag_set has the rest)
         (*fp).mv.pk.speciallw.x0 = core::ptr::null_mut();
         (*fp).mv.pk.speciallw.x4 = 1_i32;
         st::Fighter_ChangeMotionState(gobj, 363, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
@@ -545,12 +543,25 @@ pub fn ftPk_SpecialAirLwLoop1_Phys_fp(fp: &mut Fighter) {
     co::calc_self_accel_deaccel_quick_air(fp);
 }
 
+/// The Thunder's hit flag, `specialhi.x4` in the C: the GameCube word fp+2344. The Thunder item sets it from its own
+/// callbacks, so Pikachu may be in any motion state. In the SpecialLw states that word is speciallw.x4 (native +8:
+/// speciallw.x0, the Thunder's pointer, is 8 bytes here); in any other state it is native +4, where every other view
+/// keeps it (co.turn.facing_after...). Writing both, as before, put the flag into the pointer's high half (the pointer
+/// read back as 0x3_81f8f7a0 after a hit) and into fp+2348 of the live view (co.turn.x8, the Turn IASA gate).
+fn thunder_flag_set(fp: &mut Fighter, v: i32) {
+    if (ftPk_MS_SpecialLwStart..=ftPk_MS_SpecialAirLwEnd).contains(&(fp.motion_id as ftPikachu_MotionState)) {
+        unsafe { fp.mv.pk.speciallw.x4 = v };
+    } else {
+        unsafe { fp.mv.pk.specialhi.x4 = v };
+    }
+}
+
 pub fn ftPk_SpecialLw_SetState_Unk0_fp(fp: &mut Fighter) {
     melee_core::ct!("ftPk_SpecialLw_SetState_Unk0_fp");
-    unsafe { fp.mv.pk.specialhi.x4 = 3; fp.mv.pk.speciallw.x4 = 3; /* same GC word */ };
+    thunder_flag_set(fp, 3);
 }
 
 pub fn ftPk_SpecialLw_SetState_Unk1_fp(fp: &mut Fighter) {
     melee_core::ct!("ftPk_SpecialLw_SetState_Unk1_fp");
-    unsafe { fp.mv.pk.specialhi.x4 = 0; fp.mv.pk.speciallw.x4 = 0; /* same GC word */ };
+    thunder_flag_set(fp, 0);
 }

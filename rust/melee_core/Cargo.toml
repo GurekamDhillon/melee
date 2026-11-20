@@ -16,6 +16,8 @@ calltrace = []
 disc = []
 # Tracy spans (src/tracy.rs, notes/profiling.md). Off by default; off = no code, no dependency.
 profile-tracy = ["dep:tracy-client"]
+# Union-drift checker (mvshadow.rs, tools/rust-port/mvshadow/instrument.py): an instrumented scratch build only.
+mvshadow = []
 
 [lints.rust]
 # workspace.lints is not inherited where a crate has its own table (rust/Cargo.toml: function identity)

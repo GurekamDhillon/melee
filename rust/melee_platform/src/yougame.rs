@@ -26,7 +26,7 @@ pub const QUIT_GRACE: Duration = Duration::from_millis(4000);
 /// no `join` / `notice` (not handled yet).
 pub const CAPS_STANDALONE: &str = r#"yg {"caps":["ready"]}"#;
 /// Caps in the player box (YOUGAME_EMBED=1): Shift+Tab goes to the page as overlay down/up. No `pads` (the pad
-/// mirror is not implemented), no `view` / `volume` (not implemented).
+/// relay `yg-pads`: the GameCube pads come from the pad mirror, adapter/yg_mirror.rs), no `view` / `volume`.
 pub const CAPS_EMBEDDED: &str = r#"yg {"caps":["ready","overlay"]}"#;
 /// The app's own line limit (StdioBridge: 48 MiB, a save file's base64 fits).
 pub const MAX_LINE: usize = 48 << 20;
@@ -117,6 +117,9 @@ fn apply_data_dir(d: &str) -> Vec<String> {
         ("MELEE_MODS_DIR", "mods", true),
         ("MELEE_NUCLEUS_DIR", "nucleus", true),
         ("MELEE_COSMETICS_DIR", "Cosmetics", true),
+        // Both default to beside the exe, which is read-only in the app: the pipeline cache and the Envoy run file.
+        ("MELEE_GPUCACHE", "gpucache", true),
+        ("MELEE_ENVOY_DIR", "envoy", true),
     ] {
         if std::env::var_os(key).is_some() {
             continue;
@@ -349,7 +352,24 @@ pub enum AppLine {
     Answer(i64),
     Push,
     PadRelay,
+    /// `{"push":{"type":"pads","handle":N}}`: the pad mirror's section handle (Windows), see adapter/yg_mirror.rs.
+    PadsHandle(u64),
     Ignored,
+}
+
+/// The pad mirror's section handle from the app's `pads` push (0: none yet). A later push (the app's controller
+/// helper restarted) replaces it; the adapter remaps on the change.
+static PADS_HANDLE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+pub fn pads_handle() -> u64 {
+    PADS_HANDLE.load(Ordering::SeqCst)
+}
+
+/// The integer after `"key":` in a JSON line (no nesting needed for the app's flat pushes).
+fn json_uint(j: &str, key: &str) -> Option<u64> {
+    let i = j.find(&format!("\"{key}\""))?;
+    let rest = j[i + key.len() + 2..].trim_start().strip_prefix(':')?.trim_start();
+    let n: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+    n.parse().ok()
 }
 
 pub fn parse_line(line: &str) -> AppLine {
@@ -373,6 +393,12 @@ pub fn parse_line(line: &str) -> AppLine {
             }
         }
         if j.contains("\"push\"") {
+            let compact: String = j.chars().filter(|c| !c.is_whitespace()).collect();
+            if compact.contains("\"type\":\"pads\"") {
+                if let Some(h) = json_uint(&compact, "handle").filter(|&h| h != 0) {
+                    return AppLine::PadsHandle(h);
+                }
+            }
             return AppLine::Push;
         }
     }
@@ -403,6 +429,11 @@ fn read_stdin<R: BufRead>(mut r: R) {
             }
             AppLine::Answer(id) => s.answers.lock().unwrap().push((id, line.to_string())),
             AppLine::Push => crate::plog!("yougame: push from the app (not handled yet): {}", line.chars().take(200).collect::<String>()),
+            AppLine::PadsHandle(h) => {
+                if PADS_HANDLE.swap(h, Ordering::SeqCst) != h {
+                    crate::plog!("yougame: pad mirror handle {h} from the app");
+                }
+            }
             AppLine::PadRelay | AppLine::Ignored => {}
         }
     }
@@ -424,6 +455,10 @@ mod tests {
         assert_eq!(parse_line(r#"yg {"push":{"type":"notice"}}"#), AppLine::Push);
         assert_eq!(parse_line(r#"yg-pads {"seq":1}"#), AppLine::PadRelay);
         assert_eq!(parse_line("hello"), AppLine::Ignored);
+        assert_eq!(parse_line(r#"yg {"push":{"type":"pads","handle":1234}}"#), AppLine::PadsHandle(1234));
+        assert_eq!(parse_line(r#"yg {"push": {"handle": 88, "type": "pads"}}"#), AppLine::PadsHandle(88));
+        // The POSIX form carries no handle: an ordinary push here.
+        assert_eq!(parse_line(r#"yg {"push":{"type":"pads","posix":{"version":1,"fd":6,"size":80}}}"#), AppLine::Push);
     }
     #[test]
     fn crash_and_fields() {

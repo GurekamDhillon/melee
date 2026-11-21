@@ -1,8 +1,10 @@
 {
   "version": 1,
-  "args": ["play", "--iso", "{disc}"],
+  "args": ["play", "--iso", "{disc}", "--brawl-files", "{disc:brawl:files}"],
   "disc": true,
-  "controllers": "none",
+  "discs": { "brawl": "optional" },
+  "embed": { "class": "MeleePortWindow", "title": "Melee Unlocked" },
   "net": "internet",
-  "memoryMb": 4096
+  "controllers": "mirror",
+  "memoryMb": 6144
 }

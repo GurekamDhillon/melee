@@ -18,6 +18,7 @@ pub mod linux_usb;
 pub mod win_hid;
 #[cfg(windows)]
 pub mod win_usb;
+pub mod yg_mirror;
 
 use crate::pad::*;
 use crate::plog;
@@ -179,7 +180,11 @@ impl Adapter {
     pub fn new_system() -> Self {
         #[cfg(windows)]
         let opener: Opener = Box::new(|| {
-            // WinUSB first (Zadig-bound adapters), then the HID class driver, as in the C.
+            // The YouGame app's pad mirror when it handed us one (its sandbox has no USB), then WinUSB (Zadig-bound
+            // adapters), then the HID class driver, as in the C.
+            if let Some(m) = yg_mirror::open() {
+                return Some(m as Arc<dyn Device>);
+            }
             if let Some(d) = win_usb::open() {
                 return Some(d as Arc<dyn Device>);
             }

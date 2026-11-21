@@ -435,11 +435,15 @@ fn decode_wave_info(d: &[u8], wi: usize, wave: &[u8], pitch: f32) -> Result<Pcm,
     Ok(interleave(chans, rate.max(1), looped.then(|| to_samples(loop_start))))
 }
 
-/// The local Brawl folder: `MELEE_BRAWL_LOCAL`, else the first `_build/brawl` found walking up from the working
-/// directory or the exe (the same search as the Petey model).
+/// The local Brawl folder: the app's dual-disc folder (`YOUGAME_DISC_BRAWL_FILES`, `{disc:brawl:files}`), else
+/// `MELEE_BRAWL_LOCAL`, else the first `_build/brawl` found walking up from the working directory or the exe
+/// (the same search as the Petey model).
 pub fn local_root() -> Option<PathBuf> {
     if std::env::var_os("MELEE_BRAWL_ABSENT").is_some() {
         return None;
+    }
+    if let Some(p) = std::env::var_os("YOUGAME_DISC_BRAWL_FILES") {
+        return Some(PathBuf::from(p));
     }
     if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
         return Some(PathBuf::from(p));
@@ -466,10 +470,17 @@ pub fn local_root() -> Option<PathBuf> {
     None
 }
 
-/// `disc/files/sound` under the local Brawl folder, if the archive is there.
+/// The Brawl sound folder under the local root, if the archive is there: `disc/files/sound` for an extracted
+/// disc (`_build/brawl`), or `files/sound` for the app's dual-disc folder (`{disc:brawl:files}`).
 pub fn sound_dir() -> Option<PathBuf> {
-    let d = local_root()?.join("disc").join("files").join("sound");
-    d.join(ARCHIVE).is_file().then_some(d)
+    let r = local_root()?;
+    for base in [r.join("disc").join("files"), r.join("files")] {
+        let d = base.join("sound");
+        if d.join(ARCHIVE).is_file() {
+            return Some(d);
+        }
+    }
+    None
 }
 
 pub const ARCHIVE: &str = "smashbros_sound.brsar";

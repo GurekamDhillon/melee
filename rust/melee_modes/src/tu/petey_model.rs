@@ -123,14 +123,14 @@ pub fn brawl_present() -> bool {
         if brawl_env().absent {
             return false; // test knob: behave as if the files were missing
         }
-        local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(STAGE).is_file())
+        local_root().is_some_and(|r| files_of(&r).join("stage").join("adventure").join(STAGE).is_file())
     })
 }
 
 /// Whether the owner's Brawl folder has adventure archive `name` (`MELEE_BRAWL_ABSENT`: as if missing).
 pub fn adventure_present(name: &str) -> bool {
     !brawl_env().absent
-        && local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(name).is_file())
+        && local_root().is_some_and(|r| files_of(&r).join("stage").join("adventure").join(name).is_file())
 }
 
 /// The owner's Brawl folder settings (`MELEE_BRAWL_ABSENT`, `MELEE_BRAWL_LOCAL` or a `_build/brawl` above the working
@@ -171,7 +171,22 @@ pub(crate) fn local_root() -> Option<PathBuf> {
     brawl_env().root.clone()
 }
 
+/// The Brawl disc's own file system under a local root: `disc/files` in an extracted `_build/brawl`, `files` in the
+/// YouGame app's unpacked DATA partition (`{disc:brawl:files}`).
+pub(crate) fn files_of(r: &Path) -> PathBuf {
+    let d = r.join("disc").join("files");
+    if d.is_dir() {
+        d
+    } else {
+        r.join("files")
+    }
+}
+
 fn find_root() -> Option<PathBuf> {
+    // The YouGame app's dual-disc folder (read-only, `files/...` at its top), as the sound reader takes it.
+    if let Some(p) = std::env::var_os("YOUGAME_DISC_BRAWL_FILES").filter(|p| !p.is_empty()) {
+        return Some(PathBuf::from(p));
+    }
     if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
         return Some(PathBuf::from(p));
     }
@@ -202,7 +217,7 @@ const STAGE: &str = "030101.pac";
 
 fn load() -> Result<Model, String> {
     let root = local_root().ok_or("no local Brawl folder")?;
-    let f = root.join("disc").join("files").join("stage").join("adventure").join(STAGE);
+    let f = files_of(&root).join("stage").join("adventure").join(STAGE);
     let raw = std::fs::read(&f).map_err(|e| format!("boss archive not readable ({})", e.kind()))?;
     let mut leaves = vec![];
     walk(&unwrap(raw), 0, &mut leaves);
@@ -315,7 +330,7 @@ pub fn load_rigs(rel: &[&str], wants: &[(&str, &str, &str)]) -> Result<Vec<Optio
 /// reads it as movement and holds it itself, `vm_boss_model.rs`).
 pub fn load_rigs_with(rel: &[&str], wants: &[(&str, &str, &str)], strip: bool) -> Result<Vec<Option<Rig>>, String> {
     let root = local_root().ok_or("no local Brawl folder")?;
-    let mut f = root.join("disc").join("files");
+    let mut f = files_of(&root);
     for p in rel {
         f = f.join(p);
     }
@@ -1898,7 +1913,7 @@ mod probe {
 /// `None` without them. Nothing is written anywhere and the path is never printed.
 pub fn pac_leaves(name: &str) -> Option<Vec<Vec<u8>>> {
     let root = local_root()?;
-    let raw = std::fs::read(root.join("disc").join("files").join("stage").join("adventure").join(name)).ok()?;
+    let raw = std::fs::read(files_of(&root).join("stage").join("adventure").join(name)).ok()?;
     let mut leaves = vec![];
     walk(&unwrap(raw), 0, &mut leaves);
     Some(leaves)
@@ -1907,7 +1922,7 @@ pub fn pac_leaves(name: &str) -> Option<Vec<Vec<u8>>> {
 /// [`pac_leaves`] with each leaf's (file type, file index) path through the archive tree.
 pub fn pac_leaves_tagged(name: &str) -> Option<(Vec<Vec<u8>>, Vec<Vec<(u16, u16)>>)> {
     let root = local_root()?;
-    let raw = std::fs::read(root.join("disc").join("files").join("stage").join("adventure").join(name)).ok()?;
+    let raw = std::fs::read(files_of(&root).join("stage").join("adventure").join(name)).ok()?;
     let (mut leaves, mut tags) = (vec![], vec![]);
     walk_tagged(&unwrap(raw), 0, &mut leaves, &mut vec![], Some(&mut tags));
     Some((leaves, tags))

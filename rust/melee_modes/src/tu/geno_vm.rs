@@ -60,7 +60,7 @@ fn read(name: &str) -> Result<Program, String> {
     }
     let &(_, stem, arc, h) = vm::FILES.iter().find(|f| f.0 == name).ok_or("not a VM boss / enemy")?;
     let root = local_root().ok_or("no local Brawl folder")?;
-    let adv = root.join("disc").join("files").join("stage").join("adventure");
+    let adv = crate::tu::petey_model::files_of(&root).join("stage").join("adventure");
     let leaf_of = |arc: &str, h: u64| -> Result<Vec<u8>, String> {
         let raw = std::fs::read(adv.join(arc)).map_err(|e| format!("archive not readable ({})", e.kind()))?;
         let mut ls = Vec::new();

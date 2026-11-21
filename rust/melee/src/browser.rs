@@ -488,6 +488,46 @@ impl RetailPlay {
     /// relaunches to the menus (MELEE_BOOT_MENU=1, no boot-mode options, no MELEE_SCENE) from anything a scene launch,
     /// a browser relaunch, a replay, netplay, a spectate or a recording set up: those carry run-wide state (the LAB's
     /// rollback mode, a feed, a session) that a scene switch cannot undo.
+    /// The Slippi online submenu's pick (`melee_modes::tu::slippi_online`, plan step 8): hand the run to our Slippi
+    /// netplay client, paired through matchmaking (`melee slippi-netplay --mm`). The matchmaking URL must be a local
+    /// server (the client refuses any other without `--mm-real`, which this path never passes). The account is a local
+    /// test identity from MELEE_SLIPPI_TEST_CODE: no Slippi user.json is read here. Until the connect-code screen
+    /// (step 7) is ported, Direct's opponent code comes from MELEE_SLIPPI_DIRECT_CODE.
+    pub(super) fn slippi_online_pick(&mut self) {
+        let Some(mode) = melee_modes::tu::slippi_online::take_pick() else { return };
+        let name = melee_modes::tu::slippi_online::mode_name(mode);
+        let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+        let (Some(url), Some(port), Some(code)) = (env("MELEE_SLIPPI_MM_URL"), env("MELEE_SLIPPI_NP_PORT"), env("MELEE_SLIPPI_TEST_CODE")) else {
+            return self.ui_status(1, &format!("online menu: {name} needs a matchmaking server (MELEE_SLIPPI_MM_URL, MELEE_SLIPPI_NP_PORT, MELEE_SLIPPI_TEST_CODE)"));
+        };
+        let mut args: Vec<String> = ["slippi-netplay", "--mm", &url, "--port", &port, "--code", &code].iter().map(|s| s.to_string()).collect();
+        match mode {
+            melee_modes::tu::slippi_online::MODE_DIRECT => {
+                let Some(theirs) = env("MELEE_SLIPPI_DIRECT_CODE") else {
+                    return self.ui_status(1, "online menu: Direct needs the opponent's code (MELEE_SLIPPI_DIRECT_CODE until the code screen is ported)");
+                };
+                args.extend(["--mm-mode".into(), "direct".into(), "--search".into(), theirs]);
+            }
+            // unranked against a local server only: the client refuses unranked without --mm-real, so this is refused
+            // there too until the local mock speaks unranked (later step)
+            _ => args.extend(["--mm-mode".into(), "unranked".into()]),
+        }
+        // test hooks: the match length, the per-frame checksum file and a hard time limit
+        for (k, e) in [("--frames", "MELEE_SLIPPI_NP_FRAMES"), ("--out", "MELEE_SLIPPI_NP_OUT"), ("--max-seconds", "MELEE_SLIPPI_NP_MAX_SECONDS")] {
+            if let Some(v) = env(e) {
+                args.extend([k.to_string(), v]);
+            }
+        }
+        log(&format!("online menu: {name}: relaunching into slippi-netplay (matchmaking, code {code})"));
+        let Ok(exe) = std::env::current_exe() else { return self.ui_status(1, "cannot find the game executable") };
+        let mut cmd = std::process::Command::new(exe);
+        cmd.args(&args).env_remove("MELEE_PAD_SCRIPT");
+        match cmd.spawn() {
+            Ok(_) => self.quit = true,
+            Err(e) => self.ui_status(1, &format!("online menu: relaunch failed: {e}")),
+        }
+    }
+
     pub(super) fn session_exit(&mut self) {
         if self.boot_menu && self.e.is_some() && matches!(self.cur.0 as u32, melee_types::GM_TITLE | melee_types::GM_OPENING_MV) {
             self.boot_menu = false;

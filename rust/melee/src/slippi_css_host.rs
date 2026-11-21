@@ -30,6 +30,23 @@ fn arg(a: &[String], k: &str) -> Option<String> {
     a.iter().position(|x| x == k).and_then(|i| a.get(i + 1)).cloned()
 }
 
+/// The last search's arguments, for a search again from the idle select (after a hold-Z disconnect).
+static LAST: Mutex<Option<(Vec<String>, i32)>> = Mutex::new(None);
+
+/// Once per tick: the idle select asked to search again (Start after a hold-Z disconnect).
+pub fn poll() {
+    if sc::take_search_again() {
+        let last = LAST.lock().ok().and_then(|l| l.clone());
+        match last {
+            Some((args, mode)) => {
+                eprintln!("online css: session: searching again");
+                start(args, mode);
+            }
+            None => eprintln!("online css: session: no search to repeat"),
+        }
+    }
+}
+
 /// Start searching. `args` are `play`'s `--slippi-*` options (the same the match used to take); `mode` the online
 /// menu's mode. The screen reads the state through `slippi_css::with`.
 pub fn start(args: Vec<String>, mode: i32) {
@@ -39,6 +56,7 @@ pub fn start(args: Vec<String>, mode: i32) {
         eprintln!("online css: session: the match is on its way; no new search");
         return;
     }
+    *LAST.lock().unwrap() = Some((args.clone(), mode));
     let search = arg(&args, "--slippi-search").unwrap_or_default();
     sc::begin(mode, &search);
     *HANDOFF.lock().unwrap() = None;
@@ -209,7 +227,12 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
                 cl.poll();
                 std::thread::sleep(Duration::from_millis(2));
             }
-            eprintln!("online css: session: {}, link closed", if sc::with(|o| o.disconnect) { "disconnected (hold Z)" } else { "cancelled" });
+            let z = sc::with(|o| o.disconnect);
+            eprintln!("online css: session: {}, link closed", if z { "disconnected (hold Z)" } else { "cancelled" });
+            if z {
+                // Hero: after the cleanup the select stays up, idle; Start there searches again
+                sc::go_idle();
+            }
             return Ok(false);
         }
         match cl.status {

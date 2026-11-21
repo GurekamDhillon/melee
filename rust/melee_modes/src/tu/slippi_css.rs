@@ -12,11 +12,13 @@
 //!
 //! Direct follows Hero's winner / loser rule: the loser of the last game (the first game: the player in slot 0) goes
 //! to the stage select on Start, picks, comes back and locks in with that stage; the winner locks in without one (the
-//! loser's stage stands). Connected, holding Z disconnects (`DISCONNECT_HOLD_DELAY`); locked in, the fighter can't be
+//! loser's stage stands). Connected, holding Z disconnects (`DISCONNECT_HOLD_DELAY`) and the select stays up, idle
+//! (Hero: the cleanup command, then `MU_SLP_MM_IDLE`); Start there searches again. Locked in, the fighter can't be
 //! unselected and the colour can't change (Hero `mu_slippi_css_block_unselect` / `_block_costume_change`).
 //!
-//! Not ported (noted for later): chat (`mu_slippi_chat.c`, SlippiCSS.dat), Teams' colour button, the SSS's legal-stage
-//! filter (a pick outside the online stage set fails at the match's setup).
+//! The loser's stage select picks only from Hero's online stage set (`ONLINE_STAGES`); Random draws from it too.
+//!
+//! Not ported (noted for later): chat (`mu_slippi_chat.c`, SlippiCSS.dat), Teams' colour button.
 
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
@@ -68,12 +70,14 @@ pub struct Online {
     pub to_sss: bool,
     /// Frames Z has been held while connected.
     pub z_hold: u16,
-    /// Hold-Z disconnect: the session drops the link, the screen goes back to the online menu.
+    /// Hold-Z disconnect: the session drops the link, the screen stays up, idle.
     pub disconnect: bool,
     /// Games played against this opponent before this one (0: the first).
     pub game: u32,
     /// Unselect / colour-change attempts refused while locked in (tests).
     pub refused: u32,
+    /// Idle after a hold-Z disconnect: Start (a fighter chosen) searches again (Hero's `MU_SLP_MM_IDLE` case).
+    pub search_again: bool,
 }
 
 pub static ONLINE: std::sync::Mutex<Online> = std::sync::Mutex::new(Online {
@@ -95,6 +99,7 @@ pub static ONLINE: std::sync::Mutex<Online> = std::sync::Mutex::new(Online {
     disconnect: false,
     game: 0,
     refused: 0,
+    search_again: false,
 });
 
 pub fn with<R>(f: impl FnOnce(&mut Online) -> R) -> R {
@@ -109,6 +114,26 @@ pub fn begin(mode: i32, search_code: &str) {
     with(|o| {
         *o = Online { mode, conn: CONN_INITIALIZING, search_code: search_code.to_string(), ..Default::default() };
     });
+}
+
+/// The link is closed after a hold-Z disconnect: the select stays up, idle (Hero `MU_SLP_MM_IDLE`), the fighter kept.
+pub fn go_idle() {
+    with(|o| {
+        let keep = (o.mode, o.search_code.clone());
+        *o = Online { mode: keep.0, conn: CONN_IDLE, search_code: keep.1, ..Default::default() };
+    });
+    eprintln!("online css: idle (disconnected); Start searches again");
+}
+
+/// Idle and Start was pressed: the host starts the search again (once).
+pub fn take_search_again() -> bool {
+    with(|o| {
+        let r = o.search_again && o.conn == CONN_IDLE;
+        if r {
+            o.search_again = false;
+        }
+        r
+    })
 }
 
 /// The screen left with both locked in: the host starts the match (once).
@@ -134,18 +159,40 @@ static mut STATES: [GameModeState; 3] = unsafe {
     ]
 };
 
+/// Hero's online stage set (`g_allowed_stages`, external ids): Fountain of Dreams, Pokemon Stadium, Yoshi's Story,
+/// Dream Land, Battlefield, Final Destination. The online stage select picks only these; the match's setup refuses others.
+pub const ONLINE_STAGES: [u16; 6] = [0x02, 0x03, 0x08, 0x1C, 0x1F, 0x20];
+pub fn stage_allowed(stage: u16) -> bool {
+    ONLINE_STAGES.contains(&stage)
+}
+
+/// The online stage select is on screen (the loser's pick).
+static ON_SSS: AtomicBool = AtomicBool::new(false);
+pub fn on_sss() -> bool {
+    ON_SSS.load(Ordering::Relaxed) && so::enabled()
+}
+
+/// A pick outside the online stage set, refused on the stage select.
+pub fn refused_stage(stage: u16) {
+    eprintln!("online css: stage {stage} is not in the online stage set: refused");
+}
+
 /// The stage select for the loser's pick: the select's players and rules go with it (`gmVsMelee_EnterSss`).
 unsafe extern "C" fn sss_prep(state: *mut GameModeState) {
     let sss = super::gm_1A3F::gm_GetGameModeStateEnterData(state) as *mut SSSData;
     (*sss).vs = CSS_DATA.vs;
     super::gm_1601::gm_80167FC4(sss);
+    ON_SSS.store(true, Ordering::Relaxed);
     eprintln!("online css: stage select (the loser's pick)");
 }
 
 /// The pick (Hero's SSS lock-in callback): the stage is kept and the select comes back, which locks in with it.
 unsafe extern "C" fn sss_decide(state: *mut GameModeState) {
     let sss = super::gm_1A3F::gm_GetGameModeStateExitData(state) as *mut SSSData;
+    ON_SSS.store(false, Ordering::Relaxed);
     let picked = if (*sss).start_game != 0 { Some((*sss).vs.start.rules.stkind as u16) } else { None };
+    // never outside the online set (the select refuses those; anything else is dropped and picked again)
+    let picked = picked.filter(|&s| stage_allowed(s));
     with(|o| {
         o.to_sss = false;
         o.chose_stage = picked;
@@ -211,11 +258,6 @@ unsafe extern "C" fn css_decide(state: *mut GameModeState) {
         eprintln!("online css: the loser goes to the stage select");
         return;
     }
-    if disconnect {
-        eprintln!("online css: disconnected (hold Z), back to the online menu");
-        super::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(GM_MENU as i32);
-        return;
-    }
     if (*css).pending_scene_change == 2 {
         with(|o| o.cancel = true);
         eprintln!("online css: cancelled, back to the online menu");
@@ -244,10 +286,24 @@ pub unsafe fn inputs(trigger: u32, held: u32, ready: bool, ck: i8, color: u8) ->
     if trigger & START != 0 && !local {
         eprintln!("online css: Start (connection {conn}, fighter chosen {ready}, fighter {ck})");
     }
+    if conn == CONN_IDLE {
+        // Hero's MU_SLP_MM_IDLE case: Start with a fighter chosen searches again (the host restarts the session)
+        if trigger & START != 0 && ready && ck >= 0 {
+            with(|o| {
+                if !o.search_again {
+                    o.search_again = true;
+                    o.winner = WINNER_NULL;
+                    o.chose_stage = None;
+                    eprintln!("online css: idle: Start, searching again");
+                }
+            });
+        }
+        return trigger & !START;
+    }
     if conn != CONN_SUCCESS {
         return trigger & !START;
     }
-    // connected: hold Z to disconnect (the session drops the link; the screen goes back to the online menu)
+    // connected: hold Z to disconnect (the session drops the link; the screen stays up, idle)
     let gone = with(|o| {
         if o.disconnect {
             return false;
@@ -266,8 +322,8 @@ pub unsafe fn inputs(trigger: u32, held: u32, ready: bool, ck: i8, color: u8) ->
         false
     });
     if gone {
+        // Hero: the cleanup command (0xBA, the Z reason); the select stays up and goes idle once the link is closed
         eprintln!("online css: hold Z: disconnecting");
-        super::mnmain::ext::gm_801A4B60();
         return trigger & !START;
     }
     if local && remote && ready {
@@ -327,7 +383,9 @@ pub fn panel_lines(o: &Online) -> [String; LINES] {
     let opp = if !o.opp_code.is_empty() { o.opp_code.clone() } else if o.mode == so::MODE_DIRECT && !o.search_code.is_empty() { o.search_code.clone() } else { "opponent".into() };
     let mode = format!("Slippi {}", so::mode_name(o.mode));
     let status = match o.conn {
-        CONN_IDLE | CONN_INITIALIZING => "Starting...".to_string(),
+        CONN_IDLE if o.search_again => "Starting...".to_string(),
+        CONN_IDLE => "Disconnected. Press START to search".to_string(),
+        CONN_INITIALIZING => "Starting...".to_string(),
         CONN_MATCHMAKING => format!("Searching for {opp}"),
         CONN_OPPONENT_CONNECTING => format!("Connecting to {opp}"),
         CONN_SUCCESS if o.local_ready && !o.remote_ready => format!("Waiting on {opp}"),
@@ -391,6 +449,9 @@ mod tests {
         assert_eq!(panel_lines(&u)[1], "Searching for opponent");
         let e = Online { mode: so::MODE_UNRANKED, conn: CONN_ERROR, error: "x".into(), ..Default::default() };
         assert_eq!(panel_lines(&e)[1], "Error: x");
+        let idl = Online { mode: so::MODE_DIRECT, conn: CONN_IDLE, ..Default::default() };
+        assert_eq!(panel_lines(&idl)[1], "Disconnected. Press START to search");
+        assert!(stage_allowed(0x1F) && stage_allowed(0x02) && !stage_allowed(0x15) && !stage_allowed(0));
         let long = Online { conn: CONN_ERROR, error: "bind: Only one usage of each socket address (protocol/network address/port)".into(), ..Default::default() };
         assert!(panel_lines(&long)[1].len() <= 43);
     }

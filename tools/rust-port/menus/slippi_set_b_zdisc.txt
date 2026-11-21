@@ -42,3 +42,6 @@
 # hold Z: disconnect
 90 0010 0 0
 300 0000 0 0
+# idle on the select (Hero's MU_SLP_MM_IDLE): Start searches again
+2 1000 0 0
+200 0000 0 0

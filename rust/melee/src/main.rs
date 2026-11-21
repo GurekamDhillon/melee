@@ -57,6 +57,7 @@ mod retail_flow;
 mod envoy_fx;
 mod audio;
 mod stage_anim;
+mod frametime;
 mod slpcheck;
 mod snap;
 mod fighter_fields;

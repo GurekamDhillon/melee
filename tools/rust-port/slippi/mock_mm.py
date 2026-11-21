@@ -12,7 +12,7 @@ and the engines run with `--mm-lan` (docs/rust-port/notes/linux.md, cross-OS net
 Point Slippi Dolphin at it with SLIPPI_MM_URL=ws://127.0.0.1:43110/v1/queue (and SLIPPI_LOCAL_TEST=1, the local Dolphin
 patch). The protocol is the one in Externals/SlippiRustExtensions/matchmaking (protocol.rs, client.rs) and
 SlippiMatchmaking.cpp's match handler: `join` -> `joined{ticketId, token}` and `status` every 2 s; once two `join`s
-are queued (any mode, any code) both get `match{matchId, isHost, players[...], stages}`.
+are queued (Direct with matching codes, or Unranked from 127.0.0.1 only; Ranked is refused) both get `match{matchId, isHost, players[...], stages}`.
 
 The relay: each player is told its opponent is at 127.0.0.1:<relay port>, and the relay forwards datagrams between the
 two real netplay ports, so both ENet peers talk through it unchanged. Every datagram is appended to the capture file as
@@ -141,6 +141,12 @@ class Server:
                 if kind == "join":
                     n += 1
                     user = msg.get("user", {})
+                    # unranked (mode 1) only between players on this machine (127.0.0.1); ranked (0) never
+                    mode = msg.get("search", {}).get("mode")
+                    if mode == 0 or (mode == 1 and msg["_peer_ip"] != LOOP):
+                        log(f"join refused: mode {mode} from {msg['_peer_ip']}")
+                        c.send({"type": "error", "error": "mode not offered by the local mock"})
+                        continue
                     log(f"join from {user.get('connectCode')} mode {msg.get('search', {}).get('mode')} "
                         f"port {msg.get('port')} lan {msg.get('ipAddressLan')} appVersion {msg.get('appVersion')} "
                         f"keys {sorted(msg.keys())}")

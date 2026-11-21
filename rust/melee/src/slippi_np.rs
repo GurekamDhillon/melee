@@ -133,9 +133,11 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
         }
         let mode = match arg(args, "--mm-mode").as_deref() {
             None | Some("direct") => 2,
-            Some("unranked") if real => 1,
+            // unranked: Slippi's real server (--mm-real, the join-and-leave check) or a local mock on 127.0.0.1 only
+            // (`Target::Loopback` refuses any other address); never over --mm-lan
+            Some("unranked") if real || !lan => 1,
             Some(m) => {
-                return Err((2, format!("--mm-mode {m}: only direct (or unranked with --mm-real, for a join-and-leave check); never ranked")));
+                return Err((2, format!("--mm-mode {m}: only direct, or unranked with --mm-real or a loopback mock; never ranked")));
             }
         };
         let req = melee_net::slippi_mm::JoinRequest {

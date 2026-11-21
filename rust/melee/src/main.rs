@@ -70,6 +70,7 @@ mod netmatch;
 mod netplay;
 mod slippi_css_host;
 mod slippi_np;
+mod yougame_search;
 mod play_net;
 mod slp_export;
 mod spectate;

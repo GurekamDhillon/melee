@@ -511,7 +511,13 @@ impl RetailPlay {
                     Some(theirs) => args.extend(["--slippi-mm-mode".into(), "direct".into(), "--slippi-search".into(), theirs]),
                     None => return self.ui_status(1, "online menu: Direct needs the code screen (not ported yet)"),
                 },
-                melee_modes::tu::slippi_online::MODE_UNRANKED => args.extend(["--slippi-mm-mode".into(), "unranked".into()]),
+                melee_modes::tu::slippi_online::MODE_UNRANKED => {
+                    args.extend(["--slippi-mm-mode".into(), "unranked".into()]);
+                    // Hero's yougame_mode_policy: in YouGame mode Unranked with a Slippi login searches both pools
+                    if melee_platform::yougame::active() && melee_platform::yougame_mm::matchmaking_route(mode, true, true, false, false, true) == melee_platform::yougame_mm::Route::Blend {
+                        args.extend(["--slippi-route".into(), "blend".into()]);
+                    }
+                }
                 _ => return self.ui_status(1, &format!("online menu: {name} is not offered yet")),
             }
             log(&format!("online menu: {name}: Slippi matchmaking with the granted login, the online select meanwhile"));
@@ -520,26 +526,30 @@ impl RetailPlay {
         // Hero's yougame_mode_policy (melee_platform::yougame_mm::matchmaking_route): in YouGame mode without a granted
         // login Direct / Teams / Party are Locked, and Unranked goes to YouGame's own queue (mpTicket through the app
         // bridge, on a thread: the answer can take 30 s). Never Slippi's servers from here.
-        if melee_platform::yougame::active() && !agent {
+        // Tests: MELEE_YOUGAME_TEST_SLIPPI_LOGIN=1 stands in for a granted login, with the local Slippi mock
+        // (MELEE_SLIPPI_MM_URL; loopback only) as Slippi's pool: an agent run may then take the YouGame route too, whose
+        // rooms URL must also be loopback (yougame_search::target).
+        let test_login = env("MELEE_YOUGAME_TEST_SLIPPI_LOGIN").is_some_and(|v| v == "1") && env("MELEE_SLIPPI_MM_URL").is_some();
+        let yg_route = if melee_platform::yougame::active() && (!agent || test_login) {
             use melee_platform::yougame_mm as ym;
-            let route = ym::matchmaking_route(mode, true, false, false, false, true);
-            if route == ym::Route::Locked {
+            let route = ym::matchmaking_route(mode, true, test_login, false, false, true);
+            if route == ym::Route::Locked || (route == ym::Route::Slippi && !test_login) {
                 return self.ui_status(1, &format!("online menu: {name} needs your Slippi login (allow it on the game's page)"));
             }
-            log(&format!("online menu: {name}: YouGame's queue ({:?})", route));
-            std::thread::spawn(move || {
-                let s = ym::start_search(&mut ym::StdioBridge, mode, false, false, true, concat!("gd-melee-rust/", env!("CARGO_PKG_VERSION")));
-                match s.ticket {
-                    Some(Ok(t)) => log(&format!("yougame: {name}: ticket for room {} ({}); the rooms client is the next step", t.room.as_deref().unwrap_or("-"), s.status)),
-                    Some(Err(e)) => log(&format!("yougame: {name}: {e}")),
-                    None => {}
-                }
-            });
-            melee_modes::tu::slippi_css::with(|o| {
-                o.conn = melee_modes::tu::slippi_css::CONN_MATCHMAKING;
-                o.opp_code.clear();
-            });
-            return self.ui_status(0, &format!("{name}: {}", ym::SEARCH_YOUGAME_ONLY));
+            log(&format!("online menu: {name}: {:?} ({})", route, if route == ym::Route::Blend { ym::SEARCH_BOTH } else { ym::SEARCH_YOUGAME_ONLY }));
+            Some(match route {
+                ym::Route::Blend => "blend",
+                ym::Route::YouGame => "yougame",
+                _ => "slippi",
+            })
+        } else {
+            None
+        };
+        if let (Some(r), None) = (yg_route, env("MELEE_SLIPPI_MM_URL")) {
+            // YouGame's rooms alone: no Slippi pool to name
+            let port = env("YOUGAME_SLIPPI_UDP_PORT").or_else(|| env("MELEE_SLIPPI_NP_PORT")).unwrap_or_else(|| "51441".into());
+            let args: Vec<String> = ["--slippi-port", &port, "--slippi-route", r].iter().map(|s| s.to_string()).collect();
+            return crate::slippi_css_host::start(args, mode);
         }
         let (Some(url), Some(port), Some(code)) = (env("MELEE_SLIPPI_MM_URL"), env("MELEE_SLIPPI_NP_PORT"), env("MELEE_SLIPPI_TEST_CODE")) else {
             return self.ui_status(1, &format!("online menu: {name} needs a matchmaking server (MELEE_SLIPPI_MM_URL, MELEE_SLIPPI_NP_PORT, MELEE_SLIPPI_TEST_CODE)"));
@@ -558,6 +568,9 @@ impl RetailPlay {
         }
         if let Some(v) = env("MELEE_SLIPPI_NP_MAX_SECONDS") {
             args.extend(["--slippi-max-seconds".to_string(), v]);
+        }
+        if let Some(r) = yg_route {
+            args.extend(["--slippi-route".into(), r.into()]);
         }
         log(&format!("online menu: {name}: matchmaking as {code}, the online select meanwhile"));
         crate::slippi_css_host::start(args, mode);

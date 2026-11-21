@@ -21,6 +21,17 @@ use std::collections::{BTreeMap, VecDeque};
 use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
+/// `k`'s value in `args` (for `yougame_search`).
+pub fn arg_value(args: &[String], k: &str) -> Option<String> {
+    arg(args, k)
+}
+
+/// [`pair`], ended early (`Err((0, "Cancelled"))`) once `stop` is set: checked on each matchmaking message (the
+/// server's status every 2 s), when the search closes its connection.
+pub fn pair_cancellable(args: &[String], max_s: u64, stop: &std::sync::atomic::AtomicBool) -> Result<Paired, LinkErr> {
+    pair_with(args, max_s, Some(stop))
+}
+
 fn arg(args: &[String], k: &str) -> Option<String> {
     args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned()
 }
@@ -109,6 +120,11 @@ pub struct Paired {
 
 /// The matchmaking half of [`establish`]: no netplay connection yet (the online CSS holds its own, `slippi_css`).
 pub fn pair(args: &[String], max_s: u64) -> Result<Paired, LinkErr> {
+    pair_with(args, max_s, None)
+}
+
+fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::AtomicBool>) -> Result<Paired, LinkErr> {
+    let stopped = || stop.is_some_and(|s| s.load(std::sync::atomic::Ordering::SeqCst));
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
     // --mm ws://127.0.0.1:P/v1/queue: be paired through a (local mock) matchmaking server, as Slippi Dolphin is;
     // otherwise direct: --host|--join with --peer
@@ -178,7 +194,7 @@ pub fn pair(args: &[String], max_s: u64) -> Result<Paired, LinkErr> {
         // --mm-leave-after-joined: close as soon as the server has accepted the join (the unranked check: never stays
         // queued long enough to be matched on purpose)
         let leave_early = args.iter().any(|a| a == "--mm-leave-after-joined");
-        let leave = |t: &str| leave_early && melee_net::slippi_mm::Json::parse(t).is_some_and(|j| j.get("type").and_then(|v| v.str()) .is_some_and(|t| t == "joined" || t == "create-ticket-resp"));
+        let leave = |t: &str| stopped() || leave_early && melee_net::slippi_mm::Json::parse(t).is_some_and(|j| j.get("type").and_then(|v| v.str()) .is_some_and(|t| t == "joined" || t == "create-ticket-resp"));
         let target = if real {
             melee_net::slippi_mm::Target::Real
         } else if lan {
@@ -194,6 +210,10 @@ pub fn pair(args: &[String], max_s: u64) -> Result<Paired, LinkErr> {
             melee_net::slippi_mm::join_to(&url, &req, Duration::from_secs(max_s), target, shown, leave)
         };
         let m = match res {
+            Err(e) if e == "left" && stopped() => {
+                eprintln!("melee: mm: search cancelled (the other pool matched first, or the player left)");
+                return Err((0, "Cancelled".into()));
+            }
             Err(e) if e == "left" => {
                 return Err((0, format!("matchmaking: accepted (joined), left the queue at once")));
             }

@@ -7,6 +7,7 @@
 use melee_modes::tu::slippi_css as sc;
 use melee_net::slippi::{Client, Note, Selections, Status};
 use melee_net::transport::UdpTransport;
+use melee_platform::yougame_mm as ym;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -43,6 +44,10 @@ fn run(args: &[String]) -> Result<(), String> {
     let mut sub: Vec<String> = Vec::new();
     let mut i = 0;
     while i < args.len() {
+        if args[i] == "--slippi-route" {
+            i += 2;
+            continue;
+        }
         if let Some(k) = args[i].strip_prefix("--slippi-") {
             sub.push(format!("--{k}"));
             if k != "mm-real" && k != "mm-lan" {
@@ -57,7 +62,26 @@ fn run(args: &[String]) -> Result<(), String> {
     let max_s: u64 = arg(&sub, "--max-seconds").and_then(|v| v.parse().ok()).unwrap_or(600);
     let port: u16 = arg(&sub, "--port").and_then(|v| v.parse().ok()).unwrap_or(0);
     sc::with(|o| o.conn = sc::CONN_MATCHMAKING);
-    let p = crate::slippi_np::pair(&sub, max_s).map_err(|(_, m)| m)?;
+    // --slippi-route yougame|blend (from the online menu in YouGame mode): YouGame's rooms, or both pools
+    let route = match arg(args, "--slippi-route").as_deref() {
+        Some("yougame") => ym::Route::YouGame,
+        Some("blend") => ym::Route::Blend,
+        _ => ym::Route::Slippi,
+    };
+    let agent = std::env::var_os("MELEE_PAD_SCRIPT").is_some() || std::env::var("MELEE_WINDOW_HIDDEN").is_ok_and(|v| v == "1");
+    let mode = sc::with(|o| o.mode);
+    let found = crate::yougame_search::pair(route, mode, &sub, max_s, agent, &|| sc::with(|o| o.cancel), &|s| eprintln!("online css: session: {s}"));
+    let found = match found {
+        Err(e) if e == "Cancelled" => {
+            eprintln!("online css: session: search cancelled");
+            return Ok(());
+        }
+        r => r?,
+    };
+    eprintln!("online css: session: the opponent came from {}", found.side.name());
+    // the room stays open while the select is up (dropped with the session: the match runs in the relaunched window)
+    let _room = found.room;
+    let p = found.paired;
     if sc::with(|o| o.cancel) {
         eprintln!("online css: session: cancelled after matchmaking");
         return Ok(());

@@ -596,3 +596,30 @@ matches both (a 2-frame game, 126 oracle frames); 134017 207 -> 8718 (oracle: s2
 `anim_id` at 8718, an input-class difference, not a hit), 123832 368 -> 5344 (.slp) / 1989 (oracle: s3 Nana
 `cpu.lstick.y`, the Nana CPU class). Singles sample (every singles file off the six stages plus 40 across them):
 42 -> 43 of 47 (152343), none worse. What is left in the 4-player set: x 55, stocks 43, percent 2.
+
+## Round 12 (port/gangfix): three late Gang-Steals divergences are the oracle's own RNG
+
+Three 1.7.1 files where the oracle diverges from the engine late (37/095327 s0 motion 88 vs 91 at slippi 880;
+16/120216 s2 91 vs 88 at 5062; 35/161328 Yoshi's Story Shy Guys at 2030, one at y 30 in Rust, four at y 43-45 in
+Dolphin) are not engine bugs.
+
+- **The console's run had already left the replay.** slpcheck's first divergence is earlier in each file (848 P3 x,
+  1034 P4 x, 944 P4 facing), and on those frames Dolphin equals the engine on every NHV1 word. Both differ from the
+  recorded Post-Frame: a recording-console-only divergence, as in round 9's table.
+- **The later difference is a random draw.** DamageFlyN (88) vs DamageFlyRoll (91) is `HSD_Randf() < x240` in
+  `ftCo_8008DCE0`; the Shy Guy group's count and height are stage draws. slpcheck reseeds from each Pre-Frame seed;
+  playback with `shouldResync=false` does not. Stepping HSD_Rand's LCG from each side's end-of-frame seed to
+  the recorded Pre-Frame seed of the divergent frame: the engine reaches it in 12, 0 and 8 steps (render draws);
+  Dolphin's seed takes 161 steps in 37/095327 and does not reach it within 100,000 steps in the other two. Dolphin's
+  RNG is off the recording's sequence, so its draws are not the console's; the engine's are.
+- So all three are **recording console only** at their slpcheck frame, and the oracle frame is a seed artifact.
+
+Tags for the 20 Gang-Steals representatives (slpcheck frame / oracle):
+
+| class | files |
+|---|---|
+| recording console only (oracle matches, or equals the engine past slpcheck's frame) | 21/173910, 21/174128, 23/125526, 31/093122, 11/145555, 15/154735, 37/095327, 16/120216, 35/161328, 21/145522, 32/103305, 6/121452 |
+| oracle unusable (differs from frame -123 in `coll_data` / CPU block / `x20A4`) | 12/131709, 16/112859, 7/135147, 17/103021, 19/121044, 36/142655, 4/111642, 30/010411 (left alone) |
+
+21/145522, 32/103305 and 6/121452 differ from the engine ~100 frames after slpcheck's frame (CPU scratch / seed
+fields first), the same late class as the three above.

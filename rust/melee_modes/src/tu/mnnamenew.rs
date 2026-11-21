@@ -2179,6 +2179,10 @@ pub unsafe extern "C" fn mnNameNew_MainInput(mut arg0: *mut HSD_GObj) {
         mnNameNew_GlyphVariantInput(arg0);
         return;
     }
+    if super::slippi_online::code_entry_active() {
+        super::slippi_online::code_input();
+        return;
+    }
     mn_804A04F0.buttons = mn_80229624(mnNameNew_PortInUse as u32) as u64;
     buttons = mn_804A04F0.buttons as u32;
     n = 0 as i32;

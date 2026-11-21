@@ -497,7 +497,8 @@ impl RetailPlay {
         const SLIPPI_MM_REAL: &str = "wss://matchmaking.slippi.gg/v1/queue";
         let Some(mode) = melee_modes::tu::slippi_online::take_pick() else { return };
         let name = melee_modes::tu::slippi_online::mode_name(mode);
-        let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+        let typed = melee_modes::tu::slippi_online::take_direct_code();
+        let env = |k: &str| if k == "MELEE_SLIPPI_DIRECT_CODE" && typed.is_some() { typed.clone() } else { std::env::var(k).ok().filter(|v| !v.is_empty()) };
         // Slippi's real matchmaking only with a login the YouGame app granted (YOUGAME_SLIPPI_USER_JSON: the path of
         // the player's Slippi sign-in file, Hero's `account::app_sign_in`), never in an agent or scripted run (hidden
         // window, pad script, or a local mock named). Its fields are read by `establish` and never printed.

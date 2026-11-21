@@ -1168,6 +1168,11 @@ pub unsafe extern "C" fn mnName_MainInput(mut arg0: *mut HSD_GObj) {
 }
 pub unsafe extern "C" fn fn_80238540(mut gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_80238540");
+    // Slippi Direct's connect-code entry opens the keyboard through this screen (slippi_online, plan step 7)
+    if mn_804A04F0.x10 == 0 && super::slippi_online::code_entry_pending() {
+        super::slippi_online::code_entry_from_names();
+        return;
+    }
     match mn_804A04F0.x10 as s32 {
         0 => {
             mnName_MainInput(gobj);

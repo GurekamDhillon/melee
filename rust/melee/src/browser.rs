@@ -603,6 +603,19 @@ impl RetailPlay {
             }
         }
         log("online select: both locked in, the match in the game window");
+        if crate::room_keeper::active() {
+            // a YouGame room: this process keeps it through the match, the match process reports to it
+            let report = crate::room_keeper::report_path();
+            let _ = std::fs::remove_file(&report);
+            self.room_report = Some(report.clone());
+            if let Some(child) = self.relaunch(&args, None, false, "the Slippi match") {
+                crate::room_keeper::attach(child, report);
+            } else {
+                crate::room_keeper::close();
+            }
+            self.room_report = None;
+            return;
+        }
         self.relaunch(&args, None, false, "the Slippi match");
     }
 
@@ -632,7 +645,7 @@ impl RetailPlay {
         self.relaunch(&[], None, true, "the main menu");
     }
 
-    fn relaunch(&mut self, extra: &[String], scene: Option<&str>, to_menu: bool, what: &str) {
+    fn relaunch(&mut self, extra: &[String], scene: Option<&str>, to_menu: bool, what: &str) -> Option<std::process::Child> {
         let mut args: Vec<String> = Vec::new();
         let cur: Vec<String> = std::env::args().skip(1).collect();
         let mut i = 0;
@@ -665,9 +678,12 @@ impl RetailPlay {
             if to_menu {
                 self.quit = true;
             }
-            return;
+            return None;
         }
-        let Ok(exe) = std::env::current_exe() else { return self.ui_status(1, "cannot find the game executable") };
+        let Ok(exe) = std::env::current_exe() else {
+            self.ui_status(1, "cannot find the game executable");
+            return None;
+        };
         let mut cmd = std::process::Command::new(exe);
         cmd.args(&args).env_remove("MELEE_PAD_SCRIPT");
         if to_menu {
@@ -679,16 +695,21 @@ impl RetailPlay {
             Some(s) => cmd.env("MELEE_SCENE", s),
             None => cmd.env_remove("MELEE_SCENE"),
         };
+        if let Some(r) = &self.room_report {
+            cmd.env("MELEE_ROOM_REPORT", r);
+        }
         match cmd.spawn() {
-            Ok(_) => {
+            Ok(c) => {
                 self.ui_status(2, &format!("relaunching for {what}:{env} melee {}", shown.join(" ")));
                 self.quit = true;
+                Some(c)
             }
             Err(e) => {
                 self.ui_status(1, &format!("relaunch failed: {e}"));
                 if to_menu {
                     self.quit = true;
                 }
+                None
             }
         }
     }

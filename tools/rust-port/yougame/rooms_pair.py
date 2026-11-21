@@ -10,6 +10,7 @@ matchmaking (the local mock), as Hero's blend does it. Loopback only; test ident
   fake rooms service pairs them: the match must come from YouGame's pool.
 --case slippi: A is under the fake app with the test login (the blend); B is a plain Slippi-menu player on the mock.
   A is alone in YouGame's queue, so the blend searches Slippi's pool too and the mock pairs A with B.
+--case quit: as yougame, but B's match quits at online frame 300 (MELEE_SLIPPI_NP_QUIT_AT): the room hears void.
 --case cancel: A alone, blended; it cancels at the online select (B on the select): both searches end, the queue
   hears `cancel`, nothing is paired.
 Both peers walk the menus by pad script to the online select (tools/rust-port/menus/slippi_online*_css.txt), lock in,
@@ -23,7 +24,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 sys.path.insert(0, str(HERE))
-from fake_rooms import Rooms, App  # noqa: E402
+from fake_rooms import Rooms, App, Stun  # noqa: E402
 
 
 def env_file():
@@ -43,8 +44,9 @@ def env_file():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("out")
-    ap.add_argument("--case", choices=["yougame", "slippi", "cancel"], required=True)
+    ap.add_argument("--case", choices=["yougame", "slippi", "cancel", "quit"], required=True)
     ap.add_argument("--frames", type=int, default=900)
+    ap.add_argument("--dead-lan", action="store_true", help="publish a dead lan address: the punch must use ext")
     ap.add_argument("--rooms-port", type=int, default=43190)
     ap.add_argument("--mm-port", type=int, default=43175)
     ap.add_argument("--exe", default=str(REPO / "build" / "cargo" / os.environ.get("PROFILE", "fast") / "melee.exe"))
@@ -55,6 +57,7 @@ def main():
         (out / f).unlink(missing_ok=True)
     logf = open(out / "harness.log", "w")
     rooms = Rooms(a.rooms_port, logf).start()
+    stun = Stun(a.rooms_port + 1, logf).start()
     mm = subprocess.Popen([sys.executable, "-I", str(REPO / "tools/rust-port/slippi/mock_mm.py"), "--port", str(a.mm_port)],
                           stdout=open(out / "mm.log", "w"), stderr=subprocess.STDOUT)
     time.sleep(1.5)
@@ -67,11 +70,17 @@ def main():
 
     def spawn(name, yougame, script, np_port, code, csv):
         e = dict(base)
+        if a.case == "quit" and name == "B":
+            e["MELEE_SLIPPI_NP_QUIT_AT"] = "300"
         e.update(MELEE_WINDOW_TITLE=f"slippimenu:{name}:rooms-{a.case}", MELEE_PAD_SCRIPT=str(menus / script),
                  MELEE_SLIPPI_NP_PORT=str(np_port), MELEE_SLIPPI_TEST_CODE=code, MELEE_SLIPPI_NP_OUT=str(out / csv))
         if yougame:
             data = out / f"ygdata-{name}"
             data.mkdir(exist_ok=True)
+            # NAT traversal on loopback: the fake STUN server, and (--dead-lan) a dead `lan` so only `ext` can work
+            e.update(MELEE_YOUGAME_STUN=f"127.0.0.1:{a.rooms_port + 1}")
+            if a.dead_lan:
+                e.update(MELEE_YOUGAME_TEST_DEAD_LAN="1")
             e.update(YOUGAME_STDIO="1", YOUGAME_DATA=str(data), MELEE_YOUGAME_NO_WATCHDOG="1", MELEE_YOUGAME_TEST_SLIPPI_LOGIN="1")
         p = subprocess.Popen([a.exe, "play", "--skip-intro", "--max-frames", "3000", "--slippi-menus", "on"],
                              cwd=str(REPO / "rust"), env=e, stdin=subprocess.PIPE,
@@ -86,15 +95,15 @@ def main():
         procs.append(spawn("A", True, "slippi_online_unranked_css_cancel.txt", a.mm_port + 100, "AAAA#001", "a.csv"))
     else:
         procs.append(spawn("A", True, "slippi_online_unranked_css.txt", a.mm_port + 100, "AAAA#001", "a.csv"))
-        time.sleep(1.0 if a.case == "yougame" else 0.2)
-        procs.append(spawn("B", a.case == "yougame", "slippi_online_b_unranked_css.txt", a.mm_port + 101, "BBBB#002", "b.csv"))
+        time.sleep(0.2 if a.case == "slippi" else 1.0)
+        procs.append(spawn("B", a.case != "slippi", "slippi_online_b_unranked_css.txt", a.mm_port + 101, "BBBB#002", "b.csv"))
     for p in procs:
         try:
             p.wait(timeout=240)
         except subprocess.TimeoutExpired:
             p.kill()
     verdict = ""
-    if a.case != "cancel":
+    if a.case not in ("cancel", "quit"):
         # the match windows (relaunched children) write the CSVs; bounded wait
         until = time.time() + 240
         while time.time() < until:
@@ -115,6 +124,7 @@ def main():
         time.sleep(2)
     mm.kill()
     errs = "".join((out / f).read_text(errors="replace") for f in ("A-menu.err", "B-menu.err") if (out / f).exists())
+    print(f"fake STUN answered {stun.answered} binding requests")
     keys = ("online search", "unranked blend", "yougame:", "online css", "online menu")
     for line in errs.splitlines():
         if any(k in line for k in keys):
@@ -122,6 +132,16 @@ def main():
     for line in rooms.events:
         print(line)
     print([l for l in (out / "mm.log").read_text(errors="replace").splitlines() if "match" in l][:3])
+    # the room through the match (room_keeper): begin -> start -> finish(winner | void) -> result; one search each
+    ev = rooms.events
+    if a.case in ("yougame", "quit"):
+        fin = [l for l in ev if "finish by" in l]
+        begin = any("begin by" in l for l in ev)
+        searches = sum(1 for l in ev if "searching" in l)
+        winners = set(l.split('"winner": ')[1].split('"')[1] if '"winner"' in l else "void" for l in fin)
+        want_void = a.case == "quit"
+        ok = begin and len(fin) >= 1 and (winners == {"void"} if want_void else (len(winners) == 1 and "void" not in winners))
+        verdict += f" | room: begin {begin}, finishes {len(fin)}, winners {sorted(winners)}, searches {searches}: {'ROOM-OK' if ok and searches == 2 else 'ROOM-BAD'}"
     print(a.case, verdict)
 
 

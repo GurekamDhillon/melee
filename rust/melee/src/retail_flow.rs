@@ -159,6 +159,8 @@ pub struct RetailPlay {
     exit_req: Option<bool>,
     /// MELEE_BOOT_MENU=1 (a "Return to main menu" relaunch): leave the boot's opening / title for the main menu.
     boot_menu: bool,
+    /// Set while relaunching for a match whose YouGame room this process keeps (`room_keeper`): the report file.
+    pub(crate) room_report: Option<std::path::PathBuf>,
 }
 
 impl RetailPlay {
@@ -170,7 +172,7 @@ impl RetailPlay {
             shot_pending: None, scene_tick: false, sss_hover_logged: -1, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
-            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
+            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, room_report: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
             envoy_fx: Default::default(),
             menu_cam: Default::default(),
             ui: match melee_modhost::ui::PresHost::from_env() {

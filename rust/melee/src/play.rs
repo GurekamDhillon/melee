@@ -1909,7 +1909,12 @@ pub fn play(args: &[String]) -> ExitCode {
             }
         }
         rp.net = net;
-        return crate::retail_flow::run(rp, has("--headless"));
+        let code = crate::retail_flow::run(rp, has("--headless"));
+        // a YouGame room kept through a relaunched match: the window is closed; wait for the match process
+        if let Some(c) = crate::room_keeper::finish() {
+            eprintln!("play: the match process exited ({c})");
+        }
+        return code;
     }
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
     // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.

@@ -13,6 +13,8 @@ use std::time::{Duration, Instant};
 
 /// The match's arguments, once both are locked in.
 static HANDOFF: Mutex<Option<Vec<String>>> = Mutex::new(None);
+/// Both sides locked in: from then on this process is handing over to the match.
+static LOCKED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 pub fn take_handoff() -> Option<Vec<String>> {
     HANDOFF.lock().ok()?.take()
@@ -25,6 +27,12 @@ fn arg(a: &[String], k: &str) -> Option<String> {
 /// Start searching. `args` are `play`'s `--slippi-*` options (the same the match used to take); `mode` the online
 /// menu's mode. The screen reads the state through `slippi_css::with`.
 pub fn start(args: Vec<String>, mode: i32) {
+    // both are locked in and the match is on its way: the select was left for the match, and a menu re-entered
+    // meanwhile must not start a second search (it would queue again in YouGame's pool)
+    if LOCKED.load(std::sync::atomic::Ordering::SeqCst) {
+        eprintln!("online css: session: the match is on its way; no new search");
+        return;
+    }
     let search = arg(&args, "--slippi-search").unwrap_or_default();
     sc::begin(mode, &search);
     *HANDOFF.lock().unwrap() = None;
@@ -79,12 +87,24 @@ fn run(args: &[String]) -> Result<(), String> {
         r => r?,
     };
     eprintln!("online css: session: the opponent came from {}", found.side.name());
-    // the room stays open while the select is up (dropped with the session: the match runs in the relaunched window)
-    let _room = found.room;
+    // the room stays open from here through the match (crate::room_keeper: this process keeps it while the match
+    // runs in the relaunched window); a cancel or an error before the match leaves it
+    if let Some((j, opener)) = found.room {
+        crate::room_keeper::start(j, opener, mode);
+    }
     let p = found.paired;
+    let r = link(&p, port, max_s);
+    if !matches!(r, Ok(true)) {
+        crate::room_keeper::close();
+    }
+    r.map(|_| ())
+}
+
+/// The link to the opponent through the select: Ok(true) when both locked in (the handoff is set).
+fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, String> {
     if sc::with(|o| o.cancel) {
         eprintln!("online css: session: cancelled after matchmaking");
-        return Ok(());
+        return Ok(false);
     }
     eprintln!("online css: session: paired with {}, local player {}, decider {}", if p.opp_code.is_empty() { "?" } else { &p.opp_code }, p.local_port, p.decider);
     sc::with(|o| {
@@ -111,7 +131,7 @@ fn run(args: &[String]) -> Result<(), String> {
         let (cancel, lock) = sc::with(|o| (o.cancel, o.lock));
         if cancel {
             eprintln!("online css: session: cancelled, link closed");
-            return Ok(());
+            return Ok(false);
         }
         match cl.status {
             Status::Connected => {
@@ -135,6 +155,7 @@ fn run(args: &[String]) -> Result<(), String> {
             sc::with(|o| o.local_ready = true);
         }
         if sent.is_some() && theirs.is_some() {
+            LOCKED.store(true, std::sync::atomic::Ordering::SeqCst);
             // a moment for the last acks, then the link closes before the match window binds the same port
             let at = *both_at.get_or_insert_with(Instant::now);
             if at.elapsed() > Duration::from_millis(700) {
@@ -165,5 +186,5 @@ fn run(args: &[String]) -> Result<(), String> {
     }
     eprintln!("online css: session: both locked in, the match next");
     *HANDOFF.lock().unwrap() = Some(m);
-    Ok(())
+    Ok(true)
 }

@@ -177,6 +177,33 @@ class Rooms:
                 pass
 
 
+class Stun:
+    """A loopback STUN server (RFC 5389 binding): answers XOR-MAPPED-ADDRESS with the request's source."""
+
+    def __init__(self, port, logf=None):
+        self.port, self.logf, self.answered = port, logf, 0
+
+    def start(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((LOOP, self.port))
+        threading.Thread(target=self._run, args=(s,), daemon=True).start()
+        return self
+
+    def _run(self, s):
+        import struct
+        while True:
+            d, (ip, port) = s.recvfrom(512)
+            if len(d) < 20 or d[:2] != bytes([0, 1]) or d[4:8] != bytes([0x21, 0x12, 0xA4, 0x42]):
+                continue
+            xip = bytes(a ^ b for a, b in zip(socket.inet_aton(ip), d[4:8]))
+            attr = struct.pack(">HHBBH", 0x20, 8, 0, 1, port ^ 0x2112) + xip
+            s.sendto(bytes([1, 1]) + struct.pack(">H", len(attr)) + d[4:20] + attr, (ip, port))
+            self.answered += 1
+            if self.logf:
+                self.logf.write("fake_stun: answered a binding request" + chr(10))
+                self.logf.flush()
+
+
 class App:
     """The YouGame app's side of one game's stdio bridge."""
 

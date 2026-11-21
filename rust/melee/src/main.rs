@@ -71,6 +71,7 @@ mod netplay;
 mod slippi_css_host;
 mod slippi_np;
 mod yougame_search;
+mod room_keeper;
 mod play_net;
 mod slp_export;
 mod spectate;

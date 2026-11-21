@@ -2018,6 +2018,14 @@ impl NetDriver {
         if self.started_at.is_none() && sr.last_rx.is_some() {
             self.started_at = Some(Instant::now());
             log(&format!("netplay {tag}: Slippi match started (delay {})", sr.delay));
+            room_report("start");
+        }
+        // test hook: this side quits mid-match (the room's void case)
+        if let Some(q) = std::env::var("MELEE_SLIPPI_NP_QUIT_AT").ok().and_then(|v| v.parse::<i32>().ok()) {
+            if online(s.current_frame()) >= q {
+                log(&format!("netplay {tag}: MELEE_SLIPPI_NP_QUIT_AT {q}: quitting the match"));
+                std::process::exit(3);
+            }
         }
         let f = s.current_frame();
         for ff in (sr.last_local + 1).max(f)..=f + sr.delay {
@@ -2085,7 +2093,8 @@ impl NetDriver {
                 }
             }
         }
-        let reached = sr.frames.is_some_and(|n| sr.finals.keys().next_back().is_some_and(|&k| k >= n));
+        // a frame-capped match ends on a confirmed frame (no predicted input in the state the winner is read from)
+        let reached = sr.frames.is_some_and(|n| sr.finals.keys().next_back().is_some_and(|&k| k >= n)) && (conf >= s.current_frame() || sr.finals.len() as i32 > sr.frames.unwrap_or(0) + 120);
         if (reached || g.e.ended) && sr.done_at.is_none() {
             sr.done_at = Some(Instant::now());
         }
@@ -2120,6 +2129,7 @@ impl NetDriver {
             sr.link.disconnect(0);
             let (hard, compared) = (sr.hard, sr.compared);
             sr.out = None;
+            room_report(&format!("end {}", if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() }));
             if let Some(e) = err.filter(|_| !end_now) {
                 self.fail(e);
             } else if hard > 0 || compared == 0 {
@@ -2130,6 +2140,30 @@ impl NetDriver {
             }
         }
         true
+    }
+}
+
+/// The YouGame room this match plays for (`MELEE_ROOM_REPORT`, set by the menu process that keeps the room:
+/// `room_keeper`): one line per event, `start` and `end W`.
+fn room_report(line: &str) {
+    let Some(p) = std::env::var_os("MELEE_ROOM_REPORT") else { return };
+    use std::io::Write;
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) {
+        let _ = writeln!(f, "{line}");
+    }
+    log(&format!("room report: {line}"));
+}
+
+/// The winner of a 1v1 by Melee's order: more stocks, then less damage; -1 when even (no single winner).
+fn match_winner() -> i32 {
+    let st = |p: i32| melee_fighter::stale::stocks(p);
+    let dmg = |p: i32| melee_fighter::player::get_damage(p);
+    let (a, b) = ((st(0), -dmg(0)), (st(1), -dmg(1)));
+    log(&format!("match end: P1 {} stocks {}%, P2 {} stocks {}%", a.0, -a.1, b.0, -b.1));
+    match a.cmp(&b) {
+        std::cmp::Ordering::Greater => 0,
+        std::cmp::Ordering::Less => 1,
+        std::cmp::Ordering::Equal => -1,
     }
 }
 

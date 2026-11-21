@@ -32,6 +32,7 @@ mod controls_store;
 mod firstrun;
 mod geno_suite;
 mod cosmetics;
+mod slippi_menus;
 mod cosmetics_import;
 mod nucleus;
 mod settings_overlay;
@@ -820,9 +821,14 @@ pub(crate) fn engine_mods_overlay(args: &[String]) -> Result<Option<melee_engine
     let iso = iso_path(args).ok();
     let sh = if crate::cfg::flag("cosmetics", true) { iso.as_deref().and_then(cosmetics::boot) } else { None };
     cosmetics::set_booted(sh.clone());
-    Ok(match sh {
+    let o = match sh {
         Some(sh) => Some(cosmetics::overlay(sh, under)),
         None => under,
+    };
+    // `--slippi-menus on`: Slippi's menu files over everything (all or nothing; off leaves the boot unchanged)
+    Ok(match slippi_menus::load(args, iso.as_deref()) {
+        Some(s) => Some(slippi_menus::wrap(s, o)),
+        None => o,
     })
 }
 

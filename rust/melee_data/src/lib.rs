@@ -14,5 +14,6 @@ pub mod player;
 pub mod replay;
 pub mod slippi_pad;
 pub mod slp;
+pub mod sysfiles;
 pub mod vcdiff;
 pub mod settings;

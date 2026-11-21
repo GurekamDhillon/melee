@@ -436,6 +436,8 @@ struct App<G: Game> {
     presented_tick: u64,
     /// YouGame bridge: the Tab press was taken as Shift+Tab, so its release is ours too.
     yg_tab: bool,
+    /// The YouGame player box (YOUGAME_EMBED=1): adoption state and the box commands held until then.
+    ygbox: YgBox,
     /// The profiler's last display line (frameprof::info only when it changes).
     profile_line: String,
 }
@@ -718,7 +720,9 @@ impl<G: Game> App<G> {
             if !extra.is_empty() {
                 plog!("gw: status:{extra}");
             }
-            w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps{extra}", self.cfg.title));
+            if !crate::yougame::embedded() {
+                w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps{extra}", self.cfg.title));
+            }
         }
     }
 
@@ -893,6 +897,12 @@ impl<G: Game> ApplicationHandler for App<G> {
                     crate::yougame::focus_lost();
                 }
             }
+            WindowEvent::MouseInput { state: ElementState::Pressed, .. } if crate::yougame::embedded() => {
+                // a child window does not take the keyboard by itself: a click into the box does
+                if let Some(w) = self.window.as_ref() {
+                    ygwin::focus(w, true);
+                }
+            }
             WindowEvent::ModifiersChanged(m) => self.mods = m.state(),
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(k) = event.physical_key {
@@ -912,6 +922,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                         }
                     }
                     let enter = matches!(k, KeyCode::Enter | KeyCode::NumpadEnter);
+                    if enter && self.mods.alt_key() && crate::yougame::embedded() {
+                        return; // the page owns full screen in the player box; winit's style change would undo WS_CHILD
+                    }
                     if enter && self.mods.alt_key() {
                         // Alt+Enter: fullscreen <-> window (the key never reaches the pads)
                         if event.state == ElementState::Pressed && !event.repeat {
@@ -977,7 +990,8 @@ impl<G: Game> ApplicationHandler for App<G> {
                 self.quit = true;
             }
             if let Some(w) = self.window.as_ref() {
-                yougame_box(w, crate::yougame::take_box_commands());
+                let w = Arc::clone(w);
+                self.ygbox.run(&w, crate::yougame::take_box_commands());
             }
         }
         if !self.present_first {
@@ -1076,23 +1090,157 @@ fn yougame_box_attrs(mut attrs: winit::window::WindowAttributes) -> winit::windo
     attrs
 }
 
-/// The player box's commands, on the window thread: `rect x y w h`, `show` / `hide`, `focus` (`blur`, `view`,
-/// `volume` are logged and ignored).
-fn yougame_box(w: &Window, cmds: Vec<String>) {
-    if window_hidden() {
-        return; // a hidden run is never shown or focused
-    }
-    for c in cmds {
-        let n: Vec<i32> = c.split_whitespace().skip(1).filter_map(|v| v.parse().ok()).collect();
-        match c.split_whitespace().next().unwrap_or("") {
-            "rect" if n.len() == 4 && n[2] > 0 && n[3] > 0 => {
-                w.set_outer_position(winit::dpi::PhysicalPosition::new(n[0], n[1]));
-                let _ = w.request_inner_size(winit::dpi::PhysicalSize::new(n[2] as u32, n[3] as u32));
+/// How long the window waits for the app's launcher to adopt it before showing itself on its own (Hero's is 30 s too).
+const YG_ADOPT_WAIT: Duration = Duration::from_secs(30);
+
+/// The player box's commands, on the window thread: `rect x y w h`, `show` / `hide`, `focus` / `blur` (`view`,
+/// `volume`, `scale`, ... are ignored). The launcher (yougame-sandbox.exe) makes our window a child of the app's
+/// (WS_CHILD, then SetParent) from outside the process. winit's own setters rewrite GWL_STYLE from its flags
+/// (set_visible), which dropped WS_CHILD and tore the window back out to the desktop, and its focus_window fakes
+/// an Alt key press. So the box is driven with plain Win32 calls on the HWND, and winit's flags are left alone.
+#[derive(Default)]
+struct YgBox {
+    t0: Option<Instant>,
+    adopted: bool,
+    standalone: bool,
+    held: Vec<String>,
+}
+
+impl YgBox {
+    fn run(&mut self, w: &Window, cmds: Vec<String>) {
+        if window_hidden() {
+            return; // a hidden run is never shown or focused
+        }
+        let t0 = *self.t0.get_or_insert_with(Instant::now);
+        if !self.adopted && !self.standalone {
+            if ygwin::adopted(w) {
+                self.adopted = true;
+                plog!("yougame: window: in the YouGame player box (adopted after {} ms)", t0.elapsed().as_millis());
+            } else if t0.elapsed() >= YG_ADOPT_WAIT {
+                self.standalone = true;
+                self.held.clear();
+                plog!("yougame: window: the app did not take the window into its player box; showing it on its own");
+                w.set_decorations(true);
+                w.set_visible(true);
+            } else {
+                // Not adopted yet: a rect is parent-relative, so applying it now would put the window on the desktop.
+                self.held.extend(cmds);
+                if self.held.len() > 64 {
+                    let n = self.held.len() - 64;
+                    self.held.drain(..n);
+                }
+                return;
             }
-            "show" => w.set_visible(true),
-            "hide" => w.set_visible(false),
-            "focus" => w.focus_window(),
-            _ => plog!("yougame: player box command ignored: {}", c.chars().take(60).collect::<String>()),
+        }
+        if self.standalone {
+            return;
+        }
+        let cmds = if self.held.is_empty() {
+            cmds
+        } else {
+            let mut h = std::mem::take(&mut self.held);
+            h.extend(cmds);
+            h
+        };
+        for c in cmds {
+            let mut it = c.split_whitespace();
+            let verb = it.next().unwrap_or("");
+            let n: Vec<i32> = it.map_while(|v| v.parse().ok()).collect();
+            match verb {
+                "rect" if n.len() == 4 && n[2] > 0 && n[3] > 0 => ygwin::place(w, n[0], n[1], n[2].min(16384), n[3].min(16384)),
+                "show" => ygwin::show(w, true),
+                "hide" => ygwin::show(w, false),
+                "focus" => ygwin::focus(w, true),
+                "blur" => ygwin::focus(w, false),
+                _ => plog!("yougame: player box command ignored: {}", c.chars().take(60).collect::<String>()),
+            }
+        }
+    }
+}
+
+/// Win32 calls on our own HWND for the player box (other platforms: winit's, which keep no style of their own).
+#[cfg(windows)]
+mod ygwin {
+    use windows_sys::Win32::Foundation::HWND;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetFocus, SetFocus};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        GetAncestor, GetDesktopWindow, GetWindowLongPtrW, SetWindowPos, ShowWindow, GA_PARENT, GWL_STYLE, HWND_TOP, SWP_NOACTIVATE,
+        SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SW_HIDE, SW_SHOWNA, WS_CHILD,
+    };
+    use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use winit::window::Window;
+
+    fn hwnd(w: &Window) -> Option<HWND> {
+        match w.window_handle().ok()?.as_raw() {
+            RawWindowHandle::Win32(h) => Some(h.hwnd.get() as HWND),
+            _ => None,
+        }
+    }
+
+    /// Adopted = WS_CHILD and a real parent (the launcher sets WS_CHILD before SetParent; a parent alone is no proof).
+    pub fn adopted(w: &Window) -> bool {
+        let Some(h) = hwnd(w) else { return false };
+        // SAFETY: plain queries on our own live window.
+        unsafe {
+            let p = GetAncestor(h, GA_PARENT);
+            !p.is_null() && p != GetDesktopWindow() && (GetWindowLongPtrW(h, GWL_STYLE) as u32 & WS_CHILD) != 0
+        }
+    }
+
+    /// Parent-relative physical pixels, as the app sends them. WM_SIZE follows synchronously (winit's Resized).
+    pub fn place(w: &Window, x: i32, y: i32, cw: i32, ch: i32) {
+        let Some(h) = hwnd(w) else { return };
+        // SAFETY: our own window, on its own thread.
+        unsafe { SetWindowPos(h, std::ptr::null_mut(), x, y, cw, ch, SWP_NOZORDER | SWP_NOACTIVATE) };
+    }
+
+    pub fn show(w: &Window, on: bool) {
+        let Some(h) = hwnd(w) else { return };
+        // SAFETY: as above. SW_SHOWNA: shown without taking activation; a hide while holding the keys hands them back.
+        unsafe {
+            if !on && GetFocus() == h {
+                SetFocus(GetAncestor(h, GA_PARENT));
+            }
+            ShowWindow(h, if on { SW_SHOWNA } else { SW_HIDE });
+            if on {
+                SetWindowPos(h, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            }
+        }
+    }
+
+    /// The keyboard to the game (`focus`, a click) or back to the app (`blur`). SetFocus works across the two
+    /// processes because a child's input queue is attached to its parent's; no synthesized input.
+    pub fn focus(w: &Window, on: bool) {
+        let Some(h) = hwnd(w) else { return };
+        // SAFETY: as above.
+        unsafe {
+            if on {
+                if GetFocus() != h {
+                    SetFocus(h);
+                }
+            } else if GetFocus() == h {
+                SetFocus(GetAncestor(h, GA_PARENT));
+            }
+        }
+    }
+}
+
+#[cfg(not(windows))]
+mod ygwin {
+    use winit::window::Window;
+    pub fn adopted(_: &Window) -> bool {
+        true
+    }
+    pub fn place(w: &Window, x: i32, y: i32, cw: i32, ch: i32) {
+        w.set_outer_position(winit::dpi::PhysicalPosition::new(x, y));
+        let _ = w.request_inner_size(winit::dpi::PhysicalSize::new(cw as u32, ch as u32));
+    }
+    pub fn show(w: &Window, on: bool) {
+        w.set_visible(on);
+    }
+    pub fn focus(w: &Window, on: bool) {
+        if on {
+            w.focus_window();
         }
     }
 }
@@ -1155,6 +1303,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         vrr_votes: (None, 0),
         stale: 0,
         yg_tab: false,
+        ygbox: YgBox::default(),
         profile_line: String::new(),
     };
     if let Some(f) = app.trace.as_mut() {

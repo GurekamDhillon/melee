@@ -2263,6 +2263,10 @@ pub unsafe fn mnCharSel_CostumeChange(door_idx: i32, input: u32) {
     melee_core::ct!("mnCharSel_CostumeChange");
     let d = door(door_idx as usize);
     let prev_costume = (*d).costume;
+    // PreventColorChange: not while locked in on the online select (Hero `mu_slippi_css_block_costume_change`)
+    if super::slippi_css::block_unselect() {
+        return;
+    }
 
     if (*d).sel_icon as i32 >= MNCS_NUM() {
         return;
@@ -3153,7 +3157,10 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
                                     ci += 1;
                                 }
 
-                                if closest >= 0 {
+                                // PreventAPressCharUnselect (Hero `mu_slippi_css_block_unselect`)
+                                if closest >= 0 && super::slippi_css::block_unselect() {
+                                    super::slippi_css::refused_unselect();
+                                } else if closest >= 0 {
                                     let cport4: u8 = (*cursor).x4;
                                     let closest_door = (closest as u8) as i32;
                                     (*mnCharSel_804A0BD0[(closest as u8) as usize]).x5 = (cport4 as i32 + 1) as u8;
@@ -3166,6 +3173,9 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
                                     (*cursor).x10 = (*mnCharSel_804A0BD0[closest as usize]).xC - -2.0f32;
                                 }
                             }
+                        } else if trigger & PAD_B != 0 && super::slippi_css::block_unselect() {
+                            // PreventBPressCharUnselect (Hero `mu_slippi_css_block_unselect`)
+                            super::slippi_css::refused_unselect();
                         } else if trigger & PAD_B != 0 {
                             let cport5: u8 = (*cursor).x4;
                             if (*door((*cursor).x4 as usize)).p_kind != 3 && ((*door((*cursor).x4 as usize)).sel_icon as u32) < MNCS_NUM_U() {
@@ -3575,7 +3585,8 @@ pub unsafe extern "C" fn fn_80262F44(gobj: *mut HSD_GObj) {
                     eprintln!("online css: hand {} {} state {}", (*c).xC, (*c).x10, (*c).x5);
                 }
             }
-            trigger = super::slippi_css::inputs(trigger, mnCharSel_804D6CF7 != 0, (*p).ckind, (*p).color);
+            let held = (*pad(mnCharSel_804D6CF0 as usize & 3)).button;
+            trigger = super::slippi_css::inputs(trigger, held, mnCharSel_804D6CF7 != 0, (*p).ckind, (*p).color);
         }
         if mnCharSel_804D6CF2 == 0 && (trigger & HSD_PAD_START as u32) != 0 {
             if mnCharSel_804D6CF7 != 0 {

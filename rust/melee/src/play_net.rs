@@ -1859,7 +1859,7 @@ impl NetDriver {
         while i < args.len() {
             if let Some(k) = args[i].strip_prefix("--slippi-").filter(|k| *k != "menus") {
                 sub.push(format!("--{k}"));
-                if k != "mm-real" && k != "mm-lan" && k != "host" {
+                if k != "mm-real" && k != "mm-lan" && k != "host" && k != "stage-unset" {
                     if let Some(v) = args.get(i + 1) {
                         sub.push(v.clone());
                         i += 1;
@@ -2129,7 +2129,9 @@ impl NetDriver {
             sr.link.disconnect(0);
             let (hard, compared) = (sr.hard, sr.compared);
             sr.out = None;
-            room_report(&format!("end {}", if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() }));
+            let won = if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() };
+            LAST_WINNER.store(won, std::sync::atomic::Ordering::Relaxed);
+            room_report(&format!("end {won}"));
             if let Some(e) = err.filter(|_| !end_now) {
                 self.fail(e);
             } else if hard > 0 || compared == 0 {
@@ -2142,6 +2144,9 @@ impl NetDriver {
         true
     }
 }
+
+/// The last Slippi match's winning port (0-based; -1 none or not clean): the online select's next stage pick.
+pub static LAST_WINNER: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
 
 /// The YouGame room this match plays for (`MELEE_ROOM_REPORT`, set by the menu process that keeps the room:
 /// `room_keeper`): one line per event, `start` and `end W`.

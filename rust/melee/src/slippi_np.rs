@@ -282,7 +282,8 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
         is_character_selected: true,
         player_idx: local_port,
         stage_id: num("--stage", 0x20) as u16,
-        is_stage_selected: true,
+        // --stage-unset: no stage from this side (Direct's winner: the loser's pick stands)
+        is_stage_selected: !args.iter().any(|a| a == "--stage-unset"),
         rng_offset,
         ..Default::default()
     };

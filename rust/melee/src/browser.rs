@@ -495,6 +495,16 @@ impl RetailPlay {
     /// (step 7) is ported, Direct's opponent code comes from MELEE_SLIPPI_DIRECT_CODE.
     pub(super) fn slippi_online_pick(&mut self) {
         const SLIPPI_MM_REAL: &str = "wss://matchmaking.slippi.gg/v1/queue";
+        // a set's next game: the match process relaunched this window into the menus; on to the online select
+        static REMATCH_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !REMATCH_DONE.load(std::sync::atomic::Ordering::Relaxed) && self.e.is_some() && self.cur.0 as u32 == melee_types::GM_MENU && melee_modes::tu::slippi_online::enabled() {
+            REMATCH_DONE.store(true, std::sync::atomic::Ordering::Relaxed);
+            if crate::slippi_css_host::start_rematch().is_some() {
+                log("online select: the set goes on, back to the online select");
+                self.e.as_mut().unwrap().goto_mode(melee_types::GM_HANYU_CSS as u8);
+                return;
+            }
+        }
         let Some(mode) = melee_modes::tu::slippi_online::take_pick() else { return };
         let name = melee_modes::tu::slippi_online::mode_name(mode);
         let typed = melee_modes::tu::slippi_online::take_direct_code();
@@ -602,6 +612,17 @@ impl RetailPlay {
                 }
             }
         }
+        // a set's later games write their own checksum file (<out>-g<n>.csv)
+        let game = crate::slippi_css_host::handoff_game();
+        if game > 0 {
+            if let Some(i) = args.iter().position(|a| a == "--slippi-out") {
+                if let Some(p) = args.get_mut(i + 1) {
+                    let pb = std::path::PathBuf::from(&*p);
+                    let stem = pb.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                    *p = pb.with_file_name(format!("{stem}-g{}.csv", game + 1)).to_string_lossy().into_owned();
+                }
+            }
+        }
         log("online select: both locked in, the match in the game window");
         if crate::room_keeper::active() {
             // a YouGame room: this process keeps it through the match, the match process reports to it
@@ -617,6 +638,65 @@ impl RetailPlay {
             return;
         }
         self.relaunch(&args, None, false, "the Slippi match");
+    }
+
+    /// After a game of an online-select set (Hero: the select comes back, connected, for the next game; the loser
+    /// picks its stage): relaunch the window into the menus' online select with the same opponent. False when this
+    /// match is not part of one (the window quits as before).
+    pub(super) fn slippi_set_back(&mut self) -> bool {
+        let cur: Vec<String> = std::env::args().skip(1).collect();
+        let won = crate::play_net::LAST_WINNER.load(std::sync::atomic::Ordering::Relaxed);
+        let Some(env) = crate::slippi_css_host::rematch_env(&cur, won) else { return false };
+        let game: u32 = env.rsplit(';').next().and_then(|g| g.parse().ok()).unwrap_or(1);
+        // tests: MELEE_SLIPPI_SET_GAMES ends the set after that many games
+        if std::env::var("MELEE_SLIPPI_SET_GAMES").ok().and_then(|v| v.parse::<u32>().ok()).is_some_and(|n| game >= n) {
+            log(&format!("online select: the set's {game} games are played"));
+            return false;
+        }
+        // the match's own arguments go; the menus' stay (`--slippi-menus on`)
+        let mut args: Vec<String> = Vec::new();
+        let mut i = 0;
+        while i < cur.len() {
+            let a = cur[i].as_str();
+            if a == "--slippi-host" || a == "--slippi-stage-unset" {
+                i += 1;
+                continue;
+            }
+            if a.starts_with("--slippi-") && a != "--slippi-menus" || a == "--max-frames" {
+                i += 2;
+                continue;
+            }
+            args.push(cur[i].clone());
+            i += 1;
+        }
+        if args.first().is_none_or(|a| a != "play") {
+            args.insert(0, "play".into());
+        }
+        if let Ok(n) = std::env::var("MELEE_SLIPPI_SET_MAX_FRAMES") {
+            args.extend(["--max-frames".into(), n]);
+        }
+        let Ok(exe) = std::env::current_exe() else { return false };
+        let mut cmd = std::process::Command::new(exe);
+        cmd.args(&args).env("MELEE_BOOT_MENU", "1").env("MELEE_SLIPPI_REMATCH", &env).env_remove("MELEE_SCENE").env_remove("MELEE_SLIPPI_SET");
+        // tests: the next select's pad script (MELEE_SLIPPI_SET_PAD_SCRIPT_G<n>, n the next game)
+        match std::env::var(format!("MELEE_SLIPPI_SET_PAD_SCRIPT_G{}", game + 1)) {
+            Ok(p) => cmd.env("MELEE_PAD_SCRIPT", p),
+            Err(_) => cmd.env_remove("MELEE_PAD_SCRIPT"),
+        };
+        if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
+            cmd.env("MELEE_WINDOW_TITLE", format!("{t}:select-g{}", game + 1));
+        }
+        match cmd.spawn() {
+            Ok(_) => {
+                log(&format!("online select: game {game} over (winner port {won}), back to the select for game {}", game + 1));
+                self.quit = true;
+                true
+            }
+            Err(e) => {
+                log(&format!("online select: relaunch failed: {e}"));
+                false
+            }
+        }
     }
 
     pub(super) fn session_exit(&mut self) {

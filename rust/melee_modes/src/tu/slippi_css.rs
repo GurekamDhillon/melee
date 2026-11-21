@@ -10,8 +10,13 @@
 //! runs in the host's match window (`play --slippi-peer`). B on the screen cancels the search and goes back to the
 //! online menu.
 //!
-//! Not ported (noted for later): chat (`mu_slippi_chat.c`, SlippiCSS.dat), Direct's loser-picks-the-stage SSS (the
-//! stage is the decider's here), hold-Z disconnect, unselect guards while locked in, Teams' colour button.
+//! Direct follows Hero's winner / loser rule: the loser of the last game (the first game: the player in slot 0) goes
+//! to the stage select on Start, picks, comes back and locks in with that stage; the winner locks in without one (the
+//! loser's stage stands). Connected, holding Z disconnects (`DISCONNECT_HOLD_DELAY`); locked in, the fighter can't be
+//! unselected and the colour can't change (Hero `mu_slippi_css_block_unselect` / `_block_costume_change`).
+//!
+//! Not ported (noted for later): chat (`mu_slippi_chat.c`, SlippiCSS.dat), Teams' colour button, the SSS's legal-stage
+//! filter (a pick outside the online stage set fails at the match's setup).
 
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
@@ -27,6 +32,13 @@ pub const CONN_MATCHMAKING: u8 = 2;
 pub const CONN_OPPONENT_CONNECTING: u8 = 3;
 pub const CONN_SUCCESS: u8 = 4;
 pub const CONN_ERROR: u8 = 5;
+
+/// Hero's `MU_SLP_WINNER_*`: the last game's result, which decides Direct's stage pick.
+pub const WINNER_NULL: u8 = 0;
+pub const WINNER_WON: u8 = 1;
+pub const WINNER_LOST: u8 = 2;
+/// Hero's `DISCONNECT_HOLD_DELAY`: frames of Z held, connected, before the link is dropped.
+pub const DISCONNECT_HOLD_DELAY: u16 = 48;
 
 /// What the host's session and this screen share (Hero's match-state read, `mu_slippi_load_match_state`).
 #[derive(Clone, Debug, Default)]
@@ -44,6 +56,24 @@ pub struct Online {
     pub lock: Option<(u8, u8)>,
     /// The screen was left with B: the session drops its search or link.
     pub cancel: bool,
+    /// This side's player index in the link (0: the one who sent the request; set when connected).
+    pub local_index: u8,
+    /// The last game against this opponent (`WINNER_*`; Hero `st->is_winner`).
+    pub winner: u8,
+    /// The stage the loser picked on the stage select (Hero `st->chose_stage` + `picked_stage`).
+    pub chose_stage: Option<u16>,
+    /// The stage that goes with the lock-in (None: unset, the opponent's stands).
+    pub lock_stage: Option<u16>,
+    /// The screen is leaving for the stage select (the loser's pick).
+    pub to_sss: bool,
+    /// Frames Z has been held while connected.
+    pub z_hold: u16,
+    /// Hold-Z disconnect: the session drops the link, the screen goes back to the online menu.
+    pub disconnect: bool,
+    /// Games played against this opponent before this one (0: the first).
+    pub game: u32,
+    /// Unselect / colour-change attempts refused while locked in (tests).
+    pub refused: u32,
 }
 
 pub static ONLINE: std::sync::Mutex<Online> = std::sync::Mutex::new(Online {
@@ -56,6 +86,15 @@ pub static ONLINE: std::sync::Mutex<Online> = std::sync::Mutex::new(Online {
     remote_ready: false,
     lock: None,
     cancel: false,
+    local_index: 0,
+    winner: WINNER_NULL,
+    chose_stage: None,
+    lock_stage: None,
+    to_sss: false,
+    z_hold: 0,
+    disconnect: false,
+    game: 0,
+    refused: 0,
 });
 
 pub fn with<R>(f: impl FnOnce(&mut Online) -> R) -> R {
@@ -85,12 +124,38 @@ pub fn active() -> bool {
 }
 
 static mut CSS_DATA: CSSData = unsafe { core::mem::zeroed() };
-static mut STATES: [GameModeState; 2] = unsafe {
+static mut SSS_DATA: SSSData = unsafe { core::mem::zeroed() };
+static mut STATES: [GameModeState; 3] = unsafe {
     [
         state(0, lbDvdPreload_3, Some(css_prep), Some(css_decide), GS_CSS, &raw mut CSS_DATA as *mut core::ffi::c_void, &raw mut CSS_DATA as *mut core::ffi::c_void),
+        // Direct's stage pick (Hero: the CSS's scene request 1, MU_SLP_CB_SSS_LOCK_IN): back to the select after it
+        state(1, lbDvdPreload_3, Some(sss_prep), Some(sss_decide), GS_SSS, &raw mut SSS_DATA as *mut core::ffi::c_void, &raw mut SSS_DATA as *mut core::ffi::c_void),
         end(),
     ]
 };
+
+/// The stage select for the loser's pick: the select's players and rules go with it (`gmVsMelee_EnterSss`).
+unsafe extern "C" fn sss_prep(state: *mut GameModeState) {
+    let sss = super::gm_1A3F::gm_GetGameModeStateEnterData(state) as *mut SSSData;
+    (*sss).vs = CSS_DATA.vs;
+    super::gm_1601::gm_80167FC4(sss);
+    eprintln!("online css: stage select (the loser's pick)");
+}
+
+/// The pick (Hero's SSS lock-in callback): the stage is kept and the select comes back, which locks in with it.
+unsafe extern "C" fn sss_decide(state: *mut GameModeState) {
+    let sss = super::gm_1A3F::gm_GetGameModeStateExitData(state) as *mut SSSData;
+    let picked = if (*sss).start_game != 0 { Some((*sss).vs.start.rules.stkind as u16) } else { None };
+    with(|o| {
+        o.to_sss = false;
+        o.chose_stage = picked;
+    });
+    match picked {
+        Some(st) => eprintln!("online css: the loser picked stage {st}"),
+        None => eprintln!("online css: stage select left without a pick"),
+    }
+    super::gm_1A3F::gm_SetNextGameModeStateId(0);
+}
 
 /// GM_HANYU_CSS becomes the online major (Hero `mu_slippi_scene_install`, Slippi main.asm). Called with the menus' install.
 pub unsafe fn install_major() {
@@ -136,8 +201,21 @@ unsafe extern "C" fn css_decide(state: *mut GameModeState) {
     let css = super::gm_1A3F::gm_GetGameModeStateExitData(state) as *mut CSSData;
     ON_CSS.store(false, Ordering::Relaxed);
     TEXT = core::ptr::null_mut();
-    let conn = with(|o| o.conn);
+    let (conn, to_sss, disconnect) = with(|o| (o.conn, o.to_sss, o.disconnect));
     eprintln!("online css: exit request {} connection {conn}", (*css).pending_scene_change);
+    if to_sss && !disconnect && (*css).pending_scene_change != 2 {
+        // the fighter is kept for the way back (the event-style select restores it), and the stage select is next
+        let ev = ev();
+        super::gmevent::ext::gm_801B0730(css, &raw mut (*ev).x2, core::ptr::null_mut(), &raw mut (*ev).x3, &raw mut (*ev).nametag, core::ptr::null_mut());
+        super::gm_1A3F::gm_SetNextGameModeStateId(1);
+        eprintln!("online css: the loser goes to the stage select");
+        return;
+    }
+    if disconnect {
+        eprintln!("online css: disconnected (hold Z), back to the online menu");
+        super::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(GM_MENU as i32);
+        return;
+    }
     if (*css).pending_scene_change == 2 {
         with(|o| o.cancel = true);
         eprintln!("online css: cancelled, back to the online menu");
@@ -156,21 +234,71 @@ unsafe extern "C" fn css_decide(state: *mut GameModeState) {
 
 /// HandleInputsOnCSS (Hero `mu_slippi_css_inputs`) at the CSS's Start test: returns the trigger the vanilla path sees.
 /// Start locks the fighter in once connected; Start reaches the vanilla path (which leaves the screen) only when both
-/// players are locked in. `ready`: the vanilla "a fighter is chosen" flag; `ck`/`color`: the door's fighter.
-pub unsafe fn inputs(trigger: u32, ready: bool, ck: i8, color: u8) -> u32 {
+/// players are locked in, or when Direct's loser leaves for the stage select. `held`: the port's held buttons (hold
+/// Z); `ready`: the vanilla "a fighter is chosen" flag; `ck`/`color`: the door's fighter.
+pub unsafe fn inputs(trigger: u32, held: u32, ready: bool, ck: i8, color: u8) -> u32 {
     const START: u32 = HSD_PAD_START as u32;
-    let (conn, local, remote) = with(|o| (o.conn, o.local_ready, o.remote_ready));
+    const Z: u32 = HSD_PAD_Z as u32;
+    let (conn, local, remote, mode) = with(|o| (o.conn, o.local_ready, o.remote_ready, o.mode));
     text_think();
     if trigger & START != 0 && !local {
         eprintln!("online css: Start (connection {conn}, fighter chosen {ready}, fighter {ck})");
     }
-    if conn == CONN_SUCCESS && local && remote && ready {
+    if conn != CONN_SUCCESS {
+        return trigger & !START;
+    }
+    // connected: hold Z to disconnect (the session drops the link; the screen goes back to the online menu)
+    let gone = with(|o| {
+        if o.disconnect {
+            return false;
+        }
+        if held & Z != 0 {
+            o.z_hold += 1;
+            if o.z_hold > DISCONNECT_HOLD_DELAY {
+                o.z_hold = 0;
+                o.disconnect = true;
+                o.cancel = true;
+                return true;
+            }
+        } else {
+            o.z_hold = 0;
+        }
+        false
+    });
+    if gone {
+        eprintln!("online css: hold Z: disconnecting");
+        super::mnmain::ext::gm_801A4B60();
+        return trigger & !START;
+    }
+    if local && remote && ready {
         return trigger | START;
     }
-    if trigger & START != 0 && conn == CONN_SUCCESS && !local && ready && ck >= 0 {
-        with(|o| o.lock = Some((ck as u8, color)));
+    let direct = mode == so::MODE_DIRECT;
+    // a session's first game: the player in slot 0 picks the stage, as the loser of a game picks the next one
+    let (winner, chose) = with(|o| {
+        if direct && o.winner == WINNER_NULL {
+            o.winner = if o.local_index == 0 { WINNER_LOST } else { WINNER_WON };
+            o.chose_stage = None;
+            eprintln!("online css: no game yet, local index {} {} the stage", o.local_index, if o.local_index == 0 { "picks" } else { "waits for" });
+        }
+        (o.winner, o.chose_stage)
+    });
+    let mut advance = trigger & START != 0;
+    if !advance && direct && winner == WINNER_LOST && chose.is_some() {
+        advance = true; // back from the stage select: the pick locks in
+    }
+    if advance && !local && ready && ck >= 0 {
+        if direct && winner == WINNER_LOST && chose.is_none() {
+            with(|o| o.to_sss = true);
+            return trigger | START; // the vanilla path leaves the screen; css_decide goes on to the stage select
+        }
+        let stage = if direct && winner == WINNER_LOST { chose } else { None };
+        with(|o| {
+            o.lock = Some((ck as u8, color));
+            o.lock_stage = stage;
+        });
         super::mnmain::ext::lbAudioAx_80024030(1);
-        eprintln!("online css: locked in fighter {ck} colour {color}");
+        eprintln!("online css: locked in fighter {ck} colour {color} stage {}", stage.map_or("unset".to_string(), |s| s.to_string()));
     }
     trigger & !START
 }
@@ -178,6 +306,15 @@ pub unsafe fn inputs(trigger: u32, ready: bool, ck: i8, color: u8) -> u32 {
 /// No unselect or costume change once locked in (Hero `mu_slippi_css_block_unselect`).
 pub fn block_unselect() -> bool {
     active() && with(|o| o.lock.is_some())
+}
+
+/// An unselect (A on the coin, B) or colour change refused while locked in.
+pub fn refused_unselect() {
+    let n = with(|o| {
+        o.refused += 1;
+        o.refused
+    });
+    eprintln!("online css: locked in: unselect refused ({n})");
 }
 
 // ---- the panel (Hero `text_think`, LoadCSSText): status, opponent ----------------------------------------------
@@ -196,7 +333,8 @@ pub fn panel_lines(o: &Online) -> [String; LINES] {
         CONN_SUCCESS if o.local_ready && !o.remote_ready => format!("Waiting on {opp}"),
         CONN_SUCCESS if o.local_ready => "Starting the match".to_string(),
         CONN_SUCCESS => "Press START to lock in".to_string(),
-        _ => format!("Error: {}", if o.error.is_empty() { "the connection failed" } else { &o.error }),
+        // the text's buffer is small (a long OS error overflowed it): printable ASCII, cut short
+        _ => format!("Error: {}", if o.error.is_empty() { "the connection failed".to_string() } else { o.error.chars().filter(|c| c.is_ascii_graphic() || *c == ' ').take(36).collect() }),
     };
     let playing = if o.conn == CONN_SUCCESS { format!("Playing: {opp}") } else { String::new() };
     [mode, status, playing]
@@ -253,5 +391,7 @@ mod tests {
         assert_eq!(panel_lines(&u)[1], "Searching for opponent");
         let e = Online { mode: so::MODE_UNRANKED, conn: CONN_ERROR, error: "x".into(), ..Default::default() };
         assert_eq!(panel_lines(&e)[1], "Error: x");
+        let long = Online { conn: CONN_ERROR, error: "bind: Only one usage of each socket address (protocol/network address/port)".into(), ..Default::default() };
+        assert!(panel_lines(&long)[1].len() <= 43);
     }
 }

@@ -366,7 +366,13 @@ impl RetailPlay {
                             self.e = Some(e);
                         }
                         if !nd.css() {
-                            self.quit = true;
+                            // an online-select set (Direct): back to the select with the same opponent
+                            let back = nd.slippi.is_some() && nd.error.is_none();
+                            // the link's socket closes first: the select's session binds the same port
+                            nd.slippi = None;
+                            if !(back && self.slippi_set_back()) {
+                                self.quit = true;
+                            }
                         }
                     }
                     return false;

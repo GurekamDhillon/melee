@@ -16,6 +16,12 @@ static HANDOFF: Mutex<Option<Vec<String>>> = Mutex::new(None);
 /// Both sides locked in: from then on this process is handing over to the match.
 static LOCKED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+/// The game of the set the handoff's match is (0: the first), as it was at the lock-in.
+static HANDOFF_GAME: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+pub fn handoff_game() -> u32 {
+    HANDOFF_GAME.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 pub fn take_handoff() -> Option<Vec<String>> {
     HANDOFF.lock().ok()?.take()
 }
@@ -45,6 +51,64 @@ pub fn start(args: Vec<String>, mode: i32) {
             });
         }
     });
+}
+
+/// The set goes on: the match process came back to the online select with the same opponent (Hero: after a game the
+/// select comes back, connected, the loser picking the next stage). `MELEE_SLIPPI_REMATCH` (set by the match process,
+/// `rematch_env`): `peer;port;local_port;decider;mode;opp_code;winner;game`. Returns the mode when it was there.
+pub fn start_rematch() -> Option<i32> {
+    let v = std::env::var("MELEE_SLIPPI_REMATCH").ok().filter(|v| !v.is_empty())?;
+    std::env::remove_var("MELEE_SLIPPI_REMATCH");
+    let f: Vec<&str> = v.split(';').collect();
+    if f.len() < 8 {
+        eprintln!("online css: rematch: malformed {v}");
+        return None;
+    }
+    let (peer, port, local_port, decider) = (f[0].to_string(), f[1].parse::<u16>().unwrap_or(0), f[2].parse::<u8>().unwrap_or(0), f[3] == "1");
+    let (mode, opp, winner, game) = (f[4].parse::<i32>().unwrap_or(0), f[5].to_string(), f[6].parse::<u8>().unwrap_or(sc::WINNER_NULL), f[7].parse::<u32>().unwrap_or(1));
+    sc::begin(mode, "");
+    sc::with(|o| {
+        o.opp_code = opp.clone();
+        o.winner = winner;
+        o.game = game;
+        o.conn = sc::CONN_OPPONENT_CONNECTING;
+    });
+    *HANDOFF.lock().unwrap() = None;
+    let max_s: u64 = std::env::var("MELEE_SLIPPI_NP_MAX_SECONDS").ok().and_then(|v| v.parse().ok()).unwrap_or(600);
+    eprintln!("online css: rematch: game {} against {}, last game {}", game + 1, if opp.is_empty() { "?" } else { &opp }, ["none", "won", "lost"][winner.min(2) as usize]);
+    std::thread::spawn(move || {
+        let mut a: Vec<String> = vec!["--peer".into(), peer, "--local-port".into(), local_port.to_string()];
+        if decider {
+            a.push("--host".into());
+        }
+        let r = crate::slippi_np::pair(&a, max_s).map_err(|(_, m)| m).and_then(|mut p| {
+            p.decider = decider;
+            p.opp_code = opp;
+            link(&p, port, max_s).map(|_| ())
+        });
+        if let Err(e) = r {
+            eprintln!("online css: session: {e}");
+            sc::with(|o| {
+                o.conn = sc::CONN_ERROR;
+                o.error = e;
+            });
+        }
+    });
+    Some(mode)
+}
+
+/// The environment the match process takes back to the online select after its game (`start_rematch`): `None` when
+/// this match is not part of an online-select set (`MELEE_SLIPPI_SET`, set at the handoff: `mode;opp_code;game`).
+pub fn rematch_env(match_args: &[String], winner_port: i32) -> Option<String> {
+    let set = std::env::var("MELEE_SLIPPI_SET").ok().filter(|v| !v.is_empty())?;
+    let f: Vec<&str> = set.split(';').collect();
+    let (mode, opp, game) = (f.first()?, f.get(1).copied().unwrap_or(""), f.get(2).and_then(|g| g.parse::<u32>().ok()).unwrap_or(0));
+    let peer = arg(match_args, "--slippi-peer")?;
+    let port = arg(match_args, "--slippi-port").unwrap_or_else(|| "0".into());
+    let lp: u8 = arg(match_args, "--slippi-local-port").and_then(|v| v.parse().ok()).unwrap_or(0);
+    let decider = match_args.iter().any(|a| a == "--slippi-host");
+    let winner = if winner_port < 0 { sc::WINNER_NULL } else if winner_port as u8 == lp { sc::WINNER_WON } else { sc::WINNER_LOST };
+    Some(format!("{peer};{port};{lp};{};{mode};{opp};{winner};{}", decider as u8, game + 1))
 }
 
 fn run(args: &[String]) -> Result<(), String> {
@@ -111,12 +175,21 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         o.conn = sc::CONN_OPPONENT_CONNECTING;
         o.opp_code = p.opp_code.clone();
     });
-    let udp = UdpTransport::open(p.bind_ip, port).map_err(|e| format!("bind: {e}"))?;
+    // the port can still be held a moment by the process before (the last game's match window): retry the bind
+    let mut udp = UdpTransport::open(p.bind_ip, port);
+    let bind_t = Instant::now();
+    while udp.is_err() && port != 0 && bind_t.elapsed() < Duration::from_secs(8) {
+        std::thread::sleep(Duration::from_millis(100));
+        udp = UdpTransport::open(p.bind_ip, port);
+    }
+    let udp = udp.map_err(|e| format!("bind: {e}"))?;
+    sc::with(|o| o.local_index = p.local_port);
     let mut cl = Client::new(Box::new(udp), p.local_port, p.peer, p.remote_port);
     cl.connect_timeout_ms = 30000;
     let t0 = Instant::now();
     let (mut sent, mut theirs) = (None::<(u8, u8)>, None::<Selections>);
     let mut both_at = None::<Instant>;
+    let mut lock_at: Option<(i32, Option<u16>, u32)> = None;
     loop {
         cl.poll();
         while let Some(n) = cl.next_note() {
@@ -130,7 +203,13 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         }
         let (cancel, lock) = sc::with(|o| (o.cancel, o.lock));
         if cancel {
-            eprintln!("online css: session: cancelled, link closed");
+            // B, or hold Z (Hero's cleanup command): the opponent is told, the link closes
+            cl.disconnect(0);
+            for _ in 0..20 {
+                cl.poll();
+                std::thread::sleep(Duration::from_millis(2));
+            }
+            eprintln!("online css: session: {}, link closed", if sc::with(|o| o.disconnect) { "disconnected (hold Z)" } else { "cancelled" });
             return Ok(false);
         }
         match cl.status {
@@ -140,18 +219,24 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
                     sc::with(|o| o.conn = sc::CONN_SUCCESS);
                 }
             }
-            Status::Failed | Status::Disconnected => return Err(format!("the opponent's link {:?}", cl.status)),
+            Status::Disconnected => return Err("the opponent disconnected".into()),
+            Status::Failed => return Err(format!("the opponent's link {:?}", cl.status)),
             _ => {}
         }
         if let (Some((ck, color)), None, Status::Connected) = (lock, sent, cl.status) {
+            let stage = sc::with(|o| o.lock_stage);
             cl.set_match_selections(Selections {
                 character_id: ck,
                 character_color: color,
                 is_character_selected: true,
                 player_idx: p.local_port,
+                stage_id: stage.unwrap_or(0),
+                is_stage_selected: stage.is_some(),
                 ..Default::default()
             });
             sent = Some((ck, color));
+            // the set's state as it was at the lock-in (the menus can be re-entered before the handoff)
+            lock_at = sc::with(|o| Some((o.mode, o.lock_stage, o.game)));
             sc::with(|o| o.local_ready = true);
         }
         if sent.is_some() && theirs.is_some() {
@@ -183,6 +268,23 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
     ];
     if p.decider {
         m.push("--slippi-host".into());
+    }
+    // Direct: the loser's stage, or none from the winner (the loser's stands); Unranked keeps the match's default
+    let (mode, stage, game) = lock_at.unwrap();
+    let opp = p.opp_code.clone();
+    HANDOFF_GAME.store(game, std::sync::atomic::Ordering::Relaxed);
+    if mode == melee_modes::tu::slippi_online::MODE_DIRECT {
+        match stage {
+            Some(s) => m.extend(["--slippi-stage".into(), s.to_string()]),
+            None => m.push("--slippi-stage-unset".into()),
+        }
+    }
+    // the match process comes back to this select after its game (rematch_env / start_rematch)
+    // (Direct only: Unranked's link ends with its game, as Slippi's does)
+    if mode == melee_modes::tu::slippi_online::MODE_DIRECT {
+        std::env::set_var("MELEE_SLIPPI_SET", format!("{mode};{opp};{game}"));
+    } else {
+        std::env::remove_var("MELEE_SLIPPI_SET");
     }
     eprintln!("online css: session: both locked in, the match next");
     *HANDOFF.lock().unwrap() = Some(m);

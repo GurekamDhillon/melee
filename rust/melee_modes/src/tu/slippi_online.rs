@@ -59,7 +59,7 @@ pub unsafe fn install() {
         return;
     }
     // Slippi's description ids per mode slot 0..7 (Online/Menus, from Slippi's code, not the disc).
-    const SOURCE_DESCRIPTIONS: [u16; 8] = [0x645, 0x646, 0x647, 0x64B, 0x64C, 0x648, 0x649, 0x64A];
+    const SOURCE_DESCRIPTIONS: [u16; 8] = [0x645, 0x646, 0x647, 0x64B, 0x64C, 0x648, 0x649, 0x64A]; // [Slippi text id]
     let mut original: [AnimLoopSettings; 8] = core::mem::zeroed();
     for i in 0..3 {
         original[i] = mn_803EB57C[i];
@@ -78,7 +78,7 @@ pub unsafe fn install() {
     k.selection_count = ROWS.len() as u8;
     k.think = Some(online_menu_think);
     // The 1P menu's row 2 (Online): Slippi's description and the character select's preview (its own frames are blank).
-    mn_803EB66C[SEL_1P_2 as usize] = 0x644;
+    mn_803EB66C[SEL_1P_2 as usize] = 0x644; // [Slippi text id]
     mn_803EB444[SEL_1P_2 as usize] = mn_803EB57C[0];
 }
 

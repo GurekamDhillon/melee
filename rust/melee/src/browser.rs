@@ -500,32 +500,26 @@ impl RetailPlay {
         let (Some(url), Some(port), Some(code)) = (env("MELEE_SLIPPI_MM_URL"), env("MELEE_SLIPPI_NP_PORT"), env("MELEE_SLIPPI_TEST_CODE")) else {
             return self.ui_status(1, &format!("online menu: {name} needs a matchmaking server (MELEE_SLIPPI_MM_URL, MELEE_SLIPPI_NP_PORT, MELEE_SLIPPI_TEST_CODE)"));
         };
-        let mut args: Vec<String> = ["slippi-netplay", "--mm", &url, "--port", &port, "--code", &code].iter().map(|s| s.to_string()).collect();
+        // the match runs in this game's window (play --slippi-mm: renderer, audio, pads), over the Slippi wire
+        let mut args: Vec<String> = ["--slippi-mm", &url, "--slippi-port", &port, "--slippi-code", &code].iter().map(|s| s.to_string()).collect();
         match mode {
             melee_modes::tu::slippi_online::MODE_DIRECT => {
                 let Some(theirs) = env("MELEE_SLIPPI_DIRECT_CODE") else {
                     return self.ui_status(1, "online menu: Direct needs the opponent's code (MELEE_SLIPPI_DIRECT_CODE until the code screen is ported)");
                 };
-                args.extend(["--mm-mode".into(), "direct".into(), "--search".into(), theirs]);
+                args.extend(["--slippi-mm-mode".into(), "direct".into(), "--slippi-search".into(), theirs]);
             }
-            // unranked against a local server only: the client refuses unranked without --mm-real, so this is refused
-            // there too until the local mock speaks unranked (later step)
-            _ => args.extend(["--mm-mode".into(), "unranked".into()]),
+            // unranked: a loopback matchmaking server only (the client refuses any other address without --mm-real)
+            _ => args.extend(["--slippi-mm-mode".into(), "unranked".into()]),
         }
-        // test hooks: the match length, the per-frame checksum file and a hard time limit
-        for (k, e) in [("--frames", "MELEE_SLIPPI_NP_FRAMES"), ("--out", "MELEE_SLIPPI_NP_OUT"), ("--max-seconds", "MELEE_SLIPPI_NP_MAX_SECONDS")] {
+        // test hooks: the match length, the per-frame checksum file, a hard time limit, generated pads
+        for (k, e) in [("--slippi-frames", "MELEE_SLIPPI_NP_FRAMES"), ("--slippi-out", "MELEE_SLIPPI_NP_OUT"), ("--slippi-max-seconds", "MELEE_SLIPPI_NP_MAX_SECONDS"), ("--slippi-padgen", "MELEE_SLIPPI_NP_PADGEN")] {
             if let Some(v) = env(e) {
                 args.extend([k.to_string(), v]);
             }
         }
-        log(&format!("online menu: {name}: relaunching into slippi-netplay (matchmaking, code {code})"));
-        let Ok(exe) = std::env::current_exe() else { return self.ui_status(1, "cannot find the game executable") };
-        let mut cmd = std::process::Command::new(exe);
-        cmd.args(&args).env_remove("MELEE_PAD_SCRIPT");
-        match cmd.spawn() {
-            Ok(_) => self.quit = true,
-            Err(e) => self.ui_status(1, &format!("online menu: relaunch failed: {e}")),
-        }
+        log(&format!("online menu: {name}: matchmaking as {code}, the match in the game window"));
+        self.relaunch(&args, None, false, &format!("Slippi {name}"));
     }
 
     pub(super) fn session_exit(&mut self) {

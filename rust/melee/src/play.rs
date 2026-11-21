@@ -1740,6 +1740,22 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
             }
         }
+        // `--slippi-mm URL ...` (the online menu's pick): a Slippi-wire match in this window. Matchmaking, the
+        // connection and the selections happen here, before the window, like --netplay; the boot goes straight to it.
+        let mut slippi_scn = None;
+        if !netplay && get("--slippi-mm").is_some() {
+            match crate::play_net::NetDriver::connect_slippi(args) {
+                Ok((n, scn)) => {
+                    seed = Some(n.agreed.seed);
+                    slippi_scn = Some(scn);
+                    net = Some(n);
+                }
+                Err(e) => {
+                    eprintln!("play: slippi: {e}");
+                    return ExitCode::FAILURE;
+                }
+            }
+        }
         let sync_k = std::env::var("MELEE_PLAY_SYNCTEST").ok().and_then(|v| v.parse::<i32>().ok()).filter(|&k| k > 0);
         // --replay-seekable / a seek control: the playback snapshots the match (the rollback allocator modes)
         let seekable = feed.is_some() && (has("--replay-seekable") || get("--replay-seek").is_some() || get("--replay-ctl").is_some_and(|c| c.contains("seek") || c.contains("back")));
@@ -1764,6 +1780,9 @@ pub fn play(args: &[String]) -> ExitCode {
         let seed = seed.unwrap_or_else(|| std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345));
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());
         let mut presets = presets;
+        if let Some(scn) = slippi_scn {
+            presets.scenario = Some(scn);
+        }
         if let Some(r) = &np_rules {
             presets.stocks = r.stocks;
             presets.time_secs = r.time_secs;

@@ -499,7 +499,7 @@ impl RetailPlay {
         if self.arm && !e.ended && e.mode_scene().1 == SCENE_VS && e.frames >= ARM_FRAMES {
             self.arm = false;
             if let Some(nd) = self.net.as_mut() {
-                if matches!(nd.phase, NetPhase::PreMatch) && nd.room.is_none() {
+                if matches!(nd.phase, NetPhase::PreMatch) && nd.room.is_none() && nd.slippi.is_none() {
                     if let Err(er) = nd.next_room() {
                         log(&format!("netplay: {er}"));
                         self.failed = Some(er);

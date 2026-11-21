@@ -79,12 +79,25 @@ pub fn online_scene(sel: &[Selections; 2]) -> Result<(String, u16), String> {
     Ok((t, stage))
 }
 
-pub fn slippi_netplay(args: &[String]) -> ExitCode {
+/// A Slippi link after matchmaking (or the given peer), the ENet connection and the MATCH_SELECTIONS exchange.
+pub struct Linked {
+    pub cl: Client,
+    pub decider: bool,
+    pub local_port: u8,
+    pub remote_port: u8,
+    pub by_port: [Selections; 2],
+    pub rng_offset: u32,
+    pub scene: String,
+    pub stage: u16,
+}
+
+/// Why [`establish`] stopped: the exit code (0: the join-and-leave check left the queue on purpose) and the message.
+pub type LinkErr = (u8, String);
+
+/// Matchmaking (`--mm`) or a direct peer (`--host|--join --peer`), the connection and the selections exchange: the part
+/// of a Slippi match before the scene boots, shared by `slippi-netplay` (headless) and `play --slippi-mm` (rendered).
+pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
-    let delay = num("--delay", 2) as i32;
-    let frames = num("--frames", 3600) as i32;
-    let max_s = num("--max-seconds", 600) as u64;
-    let t0 = Instant::now();
     // --mm ws://127.0.0.1:P/v1/queue: be paired through a (local mock) matchmaking server, as Slippi Dolphin is;
     // otherwise direct: --host|--join with --peer
     // --mm-real: the only way to reach a matchmaking server that is not on loopback (Slippi's own, wss://). The account
@@ -100,8 +113,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         let mut app_version = arg(args, "--app-version").unwrap_or_else(|| "4.0.0-mainline-beta.20".into());
         if real {
             let Some(path) = arg(args, "--user-json") else {
-                eprintln!("melee: --mm-real needs --user-json (a copy of the account's Slippi user.json)");
-                return ExitCode::from(2);
+                return Err((2, format!("--mm-real needs --user-json (a copy of the account's Slippi user.json)")));
             };
             let acct = std::fs::read_to_string(&path).ok().and_then(|t| melee_net::slippi_mm::Json::parse(&t));
             let field = |k: &str| acct.as_ref().and_then(|j| j.get(k)).and_then(|v| v.str()).map(str::to_string);
@@ -115,8 +127,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
                     }
                 }
                 _ => {
-                    eprintln!("melee: --user-json: not a Slippi user.json (uid, playKey, connectCode)");
-                    return ExitCode::from(2);
+                    return Err((2, format!("--user-json: not a Slippi user.json (uid, playKey, connectCode)")));
                 }
             }
         }
@@ -124,8 +135,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             None | Some("direct") => 2,
             Some("unranked") if real => 1,
             Some(m) => {
-                eprintln!("melee: --mm-mode {m}: only direct (or unranked with --mm-real, for a join-and-leave check); never ranked");
-                return ExitCode::from(2);
+                return Err((2, format!("--mm-mode {m}: only direct (or unranked with --mm-real, for a join-and-leave check); never ranked")));
             }
         };
         let req = melee_net::slippi_mm::JoinRequest {
@@ -140,8 +150,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             port: num("--port", 0) as u16,
         };
         if req.port == 0 {
-            eprintln!("melee: --mm needs --port (the netplay port the server is told)");
-            return ExitCode::from(2);
+            return Err((2, format!("--mm needs --port (the netplay port the server is told)")));
         }
         // a real server's messages carry account data (uids, codes, addresses): only their type is shown
         let shown = |t: &str| {
@@ -172,22 +181,18 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         };
         let m = match res {
             Err(e) if e == "left" => {
-                eprintln!("melee: matchmaking: accepted (joined), left the queue at once");
-                return ExitCode::SUCCESS;
+                return Err((0, format!("matchmaking: accepted (joined), left the queue at once")));
             }
             Ok(m) => m,
             Err(e) => {
-                eprintln!("melee: matchmaking: {e}");
-                return ExitCode::FAILURE;
+                return Err((1, format!("matchmaking: {e}")));
             }
         };
         let (Some(li), Some((ri, ra))) = (m.local_index(), m.remote_addresses().into_iter().next()) else {
-            eprintln!("melee: matchmaking: the match has no local or remote player");
-            return ExitCode::FAILURE;
+            return Err((1, format!("matchmaking: the match has no local or remote player")));
         };
         let Some(peer) = addr_parse(&ra, 51441) else {
-            eprintln!("melee: matchmaking: bad remote address {ra}");
-            return ExitCode::FAILURE;
+            return Err((1, format!("matchmaking: bad remote address {ra}")));
         };
         if real {
             eprintln!("melee: matched: local player {li}, remote {ri}, decider {}, stages {:?}", m.is_host, m.stages);
@@ -198,9 +203,8 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     } else {
         let host = args.iter().any(|a| a == "--host");
         let Some(peer) = arg(args, "--peer").and_then(|p| addr_parse(&p, 51600)) else {
-            eprintln!("usage: melee slippi-netplay (--host|--join) --port P --peer IP:PORT [--delay D] [--lag-ms N] [--loss-pct P] [--frames N] [--out CSV] [--max-seconds S]");
-            eprintln!("       melee slippi-netplay --mm ws://127.0.0.1:P/v1/queue --port P [--code C] [--search C] [--char EXT] [--color N] [--stage EXT] [...]");
-            return ExitCode::from(2);
+            return Err((2, "usage: melee slippi-netplay (--host|--join) --port P --peer IP:PORT [--delay D] [--lag-ms N] [--loss-pct P] [--frames N] [--out CSV] [--max-seconds S]
+       melee slippi-netplay --mm ws://127.0.0.1:P/v1/queue --port P [--code C] [--search C] [--char EXT] [--color N] [--stage EXT] [...]".into()));
         };
         let lp: u8 = if host { 0 } else { 1 };
         (host, lp, 1 - lp, peer)
@@ -215,8 +219,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             u
         }
         Err(e) => {
-            eprintln!("melee: bind: {e}");
-            return ExitCode::FAILURE;
+            return Err((1, format!("bind: {e}")));
         }
     };
     let tp: Box<dyn Transport> = Box::new(Degraded {
@@ -258,8 +261,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             eprintln!("melee: {tag}: connected after {:.2}s", t0.elapsed().as_secs_f32());
         }
         if matches!(cl.status, Status::Failed | Status::Disconnected) || t0.elapsed().as_secs() > max_s {
-            eprintln!("melee: {tag}: connection failed ({:?})", cl.status);
-            return ExitCode::FAILURE;
+            return Err((1, format!("{tag}: connection failed ({:?})", cl.status)));
         }
         std::thread::sleep(Duration::from_millis(1));
     }
@@ -270,11 +272,27 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let (scene, stage) = match online_scene(&by_port) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("melee: {e}");
-            return ExitCode::FAILURE;
+            return Err((1, format!("{e}")));
         }
     };
     eprintln!("melee: {tag}: selections exchanged, rng_offset {rng_offset:#06x}, stage {stage:#x}, scene {scene}");
+    Ok(Linked { cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage })
+}
+
+pub fn slippi_netplay(args: &[String]) -> ExitCode {
+    let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+    let delay = num("--delay", 2) as i32;
+    let frames = num("--frames", 3600) as i32;
+    let max_s = num("--max-seconds", 600) as u64;
+    let t0 = Instant::now();
+    let Linked { mut cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage: _ } = match establish(args, t0, max_s) {
+        Ok(l) => l,
+        Err((c, m)) => {
+            eprintln!("melee: {m}");
+            return ExitCode::from(c);
+        }
+    };
+    let tag = if decider { "decider" } else { "guest" };
     melee_core::slippi_online::enable(rng_offset);
     if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
         online_codes(by_port.iter().map(|s| s.alt_stage_mode).max().unwrap_or(0));

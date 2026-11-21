@@ -3,7 +3,9 @@
 //! `0653df819` speaks it (`SlippiNetplay.cpp`): `sf::Packet` encoding (big-endian integers, bool = 1 byte, string =
 //! u32 length + bytes), three ENet channels (0 reliable for everything but the pads, 1 unsequenced for pads, acks
 //! and suggestions, 2 unsequenced for the acks sent while handling a pad), a resend-until-acked local pad queue of
-//! up to 128 frames, acks only for pads that added frames, ping from ack round trips and Slippi's time offset.
+//! up to 128 frames (also resent by `poll` while unacked and no new pad goes out: not in Slippi Dolphin, see there),
+//! acks for pads that added frames (and for a resend of the newest frame), ping from ack round trips and Slippi's
+//! time offset.
 //!
 //! Direct connections only: both sides know the other's address and connect to it at once (as Slippi does after
 //! matchmaking). Nothing here talks to a matchmaking server, STUN or any Slippi service.
@@ -248,6 +250,8 @@ pub struct Client {
     pub stats: ClientStats,
     /// When the last ENet ping for the displayed round trip went out (see [`Client::net_ping_us`]).
     last_probe_us: i64,
+    /// When the local pad queue last went on the wire (a new pad or a resend, see [`Client::poll`]).
+    last_pad_send_us: i64,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -257,6 +261,8 @@ pub struct ClientStats {
     pub acks_sent: u64,
     pub acks_received: u64,
     pub max_queue: usize,
+    /// Pad packets sent again by `poll` with no new local pad (unacked frames while no new frame was sent).
+    pub pads_resent: u64,
 }
 
 impl Client {
@@ -293,6 +299,7 @@ impl Client {
             remote_checksums: BTreeMap::new(),
             stats: ClientStats::default(),
             last_probe_us: 0,
+            last_pad_send_us: 0,
         };
         c.started_at_us = c.now_us();
         c
@@ -367,25 +374,29 @@ impl Client {
             return;
         }
         self.local_queue.push_front((frame, pad, checksum_frame, checksum));
-        let mut min_ack = self.remote.last_acked;
-        let cur = self.local_queue.front().unwrap().0;
-        min_ack = min_ack.max(cur - 128);
-        while self.local_queue.back().map_or(false, |b| b.0 < min_ack) {
-            self.local_queue.pop_back();
-        }
-        if self.local_queue.is_empty() {
-            return;
-        }
+        let Some(frame) = self.send_local_queue() else { return };
         self.stats.max_queue = self.stats.max_queue.max(self.local_queue.len());
-        let f = self.local_queue.front().unwrap();
-        let m = PadMsg { frame: f.0, port: self.local_port, checksum_frame: f.2, checksum: f.3, pads: self.local_queue.iter().map(|q| q.1).collect() };
-        let b = m.encode();
-        self.send(&b);
         self.stats.pads_sent += 1;
         let now = self.now_us();
         self.has_game_started = true;
-        self.remote.last_timing = Timing { frame: m.frame, time_us: now };
-        self.remote.ack_timers.push_back(Timing { frame: m.frame, time_us: now });
+        self.remote.last_timing = Timing { frame, time_us: now };
+        self.remote.ack_timers.push_back(Timing { frame, time_us: now });
+    }
+
+    /// Drop the acked pads (and any older than the 128-frame window), then send the rest as one pad packet, newest
+    /// first. Returns the newest frame sent, or None when nothing is left unacked.
+    fn send_local_queue(&mut self) -> Option<i32> {
+        let cur = self.local_queue.front()?.0;
+        let min_ack = self.remote.last_acked.max(cur - 128);
+        while self.local_queue.back().map_or(false, |b| b.0 < min_ack) {
+            self.local_queue.pop_back();
+        }
+        let f = self.local_queue.front()?;
+        let m = PadMsg { frame: f.0, port: self.local_port, checksum_frame: f.2, checksum: f.3, pads: self.local_queue.iter().map(|q| q.1).collect() };
+        let b = m.encode();
+        self.send(&b);
+        self.last_pad_send_us = self.now_us();
+        Some(m.frame)
     }
 
     /// Put the queued datagrams on the wire now (`enet_host_flush`) instead of at the next `poll`: called right
@@ -432,6 +443,21 @@ impl Client {
                     self.last_probe_us = now;
                 }
             }
+        }
+        // pads are unsequenced and unreliable: an unacked pad is repaired only by the next packet that carries the
+        // queue. A side that sends no new frame (its rollback window full waiting for the peer, or past its last
+        // frame) would never resend a lost newest packet, and two sides each waiting on the other's lost tail stall
+        // for good. So a queue with unacked pads that has not gone out for a frame goes out again. The send timing
+        // (time offset) stays with the original send; the pending ack timers are dropped, as an ack arriving now may
+        // answer either send (Karn's rule: no ping sample from a resent packet).
+        if self.status == Status::Connected
+            && self.has_game_started
+            && self.now_us() - self.last_pad_send_us >= FRAME_US
+            && self.send_local_queue().is_some()
+        {
+            self.remote.ack_timers.clear();
+            self.stats.pads_resent += 1;
+            self.host.flush();
         }
         if self.status == Status::Initiated && (self.now_us() - self.started_at_us) / 1000 >= self.connect_timeout_ms {
             self.status = Status::Failed;
@@ -533,7 +559,9 @@ impl Client {
                 }
                 self.remote_checksums.insert(m.checksum_frame, m.checksum);
                 self.notes.push_back(Note::Checksum { port: m.port, frame: m.checksum_frame, value: m.checksum });
-                if to_copy > 0 {
+                // a resend of our newest frame is acked too: its first ack was lost, and the sender (`poll`) keeps
+                // resending until one arrives
+                if to_copy > 0 || m.frame == rm.head_frame {
                     let a = encode_ack(m.frame, self.local_port);
                     self.host.send(peer, 2, &a, false);
                     self.stats.acks_sent += 1;

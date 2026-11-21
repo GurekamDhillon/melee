@@ -3566,6 +3566,17 @@ pub unsafe extern "C" fn fn_80262F44(gobj: *mut HSD_GObj) {
             }
         }
 
+        // the Slippi online select: Start locks in, and reaches this path only when both players are locked in
+        if mnCharSel_804D6CF2 == 0 && super::slippi_css::active() {
+            let p = player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize);
+            if trigger & HSD_PAD_START as u32 != 0 && std::env::var_os("MELEE_SLIPPI_CSS_TRACE").is_some() {
+                let c = mnCharSel_804A0BC0[mnCharSel_804D6CF0 as usize & 3];
+                if !c.is_null() {
+                    eprintln!("online css: hand {} {} state {}", (*c).xC, (*c).x10, (*c).x5);
+                }
+            }
+            trigger = super::slippi_css::inputs(trigger, mnCharSel_804D6CF7 != 0, (*p).ckind, (*p).color);
+        }
         if mnCharSel_804D6CF2 == 0 && (trigger & HSD_PAD_START as u32) != 0 {
             if mnCharSel_804D6CF7 != 0 {
                 mnCharSel_804D6CF6 = 1;

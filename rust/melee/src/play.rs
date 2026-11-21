@@ -1743,7 +1743,7 @@ pub fn play(args: &[String]) -> ExitCode {
         // `--slippi-mm URL ...` (the online menu's pick): a Slippi-wire match in this window. Matchmaking, the
         // connection and the selections happen here, before the window, like --netplay; the boot goes straight to it.
         let mut slippi_scn = None;
-        if !netplay && get("--slippi-mm").is_some() {
+        if !netplay && (get("--slippi-mm").is_some() || get("--slippi-peer").is_some()) {
             match crate::play_net::NetDriver::connect_slippi(args) {
                 Ok((n, scn)) => {
                     seed = Some(n.agreed.seed);

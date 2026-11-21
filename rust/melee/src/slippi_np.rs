@@ -96,7 +96,19 @@ pub type LinkErr = (u8, String);
 
 /// Matchmaking (`--mm`) or a direct peer (`--host|--join --peer`), the connection and the selections exchange: the part
 /// of a Slippi match before the scene boots, shared by `slippi-netplay` (headless) and `play --slippi-mm` (rendered).
-pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
+/// Who the opponent is and how to reach them: matchmaking's answer (`--mm`), or a direct `--host|--join --peer`.
+pub struct Paired {
+    pub decider: bool,
+    pub local_port: u8,
+    pub remote_port: u8,
+    pub peer: melee_net::transport::Addr,
+    pub bind_ip: u32,
+    /// The opponent's connect code from matchmaking (empty for a direct link).
+    pub opp_code: String,
+}
+
+/// The matchmaking half of [`establish`]: no netplay connection yet (the online CSS holds its own, `slippi_css`).
+pub fn pair(args: &[String], max_s: u64) -> Result<Paired, LinkErr> {
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
     // --mm ws://127.0.0.1:P/v1/queue: be paired through a (local mock) matchmaking server, as Slippi Dolphin is;
     // otherwise direct: --host|--join with --peer
@@ -107,7 +119,7 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
     // Windows host, two LAN boxes): ws:// to a private literal IPv4, sockets bound to every interface
     let lan = !real && args.iter().any(|a| a == "--mm-lan");
     let bind_ip: u32 = if real || lan { 0 } else { 0x7F000001 };
-    let (decider, local_port, remote_port, peer) = if let Some(url) = arg(args, "--mm") {
+    let (decider, local_port, remote_port, peer, opp_code) = if let Some(url) = arg(args, "--mm") {
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));
         let mut app_version = arg(args, "--app-version").unwrap_or_else(|| "4.0.0-mainline-beta.20".into());
@@ -201,16 +213,24 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
         } else {
             eprintln!("melee: matched ({}): local player {li}, remote {ri} at {ra}, decider {}, stages {:?}", m.match_id, m.is_host, m.stages);
         }
-        (m.is_host, li, ri, peer)
+        let opp = m.players.iter().find(|p| !p.is_local).map(|p| p.connect_code.clone()).unwrap_or_default();
+        (m.is_host, li, ri, peer, opp)
     } else {
         let host = args.iter().any(|a| a == "--host");
         let Some(peer) = arg(args, "--peer").and_then(|p| addr_parse(&p, 51600)) else {
             return Err((2, "usage: melee slippi-netplay (--host|--join) --port P --peer IP:PORT [--delay D] [--lag-ms N] [--loss-pct P] [--frames N] [--out CSV] [--max-seconds S]
        melee slippi-netplay --mm ws://127.0.0.1:P/v1/queue --port P [--code C] [--search C] [--char EXT] [--color N] [--stage EXT] [...]".into()));
         };
-        let lp: u8 = if host { 0 } else { 1 };
-        (host, lp, 1 - lp, peer)
+        // --local-port: the player index matchmaking gave (a link the online CSS paired; otherwise the host is 0)
+        let lp: u8 = arg(args, "--local-port").and_then(|v| v.parse().ok()).filter(|&p: &u8| p < 2).unwrap_or(if host { 0 } else { 1 });
+        (host, lp, 1 - lp, peer, String::new())
     };
+    Ok(Paired { decider, local_port, remote_port, peer, bind_ip, opp_code })
+}
+
+pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
+    let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+    let Paired { decider, local_port, remote_port, peer, bind_ip, opp_code: _ } = pair(args, max_s)?;
     let tag = if decider { "decider" } else { "guest" };
     let udp = match UdpTransport::open(bind_ip, num("--port", 0) as u16) {
         Ok(mut u) => {

@@ -1859,7 +1859,7 @@ impl NetDriver {
         while i < args.len() {
             if let Some(k) = args[i].strip_prefix("--slippi-").filter(|k| *k != "menus") {
                 sub.push(format!("--{k}"));
-                if k != "mm-real" && k != "mm-lan" {
+                if k != "mm-real" && k != "mm-lan" && k != "host" {
                     if let Some(v) = args.get(i + 1) {
                         sub.push(v.clone());
                         i += 1;

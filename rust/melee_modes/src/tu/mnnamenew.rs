@@ -1397,7 +1397,7 @@ static mut mnNameNew_804D4F74: GXColor = _GXColor {
     b: 0xb as u8,
     a: 0xff as u8,
 };
-static mut mnNameNew_804D4F78: GXColor = _GXColor {
+pub static mut mnNameNew_804D4F78: GXColor = _GXColor {
     r: 0 as u8,
     g: 0 as u8,
     b: 0 as u8,
@@ -2587,6 +2587,10 @@ pub unsafe extern "C" fn mnNameNew_8023CE4C() {
     (*text).font_size.x = 0.04_f32 as f32;
     (*text).font_size.y = 0.05_f32 as f32;
     (*text).text_color = mnNameNew_804D4F6C;
+    // Slippi Direct's connect code: the whole code, not the four name slots
+    if super::slippi_online::code_draw(text, char_spacing) {
+        i = 4;
+    }
     while i < 4 {
         if *(&raw mut mnNameNew_NullCharacter as *mut c_char) as i8
             as i32

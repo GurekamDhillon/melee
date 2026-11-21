@@ -514,8 +514,8 @@ impl RetailPlay {
                 melee_modes::tu::slippi_online::MODE_UNRANKED => args.extend(["--slippi-mm-mode".into(), "unranked".into()]),
                 _ => return self.ui_status(1, &format!("online menu: {name} is not offered yet")),
             }
-            log(&format!("online menu: {name}: Slippi matchmaking with the granted login"));
-            return self.relaunch(&args, None, false, &format!("Slippi {name}"));
+            log(&format!("online menu: {name}: Slippi matchmaking with the granted login, the online select meanwhile"));
+            return crate::slippi_css_host::start(args, mode);
         }
         // Hero's yougame_mode_policy (melee_platform::yougame_mm::matchmaking_route): in YouGame mode without a granted
         // login Direct / Teams / Party are Locked, and Unranked goes to YouGame's own queue (mpTicket through the app
@@ -535,6 +535,10 @@ impl RetailPlay {
                     None => {}
                 }
             });
+            melee_modes::tu::slippi_css::with(|o| {
+                o.conn = melee_modes::tu::slippi_css::CONN_MATCHMAKING;
+                o.opp_code.clear();
+            });
             return self.ui_status(0, &format!("{name}: {}", ym::SEARCH_YOUGAME_ONLY));
         }
         let (Some(url), Some(port), Some(code)) = (env("MELEE_SLIPPI_MM_URL"), env("MELEE_SLIPPI_NP_PORT"), env("MELEE_SLIPPI_TEST_CODE")) else {
@@ -552,14 +556,41 @@ impl RetailPlay {
             // unranked: a loopback matchmaking server only (the client refuses any other address without --mm-real)
             _ => args.extend(["--slippi-mm-mode".into(), "unranked".into()]),
         }
+        if let Some(v) = env("MELEE_SLIPPI_NP_MAX_SECONDS") {
+            args.extend(["--slippi-max-seconds".to_string(), v]);
+        }
+        log(&format!("online menu: {name}: matchmaking as {code}, the online select meanwhile"));
+        crate::slippi_css_host::start(args, mode);
+    }
+
+    /// The online select was left with both fighters locked in (`slippi_css::take_go`): the match runs in this game's
+    /// window (play --slippi-peer: renderer, audio, pads), against the opponent the select's session linked to.
+    pub(super) fn slippi_online_match(&mut self) {
+        // the select can leave a moment before the session has closed its link: wait for the handoff
+        static WAITING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        use std::sync::atomic::Ordering::Relaxed;
+        if melee_modes::tu::slippi_css::take_go() {
+            WAITING.store(true, Relaxed);
+        }
+        if !WAITING.load(Relaxed) {
+            return;
+        }
+        if melee_modes::tu::slippi_css::with(|o| o.conn == melee_modes::tu::slippi_css::CONN_ERROR) {
+            WAITING.store(false, Relaxed);
+            return self.ui_status(1, "online select: the opponent's link failed before the match");
+        }
+        let Some(mut args) = crate::slippi_css_host::take_handoff() else { return };
+        WAITING.store(false, Relaxed);
         // test hooks: the match length, the per-frame checksum file, a hard time limit, generated pads
         for (k, e) in [("--slippi-frames", "MELEE_SLIPPI_NP_FRAMES"), ("--slippi-out", "MELEE_SLIPPI_NP_OUT"), ("--slippi-max-seconds", "MELEE_SLIPPI_NP_MAX_SECONDS"), ("--slippi-padgen", "MELEE_SLIPPI_NP_PADGEN")] {
-            if let Some(v) = env(e) {
-                args.extend([k.to_string(), v]);
+            if let Ok(v) = std::env::var(e) {
+                if !v.is_empty() {
+                    args.extend([k.to_string(), v]);
+                }
             }
         }
-        log(&format!("online menu: {name}: matchmaking as {code}, the match in the game window"));
-        self.relaunch(&args, None, false, &format!("Slippi {name}"));
+        log("online select: both locked in, the match in the game window");
+        self.relaunch(&args, None, false, "the Slippi match");
     }
 
     pub(super) fn session_exit(&mut self) {

@@ -68,6 +68,7 @@ mod diff_layout;
 mod dolphin_oracle;
 mod netmatch;
 mod netplay;
+mod slippi_css_host;
 mod slippi_np;
 mod play_net;
 mod slp_export;

@@ -43,6 +43,11 @@ pub fn row_unlocked(row: i32) -> bool {
     matches!(ROWS.get(row as usize), Some(&MODE_DIRECT) | Some(&MODE_UNRANKED))
 }
 
+/// The online menu's row of `mode` (0 if it has none).
+pub fn row_of(mode: i32) -> usize {
+    ROWS.iter().position(|&m| m == mode).unwrap_or(0)
+}
+
 /// The confirmed mode, once (the host starts matchmaking for it).
 pub fn take_pick() -> Option<i32> {
     let p = PICK.swap(-1, Ordering::Relaxed);
@@ -113,6 +118,9 @@ pub unsafe extern "C" fn online_menu_think(_gp: *mut HSD_GObj) {
         }
         PICK.store(mode, Ordering::Relaxed);
         mn_804A04F0.entering_menu = 1;
+        // on to the online select while the host searches (Slippi: the CSS shows the search)
+        super::slippi_css::begin(mode, &std::env::var("MELEE_SLIPPI_DIRECT_CODE").unwrap_or_default());
+        super::slippi_css::enter_from_menu();
     } else if buttons & MenuInput_Back as u32 != 0 {
         sfxBack();
         mn_804A04F0.entering_menu = 0;
@@ -225,6 +233,7 @@ pub fn code_complete(code: &[u8]) -> bool {
 unsafe fn code_show(data: *mut NameNewEntry) {
     use super::mnnamenew::*;
     let code = &CODE[..CODE_LEN];
+    // the field's four slots keep the vanilla cursor; the whole code is drawn by code_draw (mnNameNew_8023CE4C)
     let shown = &code[code.len().saturating_sub(4)..];
     let text = &raw mut mnNameNew_CurrentNameText as *mut u8;
     for slot in 0..4 {
@@ -244,6 +253,25 @@ unsafe fn code_show(data: *mut NameNewEntry) {
     mnNameNew_8023CE4C();
 }
 
+/// The name field while code entry is on: every character of the code (up to [`CODE_MAX`]) at half the slot pitch,
+/// not just the last four (Hero shows the whole code). Returns false when code entry is off (the vanilla draw runs).
+pub unsafe fn code_draw(text: *mut HSD_Text, slot_pitch: f32) -> bool {
+    use melee_runtime::tu::hsd_3A64 as sis;
+    if !code_entry_active() {
+        return false;
+    }
+    (*text).font_size.x = 0.028;
+    let pitch = slot_pitch * 0.5;
+    for (i, &c) in CODE[..CODE_LEN].iter().enumerate() {
+        let ch = char::from_u32(0xFF00 + (c as u32 - 0x20)).unwrap();
+        let mut b = [0u8; 4];
+        let n = sis::HSD_SisLib_803A6B98(text, pitch * i as f32 / (*text).font_size.x, 0.0, Some(ch.encode_utf8(&mut b)));
+        let col = super::mnnamenew::mnNameNew_804D4F78;
+        sis::HSD_SisLib_803A74F0(text, n, &col);
+    }
+    true
+}
+
 unsafe fn code_leave(confirmed: bool) {
     CODE_STATE.store(0, Ordering::Relaxed);
     super::mnnamenew::mnNameNew_8023B224(0); // back to the Names screen; no name tag is made
@@ -255,6 +283,8 @@ unsafe fn code_leave(confirmed: bool) {
         }
         PICK.store(MODE_DIRECT, Ordering::Relaxed);
         mn_804A04F0.entering_menu = 1;
+        super::slippi_css::begin(MODE_DIRECT, &String::from_utf8_lossy(&CODE[..CODE_LEN]));
+        super::slippi_css::enter_from_menu();
     } else {
         eprintln!("online menu: Direct: code entry cancelled");
         mn_804A04F0.entering_menu = 0;

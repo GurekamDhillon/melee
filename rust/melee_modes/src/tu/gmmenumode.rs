@@ -326,9 +326,13 @@ pub unsafe extern "C" fn onEnter(scene: *mut GameModeState) {
     (*data).load_assets = 1;
     // Slippi online menus (OnMenuPrep): menu kind 8 becomes the online submenu (slippi_online.rs; off: nothing)
     super::slippi_online::install();
+    super::slippi_css::install_major();
     let mut previous_mode: GameModeKind = ext::gm_GetPreviousGameMode() as GameModeKind;
     if previous_mode == GM_CHALLENGER_APPROACH {
         previous_mode = ext::gm_801737D8() as GameModeKind;
+    }
+    if previous_mode == GM_HANYU_CSS && super::slippi_online::enabled() {
+        eprintln!("online menu: back from the online select");
     }
     let (kind, sel) = match previous_mode {
         GM_CLASSIC => (MENU_KIND_REG, SEL_REG_CLASSIC as u32),
@@ -348,6 +352,8 @@ pub unsafe extern "C" fn onEnter(scene: *mut GameModeState) {
         GM_HOME_RUN_CONTEST => (MENU_KIND_STADIUM, SEL_STADIUM_HOMERUN as u32),
         GM_TRAINING => (MENU_KIND_1P, SEL_1P_TRAINING as u32),
         GM_VS => (MENU_KIND_VS, SEL_VS_MELEE as u32),
+        // back from the Slippi online select: the online menu, on the mode's row (Hero, previous_mode == GM_HANYU_CSS)
+        GM_HANYU_CSS if super::slippi_online::enabled() => (MENU_KIND_8, super::slippi_online::row_of(super::slippi_css::with(|o| o.mode)) as u32),
         GM_TOURNAMENT => (MENU_KIND_VS, SEL_VS_TOURNAMENT as u32),
         GM_CAMERA_MODE => (MENU_KIND_SPECIAL, SEL_SPECIAL_VS_CAMERA as u32),
         GM_STAMINA_VS => (MENU_KIND_SPECIAL, SEL_SPECIAL_VS_STAMINA as u32),

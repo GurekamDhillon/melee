@@ -766,6 +766,7 @@ impl RetailPlay {
         }
         self.session_exit();
         self.slippi_online_pick();
+        self.slippi_online_match();
         if let Some(pr) = self.practice.as_mut() {
             let _h = SysHeap::enter();
             pr.observe();

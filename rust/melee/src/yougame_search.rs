@@ -21,6 +21,8 @@ pub struct Found {
     pub paired: Paired,
     pub side: ym::Side,
     pub room: Option<(yr::Joined, yr::WsOpener)>,
+    /// The punch failed and both seats agreed: the match's datagrams go through the room (the keeper drives it).
+    pub relay: Option<melee_net::yougame_relay::Relay>,
 }
 
 pub fn compat() -> &'static str {
@@ -106,12 +108,13 @@ pub fn yougame_side(
     let ext = melee_net::yougame_punch::stun(&udp, &stun_list, &cancelled);
     log(&format!("yougame: STUN {}", if ext.is_some() { "answered" } else if stun_list.is_empty() { "not asked" } else { "did not answer" }));
     // test hook (agent runs only): publish a dead `lan` so only `ext` can work, as behind a NAT
-    let lan = match std::env::var("MELEE_YOUGAME_TEST_DEAD_LAN").ok().filter(|v| v == "1" && agent) {
-        Some(_) => "127.0.0.1:9".to_string(),
-        None => format!("{ip}:{port}"),
-    };
+    // MELEE_YOUGAME_TEST_DEAD_DIRECT=1 (agent runs): both published addresses dead, so only the room relay works
+    let dead_direct = std::env::var("MELEE_YOUGAME_TEST_DEAD_DIRECT").is_ok_and(|v| v == "1") && agent;
+    let dead_lan = dead_direct || std::env::var("MELEE_YOUGAME_TEST_DEAD_LAN").is_ok_and(|v| v == "1") && agent;
+    let lan = if dead_lan { "127.0.0.1:9".to_string() } else { format!("{ip}:{port}") };
+    let ext_pub = if dead_direct { "127.0.0.2:9".to_string() } else { ext.map(|a| a.to_string()).unwrap_or_default() };
     let token = yr::now_ms() ^ ((std::process::id() as u64) << 32) | 1;
-    let me = yr::Candidate { compat: compat().into(), code: code.into(), lan, ext: ext.map(|a| a.to_string()).unwrap_or_default(), token: format!("{token:x}") };
+    let me = yr::Candidate { compat: compat().into(), code: code.into(), lan, ext: ext_pub, token: format!("{token:x}") };
     let mut j = yr::join(&mut opener, &room, pass, &me, &mut h, 15_000)?;
     log(&format!("yougame: room {}: seat {}, opponent seat {}, host {}, revision {}", j.code, j.seat, j.opp_seat, j.room.is_host(), j.room.revision));
     let mut cands = Vec::new();
@@ -124,9 +127,19 @@ pub fn yougame_side(
     let theirs = u64::from_str_radix(&j.opp_token, 16).unwrap_or(0);
     let mut peers = [melee_net::yougame_punch::Peer::new(j.opp_seat + 1, token, theirs, cands)];
     let mut say2 = |s: &str| log(s);
+    let mut relay = None;
     if !melee_net::yougame_punch::punch(&udp, j.seat + 1, &mut peers, Duration::from_secs(8), &cancelled, &mut say2) {
-        j.socket.send(r#"{"t":"leave"}"#);
-        return Err(if cancelled() { "Cancelled".into() } else { "Could not reach the opponent (no relay yet)".into() });
+        // Hero's own_udp_relay: every seat says so and waits for the others; only then the room relay
+        log(&format!("yougame: connect failed (own UDP): my STUN {}", if ext.is_some() { "ok" } else { "none" }));
+        if cancelled() || !relay_agreed(&mut j, &cancelled) {
+            j.socket.send(r#"{"t":"leave"}"#);
+            return Err(if cancelled() { "Cancelled".into() } else { "Could not reach the opponent".into() });
+        }
+        let r = melee_net::yougame_relay::Relay::new(j.seat + 1, &[j.opp_seat + 1], port).map_err(|e| format!("room relay: {e}"))?;
+        log(&format!("yougame: own UDP failed: every seat agreed, this match uses the room relay (seat {})", j.seat + 1));
+        peers[0].chosen = r.stand_in(j.opp_seat + 1);
+        peers[0].via = "relay";
+        relay = Some(r);
     }
     drop(udp); // the match binds the same port again: the NAT mapping the punch opened
     let p = peers[0].chosen.unwrap_or(j.peer);
@@ -139,7 +152,37 @@ pub fn yougame_side(
         bind_ip: if loopback { 0x7F00_0001 } else { 0 },
         opp_code: j.opp_code.clone(),
     };
-    Ok(Found { paired, side: ym::Side::YouGame, room: Some((j, opener)) })
+    Ok(Found { paired, side: ym::Side::YouGame, room: Some((j, opener)), relay })
+}
+
+/// Hero's relay agreement: send `mu-relay-ok` and wait up to 5 s for the opponent's (its leave ends it).
+fn relay_agreed(j: &mut yr::Joined, cancelled: &dyn Fn() -> bool) -> bool {
+    use melee_net::yougame_relay as rl;
+    j.socket.send(&rl::agree_msg(compat()));
+    let until = yr::now_ms() + rl::AGREE_MS;
+    while yr::now_ms() < until && !cancelled() {
+        match j.socket.next(Duration::from_millis(100)) {
+            yr::Next::Closed(_) => return false,
+            yr::Next::Idle => {}
+            yr::Next::Msg(t) => {
+                let Some(m) = melee_net::slippi_mm::Json::parse(&t) else { continue };
+                let leave = m.get("t").and_then(|v| v.str()) == Some("leave");
+                match j.room.receive(&m, yr::now_ms()) {
+                    yr::Event::Message { from, d } if rl::is_agree(&d, compat()) && from != j.room.me => {
+                        log("yougame: the opponent agreed to the room relay");
+                        return true;
+                    }
+                    yr::Event::Ended(_) => return false,
+                    _ => {}
+                }
+                if leave && j.room.seated().count() < 2 {
+                    return false;
+                }
+            }
+        }
+    }
+    log("yougame: room relay not agreed (0 of 1 seats)");
+    false
 }
 
 /// STUN servers: MELEE_YOUGAME_STUN (host:port list; in an agent run loopback ones only), else Hero's in a real run,
@@ -184,7 +227,7 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
     let start_slippi = |stop: &Arc<AtomicBool>| {
         let (tx, sub, stop) = (tx.clone(), sub.to_vec(), stop.clone());
         std::thread::spawn(move || {
-            let r = crate::slippi_np::pair_cancellable(&sub, max_s, &stop).map_err(|(_, m)| m).map(|paired| Found { paired, side: ym::Side::Slippi, room: None });
+            let r = crate::slippi_np::pair_cancellable(&sub, max_s, &stop).map_err(|(_, m)| m).map(|paired| Found { paired, side: ym::Side::Slippi, room: None, relay: None });
             let _ = tx.send((ym::Side::Slippi, r));
         });
     };

@@ -9,6 +9,7 @@
 //! `game_started` / `game_ended`: the host sends `begin`, everyone `finish` with the winner's participant id, or
 //! `void` when the match ends with no winner or the child quits before an end. Then it leaves the room.
 
+use melee_net::yougame_relay::{is_frame, Relay};
 use melee_net::yougame_room as yr;
 use melee_platform::yougame_mm as ym;
 use std::path::PathBuf;
@@ -35,10 +36,10 @@ fn log(s: &str) {
 }
 
 /// Take over the room the search joined; it is pumped on a thread of its own from now on.
-pub fn start(j: yr::Joined, opener: yr::WsOpener, mode: i32) {
+pub fn start(j: yr::Joined, opener: yr::WsOpener, mode: i32, relay: Option<Relay>) {
     close(); // a room from an earlier search
     let (tx, rx) = mpsc::channel();
-    let thread = std::thread::Builder::new().name("yougame-room".into()).spawn(move || run(j, opener, mode, rx)).expect("room thread");
+    let thread = std::thread::Builder::new().name("yougame-room".into()).spawn(move || run(j, opener, mode, relay, rx)).expect("room thread");
     *KEEPER.lock().unwrap() = Some(Keeper { tx, thread });
 }
 
@@ -78,7 +79,7 @@ pub fn report_path() -> PathBuf {
     base.join(format!("room-report-{}.txt", std::process::id()))
 }
 
-fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, rx: mpsc::Receiver<Cmd>) {
+fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, mut relay: Option<Relay>, rx: mpsc::Receiver<Cmd>) {
     let no = || false;
     let mut claim = || true;
     let mut waiting = |_: i32| {};
@@ -90,6 +91,10 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, rx: mpsc::Receive
     let mut seen = 0usize;
     let mut done_at: Option<Instant> = None;
     let mut last_ping = Instant::now();
+    let mut last_report = Instant::now();
+    if relay.is_some() {
+        log("room relay on: the match's datagrams go through this room");
+    }
     log(&format!("kept: room {}, seat {}, host {}", j.code, j.seat, j.room.is_host()));
     loop {
         match rx.try_recv() {
@@ -101,8 +106,20 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, rx: mpsc::Receive
             Err(mpsc::TryRecvError::Disconnected) if child.is_none() => break,
             Err(_) => {}
         }
-        for e in yr::pump(&mut j, &mut opener, &mut h, Duration::from_millis(20)) {
+        // the room relay (Hero's yougame_room_relay.h): datagrams out every 16 ms, frames in as they come
+        if let Some(r) = relay.as_mut() {
+            for f in r.poll(yr::now_ms()) {
+                j.socket.send(&f);
+            }
+        }
+        let wait = Duration::from_millis(if relay.is_some() { 2 } else { 20 });
+        for e in yr::pump(&mut j, &mut opener, &mut h, wait) {
             match e {
+                yr::Event::Message { d, .. } if is_frame(&d) => {
+                    if let Some(r) = relay.as_mut() {
+                        r.receive(&d);
+                    }
+                }
                 yr::Event::Started(id) => log(&format!("start {id}")),
                 yr::Event::Result(id) => {
                     log(&format!("result {id}"));
@@ -127,6 +144,10 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, rx: mpsc::Receive
         }
         // the app asked us to stop: the match is abandoned
         let quit = melee_platform::yougame::quit_requested();
+        if last_report.elapsed() < Duration::from_millis(50) {
+            continue;
+        }
+        last_report = Instant::now();
         if let Some((c, p)) = child.as_mut() {
             let text = std::fs::read_to_string(&*p).unwrap_or_default();
             let lines: Vec<&str> = text.lines().collect();
@@ -175,6 +196,9 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, rx: mpsc::Receive
         } else if quit {
             break;
         }
+    }
+    if let Some(r) = &relay {
+        log(&format!("room relay ended ({} sent, {} received, {} dropped)", r.sent, r.received, r.dropped));
     }
     j.socket.send(r#"{"t":"leave"}"#);
     log("left the room");

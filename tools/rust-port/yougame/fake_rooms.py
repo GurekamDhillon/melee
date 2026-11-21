@@ -146,9 +146,17 @@ class Rooms:
                     r = self.rooms[code]
                     if t == "msg":
                         to = m.get("to")
+                        # no `to`: every other seat (as Rooms does; the room relay's frames)
+                        d = m.get("d") or {}
                         for u2, (c2, id2) in r["conns"].items():
-                            if id2 == to:
+                            if id2 == to or (to is None and id2 != cid):
                                 c2.send({"t": "msg", "from": cid, "d": m.get("d")})
+                        if d.get("k") == "mu.relay":
+                            r["relayed"] = r.get("relayed", 0) + 1
+                            if r["relayed"] in (1, 1000) or r["relayed"] % 5000 == 0:
+                                self.log(f"room {code}: relayed {r['relayed']} frames")
+                        if d.get("kind") == "mu-relay-ok":
+                            self.log(f"room {code}: {user} agreed to the room relay")
                         if (m.get("d") or {}).get("kind") == "mu-cand":
                             self.log(f"room {code}: {user} sent its candidate")
                     elif t == "begin":

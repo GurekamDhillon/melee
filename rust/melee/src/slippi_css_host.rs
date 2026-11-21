@@ -90,7 +90,7 @@ fn run(args: &[String]) -> Result<(), String> {
     // the room stays open from here through the match (crate::room_keeper: this process keeps it while the match
     // runs in the relaunched window); a cancel or an error before the match leaves it
     if let Some((j, opener)) = found.room {
-        crate::room_keeper::start(j, opener, mode);
+        crate::room_keeper::start(j, opener, mode, found.relay);
     }
     let p = found.paired;
     let r = link(&p, port, max_s);

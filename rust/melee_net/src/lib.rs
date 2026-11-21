@@ -31,6 +31,7 @@ pub mod transport;
 pub mod wire;
 pub mod yougame_room;
 pub mod yougame_punch;
+pub mod yougame_relay;
 
 pub use hash::{hash64, hash_file};
 pub use net::{Callbacks, Config, Event, Net, RemoteConfig, State, Stats};

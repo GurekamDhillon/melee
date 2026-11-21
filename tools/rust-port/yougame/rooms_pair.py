@@ -47,6 +47,7 @@ def main():
     ap.add_argument("--case", choices=["yougame", "slippi", "cancel", "quit"], required=True)
     ap.add_argument("--frames", type=int, default=900)
     ap.add_argument("--dead-lan", action="store_true", help="publish a dead lan address: the punch must use ext")
+    ap.add_argument("--dead-direct", action="store_true", help="both published addresses dead: only the room relay works")
     ap.add_argument("--rooms-port", type=int, default=43190)
     ap.add_argument("--mm-port", type=int, default=43175)
     ap.add_argument("--exe", default=str(REPO / "build" / "cargo" / os.environ.get("PROFILE", "fast") / "melee.exe"))
@@ -81,6 +82,8 @@ def main():
             e.update(MELEE_YOUGAME_STUN=f"127.0.0.1:{a.rooms_port + 1}")
             if a.dead_lan:
                 e.update(MELEE_YOUGAME_TEST_DEAD_LAN="1")
+            if a.dead_direct:
+                e.update(MELEE_YOUGAME_TEST_DEAD_DIRECT="1")
             e.update(YOUGAME_STDIO="1", YOUGAME_DATA=str(data), MELEE_YOUGAME_NO_WATCHDOG="1", MELEE_YOUGAME_TEST_SLIPPI_LOGIN="1")
         p = subprocess.Popen([a.exe, "play", "--skip-intro", "--max-frames", "3000", "--slippi-menus", "on"],
                              cwd=str(REPO / "rust"), env=e, stdin=subprocess.PIPE,
@@ -125,7 +128,7 @@ def main():
     mm.kill()
     errs = "".join((out / f).read_text(errors="replace") for f in ("A-menu.err", "B-menu.err") if (out / f).exists())
     print(f"fake STUN answered {stun.answered} binding requests")
-    keys = ("online search", "unranked blend", "yougame:", "online css", "online menu")
+    keys = ("online search", "yougame room:", "over 16 ms", "unranked blend", "yougame:", "online css", "online menu")
     for line in errs.splitlines():
         if any(k in line for k in keys):
             print(line)

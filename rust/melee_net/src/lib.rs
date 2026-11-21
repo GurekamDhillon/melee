@@ -30,6 +30,7 @@ pub mod slippi_mm;
 pub mod transport;
 pub mod wire;
 pub mod yougame_room;
+pub mod yougame_punch;
 
 pub use hash::{hash64, hash_file};
 pub use net::{Callbacks, Config, Event, Net, RemoteConfig, State, Stats};

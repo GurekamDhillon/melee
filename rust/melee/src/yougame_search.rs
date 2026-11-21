@@ -88,8 +88,10 @@ pub fn yougame_side(
         },
     };
     log(&format!("yougame: matched into room {room}"));
-    // where the opponent reaches this seat's netplay port: loopback for a local service, else this machine's address
-    // towards the rooms server (YouGame's own UDP path: no relay or STUN here yet)
+    // where the opponent reaches this seat's netplay port (Hero's own-UDP path, melee_net::yougame_punch): `lan`
+    // (loopback for a local service, else this machine's address towards the rooms server) and `ext`, the netplay
+    // port's address as STUN sees it; then a punch from that port to both of the opponent's, the first that
+    // answers (and acks ours) is the match's peer.
     let ip = if loopback {
         std::net::Ipv4Addr::LOCALHOST
     } else {
@@ -98,10 +100,37 @@ pub fn yougame_side(
         let host = if host.contains(':') { host.to_string() } else { format!("{host}:443") };
         host.to_socket_addrs().ok().and_then(|mut a| a.next()).and_then(melee_net::slippi_mm::local_ip_towards).unwrap_or(std::net::Ipv4Addr::UNSPECIFIED)
     };
-    let me = yr::Candidate { compat: compat().into(), code: code.into(), lan: format!("{ip}:{port}"), ext: String::new(), token: format!("{:x}", yr::now_ms() | 1) };
-    let j = yr::join(&mut opener, &room, pass, &me, &mut h, 15_000)?;
+    let udp = std::net::UdpSocket::bind((if loopback { std::net::Ipv4Addr::LOCALHOST } else { std::net::Ipv4Addr::UNSPECIFIED }, port)).map_err(|e| format!("netplay port {port}: {e}"))?;
+    let port = udp.local_addr().map(|a| a.port()).unwrap_or(port);
+    let stun_list = stun_servers(agent);
+    let ext = melee_net::yougame_punch::stun(&udp, &stun_list, &cancelled);
+    log(&format!("yougame: STUN {}", if ext.is_some() { "answered" } else if stun_list.is_empty() { "not asked" } else { "did not answer" }));
+    // test hook (agent runs only): publish a dead `lan` so only `ext` can work, as behind a NAT
+    let lan = match std::env::var("MELEE_YOUGAME_TEST_DEAD_LAN").ok().filter(|v| v == "1" && agent) {
+        Some(_) => "127.0.0.1:9".to_string(),
+        None => format!("{ip}:{port}"),
+    };
+    let token = yr::now_ms() ^ ((std::process::id() as u64) << 32) | 1;
+    let me = yr::Candidate { compat: compat().into(), code: code.into(), lan, ext: ext.map(|a| a.to_string()).unwrap_or_default(), token: format!("{token:x}") };
+    let mut j = yr::join(&mut opener, &room, pass, &me, &mut h, 15_000)?;
     log(&format!("yougame: room {}: seat {}, opponent seat {}, host {}, revision {}", j.code, j.seat, j.opp_seat, j.room.is_host(), j.room.revision));
-    let p = j.peer;
+    let mut cands = Vec::new();
+    if let Some(a) = j.opp_lan {
+        cands.push((a, "lan"));
+    }
+    if let Some(a) = j.opp_ext.filter(|e| Some(*e) != j.opp_lan) {
+        cands.push((a, "ext"));
+    }
+    let theirs = u64::from_str_radix(&j.opp_token, 16).unwrap_or(0);
+    let mut peers = [melee_net::yougame_punch::Peer::new(j.opp_seat + 1, token, theirs, cands)];
+    let mut say2 = |s: &str| log(s);
+    if !melee_net::yougame_punch::punch(&udp, j.seat + 1, &mut peers, Duration::from_secs(8), &cancelled, &mut say2) {
+        j.socket.send(r#"{"t":"leave"}"#);
+        return Err(if cancelled() { "Cancelled".into() } else { "Could not reach the opponent (no relay yet)".into() });
+    }
+    drop(udp); // the match binds the same port again: the NAT mapping the punch opened
+    let p = peers[0].chosen.unwrap_or(j.peer);
+    log(&format!("yougame: the opponent answered via {}", peers[0].via));
     let paired = Paired {
         decider: j.seat == 0,
         local_port: j.seat,
@@ -111,6 +140,16 @@ pub fn yougame_side(
         opp_code: j.opp_code.clone(),
     };
     Ok(Found { paired, side: ym::Side::YouGame, room: Some((j, opener)) })
+}
+
+/// STUN servers: MELEE_YOUGAME_STUN (host:port list; in an agent run loopback ones only), else Hero's in a real run,
+/// none in an agent run.
+fn stun_servers(agent: bool) -> Vec<std::net::SocketAddr> {
+    match std::env::var("MELEE_YOUGAME_STUN").ok().filter(|v| !v.is_empty()) {
+        Some(v) => v.split(',').filter_map(|a| a.trim().parse::<std::net::SocketAddr>().ok()).filter(|a| !agent || a.ip().is_loopback()).collect(),
+        None if agent => Vec::new(),
+        None => melee_net::yougame_punch::resolve(&melee_net::yougame_punch::STUN_SERVERS),
+    }
 }
 
 /// Pair for the online select by `route`: YouGame's queue alone, Slippi's (`slippi_np::pair` with `sub`), or the

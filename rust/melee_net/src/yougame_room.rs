@@ -475,6 +475,10 @@ pub struct Joined {
     pub opp_seat: u8,
     pub peer: SocketAddrV4,
     pub opp_code: String,
+    /// The opponent's published addresses and punch token (its candidate's `lan`, `ext`, `token`).
+    pub opp_lan: Option<SocketAddrV4>,
+    pub opp_ext: Option<SocketAddrV4>,
+    pub opp_token: String,
     pub rejoins: u32,
 }
 
@@ -583,6 +587,9 @@ pub fn join(opener: &mut dyn Opener, code: &str, mut ticket: String, me: &Candid
                     // one more send so the other side surely has ours, then the link
                     sock.send(&format!(r#"{{"t":"msg","to":{},"d":{}}}"#, quote(from), me.json(&match_id)));
                     return Ok(Joined {
+                        opp_lan: parse_addr(&s(d, "lan")),
+                        opp_ext: parse_addr(&s(d, "ext")),
+                        opp_token: s(d, "token"),
                         opp_code: s(d, "code"),
                         room,
                         socket: sock,

@@ -16,7 +16,7 @@ the default. `--save-display` writes the resolved values back to settings.cfg.
 | `--widescreen-mode renderer\|camera` | `MELEE_WIDESCREEN_MODE` / `widescreen_mode` | renderer, camera | renderer |
 | `--fps-cap N\|off` | `MELEE_FPS_CAP` / `fps_cap` | 20..1000, off | off |
 | `--vrr auto\|on\|off` | `MELEE_VRR` / `vrr` | auto, on, off | auto |
-| `--interp auto\|on\|off` | `MELEE_INTERP` / `interp` | auto (on above 65 fps), on, off | auto |
+| `--interp auto\|on\|off` | `MELEE_INTERP` / `interp` | on, off (an old "auto" reads as off) | off |
 | `--interp-mode interpolate\|extrapolate` | `MELEE_INTERP_MODE` / `interp_mode` | interpolate, extrapolate | interpolate |
 | `--frame-latency 1\|2\|3` | `MELEE_FRAME_LATENCY` / `frame_latency` | 1..3 | 2 |
 
@@ -180,8 +180,7 @@ Interpolation cost:
 - per re-posed present at the 240 cap: evaluate p50 0.08 / p99 0.20 ms, uniform patching p50 0.06 / p99 0.20 ms.
 
 The rest of the per-present difference is re-drawing the frame instead of re-presenting the last image. At a 60 cap,
-interpolation re-poses almost nothing, because each present lands right after its tick; `interp=auto` turns it on only
-above 65 fps. With vsync on (FIFO, 144 Hz): 144.0 fps, interval p50 6.90 / p99 9.78 ms.
+interpolation re-poses almost nothing, because each present lands right after its tick; `interp` is off by default (one frame per tick). With vsync on (FIFO, 144 Hz): 144.0 fps, interval p50 6.90 / p99 9.78 ms.
 
 Not verified: a VRR display (there is none here; detection was only seen to answer "fixed"), and exclusive fullscreen
 pacing.

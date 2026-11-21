@@ -30,7 +30,7 @@ pub trait Game {
     fn tick(&mut self, pads: &mut PadSystem);
     /// Draw. `alpha` in [0,1): how far into the next tick real time is.
     fn present(&mut self, _window: &Arc<Window>, _alpha: f64) {}
-    /// Render-only interpolation switched on/off (MELEE_INTERP, or auto above 60 fps).
+    /// Render-only interpolation switched on/off (MELEE_INTERP=1; off by default).
     fn set_interp(&mut self, _on: bool) {}
     /// The window's client area changed (physical pixels); reconfigure a swapchain here.
     fn resized(&mut self, _width: u32, _height: u32) {}
@@ -79,8 +79,8 @@ pub struct Pacing {
     /// Presented frames per second (0: no cap).
     pub fps_cap: Option<f64>,
     pub vsync: Option<bool>,
-    /// Render-side interpolation: Some(forced) or None (auto above 60 fps).
-    pub interp: Option<Option<bool>>,
+    /// Render-side interpolation on/off (off by default; one rendered frame per tick).
+    pub interp: Option<bool>,
 }
 
 /// `--vrr` / `MELEE_VRR`: whether the display follows the frames (G-Sync / FreeSync).
@@ -376,8 +376,8 @@ struct App<G: Game> {
     quit: bool,
     /// Render as often as the swapchain allows instead of once per tick.
     decoupled: bool,
-    /// MELEE_INTERP: Some(forced) or None (auto: on when rendering above 60 fps).
-    interp_env: Option<bool>,
+    /// MELEE_INTERP=1: interpolation explicitly on (testing); otherwise off.
+    interp_env: bool,
     interp: bool,
     show_fps: bool,
     fps_t0: Option<Instant>,
@@ -525,14 +525,12 @@ impl<G: Game> App<G> {
         }
         if let Some(i) = p.interp {
             self.interp_env = i;
-            if let Some(on) = i {
-                if on != self.interp {
-                    self.interp = on;
-                    self.game.set_interp(on);
-                }
+            if i != self.interp {
+                self.interp = i;
+                self.game.set_interp(i);
             }
         }
-        plog!("gw: video: pacing (live): fps cap {}, vsync {}, interp {}", if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() }, if self.vsync { "on" } else { "off" }, match self.interp_env { None => "auto", Some(true) => "on", Some(false) => "off" });
+        plog!("gw: video: pacing (live): fps cap {}, vsync {}, interp {}", if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() }, if self.vsync { "on" } else { "off" }, if self.interp_env { "on" } else { "off" });
     }
 
     /// One present (the window's RedrawRequested; a hidden window gets none from Windows, so `ask_redraw` calls it).
@@ -691,7 +689,7 @@ impl<G: Game> App<G> {
         }
     }
 
-    /// Once a second: measure render fps / sim tps, apply the MELEE_INTERP auto rule, show MELEE_SHOW_FPS.
+    /// Once a second: measure render fps / sim tps, apply MELEE_INTERP, show MELEE_SHOW_FPS.
     fn fps_tick(&mut self, w: &Arc<Window>) {
         let now = Instant::now();
         let t0 = *self.fps_t0.get_or_insert(now);
@@ -706,7 +704,7 @@ impl<G: Game> App<G> {
         self.fps_ticks0 = self.clock.ticks;
         let (sim_ms, ren_ms) = (std::mem::take(&mut self.tick_time).as_secs_f64() * 1e3, std::mem::take(&mut self.present_time).as_secs_f64() * 1e3);
         // interpolation is off unless forced on (MELEE_INTERP=1): one rendered frame per sim tick
-        let want = self.interp_env.unwrap_or(false);
+        let want = self.interp_env;
         if want != self.interp {
             self.interp = want;
             self.game.set_interp(want);
@@ -739,7 +737,7 @@ impl<G: Game> App<G> {
             "{:.0} Hz refresh, vsync {}, fps cap {}, VRR {}, interpolation {} ({}), window {}x{}, fullscreen {:?}, expected frame interval {:.2} ms",
             self.refresh_hz, if self.vsync { "on" } else { "off" }, if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() },
             match self.vrr { Some(true) => "detected", Some(false) => "no", None => "probing" }, if self.interp { "on" } else { "off" },
-            match self.interp_env { None => "auto", Some(true) => "forced on", Some(false) => "forced off" },
+            if self.interp_env { "explicit on" } else { "default off" },
             self.window.as_ref().map_or(0, |w| w.inner_size().width), self.window.as_ref().map_or(0, |w| w.inner_size().height), self.fullscreen, exp / 1e3
         );
         if line != self.profile_line {
@@ -1264,7 +1262,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         // brings back rendering at the display rate.
         decoupled: env_bool("MELEE_RENDER_DECOUPLED").unwrap_or(env_bool("MELEE_INTERP") == Some(true)),
         presented_tick: u64::MAX,
-        interp_env: env_bool("MELEE_INTERP"),
+        interp_env: env_bool("MELEE_INTERP") == Some(true),
         interp: false,
         show_fps: env_bool("MELEE_SHOW_FPS").unwrap_or(false),
         fps_t0: None,
@@ -1311,7 +1309,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         let unix = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
         let _ = writeln!(f, "S,0,{:.3},0", unix.as_secs_f64() * 1e3);
     }
-    if app.interp_env == Some(true) {
+    if app.interp_env {
         app.interp = true;
         app.game.set_interp(true);
     }

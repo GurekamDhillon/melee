@@ -1026,7 +1026,7 @@ impl RetailPlay {
                             self.video.push((c.key.clone(), c.value.clone()));
                         }
                         "fps_cap" => p.fps_cap = Some(c.value.parse().unwrap_or(0.0)),
-                        _ => p.interp = Some(match c.value.as_str() { "on" => Some(true), "off" => Some(false), _ => None }),
+                        _ => p.interp = Some(c.value == "on"),
                     }
                 }
                 "interp_mode" | "render_scale" => self.video.push((c.key.clone(), c.value.clone())),

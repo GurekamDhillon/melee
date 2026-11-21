@@ -183,7 +183,7 @@ fn toggle(key: &str, label: &str, dflt: bool, live: bool, help: &str) -> Row {
 impl Overlay {
     /// The pages from the current settings; `volume` the live master volume.
     pub fn new(volume: i32) -> Overlay {
-        let onoff = [("Auto", "auto"), ("On", "on"), ("Off", "off")];
+        let onoff = [("Off", "off"), ("On", "on")];
         // Live: the presenter and the pacer take these at once (presentation only). Widescreen is live in the renderer
         // mode (the game's view hooks keep answering 4:3); the camera mode is fixed for the run. MSAA is baked into
         // every pipeline (the sample count), so it waits for the next launch.
@@ -193,7 +193,7 @@ impl Overlay {
             choice("fullscreen", "Fullscreen", &[("Off", "off"), ("Borderless", "borderless"), ("Exclusive", "exclusive")], "off", false, "Alt+Enter toggles at any time."),
             toggle("vsync", "VSync", true, true, "Off: present as fast as the cap allows."),
             choice("fps_cap", "Frame cap", &[("Off", "off"), ("60", "60"), ("120", "120"), ("144", "144"), ("165", "165"), ("240", "240")], "off", true, "Presented frames per second; the game always runs at 60."),
-            choice("interp", "Frame interpolation", &onoff, "auto", true, "Render-only in-between frames (auto: on above 60 fps)."),
+            choice("interp", "Frame interpolation", &onoff, "off", true, "Render-only in-between frames, for testing. Off: one frame per 60 Hz tick."),
             choice("interp_mode", "Interpolation mode", &[("Interpolate", "interpolate"), ("Extrapolate", "extrapolate")], "interpolate", true, "Extrapolate adds no latency."),
             choice("render_scale", "Internal resolution", &[("Auto", "auto"), ("1x", "1"), ("2x", "2"), ("3x", "3"), ("4x", "4"), ("6x", "6"), ("8x", "8")], "auto", true, "x 480 lines."),
             msaa_row(),

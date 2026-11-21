@@ -273,3 +273,22 @@ fn headless_runs_ticks_with_script() {
     assert_eq!(run_headless(&mut g, &mut ps, 120), 120);
     assert_eq!((g.frames, g.a_frames), (120, 10));
 }
+
+#[test]
+fn script_until_waits_for_the_scene_and_pulses() {
+    use melee_platform::script::SCENE;
+    let mut s = PadScript::parse("until 8 1000 2 4\n3 0100\n", 1);
+    assert_eq!(s.segments.len(), 2);
+    let mut st = [PADStatus::zeroed(); 4];
+    SCENE.store(5, Ordering::Relaxed);
+    let mut seen = vec![];
+    for _ in 0..6 {
+        s.apply(&mut st);
+        seen.push(st[0].button);
+    }
+    assert_eq!(seen, [0x1000, 0x1000, 0, 0, 0x1000, 0x1000]);
+    SCENE.store(8, Ordering::Relaxed);
+    s.apply(&mut st);
+    assert_eq!(st[0].button, 0x0100);
+    SCENE.store(-1, Ordering::Relaxed);
+}

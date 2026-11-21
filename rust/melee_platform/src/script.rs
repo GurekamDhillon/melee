@@ -9,6 +9,10 @@ pub const GW_SCRIPT_MAX: usize = 8192;
 
 /// Set by the host's scene flow each tick: a live match (VS / sudden death) is on.
 pub static IN_MATCH: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// Set by the host's scene flow each tick: the current scene kind (-1 before the first), for `until` lines.
+pub static SCENE: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
+/// Set by the host's scene flow on the stage select: the stage kind under the cursor, for `seek` lines.
+pub static HOVER: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
 
 fn no_pause() -> bool {
     static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
@@ -26,6 +30,15 @@ pub struct Segment {
     /// The C-stick (port extension: absent = centred, as the C script).
     pub cx: i8,
     pub cy: i8,
+    /// Port extension, `until <scene> [buttons_hex [on period]]`: the segment lasts until the scene flow reports scene kind
+    /// `until` (checked before each frame; -1 = an ordinary timed segment). While waiting it presses `buttons` for `on`
+    /// frames of every `period` (default: held). Lets open-loop test scripts follow scene changes whose length varies.
+    pub until: i16,
+    /// Port extension, `seek <stage_kind> sx sy [on period max]`: on the stage select, tap the stick (sx, sy) for `on` frames of
+    /// every `period` until the hovered stage kind is `seek`, at most `max` frames (default 300; kept in `frames`) (-1 = not a seek line). `buttons` stays 0.
+    pub seek: i16,
+    pub on: i32,
+    pub period: i32,
 }
 
 #[derive(Clone, Debug)]
@@ -34,6 +47,8 @@ pub struct PadScript {
     pub chan_mask: u32,
     cursor: usize,
     left: i32,
+    /// Frames spent in the current `until` segment.
+    waited: i32,
 }
 
 /// `sscanf("%d")`: optional sign + digits, stops at the first non-digit. None if no digits.
@@ -90,6 +105,26 @@ impl PadScript {
                 continue;
             }
             let mut toks = p.split_ascii_whitespace();
+            if p.starts_with("until") {
+                toks.next();
+                let Some(scene) = toks.next().and_then(scan_int) else { continue };
+                let buttons = toks.next().and_then(scan_hex).unwrap_or(0) as u16;
+                let on = toks.next().and_then(scan_int).unwrap_or(1).max(1) as i32;
+                let period = toks.next().and_then(scan_int).unwrap_or(1).max(1) as i32;
+                segments.push(Segment { frames: 1, buttons, sx: 0, sy: 0, tl: 0, tr: 0, cx: 0, cy: 0, until: scene as i16, seek: -1, on, period });
+                continue;
+            }
+            if p.starts_with("seek") {
+                toks.next();
+                let Some(kind) = toks.next().and_then(scan_int) else { continue };
+                let sx = toks.next().and_then(scan_int).unwrap_or(0) as i8;
+                let sy = toks.next().and_then(scan_int).unwrap_or(0) as i8;
+                let on = toks.next().and_then(scan_int).unwrap_or(2).max(1) as i32;
+                let period = toks.next().and_then(scan_int).unwrap_or(20).max(1) as i32;
+                let max = toks.next().and_then(scan_int).unwrap_or(300).max(1) as i32;
+                segments.push(Segment { frames: max, buttons: 0, sx, sy, tl: 0, tr: 0, cx: 0, cy: 0, until: -1, seek: kind as i16, on, period });
+                continue;
+            }
             let Some(frames) = toks.next().and_then(scan_int) else { continue };
             let Some(buttons) = toks.next().and_then(scan_hex) else { continue };
             // sscanf stops at the first failed conversion: later fields keep 0.
@@ -113,9 +148,13 @@ impl PadScript {
                 tr: rest[3] as u8,
                 cx: rest[4] as i8,
                 cy: rest[5] as i8,
+                until: -1,
+                seek: -1,
+                on: 0,
+                period: 0,
             });
         }
-        Self { segments, chan_mask, cursor: 0, left: 0 }
+        Self { segments, chan_mask, cursor: 0, left: 0, waited: 0 }
     }
 
     /// From `MELEE_PAD_SCRIPT` (a `.txt`) and `MELEE_PAD_CHANNELS`. None if unset, `.lua`, or unreadable.
@@ -162,8 +201,55 @@ impl PadScript {
         if self.segments.is_empty() {
             return 0;
         }
+        // `until` segments: skip the ones whose scene is current, so the frame comes from the next segment
+        while self.cursor < self.segments.len() - 1 {
+            let g = self.segments[self.cursor];
+            let done = if g.until >= 0 {
+                SCENE.load(std::sync::atomic::Ordering::Relaxed) == g.until as i32
+            } else if g.seek >= 0 {
+                // a seek gives up after its `max` frames (default 300; the next line takes over: e.g. the other direction)
+                HOVER.load(std::sync::atomic::Ordering::Relaxed) == g.seek as i32 || self.waited >= g.frames
+            } else {
+                false
+            };
+            if !done {
+                break;
+            }
+            if g.seek >= 0 && self.waited > 0 {
+                crate::plog!("gw: pad script: seek {} done after {} frames (hover {})", g.seek, self.waited, HOVER.load(std::sync::atomic::Ordering::Relaxed));
+            }
+            self.cursor += 1;
+            self.left = 0;
+            self.waited = 0;
+        }
         if self.cursor >= self.segments.len() {
             self.cursor = self.segments.len() - 1;
+        }
+        if self.segments[self.cursor].until >= 0 || self.segments[self.cursor].seek >= 0 {
+            let g = self.segments[self.cursor];
+            let pulse = self.waited % g.period < g.on;
+            let b = if pulse { g.buttons } else { 0 };
+            let (sx, sy) = if pulse { (g.sx, g.sy) } else { (0, 0) };
+            self.waited += 1;
+            let mut driven = 0;
+            for (ch, s) in st.iter_mut().enumerate() {
+                if self.chan_mask & (1 << ch) == 0 {
+                    continue;
+                }
+                s.button = b;
+                s.stickX = sx;
+                s.stickY = sy;
+                s.substickX = 0;
+                s.substickY = 0;
+                s.triggerLeft = 0;
+                s.triggerRight = 0;
+                if IN_MATCH.load(std::sync::atomic::Ordering::Relaxed) && no_pause() {
+                    s.button &= !PAD_BUTTON_START;
+                }
+                s.err = 0;
+                driven |= 1 << ch;
+            }
+            return driven;
         }
         if self.left == 0 {
             self.left = self.segments[self.cursor].frames;

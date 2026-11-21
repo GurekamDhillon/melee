@@ -566,3 +566,19 @@ It now hashes contents (`rust/melee_data/src/netid.rs`):
   (`geno_host::Reload` does). A file changed on disk mid-session is therefore not read until the session ends; it
   enters the next connect's forced hash.
 - **No mods**: the word stays 0 / "no mods", so vanilla peers and existing replays are unchanged.
+
+## --np-css multi-match sessions (2026-11-21, port/netfix)
+- **Held first room timed out after long menus.** The first match's room is opened at the connection and held
+  (`hold_start`) through the character and stage select; a held session sends nothing and is not polled then (the
+  lockstep checks liveness). On release its silence clock still counted from before the menus, so menus of 90 s
+  (`HOLD_TIMEOUT_MS`) or more killed match 1 at its first poll ("peer timed out" on both peers). `Net::release` now
+  restarts the clock. Seen with the stage-seek scripts (89.6 s of menus); real players at the CSS hit it the same way.
+- **The third-match drift was the test scripts.** css_pair's pad scripts were open loop: a results screen detour that
+  only some matches show (scene kind 39) shifted every later press, so START landed on the CSS, the SSS opened early,
+  the pick went to the wrong stage and the guest's script ended a match early (the host then lost the peer). The
+  fastpick SSS moves also missed Dreamland in netplay. Hashes stayed equal throughout (not an engine desync).
+  Pad scripts now take `until <scene> [buttons on period]` and `seek <stage_kind> sx sy [on period max]` lines
+  (melee_platform::script; the scene flow publishes the scene and the SSS hover); gen_css_scripts.py's NP_CSS_STAGES
+  scripts wait for the CSS and the match and seek each stage by its hover. `play: netplay ...: started (... match N,
+  stage ext K)` and `tick N: sss hover K` show what was picked.
+- The DL->FoD CSS hang itself was fixed in 9e070c9e4 (lbdvd preload waits fire the compaction alarm); no repro since.

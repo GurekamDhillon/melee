@@ -1603,7 +1603,7 @@ impl NetDriver {
                     self.sess.borrow_mut().set_delay(rc.input_delay as i32);
                 }
             }
-            log(&format!("netplay {}: started (delay {})", if self.host { "host" } else { "guest" }, self.sess.borrow().cfg.delay));
+            log(&format!("netplay {}: started (delay {}, match {}, stage ext {})", if self.host { "host" } else { "guest" }, self.sess.borrow().cfg.delay, self.match_no + 1, unsafe { melee_world::tu::stage::Stage_80225194() }));
         }
         self.take_hints();
         let NetPhase::InMatch(g) = &mut self.phase else { return false };

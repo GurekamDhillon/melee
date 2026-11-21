@@ -606,15 +606,4 @@ ever differs. Anything else stays `diverged`; a `match` is never changed. `recor
 ID (file stem, hashes only) listed in `rust/melee/src/slpcheck_drift_verified.txt`: its drift was confirmed against this
 oracle (`ORACLE ... match` on every frame). Add an ID only after an oracle run of that file matches. `run_all.sh` prints a
 count per status; the three statuses are never merged.
-        let nself = GenoDefine_SelfCount(base);
-        let ms = core::mem::size_of::<MotionState>();
-        GenoDefine_CommonRows[k] = gd_data_copy(ext::ftData_CommonRows() as *const c_void, ms * ftCo_MS_Count as usize) as *mut MotionState;
-        GenoDefine_SpecificRows[k] = gd_data_copy(ftData_CharacterStateTables[b] as *const c_void, ms * nself) as *mut MotionState;
-        ext::GenoGame_DefineApplyRows(kind, GenoDefine_CommonRows[k], GenoDefine_SpecificRows[k], n as i32);
-        ftData_CharacterStateTables[k] = GenoDefine_SpecificRows[k];
-        gFtDataList[k] = out;
-        report(format!(
-            "geno: native define kind {kind} loaded: retail:mario; independent common/special rows; interpreter attempts {}\n",
-            GenoDefine_InterpreterAttempts[k]
-        ));
-
+The verified list is empty so far: of the four oracle-confirmed files, two now run `match` and two stay `diverged` (one passes 1 ULP within the window, one starts at 8 ULP).

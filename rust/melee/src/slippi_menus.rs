@@ -13,6 +13,9 @@ static LAYER: OnceLock<Option<Arc<SysFiles>>> = OnceLock::new();
 
 /// The run asked for the layer: `--slippi-menus on` (or `MELEE_SLIPPI_MENUS=on`), and nothing forces it off.
 pub fn requested(args: &[String]) -> Result<bool, &'static str> {
+    // the boot paths pass only part of the command line (the mods args): the process's own args count too
+    let all: Vec<String> = args.iter().cloned().chain(std::env::args()).collect();
+    let args = &all[..];
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let v = get("--slippi-menus").or_else(|| std::env::var("MELEE_SLIPPI_MENUS").ok()).unwrap_or_else(|| "off".into());
     if !matches!(v.as_str(), "on" | "1" | "true") {
@@ -70,6 +73,7 @@ pub fn load(args: &[String], iso: Option<&str>) -> Option<Arc<SysFiles>> {
                         eprintln!("slippi menus: /{} {size} {h:08x}", n.to_ascii_lowercase());
                     }
                     eprintln!("slippi menus: on ({} files)", s.len());
+                    melee_modes::tu::slippi_online::ENABLED.store(true, std::sync::atomic::Ordering::Relaxed);
                     Some(Arc::new(s))
                 }
                 Err(e) => {

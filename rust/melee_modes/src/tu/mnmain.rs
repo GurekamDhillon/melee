@@ -1876,7 +1876,12 @@ pub unsafe extern "C" fn mn_80229938(
     if menu_kind as ::core::ffi::c_int == MENU_KIND_1P as ::core::ffi::c_int
         && selection == SEL_1P_2 as ::core::ffi::c_int
     {
-        return false_0;
+        // Slippi online menus (ShowHidden1pOption): the 1P menu's third row is Online (slippi_online.rs)
+        return super::slippi_online::enabled() as bool_0;
+    }
+    if menu_kind as ::core::ffi::c_int == MENU_KIND_8 as ::core::ffi::c_int && super::slippi_online::enabled() {
+        // Slippi online menus (HandleOnlineLockedOptions)
+        return super::slippi_online::row_unlocked(selection) as bool_0;
     }
     if menu_kind as ::core::ffi::c_int == MENU_KIND_TOY as ::core::ffi::c_int {
         match selection {
@@ -4672,6 +4677,11 @@ pub unsafe extern "C" fn mn_8022D7F4(mut gp: *mut HSD_GObj) {
                 sfxForward();
                 mnEvent_8024E838(0 as ::core::ffi::c_int, true_0);
                 HSD_GObjFree(gp);
+            }
+            2 if super::slippi_online::enabled() => {
+                // Slippi online menus (OnlineModeOptionSelected): Online opens the online submenu
+                sfxForward();
+                super::slippi_online::open_from_1p();
             }
             4 => {
                 if crate::menuguard::deny(GM_TRAINING as i32) { return; } // menuguard: not ported yet

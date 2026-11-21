@@ -324,6 +324,8 @@ pub unsafe extern "C" fn onEnter(scene: *mut GameModeState) {
         return;
     }
     (*data).load_assets = 1;
+    // Slippi online menus (OnMenuPrep): menu kind 8 becomes the online submenu (slippi_online.rs; off: nothing)
+    super::slippi_online::install();
     let mut previous_mode: GameModeKind = ext::gm_GetPreviousGameMode() as GameModeKind;
     if previous_mode == GM_CHALLENGER_APPROACH {
         previous_mode = ext::gm_801737D8() as GameModeKind;

@@ -1,0 +1,13 @@
+# --slippi-menus on, booted at the main menu (MELEE_RETAIL_FIRST=1, MELEE_CARD=0): A on 1P -> down x2 to Online
+# (the hidden row) -> A -> A on Direct
+60 0000 0 0
+2 0100 0 0
+40 0000 0 0
+6 0000 0 -100
+20 0000 0 0
+6 0000 0 -100
+20 0000 0 0
+2 0100 0 0
+60 0000 0 0
+2 0100 0 0
+60 0000 0 0

@@ -184,6 +184,7 @@ pub mod mnitemsw;
 pub mod mnlanguage;
 pub mod mnmain;
 pub mod mnmainrule;
+pub mod slippi_online;
 pub mod mnname;
 pub mod mnsound;
 pub mod mnstagesw;

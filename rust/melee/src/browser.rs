@@ -517,14 +517,25 @@ impl RetailPlay {
             log(&format!("online menu: {name}: Slippi matchmaking with the granted login"));
             return self.relaunch(&args, None, false, &format!("Slippi {name}"));
         }
-        // Hero's yougame_mode_policy (matchmaking_route): in YouGame mode without a granted login, Direct / Teams /
-        // Party are Locked and everything else is YouGame's (its queue is not wired here yet); never Slippi's servers
+        // Hero's yougame_mode_policy (melee_platform::yougame_mm::matchmaking_route): in YouGame mode without a granted
+        // login Direct / Teams / Party are Locked, and Unranked goes to YouGame's own queue (mpTicket through the app
+        // bridge, on a thread: the answer can take 30 s). Never Slippi's servers from here.
         if melee_platform::yougame::active() && !agent {
-            return self.ui_status(1, &if matches!(mode, melee_modes::tu::slippi_online::MODE_DIRECT | melee_modes::tu::slippi_online::MODE_TEAMS | melee_modes::tu::slippi_online::MODE_PARTY) {
-                format!("online menu: {name} needs your Slippi login (allow it on the game's page)")
-            } else {
-                format!("online menu: {name} on YouGame is not available yet")
+            use melee_platform::yougame_mm as ym;
+            let route = ym::matchmaking_route(mode, true, false, false, false, true);
+            if route == ym::Route::Locked {
+                return self.ui_status(1, &format!("online menu: {name} needs your Slippi login (allow it on the game's page)"));
+            }
+            log(&format!("online menu: {name}: YouGame's queue ({:?})", route));
+            std::thread::spawn(move || {
+                let s = ym::start_search(&mut ym::StdioBridge, mode, false, false, true, concat!("gd-melee-rust/", env!("CARGO_PKG_VERSION")));
+                match s.ticket {
+                    Some(Ok(t)) => log(&format!("yougame: {name}: ticket for room {} ({}); the rooms client is the next step", t.room.as_deref().unwrap_or("-"), s.status)),
+                    Some(Err(e)) => log(&format!("yougame: {name}: {e}")),
+                    None => {}
+                }
             });
+            return self.ui_status(0, &format!("{name}: {}", ym::SEARCH_YOUGAME_ONLY));
         }
         let (Some(url), Some(port), Some(code)) = (env("MELEE_SLIPPI_MM_URL"), env("MELEE_SLIPPI_NP_PORT"), env("MELEE_SLIPPI_TEST_CODE")) else {
             return self.ui_status(1, &format!("online menu: {name} needs a matchmaking server (MELEE_SLIPPI_MM_URL, MELEE_SLIPPI_NP_PORT, MELEE_SLIPPI_TEST_CODE)"));

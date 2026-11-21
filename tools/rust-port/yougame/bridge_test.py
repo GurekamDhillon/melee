@@ -27,7 +27,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[3]
 SPEC = Path(__file__).resolve().parent / "yougame-native.json"
 FORBIDDEN = ("pads", "rumble", "view", "volume", "fullscreen")
-PH = re.compile(r"\{([a-z]+)\}")
+PH = re.compile(r"\{([a-z]+(?::[a-z]+)*)\}")
 
 
 def iso_path():
@@ -54,7 +54,7 @@ def check_spec(text):
     if not isinstance(o, dict):
         return None, "not an object"
     for k in o:
-        if k not in ("version", "args", "disc", "embed", "controllers", "net", "memoryMb"):
+        if k not in ("version", "args", "disc", "discs", "embed", "controllers", "net", "memoryMb"):
             return None, "unknown field " + k
     if o.get("version") != 1:
         return None, "version must be 1"
@@ -65,7 +65,7 @@ def check_spec(text):
         if not isinstance(a, str) or len(a) > 1024 or any(c in a for c in "\0\r\n"):
             return None, "bad arg"
         for m in PH.finditer(a):
-            if m.group(1) not in ("build", "data", "disc"):
+            if m.group(1) not in ("build", "data", "disc", "disc:brawl:files"):
                 return None, "unknown placeholder " + m.group(0)
         if "{" in PH.sub("", a):
             return None, "stray {"
@@ -85,8 +85,15 @@ def check_spec(text):
 
 def fill(args, build, data, disc):
     """The app's launchArgs: {build}/{data}/{disc}; a /sub/path after one gets the platform's separator."""
-    vals = {"build": build, "data": data, "disc": disc}
-    return [re.sub(r"\{([a-z]+)\}([^{]*)", lambda m: vals[m.group(1)] + m.group(2).replace("/", os.sep), a) for a in args]
+    # {disc:brawl:files}: the optional Brawl disc's files folder (files/ at its top); without one the app leaves the
+    # argument out, so the flag before it goes too (BRIDGE_BRAWL_FILES, else the workspace's extracted copy if any).
+    brawl = os.environ.get("BRIDGE_BRAWL_FILES") or str(Path(os.environ.get("GW_WORKSPACE", "E:/Projects/Melee Workspace")) / "_build/brawl/disc")
+    vals = {"build": build, "data": data, "disc": disc, "disc:brawl:files": brawl if (Path(brawl) / "files").is_dir() else ""}
+    out = [re.sub(r"\{([a-z]+(?::[a-z]+)*)\}([^{]*)", lambda m: vals[m.group(1)] + m.group(2).replace("/", os.sep), a) for a in args]
+    while "" in out:
+        i = out.index("")
+        del out[max(i - 1, 0):i + 1]
+    return out
 
 
 def iso_now(offset=0.0):

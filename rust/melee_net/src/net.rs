@@ -612,6 +612,10 @@ impl Net {
             return;
         }
         self.held = false;
+        // a held session sends nothing and is not polled while the menus run (the lockstep has its own liveness check),
+        // so its silence clock restarts here: the first match of an --np-css session died with "peer timed out" at its
+        // first poll when the character and stage select had taken HOLD_TIMEOUT_MS (90 s) or more
+        self.last_rx_ms = self.now();
         if self.is_host {
             if self.state == State::Accepted && self.peer_ready {
                 self.begin_start();

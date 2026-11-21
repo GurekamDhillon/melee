@@ -88,6 +88,8 @@ pub struct RetailPlay {
     /// frame presents at once, and a tick its time left owing runs in the next frame instead of behind it in this
     /// one (pacing only; `present_now`).
     scene_tick: bool,
+    /// the last stage-select hover logged (`tick N: sss hover K` on each change)
+    sss_hover_logged: i32,
     quit: bool,
     pub failed: Option<String>,
     interp: bool,
@@ -165,7 +167,7 @@ impl RetailPlay {
             iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, handed_tick: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
-            shot_pending: None, scene_tick: false, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
+            shot_pending: None, scene_tick: false, sss_hover_logged: -1, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
@@ -749,6 +751,11 @@ impl RetailPlay {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
             let hover = unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() };
             melee_engine::asset::sss_hover(hover);
+            melee_platform::script::HOVER.store(hover as i32, std::sync::atomic::Ordering::Relaxed);
+            if hover as i32 != self.sss_hover_logged {
+                self.sss_hover_logged = hover as i32;
+                log(&format!("tick {}: sss hover {}", self.tick_no, hover as i32));
+            }
             melee_engine::asset::sss_random_pool(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverRandomPool() });
             melee_engine::asset::sss_confirm_tick();
             // a hovered SSE map's textures go up a few per tick (vanilla stage select entry costs nothing)
@@ -867,6 +874,7 @@ impl RetailPlay {
         // a once-a-second heartbeat (tick, scene, draw commands of the last frame): a stall shows as a stopped tick,
         // a render-only fault as a running tick with no draws
         melee_platform::script::IN_MATCH.store(matches!(self.cur.1, 2 | 3), std::sync::atomic::Ordering::Relaxed);
+        melee_platform::script::SCENE.store(self.cur.1 as i32, std::sync::atomic::Ordering::Relaxed);
         if self.tick_no % 60 == 0 {
             let (dn, db, bn, bb, ev, cp) = melee_engine::gxbridge::data_cache_detail();
             log(&format!("heartbeat tick {} scene {} age {} draws {} gxcache ptr {}/{} KB blocks {}/{} KB evicted {} copied {} MB", self.tick_no, scene_name(self.cur.1), self.age, self.frame.as_ref().map_or(0, |f| f.len()), dn, db >> 10, bn, bb >> 10, ev, cp >> 20));

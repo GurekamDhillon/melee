@@ -426,6 +426,16 @@ impl Ws {
         Err("wss:// needs a build with the melee_net `real-net` feature".into())
     }
 
+    /// How long one read may block (`recv_text` then returns a "timed out" error; buffered data is kept).
+    pub fn set_read_timeout(&mut self, d: Duration) {
+        let t = Some(d.max(Duration::from_millis(1)));
+        match &self.s {
+            Stream::Plain(s) => s.set_read_timeout(t).ok(),
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => s.sock.set_read_timeout(t).ok(),
+        };
+    }
+
     /// Close the connection (a close frame; errors ignored).
     pub fn close(&mut self) {
         let _ = self.send_frame(8, &[0x03, 0xE8]);
@@ -491,7 +501,10 @@ impl Ws {
                         self.buf.drain(..need);
                         match b0 & 0x0F {
                             1 => return String::from_utf8(data).map_err(|e| e.to_string()),
-                            8 => return Err("server closed the connection".into()),
+                            8 => {
+                                let code = if data.len() >= 2 { u16::from_be_bytes([data[0], data[1]]) } else { 1005 };
+                                return Err(format!("server closed the connection (code {code})"));
+                            }
                             9 => self.send_frame(10, &data)?,
                             _ => {}
                         }

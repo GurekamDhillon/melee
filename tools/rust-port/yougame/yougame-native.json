@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "args": ["play", "--iso", "{disc}", "--brawl-files", "{disc:brawl:files}"],
+  "args": ["play", "--slippi-menus", "on", "--iso", "{disc}", "--brawl-files", "{disc:brawl:files}"],
   "disc": true,
   "discs": { "brawl": "optional" },
   "embed": { "class": "MeleePortWindow", "title": "Melee Unlocked" },

@@ -39,7 +39,7 @@ done
 CARGO_ENCODED_RUSTFLAGS="$(IFS=$''; echo "${flags[*]}")"
 export CARGO_ENCODED_RUSTFLAGS
 if [ $build = 1 ]; then
-  (cd "$repo/rust" && cargo build -j "${YG_JOBS:-3}" --release -p melee 2>&1 | tail -2)
+  (cd "$repo/rust" && cargo build -j "${YG_JOBS:-3}" --release -p melee --features real-net 2>&1 | tail -2)
 fi
 exe="$target/release/melee.exe"
 [ -f "$exe" ] || { echo "package: no $exe" >&2; exit 1; }

@@ -494,9 +494,37 @@ impl RetailPlay {
     /// test identity from MELEE_SLIPPI_TEST_CODE: no Slippi user.json is read here. Until the connect-code screen
     /// (step 7) is ported, Direct's opponent code comes from MELEE_SLIPPI_DIRECT_CODE.
     pub(super) fn slippi_online_pick(&mut self) {
+        const SLIPPI_MM_REAL: &str = "wss://matchmaking.slippi.gg/v1/queue";
         let Some(mode) = melee_modes::tu::slippi_online::take_pick() else { return };
         let name = melee_modes::tu::slippi_online::mode_name(mode);
         let env = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty());
+        // Slippi's real matchmaking only with a login the YouGame app granted (YOUGAME_SLIPPI_USER_JSON: the path of
+        // the player's Slippi sign-in file, Hero's `account::app_sign_in`), never in an agent or scripted run (hidden
+        // window, pad script, or a local mock named). Its fields are read by `establish` and never printed.
+        let agent = std::env::var_os("MELEE_PAD_SCRIPT").is_some() || env("MELEE_WINDOW_HIDDEN").is_some_and(|v| v == "1") || env("MELEE_SLIPPI_MM_URL").is_some();
+        if let Some(grant) = env("YOUGAME_SLIPPI_USER_JSON").filter(|_| !agent) {
+            let port = env("YOUGAME_SLIPPI_UDP_PORT").unwrap_or_else(|| "51441".into());
+            let mut args: Vec<String> = ["--slippi-mm", SLIPPI_MM_REAL, "--slippi-mm-real", "--slippi-user-json", &grant, "--slippi-port", &port].iter().map(|s| s.to_string()).collect();
+            match mode {
+                melee_modes::tu::slippi_online::MODE_DIRECT => match env("MELEE_SLIPPI_DIRECT_CODE") {
+                    Some(theirs) => args.extend(["--slippi-mm-mode".into(), "direct".into(), "--slippi-search".into(), theirs]),
+                    None => return self.ui_status(1, "online menu: Direct needs the code screen (not ported yet)"),
+                },
+                melee_modes::tu::slippi_online::MODE_UNRANKED => args.extend(["--slippi-mm-mode".into(), "unranked".into()]),
+                _ => return self.ui_status(1, &format!("online menu: {name} is not offered yet")),
+            }
+            log(&format!("online menu: {name}: Slippi matchmaking with the granted login"));
+            return self.relaunch(&args, None, false, &format!("Slippi {name}"));
+        }
+        // Hero's yougame_mode_policy (matchmaking_route): in YouGame mode without a granted login, Direct / Teams /
+        // Party are Locked and everything else is YouGame's (its queue is not wired here yet); never Slippi's servers
+        if melee_platform::yougame::active() && !agent {
+            return self.ui_status(1, &if matches!(mode, melee_modes::tu::slippi_online::MODE_DIRECT | melee_modes::tu::slippi_online::MODE_TEAMS | melee_modes::tu::slippi_online::MODE_PARTY) {
+                format!("online menu: {name} needs your Slippi login (allow it on the game's page)")
+            } else {
+                format!("online menu: {name} on YouGame is not available yet")
+            });
+        }
         let (Some(url), Some(port), Some(code)) = (env("MELEE_SLIPPI_MM_URL"), env("MELEE_SLIPPI_NP_PORT"), env("MELEE_SLIPPI_TEST_CODE")) else {
             return self.ui_status(1, &format!("online menu: {name} needs a matchmaking server (MELEE_SLIPPI_MM_URL, MELEE_SLIPPI_NP_PORT, MELEE_SLIPPI_TEST_CODE)"));
         };

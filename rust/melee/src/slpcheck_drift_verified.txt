@@ -1,0 +1,2 @@
+# Replay IDs (file stems) whose recorder drift was confirmed against the Dolphin oracle (engine == Dolphin on every frame)
+# AND that slpcheck classifies as recorder_drift. One ID per line, hashes only (no player tags, no paths). Empty so far.

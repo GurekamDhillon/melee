@@ -30,4 +30,5 @@ for c in "$OUT"/*.csv; do
   if [ $first = 1 ]; then head -1 "$c" | grep -q '^file,' && head -1 "$c" > "$OUT/all.csv"; first=0; fi
   grep -v '^file,' "$c" >> "$OUT/all.csv"
 done
+echo "status: $(grep -v '^file,' "$OUT/all.csv" | cut -d, -f2 | sort | uniq -c | sed 's/^ *//' | tr '\n' ';')"
 echo "done: $(grep -vc '^file,' "$OUT/all.csv") rows in $OUT/all.csv"

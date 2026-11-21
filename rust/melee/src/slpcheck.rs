@@ -363,6 +363,39 @@ fn compare(c: &Cap, p: &slp::Post) -> Vec<(usize, String, String)> {
     d
 }
 
+/// Recorder drift (notes/dolphin-oracle.md): the replay's value is one f32 step from the engine's, nothing else differs.
+const DRIFT_WINDOW: i32 = 60;
+/// Replay IDs (file stems, hashes only) whose drift was confirmed against the Dolphin oracle (engine == Dolphin on every frame).
+const DRIFT_VERIFIED: &str = include_str!("slpcheck_drift_verified.txt");
+
+fn ulp_step(a: f32, b: f32) -> Option<u32> {
+    if a.is_nan() || b.is_nan() {
+        return None;
+    }
+    let ord = |v: f32| {
+        let i = v.to_bits() as i32;
+        if i < 0 { i32::MIN.wrapping_sub(i) as i64 } else { i as i64 }
+    };
+    Some(ord(a).abs_diff(ord(b)) as u32)
+}
+
+/// True when every field of this fighter that differs is a float within 1 ULP (so no action/state/stock/etc. difference).
+fn within_one_ulp(c: &Cap, p: &slp::Post) -> bool {
+    let f = |a: f32, b: f32| ulp_step(a, b).is_some_and(|d| d <= 1);
+    f(c.x, p.x)
+        && f(c.y, p.y)
+        && f(c.facing, p.facing)
+        && f(c.percent, p.percent)
+        && f(c.shield, p.shield)
+        && p.state_frame.is_none_or(|r| f(c.state_frame, r))
+        && p.hitlag.is_none_or(|r| f(c.hitlag, r))
+        && c.action == p.action
+        && c.stocks == p.stocks
+        && c.last_attack == p.last_attack
+        && c.combo == p.combo
+        && p.airborne.is_none_or(|r| c.airborne == r)
+}
+
 #[derive(Clone, Debug)]
 struct First {
     frame: i32,
@@ -560,6 +593,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     let mut first: Option<First> = None;
     let mut per_field: [Option<i32>; 12] = [None; 12];
     let mut compared = 0i64;
+    // after the first divergence: false once any later difference in the next DRIFT_WINDOW frames is more than 1 ULP or not a float
+    let mut drift_ok = true;
     let mut last_frame = file.first_frame - 1;
     let mut panic_msg: Option<String> = None;
     // the Dolphin oracle's comparison outputs (notes/dolphin-oracle.md): `--nhv1-out CSV` the NHV1 rows
@@ -667,6 +702,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 let cap = unsafe { CAP[port] };
                 let Some(c) = cap else {
                     // no engine fighter reached the trace this frame
+                    drift_ok = false;
                     if first.as_ref().is_none_or(|f| (fr, port) < (f.frame, f.port)) {
                         first = Some(First { frame: fr, port, field: "absent", engine: "none".into(), replay: format!("action {}", p.action) });
                     }
@@ -679,7 +715,11 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                     if let Some(i) = unsafe { crate::r_in() }.input(port as i32, false) { eprintln!("PRE f{fr} p{} lx={:?} ly={:?} cx={:?} cy={:?} raw={:?} btn={:x}", port + 1, i.lx, i.ly, i.cx, i.cy, i.raw, i.buttons); }
                     eprintln!("DUMP f{fr} p{} eng x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} | slp x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} misc={:?}", port + 1, c.x, c.y, c.action, c.state_frame, c.percent, c.hitlag, c.last_attack, c.shield, p.x, p.y, p.action, p.state_frame, p.percent, p.hitlag, p.last_attack, p.shield, p.misc_as);
                 }
-                for (k, ev, rv) in compare(&c, p) {
+                let diffs = compare(&c, p);
+                if !diffs.is_empty() && !within_one_ulp(&c, p) && first.as_ref().is_none_or(|f| fr <= f.frame + DRIFT_WINDOW) {
+                    drift_ok = false;
+                }
+                for (k, ev, rv) in diffs {
                     if per_field[k].is_none() {
                         per_field[k] = Some(fr);
                     }
@@ -689,7 +729,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
             }
             // the first divergent frame is the answer; keep going only to fill the per-field table when asked
-            if first.is_some() && !dump && !args.iter().any(|a| a == "--full") {
+            // (a 1-ULP first divergence is followed DRIFT_WINDOW more frames to tell recorder drift from a real one)
+            if first.as_ref().is_some_and(|f| !drift_ok || fr >= f.frame + DRIFT_WINDOW) && !dump && !args.iter().any(|a| a == "--full") {
                 break;
             }
         }
@@ -709,7 +750,14 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         sm.status = format!("panic@{}", last_frame + 1);
         sm.panic = m.replace(&iso, "<disc>");
     } else {
-        sm.status = if first.is_some() { "diverged".into() } else { "match".into() };
+        sm.status = match &first {
+            None => "match".into(),
+            Some(_) if !drift_ok => "diverged".into(),
+            Some(_) => {
+                let id = std::path::Path::new(&name).file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+                if DRIFT_VERIFIED.lines().any(|l| l.split('#').next().is_some_and(|l| l.trim() == id)) { "recorder_drift_verified".into() } else { "recorder_drift".into() }
+            }
+        };
     }
     if let Some(f) = &first {
         sm.first = Some(f.clone());
@@ -780,7 +828,7 @@ fn finish(args: &[String], name: &str, s: &Summary) -> std::process::ExitCode {
         Some(f) => println!("SLPCHECK {name} {} first divergence: frame {} port {} field {} engine={} replay={} (compared {} fighter-frames)", s.status, f.frame, f.port + 1, f.field, f.engine, f.replay, s.frames_compared),
         None => println!("SLPCHECK {name} {} (compared {} fighter-frames, last frame {}) {}", s.status, s.frames_compared, s.last_frame, s.panic),
     }
-    if s.status == "match" || s.status == "diverged" {
+    if matches!(s.status.as_str(), "match" | "diverged" | "recorder_drift" | "recorder_drift_verified") {
         std::process::ExitCode::SUCCESS
     } else {
         std::process::ExitCode::from(1)

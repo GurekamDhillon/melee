@@ -596,3 +596,25 @@ matches both (a 2-frame game, 126 oracle frames); 134017 207 -> 8718 (oracle: s2
 `anim_id` at 8718, an input-class difference, not a hit), 123832 368 -> 5344 (.slp) / 1989 (oracle: s3 Nana
 `cpu.lstick.y`, the Nana CPU class). Singles sample (every singles file off the six stages plus 40 across them):
 42 -> 43 of 47 (152343), none worse. What is left in the 4-player set: x 55, stocks 43, percent 2.
+
+## slpcheck statuses `recorder_drift` and `recorder_drift_verified`
+
+Some .slp files (Slippi 3.19.1 recordings, mostly) hold a value one f32 step from what both the engine and Dolphin compute,
+for the whole match. slpcheck reports `recorder_drift` when the first divergence is a float field within 1 ULP, every
+difference in the next 60 frames is also a float within 1 ULP (or gone), and no action/state/stock/combo/airborne field
+ever differs. Anything else stays `diverged`; a `match` is never changed. `recorder_drift_verified` is the same, for a replay
+ID (file stem, hashes only) listed in `rust/melee/src/slpcheck_drift_verified.txt`: its drift was confirmed against this
+oracle (`ORACLE ... match` on every frame). Add an ID only after an oracle run of that file matches. `run_all.sh` prints a
+count per status; the three statuses are never merged.
+        let nself = GenoDefine_SelfCount(base);
+        let ms = core::mem::size_of::<MotionState>();
+        GenoDefine_CommonRows[k] = gd_data_copy(ext::ftData_CommonRows() as *const c_void, ms * ftCo_MS_Count as usize) as *mut MotionState;
+        GenoDefine_SpecificRows[k] = gd_data_copy(ftData_CharacterStateTables[b] as *const c_void, ms * nself) as *mut MotionState;
+        ext::GenoGame_DefineApplyRows(kind, GenoDefine_CommonRows[k], GenoDefine_SpecificRows[k], n as i32);
+        ftData_CharacterStateTables[k] = GenoDefine_SpecificRows[k];
+        gFtDataList[k] = out;
+        report(format!(
+            "geno: native define kind {kind} loaded: retail:mario; independent common/special rows; interpreter attempts {}\n",
+            GenoDefine_InterpreterAttempts[k]
+        ));
+

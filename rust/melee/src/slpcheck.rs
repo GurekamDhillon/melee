@@ -595,6 +595,16 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 if let Some(sc) = get("--render-scale").and_then(|v| v.parse::<u32>().ok()) {
                     r.set_scale(sc.clamp(1, melee_gx::render::Renderer::MAX_SCALE));
                 }
+                // GX decode and draw packing on their own thread, as play.rs / retail_flow.rs do for a rendered match (the
+                // FIFO decode in GXCopyDisp was over half of the timed tick: ~0.6 ms of the 1.4). Render-only: no game code
+                // reads the decoded state, and slpcheck never snapshots the arena (the frames may hold its blocks).
+                // wait_frame: the render span takes exactly this tick's frame. MELEE_GX_SYNC=1 keeps decoding in the tick.
+                if std::env::var_os("MELEE_GX_SYNC").is_none() {
+                    let sh = melee_engine::gxbridge::shim();
+                    sh.gx.enable_async(melee_engine::arena::mark_foreign_thread);
+                    sh.gx.set_pipe_factory(r.pipe_factory());
+                    sh.wait_frame = true;
+                }
                 rend = Some(r);
             }
             Err(er) => {
@@ -603,6 +613,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
         }
     }
+    crate::prof::set_gated(std::env::var_os("MELEE_SAMPLE_GATE").is_some_and(|v| v != "0"));
     let run = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mut ticks = 0usize;
         loop {
@@ -663,7 +674,11 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
                 e.set_pads(Some(pads));
             }
-            if !e.tick() {
+            // MELEE_SAMPLE with MELEE_SAMPLE_GATE=1: the profiler samples the engine tick only (not the replay bookkeeping or the render)
+            crate::prof::gate(true);
+            let more = e.tick();
+            crate::prof::gate(false);
+            if !more {
                 break;
             }
             if let (Some(t), Some(a)) = (timer.as_mut(), t_a) {

@@ -27,6 +27,7 @@ mod imp {
         fn SymSetOptions(o: u32) -> u32;
         fn GetLastError() -> u32;
         fn SymFromAddr(p: *mut c_void, addr: u64, disp: *mut u64, sym: *mut u8) -> i32;
+        fn GetModuleHandleW(n: *const u16) -> *mut c_void;
     }
 
     pub struct Guard {
@@ -184,6 +185,9 @@ mod imp {
                 super::slow_ms().map(|_| super::SLOW.lock().unwrap().iter().copied().collect());
             let data: Vec<Vec<u64>> =
                 data.into_iter().filter(|s| slow.as_ref().map_or(true, |k| k.contains(&s[0]))).map(|mut s| { s.remove(0); s }).collect();
+            // the exe's load address: when dbghelp names nothing (addresses only), symbolize offline against the PDB at
+            // (address - base + the image base)
+            eprintln!("prof: exe base {:#x}", unsafe { GetModuleHandleW(core::ptr::null()) } as u64);
             let names = symbolize(data.iter().flatten().copied());
             let data: Vec<Vec<u64>> = match std::env::var("MELEE_SAMPLE_ROOT") {
                 Ok(r) => data.into_iter().filter(|s| s.iter().any(|a| names[a].contains(&r))).collect(),

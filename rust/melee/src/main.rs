@@ -59,6 +59,7 @@ mod audio;
 mod stage_anim;
 mod frametime;
 mod slpcheck;
+mod slpbatch;
 mod snap;
 mod fighter_fields;
 mod diff;

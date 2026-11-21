@@ -374,6 +374,10 @@ struct First {
 
 pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
+    // `--list`: many replays, N at a time (slpbatch.rs)
+    if args.iter().any(|a| a == "--list") {
+        return crate::slpbatch::batch(args);
+    }
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let Some(path) = get("--slp") else {
         eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--time [--time-csv FILE]] [--render [--render-scale N]]");

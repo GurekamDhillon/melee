@@ -257,6 +257,8 @@ fn install_capture(at_proc_map: bool) {
 static mut SEED_FIRST: Option<(i32, i32, u32, u32)> = None;
 static mut SEED_PROBE: bool = false;
 static mut RESEED_PRE: bool = false;
+/// The file's UCF 0.7x tumble code is on (set before the engine boot, applied after it).
+static mut UCF07_TUMBLE: bool = false;
 static mut SLP_SEED: u32 = 0;
 static mut SEEDLOG_LAST: u32 = 0;
 /// Online replays: the console's forced frame seed minus the Frame Start event's (a multiple of 0x10000).
@@ -475,8 +477,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         use melee_fighter::tu::ftCo_DamageFall::ext::hook as dfh;
         let on = no_card && slp::gecko_has(&file.gecko, 0x8009_08F4) && std::env::var("SLPCHECK_UCF07").is_err();
         dfh::Replay_UcfVersion = if on { Some(|p| match unsafe { crate::r_in() }.ucf_version(p) { 73 => 84, v => v }) } else { None };
-        // UCF's own raw history is only pushed with the 1.0 cardinals on: read the pad queue's raw x from the replay
-        dfh::ftUcf_PadRaw = if on { Some(|p, w, b| unsafe { crate::r_in() }.raw_stick_back(p, w, b)) } else { None };
+        UCF07_TUMBLE = on;
     }
     // The engine's seam answers 0 for Replay_ApplyMatch (the RNG was zeroed at the match start); answer the file's seed.
     unsafe {
@@ -544,6 +545,13 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     crate::install_replay(pl);
     install_capture(file.version[0] < 3);
+    // UCF's own raw history is only pushed with the 1.0 cardinals on: the 0.7x tumble check reads the pad queue's raw x
+    // from the replay. Set after the engine boot: `melee_link::install` (Engine::boot_vs) links this hook to the fighter's
+    // own `ftUcf_PadRaw` and overwrote the earlier assignment, so the check saw a zero stick move and never left tumble
+    // (Lunar set: DamageFall/DamageFly where the console went to Fall).
+    if unsafe { UCF07_TUMBLE } {
+        unsafe { melee_fighter::tu::ftCo_DamageFall::ext::hook::ftUcf_PadRaw = Some(|p, w, b| unsafe { crate::r_in() }.raw_stick_back(p, w, b)) };
+    }
     unsafe { RESEED_PRE = !args.iter().any(|a| a == "--no-pre-reseed"); SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None; FS_OFFSET = 0 };
     let ports: Vec<usize> = (0..4).filter(|&i| conv.scn.players[i].is_some()).collect();
     let posts: Vec<Vec<Option<slp::Post>>> = (0..4).map(|p| if ports.contains(&p) { file.post_by_port(p) } else { Vec::new() }).collect();

@@ -252,6 +252,9 @@ impl Exporter {
         ev[0x1A4] = 2; // major scene: VS mode
         ev[0x2BD] = 1; // English
         raw.extend_from_slice(&ev);
+        // the Slippi spectator feed (slippi_spectate.rs): the game's start, then each group as the file gets it
+        crate::slippi_spectate::start_game();
+        crate::slippi_spectate::write(&raw);
         // the Gecko List right after Game Start, in 512-byte Message Splitter blocks, as Slippi Dolphin writes it
         let chunks: Vec<&[u8]> = self.gecko.chunks(512).collect();
         for (k, c) in chunks.iter().enumerate() {
@@ -261,6 +264,7 @@ impl Exporter {
             b[0x201..0x203].copy_from_slice(&(c.len() as u16).to_be_bytes());
             b[0x203] = 0x3D;
             b[0x204] = (k + 1 == chunks.len()) as u8;
+            crate::slippi_spectate::write(&b);
             raw.extend_from_slice(&b);
         }
         let mut present = [false; 4];
@@ -274,6 +278,7 @@ impl Exporter {
     fn end_match(&mut self, quit: bool) {
         let Some(mut m) = self.m.take() else { return };
         if !m.started {
+            crate::slippi_spectate::end_game(false);
             return;
         }
         // Game End: GAME! when one fighter (or none) has stocks left, TIME! when a timed match ran its clock, else no contest
@@ -295,7 +300,10 @@ impl Exporter {
         for (k, &p) in order.iter().enumerate() {
             place[p] = k as i8;
         }
-        m.raw.extend_from_slice(&[0x39, method, 0xFF, place[0] as u8, place[1] as u8, place[2] as u8, place[3] as u8]);
+        let end = [0x39, method, 0xFF, place[0] as u8, place[1] as u8, place[2] as u8, place[3] as u8];
+        m.raw.extend_from_slice(&end);
+        crate::slippi_spectate::write(&end);
+        crate::slippi_spectate::end_game(false);
         let mut o = b"{U\x03raw[$U#l".to_vec();
         o.extend_from_slice(&(m.raw.len() as u32).to_be_bytes());
         o.extend_from_slice(&m.raw);
@@ -615,6 +623,7 @@ fn flush_frame(m: &mut Match) {
         return;
     }
     m.started = true;
+    let at = m.raw.len();
     m.frame += 1;
     m.frames += 1;
     let f = m.frame as u32;
@@ -642,6 +651,7 @@ fn flush_frame(m: &mut Match) {
     put32(&mut bk, 1, f);
     put32(&mut bk, 5, f);
     m.raw.extend_from_slice(&bk);
+    crate::slippi_spectate::write(&m.raw[at..]);
 }
 
 /// A rollback run's match is over (the frame cap, the scene's end, the link's end): the frames confirmed so far are the

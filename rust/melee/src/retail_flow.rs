@@ -1140,6 +1140,14 @@ impl RetailPlay {
                         let _ = melee_audio::output::save_volume(v);
                     }
                 }
+                "music" | "sfx" => {
+                    let v: i32 = c.value.parse().unwrap_or(100);
+                    if c.key == "music" {
+                        melee_audio::ax::set_music_volume(v);
+                    } else {
+                        melee_audio::ax::set_sfx_volume(v);
+                    }
+                }
                 "action:menu" => self.exit_req = Some(true),
                 "action:quit" => self.exit_req = Some(false),
                 "overlay" => self.hud_request = Some(on),

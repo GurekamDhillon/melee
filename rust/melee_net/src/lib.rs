@@ -28,6 +28,7 @@ pub mod session;
 pub mod sim;
 pub mod slippi;
 pub mod slippi_mm;
+pub mod slippi_spectate;
 pub mod transport;
 pub mod wire;
 pub mod yougame_room;

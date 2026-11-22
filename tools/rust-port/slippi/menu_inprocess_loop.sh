@@ -31,11 +31,11 @@ side() { # side NAME CODE NPPORT SCRIPT BACKSCRIPT
     MELEE_SLIPPI_SET_PAD_SCRIPT_G2="$5" MELEE_SLIPPI_SET_PAD_SCRIPT_G3="${6:-}" MELEE_SLIPPI_SET_MAX_FRAMES=1500 MELEE_SLIPPI_TEST_STOCKS=$stocks \
     MELEE_SLIPPI_MM_URL="ws://127.0.0.1:$mmp/v1/queue" MELEE_SLIPPI_NP_PORT=$3 MELEE_SLIPPI_TEST_CODE="$2" \
     MELEE_SLIPPI_NP_OUT="$O/$s.csv" MELEE_SLIPPI_NP_MAX_SECONDS=420 MELEE_SLIPPI_NP_PADGEN=7 \
-    timeout 420 "$B" play --skip-intro --max-frames 9000 --slippi-menus on --shot-dir "$O/shots-$s" --shot-ages 90,240 >> "$O/$s-menu.log" 2>&1 < /dev/null )
+    timeout 420 "$B" play --skip-intro --max-frames 9000 --slippi-menus on --shot-dir "$O/shots-$s" --shot-ages 90,240,960 >> "$O/$s-menu.log" 2>&1 < /dev/null )
 }
 side A "AAAA#001" $((mmp + 100)) "$M/slippi_online_unranked_css_1start.txt" "$M/slippi_back_a.txt" "$M/slippi_rematch_leave_a.txt" & pa=$!
 sleep 1
-side B "BBBB#002" $((mmp + 101)) "$M/slippi_online_b_unranked_css_1start.txt" "$M/slippi_back_b.txt" & pb=$!
+side B "BBBB#002" $((mmp + 101)) "$M/slippi_online_b_unranked_css_1start.txt" "$M/slippi_back_b.txt" "$M/slippi_rematch_search_b.txt" & pb=$!
 ( for _ in $(seq 1 300); do echo "$(date +%s) $(games | tr '
 ' ' ')"; sleep 1; done ) > "$O/pids.log" 2>/dev/null & watch=$!
 wait $pa $pb
@@ -56,9 +56,17 @@ for s in a b; do
   grep -q "the set's link taken over" "$O/$s-menu.log" || bad "$s: game 2 not on the same link"
 done
 grep -q "online css: session: cancelled, link closed" "$O/a-menu.log" || bad "A: did not back out after game 2"
-grep -q "the opponent left; searching again" "$O/b-menu.log" || bad "B: did not see the opponent leave"
+grep -q "the opponent left; back on the idle select, no search" "$O/b-menu.log" || bad "B: did not see the opponent leave"
+# no auto-queue: after the opponent left, B searches only on its script's Start (idle Start line, then the search line, once each)
+lv=$(grep -n "the opponent left; back on the idle select" "$O/b-menu.log" | head -1 | cut -d: -f1)
+st=$(grep -n "idle: Start, searching again" "$O/b-menu.log" | tail -1 | cut -d: -f1)
+sr=$(grep -n "Start with a fighter chosen: searching" "$O/b-menu.log" | tail -1 | cut -d: -f1)
+[ -n "$lv" ] && [ -n "$st" ] && [ "$st" -gt "$lv" ] || bad "B: no Start press on the idle select after the opponent left"
+[ -n "$sr" ] && [ -n "$st" ] && [ "$sr" -gt "$st" ] || bad "B: no search after its Start"
+[ "$(grep -c "Start with a fighter chosen: searching" "$O/b-menu.log")" -eq 2 ] || bad "B: searched other than twice (game 1 and the one after leaving)"
+# the search came only after the idle wait: the mock saw B's second join no earlier than the Start (checked by the log order above)
 n=$(grep -c "join from AAAA#001" "$O/mm.log"); [ "$n" -eq 1 ] || bad "A: $n joins (want 1: games 1 and 2 on one link)"
-n=$(grep -c "join from BBBB#002" "$O/mm.log"); [ "$n" -eq 2 ] || bad "B: $n joins (want 2: the search after the opponent left)"
+n=$(grep -c "join from BBBB#002" "$O/mm.log"); [ "$n" -eq 2 ] || bad "B: $n joins (want 2: the one search from its Start after the opponent left)"
 [ -z "$(games)" ] || bad "game processes still up"
 # one process per side for the whole loop: every pid seen is one of the first two, and never more than two at once
 pids=$(awk '{for(i=2;i<=NF;i++) print $i}' "$O/pids.log" | sort -u)

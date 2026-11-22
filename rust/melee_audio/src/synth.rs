@@ -1132,6 +1132,7 @@ impl Sound {
         let base = self.slot_aram(s).wrapping_mul(2) as i32;
         for i in 0..node.voice_count as usize {
             let v = self.node_voice(n, i);
+            self.ax.set_voice_music(v, true);
             self.ax.set_voice_ve(v, &ve_block(cur, 0));
             let ratio = if node.flags & 4 != 0 { 0 } else { (65536.0f32 * (node.x14 * node.x18[0] * node.x18[1])) as u32 };
             self.ax.set_voice_src(v, &src_block(ratio));

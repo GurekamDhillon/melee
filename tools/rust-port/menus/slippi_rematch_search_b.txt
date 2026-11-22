@@ -1,0 +1,6 @@
+# Slippi rematch select after game 2 (menu_inprocess_loop.sh), side B: the opponent left, this side is idle on the
+# select with its fighter kept and does NOT search by itself (real Slippi: the player presses Start). Wait a good
+# while (the log must show no search), then press Start once: it searches (and locks in) with that one press
+900 0000 0 0
+2 1000 0 0
+3000 0000 0 0

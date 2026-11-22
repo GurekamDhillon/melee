@@ -82,6 +82,7 @@ mod slp_export;
 mod spectate;
 mod replay_ctl;
 mod slp_play;
+mod slippi_spectate;
 mod replays;
 mod np_lockstep;
 mod np_mux;
@@ -657,6 +658,7 @@ fn main_inner() -> ExitCode {
         Some("slippi-replay") => slippi_np::slippi_replay(&args),
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
+        Some("slp-spectate") => slippi_spectate::watch_cmd(&args),
         Some("replays") => replays::replays(&args),
         Some("cosmetics") => cosmetics::cli(&args[1..]),
         Some("card-import") => card_import::cli(&args[1..]),

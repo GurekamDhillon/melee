@@ -64,6 +64,12 @@ pub struct PadSystem {
     /// Remapped gilrs pads / adapter controllers per port (`bindings`, the launcher's tables); None = default.
     pub pad_maps: [crate::bindings::PortMaps; PAD_CHANMAX],
     pub gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    /// The keyboard's box mode / stick modifier keys (port 1) and the stick modifier's push, percent (`bindings`).
+    pub keyboard_extra: Option<crate::bindings::KeyboardExtra>,
+    pub stick_mod_pct: u8,
+    /// Box-mode (SOCD) history per port's HID pad and for the keyboard.
+    bind_state: [crate::profiles::PortState; PAD_CHANMAX],
+    kb_state: crate::profiles::PortState,
     /// The launcher's Rumble switch (`rumble 0` in port-settings.ini turns the motors off); on by default.
     pub rumble: bool,
     /// Controller profiles (profiles.rs: `--controllers`, `controllers.ini`); None = Aurora default.
@@ -101,6 +107,10 @@ pub struct PadSampler {
     dead_zones: DeadZones,
     pad_maps: [crate::bindings::PortMaps; PAD_CHANMAX],
     gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    keyboard_extra: Option<crate::bindings::KeyboardExtra>,
+    stick_mod_pct: u8,
+    bind_state: [crate::profiles::PortState; PAD_CHANMAX],
+    kb_state: crate::profiles::PortState,
     profiles: Option<crate::profiles::ProfileSet>,
     profile_state: [crate::profiles::PortState; PAD_CHANMAX],
     keys: Arc<Mutex<(HashSet<KeyCode>, bool)>>,
@@ -119,9 +129,12 @@ impl PadSampler {
         };
         aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
         for i in 0..PAD_CHANMAX {
-            if let Some((m, p)) = pads[i].as_ref().and_then(|p| Some((self.pad_maps[i].for_family(p.family)?, p))) {
-                crate::bindings::apply_xinput(m, p, &mut st[i]);
+            if let Some(p) = pads[i].as_ref() {
+                self.pad_maps[i].apply(p, &mut self.bind_state[i], self.stick_mod_pct, &mut st[i]);
             }
+        }
+        if let (Some(e), true) = (self.keyboard_extra.as_ref(), st[0].err == 0) {
+            crate::bindings::apply_keyboard(e, &keys, &mut self.kb_state, &mut st[0]);
         }
         if let Some(set) = self.profiles.as_ref() {
             set.apply(&pads, &mut self.profile_state, st);
@@ -138,7 +151,7 @@ impl PadSampler {
                 for i in 0..PAD_CHANMAX {
                     if adp[i].err == 0 {
                         if let Some(m) = self.gc_maps[i].as_ref() {
-                            crate::bindings::apply_gc(m, &mut adp[i]);
+                            crate::bindings::apply_gc(m, self.stick_mod_pct, &mut adp[i]);
                         }
                         st[i] = adp[i];
                     }
@@ -188,6 +201,10 @@ impl PadSystem {
             dead_zones: DeadZones::default(),
             pad_maps: Default::default(),
             gc_maps: Default::default(),
+            keyboard_extra: None,
+            stick_mod_pct: crate::bindings::STICK_MOD_DEFAULT,
+            bind_state: Default::default(),
+            kb_state: Default::default(),
             rumble: true,
             profiles: None,
             profile_state: Default::default(),
@@ -218,6 +235,10 @@ impl PadSystem {
             dead_zones: self.dead_zones,
             pad_maps: self.pad_maps.clone(),
             gc_maps: self.gc_maps.clone(),
+            keyboard_extra: self.keyboard_extra.clone(),
+            stick_mod_pct: self.stick_mod_pct,
+            bind_state: Default::default(),
+            kb_state: Default::default(),
             profiles: self.profiles.clone(),
             profile_state: Default::default(),
             keys: self.shared_keys.clone(),
@@ -265,9 +286,12 @@ impl PadSystem {
         self.sync_keys();
         let ret = aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
         for i in 0..PAD_CHANMAX {
-            if let Some((m, p)) = pads[i].as_ref().and_then(|p| Some((self.pad_maps[i].for_family(p.family)?, p))) {
-                crate::bindings::apply_xinput(m, p, &mut st[i]);
+            if let Some(p) = pads[i].as_ref() {
+                self.pad_maps[i].apply(p, &mut self.bind_state[i], self.stick_mod_pct, &mut st[i]);
             }
+        }
+        if let (Some(e), true) = (self.keyboard_extra.as_ref(), st[0].err == 0) {
+            crate::bindings::apply_keyboard(e, &keys, &mut self.kb_state, &mut st[0]);
         }
         // profiles replace Aurora's mapping for their ports; the result is plain PADStatus from here on
         if let Some(set) = self.profiles.as_ref() {
@@ -302,7 +326,7 @@ impl PadSystem {
                 for i in 0..PAD_CHANMAX {
                     if adp[i].err == 0 {
                         if let Some(m) = self.gc_maps[i].as_ref() {
-                            crate::bindings::apply_gc(m, &mut adp[i]);
+                            crate::bindings::apply_gc(m, self.stick_mod_pct, &mut adp[i]);
                         }
                         st[i] = adp[i];
                         src[i] = Source::Adapter;

@@ -15,6 +15,61 @@ fn to_sdl(v: f32) -> i16 {
     (v * 32767.0).round().clamp(-32768.0, 32767.0) as i16
 }
 
+/// A raw controller's buttons and hat as his `hid<n>` mask reads them. Button N+1 is bit N: the WGI backend numbers
+/// its raw buttons from 0 (kind 0 in the code's high half); elsewhere the n-th button the device has. The hat is a
+/// switch (kind 2) as two axes, x then y, where gilrs gives WGI's y as down-positive. Not tried on a box.
+pub fn hid_mask(state: &gilrs::ev::state::GamepadState) -> u32 {
+    let mut m = 0u32;
+    for (n, (code, d)) in state.buttons().enumerate() {
+        if !d.is_pressed() {
+            continue;
+        }
+        let c = code.into_u32();
+        let idx = if cfg!(windows) {
+            if c >> 16 != 0 {
+                continue;
+            }
+            c as usize
+        } else {
+            n
+        };
+        if idx < 28 {
+            m |= 1 << idx;
+        }
+    }
+    let (mut hx, mut hy) = (0.0f32, 0.0f32);
+    for (code, a) in state.axes() {
+        let c = code.into_u32();
+        if cfg!(windows) && c >> 16 == 2 && c & 0xFFFF < 2 {
+            if c & 1 == 0 {
+                hx = a.value();
+            } else {
+                hy = a.value();
+            }
+        }
+    }
+    m | hat_bits(hx, hy)
+}
+
+/// The hat switch from its two axes (-1..1; y negative is Up).
+pub fn hat_bits(x: f32, y: f32) -> u32 {
+    use crate::bindings::{HID_HAT_DOWN, HID_HAT_LEFT, HID_HAT_RIGHT, HID_HAT_UP};
+    let mut m = 0;
+    if y < -0.5 {
+        m |= HID_HAT_UP;
+    }
+    if y > 0.5 {
+        m |= HID_HAT_DOWN;
+    }
+    if x < -0.5 {
+        m |= HID_HAT_LEFT;
+    }
+    if x > 0.5 {
+        m |= HID_HAT_RIGHT;
+    }
+    m
+}
+
 impl Gamepads {
     pub fn new() -> Self {
         let gilrs = match Gilrs::new() {
@@ -118,6 +173,11 @@ impl Gamepads {
             r.has_rumble = gp.is_ff_supported();
             r.name = gp.name().to_string();
             r.family = crate::profiles::Family::detect(gp.vendor_id(), gp.product_id(), gp.name());
+            // his "HID Pad": a generic / box device that is a raw controller, not an XInput-layout gamepad
+            if matches!(r.family, crate::profiles::Family::Generic | crate::profiles::Family::Box) && gp.mapping_source() != gilrs::MappingSource::Driver {
+                r.hid_raw = true;
+                r.hid_buttons = hid_mask(gp.state());
+            }
             out[i] = Some(r);
         }
         out

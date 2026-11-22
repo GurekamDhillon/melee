@@ -473,12 +473,16 @@ pub fn apply_input(pads: &mut melee_platform::PadSystem) {
         return;
     }
     let pads_n = b.xinput.iter().chain(&b.ds4).chain(&b.swpro).filter(|m| m.is_some()).count();
+    let hid_n = b.hid.iter().filter(|m| m.is_some()).count();
+    let box_kb = b.keyboard_extra.as_ref().is_some_and(|e| e.box_mode);
     let gc_n = b.gc.iter().filter(|m| m.is_some()).count();
-    eprintln!("launcher-compat: controls from port-settings.ini: keyboard {}, {pads_n} gamepad table(s), {gc_n} adapter remap(s)", if b.keyboard.is_some() { "remapped" } else { "default" });
+    eprintln!("launcher-compat: controls from port-settings.ini: keyboard {}{}, {pads_n} gamepad table(s), {hid_n} HID table(s), {gc_n} adapter remap(s), stick modifier {}%", if b.keyboard.is_some() { "remapped" } else { "default" }, if box_kb { " (box mode)" } else { "" }, b.stick_mod_pct.unwrap_or(melee_platform::bindings::STICK_MOD_DEFAULT));
     if let Some(kb) = b.keyboard.clone() {
         pads.keyboard[0] = kb;
     }
     pads.pad_maps = melee_platform::bindings::PortMaps::from_bindings(&b);
+    pads.keyboard_extra = b.keyboard_extra.clone();
+    pads.stick_mod_pct = b.stick_mod_pct.unwrap_or(melee_platform::bindings::STICK_MOD_DEFAULT);
     if let Some(r) = b.rumble {
         pads.rumble = r;
     }

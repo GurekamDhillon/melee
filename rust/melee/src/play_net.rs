@@ -2037,6 +2037,7 @@ impl NetDriver {
             sr.last_local = ff;
         }
         let (ckf, ck) = sr.finals.iter().next_back().map_or((0, 0), |(a, b)| (*a, *b));
+        let sent_before = sr.last_sent;
         for ff in (sr.last_sent + 1)..=(f + sr.delay) {
             let Some(i) = s.local_input_for_send(lp * 2, ff) else { break };
             let mut p = [0u8; PAD_WIRE];
@@ -2051,6 +2052,11 @@ impl NetDriver {
             }
             sr.link.send_pad(online(ff), p, ckf, ck);
             sr.last_sent = ff;
+        }
+        // a stalled tick (no new local pad) sends the unacked pads again, as Slippi Dolphin's skipped frame does
+        // (`SendSlippiPad(nullptr)`): a lost newest packet is repaired by nothing else
+        if sr.last_sent == sent_before {
+            sr.link.resend_pads();
         }
         sr.link.flush();
         let of = online(s.current_frame());

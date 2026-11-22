@@ -3,7 +3,8 @@
 //! `0653df819` speaks it (`SlippiNetplay.cpp`): `sf::Packet` encoding (big-endian integers, bool = 1 byte, string =
 //! u32 length + bytes), three ENet channels (0 reliable for everything but the pads, 1 unsequenced for pads, acks
 //! and suggestions, 2 unsequenced for the acks sent while handling a pad), a resend-until-acked local pad queue of
-//! up to 128 frames, acks only for pads that added frames, ping from ack round trips and Slippi's time offset.
+//! up to 128 frames (sent again on stalled frames, `resend_pads`), acks only for pads that added frames, ping from
+//! ack round trips and Slippi's time offset.
 //!
 //! Direct connections only: both sides know the other's address and connect to it at once (as Slippi does after
 //! matchmaking). Nothing here talks to a matchmaking server, STUN or any Slippi service.
@@ -257,6 +258,8 @@ pub struct ClientStats {
     pub acks_sent: u64,
     pub acks_received: u64,
     pub max_queue: usize,
+    /// Pad packets sent by [`Client::resend_pads`]: the unacked queue again, on a frame with no new local pad.
+    pub pads_resent: u64,
 }
 
 impl Client {
@@ -367,25 +370,43 @@ impl Client {
             return;
         }
         self.local_queue.push_front((frame, pad, checksum_frame, checksum));
-        let mut min_ack = self.remote.last_acked;
-        let cur = self.local_queue.front().unwrap().0;
-        min_ack = min_ack.max(cur - 128);
+        if self.send_local_queue() {
+            self.stats.max_queue = self.stats.max_queue.max(self.local_queue.len());
+            self.stats.pads_sent += 1;
+        }
+    }
+
+    /// `SendSlippiPad(nullptr)`: send the unacked pads again with no new one. The game calls it on every frame it
+    /// stalls waiting for the peer (Slippi's skipped frame, a full rollback window, past its last frame), as the
+    /// game's stalled frame does in Slippi Dolphin: pads are unsequenced and unreliable, so a lost newest packet is
+    /// only repaired by a later packet carrying the queue.
+    pub fn resend_pads(&mut self) {
+        if matches!(self.status, Status::Failed | Status::Disconnected) {
+            return;
+        }
+        if self.send_local_queue() {
+            self.stats.pads_resent += 1;
+        }
+    }
+
+    /// Drop the acked pads (and any older than the 128-frame window), then send the rest as one pad packet, newest
+    /// first, with its send timing and ack timer (a resend's too, as in Slippi Dolphin). False when nothing is left
+    /// unacked.
+    fn send_local_queue(&mut self) -> bool {
+        let Some(cur) = self.local_queue.front().map(|q| q.0) else { return false };
+        let min_ack = self.remote.last_acked.max(cur - 128);
         while self.local_queue.back().map_or(false, |b| b.0 < min_ack) {
             self.local_queue.pop_back();
         }
-        if self.local_queue.is_empty() {
-            return;
-        }
-        self.stats.max_queue = self.stats.max_queue.max(self.local_queue.len());
-        let f = self.local_queue.front().unwrap();
+        let Some(f) = self.local_queue.front() else { return false };
         let m = PadMsg { frame: f.0, port: self.local_port, checksum_frame: f.2, checksum: f.3, pads: self.local_queue.iter().map(|q| q.1).collect() };
         let b = m.encode();
         self.send(&b);
-        self.stats.pads_sent += 1;
         let now = self.now_us();
         self.has_game_started = true;
         self.remote.last_timing = Timing { frame: m.frame, time_us: now };
         self.remote.ack_timers.push_back(Timing { frame: m.frame, time_us: now });
+        true
     }
 
     /// Put the queued datagrams on the wire now (`enet_host_flush`) instead of at the next `poll`: called right

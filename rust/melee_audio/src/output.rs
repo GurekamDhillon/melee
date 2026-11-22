@@ -530,9 +530,20 @@ mod device {
         /// The default output device, preferring 32 kHz stereo. `buffer_ms` > 0 asks for a device buffer of that length
         /// (WASAPI shared mode, event driven: the audio engine rounds it up to its period; cpal 0.15 has no exclusive
         /// mode); when the device refuses it the default buffer is used.
-        pub fn open(ring: Arc<Ring>, gain: Arc<AtomicU32>, buffer_ms: u32) -> Result<Device, String> {
+        pub fn open(ring: Arc<Ring>, gain: Arc<AtomicU32>, buffer_ms: u32, name: Option<&str>) -> Result<Device, String> {
             let host = cpal::default_host();
-            let dev = host.default_output_device().ok_or("no default output device")?;
+            // A named device (settings `audio_device`, Hero's "Output device"); gone or unnamed: the system default.
+            let named = name.filter(|n| !n.is_empty()).and_then(|n| {
+                let d = host.output_devices().ok()?.find(|d| d.name().is_ok_and(|x| x == n));
+                if d.is_none() {
+                    eprintln!("gw: AX: output device {n:?} not found; using the system default");
+                }
+                d
+            });
+            let dev = match named {
+                Some(d) => d,
+                None => host.default_output_device().ok_or("no default output device")?,
+            };
             let want = cpal::SampleRate(RATE);
             let cfg = dev
                 .supported_output_configs()
@@ -609,11 +620,11 @@ mod device {
         /// [`Device::open`] on a thread of its own, which then keeps the stream until the returned handle is dropped.
         /// Opening the device (WASAPI activation, RPC to the audio service) took 20-60% of the first match tick; done
         /// from the driver's creation on, it is ready (or nearly) by the time the game first needs it.
-        pub fn open_async(ring: Arc<Ring>, gain: Arc<AtomicU32>, buffer_ms: u32) -> std::sync::mpsc::Receiver<Result<(u32, Held), String>> {
+        pub fn open_async(ring: Arc<Ring>, gain: Arc<AtomicU32>, buffer_ms: u32, name: Option<String>) -> std::sync::mpsc::Receiver<Result<(u32, Held), String>> {
             let (tx, rx) = std::sync::mpsc::channel();
             let spawned = std::thread::Builder::new().name("audio open".into()).spawn(move || {
                 let (stop_tx, stop) = std::sync::mpsc::channel::<()>();
-                match Device::open(ring, gain, buffer_ms) {
+                match Device::open(ring, gain, buffer_ms, name.as_deref()) {
                     Ok(d) => {
                         if tx.send(Ok((d.rate, Held(stop_tx)))).is_ok() {
                             // blocks until the Held handle is dropped (its sender closes the channel)
@@ -639,6 +650,35 @@ mod device {
     pub struct Held(#[allow(dead_code)] std::sync::mpsc::Sender<()>);
 }
 
+/// The output devices by name (Hero's `audio_list_devices`; empty without the `device` feature or a host).
+pub fn list_devices() -> Vec<String> {
+    #[cfg(feature = "device")]
+    {
+        use cpal::traits::{DeviceTrait, HostTrait};
+        let host = cpal::default_host();
+        let mut v: Vec<String> = host.output_devices().map(|it| it.filter_map(|d| d.name().ok()).collect()).unwrap_or_default();
+        v.dedup();
+        v
+    }
+    #[cfg(not(feature = "device"))]
+    {
+        Vec::new()
+    }
+}
+
+/// The system default output device's name, if any.
+pub fn default_device() -> Option<String> {
+    #[cfg(feature = "device")]
+    {
+        use cpal::traits::{DeviceTrait, HostTrait};
+        cpal::default_host().default_output_device().and_then(|d| d.name().ok())
+    }
+    #[cfg(not(feature = "device"))]
+    {
+        None
+    }
+}
+
 // ---- frame driver ---------------------------------------------------------------------------
 
 /// Driver settings (the C read these from the environment; [`DriverConfig::from_env`] still does).
@@ -658,6 +698,9 @@ pub struct DriverConfig {
     pub dump: Option<String>,
     /// Open the output device (false for tests / headless).
     pub device: bool,
+    /// The output device by name (settings `audio_device` / MELEE_AUDIO_DEVICE); None or "" = the system default.
+    /// Read when the device opens: a change applies on the next launch, as in Hero's settings.
+    pub device_name: Option<String>,
 }
 
 impl DriverConfig {
@@ -682,6 +725,7 @@ impl DriverConfig {
             nofx: std::env::var_os("MELEE_AUDIO_NOFX").is_some(),
             dump: std::env::var("MELEE_AUDIO_DUMP").ok().filter(|s| !s.is_empty()),
             device: true,
+            device_name: std::env::var("MELEE_AUDIO_DEVICE").ok().filter(|s| !s.is_empty()),
         }
     }
 }
@@ -713,7 +757,7 @@ impl Driver {
         ring.set_target(cfg.target_frames, cfg.target_frames, cfg.max_frames);
         let gain = Arc::new(AtomicU32::new(1.0f32.to_bits()));
         #[cfg(feature = "device")]
-        let opening = (cfg.device && !cfg.turbo).then(|| device::Device::open_async(ring.clone(), gain.clone(), cfg.buffer_ms));
+        let opening = (cfg.device && !cfg.turbo).then(|| device::Device::open_async(ring.clone(), gain.clone(), cfg.buffer_ms, cfg.device_name.clone()));
         Driver {
             cfg,
             ring,
@@ -799,7 +843,7 @@ impl Driver {
         #[cfg(feature = "device")]
         {
             if self.opening.is_none() {
-                self.opening = Some(device::Device::open_async(self.ring.clone(), self.gain.clone(), self.cfg.buffer_ms));
+                self.opening = Some(device::Device::open_async(self.ring.clone(), self.gain.clone(), self.cfg.buffer_ms, self.cfg.device_name.clone()));
             }
             self.poll_open(ax);
         }
@@ -938,7 +982,7 @@ mod tests {
             assert_eq!(load_volume(), want, "MELEE_VOLUME={env}");
         }
         std::env::set_var("MELEE_VOLUME", "40");
-        let mut d = Driver::new(DriverConfig { turbo: true, target_frames: 0, max_frames: 0, buffer_ms: 0, low_latency: false, nofx: false, dump: None, device: false });
+        let mut d = Driver::new(DriverConfig { turbo: true, target_frames: 0, max_frames: 0, buffer_ms: 0, low_latency: false, nofx: false, dump: None, device: false, device_name: None });
         assert_eq!(d.volume(), 40);
         d.apply_volume();
         assert_eq!(f32::from_bits(d.gain.load(Ordering::Relaxed)), 0.4);
@@ -963,7 +1007,7 @@ mod tests {
     #[test]
     fn wall_clock_tick_without_device() {
         let mut ax = Ax::new();
-        let mut d = Driver::new(DriverConfig { turbo: false, target_frames: 12, max_frames: 20, buffer_ms: 0, low_latency: false, nofx: false, dump: None, device: false });
+        let mut d = Driver::new(DriverConfig { turbo: false, target_frames: 12, max_frames: 20, buffer_ms: 0, low_latency: false, nofx: false, dump: None, device: false, device_name: None });
         let aram = vec![0u8; 64];
         assert_eq!(d.tick(&mut ax, true, |ax| *ax.run_frame(&aram)), 0); // first call arms the clock
         std::thread::sleep(Duration::from_millis(22));

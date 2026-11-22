@@ -26,8 +26,22 @@ use std::sync::{Arc, Condvar, Mutex};
 pub const MIN_BYTES: usize = 64 << 10;
 /// Plans kept (each holds a slot); the least recently used goes first.
 const KEEP: usize = recheap::NSLOT - 6;
-/// Raw image + block bytes kept over all plans.
-const KEEP_BYTES: usize = 1536 << 20;
+/// Raw image + block bytes kept over all plans (each plan's recheap slot is committed to about that). Was 1.5 GB,
+/// which let ~440 MB of recheap stay committed on Windows (perf.md "Windows private bytes regression"); a stage or
+/// fighter that fell out is decoded again on its next load (perf.md "Plan cache cap").
+const KEEP_BYTES: usize = 256 << 20;
+
+/// Drop the least recently used finished plans (never `keep`, never a pending one) until the kept bytes plus
+/// `incoming` fit [`KEEP_BYTES`].
+fn trim_plans(entries: &mut Vec<Entry>, incoming: usize, keep: Option<i32>) -> usize {
+    let mut n = 0;
+    while entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + incoming > KEEP_BYTES {
+        let Some(old) = (0..entries.len()).filter(|&i| entries[i].plan.is_some() && Some(entries[i].entry) != keep).min_by_key(|&i| entries[i].used) else { break };
+        entries.remove(old);
+        n += 1;
+    }
+    n
+}
 
 #[derive(Clone, Copy)]
 enum Tgt {
@@ -957,10 +971,17 @@ fn worker_main() {
     crate::logq::mark_worker();
     let s = svc().unwrap();
     let mut f = s.iso.as_ref().and_then(|p| std::fs::File::open(p).ok());
+    recheap::DRAINER.store(true, core::sync::atomic::Ordering::Release);
     loop {
+        if may_decommit() {
+            recheap::drain_decommits(); // evicted plans' pages, off the game thread and outside the lock
+        }
         let job = {
             let mut g = s.m.lock().unwrap();
             loop {
+                if recheap::decommits_pending() && may_decommit() {
+                    break None;
+                }
                 // disc hints first (a load is coming); a kept-copy job only once the game's decodes went quiet
                 let since = now_ms().saturating_sub(GAME_DECODE_AT.load(core::sync::atomic::Ordering::Relaxed));
                 let pick = if since < DISC_QUIET_MS {
@@ -978,11 +999,13 @@ fn worker_main() {
                     } else {
                         continue; // dropped meanwhile (its load came first)
                     }
-                    break j;
+                    break Some(j);
                 }
-                g = s.cv.wait(g).unwrap();
+                // a timed wait: a plan dropped on another thread queues its slot's decommit without a notify
+                g = s.cv.wait_timeout(g, std::time::Duration::from_millis(100)).unwrap().0;
             }
         };
+        let Some(job) = job else { continue };
         let bytes = match job.src {
             Src::Bytes(b) => Some(b),
             Src::Disc(off, len) => f.as_mut().and_then(|f| {
@@ -1019,6 +1042,11 @@ fn worker_main() {
         }
         if g.entries.iter().any(|e| e.entry == job.entry && e.plan.is_some()) {
             g.stats.prepared_ahead += 1;
+            // the cap holds for plans made from an in-place load too (they never went through a hint's room check)
+            let dropped = trim_plans(&mut g.entries, 0, Some(job.entry));
+            if dropped > 0 && log_on() {
+                eprintln!("asset: plan cache over {} MB: dropped {dropped} least recently used plan(s)", KEEP_BYTES >> 20);
+            }
         }
         g.entries.retain(|e| e.pending || e.plan.is_some());
         drop(g);
@@ -1061,9 +1089,12 @@ fn hint_entry_pri(entry: i32, heap: i32, gr: Option<i32>, low: bool) {
         return;
     }
     // a hint outranks a cached plan nobody asked for lately: make room (least recently used first)
-    while !low && (g.entries.len() >= KEEP || g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + 8 * len > KEEP_BYTES) {
-        let Some(old) = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).min_by_key(|&i| g.entries[i].used) else { break };
-        g.entries.remove(old);
+    if !low {
+        trim_plans(&mut g.entries, 8 * len, None);
+        while g.entries.len() >= KEEP {
+            let Some(old) = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).min_by_key(|&i| g.entries[i].used) else { break };
+            g.entries.remove(old);
+        }
     }
     let held: usize = g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum();
     let busy = g.entries.len();
@@ -1103,12 +1134,21 @@ pub fn hint_files(names: &[&str]) {
 /// Scene-driven prefetch, once per tick from the play loop (`minor` the scene kind):
 /// - a match: the results screen's files (IfCoGet, GmRst, SdRst, TyDatai) while the worker is idle, so the
 ///   results entry applies plans instead of reading and parsing 1 MB on the game thread.
+/// A VS match is on (scene_prefetch): the worker leaves evicted plans' pages committed until it ends. Giving back
+/// ~100 MB of resident pages mid-match cost 20-80 ms ticks on the game thread (page-list contention), perf.md.
+static IN_FIGHT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+fn may_decommit() -> bool {
+    !IN_FIGHT.load(core::sync::atomic::Ordering::Relaxed)
+}
+
 pub fn scene_prefetch(minor: i32) {
     use core::sync::atomic::{AtomicI32, Ordering::Relaxed};
     static LAST: AtomicI32 = AtomicI32::new(-1);
     if LAST.swap(minor, Relaxed) == minor {
         return;
     }
+    let fight = minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32;
+    IN_FIGHT.store(fight, Relaxed);
     if minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32 {
         hint_files(&["IfCoGet.dat", "GmRst", "SdRst", "TyDatai"]);
     } else if minor == melee_types::GS_RESULTS as i32 {

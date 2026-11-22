@@ -355,3 +355,39 @@ Live-play bench (nightbench run_r.sh, 3 runs each, medians; before = 9311b3f0c, 
 | FD 2P | before | 1423 | 1014 | 1.10 / 1.15 | 60.0 | 59.0 |
 | FD 2P | after | 1346 | 1018 | 1.07 / 1.12 | 60.0 | 58.9 |
 Next levers (not done): the plan cache size (KEEP_BYTES 1.5 GB, KEEP 58 slots) and the system-heap growth.
+
+## Plan cache cap (Nov 22, port/volcache)
+What changed: `KEEP_BYTES` 1.5 GB -> 256 MB (least recently used plans go first; the cap now also holds when a plan made
+from an in-place load finishes, which never went through a hint's room check). Finding: evicting a plan freed nothing.
+`recheap::release_slot` kept up to `KEEP_COMMITTED` (256 MB) of pages committed per released slot (so a reuse skips
+first-touch faults), and the records and event log stayed committed too. Now, once the free slots hold more than 64 MB
+(`KEEP_FREE_COMMITTED`), a released slot is decommitted whole. The asset worker does this, never the thread that
+dropped the plan, and only outside a VS match.
+Why it waits for the match to end: version 2 decommitted at once on the worker. That cut peak private bytes by
+about 50-90 MB, but Temple 4P had 20-80 ms game ticks mid-match in 3 of 3 runs, then 2 of 3 on the rerun. The before
+build had none. Page-list contention is the likely cause; not proven.
+Live-play bench (nightbench run_r.sh, hidden window, 3 runs each, medians; before = pub/rust-port 7e63d0b7d without
+this change). The machine was shared with other agents (CONTENDED frames in every gate run), so single-run 1% lows
+are noisy:
+| scenario | build | peak private MB | peak WS MB | tick p50 / mean ms | 1% low fps |
+|---|---|---|---|---|---|
+| Temple 4P | before | 1383 | 1043 | 1.87 / 1.94 | 57.8 |
+| Temple 4P | v1: cap only | 1390 | 1078 | 1.83 / 1.90 | 58.4 |
+| Temple 4P | v2: cap + decommit at once | 1341 | 1033 | 1.87 / 1.94 | 36.8 (hitches) |
+| Temple 4P | final: cap + decommit after the match | 1411 | 1072 | 1.84 / 1.95 | 43.8 (noise; no asset events at the slow ticks) |
+| FD 2P | before | 1335 | 1010 | 1.11 / 1.16 | 56.3 |
+| FD 2P | v1: cap only | 1331 | 1042 | 1.09 / 1.15 | 56.3 |
+| FD 2P | v2: cap + decommit at once | 1248 | 958 | 1.07 / 1.11 | 58.7 |
+| FD 2P | final | 1318 | 994 | 1.08 / 1.13 | 57.5 |
+Result: a single `--match` run never fills a 256 MB cache. Only about 1 plan is evicted per Temple match
+(MELEE_ASSET_LOG: "dropped 1 least recently used plan"), so the in-match peak does not move (within ±30 MB of
+noise). The ~440 MB is the committed pages of released and kept slots, not the cap. The final version gives
+them back at the end of the match (menus, results, the next CSS). Getting them back during a match without hitches
+is still open.
+Cost of a cache miss: on a miss the file is decoded in place on the game thread. Gate runs (vanilla_bf, vanilla_walk,
+MELEE_ASSET_LOG): every in-place load took 0.43 ms or less (largest 289 KB). ItCo (2903 KB) took 10.3 ms in place
+on a no-lead `--match` start (the same on both builds: the hint is still queued). Worker prepares of the big files
+(GrNLa 596 KB, ItCo) take 42-53 ms off the game thread; their apply on the game thread takes 4-7 ms.
+16 ms check: the zero-hitch gate vanilla_walk is OK on the final build (0 over budget). The before build FAILED the
+same scenario at the same time (1 clean + 4 contended frames: the machine was busy). In vanilla_bf the over-budget
+frames were contended or draw/pacing frames. None had an asset miss on the game thread.

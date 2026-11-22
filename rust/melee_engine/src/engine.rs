@@ -300,7 +300,14 @@ impl Engine {
             controller::ext::hook::OSRestoreInterrupts = Some(crate::dvd::OSRestoreInterrupts);
 
             // rumble (baselib/rumble.c) is host output: the motor command goes nowhere, the interrupt calls are the flat ones
-            melee_runtime::tu::rumble::ext::hook::PADControlMotor = Some(|_, _| ());
+            // the motor command goes to the pad that port is read from (PadSystem::control_motor): output only, silent in a
+            // rollback re-simulation and in the Lab's silent frames
+            melee_runtime::tu::rumble::ext::hook::PADControlMotor = Some(|chan, cmd| {
+                let resim = crate::geno_host::net_resimulating() || crate::snap_host::resimulating();
+                if let Some(p) = (*std::ptr::addr_of_mut!(PADS)).as_mut() {
+                    p.control_motor(chan as usize, cmd, resim);
+                }
+            });
             melee_runtime::tu::rumble::ext::hook::OSDisableInterrupts = Some(crate::dvd::OSDisableInterrupts);
             melee_runtime::tu::rumble::ext::hook::OSRestoreInterrupts = Some(crate::dvd::OSRestoreInterrupts);
             crate::seams::install();

@@ -113,7 +113,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 | bindings `hid<n>_*`, `hid<n>_invert` (generic HID pads, box controllers in DInput) | yes | yes: 32-bit masks (bit N = button N+1, hat on bits 28..31, a signed spelling of bit 31 read back unsigned) for a generic / box pad that gilrs gives as a raw controller (Windows WGI; Linux evdev by button order); an XInput-layout pad keeps `pad<n>`. Not tried on real hardware (no box here) | PART |
 | box mode (a keyboard or HID table with Mod X / Mod Y bound), `stick_modifier_percent` + StickMod | yes | yes, through `profiles::box_sticks` (the port's `box_values` and SOCD 2IP-without-reactivation, so the coordinates are coarser than his B0XX angle table: no shield / B angle variants); Mod X + Mod Y = D-pad layer; light / mid shield = R travel; the modifier on keyboard, pad and HID stick buttons | PART |
 | per-binding levels `<table>_<Action>_level` | yes | no (every analog source clicks at 200 / 255) | MISSING |
-| `rumble` | gamepads and adapter | `rumble 0` stops adapter rumble (this branch); gamepad rumble not implemented at all | PART |
+| `rumble` | gamepads and adapter | the game's motor commands (`PADControlMotor`, hooked in melee_engine) go to the pad that port is read from: gilrs force feedback (WGI `SetVibration` on Windows) on a gamepad, the adapter's motors on an adapter port. `rumble 0` stops it (a stop is always honoured); `MELEE_RUMBLE=0` and `MELEE_RUMBLE_PORTS=1,3` do the same from the environment; silent in a rollback re-simulation; capped at 10 s if the game never stops it. Output only: pad bytes, game state and checksums never see it. Before this the hook was a no-op, so no pad rumbled at all. Not felt on real hardware (no pad here), only the decision logic, the hook and the launch are tested | OK |
 | `MELEE_NO_GC_ADAPTER` (his test runs) | yes | `MELEE_PAD_IGNORE_ADAPTER=1` | OK |
 | replays into `--replay-dir` (his viewer lists `.slp`) | `.slp` | one `.slp` per match, plus `.mrpl` in `RustPort\` | OK |
 | Replays page `--replay <slp> [--as-experienced]` | plays | plays (slp_play.rs); the PR routes the page to the Rust Port when picked; `--as-experienced` ignored | PART |
@@ -132,8 +132,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 
 **Not done here, with estimates:** P2P Direct / mu_net (1-2 weeks, notes/mu-net-feasibility.md); code mods with
 their own main.dol (the PPC interpreter, on hold for sc00p); TE packs / .gci loader (2-4 days once the interpreter
-exists, most TE content is PPC code); per-binding levels (0.5 day); gamepad rumble
-through gilrs force feedback (half a day); a real `--settings-window` (our overlay in its own window writing
+exists, most TE content is PPC code); per-binding levels (0.5 day); a real `--settings-window` (our overlay in its own window writing
 port-settings.ini: 2-3 days); fps / ssaa keys (1 day); backend choice and DLSS (not planned: wgpu only); audio
 device selection (1 day); an update channel (1 day once Hero agrees on a feed).
 

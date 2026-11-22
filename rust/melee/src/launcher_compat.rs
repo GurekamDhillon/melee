@@ -483,9 +483,11 @@ pub fn apply_input(pads: &mut melee_platform::PadSystem) {
     pads.pad_maps = melee_platform::bindings::PortMaps::from_bindings(&b);
     pads.keyboard_extra = b.keyboard_extra.clone();
     pads.stick_mod_pct = b.stick_mod_pct.unwrap_or(melee_platform::bindings::STICK_MOD_DEFAULT);
-    if let Some(r) = b.rumble {
+    // the launcher's Rumble switch (an explicit MELEE_RUMBLE wins)
+    if let (Some(r), None) = (b.rumble, std::env::var_os("MELEE_RUMBLE")) {
         pads.rumble = r;
     }
+    eprintln!("launcher-compat: rumble {} (gamepad force feedback and the adapter's motors)", if pads.rumble { "on" } else { "off" });
     pads.gc_maps = b.gc;
 }
 

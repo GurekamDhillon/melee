@@ -3,12 +3,21 @@
 use crate::aurora::{NativeButton, RawGamepad};
 use crate::pad::PAD_CHANMAX;
 use crate::plog;
+use gilrs::ff::{BaseEffect, BaseEffectType, Effect, EffectBuilder, Replay, Ticks};
 use gilrs::{Axis, Button, GamepadId, Gilrs};
 
 pub struct Gamepads {
     gilrs: Option<Gilrs>,
     ports: [Option<GamepadId>; PAD_CHANMAX],
+    /// The force-feedback effect playing on each port (dropping one stops it).
+    motors: [Option<Effect>; PAD_CHANMAX],
 }
+
+/// The GameCube rumble motor is on or off; this is the same on a gamepad: both motors, the heavy one stronger.
+const RUMBLE_STRONG: u16 = 42_000;
+const RUMBLE_WEAK: u16 = 24_000;
+/// A rumble the game never stops (a crash, a quit mid-rumble) ends by itself after this.
+const RUMBLE_MAX_MS: u32 = 10_000;
 
 /// gilrs axis value (-1..1, +Y up) -> SDL Sint16.
 fn to_sdl(v: f32) -> i16 {
@@ -83,23 +92,24 @@ impl Gamepads {
                 None
             }
         };
-        let mut me = Self { gilrs, ports: [None; PAD_CHANMAX] };
+        let mut me = Self { gilrs, ports: [None; PAD_CHANMAX], motors: Default::default() };
         me.reassign();
         me
     }
 
     /// No gamepads at all (headless).
     pub fn none() -> Self {
-        Self { gilrs: None, ports: [None; PAD_CHANMAX] }
+        Self { gilrs: None, ports: [None; PAD_CHANMAX], motors: Default::default() }
     }
 
     fn reassign(&mut self) {
         let Some(g) = self.gilrs.as_ref() else { return };
-        for p in self.ports.iter_mut() {
+        for (i, p) in self.ports.iter_mut().enumerate() {
             if let Some(id) = *p {
                 if g.connected_gamepad(id).is_none() {
                     plog!("gw: input: gamepad {id} disconnected");
                     *p = None;
+                    self.motors[i] = None;
                 }
             }
         }
@@ -115,6 +125,45 @@ impl Gamepads {
                     port + 1
                 );
                 self.ports[port] = Some(id);
+            }
+        }
+    }
+
+    /// Start (`on`) or stop the rumble of the pad on `port`. False when there is no such pad or it has no force
+    /// feedback. Output only: nothing here is read back by the game.
+    pub fn set_rumble(&mut self, port: usize, on: bool) -> bool {
+        if port >= PAD_CHANMAX {
+            return false;
+        }
+        if !on {
+            // dropping the effect stops it
+            return self.motors[port].take().is_some();
+        }
+        if self.motors[port].is_some() {
+            return true;
+        }
+        let (Some(g), Some(id)) = (self.gilrs.as_mut(), self.ports[port]) else { return false };
+        if !g.connected_gamepad(id).is_some_and(|gp| gp.is_ff_supported()) {
+            return false;
+        }
+        let play_for = Replay { play_for: Ticks::from_ms(RUMBLE_MAX_MS), ..Default::default() };
+        let built = EffectBuilder::new()
+            .add_effect(BaseEffect { kind: BaseEffectType::Strong { magnitude: RUMBLE_STRONG }, scheduling: play_for, ..Default::default() })
+            .add_effect(BaseEffect { kind: BaseEffectType::Weak { magnitude: RUMBLE_WEAK }, scheduling: play_for, ..Default::default() })
+            .gamepads(&[id])
+            .finish(g);
+        match built {
+            Ok(e) => {
+                if let Err(err) = e.play() {
+                    plog!("gw: input: rumble on port {} failed to start: {err}", port + 1);
+                    return false;
+                }
+                self.motors[port] = Some(e);
+                true
+            }
+            Err(err) => {
+                plog!("gw: input: rumble on port {} not available: {err}", port + 1);
+                false
             }
         }
     }

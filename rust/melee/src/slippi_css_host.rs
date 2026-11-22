@@ -39,17 +39,44 @@ pub fn poll() {
         let last = LAST.lock().ok().and_then(|l| l.clone());
         match last {
             Some((args, mode)) => {
-                eprintln!("online css: session: searching again");
-                start(args, mode);
+                eprintln!("online css: session: Start with a fighter chosen: searching");
+                search(args, mode);
             }
             None => eprintln!("online css: session: no search to repeat"),
         }
     }
 }
 
-/// Start searching. `args` are `play`'s `--slippi-*` options (the same the match used to take); `mode` the online
-/// menu's mode. The screen reads the state through `slippi_css::with`.
+/// The online select opens: idle until Start with a fighter chosen, which searches (Hero's mu_slippi_css begins
+/// matchmaking only then; B before it leaves with no search). `args` are `play`'s `--slippi-*` options; `mode` the
+/// online menu's mode. The screen reads the state through `slippi_css::with`.
 pub fn start(args: Vec<String>, mode: i32) {
+    if LOCKED.load(std::sync::atomic::Ordering::SeqCst) {
+        eprintln!("online css: session: the match is on its way; no new search");
+        return;
+    }
+    *LAST.lock().unwrap() = Some((args.clone(), mode));
+    set_user_from(&args);
+    sc::wait_start(mode, &arg(&args, "--slippi-search").unwrap_or_default());
+    *HANDOFF.lock().unwrap() = None;
+}
+
+fn set_user_from(args: &[String]) {
+    // the select names the signed-in player (Hero FN_UserTextUpdate): the login's name and connect code, read here
+    // and shown on the screen only, never logged
+    let (name, code) = match arg(args, "--slippi-user-json") {
+        Some(path) => {
+            let acct = std::fs::read_to_string(&path).ok().and_then(|t| melee_net::slippi_mm::Json::parse(&t));
+            let field = |k: &str| acct.as_ref().and_then(|j| j.get(k)).and_then(|v| v.str()).map(str::to_string).unwrap_or_default();
+            (field("displayName"), field("connectCode"))
+        }
+        None => (arg(args, "--slippi-name").unwrap_or_default(), arg(args, "--slippi-code").unwrap_or_default()),
+    };
+    sc::set_user(&name, &code);
+}
+
+/// Search now (Start on the idle select).
+fn search(args: Vec<String>, mode: i32) {
     // both are locked in and the match is on its way: the select was left for the match, and a menu re-entered
     // meanwhile must not start a second search (it would queue again in YouGame's pool)
     if LOCKED.load(std::sync::atomic::Ordering::SeqCst) {
@@ -58,18 +85,10 @@ pub fn start(args: Vec<String>, mode: i32) {
     }
     *LAST.lock().unwrap() = Some((args.clone(), mode));
     let search = arg(&args, "--slippi-search").unwrap_or_default();
-    // the select names the signed-in player (Hero FN_UserTextUpdate): the login's name and connect code, read here
-    // and shown on the screen only, never logged
-    let (name, code) = match arg(&args, "--slippi-user-json") {
-        Some(path) => {
-            let acct = std::fs::read_to_string(&path).ok().and_then(|t| melee_net::slippi_mm::Json::parse(&t));
-            let field = |k: &str| acct.as_ref().and_then(|j| j.get(k)).and_then(|v| v.str()).map(str::to_string).unwrap_or_default();
-            (field("displayName"), field("connectCode"))
-        }
-        None => (arg(&args, "--slippi-name").unwrap_or_default(), arg(&args, "--slippi-code").unwrap_or_default()),
-    };
-    sc::set_user(&name, &code);
+    // begin() clears the screen state: the chosen flag is kept (the fighter stays picked)
+    let chosen = sc::with(|o| o.chosen);
     sc::begin(mode, &search);
+    sc::with(|o| o.chosen = chosen);
     *HANDOFF.lock().unwrap() = None;
     std::thread::spawn(move || {
         if let Err(e) = run(&args) {
@@ -220,7 +239,7 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
     cl.connect_timeout_ms = 30000;
     let t0 = Instant::now();
     let (mut sent, mut theirs) = (None::<(u8, u8)>, None::<Selections>);
-    let mut both_at = None::<Instant>;
+    let mut mine_sel = Selections::default();
     let mut lock_at: Option<(i32, Option<u16>, u32)> = None;
     loop {
         cl.poll();
@@ -262,15 +281,20 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         }
         if let (Some((ck, color)), None, Status::Connected) = (lock, sent, cl.status) {
             let stage = sc::with(|o| o.lock_stage);
-            cl.set_match_selections(Selections {
+            // this side's rng offset goes with the lock-in (Slippi's selections carry it; the decider's is the match's):
+            // the match goes on on this link, nothing is sent again
+            let rng_offset = (std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.subsec_nanos()).unwrap_or(1) ^ 0x9E37_79B9) % 0xFFFF;
+            mine_sel = Selections {
                 character_id: ck,
                 character_color: color,
                 is_character_selected: true,
                 player_idx: p.local_port,
                 stage_id: stage.unwrap_or(0),
                 is_stage_selected: stage.is_some(),
+                rng_offset,
                 ..Default::default()
-            });
+            };
+            cl.set_match_selections(mine_sel);
             sent = Some((ck, color));
             // the set's state as it was at the lock-in (the menus can be re-entered before the handoff)
             lock_at = sc::with(|o| Some((o.mode, o.lock_stage, o.game)));
@@ -278,18 +302,13 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         }
         if sent.is_some() && theirs.is_some() {
             LOCKED.store(true, std::sync::atomic::Ordering::SeqCst);
-            // a moment for the last acks, then the link closes before the match window binds the same port
-            let at = *both_at.get_or_insert_with(Instant::now);
-            if at.elapsed() > Duration::from_millis(700) {
-                break;
-            }
+            break;
         }
         if t0.elapsed().as_secs() > max_s {
             return Err("timed out".into());
         }
         std::thread::sleep(Duration::from_millis(2));
     }
-    drop(cl);
     let (ck, color) = sent.unwrap();
     let mut m: Vec<String> = vec![
         "--slippi-peer".into(),
@@ -306,6 +325,7 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
     if p.decider {
         m.push("--slippi-host".into());
     }
+    let theirs = theirs.unwrap();
     // Direct: the loser's stage, or none from the winner (the loser's stands); Unranked keeps the match's default
     let (mode, stage, game) = lock_at.unwrap();
     let opp = p.opp_code.clone();
@@ -324,6 +344,11 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         std::env::remove_var("MELEE_SLIPPI_SET");
     }
     eprintln!("online css: session: both locked in, the match next");
-    *HANDOFF.lock().unwrap() = Some(m);
+    // one link into the match (Slippi Dolphin takes no second connection): kept polled on this thread until the match
+    // process takes it over (slippi_link.rs); the handoff is set once the keeper listens
+    crate::slippi_link::keep(cl, mine_sel, theirs, |link| {
+        m.extend(["--slippi-link".into(), link]);
+        *HANDOFF.lock().unwrap() = Some(m);
+    })?;
     Ok(true)
 }

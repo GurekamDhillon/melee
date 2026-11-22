@@ -183,6 +183,9 @@ pub fn encode_ack(frame: i32, port: u8) -> Vec<u8> {
 }
 
 /// `Note::Disconnected` reason when the peer address started a new match during ours (its process restarted).
+/// The first bytes of a link `Client::export` wrote.
+pub const LINK_MAGIC: &[u8] = b"SLNK1";
+
 pub const REASON_PEER_RESTARTED: u32 = 0xFFFF_FFF0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -309,6 +312,219 @@ impl Client {
     /// answered after 2 s (the LAN address of a player behind the same router).
     pub fn set_fallback(&mut self, a: Option<Addr>) {
         self.remote.fallback = a.filter(|f| *f != self.remote.addr);
+    }
+
+    /// The whole link for another process (`import`): the ENet host, the opponent's state and the notes not yet
+    /// read. Nothing is sent: the opponent sees one link that goes on (Slippi Dolphin keeps one client from the select
+    /// into the match and does not take a second connection after the first drops).
+    pub fn export(&self) -> Vec<u8> {
+        use crate::blob::W;
+        let mut w = W::default();
+        w.0.extend_from_slice(LINK_MAGIC);
+        w.bytes(&self.host.export());
+        w.i64(self.now_us());
+        w.u8(self.local_port);
+        w.u8(match self.status {
+            Status::Initiated => 0,
+            Status::Connected => 1,
+            Status::Failed => 2,
+            Status::Disconnected => 3,
+        });
+        let rm = &self.remote;
+        w.addr(rm.addr);
+        w.u8(rm.fallback.is_some() as u8);
+        w.addr(rm.fallback.unwrap_or_default());
+        w.u8(rm.fallback_started as u8);
+        w.u8(rm.port);
+        w.u32(rm.links.len() as u32);
+        for &l in &rm.links {
+            w.u32(l as u32);
+        }
+        w.u32(rm.active.map_or(u32::MAX, |a| a as u32));
+        w.u32(rm.head_frame as u32);
+        w.u32(rm.last_acked as u32);
+        w.u32(rm.ack_timers.len() as u32);
+        for t in &rm.ack_timers {
+            w.u32(t.frame as u32);
+            w.i64(t.time_us);
+        }
+        w.i64(rm.ping_us);
+        w.u32(rm.last_timing.frame as u32);
+        w.i64(rm.last_timing.time_us);
+        w.u32(rm.offsets.len() as u32);
+        for &o in &rm.offsets {
+            w.u32(o as u32);
+        }
+        w.u32(rm.offset_idx as u32);
+        fn sel(w: &mut crate::blob::W, s: Option<Selections>) {
+            match s {
+                Some(s) => {
+                    w.u8(1);
+                    w.bytes(&s.encode()[1..]);
+                }
+                None => w.u8(0),
+            }
+        }
+        sel(&mut w, rm.selections);
+        w.u32(self.local_queue.len() as u32);
+        for (f, pad, cf, cs) in &self.local_queue {
+            w.u32(*f as u32);
+            w.0.extend_from_slice(pad);
+            w.u32(*cf as u32);
+            w.u32(*cs);
+        }
+        w.u8(self.has_game_started as u8);
+        w.u8(self.in_game as u8);
+        w.u32(self.notes.len() as u32);
+        for n in &self.notes {
+            match n {
+                Note::Connected => w.u8(0),
+                Note::Selections(s) => {
+                    w.u8(1);
+                    sel(&mut w, Some(*s));
+                }
+                Note::Pad { port, frame, pad } => {
+                    w.u8(2);
+                    w.u8(*port);
+                    w.u32(*frame as u32);
+                    w.0.extend_from_slice(pad);
+                }
+                Note::Checksum { port, frame, value } => {
+                    w.u8(3);
+                    w.u8(*port);
+                    w.u32(*frame as u32);
+                    w.u32(*value);
+                }
+                Note::Chat { port, id } => {
+                    w.u8(4);
+                    w.u8(*port);
+                    w.u32(*id as u32);
+                }
+                Note::Disconnected { reason } => {
+                    w.u8(5);
+                    w.u32(*reason);
+                }
+            }
+        }
+        w.i64(self.started_at_us);
+        w.i64(self.connect_timeout_ms);
+        w.u32(self.remote_checksums.len() as u32);
+        for (f, c) in &self.remote_checksums {
+            w.u32(*f as u32);
+            w.u32(*c);
+        }
+        let s = &self.stats;
+        for v in [s.pads_sent, s.pads_received, s.acks_sent, s.acks_received, s.max_queue as u64, s.pads_resent] {
+            w.u64(v);
+        }
+        w.i64(self.last_probe_us);
+        w.0
+    }
+
+    /// The link `export` wrote, going on over `tp` (a socket on the same local port). None for a malformed blob.
+    pub fn import(tp: Box<dyn Transport>, b: &[u8]) -> Option<Client> {
+        let b = b.strip_prefix(LINK_MAGIC)?;
+        let mut r = crate::blob::R::new(b);
+        let hb = r.bytes()?;
+        let mut hr = crate::blob::R::new(&hb);
+        let host = Host::import(tp, &mut hr)?;
+        if !hr.done() {
+            return None;
+        }
+        let now_us = r.i64()?;
+        let local_port = r.u8()?;
+        let status = match r.u8()? {
+            0 => Status::Initiated,
+            1 => Status::Connected,
+            2 => Status::Failed,
+            3 => Status::Disconnected,
+            _ => return None,
+        };
+        fn sel(r: &mut crate::blob::R) -> Option<Option<Selections>> {
+            Some(match r.u8()? {
+                0 => None,
+                _ => Some(Selections::decode(&mut PacketR::new(&r.bytes()?))?),
+            })
+        }
+        fn pad(r: &mut crate::blob::R) -> Option<[u8; PAD_WIRE]> {
+            let mut p = [0u8; PAD_WIRE];
+            for v in p.iter_mut() {
+                *v = r.u8()?;
+            }
+            Some(p)
+        }
+        let addr = r.addr()?;
+        let has_fb = r.u8()? != 0;
+        let fb = r.addr()?;
+        let fallback_started = r.u8()? != 0;
+        let port = r.u8()?;
+        let mut links = Vec::new();
+        for _ in 0..r.u32()? {
+            links.push(r.u32()? as usize);
+        }
+        let active = Some(r.u32()?).filter(|&a| a != u32::MAX).map(|a| a as usize);
+        let head_frame = r.u32()? as i32;
+        let last_acked = r.u32()? as i32;
+        let mut ack_timers = VecDeque::new();
+        for _ in 0..r.u32()? {
+            ack_timers.push_back(Timing { frame: r.u32()? as i32, time_us: r.i64()? });
+        }
+        let ping_us = r.i64()?;
+        let last_timing = Timing { frame: r.u32()? as i32, time_us: r.i64()? };
+        let mut offsets = Vec::new();
+        for _ in 0..r.u32()? {
+            offsets.push(r.u32()? as i32);
+        }
+        let offset_idx = r.u32()? as usize;
+        let selections = sel(&mut r)?;
+        let mut local_queue = VecDeque::new();
+        for _ in 0..r.u32()? {
+            local_queue.push_back((r.u32()? as i32, pad(&mut r)?, r.u32()? as i32, r.u32()?));
+        }
+        let has_game_started = r.u8()? != 0;
+        let in_game = r.u8()? != 0;
+        let mut notes = VecDeque::new();
+        for _ in 0..r.u32()? {
+            notes.push_back(match r.u8()? {
+                0 => Note::Connected,
+                1 => Note::Selections(sel(&mut r)??),
+                2 => Note::Pad { port: r.u8()?, frame: r.u32()? as i32, pad: pad(&mut r)? },
+                3 => Note::Checksum { port: r.u8()?, frame: r.u32()? as i32, value: r.u32()? },
+                4 => Note::Chat { port: r.u8()?, id: r.u32()? as i32 },
+                5 => Note::Disconnected { reason: r.u32()? },
+                _ => return None,
+            });
+        }
+        let started_at_us = r.i64()?;
+        let connect_timeout_ms = r.i64()?;
+        let mut remote_checksums = BTreeMap::new();
+        for _ in 0..r.u32()? {
+            let f = r.u32()? as i32;
+            remote_checksums.insert(f, r.u32()?);
+        }
+        let stats = ClientStats { pads_sent: r.u64()?, pads_received: r.u64()?, acks_sent: r.u64()?, acks_received: r.u64()?, max_queue: r.u64()? as usize, pads_resent: r.u64()? };
+        let last_probe_us = r.i64()?;
+        if !r.done() {
+            return None;
+        }
+        Some(Client {
+            host,
+            local_port,
+            status,
+            remote: Remote { addr, fallback: has_fb.then_some(fb), fallback_started, port, links, active, head_frame, last_acked, ack_timers, ping_us, last_timing, offsets, offset_idx, selections },
+            local_queue,
+            has_game_started,
+            in_game,
+            notes,
+            // the client clock continues from the exporter's
+            t0: Instant::now().checked_sub(std::time::Duration::from_micros(now_us.max(0) as u64))?,
+            clock_us: None,
+            started_at_us,
+            connect_timeout_ms,
+            remote_checksums,
+            stats,
+            last_probe_us,
+        })
     }
 
     pub fn set_clock_us(&mut self, f: Box<dyn Fn() -> i64>) {

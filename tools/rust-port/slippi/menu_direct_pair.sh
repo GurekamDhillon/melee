@@ -26,7 +26,7 @@ sleep 2
   MELEE_PAD_SCRIPT="$repo/tools/rust-port/menus/slippi_online$([ $mode = unranked ] && echo _unranked)$([ $typed = 1 ] && echo _code)$([ $css = 1 ] && echo _css).txt" \
   MELEE_SLIPPI_MM_URL="ws://127.0.0.1:$mmp/v1/queue" MELEE_SLIPPI_NP_PORT=$((mmp + 100)) MELEE_SLIPPI_TEST_CODE="AAAA#001" \
   MELEE_SLIPPI_DIRECT_CODE="$([ $typed = 1 ] || echo BBBB#002)" MELEE_SLIPPI_NP_FRAMES=$frames MELEE_SLIPPI_NP_OUT="$O/a.csv" MELEE_SLIPPI_NP_MAX_SECONDS=240 \
-  MELEE_SLIPPI_NP_PADGEN=7 \
+  MELEE_SLIPPI_NP_PADGEN=${PADGEN:-7} \
   timeout 180 "$B" play --skip-intro --max-frames $([ $css = 1 ] && echo 3000 || ([ $typed = 1 ] && echo 900 || echo 400)) --slippi-menus on > "$O/a-menu.log" 2>&1 ) &
 apid=$!
 if [ $css = 1 ]; then
@@ -35,7 +35,7 @@ if [ $css = 1 ]; then
     MELEE_PAD_SCRIPT="$repo/tools/rust-port/menus/slippi_online_b$([ $mode = unranked ] && echo _unranked)_css.txt" \
     MELEE_SLIPPI_MM_URL="ws://127.0.0.1:$mmp/v1/queue" MELEE_SLIPPI_NP_PORT=$((mmp + 101)) MELEE_SLIPPI_TEST_CODE="BBBB#002" \
     MELEE_SLIPPI_DIRECT_CODE="AAAA#001" MELEE_SLIPPI_NP_FRAMES=$frames MELEE_SLIPPI_NP_OUT="$O/b.csv" MELEE_SLIPPI_NP_MAX_SECONDS=240 \
-    MELEE_SLIPPI_NP_PADGEN=7 \
+    MELEE_SLIPPI_NP_PADGEN=${PADGEN:-7} \
     timeout 180 "$B" play --skip-intro --max-frames 3000 --slippi-menus on > "$O/b-menu.log" 2>&1 )
   echo "B menu rc=$? : $(grep -E 'online (menu|css|select)|relaunch' "$O/b-menu.log" | tr '\n' ' ')"
 fi

@@ -330,6 +330,10 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
     let (mode, stage, game) = lock_at.unwrap();
     let opp = p.opp_code.clone();
     HANDOFF_GAME.store(game, std::sync::atomic::Ordering::Relaxed);
+    // Slippi's match block: pausing only in Direct (Unranked / Ranked set disable_pausing)
+    if mode == melee_modes::tu::slippi_online::MODE_DIRECT {
+        m.extend(["--slippi-pause".into(), "1".into()]);
+    }
     if mode == melee_modes::tu::slippi_online::MODE_DIRECT {
         match stage {
             Some(s) => m.extend(["--slippi-stage".into(), s.to_string()]),

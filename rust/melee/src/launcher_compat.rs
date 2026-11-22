@@ -22,13 +22,13 @@
 //! * `MELEE_NO_GC_ADAPTER` (the launcher's test runs) means `MELEE_PAD_IGNORE_ADAPTER=1`.
 //!
 //! Options with no Rust counterpart that change nothing for an offline game (`--threaded-renderer`, `--sys-dir`,
-//! `--user-dir`, `--lobby-status-file`, the vanilla flags) are accepted and logged. Ones that would
+//! `--user-dir`, `--sysgen-data-dir`, the vanilla flags) are accepted and logged. Ones that would
 //! change the game (mods, peer-to-peer and Slippi lobby matches, replays) are refused with exit code 3 and a line in the
 //! log, rather than starting a game other than the one asked for. Anything else is passed to `melee play` as given.
 use std::path::{Path, PathBuf};
 
 /// Launcher options that take a value and are accepted without effect.
-const IGNORED_VALUE: &[&str] = &["--sys-dir", "--user-dir", "--lobby-status-file", "--slippi-menus", "--online-delay", "--language", "--backend", "--fps", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
+const IGNORED_VALUE: &[&str] = &["--sys-dir", "--user-dir", "--sysgen-data-dir", "--slippi-menus", "--online-delay", "--language", "--backend", "--fps", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
 /// Launcher switches accepted without effect.
 const IGNORED_SWITCH: &[&str] = &["--threaded-renderer", "--vanilla-only", "--vanilla-game", "--no-mod-autodetect", "--quiet"];
 /// Options that would start a different game than an offline vanilla one; refused.
@@ -210,6 +210,21 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
                     "--scale" => push_env(&mut cli_env, "MELEE_RENDER_SCALE", v),
                     _ => p.notes.push(format!("{flag} {v}: no Rust counterpart, ignored")),
                 }
+            }
+            // the lobby's status mailbox (lobby_status.rs): {"status":"In game"|"In match","stocks":[n]}
+            "--lobby-status-file" => {
+                if let Some(f) = take(&mut i) {
+                    p.notes.push(format!("--lobby-status-file {f}: status written there"));
+                    push_env(&mut p.env, "MELEE_LOBBY_STATUS_FILE", f);
+                }
+            }
+            // the YouGame restart into a mode (his main.cpp: direct 2, ranked 1, else 0): MELEE_ONLINE_MODE for the
+            // online browser; an unknown word is the plain online menu, as his port reads it
+            "--online-mode" => {
+                let m = take(&mut i).unwrap_or_default();
+                let m = match m.as_str() { "direct" | "ranked" => m, _ => "unranked".to_string() };
+                p.notes.push(format!("--online-mode {m}: MELEE_ONLINE_MODE"));
+                push_env(&mut p.env, "MELEE_ONLINE_MODE", m);
             }
             "--no-music" => p.notes.push("--no-music: no separate music volume, ignored".into()),
             "--fullscreen" => push_env(&mut cli_env, "MELEE_FULLSCREEN", "borderless".into()),
@@ -427,6 +442,18 @@ mod tests {
         assert!(detect(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x"])));
         let p = plan(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x"]), Path::new("."), &|_| None);
         assert_eq!(p.play_args, s(&[SETTINGS_WINDOW]));
+    }
+
+    #[test]
+    fn launcher_05871a4a_arguments() {
+        let p = plan(&s(&["--iso", "d.iso", "--sysgen-data-dir", "L/MeleeUnlocked-YouGame", "--lobby-status-file", "g.json", "--online-mode", "direct"]), Path::new("."), &|_| None);
+        assert!(p.refused.is_empty());
+        assert_eq!(p.play_args, s(&["play", "--iso", "d.iso"]));
+        let env = |k: &str| p.env.iter().find(|(a, _)| a == k).map(|(_, v)| v.clone());
+        assert_eq!(env("MELEE_LOBBY_STATUS_FILE").as_deref(), Some("g.json"));
+        assert_eq!(env("MELEE_ONLINE_MODE").as_deref(), Some("direct"));
+        let p = plan(&s(&["--iso", "d", "--online-mode", "x"]), Path::new("."), &|_| None);
+        assert_eq!(p.env.iter().find(|(a, _)| a == "MELEE_ONLINE_MODE").unwrap().1, "unranked");
     }
 
     #[test]

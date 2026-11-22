@@ -296,6 +296,9 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
                 let m = match m.as_str() { "direct" | "ranked" => m, _ => "unranked".to_string() };
                 p.notes.push(format!("--online-mode {m}: MELEE_ONLINE_MODE"));
                 push_env(&mut p.env, "MELEE_ONLINE_MODE", m);
+                // the online menus carry the mode's select (browser.rs lands there on the first menu frame)
+                push_env(&mut p.env, "MELEE_SLIPPI_MENUS", "on".into());
+                push_env(&mut p.env, "MELEE_BOOT_MENU", "1".into());
             }
             "--no-music" => p.notes.push("--no-music: no separate music volume, ignored".into()),
             "--fullscreen" => push_env(&mut cli_env, "MELEE_FULLSCREEN", "borderless".into()),
@@ -557,6 +560,7 @@ mod tests {
         let env = |k: &str| p.env.iter().find(|(a, _)| a == k).map(|(_, v)| v.clone());
         assert_eq!(env("MELEE_LOBBY_STATUS_FILE").as_deref(), Some("g.json"));
         assert_eq!(env("MELEE_ONLINE_MODE").as_deref(), Some("direct"));
+        assert_eq!(env("MELEE_SLIPPI_MENUS").as_deref(), Some("on"));
         let p = plan(&s(&["--iso", "d", "--online-mode", "x"]), Path::new("."), &|_| None);
         assert_eq!(p.env.iter().find(|(a, _)| a == "MELEE_ONLINE_MODE").unwrap().1, "unranked");
     }

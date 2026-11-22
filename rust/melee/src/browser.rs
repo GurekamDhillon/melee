@@ -525,6 +525,22 @@ impl RetailPlay {
                 self.e.as_mut().unwrap().goto_mode(melee_types::GM_HANYU_CSS as u8);
             }
         }
+        // `--online-mode <mode>` (Hero's launcher restarting the game for YouGame, launcher_compat: MELEE_ONLINE_MODE):
+        // straight into that mode's online select, once. Hero opens Ranked or Direct; we never play Ranked, so it
+        // lands on Unranked, as any other word does.
+        static MODE_ARG_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !MODE_ARG_DONE.load(std::sync::atomic::Ordering::Relaxed) && self.e.is_some() && self.cur.0 as u32 == melee_types::GM_MENU && melee_modes::tu::slippi_online::enabled() {
+            MODE_ARG_DONE.store(true, std::sync::atomic::Ordering::Relaxed);
+            if let Some(m) = std::env::var("MELEE_ONLINE_MODE").ok().filter(|v| !v.is_empty()) {
+                std::env::remove_var("MELEE_ONLINE_MODE");
+                use melee_modes::tu::slippi_online as so;
+                let mode = if m == "direct" { so::MODE_DIRECT } else { so::MODE_UNRANKED };
+                log(&format!("online menu: --online-mode {m}: straight to {}'s online select", so::mode_name(mode)));
+                so::repick(mode);
+                melee_modes::tu::slippi_css::begin(mode, "");
+                self.e.as_mut().unwrap().goto_mode(melee_types::GM_HANYU_CSS as u8);
+            }
+        }
         let Some(mode) = melee_modes::tu::slippi_online::take_pick() else { return };
         let name = melee_modes::tu::slippi_online::mode_name(mode);
         let typed = melee_modes::tu::slippi_online::take_direct_code();
@@ -658,6 +674,12 @@ impl RetailPlay {
         if crate::slippi_link::inprocess() && !crate::room_keeper::active() {
             return self.slippi_match_inprocess(args);
         }
+        // a YouGame room's match in this window too: the keeper (this process's thread) hears the match in memory
+        if crate::slippi_link::inprocess() && crate::room_keeper::wants_inprocess() {
+            crate::room_keeper::attach_inprocess();
+            log("online select: the YouGame room's match in this window (MELEE_YOUGAME_INPROCESS=0 relaunches)");
+            return self.slippi_match_inprocess(args);
+        }
         log("online select: both locked in, the match in the game window");
         if crate::room_keeper::active() {
             // a YouGame room: this process keeps it through the match, the match process reports to it
@@ -701,6 +723,7 @@ impl RetailPlay {
                 *PENDING_GOTO.lock().unwrap() = Some((mode, 0));
             }
             Err(e) => {
+                crate::room_keeper::match_done();
                 crate::slippi_link::restore_offline_codes();
                 crate::play_net::clear_name_tags();
                 crate::slippi_css_host::reset_for_select();
@@ -717,6 +740,8 @@ impl RetailPlay {
     /// scene launch go; the menus are the offline ones again.
     fn slippi_match_cleanup(&mut self) {
         self.net = None;
+        // a kept YouGame room: the match is over in this window (void unless it ended on its own)
+        crate::room_keeper::match_done();
         // the menus' own (offline) matches record per tick again
         crate::slp_export::live_end();
         // the match's desync notices end with it (a DISCONNECTED set after this stays its few seconds)
@@ -786,6 +811,8 @@ impl RetailPlay {
             None => String::new(),
         };
         let Some(env) = crate::slippi_css_host::rematch_env(&cur, won, &kept) else { return false };
+        // a kept YouGame room: it stays for the set's next game in this window
+        crate::room_keeper::next_game();
         let game: u32 = env.split(';').nth(7).and_then(|g| g.parse().ok()).unwrap_or(1);
         let pad = std::env::var(format!("MELEE_SLIPPI_SET_PAD_SCRIPT_G{}", game + 1)).ok();
         if self.slippi_relaunch_select(("MELEE_SLIPPI_REMATCH", &env), pad, &format!("select-g{}", game + 1)) {

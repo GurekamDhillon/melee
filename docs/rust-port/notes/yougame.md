@@ -119,3 +119,23 @@ listing draft in `yougame-listing.md`.
   `MELEE_MODS_DIR`, `MELEE_NUCLEUS_DIR`, `MELEE_COSMETICS_DIR`.
 - Saves: `yougame_saves.rs` (hello, saveFileList at start, coalesced uploads, upload + wait at exit).
 - Test: `bridge_test.py` now also checks the spec, a wrong disc, and save sync against a fake account.
+
+## 8. Update 2026-11-22 (branch `port/ygroom`): YouGame rooms in the one-window online loop
+
+- A YouGame room's match now runs in the menu process's window, like Slippi's (`slippi_link::inprocess`). The room
+  keeper (`room_keeper.rs`) is still a thread of this process; it hears the match's `start` / `end W` in memory
+  (`room_keeper::report`, from `play_net::room_report`) instead of through `MELEE_ROOM_REPORT`, and the match leaving
+  the window (`match_done`, from `slippi_match_cleanup`) stands for the child's exit (a void if it had not ended).
+  The punch, the room relay and STUN are unchanged. `MELEE_YOUGAME_INPROCESS=0` keeps the relaunch per match.
+- Rematch: YouGame's Unranked asks `afterMatch: stay` (Hero: "Unranked keeps its two players together for the next
+  game"); the select goes on as a set on the same Slippi link, and the keeper now stays in the room for it
+  (`room_keeper::next_game`): one room, a `begin` / `finish` per game (match ids `<room>-m1`, `-m2`).
+- The blend's Slippi search has its own stop flag, set the moment YouGame's claim commits: it held the netplay port,
+  so the YouGame side failed to bind it (os error 10048) when both searched at once.
+- `--online-mode <mode>` (Hero's launcher restarting for YouGame): `launcher_compat` sets `MELEE_ONLINE_MODE`,
+  `MELEE_SLIPPI_MENUS=on` and `MELEE_BOOT_MENU=1`; the first menu frame goes straight to that mode's online select
+  (`direct` -> Direct, anything else, `ranked` included, -> Unranked: we never play Ranked). Hero's
+  `take_yougame_restart` is launcher state filled by the game's `muRestartOlder` request (restart in an older
+  release YouGame is on); we never send it, so only the `--online-mode` half applies.
+- Tests: `tools/rust-port/yougame/rooms_pair.py --case yougame [--rematch] [--relaunch] [--dead-direct]` (process
+  sampling: fails on a relaunch), `--case quit`, and `tools/rust-port/yougame/online_mode.sh`.

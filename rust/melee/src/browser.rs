@@ -18,6 +18,9 @@
 //!   - SKIN_SET: `skin_<slot>=name` in settings.cfg, mounted live offline through `cosmetics::mount` (as the settings
 //!     overlay does), else at the next launch.
 use super::RetailPlay;
+
+/// The in-process match's mode, waiting for its files (ticks waited).
+static PENDING_GOTO: std::sync::Mutex<Option<(u8, u32)>> = std::sync::Mutex::new(None);
 use melee_modhost::ui::{self as mui, PresHost};
 
 #[derive(Default)]
@@ -476,7 +479,7 @@ impl RetailPlay {
         self.relaunch(extra, scene, false, what);
     }
 
-    fn ui_status(&mut self, code: u8, text: &str) {
+    pub(super) fn ui_status(&mut self, code: u8, text: &str) {
         match self.ui.as_mut() {
             Some(u) => status(u, code, text),
             None => log(text),
@@ -603,6 +606,18 @@ impl RetailPlay {
     /// The online select was left with both fighters locked in (`slippi_css::take_go`): the match runs in this game's
     /// window (play --slippi-peer: renderer, audio, pads), against the opponent the select's session linked to.
     pub(super) fn slippi_online_match(&mut self) {
+        // the in-process match's scene change, once its files are read (at most half a second)
+        let due = PENDING_GOTO.lock().ok().and_then(|mut g| {
+            let (mode, n) = g.as_mut()?;
+            *n += 1;
+            let m = *mode;
+            (!melee_engine::asset::hints_busy() || *n >= 30).then(|| (g.take(), m).1)
+        });
+        if let Some(mode) = due {
+            if let Some(e) = self.e.as_mut() {
+                e.goto_mode(mode);
+            }
+        }
         // the select can leave a moment before the session has closed its link: wait for the handoff
         static WAITING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         use std::sync::atomic::Ordering::Relaxed;
@@ -637,6 +652,9 @@ impl RetailPlay {
                 }
             }
         }
+        if crate::slippi_link::inprocess() && !crate::room_keeper::active() {
+            return self.slippi_match_inprocess(args);
+        }
         log("online select: both locked in, the match in the game window");
         if crate::room_keeper::active() {
             // a YouGame room: this process keeps it through the match, the match process reports to it
@@ -652,6 +670,85 @@ impl RetailPlay {
             return;
         }
         self.relaunch(&args, None, false, "the Slippi match");
+    }
+
+    /// The match in this process and window (`slippi_link::inprocess`): the select's link is taken over here (from this
+    /// process's own keeper, `slippi_link::take`), the match scene is installed and the engine goes to it, as a scene
+    /// change; the session takes the engine on the match's first frame (`step`, `arm`). Nothing closes or reopens.
+    fn slippi_match_inprocess(&mut self, args: Vec<String>) {
+        let t0 = std::time::Instant::now();
+        crate::slippi_link::save_offline_codes();
+        match crate::play_net::NetDriver::connect_slippi(&args) {
+            Ok((n, scn)) => {
+                log(&format!("online select: both locked in, the match in this window (no relaunch; link taken in {:.1} ms)", t0.elapsed().as_secs_f64() * 1e3));
+                self.net = Some(n);
+                // the match process had no pad script (generated pads, MELEE_SLIPPI_NP_PADGEN, in tests) and no frame limit
+                super::set_pad_swap(None);
+                super::transition_begin("select->match");
+                self.max_frames = None;
+                let mode = melee_engine::scenario::boot_mode(&scn);
+                // the match's files to the asset worker first (the relaunched process had them at its boot): the
+                // select stays up a few ticks while they are read, so the match's first tick applies ready plans
+                let picks: Vec<(i32, u8)> = scn.players.iter().flatten().map(|p| (p.ckind, p.color.max(0) as u8)).collect();
+                melee_engine::asset::hint_vs_match(&picks, 0);
+                melee_engine::scenario::install(scn);
+                *PENDING_GOTO.lock().unwrap() = Some((mode, 0));
+            }
+            Err(e) => {
+                crate::slippi_link::restore_offline_codes();
+                crate::play_net::clear_name_tags();
+                crate::slippi_css_host::reset_for_select();
+                self.ui_status(1, &format!("online select: the match could not start: {e}"));
+                melee_modes::tu::slippi_css::with(|o| {
+                    o.conn = melee_modes::tu::slippi_css::CONN_ERROR;
+                    o.error = e;
+                });
+            }
+        }
+    }
+
+    /// The online match of this process is over (`slippi_link::inprocess`): the session, its codes, name tags and
+    /// scene launch go; the menus are the offline ones again.
+    fn slippi_match_cleanup(&mut self) {
+        self.net = None;
+        melee_core::slippi_online::disable();
+        crate::slippi_link::restore_offline_codes();
+        crate::play_net::clear_name_tags();
+        melee_engine::scenario::uninstall();
+        crate::slippi_css_host::reset_for_select();
+        std::env::remove_var("MELEE_SLIPPI_SET");
+        std::env::remove_var("MELEE_SLIPPI_AFTER");
+        std::env::remove_var("MELEE_SLIPPI_TAGS");
+    }
+
+    /// Back to the online select in this window (`slippi_relaunch_select`'s in-process form): `kv` is the environment
+    /// the relaunched menus would have read (`MELEE_SLIPPI_REMATCH`: the set's next game, `MELEE_SLIPPI_BACK`: the
+    /// mode's select, idle).
+    pub(super) fn slippi_back_inprocess(&mut self, kv: (&str, &str), pad: Option<String>) -> bool {
+        self.slippi_match_cleanup();
+        super::set_pad_swap(pad);
+        super::transition_begin("match->select");
+        if let Ok(n) = std::env::var("MELEE_SLIPPI_SET_MAX_FRAMES").map(|v| v.parse::<u64>()) {
+            if let Ok(n) = n {
+                self.max_frames = Some(self.tick_no as u64 + n);
+            }
+        }
+        let Some(e) = self.e.as_mut() else { return false };
+        if kv.0 == "MELEE_SLIPPI_REMATCH" {
+            std::env::set_var(kv.0, kv.1);
+            if crate::slippi_css_host::start_rematch().is_none() {
+                return false;
+            }
+            log("online select: the set goes on, back to the online select (this window)");
+            e.goto_mode(melee_types::GM_HANYU_CSS as u8);
+            return true;
+        }
+        let Ok(mode) = kv.1.parse::<i32>() else { return false };
+        log(&format!("online select: back from the match, {} again (Start searches; this window)", melee_modes::tu::slippi_online::mode_name(mode)));
+        melee_modes::tu::slippi_online::repick(mode);
+        melee_modes::tu::slippi_css::begin(mode, "");
+        e.goto_mode(melee_types::GM_HANYU_CSS as u8);
+        true
     }
 
     /// After a game of an online-select set (Hero: the select comes back, connected, for the next game; the loser
@@ -705,6 +802,9 @@ impl RetailPlay {
 
     /// Relaunch the window into the menus (`MELEE_BOOT_MENU=1`) with `kv` set, the match's own arguments dropped.
     fn slippi_relaunch_select(&mut self, kv: (&str, &str), pad: Option<String>, title: &str) -> bool {
+        if crate::slippi_link::inprocess() {
+            return self.slippi_back_inprocess(kv, pad);
+        }
         let cur: Vec<String> = std::env::args().skip(1).collect();
         // the match's own arguments go; the menus' stay (`--slippi-menus on`)
         let mut args: Vec<String> = Vec::new();

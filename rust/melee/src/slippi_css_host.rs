@@ -22,6 +22,15 @@ pub fn handoff_game() -> u32 {
     HANDOFF_GAME.load(std::sync::atomic::Ordering::Relaxed)
 }
 
+/// Back on the select after a match played in this process (`slippi_link::inprocess`): a new search or lock-in may
+/// start again (the relaunched process started with these cleared).
+pub fn reset_for_select() {
+    LOCKED.store(false, std::sync::atomic::Ordering::SeqCst);
+    if let Ok(mut h) = HANDOFF.lock() {
+        *h = None;
+    }
+}
+
 pub fn take_handoff() -> Option<Vec<String>> {
     HANDOFF.lock().ok()?.take()
 }
@@ -84,6 +93,7 @@ fn search(args: Vec<String>, mode: i32) {
         return;
     }
     *LAST.lock().unwrap() = Some((args.clone(), mode));
+    std::env::remove_var("MELEE_SLIPPI_MM_NAMES");
     let search = arg(&args, "--slippi-search").unwrap_or_default();
     // begin() clears the screen state: the chosen flag is kept (the fighter stays picked)
     let chosen = sc::with(|o| o.chosen);
@@ -356,6 +366,23 @@ fn lock_in(mut cl: Client, p: &crate::slippi_np::Paired, port: u16, max_s: u64) 
     // Direct: the loser's stage, or none from the winner (the loser's stands); Unranked keeps the match's default
     let (mode, stage, game) = lock_at.unwrap();
     let opp = p.opp_code.clone();
+    // the match's name tags (Slippi's online names over the fighters): matchmaking's names, else this login's name or
+    // code and the opponent's code (`play_net::apply_name_tags`; never logged)
+    let mm: Vec<String> = std::env::var("MELEE_SLIPPI_MM_NAMES").unwrap_or_default().split(char::from(9)).map(str::to_string).collect();
+    let mut tags: [String; 4] = Default::default();
+    for (i, t) in tags.iter_mut().enumerate() {
+        *t = mm.get(i).cloned().unwrap_or_default();
+    }
+    let (un, uc) = sc::user();
+    let lp = p.local_port as usize;
+    let rp = p.remote_port as usize;
+    if lp < 4 && tags[lp].trim().is_empty() {
+        tags[lp] = if un.trim().is_empty() { uc } else { un };
+    }
+    if rp < 4 && tags[rp].trim().is_empty() {
+        tags[rp] = opp.clone();
+    }
+    std::env::set_var("MELEE_SLIPPI_TAGS", tags.join("\t"));
     HANDOFF_GAME.store(game, std::sync::atomic::Ordering::Relaxed);
     // Slippi's match block: pausing only in Direct (Unranked / Ranked set disable_pausing)
     if mode == melee_modes::tu::slippi_online::MODE_DIRECT {

@@ -149,3 +149,46 @@ pub fn take(spec: &str, bind_ip: u32, port: u16, wrap: impl FnOnce(melee_net::tr
     let cl = Client::import(wrap(udp), &msg[o..]).ok_or("link: the handed-over state is malformed")?;
     Ok(Taken { cl, mine, theirs })
 }
+
+// ------------------------------------------------------------------------------------------------ one process
+
+/// The whole online loop (select -> match -> results -> select) in the menu process and its one window: the menu run
+/// boots in the rollback run modes (`play_net::prepare_rollback_run`), so the match takes the select's link over
+/// in-process (`take` against this process's own keeper) and the window never closes. `MELEE_SLIPPI_INPROCESS=0`
+/// keeps the relaunch per match (the older handoff above).
+static INPROCESS: AtomicBool = AtomicBool::new(false);
+
+/// At the boot: whether this run plays its online matches in-process (`--slippi-menus on`, windowed, not a match or
+/// replay run of its own).
+pub fn wants_inprocess(args: &[String]) -> bool {
+    std::env::var("MELEE_SLIPPI_INPROCESS").map_or(true, |v| v != "0") && crate::slippi_menus::requested(args) == Ok(true)
+}
+
+pub fn set_inprocess(on: bool) {
+    INPROCESS.store(on, Ordering::SeqCst);
+}
+
+pub fn inprocess() -> bool {
+    INPROCESS.load(Ordering::SeqCst)
+}
+
+/// The codes the online match turns on (`slippi_np::online_codes`), as they were before it.
+static SAVED: std::sync::Mutex<Option<(u32, u32, bool, bool)>> = std::sync::Mutex::new(None);
+
+pub fn save_offline_codes() {
+    if let Ok(mut g) = SAVED.lock() {
+        *g = Some(melee_core::codes::snapshot());
+    }
+}
+
+/// The codes back, and the Slippi code hooks back to their offline values.
+pub fn restore_offline_codes() {
+    let Some(s) = SAVED.lock().ok().and_then(|mut g| g.take()) else { return };
+    melee_core::codes::restore(s);
+    unsafe {
+        melee_fighter::platform::hook::Slippi_Codes = None;
+        // the fighter TUs' and Final Destination's tables: 0 offline (manual.rs)
+        melee_fighter::hooks::SLIPPI_CODES = Some(|| 0);
+        melee_world::tu::grlast::ext::SLIPPI_CODES = Some(|| 0);
+    }
+}

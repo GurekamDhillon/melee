@@ -331,6 +331,17 @@ fn install_onep() {
 }
 
 /// Make `SceneLaunch_*` answer for `s`, as `MELEE_SCENE` does in the C build (entry state 2 = the match).
+/// Undo a VS [`install`]: the scene launch reads inactive again (an online match played in the menu process; the
+/// menus after it are the retail ones).
+pub fn uninstall() {
+    unsafe {
+        SCN = None;
+        h::SceneLaunch_Active = Some(|| 0);
+        melee_modes::tu::gmvsmelee::ext::hook::SceneLaunch_Active = Some(|| 0);
+        melee_modes::tu::gm_1B03::ext::SCENELAUNCH_ACTIVE = Some(|| 0);
+    }
+}
+
 pub fn install(mut s: Scenario) {
     resolve_pending(&mut s);
     install_geno();

@@ -362,6 +362,14 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
             eprintln!("melee: matched ({}): local player {li}, remote {ri} at {ra}, decider {}, stages {:?}", m.match_id, m.is_host, m.stages);
         }
         let opp = m.players.iter().find(|p| !p.is_local).map(|p| p.connect_code.clone()).unwrap_or_default();
+        // the players' names by port (display name, else connect code) for the match's name tags (`tags_env`)
+        let mut names: [String; 4] = Default::default();
+        for p in &m.players {
+            if let Some(n) = names.get_mut(p.port.saturating_sub(1) as usize) {
+                *n = if p.display_name.trim().is_empty() { p.connect_code.clone() } else { p.display_name.clone() };
+            }
+        }
+        std::env::set_var("MELEE_SLIPPI_MM_NAMES", names.join("\t"));
         let fb = rfb.and_then(|f| addr_parse(&f, 51441));
         (m.is_host, li, ri, peer, opp, fb)
     } else {

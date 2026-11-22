@@ -17,6 +17,38 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use winit::window::Window;
 
+/// A pad script change asked from inside a step (the in-process online loop: the match had none, the select after it
+/// its own), applied at the next tick where the pads are: Some(None) drops the script, Some(Some(path)) loads one.
+static PAD_SWAP: std::sync::Mutex<Option<Option<String>>> = std::sync::Mutex::new(None);
+/// The in-process online loop's scene changes (select -> match, match -> select): the render ticks of the 300 after
+/// each are timed; one over 16 ms is logged, and the window's worst when it closes (the zero-lag gate's figure).
+static TRANSITION: std::sync::Mutex<Option<(String, u64, std::time::Duration, u64)>> = std::sync::Mutex::new(None);
+pub(crate) fn transition_begin(what: &str) {
+    if let Ok(mut g) = TRANSITION.lock() {
+        *g = Some((what.to_string(), 0, std::time::Duration::ZERO, 0));
+    }
+}
+fn transition_time(tick: u64, d: std::time::Duration) {
+    let Ok(mut g) = TRANSITION.lock() else { return };
+    let Some((what, n, worst, over)) = g.as_mut() else { return };
+    *n += 1;
+    *worst = (*worst).max(d);
+    if d.as_micros() > 16_000 {
+        *over += 1;
+        log(&format!("transition {what}: tick {tick} took {:.1} ms", d.as_secs_f64() * 1e3));
+    }
+    if *n >= 300 {
+        log(&format!("transition {what}: {n} ticks, worst {:.2} ms, {over} over 16 ms", worst.as_secs_f64() * 1e3));
+        *g = None;
+    }
+}
+
+pub(crate) fn set_pad_swap(script: Option<String>) {
+    if let Ok(mut g) = PAD_SWAP.lock() {
+        *g = Some(script);
+    }
+}
+
 /// The match scene's frames run before the session takes the engine.
 const ARM_FRAMES: u32 = 1;
 
@@ -349,6 +381,19 @@ impl RetailPlay {
                     if let Some(err) = nd.error.clone() {
                         log(&nd.summary());
                         nd.write_hashes();
+                        if crate::slippi_link::inprocess() && nd.slippi.is_some() {
+                            // the online loop in this window (Slippi Dolphin and Hero: DISCONNECTED, then the select):
+                            // the engine comes back from the session and the window goes on to the online select
+                            log(&format!("online select: the match ended early ({err}); back to the online select"));
+                            if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, NetPhase::Done) {
+                                self.e = Some(g.into_engine().0);
+                            }
+                            let mode = melee_modes::tu::slippi_css::with(|o| o.mode).to_string();
+                            if self.slippi_back_inprocess(("MELEE_SLIPPI_BACK", &mode), std::env::var("MELEE_SLIPPI_BACK_PAD_SCRIPT").ok()) {
+                                self.ui_status(1, "DISCONNECTED: the online match ended");
+                                return false;
+                            }
+                        }
                         self.failed = Some(err);
                         self.quit = true;
                     } else if nd.end_frame.is_some() && !nd.lingering() {
@@ -1498,9 +1543,20 @@ impl RetailPlay {
 
 impl Game for RetailPlay {
     fn tick(&mut self, pads: &mut PadSystem) {
+        if let Some(swap) = PAD_SWAP.lock().ok().and_then(|mut g| g.take()) {
+            pads.script = swap.and_then(|p| {
+                std::env::set_var("MELEE_PAD_SCRIPT", &p);
+                melee_platform::script::PadScript::from_env()
+            });
+            if pads.script.is_none() {
+                std::env::remove_var("MELEE_PAD_SCRIPT");
+            }
+        }
         if self.feed.is_none() {
+            let t = std::time::Instant::now();
             self.tick_once(pads);
             self.spec_serve();
+            transition_time(self.tick_no as u64, t.elapsed());
             return;
         }
         self.tick_playback(pads);

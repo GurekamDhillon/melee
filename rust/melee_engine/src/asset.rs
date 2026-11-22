@@ -1120,6 +1120,16 @@ pub fn scene_prefetch(minor: i32) {
 
 /// Hint each (character kind, costume) pair's fighter data, costume and animation bank (an extra internal kind, such
 /// as Zelda's Sheik, too). Reads only immutable name tables; host state only.
+/// Hints for a VS match decided ahead (the online select's lock-in): each (fighter, costume) pick's files and the
+/// stage's (ground kind `gr`, 0: none). Never sim-visible.
+pub fn hint_vs_match(picks: &[(i32, u8)], gr: i32) {
+    if svc().is_none_or(|s| !s.worker) {
+        return;
+    }
+    hint_stage(gr);
+    hint_fighters(picks);
+}
+
 fn hint_fighters(picks: &[(i32, u8)]) {
     unsafe {
         let mapping = &*core::ptr::addr_of!(melee_world::pl::ftMapping_list);

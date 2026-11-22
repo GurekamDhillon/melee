@@ -1878,6 +1878,7 @@ impl NetDriver {
         let l = crate::slippi_np::establish(&sub, Instant::now(), max_s).map_err(|(_, m)| m)?;
         let tag = if l.decider { "decider" } else { "guest" };
         melee_core::slippi_online::enable(l.rng_offset);
+        apply_name_tags();
         if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
             crate::slippi_np::online_codes(l.by_port.iter().map(|s| s.alt_stage_mode).max().unwrap_or(0));
         }
@@ -2178,6 +2179,23 @@ impl NetDriver {
 }
 
 /// The last Slippi match's winning port (0-based; -1 none or not clean): the online select's next stage pick.
+/// Slippi online's name tags over the fighters (Slippi Dolphin and Hero show the players' names in an online match):
+/// the select's `MELEE_SLIPPI_TAGS` (port order, tab-separated), set before the match's first snapshot.
+pub fn apply_name_tags() {
+    let tags = std::env::var("MELEE_SLIPPI_TAGS").unwrap_or_default();
+    let mut f = tags.split(char::from(9));
+    for slot in 0..4 {
+        melee_world::tu::ifnametag::set_online_tag(slot, f.next().unwrap_or(""));
+    }
+}
+
+/// The name tags off (the online match is over; offline matches keep the retail plates).
+pub fn clear_name_tags() {
+    for slot in 0..4 {
+        melee_world::tu::ifnametag::set_online_tag(slot, "");
+    }
+}
+
 pub static LAST_WINNER: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
 
 /// The YouGame room this match plays for (`MELEE_ROOM_REPORT`, set by the menu process that keeps the room:

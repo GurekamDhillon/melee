@@ -216,9 +216,6 @@ impl Gcm {
         read_at(self.f.as_mut(), start, n)
     }
 
-    /// Where disc entry `entry` lies in the image: (byte offset, length), or None when it is not a plain disc file or
-    /// an overlay (mods) is mounted (slice 1 does not ask it). Pure: it
-    /// asks the overlay nothing and caches nothing (the asset service's hints must not change game state).
     /// The disc entry of `path` on the disc itself (no overlay asked; -1: not there).
     pub fn disc_entry(&self, path: &str) -> i32 {
         self.entry_for_path_disc(path)
@@ -239,9 +236,18 @@ impl Gcm {
         v
     }
 
+    /// Where disc entry `entry` lies in the image: (byte offset, length), or None when it is not a plain disc file or
+    /// the overlay (mods) is known to replace it (asked already, `replaced`). Pure: it asks the overlay nothing and
+    /// caches nothing (the asset service's hints must not change game state).
+    ///
+    /// A file the overlay has not been asked about yet is located on the disc: the online flow always mounts one
+    /// (`--slippi-menus on`: Slippi's menu files), and refusing every entry then turned off every hint of it (the
+    /// boot files, the online select's `hint_vs_match`), so each match's ItCo / stage / fighter files decoded in
+    /// place in the scene-change tick. A hint is content-addressed (a plan serves only a load of the same bytes,
+    /// `asset::load`), so a hint of a file the overlay turns out to replace is a wasted prepare, never a wrong apply.
     pub fn plain_location(&self, entry: i32) -> Option<(u64, usize)> {
         let i = usize::try_from(entry).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i))?;
-        if self.overlay.is_some() {
+        if self.overlay.is_some() && self.replaced.borrow().contains_key(&entry) {
             return None;
         }
         Some((be32(&self.fst, i * 12 + 4) as u64, be32(&self.fst, i * 12 + 8) as usize))

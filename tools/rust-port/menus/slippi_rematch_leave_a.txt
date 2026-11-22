@@ -1,0 +1,9 @@
+# Slippi rematch select after game 2 (menu_inprocess_loop.sh), side A: back out with B (a press un-chooses the
+# fighter, then B held leaves the select, as the vanilla CSS); the link closes and the opponent is told
+120 0000 0 0
+2 0200 0 0
+30 0000 0 0
+120 0200 0 0
+30 0000 0 0
+120 0200 0 0
+600 0000 0 0

@@ -7,6 +7,9 @@
 //! Presets: `--stocks N` / `--time-secs N` / `--items F` are written into the saved VS rules (`GameRules` /
 //! `GamePrefs`) the rules menu edits; `--match a,b/cpuN,..[,STAGE]` seeds the VS mode the way the C build's scene
 //! launcher does (`SceneLaunch_SeedVs`: the first match starts at once), and after its results the retail CSS follows.
+/// The render tick an Unranked match ended on, while its results are up (0: none); `slippi_after_back` follows.
+static SLIPPI_AFTER_AT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 use melee_platform::gfx::{write_png, Presenter};
 use melee_platform::pad::*;
 use melee_platform::{Game, PadSystem};
@@ -371,7 +374,14 @@ impl RetailPlay {
                             // the link's socket closes first: the select's session binds the same port
                             nd.slippi = None;
                             if !(back && self.slippi_set_back()) {
-                                self.quit = true;
+                                if back && std::env::var("MELEE_SLIPPI_AFTER").is_ok_and(|v| !v.is_empty()) {
+                                    // Unranked: this window shows the results (the game's own scene, played offline
+                                    // now), then goes back to the online select (`slippi_after_back`)
+                                    log("online select: the match is over; the results, then back to the online select");
+                                    SLIPPI_AFTER_AT.store(self.tick_no.max(1) as u64, std::sync::atomic::Ordering::Relaxed);
+                                } else {
+                                    self.quit = true;
+                                }
                             }
                         }
                     }
@@ -429,7 +439,20 @@ impl RetailPlay {
                     }
                 }
                 NetPhase::PreMatch => four = neutral_pads(),
-                NetPhase::Done => {}
+                NetPhase::Done => {
+                    // tests (generated pads, MELEE_SLIPPI_NP_PADGEN; the match process has no pad script): a player
+                    // on the results: A through the winner card, then Start once on the stats (each port's ready
+                    // toggles on Start; a disconnected port is ready by itself). The pads are made connected.
+                    let at = SLIPPI_AFTER_AT.load(std::sync::atomic::Ordering::Relaxed);
+                    if at != 0 && std::env::var_os("MELEE_SLIPPI_NP_PADGEN").is_some() {
+                        let age = (self.tick_no as u64).saturating_sub(at);
+                        let b = if age < 240 && age % 45 < 2 { 0x0100 } else if (300..302).contains(&age) { 0x1000 } else { 0 };
+                        for p in four.iter_mut() {
+                            p.err = 0;
+                            p.button |= b;
+                        }
+                    }
+                }
             }
         }
         if self.lab.is_some() {
@@ -943,6 +966,11 @@ impl RetailPlay {
                     melee_modes::tu::envoy::LAB_TIME = [0; 2];
                 }
             }
+            if prev.1 == melee_types::GS_RESULTS as u8 && SLIPPI_AFTER_AT.swap(0, std::sync::atomic::Ordering::Relaxed) != 0 {
+                if !self.slippi_after_back() {
+                    self.quit = true;
+                }
+            }
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;
                 if self.quit_after.is_some_and(|n| self.matches >= n) {
@@ -953,6 +981,15 @@ impl RetailPlay {
         }
         if self.net.is_none() && self.sync.is_none() && self.feed.is_none() && self.spec_client.is_none() {
             crate::envoy_store::sync();
+        }
+        // the results never came (or never ended): back to the online select after two minutes anyway
+        let after = SLIPPI_AFTER_AT.load(std::sync::atomic::Ordering::Relaxed);
+        if after != 0 && (self.tick_no as u64).saturating_sub(after) > 120 * 60 {
+            SLIPPI_AFTER_AT.store(0, std::sync::atomic::Ordering::Relaxed);
+            log(&format!("online select: no results after the match (scene {}); back to the online select", scene_name(self.cur.1)));
+            if !self.slippi_after_back() {
+                self.quit = true;
+            }
         }
         if self.max_frames.is_some_and(|n| self.tick_no >= n) {
             log(&format!("max frames reached in {}", scene_name(self.cur.1)));

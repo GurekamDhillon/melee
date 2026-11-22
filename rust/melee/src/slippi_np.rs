@@ -89,7 +89,10 @@ pub fn online_scene(sel: &[Selections; 2], pause_allowed: bool) -> Result<(Strin
         let shade = if mirror && i == 1 { "/shade1" } else { "" };
         t += &format!("p{}=ck:{}/human/c{}{shade};", i + 1, s.character_id, s.character_color);
     }
-    t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks=4;minutes=8;items=off;pause={}", pause_allowed as u8);
+    // tests against the local mock only (MELEE_SLIPPI_MM_URL): MELEE_SLIPPI_TEST_STOCKS shortens a match that must
+    // end on stocks (both sides set the same); never with Slippi's servers or a real opponent
+    let stocks = std::env::var("MELEE_SLIPPI_TEST_STOCKS").ok().filter(|_| std::env::var_os("MELEE_SLIPPI_MM_URL").is_some()).and_then(|v| v.parse::<u8>().ok()).filter(|n| (1..=4).contains(n)).unwrap_or(4);
+    t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks={stocks};minutes=8;items=off;pause={}", pause_allowed as u8);
     Ok((t, stage))
 }
 

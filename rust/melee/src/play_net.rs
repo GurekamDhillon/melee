@@ -2111,6 +2111,10 @@ impl NetDriver {
         sr.work_max_us = sr.work_max_us.max(us);
         if us > 16_000 {
             sr.work_slow += 1;
+            // which tick (the first few): the profile has no other trace of a single slow tick
+            if sr.work_slow <= 10 {
+                log(&format!("netplay {tag}: slow tick {} us at online frame {} (tick {} of the match)", us, s.current_frame(), sr.work_n));
+            }
         }
         let end_now = sr.done_at.is_some_and(|t| t.elapsed() > Duration::from_millis(1500));
         let cur = s.current_frame();

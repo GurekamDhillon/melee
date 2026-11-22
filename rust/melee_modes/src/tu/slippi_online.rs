@@ -51,6 +51,12 @@ pub fn row_of(mode: i32) -> usize {
 }
 
 /// The confirmed mode, once (the host starts matchmaking for it).
+/// Pick `mode` as the online submenu's confirm does (the match process came back to the online select after an
+/// Unranked game: the menus pick the same mode again, idle, and Start searches).
+pub fn repick(mode: i32) {
+    PICK.store(mode, Ordering::Relaxed);
+}
+
 pub fn take_pick() -> Option<i32> {
     let p = PICK.swap(-1, Ordering::Relaxed);
     // never ranked: no path starts Ranked matchmaking, whatever set the pick

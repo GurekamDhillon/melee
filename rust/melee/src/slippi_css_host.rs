@@ -347,6 +347,13 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
     } else {
         std::env::remove_var("MELEE_SLIPPI_SET");
     }
+    // Unranked (Slippi and Hero): the results, then back to the online select, idle; Start searches again
+    // (the match process relaunches the menus with MELEE_SLIPPI_BACK, `slippi_after_back`)
+    if mode == melee_modes::tu::slippi_online::MODE_DIRECT {
+        std::env::remove_var("MELEE_SLIPPI_AFTER");
+    } else {
+        std::env::set_var("MELEE_SLIPPI_AFTER", mode.to_string());
+    }
     eprintln!("online css: session: both locked in, the match next");
     // one link into the match (Slippi Dolphin takes no second connection): kept polled on this thread until the match
     // process takes it over (slippi_link.rs); the handoff is set once the keeper listens

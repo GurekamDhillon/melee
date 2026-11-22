@@ -505,6 +505,20 @@ impl RetailPlay {
                 return;
             }
         }
+        // after an Unranked game: the match process relaunched this window into the menus; the same mode's online
+        // select, idle (Slippi / Hero: the results, then the CSS, where Start searches again)
+        static BACK_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !BACK_DONE.load(std::sync::atomic::Ordering::Relaxed) && self.e.is_some() && self.cur.0 as u32 == melee_types::GM_MENU && melee_modes::tu::slippi_online::enabled() {
+            BACK_DONE.store(true, std::sync::atomic::Ordering::Relaxed);
+            let back = std::env::var("MELEE_SLIPPI_BACK").ok().and_then(|v| v.parse::<i32>().ok());
+            std::env::remove_var("MELEE_SLIPPI_BACK");
+            if let Some(mode) = back.filter(|&m| m != melee_modes::tu::slippi_online::MODE_DIRECT && melee_modes::tu::slippi_online::row_unlocked(melee_modes::tu::slippi_online::row_of(m) as i32)) {
+                log(&format!("online select: back from the match, {} again (Start searches)", melee_modes::tu::slippi_online::mode_name(mode)));
+                melee_modes::tu::slippi_online::repick(mode);
+                melee_modes::tu::slippi_css::begin(mode, "");
+                self.e.as_mut().unwrap().goto_mode(melee_types::GM_HANYU_CSS as u8);
+            }
+        }
         let Some(mode) = melee_modes::tu::slippi_online::take_pick() else { return };
         let name = melee_modes::tu::slippi_online::mode_name(mode);
         let typed = melee_modes::tu::slippi_online::take_direct_code();
@@ -653,6 +667,33 @@ impl RetailPlay {
             log(&format!("online select: the set's {game} games are played"));
             return false;
         }
+        let pad = std::env::var(format!("MELEE_SLIPPI_SET_PAD_SCRIPT_G{}", game + 1)).ok();
+        if self.slippi_relaunch_select(("MELEE_SLIPPI_REMATCH", &env), pad, &format!("select-g{}", game + 1)) {
+            log(&format!("online select: game {game} over (winner port {won}), back to the select for game {}", game + 1));
+            true
+        } else {
+            false
+        }
+    }
+
+    /// After an Unranked game (its results shown): relaunch the window into the menus' online select of the same mode,
+    /// idle; Start searches again (Slippi Dolphin and Hero: the results, then the CSS). False when this match did not
+    /// come from the online select (`MELEE_SLIPPI_AFTER`, set at its handoff).
+    pub(super) fn slippi_after_back(&mut self) -> bool {
+        let Some(mode) = std::env::var("MELEE_SLIPPI_AFTER").ok().filter(|v| !v.is_empty()) else { return false };
+        // tests: the select's pad script after the match
+        let pad = std::env::var("MELEE_SLIPPI_BACK_PAD_SCRIPT").ok();
+        if self.slippi_relaunch_select(("MELEE_SLIPPI_BACK", &mode), pad, "select") {
+            log("online select: the results are over, back to the online select");
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Relaunch the window into the menus (`MELEE_BOOT_MENU=1`) with `kv` set, the match's own arguments dropped.
+    fn slippi_relaunch_select(&mut self, kv: (&str, &str), pad: Option<String>, title: &str) -> bool {
+        let cur: Vec<String> = std::env::args().skip(1).collect();
         // the match's own arguments go; the menus' stay (`--slippi-menus on`)
         let mut args: Vec<String> = Vec::new();
         let mut i = 0;
@@ -677,18 +718,16 @@ impl RetailPlay {
         }
         let Ok(exe) = std::env::current_exe() else { return false };
         let mut cmd = std::process::Command::new(exe);
-        cmd.args(&args).env("MELEE_BOOT_MENU", "1").env("MELEE_SLIPPI_REMATCH", &env).env_remove("MELEE_SCENE").env_remove("MELEE_SLIPPI_SET");
-        // tests: the next select's pad script (MELEE_SLIPPI_SET_PAD_SCRIPT_G<n>, n the next game)
-        match std::env::var(format!("MELEE_SLIPPI_SET_PAD_SCRIPT_G{}", game + 1)) {
-            Ok(p) => cmd.env("MELEE_PAD_SCRIPT", p),
-            Err(_) => cmd.env_remove("MELEE_PAD_SCRIPT"),
+        cmd.args(&args).env("MELEE_BOOT_MENU", "1").env(kv.0, kv.1).env_remove("MELEE_SCENE").env_remove("MELEE_SLIPPI_SET").env_remove("MELEE_SLIPPI_AFTER");
+        match pad {
+            Some(p) => cmd.env("MELEE_PAD_SCRIPT", p),
+            None => cmd.env_remove("MELEE_PAD_SCRIPT"),
         };
         if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
-            cmd.env("MELEE_WINDOW_TITLE", format!("{t}:select-g{}", game + 1));
+            cmd.env("MELEE_WINDOW_TITLE", format!("{}:{title}", t.split(":select").next().unwrap_or(&t)));
         }
         match cmd.spawn() {
             Ok(_) => {
-                log(&format!("online select: game {game} over (winner port {won}), back to the select for game {}", game + 1));
                 self.quit = true;
                 true
             }

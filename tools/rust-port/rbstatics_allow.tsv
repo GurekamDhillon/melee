@@ -1,0 +1,46 @@
+# path	static	why a rollback load cannot rewind it into a double free
+melee_core/src/codes.rs	DISC_WRITES	set once at mount (mex_host install), then only read
+melee_core/src/ct.rs	SEEN	log_stub: render pass inside the engine tick (GameScope: arena, rewound with its header); env-gated
+melee_core/src/fptrace.rs	FNS	--cfg fptrace builds only; traced functions run inside the engine tick (arena)
+melee_core/src/fptrace.rs	LOG	--cfg fptrace builds only; traced functions run inside the engine tick (arena)
+melee_core/src/fptrace.rs	STACK	--cfg fptrace builds only; traced functions run inside the engine tick (arena)
+melee_core/src/modhook.rs	HOOKED	set once at boot (melee_modhost::install from boot_host)
+melee_engine/src/archive.rs	LOGGED	host_parse_timed, reached from the game's archive loads (arena)
+melee_engine/src/archive.rs	POISONED	extended by reclaim_overlapping (game, arena); check_poison only retains; MELEE_RECLAIM_POISON test knob
+melee_engine/src/archive.rs	SAID	host_public_address, a game hook (arena)
+melee_engine/src/card.rs	BASE	set at card install (boot), then only cloned
+melee_engine/src/card.rs	QUEUE	pushed from the game's card callbacks, pumped in Engine::tick (arena)
+melee_engine/src/dvd.rs	DEFERRED	movie player completions, drained in the tick and goto_mode (arena)
+melee_engine/src/fighter_controls.rs	MEMORY	only without STORE (tests, tools); written by fc_save, called by the game (arena)
+melee_engine/src/fighter_controls.rs	STORE	two fn pointers, set once
+melee_engine/src/gcm.rs	HOST_READ	OnceLock of a fn pointer, set before boot
+melee_engine/src/geno_host.rs	BOOT_MODS	set once at boot (set_boot_mods)
+melee_engine/src/geno_host.rs	IASA_WARNED	WarnIasa, called from the game's Geno scripts (arena)
+melee_engine/src/geno_host.rs	POOL	DefineString / GenoDefine_FtDataFieldName, game hooks (arena)
+melee_engine/src/geno_host.rs	SAID	pres_open_file via DefineArtOpen, game hooks (arena)
+melee_engine/src/gxbridge.rs	HOST_RANGES	one push at boot (boot_host, the SIS font atlas), then read on the game thread
+melee_engine/src/logq.rs	Q	OnceLock of a pointer to a Mutex leaked under SysScope at init (the SysStatic pattern)
+melee_engine/src/mex_guest.rs	CACHE	m-ex guest interpreter state: guest code runs only from game hooks (arena)
+melee_engine/src/mex_guest.rs	LPOOL_SLOTS	m-ex guest interpreter state (arena)
+melee_engine/src/mex_guest.rs	POOL2_SLOTS	m-ex guest interpreter state (arena)
+melee_engine/src/mex_guest.rs	PSUF	m-ex guest interpreter state (arena)
+melee_engine/src/mex_guest.rs	RAW_PUBLICS	m-ex guest interpreter state (arena)
+melee_engine/src/mex_guest.rs	SEEN	m-ex guest interpreter state (arena)
+melee_engine/src/mex_host.rs	ROWS	OnceLock filled from a stage load inside the tick (arena; a rewind to empty only refills)
+melee_engine/src/mex_host.rs	SEEN	gr_base, from the stage load inside the tick (arena)
+melee_engine/src/seams.rs	CACHE	demo_cstr, called from the game's demo loader (arena)
+melee_engine/src/seams.rs	SEEN	stub log reached from game seam calls (arena); env-gated
+melee_engine/src/skins_host.rs	MODS	set once at boot (set_mods)
+melee_engine/src/skins_host.rs	POOL	grows only through StringPtr, which only game hooks call (arena)
+melee_engine/src/snap_host.rs	REPLAY_CURSOR	a pair of fn pointers, no heap
+melee_platform/src/log.rs	CAPTURE	test-only capture mode: outside it no line takes this lock (CAPTURING flag)
+melee/src/anim_hot.rs	SEEN	the developer's animation hot reload (MELEE_ANIM_HOT): never in a rollback session
+melee/src/crash.rs	ISO_PATH	OnceLock set once at start-up
+melee/src/crash.rs	LOG_PATH	OnceLock set once at start-up
+melee/src/crash.rs	PATH	OnceLock set once (crash handler setup)
+melee/src/engine_audio.rs	WAV	the headless audio dump (golden --audio), which never rolls back
+melee/src/geno_suite.rs	FAIL_MSG	the Geno test suite (melee geno-suite), which never rolls back
+melee/src/geno_suite.rs	TESTS	the Geno test suite (melee geno-suite), which never rolls back
+melee/src/lab.rs	CMDS	OnceLock, filled once (a rewind to empty only refills)
+melee/src/nucleus/http.rs	OVERRIDE_HOST	OnceLock set once
+melee/src/nucleus/http.rs	UA	OnceLock set once

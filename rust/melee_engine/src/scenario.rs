@@ -210,7 +210,8 @@ static mut SCN: Option<Scenario> = None;
 
 /// Fighter tokens the parse could not resolve without the disc (m-ex names and references): `ckind` holds
 /// `PENDING - index` until `install` resolves it.
-static mut PENDING_NAMES: Vec<String> = Vec::new();
+/// (Off the snapshot: pushed by host-side parses, outside the game scope, while a rollback base can be live.)
+static PENDING_NAMES: crate::arena::SysStatic<Vec<String>> = crate::arena::SysStatic::new(Vec::new);
 const PENDING: i32 = -1000;
 
 /// A fighter token resolved once the disc mounts (`mexext:N`, `mexint:N`, a disc name): the `ckind` to put in a
@@ -220,10 +221,10 @@ pub fn pending_fighter_token(name: &str) -> i32 {
 }
 
 fn pending_fighter(name: &str) -> i32 {
-    unsafe {
-        PENDING_NAMES.push(name.to_string());
-        PENDING - (PENDING_NAMES.len() as i32 - 1)
-    }
+    PENDING_NAMES.with(|v| {
+        v.push(name.to_string());
+        PENDING - (v.len() as i32 - 1)
+    })
 }
 
 /// Resolve the pending fighter tokens of `s` against the mounted disc (gw_sl_parse_char's m-ex branches, then the
@@ -240,7 +241,7 @@ fn resolve_pending(s: &mut Scenario) {
             // a retail name on an m-ex disc: the disc's own name for that slot wins (gw_sl_mex_name)
             continue;
         }
-        let tok = unsafe { PENDING_NAMES.get((PENDING - p.ckind) as usize).cloned().unwrap_or_default() };
+        let tok = PENDING_NAMES.with(|v| v.get((PENDING - p.ckind) as usize).cloned().unwrap_or_default());
         match crate::mex_host::resolve_fighter(&tok).or_else(|| ckind_by_name(&tok)) {
             Some(ck) => {
                 eprintln!("scene: p{} '{tok}' -> ck={ck}", n + 1);

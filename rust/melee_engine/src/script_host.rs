@@ -1041,18 +1041,19 @@ fn define_name(ck: i32, cap: usize) -> Option<String> {
 }
 
 /// The rules a replace call reads back by index while it runs (the C host's `gs_echo_input` / `gs_hit_rules_input`).
-static ECHO_INPUT: std::sync::Mutex<Vec<i32>> = std::sync::Mutex::new(Vec::new());
-static HIT_RULES_INPUT: std::sync::Mutex<Vec<i32>> = std::sync::Mutex::new(Vec::new());
+// off the snapshot: replaced on every call (a free), possibly from host code outside the game scope
+static ECHO_INPUT: crate::arena::SysStatic<Vec<i32>> = crate::arena::SysStatic::new(Vec::new);
+static HIT_RULES_INPUT: crate::arena::SysStatic<Vec<i32>> = crate::arena::SysStatic::new(Vec::new);
 
-fn with_input<R>(slot: &std::sync::Mutex<Vec<i32>>, rules: &[i32], f: impl FnOnce() -> R) -> R {
-    *slot.lock().unwrap_or_else(|e| e.into_inner()) = rules.to_vec();
+fn with_input<R>(slot: &crate::arena::SysStatic<Vec<i32>>, rules: &[i32], f: impl FnOnce() -> R) -> R {
+    slot.with(|v| *v = rules.to_vec());
     let r = f();
-    slot.lock().unwrap_or_else(|e| e.into_inner()).clear();
+    slot.with(|v| v.clear());
     r
 }
 
-fn input_at(slot: &std::sync::Mutex<Vec<i32>>, i: u64) -> u64 {
-    slot.lock().unwrap_or_else(|e| e.into_inner()).get(i as usize).copied().unwrap_or(0) as u32 as u64
+fn input_at(slot: &crate::arena::SysStatic<Vec<i32>>, i: u64) -> u64 {
+    slot.with(|v| v.get(i as usize).copied().unwrap_or(0) as u32 as u64)
 }
 
 /// The game-side callees into the host (`Script_*`, script_game's `ext_fns!`) reached by name, answered by the host

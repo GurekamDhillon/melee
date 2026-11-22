@@ -1341,14 +1341,16 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
         return;
     }
     // once per distinct plan (the sim may publish the same plan every frame)
-    static LAST: Mutex<Vec<i32>> = Mutex::new(Vec::new());
-    {
-        let _s = crate::arena::SysScope::enter();
-        let mut l = LAST.lock().unwrap();
+    // off the snapshot: assigned under SysScope (a real system-heap free) from the sim's tick
+    static LAST: crate::arena::SysStatic<Vec<i32>> = crate::arena::SysStatic::new(Vec::new);
+    if LAST.with(|l| {
         if l.as_slice() == &plan[..] {
-            return;
+            return true;
         }
         *l = plan.to_vec();
+        false
+    }) {
+        return;
     }
     let mut cks: Vec<i32> = Vec::new();
     let _s = crate::arena::SysScope::enter();

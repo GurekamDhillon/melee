@@ -8,18 +8,19 @@
 #            (slp_agree.py: Game Start, every Pre-/Post-Frame event of the common frames)
 #   quit:    one Unranked game; B quits mid-match (MELEE_SLIPPI_NP_QUIT_AT=600); A's .slp must still be written, with a
 #            Game End, and play in `melee slpcheck` (parsed, not refused)
-# usage: menu_slp_check.sh OUTDIR rematch|quit [--mm-port P]    (EXE=<melee binary>; GW_ISO_VANILLA set by the caller)
+# usage: menu_slp_check.sh OUTDIR rematch|quit [--mm-port P] [--lag-ms N] [--loss-pct N]   (EXE=<melee binary>;
+#   GW_ISO_VANILLA set by the caller). --lag-ms / --loss-pct go to the mock's relay: many rollbacks (the stress run).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"
 B="${EXE:-$repo/rust/target/release/melee}"; O=$1; mode=$2; shift 2
-mmp=43470
-while [ $# -gt 0 ]; do case "$1" in --mm-port) mmp=$2; shift ;; esac; shift; done
+mmp=43470; relay=()
+while [ $# -gt 0 ]; do case "$1" in --mm-port) mmp=$2; shift ;; --lag-ms|--loss-pct) relay+=("$1" "$2"); shift ;; esac; shift; done
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "GW_ISO_VANILLA is not set"; exit 2; }
 export MELEE_INPUT=n MELEE_VOLUME=3 MELEE_WINDOW_HIDDEN=1 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_KEYBOARD=0
 M="$repo/tools/rust-port/menus"
 rm -rf "$O"; mkdir -p "$O/slp-a" "$O/slp-b"
 # the mock is backgrounded on its own (its $! is the mock itself) and never outlives this script
-python3 -I "$here/mock_mm.py" --port $mmp > "$O/mm.log" 2>&1 < /dev/null & mm=$!
+python3 -I "$here/mock_mm.py" --port $mmp "${relay[@]}" > "$O/mm.log" 2>&1 < /dev/null & mm=$!
 ours() { for p in $(pgrep -x melee); do tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qE "^MELEE_SLIPPI_TEST_CODE=SLP[AB]#00[12]$" && echo $p; done; }
 cleanup() { for p in $(ours); do kill $p 2>/dev/null; done; kill $mm 2>/dev/null; }
 trap cleanup EXIT
@@ -56,6 +57,10 @@ sleep 3; cleanup; wait $pa $pb 2>/dev/null
 echo "== mock"; grep -hE "join from|pairing" "$O/mm.log" | cut -c1-60
 for s in a b; do echo "== $s"; grep -hE "gw: slp: [0-9]+ frames|Slippi: [0-9]|match over|QUIT_AT|disconnected|rematch|link taken over" "$O/$s-menu.log" | sed -E "s|$O|<out>|g" | cut -c1-150; done
 fail=0; bad() { echo "FAIL: $*"; fail=1; }
+for s in a b; do
+  grep -aqE "double free|panicked|crash report written|SIGABRT|SIGSEGV" "$O/$s-menu.log" && bad "$s: a crash or panic (see $s-menu.log)"
+  grep -ahoE "rollbacks [0-9]+ \(max depth [0-9]+" "$O/$s-menu.log" | sed "s/^/  $s: /"
+done
 mapfile -t fa < <(ls "$O"/slp-a/*.slp 2>/dev/null | sort); mapfile -t fb < <(ls "$O"/slp-b/*.slp 2>/dev/null | sort)
 if [ "$mode" = rematch ]; then
   [ ${#fa[@]} -eq 2 ] || bad "A wrote ${#fa[@]} .slp (want 2)"; [ ${#fb[@]} -eq 2 ] || bad "B wrote ${#fb[@]} .slp (want 2)"

@@ -19,17 +19,19 @@ use winit::window::Window;
 
 /// A pad script change asked from inside a step (the in-process online loop: the match had none, the select after it
 /// its own), applied at the next tick where the pads are: Some(None) drops the script, Some(Some(path)) loads one.
-static PAD_SWAP: std::sync::Mutex<Option<Option<String>>> = std::sync::Mutex::new(None);
+/// (Host state: on the system heap, never rewound by a rollback load; see `melee_engine::arena::SysStatic`.)
+static PAD_SWAP: melee_engine::arena::SysStatic<Option<Option<String>>> = melee_engine::arena::SysStatic::new(|| None);
 /// The in-process online loop's scene changes (select -> match, match -> select): the render ticks of the 300 after
 /// each are timed; one over 16 ms is logged, and the window's worst when it closes (the zero-lag gate's figure).
-static TRANSITION: std::sync::Mutex<Option<(String, u64, std::time::Duration, u64)>> = std::sync::Mutex::new(None);
+/// (Host state off the snapshot: a rollback load had rewound this static to a freed String, `free(): double free`.)
+static TRANSITION: melee_engine::arena::SysStatic<Option<(String, u64, std::time::Duration, u64)>> = melee_engine::arena::SysStatic::new(|| None);
 pub(crate) fn transition_begin(what: &str) {
-    if let Ok(mut g) = TRANSITION.lock() {
-        *g = Some((what.to_string(), 0, std::time::Duration::ZERO, 0));
-    }
+    TRANSITION.with(|g| *g = Some((what.to_string(), 0, std::time::Duration::ZERO, 0)));
 }
 fn transition_time(tick: u64, d: std::time::Duration) {
-    let Ok(mut g) = TRANSITION.lock() else { return };
+    TRANSITION.with(|g| transition_step(g, tick, d));
+}
+fn transition_step(g: &mut Option<(String, u64, std::time::Duration, u64)>, tick: u64, d: std::time::Duration) {
     let Some((what, n, worst, over)) = g.as_mut() else { return };
     *n += 1;
     *worst = (*worst).max(d);
@@ -45,25 +47,22 @@ fn transition_time(tick: u64, d: std::time::Duration) {
 
 /// Hero's in-match notices (mu_online.c hud_message): DISCONNECTED (red), DESYNC DETECTED and Desync Risk (amber),
 /// drawn over the frame until the given render tick (0: for as long as it is set).
-static NOTICE: std::sync::Mutex<Vec<(String, [u8; 4], u64)>> = std::sync::Mutex::new(Vec::new());
+/// (Host state: on the system heap, never rewound by a rollback load.)
+static NOTICE: melee_engine::arena::SysStatic<Vec<(String, [u8; 4], u64)>> = melee_engine::arena::SysStatic::new(Vec::new);
 pub(crate) fn notice(text: &str, color: [u8; 4], until: u64) {
-    if let Ok(mut n) = NOTICE.lock() {
+    NOTICE.with(|n| {
         if !n.iter().any(|l| l.0 == text) {
             log(&format!("notice: {text}"));
             n.push((text.to_string(), color, until));
         }
-    }
+    });
 }
 pub(crate) fn clear_notices() {
-    if let Ok(mut n) = NOTICE.lock() {
-        n.clear();
-    }
+    NOTICE.with(|n| n.clear());
 }
 
 pub(crate) fn set_pad_swap(script: Option<String>) {
-    if let Ok(mut g) = PAD_SWAP.lock() {
-        *g = Some(script);
-    }
+    PAD_SWAP.with(|g| *g = Some(script));
 }
 
 /// The match scene's frames run before the session takes the engine.
@@ -1566,7 +1565,7 @@ impl RetailPlay {
 
 impl Game for RetailPlay {
     fn tick(&mut self, pads: &mut PadSystem) {
-        if let Some(swap) = PAD_SWAP.lock().ok().and_then(|mut g| g.take()) {
+        if let Some(swap) = PAD_SWAP.with(|g| g.take()) {
             pads.script = swap.and_then(|p| {
                 std::env::set_var("MELEE_PAD_SCRIPT", &p);
                 melee_platform::script::PadScript::from_env()
@@ -1594,11 +1593,11 @@ impl Game for RetailPlay {
         self.scene_tick = false;
         let t_present = std::time::Instant::now();
         // the online notices over whatever the HUD shows this frame
-        let notes: Vec<melee_platform::overlay::Line> = NOTICE.lock().map(|mut n| {
-            let t = self.tick_no as u64;
+        let t = self.tick_no as u64;
+        let notes: Vec<melee_platform::overlay::Line> = NOTICE.with(|n| {
             n.retain(|l| l.2 == 0 || l.2 > t);
             n.iter().map(|l| (l.0.clone(), l.1)).collect()
-        }).unwrap_or_default();
+        });
         let base = if notes.is_empty() { None } else { self.presenter.as_mut().map(|p| p.hud.take()) };
         if let (Some(b), Some(p)) = (base.as_ref(), self.presenter.as_mut()) {
             let mut l = notes;

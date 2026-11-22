@@ -797,3 +797,61 @@ Reading:
 - Fixed at the cause (port/livedesync): Unranked/Ranked matches now set `disable_pausing` as Slippi's match block
   does, so that tick no longer exists online. Not re-measured live; if a 16 ms+ tick shows again in an online match,
   sample it with `MELEE_SAMPLE_SLOW_MS`.
+
+## The title-load tick of vanilla_bf (2026-11-22, port/titlehitch; Linux laptop, NOT the desktop)
+Measured on the laptop (i7-1370P), runs through the shared game slots with other lanes' games and builds running, and
+from ~13:10 on battery with the power-saver profile (CPU ~650 MHz-1.3 GHz): every absolute number below is a
+throttled, contended figure. Only the interleaved A/B (same conditions, back to back) compares builds.
+
+### What the tick does (new spans `preload: register`, `preload: read chain (80017CC4)`, `preload: Kirby hats`)
+The title's `on_enter` calls `gm_PreloadTitleDemo`: the demo's four fighters and stage are registered with the preload
+cache and read at once (the port completes disc reads synchronously). The card's demo here is Fox, Kirby, Luigi and Link
+on Brinstar; with Kirby, `Player_80031D2C` loads **every Kirby copy hat** (~40 archives, `ftLib_LoadKirbyHats`) in the
+same tick. Split of a 48 ms tick (rust-port before, plugged in): hats ~33, the read chain ~6-12 (the demo's ~9 MB), audio
+banks ~2, the rest ~5. Two hats dominate: Mewtwo's (103 KB, 15-30 ms) and Link's / Young Link's (42 KB, 3-4 ms each):
+`HSD_Spline.cv` garbage counts make them decode ~1M `Vec` records past the end of the data block.
+- On Linux the asset service did not exist (`recheap::sys` stub) and there was no arena pre-faulter: every hat decoded in
+  place, and the tick hid inside the exempt first frame (boot hold 50 ms). port/matchload2 (e095efa81) brings both to
+  Linux; this branch merges it and builds on it. With the service the boot hold runs to its 600 ms cap on the laptop and
+  the title tick becomes a counted frame.
+
+### Changes
+- `GcDecoder::array_zero_tail` (melee_core gcdecode.rs): an array of 4096+ records whose tail lies past the data block
+  decodes the first two tail records as before and, when they are byte-identical, touch nothing else and add the same
+  dropped-issue count (the issue list being full), fills the rest with copies. Same single allocation, same bytes.
+  `MELEE_DECODE_ZERO_TAIL=off` keeps the old loop. Mewtwo's hat in place 25-32 -> ~10 ms; its worker prepare 41 -> 30.
+- `asset::hint_entry_small`: boot hints of 40-64 KB files get plans too (`load` looks for a plan of a small file only
+  while a hint of that length is held). Link's / Young Link's hats: 3-4 ms in place -> ~0.5 ms applied.
+- `BOOT_FILES` order: GmTtAll and the hats first, then EfCoData / ItCo and the menus, and the other language's twins
+  (`.dat` of the `.usd` pairs) last. Before, the laptop's worker spent the whole boot hold on ItCo.usd + ItCo.dat and the
+  title decoded every hat in place (0 hits in 3 of 4 runs).
+- Spans in `lbDvd_80018254` and `Player_80031D2C`; `MELEE_BOOT_TIMES`' slow-tick line adds the tick's page faults.
+
+### Numbers (title-load tick ms, power-saver, interleaved runs 1-3 of each)
+| build | runs | median | worst | plan hits in the title tick |
+|---|---|---|---|---|
+| rust-port ff66a7d99 (no Linux service) | 119.6, 96.7, 121.5 | 119.6 | 121.5 (exempt first frame) | 0 |
+| port/matchload2 e095efa81 | 40.3, 48.8, 126.4 | 48.8 | 126.4 | 18, 7, 0 |
+| this branch | 40.5, 34.0, 56.4 | 40.5 | 56.4 | 20, 26, 26 |
+Earlier, before the power-saver switch (plugged in, contended): rust-port 48-49 ms, this branch's first service build
+38-39 ms. **Not under 16 ms on this laptop.** What is left (good run, 34 ms): ~40 hat applies / small in-place decodes at
+0.2-1 ms each (15 ms), the read chain (9 ms: two copies of each file, the read buffer is an arena block), audio banks.
+Next: the per-file cost of an apply (events replay), reads straight into the destination (only with a proof that
+the arena sequence is unchanged), and a desktop measurement (the gate's 24-36 ms there may be a different demo).
+
+### Proof
+- NHV1 + tick log, rust-port ff66a7d99's exe vs this branch, retail_full 6000 ticks (4292 match frames): EQUAL.
+- Arena digests (ASLR off: `setarch -R`; the digest's Linux classifier sees exe pointers as raw words otherwise),
+  retail_full 4000 ticks: zero-tail on vs `MELEE_DECODE_ZERO_TAIL=off` 769/769 loads identical; service on vs
+  `MELEE_ASSETS=off` (plans incl. the small hats vs every load in place) 769/769 identical; hash / tick logs equal.
+- gate.sh (Linux, --skip-build, this exe): 4 goldens all frames, synctest d4 0 mismatches, audio = C, sfx, lints OK;
+  semantics lint (no rustup here) and snapguard (Windows baselines; power-saver) fail as on every laptop build.
+- One `MELEE_ASSETS=off` run segfaulted after its last tick inside the NVIDIA driver's `create_graphics_pipelines`,
+  called from `PipeFactory::get` on a pipeline-warm thread (warmhang's code); the same run repeated (matchload2's exe
+  and this one) closed cleanly.
+
+### Zero-hitch gate, vanilla_bf, Linux, power-saver (gate script adapted: exe without .exe, ps instead of PowerShell
+for the busy check with GATE_ALLOW_BUSY=1, python3): FAILED for both builds, and not judgeable at 650 MHz-1.3 GHz: base
+2191 frames over budget, this branch 1916 / 1580 (in-match engine steps and draws over 16 ms throughout; the
+contention detector did not fire). Title tick: base 126.4 (inside the exempt first frame), this branch 54.0 / 53.7
+(a counted frame: the 600 ms boot hold puts it after the first present).

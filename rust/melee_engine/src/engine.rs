@@ -148,6 +148,18 @@ impl Engine {
         let _scope = crate::arena::GameScope::enter();
         unsafe {
             let sm = &raw mut gm_1A3F::state_machine;
+            // The movie player's disc reads complete a frame later ([`crate::dvd::run_deferred_completions`], once per
+            // frame after the alarms); its stop (`lbMthp_8001F800`, the opening's exit) spins until the read in flight
+            // completes. Called from inside a tick, that completion never came: the MELEE_BOOT_MENU relaunch ("Return
+            // to main menu" from a Slippi match) hung at tick 4, the opening, with its window unpumped until Windows
+            // killed it. The bytes are already copied; only the callbacks are owed. A completion may queue the next
+            // read of the ring (its copy is immediate too), so run them until none are left (bounded).
+            for _ in 0..64 {
+                if !crate::dvd::has_deferred_completions() {
+                    break;
+                }
+                crate::dvd::run_deferred_completions();
+            }
             if let Some(run) = self.run.take() {
                 gmscene::gm_801A4D34_end();
                 gm_1A3F::gm_801A4014_leave(run);

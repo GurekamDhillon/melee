@@ -888,6 +888,12 @@ pub struct PipeFactory {
     /// 5-10 ms per new pipeline. Rendering only; the simulation never reads it. MELEE_PIPE_ASYNC=0 turns it off.
     pub(crate) asyncq: std::sync::OnceLock<Option<std::sync::mpsc::Sender<crate::shader::PipelineConfig>>>,
     pub(crate) pending: std::sync::Mutex<FxMap<PipelineKey, ()>>,
+    /// The driver's pipeline cache (Vulkan `VkPipelineCache`, [`warmlist::driver_cache_path`]): compiled pipelines
+    /// kept across runs, so the start-up warm of a known list is a cache lookup instead of a full driver compile.
+    cache: Option<wgpu::PipelineCache>,
+    cache_path: Option<std::path::PathBuf>,
+    /// Pipelines created since the driver cache was last written.
+    unsaved: std::sync::atomic::AtomicUsize,
 }
 
 impl PipeFactory {
@@ -905,6 +911,69 @@ impl PipeFactory {
 
     pub fn len(&self) -> usize {
         self.pipelines.lock().unwrap().len()
+    }
+
+    /// Write the driver pipeline cache to disk when pipelines were made since the last write (temp file + rename,
+    /// so a crash mid-write never leaves a torn cache; the driver also validates the blob's header on load).
+    pub fn save_driver_cache(&self) {
+        let (Some(c), Some(p)) = (self.cache.as_ref(), self.cache_path.as_ref()) else { return };
+        if self.unsaved.swap(0, std::sync::atomic::Ordering::Relaxed) == 0 {
+            return;
+        }
+        let Some(data) = c.get_data() else { return };
+        let tmp = p.with_extension(format!("tmp{}", std::process::id()));
+        let _ = std::fs::create_dir_all(p.parent().unwrap());
+        if std::fs::write(&tmp, &data).is_ok() && std::fs::rename(&tmp, p).is_err() {
+            let _ = std::fs::remove_file(&tmp);
+        }
+    }
+
+    /// Compile the warm list (every config earlier runs needed) off the game thread: a few below-normal-priority
+    /// workers share the list (notes/zero-hitch.md "Pipeline warm list"), so the game thread and its window keep
+    /// running at full rate while it compiles; the driver cache is written when they are done and then every
+    /// 10 s while new pipelines appear.
+    fn start_warm(self: &std::sync::Arc<Self>) {
+        let me = std::sync::Arc::downgrade(self);
+        let _ = std::thread::Builder::new().name("pipeline warm".into()).spawn(move || {
+            lower_thread_priority();
+            let t = std::time::Instant::now();
+            let list = std::sync::Arc::new(warmlist::load());
+            let n = list.len();
+            let workers = std::thread::available_parallelism().map_or(2, |p| (p.get() / 4).clamp(1, 4));
+            let next = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+            let hs: Vec<_> = (0..if n > 0 { workers } else { 0 })
+                .filter_map(|i| {
+                    let (me, list, next) = (me.clone(), list.clone(), next.clone());
+                    std::thread::Builder::new()
+                        .name(format!("pipeline warm {i}"))
+                        .spawn(move || {
+                            lower_thread_priority();
+                            warmlist::WARMING.with(|w| w.set(true));
+                            loop {
+                                let k = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                                let (Some(pc), Some(f)) = (list.get(k), me.upgrade()) else { return };
+                                let _ = f.get(pc);
+                            }
+                        })
+                        .ok()
+                })
+                .collect();
+            for h in hs {
+                let _ = h.join();
+            }
+            let Some(f) = me.upgrade() else { return };
+            if n > 0 {
+                let on = if f.cache.is_some() { "on" } else { "off" };
+                eprintln!("gx: pipeline warm: {n} recorded configs, {} pipelines, {:.0} ms ({workers} workers, driver cache {on})", f.len(), t.elapsed().as_secs_f64() * 1e3);
+            }
+            f.save_driver_cache();
+            drop(f);
+            loop {
+                std::thread::sleep(std::time::Duration::from_secs(10));
+                let Some(f) = me.upgrade() else { return };
+                f.save_driver_cache();
+            }
+        });
     }
 
     /// The compile workers' queue (started on first use), or None when async creation is off.
@@ -1042,7 +1111,7 @@ impl PipeFactory {
                 })],
             }),
             multiview: None,
-            cache: None,
+            cache: self.cache.as_ref(),
         })
         });
         if let Some(e) = errs.first() {
@@ -1051,6 +1120,7 @@ impl PipeFactory {
         let fresh = self.pipelines.lock().unwrap().insert(key, pipeline.clone()).is_none();
         if fresh {
             warmlist::record(pc);
+            self.unsaved.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         }
         if std::env::var_os("MELEE_PIPE_LOG").is_some() && !warmlist::WARMING.with(|w| w.get()) {
             eprintln!("gx: pipe miss: thread {:?} fresh {fresh} wgsl {wgsl_hash:016x} key {:016x}", std::thread::current().name(), fnv(format!("{:?}", (pc.cull_mode, pc.blend_mode, pc.depth_compare, pc.color_update)).as_bytes()));
@@ -1081,15 +1151,43 @@ pub mod warmlist {
         pub static ASYNC: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
     }
 
-    fn path() -> Option<std::path::PathBuf> {
+    fn dir() -> Option<std::path::PathBuf> {
         if std::env::var("MELEE_PIPE_WARM").is_ok_and(|v| v == "0") {
             return None;
         }
-        let dir = match std::env::var_os("MELEE_GPUCACHE") {
+        Some(match std::env::var_os("MELEE_GPUCACHE") {
             Some(d) if !d.is_empty() => std::path::PathBuf::from(d),
             _ => std::env::current_exe().ok()?.parent()?.join("gpucache"),
-        };
-        Some(dir.join(format!("pipelines-{:016x}-{SZ}.bin", LAYOUT_ID)))
+        })
+    }
+
+    fn path() -> Option<std::path::PathBuf> {
+        Some(dir()?.join(format!("pipelines-{:016x}-{SZ}.bin", LAYOUT_ID)))
+    }
+
+    /// The driver pipeline cache's file: keyed by the GPU (vendor, device: wgpu's `pipeline_cache_key`), not by the
+    /// exe, so a new build keeps it. A driver update makes the driver reject the old blob (its header names the
+    /// driver) and the cache starts empty. None on backends without one (only Vulkan has it) or with the warm list
+    /// off (MELEE_PIPE_WARM=0); MELEE_PIPE_CACHE=0 turns off only this cache.
+    pub fn driver_cache_path(info: &wgpu::AdapterInfo) -> Option<std::path::PathBuf> {
+        if std::env::var("MELEE_PIPE_CACHE").is_ok_and(|v| v == "0") {
+            return None;
+        }
+        Some(dir()?.join(format!("{}.bin", wgpu::util::pipeline_cache_key(info)?)))
+    }
+
+    /// The driver pipeline cache, seeded from disk when an earlier run wrote one.
+    pub fn open_driver_cache(device: &wgpu::Device, info: &wgpu::AdapterInfo) -> (Option<wgpu::PipelineCache>, Option<std::path::PathBuf>) {
+        if !device.features().contains(wgpu::Features::PIPELINE_CACHE) {
+            return (None, None);
+        }
+        let Some(p) = driver_cache_path(info) else { return (None, None) };
+        let data = std::fs::read(&p).ok();
+        // SAFETY: the data is only ever a blob `PipelineCache::get_data` wrote for this adapter key; wgpu and the
+        // driver validate its header (vendor, device, driver version, cache UUID), and `fallback` turns a rejected
+        // blob into an empty cache instead of an error.
+        let c = unsafe { device.create_pipeline_cache(&wgpu::PipelineCacheDescriptor { label: Some("GX pipeline cache"), data: data.as_deref(), fallback: true }) };
+        (Some(c), Some(p))
     }
 
     /// The identity of the record layout: the source of every struct a record holds (all `#[repr(C)]`, so the
@@ -1369,7 +1467,7 @@ impl Renderer {
         let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("melee_gx"),
             // the adapter's own format features (MSAA counts past WebGPU's guaranteed 1 / 4) when it has them
-            required_features: wgpu::Features::PUSH_CONSTANTS | (adapter.features() & wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES),
+            required_features: wgpu::Features::PUSH_CONSTANTS | (adapter.features() & (wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES | wgpu::Features::PIPELINE_CACHE)),
             required_limits: limits,
             ..Default::default()
         }))
@@ -1453,23 +1551,10 @@ impl Renderer {
         });
         let empty_view = empty.create_view(&Default::default());
         let empty_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
-        let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default(), asyncq: Default::default(), pending: Default::default() });
-        {
-            // compile every pipeline earlier runs needed, off the frame path, while the game boots
-            let pf = pipes.clone();
-            let _ = std::thread::Builder::new().name("pipeline warm".into()).spawn(move || {
-                let t = std::time::Instant::now();
-                warmlist::WARMING.with(|w| w.set(true));
-                let list = warmlist::load();
-                let n = list.len();
-                for pc in &list {
-                    let _ = pf.get(pc);
-                }
-                if n > 0 {
-                    eprintln!("gx: pipeline warm: {n} recorded configs, {} pipelines, {:.0} ms", pf.len(), t.elapsed().as_secs_f64() * 1e3);
-                }
-            });
-        }
+        let (cache, cache_path) = warmlist::open_driver_cache(&device, &adapter_info);
+        let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default(), asyncq: Default::default(), pending: Default::default(), cache, cache_path, unsaved: Default::default() });
+        // compile every pipeline earlier runs needed, off the frame path, while the game boots
+        pipes.start_warm();
         Ok(Self {
             adapter,
             last_fill_us: 0,
@@ -3141,5 +3226,18 @@ fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawC
         } else {
             pass.draw_indexed(pd.first_index..pd.first_index + pd.count, 0, 0..d.instance_count);
         }
+    }
+}
+
+/// Below-normal priority for a background compile thread: never ahead of the game thread or its window.
+fn lower_thread_priority() {
+    #[cfg(windows)]
+    {
+        unsafe extern "system" {
+            fn GetCurrentThread() -> *mut core::ffi::c_void;
+            fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
+        }
+        // SAFETY: plain Win32 calls on this thread's own pseudo-handle.
+        unsafe { SetThreadPriority(GetCurrentThread(), -1) };
     }
 }

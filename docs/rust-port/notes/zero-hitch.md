@@ -505,6 +505,24 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   service (`MELEE_ASSETS=on`, still off by default) takes it to ~29 ms. Getting under 16.7 needs the setup split over
   ticks or the envoy hook's work moved earlier; both change the sim's frame layout and need NHV1/golden proof.
 
+### Warm workers, driver pipeline cache, boot-menu hang (2026-11-22, port/warmhang)
+- The owner's Slippi build "hung after the pipeline warm". The warm was not the cause: a "Return to main menu"
+  relaunch (MELEE_BOOT_MENU=1) leaves the opening from inside a tick (`Engine::goto_mode`), and the opening's exit
+  (`lbMthp_8001F800`) spins until the movie's read in flight completes. That completion is deferred to
+  `dvd::run_deferred_completions` (once per frame), so the spin never ended and the window stopped pumping (Windows
+  "Application Hang"). `goto_mode` now runs the owed completions first. Reproduced with MELEE_HANG_DUMP; also hangs
+  with MELEE_PIPE_WARM=0 on the old exe.
+- The warm itself: one thread compiled 1568 configs in 25-40 s every launch (`cache: None`: the list keeps configs,
+  not compiled pipelines). Now `PipeFactory::start_warm` shares the list over available_parallelism/4 (1-4)
+  below-normal workers, and a Vulkan `PipelineCache` (Features::PIPELINE_CACHE) is kept in
+  `gpucache/wgpu_pipeline_cache_vulkan_<vendor>_<device>.bin`: keyed by the GPU, not the exe, so a new build keeps
+  it; the driver rejects a blob from another driver version (fallback: empty cache). Written after the warm and
+  every 10 s while new pipelines appear (temp + rename). MELEE_PIPE_CACHE=0 turns off only that cache.
+- Owner's list (1568 configs), hidden agent runs, 2400 ticks: old exe 39.7 / 40.1 s warm, 9 and 7 clean frames over
+  16 ms; new exe 1.41 s (no driver cache file) / 0.95 s (with it), 0 frames over 16 ms, boot-menu relaunch reaches the
+  main menu at tick 5. The list is not needed before the menus: nothing waits on it (misses go to the async compile
+  workers), so it simply runs in the background.
+
 ### First-run warm pass (2026-11-16, port/vanilla-zerolag)
 A fresh install's warm list is empty, so its first matches compile pipelines on the frame path. `melee/src/warm_pass.rs`:
 when `play` starts and the list holds fewer than 150 records, a background thread runs a hidden helper (`melee play

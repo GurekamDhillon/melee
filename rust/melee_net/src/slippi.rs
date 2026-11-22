@@ -590,6 +590,13 @@ impl Client {
         self.remote.ack_timers.clear();
     }
 
+    /// The match is over and the link stays for the set's next game (Slippi Dolphin keeps one client through a Direct
+    /// set): the next selections are the opponent's next lock-in, not a restarted peer, and the opponent's link going
+    /// down is no longer the match's.
+    pub fn end_game(&mut self) {
+        self.in_game = false;
+    }
+
     /// `SendSlippiPad`: queue the local pad for `frame` (with the finalized checksum it carries) and send every
     /// unacked pad, newest first.
     pub fn send_pad(&mut self, frame: i32, pad: [u8; PAD_WIRE], checksum_frame: i32, checksum: u32) {
@@ -842,6 +849,8 @@ impl Client {
                 self.remote.selections = Some(s);
                 self.has_game_started = false;
                 self.remote.head_frame = 0;
+                // a set's next game: the last game's checksums are not this one's (its frames start again at 1)
+                self.remote_checksums.clear();
                 self.notes.push_back(Note::Selections(s));
             }
             MSG_CHAT_MESSAGE => {

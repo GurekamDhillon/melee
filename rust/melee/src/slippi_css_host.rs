@@ -1,8 +1,8 @@
 //! The host half of the Slippi online select (`melee_modes::tu::slippi_css`): the session that searches while the
 //! screen is up, holds the link to the opponent, sends this side's lock-in and reads theirs (Slippi's B5 / match
-//! selections), as Hero's host does behind `mu_slippi_cmd`. When both are locked in, the session closes its link and
-//! leaves the arguments of the match (`play --slippi-peer ...`), which connects to the same opponent again with the
-//! fighters picked here.
+//! selections), as Hero's host does behind `mu_slippi_cmd`. When both are locked in, the session leaves the arguments of
+//! the match (`play --slippi-peer ... --slippi-link`) and keeps its link for the match process to take over
+//! (slippi_link.rs); a Direct set's next game comes back here on the same link (`start_rematch`).
 
 use melee_modes::tu::slippi_css as sc;
 use melee_net::slippi::{Client, Note, Selections, Status};
@@ -103,7 +103,10 @@ fn search(args: Vec<String>, mode: i32) {
 
 /// The set goes on: the match process came back to the online select with the same opponent (Hero: after a game the
 /// select comes back, connected, the loser picking the next stage). `MELEE_SLIPPI_REMATCH` (set by the match process,
-/// `rematch_env`): `peer;port;local_port;decider;mode;opp_code;winner;game`. Returns the mode when it was there.
+/// `rematch_env`): `peer;port;local_port;decider;mode;opp_code;winner;game;link`. `link` is the last match's link,
+/// kept for this select (`slippi_link::hand_back`): taken over and locked in on, with no new connection (Slippi Dolphin
+/// keeps one client through the set and takes no second); without it the select connects again. Returns the mode when
+/// it was there.
 pub fn start_rematch() -> Option<i32> {
     let v = std::env::var("MELEE_SLIPPI_REMATCH").ok().filter(|v| !v.is_empty())?;
     std::env::remove_var("MELEE_SLIPPI_REMATCH");
@@ -114,6 +117,7 @@ pub fn start_rematch() -> Option<i32> {
     }
     let (peer, port, local_port, decider) = (f[0].to_string(), f[1].parse::<u16>().unwrap_or(0), f[2].parse::<u8>().unwrap_or(0), f[3] == "1");
     let (mode, opp, winner, game) = (f[4].parse::<i32>().unwrap_or(0), f[5].to_string(), f[6].parse::<u8>().unwrap_or(sc::WINNER_NULL), f[7].parse::<u32>().unwrap_or(1));
+    let kept = f.get(8).filter(|l| !l.is_empty()).map(|l| l.to_string());
     sc::begin(mode, "");
     sc::with(|o| {
         o.opp_code = opp.clone();
@@ -132,7 +136,15 @@ pub fn start_rematch() -> Option<i32> {
         let r = crate::slippi_np::pair(&a, max_s).map_err(|(_, m)| m).and_then(|mut p| {
             p.decider = decider;
             p.opp_code = opp;
-            link(&p, port, max_s).map(|_| ())
+            match &kept {
+                Some(spec) => {
+                    sc::with(|o| o.opp_code = p.opp_code.clone());
+                    let t = crate::slippi_link::take(spec, 0, port, |udp| Box::new(udp))?;
+                    eprintln!("online css: rematch: the set's link taken over ({:?}), no new connection", t.cl.status);
+                    lock_in(t.cl, &p, port, max_s).map(|_| ())
+                }
+                None => link(&p, port, max_s).map(|_| ()),
+            }
         });
         if let Err(e) = r {
             eprintln!("online css: session: {e}");
@@ -147,7 +159,8 @@ pub fn start_rematch() -> Option<i32> {
 
 /// The environment the match process takes back to the online select after its game (`start_rematch`): `None` when
 /// this match is not part of an online-select set (`MELEE_SLIPPI_SET`, set at the handoff: `mode;opp_code;game`).
-pub fn rematch_env(match_args: &[String], winner_port: i32) -> Option<String> {
+/// `link`: the match's link kept for the select (`slippi_link::hand_back`).
+pub fn rematch_env(match_args: &[String], winner_port: i32, link: &str) -> Option<String> {
     let set = std::env::var("MELEE_SLIPPI_SET").ok().filter(|v| !v.is_empty())?;
     let f: Vec<&str> = set.split(';').collect();
     let (mode, opp, game) = (f.first()?, f.get(1).copied().unwrap_or(""), f.get(2).and_then(|g| g.parse::<u32>().ok()).unwrap_or(0));
@@ -156,7 +169,15 @@ pub fn rematch_env(match_args: &[String], winner_port: i32) -> Option<String> {
     let lp: u8 = arg(match_args, "--slippi-local-port").and_then(|v| v.parse().ok()).unwrap_or(0);
     let decider = match_args.iter().any(|a| a == "--slippi-host");
     let winner = if winner_port < 0 { sc::WINNER_NULL } else if winner_port as u8 == lp { sc::WINNER_WON } else { sc::WINNER_LOST };
-    Some(format!("{peer};{port};{lp};{};{mode};{opp};{winner};{}", decider as u8, game + 1))
+    Some(format!("{peer};{port};{lp};{};{mode};{opp};{winner};{};{link}", decider as u8, game + 1))
+}
+
+/// In the match process: this match is a game of an online-select set and the set goes on after it (its link is
+/// kept for the next game, not closed). Tests: `MELEE_SLIPPI_SET_GAMES` ends the set after that many games.
+pub fn set_goes_on() -> bool {
+    let Some(set) = std::env::var("MELEE_SLIPPI_SET").ok().filter(|v| !v.is_empty()) else { return false };
+    let played = set.split(';').nth(2).and_then(|g| g.parse::<u32>().ok()).unwrap_or(0) + 1;
+    !std::env::var("MELEE_SLIPPI_SET_GAMES").ok().and_then(|v| v.parse::<u32>().ok()).is_some_and(|n| played >= n)
 }
 
 fn run(args: &[String]) -> Result<(), String> {
@@ -233,10 +254,16 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         udp = UdpTransport::open(p.bind_ip, port);
     }
     let udp = udp.map_err(|e| format!("bind: {e}"))?;
-    sc::with(|o| o.local_index = p.local_port);
     let mut cl = Client::new(Box::new(udp), p.local_port, p.peer, p.remote_port);
     cl.set_fallback(p.fallback);
     cl.connect_timeout_ms = 30000;
+    lock_in(cl, p, port, max_s)
+}
+
+/// The select on the link `cl` (new, or a set's kept from its last game): both lock in, then the link is kept for
+/// the match process. Ok(true) when both locked in (the handoff is set).
+fn lock_in(mut cl: Client, p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, String> {
+    sc::with(|o| o.local_index = p.local_port);
     let t0 = Instant::now();
     let (mut sent, mut theirs) = (None::<(u8, u8)>, None::<Selections>);
     let mut mine_sel = Selections::default();
@@ -357,7 +384,7 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
     eprintln!("online css: session: both locked in, the match next");
     // one link into the match (Slippi Dolphin takes no second connection): kept polled on this thread until the match
     // process takes it over (slippi_link.rs); the handoff is set once the keeper listens
-    crate::slippi_link::keep(cl, mine_sel, theirs, |link| {
+    crate::slippi_link::keep(cl, mine_sel, theirs, "match process", |link| {
         m.extend(["--slippi-link".into(), link]);
         *HANDOFF.lock().unwrap() = Some(m);
     })?;

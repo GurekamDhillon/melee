@@ -1915,7 +1915,7 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         rp.net = net;
         let code = crate::retail_flow::run(rp, has("--headless"));
-        // the online select's link, kept for the relaunched match: stay until it has been taken over
+        // the online select's link kept for the relaunched match, or a set's match's for the next game's select: stay until taken over
         crate::slippi_link::finish();
         // a YouGame room kept through a relaunched match: the window is closed; wait for the match process
         if let Some(c) = crate::room_keeper::finish() {

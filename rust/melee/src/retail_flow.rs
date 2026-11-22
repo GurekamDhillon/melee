@@ -371,9 +371,10 @@ impl RetailPlay {
                         if !nd.css() {
                             // an online-select set (Direct): back to the select with the same opponent
                             let back = nd.slippi.is_some() && nd.error.is_none();
-                            // the link's socket closes first: the select's session binds the same port
-                            nd.slippi = None;
-                            if !(back && self.slippi_set_back()) {
+                            // the link goes with it (kept for the next game's select when the set goes on, else
+                            // closed): its socket is released before the select's session binds the same port
+                            let link = nd.slippi.take().map(|sr| sr.link).filter(|_| crate::slippi_css_host::set_goes_on());
+                            if !(back && self.slippi_set_back(link)) {
                                 if back && std::env::var("MELEE_SLIPPI_AFTER").is_ok_and(|v| !v.is_empty()) {
                                     // Unranked: this window shows the results (the game's own scene, played offline
                                     // now), then goes back to the online select (`slippi_after_back`)

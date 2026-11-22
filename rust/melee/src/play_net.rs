@@ -2138,8 +2138,14 @@ impl NetDriver {
                 sr.work_slow,
                 sr.work_n
             ));
-            sr.link.disconnect(0);
             let compared = sr.compared;
+            // a Direct set's game: the link stays for the next game (Slippi Dolphin keeps one client through the set;
+            // retail_flow hands it back to the select), else it closes
+            if end_now && err.is_none() && compared > 0 && crate::slippi_css_host::set_goes_on() {
+                sr.link.end_game();
+            } else {
+                sr.link.disconnect(0);
+            }
             sr.out = None;
             let won = if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() };
             LAST_WINNER.store(won, std::sync::atomic::Ordering::Relaxed);

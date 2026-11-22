@@ -656,17 +656,29 @@ impl RetailPlay {
 
     /// After a game of an online-select set (Hero: the select comes back, connected, for the next game; the loser
     /// picks its stage): relaunch the window into the menus' online select with the same opponent. False when this
-    /// match is not part of one (the window quits as before).
-    pub(super) fn slippi_set_back(&mut self) -> bool {
+    /// match is not part of one (the window quits as before). `link`: the match's link (its game ended, kept open by
+    /// `play_net` when `slippi_css_host::set_goes_on`), kept for the select to take over (`slippi_link::hand_back`).
+    pub(super) fn slippi_set_back(&mut self, link: Option<melee_net::slippi::Client>) -> bool {
         let cur: Vec<String> = std::env::args().skip(1).collect();
         let won = crate::play_net::LAST_WINNER.load(std::sync::atomic::Ordering::Relaxed);
-        let Some(env) = crate::slippi_css_host::rematch_env(&cur, won) else { return false };
-        let game: u32 = env.rsplit(';').next().and_then(|g| g.parse().ok()).unwrap_or(1);
-        // tests: MELEE_SLIPPI_SET_GAMES ends the set after that many games
-        if std::env::var("MELEE_SLIPPI_SET_GAMES").ok().and_then(|v| v.parse::<u32>().ok()).is_some_and(|n| game >= n) {
-            log(&format!("online select: the set's {game} games are played"));
+        if crate::slippi_css_host::rematch_env(&cur, won, "").is_none() {
             return false;
         }
+        if !crate::slippi_css_host::set_goes_on() {
+            log("online select: the set's games are played");
+            return false;
+        }
+        // the one link goes on into the next game's select (Slippi Dolphin takes no second connection)
+        let kept = match link.map(crate::slippi_link::hand_back) {
+            Some(Ok(spec)) => spec,
+            Some(Err(e)) => {
+                log(&format!("online select: the set's link could not be kept: {e}"));
+                return false;
+            }
+            None => String::new(),
+        };
+        let Some(env) = crate::slippi_css_host::rematch_env(&cur, won, &kept) else { return false };
+        let game: u32 = env.split(';').nth(7).and_then(|g| g.parse().ok()).unwrap_or(1);
         let pad = std::env::var(format!("MELEE_SLIPPI_SET_PAD_SCRIPT_G{}", game + 1)).ok();
         if self.slippi_relaunch_select(("MELEE_SLIPPI_REMATCH", &env), pad, &format!("select-g{}", game + 1)) {
             log(&format!("online select: game {game} over (winner port {won}), back to the select for game {}", game + 1));

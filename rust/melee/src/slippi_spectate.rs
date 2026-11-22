@@ -65,7 +65,7 @@ pub fn start() {
         log("off in settings");
         return;
     }
-    if melee_platform::yougame::active() {
+    if melee_platform::yougame::sandboxed() {
         log("off under YouGame");
         return;
     }

@@ -62,6 +62,11 @@ pub fn active() -> bool {
 pub fn embedded() -> bool {
     st().is_some_and(|s| s.embedded)
 }
+/// Started by the YouGame app (the bridge is on, or the app's YOUGAME_DATA is set): its sandbox applies (read-only
+/// build folder, no loopback).
+pub fn sandboxed() -> bool {
+    active() || std::env::var_os("YOUGAME_DATA").is_some_and(|d| !d.is_empty())
+}
 /// YOUGAME_DATA: the per-game writable folder the app gives us.
 pub fn data_dir() -> Option<&'static str> {
     st().and_then(|s| s.data.as_deref())
@@ -110,6 +115,12 @@ pub fn init() -> Option<Vec<String>> {
 fn apply_data_dir(d: &str) -> Vec<String> {
     let base = std::path::Path::new(d);
     let mut notes = Vec::new();
+    // The app starts us in {data} already; made sure here, since the crash report's raw stage (crash.rs, written
+    // without allocating from a fault handler) and `crashlogs/` are relative to the working directory.
+    let _ = std::fs::create_dir_all(base);
+    if std::env::current_dir().ok().as_deref() != Some(base) && std::env::set_current_dir(base).is_ok() {
+        notes.push("cwd=<YOUGAME_DATA>".into());
+    }
     for (key, sub, dir) in [
         ("MELEE_CARD_PATH", "card", true),
         ("MELEE_SETTINGS_CFG", "settings.cfg", false),
@@ -121,6 +132,10 @@ fn apply_data_dir(d: &str) -> Vec<String> {
         // Both default to beside the exe, which is read-only in the app: the pipeline cache and the Envoy run file.
         ("MELEE_GPUCACHE", "gpucache", true),
         ("MELEE_ENVOY_DIR", "envoy", true),
+        // the Slippi menus' system files (--slippi-menus on), downloaded once: beside the exe by default
+        ("MELEE_SLIPPI_SYS_DIR", "SlippiSys", true),
+        // the frame profiler's recordings (profile 1): the exe's folder first by default
+        ("MELEE_PROFILE_DIR", "profiles", true),
     ] {
         if std::env::var_os(key).is_some() {
             continue;

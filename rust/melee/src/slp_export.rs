@@ -509,11 +509,23 @@ fn note_seen(m: &mut Match, seen: &[(u8, u8, f32, u8)]) {
     }
 }
 
-/// The Slippi-wire match records live from its rollback session (see the module doc). Call after `install`.
+/// The Slippi-wire match records live from its rollback session (see the module doc). Call after `install`, and at each
+/// online match's start in a run that also plays offline matches ([`live_end`] after it).
 pub fn live_rollback() {
     if let Some(x) = exp() {
         x.rb = true;
+        x.stopped = false;
         eprintln!("gw: slp: live from the rollback session's confirmed frames");
+    }
+}
+
+/// The online match of a menus run is over: its file was written at `stop`; offline matches record per tick again.
+pub fn live_end() {
+    let _s = melee_engine::arena::SysScope::enter();
+    if let Some(x) = exp().filter(|x| x.rb) {
+        x.end_match(true);
+        x.rb = false;
+        x.stopped = false;
     }
 }
 
@@ -567,6 +579,9 @@ pub fn confirm(upto: i32) {
 /// Before an engine tick: the controllers and the RNG seed the tick starts from (the Frame Start seed).
 pub fn begin_tick(pads: &[melee_types::PADStatus; 4]) {
     let _s = melee_engine::arena::SysScope::enter();
+    if exp().is_some_and(|x| x.rb) {
+        return; // a live (rollback) match: begin_frame / end_frame
+    }
     if let Some(m) = exp().and_then(|e| e.m.as_mut()) {
         m.pads = *pads;
         m.seed_at_tick = seed_now();
@@ -578,6 +593,9 @@ pub fn begin_tick(pads: &[melee_types::PADStatus; 4]) {
 /// After an engine tick: a tick that ran the fighters is one Slippi frame; leaving the match scene ends the file.
 pub fn end_tick(in_match: bool) {
     let _s = melee_engine::arena::SysScope::enter();
+    if exp().is_some_and(|x| x.rb) {
+        return;
+    }
     let Some(x) = exp() else { return };
     let Some(m) = x.m.as_mut() else { return };
     let seen = std::mem::take(&mut m.seen);

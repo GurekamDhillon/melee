@@ -1909,6 +1909,11 @@ pub fn play(args: &[String]) -> ExitCode {
                 crate::slp_export::install(&spec, "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
                 crate::slp_export::set_disc(&game.iso);
                 crate::slp_export::live_rollback();
+            } else if online_inproc {
+                // the menus' run in the rollback run modes (the online loop in one window): offline matches record per
+                // tick; an online match switches to the live export while it runs (browser.rs slippi_match_inprocess)
+                crate::slp_export::install(&spec, "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+                crate::slp_export::set_disc(&game.iso);
             } else if rollback_mode && rp.feed.is_none() {
                 if net.is_some() && rp.rec.is_some() {
                     crate::play_net::SLP_AFTER.with(|c| *c.borrow_mut() = Some(spec.clone()));

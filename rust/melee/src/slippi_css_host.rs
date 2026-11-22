@@ -161,15 +161,14 @@ pub fn start_rematch() -> Option<i32> {
         if let Err(e) = r {
             eprintln!("online css: session: {e}");
             if mode != melee_modes::tu::slippi_online::MODE_DIRECT && e.contains("disconnected") {
-                // Slippi: the opponent backed out of the select; this side is told and searches again (the fighter kept)
-                eprintln!("online css: rematch: the opponent left; searching again");
+                // Slippi: the opponent left (real Slippi Dolphin drops the link after every Unranked game); this side is
+                // told and back on the idle select with the fighter kept. No search until the player presses Start.
+                eprintln!("online css: rematch: the opponent left; back on the idle select, no search");
                 let chosen = sc::with(|o| o.chosen);
                 sc::go_idle();
                 sc::with(|o| {
                     o.error = "Your opponent disconnected".into();
                     o.chosen = chosen;
-                    o.search_again = true;
-                    o.start_locks = true;
                 });
                 return;
             }

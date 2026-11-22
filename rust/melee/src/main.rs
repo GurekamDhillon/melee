@@ -39,6 +39,7 @@ mod settings_overlay;
 mod crash;
 mod hang;
 mod launcher_compat;
+mod lobby_status;
 mod display;
 mod prof;
 mod profile;

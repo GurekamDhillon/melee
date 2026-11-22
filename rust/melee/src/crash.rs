@@ -36,6 +36,8 @@ pub fn install() {
             redirect_stderr(Path::new(&p));
         }
     }
+    #[cfg(windows)]
+    dump::init();
     let prev = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
         let loc = info.location().map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column())).unwrap_or_default();
@@ -227,6 +229,12 @@ fn write_report_with(kind: &str, reason: &str, fault: &str) {
     // when it is newer than the launch, first line "CRASH: ...".
     if let Ok(copy) = std::env::var("MELEE_CRASH_COPY") {
         if !copy.is_empty() {
+            // and `melee_port_crash.dmp` beside it, which his crash zip carries (launcher_crash_zip.h); first, so the
+            // text (the file the launcher waits on) is never newer than a dump still being written
+            #[cfg(windows)]
+            unsafe {
+                dump::write()
+            };
             let _ = std::fs::write(&copy, format!("CRASH: {kind}: {reason}, engine rust (melee)\n{text}"));
         }
     }
@@ -630,6 +638,7 @@ fn install_fault_handler() {
         let frames = &mut *core::ptr::addr_of_mut!(FRAMES);
         let n = RtlCaptureStackBackTrace(0, frames.len() as u32, frames.as_mut_ptr().cast(), core::ptr::null_mut()) as usize;
         push_frames(fault, &frames[..n]);
+        dump::EXC.store(p.cast(), std::sync::atomic::Ordering::SeqCst);
         if !REPORTING.load(std::sync::atomic::Ordering::SeqCst) {
             fault_stage1(what.as_str(), fault.as_str());
         }
@@ -767,3 +776,58 @@ pub fn crash_test(kind: &str) -> ! {
     }
 }
 
+
+/// `melee_port_crash.dmp` beside `MELEE_CRASH_COPY` (MiniDumpWriteDump from dbghelp.dll, loaded on use).
+#[cfg(windows)]
+mod dump {
+    use core::ffi::c_void;
+    use std::sync::atomic::{AtomicPtr, Ordering};
+    static PATH: std::sync::OnceLock<Vec<u16>> = std::sync::OnceLock::new();
+    /// The faulting exception's EXCEPTION_POINTERS (null for a panic).
+    pub static EXC: AtomicPtr<c_void> = AtomicPtr::new(core::ptr::null_mut());
+    #[repr(C, packed(4))]
+    struct ExcInfo {
+        thread: u32,
+        ptrs: *mut c_void,
+        client: i32,
+    }
+    type WriteDump = unsafe extern "system" fn(*mut c_void, u32, *mut c_void, u32, *const ExcInfo, *const c_void, *const c_void) -> i32;
+    extern "system" {
+        fn LoadLibraryA(name: *const u8) -> *mut c_void;
+        fn GetProcAddress(m: *mut c_void, name: *const u8) -> *mut c_void;
+        fn CreateFileW(path: *const u16, access: u32, share: u32, sa: *mut c_void, disp: u32, flags: u32, tmpl: *mut c_void) -> *mut c_void;
+        fn CloseHandle(h: *mut c_void) -> i32;
+        fn GetCurrentProcess() -> *mut c_void;
+        fn GetCurrentProcessId() -> u32;
+        fn GetCurrentThreadId() -> u32;
+    }
+    pub fn init() {
+        if let Some(c) = std::env::var_os("MELEE_CRASH_COPY").filter(|c| !c.is_empty()) {
+            use std::os::windows::ffi::OsStrExt;
+            let p = std::path::Path::new(&c).with_extension("dmp");
+            let _ = PATH.set(p.as_os_str().encode_wide().chain([0]).collect());
+        }
+    }
+    pub unsafe fn write() {
+        let Some(path) = PATH.get() else { return };
+        let lib = LoadLibraryA(b"dbghelp.dll ".as_ptr());
+        if lib.is_null() {
+            return;
+        }
+        let f = GetProcAddress(lib, b"MiniDumpWriteDump ".as_ptr());
+        if f.is_null() {
+            return;
+        }
+        let f: WriteDump = core::mem::transmute(f);
+        // GENERIC_WRITE, CREATE_ALWAYS
+        let h = CreateFileW(path.as_ptr(), 0x4000_0000, 0, core::ptr::null_mut(), 2, 0x80, core::ptr::null_mut());
+        if h as isize == -1 {
+            return;
+        }
+        let ptrs = EXC.load(Ordering::SeqCst);
+        let info = ExcInfo { thread: GetCurrentThreadId(), ptrs, client: 0 };
+        // MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithThreadInfo: stacks and what they point at, a few MB
+        f(GetCurrentProcess(), GetCurrentProcessId(), h, 0x40 | 0x1000, if ptrs.is_null() { core::ptr::null() } else { &info }, core::ptr::null(), core::ptr::null());
+        CloseHandle(h);
+    }
+}

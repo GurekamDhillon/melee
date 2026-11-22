@@ -125,8 +125,7 @@ launcher cannot reach yet. State per area (code: `rust/melee/src/launcher_compat
   `backgroundinput` are mapped; `--fps`, `--backend`, `--dlss*`, `--ssao`, `--frame-mode` and the `fps` key are
   accepted and ignored. Not present at all: backend choice, DLSS / frame generation, SSAA, CRT / shader presets,
   audio device / ASIO selection, a separate music volume.
-- **Settings button:** `--settings-window` still exits 0 at once. The engine now has its own in-game overlay (F1, or
-  hold D-pad Down and press Start) that writes our settings.cfg, not his `port-settings.ini`.
+- **Settings button:** closed by section 7 (our own settings window).
 - **Saves:** separate card folder (`User\GC\RustPort`); importing his `CardA` .gci files is not done.
 - **Crash flow:** we write `melee_port_crash.txt` but no `.dmp`; the patch keeps reports local. Posting Rust reports
   anywhere needs Hero's agreement and an engine name on his relay.
@@ -171,3 +170,30 @@ profiles; the current list is §4.
   worker `std::thread` was still joinable when statics were destroyed: `std::terminate`, CRT fail-fast, process exit
   `0xC0000409` (bash shows 127). Not a bug in his launcher (its close path goes through `WM_DESTROY`). The hooks now
   call `DestroyWindow`; the launcher exits 0 (LAUNCH OK and BUILD OK both print `launcher exit: 0`).
+
+## 7. Our own settings window (2026-11-22, port/musettings)
+
+`melee.exe --settings-window --settings-path <port-settings.ini> [--settings-tab <name>] [--settings-standby <pid>]`
+(`rust/melee/src/settings_window.rs`) opens the in-game settings overlay (settings_overlay.rs, same pages and look,
+panel centred) alone in an 800x600 window: no disc, no engine; text is the bundled fonts.
+
+- **Files:** on open his ini's display/audio values (port_ini.rs, the reverse of `map_settings`) are copied into
+  settings.cfg and audio.cfg; each change goes to settings.cfg (as in game) and the shared keys to his ini at once:
+  `widescreen` (+ `truewidescreen 0`), `fullscreen` + `exclusivefullscreen`, `vsync`, `scale` (0 = auto), `msaa`,
+  `volume`, `music`. Only those lines are rewritten; every other line (controls tables, unknown keys, comments, CRLF)
+  is kept byte for byte. The controls tables are not edited (no bindings page).
+- **Tabs:** his names; `video`, `audio`, `game`, `overlays`, `customize` match our pages, `mods` -> CUSTOMIZE (skins),
+  `controls` / `gecko` keep VIDEO. SESSION holds only "Close settings".
+- **Standby:** waits on `Local\MeleeUnlockedSettingsShow-<pid>` / `...Quit-<pid>` / the launcher's exit before any
+  window or GPU device exists (no cost while waiting; the window takes a moment to appear after the click). Show:
+  re-read the files, open; quit or launcher gone: exit 0. The GC adapter is not touched while waiting.
+- **Input:** controllers (D-pad / stick, A, B, L/R pages) and keyboard (arrows, Enter, Escape, Tab). Closing (B,
+  Escape, "Close settings", the title bar X) exits 0. Log `melee_settings.log` (never the game's `melee_port.log`).
+- **Launcher patch:** `pr/rust-port-engine` commit 2ab6d6f3 (and the squashed `scratch/ext/0001-...patch`): Settings
+  and its standby copy start `game_exe()`, i.e. `rust\melee.exe` with the Rust Port picked; the Source Port fallback
+  and the "no settings window" message are gone.
+- **Tests:** `cargo test -p melee --bin melee port_ini launcher_compat settings_overlay`;
+  `bash tools/rust-port/launcher/settings_window_test.sh <melee.exe> [shot dir]` (hidden: open + script changes the
+  volume + quit, the ini asserted; standby shown by the event; standby ended by the launcher's exit; with a shot dir,
+  720p/1080p pictures via `MELEE_SETTINGS_SHOT`). Hooks: `MELEE_SETTINGS_SCRIPT`, `MELEE_SETTINGS_SHOT`,
+  `MELEE_SETTINGS_MAX_TICKS`.

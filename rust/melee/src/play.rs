@@ -1444,6 +1444,10 @@ const USAGE: &str = "usage: melee play --iso DISC.iso [--time-secs N | --stocks 
        [--widescreen] [--fullscreen[=exclusive]] [--window WxH] [--render-scale N|auto] [--msaa N] [--vsync on|off] [--save-display]";
 
 pub fn play(args: &[String]) -> ExitCode {
+    // `--replay FILE.slp`: a Slippi replay, played by the sim's Slippi player in this window (slp_play.rs)
+    if let Some(p) = args.iter().position(|a| a == "--replay").and_then(|i| args.get(i + 1)).filter(|p| crate::slp_play::is_slp(p)) {
+        return crate::slp_play::play(args, p);
+    }
     // `--replay FILE`: the file's play options decide the boot (the command line's window options still apply)
     let mut feed = None;
     let merged: Vec<String>;

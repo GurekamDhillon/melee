@@ -8,8 +8,12 @@
 //! The events come from the fighter code's own replay hooks (`Replay_RecordInput` at the pre-frame point,
 //! `Replay_TraceFighter` at the 3.x post-frame point) and the VS mode's `Replay_RecordMatch`; `begin_tick` /
 //! `end_tick` around each engine tick group them into frames (the first tick with fighter input is frame -123). The
-//! hooks see every simulated frame, so a run that rolls back must not record live: netplay exports from its `.mrpl`
-//! playback instead (`play_net`).
+//! hooks see every simulated frame, so a run that rolls back cannot append them as they come:
+//! - the Slippi-wire match ([`live_rollback`]) records live as Slippi Dolphin does: `begin_frame` / `end_frame` around
+//!   each simulated frame (resimulations included) keep it pending under its session frame, a resimulation replacing
+//!   it, and [`confirm`] moves the frames whose every input is final into the file, in order. Game End comes from the
+//!   confirmed frames only;
+//! - other netplay exports from its `.mrpl` playback (`play_net`).
 
 use std::ffi::c_void;
 
@@ -30,6 +34,15 @@ struct Pre {
     ev: Vec<u8>,
 }
 
+/// A simulated frame of a rollback run, kept until its inputs are confirmed: its Frame Start seed, pre- and
+/// post-frame events, and what the post-frames say per fighter (port, stocks, percent, internal char id).
+struct Pending {
+    seed: u32,
+    pre: Vec<Pre>,
+    post: Vec<Vec<u8>>,
+    seen: Vec<(u8, u8, f32, u8)>,
+}
+
 struct Match {
     raw: Vec<u8>,
     frame: i32,
@@ -46,6 +59,11 @@ struct Match {
     timer_secs: u32,
     timed: bool,
     start_at: String,
+    /// rollback run: the session frame the match started on, the frames simulated but not yet confirmed, and the
+    /// post-frame facts of the frame being simulated
+    start_frame: i32,
+    pending: std::collections::BTreeMap<i32, Pending>,
+    seen: Vec<(u8, u8, f32, u8)>,
 }
 
 pub struct Exporter {
@@ -60,9 +78,17 @@ pub struct Exporter {
     /// engine's m-ex port runs), F0 terminator included. Empty: the disc carries no code list and the engine runs no
     /// Gecko codes, so no list is written (a 3.x file without one, as before Slippi 2.0).
     gecko: Vec<u8>,
+    /// a rollback run recorded live (`live_rollback`), the session frame being simulated, and whether the match is
+    /// over (`stop`: no frame after it is taken)
+    rb: bool,
+    cur: i32,
+    stopped: bool,
 }
 
-static mut EXP: Option<Exporter> = None;
+/// The exporter, made once on the system heap: a rollback load rewinds the statics and the game arena (the snapshot), so
+/// the static only holds this never-changing pointer and every entry point allocates under `SysScope`, where the
+/// events of the frames already played survive the rewind.
+static mut EXP: *mut Exporter = core::ptr::null_mut();
 
 #[allow(static_mut_refs)]
 fn exp() -> Option<&'static mut Exporter> {
@@ -242,7 +268,7 @@ impl Exporter {
             *p = gi[0x61 + 0x24 * i] != 3;
         }
         let timed = gi[0] & 3 == 2;
-        self.m = Some(Match { raw, frame: -124, present, timer_secs: sm.rules.time_limit, timed, start_at: iso_now(), started: false, seed_at_tick: 0, pads: [melee_types::PADStatus::zeroed(); 4], pre: Vec::new(), post: Vec::new(), chars: Default::default(), last: [None; 4], frames: 0 });
+        self.m = Some(Match { raw, frame: -124, present, timer_secs: sm.rules.time_limit, timed, start_at: iso_now(), started: false, seed_at_tick: 0, pads: [melee_types::PADStatus::zeroed(); 4], pre: Vec::new(), post: Vec::new(), chars: Default::default(), last: [None; 4], frames: 0, start_frame: self.cur, pending: Default::default(), seen: Vec::new() });
     }
 
     fn end_match(&mut self, quit: bool) {
@@ -335,7 +361,8 @@ impl Exporter {
 pub fn install(spec: &str, played_on: &str, names: [String; 4]) {
     use melee_fighter::platform::hook as h;
     unsafe {
-        EXP = Some(Exporter { spec: spec.to_string(), played_on: played_on.to_string(), names, m: None, count: 0, written: Vec::new(), gecko: Vec::new() });
+        let _s = melee_engine::arena::SysScope::enter();
+        EXP = Box::into_raw(Box::new(Exporter { spec: spec.to_string(), played_on: played_on.to_string(), names, m: None, count: 0, written: Vec::new(), gecko: Vec::new(), rb: false, cur: 0, stopped: false }));
         melee_modes::tu::gmvs::ext::hook::Replay_RecordMatch = Some(record_match);
         h::Replay_RecordInput = Some(record_input);
         h::Replay_Tracing = Some(|| exp().map_or(0, |x| x.m.is_some() as i32));
@@ -349,6 +376,7 @@ pub fn install(spec: &str, played_on: &str, names: [String; 4]) {
 /// List, header dropped, exactly as the disc carries it. Nothing is added or filtered: a disc without the file (vanilla)
 /// leaves the list empty.
 pub fn set_disc(iso: &str) {
+    let _s = melee_engine::arena::SysScope::enter();
     let Some(x) = exp() else { return };
     x.gecko.clear();
     let Ok(mut g) = melee_engine::gcm::Gcm::open(iso) else { return };
@@ -369,7 +397,12 @@ pub fn active() -> bool {
 }
 
 fn record_match(sm: *mut c_void, seed: u32) {
+    let _s = melee_engine::arena::SysScope::enter();
     let Some(x) = exp() else { return };
+    // a resimulation of the frame the match started on starts it again: the open match is replaced, not written
+    if x.rb && x.m.as_ref().is_some_and(|m| x.cur <= m.start_frame) {
+        x.m = None;
+    }
     x.end_match(true);
     let sm = unsafe { &*(sm as *const melee_types::StartMeleeData) };
     x.start(sm, seed);
@@ -377,11 +410,12 @@ fn record_match(sm: *mut c_void, seed: u32) {
 
 #[allow(clippy::too_many_arguments)]
 fn record_input(port: i32, fol: i32, lx: f32, ly: f32, cx: f32, cy: f32, t: f32, b: u32, action: i32, x: f32, y: f32, facing: f32, pct: f32) {
+    let _s = melee_engine::arena::SysScope::enter();
     let Some(m) = exp().and_then(|e| e.m.as_mut()) else { return };
     if !(0..4).contains(&port) {
         return;
     }
-    if m.pre.iter().any(|p| p.port == port as u8 && p.fol == (fol != 0)) {
+    if !exp().is_some_and(|x| x.rb) && m.pre.iter().any(|p| p.port == port as u8 && p.fol == (fol != 0)) {
         // this fighter's second pre-frame in one engine tick (the scene loop ran two logic frames): close the first
         flush_frame(m);
         m.seed_at_tick = seed_now();
@@ -416,6 +450,7 @@ fn record_input(port: i32, fol: i32, lx: f32, ly: f32, cx: f32, cy: f32, t: f32,
 
 #[allow(clippy::too_many_arguments)]
 fn trace_fighter(port: i32, fol: i32, ck: i32, action: i32, x: f32, y: f32, facing: f32, pct: f32, stocks: i32, ax: f32, ay: f32, kx: f32, ky: f32, gx: f32) {
+    let _s = melee_engine::arena::SysScope::enter();
     let Some(m) = exp().and_then(|e| e.m.as_mut()) else { return };
     if !(0..4).contains(&port) || m.pre.is_empty() {
         return;
@@ -457,18 +492,81 @@ fn trace_fighter(port: i32, fol: i32, ck: i32, action: i32, x: f32, y: f32, faci
         }
     }
     if fol == 0 {
-        m.last[port as usize] = Some((stocks as u8, pct));
-        let ch = &mut m.chars[port as usize];
-        match ch.iter_mut().find(|c| c.0 == ck as u8) {
-            Some(c) => c.1 += 1,
-            None => ch.push((ck as u8, 1)),
-        }
+        m.seen.push((port as u8, stocks as u8, pct, ck as u8));
     }
     m.post.push(ev);
 }
 
+/// A post-frame's facts into the match totals (the leader only): stocks and percent at the end, frames per character.
+fn note_seen(m: &mut Match, seen: &[(u8, u8, f32, u8)]) {
+    for &(port, stocks, pct, ck) in seen {
+        m.last[port as usize] = Some((stocks, pct));
+        let ch = &mut m.chars[port as usize];
+        match ch.iter_mut().find(|c| c.0 == ck) {
+            Some(c) => c.1 += 1,
+            None => ch.push((ck, 1)),
+        }
+    }
+}
+
+/// The Slippi-wire match records live from its rollback session (see the module doc). Call after `install`.
+pub fn live_rollback() {
+    if let Some(x) = exp() {
+        x.rb = true;
+        eprintln!("gw: slp: live from the rollback session's confirmed frames");
+    }
+}
+
+/// Before a rollback run's simulated frame (`frame`: its session frame, resimulations included): its controllers and
+/// the seed it starts from.
+pub fn begin_frame(frame: i32, pads: &[melee_types::PADStatus; 4]) {
+    let _s = melee_engine::arena::SysScope::enter();
+    let Some(x) = exp().filter(|x| x.rb && !x.stopped) else { return };
+    x.cur = frame;
+    if let Some(m) = x.m.as_mut() {
+        m.pads = *pads;
+        m.seed_at_tick = seed_now();
+        m.pre.clear();
+        m.post.clear();
+        m.seen.clear();
+    }
+}
+
+/// After a rollback run's simulated frame: it waits under its session frame until confirmed (a resimulation of it
+/// replaces it).
+pub fn end_frame() {
+    let _s = melee_engine::arena::SysScope::enter();
+    let Some(x) = exp().filter(|x| x.rb && !x.stopped) else { return };
+    let cur = x.cur;
+    let Some(m) = x.m.as_mut() else { return };
+    if m.pre.is_empty() {
+        return;
+    }
+    let p = Pending { seed: m.seed_at_tick, pre: std::mem::take(&mut m.pre), post: std::mem::take(&mut m.post), seen: std::mem::take(&mut m.seen) };
+    m.pending.insert(cur, p);
+}
+
+/// A rollback run's frames through `upto` (the session's confirmed frame: every input final) go into the file, in
+/// order; frames after it stay pending.
+pub fn confirm(upto: i32) {
+    let _s = melee_engine::arena::SysScope::enter();
+    let Some(m) = exp().filter(|x| x.rb && !x.stopped).and_then(|x| x.m.as_mut()) else { return };
+    while let Some(e) = m.pending.first_entry() {
+        if *e.key() > upto {
+            break;
+        }
+        let p = e.remove();
+        note_seen(m, &p.seen);
+        m.seed_at_tick = p.seed;
+        m.pre = p.pre;
+        m.post = p.post;
+        flush_frame(m);
+    }
+}
+
 /// Before an engine tick: the controllers and the RNG seed the tick starts from (the Frame Start seed).
 pub fn begin_tick(pads: &[melee_types::PADStatus; 4]) {
+    let _s = melee_engine::arena::SysScope::enter();
     if let Some(m) = exp().and_then(|e| e.m.as_mut()) {
         m.pads = *pads;
         m.seed_at_tick = seed_now();
@@ -479,8 +577,11 @@ pub fn begin_tick(pads: &[melee_types::PADStatus; 4]) {
 
 /// After an engine tick: a tick that ran the fighters is one Slippi frame; leaving the match scene ends the file.
 pub fn end_tick(in_match: bool) {
+    let _s = melee_engine::arena::SysScope::enter();
     let Some(x) = exp() else { return };
     let Some(m) = x.m.as_mut() else { return };
+    let seen = std::mem::take(&mut m.seen);
+    note_seen(m, &seen);
     if m.pre.is_empty() {
         if m.started && !in_match {
             x.end_match(false);
@@ -525,8 +626,25 @@ fn flush_frame(m: &mut Match) {
     m.raw.extend_from_slice(&bk);
 }
 
+/// A rollback run's match is over (the frame cap, the scene's end, the link's end): the frames confirmed so far are the
+/// file, written at once; the session goes on a moment for the peer (and confirms everything once it has left), none of
+/// that is taken.
+pub fn stop() {
+    let _s = melee_engine::arena::SysScope::enter();
+    if let Some(x) = exp().filter(|x| x.rb && !x.stopped) {
+        x.stopped = true;
+        if let Some(m) = x.m.as_mut() {
+            m.pending.clear();
+        }
+        // written now, Game End included, as Slippi Dolphin closes the file when the game ends: the process may be
+        // closed during the linger that follows
+        x.end_match(true);
+    }
+}
+
 /// The run ends: a match still open is written as a no contest.
 pub fn finish() -> Vec<String> {
+    let _s = melee_engine::arena::SysScope::enter();
     match exp() {
         Some(x) => {
             x.end_match(true);

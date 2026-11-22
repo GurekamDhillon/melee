@@ -81,3 +81,59 @@ fn run(loss: u32, lag_ms: u64, frames: i32) {
 fn slippi_clean() { run(0, 0, 600); }
 #[test]
 fn slippi_loss_lag() { run(10, 30, 600); }
+
+/// The live failure against Slippi Dolphin: matchmaking names the opponent's public endpoint, but its NAT maps its
+/// port anew for us, so its CONNECT arrives from another port than the one we dial. Slippi Dolphin and Hero accept
+/// a connecting peer by host; this client used to demand the exact address and dropped it (connect timed out).
+#[test]
+fn accepts_the_opponent_from_a_remapped_port() {
+    let a = UdpTransport::open(0x7F000001, 0).unwrap();
+    let dead = std::net::UdpSocket::bind("127.0.0.1:0").unwrap(); // the advertised endpoint: nothing answers there
+    let advertised = Addr::new(0x7F000001, dead.local_addr().unwrap().port());
+    drop(dead);
+    let b = UdpTransport::open(0x7F000001, 0).unwrap();
+    let pa = a.local_port();
+    let mut ca = Client::new(Box::new(a), 0, advertised, 1);
+    // "Dolphin": its own client dials our real port from its (different) real port
+    let mut cb = Client::new(Box::new(b), 1, Addr::new(0x7F000001, pa), 0);
+    let t0 = Instant::now();
+    while !(ca.status == Status::Connected && cb.status == Status::Connected) {
+        ca.poll();
+        cb.poll();
+        assert!(ca.status != Status::Failed && cb.status != Status::Failed);
+        assert!(t0.elapsed() < Duration::from_secs(5), "the opponent from a remapped port was refused (status {:?}/{:?})", ca.status, cb.status);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let s = Selections { character_id: 2, rng_offset: 5, ..Default::default() };
+    ca.set_match_selections(s);
+    let t0 = Instant::now();
+    loop {
+        ca.poll();
+        cb.poll();
+        if cb.remote_selections().is_some() {
+            break;
+        }
+        assert!(t0.elapsed() < Duration::from_secs(5), "no selections over the accepted link");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+}
+
+/// Hero's public fallback: the LAN address named first does not answer; 2 s in, the public one is dialled too.
+#[test]
+fn public_fallback_after_two_seconds() {
+    let a = UdpTransport::open(0x7F000001, 0).unwrap();
+    let b = UdpTransport::open(0x7F000001, 0).unwrap();
+    let pb = b.local_port();
+    let mut ca = Client::new(Box::new(a), 0, Addr::new(0x7F000001, 9), 1); // a LAN address nothing answers on
+    ca.set_fallback(Some(Addr::new(0x7F000001, pb)));
+    // the opponent never dials (a silent listener): only our fallback can make the link
+    let mut hb = melee_net::enet::Host::new(Box::new(b), 4, 3);
+    let t0 = Instant::now();
+    while ca.status != Status::Connected {
+        ca.poll();
+        while hb.service().is_some() {}
+        assert!(t0.elapsed() < Duration::from_secs(6), "the public fallback never connected");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    assert!(t0.elapsed() >= Duration::from_millis(1900), "the fallback must wait for the LAN attempt");
+}

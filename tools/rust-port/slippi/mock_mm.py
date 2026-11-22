@@ -98,6 +98,7 @@ class Conn:
 
 class Server:
     def __init__(self, port, capture, delay_ms, stages=None, lag_ms=0, loss_pct=0):
+        self.error, self.latest = "", ""
         self.port = port
         self.bind = LOOP
         self.capture = open(capture, "w") if capture else None
@@ -146,6 +147,14 @@ class Server:
                     if mode == 0 or (mode == 1 and msg["_peer_ip"] != LOOP):
                         log(f"join refused: mode {mode} from {msg['_peer_ip']}")
                         c.send({"type": "error", "error": "mode not offered by the local mock"})
+                        continue
+                    if self.error:
+                        # --error: answer every join as Slippi's server answers an outdated client
+                        log(f"join answered with the --error reply (appVersion {msg.get('appVersion')})")
+                        reply = {"type": "error", "error": self.error}
+                        if self.latest:
+                            reply["latestVersion"] = self.latest
+                        c.send(reply)
                         continue
                     log(f"join from {user.get('connectCode')} mode {msg.get('search', {}).get('mode')} "
                         f"port {msg.get('port')} lan {msg.get('ipAddressLan')} appVersion {msg.get('appVersion')} "
@@ -253,6 +262,8 @@ def main():
     ap.add_argument("--lag-ms", type=int, default=0, help="relay: one-way delay per datagram")
     ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this % of datagrams")
     ap.add_argument("--bind", default=LOOP, help="listen/relay address (default loopback; a private address for --mm-lan peers)")
+    ap.add_argument("--error", default="", help="answer every join with this server error (the outdated-client check)")
+    ap.add_argument("--latest-version", default="", help="with --error: the reply's latestVersion")
     a = ap.parse_args()
     ip = ipaddress.ip_address(a.bind)
     if not (ip.is_loopback or ip.is_private):
@@ -260,6 +271,7 @@ def main():
     stages = [int(x, 0) for x in a.stages.split(",") if x]
     srv = Server(a.port, a.capture, a.delay_ms, stages, a.lag_ms, a.loss_pct)
     srv.bind = a.bind
+    srv.error, srv.latest = a.error, a.latest_version
     srv.serve()
 
 

@@ -62,6 +62,10 @@ fn run(loss: u32, lag_ms: u64, frames: i32) {
             let p = [f as u8; 9];
             ca.send_pad(f, p, f - 3, 0x1000 + f as u32);
             cb.send_pad(f, p, f - 3, 0x1000 + f as u32);
+        } else {
+            // a stalled tick: send the unacked pads again, as the game loops do
+            ca.resend_pads();
+            cb.resend_pads();
         }
         std::thread::sleep(Duration::from_micros(500));
     }

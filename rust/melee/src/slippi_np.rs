@@ -508,6 +508,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             s.submit_local_input(local_port as usize * 2, ff, &i);
         }
         let (ckf, ck) = finals.iter().next_back().map_or((0, 0), |(a, b)| (*a, *b));
+        let sent_before = last_sent;
         for ff in (last_sent + 1)..=(f + delay) {
             let Some(i) = s.local_input_for_send(local_port as usize * 2, ff) else { break };
             let mut p = [0u8; PAD_WIRE];
@@ -519,6 +520,11 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             game.slippi_bits.entry(ff).or_default()[local_port as usize & 3] = p[8];
             cl.send_pad(online(ff), p, ckf, ck);
             last_sent = ff;
+        }
+        // a stalled tick (no new local pad) sends the unacked pads again, as Slippi Dolphin's skipped frame does
+        // (`SendSlippiPad(nullptr)`): a lost newest packet is repaired by nothing else
+        if last_sent == sent_before {
+            cl.resend_pads();
         }
         // on the wire now, not at the next tick's poll (~16 ms later); MELEE_NP_LATE_SEND=1 keeps the old timing (A/B)
         if !late_send {

@@ -26,8 +26,9 @@ pub const QUIT_GRACE: Duration = Duration::from_millis(4000);
 /// no `join` / `notice` (not handled yet).
 pub const CAPS_STANDALONE: &str = r#"yg {"caps":["ready"]}"#;
 /// Caps in the player box (YOUGAME_EMBED=1): Shift+Tab goes to the page as overlay down/up. No `pads` (the pad
-/// relay `yg-pads`: the GameCube pads come from the pad mirror, adapter/yg_mirror.rs), no `view` / `volume`.
-pub const CAPS_EMBEDDED: &str = r#"yg {"caps":["ready","overlay"]}"#;
+/// relay `yg-pads`: the GameCube pads come from the pad mirror, adapter/yg_mirror.rs), no `view`. `volume`: the page's
+/// slider arrives as `embed volume <gain>` (melee_core::host_volume), a master over our own volume, as in Hero's.
+pub const CAPS_EMBEDDED: &str = r#"yg {"caps":["ready","overlay","volume"]}"#;
 /// The app's own line limit (StdioBridge: 48 MiB, a save file's base64 fits).
 pub const MAX_LINE: usize = 48 << 20;
 pub const READY: &str = r#"yg {"ready":true}"#;
@@ -60,6 +61,11 @@ pub fn active() -> bool {
 /// The app asked for the player box (YOUGAME_EMBED=1).
 pub fn embedded() -> bool {
     st().is_some_and(|s| s.embedded)
+}
+/// Started by the YouGame app (the bridge is on, or the app's YOUGAME_DATA is set): its sandbox applies (read-only
+/// build folder, no loopback).
+pub fn sandboxed() -> bool {
+    active() || std::env::var_os("YOUGAME_DATA").is_some_and(|d| !d.is_empty())
 }
 /// YOUGAME_DATA: the per-game writable folder the app gives us.
 pub fn data_dir() -> Option<&'static str> {
@@ -109,6 +115,12 @@ pub fn init() -> Option<Vec<String>> {
 fn apply_data_dir(d: &str) -> Vec<String> {
     let base = std::path::Path::new(d);
     let mut notes = Vec::new();
+    // The app starts us in {data} already; made sure here, since the crash report's raw stage (crash.rs, written
+    // without allocating from a fault handler) and `crashlogs/` are relative to the working directory.
+    let _ = std::fs::create_dir_all(base);
+    if std::env::current_dir().ok().as_deref() != Some(base) && std::env::set_current_dir(base).is_ok() {
+        notes.push("cwd=<YOUGAME_DATA>".into());
+    }
     for (key, sub, dir) in [
         ("MELEE_CARD_PATH", "card", true),
         ("MELEE_SETTINGS_CFG", "settings.cfg", false),
@@ -120,6 +132,10 @@ fn apply_data_dir(d: &str) -> Vec<String> {
         // Both default to beside the exe, which is read-only in the app: the pipeline cache and the Envoy run file.
         ("MELEE_GPUCACHE", "gpucache", true),
         ("MELEE_ENVOY_DIR", "envoy", true),
+        // the Slippi menus' system files (--slippi-menus on), downloaded once: beside the exe by default
+        ("MELEE_SLIPPI_SYS_DIR", "SlippiSys", true),
+        // the frame profiler's recordings (profile 1): the exe's folder first by default
+        ("MELEE_PROFILE_DIR", "profiles", true),
     ] {
         if std::env::var_os(key).is_some() {
             continue;
@@ -421,6 +437,15 @@ fn read_stdin<R: BufRead>(mut r: R) {
         let Some(s) = st() else { return };
         match parse_line(line) {
             AppLine::Quit => request_quit("the app asked"),
+            AppLine::Box(c) if c.starts_with("volume ") => match melee_core::host_volume::parse_embed(&c) {
+                // On this thread, not the window's: a hidden or not-yet-adopted window still gets the page's volume.
+                Some(g) => {
+                    if melee_core::host_volume::set_milli(g) {
+                        crate::plog!("yougame: page volume {:.3}", g as f32 / 1000.0);
+                    }
+                }
+                None => crate::plog!("yougame: ignored a volume command: {}", c.chars().take(40).collect::<String>()),
+            },
             AppLine::Box(c) => {
                 let mut q = s.box_cmds.lock().unwrap();
                 if q.len() < 256 {

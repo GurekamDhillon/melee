@@ -11,6 +11,12 @@ matchmaking (the local mock), as Hero's blend does it. Loopback only; test ident
 --case slippi: A is under the fake app with the test login (the blend); B is a plain Slippi-menu player on the mock.
   A is alone in YouGame's queue, so the blend searches Slippi's pool too and the mock pairs A with B.
 --case quit: as yougame, but B's match quits at online frame 300 (MELEE_SLIPPI_NP_QUIT_AT): the room hears void.
+--rematch (yougame): after game 1 both windows are back on the online select in the same process, still linked
+  (YouGame's Unranked stays together, Hero's `afterMatch: stay`), and play game 2 on the same link; the kept room
+  hears begin/finish for both games (one room, two match ids).
+--relaunch: MELEE_YOUGAME_INPROCESS=0, the older relaunch per match (the room kept by the menu process).
+By default the match runs in the menu process's window (room_keeper in-process): the harness samples the game
+processes every second and fails on a relaunch (a third process, or a relaunch line in the logs).
 --case cancel: A alone, blended; it cancels at the online select (B on the select): both searches end, the queue
   hears `cancel`, nothing is paired.
 Both peers walk the menus by pad script to the online select (tools/rust-port/menus/slippi_online*_css.txt), lock in,
@@ -48,6 +54,8 @@ def main():
     ap.add_argument("--frames", type=int, default=900)
     ap.add_argument("--dead-lan", action="store_true", help="publish a dead lan address: the punch must use ext")
     ap.add_argument("--dead-direct", action="store_true", help="both published addresses dead: only the room relay works")
+    ap.add_argument("--rematch", action="store_true", help="a second game after the select comes back (in-process)")
+    ap.add_argument("--relaunch", action="store_true", help="MELEE_YOUGAME_INPROCESS=0: relaunch the window per match")
     ap.add_argument("--rooms-port", type=int, default=43190)
     ap.add_argument("--mm-port", type=int, default=43175)
     ap.add_argument("--exe", default=str(REPO / "build" / "cargo" / os.environ.get("PROFILE", "fast") / "melee.exe"))
@@ -73,7 +81,15 @@ def main():
         e = dict(base)
         if a.case == "quit" and name == "B":
             e["MELEE_SLIPPI_NP_QUIT_AT"] = "300"
-        e.update(MELEE_WINDOW_TITLE=f"slippimenu:{name}:rooms-{a.case}", MELEE_PAD_SCRIPT=str(menus / script),
+        if a.relaunch:
+            e["MELEE_YOUGAME_INPROCESS"] = "0"
+        # back on the select after a match in this window: idle, or (--rematch) pick and Start once; then end the run
+        e["MELEE_SLIPPI_SET_MAX_FRAMES"] = "4000" if a.rematch else "300"
+        if a.rematch:
+            # YouGame's Unranked stays together (`afterMatch: stay`): a set on the same link, the room kept for game 2
+            e["MELEE_SLIPPI_SET_GAMES"] = "2"
+            e["MELEE_SLIPPI_SET_PAD_SCRIPT_G2"] = str(menus / ("slippi_set_a_g2.txt" if name == "A" else "slippi_set_b_g2.txt"))
+        e.update(MELEE_WINDOW_TITLE=f"ygroom:{name}:rooms-{a.case}{'-relaunch' if a.relaunch else ''}", MELEE_PAD_SCRIPT=str(menus / script),
                  MELEE_SLIPPI_NP_PORT=str(np_port), MELEE_SLIPPI_TEST_CODE=code, MELEE_SLIPPI_NP_OUT=str(out / csv))
         if yougame:
             data = out / f"ygdata-{name}"
@@ -93,6 +109,24 @@ def main():
             App(p, name.lower(), a.rooms_port, logf)
         return p
 
+    exe_w = str(Path(a.exe).resolve())
+    seen_pids, max_live, stop_watch = set(), [0], [False]
+
+    def watch():
+        ps = ("Get-CimInstance Win32_Process -Filter \"Name='melee.exe'\" | Where-Object { $_.ExecutablePath -eq '%s' } "
+              "| ForEach-Object { $_.ProcessId }" % exe_w)
+        while not stop_watch[0]:
+            try:
+                out_ = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, timeout=20).stdout
+                pids = [int(x) for x in out_.split() if x.isdigit()]
+                seen_pids.update(pids)
+                max_live[0] = max(max_live[0], len(pids))
+            except (subprocess.TimeoutExpired, OSError):
+                pass
+            time.sleep(1)
+
+    import threading
+    threading.Thread(target=watch, daemon=True).start()
     procs = []
     if a.case == "cancel":
         procs.append(spawn("A", True, "slippi_online_unranked_css_cancel.txt", a.mm_port + 100, "AAAA#001", "a.csv"))
@@ -125,10 +159,17 @@ def main():
             verdict = f"NO-CSV ({e})"
     else:
         time.sleep(2)
+    # in-process the menu processes end on their own (MELEE_SLIPPI_SET_MAX_FRAMES after the select comes back)
+    for p in procs:
+        try:
+            p.wait(timeout=120)
+        except subprocess.TimeoutExpired:
+            p.kill()
+    stop_watch[0] = True
     mm.kill()
     errs = "".join((out / f).read_text(errors="replace") for f in ("A-menu.err", "B-menu.err") if (out / f).exists())
     print(f"fake STUN answered {stun.answered} binding requests")
-    keys = ("online search", "yougame room:", "over 16 ms", "unranked blend", "yougame:", "online css", "online menu")
+    keys = ("relaunch", "in this window", "HARD desyncs", "match over at", "online search", "yougame room:", "over 16 ms", "unranked blend", "yougame:", "online css", "online menu")
     for line in errs.splitlines():
         if any(k in line for k in keys):
             print(line)
@@ -145,6 +186,19 @@ def main():
         want_void = a.case == "quit"
         ok = begin and len(fin) >= 1 and (winners == {"void"} if want_void else (len(winners) == 1 and "void" not in winners))
         verdict += f" | room: begin {begin}, finishes {len(fin)}, winners {sorted(winners)}, searches {searches}: {'ROOM-OK' if ok and searches == 2 else 'ROOM-BAD'}"
+    # one window per side: never more than the two menu processes, and no relaunch line
+    relaunched = any(k in errs for k in ("relaunching for", "the match runs in the relaunched window"))
+    desync = [l for l in errs.splitlines() if "HARD desyncs" in l and " 0 HARD desyncs" not in l]
+    matches = errs.count("match over at game frame")
+    print(f"game processes seen: {len(seen_pids)}, at most {max_live[0]} at once; relaunch in logs: {relaunched}; "
+          f"matches played: {matches}; desync lines: {len(desync)}")
+    if a.case == "yougame" and not a.relaunch:
+        want = 4 if a.rematch else 2
+        okw = len(seen_pids) <= 2 and not relaunched and not desync and matches >= want
+        if a.rematch:
+            fin = [l for l in rooms.events if "finish by" in l]
+            okw = okw and sum(1 for l in rooms.events if "begin by" in l) >= 2 and len(fin) >= 4 and errs.count("the set's link taken over") >= 2
+        verdict += f" | one window: {'INPROC-OK' if okw else 'INPROC-BAD'}"
     print(a.case, verdict)
 
 

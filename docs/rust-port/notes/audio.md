@@ -150,3 +150,20 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   seconds give one back. Drift: when resampling, the step is steered by the ring fill against the cushion (max 0.2%).
 - All of it is consumer side: the sub-frame sequence the mixer produces is unchanged, so the mix hash (gate:
   pad_falcon_fox_fd, 6106 sub-frames, 0xf4956676e79a4037) is unaffected.
+
+## Audio controls (port/audioctl, 2026-11-22): Music / SFX sliders, output device, Hero's setting names
+- settings.cfg `music` and `sfx` (0..100, default 100; `MELEE_MUSIC` / `MELEE_SFX` win), live in the overlay's AUDIO page. Applied in
+  `ax.rs`'s mix to each voice's sample before its sends: the HPS stream voices (`Voice::music`, set in `pstream_first_data`) take the
+  music gain, every other voice and the native clips the SFX gain. Process-wide atomics, not `Ax` fields, so a rollback load never
+  rewinds them. At 100/100 the mix is untouched (bit for bit).
+- Combining: device gain = `volume`/100 (audio.cfg / MELEE_VOLUME) x the host page gain (port/volcache's rule), and the music/SFX
+  gains multiply per voice under it. port/volcache was not in rust-port yet: this branch carries only its hidden+MELEE_AUDIO_DUMP
+  deviceless driver path (same code), not host_volume.
+- Output device: settings `audio_device` (Hero's key) = a device name, empty = the system default (`MELEE_AUDIO_DEVICE` wins);
+  applies after restart, as in Hero's page. The device list goes to the log at boot. Hero's launcher `audio_device` is a WASAPI
+  endpoint id, so launcher_compat maps only `music`.
+- Jukebox: Hero's (and Slippi's) jukebox plays the stage HPS on the host because Slippi's netplay codes mute the game's own stream.
+  Our engine plays that stream natively, so the Music slider covers it; no separate jukebox was added.
+- Proof: `melee_audio/tests/mix_gain.rs` (music 0 = the SFX-only mix exactly, SFX 0 = the music-only mix exactly, 50% = a quarter of
+  the energy, 100/100 bit for bit); hidden CPU match runs with MELEE_AUDIO_DUMP: RMS music-only 2906, music 50% 1453, SFX-only 3316,
+  both 4406 (= sqrt of the sum of squares), device enumeration in the log.

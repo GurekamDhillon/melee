@@ -2216,6 +2216,12 @@ pub static LAST_WINNER: std::sync::atomic::AtomicI32 = std::sync::atomic::Atomic
 /// The YouGame room this match plays for (`MELEE_ROOM_REPORT`, set by the menu process that keeps the room:
 /// `room_keeper`): one line per event, `start` and `end W`.
 fn room_report(line: &str) {
+    // the room kept by this process, the match in this window (room_keeper::attach_inprocess)
+    if crate::room_keeper::inprocess_attached() {
+        crate::room_keeper::report(line);
+        log(&format!("room report: {line} (in-process)"));
+        return;
+    }
     let Some(p) = std::env::var_os("MELEE_ROOM_REPORT") else { return };
     use std::io::Write;
     if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) {

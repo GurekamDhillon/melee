@@ -993,7 +993,7 @@ impl RetailPlay {
         self.age += 1;
         let Some(e) = self.engine() else { return };
         let now = e.mode_scene();
-        crate::lobby_status::frame(now.1);
+        crate::lobby_status::on_frame(now.1);
         if melee_core::frameprof::on() {
             use melee_core::frameprof as fp;
             if entered || now != self.cur {
@@ -1151,6 +1151,14 @@ impl RetailPlay {
                     }
                     if std::env::var_os("MELEE_VOLUME").is_none() {
                         let _ = melee_audio::output::save_volume(v);
+                    }
+                }
+                "music" | "sfx" => {
+                    let v: i32 = c.value.parse().unwrap_or(100);
+                    if c.key == "music" {
+                        melee_audio::ax::set_music_volume(v);
+                    } else {
+                        melee_audio::ax::set_sfx_volume(v);
                     }
                 }
                 "action:menu" => self.exit_req = Some(true),

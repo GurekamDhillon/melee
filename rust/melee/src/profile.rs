@@ -32,6 +32,10 @@ pub fn start(display: &crate::display::Display, args: &[String]) {
     if let Some(d) = crate::cfg::text("profile_dir") {
         dirs.push(PathBuf::from(d));
     }
+    // MELEE_PROFILE_DIR (the YouGame build sets it under YOUGAME_DATA: the exe's folder is read-only there)
+    if let Some(d) = std::env::var_os("MELEE_PROFILE_DIR").filter(|d| !d.is_empty()) {
+        dirs.push(PathBuf::from(d));
+    }
     dirs.push(exe_dir.join("profiles"));
     if let Some(p) = melee_data::settings::default_path().parent() {
         dirs.push(p.join("profiles"));

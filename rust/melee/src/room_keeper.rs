@@ -8,6 +8,11 @@
 //! starts, `end W` when it ends (W the 0-based winning port, -1 none). The keeper turns those into Hero's
 //! `game_started` / `game_ended`: the host sends `begin`, everyone `finish` with the winner's participant id, or
 //! `void` when the match ends with no winner or the child quits before an end. Then it leaves the room.
+//!
+//! In-process (the default with the one-window online loop, `slippi_link::inprocess`; `MELEE_YOUGAME_INPROCESS=0`
+//! keeps the relaunch above): the match runs in this process and window. Its `start` / `end W` lines come to the
+//! keeper in memory ([`report`]) instead of a file, and the match's end in this window ([`match_done`]) stands for
+//! the child's exit. The keeper thread, the room relay and the punch's port are the same either way.
 
 use melee_net::yougame_relay::{is_frame, Relay};
 use melee_net::yougame_room as yr;
@@ -20,8 +25,65 @@ use std::time::{Duration, Instant};
 enum Cmd {
     /// The match process: its handle and the file it reports to.
     Child(std::process::Child, PathBuf),
+    /// The match runs in this process (`attach_inprocess`): reports come through [`report`].
+    InProcess,
     /// No match follows (cancel, error): leave the room.
     Close,
+    /// The process is ending: leave once the match in hand is reported (no next game).
+    Finish,
+}
+
+/// The in-process match's report lines, and whether it is over (`match_done`).
+/// (A SysStatic: `report` runs inside the rollback session, whose loads rewind plain statics.)
+static INPROC_LINES: melee_engine::arena::SysStatic<Vec<String>> = melee_engine::arena::SysStatic::new(Vec::new);
+static INPROC_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static INPROC_ON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// The set goes on in this window (Hero: the room stays for the next game, `afterMatch: stay`): stay in the room.
+static NEXT_GAME: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The in-process match's set goes on (browser.rs `slippi_set_back`): the room stays for the next game.
+pub fn next_game() {
+    if INPROC_ON.load(std::sync::atomic::Ordering::SeqCst) {
+        NEXT_GAME.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+/// YouGame rooms play their matches in this process too (`MELEE_YOUGAME_INPROCESS=0`: the relaunch per match).
+pub fn wants_inprocess() -> bool {
+    let off = std::env::var("MELEE_YOUGAME_INPROCESS").is_ok_and(|v| v == "0");
+    // the relaunch hands the Slippi link over loopback TCP (slippi_link::keep), which the YouGame sandbox denies
+    if off && melee_platform::yougame::sandboxed() {
+        eprintln!("melee: MELEE_YOUGAME_INPROCESS=0 is ignored under YouGame (its relaunch handoff needs loopback, which the sandbox denies)");
+        return true;
+    }
+    !off
+}
+
+/// The kept room's match runs in this process from now on.
+pub fn attach_inprocess() {
+    INPROC_LINES.with(|v| v.clear());
+    INPROC_DONE.store(false, std::sync::atomic::Ordering::SeqCst);
+    if let Some(k) = KEEPER.lock().unwrap().as_ref() {
+        INPROC_ON.store(true, std::sync::atomic::Ordering::SeqCst);
+        let _ = k.tx.send(Cmd::InProcess);
+    }
+}
+
+/// An in-process match is reporting to a kept room (play_net's `room_report` sends its lines here).
+pub fn inprocess_attached() -> bool {
+    INPROC_ON.load(std::sync::atomic::Ordering::SeqCst)
+}
+
+/// A line from the in-process match (`start`, `end W`).
+pub fn report(line: &str) {
+    INPROC_LINES.with(|v| v.push(line.to_string()));
+}
+
+/// The in-process match is over (back to the select, or it could not start): the child's exit, in-process.
+pub fn match_done() {
+    if INPROC_ON.swap(false, std::sync::atomic::Ordering::SeqCst) {
+        INPROC_DONE.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
 }
 
 struct Keeper {
@@ -66,7 +128,11 @@ pub fn close() {
 /// At the end of `play`: when a match process holds the room, wait for it (the window is gone by now); else leave.
 /// Returns the match process's exit code when there was one.
 pub fn finish() -> Option<i32> {
+    // an in-process match still on when the window closed: it is over now, and no next game follows
+    match_done();
+    NEXT_GAME.store(false, std::sync::atomic::Ordering::SeqCst);
     let k = KEEPER.lock().unwrap().take()?;
+    let _ = k.tx.send(Cmd::Finish);
     let _ = k.thread.join();
     CHILD_CODE.lock().unwrap().take()
 }
@@ -87,6 +153,9 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, mut relay: Option
     let mut say = |s: &str| eprintln!("{s}");
     let mut h = yr::Hooks { cancelled: &no, claim: &mut claim, searching: &mut waiting, renew: &mut renew, now: &yr::now_ms, log: &mut say };
     let mut child: Option<(std::process::Child, PathBuf)> = None;
+    let mut inproc = false;
+    let mut games = 0u32;
+    let mut finishing = false;
     let (mut started, mut ended) = (false, false);
     let mut seen = 0usize;
     let mut done_at: Option<Instant> = None;
@@ -102,8 +171,19 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, mut relay: Option
                 log("the match runs in the relaunched window; this process keeps the room");
                 child = Some((c, p));
             }
+            Ok(Cmd::InProcess) => {
+                log(&format!("the match runs in this window (no relaunch); the room stays with it (game {})", games + 1));
+                inproc = true;
+            }
+            Ok(Cmd::Finish) => {
+                finishing = true;
+                // between two games of a set in this window: nothing in hand, leave now
+                if child.is_none() && !started {
+                    break;
+                }
+            }
             Ok(Cmd::Close) => break,
-            Err(mpsc::TryRecvError::Disconnected) if child.is_none() => break,
+            Err(mpsc::TryRecvError::Disconnected) if child.is_none() && !inproc => break,
             Err(_) => {}
         }
         // the room relay (Hero's yougame_room_relay.h): datagrams out every 16 ms, frames in as they come
@@ -130,6 +210,7 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, mut relay: Option
                 yr::Event::Refused { action, error } => log(&format!("{action} refused: {error}")),
                 yr::Event::Ended(t) => {
                     log(&format!("the room ended ({t})"));
+                    INPROC_ON.store(false, std::sync::atomic::Ordering::SeqCst);
                     if let Some((c, _)) = child.as_mut() {
                         *CHILD_CODE.lock().unwrap() = c.wait().ok().and_then(|s| s.code());
                     }
@@ -148,11 +229,28 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, mut relay: Option
             continue;
         }
         last_report = Instant::now();
-        if let Some((c, p)) = child.as_mut() {
+        let polled: Option<(Vec<String>, bool)> = if let Some((c, p)) = child.as_mut() {
             let text = std::fs::read_to_string(&*p).unwrap_or_default();
-            let lines: Vec<&str> = text.lines().collect();
+            let exited = match c.try_wait() {
+                Ok(Some(s)) => {
+                    *CHILD_CODE.lock().unwrap() = s.code();
+                    true
+                }
+                Ok(None) => false,
+                Err(_) => true,
+            };
+            if quit && !exited {
+                let _ = c.kill();
+            }
+            Some((text.lines().map(str::to_string).collect(), exited))
+        } else if inproc {
+            Some((INPROC_LINES.with(|v| v.clone()), INPROC_DONE.load(std::sync::atomic::Ordering::SeqCst)))
+        } else {
+            None
+        };
+        if let Some((lines, exited)) = polled {
             for l in lines.iter().skip(seen) {
-                if *l == "start" && !started {
+                if l == "start" && !started {
                     started = true;
                     j.room.game_started();
                     log("the match started: begin");
@@ -166,30 +264,30 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, mut relay: Option
                 }
             }
             seen = lines.len();
-            let exited = match c.try_wait() {
-                Ok(Some(s)) => {
-                    *CHILD_CODE.lock().unwrap() = s.code();
-                    true
-                }
-                Ok(None) => false,
-                Err(_) => true,
-            };
-            if quit && !exited {
-                let _ = c.kill();
-            }
             if (exited || quit) && !ended {
                 ended = true;
                 if started {
                     j.room.game_ended(-1);
-                    log("the match process ended before the match did: void");
+                    log(if inproc { "the match left this window before it ended: void" } else { "the match process ended before the match did: void" });
                 }
                 done_at.get_or_insert_with(Instant::now);
             }
+            // in-process: the result can come while the window is already back on the select
+            let exited = exited || (inproc && ended);
             if exited && ended {
                 // the result (or 5 s for it), then leave
                 let at = *done_at.get_or_insert_with(Instant::now);
                 // no match ever started: nothing to report. Else finish went out (due() clears the match id).
                 if !started || at.elapsed() > Duration::from_secs(5) || (j.room.match_id.is_empty() && at.elapsed() > Duration::from_millis(1500)) {
+                    // a set in this window goes on: the same room for its next game (Hero's `afterMatch: stay`)
+                    if inproc && started && !finishing && NEXT_GAME.swap(false, std::sync::atomic::Ordering::SeqCst) {
+                        games += 1;
+                        log(&format!("game {games} reported; the set goes on: the room stays for game {}", games + 1));
+                        (started, ended, seen, done_at) = (false, false, 0, None);
+                        INPROC_LINES.with(|v| v.clear());
+                        INPROC_DONE.store(false, std::sync::atomic::Ordering::SeqCst);
+                        continue;
+                    }
                     break;
                 }
             }
@@ -202,6 +300,7 @@ fn run(mut j: yr::Joined, mut opener: yr::WsOpener, mode: i32, mut relay: Option
     }
     j.socket.send(r#"{"t":"leave"}"#);
     log("left the room");
+    INPROC_ON.store(false, std::sync::atomic::Ordering::SeqCst);
     if let Some((_, p)) = child {
         let _ = std::fs::remove_file(p);
     }

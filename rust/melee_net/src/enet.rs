@@ -11,8 +11,10 @@
 //! - ping (reliable on the peer channel 0xFF), bandwidth-limit and throttle-configure commands (accepted and
 //!   stored: Slippi sends a throttle-configure with deceleration 0 on connect).
 //!
-//! Not implemented: compression and the optional checksum (Slippi uses neither), fragments (nothing Slippi sends
-//! is larger than one datagram; an incoming fragment is skipped), the bandwidth throttle (we never drop our own
+//! Reliable fragments (SEND_FRAGMENT) are sent and put back together: the Slippi spectator feed (slippi_spectate.rs)
+//! sends game events larger than one datagram. A host export (`export`) does not carry a half-assembled packet.
+//!
+//! Not implemented: compression and the optional checksum (Slippi uses neither), unreliable fragments (skipped), the bandwidth throttle (we never drop our own
 //! unreliable traffic, which is what Slippi's deceleration-0 setting asks of a peer anyway).
 //!
 //! Like the rest of this crate it runs from `service` calls on the caller's thread: no threads, no blocking. All
@@ -33,6 +35,11 @@ pub const THROTTLE_DECELERATION: u32 = 2;
 pub const PING_INTERVAL_MS: u32 = 500;
 /// No ack for a reliable command this long: the peer is gone (ENet's `ENET_PEER_TIMEOUT_MAXIMUM`).
 pub const TIMEOUT_MS: u32 = 30000;
+/// ENet's `ENET_PEER_TIMEOUT_MINIMUM`: a command resent until its timeout grew `TIMEOUT_LIMIT` times and unacked
+/// this long is also a gone peer (what Slippi Dolphin and Hero, on ENet's defaults, notice a dead peer by).
+pub const TIMEOUT_MINIMUM_MS: u32 = 5000;
+/// ENet's `ENET_PEER_TIMEOUT_LIMIT`: the round-trip timeout doubles per resend, so 32x is the fifth resend.
+pub const TIMEOUT_LIMIT: u32 = 32;
 const UNSEQ_WINDOW_SIZE: u32 = 1024;
 const FREE_UNSEQ_WINDOWS: u32 = 32;
 
@@ -86,7 +93,14 @@ struct Channel {
     in_reliable: u16,
     /// Reliable packets that arrived ahead of `in_reliable + 1`.
     pending: BTreeMap<u16, Vec<u8>>,
+    /// The reliable sequence numbers in `pending` that are fragments: (start sequence, count, number, total, offset).
+    frag_meta: BTreeMap<u16, (u16, u32, u32, u32, u32)>,
+    /// The fragmented packet being put together, in order: (start sequence, bytes, fragments seen).
+    assembling: Option<(u16, Vec<u8>, u32)>,
 }
+
+/// Largest packet a fragmented send may make (ENet's own default host limit is 32 MB; nothing here comes close).
+const MAX_PACKET: usize = 1 << 20;
 
 #[derive(Clone)]
 struct SentReliable {
@@ -97,6 +111,8 @@ struct SentReliable {
     first_sent: u32,
     next_send: u32,
     timeout: u32,
+    /// Times resent (ENet's doubling `roundTripTimeout`: 2^resends of the first).
+    resends: u32,
 }
 
 #[derive(Clone)]
@@ -286,15 +302,37 @@ impl Host {
         };
         bytes[2..4].copy_from_slice(&seq.to_be_bytes());
         let command = bytes[0] & 0x0F;
-        p.out_reliable.push_back(SentReliable { channel, seq, command, bytes, first_sent: 0, next_send: 0, timeout: 0 });
+        p.out_reliable.push_back(SentReliable { channel, seq, command, bytes, first_sent: 0, next_send: 0, timeout: 0, resends: 0 });
     }
 
     /// `enet_peer_send`: `reliable` = ENET_PACKET_FLAG_RELIABLE, else ENET_PACKET_FLAG_UNSEQUENCED (what Slippi uses
     /// for its pads and acks). False when the peer is not connected, the channel does not exist, or it is too big.
     pub fn send(&mut self, peer: usize, channel: u8, data: &[u8], reliable: bool) -> bool {
         let Some(p) = self.peers.get_mut(peer) else { return false };
-        if p.state != PeerState::Connected || channel as usize >= p.channels.len() || data.len() + 12 > p.mtu as usize {
+        if p.state != PeerState::Connected || channel as usize >= p.channels.len() {
             return false;
+        }
+        if data.len() + 12 > p.mtu as usize {
+            // `enet_peer_send` over the MTU: reliable fragments (SEND_FRAGMENT), each its own reliable command on the
+            // channel; the first one's sequence number names the packet
+            if !reliable || data.len() > MAX_PACKET {
+                return false;
+            }
+            let per = p.mtu as usize - 4 - 24;
+            let count = data.len().div_ceil(per) as u32;
+            let start = p.channels[channel as usize].out_reliable.wrapping_add(1);
+            for (k, part) in data.chunks(per).enumerate() {
+                let mut c = vec![CMD_SEND_FRAGMENT | FLAG_ACK, channel, 0, 0];
+                c.extend_from_slice(&start.to_be_bytes());
+                c.extend_from_slice(&(part.len() as u16).to_be_bytes());
+                c.extend_from_slice(&count.to_be_bytes());
+                c.extend_from_slice(&(k as u32).to_be_bytes());
+                c.extend_from_slice(&(data.len() as u32).to_be_bytes());
+                c.extend_from_slice(&((k * per) as u32).to_be_bytes());
+                c.extend_from_slice(part);
+                Self::queue_reliable(p, channel, c);
+            }
+            return true;
         }
         if reliable {
             let mut c = vec![CMD_SEND_RELIABLE | FLAG_ACK, channel, 0, 0];
@@ -420,17 +458,30 @@ impl Host {
             }
             _ => {}
         }
-        // a reliable command unacked for too long: the peer is gone
-        if let Some(s) = p.sent.iter().find(|s| s.first_sent != 0) {
-            if now.wrapping_sub(s.first_sent) >= TIMEOUT_MS && (now.wrapping_sub(s.first_sent) as i32) > 0 {
-                let was = p.state;
-                let data = p.event_data;
-                p.reset();
-                if matches!(was, PeerState::Connected | PeerState::Disconnecting | PeerState::AcknowledgingConnect) {
-                    self.events.push_back(Event::Disconnect { peer: i, data: if was == PeerState::Disconnecting { data } else { 0 } });
-                }
-                return;
+        // a reliable command unacked for too long: the peer is gone. ENet's enet_protocol_check_timeouts, run when a
+        // resend falls due: unacked TIMEOUT_MS since the earliest timed-out send, or resent to TIMEOUT_LIMIT and
+        // unacked TIMEOUT_MINIMUM_MS (a dead peer on a fast link: ~5 s, not 30)
+        let mut earliest: Option<u32> = None;
+        let mut limit = false;
+        for s in p.sent.iter().filter(|s| s.first_sent != 0 && (now.wrapping_sub(s.next_send) as i32) >= 0) {
+            if earliest.map_or(true, |e| (s.first_sent.wrapping_sub(e) as i32) < 0) {
+                earliest = Some(s.first_sent);
             }
+            limit |= 1u64 << s.resends.min(32) >= TIMEOUT_LIMIT as u64;
+        }
+        let oldest = p.sent.iter().find(|s| s.first_sent != 0).map(|s| s.first_sent);
+        let gone = |t: Option<u32>, ms: u32| t.is_some_and(|t| now.wrapping_sub(t) >= ms && (now.wrapping_sub(t) as i32) > 0);
+        // (the minimum on a live link only: a CONNECT still resent waits out TIMEOUT_MS, as the select's connect
+        // window relies on, the opponent may start listening late)
+        let limit = limit && p.state == PeerState::Connected;
+        if gone(oldest, TIMEOUT_MS) || (limit && gone(earliest, TIMEOUT_MINIMUM_MS)) {
+            let was = p.state;
+            let data = p.event_data;
+            p.reset();
+            if matches!(was, PeerState::Connected | PeerState::Disconnecting | PeerState::AcknowledgingConnect) {
+                self.events.push_back(Event::Disconnect { peer: i, data: if was == PeerState::Disconnecting { data } else { 0 } });
+            }
+            return;
         }
         // keep-alive: ENet pings every interval when nothing reliable is in flight
         if p.state == PeerState::Connected && p.sent.is_empty() && p.out_reliable.is_empty() && now.wrapping_sub(p.last_ack_time.max(p.last_receive)) >= PING_INTERVAL_MS {
@@ -474,6 +525,7 @@ impl Host {
             if (now.wrapping_sub(s.next_send) as i32) >= 0 {
                 s.timeout = (s.timeout * 2).min(4000);
                 s.next_send = now.wrapping_add(s.timeout);
+                s.resends = s.resends.saturating_add(1);
                 cmds.push(s.bytes.clone());
                 p.stats_resent += 1;
             }
@@ -803,12 +855,26 @@ impl Host {
                     return true; // already delivered (the ack is resent) or outside the window
                 }
                 ch.pending.insert(seq, payload.to_vec());
-                loop {
-                    let next = ch.in_reliable.wrapping_add(1);
-                    let Some(d) = ch.pending.remove(&next) else { break };
-                    ch.in_reliable = next;
-                    self.events.push_back(Event::Receive { peer: i, channel, data: d });
+                Self::deliver_in_order(&mut self.events, ch, i, channel);
+                true
+            }
+            CMD_SEND_FRAGMENT => {
+                if !live || channel as usize >= p.channels.len() {
+                    return false;
                 }
+                let ch = &mut p.channels[channel as usize];
+                let ahead = seq.wrapping_sub(ch.in_reliable) as i16;
+                if ahead <= 0 || ahead as u32 >= 0x1000 * 7 {
+                    return true;
+                }
+                let meta = (be16(c, 4), be32(c, 8), be32(c, 12), be32(c, 16), be32(c, 20));
+                let (_, count, num, total, off) = meta;
+                if count == 0 || num >= count || total as usize > MAX_PACKET || off as usize + payload.len() > total as usize {
+                    return true; // malformed: dropped (acked, so the sender moves on)
+                }
+                ch.pending.insert(seq, payload.to_vec());
+                ch.frag_meta.insert(seq, meta);
+                Self::deliver_in_order(&mut self.events, ch, i, channel);
                 true
             }
             CMD_SEND_UNRELIABLE => {
@@ -841,8 +907,38 @@ impl Host {
                 self.events.push_back(Event::Receive { peer: i, channel, data: payload.to_vec() });
                 true
             }
-            CMD_SEND_FRAGMENT | CMD_SEND_UNRELIABLE_FRAGMENT => live, // not reassembled (see the module comment)
+            CMD_SEND_UNRELIABLE_FRAGMENT => live, // not reassembled (see the module comment)
             _ => false,
+        }
+    }
+
+    /// Reliable commands in sequence order: whole packets are delivered, fragments are put together and delivered
+    /// once their last one is in.
+    fn deliver_in_order(events: &mut VecDeque<Event>, ch: &mut Channel, i: usize, channel: u8) {
+        loop {
+            let next = ch.in_reliable.wrapping_add(1);
+            let Some(d) = ch.pending.remove(&next) else { break };
+            ch.in_reliable = next;
+            match ch.frag_meta.remove(&next) {
+                None => {
+                    ch.assembling = None;
+                    events.push_back(Event::Receive { peer: i, channel, data: d });
+                }
+                Some((start, count, _num, total, off)) => {
+                    if ch.assembling.as_ref().is_none_or(|a| a.0 != start) {
+                        ch.assembling = Some((start, vec![0; total as usize], 0));
+                    }
+                    let a = ch.assembling.as_mut().unwrap();
+                    if a.1.len() == total as usize {
+                        a.1[off as usize..off as usize + d.len()].copy_from_slice(&d);
+                        a.2 += 1;
+                    }
+                    if a.2 >= count {
+                        let (_, data, _) = ch.assembling.take().unwrap();
+                        events.push_back(Event::Receive { peer: i, channel, data });
+                    }
+                }
+            }
         }
     }
 
@@ -892,6 +988,7 @@ impl Host {
             w.u32(s.first_sent);
             w.u32(s.next_send);
             w.u32(s.timeout);
+            w.u32(s.resends);
         };
         w.u32(self.peers.len() as u32);
         for p in &self.peers {
@@ -975,7 +1072,7 @@ impl Host {
             h.events.push_back(e);
         }
         fn sr(r: &mut crate::blob::R) -> Option<SentReliable> {
-            Some(SentReliable { channel: r.u8()?, seq: r.u16()?, command: r.u8()?, bytes: r.bytes()?, first_sent: r.u32()?, next_send: r.u32()?, timeout: r.u32()? })
+            Some(SentReliable { channel: r.u8()?, seq: r.u16()?, command: r.u8()?, bytes: r.bytes()?, first_sent: r.u32()?, next_send: r.u32()?, timeout: r.u32()?, resends: r.u32()? })
         }
         let n = r.u32()? as usize;
         if n == 0 || n > MAX_PEER_ID as usize {
@@ -1001,7 +1098,7 @@ impl Host {
             p.mtu = r.u32()?;
             p.window = r.u32()?;
             for _ in 0..r.u32()? {
-                let mut c = Channel { out_reliable: r.u16()?, out_unreliable: r.u16()?, in_reliable: r.u16()?, pending: BTreeMap::new() };
+                let mut c = Channel { out_reliable: r.u16()?, out_unreliable: r.u16()?, in_reliable: r.u16()?, pending: BTreeMap::new(), ..Default::default() };
                 for _ in 0..r.u32()? {
                     let k = r.u16()?;
                     c.pending.insert(k, r.bytes()?);

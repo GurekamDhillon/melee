@@ -30,7 +30,7 @@ and no account was used.
 
 | line / variable | direction | meaning | Rust (this branch) |
 |---|---|---|---|
-| `yg {"caps":[...]}` | game -> app, first line | what the game supports. Hero always sends `ready, overlay, join, notice, pads, view, volume` (Windows/Linux). Crunch: when not embedded drop `pads, rumble, view, volume, fullscreen`; the app attaches its 125 Hz pad relay whenever caps contain `pads` (handoff, `native-pad-relay.js:227`) | `["ready"]` standalone; `["ready","overlay"]` embedded |
+| `yg {"caps":[...]}` | game -> app, first line | what the game supports. Hero always sends `ready, overlay, join, notice, pads, view, volume` (Windows/Linux). Crunch: when not embedded drop `pads, rumble, view, volume, fullscreen`; the app attaches its 125 Hz pad relay whenever caps contain `pads` (handoff, `native-pad-relay.js:227`) | `["ready"]` standalone; `["ready","overlay","volume"]` embedded |
 | `yg {"ready":true}` | game -> app | after the first **presented** frame (Hero: a visible game frame, never a loading panel). Without it the app stays on "Opening Melee Unlocked..." | sent once after the first successful present (our first present can be the black boot frame; see open points) |
 | `embed quit` | app -> game | Stop. The app then kills after `QUIT_GRACE_MS` = 5 s (handoff). Hero honours it only through the player box's handler, so a non-embedded game ignores it today (Crunch's fix 2) | honoured always (also a bare `quit`); main loop exits, exit 0; a watchdog `process::exit(0)` at 4 s |
 | stdin EOF | app -> game | the app quit / closed the pipe | same quit path |
@@ -68,8 +68,12 @@ Hero's tree at v0.9.107).
 **Rust:** with `YOUGAME_EMBED=1` the window is created undecorated, hidden, class `MeleePortWindow` (winit
 `with_class_name`), caption `Melee Unlocked`; `YOUGAME_EMBED_PARENT` (decimal HWND) makes it a child at creation
 (**unverified**, the Windows app does not send it). `rect`, `show`, `hide`, `focus` are applied on the window thread;
-`view`, `volume`, `blur` are logged and ignored. **Missing:** pad relay and adapter mirror (so no `pads` cap: inside
-the sandbox an embedded Rust build has no controllers), `view` clipping, page volume, `WS_CHILD` adoption checks,
+`view`, `blur` are logged and ignored. `volume <gain>` (page gain 0..1, `toFixed(3)`) is applied on the stdin thread
+(melee_core::host_volume, Hero's yg_embed_volume parse) and multiplied into the mixer gain on the next audio frame:
+mixer gain = our volume/100 x page gain, as Hero's `output_volume()`; the page's gain is used as it is (it is the
+page's own curve). Until Nov 22 the embedded caps had no `volume`, so the app never sent the slider, and the line was
+ignored anyway: the slider did nothing. Proof: pc/tests/yougame/page_volume.py. **Missing:** pad relay and adapter mirror (so no `pads` cap: inside
+the sandbox an embedded Rust build has no controllers), `view` clipping, `WS_CHILD` adoption checks,
 pad-chord overlay tap. Not worth doing while the direction is standalone.
 
 ## 4. Needed for online / ranked / friends (not implemented)
@@ -119,3 +123,68 @@ listing draft in `yougame-listing.md`.
   `MELEE_MODS_DIR`, `MELEE_NUCLEUS_DIR`, `MELEE_COSMETICS_DIR`.
 - Saves: `yougame_saves.rs` (hello, saveFileList at start, coalesced uploads, upload + wait at exit).
 - Test: `bridge_test.py` now also checks the spec, a wrong disc, and save sync against a fake account.
+
+## 8. Update 2026-11-22 (branch `port/ygroom`): YouGame rooms in the one-window online loop
+
+- A YouGame room's match now runs in the menu process's window, like Slippi's (`slippi_link::inprocess`). The room
+  keeper (`room_keeper.rs`) is still a thread of this process; it hears the match's `start` / `end W` in memory
+  (`room_keeper::report`, from `play_net::room_report`) instead of through `MELEE_ROOM_REPORT`, and the match leaving
+  the window (`match_done`, from `slippi_match_cleanup`) stands for the child's exit (a void if it had not ended).
+  The punch, the room relay and STUN are unchanged. `MELEE_YOUGAME_INPROCESS=0` keeps the relaunch per match.
+- Rematch: YouGame's Unranked asks `afterMatch: stay` (Hero: "Unranked keeps its two players together for the next
+  game"); the select goes on as a set on the same Slippi link, and the keeper now stays in the room for it
+  (`room_keeper::next_game`): one room, a `begin` / `finish` per game (match ids `<room>-m1`, `-m2`).
+- The blend's Slippi search has its own stop flag, set the moment YouGame's claim commits: it held the netplay port,
+  so the YouGame side failed to bind it (os error 10048) when both searched at once.
+- `--online-mode <mode>` (Hero's launcher restarting for YouGame): `launcher_compat` sets `MELEE_ONLINE_MODE`,
+  `MELEE_SLIPPI_MENUS=on` and `MELEE_BOOT_MENU=1`; the first menu frame goes straight to that mode's online select
+  (`direct` -> Direct, anything else, `ranked` included, -> Unranked: we never play Ranked). Hero's
+  `take_yougame_restart` is launcher state filled by the game's `muRestartOlder` request (restart in an older
+  release YouGame is on); we never send it, so only the `--online-mode` half applies.
+- Tests: `tools/rust-port/yougame/rooms_pair.py --case yougame [--rematch] [--relaunch] [--dead-direct]` (process
+  sampling: fails on a relaunch), `--case quit`, and `tools/rust-port/yougame/online_mode.sh`.
+
+## 9. Update 2026-11-22 (branch `port/ygsandbox`): the sandbox's rules
+
+The app runs a Windows build in a sandbox (publish.md "Desktop builds"): the build folder is read-only, writes go
+to `YOUGAME_DATA` (`{data}`, also the working directory), loopback is denied, memory is capped at `memoryMb` (6144).
+
+**Writes.** `yougame::init` (YOUGAME_STDIO=1) points every user file under YOUGAME_DATA unless a `MELEE_*` override
+is set: `card/`, `settings.cfg`, `audio.cfg`, `replays/` (MELEE_SLP_DIR), `mods/`, `nucleus/` (the asset service's
+queue, state and caches), `Cosmetics/`, `gpucache/` (the warm list and the Vulkan pipeline cache), `envoy/`,
+`SlippiSys/` (the Slippi menus' system files; was beside the exe) and `profiles/` (the frame profiler; was the exe's
+folder first). `fighter_controls.cfg`, `lab/`, `brawl/`, `room-report-*.txt` and `yougame-sync.txt` read
+`data_dir()` themselves; crash logs go to `crashlogs/` in the working directory (= YOUGAME_DATA); the log stays on
+stderr. `tools/rust-port/yougame/sandbox_test.py` checks a real run.
+
+**Loopback.** Under YouGame (`yougame::sandboxed()`: the bridge is on or YOUGAME_DATA is set):
+- the online select's link goes into the in-process match in memory (`slippi_link::keep_mem`, `--slippi-link mem:<token>`),
+  not over loopback TCP (it used to bind 127.0.0.1 and connect to itself on every online match);
+- `MELEE_SLIPPI_INPROCESS=0` and `MELEE_YOUGAME_INPROCESS=0` are ignored with a log line (the relaunch handoff is loopback TCP);
+- the Slippi spectator feed (UDP 127.0.0.1:51441) is off.
+Still open: the YouGame room relay's fallback (`melee_net::yougame_relay`, used only when the UDP punch fails) keeps a
+loopback stand-in socket per opponent; in the sandbox that path fails (the search reports it cannot reach the
+opponent). It needs an in-memory transport in front of the match's ENet socket.
+
+**netplay_key: held back.** publish.md documents `"netplay_key"`, but the app of 2026-11-22 refuses a spec carrying
+it at Play: staging's `upload-native.mjs` (the app's own spec check, `parseLaunchSpec`) allows no such field under any
+advertised capability (`YouGameDirect/1`, `YouGameMultiDisc/1`, `YouGameNativeKnobs/1`, ... none adds it). So the
+shipped `yougame-native.json` has no key, and only identical builds meet online until then. When a helper/app that
+accepts it ships (its spec check lists `netplay_key`, likely behind a new `YouGame.../1` token), add
+`"netplay_key": "melee-rust-p1"` (the `<name>-p<N>` form) so every main-line build of the listing meets every other. Bump N (`melee-rust-p2`, ...) when an old and a new build can no longer finish a session together (when unsure, bump), i.e. in the release that changes anything two
+copies must agree on: the netcode or wire format (Slippi or YouGame rooms), rollback/sync (snapshots, checksums,
+the input delay rules), or the simulation itself (any change that can make the same inputs give a different frame).
+A release that only touches menus, rendering, audio, files or the launcher keeps the key. Rules: lowercase letters,
+digits, `.`, `_`, `-`, at most 40 characters (bridge_test.py checks it).
+
+**net "internet", not "yougame".** Hero's spec sets `net: "yougame"` (online play through the app's network broker: the
+hello carries `netBroker {v1, mode yougame, direct {v1, maxDatagram 1200}}`). Ours has no broker client: nothing reads
+a `netBroker` hello field, and the Slippi/rooms sockets are our own UDP. Under `"yougame"` the build would have no
+network of its own, so ours stays `"internet"`. Moving needs: parse the broker offer from the hello, a
+`melee_net::transport::Transport` that sends datagrams (<= 1200 bytes) through the bridge's broker messages instead
+of a UDP socket, matchmaking/rooms over the broker, and Slippi's own servers reachable through it (or Slippi online
+kept to "internet"). The same in-memory transport also closes the room-relay loopback gap above.
+
+**Paths as args vs. env.** Hero passes every writable path as an argument under `{data}`. Ours gets the same effect
+from `yougame::init` setting `MELEE_*` from YOUGAME_DATA, plus the working directory forced to it (crash reports,
+including the raw stage, land in `{data}/crashlogs`), so the spec stays short and older launchers keep working.

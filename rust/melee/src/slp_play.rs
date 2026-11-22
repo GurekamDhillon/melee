@@ -15,6 +15,7 @@
 //! 16:9 (the projection scale the VS scene answers is then bit-identical) and the presenter draws 16:9 content.
 use std::process::ExitCode;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use melee_platform::gfx::Presenter;
 use melee_platform::pad::*;
@@ -76,11 +77,64 @@ struct SlpPlay {
     interp: bool,
     quit: bool,
     failed: Option<String>,
+    /// A file still being written (raw length 0: a live spectator's, Hero's "Watch live"): read again as it grows.
+    live: Option<Live>,
+}
+
+struct Live {
+    path: String,
+    len: usize,
+    changed: Instant,
+    checked: Instant,
+}
+
+/// A live file that has not grown for this long is taken as finished (the feed or the writer went away).
+const LIVE_IDLE: Duration = Duration::from_secs(15);
+
+/// Whether a `.slp`'s raw element is still open (declared length 0, as Slippi Dolphin writes a game in progress).
+pub fn in_progress(data: &[u8]) -> bool {
+    let key = b"raw[$U#l";
+    data.windows(key.len()).position(|w| w == key).is_some_and(|i| data.get(i + 8..i + 12) == Some(&[0, 0, 0, 0][..]))
 }
 
 impl SlpPlay {
+    /// Live: the next frame is not in the file yet. Read it again (at most every 50 ms); true while it should wait.
+    fn live_wait(&mut self) -> bool {
+        let Some(l) = self.live.as_mut() else { return false };
+        let pl = unsafe { crate::r_in() };
+        if pl.frame < pl.r.last {
+            return false;
+        }
+        if l.checked.elapsed() < Duration::from_millis(50) {
+            return true;
+        }
+        l.checked = Instant::now();
+        let data = std::fs::read(&l.path).unwrap_or_default();
+        if data.len() != l.len {
+            l.len = data.len();
+            l.changed = Instant::now();
+            let done = !in_progress(&data);
+            if pl.reload_slp(&data) {
+                self.last_frame = pl.r.last;
+            }
+            if done {
+                log(&format!("live: the game's file is complete ({} frames)", pl.r.last + 124));
+                self.live = None;
+                return false;
+            }
+        } else if l.changed.elapsed() > LIVE_IDLE {
+            log("live: the file stopped growing; playing to its end");
+            self.live = None;
+            return false;
+        }
+        pl.frame >= pl.r.last
+    }
+
     /// One engine tick of the replay (golden's loop body: replay frame, tick, the hash row).
     fn step(&mut self) -> bool {
+        if self.live_wait() {
+            return false;
+        }
         let f = self.e.frames;
         replay_frame();
         let alive = self.e.tick();
@@ -261,6 +315,10 @@ pub fn play(args: &[String], path: &str) -> ExitCode {
         }
     };
     let last_frame = pl.r.last;
+    let live = std::fs::read(path).ok().filter(|d| in_progress(d)).map(|d| {
+        log("live: the file is still being written; it plays as it grows (Watch live)");
+        Live { path: path.to_string(), len: d.len(), changed: Instant::now(), checked: Instant::now() }
+    });
     // SAFETY: single-threaded start-up, before the engine reads them.
     unsafe {
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());
@@ -318,6 +376,7 @@ pub fn play(args: &[String], path: &str) -> ExitCode {
         interp: false,
         quit: false,
         failed: None,
+        live,
     };
     let title = std::env::var("MELEE_WINDOW_TITLE").unwrap_or_else(|_| format!("{} replay", crate::play::window_title(None)));
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());

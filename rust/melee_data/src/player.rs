@@ -201,6 +201,19 @@ impl Player {
 
     /// `rp_load` for a replay file: `path` is only used in the log line. `trace` = `MELEE_STATE_TRACE`
     /// is set (the trace buffers are then created if the replay is active).
+    /// A `.slp` still being written (a live spectator's file) grew: parse it again and take its frames, keeping the
+    /// playback where it is. False when the new bytes do not parse (the old frames stay).
+    pub fn reload_slp(&mut self, data: &[u8]) -> bool {
+        let mut parsed = Replay::empty();
+        if replay::parse_into(&mut parsed, data, self.parity).is_err() || parsed.last < self.r.last {
+            return false;
+        }
+        self.r = parsed;
+        let n = self.r.post.as_ref().map_or(0, |p| p.len());
+        self.post_seen.resize(n, false);
+        true
+    }
+
     pub fn load_slp(&mut self, path: &str, data: &[u8], trace: bool) {
         let mut parsed = Replay::empty();
         let res = replay::parse_into(&mut parsed, data, self.env.parity);

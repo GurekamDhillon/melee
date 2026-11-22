@@ -54,7 +54,7 @@ def check_spec(text):
     if not isinstance(o, dict):
         return None, "not an object"
     for k in o:
-        if k not in ("version", "args", "disc", "discs", "embed", "controllers", "net", "memoryMb"):
+        if k not in ("version", "args", "disc", "discs", "embed", "controllers", "net", "memoryMb", "netplay_key"):
             return None, "unknown field " + k
     if o.get("version") != 1:
         return None, "version must be 1"
@@ -77,6 +77,11 @@ def check_spec(text):
         return None, "bad controllers"
     if o.get("net") not in ("internet", "yougame", "none"):
         return None, "no net key (a spec without one runs offline)"
+    if "netplay_key" in o:
+        k = o["netplay_key"]
+        # publish.md "Desktop builds": lowercase letters, digits, . _ -, up to 40 characters
+        if not isinstance(k, str) or not re.fullmatch(r"[a-z0-9._-]{1,40}", k):
+            return None, "bad netplay_key"
     mem = o.get("memoryMb", 4096)
     if not isinstance(mem, int) or isinstance(mem, bool) or not 512 <= mem <= 16384:
         return None, "bad memoryMb"

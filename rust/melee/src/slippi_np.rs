@@ -363,6 +363,28 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
 
 pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+    // --link (the online select's handoff): the select's link goes on, as one Slippi client from the select into the
+    // match; no new connection (Slippi Dolphin takes none after its first link drops) and no selections sent again
+    if let Some(spec) = arg(args, "--link") {
+        let local_port: u8 = arg(args, "--local-port").and_then(|v| v.parse().ok()).filter(|&p: &u8| p < 2).unwrap_or(0);
+        let decider = args.iter().any(|a| a == "--host");
+        let (lag, loss) = (Duration::from_millis(num("--lag-ms", 0) as u64), num("--loss-pct", 0) as u32);
+        let t = crate::slippi_link::take(&spec, 0, num("--port", 0) as u16, |udp| {
+            Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, rng: 0x5150_0000 ^ local_port as u32, q: VecDeque::new() })
+        })
+        .map_err(|e| (1, e))?;
+        let tag = if decider { "decider" } else { "guest" };
+        if t.cl.status != Status::Connected {
+            return Err((1, format!("{tag}: the select's link was {:?} at the handoff", t.cl.status)));
+        }
+        let remote_port = 1 - local_port;
+        let mut by_port = [t.mine; 2];
+        by_port[remote_port as usize & 1] = t.theirs;
+        let rng_offset = if decider { t.mine.rng_offset } else { t.theirs.rng_offset };
+        let (scene, stage) = online_scene(&by_port).map_err(|e| (1, format!("{e}")))?;
+        eprintln!("melee: {tag}: the select's link taken over after {:.2}s, rng_offset {rng_offset:#06x}, stage {stage:#x}, scene {scene}", t0.elapsed().as_secs_f32());
+        return Ok(Linked { cl: t.cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage });
+    }
     let Paired { decider, local_port, remote_port, peer, fallback, bind_ip, opp_code: _ } = pair(args, max_s)?;
     release_port();
     let tag = if decider { "decider" } else { "guest" };

@@ -853,6 +853,194 @@ impl Host {
     pub fn has_outgoing(&self, peer: usize) -> bool {
         self.peers.get(peer).map_or(false, |p| p.has_outgoing())
     }
+
+    /// The whole host state but its socket, for another process to go on with the same links (`import`): queued
+    /// events are carried, host times are carried as they are (the importing host's clock continues from `now`).
+    pub fn export(&self) -> Vec<u8> {
+        use crate::blob::W;
+        let mut w = W::default();
+        w.u32(self.now());
+        w.u64(self.rng);
+        w.u32(self.channel_limit as u32);
+        w.u64(self.dropped);
+        w.u32(self.events.len() as u32);
+        for e in &self.events {
+            match e {
+                Event::Connect { peer, data } => {
+                    w.u8(0);
+                    w.u32(*peer as u32);
+                    w.u32(*data);
+                }
+                Event::Disconnect { peer, data } => {
+                    w.u8(1);
+                    w.u32(*peer as u32);
+                    w.u32(*data);
+                }
+                Event::Receive { peer, channel, data } => {
+                    w.u8(2);
+                    w.u32(*peer as u32);
+                    w.u8(*channel);
+                    w.bytes(data);
+                }
+            }
+        }
+        let sr = |w: &mut W, s: &SentReliable| {
+            w.u8(s.channel);
+            w.u16(s.seq);
+            w.u8(s.command);
+            w.bytes(&s.bytes);
+            w.u32(s.first_sent);
+            w.u32(s.next_send);
+            w.u32(s.timeout);
+        };
+        w.u32(self.peers.len() as u32);
+        for p in &self.peers {
+            w.u8(p.state as u8);
+            w.addr(p.addr);
+            w.u16(p.outgoing_peer_id);
+            w.u8(p.in_session);
+            w.u8(p.out_session);
+            w.0.extend_from_slice(&p.connect_id);
+            w.u32(p.mtu);
+            w.u32(p.window);
+            w.u32(p.channels.len() as u32);
+            for c in &p.channels {
+                w.u16(c.out_reliable);
+                w.u16(c.out_unreliable);
+                w.u16(c.in_reliable);
+                w.u32(c.pending.len() as u32);
+                for (k, v) in &c.pending {
+                    w.u16(*k);
+                    w.bytes(v);
+                }
+            }
+            w.u16(p.peer_reliable_seq);
+            w.u16(p.out_unseq_group);
+            w.u16(p.in_unseq_group);
+            for v in p.unseq_window {
+                w.u32(v);
+            }
+            w.u32(p.sent.len() as u32);
+            for s in &p.sent {
+                sr(&mut w, s);
+            }
+            w.u32(p.out_once.len() as u32);
+            for o in &p.out_once {
+                w.bytes(o);
+            }
+            w.u32(p.out_reliable.len() as u32);
+            for s in &p.out_reliable {
+                sr(&mut w, s);
+            }
+            w.u32(p.acks.len() as u32);
+            for a in &p.acks {
+                w.u8(a.0);
+                w.u16(a.1);
+                w.u16(a.2);
+                w.u8(a.3);
+                w.u32(a.4);
+            }
+            w.f32(p.net_rtt);
+            w.u32(p.rtt);
+            w.u32(p.rtt_var);
+            w.u32(p.last_ack_time);
+            w.u32(p.last_receive);
+            w.u32(p.throttle.0);
+            w.u32(p.throttle.1);
+            w.u32(p.throttle.2);
+            w.u32(p.event_data);
+            w.u8(p.zombie_after_flush as u8);
+            w.u64(p.stats_sent);
+            w.u64(p.stats_received);
+            w.u64(p.stats_resent);
+        }
+        w.0
+    }
+
+    /// A host from `export`, on a new socket (bound to the same port, so the opponent's datagrams keep coming).
+    pub fn import(tp: Box<dyn Transport>, r: &mut crate::blob::R) -> Option<Host> {
+        let now = r.u32()?;
+        let mut h = Host::new(tp, 1, 1);
+        h.t0 = std::time::Instant::now().checked_sub(std::time::Duration::from_millis(now.saturating_sub(1) as u64))?;
+        h.rng = r.u64()?;
+        h.channel_limit = r.u32()? as usize;
+        h.dropped = r.u64()?;
+        for _ in 0..r.u32()? {
+            let e = match r.u8()? {
+                0 => Event::Connect { peer: r.u32()? as usize, data: r.u32()? },
+                1 => Event::Disconnect { peer: r.u32()? as usize, data: r.u32()? },
+                2 => Event::Receive { peer: r.u32()? as usize, channel: r.u8()?, data: r.bytes()? },
+                _ => return None,
+            };
+            h.events.push_back(e);
+        }
+        fn sr(r: &mut crate::blob::R) -> Option<SentReliable> {
+            Some(SentReliable { channel: r.u8()?, seq: r.u16()?, command: r.u8()?, bytes: r.bytes()?, first_sent: r.u32()?, next_send: r.u32()?, timeout: r.u32()? })
+        }
+        let n = r.u32()? as usize;
+        if n == 0 || n > MAX_PEER_ID as usize {
+            return None;
+        }
+        h.peers.clear();
+        for _ in 0..n {
+            let mut p = Peer::new();
+            p.state = match r.u8()? {
+                0 => PeerState::Disconnected,
+                1 => PeerState::Connecting,
+                2 => PeerState::AcknowledgingConnect,
+                3 => PeerState::Connected,
+                4 => PeerState::Disconnecting,
+                5 => PeerState::Zombie,
+                _ => return None,
+            };
+            p.addr = r.addr()?;
+            p.outgoing_peer_id = r.u16()?;
+            p.in_session = r.u8()?;
+            p.out_session = r.u8()?;
+            p.connect_id = [r.u8()?, r.u8()?, r.u8()?, r.u8()?];
+            p.mtu = r.u32()?;
+            p.window = r.u32()?;
+            for _ in 0..r.u32()? {
+                let mut c = Channel { out_reliable: r.u16()?, out_unreliable: r.u16()?, in_reliable: r.u16()?, pending: BTreeMap::new() };
+                for _ in 0..r.u32()? {
+                    let k = r.u16()?;
+                    c.pending.insert(k, r.bytes()?);
+                }
+                p.channels.push(c);
+            }
+            p.peer_reliable_seq = r.u16()?;
+            p.out_unseq_group = r.u16()?;
+            p.in_unseq_group = r.u16()?;
+            for v in p.unseq_window.iter_mut() {
+                *v = r.u32()?;
+            }
+            for _ in 0..r.u32()? {
+                p.sent.push(sr(r)?);
+            }
+            for _ in 0..r.u32()? {
+                p.out_once.push(r.bytes()?);
+            }
+            for _ in 0..r.u32()? {
+                p.out_reliable.push_back(sr(r)?);
+            }
+            for _ in 0..r.u32()? {
+                p.acks.push((r.u8()?, r.u16()?, r.u16()?, r.u8()?, r.u32()?));
+            }
+            p.net_rtt = r.f32()?;
+            p.rtt = r.u32()?;
+            p.rtt_var = r.u32()?;
+            p.last_ack_time = r.u32()?;
+            p.last_receive = r.u32()?;
+            p.throttle = (r.u32()?, r.u32()?, r.u32()?);
+            p.event_data = r.u32()?;
+            p.zombie_after_flush = r.u8()? != 0;
+            p.stats_sent = r.u64()?;
+            p.stats_received = r.u64()?;
+            p.stats_resent = r.u64()?;
+            h.peers.push(p);
+        }
+        Some(h)
+    }
 }
 
 /// The round trip of one ack: its landing time `rx` (host ms) minus the 16-bit echo of our send time (which a peer

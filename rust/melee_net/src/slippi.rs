@@ -753,6 +753,8 @@ impl Client {
             self.remote.active = self.remote.links.iter().copied().find(|&l| self.host.peers[l].state == PeerState::Connected);
         }
         if self.remote.active.is_none() && self.status == Status::Connected {
+            // once: the peer's DISCONNECT (its reason word), or ENet's timeout (0: a dead process, ~5-7 s on a fast link)
+            eprintln!("slippi: the opponent's link is down (reason {data}{})", if self.in_game { ", in a match" } else { "" });
             self.status = Status::Disconnected;
             self.notes.push_back(Note::Disconnected { reason: data });
         }

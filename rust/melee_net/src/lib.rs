@@ -17,6 +17,7 @@
 //! iteration on the caller's thread: no threads, no blocking.
 
 pub mod app;
+pub mod blob;
 pub mod early;
 pub mod enet;
 pub mod hash;

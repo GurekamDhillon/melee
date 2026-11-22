@@ -2091,10 +2091,12 @@ impl NetDriver {
             match compare(lv, rv) {
                 Compare::Same => {}
                 Compare::Soft => sr.soft += 1,
+                // Slippi Dolphin and Hero (slippi_online.cpp) log a mismatch and play on: the match is not ended
+                // for it; the summary reports it
                 Compare::Hard => {
                     sr.hard += 1;
-                    if err.is_none() {
-                        err = Some(format!("DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x}"));
+                    if sr.hard < 4 {
+                        log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x} (the match goes on)"));
                     }
                 }
             }
@@ -2109,6 +2111,10 @@ impl NetDriver {
         sr.work_max_us = sr.work_max_us.max(us);
         if us > 16_000 {
             sr.work_slow += 1;
+            // which tick (the first few): the profile has no other trace of a single slow tick
+            if sr.work_slow <= 10 {
+                log(&format!("netplay {tag}: slow tick {} us at online frame {} (tick {} of the match)", us, s.current_frame(), sr.work_n));
+            }
         }
         let end_now = sr.done_at.is_some_and(|t| t.elapsed() > Duration::from_millis(1500));
         let cur = s.current_frame();
@@ -2133,14 +2139,14 @@ impl NetDriver {
                 sr.work_n
             ));
             sr.link.disconnect(0);
-            let (hard, compared) = (sr.hard, sr.compared);
+            let compared = sr.compared;
             sr.out = None;
             let won = if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() };
             LAST_WINNER.store(won, std::sync::atomic::Ordering::Relaxed);
             room_report(&format!("end {won}"));
             if let Some(e) = err.filter(|_| !end_now) {
                 self.fail(e);
-            } else if hard > 0 || compared == 0 {
+            } else if compared == 0 {
                 self.fail("Slippi: no clean compare".into());
             } else {
                 self.end_frame = Some(cur);

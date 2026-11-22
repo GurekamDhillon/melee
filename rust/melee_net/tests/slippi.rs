@@ -137,3 +137,129 @@ fn public_fallback_after_two_seconds() {
     }
     assert!(t0.elapsed() >= Duration::from_millis(1900), "the fallback must wait for the LAN attempt");
 }
+
+/// Slippi Dolphin's rule for a link: one client from the select into the match. Once linked (`armed` holds the
+/// links it had then), every later connection is turned away.
+fn dolphin_poll(b: &mut Client, armed: &mut Option<Vec<usize>>) {
+    b.poll();
+    if let Some(ok) = armed {
+        for i in 0..b.host.peers.len() {
+            if b.host.peers[i].connected() && !ok.contains(&i) {
+                b.host.disconnect(i, 0);
+            }
+        }
+    }
+}
+
+fn arm(b: &Client) -> Option<Vec<usize>> {
+    Some((0..b.host.peers.len()).filter(|&i| b.host.peers[i].connected()).collect())
+}
+
+fn linked_pair() -> (Client, Client, u16, Option<Vec<usize>>) {
+    let a = UdpTransport::open(0x7F000001, 0).unwrap();
+    let b = UdpTransport::open(0x7F000001, 0).unwrap();
+    let (pa, pb) = (a.local_port(), b.local_port());
+    // our engine as player 1 (not the decider), the Dolphin-like peer as player 0
+    let mut ca = Client::new(Box::new(a), 1, Addr::new(0x7F000001, pb), 0);
+    let mut cb = Client::new(Box::new(b), 0, Addr::new(0x7F000001, pa), 1);
+    let mut first: Option<Vec<usize>> = None;
+    let t0 = Instant::now();
+    while !(ca.status == Status::Connected && cb.status == Status::Connected) {
+        ca.poll();
+        dolphin_poll(&mut cb, &mut first);
+        assert!(t0.elapsed() < Duration::from_secs(10), "connect timed out");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    // both lock in on the select (the selections exchanged on this link)
+    ca.set_match_selections(Selections { character_id: 20, is_character_selected: true, player_idx: 1, ..Default::default() });
+    cb.set_match_selections(Selections { character_id: 2, is_character_selected: true, player_idx: 0, stage_id: 0x20, is_stage_selected: true, rng_offset: 99, ..Default::default() });
+    let t0 = Instant::now();
+    let mut got = false;
+    while !got {
+        ca.poll();
+        dolphin_poll(&mut cb, &mut first);
+        while let Some(n) = ca.next_note() {
+            got |= matches!(n, Note::Selections(s) if s.rng_offset == 99);
+        }
+        assert!(t0.elapsed() < Duration::from_secs(5), "no selections");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    first = arm(&cb);
+    (ca, cb, pa, first)
+}
+
+/// The old handoff: the select's link dropped, the match connecting again from the same port. A Dolphin-like peer
+/// turns the second connection away, so the match never gets a link.
+#[test]
+fn reconnect_handoff_fails_against_a_dolphin_like_peer() {
+    let (ca, mut cb, pa, mut first) = linked_pair();
+    drop(ca);
+    let mut a2 = Client::new(Box::new(UdpTransport::open(0x7F000001, pa).unwrap()), 1, Addr::new(0x7F000001, cb.host.local_port()), 0);
+    let t0 = Instant::now();
+    while t0.elapsed() < Duration::from_secs(10) && !matches!(a2.status, Status::Failed | Status::Disconnected) {
+        a2.poll();
+        dolphin_poll(&mut cb, &mut first);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    assert!(matches!(a2.status, Status::Failed | Status::Disconnected), "the second connection was taken: {:?}", a2.status);
+}
+
+/// The one-link handoff: the select's client exported, its socket closed, the match importing it on the same port.
+/// The Dolphin-like peer sees one link going on, and 600 frames of pads go both ways.
+#[test]
+fn one_link_handoff_passes_against_a_dolphin_like_peer() {
+    let (mut ca, mut cb, pa, mut first) = linked_pair();
+    // the peer goes into its match at once and sends pads while ours is handing over
+    cb.start_game();
+    for f in 1..=5 {
+        cb.send_pad(f, [f as u8; 9], 0, 0);
+    }
+    for _ in 0..20 {
+        ca.poll();
+        dolphin_poll(&mut cb, &mut first);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let blob = ca.export();
+    drop(ca);
+    std::thread::sleep(Duration::from_millis(200));
+    let mut a2 = Client::import(Box::new(UdpTransport::open(0x7F000001, pa).unwrap()), &blob).expect("import");
+    assert_eq!(a2.status, Status::Connected);
+    a2.start_game();
+    let (mut got_a, mut got_b, mut f) = (0i32, 0i32, 0i32);
+    let mut fb = 5;
+    let t0 = Instant::now();
+    while got_a < 600 || got_b < 600 {
+        assert!(t0.elapsed() < Duration::from_secs(60), "pads stalled at {got_a}/{got_b}");
+        a2.poll();
+        dolphin_poll(&mut cb, &mut first);
+        while let Some(n) = a2.next_note() {
+            if let Note::Pad { frame, .. } = n {
+                assert_eq!(frame, got_a + 1, "pads in order across the handoff");
+                got_a = frame;
+            }
+            assert!(!matches!(n, Note::Disconnected { .. }), "link dropped");
+        }
+        while let Some(n) = cb.next_note() {
+            if let Note::Pad { frame, .. } = n {
+                assert_eq!(frame, got_b + 1);
+                got_b = frame;
+            }
+            assert!(!matches!(n, Note::Disconnected { .. }), "peer saw a disconnect");
+        }
+        if f < 600 && f - got_b < 7 {
+            f += 1;
+            a2.send_pad(f, [f as u8; 9], 0, 0);
+        } else {
+            a2.resend_pads();
+        }
+        if fb < 600 && fb - got_a < 7 {
+            fb += 1;
+            cb.send_pad(fb, [fb as u8; 9], 0, 0);
+        } else {
+            cb.resend_pads();
+        }
+        std::thread::sleep(Duration::from_micros(500));
+    }
+    assert_eq!(cb.status, Status::Connected);
+    assert!(first.unwrap().iter().any(|&i| cb.host.peers[i].connected()), "the peer's first link carried the match");
+}

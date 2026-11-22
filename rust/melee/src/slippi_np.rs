@@ -71,7 +71,10 @@ pub fn online_codes(alt_stage_mode: u8) {
 
 pub const LEGAL_STAGES: [u16; 6] = [0x02, 0x03, 0x08, 0x1C, 0x1F, 0x20];
 
-pub fn online_scene(sel: &[Selections; 2]) -> Result<(String, u16), String> {
+/// `pause_allowed`: Dolphin's match block byte 2 bit 0x8 (`disable_pausing`) is set in every mode but Direct
+/// (`prepareOnlineMatchState`; Hero's slippi_online.cpp does the same). A pause the peer's game does not take is a
+/// HARD desync at once (the live Unranked test of 9f552c0d5: a stray Start at online frame 1093).
+pub fn online_scene(sel: &[Selections; 2], pause_allowed: bool) -> Result<(String, u16), String> {
     let stage = sel.iter().find(|s| s.is_stage_selected).map_or(0x1F, |s| s.stage_id);
     // internal stage ids (`stage=ext:N`): the legal set of Slippi's online modes (Fountain of Dreams, Pokemon Stadium,
     // Yoshi's Story, Dreamland, Battlefield, Final Destination); others are not tested on the engine
@@ -86,8 +89,21 @@ pub fn online_scene(sel: &[Selections; 2]) -> Result<(String, u16), String> {
         let shade = if mirror && i == 1 { "/shade1" } else { "" };
         t += &format!("p{}=ck:{}/human/c{}{shade};", i + 1, s.character_id, s.character_color);
     }
-    t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks=4;minutes=8;items=off");
+    // tests against the local mock only (MELEE_SLIPPI_MM_URL): MELEE_SLIPPI_TEST_STOCKS shortens a match that must
+    // end on stocks (both sides set the same); never with Slippi's servers or a real opponent
+    let stocks = std::env::var("MELEE_SLIPPI_TEST_STOCKS").ok().filter(|_| std::env::var_os("MELEE_SLIPPI_MM_URL").is_some()).and_then(|v| v.parse::<u8>().ok()).filter(|n| (1..=4).contains(n)).unwrap_or(4);
+    t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks={stocks};minutes=8;items=off;pause={}", pause_allowed as u8);
     Ok((t, stage))
+}
+
+/// Whether the match allows pausing: Slippi Direct only. `--pause 0|1` says it (the online select's handoff passes
+/// `--slippi-pause 1` for Direct); otherwise a linked match (the select's handoff) has it off, and a `--mm` match
+/// or a direct `--host|--join` peer (Direct) has it on unless `--mm-mode` is not direct.
+fn pause_allowed(args: &[String], linked: bool) -> bool {
+    match arg(args, "--pause").as_deref() {
+        Some(v) => v.starts_with('1'),
+        None => !linked && matches!(arg(args, "--mm-mode").as_deref(), None | Some("direct")),
+    }
 }
 
 /// A Slippi link after matchmaking (or the given peer), the ENet connection and the MATCH_SELECTIONS exchange.
@@ -363,6 +379,28 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
 
 pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+    // --link (the online select's handoff): the select's link goes on, as one Slippi client from the select into the
+    // match; no new connection (Slippi Dolphin takes none after its first link drops) and no selections sent again
+    if let Some(spec) = arg(args, "--link") {
+        let local_port: u8 = arg(args, "--local-port").and_then(|v| v.parse().ok()).filter(|&p: &u8| p < 2).unwrap_or(0);
+        let decider = args.iter().any(|a| a == "--host");
+        let (lag, loss) = (Duration::from_millis(num("--lag-ms", 0) as u64), num("--loss-pct", 0) as u32);
+        let t = crate::slippi_link::take(&spec, 0, num("--port", 0) as u16, |udp| {
+            Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, rng: 0x5150_0000 ^ local_port as u32, q: VecDeque::new() })
+        })
+        .map_err(|e| (1, e))?;
+        let tag = if decider { "decider" } else { "guest" };
+        if t.cl.status != Status::Connected {
+            return Err((1, format!("{tag}: the select's link was {:?} at the handoff", t.cl.status)));
+        }
+        let remote_port = 1 - local_port;
+        let mut by_port = [t.mine; 2];
+        by_port[remote_port as usize & 1] = t.theirs;
+        let rng_offset = if decider { t.mine.rng_offset } else { t.theirs.rng_offset };
+        let (scene, stage) = online_scene(&by_port, pause_allowed(args, true)).map_err(|e| (1, format!("{e}")))?;
+        eprintln!("melee: {tag}: the select's link taken over after {:.2}s, rng_offset {rng_offset:#06x}, stage {stage:#x}, scene {scene}", t0.elapsed().as_secs_f32());
+        return Ok(Linked { cl: t.cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage });
+    }
     let Paired { decider, local_port, remote_port, peer, fallback, bind_ip, opp_code: _ } = pair(args, max_s)?;
     release_port();
     let tag = if decider { "decider" } else { "guest" };
@@ -427,7 +465,7 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
     let mut by_port = [mine; 2];
     by_port[remote_port as usize & 1] = theirs;
     let rng_offset = if decider { mine.rng_offset } else { theirs.rng_offset };
-    let (scene, stage) = match online_scene(&by_port) {
+    let (scene, stage) = match online_scene(&by_port, pause_allowed(args, false)) {
         Ok(v) => v,
         Err(e) => {
             return Err((1, format!("{e}")));
@@ -525,6 +563,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let shift = num("--script-shift", 0) as i32;
     // --padgen SEED: the session's deterministic pad generator instead of the (1800-frame) scenario script, for long matches
     let padgen = arg(args, "--padgen").and_then(|v| v.parse::<u32>().ok());
+    let start_at = std::env::var("MELEE_NP_START_AT").ok().and_then(|v| v.parse::<i32>().ok());
     // no remote pad for this long ends the run with a report instead of a silent stall: generous until the first pad
     // (the peer may still be loading), short after it
     let first_pad_s = num("--first-pad-seconds", 120) as u64;
@@ -616,10 +655,15 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         // local controller: the script, known `delay` frames ahead
         let f = s.current_frame();
         for ff in f..=f + delay {
-            let i = match padgen {
+            let mut i = match padgen {
                 Some(g) => melee_net::session::rb_gen(g, local_port as usize * 2, ff),
                 None => script_input(local_port as usize, ff - FIRST - shift),
             };
+            // test hook: MELEE_NP_START_AT=N holds Start (PAD_BUTTON_START 0x1000) on online frames N..N+3 (a stray
+            // Start: in Unranked the match must not pause; see online_scene's pause_allowed)
+            if start_at.is_some_and(|n| (n..n + 4).contains(&online(ff))) {
+                i.buttons |= 0x1000;
+            }
             s.submit_local_input(local_port as usize * 2, ff, &i);
         }
         let (ckf, ck) = finals.iter().next_back().map_or((0, 0), |(a, b)| (*a, *b));

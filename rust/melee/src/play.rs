@@ -1751,7 +1751,8 @@ pub fn play(args: &[String]) -> ExitCode {
                     net = Some(n);
                 }
                 Err(e) => {
-                    eprintln!("play: slippi: {e}");
+                    // never a silent exit: the log (MELEE_LOG_FILE) and a message on screen
+                    crate::disc::tell_player(&format!("slippi: the online match could not start: {e}"));
                     return ExitCode::FAILURE;
                 }
             }
@@ -1910,6 +1911,8 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         rp.net = net;
         let code = crate::retail_flow::run(rp, has("--headless"));
+        // the online select's link, kept for the relaunched match: stay until it has been taken over
+        crate::slippi_link::finish();
         // a YouGame room kept through a relaunched match: the window is closed; wait for the match process
         if let Some(c) = crate::room_keeper::finish() {
             eprintln!("play: the match process exited ({c})");
@@ -1978,6 +1981,7 @@ pub fn play(args: &[String]) -> ExitCode {
     match run_windowed(game, pads, cfg) {
         Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));
+            crate::slippi_link::finish();
             ExitCode::SUCCESS
         }
         Err(e) => {

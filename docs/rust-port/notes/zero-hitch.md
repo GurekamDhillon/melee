@@ -771,3 +771,11 @@ Reading:
   is using (the fod/envoy failures need that), and look at the tick-4 title load in vanilla_bf (the preload of EfCoData / ItCo /
   IfAll plus a scene change in one tick).
 - Raw: `scratch/nightbench/zerohitch-run1/`, `scratch/nightbench/zerohitch/` (profile csv + jsonl per scenario), `gate-run1.log`, `gate.log`.
+
+## Live Slippi Unranked, rust-port 9f552c0d5 (Nov 22): one 19.7 ms tick
+- `tick work max 19695 us, 1 of 1115 ticks over 16 ms` (guest, 1-1115 the whole match). The log has no span for it; the
+  one unusual tick in that match is the stray Start at scene frame 968 (online 1093): `gm_DoPauseChecksAndRoutine`
+  built the pause HUD/camera and ducked audio inside the rollback tick, and the same tick ended in the HARD desync.
+- Fixed at the cause (port/livedesync): Unranked/Ranked matches now set `disable_pausing` as Slippi's match block
+  does, so that tick no longer exists online. Not re-measured live; if a 16 ms+ tick shows again in an online match,
+  sample it with `MELEE_SAMPLE_SLOW_MS`.

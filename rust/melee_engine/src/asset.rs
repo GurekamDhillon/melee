@@ -24,6 +24,9 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Condvar, Mutex};
 
 pub const MIN_BYTES: usize = 64 << 10;
+/// The smallest file [`hint_entry_small`] plans. The 40-64 KB copy hats include the two slow ones (Link's and Young
+/// Link's, 42 KB); below that they decode in place in 0.1-0.3 ms, and each plan holds a slot of the cache.
+const SMALL_HINT_MIN: usize = 40 << 10;
 /// Plans kept (each holds a slot); the least recently used goes first.
 const KEEP: usize = recheap::NSLOT - 6;
 /// Raw image + block bytes kept over all plans (each plan's recheap slot is committed to about that). Was 1.5 GB,
@@ -925,8 +928,11 @@ pub fn init(iso: Option<String>) {
     let _ = crate::archive::reclaim_flags(); // before any decode (see there)
     crate::arena::start_prefault();
     let _ = crate::archive::decode_prof_on(); // its first read allocates: never on the asset path (a decode)
+    if std::env::var("MELEE_DECODE_ZERO_TAIL").is_ok_and(|v| v == "off") {
+        melee_core::gcdecode::ZERO_TAIL.store(false, core::sync::atomic::Ordering::Relaxed);
+    }
     // MELEE_ASSET_SERVICE=off: no service, every load is the old in-place decode (what a platform without the recording
-    // heap runs, e.g. Linux): lets that path be tested on Windows
+    // heap runs; Windows and Linux have one): lets that path be tested
     if std::env::var("MELEE_ASSET_SERVICE").is_ok_and(|v| v == "off") || !recheap::init() {
         return;
     }
@@ -1062,18 +1068,27 @@ pub fn hint_entry(entry: i32, heap: i32) {
 }
 
 fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
-    hint_entry_pri(entry, heap, gr, false)
+    hint_entry_pri(entry, heap, gr, false, false)
+}
+
+/// [`hint_entry`] for a file under [`MIN_BYTES`] that one tick decodes many of (Kirby's copy hats: about 40 archives
+/// in the tick a preload names Kirby, the title demo's among them; two 42 KB ones decode in place in 3-4 ms each
+/// on a laptop, the rest in 0.1-1). Its plan is applied like a big file's: [`load`] looks for a plan of a small file
+/// only while a hint of that length is held, so every other small file keeps the in-place decode. Both are the
+/// asset path's same arena sequence (the service's rule), so which of the two a load takes is never visible.
+pub fn hint_entry_small(entry: i32, heap: i32) {
+    hint_entry_pri(entry, heap, None, false, true)
 }
 
 /// `low`: a speculative hint (the Random pool) that never evicts a cached plan and queues behind the others; a later
 /// normal hint for the same entry moves its job to the front of the queue.
-fn hint_entry_pri(entry: i32, heap: i32, gr: Option<i32>, low: bool) {
+fn hint_entry_pri(entry: i32, heap: i32, gr: Option<i32>, low: bool, small: bool) {
     let Some(s) = svc() else { return };
     if !s.worker {
         return;
     }
     let Some((off, len)) = crate::host::Host::try_get().and_then(|h| h.disc.plain_location(entry)) else { return };
-    if len < MIN_BYTES {
+    if len < if small { SMALL_HINT_MIN } else { MIN_BYTES } {
         return;
     }
     let largest = melee_runtime::tu::lbheap::lbHeap_LargestFree(heap) as usize;
@@ -1362,7 +1377,7 @@ pub fn sss_random_pool(pool: Option<Vec<i32>>) {
             if gr > 0 && (gr as usize) < sd.len() && !sd[gr as usize].is_null() {
                 let e = entry_of((*sd[gr as usize]).data1 as *const i8);
                 if e > 0 {
-                    hint_entry_pri(e, -1, Some(gr), true);
+                    hint_entry_pri(e, -1, Some(gr), true, false);
                     n += 1;
                 }
             }
@@ -1418,20 +1433,24 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
 /// Files every session loads early, hinted at boot so the worker starts on them at once: the title's, the menus' and
 /// character select's archives, then the match commons (in the order the game needs them). Either language's name.
 const BOOT_FILES: &[&str] = &[
-    // the effect and item commons first: a session that boots straight to character select (netplay, --match) loads
-    // them at tick 7, ~115 ms after boot; queued behind the menus and Kirby's hats their plans were not ready by then
-    // (tick 7: 30 ms engine step + 5.6 ms read and parse in place)
-    "EfCoData.dat", "ItCo.usd", "ItCo.dat",
-    "GmTtAll.usd", "GmTtAll.dat",
-    // Kirby's copy hats: every match (the title demo's too) with Kirby decodes the whole set at its load (~22 ms in
-    // place at the title's first frame when the demo picked Kirby); small, so prepared early (files < MIN_BYTES skip)
+    // the title's (its scene starts at tick 3 of a retail boot): its archive, then Kirby's copy hats: every match
+    // (the title demo's too) with Kirby decodes the whole set at its load (~22 ms in place at the title's tick when the
+    // demo picked Kirby, 50-110 ms on a laptop); small, so prepared early (`hint_entry_small`: the ones of 40 KB and
+    // more get a plan as well). A laptop's worker got through only the commons below in the boot hold when they came
+    // first, and the title tick then decoded every hat in place.
+    "GmTtAll.usd",
     "PlKbCpDk.dat", "PlKbNrCpDk.dat", "PlKbCpFx.dat", "PlKbCpGw.dat", "PlKbNrCpGw.dat", "PlKbCpMs.dat", "PlKbCpMt.dat",
     "PlKbNrCpMt.dat", "PlKbCpNs.dat", "PlKbCpPk.dat", "PlKbCpPp.dat", "PlKbCpPr.dat", "PlKbNrCpPr.dat", "PlKbCpYs.dat",
     "PlKbCpSk.dat", "PlKbCpFc.dat", "PlKbNrCpFc.dat", "PlKbCpFe.dat", "PlKbCpPc.dat", "PlKbCpLg.dat", "PlKbCpCl.dat",
     "PlKbCpMr.dat", "PlKbCpZd.dat", "PlKbCpGn.dat", "PlKbCpCa.dat", "PlKbCpKp.dat", "PlKbCpLk.dat", "PlKbCpDr.dat",
     "PlKbCpPe.dat", "PlKbCpSs.dat",
-    "MnMaAll.usd", "MnMaAll.dat", "MnSlChr.usd", "MnSlChr.dat", "MnExtAll.usd", "MnExtAll.dat", "MnSlMap.usd", "MnSlMap.dat",
-    "IfAll.usd", "IfAll.dat", "PlCo.dat",
+    // the effect and item commons: a session that boots straight to character select (netplay, --match) loads them at
+    // tick 7, after the boot hold (tick 7: 30 ms engine step + 5.6 ms read and parse in place without a plan)
+    "EfCoData.dat", "ItCo.usd",
+    "MnMaAll.usd", "MnSlChr.usd", "MnExtAll.usd", "MnSlMap.usd", "IfAll.usd", "PlCo.dat",
+    // the other language's twins last (`lbFileGetFullName` picks one of each pair by the language setting; English is
+    // the default): a slow machine's boot hold (`BOOT_WAIT_MAX`) ran out with the title's hats still queued behind them
+    "ItCo.dat", "GmTtAll.dat", "MnMaAll.dat", "MnSlChr.dat", "MnExtAll.dat", "MnSlMap.dat", "IfAll.dat",
 ];
 
 /// Disc warm-up (boot, once; `MELEE_DISC_WARM=off` keeps it off): a below-normal thread reads every game data file
@@ -1501,7 +1520,7 @@ pub fn boot_hints() {
     for f in BOOT_FILES {
         let e = h.disc.disc_entry(f);
         if e > 0 {
-            hint_entry(e, -1);
+            hint_entry_small(e, -1);
         }
     }
     if crate::arena::trim() {
@@ -1560,7 +1579,9 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
     let t0 = std::time::Instant::now();
     let _sys = crate::arena::SysScope::enter();
     let mut waited = false;
-    let found: Option<Arc<Plan>> = if len < MIN_BYTES {
+    // a small file has a plan only when it was hinted ([`hint_entry_small`]): look for one only then
+    let small_hinted = |g: &Inner| g.entries.iter().any(|e| e.len == len);
+    let found: Option<Arc<Plan>> = if len < MIN_BYTES && !small_hinted(&s.m.lock().unwrap()) {
         None
     } else {
         let mut g = s.m.lock().unwrap();

@@ -335,7 +335,6 @@ pub fn describe(r: &Result<Outcome, ImportError>) -> String {
 
 /// The launcher path: his card folder (`--card-dir`) into our card base, only while ours has no save
 /// yet. `MELEE_CARD_IMPORT=0` turns it off. Never fails the launch; returns the line for the log.
-#[allow(dead_code)] // launcher_compat.rs's `--card-dir` calls it (that file is owned elsewhere; the hook lands there)
 pub fn on_launch(his_card: &Path, our_base: &Path) -> String {
     if std::env::var("MELEE_CARD_IMPORT").is_ok_and(|v| v.starts_with('0')) {
         return "card-import: off (MELEE_CARD_IMPORT=0)".into();

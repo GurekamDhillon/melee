@@ -196,6 +196,7 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
                     let base = d.parent().map(|q| q.join("RustPort")).unwrap_or_else(|| d.join("RustPort"));
                     p.notes.push(format!("card {} -> {}", d.display(), base.display()));
                     push_env(&mut p.env, "MELEE_CARD_PATH", base.display().to_string());
+                    p.notes.push(crate::card_import::on_launch(&d, &base));
                 }
             }
             "--volume" => {

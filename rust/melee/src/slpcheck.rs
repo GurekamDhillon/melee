@@ -637,7 +637,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             // wrong values. The forced value is recovered from the recorded Pre-Frame seed by stepping the LCG back (up to 64 draws)
             // to the nearest value with the Frame Start low half, the frame offset kept from frame to frame.
             let pre = ports.iter().find_map(|&p| pl.input(p as i32, false).map(|i| i.seed).filter(|&s| s != 0));
-            if pl.r.online && sd != 0 {
+            if pl.r.online && sd != 0 && !pl.r.fs_forced {
                 let forced = pre.and_then(|rec| online_forced_seed(rec, sd, unsafe { &mut FS_OFFSET })).unwrap_or(sd.wrapping_add(unsafe { FS_OFFSET }));
                 if std::env::var_os("SLPCHECK_PREDBG").is_some() && forced != sd { eprintln!("PREDBG f{fr} sd={sd:08x} forced={forced:08x}"); }
                 melee_runtime::tu::random::global::state().set_logic_seed(forced);

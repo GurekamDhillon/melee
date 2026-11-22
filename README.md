@@ -1,4 +1,4 @@
-# GD's Melee — native PC port
+# GD's Melee: native Rust engine
 
 <p align="center">
   <picture>
@@ -9,202 +9,87 @@
 </p>
 
 <p align="center">
-  <a href="https://0rwx.com"><img alt="0rwx: AI-X, made with AI" src="pc/docs/readme/brand/0rwx-AI-X.png" width="120"></a><br>
-  <b>AI level: <a href="https://0rwx.com">X (execute)</a>.</b> AI agents write most of this code, and no one reviews it line by line.<br>
-  It is checked by machine instead: against the real console through a Dolphin memory oracle, frame by frame on Slippi replays, and against an independent engine.
+  <img alt="Platform: Windows x64 and Linux x86_64" src="pc/docs/readme/brand/windows.svg" height="28">
+  <img alt="Netplay: rollback" src="pc/docs/readme/brand/rollback.svg" height="28">
+  <img alt="Replays: Slippi" src="pc/docs/readme/brand/slippi.svg" height="28">
+  <a href="https://discord.gg/FU4KTGQS5m"><img alt="Join GD's Workshop on Discord" src="pc/docs/readme/brand/discord.svg" height="28"></a>
+  <a href="rust/LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/engine-GPL--3.0-3a3f4b"></a>
+  <a href="docs/specs/LICENSE-MIT"><img alt="Specs: MIT" src="https://img.shields.io/badge/specs-MIT-3a3f4b"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.2.2" src="pc/docs/readme/brand/version.svg" height="28"></a>
-  <img alt="Platform: Windows x64 and Linux x86_64" src="pc/docs/readme/brand/windows.svg" height="28">
-  <img alt="Netplay: rollback" src="pc/docs/readme/brand/rollback.svg" height="28">
-  <img alt="Mods: m-ex compatible" src="pc/docs/readme/brand/mex.svg" height="28">
-  <img alt="Replays: Slippi" src="pc/docs/readme/brand/slippi.svg" height="28">
-  <a href="https://discord.gg/FU4KTGQS5m"><img alt="Join GD's Workshop on Discord" src="pc/docs/readme/brand/discord.svg" height="28"></a>
-  <a href="pc/LICENSE"><img alt="License: GPL-2.0-or-later" src="https://img.shields.io/badge/license-GPL--2.0--or--later-3a3f4b"></a>
+  <a href="https://0rwx.com"><img alt="0rwx: AI-X, made with AI" src="pc/docs/readme/brand/0rwx-AI-X.png" width="120"></a><br>
+  <b>AI level: <a href="https://0rwx.com">X (execute)</a>.</b> AI agents write most of this code, and no one reviews it line by line.
+  It is checked by machine instead: against Slippi replays frame by frame, and against the console's own memory through a Dolphin oracle.
 </p>
 
-<p align="center">Join <a href="https://discord.gg/FU4KTGQS5m">GD's Workshop on Discord</a> for matchmaking, setup help, bug reports, and modding.</p>
+A native engine for *Super Smash Bros. Melee* (NTSC 1.02, `GALE01`), written in Rust from the
+[doldecomp/melee](https://github.com/doldecomp/melee) decompilation. No emulator and no recompiled
+binary: the game logic is ordinary Rust, and it reads its assets from **your own disc**.
 
-This fork of [doldecomp/melee](https://github.com/doldecomp/melee) adds a native PC port of
-*Super Smash Bros. Melee* (NTSC 1.02, `GALE01`) on the **`pc-port`** branch. It is built from the
-matching decompilation — every game translation unit is real, editable C — rather than by emulation
-or by statically recompiling the retail binary.
+## Status
 
-It plays online with **rollback netcode** from a competitive lobby, renders natively in HD, runs
-**[m-ex](https://github.com/akaneia/m-ex) modded content** (mod discs and loose mods: fighters,
-stages, items and music), and can be scripted in **Lua**.
-
-> **Status: public test build (0.2.2), for Windows x64 and Linux x86_64.** Download it
-> (`GDMelee-<version>-win64.zip` or `GDMelee-<version>-linux-x86_64.tar.xz`), and read the project
-> overview, the full feature list and screenshots, in the workspace repo:
-> **[GurekamDhillon/gd-melee-workspace](https://github.com/GurekamDhillon/gd-melee-workspace)**
-> ([latest release](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest)). You
-> supply your own legally dumped disc image; nothing disc-derived is distributed. Windows and Linux
-> 0.2.2 play each other online, but not 0.2.1 or earlier.
-
-## The Rust port (in progress)
-
-The game is being ported to **native Rust** in [`rust/`](rust/): one Rust function per decomp C
-function, with native little-endian data and no emulation or retargeting. The C build stays as the
-correctness reference until the Rust build passes it, and then the Rust build replaces it.
-
-- **How it is checked.** Each ported function is tested against the compiled C. Whole matches are
-  checked frame by frame against recordings from the C build: a gameplay hash, the random seed, and
-  a field-by-field state diff.
-- **Where it is.** Two-player matches (Captain Falcon vs Fox on Final Destination, Marth vs Sheik
-  on Battlefield) run all 1,801 frames on the real game loop with the same hash and seed as the C
-  build. CPU opponents, hazard stages and the rest of the game modes are being moved over now.
-- **Status and plan:** [`docs/rust-port/STATUS.md`](docs/rust-port/STATUS.md).
-
-Rendering (wgpu), audio, input, rollback netplay between Rust builds, replays and m-ex import run
-natively in Rust. The online lobby and settings menus are being redesigned and are not ported yet.
-
-## What's here
-
-- **Rollback netplay** with a room code or Random Opponent, and a competitive lobby: blind picks,
-  starters and counterpicks, 1-2-1 strikes (the cursor skips struck stages), bans, ready-up and
-  rematches.
-- **Windows and Linux**, with cross-play. Sets resume after a disconnect, and the disc check refuses
-  a player on a different disc image instead of desyncing.
-- **HD rendering** at any render scale over D3D12 (Vulkan on Linux), vsync off, an experimental uncapped frame rate,
-  and about 13 ms from controller to screen.
-- **m-ex content**: mod discs (ACE, Akaneia) and loose mods, **94 fighter slots**, m-ex fighters'
-  names, emblems and stock icons on the results screen, and m-ex CPUs that play from their clone
-  base's CPU tables.
-- **New menus**: main menu, hubs, character and stage select (with pages for big rosters), a
-  Settings screen, and Training through the new select screens.
-- **Lua scripting and a console**, including `gd.kit` for drawing in the menus' own style over any
-  scene. See the workspace repo's
-  [`docs/scripting.md`](https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md).
-- **Slippi replay playback**, UCF and tournament rule sets, and a deterministic engine checked frame
-  by frame with SyncTest.
-- **An in-game mod browser** for SSBM Nucleus mods (search, thumbnails, an install queue that
-  survives a restart; zip mods are downloaded and installed for you). Mods from SSBM Nucleus -
-  https://ssbmnucleus.net, with the permission of sc00p.
-- **Envoy**, a roguelite on top of Classic and Adventure (drives, keystones, tougher opponents; solo,
-  offline co-op or an online set), **255 costumes per fighter**, **everything unlocked by default**
-  (Settings > Gameplay turns it off) and **fullscreen** (F11 or Alt+Enter).
-- **Controllers play, the keyboard is hotkeys only**, with a "Connect a controller" notice when a
-  window has none, and **the mouse in every menu** (`gd.mouse` for scripts).
-- **Bit-exact with the console:** matrix maths rounds like the Gekko's paired singles, and real
-  console Slippi replays play back matching to the bit, frame by frame.
-- Recent fixes: items no longer hitch on first spawn (pipelines compiled in parallel and prewarmed),
-  and crash fixes for m-ex motion tables, part trees and costume data.
-
-### The Geno engine and LAB
-
-**Geno** (`pc/geno/`) is native fighter content beyond m-ex, opt-in per fighter through a
-`geno.json`: script variables and logic, engine values, change-action rules, new action states
-(glide, Brawl-style specials), root-motion states, and model effects that follow a move. A fighter
-without `geno.json` runs exactly as m-ex defines it, and everything Geno adds is in the rollback
-snapshot. Melee's own physics, hitstun, knockback and ledge rules never change.
-
-**LAB** (SOLO > LAB) is a frame-data lab game mode: display modes and overlays, a Sakurai-style pause
-menu, long rewind, a savestate library and hot reload, a state browser, knockback preview, A/B
-compare, frame-data export, a rollback visualiser, and vanilla-parity checks against real Slippi
-replays.
-
-The reference is [`docs/geno.md`](docs/geno.md). The first fighter built on it is **Halberd**
-(Meta Knight from *Brawl*), whose research lives in the workspace repo's
-[`ports/halberd/`](https://github.com/GurekamDhillon/gd-melee-workspace/tree/master/ports/halberd)
-(no assets; you need your own legally obtained game files).
-
-## What the port adds
-
-Everything lives under [`pc/`](pc/):
-
-```
-pc/platform/   native shims: GX→Aurora, OS, PAD, CARD, AX (DSP-ADPCM mixer), DVD, AR, VI, libc,
-               netplay, scripting (Lua) and the new menus,
-               plus the m-ex layer: gw_ppc.c (interpreter), gw_mex_ftfunction*.c (fighters),
-               gw_mex_grfunction.c (stages), gw_mex_bridge.c (guest→native call bridge)
-pc/geno/       Geno (fighter extensions) and the LAB mode
-pc/gameworld/  game-world code compiled through the PowerPC→x86 retarget (gekko_fp.c, mtx_pc.c)
-pc/scripts/    the built-in Lua examples and console.py (the console over a local socket)
-pc/tools/      gwtool (the PPC→x86 retargeter) and asset extraction
-pc/build/      Windows build/link/run scripts
-pc/tests/      in-engine tests, run headless against a real disc image
-pc/docs/       port dev quick-reference
-```
-
-The game's own translation units are compiled for PowerPC with clang and retargeted to x86 by
-`gwtool`, which keeps guest memory big-endian and provides the GameCube SDK surface through native
-shims over [Aurora](https://github.com/encounter/aurora) / [Dawn](https://dawn.googlesource.com/dawn)
-(D3D12). See [`pc/README.md`](pc/README.md) for the architecture.
-
-## m-ex content support
-
-m-ex extends Melee by shipping **PowerPC code inside its data files** — each custom fighter and
-stage carries a relocatable code blob that the retail engine calls into. Natively compiled x86 has
-no way to execute that, so the port runs those blobs through a small **PowerPC interpreter**
-(`pc/platform/gw_ppc.c`) and bridges their calls back to the port's own native functions. Content
-is read from `MxDt.dat` (m-ex's `mexData`) rather than hardcoded, so adding a fighter is a data
-question, not a code one.
-
-| Area | State |
+| | |
 |---|---|
-| **Fighters** | Table-driven from `mexData`, up to **94** m-ex slots. Akaneia and ACE rosters load and play, locally and online. |
-| **Stages** | `grFunction` plus the expanded stage tables. |
-| **Items** | Custom articles work (for example Sonic's spring). |
-| **Audio/menus** | Per-fighter BGM, weighted menu playlists, announcer, victory themes, results screen names, emblems and stock icons, CSS cursor scaling. |
-| **CPUs** | m-ex CPUs read their clone base's rows of the CPU tables. |
-| **Kirby hats** | Not implemented — every m-ex fighter currently gives Kirby the clone base's hat. |
-| **Mixing packs** | Fighters and stages from different packs (ACE fighters on Akaneia stages) can't be mixed yet. |
+| Replay accuracy | **12,012 of 12,265** Slippi replays (97.9%) match byte for byte, across 5 replay sets ([results](docs/rust-port/notes/replay-results.md)) |
+| Rollback netplay | **0 desyncs** in the test matches |
+| Slippi online | Unranked and Direct menus, following Slippi's own client. **In test**, not released |
+| Smoothness | Gate: no frame over 16 ms caused by the game, in any tested scene |
+| Speed | Faster on average than the other native engines we measured, on one machine. **Provisional**; 1% lows still trail ([bench-live](docs/rust-port/notes/bench-live.md)) |
 
-m-ex content requires a disc (or loose mods) that carries it. A stock `GALE01` image boots fine and
-simply has none.
+This is a work in progress. Expect rough edges and report bugs on [Discord](https://discord.gg/FU4KTGQS5m) or in Issues.
 
-### Development conveniences
+## Features
 
-- `MELEE_SCENE="mode=training;p1=fox"` boots straight to any screen with any configuration —
-  characters, stages, CPU levels, teams, and `select=kit` for Training on the new select screens. A
-  number naming a character or stage **must** say which index space it is in (`ck:`/`fk:`/`mex:`,
-  `ext:`/`int:`), because the port juggles four of them.
-- `MELEE_CONSOLE_PORT` opens the console on a local socket (`pc/scripts/console.py`), so tools can
-  drive the game: state, input, save/load states, stepping and screenshots.
-- A host-side loading overlay reports real progress during the multi-second boot read.
-- In-engine tests run headless (no window, no GPU) against a real disc image, so most of the m-ex
-  data layer is verified without launching the game.
+- **Mods** as sandboxed WebAssembly: no file or network access, deterministic, safe for netplay.
+  The mod API and specs are MIT, so anyone can build on them ([docs/specs](docs/specs/)).
+- **Stage switches**: toggle stage hazards and variants.
+- **Quick-swap**: change character in place with one button ([notes](docs/rust-port/notes/quick-swap.md)).
+- **Envoy**: a single-player and party mode built on the engine.
+- **Slippi replays**: plays `.slp` files and checks itself against them.
 
-## Building
+## Build and run
 
-See [`pc/build/README.md`](pc/build/README.md) and [`pc/docs/PORT_DEV_QUICKREF.md`](pc/docs/PORT_DEV_QUICKREF.md).
-Broadly: build Aurora + Dawn + SDL3, compile each translation unit through `gwtool`, link with the
-platform shims, regenerate the m-ex bridge from the link map and link again, then run
-`melee-pc.exe --iso <your GALE01 v1.02 image>`. The workspace repo's `tools/port/build.sh` does the
-whole sequence.
+You need a retail NTSC 1.02 Melee disc image that you made from your own disc. This repo contains no game data.
 
-## Licence and legal
+**Windows** (Rust from [rustup](https://rustup.rs)):
 
-Geno and the interop specs (`docs/specs`, most of `pc/geno`) are MIT-licensed; see the `LICENSE-MIT` files ([`docs/specs/LICENSE-MIT`](docs/specs/LICENSE-MIT), [`pc/geno/LICENSE-MIT`](pc/geno/LICENSE-MIT)). The Rust port (`rust/`) is **GPL-3.0-or-later**; see [`rust/LICENSE`](rust/LICENSE). Everything else is GPL-2.0-or-later.
+```sh
+git clone https://github.com/GurekamDhillon/melee
+cd melee/rust
+cargo build --release -p melee
+```
 
-`pc/` is licensed **GPL-2.0-or-later** — see [`pc/LICENSE`](pc/LICENSE). Upstream `doldecomp/melee`
-publishes no licence of its own; nothing here re-licences the decompilation. `pc/gameworld/gekko_fp.c`
-derives in part from Dolphin Emulator's `Common/FloatUtils.cpp` (GPL-2.0-or-later) and carries an
-attribution header.
+**Linux**: install the system packages first (`bash tools/rust-port/linux/deps.sh`, or `NOSUDO=1` without sudo;
+see [linux.md](docs/rust-port/notes/linux.md)), then run the same `cargo build`.
 
-**No copyrighted game material is distributed here.** You must supply your own legally dumped disc
-image. Nothing in this repository contains disc data: no `.iso`, `.dol`, `.dat`, `.usd`, `.ssm`,
-`.sem`, `.hps`, `.thp` or `.gci` files are tracked, and `.gitignore` refuses them. The screenshots
-above show the port running on the author's own discs.
+Point the engine at your disc with the `GW_ISO_VANILLA` environment variable and start
+`build/cargo/release/melee` (`melee.exe` on Windows).
 
-**m-ex is treated as a specification only.** m-ex publishes no licence, so none of its sources,
-headers or data files are vendored or redistributed here; the support described above is an
-independent reimplementation in original C of its published behaviour and file formats. Modded
-content itself — Akaneia, ACE or any other build — is not distributed and must be supplied by you.
+## Docs
 
-Not affiliated with, endorsed by or sponsored by Nintendo; *Super Smash Bros.* and *Melee* are
-trademarks of Nintendo.
+| Start here | |
+|---|---|
+| [STATUS.md](docs/rust-port/STATUS.md) | current state, crate map, commands |
+| [notes/](docs/rust-port/notes/) | one file per topic: [netplay](docs/rust-port/notes/net.md), [Slippi online](docs/rust-port/notes/slippi-online.md), [mod host](docs/rust-port/notes/modhost.md), [zero hitch](docs/rust-port/notes/zero-hitch.md), [performance](docs/rust-port/notes/perf.md), [Dolphin oracle](docs/rust-port/notes/dolphin-oracle.md), [external replays](docs/rust-port/notes/replays-ext.md) |
+| [docs/specs](docs/specs/) | mod ABI ([mod-c-v1](docs/specs/mod-c-v1.md)), hooks, NHV1 state hash, Geno |
+| [CONTRIBUTING](.github/CONTRIBUTING.md) | coding style (inherited from the decomp; a Rust section is planned) |
 
-Dependencies — including the vendored Aurora and its port patches — are inventoried in
-[`pc/DEPENDENCIES.md`](pc/DEPENDENCIES.md).
+## Licences
+
+- Engine and tools: [GPL-3.0](rust/LICENSE).
+- Specs, headers and examples in `docs/specs/`: [MIT](docs/specs/LICENSE-MIT).
+- Third-party code keeps its own licence (see each folder and [CREDITS.md](CREDITS.md)).
 
 ## Credits
 
-[doldecomp/melee](https://github.com/doldecomp/melee) · [encounter/aurora](https://github.com/encounter/aurora) ·
-[google/dawn](https://dawn.googlesource.com/dawn) · [TwilitRealm/dusklight](https://github.com/TwilitRealm/dusklight) ·
-[akaneia/m-ex](https://github.com/akaneia/m-ex) · Dolphin Emulator.
+- [doldecomp/melee](https://github.com/doldecomp/melee) and its contributors: the decompilation this engine is built from.
+- Hero and Melee Unlocked: we follow his design for Slippi online, with his permission.
+- [Project Slippi](https://github.com/project-slippi): replays and the online protocol we aim to match.
+- See [CREDITS.md](CREDITS.md) for the rest.
 
-Netplay early inputs (`rust/melee_net/src/early.rs`) follow the early-input approach of Hero's
-melee-unlocked, which builds on Arte's subframe rollback.
+## Legal
+
+This project is not affiliated with or endorsed by Nintendo, HAL Laboratory or Project Slippi. It contains no
+Nintendo code, assets or disc data. You must supply a disc image you own. *Super Smash Bros. Melee* is a trademark
+of Nintendo.

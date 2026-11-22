@@ -1,6 +1,6 @@
 -- @name: enemies2
 -- @gameplay: true
--- Unattended LAB/FD fixture. Launch as MELEE_PAD_SCRIPT; see enemies2-report.md.
+-- Unattended LAB/FD fixture. Launch as MELEE_PAD_SCRIPT; see docs/rust-port/reports/enemies2-report.md.
 local section, failures, done = 0, 0, false
 local events, expected = {}, {}
 local started = gd.time()

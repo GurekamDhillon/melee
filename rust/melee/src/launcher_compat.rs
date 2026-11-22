@@ -104,6 +104,11 @@ pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
     if let Some(v) = get("volume").and_then(|s| s.trim().parse::<i32>().ok()) {
         out.push(("MELEE_VOLUME".into(), v.clamp(0, 100).to_string()));
     }
+    // Hero's "Music" slider (pc_settings `music`, 0..100). His `audio_device` is a WASAPI endpoint id, not a name
+    // our output can open, so it is not mapped: the device is picked in our own settings overlay.
+    if let Some(v) = get("music").and_then(|s| s.trim().parse::<i32>().ok()) {
+        out.push(("MELEE_MUSIC".into(), v.clamp(0, 100).to_string()));
+    }
     // the adapter keeps reading with the window in the background (melee_platform PadSystem::background_input)
     if let Some(v) = get("backgroundinput") {
         out.push(("MELEE_BACKGROUND_INPUT".into(), (on(v) as u8).to_string()));
@@ -492,7 +497,7 @@ mod tests {
     #[test]
     #[cfg_attr(not(windows), ignore = "the Windows launcher's command line: its paths only split on `\\` on Windows")]
     fn maps_the_launchers_command_line() {
-        let ini = "fps 60\nscale 3\nfullscreen 1\nexclusivefullscreen 0\nvsync 0\nwidescreen 1\nwindow 1600x1200\nvolume 40\nmsaa 4\n";
+        let ini = "fps 60\nscale 3\nfullscreen 1\nexclusivefullscreen 0\nvsync 0\nwidescreen 1\nwindow 1600x1200\nvolume 40\nmusic 25\nmsaa 4\n";
         let args = s(&[
             "--iso", "C:\\d\\melee.iso", "--threaded-renderer", "--settings-path", "C:\\g\\port-settings.ini", "--sys-dir", "C:\\g\\Sys",
             "--replay-dir", "C:\\g\\Replays", "--card-dir", "C:\\g\\User\\GC\\CardA", "--slippi-menus", "off", "--vanilla-only",
@@ -512,6 +517,7 @@ mod tests {
         assert_eq!(env("MELEE_MSAA"), Some("4"));
         assert_eq!(env("MELEE_VSYNC"), Some("off"));
         assert_eq!(env("MELEE_VOLUME"), Some("40"));
+        assert_eq!(env("MELEE_MUSIC"), Some("25"));
         assert_eq!(env("MELEE_SLP_DIR"), Some(r"C:\g\Replays"));
         assert_eq!(env("MELEE_CARD_PATH"), Some(Path::new("C:\\g\\User\\GC").join("RustPort").display().to_string().as_str()));
         assert!(env("MELEE_LOG_FILE").unwrap().ends_with("melee_port.log"));

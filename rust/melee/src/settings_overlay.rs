@@ -138,6 +138,24 @@ fn cfg_val(key: &str) -> Option<String> {
     crate::cfg::text(key)
 }
 
+/// A live 0..100 slider (step 5) from settings.cfg.
+fn slider(key: &str, label: &str, dflt: i32, help: &str) -> Row {
+    let value = cfg_val(key).and_then(|v| v.trim().parse::<i32>().ok()).unwrap_or(dflt).clamp(0, 100);
+    Row { key: key.into(), label: label.into(), kind: Kind::Slider { lo: 0, hi: 100, step: 5 }, value, live: true, help: help.into(), note: String::new() }
+}
+
+/// Hero's "Output device": the system default or one device by name (`audio_device`); applies on the next launch.
+fn device_row(devices: &[String]) -> Row {
+    let cur = cfg_val("audio_device").unwrap_or_default();
+    let mut c: Vec<(String, String)> = vec![("System default".into(), String::new())];
+    c.extend(devices.iter().map(|d| (d.clone(), d.clone())));
+    if !cur.is_empty() && !devices.contains(&cur) {
+        c.push((format!("{cur} (not connected)"), cur.clone()));
+    }
+    let value = c.iter().position(|o| o.1 == cur).unwrap_or(0) as i32;
+    Row { key: "audio_device".into(), label: "Output device".into(), kind: Kind::Choice(c), value, live: false, help: "Applies after restart (as Hero's).".into(), note: String::new() }
+}
+
 fn choice(key: &str, label: &str, opts: &[(&str, &str)], dflt: &str, live: bool, help: &str) -> Row {
     let cur = cfg_val(key).unwrap_or_else(|| dflt.to_string()).to_ascii_lowercase();
     let c: Vec<(String, String)> = opts.iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
@@ -206,7 +224,10 @@ impl Overlay {
             live: true,
             help: "Output gain only; the game's mix is untouched.".into(),
             note: String::new(),
-        }];
+        },
+        slider("music", "Music", 100, "The music stream only (Hero's Music slider); master volume applies on top."),
+        slider("sfx", "SFX", 100, "Every sound but the music: fighters, stages, menus, announcer."),
+        device_row(&melee_audio::output::list_devices())];
         let overlays = vec![
             toggle("overlay", "Performance HUD", false, true, "fps, frame time, sim rate; netplay ping / delay / rollbacks (F3)."),
             toggle("input_display", "Input display", false, true, "Sticks, triggers and buttons per port (F6)."),

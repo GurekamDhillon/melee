@@ -5,7 +5,8 @@
 //! disk never holds the simulation.
 //!
 //! One difference: his port says "In match" only for an online match. Ours also says it in an offline VS match (the
-//! scenes `vs` and `suddendeath`), which is what the lobby's presence line shows a friend. Stocks are port 1's.
+//! scenes `vs` and `suddendeath`), which is what the lobby's presence line shows a friend. Stocks are port 1's
+//! (`MELEE_LOBBY_STATUS_PORT` picks another).
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
@@ -44,6 +45,13 @@ fn start(path: std::path::PathBuf) -> Mutex<Writer> {
     Mutex::new(Writer { tx, last_sent: None, last_at: None })
 }
 
+/// The local player's slot (his `local_player_index`): port 1 offline; `MELEE_LOBBY_STATUS_PORT=1..4` picks another
+/// (online seats, tests).
+fn local_port() -> i32 {
+    static P: OnceLock<i32> = OnceLock::new();
+    *P.get_or_init(|| std::env::var("MELEE_LOBBY_STATUS_PORT").ok().and_then(|v| v.parse::<i32>().ok()).filter(|p| (1..=4).contains(p)).map_or(0, |p| p - 1))
+}
+
 /// Called once per tick by the retail flow with the current scene kind. Nothing without `MELEE_LOBBY_STATUS_FILE`.
 pub fn frame(scene_kind: u8) {
     // launcher tests only (MELEE_LAUNCHER_TEST): a panic in the first match tick, for the crash files the launcher reads
@@ -58,7 +66,7 @@ pub fn frame(scene_kind: u8) {
         return;
     }
     w.last_at = Some(now);
-    let stocks = if matches!(scene_kind, 2 | 3) { unsafe { melee_fighter::tu::player::Player_GetStocks(0) } } else { -1 };
+    let stocks = if matches!(scene_kind, 2 | 3) { unsafe { melee_fighter::tu::player::Player_GetStocks(local_port()) } } else { -1 };
     let t = text(scene_kind, stocks);
     if w.last_sent.as_deref() != Some(t.as_str()) {
         let _ = w.tx.send(t.clone());

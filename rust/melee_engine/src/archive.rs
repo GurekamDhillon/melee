@@ -568,6 +568,19 @@ pub(crate) fn decode_prof_on() -> bool {
 }
 
 /// The process's page-fault count (diagnostics; 0 off Windows).
+/// Minor page faults of the calling thread so far (Linux; 0 elsewhere, where [`page_faults`] counts the process):
+/// the `MELEE_BOOT_TIMES` slow-tick line's count.
+pub fn thread_page_faults() -> u64 {
+    #[cfg(target_os = "linux")]
+    unsafe {
+        let mut u: libc::rusage = core::mem::zeroed();
+        if libc::getrusage(libc::RUSAGE_THREAD, &mut u) == 0 {
+            return u.ru_minflt as u64;
+        }
+    }
+    0
+}
+
 pub fn page_faults() -> u32 {
     #[cfg(windows)]
     {

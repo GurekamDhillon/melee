@@ -805,6 +805,7 @@ pub unsafe extern "C" fn lbDvd_80018254() {
         }
     }
 
+    let _zh_reg = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("preload: register"));
     match preloadCache.persistent_heaps {
         0 => {}
         1 => inline1(),
@@ -850,7 +851,9 @@ pub unsafe extern "C" fn lbDvd_80018254() {
             return;
         }
     }
+    drop(_zh_reg);
     if six_budget_check == 0 {
+        let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("preload: read chain (80017CC4)"));
         lbDvd_80017CC4();
     }
     ext::OSRestoreInterrupts(enabled);

@@ -126,7 +126,41 @@ mod sys {
         VirtualFree(at as *mut _, n, 0x4000);
     }
 }
-#[cfg(not(windows))]
+/// Linux: the same range with `mmap` (reserved PROT_NONE, committed by `mprotect`, given back by `MADV_DONTNEED`: a
+/// dropped page stays mapped and reads zero, as a Windows decommit + recommit does). No write watch: `written` says
+/// "unknown", and the plan builder then scans and copies every page up to the slot's bump (slower on the worker only).
+#[cfg(target_os = "linux")]
+mod sys {
+    unsafe fn map(at: usize, n: usize) -> usize {
+        let fixed = if at != 0 { libc::MAP_FIXED_NOREPLACE } else { 0 };
+        let p = libc::mmap(at as *mut _, n, libc::PROT_NONE, libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE | fixed, -1, 0);
+        if p == libc::MAP_FAILED {
+            return 0;
+        }
+        if at != 0 && p as usize != at {
+            // an old kernel without MAP_FIXED_NOREPLACE takes the address as a hint only
+            libc::munmap(p, n);
+            return 0;
+        }
+        p as usize
+    }
+    pub unsafe fn reserve(n: usize) -> usize {
+        map(0, n)
+    }
+    pub unsafe fn reserve_at(at: usize, n: usize) -> usize {
+        map(at, n)
+    }
+    pub unsafe fn written(_a: usize, _n: usize) -> Option<Vec<usize>> {
+        None
+    }
+    pub unsafe fn commit(at: usize, n: usize) -> bool {
+        libc::mprotect(at as *mut _, n, libc::PROT_READ | libc::PROT_WRITE) == 0
+    }
+    pub unsafe fn decommit(at: usize, n: usize) {
+        libc::madvise(at as *mut _, n, libc::MADV_DONTNEED);
+    }
+}
+#[cfg(not(any(windows, target_os = "linux")))]
 mod sys {
     pub unsafe fn reserve(_n: usize) -> usize {
         0

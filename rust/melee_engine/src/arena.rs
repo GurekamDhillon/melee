@@ -527,7 +527,7 @@ unsafe fn tail_decommit(a: usize, b: usize) {
 }
 
 /// The background thread: decommit the queued tails (the system calls run outside the arena lock).
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "linux"))]
 fn tails_drain() {
     loop {
         let mut local = [(0usize, 0usize); 16];
@@ -845,7 +845,7 @@ impl Drop for BgPause {
 }
 
 /// Bytes past the bump pointer the pre-faulter keeps resident.
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "linux"))]
 const PREFAULT_AHEAD: usize = 96 << 20;
 
 /// Start the pre-faulter (boot, once; `MELEE_ARENA_PREFAULT=off` keeps it off): a thread that keeps the pages just past
@@ -854,7 +854,11 @@ const PREFAULT_AHEAD: usize = 96 << 20;
 /// already backed by a zeroed physical page, so the game thread's first write does not fault. Nothing is written: the
 /// arena's bytes, blocks and write-watch state are exactly as without it (commits ahead are what `alloc_locked` would do
 /// at its next step, made earlier, under the same lock).
-#[cfg(windows)]
+/// Linux (no ReadProcessMemory, and a read there maps the shared zero page, so the first write would still fault):
+/// `madvise(MADV_POPULATE_WRITE)` faults the range in writable without writing a byte (kernel 5.14+; older kernels
+/// refuse it and nothing happens). A page the game thread has since freed and dropped (`MADV_DONTNEED`) reads zero
+/// either way, so the order of the two never changes a byte; a range past the commit is refused, not faulted.
+#[cfg(any(windows, target_os = "linux"))]
 pub fn start_prefault() {
     {
         let _s = SysScope::enter();
@@ -870,14 +874,20 @@ pub fn start_prefault() {
     let _s = SysScope::enter();
     let _ = std::thread::Builder::new().name("arena-prefault".into()).spawn(|| {
         mark_foreign_thread();
+        #[cfg(windows)]
         extern "system" {
             fn GetCurrentThread() -> *mut core::ffi::c_void;
             fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
             fn GetCurrentProcess() -> *mut core::ffi::c_void;
             fn ReadProcessMemory(h: *mut core::ffi::c_void, base: *const core::ffi::c_void, buf: *mut core::ffi::c_void, n: usize, read: *mut usize) -> i32;
         }
+        #[cfg(windows)]
         let me = unsafe { GetCurrentProcess() };
+        #[cfg(windows)]
         unsafe { SetThreadPriority(GetCurrentThread(), -1) }; // below normal: never ahead of the game thread
+        // Linux: a nice value is per thread there (this thread only), 5 ~ below normal
+        #[cfg(target_os = "linux")]
+        unsafe { libc::setpriority(libc::PRIO_PROCESS, libc::gettid() as libc::id_t, 5) };
         BG_ALIVE.store(true, Relaxed);
         let mut touched = 0usize;
         loop {
@@ -906,7 +916,17 @@ pub fn start_prefault() {
             let committed = unsafe { core::ptr::read_volatile(&raw const COMMITTED) };
             let mut p = (touched.max(bump) + 0xFFF) & !0xFFF;
             let end = want.min(committed);
+            #[cfg(windows)]
             let mut n = 0;
+            #[cfg(target_os = "linux")]
+            while p < end && !bg_paused() {
+                // 1 MB per call (256 pages), yielding between: the same pace as the Windows loop below
+                let n = (end - p).min(1 << 20);
+                unsafe { libc::madvise(p as *mut _, n, libc::MADV_POPULATE_WRITE) };
+                p += n;
+                std::thread::yield_now();
+            }
+            #[cfg(windows)]
             while p < end && !bg_paused() {
                 // Touch the page through the kernel, not with a plain load. `bump` above is a moment old: the game
                 // thread can since have handed out a block here and freed it again, and a freed block of 64 KB or
@@ -929,7 +949,7 @@ pub fn start_prefault() {
         }
     });
 }
-#[cfg(not(windows))]
+#[cfg(not(any(windows, target_os = "linux")))]
 pub fn start_prefault() {}
 
 /// Trim mode keeps big freed blocks RESIDENT instead of decommitting them (`MELEE_ARENA_KEEP=off` restores the

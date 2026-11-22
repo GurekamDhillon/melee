@@ -78,6 +78,8 @@ pub struct Online {
     pub refused: u32,
     /// Idle after a hold-Z disconnect: Start (a fighter chosen) searches again (Hero's `MU_SLP_MM_IDLE` case).
     pub search_again: bool,
+    /// A fighter is chosen on the select (the vanilla flag; Hero `*char_chosen`), for the panel's first line.
+    pub chosen: bool,
 }
 
 pub static ONLINE: std::sync::Mutex<Online> = std::sync::Mutex::new(Online {
@@ -100,6 +102,7 @@ pub static ONLINE: std::sync::Mutex<Online> = std::sync::Mutex::new(Online {
     game: 0,
     refused: 0,
     search_again: false,
+    chosen: false,
 });
 
 pub fn with<R>(f: impl FnOnce(&mut Online) -> R) -> R {
@@ -281,7 +284,10 @@ unsafe extern "C" fn css_decide(state: *mut GameModeState) {
 pub unsafe fn inputs(trigger: u32, held: u32, ready: bool, ck: i8, color: u8) -> u32 {
     const START: u32 = HSD_PAD_START as u32;
     const Z: u32 = HSD_PAD_Z as u32;
-    let (conn, local, remote, mode) = with(|o| (o.conn, o.local_ready, o.remote_ready, o.mode));
+    let (conn, local, remote, mode) = with(|o| {
+        o.chosen = ready && ck >= 0;
+        (o.conn, o.local_ready, o.remote_ready, o.mode)
+    });
     text_think();
     if trigger & START != 0 && !local {
         eprintln!("online css: Start (connection {conn}, fighter chosen {ready}, fighter {ck})");
@@ -374,7 +380,7 @@ pub fn refused_unselect() {
 }
 
 // ---- the panel (Hero `text_think`, LoadCSSText, FN_UserTextUpdate): header, status, error, prompt, opponent, user --
-const LINES: usize = 12;
+const LINES: usize = 15;
 const L_HEADER: usize = 0;
 const L_STATUS: usize = 1; // two status lines, or the first two of the four error lines
 const L_ERR: usize = 1; // L_ERR..L_ERR + 4: the error, wrapped (Hero ST_ERR1..ST_ERR4)
@@ -382,6 +388,15 @@ const L_PROMPT: usize = 5;
 const L_PLAYING: usize = 6;
 const L_OPP: usize = 7;
 const L_USER: usize = 8; // "User", the name, "Connect Code", the code (Hero FN_InitUserDisplay)
+const L_SPIN: usize = 12; // L_SPIN..L_SPIN + 3: the status lines' spinners, SPIN_WAIT / SPIN_DONE / empty (Hero ST_SPIN1..3)
+const SPIN_WAIT: &str = "wait";
+const SPIN_DONE: &str = "done";
+/// Hero's SPINNER_TRANSITION_FRAMES: the wait glyph alternates every 15 frames.
+const SPIN_FRAMES: u32 = 15;
+static mut FRAME: u32 = 0;
+/// Hero's sound edges (mu_slippi_css_inputs): the last lock-in and connection state seen.
+static mut PREV_LOCK: bool = false;
+static mut PREV_CONN: u8 = CONN_IDLE;
 static mut TEXT: *mut HSD_Text = core::ptr::null_mut();
 static mut SHOWN: [String; LINES] = [const { String::new() }; LINES];
 
@@ -446,22 +461,49 @@ pub fn panel_lines(o: &Online, user: &(String, String)) -> [String; LINES] {
         }
         l[L_PROMPT] = "Press B to go back".into();
     } else {
-        l[L_STATUS] = match o.conn {
-            CONN_IDLE if o.search_again => "Starting...".to_string(),
-            CONN_IDLE => "Disconnected".to_string(),
-            CONN_INITIALIZING => "Starting...".to_string(),
-            CONN_MATCHMAKING => format!("Searching for {opp}"),
-            CONN_OPPONENT_CONNECTING => format!("Connecting to {opp}"),
-            CONN_SUCCESS if o.local_ready && !o.remote_ready => format!("Waiting on {opp}"),
-            CONN_SUCCESS if o.local_ready => "Starting the match".to_string(),
-            _ => "Opponent found".to_string(),
+        // Hero's text_think steps: the fighter, then the search or lock-in, then the wait on the opponent, each
+        // with its spinner (wait while it is pending, done once it is)
+        let direct = o.mode == so::MODE_DIRECT;
+        let searching = matches!(o.conn, CONN_INITIALIZING | CONN_MATCHMAKING) || (o.conn == CONN_IDLE && o.search_again);
+        let link = if searching {
+            format!("Searching for {opp}")
+        } else if o.conn == CONN_OPPONENT_CONNECTING {
+            format!("Connecting to {opp}")
+        } else {
+            String::new()
         };
-        l[L_STATUS + 1] = match o.conn {
-            CONN_IDLE => "Press START to search".into(),
-            CONN_SUCCESS if !o.local_ready => "Press START to lock in".into(),
-            CONN_SUCCESS => "Locked in".into(),
-            _ => String::new(),
-        };
+        if !o.chosen {
+            l[L_STATUS] = "Select your character".into();
+            l[L_SPIN] = SPIN_WAIT.into();
+            if !link.is_empty() {
+                l[L_STATUS + 1] = link;
+                l[L_SPIN + 1] = SPIN_WAIT.into();
+            }
+        } else {
+            l[L_STATUS] = "Character selected".into();
+            l[L_SPIN] = SPIN_DONE.into();
+            if !o.local_ready {
+                l[L_STATUS + 1] = if !link.is_empty() {
+                    link
+                } else if o.conn == CONN_SUCCESS && direct && o.winner == WINNER_LOST && o.chose_stage.is_none() {
+                    "Press START to select stage".into()
+                } else if o.conn == CONN_SUCCESS {
+                    "Press START to lock in".into()
+                } else {
+                    "Press START to search".into()
+                };
+                l[L_SPIN + 1] = SPIN_WAIT.into();
+            } else {
+                l[L_STATUS + 1] = "Locked in".into();
+                l[L_SPIN + 1] = SPIN_DONE.into();
+                l[L_STATUS + 2] = match o.conn {
+                    CONN_SUCCESS if o.remote_ready => "Starting the match".into(),
+                    CONN_SUCCESS => format!("Waiting on {opp}"),
+                    _ => link,
+                };
+                l[L_SPIN + 2] = if o.conn == CONN_SUCCESS && o.remote_ready { SPIN_DONE } else { SPIN_WAIT }.into();
+            }
+        }
         l[L_PROMPT] = match o.conn {
             CONN_SUCCESS => "Hold Z to disconnect".into(),
             CONN_INITIALIZING | CONN_MATCHMAKING | CONN_OPPONENT_CONNECTING => "Press B to cancel".into(),
@@ -491,7 +533,27 @@ pub fn panel_lines(o: &Online, user: &(String, String)) -> [String; LINES] {
 unsafe fn text_think() {
     use melee_runtime::tu::hsd_3A64 as sis;
     let u = user();
-    let lines = with(|o| panel_lines(o, &u));
+    let (mut lines, lock, conn) = with(|o| (panel_lines(o, &u), o.lock.is_some(), o.conn));
+    // Hero's sounds: lock-in lost -> "back" (0); any -> error -> "error" (3); connected -> any -> "back"
+    if PREV_LOCK && !lock {
+        super::mnmain::ext::lbAudioAx_80024030(0);
+    } else if PREV_CONN != CONN_ERROR && conn == CONN_ERROR {
+        super::mnmain::ext::lbAudioAx_80024030(3);
+    } else if PREV_CONN == CONN_SUCCESS && conn != CONN_SUCCESS {
+        super::mnmain::ext::lbAudioAx_80024030(0);
+    }
+    if PREV_CONN != conn {
+        eprintln!("online css: panel: connection {PREV_CONN} -> {conn}");
+    }
+    (PREV_LOCK, PREV_CONN) = (lock, conn);
+    // the wait spinner's phase is part of the line, so the text is rebuilt when it turns
+    let phase = (FRAME / SPIN_FRAMES) & 1;
+    FRAME = (FRAME + 1) % (2 * SPIN_FRAMES);
+    for l in lines[L_SPIN..L_SPIN + 3].iter_mut() {
+        if l == SPIN_WAIT {
+            *l = format!("{SPIN_WAIT}{phase}");
+        }
+    }
     if lines == SHOWN && !TEXT.is_null() {
         return;
     }
@@ -536,10 +598,25 @@ unsafe fn text_think() {
         (-112.0, 40.0, 0.5, white),
         (-112.0, 65.0, 0.4, gray),
         (-112.0, 85.0, 0.5, white),
+        (70.0, 52.0, 0.45, white),
+        (70.0, 75.0, 0.45, white),
+        (70.0, 98.0, 0.45, white),
     ];
-    for (l, &(x, y, scale, c)) in lines.iter().zip(place.iter()) {
+    // Hero's spinner glyphs (Shift-JIS) and colours
+    let wait = GXColor { r: 0x3C, g: 0xBC, b: 0xFF, a: 0xFF };
+    let done = GXColor { r: 0x33, g: 0xFF, b: 0x2F, a: 0xFF };
+    for (i, (l, &(x, y, scale, c))) in lines.iter().zip(place.iter()).enumerate() {
         let s = if l.is_empty() { " " } else { l.as_str() };
-        let n = sis::HSD_SisLib_803A6B98(t, x, y, Some(s));
+        let (n, c) = if i >= L_SPIN && !l.is_empty() {
+            let (glyph, col): (&[u8], GXColor) = match l.as_str() {
+                "wait0" => (&[0x81, 0x7B], wait),
+                "wait1" => (&[0x81, 0x7E], wait),
+                _ => (&[0x81, 0x7C], done),
+            };
+            (sis::HSD_SisLib_803A6B98_bytes(t, x, y, Some(glyph)), col)
+        } else {
+            (sis::HSD_SisLib_803A6B98(t, x, y, Some(s)), c)
+        };
         sis::HSD_SisLib_803A7548(t, n, scale, scale);
         sis::HSD_SisLib_803A74F0(t, n, &c);
     }
@@ -555,20 +632,32 @@ mod tests {
     fn panel() {
         let none = (String::new(), String::new());
         let mut o = Online { mode: so::MODE_DIRECT, conn: CONN_MATCHMAKING, search_code: "BBBB#002".into(), ..Default::default() };
-        assert_eq!(panel_lines(&o, &none)[L_STATUS], "Searching for BBBB\u{FF03}002");
+        let l = panel_lines(&o, &none);
+        assert_eq!((l[L_STATUS].as_str(), l[L_SPIN].as_str()), ("Select your character", SPIN_WAIT));
+        assert_eq!((l[L_STATUS + 1].as_str(), l[L_SPIN + 1].as_str()), ("Searching for BBBB\u{FF03}002", SPIN_WAIT));
+        o.chosen = true;
+        let l = panel_lines(&o, &none);
+        assert_eq!((l[L_STATUS].as_str(), l[L_SPIN].as_str()), ("Character selected", SPIN_DONE));
+        assert_eq!(l[L_STATUS + 1], "Searching for BBBB\u{FF03}002");
+        o.conn = CONN_OPPONENT_CONNECTING;
+        assert_eq!(panel_lines(&o, &none)[L_STATUS + 1], "Connecting to BBBB\u{FF03}002");
+        o.conn = CONN_MATCHMAKING;
         assert_eq!(panel_lines(&o, &none)[L_PROMPT], "Press B to cancel");
         o.conn = CONN_SUCCESS;
         let l = panel_lines(&o, &none);
         assert_eq!((l[L_PLAYING].as_str(), l[L_OPP].as_str()), ("Playing:", "BBBB\u{FF03}002"));
+        assert_eq!(l[L_STATUS + 1], "Press START to lock in");
         o.local_ready = true;
-        assert_eq!(panel_lines(&o, &none)[L_STATUS], "Waiting on BBBB\u{FF03}002");
+        let l = panel_lines(&o, &none);
+        assert_eq!((l[L_STATUS + 1].as_str(), l[L_SPIN + 1].as_str()), ("Locked in", SPIN_DONE));
+        assert_eq!((l[L_STATUS + 2].as_str(), l[L_SPIN + 2].as_str()), ("Waiting on BBBB\u{FF03}002", SPIN_WAIT));
         o.remote_ready = true;
-        assert_eq!(panel_lines(&o, &none)[L_STATUS], "Starting the match");
+        assert_eq!(panel_lines(&o, &none)[L_STATUS + 2], "Starting the match");
         let u = Online { mode: so::MODE_UNRANKED, conn: CONN_MATCHMAKING, ..Default::default() };
         let l = panel_lines(&u, &("Name".into(), "TEST#123".into()));
-        assert_eq!((l[L_HEADER].as_str(), l[L_STATUS].as_str()), ("Slippi Unranked", "Searching for opponent"));
+        assert_eq!((l[L_HEADER].as_str(), l[L_STATUS + 1].as_str()), ("Slippi Unranked", "Searching for opponent"));
         assert_eq!((l[L_USER].as_str(), l[L_USER + 1].as_str(), l[L_USER + 3].as_str()), ("User", "Name", "TEST\u{FF03}123"));
-        let idl = Online { mode: so::MODE_DIRECT, conn: CONN_IDLE, ..Default::default() };
+        let idl = Online { mode: so::MODE_DIRECT, conn: CONN_IDLE, chosen: true, ..Default::default() };
         assert_eq!(panel_lines(&idl, &none)[L_STATUS + 1], "Press START to search");
         assert!(stage_allowed(0x1F) && stage_allowed(0x02) && !stage_allowed(0x15) && !stage_allowed(0));
     }

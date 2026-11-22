@@ -80,6 +80,7 @@ mod play_net;
 mod slp_export;
 mod spectate;
 mod replay_ctl;
+mod slp_play;
 mod replays;
 mod np_lockstep;
 mod np_mux;
@@ -1093,7 +1094,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
     let pause: Option<(usize, usize)> = get("--pause").and_then(|v| v.split_once(':').and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?))));
     let mut csv_file = std::fs::File::create(&out).ok();
     let mut csv_written = 0usize;
-    let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
+    let mut csv = String::from(slp_play::CSV_HEADER);
     let calltrace_out = get("--calltrace");
     if calltrace_out.is_some() && !melee_core::ct::ENABLED {
         eprintln!("melee: --calltrace needs a build with `--features calltrace`");
@@ -1136,12 +1137,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
         if replay {
             // gmscene.c: `Replay_Tick`, then the forced seed; the fighters read the recorded inputs through the `Replay_*` platform hooks
-            let pl = unsafe { REPLAY.as_mut().unwrap() };
-            pl.tick();
-            let sd = pl.resync_seed();
-            if sd != 0 {
-                melee_runtime::tu::random::global::state().set_logic_seed(sd);
-            }
+            slp_play::replay_frame();
         }
         if idle || pause.is_some() {
             let mut pads = [melee_types::PADStatus::zeroed(); 4];
@@ -1220,11 +1216,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
             eprintln!("f{f} {}", e.debug_fighter(0));
             eprintln!("f{f} {}", e.debug_fighter(1));
         }
-        csv.push_str(&format!("{f},{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]));
-        for w in &r[4..16] {
-            csv.push_str(&format!(",{w:08X}"));
-        }
-        csv.push('\n');
+        csv.push_str(&slp_play::csv_row(f, &r));
         // written every frame: a crash later in the run keeps the frames that were produced
         // (appended through one open handle: rewriting the whole file each frame cost ~half the run on Windows)
         if let Some(f) = csv_file.as_mut() {
@@ -1299,7 +1291,7 @@ pub(crate) fn apply_recorded_spawn(data: &[u8]) {
     }
 }
 
-fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
+pub(crate) fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
     // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
     let parsed = melee_data::slp::parse(&data, false).ok();

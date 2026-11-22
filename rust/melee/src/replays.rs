@@ -2,8 +2,9 @@
 //!
 //! Lists the `.slp` (Slippi, read with melee_data::slp) and `.mrpl` (this engine's replay, play_net::Replay) files of a
 //! folder (default `MELEE_SLP_DIR`, else `Replays`), newest first, with characters, stage, date and duration. `--play N`
-//! plays entry N: a `.mrpl` through `melee play --replay` (pause / step / seek / speed / camera: replay_ctl.rs), a `.slp`
-//! through the sim's Slippi player (`melee golden --slp`, headless, hash per frame; it plays only what the sim covers).
+//! plays entry N through `melee play --replay` in the window: a `.mrpl` (pause / step / seek / speed / camera:
+//! replay_ctl.rs), a `.slp` through the sim's Slippi player (slp_play.rs; it plays only what the sim covers). A `.slp`
+//! with `--headless` runs `melee golden --slp` instead (hash per frame, no window).
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -148,11 +149,12 @@ pub fn replays(args: &[String]) -> ExitCode {
         let exe = std::env::current_exe().unwrap_or_else(|_| "melee".into());
         let p = e.path.to_string_lossy().to_string();
         let mut cmd = std::process::Command::new(exe);
-        if e.kind == "mrpl" {
+        if e.kind == "mrpl" || !rest.iter().any(|a| a == "--headless") {
+            // a .slp plays in the window too (slp_play.rs: the sim's Slippi player, golden's setup)
             cmd.args(["play", "--replay", &p]).args(&rest);
         } else {
             eprintln!("replays: {p}: Slippi playback through the sim's player (headless, `golden --slp`)");
-            cmd.args(["golden", "--slp", &p]).args(&rest);
+            cmd.args(["golden", "--slp", &p]).args(rest.iter().filter(|a| *a != "--headless"));
         }
         return match cmd.status() {
             Ok(s) if s.success() => ExitCode::SUCCESS,

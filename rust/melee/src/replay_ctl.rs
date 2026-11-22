@@ -58,6 +58,11 @@ fn log(m: &str) {
 }
 
 impl Ctl {
+    /// Plain playback with the keyboard controls available (a `.slp` playback always has them: slp_play.rs).
+    pub fn new() -> Ctl {
+        Ctl { paused: false, speed: 1.0, acc: 0.0, step: 0, seek: None, ff_to: None, camera: Camera::Game, snap_every: 300, script: Vec::new(), seekable: false }
+    }
+
     /// None when the command line asks for no control (plain playback stays exactly as before).
     pub fn from_args(args: &[String]) -> Option<Ctl> {
         let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();

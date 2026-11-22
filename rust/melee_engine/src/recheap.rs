@@ -333,6 +333,8 @@ pub fn drain_decommits() {
         s.dirty[slot].store(0, Release);
         s.used.fetch_and(!(1u64 << slot), AcqRel);
     }
+}
+
 /// A VS match is on (the asset service's `scene_prefetch`): no slot page is given back meanwhile (Linux `sys::zero_slot_range`).
 static IN_FIGHT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 pub fn set_in_fight(on: bool) {

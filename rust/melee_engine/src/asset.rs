@@ -1165,7 +1165,7 @@ pub fn scene_prefetch(minor: i32) {
     let fight = minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32;
     IN_FIGHT.store(fight, Relaxed);
     // a fight is on: recheap gives no slot page back until it ends (Linux `zero_slot_range`)
-    recheap::set_in_fight(minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32);
+    recheap::set_in_fight(fight);
     if minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32 {
         hint_files(&["IfCoGet.dat", "GmRst", "SdRst", "TyDatai"]);
     } else if minor == melee_types::GS_RESULTS as i32 {

@@ -251,6 +251,11 @@ pub struct JoinRequest {
     pub app_version: String,
     /// our netplay (ENet) UDP port; the netplay client binds it after the match is found
     pub port: u16,
+    /// Hero's `build_join`: the netplay port's public address as STUN saw it (the `srflx` candidate; it also
+    /// becomes the join's `port`). None: the server falls back to the address it observes.
+    pub reflexive: Option<std::net::SocketAddrV4>,
+    /// "cone", "symmetric" or "unknown" (Hero's `classify_nat` of two STUN answers); empty: not sent
+    pub nat_type: String,
 }
 
 #[derive(Clone, Debug)]
@@ -280,8 +285,9 @@ impl MatchResult {
     pub fn local_index(&self) -> Option<u8> {
         self.players.iter().find(|p| p.is_local).map(|p| p.port.saturating_sub(1))
     }
-    /// The remote addresses as SlippiMatchmaking picks them: the LAN address when both share the external IP.
-    pub fn remote_addresses(&self) -> Vec<(u8, String)> {
+    /// The remote addresses as Hero's `remote_address` (slippi_address.h) picks them: (index, first, fallback).
+    /// Same external IP and a distinct LAN address: the LAN address first, the public one as the fallback.
+    pub fn remote_addresses(&self) -> Vec<(u8, String, Option<String>)> {
         let Some(me) = self.players.iter().find(|p| p.is_local) else { return Vec::new() };
         let my_ext = me.ip_address.split(':').next().unwrap_or("").to_string();
         self.players
@@ -289,8 +295,12 @@ impl MatchResult {
             .filter(|p| !p.is_local)
             .map(|p| {
                 let ext = p.ip_address.split(':').next().unwrap_or("");
-                let a = if ext != my_ext || p.ip_address_lan.is_empty() { &p.ip_address } else { &p.ip_address_lan };
-                (p.port.saturating_sub(1), a.clone())
+                let lan = &p.ip_address_lan;
+                if ext == my_ext && !lan.is_empty() && *lan != p.ip_address {
+                    (p.port.saturating_sub(1), lan.clone(), Some(p.ip_address.clone()))
+                } else {
+                    (p.port.saturating_sub(1), p.ip_address.clone(), None)
+                }
             })
             .collect()
     }
@@ -326,21 +336,33 @@ impl MatchResult {
 
 /// `join` as `protocol.rs` serializes it (the search code goes as its Shift-JIS bytes; ASCII codes are those bytes).
 pub fn join_message(r: &JoinRequest) -> String {
-    let code_bytes: Vec<String> = r.search_code.bytes().map(|b| b.to_string()).collect();
-    let lan = format!("{}:{}", if r.lan_ip.is_empty() { "127.0.0.1" } else { &r.lan_ip }, r.port);
-    format!(
-        "{{\"type\":\"join\",\"user\":{{\"uid\":{},\"playKey\":{},\"connectCode\":{},\"displayName\":{}}},\"search\":{{\"mode\":{},\"connectCode\":[{}]}},\"appVersion\":{},\"port\":{},\"ipAddressLan\":{},\"candidates\":[{{\"kind\":\"host\",\"address\":{}}}],\"natType\":\"unknown\"}}",
+    // Hero's `join_json` (slippi_mm_service.cpp, the 3.7.0 service): `port` is the public (STUN) port when known,
+    // candidates are `{ip, port, type}` (srflx first, then the LAN host), natType from two STUN answers
+    let lan_ip = if r.lan_ip.is_empty() { "127.0.0.1" } else { &r.lan_ip };
+    let lan = format!("{lan_ip}:{}", r.port);
+    let mut cands = Vec::new();
+    if let Some(x) = r.reflexive {
+        cands.push(format!("{{\"ip\":{},\"port\":{},\"type\":\"srflx\"}}", quote(&x.ip().to_string()), x.port()));
+    }
+    cands.push(format!("{{\"ip\":{},\"port\":{},\"type\":\"host\"}}", quote(lan_ip), r.port));
+    let mut s = format!(
+        "{{\"type\":\"join\",\"user\":{{\"uid\":{},\"playKey\":{},\"connectCode\":{},\"displayName\":{}}},\"search\":{{\"mode\":{},\"connectCode\":[{}]}},\"appVersion\":{},\"port\":{},\"ipAddressLan\":{},\"candidates\":[{}]",
         quote(&r.uid),
         quote(&r.play_key),
         quote(&r.connect_code),
         quote(&r.display_name),
         r.mode,
-        code_bytes.join(","),
+        r.search_code.bytes().map(|b| b.to_string()).collect::<Vec<_>>().join(","),
         quote(&r.app_version),
-        r.port,
+        r.reflexive.map(|x| x.port()).unwrap_or(r.port),
         quote(&lan),
-        quote(&lan)
-    )
+        cands.join(","),
+    );
+    if !r.nat_type.is_empty() {
+        s += &format!(",\"natType\":{}", quote(&r.nat_type));
+    }
+    s.push('}');
+    s
 }
 
 /// Which servers a connection may reach.
@@ -777,17 +799,26 @@ mod tests {
         let m = MatchResult::from_json(&Json::parse(t).unwrap()).unwrap();
         assert_eq!(m.local_index(), Some(1));
         assert_eq!(m.stages, vec![2, 32]);
-        assert_eq!(m.remote_addresses(), vec![(0, "127.0.0.1:5000".to_string())]);
+        assert_eq!(m.remote_addresses(), vec![(0, "127.0.0.1:5000".to_string(), None)]);
         assert_eq!(m.players[0].display_name, "Aé");
-        let j = join_message(&JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "4.0.0".into(), port: 7, play_key: String::new(), lan_ip: String::new() });
+        let j = join_message(&JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "4.0.0".into(), port: 7, play_key: String::new(), lan_ip: String::new(), reflexive: None, nat_type: String::new() });
         let p = Json::parse(&j).unwrap();
         assert_eq!(p.get("search").unwrap().get("connectCode").unwrap().arr().len(), 4);
         assert_eq!(p.get("port").unwrap().num(), Some(7.0));
+        // Hero's 3.7.0 join: srflx candidate first and its port as `port`, `{ip, port, type}` fields, natType
+        let j = join_message(&JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 1, search_code: String::new(), app_version: "3.7.0".into(), port: 51441, play_key: String::new(), lan_ip: "10.0.0.5".into(), reflexive: Some("1.2.3.4:40000".parse().unwrap()), nat_type: "cone".into() });
+        let p = Json::parse(&j).unwrap();
+        assert_eq!(p.get("port").unwrap().num(), Some(40000.0));
+        let c = p.get("candidates").unwrap().arr();
+        assert_eq!((c[0].get("type").unwrap().str(), c[0].get("ip").unwrap().str(), c[0].get("port").unwrap().num()), (Some("srflx"), Some("1.2.3.4"), Some(40000.0)));
+        assert_eq!((c[1].get("type").unwrap().str(), c[1].get("ip").unwrap().str(), c[1].get("port").unwrap().num()), (Some("host"), Some("10.0.0.5"), Some(51441.0)));
+        assert_eq!(p.get("natType").unwrap().str(), Some("cone"));
+        assert_eq!(p.get("ipAddressLan").unwrap().str(), Some("10.0.0.5:51441"));
     }
 
     #[test]
     fn create_ticket_shape() {
-        let r = JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "3.6.4".into(), port: 41234, play_key: "k".into(), lan_ip: "10.0.0.5".into() };
+        let r = JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "3.6.4".into(), port: 41234, play_key: "k".into(), lan_ip: "10.0.0.5".into(), reflexive: None, nat_type: String::new() };
         let p = Json::parse(&create_ticket_message(&r)).unwrap();
         assert_eq!(p.get("type").unwrap().str(), Some("create-ticket"));
         assert_eq!(p.get("ipAddressLan").unwrap().str(), Some("10.0.0.5:41234"));
@@ -795,7 +826,7 @@ mod tests {
         assert!(join_enet("10.0.0.1:43113", 0x7F000001, &r, Duration::from_millis(10), Target::Loopback, |_| {}, |_| false).is_err());
         let g = r#"{"type":"get-ticket-resp","matchId":"x","isHost":true,"players":[{"port":1,"isLocalPlayer":true,"ipAddress":"1.2.3.4:5"},{"port":2,"isLocalPlayer":false,"ipAddress":"1.2.3.4:6","ipAddressLan":"10.0.0.2:6"}]}"#;
         let m = MatchResult::from_json(&Json::parse(g).unwrap()).unwrap();
-        assert_eq!(m.remote_addresses(), vec![(1, "10.0.0.2:6".to_string())]);
+        assert_eq!(m.remote_addresses(), vec![(1, "10.0.0.2:6".to_string(), Some("1.2.3.4:6".to_string()))]);
     }
 
     #[test]

@@ -149,6 +149,7 @@ pub fn yougame_side(
         local_port: j.seat,
         remote_port: j.opp_seat,
         peer: Addr::new(u32::from(*p.ip()), p.port()),
+        fallback: None,
         bind_ip: if loopback { 0x7F00_0001 } else { 0 },
         opp_code: j.opp_code.clone(),
     };

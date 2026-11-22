@@ -204,6 +204,8 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         o.conn = sc::CONN_OPPONENT_CONNECTING;
         o.opp_code = p.opp_code.clone();
     });
+    // the search's STUN socket on this port (Hero's): closed now, its NAT mapping stays for the link
+    crate::slippi_np::release_port();
     // the port can still be held a moment by the process before (the last game's match window): retry the bind
     let mut udp = UdpTransport::open(p.bind_ip, port);
     let bind_t = Instant::now();
@@ -214,6 +216,7 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
     let udp = udp.map_err(|e| format!("bind: {e}"))?;
     sc::with(|o| o.local_index = p.local_port);
     let mut cl = Client::new(Box::new(udp), p.local_port, p.peer, p.remote_port);
+    cl.set_fallback(p.fallback);
     cl.connect_timeout_ms = 30000;
     let t0 = Instant::now();
     let (mut sent, mut theirs) = (None::<(u8, u8)>, None::<Selections>);

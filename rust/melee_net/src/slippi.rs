@@ -215,6 +215,9 @@ struct Timing {
 /// One remote player's link and pad state (1v1: there is one).
 struct Remote {
     addr: Addr,
+    /// Hero's public fallback (slippi_address.h): the public address tried 2 s into a LAN attempt.
+    fallback: Option<Addr>,
+    fallback_started: bool,
     port: u8,
     /// The ENet peer slots we hold to this address (two when both sides connected at once).
     links: Vec<usize>,
@@ -273,6 +276,8 @@ impl Client {
             status: Status::Initiated,
             remote: Remote {
                 addr: remote,
+                fallback: None,
+                fallback_started: false,
                 port: remote_port,
                 links: first.into_iter().collect(),
                 active: None,
@@ -300,6 +305,12 @@ impl Client {
         c.started_at_us = c.now_us();
         c
     }
+    /// Hero's `public_fallbacks_`: the opponent's public address, connected to when the first address has not
+    /// answered after 2 s (the LAN address of a player behind the same router).
+    pub fn set_fallback(&mut self, a: Option<Addr>) {
+        self.remote.fallback = a.filter(|f| *f != self.remote.addr);
+    }
+
     pub fn set_clock_us(&mut self, f: Box<dyn Fn() -> i64>) {
         self.clock_us = Some(f);
         self.started_at_us = self.now_us();
@@ -454,14 +465,29 @@ impl Client {
                 }
             }
         }
+        // Hero's public_fallback_due: 2 s with no link to the first address, the public one as well
+        if self.status == Status::Initiated && !self.remote.fallback_started && (self.now_us() - self.started_at_us) / 1000 >= 2000 {
+            if let Some(f) = self.remote.fallback {
+                self.remote.fallback_started = true;
+                eprintln!("slippi: LAN connection pending; trying public address fallback");
+                if let Some(l) = self.host.connect(f, 3, 0) {
+                    self.remote.links.push(l);
+                }
+            }
+        }
         if self.status == Status::Initiated && (self.now_us() - self.started_at_us) / 1000 >= self.connect_timeout_ms {
             self.status = Status::Failed;
         }
     }
 
     fn on_connect(&mut self, peer: usize) {
-        if self.host.peers[peer].addr != self.remote.addr {
-            // only the expected player may join a direct match
+        // only the expected player may join: as Slippi Dolphin and Hero match a connecting peer, its exact address,
+        // else the same host (a NAT that maps the opponent's port anew for us: its CONNECT comes from another port
+        // than matchmaking named), else the public fallback's host. Before the link is up only.
+        let a = self.host.peers[peer].addr;
+        let same_host = |b: Addr| b.ip == a.ip && b.ip6 == a.ip6;
+        let known = a == self.remote.addr || (self.remote.active.is_none() && (same_host(self.remote.addr) || self.remote.fallback.is_some_and(same_host)));
+        if !known {
             self.host.disconnect(peer, 0);
             return;
         }
@@ -475,12 +501,14 @@ impl Client {
             // was listening, so ENet resends it with backoff at ~0.5, 1.5, 3.5, 7.5 s...) is dropped silently,
             // else a late resend opens a second link mid-match that the duplicate-link rule then disconnects
             for l in 0..self.host.peers.len() {
-                if l != peer && self.host.peers[l].state == PeerState::Connecting && self.host.peers[l].addr == self.remote.addr {
+                let la = self.host.peers[l].addr;
+                if l != peer && self.host.peers[l].state == PeerState::Connecting && (la == self.remote.addr || Some(la) == self.remote.fallback) {
                     self.host.reset_peer(l);
                     self.remote.links.retain(|&x| x != l);
                 }
             }
             self.remote.active = Some(peer);
+            self.remote.addr = a;
             if self.status == Status::Initiated {
                 self.status = Status::Connected;
                 self.notes.push_back(Note::Connected);

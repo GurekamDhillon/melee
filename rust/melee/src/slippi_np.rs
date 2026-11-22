@@ -113,9 +113,100 @@ pub struct Paired {
     pub local_port: u8,
     pub remote_port: u8,
     pub peer: melee_net::transport::Addr,
+    /// Hero's public fallback: the opponent's public address when `peer` is its LAN address (same router).
+    pub fallback: Option<melee_net::transport::Addr>,
     pub bind_ip: u32,
     /// The opponent's connect code from matchmaking (empty for a direct link).
     pub opp_code: String,
+}
+
+/// Hero (slippi_net.cpp, Slippi 3.7.0): the netplay port is bound before the search and asks STUN through it, so
+/// the NAT mapping the opponent will use exists and the join names it; a keepalive every 15 s holds it while queued.
+/// The socket is released (the mapping stays) just before the netplay client binds the same port.
+struct PortHold {
+    stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    thread: std::thread::JoinHandle<()>,
+}
+
+static HOLD: std::sync::Mutex<Option<PortHold>> = std::sync::Mutex::new(None);
+
+/// Close the netplay port the search held (no-op when none); the netplay client binds it next.
+pub fn release_port() {
+    let h = HOLD.lock().ok().and_then(|mut g| g.take());
+    if let Some(h) = h {
+        h.stop.store(true, std::sync::atomic::Ordering::SeqCst);
+        let _ = h.thread.join();
+    }
+}
+
+/// STUN servers for the Slippi search: `MELEE_SLIPPI_STUN` (comma-separated ip:port; loopback only on agent
+/// runs), else Hero's list in a real run, none on a mock run.
+fn slippi_stun_servers(real: bool) -> Vec<std::net::SocketAddr> {
+    let agent = std::env::var("MELEE_WINDOW_HIDDEN").is_ok_and(|v| v == "1") || std::env::var_os("MELEE_PAD_SCRIPT").is_some();
+    match std::env::var("MELEE_SLIPPI_STUN").ok().filter(|v| !v.is_empty()) {
+        Some(v) => v.split(',').filter_map(|a| a.trim().parse::<std::net::SocketAddr>().ok()).filter(|a| !agent || a.ip().is_loopback()).collect(),
+        None if real => melee_net::yougame_punch::resolve(&melee_net::yougame_punch::STUN_SERVERS),
+        None => Vec::new(),
+    }
+}
+
+/// Bind the netplay port and ask two STUN servers through it: (public address, NAT type). The socket is kept
+/// (keepalives to the first server that answered) until [`release_port`].
+fn stun_and_hold(bind_ip: u32, port: u16, servers: &[std::net::SocketAddr], stopped: &dyn Fn() -> bool) -> (Option<std::net::SocketAddrV4>, String) {
+    use melee_net::yougame_punch::stun;
+    release_port();
+    let Ok(sock) = std::net::UdpSocket::bind((std::net::Ipv4Addr::from(bind_ip), port)) else {
+        eprintln!("slippi: netplay port {port} busy before the search; no STUN");
+        return (None, String::new());
+    };
+    let (mut a, mut b, mut used) = (None, None, None);
+    for s in servers {
+        if a.is_none() {
+            a = stun(&sock, std::slice::from_ref(s), stopped);
+            if a.is_some() {
+                used = Some(*s);
+            }
+        } else if let Some(x) = stun(&sock, std::slice::from_ref(s), stopped) {
+            b = Some(x);
+            break;
+        }
+    }
+    let answers = a.is_some() as u8 + b.is_some() as u8;
+    if servers.is_empty() {
+        eprintln!("slippi: STUN not asked");
+    } else if answers == 0 {
+        eprintln!("slippi: STUN lookup failed; the matchmaking service will use the address it observes");
+    } else {
+        eprintln!("slippi: STUN servers answered: {answers} of 2");
+    }
+    let nat = match (a, b) {
+        (Some(x), Some(y)) => {
+            if x == y {
+                "cone"
+            } else {
+                "symmetric"
+            }
+        }
+        _ => "unknown",
+    };
+    eprintln!("slippi: NAT type: {nat}");
+    let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let st = stop.clone();
+    let thread = std::thread::spawn(move || {
+        let mut last = Instant::now();
+        while !st.load(std::sync::atomic::Ordering::SeqCst) {
+            std::thread::sleep(Duration::from_millis(50));
+            if let (Some(to), true) = (used, last.elapsed() >= Duration::from_secs(15)) {
+                last = Instant::now();
+                let _ = sock.send_to(&melee_net::yougame_punch::stun_request(), to);
+            }
+        }
+        drop(sock);
+    });
+    if let Ok(mut g) = HOLD.lock() {
+        *g = Some(PortHold { stop, thread });
+    }
+    (a, nat.to_string())
 }
 
 /// The matchmaking half of [`establish`]: no netplay connection yet (the online CSS holds its own, `slippi_css`).
@@ -135,7 +226,7 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
     // Windows host, two LAN boxes): ws:// to a private literal IPv4, sockets bound to every interface
     let lan = !real && args.iter().any(|a| a == "--mm-lan");
     let bind_ip: u32 = if real || lan { 0 } else { 0x7F000001 };
-    let (decider, local_port, remote_port, peer, opp_code) = if let Some(url) = arg(args, "--mm") {
+    let (decider, local_port, remote_port, peer, opp_code, fallback) = if let Some(url) = arg(args, "--mm") {
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));
         let app_version = arg(args, "--app-version").unwrap_or_else(|| melee_net::slippi_mm::SLIPPI_SEMVER.into());
@@ -170,10 +261,26 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
                 return Err((2, format!("--mm-mode {m}: only direct, or unranked with --mm-real or a loopback mock; never ranked")));
             }
         };
+        // the WebSocket service (Slippi 3.7.0, Hero's path): STUN from the netplay port first; the ENet service
+        // observes the address itself
+        let port0 = num("--port", 0) as u16;
+        let mut lan_ip = arg(args, "--lan-ip").unwrap_or_default();
+        let (reflexive, nat_type) = if !url.starts_with("enet://") && port0 != 0 {
+            let servers = slippi_stun_servers(real);
+            if lan_ip.is_empty() && (real || lan) {
+                // Hero's local_address_string: this machine's address towards the (first) STUN server
+                lan_ip = servers.first().and_then(|s| melee_net::slippi_mm::local_ip_towards(*s)).map(|i| i.to_string()).unwrap_or_default();
+            }
+            stun_and_hold(bind_ip, port0, &servers, &stopped)
+        } else {
+            (None, String::new())
+        };
         let req = melee_net::slippi_mm::JoinRequest {
+            reflexive,
+            nat_type,
             uid,
             play_key,
-            lan_ip: arg(args, "--lan-ip").unwrap_or_default(),
+            lan_ip,
             display_name: display,
             connect_code: code,
             mode,
@@ -211,6 +318,9 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
         } else {
             melee_net::slippi_mm::join_to(&url, &req, Duration::from_secs(max_s), target, shown, leave)
         };
+        if res.is_err() {
+            release_port();
+        }
         let m = match res {
             Err(e) if e == "left" && stopped() => {
                 eprintln!("melee: mm: search cancelled (the other pool matched first, or the player left)");
@@ -224,7 +334,7 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
                 return Err((1, format!("matchmaking: {e}")));
             }
         };
-        let (Some(li), Some((ri, ra))) = (m.local_index(), m.remote_addresses().into_iter().next()) else {
+        let (Some(li), Some((ri, ra, rfb))) = (m.local_index(), m.remote_addresses().into_iter().next()) else {
             return Err((1, format!("matchmaking: the match has no local or remote player")));
         };
         let Some(peer) = addr_parse(&ra, 51441) else {
@@ -236,7 +346,8 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
             eprintln!("melee: matched ({}): local player {li}, remote {ri} at {ra}, decider {}, stages {:?}", m.match_id, m.is_host, m.stages);
         }
         let opp = m.players.iter().find(|p| !p.is_local).map(|p| p.connect_code.clone()).unwrap_or_default();
-        (m.is_host, li, ri, peer, opp)
+        let fb = rfb.and_then(|f| addr_parse(&f, 51441));
+        (m.is_host, li, ri, peer, opp, fb)
     } else {
         let host = args.iter().any(|a| a == "--host");
         let Some(peer) = arg(args, "--peer").and_then(|p| addr_parse(&p, 51600)) else {
@@ -245,14 +356,15 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
         };
         // --local-port: the player index matchmaking gave (a link the online CSS paired; otherwise the host is 0)
         let lp: u8 = arg(args, "--local-port").and_then(|v| v.parse().ok()).filter(|&p: &u8| p < 2).unwrap_or(if host { 0 } else { 1 });
-        (host, lp, 1 - lp, peer, String::new())
+        (host, lp, 1 - lp, peer, String::new(), None)
     };
-    Ok(Paired { decider, local_port, remote_port, peer, bind_ip, opp_code })
+    Ok(Paired { decider, local_port, remote_port, peer, fallback, bind_ip, opp_code })
 }
 
 pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
-    let Paired { decider, local_port, remote_port, peer, bind_ip, opp_code: _ } = pair(args, max_s)?;
+    let Paired { decider, local_port, remote_port, peer, fallback, bind_ip, opp_code: _ } = pair(args, max_s)?;
+    release_port();
     let tag = if decider { "decider" } else { "guest" };
     let udp = match UdpTransport::open(bind_ip, num("--port", 0) as u16) {
         Ok(mut u) => {
@@ -274,6 +386,7 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
         q: VecDeque::new(),
     });
     let mut cl = Client::new(tp, local_port, peer, remote_port);
+    cl.set_fallback(fallback);
     cl.connect_timeout_ms = 30000;
     // connect, then exchange MATCH_SELECTIONS (the decider's rng_offset is the match's)
     let rng_offset = (std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.subsec_nanos()).unwrap_or(1) ^ 0x9E37_79B9) % 0xFFFF;

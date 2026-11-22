@@ -369,9 +369,8 @@ impl RetailPlay {
             mui::REQ_REPLAY_PLAY => {
                 let i: usize = arg.parse().unwrap_or(0);
                 let Some((path, kind)) = self.browser.replays.get(i.wrapping_sub(1)).cloned() else { return st(self, 1, "no such replay") };
-                if kind != "mrpl" {
-                    return st(self, 1, "Slippi replays play through the sim's player: melee replays --play N.");
-                }
+                // .mrpl and .slp both go to `play --replay`, which picks the player by extension (play.rs, slp_play.rs)
+                let _ = kind;
                 let p = path.to_string_lossy().into_owned();
                 self.browser_relaunch(&["--replay".into(), p], None, "replay")
             }

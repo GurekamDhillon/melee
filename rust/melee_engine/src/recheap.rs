@@ -21,7 +21,12 @@ pub const SLOT: usize = 1 << 30;
 pub const NSLOT: usize = 64;
 /// The slot's tail holds the block records (not recorded allocations).
 const META: usize = 64 << 20;
-const STEP: usize = 1 << 20;
+/// Commit granularity of the block area. Windows charges committed pages to the process's private bytes whether or not
+/// they are ever touched, and every slot a kept plan holds keeps its commit: a coarse step left ~0.5 MB per slot unused.
+const STEP: usize = 256 << 10;
+/// Commit granularity of the block records and the event log (most recordings write a few KB of each; a 1 MB step
+/// left ~2 MB committed and untouched per slot, ~85 MB over the 40-odd slots a match keeps).
+const META_STEP: usize = 64 << 10;
 
 struct State {
     base: usize,
@@ -255,10 +260,10 @@ impl Rec {
             return false;
         }
         if end > self.ev_committed {
-            if !sys::commit(self.ev_committed, STEP) {
+            if !sys::commit(self.ev_committed, META_STEP) {
                 return false;
             }
-            self.ev_committed += STEP;
+            self.ev_committed += META_STEP;
         }
         self.ev.add(self.nev).write(e);
         self.nev += 1;
@@ -353,10 +358,10 @@ unsafe fn alloc_block(l: Layout) -> *mut u8 {
         if mend > r.lo + SLOT - META / 2 {
             return core::ptr::null_mut();
         }
-        if !sys::commit(r.meta_committed, STEP) {
+        if !sys::commit(r.meta_committed, META_STEP) {
             return core::ptr::null_mut();
         }
-        r.meta_committed += STEP;
+        r.meta_committed += META_STEP;
     }
     r.meta.add(r.n).write(Blk { at: p, size: l.size(), align: l.align(), live: 1 });
     r.n += 1;

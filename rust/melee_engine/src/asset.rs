@@ -1164,6 +1164,8 @@ pub fn scene_prefetch(minor: i32) {
     }
     let fight = minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32;
     IN_FIGHT.store(fight, Relaxed);
+    // a fight is on: recheap gives no slot page back until it ends (Linux `zero_slot_range`)
+    recheap::set_in_fight(minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32);
     if minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32 {
         hint_files(&["IfCoGet.dat", "GmRst", "SdRst", "TyDatai"]);
     } else if minor == melee_types::GS_RESULTS as i32 {
@@ -1183,6 +1185,17 @@ pub fn hint_vs_match(picks: &[(i32, u8)], gr: i32) {
     }
     hint_stage(gr);
     hint_fighters(picks);
+}
+
+/// The ground kind of external stage `stkind` (`stage_id_map`; 0: none / out of range). Reads an immutable table.
+pub fn stage_grkind(stkind: i32) -> i32 {
+    unsafe {
+        let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+        if stkind < 0 || stkind as usize >= map.len() {
+            return 0;
+        }
+        map[stkind as usize].grkind as i32
+    }
 }
 
 fn hint_fighters(picks: &[(i32, u8)]) {

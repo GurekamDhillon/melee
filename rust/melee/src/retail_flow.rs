@@ -842,7 +842,7 @@ impl RetailPlay {
         }
         let zstep = melee_core::tracy::zone("sim (engine step)");
         let t_step = std::time::Instant::now();
-        let flt0 = melee_engine::archive::thread_page_faults();
+        let flt0 = melee_engine::archive::page_faults() as u64;
         let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
         self.scene_tick = entered && !self.headless;
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
@@ -897,7 +897,7 @@ impl RetailPlay {
                 melee_core::frameprof::set_audio_underruns(au.underruns() as u64);
             }
             if std::env::var_os("MELEE_BOOT_TIMES").is_some() && (t_step + t.elapsed()).as_millis() >= 20 {
-                log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms, {} page faults on the game thread", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3, melee_engine::archive::thread_page_faults().saturating_sub(flt0)));
+                log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms, {} page faults (the game thread's on Linux, the process's on Windows)", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3, (melee_engine::archive::page_faults() as u64).saturating_sub(flt0)));
             }
         }
         let zcap = melee_core::tracy::zone("capture / decode");

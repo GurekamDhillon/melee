@@ -15,6 +15,7 @@ pub mod frameprof;
 pub mod gc;
 pub mod gcdecode;
 pub mod hash;
+pub mod host_volume;
 pub mod heaptrace;
 pub mod modhook;
 pub mod pose;

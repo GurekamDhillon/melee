@@ -692,6 +692,8 @@ pub struct Driver {
     pub ring: Arc<Ring>,
     gain: Arc<AtomicU32>,
     volume: i32,
+    /// melee_core::host_volume's generation last applied (the host app's master over `volume`).
+    host_gen: u32,
     #[cfg(feature = "device")]
     device: Option<device::Held>,
     #[cfg(feature = "device")]
@@ -717,6 +719,7 @@ impl Driver {
             ring,
             gain,
             volume: -1,
+            host_gen: melee_core::host_volume::generation(),
             #[cfg(feature = "device")]
             device: None,
             #[cfg(feature = "device")]
@@ -757,8 +760,13 @@ impl Driver {
     }
 
     fn apply_volume(&mut self) {
-        let v = self.volume() as f32 / 100.0;
-        self.gain.store(v.to_bits(), Ordering::Relaxed);
+        let g = self.mixer_gain();
+        self.gain.store(g.to_bits(), Ordering::Relaxed);
+    }
+
+    /// The gain the output callback applies: our own volume (0..100, linear) times the host app's master gain.
+    pub fn mixer_gain(&mut self) -> f32 {
+        self.volume() as f32 / 100.0 * melee_core::host_volume::milli() as f32 / 1000.0
     }
 
     fn open(&mut self, ax: &mut Ax) {
@@ -845,6 +853,18 @@ impl Driver {
         mut sub_frame: impl FnMut(&mut Ax) -> [i16; FRAME_SAMPLES * 2],
     ) -> u32 {
         let now = Instant::now();
+        let host_gen = melee_core::host_volume::generation();
+        if host_gen != self.host_gen {
+            self.host_gen = host_gen;
+            self.apply_volume();
+            let g = self.mixer_gain();
+            let line = format!("gw: AX: mixer gain {g:.4} (game {}%, host {:.3})", self.volume(), melee_core::host_volume::milli() as f32 / 1000.0);
+            if let Some(l) = ax.log.as_mut() {
+                l(&line);
+            } else {
+                eprintln!("{line}");
+            }
+        }
         if !callback_registered {
             self.last_tick = Some(now);
             return 0;
@@ -922,6 +942,14 @@ mod tests {
         assert_eq!(d.volume(), 40);
         d.apply_volume();
         assert_eq!(f32::from_bits(d.gain.load(Ordering::Relaxed)), 0.4);
+        // The host app's master (YouGame page) multiplies in; our own slider still moves under it (only test touching it).
+        melee_core::host_volume::set_milli(500);
+        d.set_volume_live(50);
+        assert_eq!(f32::from_bits(d.gain.load(Ordering::Relaxed)), 0.25);
+        melee_core::host_volume::set_milli(0);
+        d.set_volume_live(80);
+        assert_eq!(f32::from_bits(d.gain.load(Ordering::Relaxed)), 0.0);
+        melee_core::host_volume::set_milli(1000);
         std::env::remove_var("MELEE_VOLUME");
     }
 

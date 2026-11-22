@@ -26,8 +26,9 @@ pub const QUIT_GRACE: Duration = Duration::from_millis(4000);
 /// no `join` / `notice` (not handled yet).
 pub const CAPS_STANDALONE: &str = r#"yg {"caps":["ready"]}"#;
 /// Caps in the player box (YOUGAME_EMBED=1): Shift+Tab goes to the page as overlay down/up. No `pads` (the pad
-/// relay `yg-pads`: the GameCube pads come from the pad mirror, adapter/yg_mirror.rs), no `view` / `volume`.
-pub const CAPS_EMBEDDED: &str = r#"yg {"caps":["ready","overlay"]}"#;
+/// relay `yg-pads`: the GameCube pads come from the pad mirror, adapter/yg_mirror.rs), no `view`. `volume`: the page's
+/// slider arrives as `embed volume <gain>` (melee_core::host_volume), a master over our own volume, as in Hero's.
+pub const CAPS_EMBEDDED: &str = r#"yg {"caps":["ready","overlay","volume"]}"#;
 /// The app's own line limit (StdioBridge: 48 MiB, a save file's base64 fits).
 pub const MAX_LINE: usize = 48 << 20;
 pub const READY: &str = r#"yg {"ready":true}"#;
@@ -421,6 +422,15 @@ fn read_stdin<R: BufRead>(mut r: R) {
         let Some(s) = st() else { return };
         match parse_line(line) {
             AppLine::Quit => request_quit("the app asked"),
+            AppLine::Box(c) if c.starts_with("volume ") => match melee_core::host_volume::parse_embed(&c) {
+                // On this thread, not the window's: a hidden or not-yet-adopted window still gets the page's volume.
+                Some(g) => {
+                    if melee_core::host_volume::set_milli(g) {
+                        crate::plog!("yougame: page volume {:.3}", g as f32 / 1000.0);
+                    }
+                }
+                None => crate::plog!("yougame: ignored a volume command: {}", c.chars().take(40).collect::<String>()),
+            },
             AppLine::Box(c) => {
                 let mut q = s.box_cmds.lock().unwrap();
                 if q.len() < 256 {

@@ -43,6 +43,23 @@ fn transition_time(tick: u64, d: std::time::Duration) {
     }
 }
 
+/// Hero's in-match notices (mu_online.c hud_message): DISCONNECTED (red), DESYNC DETECTED and Desync Risk (amber),
+/// drawn over the frame until the given render tick (0: for as long as it is set).
+static NOTICE: std::sync::Mutex<Vec<(String, [u8; 4], u64)>> = std::sync::Mutex::new(Vec::new());
+pub(crate) fn notice(text: &str, color: [u8; 4], until: u64) {
+    if let Ok(mut n) = NOTICE.lock() {
+        if !n.iter().any(|l| l.0 == text) {
+            log(&format!("notice: {text}"));
+            n.push((text.to_string(), color, until));
+        }
+    }
+}
+pub(crate) fn clear_notices() {
+    if let Ok(mut n) = NOTICE.lock() {
+        n.clear();
+    }
+}
+
 pub(crate) fn set_pad_swap(script: Option<String>) {
     if let Ok(mut g) = PAD_SWAP.lock() {
         *g = Some(script);
@@ -372,6 +389,11 @@ impl RetailPlay {
                         four[0].button &= !0x1000;
                     }
                     nd.tick_match(&four[0], self.rec.as_mut().map(|r| &mut r.1));
+                    match nd.slippi_desyncs() {
+                        Some((_, h)) if h > 0 => notice("DESYNC DETECTED", melee_platform::overlay::WARN, 0),
+                        Some((sft, _)) if sft > 0 => notice("Desync Risk", melee_platform::overlay::WARN, 0),
+                        _ => {}
+                    }
                     if let NetPhase::InMatch(g) = &mut nd.phase {
                         if let Some(f) = g.take_frame() {
                             self.frame = Some(f);
@@ -390,6 +412,7 @@ impl RetailPlay {
                             }
                             let mode = melee_modes::tu::slippi_css::with(|o| o.mode).to_string();
                             if self.slippi_back_inprocess(("MELEE_SLIPPI_BACK", &mode), std::env::var("MELEE_SLIPPI_BACK_PAD_SCRIPT").ok()) {
+                                notice("DISCONNECTED", melee_platform::overlay::BAD, self.tick_no as u64 + 240);
                                 self.ui_status(1, "DISCONNECTED: the online match ended");
                                 return false;
                             }
@@ -1570,7 +1593,22 @@ impl Game for RetailPlay {
     fn present(&mut self, window: &Arc<Window>, alpha: f64) {
         self.scene_tick = false;
         let t_present = std::time::Instant::now();
+        // the online notices over whatever the HUD shows this frame
+        let notes: Vec<melee_platform::overlay::Line> = NOTICE.lock().map(|mut n| {
+            let t = self.tick_no as u64;
+            n.retain(|l| l.2 == 0 || l.2 > t);
+            n.iter().map(|l| (l.0.clone(), l.1)).collect()
+        }).unwrap_or_default();
+        let base = if notes.is_empty() { None } else { self.presenter.as_mut().map(|p| p.hud.take()) };
+        if let (Some(b), Some(p)) = (base.as_ref(), self.presenter.as_mut()) {
+            let mut l = notes;
+            l.extend(b.iter().flatten().cloned());
+            p.hud = Some(l);
+        }
         self.present_inner(window, alpha);
+        if let (Some(b), Some(p)) = (base, self.presenter.as_mut()) {
+            p.hud = b;
+        }
         // MELEE_PRESENT_SPIKE=<ms>: one line per present at least that long, with the presenter's stages (frame-time tail)
         static SPIKE: std::sync::OnceLock<Option<f64>> = std::sync::OnceLock::new();
         if let (Some(ms), Some(p)) = (*SPIKE.get_or_init(|| std::env::var("MELEE_PRESENT_SPIKE").ok().and_then(|v| v.parse().ok())), self.presenter.as_ref()) {

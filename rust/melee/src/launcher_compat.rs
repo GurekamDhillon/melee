@@ -23,16 +23,16 @@
 //!
 //! Options with no Rust counterpart that change nothing for an offline game (`--threaded-renderer`, `--sys-dir`,
 //! `--user-dir`, `--sysgen-data-dir`, the vanilla flags) are accepted and logged. Ones that would
-//! change the game (mods, peer-to-peer and Slippi lobby matches, replays) are refused with exit code 3 and a line in the
+//! change the game (mods, peer-to-peer and Slippi lobby matches) are refused with exit code 3 and a line in the
 //! log, rather than starting a game other than the one asked for. Anything else is passed to `melee play` as given.
 use std::path::{Path, PathBuf};
 
 /// Launcher options that take a value and are accepted without effect.
 const IGNORED_VALUE: &[&str] = &["--sys-dir", "--user-dir", "--sysgen-data-dir", "--slippi-menus", "--online-delay", "--language", "--backend", "--fps", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
 /// Launcher switches accepted without effect.
-const IGNORED_SWITCH: &[&str] = &["--threaded-renderer", "--vanilla-only", "--vanilla-game", "--no-mod-autodetect", "--quiet"];
+const IGNORED_SWITCH: &[&str] = &["--as-experienced", "--threaded-renderer", "--vanilla-only", "--vanilla-game", "--no-mod-autodetect", "--quiet"];
 /// Options that would start a different game than an offline vanilla one; refused.
-const REFUSED: &[&str] = &["--mod-gci", "--mod-dir", "--mod-profile", "--replay", "--lobby-direct", "--lobby-character", "--local-peer"];
+const REFUSED: &[&str] = &["--mod-gci", "--mod-dir", "--mod-profile", "--lobby-direct", "--lobby-character", "--local-peer"];
 /// The flags only the launcher's command line starts with (a `melee` subcommand never begins with `--`).
 const LAUNCHER_FIRST: &[&str] = &["--iso", "--settings-path", "--card-dir", "--sys-dir", "--lobby-status-file", "--threaded-renderer", "--settings-window"];
 
@@ -266,6 +266,14 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
             p.play_args.drain(i..(i + 2).min(p.play_args.len()));
         }
     }
+    // `--replay FILE.slp` plays a replay in the window (slp_play.rs): nothing to record or export
+    if p.play_args.iter().any(|a| a == "--replay") {
+        for flag in ["--record", "--slp"] {
+            if let Some(i) = p.play_args.iter().position(|a| a == flag) {
+                p.play_args.drain(i..(i + 2).min(p.play_args.len()));
+            }
+        }
+    }
     if p.play_args[0] == SETTINGS_WINDOW {
         p.play_args.truncate(1);
     }
@@ -430,6 +438,13 @@ mod tests {
         assert_eq!(p.refused.len(), 2);
         assert_eq!(p.refused[0], "--p2p-port 5000");
         assert!(p.refused[1].starts_with("--mod-iso m.iso ("), "{:?}", p.refused);
+    }
+
+    #[test]
+    fn replay_passes_through_to_play() {
+        let p = plan(&s(&["--iso", "d.iso", "--settings-path", "s", "--replay-dir", r"C:\g\R", "--replay", "x.slp", "--as-experienced"]), Path::new("."), &|_| None);
+        assert!(p.refused.is_empty(), "{:?}", p.refused);
+        assert_eq!(p.play_args, s(&["play", "--iso", "d.iso", "--replay", "x.slp"]));
     }
 
     #[test]

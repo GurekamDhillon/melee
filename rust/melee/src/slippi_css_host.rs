@@ -96,9 +96,12 @@ fn search(args: Vec<String>, mode: i32) {
     std::env::remove_var("MELEE_SLIPPI_MM_NAMES");
     let search = arg(&args, "--slippi-search").unwrap_or_default();
     // begin() clears the screen state: the chosen flag is kept (the fighter stays picked)
-    let chosen = sc::with(|o| o.chosen);
+    let (chosen, locks) = sc::with(|o| (o.chosen, o.start_locks));
     sc::begin(mode, &search);
-    sc::with(|o| o.chosen = chosen);
+    sc::with(|o| {
+        o.chosen = chosen;
+        o.start_locks = locks;
+    });
     *HANDOFF.lock().unwrap() = None;
     std::thread::spawn(move || {
         if let Err(e) = run(&args) {
@@ -158,6 +161,19 @@ pub fn start_rematch() -> Option<i32> {
         });
         if let Err(e) = r {
             eprintln!("online css: session: {e}");
+            if mode != melee_modes::tu::slippi_online::MODE_DIRECT && e.contains("disconnected") {
+                // Slippi: the opponent backed out of the select; this side is told and searches again (the fighter kept)
+                eprintln!("online css: rematch: the opponent left; searching again");
+                let chosen = sc::with(|o| o.chosen);
+                sc::go_idle();
+                sc::with(|o| {
+                    o.error = "Your opponent disconnected".into();
+                    o.chosen = chosen;
+                    o.search_again = true;
+                    o.start_locks = true;
+                });
+                return;
+            }
             sc::with(|o| {
                 o.conn = sc::CONN_ERROR;
                 o.error = e;
@@ -396,11 +412,9 @@ fn lock_in(mut cl: Client, p: &crate::slippi_np::Paired, port: u16, max_s: u64) 
     }
     // the match process comes back to this select after its game (rematch_env / start_rematch)
     // (Direct only: Unranked's link ends with its game, as Slippi's does)
-    if mode == melee_modes::tu::slippi_online::MODE_DIRECT {
-        std::env::set_var("MELEE_SLIPPI_SET", format!("{mode};{opp};{game}"));
-    } else {
-        std::env::remove_var("MELEE_SLIPPI_SET");
-    }
+    // Unranked too (Slippi / Hero): after a game both are back on the select, still linked; the next game is played on
+    // the same link once both lock in, and B on the select ends it for both
+    std::env::set_var("MELEE_SLIPPI_SET", format!("{mode};{opp};{game}"));
     // Unranked (Slippi and Hero): the results, then back to the online select, idle; Start searches again
     // (the match process relaunches the menus with MELEE_SLIPPI_BACK, `slippi_after_back`)
     if mode == melee_modes::tu::slippi_online::MODE_DIRECT {

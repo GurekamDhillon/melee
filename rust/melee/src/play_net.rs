@@ -1856,6 +1856,13 @@ pub struct SlippiRun {
 }
 
 impl NetDriver {
+    /// A Slippi-wire match's checksum comparisons so far: (soft, hard) desyncs (Hero's "Desync Risk" / "DESYNC DETECTED").
+    pub fn slippi_desyncs(&self) -> Option<(u32, u32)> {
+        self.slippi.as_ref().map(|sr| (sr.soft, sr.hard))
+    }
+}
+
+impl NetDriver {
     /// `play --slippi-mm URL --slippi-port P --slippi-code C [--slippi-mm-mode direct|unranked] [--slippi-search C]
     /// [--slippi-delay D] [--slippi-frames N --slippi-out CSV] [--slippi-max-seconds S]`: matchmaking (a loopback
     /// mock unless --slippi-mm-real), the Slippi connection and the selections, before the window. Returns the driver

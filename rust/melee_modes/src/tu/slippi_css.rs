@@ -78,6 +78,9 @@ pub struct Online {
     pub refused: u32,
     /// Idle after a hold-Z disconnect: Start (a fighter chosen) searches again (Hero's `MU_SLP_MM_IDLE` case).
     pub search_again: bool,
+    /// Slippi / Hero: the Start that searched also locked the fighter in; once connected the lock-in goes out with no
+    /// second press.
+    pub start_locks: bool,
     /// A fighter is chosen on the select (the vanilla flag; Hero `*char_chosen`), for the panel's first line.
     pub chosen: bool,
 }
@@ -102,6 +105,7 @@ pub static ONLINE: std::sync::Mutex<Online> = std::sync::Mutex::new(Online {
     game: 0,
     refused: 0,
     search_again: false,
+    start_locks: false,
     chosen: false,
 });
 
@@ -306,6 +310,7 @@ pub unsafe fn inputs(trigger: u32, held: u32, ready: bool, ck: i8, color: u8) ->
             with(|o| {
                 if !o.search_again {
                     o.search_again = true;
+                    o.start_locks = true;
                     o.winner = WINNER_NULL;
                     o.chose_stage = None;
                     eprintln!("online css: idle: Start, searching again");
@@ -353,7 +358,12 @@ pub unsafe fn inputs(trigger: u32, held: u32, ready: bool, ck: i8, color: u8) ->
         }
         (o.winner, o.chose_stage)
     });
-    let mut advance = trigger & START != 0;
+    // the search's Start locked the fighter in (Slippi: one press, then the match loads by itself)
+    let auto = with(|o| core::mem::take(&mut o.start_locks));
+    let mut advance = trigger & START != 0 || (auto && !local);
+    if auto {
+        eprintln!("online css: connected; the search's Start locks in (no second press)");
+    }
     if !advance && direct && winner == WINNER_LOST && chose.is_some() {
         advance = true; // back from the stage select: the pick locks in
     }

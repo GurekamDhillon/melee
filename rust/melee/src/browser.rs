@@ -20,6 +20,9 @@
 use super::RetailPlay;
 
 /// The in-process match's mode, waiting for its files (ticks waited).
+/// The in-process match's own arguments (`--slippi-peer ...`): a relaunched match had them as its command line.
+static MATCH_ARGS: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
 static PENDING_GOTO: std::sync::Mutex<Option<(u8, u32)>> = std::sync::Mutex::new(None);
 use melee_modhost::ui::{self as mui, PresHost};
 
@@ -369,9 +372,8 @@ impl RetailPlay {
             mui::REQ_REPLAY_PLAY => {
                 let i: usize = arg.parse().unwrap_or(0);
                 let Some((path, kind)) = self.browser.replays.get(i.wrapping_sub(1)).cloned() else { return st(self, 1, "no such replay") };
-                if kind != "mrpl" {
-                    return st(self, 1, "Slippi replays play through the sim's player: melee replays --play N.");
-                }
+                // .mrpl and .slp both go to `play --replay`, which picks the player by extension (play.rs, slp_play.rs)
+                let _ = kind;
                 let p = path.to_string_lossy().into_owned();
                 self.browser_relaunch(&["--replay".into(), p], None, "replay")
             }
@@ -678,6 +680,7 @@ impl RetailPlay {
     fn slippi_match_inprocess(&mut self, args: Vec<String>) {
         let t0 = std::time::Instant::now();
         crate::slippi_link::save_offline_codes();
+        *MATCH_ARGS.lock().unwrap() = args.clone();
         match crate::play_net::NetDriver::connect_slippi(&args) {
             Ok((n, scn)) => {
                 log(&format!("online select: both locked in, the match in this window (no relaunch; link taken in {:.1} ms)", t0.elapsed().as_secs_f64() * 1e3));
@@ -715,6 +718,8 @@ impl RetailPlay {
         self.net = None;
         // the menus' own (offline) matches record per tick again
         crate::slp_export::live_end();
+        // the match's desync notices end with it (a DISCONNECTED set after this stays its few seconds)
+        super::clear_notices();
         melee_core::slippi_online::disable();
         crate::slippi_link::restore_offline_codes();
         crate::play_net::clear_name_tags();
@@ -760,7 +765,8 @@ impl RetailPlay {
     /// match is not part of one (the window quits as before). `link`: the match's link (its game ended, kept open by
     /// `play_net` when `slippi_css_host::set_goes_on`), kept for the select to take over (`slippi_link::hand_back`).
     pub(super) fn slippi_set_back(&mut self, link: Option<melee_net::slippi::Client>) -> bool {
-        let cur: Vec<String> = std::env::args().skip(1).collect();
+        // the match's arguments: this process's command line, or the in-process match's own
+        let cur: Vec<String> = if crate::slippi_link::inprocess() { MATCH_ARGS.lock().unwrap().clone() } else { std::env::args().skip(1).collect() };
         let won = crate::play_net::LAST_WINNER.load(std::sync::atomic::Ordering::Relaxed);
         if crate::slippi_css_host::rematch_env(&cur, won, "").is_none() {
             return false;

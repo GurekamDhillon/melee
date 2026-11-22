@@ -177,14 +177,14 @@ static SAVED: std::sync::Mutex<Option<(u32, u32, bool, bool)>> = std::sync::Mute
 
 pub fn save_offline_codes() {
     if let Ok(mut g) = SAVED.lock() {
-        *g = Some(melee_core::codes::snapshot());
+        *g = Some(melee_core::codes::save_offline());
     }
 }
 
 /// The codes back, and the Slippi code hooks back to their offline values.
 pub fn restore_offline_codes() {
     let Some(s) = SAVED.lock().ok().and_then(|mut g| g.take()) else { return };
-    melee_core::codes::restore(s);
+    melee_core::codes::restore_offline(s);
     unsafe {
         melee_fighter::platform::hook::Slippi_Codes = None;
         // the fighter TUs' and Final Destination's tables: 0 offline (manual.rs)

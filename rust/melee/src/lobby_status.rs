@@ -53,7 +53,7 @@ fn local_port() -> i32 {
 }
 
 /// Called once per tick by the retail flow with the current scene kind. Nothing without `MELEE_LOBBY_STATUS_FILE`.
-pub fn frame(scene_kind: u8) {
+pub fn on_frame(scene_kind: u8) {
     // launcher tests only (MELEE_LAUNCHER_TEST): a panic in the first match tick, for the crash files the launcher reads
     if matches!(scene_kind, 2 | 3) && std::env::var_os("MELEE_LAUNCHER_TEST").is_some() && std::env::var("MELEE_CRASH_TEST_IN_MATCH").is_ok_and(|v| v == "1") {
         panic!("MELEE_CRASH_TEST_IN_MATCH: forced panic in the match");

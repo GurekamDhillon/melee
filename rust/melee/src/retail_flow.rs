@@ -993,7 +993,7 @@ impl RetailPlay {
         self.age += 1;
         let Some(e) = self.engine() else { return };
         let now = e.mode_scene();
-        crate::lobby_status::frame(now.1);
+        crate::lobby_status::on_frame(now.1);
         if melee_core::frameprof::on() {
             use melee_core::frameprof as fp;
             if entered || now != self.cur {

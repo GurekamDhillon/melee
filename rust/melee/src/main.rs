@@ -72,6 +72,7 @@ mod dolphin_oracle;
 mod netmatch;
 mod netplay;
 mod slippi_css_host;
+mod slippi_link;
 mod slippi_np;
 mod yougame_search;
 mod room_keeper;

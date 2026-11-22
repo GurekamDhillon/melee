@@ -582,7 +582,7 @@ impl RetailPlay {
         if let Some(r) = yg_route {
             args.extend(["--slippi-route".into(), r.into()]);
         }
-        log(&format!("online menu: {name}: matchmaking as {code}, the online select meanwhile"));
+        log(&format!("online menu: {name}: the online select as {code}; Start with a fighter chosen searches"));
         crate::slippi_css_host::start(args, mode);
     }
 

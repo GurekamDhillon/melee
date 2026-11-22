@@ -128,6 +128,14 @@ pub fn go_idle() {
     eprintln!("online css: idle (disconnected); Start searches again");
 }
 
+/// The select opens idle (Hero `MU_SLP_MM_IDLE`): no search until Start with a fighter chosen.
+pub fn wait_start(mode: i32, search_code: &str) {
+    with(|o| {
+        *o = Online { mode, conn: CONN_IDLE, search_code: search_code.to_string(), ..Default::default() };
+    });
+    eprintln!("online css: idle; Start with a fighter chosen searches");
+}
+
 /// Idle and Start was pressed: the host starts the search again (once).
 pub fn take_search_again() -> bool {
     with(|o| {

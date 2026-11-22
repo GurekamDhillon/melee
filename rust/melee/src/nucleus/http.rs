@@ -64,8 +64,25 @@ pub fn host_ok(host: &str, secure: bool) -> bool {
 /// GET `url`, at most `max` bytes of body. `progress(got, expected or 0)` after every read; true abandons it.
 pub fn get(url: &str, max: usize, progress: &mut dyn FnMut(usize, usize) -> bool) -> Resp {
     match split(url) {
-        Some((h, s)) if host_ok(&h, s) => imp::get(url, max, progress),
+        Some((h, s)) if host_ok(&h, s) => imp::get(url, max, progress, &host_ok),
         _ => Resp::fail("address not allowed"),
+    }
+}
+
+/// Slippi's public system files (slippi_menus.rs): only `raw.githubusercontent.com` over https, only under
+/// `project-slippi/Ishiiruka/`. In-process on Windows (WinHTTP), so it works in the YouGame sandbox (no child
+/// processes there). The caller checks the sha256.
+pub fn get_slippi_sys(url: &str, max: usize) -> Result<Vec<u8>, String> {
+    const ALLOWED: &str = "https://raw.githubusercontent.com/project-slippi/Ishiiruka/";
+    if !url.starts_with(ALLOWED) || url.contains(['\'', '"', ' ', '\n', '?', '#']) {
+        return Err("address not allowed".into());
+    }
+    let ok = |h: &str, s: bool| s && h == "raw.githubusercontent.com";
+    let r = imp::get(url, max, &mut |_, _| false, &ok);
+    match r.status {
+        200 => Ok(r.body),
+        0 => Err(format!("download failed ({})", r.err)),
+        c => Err(format!("download failed (HTTP {c})")),
     }
 }
 
@@ -120,7 +137,7 @@ mod imp {
         (unsafe { WinHttpQueryHeaders(req, q | QUERY_FLAG_NUMBER, std::ptr::null(), &mut v as *mut u32 as *mut c_void, &mut sz, std::ptr::null_mut()) } != 0).then_some(v)
     }
 
-    pub fn get(url: &str, max: usize, progress: &mut dyn FnMut(usize, usize) -> bool) -> Resp {
+    pub fn get(url: &str, max: usize, progress: &mut dyn FnMut(usize, usize) -> bool, ok: &dyn Fn(&str, bool) -> bool) -> Resp {
         let secure = url.starts_with("https://");
         let rest = &url[if secure { 8 } else { 7 }..];
         let hend = rest.find(['/', '?']).unwrap_or(rest.len());
@@ -162,7 +179,7 @@ mod imp {
             if WinHttpQueryOption(req, OPTION_URL, fin.as_mut_ptr() as *mut c_void, &mut fl) != 0 {
                 let f = String::from_utf16_lossy(&fin[..(fl as usize / 2).min(fin.len())]);
                 let f = f.trim_end_matches('\0');
-                if !super::split(f).is_some_and(|(h, s)| super::host_ok(&h, s)) {
+                if !super::split(f).is_some_and(|(h, s)| ok(&h, s)) {
                     return Resp::fail("redirected to an address that is not allowed");
                 }
             }
@@ -196,7 +213,7 @@ mod imp {
 mod imp {
     use super::Resp;
     /// The system curl (no progress: curl runs to the end).
-    pub fn get(url: &str, max: usize, _progress: &mut dyn FnMut(usize, usize) -> bool) -> Resp {
+    pub fn get(url: &str, max: usize, _progress: &mut dyn FnMut(usize, usize) -> bool, ok: &dyn Fn(&str, bool) -> bool) -> Resp {
         if url.contains(['\'', '\n']) {
             return Resp::fail("address not allowed");
         }
@@ -215,7 +232,7 @@ mod imp {
         let mut it = w.split_whitespace();
         let code: u32 = it.next().and_then(|c| c.parse().ok()).unwrap_or(0);
         let fin = it.next().unwrap_or("");
-        let r = if code > 0 && !fin.is_empty() && !super::split(fin).is_some_and(|(h, s)| super::host_ok(&h, s)) {
+        let r = if code > 0 && !fin.is_empty() && !super::split(fin).is_some_and(|(h, s)| ok(&h, s)) {
             Resp::fail("redirected to an address that is not allowed")
         } else if code == 0 {
             Resp::fail("no answer (is curl installed?)")

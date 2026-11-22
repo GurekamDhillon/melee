@@ -15,8 +15,40 @@ use crate::Sound;
 
 static SOUND: Mutex<Option<Sound>> = Mutex::new(None);
 
-fn lock() -> MutexGuard<'static, Option<Sound>> {
-    SOUND.lock().unwrap_or_else(|e| e.into_inner())
+/// The sound, held. MELEE_AUDIO_DBG: a hold over 8 ms is logged with its caller (the device's mixer thread waits
+/// behind every hold).
+struct Held {
+    g: MutexGuard<'static, Option<Sound>>,
+    t: Option<(std::time::Instant, &'static std::panic::Location<'static>)>,
+}
+impl std::ops::Deref for Held {
+    type Target = Option<Sound>;
+    fn deref(&self) -> &Option<Sound> {
+        &self.g
+    }
+}
+impl std::ops::DerefMut for Held {
+    fn deref_mut(&mut self) -> &mut Option<Sound> {
+        &mut self.g
+    }
+}
+impl Drop for Held {
+    fn drop(&mut self) {
+        if let Some((t, at)) = self.t {
+            let ms = t.elapsed().as_secs_f64() * 1e3;
+            if ms >= 8.0 {
+                eprintln!("audio: sound held {ms:.1} ms by {}:{} ({})", at.file(), at.line(), std::thread::current().name().unwrap_or("?"));
+            }
+        }
+    }
+}
+
+#[track_caller]
+fn lock() -> Held {
+    static DBG: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    let at = std::panic::Location::caller();
+    let g = SOUND.lock().unwrap_or_else(|e| e.into_inner());
+    Held { g, t: DBG.get_or_init(|| std::env::var_os("MELEE_AUDIO_DBG").is_some()).then(|| (std::time::Instant::now(), at)) }
 }
 
 /// Make `s` the sound the game calls. Replaces any previous one.
@@ -34,6 +66,7 @@ pub fn is_installed() -> bool {
 }
 
 /// Run `f` on the installed sound.
+#[track_caller]
 pub fn with<R>(f: impl FnOnce(&mut Sound) -> R) -> Option<R> {
     lock().as_mut().map(f)
 }
@@ -227,7 +260,7 @@ impl Output {
             while !st.load(Ordering::Relaxed) {
                 // the cushion is the ring's (adaptive: the device callback widens it after an underrun)
                 let buffered = ring.len() / crate::FRAME_SAMPLES as u32;
-                let n = ring.target().saturating_sub(buffered).min(crate::output::MAX_BURST);
+                let n = ring.fill_to().saturating_sub(buffered).min(crate::output::MAX_BURST);
                 if n > 0 {
                     let mut g = lock();
                     if let Some(s) = g.as_mut() {

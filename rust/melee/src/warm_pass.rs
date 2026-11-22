@@ -45,6 +45,11 @@ pub fn maybe_start(iso: &str, args: &[String]) {
     if std::env::var_os("MELEE_WARM_CHILD").is_some() || (!std::env::var("MELEE_WARM_PASS").is_ok_and(|v| v == "1") && skipped(args)) {
         return;
     }
+    // a helper is a child process: none under the YouGame app (its sandbox), and the helpers' matches took the CPU
+    // from the game thread there while the app unpacked a disc (audio underruns)
+    if melee_platform::yougame::refuse_child("warm pass") {
+        return;
+    }
     let n = melee_gx::render::warmlist::record_count();
     if n >= SMALL {
         return;

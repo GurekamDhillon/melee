@@ -527,6 +527,9 @@ thread_local! {
 /// exporter's hooks see each frame once) with `--slp`.
 pub fn slp_from_replay(mrpl: &str, iso: &str) {
     let Some(spec) = SLP_AFTER.with(|c| c.borrow_mut().take()) else { return };
+    if melee_platform::yougame::refuse_child("slp export") {
+        return;
+    }
     let Ok(exe) = std::env::current_exe() else { return };
     log(&format!("slp: exporting {mrpl} to {spec} (headless playback)"));
     let st = std::process::Command::new(exe)

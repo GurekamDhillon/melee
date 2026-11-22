@@ -60,6 +60,9 @@ pub struct Ring {
     target: AtomicU32,
     target_min: AtomicU32,
     target_max: AtomicU32,
+    /// A floor under `target` the game thread sets outside fights (menus, scene loads): the cushion that rides out a
+    /// blocking load on the game thread, the producer's only thread (0 = none). Output side only.
+    floor: AtomicU32,
     /// Push time (ns since `epoch`) of sub-frame k at `stamp[k % STAMPS]`.
     stamp: Box<[AtomicU64]>,
     epoch: Instant,
@@ -105,6 +108,7 @@ impl Ring {
             target: AtomicU32::new(12),
             target_min: AtomicU32::new(12),
             target_max: AtomicU32::new(12),
+            floor: AtomicU32::new(0),
             stamp: (0..STAMPS).map(|_| AtomicU64::new(0)).collect(),
             epoch: Instant::now(),
             lat_sum_us: AtomicU64::new(0),
@@ -127,6 +131,14 @@ impl Ring {
     /// The cushion the producer tops the ring up to, in 5 ms sub-frames.
     pub fn target(&self) -> u32 {
         self.target.load(Ordering::Relaxed)
+    }
+    /// The floor under the cushion (sub-frames; 0 = none), see `floor`.
+    pub fn set_floor(&self, sub_frames: u32) {
+        self.floor.store(sub_frames.min(RING_FRAMES / FRAME_SAMPLES as u32 / 2), Ordering::Relaxed);
+    }
+    /// What the producer tops up to: the adaptive cushion, or the floor when that is deeper.
+    pub fn fill_to(&self) -> u32 {
+        self.target().max(self.floor.load(Ordering::Relaxed))
     }
     /// Consumer: an underrun happened; keep one more sub-frame from now on (up to the max).
     fn widen(&self) {
@@ -922,7 +934,7 @@ impl Driver {
         }
         let mut n = if self.dev_ok {
             let buffered = self.ring.len() / FRAME_SAMPLES as u32;
-            self.ring.target().saturating_sub(buffered)
+            self.ring.fill_to().saturating_sub(buffered)
         } else {
             let Some(last) = self.last_tick else {
                 self.last_tick = Some(now);

@@ -74,8 +74,39 @@ pub fn on_frame(scene_kind: u8) {
     }
 }
 
+/// One line of the lobby's result mailbox, `<status file>.results` (his host.cpp `publish_lobby_result`, read by
+/// launcher_lobby.cpp `consume_results` to keep the match history): `{"result":"win"|"loss"|"incomplete","winner":W,
+/// "end_method":M}`. `winner` / `local` are 0-based ports, -1 for none; a game with a winner ends by its rules
+/// (end_method 2, his GAME!), anything else is incomplete.
+pub fn result_line(winner: i32, local: i32) -> String {
+    let (outcome, end_method) = if winner >= 0 && local >= 0 { (if winner == local { "win" } else { "loss" }, 2) } else { ("incomplete", 0) };
+    format!("{{\"result\":\"{outcome}\",\"winner\":{winner},\"end_method\":{end_method}}}")
+}
+
+/// Append the result of a lobby match (launched with `--lobby-direct`, which sets `MELEE_LOBBY_DIRECT`) to the
+/// mailbox. Nothing for any other game, as in his port.
+pub fn publish_result(winner: i32, local: i32) {
+    use std::io::Write;
+    if std::env::var_os("MELEE_LOBBY_DIRECT").is_none() {
+        return;
+    }
+    let Some(p) = std::env::var_os("MELEE_LOBBY_STATUS_FILE").filter(|p| !p.is_empty()) else { return };
+    let mut p = std::path::PathBuf::from(p).into_os_string();
+    p.push(".results");
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&p) {
+        let _ = writeln!(f, "{}", result_line(winner, local));
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn result_lines_match_the_source_ports() {
+        assert_eq!(super::result_line(1, 1), r#"{"result":"win","winner":1,"end_method":2}"#);
+        assert_eq!(super::result_line(0, 1), r#"{"result":"loss","winner":0,"end_method":2}"#);
+        assert_eq!(super::result_line(-1, 0), r#"{"result":"incomplete","winner":-1,"end_method":0}"#);
+    }
+
     #[test]
     fn schema_matches_the_source_ports() {
         assert_eq!(super::text(8, -1), r#"{"status":"In game","stocks":[]}"#);

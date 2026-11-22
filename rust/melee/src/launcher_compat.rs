@@ -345,6 +345,8 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
             Ok(a) => {
                 p.notes.push(format!("--lobby-direct {}: Slippi Direct, character {ch}", mask_code(&code)));
                 p.play_args.extend(a);
+                // the result goes to the lobby's mailbox (lobby_status::publish_result)
+                push_env(&mut p.env, "MELEE_LOBBY_DIRECT", "1".into());
             }
             Err(why) => p.refused.push(format!("--lobby-direct ({why})")),
         }
@@ -467,16 +469,19 @@ pub fn apply_input(pads: &mut melee_platform::PadSystem) {
     }
     let Some(text) = std::env::var_os("MELEE_PORT_SETTINGS").and_then(|p| std::fs::read_to_string(p).ok()) else { return };
     let b = melee_platform::bindings::parse(&text);
-    if b.lines == 0 {
+    if b.lines == 0 && b.rumble.is_none() {
         return;
     }
-    let pads_n = b.xinput.iter().filter(|m| m.is_some()).count();
+    let pads_n = b.xinput.iter().chain(&b.ds4).chain(&b.swpro).filter(|m| m.is_some()).count();
     let gc_n = b.gc.iter().filter(|m| m.is_some()).count();
     eprintln!("launcher-compat: controls from port-settings.ini: keyboard {}, {pads_n} gamepad table(s), {gc_n} adapter remap(s)", if b.keyboard.is_some() { "remapped" } else { "default" });
-    if let Some(kb) = b.keyboard {
+    if let Some(kb) = b.keyboard.clone() {
         pads.keyboard[0] = kb;
     }
-    pads.pad_maps = b.xinput;
+    pads.pad_maps = melee_platform::bindings::PortMaps::from_bindings(&b);
+    if let Some(r) = b.rumble {
+        pads.rumble = r;
+    }
     pads.gc_maps = b.gc;
 }
 

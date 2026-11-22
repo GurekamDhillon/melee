@@ -12,9 +12,15 @@
 //! * `gc<n>_*` (GameCube adapter masks, the PAD bits) -> the adapter controller on port n, when the
 //!   table is not the identity.
 //!
-//! Box mode, the stick modifier, per-binding levels, and the DualShock / Switch Pro / HID tables are
-//! not read: those devices come through gilrs as plain gamepads and keep the `pad<n>` (or default)
-//! layout. With no file nothing here runs and input is exactly the default.
+//! * `ds4<n>_*` / `swpro<n>_*` (his DualShock 4 and Switch Pro masks) -> a gilrs pad on port n that
+//!   is that family (profiles::Family, from its USB ids): gilrs reports both in the Xbox layout by
+//!   position, so each mask is turned into the XInput one of the same physical buttons (Cross / B
+//!   bottom = A, Circle / A right = B, Square / Y left = X, Triangle / X top = Y, L2 / ZL = LT ...)
+//!   and goes through the same path as `pad<n>`. A DualSense counts as a DualShock 4. Without its
+//!   own table such a pad keeps the `pad<n>` table (or the default layout).
+//!
+//! Box mode, the stick modifier, per-binding levels and the generic HID tables are not read.
+//! With no file nothing here runs and input is exactly the default.
 use crate::aurora::{KeyboardBindings, NativeButton, PadAxis, RawGamepad};
 use crate::pad::*;
 use winit::keyboard::KeyCode;
@@ -55,6 +61,11 @@ pub struct Bindings {
     pub keyboard: Option<KeyboardBindings>,
     pub xinput: [Option<PadMap>; PAD_CHANMAX],
     pub gc: [Option<PadMap>; PAD_CHANMAX],
+    /// `ds4<n>_*` / `swpro<n>_*`, already turned into XInput masks ([`family_to_xinput`]).
+    pub ds4: [Option<PadMap>; PAD_CHANMAX],
+    pub swpro: [Option<PadMap>; PAD_CHANMAX],
+    /// `rumble 0|1` (his Rumble switch); None when the file does not say.
+    pub rumble: Option<bool>,
     /// `key value` lines read, for the log.
     pub lines: usize,
 }
@@ -80,7 +91,9 @@ pub fn parse(text: &str) -> Bindings {
     for line in text.lines() {
         let Some((k, v)) = line.trim().split_once(char::is_whitespace) else { continue };
         let v = v.trim();
-        if let Some(a) = k.strip_prefix("key_").and_then(action_index) {
+        if k == "rumble" {
+            b.rumble = Some(v != "0");
+        } else if let Some(a) = k.strip_prefix("key_").and_then(action_index) {
             if let Ok(vk) = v.parse::<i32>() {
                 keys[a] = vk;
                 any_key = true;
@@ -89,6 +102,12 @@ pub fn parse(text: &str) -> Bindings {
         } else if let Some((n, a)) = indexed(k, "pad") {
             if let Ok(m) = v.parse::<u16>() {
                 b.xinput[n].get_or_insert_with(PadMap::default).mask[a] = m;
+                b.lines += 1;
+            }
+        } else if let Some((n, a, fam)) = indexed(k, "ds4").map(|(n, a)| (n, a, Fam::Ds4)).or_else(|| indexed(k, "swpro").map(|(n, a)| (n, a, Fam::SwPro))) {
+            if let Ok(m) = v.parse::<u16>() {
+                let t = if fam == Fam::Ds4 { &mut b.ds4 } else { &mut b.swpro };
+                t[n].get_or_insert_with(PadMap::default).mask[a] = family_to_xinput(fam, m);
                 b.lines += 1;
             }
         } else if let Some((n, a)) = indexed(k, "gc") {
@@ -107,6 +126,55 @@ pub fn parse(text: &str) -> Bindings {
         }
     }
     b
+}
+
+/// The two pad families with tables of their own in his file.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Fam {
+    Ds4,
+    SwPro,
+}
+
+/// His DualShock 4 / Switch Pro mask (input_bindings.h: D-pad bits 0..3, then the four face buttons
+/// left / bottom / right / top as he numbers them, L1 R1 L2 R2, Share/Minus, Options/Plus, L3, R3) as
+/// the XInput mask of the button in the same place on an Xbox pad, which is how gilrs reports them.
+pub fn family_to_xinput(fam: Fam, m: u16) -> u16 {
+    // XInput: DUp 1, DDown 2, DLeft 4, DRight 8, Start 0x10, Back 0x20, LThumb 0x40, RThumb 0x80, LB 0x100, RB 0x200,
+    // A 0x1000, B 0x2000, X 0x4000, Y 0x8000; his LT / RT bits 0x400 / 0x800
+    let face: [u16; 4] = match fam {
+        // Square, Cross, Circle, Triangle
+        Fam::Ds4 => [0x4000, 0x1000, 0x2000, 0x8000],
+        // B (bottom), A (right), Y (left), X (top)
+        Fam::SwPro => [0x1000, 0x2000, 0x4000, 0x8000],
+    };
+    let map: [u16; 16] = [
+        0x0001, 0x0002, 0x0004, 0x0008, face[0], face[1], face[2], face[3], 0x0100, 0x0200, XI_LT, XI_RT, 0x0020, 0x0010, 0x0040, 0x0080,
+    ];
+    (0..16).filter(|i| m & (1 << i) != 0).fold(0, |a, i| a | map[i])
+}
+
+/// One port's gamepad tables; [`PortMaps::for_family`] picks the one for the pad plugged in there.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct PortMaps {
+    pub xinput: Option<PadMap>,
+    pub ds4: Option<PadMap>,
+    pub swpro: Option<PadMap>,
+}
+
+impl PortMaps {
+    /// Every port's tables from a parsed file.
+    pub fn from_bindings(b: &Bindings) -> [PortMaps; PAD_CHANMAX] {
+        std::array::from_fn(|i| PortMaps { xinput: b.xinput[i].clone(), ds4: b.ds4[i].clone(), swpro: b.swpro[i].clone() })
+    }
+    pub fn for_family(&self, f: crate::profiles::Family) -> Option<&PadMap> {
+        use crate::profiles::Family;
+        let own = match f {
+            Family::Ds4 | Family::Ds5 => self.ds4.as_ref(),
+            Family::SwitchPro => self.swpro.as_ref(),
+            _ => None,
+        };
+        own.or(self.xinput.as_ref())
+    }
 }
 
 /// The adapter table that changes nothing (his default): each button on itself.
@@ -293,6 +361,33 @@ fn apply(map: &PadMap, buttons: u16, left: u8, right: u8, lt_bit: u16, rt_bit: u
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ds4_and_switch_pro_tables_become_xinput_by_position() {
+        // his defaults: A on Cross (DS4) / on the bottom B (Switch Pro), Z on R1 / R, L on L2 / ZL, Start on Options / Plus
+        let b = parse("ds40_A 32
+ds40_Z 512
+ds40_L 1024
+ds40_Start 8192
+swpro1_A 16
+swpro1_B 32
+swpro1_X 128
+swpro1_DUp 1
+");
+        let d = b.ds4[0].as_ref().unwrap();
+        assert_eq!((d.mask[0], d.mask[4], d.mask[6], d.mask[5]), (0x1000, 0x0200, XI_LT, 0x0010));
+        let w = b.swpro[1].as_ref().unwrap();
+        assert_eq!((w.mask[0], w.mask[1], w.mask[2], w.mask[8]), (0x1000, 0x2000, 0x8000, 0x0001));
+        assert_eq!(b.lines, 8);
+        assert_eq!(b.rumble, None);
+        assert_eq!(parse("rumble 0
+").rumble, Some(false));
+        use crate::profiles::Family;
+        let ports = PortMaps::from_bindings(&b);
+        assert_eq!(ports[0].for_family(Family::Ds5), Some(d));
+        assert_eq!(ports[0].for_family(Family::XInput), None);
+        assert_eq!(ports[1].for_family(Family::SwitchPro), Some(w));
+    }
 
     #[test]
     fn reads_keys_pads_and_skips_identity_gc() {

@@ -1,5 +1,7 @@
 # GD's Melee — native PC port
 
+> **This is the old C port, kept as a frozen reference.** Active development is the native Rust engine on [`rust-port`](https://github.com/GurekamDhillon/melee/tree/rust-port).
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="pc/docs/readme/brand/logo_horizontal_dark.png">

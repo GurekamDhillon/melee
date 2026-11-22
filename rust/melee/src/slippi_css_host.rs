@@ -159,8 +159,9 @@ pub fn rematch_env(match_args: &[String], winner_port: i32) -> Option<String> {
     Some(format!("{peer};{port};{lp};{};{mode};{opp};{winner};{}", decider as u8, game + 1))
 }
 
-fn run(args: &[String]) -> Result<(), String> {
-    // `--slippi-x` -> `--x`, as `NetDriver::connect_slippi` maps them
+/// `--slippi-x` -> `--x`, as `NetDriver::connect_slippi` maps them; `--slippi-route` is the menu's own and dropped,
+/// and the flags `--slippi-mm-real` / `--slippi-mm-lan` take no value.
+fn sub_args(args: &[String]) -> Vec<String> {
     let mut sub: Vec<String> = Vec::new();
     let mut i = 0;
     while i < args.len() {
@@ -179,6 +180,11 @@ fn run(args: &[String]) -> Result<(), String> {
         }
         i += 1;
     }
+    sub
+}
+
+fn run(args: &[String]) -> Result<(), String> {
+    let sub = sub_args(args);
     let max_s: u64 = arg(&sub, "--max-seconds").and_then(|v| v.parse().ok()).unwrap_or(600);
     let port: u16 = arg(&sub, "--port").and_then(|v| v.parse().ok()).unwrap_or(0);
     sc::with(|o| o.conn = sc::CONN_MATCHMAKING);
@@ -351,4 +357,18 @@ fn link(p: &crate::slippi_np::Paired, port: u16, max_s: u64) -> Result<bool, Str
         *HANDOFF.lock().unwrap() = Some(m);
     })?;
     Ok(true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sub_args;
+
+    #[test]
+    fn mm_lan_is_a_bare_flag() {
+        let a: Vec<String> = ["--slippi-mm", "ws://192.168.1.2:43110/v1/queue", "--slippi-port", "43211", "--slippi-mm-lan", "--slippi-max-seconds", "240", "--slippi-route", "blend"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        assert_eq!(sub_args(&a), ["--mm", "ws://192.168.1.2:43110/v1/queue", "--port", "43211", "--mm-lan", "--max-seconds", "240"]);
+    }
 }

@@ -579,6 +579,11 @@ impl RetailPlay {
         if let Some(v) = env("MELEE_SLIPPI_NP_MAX_SECONDS") {
             args.extend(["--slippi-max-seconds".to_string(), v]);
         }
+        // MELEE_SLIPPI_MM_LAN=1: the mock (and so the opponent) is on another machine of a private network
+        // (`slippi-netplay --mm-lan`): ws:// to a private literal IPv4, sockets bound to every interface
+        if env("MELEE_SLIPPI_MM_LAN").is_some_and(|v| v == "1") {
+            args.push("--slippi-mm-lan".into());
+        }
         if let Some(r) = yg_route {
             args.extend(["--slippi-route".into(), r.into()]);
         }

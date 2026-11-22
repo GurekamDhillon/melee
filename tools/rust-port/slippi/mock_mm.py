@@ -260,7 +260,7 @@ def main():
     ap.add_argument("--delay-ms", type=int, default=0)
     ap.add_argument("--stages", default="", help="comma-separated external stage ids for the match (default the 1v1 list)")
     ap.add_argument("--lag-ms", type=int, default=0, help="relay: one-way delay per datagram")
-    ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this % of datagrams")
+    ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this %% of datagrams")
     ap.add_argument("--bind", default=LOOP, help="listen/relay address (default loopback; a private address for --mm-lan peers)")
     ap.add_argument("--error", default="", help="answer every join with this server error (the outdated-client check)")
     ap.add_argument("--latest-version", default="", help="with --error: the reply's latestVersion")

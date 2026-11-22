@@ -342,7 +342,10 @@ impl RbGame for ModesGame {
                 };
             }
         }
+        // a live .slp (the Slippi-wire match): this frame's events wait under its session frame until confirmed
+        crate::slp_export::begin_frame(self.frame() + 1, &p);
         self.step(p);
+        crate::slp_export::end_frame();
         if self.slippi.is_some() && melee_core::slippi_online::state().is_some() {
             let sf = self.frame();
             let rolling = melee_core::slippi_online::state().is_some_and(|st| st.last_rolling != 0);
@@ -2106,6 +2109,8 @@ impl NetDriver {
                 }
             }
         }
+        // the live .slp takes the frames whose every input is final
+        crate::slp_export::confirm(conf);
         for (&fr, &rv) in sr.link.remote_checksums.range((sr.compared_upto + 1).max(2)..) {
             let Some(&lv) = sr.finals.get(&fr) else { break };
             sr.compared += 1;
@@ -2127,6 +2132,8 @@ impl NetDriver {
         let reached = sr.frames.is_some_and(|n| sr.finals.keys().next_back().is_some_and(|&k| k >= n)) && (conf >= s.current_frame() || sr.finals.len() as i32 > sr.frames.unwrap_or(0) + 120);
         if (reached || g.e.ended) && sr.done_at.is_none() {
             sr.done_at = Some(Instant::now());
+            // the live .slp ends here: the frames after it are the peer's linger, not the match
+            crate::slp_export::stop();
         }
         let us = work.elapsed().as_micros() as u64;
         sr.work_n += 1;
@@ -2142,6 +2149,7 @@ impl NetDriver {
         let cur = s.current_frame();
         drop(s);
         if end_now || err.is_some() {
+            crate::slp_export::stop();
             let sr = self.slippi.as_mut().unwrap();
             if let Some(p) = &sr.out {
                 let mut t = String::from("frame,checksum\n");

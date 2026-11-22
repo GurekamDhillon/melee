@@ -8,11 +8,11 @@ use melee_modes::tu::slippi_css as sc;
 use melee_net::slippi::{Client, Note, Selections, Status};
 use melee_net::transport::UdpTransport;
 use melee_platform::yougame_mm as ym;
-use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 /// The match's arguments, once both are locked in.
-static HANDOFF: Mutex<Option<Vec<String>>> = Mutex::new(None);
+/// (Host state: on the system heap, never rewound by a rollback load; see `melee_engine::arena::SysStatic`.)
+static HANDOFF: melee_engine::arena::SysStatic<Option<Vec<String>>> = melee_engine::arena::SysStatic::new(|| None);
 /// Both sides locked in: from then on this process is handing over to the match.
 static LOCKED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -26,13 +26,11 @@ pub fn handoff_game() -> u32 {
 /// start again (the relaunched process started with these cleared).
 pub fn reset_for_select() {
     LOCKED.store(false, std::sync::atomic::Ordering::SeqCst);
-    if let Ok(mut h) = HANDOFF.lock() {
-        *h = None;
-    }
+    HANDOFF.with(|h| *h = None);
 }
 
 pub fn take_handoff() -> Option<Vec<String>> {
-    HANDOFF.lock().ok()?.take()
+    HANDOFF.with(|h| h.take())
 }
 
 fn arg(a: &[String], k: &str) -> Option<String> {
@@ -40,12 +38,13 @@ fn arg(a: &[String], k: &str) -> Option<String> {
 }
 
 /// The last search's arguments, for a search again from the idle select (after a hold-Z disconnect).
-static LAST: Mutex<Option<(Vec<String>, i32)>> = Mutex::new(None);
+/// (Host state: on the system heap, never rewound by a rollback load.)
+static LAST: melee_engine::arena::SysStatic<Option<(Vec<String>, i32)>> = melee_engine::arena::SysStatic::new(|| None);
 
 /// Once per tick: the idle select asked to search again (Start after a hold-Z disconnect).
 pub fn poll() {
     if sc::take_search_again() {
-        let last = LAST.lock().ok().and_then(|l| l.clone());
+        let last = LAST.with(|l| l.clone());
         match last {
             Some((args, mode)) => {
                 eprintln!("online css: session: Start with a fighter chosen: searching");
@@ -64,10 +63,10 @@ pub fn start(args: Vec<String>, mode: i32) {
         eprintln!("online css: session: the match is on its way; no new search");
         return;
     }
-    *LAST.lock().unwrap() = Some((args.clone(), mode));
+    LAST.with(|l| *l = Some((args.clone(), mode)));
     set_user_from(&args);
     sc::wait_start(mode, &arg(&args, "--slippi-search").unwrap_or_default());
-    *HANDOFF.lock().unwrap() = None;
+    HANDOFF.with(|h| *h = None);
 }
 
 fn set_user_from(args: &[String]) {
@@ -92,7 +91,7 @@ fn search(args: Vec<String>, mode: i32) {
         eprintln!("online css: session: the match is on its way; no new search");
         return;
     }
-    *LAST.lock().unwrap() = Some((args.clone(), mode));
+    LAST.with(|l| *l = Some((args.clone(), mode)));
     std::env::remove_var("MELEE_SLIPPI_MM_NAMES");
     let search = arg(&args, "--slippi-search").unwrap_or_default();
     // begin() clears the screen state: the chosen flag is kept (the fighter stays picked)
@@ -102,7 +101,7 @@ fn search(args: Vec<String>, mode: i32) {
         o.chosen = chosen;
         o.start_locks = locks;
     });
-    *HANDOFF.lock().unwrap() = None;
+    HANDOFF.with(|h| *h = None);
     std::thread::spawn(move || {
         if let Err(e) = run(&args) {
             eprintln!("online css: session: {e}");
@@ -138,7 +137,7 @@ pub fn start_rematch() -> Option<i32> {
         o.game = game;
         o.conn = sc::CONN_OPPONENT_CONNECTING;
     });
-    *HANDOFF.lock().unwrap() = None;
+    HANDOFF.with(|h| *h = None);
     let max_s: u64 = std::env::var("MELEE_SLIPPI_NP_MAX_SECONDS").ok().and_then(|v| v.parse().ok()).unwrap_or(600);
     eprintln!("online css: rematch: game {} against {}, last game {}", game + 1, if opp.is_empty() { "?" } else { &opp }, ["none", "won", "lost"][winner.min(2) as usize]);
     std::thread::spawn(move || {
@@ -427,7 +426,7 @@ fn lock_in(mut cl: Client, p: &crate::slippi_np::Paired, port: u16, max_s: u64) 
     // process takes it over (slippi_link.rs); the handoff is set once the keeper listens
     crate::slippi_link::keep(cl, mine_sel, theirs, "match process", |link| {
         m.extend(["--slippi-link".into(), link]);
-        *HANDOFF.lock().unwrap() = Some(m);
+        HANDOFF.with(|h| *h = Some(m));
     })?;
     Ok(true)
 }

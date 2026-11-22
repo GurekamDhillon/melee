@@ -320,14 +320,15 @@ fn or_into(dst: &mut Vec<u64>, src: &[u64]) {
 }
 
 /// Buffers for the next [`Base::capture`]'s copies (index = range), allocated and touched ahead by [`prewarm`].
-static PREWARM: std::sync::Mutex<Vec<Vec<u8>>> = std::sync::Mutex::new(Vec::new());
+/// (Off the snapshot: the helper thread can finish after a capture, and a load must not rewind these buffers.)
+static PREWARM: crate::arena::SysStatic<Vec<Vec<u8>>> = crate::arena::SysStatic::new(Vec::new);
 
 /// Make the next capture's copy buffers ahead, on a helper thread (system heap), every page touched: a capture at a
 /// netplay match start otherwise spends ~40 ms in the first-touch faults of ~its fresh buffers, which more threads do
 /// not speed up. Presentation-neutral: the buffers hold nothing until the capture copies the state into them.
 pub fn prewarm() {
     let sizes: Vec<usize> = ranges().iter().map(|r| r.1).collect();
-    if PREWARM.lock().is_ok_and(|g| g.len() == sizes.len() && g.iter().zip(&sizes).skip(1).all(|(v, &l)| v.len() == l)) {
+    if PREWARM.with(|g| g.len() == sizes.len() && g.iter().zip(&sizes).skip(1).all(|(v, &l)| v.len() == l)) {
         return;
     }
     let _s = crate::arena::SysScope::enter();
@@ -348,9 +349,7 @@ pub fn prewarm() {
                 v
             })
             .collect();
-        if let Ok(mut g) = PREWARM.lock() {
-            *g = bufs;
-        }
+        PREWARM.with(|g| *g = bufs);
     });
 }
 
@@ -608,7 +607,7 @@ impl Base {
         }
         drop(_z3);
         let _z4 = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, "snapshot capture: copies");
-        let mut warm = PREWARM.lock().map(|mut g| std::mem::take(&mut *g)).unwrap_or_default();
+        let mut warm = PREWARM.with(std::mem::take);
         for i in 1..n {
             let (a, l) = b.ranges[i];
             // the host block (64 MB, most of the copy): read-only now, copied by a helper thread (cow::bg)

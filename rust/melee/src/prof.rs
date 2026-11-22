@@ -182,7 +182,7 @@ mod imp {
             let data = std::mem::take(&mut *self.data.lock().unwrap());
             // MELEE_SAMPLE_SLOW_MS=N: only the samples of gated regions (ticks) that took N ms or more
             let slow: Option<std::collections::HashSet<u64>> =
-                super::slow_ms().map(|_| super::SLOW.lock().unwrap().iter().copied().collect());
+                super::slow_ms().map(|_| super::SLOW.with(|s| s.iter().copied().collect()));
             let data: Vec<Vec<u64>> =
                 data.into_iter().filter(|s| slow.as_ref().map_or(true, |k| k.contains(&s[0]))).map(|mut s| { s.remove(0); s }).collect();
             // the exe's load address: when dbghelp names nothing (addresses only), symbolize offline against the PDB at
@@ -281,7 +281,7 @@ pub fn gate(inside: bool) {
         if inside {
             *t = Some(std::time::Instant::now());
         } else if t.take().is_some_and(|t0| t0.elapsed().as_secs_f64() * 1e3 >= ms) {
-            SLOW.lock().unwrap().push(TICKS.load(Ordering::Relaxed));
+            SLOW.with(|s| s.push(TICKS.load(Ordering::Relaxed)));
         }
     }
     if !inside {
@@ -295,7 +295,8 @@ fn slow_ms() -> Option<f64> {
     *V.get_or_init(|| std::env::var("MELEE_SAMPLE_SLOW_MS").ok().and_then(|v| v.parse().ok()))
 }
 static GATE_T0: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
-static SLOW: std::sync::Mutex<Vec<u64>> = std::sync::Mutex::new(Vec::new());
+/// (Host state: on the system heap, never rewound by a rollback load.)
+static SLOW: melee_engine::arena::SysStatic<Vec<u64>> = melee_engine::arena::SysStatic::new(Vec::new);
 
 #[cfg(windows)]
 pub fn from_env() -> Option<Guard> {

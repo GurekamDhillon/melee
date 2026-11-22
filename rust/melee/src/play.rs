@@ -1792,6 +1792,7 @@ pub fn play(args: &[String]) -> ExitCode {
         let seed = seed.unwrap_or_else(|| std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345));
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());
         let mut presets = presets;
+        let slippi_wire = slippi_scn.is_some();
         if let Some(scn) = slippi_scn {
             presets.scenario = Some(scn);
         }
@@ -1906,7 +1907,18 @@ pub fn play(args: &[String]) -> ExitCode {
         // MELEE_SLP_RECORD=<file> (the C build's recording variable) is the same export when --slp is not given: Game Start,
         // Frame Start, Pre-Frame, Post-Frame, Frame Bookend, Game End and metadata, so the file plays in Slippi Dolphin.
         if let Some(spec) = get("--slp").or_else(|| std::env::var("MELEE_SLP_RECORD").ok().filter(|s| !s.is_empty())) {
-            if rollback_mode && rp.feed.is_none() {
+            if slippi_wire && net.is_some() {
+                // the Slippi-wire match (the online select's): recorded live from its confirmed frames, as Slippi Dolphin
+                // records an online game; no --record needed (the select's relaunch drops it)
+                crate::slp_export::install(&spec, "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+                crate::slp_export::set_disc(&game.iso);
+                crate::slp_export::live_rollback();
+            } else if online_inproc {
+                // the menus' run in the rollback run modes (the online loop in one window): offline matches record per
+                // tick; an online match switches to the live export while it runs (browser.rs slippi_match_inprocess)
+                crate::slp_export::install(&spec, "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+                crate::slp_export::set_disc(&game.iso);
+            } else if rollback_mode && rp.feed.is_none() {
                 if net.is_some() && rp.rec.is_some() {
                     crate::play_net::SLP_AFTER.with(|c| *c.borrow_mut() = Some(spec.clone()));
                 } else {

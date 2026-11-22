@@ -1031,3 +1031,46 @@ mod keep {
     pub fn zero_some() {}
     pub fn init() {}
 }
+
+/// A host static that a rollback must not rewind: the static itself holds only a pointer, set once, to a block on the
+/// system heap made under [`SysScope`]; the value lives in that block, and every access runs under `SysScope`, so its
+/// own allocations stay off the arena too.
+///
+/// Why: a rollback load restores every writable static of the executable (and the arena). A plain
+/// `static X: Mutex<Vec<String>>` mutated on the system heap after a snapshot gets an old header back, pointing at a
+/// buffer since freed or moved: the next drop frees it twice (`free(): double free` in
+/// `retail_flow::transition_time`, the in-process online loop). Rewinding this pointer restores the same value; a load
+/// from before the first use resets it to null, so the next use starts a fresh block (the old one is leaked, never
+/// freed twice). The `Mutex` is in the block as well, so a load cannot leave it held either.
+pub struct SysStatic<T: 'static> {
+    p: core::sync::atomic::AtomicPtr<std::sync::Mutex<T>>,
+    init: fn() -> T,
+}
+
+impl<T: 'static> SysStatic<T> {
+    pub const fn new(init: fn() -> T) -> Self {
+        SysStatic { p: core::sync::atomic::AtomicPtr::new(core::ptr::null_mut()), init }
+    }
+
+    fn cell(&self) -> &'static std::sync::Mutex<T> {
+        let p = self.p.load(Acquire);
+        if !p.is_null() {
+            return unsafe { &*p };
+        }
+        let b = Box::into_raw(Box::new(std::sync::Mutex::new((self.init)())));
+        match self.p.compare_exchange(core::ptr::null_mut(), b, AcqRel, Acquire) {
+            Ok(_) => unsafe { &*b },
+            Err(other) => {
+                drop(unsafe { Box::from_raw(b) });
+                unsafe { &*other }
+            }
+        }
+    }
+
+    /// The value, locked, with this thread's allocations on the system heap for the call.
+    pub fn with<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
+        let _s = SysScope::enter();
+        let mut g = self.cell().lock().unwrap_or_else(|e| e.into_inner());
+        f(&mut g)
+    }
+}

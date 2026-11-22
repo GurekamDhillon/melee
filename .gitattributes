@@ -43,7 +43,7 @@ reqs/** linguist-vendored
 configure.py linguist-vendored
 default.nix linguist-vendored
 flake.nix linguist-vendored
-workspace-slippi.patch linguist-vendored
+docs/rust-port/reports/workspace-slippi.patch linguist-vendored
 # Non-Rust sources living under rust/: third-party Lua, C/Python oracles, generators, C reference dumps.
 rust/third_party/** linguist-vendored
 rust/*/oracle/** linguist-vendored

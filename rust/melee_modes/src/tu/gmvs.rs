@@ -1953,9 +1953,18 @@ unsafe fn legacy_neutral_spawn(slot: i32) {
         // 1v1 faces the stage's centre from its own spawn (also from a centre joint): on the six stages the same as the
         // rule above; on Corneria, Kongo Jungle and Big Blue the first port's joint is on the right and it faces left
         // (Gang-Steals 030631, 174456, 174719), which the rule above gets wrong
-        let mut pos: Vec3 = core::mem::zeroed();
-        ext::Player_LoadPlayerCoords(slot, &mut pos);
-        if pos.x <= 0.0 { 1.0 } else { -1.0 }
+        // The second port takes the opposite of the first's facing (the tie rule above), even when both stand on the
+        // same side of the centre: stages 23 and 30 put both 1v1 joints left of 0 (Gang-Steals 112859, 131709; Dolphin
+        // oracle: the higher port faces left at x < 0).
+        let lower = active.iter().copied().find(|&p| p < slot);
+        match lower {
+            Some(p) => -ext::Player_GetFacingDirection(p),
+            None => {
+                let mut pos: Vec3 = core::mem::zeroed();
+                ext::Player_LoadPlayerCoords(slot, &mut pos);
+                if pos.x <= 0.0 { 1.0 } else { -1.0 }
+            }
+        }
     };
     ext::Player_SetFacingDirection(slot, facing);
 }

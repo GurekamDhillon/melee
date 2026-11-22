@@ -374,9 +374,13 @@ struct First {
 
 pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
+    // `--list`: many replays, N at a time (slpbatch.rs)
+    if args.iter().any(|a| a == "--list") {
+        return crate::slpbatch::batch(args);
+    }
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let Some(path) = get("--slp") else {
-        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai]");
+        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--time [--time-csv FILE]] [--render [--render-scale N]]");
         return ExitCode::from(2);
     };
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
@@ -535,6 +539,16 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if let Some(w) = ws {
         sm.notes = format!("{}{}widescreen code {}..{} x{}/{}", sm.notes, if sm.notes.is_empty() { "" } else { "; " }, w.left, w.right, w.num, w.den);
     }
+    // `--time` (or SLPCHECK_TIME=1): per-frame sim timing (thread CPU cycles and wall), summary below the status; `--time-csv FILE`
+    // writes every frame. `--render`: also draw each frame offscreen (melee_gx, no window, no readback, no pacing) and time that.
+    // Off: nothing below runs (no clock reads, no allocation). The replay's comparison is outside the timed span.
+    let want_render = args.iter().any(|a| a == "--render");
+    let want_time = want_render || args.iter().any(|a| a == "--time") || std::env::var_os("SLPCHECK_TIME").is_some_and(|v| v != "0");
+    // SAFETY: single-threaded start-up, before the engine reads it.
+    if want_render {
+        unsafe { melee_engine::engine::RENDER = true };
+    }
+    let mut timer = want_time.then(|| crate::frametime::FrameTimes::new(get("--time-csv").as_deref(), want_render));
     let booted = crate::engine_disc(&iso).and_then(|disc| melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), conv.scn.clone()));
     let mut e = match booted {
         Ok(e) => e,
@@ -578,12 +592,39 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     // `--wide-from F --wide-to F`: only those slippi frames (a whole match is ~2 GB of lines)
     let wide_from: i32 = get("--wide-from").and_then(|v| v.parse().ok()).unwrap_or(i32::MIN);
     let wide_to: i32 = get("--wide-to").and_then(|v| v.parse().ok()).unwrap_or(i32::MAX);
+    let mut rend: Option<melee_gx::render::Renderer> = None;
+    if want_render {
+        match melee_gx::render::Renderer::new(640, 480) {
+            Ok(mut r) => {
+                if let Some(sc) = get("--render-scale").and_then(|v| v.parse::<u32>().ok()) {
+                    r.set_scale(sc.clamp(1, melee_gx::render::Renderer::MAX_SCALE));
+                }
+                // GX decode and draw packing on their own thread, as play.rs / retail_flow.rs do for a rendered match (the
+                // FIFO decode in GXCopyDisp was over half of the timed tick: ~0.6 ms of the 1.4). Render-only: no game code
+                // reads the decoded state, and slpcheck never snapshots the arena (the frames may hold its blocks).
+                // wait_frame: the render span takes exactly this tick's frame. MELEE_GX_SYNC=1 keeps decoding in the tick.
+                if std::env::var_os("MELEE_GX_SYNC").is_none() {
+                    let sh = melee_engine::gxbridge::shim();
+                    sh.gx.enable_async(melee_engine::arena::mark_foreign_thread);
+                    sh.gx.set_pipe_factory(r.pipe_factory());
+                    sh.wait_frame = true;
+                }
+                rend = Some(r);
+            }
+            Err(er) => {
+                sm.status = format!("boot-error: renderer: {er}");
+                return finish(args, &name, &sm);
+            }
+        }
+    }
+    crate::prof::set_gated(std::env::var_os("MELEE_SAMPLE_GATE").is_some_and(|v| v != "0"));
     let run = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mut ticks = 0usize;
         loop {
             if ticks >= max_ticks {
                 break;
             }
+            let t_a = timer.as_ref().map(|_| crate::frametime::mark());
             let pl = unsafe { crate::r_in() };
             pl.tick();
             let fr = pl.frame();
@@ -607,7 +648,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             // wrong values. The forced value is recovered from the recorded Pre-Frame seed by stepping the LCG back (up to 64 draws)
             // to the nearest value with the Frame Start low half, the frame offset kept from frame to frame.
             let pre = ports.iter().find_map(|&p| pl.input(p as i32, false).map(|i| i.seed).filter(|&s| s != 0));
-            if pl.r.online && sd != 0 {
+            if pl.r.online && sd != 0 && !pl.r.fs_forced {
                 let forced = pre.and_then(|rec| online_forced_seed(rec, sd, unsafe { &mut FS_OFFSET })).unwrap_or(sd.wrapping_add(unsafe { FS_OFFSET }));
                 if std::env::var_os("SLPCHECK_PREDBG").is_some() && forced != sd { eprintln!("PREDBG f{fr} sd={sd:08x} forced={forced:08x}"); }
                 melee_runtime::tu::random::global::state().set_logic_seed(forced);
@@ -637,8 +678,24 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
                 e.set_pads(Some(pads));
             }
-            if !e.tick() {
+            // MELEE_SAMPLE with MELEE_SAMPLE_GATE=1: the profiler samples the engine tick only (not the replay bookkeeping or the render)
+            crate::prof::gate(true);
+            let more = e.tick();
+            crate::prof::gate(false);
+            if !more {
                 break;
+            }
+            if let (Some(t), Some(a)) = (timer.as_mut(), t_a) {
+                let b = crate::frametime::mark();
+                if let Some(r) = rend.as_mut() {
+                    if let Some(f) = melee_engine::gxbridge::take_frame() {
+                        if let Some(pk) = melee_engine::gxbridge::shim().gx.packed.take() {
+                            r.set_packed(pk);
+                        }
+                        r.render_frame(&melee_engine::gxbridge::shim().gx.state, &f);
+                    }
+                }
+                t.push(fr, a, b, if rend.is_some() { crate::frametime::mark() } else { b });
             }
             ticks += 1;
             last_frame = fr;
@@ -689,7 +746,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
             }
             // the first divergent frame is the answer; keep going only to fill the per-field table when asked
-            if first.is_some() && !dump && !args.iter().any(|a| a == "--full") {
+            if first.is_some() && !dump && timer.is_none() && !args.iter().any(|a| a == "--full") {
                 break;
             }
         }
@@ -715,6 +772,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         sm.first = Some(f.clone());
     }
     sm.per_field = per_field;
+    if let Some(t) = timer.as_mut() {
+        print!("{}", t.summary());
+    }
     finish(args, &name, &sm)
 }
 

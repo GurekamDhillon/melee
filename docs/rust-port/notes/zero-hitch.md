@@ -745,3 +745,11 @@ texture already copied whole is returned without a probe. Presentation only (has
 - **First frame of the match** (netplay PS 19 ms before the fix): render pass (display lists) 7.4 + the VirtualQuery.
 - **BF match 2, third tick (6241)**: `tick: step` 16-20 ms with no inner span: sample it next (`MELEE_SAMPLE_SLOW_MS`).
 - **First match's first frame**: prepare 6.5 + 113 texture uploads 3.7 ms (PS): stream or worker-stage uploads.
+
+## Live Slippi Unranked, rust-port 9f552c0d5 (Nov 22): one 19.7 ms tick
+- `tick work max 19695 us, 1 of 1115 ticks over 16 ms` (guest, 1-1115 the whole match). The log has no span for it; the
+  one unusual tick in that match is the stray Start at scene frame 968 (online 1093): `gm_DoPauseChecksAndRoutine`
+  built the pause HUD/camera and ducked audio inside the rollback tick, and the same tick ended in the HARD desync.
+- Fixed at the cause (port/livedesync): Unranked/Ranked matches now set `disable_pausing` as Slippi's match block
+  does, so that tick no longer exists online. Not re-measured live; if a 16 ms+ tick shows again in an online match,
+  sample it with `MELEE_SAMPLE_SLOW_MS`.

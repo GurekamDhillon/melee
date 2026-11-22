@@ -258,3 +258,24 @@ Checks: `tools/rust-port/gate.sh --skip-build` on the new exe (goldens, synctest
 on the old exe under the same load: see the commit message. Draw order, uniforms and EFB copies are unchanged by
 construction (the split only moves when a prepared frame is drawn); the Stadium shots of the new exe are identical
 across 3 runs and equal to the baseline's run-2/run-3 shots (the ones where no extra tick slipped in).
+
+## slpcheck --render: GX decode off the tick (port/simdraw, 2026-11-21)
+
+Profiled with the in-process sampler (`MELEE_SAMPLE=<file> MELEE_SAMPLE_GATE=1 melee slpcheck ... --render`: the gate
+keeps only the engine tick; when dbghelp names nothing, the report's addresses symbolize offline against the PDB at
+`address - "prof: exe base" + 0x140000000`). Of the 1.44 ms rendered tick on Game_20261023T125724, 51% was
+`gxbridge::finish_frame` -> `GxShim::copy_disp` -> `Gx::drain` -> `GxState::process` / `draw::build_draw` (the FIFO
+decode and DrawCmd building, plus its allocations), work the play and retail paths already do on the `gx decode`
+thread (`Gx::enable_async`). slpcheck ran it synchronously. `--render` now enables the same async decode (with
+`wait_frame`, so the render span takes exactly this tick's frame; `MELEE_GX_SYNC=1` restores the old path).
+The rest of the gap to the sim-only tick is the draw callbacks' own GX calls (`HSD_JObjDispAll` -> `HSD_DObjDisp`,
+`HSD_MObjSetup`, `GXLoadTexObj`, `GXCallDisplayList`): spread thin, no single hot spot.
+
+| replay | sim cpu before (mean/p99/max) | sim cpu after | render wall before | render wall after | frame wall before / after |
+|---|---|---|---|---|---|
+| Game_20261023T125724 | 1.438 / 2.274 / 3.205 | 0.661 / 1.227 / 1.793 | 1.169 | 2.188 | 2.651 / 2.790 |
+| Game_20260613T223503 | 2.611 / 4.265 / 5.394 | 0.783 / 1.366 / 1.909 | 2.323 | 3.486 | 5.139 / 4.276 |
+| Game_20251228T235414 | 3.255 / 4.703 / 5.811 | 0.885 / 1.356 / 1.955 | 2.710 | 4.698 | 6.007 / 5.598 |
+
+The render span now includes waiting for the decode thread (its CPU is on that thread, not in `render_cpu_ms`), so
+render wall grows by about what the tick lost; slpcheck waits for every frame, play overlaps the decode with the next tick.

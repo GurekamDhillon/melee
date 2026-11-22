@@ -3,8 +3,10 @@
 //! the 1P menu's hidden third row (`SEL_1P_2`) becomes Online, and menu kind 8 (empty in retail) becomes the online
 //! submenu, whose art and descriptions come from Slippi's patched MnMaAll / SdMenu served by `--slippi-menus`.
 //!
-//! The rows are Hero's Slippi page (Direct, Unranked, Teams, Party; no Slippi Ranked row). This round opens Direct
-//! and Unranked; Teams and Party stay locked. The YouGame page is a later round: `ROWS` is the one place it plugs in.
+//! The rows are the art's own order (Ranked, Unranked, Direct, Teams, Party: the label of each row is baked into
+//! Slippi's MnMaAll slot by slot, so a row's slot is its mode id). Ranked is greyed and never starts matchmaking
+//! (Hero: a listing without a ladder keeps Ranked greyed and the page starts on Unranked). This round opens Unranked
+//! and Direct; Teams and Party stay locked. The YouGame page is a later round: `ROWS` is the one place it plugs in.
 //! Nothing here runs unless [`ENABLED`] is set (the host sets it only when the system files loaded).
 
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
@@ -29,7 +31,7 @@ pub const MODE_TEAMS: i32 = 3;
 pub const MODE_PARTY: i32 = 4;
 
 /// The Slippi page's rows, top to bottom (Hero `mu_online_slippi_rows`).
-pub const ROWS: [i32; 4] = [MODE_DIRECT, MODE_UNRANKED, MODE_TEAMS, MODE_PARTY];
+pub const ROWS: [i32; 5] = [MODE_RANKED, MODE_UNRANKED, MODE_DIRECT, MODE_TEAMS, MODE_PARTY];
 
 /// The row the player confirmed, as a mode id (-1: none yet). The host reads it with [`take_pick`].
 static PICK: AtomicI32 = AtomicI32::new(-1);
@@ -51,7 +53,8 @@ pub fn row_of(mode: i32) -> usize {
 /// The confirmed mode, once (the host starts matchmaking for it).
 pub fn take_pick() -> Option<i32> {
     let p = PICK.swap(-1, Ordering::Relaxed);
-    (p >= 0).then_some(p)
+    // never ranked: no path starts Ranked matchmaking, whatever set the pick
+    (p >= 0 && p != MODE_RANKED).then_some(p)
 }
 
 static mut ANIM: [AnimLoopSettings; 8] = unsafe { core::mem::zeroed() };
@@ -289,7 +292,7 @@ unsafe fn code_leave(confirmed: bool) {
         eprintln!("online menu: Direct: code entry cancelled");
         mn_804A04F0.entering_menu = 0;
         super::mnname::ext::HSD_SisLib_803A5D30();
-        mn_80229894(MENU_KIND_8 as s32, 0, 3);
+        mn_80229894(MENU_KIND_8 as s32, row_of(MODE_DIRECT) as u16, 3);
     }
 }
 
@@ -416,9 +419,12 @@ mod tests {
 
     #[test]
     fn rows_and_locks() {
-        assert_eq!(ROWS[0], MODE_DIRECT);
-        assert!(row_unlocked(0) && row_unlocked(1));
-        assert!(!row_unlocked(2) && !row_unlocked(3) && !row_unlocked(4));
+        assert_eq!(ROWS[0], MODE_RANKED);
+        assert!(!row_unlocked(0) && !row_unlocked(row_of(MODE_RANKED)));
+        assert!(row_unlocked(1) && row_unlocked(2));
+        assert!(!row_unlocked(3) && !row_unlocked(4));
+        PICK.store(MODE_RANKED, Ordering::Relaxed);
+        assert_eq!(take_pick(), None);
         assert_eq!(take_pick(), None);
         PICK.store(MODE_DIRECT, Ordering::Relaxed);
         assert_eq!(take_pick(), Some(MODE_DIRECT));

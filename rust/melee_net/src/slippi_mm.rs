@@ -835,4 +835,16 @@ mod tests {
         assert!(Ws::connect("ws://matchmaking.example:1/v1/queue", Duration::from_millis(10)).is_err());
         assert!(Ws::connect("wss://matchmaking.example/v1/queue", Duration::from_millis(10)).is_err());
     }
+
+    #[test]
+    fn lan_refuses_public_and_tls() {
+        // --mm-lan (also for Unranked): a mock on a private address only; these fail before any connection is tried
+        let t = Duration::from_millis(10);
+        for url in ["ws://8.8.8.8:43110/v1/queue", "ws://matchmaking.example:43110/v1/queue", "wss://192.168.1.2:43110/v1/queue", "wss://matchmaking.example/v1/queue"] {
+            let e = Ws::connect_to(url, t, Target::Lan).err().expect(url);
+            assert!(e.contains("not a private address") || e.contains("literal IPv4") || e.contains("wss://"), "{url}: {e}");
+        }
+        assert!(lan_ok(Ipv4Addr::new(192, 168, 1, 221)) && lan_ok(Ipv4Addr::new(10, 0, 0, 1)) && lan_ok(Ipv4Addr::new(127, 0, 0, 1)));
+        assert!(!lan_ok(Ipv4Addr::new(8, 8, 8, 8)) && !lan_ok(Ipv4Addr::new(100, 66, 101, 57)));
+    }
 }

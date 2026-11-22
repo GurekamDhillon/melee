@@ -267,11 +267,12 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
         }
         let mode = match arg(args, "--mm-mode").as_deref() {
             None | Some("direct") => 2,
-            // unranked: Slippi's real server (--mm-real, the join-and-leave check) or a local mock on 127.0.0.1 only
-            // (`Target::Loopback` refuses any other address); never over --mm-lan
-            Some("unranked") if real || !lan => 1,
+            // unranked: Slippi's real server (--mm-real, the join-and-leave check), a local mock on 127.0.0.1
+            // (`Target::Loopback` refuses any other address) or a mock on the LAN (`Target::Lan`: ws:// to a literal
+            // private IPv4 only, so Slippi's servers stay out of reach without --mm-real)
+            Some("unranked") => 1,
             Some(m) => {
-                return Err((2, format!("--mm-mode {m}: only direct, or unranked with --mm-real or a loopback mock; never ranked")));
+                return Err((2, format!("--mm-mode {m}: only direct or unranked; never ranked")));
             }
         };
         // the WebSocket service (Slippi 3.7.0, Hero's path): STUN from the netplay port first; the ENet service

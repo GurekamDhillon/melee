@@ -34,6 +34,7 @@ mod geno_suite;
 mod cosmetics;
 mod slippi_menus;
 mod cosmetics_import;
+mod card_import;
 mod nucleus;
 mod settings_overlay;
 mod crash;
@@ -657,6 +658,7 @@ fn main_inner() -> ExitCode {
         Some("play") => play::play(&args),
         Some("replays") => replays::replays(&args),
         Some("cosmetics") => cosmetics::cli(&args[1..]),
+        Some("card-import") => card_import::cli(&args[1..]),
         Some("spectate") => {
             // `melee spectate TARGET [play options]` = `melee play --spectate TARGET ...`
             let mut a = vec!["play".to_string(), "--spectate".to_string()];

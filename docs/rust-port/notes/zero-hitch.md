@@ -505,6 +505,24 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   service (`MELEE_ASSETS=on`, still off by default) takes it to ~29 ms. Getting under 16.7 needs the setup split over
   ticks or the envoy hook's work moved earlier; both change the sim's frame layout and need NHV1/golden proof.
 
+### Warm workers, driver pipeline cache, boot-menu hang (2026-11-22, port/warmhang)
+- The owner's Slippi build "hung after the pipeline warm". The warm was not the cause: a "Return to main menu"
+  relaunch (MELEE_BOOT_MENU=1) leaves the opening from inside a tick (`Engine::goto_mode`), and the opening's exit
+  (`lbMthp_8001F800`) spins until the movie's read in flight completes. That completion is deferred to
+  `dvd::run_deferred_completions` (once per frame), so the spin never ended and the window stopped pumping (Windows
+  "Application Hang"). `goto_mode` now runs the owed completions first. Reproduced with MELEE_HANG_DUMP; also hangs
+  with MELEE_PIPE_WARM=0 on the old exe.
+- The warm itself: one thread compiled 1568 configs in 25-40 s every launch (`cache: None`: the list keeps configs,
+  not compiled pipelines). Now `PipeFactory::start_warm` shares the list over available_parallelism/4 (1-4)
+  below-normal workers, and a Vulkan `PipelineCache` (Features::PIPELINE_CACHE) is kept in
+  `gpucache/wgpu_pipeline_cache_vulkan_<vendor>_<device>.bin`: keyed by the GPU, not the exe, so a new build keeps
+  it; the driver rejects a blob from another driver version (fallback: empty cache). Written after the warm and
+  every 10 s while new pipelines appear (temp + rename). MELEE_PIPE_CACHE=0 turns off only that cache.
+- Owner's list (1568 configs), hidden agent runs, 2400 ticks: old exe 39.7 / 40.1 s warm, 9 and 7 clean frames over
+  16 ms; new exe 1.41 s (no driver cache file) / 0.95 s (with it), 0 frames over 16 ms, boot-menu relaunch reaches the
+  main menu at tick 5. The list is not needed before the menus: nothing waits on it (misses go to the async compile
+  workers), so it simply runs in the background.
+
 ### First-run warm pass (2026-11-16, port/vanilla-zerolag)
 A fresh install's warm list is empty, so its first matches compile pipelines on the frame path. `melee/src/warm_pass.rs`:
 when `play` starts and the list holds fewer than 150 records, a background thread runs a hidden helper (`melee play
@@ -745,6 +763,32 @@ texture already copied whole is returned without a probe. Presentation only (has
 - **First frame of the match** (netplay PS 19 ms before the fix): render pass (display lists) 7.4 + the VirtualQuery.
 - **BF match 2, third tick (6241)**: `tick: step` 16-20 ms with no inner span: sample it next (`MELEE_SAMPLE_SLOW_MS`).
 - **First match's first frame**: prepare 6.5 + 113 texture uploads 3.7 ms (PS): stream or worker-stage uploads.
+
+## Gate at pub/rust-port 839886736, release, 16.0 ms budget (2026-11-22, branch port/nightbench-1122): FAILED, not yet a clean pass
+Command: `BUDGET=16.0 zero_hitch_gate.sh vanilla_bf vanilla_walk vanilla_fod envoy` (the default scenarios; vanilla_walk is in the
+default set) with the plain release exe of that tip (`cargo build --release -p melee --bin melee`, -j 2, private target), mods built
+with `build_mods.sh`, memory card copied from a scratch save, under buildlock + runlight, after a quiet check (no other game /
+cargo / rustc, machine CPU under 30 %). Other agents' sessions were running on the machine all night, so the CPU was not
+guaranteed quiet DURING a run: the gate's own contention detector fired in run 2.
+
+| scenario | run 1 | run 2 |
+|---|---|---|
+| vanilla_bf (9000 ticks) | 1 clean over: tick 4 (title load), 36.4 ms, pacing sleep after a 20 ms tick (file read+parse 8.8, engine step 11.3) | 1 clean over: tick 4 (title load), 24.3 ms (engine step 10.4, file read+parse 9.0) |
+| vanilla_walk (2600) | 1 clean over: tick 2338 (VS), 25.5 ms, draw 12.5 | PASS, 0 over |
+| vanilla_fod (3000) | 8 clean + 7 contended: all inside ticks 2535-2907 (one burst, machine over 85 % CPU in 1 sample), draw 8-16 ms, worst 39.4 | 113 clean + 229 contended, worst 196.6 ms: machine over 85 % CPU in 23 samples (another agent's game); the run is void |
+| envoy (9000) | 3 clean + 2 contended: ticks 1650 (28 ms), 7332 (29.1 ms engine step), worst clean 29.2 | 7 clean + 45 contended, worst clean 59.5 ms (tick 1863, engine step 44.1): machine over 85 % CPU in 20 samples |
+
+Reading:
+- Presents over 1.5x the display interval: 0 in every scenario of both runs.
+- Run 2's fod and envoy were not quiet and are void; run 1's vanilla_fod burst (ticks 2535-2907) is partly contended (7 of 15 frames) and not
+  judged either. So the failures that stand are the "clean" ones that appear in BOTH runs or in a run the detector did not flag:
+  the **title scene change at tick 4 of vanilla_bf (24 to 36 ms, both runs)** is repeatable and is the real offender; the single
+  walk frame (run 1 only, 25.5 ms draw in VS) and the envoy engine-step frames (run 1: 29.1 ms at tick 7332 with only 3 ms of game-thread CPU, system 16 %,
+  which reads as an OS stall) are one-offs not seen in the other run.
+- Not a pass at 16.0 ms, so **no release candidate was packaged** from this tip. Next: re-run all four scenarios on a machine nobody else
+  is using (the fod/envoy failures need that), and look at the tick-4 title load in vanilla_bf (the preload of EfCoData / ItCo /
+  IfAll plus a scene change in one tick).
+- Raw: `scratch/nightbench/zerohitch-run1/`, `scratch/nightbench/zerohitch/` (profile csv + jsonl per scenario), `gate-run1.log`, `gate.log`.
 
 ## Live Slippi Unranked, rust-port 9f552c0d5 (Nov 22): one 19.7 ms tick
 - `tick work max 19695 us, 1 of 1115 ticks over 16 ms` (guest, 1-1115 the whole match). The log has no span for it; the

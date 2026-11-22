@@ -279,3 +279,50 @@ The rest of the gap to the sim-only tick is the draw callbacks' own GX calls (`H
 
 The render span now includes waiting for the decode thread (its CPU is on that thread, not in `render_cpu_ms`), so
 render wall grows by about what the tick lost; slpcheck waits for every frame, play overlaps the decode with the next tick.
+
+# Live play vs Hero's Source Port, re-run (2026-11-22, branch port/nightbench-1122)
+Task: re-run the bench-live comparison (notes/bench-live.md, last set 2026-11-03, tick 1.30 / 0.81 ms) against a current
+Source Port. Same scenarios, same harness (`bench-live/` scripts, copied to scratch and adapted: spaces in the path, the
+`MELEE_INPUT=n` env, the Source Port's `--sys-dir`), 3 runs each, one game at a time, Rust then Hero alternating, medians.
+
+## What was measured
+| | Rust port | Hero's Source Port |
+|---|---|---|
+| build | pub/rust-port 839886736, `cargo build --release -p melee --bin melee` (rustc 1.102.0-nightly, release profile, `debug = 1`, no fat LTO, -j 2, private target dir) | Melee Unlocked **0.9.120 (YouGame build 103)**, `melee_source.exe` as installed on this machine by the YouGame desktop app on 2026-11-20 (his prebuilt release; not built by us). His repo has since moved on (origin/main tip is newer, a 0.9.991 launcher exists), so this is not necessarily his newest code |
+| renderer / window | wgpu (D3D12), visible, unfocused (`MELEE_WINDOW_UNFOCUSED=1`), bottom of the z-order | his D3D12 renderer, `--hidden --threaded-renderer` (a visible window takes focus; his hidden window may make Present cheaper, unverified, as before) |
+| env / flags | `MELEE_INPUT=n MELEE_PAD_IGNORE_ADAPTER=1 MELEE_VOLUME=3 MELEE_VSYNC=off MELEE_INTERP=1 MELEE_RENDER_SCALE=2 MELEE_WINDOW_TITLE="nightbench: rust 839886736 ..."`, `play --match ... --items OFF --stocks 4 --max-frames 3603` | `--fps unlocked --frame-mode interpolate --time-base 1 --window 1280x960 --scale 2 --dlss off --volume 0 --no-music --script s_hyrule.txt|s_fd.txt`, `MELEE_PRESENT_UNCAPPED=1`; his menu walk (script) still reaches the match with 0.9.120 |
+| scenarios | Hyrule Temple 4 CPUs (fox/marth/falco/peach cpu9), Final Destination fox vs marth cpu9; items off, stock 4, 1280x960 at 2x, vsync off, 3600 match frames | same |
+
+Machine: Core Ultra 7 265F, 32 GB, RTX 5070, Windows 11 26200. NOT an empty machine: other agents' sessions were
+running all night. A run only started when `quiet.sh` saw no melee / melee-slippi / melee_source / Dolphin / cargo / rustc /
+link / cl process, machine CPU under 30 % (instantaneous counter) and more than 3 GB free; the measured CPU before the 12 runs was
+7 to 26 % (browser and chat apps in the background), free RAM 5.3 to 10 GB. Build lock held for the whole set. One discarded
+warm-up run per scenario (cold pipeline cache) came first.
+
+## Results (medians of 3)
+| | Rust Temple 4P | Hero 0.9.120 Temple 4P | Rust FD 2P | Hero 0.9.120 FD 2P |
+|---|---|---|---|---|
+| sim per tick p50 (ours: wall of `Game::tick`; his: game-thread `cpu_ms`) | **1.84** ms (mean 1.90, p99 2.8) | 3.35 ms (mean 3.45) | **1.16** ms (mean 1.35, p99 3.8) | 1.85 ms (mean 1.86) |
+| render fps, average | **812** | 470 | 1150 | 1186 |
+| render fps, 1% low | **233** | 136 | 207 | **373** |
+| frame time p50 / p95 / p99 (ms) | 1.04 / 2.69 / **3.45** | 1.81 / 4.03 / 5.27 | 0.70 / 1.78 / 2.91 | 0.74 / 1.68 / **2.24** |
+| process CPU per rendered frame | 1.80 ms | 2.84 ms | 1.21 ms | 0.90 ms |
+| working set peak | 1053 MB | 1270 MB | 1019 MB | 1190 MB |
+| private bytes peak | 1462 MB | 1413 MB | 1402 MB | 1338 MB |
+| draws per presented frame (his column, after his merge) | not logged | 1027 | not logged | 472 |
+
+Per-run: Rust Temple fps 622 / 835 / 813, 1% low 162 / 233 / 241, p99 4.55 / 3.45 / 3.37; Hero Temple fps 470 / 445 / 596, 1% low 136 / 129 / 187.
+Rust FD fps 1150 / 840 / 1289, 1% low 207 / 110 / 324, p99 2.91 / 4.88 / 2.30; Hero FD fps 1113 / 1186 / 1229, 1% low 306 / 373 / 379, p99 2.63 / 2.24 / 2.15.
+
+## Reading
+- Temple 4P: ahead on every row except peak private bytes (1.04x his). Tick 0.55x of his CPU per tick, 1% low 1.7x, p99 frame 0.65x.
+- FD 2P: tick is 0.63x of his, but average fps is level (1150 vs 1186) and the **1% low trails** (207 vs 373; the p99 frame is 2.91 vs 2.24 ms). Our FD spread is wide (1% low 110 to 324 across the 3 runs; the 110 run also has the worst p99 of the set at 4.88 ms), his is narrow (306 to 379). Three runs do not say whether that is our engine or a background spike, but it is not "no worse 1% lows", so **the README speed row stays "Provisional"** and was not changed.
+- **Not as good as the 2026-11-03 set.** Same method, the same machine: our tick went 1.30 to 1.84 ms (Temple) and 0.81 to 1.16 ms (FD), our private-bytes peak 690 to 1462 MB (Temple) and 608 to 1402 MB (FD), the FD 1% low 444 to 207. Hero's own numbers moved less (tick 3.97 to 3.35 and 2.15 to 1.85 ms, memory 1109 to 1413 MB). This run has more background load (CPU 7 to 26 % before each run against 0 to 15 % on 2026-11-03), which accounts for some of the tick, but not the memory: a 2x private-bytes growth since perf2 (01058c072) is a real change in the engine between that build and 839886736 and is worth bisecting (the Slippi menus, the wasm mod host and the modes added since are the suspects; not investigated here).
+- With the memory growth our "about half of his" claim of 2026-11-03 no longer holds; at this tip we are about level (1.0x to 1.05x).
+
+## Caveats
+- Everything in bench-live.md's caveats still applies: hidden window on his side, Slippi layer and sub-frame interpolation work on his side, the two sim columns are different quantities (wall of `Game::tick` against game-thread `cpu_ms`), different renderers, GX parity not complete on ours (fewer draws), our release profile without fat LTO (`--profile perf` is about 25 % faster) against his MSVC/GCC release.
+- The Source Port is a 2026-11-20 release (0.9.120, YouGame build 103), not the tip of his repo; the number is "his current shipped build on this machine".
+- 3 runs, a shared machine (see above), CPU 7 to 26 % before each run. Run-to-run spread on our FD set is large.
+- Hero's per-run `sim_ms` (wall) reads a constant 13.4 ms: pacing, not cost; only `cpu_ms` is meaningful. His startup (scripted menu walk) is 45 s, ours 1 s: not comparable.
+- Scripts: `scratch/nightbench/` (`all.sh`, `run_r.sh`, `run_h.sh`, `quiet.sh`; per-run output in `N_R_*`, `N_H_*`), the unchanged bench-live scripts otherwise.

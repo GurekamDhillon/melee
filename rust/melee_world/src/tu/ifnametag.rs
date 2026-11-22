@@ -163,6 +163,34 @@ pub static mut un_804D6D78: *mut HSD_Text = null_mut();
 pub static mut un_804D6D7C: i32 = 0;
 
 /// `memzero` (lb_00B0.c): the real behaviour, used unless a test installs a hook.
+/// Slippi online's name tags: each port's display name over its fighter in place of its P1..P4 plate text (Slippi
+/// Dolphin and Hero show the players' names during an online match). NUL-terminated text for the SIS font; empty: none.
+/// Plain bytes (no heap): set before the match's first snapshot, so a rollback load puts back the same names.
+pub static mut ONLINE_TAGS: [[u8; 64]; 4] = [[0; 64]; 4];
+
+/// Name the port's tag (`""` clears it). Printable ASCII only (no `%`: the text is a format), at most 15 characters (Slippi's in-game name length);
+/// letters, digits and `.-:` and spaces as the font's ASCII forms, the rest as their fullwidth forms.
+pub fn set_online_tag(slot: usize, name: &str) {
+    let Some(t) = (unsafe { (*core::ptr::addr_of_mut!(ONLINE_TAGS)).get_mut(slot) }) else { return };
+    *t = [0; 64];
+    let mut o = 0;
+    for c in name.chars().filter(|c| (c.is_ascii_graphic() && *c != '%') || *c == ' ').take(15) {
+        let mut b = [0u8; 4];
+        let enc: &[u8] = if c.is_ascii_alphanumeric() || " .-:".contains(c) { c.encode_utf8(&mut b).as_bytes() } else { char::from_u32(c as u32 + 0xFEE0).unwrap_or('?').encode_utf8(&mut b).as_bytes() };
+        if o + enc.len() >= t.len() {
+            break;
+        }
+        t[o..o + enc.len()].copy_from_slice(enc);
+        o += enc.len();
+    }
+}
+
+/// The port's online tag, when it has one.
+pub fn online_tag(slot: i32) -> Option<*const u8> {
+    let t = unsafe { (*core::ptr::addr_of!(ONLINE_TAGS)).get(slot as usize)? };
+    (t[0] != 0).then_some(t.as_ptr())
+}
+
 pub fn memzero_default(mem: *mut c_void, size: i32) {
     melee_core::ct!("memzero_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
@@ -244,7 +272,7 @@ pub unsafe extern "C" fn un_802FCBA0() {
 pub unsafe extern "C" fn has_nametag(slot: i32) -> bool {
     core::hint::black_box(0x3AE97141u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("has_nametag");
-    !(ext::Player_GetPlayerSlotType(slot) != Gm_PKind_Human || ext::Player_GetNametagSlotID(slot) == NAMETAG_DISABLED)
+    online_tag(slot).is_some() || !(ext::Player_GetPlayerSlotType(slot) != Gm_PKind_Human || ext::Player_GetNametagSlotID(slot) == NAMETAG_DISABLED)
 }
 
 #[inline(never)]
@@ -275,6 +303,7 @@ pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
         && ext::Player_GetStocks(*slot as i32) != 0
         && (un_804D6D70[*slot as usize] != 0
             || ext::Player_GetNametagSlotID(*slot as i32) != b'x'
+            || online_tag(*slot as i32).is_some()
             || ext::Player_80036058(*slot as i32) != 0
             || ext::gm_8016B258(*slot as i32) != 0)
     {
@@ -331,8 +360,17 @@ pub unsafe extern "C" fn NameTag_Create(slot: i32) {
             let mut f = un_802FC9B4(slot as u8, team, a2, a3);
             if has_nametag(slot) {
                 f = inlineA1(f);
-                let name = ext::GetNameText(ext::Player_GetNametagSlotID(slot) as i32);
-                un_804A1EF8[slot as usize] = ext::HSD_SisLib_803A6B98(un_804D6D78, -5000.0, 0.0, name.cast());
+                un_804A1EF8[slot as usize] = match online_tag(slot) {
+                    // the text maker itself: the linked hook's argument cast does not take a byte pointer
+                    Some(t) => {
+                        let s = melee_runtime::cformat::c_format(t as *const i8, &[]);
+                        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98_bytes(un_804D6D78, -5000.0, 0.0, Some(&s))
+                    }
+                    None => {
+                        let name = ext::GetNameText(ext::Player_GetNametagSlotID(slot) as i32);
+                        ext::HSD_SisLib_803A6B98(un_804D6D78, -5000.0, 0.0, name.cast())
+                    }
+                };
                 ext::HSD_SisLib_803A7548(un_804D6D78, un_804A1EF8[slot as usize], 0.4, 0.55);
             }
             ext::HSD_JObjReqAnimAll(jobj, f);

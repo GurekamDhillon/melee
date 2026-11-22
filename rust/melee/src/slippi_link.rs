@@ -6,6 +6,10 @@
 //! locked in (`keep`), and when the match process asks (`take`, over loopback TCP with a one-time token) it stops,
 //! hands over the whole ENet + Slippi client state (`Client::export`), and closes its socket. The match process binds
 //! the same UDP port and goes on with that state, so the opponent sees one link that never dropped.
+//!
+//! A Direct set goes back the other way after each game (`hand_back`): the match process keeps the link for the menu
+//! process it relaunches into the select, which takes it (`slippi_css_host::start_rematch`) for the next lock-in and
+//! hands it on to the next match as above.
 
 use melee_net::slippi::{Client, PacketR, Selections};
 use std::io::{Read, Write};
@@ -20,8 +24,8 @@ static KEEPING: AtomicBool = AtomicBool::new(false);
 const KEEP_SECONDS: u64 = 120;
 
 /// Keep `cl` alive (polled) on this thread (the session's, which owns the client) until the match process takes it.
-/// `ready` gets the `--slippi-link` value for the match once the keeper listens.
-pub fn keep(mut cl: Client, mine: Selections, theirs: Selections, ready: impl FnOnce(String)) -> Result<(), String> {
+/// `ready` gets the `--slippi-link` value for the match once the keeper listens; `to` names the taker in the log.
+pub fn keep(mut cl: Client, mine: Selections, theirs: Selections, to: &str, ready: impl FnOnce(String)) -> Result<(), String> {
     let l = TcpListener::bind("127.0.0.1:0").map_err(|e| format!("link keeper: {e}"))?;
     l.set_nonblocking(true).map_err(|e| format!("link keeper: {e}"))?;
     let port = l.local_addr().map_err(|e| format!("link keeper: {e}"))?.port();
@@ -52,12 +56,12 @@ pub fn keep(mut cl: Client, mine: Selections, theirs: Selections, ready: impl Fn
                     }
                     msg.extend_from_slice(&blob);
                     let ok = s.write_all(&(msg.len() as u32).to_le_bytes()).and_then(|_| s.write_all(&msg)).is_ok();
-                    eprintln!("online css: link: {} to the match process after {:.2}s", if ok { "handed" } else { "LOST handing" }, t0.elapsed().as_secs_f32());
+                    eprintln!("online css: link: {} to the {to} after {:.2}s", if ok { "handed" } else { "LOST handing" }, t0.elapsed().as_secs_f32());
                     return;
                 }
             }
             if t0.elapsed() > Duration::from_secs(KEEP_SECONDS) {
-                eprintln!("online css: link: the match process never took the link; closing it");
+                eprintln!("online css: link: the {to} never took the link; closing it");
                 cl.disconnect(0);
                 return;
             }
@@ -69,7 +73,34 @@ pub fn keep(mut cl: Client, mine: Selections, theirs: Selections, ready: impl Fn
     Ok(())
 }
 
-/// At the end of the menu process: wait until the match process has the link (or the keeper gave up).
+/// The end of a Direct set's game, in the match process: the link (its game ended, `Client::end_game`) is kept for
+/// the select the window relaunches into; the value for `MELEE_SLIPPI_REMATCH`'s link field. The client is not `Send`:
+/// it is exported here and goes on in the keeper's thread over a socket on the same port, nothing sent meanwhile.
+/// `finish` (the end of this process) waits until the select has it.
+pub fn hand_back(cl: Client) -> Result<String, String> {
+    let port = cl.host.local_port();
+    let blob = cl.export();
+    drop(cl);
+    let (tx, rx) = std::sync::mpsc::channel::<Result<String, String>>();
+    std::thread::spawn(move || {
+        let t0 = Instant::now();
+        let udp = loop {
+            match melee_net::transport::UdpTransport::open(0, port) {
+                Ok(u) => break u,
+                Err(e) if t0.elapsed() > Duration::from_secs(5) => return drop(tx.send(Err(format!("bind: {e}")))),
+                Err(_) => std::thread::sleep(Duration::from_millis(5)),
+            }
+        };
+        let Some(cl) = Client::import(Box::new(udp), &blob) else { return drop(tx.send(Err("the link's state is malformed".into()))) };
+        let done = tx.clone();
+        if let Err(e) = keep(cl, Selections::default(), Selections::default(), "select", move |spec| drop(done.send(Ok(spec)))) {
+            let _ = tx.send(Err(e));
+        }
+    });
+    rx.recv_timeout(Duration::from_secs(10)).map_err(|_| "link keeper: no answer".to_string())?
+}
+
+/// At the end of the menu process (or of a set's match process): wait until the match process has the link (or the keeper gave up).
 pub fn finish() {
     let t0 = Instant::now();
     while KEEPING.load(Ordering::SeqCst) && t0.elapsed() < Duration::from_secs(KEEP_SECONDS + 10) {
@@ -84,7 +115,7 @@ pub struct Taken {
     pub theirs: Selections,
 }
 
-/// In the match process: take the link `keep` holds (`spec` is the `--slippi-link` value), going on over a socket on
+/// In the match process (or the select of a set's next game): take the link `keep` holds (`spec` is the `--slippi-link` value), going on over a socket on
 /// `port` (the same local port the select used; `wrap` adds the test hooks' lag and loss).
 pub fn take(spec: &str, bind_ip: u32, port: u16, wrap: impl FnOnce(melee_net::transport::UdpTransport) -> Box<dyn melee_net::transport::Transport>) -> Result<Taken, String> {
     let (kp, token) = spec.split_once(':').ok_or("bad --slippi-link")?;
@@ -117,4 +148,47 @@ pub fn take(spec: &str, bind_ip: u32, port: u16, wrap: impl FnOnce(melee_net::tr
     };
     let cl = Client::import(wrap(udp), &msg[o..]).ok_or("link: the handed-over state is malformed")?;
     Ok(Taken { cl, mine, theirs })
+}
+
+// ------------------------------------------------------------------------------------------------ one process
+
+/// The whole online loop (select -> match -> results -> select) in the menu process and its one window: the menu run
+/// boots in the rollback run modes (`play_net::prepare_rollback_run`), so the match takes the select's link over
+/// in-process (`take` against this process's own keeper) and the window never closes. `MELEE_SLIPPI_INPROCESS=0`
+/// keeps the relaunch per match (the older handoff above).
+static INPROCESS: AtomicBool = AtomicBool::new(false);
+
+/// At the boot: whether this run plays its online matches in-process (`--slippi-menus on`, windowed, not a match or
+/// replay run of its own).
+pub fn wants_inprocess(args: &[String]) -> bool {
+    std::env::var("MELEE_SLIPPI_INPROCESS").map_or(true, |v| v != "0") && crate::slippi_menus::requested(args) == Ok(true)
+}
+
+pub fn set_inprocess(on: bool) {
+    INPROCESS.store(on, Ordering::SeqCst);
+}
+
+pub fn inprocess() -> bool {
+    INPROCESS.load(Ordering::SeqCst)
+}
+
+/// The codes the online match turns on (`slippi_np::online_codes`), as they were before it.
+static SAVED: std::sync::Mutex<Option<(u32, u32, bool, bool)>> = std::sync::Mutex::new(None);
+
+pub fn save_offline_codes() {
+    if let Ok(mut g) = SAVED.lock() {
+        *g = Some(melee_core::codes::snapshot());
+    }
+}
+
+/// The codes back, and the Slippi code hooks back to their offline values.
+pub fn restore_offline_codes() {
+    let Some(s) = SAVED.lock().ok().and_then(|mut g| g.take()) else { return };
+    melee_core::codes::restore(s);
+    unsafe {
+        melee_fighter::platform::hook::Slippi_Codes = None;
+        // the fighter TUs' and Final Destination's tables: 0 offline (manual.rs)
+        melee_fighter::hooks::SLIPPI_CODES = Some(|| 0);
+        melee_world::tu::grlast::ext::SLIPPI_CODES = Some(|| 0);
+    }
 }

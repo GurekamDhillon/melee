@@ -118,6 +118,19 @@ pub fn set(w: u32, lgl: u32) {
     CONFIGURED.store(true, Ordering::Relaxed);
 }
 
+/// The codes as they are now (word, LGL limit, configured, PS camera monitor), for [`restore`].
+pub fn snapshot() -> (u32, u32, bool, bool) {
+    (WORD.load(Ordering::Relaxed), LGL_N.load(Ordering::Relaxed), CONFIGURED.load(Ordering::Relaxed), ps_camera_independent_monitor())
+}
+
+/// Put back a [`snapshot`] (an online match played in the menu process: its codes end with it).
+pub fn restore(s: (u32, u32, bool, bool)) {
+    WORD.store(s.0, Ordering::Relaxed);
+    LGL_N.store(s.1, Ordering::Relaxed);
+    CONFIGURED.store(s.2, Ordering::Relaxed);
+    set_ps_camera_independent_monitor(s.3);
+}
+
 /// Turn `bit` on without marking the codes configured (slpcheck: a code found in the replay's own Gecko list).
 pub fn enable(bit: u32) {
     WORD.fetch_or(bit, Ordering::Relaxed);

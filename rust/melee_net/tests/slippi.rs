@@ -138,11 +138,12 @@ fn public_fallback_after_two_seconds() {
     assert!(t0.elapsed() >= Duration::from_millis(1900), "the fallback must wait for the LAN attempt");
 }
 
-/// Slippi Dolphin's rule for a link: one client from the select into the match. Once linked (`armed` holds the
-/// links it had then), every later connection is turned away.
+/// Slippi Dolphin's rule for a link: one client from the select into the match (and through a Direct set). Once
+/// linked (`armed` holds the links it had then), every later connection is turned away, a link that dropped too.
 fn dolphin_poll(b: &mut Client, armed: &mut Option<Vec<usize>>) {
     b.poll();
     if let Some(ok) = armed {
+        ok.retain(|&i| b.host.peers[i].connected());
         for i in 0..b.host.peers.len() {
             if b.host.peers[i].connected() && !ok.contains(&i) {
                 b.host.disconnect(i, 0);
@@ -262,4 +263,130 @@ fn one_link_handoff_passes_against_a_dolphin_like_peer() {
     }
     assert_eq!(cb.status, Status::Connected);
     assert!(first.unwrap().iter().any(|&i| cb.host.peers[i].connected()), "the peer's first link carried the match");
+}
+
+/// A process boundary on our side: the link exported, its socket closed, imported on the same port (the select's
+/// keeper to the match process, or a set's match process back to the next game's select).
+fn hand_over(mut ca: Client, pa: u16, cb: &mut Client, first: &mut Option<Vec<usize>>) -> Client {
+    for _ in 0..20 {
+        ca.poll();
+        dolphin_poll(cb, first);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let blob = ca.export();
+    drop(ca);
+    for _ in 0..100 {
+        dolphin_poll(cb, first);
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    let a2 = Client::import(Box::new(UdpTransport::open(0x7F000001, pa).unwrap()), &blob).expect("import");
+    assert_eq!(a2.status, Status::Connected);
+    a2
+}
+
+/// One game of `n` frames of pads both ways (pads carry the checksum `frame ^ tag`), then both end it with the link up.
+fn play_game(a: &mut Client, b: &mut Client, first: &mut Option<Vec<usize>>, n: i32, tag: u32) {
+    a.start_game();
+    b.start_game();
+    let (mut got_a, mut got_b, mut fa, mut fb) = (0i32, 0i32, 0i32, 0i32);
+    let t0 = Instant::now();
+    while got_a < n || got_b < n {
+        assert!(t0.elapsed() < Duration::from_secs(60), "pads stalled at {got_a}/{got_b}");
+        a.poll();
+        dolphin_poll(b, first);
+        for (c, got, who) in [(&mut *a, &mut got_a, "ours"), (&mut *b, &mut got_b, "the peer")] {
+            while let Some(m) = c.next_note() {
+                if let Note::Pad { frame, .. } = m {
+                    assert_eq!(frame, *got + 1, "{who}: pads in order");
+                    *got = frame;
+                }
+                assert!(!matches!(m, Note::Disconnected { .. }), "{who}: link dropped");
+            }
+        }
+        for (c, f, got) in [(&mut *a, &mut fa, got_b), (&mut *b, &mut fb, got_a)] {
+            if *f < n && *f - got < 7 {
+                *f += 1;
+                c.send_pad(*f, [*f as u8; 9], *f, *f as u32 ^ tag);
+            } else {
+                c.resend_pads();
+            }
+        }
+        std::thread::sleep(Duration::from_micros(500));
+    }
+    // the last acks, then the game is over on both sides; the link stays for the set
+    for _ in 0..50 {
+        a.poll();
+        dolphin_poll(b, first);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    a.end_game();
+    b.end_game();
+}
+
+/// The next game's lock-in on the same link: each side's selections reach the other (not taken for a restarted peer).
+fn lock_in_again(a: &mut Client, b: &mut Client, first: &mut Option<Vec<usize>>, rng: u32) {
+    a.set_match_selections(Selections { character_id: 9, is_character_selected: true, player_idx: 1, ..Default::default() });
+    b.set_match_selections(Selections { character_id: 2, is_character_selected: true, player_idx: 0, stage_id: 0x1F, is_stage_selected: true, rng_offset: rng, ..Default::default() });
+    let (mut got_a, mut got_b) = (false, false);
+    let t0 = Instant::now();
+    while !(got_a && got_b) {
+        assert!(t0.elapsed() < Duration::from_secs(5), "no selections for the next game ({got_a}/{got_b})");
+        a.poll();
+        dolphin_poll(b, first);
+        while let Some(n) = a.next_note() {
+            got_a |= matches!(n, Note::Selections(s) if s.rng_offset == rng);
+            assert!(!matches!(n, Note::Disconnected { .. }), "ours: link dropped at the next lock-in");
+        }
+        while let Some(n) = b.next_note() {
+            got_b |= matches!(n, Note::Selections(s) if s.character_id == 9);
+            assert!(!matches!(n, Note::Disconnected { .. }), "the peer: link dropped at the next lock-in");
+        }
+        std::thread::sleep(Duration::from_millis(1));
+    }
+}
+
+/// A Direct set of two games against a Dolphin-like peer, on one link: select -> match -> (game 1 over) select ->
+/// match, a process boundary on our side at each step. No second connection is made, and game 2's checksums are its
+/// own (the last game's are gone with the next lock-in).
+#[test]
+fn two_game_set_on_one_link_against_a_dolphin_like_peer() {
+    let (ca, mut cb, pa, mut first) = linked_pair();
+    let armed = first.clone().unwrap();
+    let mut ca = hand_over(ca, pa, &mut cb, &mut first);
+    play_game(&mut ca, &mut cb, &mut first, 300, 0x1000);
+    // game 1 over: the match process hands the link back to the next game's select
+    let mut ca = hand_over(ca, pa, &mut cb, &mut first);
+    lock_in_again(&mut ca, &mut cb, &mut first, 77);
+    assert!(ca.remote_checksums.is_empty(), "game 1's checksums are not game 2's");
+    let mut ca = hand_over(ca, pa, &mut cb, &mut first);
+    play_game(&mut ca, &mut cb, &mut first, 300, 0x2000);
+    assert!(!ca.remote_checksums.is_empty() && ca.remote_checksums.iter().all(|(&f, &v)| v == f as u32 ^ 0x2000), "game 2 compares only game 2's checksums");
+    assert_eq!((ca.status, cb.status), (Status::Connected, Status::Connected));
+    // (the link set at the select may hold two when both sides connected at once: the duplicate is dropped in game 1)
+    assert!(first.as_ref().is_some_and(|f| !f.is_empty() && f.iter().all(|i| armed.contains(i))), "the peer's first link carried the whole set");
+    assert_eq!((0..cb.host.peers.len()).filter(|&i| cb.host.peers[i].connected()).count(), 1, "one link at the peer");
+}
+
+/// The old set path: game 1 over, the match closes its link and the next game's select connects again from the same
+/// port. A Dolphin-like peer turns that connection away.
+#[test]
+fn set_reconnect_for_game_two_fails_against_a_dolphin_like_peer() {
+    let (ca, mut cb, pa, mut first) = linked_pair();
+    let mut ca = hand_over(ca, pa, &mut cb, &mut first);
+    play_game(&mut ca, &mut cb, &mut first, 120, 0x1000);
+    ca.disconnect(0);
+    for _ in 0..50 {
+        ca.poll();
+        dolphin_poll(&mut cb, &mut first);
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    drop(ca);
+    let mut a2 = Client::new(Box::new(UdpTransport::open(0x7F000001, pa).unwrap()), 1, Addr::new(0x7F000001, cb.host.local_port()), 0);
+    let t0 = Instant::now();
+    while t0.elapsed() < Duration::from_secs(10) && !matches!(a2.status, Status::Failed | Status::Disconnected) {
+        a2.poll();
+        dolphin_poll(&mut cb, &mut first);
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    assert!(matches!(a2.status, Status::Failed | Status::Disconnected), "game 2's new connection was taken: {:?}", a2.status);
 }

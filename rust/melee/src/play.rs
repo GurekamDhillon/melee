@@ -1771,7 +1771,14 @@ pub fn play(args: &[String]) -> ExitCode {
         // a core v1.1 host that keeps savestates (corev1.rs): a plain match, snapshotted like a synctest's
         // MELEE_PLAY_HOSTED=1: the same session in our own build (its tests)
         let hosted = (crate::retail_flow::HOSTED_STATES.load(std::sync::atomic::Ordering::Relaxed) || std::env::var("MELEE_PLAY_HOSTED").is_ok_and(|v| v == "1")) && net.is_none() && sync_k.is_none() && feed.is_none() && !lab_mod;
-        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod || hosted;
+        // the online menus (`--slippi-menus on`) play their matches in this process and window (slippi_link::inprocess):
+        // the run is in the rollback modes from the boot, as a match process's was
+        let online_inproc = net.is_none() && feed.is_none() && sync_k.is_none() && !lab_mod && !hosted && !has("--headless") && crate::slippi_link::wants_inprocess(args);
+        crate::slippi_link::set_inprocess(online_inproc);
+        if online_inproc {
+            log("online menus: the online matches run in this window (one process for the whole online loop)");
+        }
+        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod || hosted || online_inproc;
         if rollback_mode {
             crate::play_net::prepare_rollback_run();
             // the GX shim (a static the snapshots restore) with all its buffers and Arcs in the arena from the start
@@ -1918,7 +1925,7 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         rp.net = net;
         let code = crate::retail_flow::run(rp, has("--headless"));
-        // the online select's link, kept for the relaunched match: stay until it has been taken over
+        // the online select's link kept for the relaunched match, or a set's match's for the next game's select: stay until taken over
         crate::slippi_link::finish();
         // a YouGame room kept through a relaunched match: the window is closed; wait for the match process
         if let Some(c) = crate::room_keeper::finish() {

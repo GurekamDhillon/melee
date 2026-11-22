@@ -416,7 +416,7 @@ pub fn set_user(name: &str, code: &str) {
         *u = (name.to_string(), code.to_string());
     }
 }
-fn user() -> (String, String) {
+pub fn user() -> (String, String) {
     USER.lock().map(|u| u.clone()).unwrap_or_default()
 }
 

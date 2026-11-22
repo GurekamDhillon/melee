@@ -1844,6 +1844,10 @@ pub struct SlippiRun {
     frames: Option<i32>,
     out: Option<String>,
     padgen: Option<u32>,
+    /// test hook `MELEE_NP_START_AT=N`: Start held on online frames N..N+3, logged once (a field, not a static: the
+    /// rollback snapshot covers every static, so a static flag rewinds with the game and logs again)
+    start_at: Option<i32>,
+    start_logged: bool,
     done_at: Option<Instant>,
     /// tick work (poll + session frames + send): max, and ticks over 16 ms
     work_max_us: u64,
@@ -1877,6 +1881,7 @@ impl NetDriver {
         let l = crate::slippi_np::establish(&sub, Instant::now(), max_s).map_err(|(_, m)| m)?;
         let tag = if l.decider { "decider" } else { "guest" };
         melee_core::slippi_online::enable(l.rng_offset);
+        apply_name_tags();
         if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
             crate::slippi_np::online_codes(l.by_port.iter().map(|s| s.alt_stage_mode).max().unwrap_or(0));
         }
@@ -1928,6 +1933,8 @@ impl NetDriver {
             frames: arg(&sub, "--frames").and_then(|v| v.parse().ok()),
             out: arg(&sub, "--out"),
             padgen: arg(&sub, "--padgen").and_then(|v| v.parse().ok()),
+            start_at: std::env::var("MELEE_NP_START_AT").ok().and_then(|v| v.parse().ok()),
+            start_logged: false,
             done_at: None,
             work_max_us: 0,
             work_slow: 0,
@@ -2032,10 +2039,18 @@ impl NetDriver {
         }
         let f = s.current_frame();
         for ff in (sr.last_local + 1).max(f)..=f + sr.delay {
-            let i = match sr.padgen {
+            let mut i = match sr.padgen {
                 Some(gs) => melee_net::session::rb_gen(gs, lp * 2, ff),
                 None => input_of(local),
             };
+            // test hook: MELEE_NP_START_AT=N holds Start (PAD_BUTTON_START 0x1000) on online frames N..N+3 (a stray
+            // Start: in Unranked the match must not pause; see slippi_np's online_scene pause_allowed)
+            if let Some(n) = sr.start_at.filter(|&n| (n..n + 4).contains(&online(ff))) {
+                i.buttons |= 0x1000;
+                if !std::mem::replace(&mut sr.start_logged, true) {
+                    log(&format!("netplay {tag}: MELEE_NP_START_AT: Start held on online frames {n}..{}", n + 3));
+                }
+            }
             s.submit_local_input(lp * 2, ff, &i);
             sr.last_local = ff;
         }
@@ -2146,8 +2161,14 @@ impl NetDriver {
                 sr.work_slow,
                 sr.work_n
             ));
-            sr.link.disconnect(0);
             let compared = sr.compared;
+            // a Direct set's game: the link stays for the next game (Slippi Dolphin keeps one client through the set;
+            // retail_flow hands it back to the select), else it closes
+            if end_now && err.is_none() && compared > 0 && crate::slippi_css_host::set_goes_on() {
+                sr.link.end_game();
+            } else {
+                sr.link.disconnect(0);
+            }
             sr.out = None;
             let won = if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() };
             LAST_WINNER.store(won, std::sync::atomic::Ordering::Relaxed);
@@ -2166,6 +2187,23 @@ impl NetDriver {
 }
 
 /// The last Slippi match's winning port (0-based; -1 none or not clean): the online select's next stage pick.
+/// Slippi online's name tags over the fighters (Slippi Dolphin and Hero show the players' names in an online match):
+/// the select's `MELEE_SLIPPI_TAGS` (port order, tab-separated), set before the match's first snapshot.
+pub fn apply_name_tags() {
+    let tags = std::env::var("MELEE_SLIPPI_TAGS").unwrap_or_default();
+    let mut f = tags.split(char::from(9));
+    for slot in 0..4 {
+        melee_world::tu::ifnametag::set_online_tag(slot, f.next().unwrap_or(""));
+    }
+}
+
+/// The name tags off (the online match is over; offline matches keep the retail plates).
+pub fn clear_name_tags() {
+    for slot in 0..4 {
+        melee_world::tu::ifnametag::set_online_tag(slot, "");
+    }
+}
+
 pub static LAST_WINNER: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
 
 /// The YouGame room this match plays for (`MELEE_ROOM_REPORT`, set by the menu process that keeps the room:

@@ -1841,6 +1841,10 @@ pub struct SlippiRun {
     frames: Option<i32>,
     out: Option<String>,
     padgen: Option<u32>,
+    /// test hook `MELEE_NP_START_AT=N`: Start held on online frames N..N+3, logged once (a field, not a static: the
+    /// rollback snapshot covers every static, so a static flag rewinds with the game and logs again)
+    start_at: Option<i32>,
+    start_logged: bool,
     done_at: Option<Instant>,
     /// tick work (poll + session frames + send): max, and ticks over 16 ms
     work_max_us: u64,
@@ -1925,6 +1929,8 @@ impl NetDriver {
             frames: arg(&sub, "--frames").and_then(|v| v.parse().ok()),
             out: arg(&sub, "--out"),
             padgen: arg(&sub, "--padgen").and_then(|v| v.parse().ok()),
+            start_at: std::env::var("MELEE_NP_START_AT").ok().and_then(|v| v.parse().ok()),
+            start_logged: false,
             done_at: None,
             work_max_us: 0,
             work_slow: 0,
@@ -2029,10 +2035,18 @@ impl NetDriver {
         }
         let f = s.current_frame();
         for ff in (sr.last_local + 1).max(f)..=f + sr.delay {
-            let i = match sr.padgen {
+            let mut i = match sr.padgen {
                 Some(gs) => melee_net::session::rb_gen(gs, lp * 2, ff),
                 None => input_of(local),
             };
+            // test hook: MELEE_NP_START_AT=N holds Start (PAD_BUTTON_START 0x1000) on online frames N..N+3 (a stray
+            // Start: in Unranked the match must not pause; see slippi_np's online_scene pause_allowed)
+            if let Some(n) = sr.start_at.filter(|&n| (n..n + 4).contains(&online(ff))) {
+                i.buttons |= 0x1000;
+                if !std::mem::replace(&mut sr.start_logged, true) {
+                    log(&format!("netplay {tag}: MELEE_NP_START_AT: Start held on online frames {n}..{}", n + 3));
+                }
+            }
             s.submit_local_input(lp * 2, ff, &i);
             sr.last_local = ff;
         }

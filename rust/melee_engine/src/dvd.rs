@@ -72,6 +72,11 @@ pub fn run_deferred_completions() {
     }
 }
 
+/// Whether [`host_dev_com_deferred`] holds completions not yet run.
+pub fn has_deferred_completions() -> bool {
+    unsafe { !(*core::ptr::addr_of!(DEFERRED)).is_empty() }
+}
+
 /// `host_pump_disc`: pumps the disc queue; requests already completed.
 pub fn host_pump_disc() {}
 

@@ -2180,6 +2180,8 @@ impl NetDriver {
             let won = if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() };
             LAST_WINNER.store(won, std::sync::atomic::Ordering::Relaxed);
             room_report(&format!("end {won}"));
+            // the Melee Unlocked lobby's match history (a --lobby-direct game only)
+            crate::lobby_status::publish_result(won, sr.local_port as i32);
             if let Some(e) = err.filter(|_| !end_now) {
                 self.fail(e);
             } else if compared == 0 {

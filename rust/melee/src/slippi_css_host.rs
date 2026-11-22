@@ -58,6 +58,17 @@ pub fn start(args: Vec<String>, mode: i32) {
     }
     *LAST.lock().unwrap() = Some((args.clone(), mode));
     let search = arg(&args, "--slippi-search").unwrap_or_default();
+    // the select names the signed-in player (Hero FN_UserTextUpdate): the login's name and connect code, read here
+    // and shown on the screen only, never logged
+    let (name, code) = match arg(&args, "--slippi-user-json") {
+        Some(path) => {
+            let acct = std::fs::read_to_string(&path).ok().and_then(|t| melee_net::slippi_mm::Json::parse(&t));
+            let field = |k: &str| acct.as_ref().and_then(|j| j.get(k)).and_then(|v| v.str()).map(str::to_string).unwrap_or_default();
+            (field("displayName"), field("connectCode"))
+        }
+        None => (arg(&args, "--slippi-name").unwrap_or_default(), arg(&args, "--slippi-code").unwrap_or_default()),
+    };
+    sc::set_user(&name, &code);
     sc::begin(mode, &search);
     *HANDOFF.lock().unwrap() = None;
     std::thread::spawn(move || {

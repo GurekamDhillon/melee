@@ -138,7 +138,7 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
     let (decider, local_port, remote_port, peer, opp_code) = if let Some(url) = arg(args, "--mm") {
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));
-        let mut app_version = arg(args, "--app-version").unwrap_or_else(|| "4.0.0-mainline-beta.20".into());
+        let app_version = arg(args, "--app-version").unwrap_or_else(|| melee_net::slippi_mm::SLIPPI_SEMVER.into());
         if real {
             let Some(path) = arg(args, "--user-json") else {
                 return Err((2, format!("--mm-real needs --user-json (a copy of the account's Slippi user.json)")));
@@ -149,9 +149,11 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
                 (Some(u), Some(k), Some(c)) => {
                     (uid, play_key, code) = (u, k, c);
                     display = field("displayName").unwrap_or(display);
-                    // the server refuses an outdated client: the account's own latestVersion unless --app-version
-                    if arg(args, "--app-version").is_none() {
-                        app_version = field("latestVersion").unwrap_or(app_version);
+                    // Hero's version gate: the join always names this build's own version (SLIPPI_SEMVER); when the
+                    // account knows a newer Slippi release, this build stays out of matchmaking instead
+                    if let Err(e) = melee_net::slippi_mm::version_gate(&field("latestVersion").unwrap_or_default()) {
+                        eprintln!("slippi: matchmaking blocked: a newer Slippi is out than this build speaks ({})", melee_net::slippi_mm::SLIPPI_SEMVER);
+                        return Err((2, e));
                     }
                 }
                 _ => {

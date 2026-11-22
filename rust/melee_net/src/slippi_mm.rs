@@ -179,6 +179,61 @@ pub fn quote(s: &str) -> String {
     o + "\""
 }
 
+/// The Slippi netplay version this port speaks, sent as the join's `appVersion` (Hero's `SLIPPI_SEMVER`,
+/// port/runtime/hle/slippi_net.cpp). Slippi's servers refuse a join whose version they do not accept, so this is a
+/// release number, never a beta tag.
+pub const SLIPPI_SEMVER: &str = "3.7.0";
+
+/// Hero's `release_version_valid` (slippi_version.h): 2 to 4 dotted numbers of at most 8 digits. An absent,
+/// truncated or malformed version is not evidence of compatibility.
+pub fn release_version_valid(v: &str) -> bool {
+    let (mut parts, mut digits) = (0u32, 0u32);
+    for c in v.chars() {
+        if c.is_ascii_digit() {
+            digits += 1;
+            if digits > 8 {
+                return false;
+            }
+        } else if c == '.' && digits > 0 && parts < 3 {
+            parts += 1;
+            digits = 0;
+        } else {
+            return false;
+        }
+    }
+    digits > 0 && (2..=3).contains(&parts)
+}
+
+/// Hero's `version_newer`: dotted `a` newer than `b` ("3.6.10" > "3.6.4"); a tag after the numbers is ignored, a
+/// missing part counts as 0, an empty `a` is never newer.
+pub fn version_newer(a: &str, b: &str) -> bool {
+    fn parts(s: &str) -> [u64; 4] {
+        let mut out = [0u64; 4];
+        let mut rest = s;
+        for slot in out.iter_mut() {
+            let n = rest.bytes().take_while(u8::is_ascii_digit).count();
+            *slot = rest[..n].parse().unwrap_or(0);
+            rest = &rest[n..];
+            match rest.strip_prefix('.') {
+                Some(r) => rest = r,
+                None => break,
+            }
+        }
+        out
+    }
+    parts(a) > parts(b)
+}
+
+/// The version gate (Hero's `Matchmaking::FindMatch`): the account (user.json `latestVersion`) or the service names
+/// a newer Slippi than this build speaks, so it stays out of matchmaking. The message is Hero's, with this game's name.
+pub fn version_gate(latest: &str) -> Result<(), String> {
+    if release_version_valid(latest) && version_newer(latest, SLIPPI_SEMVER) {
+        Err(format!("Slippi {latest} is out. Update Melee"))
+    } else {
+        Ok(())
+    }
+}
+
 /// What we tell the server about ourselves.
 #[derive(Clone, Debug)]
 pub struct JoinRequest {
@@ -545,7 +600,17 @@ pub fn join_to(url: &str, req: &JoinRequest, timeout: Duration, target: Target, 
         let Some(j) = Json::parse(&t) else { continue };
         match j.get("type").and_then(|v| v.str()) {
             Some("match") => return MatchResult::from_json(&j).ok_or_else(|| "malformed match".to_string()),
-            Some("error") => return Err(format!("server error: {}", j.get("error").and_then(|v| v.str()).unwrap_or("?"))),
+            Some("error") => {
+                let err = j.get("error").and_then(|v| v.str()).unwrap_or("?").to_string();
+                // Hero (slippi_mm_service): the service names the latest release; past this build's, the gate's words
+                if let Some(latest) = j.get("latestVersion").and_then(|v| v.str()).filter(|v| !v.is_empty()) {
+                    eprintln!("slippi: mm: the service names Slippi {latest} as the latest (this build speaks {SLIPPI_SEMVER})");
+                    if let Err(gate) = version_gate(latest) {
+                        return Err(format!("server error: {gate}"));
+                    }
+                }
+                return Err(format!("server error: {err}"));
+            }
             _ => {}
         }
     }
@@ -693,6 +758,16 @@ pub fn join_enet(server: &str, bind_ip: u32, req: &JoinRequest, timeout: Duratio
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn version_gate_follows_hero() {
+        assert!(release_version_valid("3.7.0") && !release_version_valid("3.6") && !release_version_valid("4.0.0-mainline-beta.20"));
+        assert!(!release_version_valid("") && !release_version_valid("3") && !release_version_valid("1.2.3.4.5"));
+        assert!(version_newer("3.6.10", "3.6.4") && !version_newer("3.6.4", "3.6.10") && !version_newer("", "3.7.0"));
+        assert!(!version_newer("3.7", "3.7.0") && version_newer("3.7.1", "3.7.0") && version_newer("4.0.0", "3.7.0"));
+        assert!(version_gate("3.7.0").is_ok() && version_gate("3.5.2").is_ok() && version_gate("garbage").is_ok());
+        assert_eq!(version_gate("3.8.0").unwrap_err(), "Slippi 3.8.0 is out. Update Melee");
+    }
 
     #[test]
     fn parses_a_match() {

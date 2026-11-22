@@ -373,34 +373,125 @@ pub fn refused_unselect() {
     eprintln!("online css: locked in: unselect refused ({n})");
 }
 
-// ---- the panel (Hero `text_think`, LoadCSSText): status, opponent ----------------------------------------------
-const LINES: usize = 3;
+// ---- the panel (Hero `text_think`, LoadCSSText, FN_UserTextUpdate): header, status, error, prompt, opponent, user --
+const LINES: usize = 12;
+const L_HEADER: usize = 0;
+const L_STATUS: usize = 1; // two status lines, or the first two of the four error lines
+const L_ERR: usize = 1; // L_ERR..L_ERR + 4: the error, wrapped (Hero ST_ERR1..ST_ERR4)
+const L_PROMPT: usize = 5;
+const L_PLAYING: usize = 6;
+const L_OPP: usize = 7;
+const L_USER: usize = 8; // "User", the name, "Connect Code", the code (Hero FN_InitUserDisplay)
 static mut TEXT: *mut HSD_Text = core::ptr::null_mut();
 static mut SHOWN: [String; LINES] = [const { String::new() }; LINES];
 
+/// The signed-in player (Hero `mu_slippi_user_name` / `mu_slippi_user_code`): the name and connect code of the login
+/// the session searches with. Shown on the select, never written to the log.
+static USER: std::sync::Mutex<(String, String)> = std::sync::Mutex::new((String::new(), String::new()));
+pub fn set_user(name: &str, code: &str) {
+    if let Ok(mut u) = USER.lock() {
+        *u = (name.to_string(), code.to_string());
+    }
+}
+fn user() -> (String, String) {
+    USER.lock().map(|u| u.clone()).unwrap_or_default()
+}
+
+/// Printable ASCII only, at most `n` characters (the SIS font has no glyphs for the rest, and a line has a fixed room).
+fn printable(s: &str, n: usize) -> String {
+    s.chars().filter(|c| c.is_ascii_graphic() || *c == ' ').take(n).collect()
+}
+
+/// A connect code for the SIS font: its '#' has no ASCII glyph, so the fullwidth form (as Hero's code_sjis18).
+fn code_text(s: &str, n: usize) -> String {
+    printable(s, n).replace('#', "\u{FF03}")
+}
+
+/// Hero's error wrap: at 30 letters on the last space, four lines at most, from the first 241 bytes. The session's
+/// own prefixes ("matchmaking: server error: ") are dropped, as Hero shows the service's words alone.
+pub fn wrap_error(e: &str) -> std::vec::Vec<String> {
+    let mut e = e.trim();
+    for p in ["matchmaking: ", "server error: "] {
+        e = e.strip_prefix(p).unwrap_or(e);
+    }
+    let e = if e.is_empty() { "The connection failed".to_string() } else { printable(e, 241) };
+    let mut out = std::vec::Vec::new();
+    let mut rest = e.as_str().trim_start();
+    while !rest.is_empty() && out.len() < 4 {
+        if rest.len() <= 30 {
+            out.push(rest.to_string());
+            break;
+        }
+        let cut = rest[..=30].rfind(' ').filter(|&i| i > 0).unwrap_or(30);
+        out.push(rest[..cut].trim_end().to_string());
+        rest = rest[cut..].trim_start();
+    }
+    out
+}
+
 /// The panel's lines for a state (pure, tested).
-pub fn panel_lines(o: &Online) -> [String; LINES] {
-    let opp = if !o.opp_code.is_empty() { o.opp_code.clone() } else if o.mode == so::MODE_DIRECT && !o.search_code.is_empty() { o.search_code.clone() } else { "opponent".into() };
-    let mode = format!("Slippi {}", so::mode_name(o.mode));
-    let status = match o.conn {
-        CONN_IDLE if o.search_again => "Starting...".to_string(),
-        CONN_IDLE => "Disconnected. Press START to search".to_string(),
-        CONN_INITIALIZING => "Starting...".to_string(),
-        CONN_MATCHMAKING => format!("Searching for {opp}"),
-        CONN_OPPONENT_CONNECTING => format!("Connecting to {opp}"),
-        CONN_SUCCESS if o.local_ready && !o.remote_ready => format!("Waiting on {opp}"),
-        CONN_SUCCESS if o.local_ready => "Starting the match".to_string(),
-        CONN_SUCCESS => "Press START to lock in".to_string(),
-        // the text's buffer is small (a long OS error overflowed it): printable ASCII, cut short
-        _ => format!("Error: {}", if o.error.is_empty() { "the connection failed".to_string() } else { o.error.chars().filter(|c| c.is_ascii_graphic() || *c == ' ').take(36).collect() }),
+pub fn panel_lines(o: &Online, user: &(String, String)) -> [String; LINES] {
+    let mut l: [String; LINES] = Default::default();
+    let opp = if !o.opp_code.is_empty() {
+        code_text(&o.opp_code, 18)
+    } else if o.mode == so::MODE_DIRECT && !o.search_code.is_empty() {
+        code_text(&o.search_code, 18)
+    } else {
+        "opponent".into()
     };
-    let playing = if o.conn == CONN_SUCCESS { format!("Playing: {opp}") } else { String::new() };
-    [mode, status, playing]
+    l[L_HEADER] = if o.conn == CONN_ERROR { "Error".into() } else { format!("Slippi {}", so::mode_name(o.mode)) };
+    if o.conn == CONN_ERROR {
+        for (i, w) in wrap_error(&o.error).into_iter().enumerate() {
+            l[L_ERR + i] = w;
+        }
+        l[L_PROMPT] = "Press B to go back".into();
+    } else {
+        l[L_STATUS] = match o.conn {
+            CONN_IDLE if o.search_again => "Starting...".to_string(),
+            CONN_IDLE => "Disconnected".to_string(),
+            CONN_INITIALIZING => "Starting...".to_string(),
+            CONN_MATCHMAKING => format!("Searching for {opp}"),
+            CONN_OPPONENT_CONNECTING => format!("Connecting to {opp}"),
+            CONN_SUCCESS if o.local_ready && !o.remote_ready => format!("Waiting on {opp}"),
+            CONN_SUCCESS if o.local_ready => "Starting the match".to_string(),
+            _ => "Opponent found".to_string(),
+        };
+        l[L_STATUS + 1] = match o.conn {
+            CONN_IDLE => "Press START to search".into(),
+            CONN_SUCCESS if !o.local_ready => "Press START to lock in".into(),
+            CONN_SUCCESS => "Locked in".into(),
+            _ => String::new(),
+        };
+        l[L_PROMPT] = match o.conn {
+            CONN_SUCCESS => "Hold Z to disconnect".into(),
+            CONN_INITIALIZING | CONN_MATCHMAKING | CONN_OPPONENT_CONNECTING => "Press B to cancel".into(),
+            _ => String::new(),
+        };
+    }
+    l[L_PLAYING] = match o.conn {
+        CONN_SUCCESS => "Playing:".into(),
+        CONN_OPPONENT_CONNECTING => "Found:".into(),
+        _ => String::new(),
+    };
+    if !l[L_PLAYING].is_empty() {
+        l[L_OPP] = opp;
+    }
+    let (name, code) = user;
+    if !name.is_empty() || !code.is_empty() {
+        l[L_USER] = "User".into();
+        l[L_USER + 1] = printable(name, 31);
+        if !code.is_empty() {
+            l[L_USER + 2] = "Connect Code".into();
+            l[L_USER + 3] = code_text(code, 10);
+        }
+    }
+    l
 }
 
 unsafe fn text_think() {
     use melee_runtime::tu::hsd_3A64 as sis;
-    let lines = with(|o| panel_lines(o));
+    let u = user();
+    let lines = with(|o| panel_lines(o, &u));
     if lines == SHOWN && !TEXT.is_null() {
         return;
     }
@@ -417,14 +508,39 @@ unsafe fn text_think() {
     (*t).pos_x = 0.0;
     (*t).pos_y = 0.0;
     (*t).pos_z = 0.0;
-    (*t).font_size.x = 0.5;
-    (*t).font_size.y = 0.5;
-    // Hero's places: the status lines right of the door, "Playing:" at the top of the bar
-    let at = [(130.0f32, 80.0f32), (130.0, 104.0), (-200.0, -256.0)];
-    for (i, l) in lines.iter().enumerate() {
+    // Hero's text_struct(0, 0.1) and create_subtext places / scales (LoadCSSText, FN_InitUserDisplay)
+    (*t).font_size.x = 0.1;
+    (*t).font_size.y = 0.1;
+    let error = lines[L_HEADER] == "Error";
+    let white = GXColor { r: 255, g: 255, b: 255, a: 255 };
+    let gray = GXColor { r: 170, g: 170, b: 170, a: 255 };
+    let red = GXColor { r: 255, g: 80, b: 80, a: 255 };
+    // the status lines at Hero's line places, or the error at ST_ERR1..4
+    let status_or_err = |i: usize| -> (f32, f32, f32, GXColor) {
+        if error {
+            (70.0, [52.0, 70.0, 88.0, 106.0][i], 0.4, red)
+        } else {
+            (90.0, [52.0, 75.0, 98.0, 121.0][i], 0.4, white)
+        }
+    };
+    let place: [(f32, f32, f32, GXColor); LINES] = [
+        (70.0, 23.0, 0.5, white),
+        status_or_err(0),
+        status_or_err(1),
+        status_or_err(2),
+        status_or_err(3),
+        (70.0, 132.5, 0.4, gray),
+        (-130.0, -256.0, 0.5, gray),
+        (-50.0, -256.0, 0.5, white),
+        (-112.0, 20.0, 0.4, gray),
+        (-112.0, 40.0, 0.5, white),
+        (-112.0, 65.0, 0.4, gray),
+        (-112.0, 85.0, 0.5, white),
+    ];
+    for (l, &(x, y, scale, c)) in lines.iter().zip(place.iter()) {
         let s = if l.is_empty() { " " } else { l.as_str() };
-        let n = sis::HSD_SisLib_803A6B98(t, at[i].0 / 0.5, at[i].1 / 0.5, Some(s));
-        let c = if i == 1 && l.starts_with("Error") { GXColor { r: 255, g: 80, b: 80, a: 255 } } else { GXColor { r: 255, g: 255, b: 255, a: 255 } };
+        let n = sis::HSD_SisLib_803A6B98(t, x, y, Some(s));
+        sis::HSD_SisLib_803A7548(t, n, scale, scale);
         sis::HSD_SisLib_803A74F0(t, n, &c);
     }
     TEXT = t;
@@ -437,22 +553,40 @@ mod tests {
 
     #[test]
     fn panel() {
+        let none = (String::new(), String::new());
         let mut o = Online { mode: so::MODE_DIRECT, conn: CONN_MATCHMAKING, search_code: "BBBB#002".into(), ..Default::default() };
-        assert_eq!(panel_lines(&o)[1], "Searching for BBBB#002");
+        assert_eq!(panel_lines(&o, &none)[L_STATUS], "Searching for BBBB\u{FF03}002");
+        assert_eq!(panel_lines(&o, &none)[L_PROMPT], "Press B to cancel");
         o.conn = CONN_SUCCESS;
-        assert_eq!(panel_lines(&o)[2], "Playing: BBBB#002");
+        let l = panel_lines(&o, &none);
+        assert_eq!((l[L_PLAYING].as_str(), l[L_OPP].as_str()), ("Playing:", "BBBB\u{FF03}002"));
         o.local_ready = true;
-        assert_eq!(panel_lines(&o)[1], "Waiting on BBBB#002");
+        assert_eq!(panel_lines(&o, &none)[L_STATUS], "Waiting on BBBB\u{FF03}002");
         o.remote_ready = true;
-        assert_eq!(panel_lines(&o)[1], "Starting the match");
+        assert_eq!(panel_lines(&o, &none)[L_STATUS], "Starting the match");
         let u = Online { mode: so::MODE_UNRANKED, conn: CONN_MATCHMAKING, ..Default::default() };
-        assert_eq!(panel_lines(&u)[1], "Searching for opponent");
-        let e = Online { mode: so::MODE_UNRANKED, conn: CONN_ERROR, error: "x".into(), ..Default::default() };
-        assert_eq!(panel_lines(&e)[1], "Error: x");
+        let l = panel_lines(&u, &("Name".into(), "TEST#123".into()));
+        assert_eq!((l[L_HEADER].as_str(), l[L_STATUS].as_str()), ("Slippi Unranked", "Searching for opponent"));
+        assert_eq!((l[L_USER].as_str(), l[L_USER + 1].as_str(), l[L_USER + 3].as_str()), ("User", "Name", "TEST\u{FF03}123"));
         let idl = Online { mode: so::MODE_DIRECT, conn: CONN_IDLE, ..Default::default() };
-        assert_eq!(panel_lines(&idl)[1], "Disconnected. Press START to search");
+        assert_eq!(panel_lines(&idl, &none)[L_STATUS + 1], "Press START to search");
         assert!(stage_allowed(0x1F) && stage_allowed(0x02) && !stage_allowed(0x15) && !stage_allowed(0));
-        let long = Online { conn: CONN_ERROR, error: "bind: Only one usage of each socket address (protocol/network address/port)".into(), ..Default::default() };
-        assert!(panel_lines(&long)[1].len() <= 43);
+    }
+
+    #[test]
+    fn server_error_wraps_safely() {
+        let e = Online {
+            mode: so::MODE_UNRANKED,
+            conn: CONN_ERROR,
+            error: "matchmaking: server error: A new version has been released. Return to menu to update".into(),
+            ..Default::default()
+        };
+        let l = panel_lines(&e, &(String::new(), String::new()));
+        assert_eq!(l[L_HEADER], "Error");
+        assert_eq!(&l[L_ERR..L_ERR + 3], ["A new version has been", "released. Return to menu to", "update"]);
+        let long = "x".repeat(500) + " \u{1F600} " + &"word ".repeat(80);
+        let w = wrap_error(&long);
+        assert!(w.len() <= 4 && w.iter().all(|s| s.len() <= 30 && s.is_ascii()));
+        assert_eq!(wrap_error(""), ["The connection failed"]);
     }
 }

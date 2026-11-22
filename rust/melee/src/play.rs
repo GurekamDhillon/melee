@@ -1932,8 +1932,13 @@ pub fn play(args: &[String]) -> ExitCode {
                 crate::slp_export::set_disc(&game.iso);
             }
         }
+        // the Slippi spectator feed of the exported match (slippi_spectate.rs): read-only, loopback, off under YouGame
+        if crate::slp_export::active() {
+            crate::slippi_spectate::start();
+        }
         rp.net = net;
         let code = crate::retail_flow::run(rp, has("--headless"));
+        crate::slippi_spectate::stop();
         // the online select's link kept for the relaunched match, or a set's match's for the next game's select: stay until taken over
         crate::slippi_link::finish();
         // a YouGame room kept through a relaunched match: the window is closed; wait for the match process

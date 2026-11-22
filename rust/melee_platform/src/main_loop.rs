@@ -1092,7 +1092,7 @@ fn yougame_box_attrs(mut attrs: winit::window::WindowAttributes) -> winit::windo
 const YG_ADOPT_WAIT: Duration = Duration::from_secs(30);
 
 /// The player box's commands, on the window thread: `rect x y w h`, `show` / `hide`, `focus` / `blur` (`view`,
-/// `volume`, `scale`, ... are ignored). The launcher (yougame-sandbox.exe) makes our window a child of the app's
+/// `scale`, ... are ignored; `volume` never comes here, the stdin thread applies it). The launcher (yougame-sandbox.exe) makes our window a child of the app's
 /// (WS_CHILD, then SetParent) from outside the process. winit's own setters rewrite GWL_STYLE from its flags
 /// (set_visible), which dropped WS_CHILD and tore the window back out to the desktop, and its focus_window fakes
 /// an Alt key press. So the box is driven with plain Win32 calls on the HWND, and winit's flags are left alone.

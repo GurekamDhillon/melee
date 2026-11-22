@@ -326,3 +326,32 @@ Rust FD fps 1150 / 840 / 1289, 1% low 207 / 110 / 324, p99 2.91 / 4.88 / 2.30; H
 - 3 runs, a shared machine (see above), CPU 7 to 26 % before each run. Run-to-run spread on our FD set is large.
 - Hero's per-run `sim_ms` (wall) reads a constant 13.4 ms: pacing, not cost; only `cpu_ms` is meaningful. His startup (scripted menu walk) is 45 s, ours 1 s: not comparable.
 - Scripts: `scratch/nightbench/` (`all.sh`, `run_r.sh`, `run_h.sh`, `quiet.sh`; per-run output in `N_R_*`, `N_H_*`), the unchanged bench-live scripts otherwise.
+
+## Windows private bytes regression (Nov 22, port/memwin)
+Peak private bytes went from ~690/608 MB (Temple 4P / FD 2P, 01058c072) to ~1460/1400 MB (839886736); Linux RSS level.
+VirtualQuery + QueryWorkingSet walk per allocation at 45 s of Temple 4P (private commit / private working set, MB):
+01058c072 682 / 488; tip 1399 / 954; tip with MELEE_ASSETS=off 968 / 732.
+- ~440 MB: the asset service's recording heap (recheap, 64 x 1 GB slots at 0x5C7A00000000). It only exists on Windows
+  (`recheap::init` is false elsewhere, so the service is off on Linux: the reason Linux showed nothing). 43 slots held by
+  kept plans: 389 MB committed, 180 MB resident. Of that, the block records + event log were 88 MB committed (1 MB steps
+  per slot) and 9 MB touched; the block area 301 / 171 (blocks a decode allocates and never writes: alloc_zeroed and
+  Vec capacity, which the plan never reads either).
+- ~290 MB with the service off: system-heap segments (15.8 MB NT heap segments, 3 -> 16-22), all resident, grown over
+  many commits (first-parent bisect on commit with assets off: 688 @194, 776 @291, 775 @315, 792 @316, 854 @321,
+  883 @318/327, 875 @340, 968 tip): real allocations, no single culprit. `system heap` in MELEE_MEM_EVERY lines: 229 MB
+  at tick 0, 314 MB at tick 2400 (Temple 4P, assets off).
+- Unchanged and fine: arena 16 GB reserve 210 committed / 202 resident; lowmem 64 MB committed / 12 resident (same at
+  01058c072); GX data/block cache 9 MB.
+Fix (3876d6158): recheap commits records/event log in 64 KB steps, blocks in 256 KB (meta 88 -> 12 MB). The untouched
+block area is left: commit-on-fault would race the crash/cow/pagewatch VEHs and kernel-mode reads, and a decommit after
+the plan breaks the whole-block apply copy. Gate: 4 goldens, synctest, audio, snapguard ok (lint FAIL is the
+pre-existing lobby_status.rs R1, not this change).
+
+Live-play bench (nightbench run_r.sh, 3 runs each, medians; before = 9311b3f0c, after = 3876d6158):
+| scenario | build | peak private MB | peak WS MB | tick p50 / mean ms | fps | 1% low fps |
+|---|---|---|---|---|---|---|
+| Temple 4P | before | 1515 | 1075 | 1.82 / 1.88 | 60.0 | 58.1 |
+| Temple 4P | after | 1408 | 1066 | 1.85 / 1.89 | 60.0 | 56.6 |
+| FD 2P | before | 1423 | 1014 | 1.10 / 1.15 | 60.0 | 59.0 |
+| FD 2P | after | 1346 | 1018 | 1.07 / 1.12 | 60.0 | 58.9 |
+Next levers (not done): the plan cache size (KEEP_BYTES 1.5 GB, KEEP 58 slots) and the system-heap growth.

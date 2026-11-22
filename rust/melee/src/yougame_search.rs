@@ -102,7 +102,19 @@ pub fn yougame_side(
         let host = if host.contains(':') { host.to_string() } else { format!("{host}:443") };
         host.to_socket_addrs().ok().and_then(|mut a| a.next()).and_then(melee_net::slippi_mm::local_ip_towards).unwrap_or(std::net::Ipv4Addr::UNSPECIFIED)
     };
-    let udp = std::net::UdpSocket::bind((if loopback { std::net::Ipv4Addr::LOCALHOST } else { std::net::Ipv4Addr::UNSPECIFIED }, port)).map_err(|e| format!("netplay port {port}: {e}"))?;
+    // the blend's Slippi search (cancelled by the claim just now) can still hold the port for a moment: retry 3 s
+    let bind_at = (if loopback { std::net::Ipv4Addr::LOCALHOST } else { std::net::Ipv4Addr::UNSPECIFIED }, port);
+    let t_bind = std::time::Instant::now();
+    let udp = loop {
+        match std::net::UdpSocket::bind(bind_at) {
+            Ok(u) => break u,
+            Err(e) if port == 0 || t_bind.elapsed() > Duration::from_secs(3) || cancelled() => return Err(format!("netplay port {port}: {e}")),
+            Err(_) => std::thread::sleep(Duration::from_millis(10)),
+        }
+    };
+    if t_bind.elapsed() > Duration::from_millis(20) {
+        log(&format!("yougame: netplay port free after {} ms (the Slippi search let it go)", t_bind.elapsed().as_millis()));
+    }
     let port = udp.local_addr().map(|a| a.port()).unwrap_or(port);
     let stun_list = stun_servers(agent);
     let ext = melee_net::yougame_punch::stun(&udp, &stun_list, &cancelled);
@@ -202,6 +214,8 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
     let port: u16 = crate::slippi_np::arg_value(sub, "--port").and_then(|v| v.parse().ok()).unwrap_or(0);
     let code = crate::slippi_np::arg_value(sub, "--code").unwrap_or_default();
     let stop = Arc::new(AtomicBool::new(false));
+    // the Slippi search's own stop: also set the moment YouGame's claim commits (its netplay port is the same one)
+    let sstop = Arc::new(AtomicBool::new(false));
     let coord = Arc::new(Mutex::new(ym::Coordinator::new(yr::now_ms())));
     let (tx, rx) = mpsc::channel::<(ym::Side, Result<Found, String>)>();
     let blend = route == ym::Route::Blend;
@@ -212,9 +226,15 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
     // YouGame's side, on its own thread (the ticket alone can take 30 s)
     if matches!(route, ym::Route::YouGame | ym::Route::Blend) {
         status(if blend { ym::SEARCH_BOTH } else { ym::SEARCH_YOUGAME_ONLY });
-        let (tx, stop, coord, code) = (tx.clone(), stop.clone(), coord.clone(), code.clone());
+        let (tx, stop, coord, code, sstop) = (tx.clone(), stop.clone(), coord.clone(), code.clone(), sstop.clone());
         std::thread::spawn(move || {
-            let mut claim = || !blend || coord.lock().unwrap().matched(ym::Side::YouGame, yr::now_ms());
+            let mut claim = || {
+                let won = !blend || coord.lock().unwrap().matched(ym::Side::YouGame, yr::now_ms());
+                if won {
+                    sstop.store(true, Ordering::SeqCst);
+                }
+                won
+            };
             let mut waiting = |w: i32| {
                 if blend {
                     coord.lock().unwrap().searching(w, yr::now_ms());
@@ -225,8 +245,8 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
         });
     }
     let mut slippi_started = false;
-    let start_slippi = |stop: &Arc<AtomicBool>| {
-        let (tx, sub, stop) = (tx.clone(), sub.to_vec(), stop.clone());
+    let start_slippi = |_: &Arc<AtomicBool>| {
+        let (tx, sub, stop) = (tx.clone(), sub.to_vec(), sstop.clone());
         std::thread::spawn(move || {
             let r = crate::slippi_np::pair_cancellable(&sub, max_s, &stop).map_err(|(_, m)| m).map(|paired| Found { paired, side: ym::Side::Slippi, room: None, relay: None });
             let _ = tx.send((ym::Side::Slippi, r));
@@ -242,7 +262,7 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
     let mut last_err = String::from("no opponent found");
     loop {
         if cancel() {
-            stop.store(true, Ordering::SeqCst);
+            { stop.store(true, Ordering::SeqCst); sstop.store(true, Ordering::SeqCst); }
             coord.lock().unwrap().stop();
             log("online search: cancelled");
             return Err("Cancelled".into());
@@ -266,7 +286,7 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
                 };
                 flush(&mut coord.lock().unwrap());
                 if won {
-                    stop.store(true, Ordering::SeqCst);
+                    { stop.store(true, Ordering::SeqCst); sstop.store(true, Ordering::SeqCst); }
                     log(&format!("online search: matched on {}", side.name()));
                     return Ok(found);
                 }
@@ -296,7 +316,7 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
             Err(_) => return Err(last_err),
         }
         if t0.elapsed().as_secs() > max_s {
-            stop.store(true, Ordering::SeqCst);
+            { stop.store(true, Ordering::SeqCst); sstop.store(true, Ordering::SeqCst); }
             return Err("timed out".into());
         }
     }

@@ -118,13 +118,13 @@ pub fn set(w: u32, lgl: u32) {
     CONFIGURED.store(true, Ordering::Relaxed);
 }
 
-/// The codes as they are now (word, LGL limit, configured, PS camera monitor), for [`restore`].
-pub fn snapshot() -> (u32, u32, bool, bool) {
+/// The codes as they are now (word, LGL limit, configured, PS camera monitor), for [`restore_offline`].
+pub fn save_offline() -> (u32, u32, bool, bool) {
     (WORD.load(Ordering::Relaxed), LGL_N.load(Ordering::Relaxed), CONFIGURED.load(Ordering::Relaxed), ps_camera_independent_monitor())
 }
 
-/// Put back a [`snapshot`] (an online match played in the menu process: its codes end with it).
-pub fn restore(s: (u32, u32, bool, bool)) {
+/// Put back a [`save_offline`] (an online match played in the menu process: its codes end with it).
+pub fn restore_offline(s: (u32, u32, bool, bool)) {
     WORD.store(s.0, Ordering::Relaxed);
     LGL_N.store(s.1, Ordering::Relaxed);
     CONFIGURED.store(s.2, Ordering::Relaxed);

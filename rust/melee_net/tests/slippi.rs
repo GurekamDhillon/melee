@@ -390,3 +390,45 @@ fn set_reconnect_for_game_two_fails_against_a_dolphin_like_peer() {
     }
     assert!(matches!(a2.status, Status::Failed | Status::Disconnected), "game 2's new connection was taken: {:?}", a2.status);
 }
+
+/// Both on the select, linked, then the opponent's process dies (no DISCONNECT sent: its client just stops). ENet's
+/// timeout limit and minimum (Slippi Dolphin and Hero on ENet's defaults): the survivor notices in about 5 s, not
+/// at the 30 s maximum.
+#[test]
+fn a_dead_opponent_on_the_select_is_noticed_in_about_five_seconds() {
+    let (mut ca, cb, _pa, _first) = linked_pair();
+    drop(cb);
+    let t0 = Instant::now();
+    while ca.status == Status::Connected && t0.elapsed() < Duration::from_secs(40) {
+        ca.poll();
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    let took = t0.elapsed();
+    eprintln!("dead opponent noticed after {:.2}s", took.as_secs_f32());
+    assert_eq!(ca.status, Status::Disconnected);
+    assert!(took >= Duration::from_millis(4500) && took < Duration::from_secs(10), "took {took:?}");
+    assert!(std::iter::from_fn(|| ca.next_note()).any(|n| matches!(n, Note::Disconnected { .. })));
+}
+
+/// The other side of it: a long idle select on a lossy, laggy link (5% loss, 60 ms each way) never drops.
+#[test]
+fn a_long_idle_select_on_a_lossy_link_stays_up() {
+    let a = UdpTransport::open(0x7F000001, 0).unwrap();
+    let b = UdpTransport::open(0x7F000001, 0).unwrap();
+    let (pa, pb) = (a.local_port(), b.local_port());
+    let lossy = |u, s| Box::new(Lossy { inner: u, loss: 5, lag: Duration::from_millis(60), rng: s, q: VecDeque::new() });
+    let mut ca = Client::new(lossy(a, 7), 0, Addr::new(0x7F000001, pb), 1);
+    let mut cb = Client::new(lossy(b, 9), 1, Addr::new(0x7F000001, pa), 0);
+    let t0 = Instant::now();
+    while !(ca.status == Status::Connected && cb.status == Status::Connected) {
+        ca.poll(); cb.poll();
+        assert!(t0.elapsed() < Duration::from_secs(10), "connect timed out");
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    let t0 = Instant::now();
+    while t0.elapsed() < Duration::from_secs(20) {
+        ca.poll(); cb.poll();
+        assert_eq!((ca.status, cb.status), (Status::Connected, Status::Connected), "dropped after {:?}", t0.elapsed());
+        std::thread::sleep(Duration::from_millis(2));
+    }
+}

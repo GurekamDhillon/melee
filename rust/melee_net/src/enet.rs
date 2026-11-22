@@ -33,6 +33,11 @@ pub const THROTTLE_DECELERATION: u32 = 2;
 pub const PING_INTERVAL_MS: u32 = 500;
 /// No ack for a reliable command this long: the peer is gone (ENet's `ENET_PEER_TIMEOUT_MAXIMUM`).
 pub const TIMEOUT_MS: u32 = 30000;
+/// ENet's `ENET_PEER_TIMEOUT_MINIMUM`: a command resent until its timeout grew `TIMEOUT_LIMIT` times and unacked
+/// this long is also a gone peer (what Slippi Dolphin and Hero, on ENet's defaults, notice a dead peer by).
+pub const TIMEOUT_MINIMUM_MS: u32 = 5000;
+/// ENet's `ENET_PEER_TIMEOUT_LIMIT`: the round-trip timeout doubles per resend, so 32x is the fifth resend.
+pub const TIMEOUT_LIMIT: u32 = 32;
 const UNSEQ_WINDOW_SIZE: u32 = 1024;
 const FREE_UNSEQ_WINDOWS: u32 = 32;
 
@@ -97,6 +102,8 @@ struct SentReliable {
     first_sent: u32,
     next_send: u32,
     timeout: u32,
+    /// Times resent (ENet's doubling `roundTripTimeout`: 2^resends of the first).
+    resends: u32,
 }
 
 #[derive(Clone)]
@@ -286,7 +293,7 @@ impl Host {
         };
         bytes[2..4].copy_from_slice(&seq.to_be_bytes());
         let command = bytes[0] & 0x0F;
-        p.out_reliable.push_back(SentReliable { channel, seq, command, bytes, first_sent: 0, next_send: 0, timeout: 0 });
+        p.out_reliable.push_back(SentReliable { channel, seq, command, bytes, first_sent: 0, next_send: 0, timeout: 0, resends: 0 });
     }
 
     /// `enet_peer_send`: `reliable` = ENET_PACKET_FLAG_RELIABLE, else ENET_PACKET_FLAG_UNSEQUENCED (what Slippi uses
@@ -420,17 +427,30 @@ impl Host {
             }
             _ => {}
         }
-        // a reliable command unacked for too long: the peer is gone
-        if let Some(s) = p.sent.iter().find(|s| s.first_sent != 0) {
-            if now.wrapping_sub(s.first_sent) >= TIMEOUT_MS && (now.wrapping_sub(s.first_sent) as i32) > 0 {
-                let was = p.state;
-                let data = p.event_data;
-                p.reset();
-                if matches!(was, PeerState::Connected | PeerState::Disconnecting | PeerState::AcknowledgingConnect) {
-                    self.events.push_back(Event::Disconnect { peer: i, data: if was == PeerState::Disconnecting { data } else { 0 } });
-                }
-                return;
+        // a reliable command unacked for too long: the peer is gone. ENet's enet_protocol_check_timeouts, run when a
+        // resend falls due: unacked TIMEOUT_MS since the earliest timed-out send, or resent to TIMEOUT_LIMIT and
+        // unacked TIMEOUT_MINIMUM_MS (a dead peer on a fast link: ~5 s, not 30)
+        let mut earliest: Option<u32> = None;
+        let mut limit = false;
+        for s in p.sent.iter().filter(|s| s.first_sent != 0 && (now.wrapping_sub(s.next_send) as i32) >= 0) {
+            if earliest.map_or(true, |e| (s.first_sent.wrapping_sub(e) as i32) < 0) {
+                earliest = Some(s.first_sent);
             }
+            limit |= 1u64 << s.resends.min(32) >= TIMEOUT_LIMIT as u64;
+        }
+        let oldest = p.sent.iter().find(|s| s.first_sent != 0).map(|s| s.first_sent);
+        let gone = |t: Option<u32>, ms: u32| t.is_some_and(|t| now.wrapping_sub(t) >= ms && (now.wrapping_sub(t) as i32) > 0);
+        // (the minimum on a live link only: a CONNECT still resent waits out TIMEOUT_MS, as the select's connect
+        // window relies on, the opponent may start listening late)
+        let limit = limit && p.state == PeerState::Connected;
+        if gone(oldest, TIMEOUT_MS) || (limit && gone(earliest, TIMEOUT_MINIMUM_MS)) {
+            let was = p.state;
+            let data = p.event_data;
+            p.reset();
+            if matches!(was, PeerState::Connected | PeerState::Disconnecting | PeerState::AcknowledgingConnect) {
+                self.events.push_back(Event::Disconnect { peer: i, data: if was == PeerState::Disconnecting { data } else { 0 } });
+            }
+            return;
         }
         // keep-alive: ENet pings every interval when nothing reliable is in flight
         if p.state == PeerState::Connected && p.sent.is_empty() && p.out_reliable.is_empty() && now.wrapping_sub(p.last_ack_time.max(p.last_receive)) >= PING_INTERVAL_MS {
@@ -474,6 +494,7 @@ impl Host {
             if (now.wrapping_sub(s.next_send) as i32) >= 0 {
                 s.timeout = (s.timeout * 2).min(4000);
                 s.next_send = now.wrapping_add(s.timeout);
+                s.resends = s.resends.saturating_add(1);
                 cmds.push(s.bytes.clone());
                 p.stats_resent += 1;
             }
@@ -892,6 +913,7 @@ impl Host {
             w.u32(s.first_sent);
             w.u32(s.next_send);
             w.u32(s.timeout);
+            w.u32(s.resends);
         };
         w.u32(self.peers.len() as u32);
         for p in &self.peers {
@@ -975,7 +997,7 @@ impl Host {
             h.events.push_back(e);
         }
         fn sr(r: &mut crate::blob::R) -> Option<SentReliable> {
-            Some(SentReliable { channel: r.u8()?, seq: r.u16()?, command: r.u8()?, bytes: r.bytes()?, first_sent: r.u32()?, next_send: r.u32()?, timeout: r.u32()? })
+            Some(SentReliable { channel: r.u8()?, seq: r.u16()?, command: r.u8()?, bytes: r.bytes()?, first_sent: r.u32()?, next_send: r.u32()?, timeout: r.u32()?, resends: r.u32()? })
         }
         let n = r.u32()? as usize;
         if n == 0 || n > MAX_PEER_ID as usize {

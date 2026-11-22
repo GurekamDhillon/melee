@@ -242,15 +242,52 @@ pub fn take_slot() -> Option<usize> {
     }
 }
 
+/// Committed pages kept over all FREE slots (a reuse skips the 4 KB first-touch faults). Past it a released slot is
+/// decommitted whole, block records and event log included: before, every slot a plan had ever used kept up to
+/// [`KEEP_COMMITTED`] of pages after the plan went, so evicting plans freed nothing (perf.md "Plan cache cap").
+const KEEP_FREE_COMMITTED: usize = 64 << 20;
+
 /// Give a slot back: its pages are dropped (they read zero when committed again).
 pub fn release_slot(slot: usize) {
     let Some(s) = state() else { return };
     let d = s.dirty[slot].load(Acquire);
-    if d > KEEP_COMMITTED {
+    let used = s.used.load(Acquire);
+    let kept_free: usize = (0..NSLOT).filter(|&i| i != slot && used & (1 << i) == 0).map(|i| s.dirty[i].load(Acquire)).sum();
+    if kept_free + d.min(KEEP_COMMITTED) > KEEP_FREE_COMMITTED {
+        // Decommitting resident pages costs ms per 100 MB: never on the thread that dropped the plan (often the
+        // game's). The slot stays taken until the asset worker has given its pages back ([`drain_decommits`]).
+        if DRAINER.load(Acquire) {
+            DECOMMIT.fetch_or(1 << slot, AcqRel);
+            return;
+        }
+        unsafe { sys::decommit(s.base + slot * SLOT, SLOT) };
+        s.dirty[slot].store(0, Release);
+    } else if d > KEEP_COMMITTED {
         unsafe { sys::decommit(s.base + slot * SLOT + KEEP_COMMITTED, SLOT - META - KEEP_COMMITTED) };
         s.dirty[slot].store(KEEP_COMMITTED, Release);
     }
     s.used.fetch_and(!(1u64 << slot), AcqRel);
+}
+
+/// An asset worker calls [`drain_decommits`] (set by it at start); without one a release decommits in place.
+pub static DRAINER: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+/// Released slots waiting for [`drain_decommits`] (still marked used meanwhile).
+static DECOMMIT: AtomicU64 = AtomicU64::new(0);
+
+/// Whether released slots wait for their pages to be given back.
+pub fn decommits_pending() -> bool {
+    DECOMMIT.load(Acquire) != 0
+}
+
+/// Give back the pages of the slots [`release_slot`] queued, then free the slots. The asset worker's thread only.
+pub fn drain_decommits() {
+    let Some(s) = state() else { return };
+    let m = DECOMMIT.swap(0, AcqRel);
+    for slot in (0..NSLOT).filter(|&i| m & (1 << i) != 0) {
+        unsafe { sys::decommit(s.base + slot * SLOT, SLOT) };
+        s.dirty[slot].store(0, Release);
+        s.used.fetch_and(!(1u64 << slot), AcqRel);
+    }
 }
 
 /// Note how far slot `slot` was written (its taker zeroes that much on reuse).

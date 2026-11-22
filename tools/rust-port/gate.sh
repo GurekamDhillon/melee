@@ -12,8 +12,9 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   2. baseline files tools/rust-port/diff/baseline/*.txt have not grown (baseline_max.tsv), and
 #      `melee diff --frames` shows no difference outside the baseline in the subsystems of docs/rust-port/migrated.txt
 #      at the sampled frames of tools/rust-port/diff/frames.tsv (capped at the engine's count);
-#   3. tools/rust-port/lint_logic.py introduces no new violations (when the script exists), and
-#      tools/rust-port/semantics_lint.py finds no console-arithmetic violation in the game crates.
+#   3. tools/rust-port/lint_logic.py introduces no new violations (when the script exists),
+#      tools/rust-port/semantics_lint.py finds no console-arithmetic violation in the game crates, and
+#      tools/rust-port/rbstatics_lint.py finds no unreviewed heap-owning static a rollback load could rewind.
 # --update-progress appends the measured counts (only when none went down) and lowers baseline_max.tsv.
 set -u
 # One cargo target dir per worktree (notes/buildspeed.md): a CARGO_TARGET_DIR shared by worktrees makes lanes overwrite each
@@ -145,6 +146,11 @@ fi
 # SEMLINT=0 skips it.
 if [ "${SEMLINT:-1}" = 1 ] && [ -z "$only" ]; then
   python tools/rust-port/semantics_lint.py || { echo "FAIL semantics lint"; fail=1; }
+fi
+# rollback statics (arena::SysStatic): every heap-owning static of the host crates outside SysStatic / thread_local is
+# reviewed in rbstatics_allow.tsv (a rewound one was a double free, retail_flow::transition_time). Source scan, instant.
+if [ -f tools/rust-port/rbstatics_lint.py ]; then
+  python tools/rust-port/rbstatics_lint.py || { echo "FAIL rbstatics lint"; fail=1; }
 fi
 # 4. rollback snapshot perf (tools/rust-port/perf/snapguard.sh, notes/perf.md "Snapshot perf guard"): depth-7 synctest
 #    save / load / total, min of 3 runs, within 25% of the committed baseline. Release only (the baseline's profile);

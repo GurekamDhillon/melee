@@ -30,7 +30,7 @@ and no account was used.
 
 | line / variable | direction | meaning | Rust (this branch) |
 |---|---|---|---|
-| `yg {"caps":[...]}` | game -> app, first line | what the game supports. Hero always sends `ready, overlay, join, notice, pads, view, volume` (Windows/Linux). Crunch: when not embedded drop `pads, rumble, view, volume, fullscreen`; the app attaches its 125 Hz pad relay whenever caps contain `pads` (handoff, `native-pad-relay.js:227`) | `["ready"]` standalone; `["ready","overlay"]` embedded |
+| `yg {"caps":[...]}` | game -> app, first line | what the game supports. Hero always sends `ready, overlay, join, notice, pads, view, volume` (Windows/Linux). Crunch: when not embedded drop `pads, rumble, view, volume, fullscreen`; the app attaches its 125 Hz pad relay whenever caps contain `pads` (handoff, `native-pad-relay.js:227`) | `["ready"]` standalone; `["ready","overlay","volume"]` embedded |
 | `yg {"ready":true}` | game -> app | after the first **presented** frame (Hero: a visible game frame, never a loading panel). Without it the app stays on "Opening Melee Unlocked..." | sent once after the first successful present (our first present can be the black boot frame; see open points) |
 | `embed quit` | app -> game | Stop. The app then kills after `QUIT_GRACE_MS` = 5 s (handoff). Hero honours it only through the player box's handler, so a non-embedded game ignores it today (Crunch's fix 2) | honoured always (also a bare `quit`); main loop exits, exit 0; a watchdog `process::exit(0)` at 4 s |
 | stdin EOF | app -> game | the app quit / closed the pipe | same quit path |
@@ -68,8 +68,12 @@ Hero's tree at v0.9.107).
 **Rust:** with `YOUGAME_EMBED=1` the window is created undecorated, hidden, class `MeleePortWindow` (winit
 `with_class_name`), caption `Melee Unlocked`; `YOUGAME_EMBED_PARENT` (decimal HWND) makes it a child at creation
 (**unverified**, the Windows app does not send it). `rect`, `show`, `hide`, `focus` are applied on the window thread;
-`view`, `volume`, `blur` are logged and ignored. **Missing:** pad relay and adapter mirror (so no `pads` cap: inside
-the sandbox an embedded Rust build has no controllers), `view` clipping, page volume, `WS_CHILD` adoption checks,
+`view`, `blur` are logged and ignored. `volume <gain>` (page gain 0..1, `toFixed(3)`) is applied on the stdin thread
+(melee_core::host_volume, Hero's yg_embed_volume parse) and multiplied into the mixer gain on the next audio frame:
+mixer gain = our volume/100 x page gain, as Hero's `output_volume()`; the page's gain is used as it is (it is the
+page's own curve). Until Nov 22 the embedded caps had no `volume`, so the app never sent the slider, and the line was
+ignored anyway: the slider did nothing. Proof: pc/tests/yougame/page_volume.py. **Missing:** pad relay and adapter mirror (so no `pads` cap: inside
+the sandbox an embedded Rust build has no controllers), `view` clipping, `WS_CHILD` adoption checks,
 pad-chord overlay tap. Not worth doing while the direction is standalone.
 
 ## 4. Needed for online / ranked / friends (not implemented)

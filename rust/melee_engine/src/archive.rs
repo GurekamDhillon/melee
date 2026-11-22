@@ -567,7 +567,7 @@ pub(crate) fn decode_prof_on() -> bool {
     *P.get_or_init(|| std::env::var_os("MELEE_DECODE_PROF").is_some())
 }
 
-/// The process's page-fault count (diagnostics; 0 off Windows).
+/// The page-fault count (diagnostics): the process's on Windows, the calling thread's on Linux, else 0.
 pub fn page_faults() -> u32 {
     #[cfg(windows)]
     {
@@ -580,6 +580,14 @@ pub fn page_faults() -> u32 {
         let mut c = Counters { cb: core::mem::size_of::<Counters>() as u32, page_faults: 0, rest: [0; 9] };
         if unsafe { K32GetProcessMemoryInfo(GetCurrentProcess(), &mut c, c.cb) } != 0 {
             return c.page_faults;
+        }
+    }
+    // Linux: the calling thread's own (minor + major) faults (the game thread's, where the asset log reads it)
+    #[cfg(target_os = "linux")]
+    {
+        let mut u: libc::rusage = unsafe { core::mem::zeroed() };
+        if unsafe { libc::getrusage(libc::RUSAGE_THREAD, &mut u) } == 0 {
+            return (u.ru_minflt + u.ru_majflt) as u32;
         }
     }
     0

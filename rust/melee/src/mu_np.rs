@@ -297,6 +297,11 @@ fn online(s: i32) -> i32 {
     s - FIRST + 1
 }
 
+/// `k`'s value in `args`.
+pub fn arg_value(args: &[String], k: &str) -> Option<String> {
+    arg(args, k)
+}
+
 fn arg(args: &[String], k: &str) -> Option<String> {
     args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned()
 }

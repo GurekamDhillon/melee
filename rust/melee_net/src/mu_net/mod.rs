@@ -11,5 +11,6 @@ pub mod crypto;
 pub mod desc;
 pub mod input;
 pub mod link;
+pub mod result;
 pub mod sec;
 pub mod wire;

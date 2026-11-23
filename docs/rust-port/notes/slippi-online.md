@@ -712,3 +712,42 @@ frozen. So these loopback runs neither confirm nor rule out time sync as the cau
 online frame 125, the remote checksum constant): frame 125 is exactly the first frame the new rule can run an extra
 frame on, which a loopback peer on the same clock rarely makes it do. A test that needs the engine to start behind a
 faster-loading Dolphin, or a forced catch-up, is what would decide it.
+
+## 17. The forced catch-up vs Slippi Dolphin (2026-11-23, port/catchupfix)
+
+**Correction to section 16.** The new rule's first possible extra frame is online frame 150, not 125:
+`advance_frames` returns 0 on a check frame up to the opening (120), so the first catch-up starts at the check on 150
+(150, 155, 160). Frame 125 is where a hold from the last opening check (120, up to 5 frames under either rule) ends.
+
+**The hook.** `MELEE_TIMESYNC_FORCE_CATCHUP=N[:K]` (new rule only, read once per match in `TimeSync::new`, a field of
+the match's `TimeSync`, no static): on every Nth offset check after the opening a catch-up of K frames (default 3,
+`MAX_ADVANCE`) starts whatever the offset. `np_dolphin_matrix_linux.sh` `RULES=force` (`FORCE=N`).
+
+**Results.** Engine vs Slippi Dolphin (loopback mock, `MELEE_TIMESYNC_NEW=1`, 2400-frame target, 3 matches per row;
+"inputs" = `slp_inputs_diff.py` on Dolphin's .slp vs the engine's `play --slp`: per frame and port the buttons, sticks,
+triggers and pre-frame seed from frame -39, plus the post-frame state):
+
+| decider | stage | lag ms | catch-up | frames compared | desyncs | extra frames run (per match) | rollbacks | inputs / state |
+|---|---|---|---|---|---|---|---|---|
+| engine | Dream Land | 30 | forced (N=1) | 6716 | 0 | 217, 239, 239 | ~290 | equal |
+| engine | Dream Land | 30 | natural | 7460 | 0 | 0, 0, 0 | ~108 | equal (one seed on the file's last frame) |
+| engine | Dream Land | 60 | forced | 6882 | 0 | 239 x3 | ~325 | equal |
+| engine | Dream Land | 60 | natural | 7409 | 0 | 0 | ~335 | equal |
+| engine | Pokemon Stadium (3) | 30 | forced | 6911 | 0 | 239 x3 | ~308 | equal |
+| engine | Pokemon Stadium | 30 | natural | 6640 | 0 | 0, 2, 2 | ~95 | equal |
+| engine | Pokemon Stadium | 60 | forced | 5900 | 0 | 226, 232, 231 | ~311 | equal |
+| engine | Pokemon Stadium | 60 | natural | 7208 | 0 | 0, 2, 7 | ~343 | equal |
+| Dolphin (engine guest) | Dream Land | 30 | forced | 6190 | 0 | 200, 221, 168 | ~259 | equal |
+| Dolphin | Dream Land | 30 | natural | 6102 | 0 | 3, 0, 3 | ~147 | equal |
+| Dolphin | Dream Land | 60 | forced | 6061 | 0 | 219, 236, 204 | ~305 | equal |
+| Dolphin | Dream Land | 60 | natural | 6199 | 0 | 8, 8, 9 | ~322 | equal |
+| Dolphin | Pokemon Stadium | 30 | forced | 6918 | 0 | 229, 227, 239 | ~303 | equal |
+| Dolphin | Pokemon Stadium | 30 | natural | 6641 | 0 | 3, 0, 0 | ~95 | equal |
+| Dolphin | Pokemon Stadium | 60 | forced | 6162 | 0 | 232, 227, 222 | ~317 | equal |
+| Dolphin | Pokemon Stadium | 60 | natural | 6441 | 0 | 9, 8, 0 | ~330 | equal |
+
+The catch-up path ran about 5,300 extra frames in 24 forced matches without a desync, decider or guest, on both stages:
+it is not what desynced live, and needs no fix. Slippi Dolphin mainline catches up itself ("Advancing on frame 30
+due to time sync" in its log), so both sides running extra frames is normal play. The engine's .slp numbers frames
+one lower than Dolphin's and records its own stick a frame or two early before frame -39 (the game state is unaffected);
+`slp_inputs_diff.py` finds the shift itself and counts those apart.

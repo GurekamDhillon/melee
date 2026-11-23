@@ -273,6 +273,22 @@ impl Link {
         }
     }
 
+    /// Whether the peer announced revision 2 (it takes our SAMPLEs; we only send them to such a peer).
+    pub fn peer_takes_samples(&self) -> bool {
+        self.peer_info.is_some_and(|(rev, _)| rev >= 2)
+    }
+
+    /// Sends our early input for pad frame `target` (game numbering) when the game runs and the peer takes them.
+    pub fn send_sample(&mut self, target: i32, pad: Pad) -> bool {
+        if !self.started || !self.peer_takes_samples() || target <= self.input.local_latest() {
+            return false;
+        }
+        let m = self.input.build_sample(target, self.local_slot as u8, pad);
+        let ok = self.conn.send(&m);
+        self.conn.flush();
+        ok
+    }
+
     /// No new peer frame for [`INPUT_TIMEOUT`] while frames are being played.
     pub fn input_timed_out(&self) -> bool {
         self.started && self.now_us().saturating_sub(self.input.last_progress_us) > INPUT_TIMEOUT.as_micros() as u64
@@ -458,6 +474,35 @@ mod tests {
             }
         }
         assert_ne!(digests[0], digests[1]);
+    }
+
+    #[test]
+    fn samples_reach_a_peer_that_takes_them() {
+        let mut links = ready_pair(1000, [1, 1]);
+        links[1].input.samples_on = true;
+        links[0].commit(1, [0; 8]);
+        links[0].commit(2, [0; 8]);
+        assert!(links[0].peer_takes_samples());
+        assert!(!links[0].send_sample(2, [7; 8]), "a frame already committed is not an early input");
+        assert!(links[0].send_sample(5, [7; 8]));
+        let t = Instant::now();
+        let mut got = Vec::new();
+        while got.is_empty() && t.elapsed() < Duration::from_secs(2) {
+            links.iter_mut().for_each(Link::poll);
+            got = links[1].input.take_samples();
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        assert_eq!(got, vec![(5, [7; 8])]);
+        // off: counted and dropped
+        links[1].input.samples_on = false;
+        links[0].send_sample(6, [8; 8]);
+        let t = Instant::now();
+        while links[1].input.stats.samples_ignored == 0 && t.elapsed() < Duration::from_secs(2) {
+            links.iter_mut().for_each(Link::poll);
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        assert_eq!(links[1].input.stats.samples_ignored, 1);
+        assert!(links[1].input.take_samples().is_empty());
     }
 
     #[test]

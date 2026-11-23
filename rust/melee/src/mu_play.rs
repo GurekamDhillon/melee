@@ -33,6 +33,8 @@ pub struct MuRun {
     /// the session ended before the game reported its end (BYE, a lost connection, 7 s without input)
     disconnected: bool,
     written: bool,
+    /// early inputs on for this run (np_early::enabled): the peer's SAMPLEs are used for prediction
+    early: bool,
     /// test hooks: `--mu-test-frames N` ends the match after N final checksums (a scripted match that never reaches
     /// GAME!), `--mu-test-padgen SEED` plays the session's generated pads instead of the local controller
     frames: Option<i32>,
@@ -103,6 +105,7 @@ impl NetDriver {
             done_at: None,
             disconnected: false,
             written: false,
+            early: crate::np_early::enabled(args),
             frames: val("--mu-test-frames").and_then(|v| v.parse().ok()),
             padgen: val("--mu-test-padgen").and_then(|v| v.parse().ok()),
             opts: o,
@@ -171,6 +174,14 @@ impl NetDriver {
         mr.link.poll();
         for (f, pad) in mr.link.input.take_fresh() {
             s.submit_remote_input(rp * 2, sess(f), &pad_input(&pad));
+        }
+        // early inputs (rev 2): the peer's SAMPLEs predict its unconfirmed frames
+        if !s.hints_on && mr.early {
+            s.hints_on = true;
+            mr.link.input.samples_on = true;
+        }
+        for (t, pad) in mr.link.input.take_samples() {
+            s.submit_hint(rp * 2, sess(t), &crate::mu_np::hint_of(&pad));
         }
         let mut gone: Option<String> = None;
         if mr.done_at.is_none() {

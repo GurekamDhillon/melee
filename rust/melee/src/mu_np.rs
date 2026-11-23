@@ -372,6 +372,13 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
     }
 }
 
+/// A SAMPLE's 8 pad bytes as the session's hint pad (analog A / B and err 0, as a committed pad carries them).
+pub fn hint_of(p: &[u8; 8]) -> melee_net::early::Pad {
+    let mut h = [0u8; melee_net::NP_PAYLOAD];
+    h[..8].copy_from_slice(p);
+    h
+}
+
 /// One game's outcome in `mu_netplay`.
 struct GameRun {
     ok: bool,
@@ -454,6 +461,14 @@ fn play_one(args: &[String], o: &P2pOptions, tag: &str, t0: Instant, frames: i32
     s.set_local_port(local);
     s.set_delay(delay);
     let padgen = arg(args, "--padgen").and_then(|v| v.parse::<u32>().ok());
+    // early inputs (rev 2, plan M7): the peer's SAMPLEs predict its unconfirmed frames (RbSession hints)
+    let early = crate::np_early::enabled(args);
+    link.input.samples_on = early;
+    s.hints_on = early;
+    // test hook --mu-test-early-lead: send the generated pad of the frame after the newest committed one as a SAMPLE
+    // (a scripted controller never changes between polls; this stands in for the sampler's early read)
+    let early_lead = early && padgen.is_some() && args.iter().any(|a| a == "--mu-test-early-lead");
+    let mut samples_sent = 0u64;
     let tick = Duration::from_micros(16683);
     let mut next_tick = Instant::now();
     let mut last_sent = FIRST - 1;
@@ -480,6 +495,9 @@ fn play_one(args: &[String], o: &P2pOptions, tag: &str, t0: Instant, frames: i32
         link.poll();
         for (f, pad) in link.input.take_fresh() {
             s.submit_remote_input(remote * 2, sess(f), &pad_input(&pad));
+        }
+        for (t, pad) in link.input.take_samples() {
+            s.submit_hint(remote * 2, sess(t), &hint_of(&pad));
         }
         if let Some(w) = link.down() {
             eprintln!("p2p: {tag}: {w} at online frame {}", online(s.current_frame()));
@@ -521,6 +539,13 @@ fn play_one(args: &[String], o: &P2pOptions, tag: &str, t0: Instant, frames: i32
             link.input.set_checksum(ckf, ck);
         }
         link.send_commit();
+        if early_lead {
+            let nf = last_sent + 1;
+            if online(nf) > delay {
+                let i = melee_net::session::rb_gen(padgen.unwrap(), local * 2, nf);
+                samples_sent += link.send_sample(online(nf), pad_bytes(&i)) as u64;
+            }
+        }
         if done_at.is_none() {
             run_tick(&mut s, &mut game, None);
             if extra > 0 && s.current_frame() > f {
@@ -589,6 +614,10 @@ fn play_one(args: &[String], o: &P2pOptions, tag: &str, t0: Instant, frames: i32
     }
     let tr = link.transcript.as_ref().map_or((0, String::new()), |t| (t.frames, hex(&t.digest()[..8])));
     let st = &link.input.stats;
+    if early {
+        let h = s.hint_stats;
+        eprintln!("p2p: {tag}: game {}: early inputs: {samples_sent} samples sent, {} received ({} ignored), hints {h:?}", link.game, st.samples_received, st.samples_ignored);
+    }
     eprintln!(
         "p2p: {tag}: game {}: {} final checksums, {compared} compared: {soft} soft, {hard} HARD desyncs; transcript {} frames {} (peer {}); rollbacks {}, stalls {}, waits {}, time sync held {} advanced {}; ping {} us; commits sent {} received {}, gaps {}, conflicts {}, other game {}",
         link.game,

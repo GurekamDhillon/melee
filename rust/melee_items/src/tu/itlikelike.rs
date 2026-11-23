@@ -217,6 +217,13 @@ const M_PI: f64 = core::f64::consts::PI;
 /// `const Vec3 zero_vec`
 pub static zero_vec: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
+/// `x *= -1.0f` as the console computes it: a real `fmuls`, so a NaN keeps its sign (a literal `* -1.0` is folded
+/// to a negation by LLVM, which flips a NaN's sign; docs/rust-port/notes/oracles-mtu.md trap (1), as itfreeze.rs).
+#[inline(never)]
+fn mul_m1(x: f32) -> f32 {
+    x * core::hint::black_box(-1.0f32)
+}
+
 /// `ABS` (platform.h): `((x) < 0 ? -(x) : (x))`.
 #[inline(always)]
 fn abs_c(x: f32) -> f32 {
@@ -565,7 +572,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     let temp_f2 = (*ip).facing_dir;
     if (temp_f2 > 0.0 && (*ip).x70_nudge.x < 0.0) || (temp_f2 < 0.0 && (*ip).x70_nudge.x > 0.0) {
         (*ip).facing_dir = -temp_f2;
-        (*ip).x40_vel.x *= -1.0;
+        (*ip).x40_vel.x = mul_m1((*ip).x40_vel.x);
     }
     ext::it_8027C8D0(&mut (*ip).x40_vel, &mut (*ip).x378_itemColl.floor.normal, (*ip).facing_dir);
     ext::it_8027C0A8(gobj, 0.0, 5.0);
@@ -675,7 +682,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Phys(gobj: *mut Item_GObj) {
     let temp_f2 = (*ip).facing_dir;
     if (temp_f2 > 0.0 && (*ip).x70_nudge.x < 0.0) || (temp_f2 < 0.0 && (*ip).x70_nudge.x > 0.0) {
         (*ip).facing_dir = -temp_f2;
-        (*ip).x40_vel.x *= -1.0;
+        (*ip).x40_vel.x = mul_m1((*ip).x40_vel.x);
     }
     ext::it_8027C8D0(&mut (*ip).x40_vel, &mut (*ip).x378_itemColl.floor.normal, (*ip).facing_dir);
     ext::it_8027C0CC(gobj, 0.0, 5.0);
@@ -697,10 +704,10 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32
     }
     if ext::it_802762D8(gobj) != 0 {
         (*ip).facing_dir = -(*ip).facing_dir;
-        (*ip).x40_vel.x *= -1.0;
+        (*ip).x40_vel.x = mul_m1((*ip).x40_vel.x);
     } else if ext::it_80276308(gobj) != 0 {
         (*ip).facing_dir = -(*ip).facing_dir;
-        (*ip).x40_vel.x *= -1.0;
+        (*ip).x40_vel.x = mul_m1((*ip).x40_vel.x);
     } else {
         let half: f32 = 0.5;
         if abs_c((*ip).xDD4_itemVar.likelike.x20.x - (*ip).pos.x) < (*(*attr).x0).x4 * half

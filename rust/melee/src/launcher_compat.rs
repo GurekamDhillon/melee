@@ -171,8 +171,12 @@ pub fn map_settings_notes(kv: &[(String, String)]) -> (Vec<(String, String)>, Ve
     if let Some(v) = get("volume").and_then(|s| s.trim().parse::<i32>().ok()) {
         out.push(("MELEE_VOLUME".into(), v.clamp(0, 100).to_string()));
     }
-    // Hero's "Music" slider (pc_settings `music`, 0..100). His `audio_device` is a WASAPI endpoint id, not a name
-    // our output can open, so it is not mapped: the device is picked in our own settings overlay.
+    // His `audio_device` is a WASAPI endpoint id (empty = the system default), not a name our output can open: it goes
+    // on as MELEE_AUDIO_DEVICE_ID and the audio boot turns it into a device name (audio.rs, audio_endpoint::choose_device).
+    if let Some(d) = get("audio_device").filter(|d| !d.trim().is_empty()) {
+        out.push(("MELEE_AUDIO_DEVICE_ID".into(), d.trim().to_string()));
+    }
+    // Hero's "Music" slider (pc_settings `music`, 0..100).
     if let Some(v) = get("music").and_then(|s| s.trim().parse::<i32>().ok()) {
         out.push(("MELEE_MUSIC".into(), v.clamp(0, 100).to_string()));
     }
@@ -695,6 +699,19 @@ mod tests {
         assert!(notes[0].contains("render scale 4"), "{notes:?}");
         let (env, _) = map_settings_notes(&parse_settings("ssaa 4\nscale 0\n"));
         assert_eq!(env.iter().find(|(k, _)| k == "MELEE_RENDER_SCALE").unwrap().1, "auto");
+    }
+
+    #[test]
+    fn audio_device_id_goes_to_the_audio_boot() {
+        let (env, _) = map_settings_notes(&parse_settings("audio_device {0.0.0.00000000}.{abc}
+volume 5
+"));
+        assert!(env.contains(&("MELEE_AUDIO_DEVICE_ID".to_string(), "{0.0.0.00000000}.{abc}".to_string())));
+        // empty = the system default: nothing set
+        let (env, _) = map_settings_notes(&parse_settings("audio_device 
+volume 5
+"));
+        assert!(!env.iter().any(|(k, _)| k == "MELEE_AUDIO_DEVICE_ID"));
     }
 
     #[test]

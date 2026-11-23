@@ -14,6 +14,7 @@ pub mod yougame_saves;
 pub mod pad;
 pub mod adapter;
 pub mod aurora;
+pub mod audio_endpoint;
 pub mod bindings;
 pub mod socd;
 pub mod profiles;

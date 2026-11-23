@@ -26,7 +26,7 @@ libc = "0.2"
 
 [target.'cfg(windows)'.dependencies]
 # DXGI frame statistics of wgpu's own D3D12 swapchain (VRR detection, gfx.rs); the version wgpu-hal 27 uses
-windows = { version = "0.58", default-features = false, features = ["Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Foundation", "Win32_System_Performance"] }
+windows = { version = "0.58", default-features = false, features = ["Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Foundation", "Win32_System_Performance", "Win32_Media_Audio", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_UI_Shell_PropertiesSystem", "Win32_Devices_FunctionDiscovery"] }
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
     "Win32_Devices_HumanInterfaceDevice",

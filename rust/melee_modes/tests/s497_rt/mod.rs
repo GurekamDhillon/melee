@@ -5,6 +5,8 @@
 
 use melee_modes::hook::A;
 use std::cell::RefCell;
+#[path = "../../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 use std::fmt::Write as _;
 
 pub const ARENA_SIZE: usize = 512 * 1024;
@@ -128,6 +130,12 @@ impl Rt {
             if v >= *p as u64 && v < (*p + *sz) as u64 {
                 return format!("G:{n}+{:x}", v - *p as u64);
             }
+        }
+        // a pointer the library stored can be a crate-local copy of a registered fn (rustc inlines small leaf fns
+        // across crates and the test crate gets its own copy): match it by symbol (docs/rust-port/notes/fn-identity.md 1)
+        let addrs: Vec<usize> = g.ftab.iter().map(|(_, p)| *p).collect();
+        if let Some(i) = fnsym::find(&addrs, v as usize) {
+            return format!("F:{}", g.ftab[i].0);
         }
         format!("X:{v:x}")
     }

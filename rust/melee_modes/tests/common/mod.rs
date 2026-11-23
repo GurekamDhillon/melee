@@ -4,6 +4,8 @@
 #![allow(dead_code, static_mut_refs)]
 
 use core::ffi::{c_char, CStr};
+#[path = "../../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 
 pub static mut ORS: u32 = 1;
 pub fn rnd() -> u32 {
@@ -140,6 +142,12 @@ pub fn trp(p: *const u8) {
             if *f == v {
                 return out(&format!(" f:{}", name));
             }
+        }
+        // a pointer the library stored can be a crate-local copy of a registered fn: match it by symbol
+        // (docs/rust-port/notes/fn-identity.md 1)
+        let addrs: Vec<usize> = FNS.iter().map(|(_, f)| *f as usize).collect();
+        if let Some(i) = fnsym::find(&addrs, v as usize) {
+            return out(&format!(" f:{}", FNS[i].0));
         }
     }
     out(" x")

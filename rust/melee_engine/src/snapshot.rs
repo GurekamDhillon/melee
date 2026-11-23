@@ -496,6 +496,10 @@ pub struct Base {
     hot: std::cell::RefCell<Vec<(Vec<u64>, Vec<u8>)>>,
     /// The statics are fault-watched (else compared in full).
     static_watch: bool,
+    /// MELEE_SNAP_STATIC_SCAN, read once at capture: `refresh` runs at every save and load (a getenv per static range
+    /// each time was ~0.3% of a synctest's cycles on Linux, where getenv walks the whole environment)
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    static_scan: bool,
     /// Page buffers of dropped snapshots, reused by the next saves (no allocation per page in steady state).
     pool: Pool,
     /// The next snapshot id. Here, not a static: a load puts the statics back, and a static counter would hand out
@@ -933,6 +937,7 @@ impl Base {
             last_snap: Default::default(),
             hot: std::cell::RefCell::new(ranges[STATIC0.min(n)..].iter().map(|r| (vec![0u64; (r.1 / PAGE).div_ceil(64)], vec![0u8; r.1 / PAGE])).collect()),
             static_watch: false,
+            static_scan: scan,
             ranges, data, arena_len,
             // reserved now: a push never reallocates, wherever a snapshot is dropped
             pool: Rc::new(PagePool(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX)))), next_id: std::cell::Cell::new(1),
@@ -1036,7 +1041,7 @@ impl Base {
             } else {
                 // Linux: no fault-based static watch, but the kernel's soft-dirty bits cover the statics too
                 #[cfg(target_os = "linux")]
-                if std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_none()
+                if !self.static_scan
                     && (wpwatch::read(cur[ri].0, cur[ri].1, cur[ri].0, &mut since[ri]) || softdirty::read(cur[ri].0, cur[ri].1, cur[ri].0, &mut since[ri]))
                 {
                     continue;

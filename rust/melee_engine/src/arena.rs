@@ -131,6 +131,35 @@ thread_local! {
     static GAME_THREAD: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
 }
 
+/// `MELEE_RB_DIAG=1` (diagnostics): host-side memory work that can land inside a fight tick (snapshot page frees and
+/// the reaper's sends, recheap slot zeroing / decommits, pre-faulter rounds) is logged with its time and thread, and
+/// timed as a frame-profiler span. Read once, under [`SysScope`] (a rollback load may rewind the flag to unread: it
+/// is read again, same answer).
+pub fn rb_diag() -> bool {
+    static S: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
+    match S.load(Relaxed) {
+        1 => false,
+        2 => true,
+        _ => {
+            let on = {
+                let _s = SysScope::enter();
+                std::env::var_os("MELEE_RB_DIAG").is_some()
+            };
+            S.store(if on { 2 } else { 1 }, Relaxed);
+            on
+        }
+    }
+}
+/// True on the thread that runs the game (entered a [`GameScope`]).
+pub fn on_game_thread() -> bool {
+    GAME_THREAD.with(|g| g.get())
+}
+/// One [`rb_diag`] line: `what`, a count, the time it took (us), and which thread.
+pub fn rb_diag_log(what: &str, n: usize, us: u64) {
+    let _s = SysScope::enter();
+    eprintln!("rbdiag: {what} n={n} {us} us on {}", if on_game_thread() { "GAME" } else { "bg" });
+}
+
 /// Mark the calling thread as one whose allocations never go to the arena.
 pub fn mark_foreign_thread() {
     FOREIGN.with(|f| f.set(true));
@@ -904,6 +933,7 @@ pub fn start_prefault() {
             }
             let committed = unsafe { core::ptr::read_volatile(&raw const COMMITTED) };
             let mut p = (touched.max(bump) + 0xFFF) & !0xFFF;
+            let (p0, t0) = (p, std::time::Instant::now());
             let end = want.min(committed);
             while p < end && !bg_paused() {
                 let q = (p + (256 << 12)).min(end);
@@ -914,6 +944,9 @@ pub fn start_prefault() {
                 std::thread::yield_now();
             }
             touched = touched.max(p.min(end));
+            if p > p0 && rb_diag() {
+                rb_diag_log("prefault round (pages)", (p - p0) >> 12, t0.elapsed().as_micros() as u64);
+            }
             keep::zero_some();
             tails_drain();
             bg_end();

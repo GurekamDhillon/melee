@@ -188,7 +188,7 @@ mod sys {
     /// ([`super::set_in_fight`]) the pages are written with zeros instead and stay resident: no page is given back
     /// mid-match (the plan cache cap's rule, perf.md); they then count as written (more scanning, same plan).
     pub unsafe fn zero_slot_range(at: usize, n: usize) {
-        if super::IN_FIGHT.load(core::sync::atomic::Ordering::Relaxed) {
+        if super::in_fight() {
             core::ptr::write_bytes(at as *mut u8, 0, n);
             return;
         }
@@ -278,7 +278,11 @@ pub fn take_slot() -> Option<usize> {
         if s.used.compare_exchange(m, m | (1 << free), AcqRel, Acquire).is_ok() {
             let d = s.dirty[free].swap(0, AcqRel);
             if d > 0 {
+                let t0 = std::time::Instant::now();
                 unsafe { sys::zero_slot_range(s.base + free * SLOT, d) };
+                if crate::arena::rb_diag() {
+                    crate::arena::rb_diag_log("recheap take_slot zero (KB)", d >> 10, t0.elapsed().as_micros() as u64);
+                }
             }
             // the zeroing (and the last user's writes) are not this user's writes
             let _ = unsafe { sys::written(s.base + free * SLOT, SLOT - META) };
@@ -292,16 +296,31 @@ pub fn release_slot(slot: usize) {
     let Some(s) = state() else { return };
     let d = s.dirty[slot].load(Acquire);
     if d > KEEP_COMMITTED {
+        let t0 = std::time::Instant::now();
+        let _z = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("recheap release decommit"));
         unsafe { sys::decommit(s.base + slot * SLOT + KEEP_COMMITTED, SLOT - META - KEEP_COMMITTED) };
         s.dirty[slot].store(KEEP_COMMITTED, Release);
+        if crate::arena::rb_diag() {
+            crate::arena::rb_diag_log("recheap release_slot decommit (dirty KB)", d >> 10, t0.elapsed().as_micros() as u64);
+        }
+    } else if crate::arena::rb_diag() {
+        crate::arena::rb_diag_log("recheap release_slot (dirty KB, no decommit)", d >> 10, 0);
     }
     s.used.fetch_and(!(1u64 << slot), AcqRel);
 }
 
-/// A VS match is on (the asset service's `scene_prefetch`): no slot page is given back meanwhile (Linux `sys::zero_slot_range`).
-static IN_FIGHT: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+/// A fight scene is on (VS / sudden death; set by the asset service's `scene_prefetch` at each scene change). While
+/// it is, the host's background memory work holds off so that nothing competes with the fight's ticks: the asset
+/// worker starts no job, a hint evicts no plan (a plan's drop decommits its slot on the thread that drops it, the
+/// game's: 20-80 ms ticks on Windows), the snapshot page reaper waits, and Linux slot zeroing writes instead of
+/// dropping pages. Host state off the snapshot (`arena::SysStatic`): a plain static was rewound by a rollback load
+/// to its value at the session's base, which can predate the fight.
+static IN_FIGHT: crate::arena::SysStatic<bool> = crate::arena::SysStatic::new(|| false);
 pub fn set_in_fight(on: bool) {
-    IN_FIGHT.store(on, core::sync::atomic::Ordering::Relaxed);
+    IN_FIGHT.with(|f| *f = on);
+}
+pub fn in_fight() -> bool {
+    IN_FIGHT.with(|f| *f)
 }
 
 /// Note how far slot `slot` was written (its taker zeroes that much on reuse).

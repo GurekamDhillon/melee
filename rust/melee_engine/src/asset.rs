@@ -963,7 +963,9 @@ fn worker_main() {
             loop {
                 // disc hints first (a load is coming); a kept-copy job only once the game's decodes went quiet
                 let since = now_ms().saturating_sub(GAME_DECODE_AT.load(core::sync::atomic::Ordering::Relaxed));
-                let pick = if since < DISC_QUIET_MS {
+                // no job while a fight is on (recheap::in_fight): its slot take, page commits and decode compete
+                // with the fight's ticks; the queue waits for the fight's end (a load meanwhile decodes in place)
+                let pick = if since < DISC_QUIET_MS || recheap::in_fight() {
                     None
                 } else {
                     g.jobs.iter().position(|j| matches!(j.src, Src::Disc(..))).or(if since >= BYTES_QUIET_MS { (!g.jobs.is_empty()).then_some(0) } else { None })
@@ -1000,7 +1002,14 @@ fn worker_main() {
         let res = match bytes {
             None => Err(NoPlan::NoSlot), // the read failed: not the file's fault
             Some(b) if !hdr_ok(&b) => Err(NoPlan::Unsafe),
-            Some(b) => std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).unwrap_or(Err(NoPlan::Unsafe)),
+            Some(b) => {
+                let t0 = std::time::Instant::now();
+                let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).unwrap_or(Err(NoPlan::Unsafe));
+                if crate::arena::rb_diag() {
+                    crate::arena::rb_diag_log(&format!("asset worker prepare entry {:#x} (KB)", job.entry), b.len() >> 10, t0.elapsed().as_micros() as u64);
+                }
+                r
+            }
         };
         let (plan, why) = match res { Ok(p) => (Some(p), None), Err(e) => (None, Some(e)) };
         let mut g = s.m.lock().unwrap();
@@ -1060,10 +1069,18 @@ fn hint_entry_pri(entry: i32, heap: i32, gr: Option<i32>, low: bool) {
         }
         return;
     }
-    // a hint outranks a cached plan nobody asked for lately: make room (least recently used first)
+    // a hint outranks a cached plan nobody asked for lately: make room (least recently used first). Not during a
+    // fight: dropping a plan gives its slot's pages back on this (the game's) thread; the hint is refused instead
+    let low = low || recheap::in_fight();
     while !low && (g.entries.len() >= KEEP || g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + 8 * len > KEEP_BYTES) {
         let Some(old) = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).min_by_key(|&i| g.entries[i].used) else { break };
-        g.entries.remove(old);
+        let t0 = std::time::Instant::now();
+        let e = g.entries.remove(old);
+        let n = e.len;
+        drop(e);
+        if crate::arena::rb_diag() {
+            crate::arena::rb_diag_log("asset hint evicts a plan (KB)", n >> 10, t0.elapsed().as_micros() as u64);
+        }
     }
     let held: usize = g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum();
     let busy = g.entries.len();

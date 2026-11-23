@@ -653,3 +653,62 @@ checks the two CSVs against each other. The doc lists the likely Linux build tro
 `melee_engine::cow` had no non-Windows build.
 
 **Not done.** No stranger (unranked) check.
+
+## 16. Linux: the local-test Slippi Dolphin, the engine as decider, time sync A/B (2026-11-22, port/deciderharness)
+
+**The build.** `tools/rust-port/slippi/build_dolphin_linux.sh DIR` builds dolphin-emu-nogui of project-slippi/dolphin
+mainline `0653df8` on Linux (Arch, GCC 16, CMake 4, rustc 1.99.1 for the pinned 1.88.0): the same patches as the
+Windows netplay link (`slippi-dolphin-nhv1.patch`, `dolphin_enet_mm.patch`), plus `dolphin_localtest_rust.patch`
+(the Rust half of `SLIPPI_LOCAL_TEST`, which the Windows-only `localtest-cpp.patch` held: every web request refused
+in the resolver before DNS, no browser pages, matchmaking only to `ws://127.0.0.1:`) and `dolphin_linux_fixups.patch`
+(a missing include MSVC's precompiled header hid). Needed: `USE_SYSTEM_LIBS=OFF` (Arch's fmt 12 breaks 0653df8),
+`CMAKE_C_FLAGS=-std=gnu17` (GCC 16's C23 default breaks the bundled libiconv 1.14), `ENABLE_SDL=OFF`,
+`CMAKE_POLICY_VERSION_MINIMUM=3.5`. No root needed. About an hour on 8 jobs.
+
+**The harness.** `run_np_dolphin.sh` starts one Dolphin with a fresh throwaway user dir per run (test profile
+`TSTA#001`, fake uid, no play key; `latestVersion` must parse as semver, an empty one throws in
+`prepareOnlineStatus`), Null video, no audio, emulation speed 1.0, spectator/jukebox/replays off, pads from the FIFO
+`<userdir>/Pipes/slippibot1` (`dolphin_drive.py --pipe`). `np_dolphin_pair_linux.sh OUT --decider engine|dolphin
+--stage S --lag-ms N` runs mock + Dolphin + driver + `melee play --slippi-mm` inside `unshare -rn` (a private network
+namespace with only loopback: nothing can reach a Slippi service whatever the config). The mock makes the first
+queued ticket the host, so `--decider engine` queues the engine first and Dolphin joins second as the guest (port 2).
+`--engine-out-ms` / `--dolphin-out-ms` add one-way delay to one direction only (`mock_mm.py --extra-ab-ms/--extra-ba-ms`);
+`--engine-hitch-ms` SIGSTOPs the engine for a while. `np_dolphin_matrix_linux.sh OUT N FRAMES` runs the matrix.
+
+**Guest pairing.** Dolphin as the guest paired, connected and played every time here (all engine-decider runs below,
+plus one with the engine left 45 s alone in the queue). The mock's answer to the second joiner (`isHost:false`, its own
+entry `port 2`, the decider at the relay) is what Slippi's `handleMatchmaking` expects; the Dolphin side keeps one link
+(the engine's CONNECT reached it after it had bound its netplay port). The desktop's disconnect was not reproduced.
+
+**Found on the way.** `UdpTransport::stamp_arrivals`' reader thread ended on EINTR: on Linux a socket read with
+SO_RCVTIMEO fails with EINTR after a stop signal and SIGCONT, and the link then went deaf (still sending, never
+receiving, until the peer timed it out). Interrupted is now a timeout like WouldBlock.
+
+**Results** (engine vs Slippi Dolphin, loopback, mock relay lag one way in both directions, 3600-frame target; a
+match can end early on stocks; compared = Dolphin's TX checksums vs the engine's finalized ones, every common frame):
+
+| decider | stage | lag ms | extra | time sync | matches | frames compared | desyncs (soft/hard) | engine holds per match | engine catch-up frames | engine rollbacks per match |
+|---|---|---|---|---|---|---|---|---|---|---|
+| engine | Dream Land (0x1C) | 30 | - | old (default) | 3 | 9461 | 0/0 | 8, 10, 10 | 0 | 10, 19, 17 |
+| engine | Dream Land | 30 | - | new | 3 | 9648 | 0/0 | 0, 0, 0 | 0 | 151, 191, 201 |
+| engine | Dream Land | 60 | - | old | 3 | 9939 | 0/0 | 4, 4, 5 | 0 | 308, 453, 457 |
+| engine | Dream Land | 60 | - | new | 3 | 8229 | 0/0 | 3, 1, 2 | 4 (one match) | 251, 335, 455 |
+| engine | Final Destination (0x20) | 30 | - | old | 3 | 10340 | 0/0 | 8, 10, 9 | 0 | 11, 12, 12 |
+| engine | Final Destination | 30 | - | new | 3 | 10781 | 0/0 | 0, 0, 0 | 0 | 238, 198, 175 |
+| engine | Final Destination | 60 | - | old | 3 | 8625 | 0/0 | 5, 6, 5 | 0 | 232, 363, 457 |
+| engine | Final Destination | 60 | - | new | 3 | 10734 | 0/0 | 1, 0, 0 | 0 | 413, 456, 460 |
+| Dolphin (control) | Dream Land | 30 | - | old | 1 | 3566 | 0/0 | 9 | 0 | 18 |
+| Dolphin (control) | Dream Land | 30 | - | new | 1 | 3681 | 0/0 | 0 | 0 | 202 |
+| engine | Dream Land | 30 | engine->Dolphin +80 | old / new | 3 / 3 | 9940 / 9979 | 0/0 | 4 / 0 | 0 | ~300-460 |
+| engine | Dream Land | 30 | Dolphin->engine +80 | old / new | 3 / 3 | 9779 / 9443 | 0/0 | 3-4 / 0 | 0 | ~300-460 |
+| engine | Dream Land | 30 | engine stopped 200 ms at ~1 s | old / new | 3 / 3 | 9137 / 9638 | 0/0 | 8-10 / 0 | 0 | 8-18 / 121-197 |
+| engine | Dream Land | 30 | engine stopped 300 ms before its start | old / new | 3 / 3 | 8938 / 9059 | 0/0 | 3 / 0-1 | 0 | 10-13 / 79-167 |
+
+No desync in 50 matches with either rule. The new rule's difference here is that it does not hold after the opening
+(frame 120), so the engine stays a little ahead and rolls back 10-20x more at 30 ms; its catch-up path (run extra
+frames when behind, first possible on online frame 125) ran in one match only (4 frames, 60 ms, no desync): the engine
+measured itself ahead of Dolphin in every other match, whichever direction carried the extra delay and with the engine
+frozen. So these loopback runs neither confirm nor rule out time sync as the cause of the live desync (Dream Land,
+online frame 125, the remote checksum constant): frame 125 is exactly the first frame the new rule can run an extra
+frame on, which a loopback peer on the same clock rarely makes it do. A test that needs the engine to start behind a
+faster-loading Dolphin, or a forced catch-up, is what would decide it.

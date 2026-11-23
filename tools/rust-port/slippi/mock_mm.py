@@ -98,7 +98,7 @@ class Conn:
 
 
 class Server:
-    def __init__(self, port, capture, delay_ms, stages=None, lag_ms=0, loss_pct=0):
+    def __init__(self, port, capture, delay_ms, stages=None, lag_ms=0, loss_pct=0, extra_ab_ms=0, extra_ba_ms=0):
         self.error, self.latest = "", ""
         self.port = port
         self.bind = LOOP
@@ -110,6 +110,8 @@ class Server:
         self.stages = stages or [0x2, 0x3, 0x8, 0x1C, 0x1F, 0x20]
         # relay impairment, both directions: each datagram is dropped with loss_pct %, else held lag_ms
         self.lag = lag_ms / 1000.0
+        # asymmetric routes: extra one-way delay from the first-queued player A to B, and from B to A
+        self.extra = {"A>B": extra_ab_ms / 1000.0, "B>A": extra_ba_ms / 1000.0}
         self.loss = loss_pct
         self.jitter = 0.0
         self.rng = 0x1234567
@@ -246,11 +248,10 @@ class Server:
                     out, dest, d = rx, pa, "B>A"
                 if self.loss and self.drop():
                     d += "x"
-                elif self.lag or self.jitter:
+                elif self.lag or self.jitter or self.extra[d]:
                     j = random.uniform(0, self.jitter) if self.jitter else 0.0
-                    held.append((time.time() + self.lag + j, out, data, dest))
-                    if j:
-                        held.sort(key=lambda h: h[0])  # jitter reorders datagrams, as a real path may
+                    held.append((time.time() + self.lag + self.extra[d] + j, out, data, dest))
+                    held.sort(key=lambda h: h[0])  # jitter reorders datagrams, as a real path may
                 else:
                     out.sendto(data, dest)
                 if self.capture:
@@ -267,6 +268,8 @@ def main():
     ap.add_argument("--lag-ms", type=int, default=0, help="relay: one-way delay per datagram")
     ap.add_argument("--jitter-ms", type=int, default=0, help="relay: plus a uniform 0..N ms per datagram")
     ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this %% of datagrams")
+    ap.add_argument("--extra-ab-ms", type=int, default=0, help="relay: extra one-way delay from A (first queued) to B")
+    ap.add_argument("--extra-ba-ms", type=int, default=0, help="relay: extra one-way delay from B to A")
     ap.add_argument("--bind", default=LOOP, help="listen/relay address (default loopback; a private address for --mm-lan peers)")
     ap.add_argument("--error", default="", help="answer every join with this server error (the outdated-client check)")
     ap.add_argument("--latest-version", default="", help="with --error: the reply's latestVersion")
@@ -275,7 +278,7 @@ def main():
     if not (ip.is_loopback or ip.is_private):
         ap.error("--bind must be a loopback or private address")
     stages = [int(x, 0) for x in a.stages.split(",") if x]
-    srv = Server(a.port, a.capture, a.delay_ms, stages, a.lag_ms, a.loss_pct)
+    srv = Server(a.port, a.capture, a.delay_ms, stages, a.lag_ms, a.loss_pct, a.extra_ab_ms, a.extra_ba_ms)
     srv.jitter = a.jitter_ms / 1000.0
     srv.bind = a.bind
     srv.error, srv.latest = a.error, a.latest_version

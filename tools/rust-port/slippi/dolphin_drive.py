@@ -14,6 +14,7 @@ Steps: main menu -> 1P menu (Slippi's Online Play) -> Online submenu -> Direct -
 (the same rb_gen as `melee slippi-netplay --padgen`) for this port, one pad per frame as the state log advances.
 """
 import argparse
+import os
 import struct
 import sys
 import time
@@ -31,8 +32,9 @@ def log(m):
 
 
 class Dolphin:
-    def __init__(self, name, state):
-        self.pipe_name = rf"\\.\pipe\{name}slippibot1"
+    def __init__(self, name, state, pipe=""):
+        # Windows: the named pipe of SLIPPI_PIPE_PREFIX; Linux (--pipe): the FIFO <userdir>/Pipes/slippibot1
+        self.pipe_name = pipe or rf"\\.\pipe\{name}slippibot1"
         self.state = state
         self.pipe = None
         self.fh = None
@@ -43,7 +45,14 @@ class Dolphin:
         t = time.time()
         while time.time() - t < timeout:
             try:
-                self.pipe = open(self.pipe_name, "wb", buffering=0)
+                if os.name == "nt":
+                    self.pipe = open(self.pipe_name, "wb", buffering=0)
+                else:
+                    # a FIFO: a non-blocking open fails (ENXIO) until Dolphin has opened its end, so a Dolphin
+                    # that never boots cannot hang the driver
+                    fd = os.open(self.pipe_name, os.O_WRONLY | os.O_NONBLOCK)
+                    os.set_blocking(fd, True)
+                    self.pipe = os.fdopen(fd, "wb", buffering=0)
                 break
             except OSError:
                 time.sleep(0.25)
@@ -115,13 +124,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--name", required=True)
     ap.add_argument("--state", required=True)
+    ap.add_argument("--pipe", default="", help="the pad pipe's path (Linux: <userdir>/Pipes/slippibot1)")
     ap.add_argument("--explore", default="", help="space-separated taps (A, B, START, D_DOWN...) then report")
     ap.add_argument("--play", default="", help="X,Y or a character name (CSS table): the full flow, picking that character")
     ap.add_argument("--pads", type=int, default=1, help="seed of the scripted in-game pads")
     ap.add_argument("--frames", type=int, default=3600, help="in-game frames to play (the game may end first)")
     ap.add_argument("--timeout", type=int, default=600)
     a = ap.parse_args()
-    d = Dolphin(a.name, a.state)
+    d = Dolphin(a.name, a.state, a.pipe)
     d.open()
     d.until(lambda s: major(s) in (1, 8), "main menu")
     d.frames(30)

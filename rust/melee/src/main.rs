@@ -77,6 +77,8 @@ mod netplay;
 mod slippi_css_host;
 mod slippi_link;
 mod slippi_np;
+#[cfg(feature = "real-net")]
+mod mu_np;
 mod yougame_search;
 mod room_keeper;
 mod play_net;
@@ -655,6 +657,13 @@ fn main_inner() -> ExitCode {
         Some("netplay") => netplay::netplay(&args),
         Some("slippi-netplay") => slippi_np::slippi_netplay(&args),
         Some("slippi-replay") => slippi_np::slippi_replay(&args),
+        #[cfg(feature = "real-net")]
+        Some("mu-netplay") => mu_np::mu_netplay(&args),
+        #[cfg(not(feature = "real-net"))]
+        Some("mu-netplay") => {
+            eprintln!("melee: mu-netplay (P2P Direct) needs a build with --features real-net");
+            ExitCode::FAILURE
+        }
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
         Some("slp-spectate") => slippi_spectate::watch_cmd(&args),

@@ -166,6 +166,54 @@ frames over 16 ms per profile 10-230 -> 0 (and 0 with the mock relay's --lag-ms 
 save are the same with either watch (the same writes are seen), so the state is unchanged; MELEE_SNAP_CHECK still
 compares every save and load with the full state.
 
+## Linux: the host block's base copied in the background (2026-11-23, port/linuxcow)
+The online match's first tick captures the rollback base (`Base::capture`), and after port/firsttick made the copy
+buffers early (`snapshot::prewarm`) most of what was left of the capture was copying the 64 MB host block (+ ~13 MB
+of statics) on the game thread. Windows has copied the host block behind write faults since `cow::bg`; Linux now does
+the same (`cow.rs`, `bg` for `target_os = "linux"`):
+- At capture the host block goes `PROT_READ` (one `mprotect`) and the copy helper copies it in runs of 64 pages into
+  the base buffer, making each copied run writable again. A write that reaches a not-yet-copied page raises SIGSEGV;
+  the handler (shared with the arena's copy-on-write, `imp_unix`) claims the page (0 not copied, 1 being copied, 2
+  copied), copies it or waits for the helper's copy, and makes it writable before the write re-runs. `base_page`
+  reads the live page while a page is not copied (it was not written since the capture).
+- Ordering with the write watch: the host block stays registered on `wpwatch` (userfaultfd WP_ASYNC). `mprotect`
+  changes only the VMA's permissions; the pages' write-protect markers survive it, so a write after the handler made
+  a page writable still reads as written at the next save, and a page the helper only made writable reads unwritten
+  (kernel 7.2, standalone PAGEMAP_SCAN test, populated and unpopulated pages). A second userfaultfd in synchronous WP
+  mode is not possible: a VMA has one uffd context, and wpwatch's is async. Soft-dirty would behave the same way
+  (mprotect keeps a cleared page non-writable), but the background copy is on only while the host block is on
+  wpwatch; `MELEE_SNAP_NO_COWBG=1` (or `MELEE_SNAP_BGCOPY=0`, or `MELEE_SNAP_NO_UFFD=1`) keeps the copy on the game
+  thread.
+- One helper thread for the process, started by `prewarm` (or the first capture), parked between copies, never
+  ended. A rollback load on Linux rewinds every static of the executable, std's and the runtime's own thread
+  bookkeeping included (no PDB marks them host-only there): a helper per base that ended mid-session had a load write
+  its old bookkeeping back, and the next thread std started (the snapshot reaper, at the session's end) panicked in a
+  btree assertion (2 of 4 synctests). Anything that starts or ends a thread while a base is alive is exposed to this;
+  the snapshot-prewarm thread is safe only because it is done long before the capture. The helper's job/stop flags
+  and the fault counter live on the system heap for the same reason.
+- `MELEE_SNAP_BGCOPY_DELAY_MS=N` (test): the helper starts each copy N ms late, so the first frames' writes and a
+  synctest's loads take the fault path (205-282 faults per 660-frame synctest at 2.5-4 s).
+
+Checks: synctest depth 4 and 7 on pad_falcon_fox_fd, cpu_fox_falco_dl, pad_marth_sheik_bf, cpu_peach_samus_ys_items,
+660 frames, `MELEE_SNAP_CHECK=1`: 0 mismatches, with and without the delay knob; gate goldens unchanged; NHV1
+retail_full byte-identical; engine-vs-engine rematch (with and without `--lag-ms 45`): slp differing 0, the two
+peers' checksum CSVs equal on every game.
+
+First online tick, interleaved rematch A/B (3 rounds each, 12 captures per build, profiler on, vsync off; the laptop
+was at load 17-23 from other lanes' builds and games, so the absolute numbers are high and wide), median [range]:
+
+| | base (rust-port 56367f6c4) | background host copy |
+|---|---|---|
+| tick step of the capture tick | 32.6 ms [20.6-42.9] | 26.2 ms [21.2-37.2] |
+| capture + first state hash | 26.1 ms [13.6-34.2] | 15.7 ms [13.0-21.5] |
+| capture: copies (statics, and the host block before) | 10.9 ms [7.0-23.6] | 5.3 ms [2.5-8.7] |
+| of it: host block start (mprotect, helper request) | - | 1.5 ms [0.7-3.5] |
+| capture: arena protect (unchanged code) | 8.0 ms [3.7-23.3] | 6.6 ms [4.3-10.4] |
+
+What is left in the capture is the arena's `mprotect` (`cow::protect`, ~108 MB; the most variable part under load)
+and the statics' 13 MB copy; the statics could take the same background path (their writers include other threads,
+which the handler serves too), not done here.
+
 ## Snapshot perf guard
 `tools/rust-port/perf/snapguard.sh` (run by `gate.sh` for the release profile; `SNAPGUARD=0` skips it) runs the cpu_fox_falco_dl
 depth-7 synctest 3 times (`--runs N`), takes the minimum of save, load and total ms per tick, and fails when one is more than

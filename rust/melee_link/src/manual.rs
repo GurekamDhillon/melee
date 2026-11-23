@@ -255,7 +255,7 @@ pub fn install() {
             h::HSD_JOBJ_ADD_ANIM_ALL = Some(|j, a| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnimAll(j, a, core::ptr::null_mut(), core::ptr::null_mut()) });
             h::GENO_DEFINE_BASE_KIND = Some(|_| -1);
             h::MEX_SSM_FOR_PORT_KIND = Some(|_| -1);
-            h::SLIPPI_CODES = Some(|| 0);
+            h::SLIPPI_CODES = Some(melee_core::codes::slippi_codeset);
             h::MEX_ON_APPLY_HEAD_ITEM = Some(|_, _| {});
             h::MEX_ON_ITEM_DROP = Some(|_, _, _| {});
             h::MEX_ON_ITEM_DROP_EXT = Some(|_, _, _| {});

@@ -66,9 +66,10 @@ pub fn online_codes(alt_stage_mode: u8) {
     let w = std::env::var("MELEE_SLIPPI_ONLINE_BITS").ok().and_then(|v| u32::from_str_radix(&v, 16).ok());
     c::set_ps_camera_independent_monitor(true);
     c::set(w.unwrap_or(c::UCF | c::NEUTRAL_SPAWN | c::FREEZE_FIX | c::NO_WOBBLE | c::LGL | frozen), 45);
+    c::set_slippi_codeset(2);
     unsafe {
         melee_fighter::platform::hook::Slippi_Codes = Some(|| 2);
-        melee_fighter::hooks::SLIPPI_CODES = Some(|| 2);
+        melee_fighter::hooks::SLIPPI_CODES = Some(melee_core::codes::slippi_codeset);
         melee_world::tu::grlast::ext::SLIPPI_CODES = Some(|| 2);
     }
 }

@@ -67,6 +67,21 @@ static LAB_UNTIMED: AtomicBool = AtomicBool::new(false);
 /// (Slippi's codesets all carry it). Set before the match boots.
 static REPLAY_NO_NEUTRAL_SPAWN: AtomicBool = AtomicBool::new(false);
 
+/// The Slippi codeset the fighter TUs' `Slippi_Codes` hook answers (0 none, 2 online, a replay's own value): set with
+/// the match's other codes and read through the hook `melee_link::manual` installs, so an engine boot after the online
+/// setup (which installs every hook again) cannot reset it to 0. While it was lost, the online-only fixes the fighter
+/// code keys on were off in a live Slippi match: WhispyBlowDirFix let a dead fighter count in Whispy's direction pick
+/// (ftLib_GetOpponentsDir), and Dream Land's wind ran a few frames apart from Slippi Dolphin's (HARD desyncs).
+static SLIPPI_CODESET: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+
+pub fn set_slippi_codeset(c: i32) {
+    SLIPPI_CODESET.store(c, Ordering::Relaxed);
+}
+
+pub fn slippi_codeset() -> i32 {
+    SLIPPI_CODESET.load(Ordering::Relaxed)
+}
+
 /// See [`REPLAY_NO_NEUTRAL_SPAWN`].
 pub fn set_replay_no_neutral_spawn(on: bool) {
     REPLAY_NO_NEUTRAL_SPAWN.store(on, Ordering::Relaxed);

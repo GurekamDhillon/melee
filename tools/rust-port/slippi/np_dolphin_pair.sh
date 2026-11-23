@@ -30,7 +30,7 @@ MELEE_WINDOW_TITLE="slippi4:dolphin:$dn" powershell -NoProfile -File "$here/run_
 for i in $(seq 100); do [ -s "$O/dolphin.pid" ] && break; sleep 0.2; done
 dpid=$(tr -d '\r\n' < "$O/dolphin.pid")
 echo "dolphin pid $dpid"
-python -I "$here/dolphin_drive.py" --name $dn --state "$W\\state_$dn.txt" --play "$css" --pads $pads --frames $((frames + 300)) --timeout 300 > "$O/drive.log" 2>&1 &
+python -I "$here/dolphin_drive.py" --name $dn --state "$W\\state_$dn.txt" --play="$css" --pads $pads --frames $((frames + 300)) --timeout 300 > "$O/drive.log" 2>&1 &
 drv=$!
 # the engine joins once Dolphin is searching (it must be second in the queue to be player 2)
 for i in $(seq 600); do grep -q "join from TSTA" "$O/mm.log" && break; sleep 0.5; done

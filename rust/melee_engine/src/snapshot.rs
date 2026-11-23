@@ -281,6 +281,11 @@ mod wpwatch {
         })
     }
 
+    /// `[addr, addr+len)` is on the watch.
+    pub fn covers(addr: usize, len: usize) -> bool {
+        W.with(|w| w.fds.is_some() && w.regs.iter().any(|&(ra, rl)| addr >= ra && addr + len <= ra + rl))
+    }
+
     /// Set the bits of the pages of `[addr, addr+len)` written since the last read of them, and protect them again;
     /// false when the range is not on the watch (the caller then asks soft-dirty).
     pub fn read(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) -> bool {
@@ -556,6 +561,11 @@ static PREWARM: crate::arena::SysStatic<Vec<Vec<u8>>> = crate::arena::SysStatic:
 /// netplay match start otherwise spends ~40 ms in the first-touch faults of ~its fresh buffers, which more threads do
 /// not speed up. Presentation-neutral: the buffers hold nothing until the capture copies the state into them.
 pub fn prewarm() {
+    // Linux: the host block's background copy helper (one thread for the process) starts here, before the capture
+    #[cfg(target_os = "linux")]
+    if bg_copy() {
+        crate::cow::bg::spawn_helper();
+    }
     let sizes: Vec<usize> = ranges().iter().map(|r| r.1).collect();
     if PREWARM.with(|g| g.len() == sizes.len() && g.iter().zip(&sizes).skip(1).all(|(v, &l)| v.len() == l)) {
         return;
@@ -589,9 +599,20 @@ fn bg_copy() -> bool {
     std::env::var("MELEE_SNAP_BGCOPY").map_or(true, |v| v != "0")
 }
 
+/// Linux: the same, while the host block is on the userfaultfd write watch (`wpwatch`, kernel 6.7+; the copy itself
+/// needs only `mprotect`, but this is the path the correctness runs cover). Off with MELEE_SNAP_NO_COWBG=1 (or
+/// MELEE_SNAP_BGCOPY=0): the host block is copied on the game thread at capture, as before.
+#[cfg(target_os = "linux")]
+fn bg_copy() -> bool {
+    std::env::var("MELEE_SNAP_BGCOPY").map_or(true, |v| v != "0") && std::env::var_os("MELEE_SNAP_NO_COWBG").is_none() && {
+        let m = Host::get().os.mem;
+        wpwatch::covers(m.base as usize, m.len)
+    }
+}
+
 /// The host block's write faults while its base was being copied in the background (stats line).
 fn bg_faults_note() -> String {
-    #[cfg(windows)]
+    #[cfg(any(windows, target_os = "linux"))]
     if crate::cow::bg::active() || crate::cow::bg::faults() > 0 {
         return format!("; host base copy: {} write faults", crate::cow::bg::faults());
     }
@@ -878,7 +899,7 @@ impl Drop for Base {
             if self.static_watch {
                 crate::pagewatch::release();
             }
-            #[cfg(windows)]
+            #[cfg(any(windows, target_os = "linux"))]
             crate::cow::bg::release_copy();
             crate::cow::release()
         };
@@ -970,12 +991,13 @@ impl Base {
         for i in 1..n {
             let (a, l) = b.ranges[i];
             // the host block (64 MB, most of the copy): read-only now, copied by a helper thread (cow::bg)
-            #[cfg(windows)]
+            #[cfg(any(windows, target_os = "linux"))]
             if i == HOST && bg_copy() && l % PAGE == 0 {
                 let mut v = match warm.get_mut(i).map(std::mem::take) {
                     Some(v) if v.len() == l => v,
                     _ => vec![0u8; l],
                 };
+                let _zb = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "snapshot capture: host base start (bg)");
                 match unsafe { crate::cow::bg::begin(a, l, v.as_mut_ptr()) } {
                     Ok(()) => {
                         b.data[i] = v;
@@ -1130,7 +1152,7 @@ impl Base {
             // never written since the capture: the live page IS the base page
             return unsafe { crate::cow::saved(at).unwrap_or_else(|| bytes(at, PAGE)) };
         }
-        #[cfg(windows)]
+        #[cfg(any(windows, target_os = "linux"))]
         if ri == HOST && crate::cow::bg::active() && !crate::cow::bg::copied(pi) {
             // not copied yet, so not written since the capture (a write copies it first): the live page is the base
             let (a, l) = self.ranges[HOST];

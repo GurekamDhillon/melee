@@ -523,6 +523,7 @@ pub fn Player_80031D2C(kind: CharacterKind, color: u8) {
     unsafe {
         if !hats_preloaded && ext::lbDvd_IsPlanningSixSlot() == 0 {
             hats_preloaded = true;
+            let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("preload: Kirby hats"));
             ext::ftLib_LoadKirbyHats(0);
         }
     }

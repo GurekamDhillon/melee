@@ -125,8 +125,84 @@ mod sys {
     pub unsafe fn decommit(at: usize, n: usize) {
         VirtualFree(at as *mut _, n, 0x4000);
     }
+    /// Zero `[at, at + n)` of a committed slot (its taker's fresh start; the write watch is reset after).
+    pub unsafe fn zero_slot_range(at: usize, n: usize) {
+        core::ptr::write_bytes(at as *mut u8, 0, n);
+    }
 }
-#[cfg(not(windows))]
+/// Linux: the range is a PROT_NONE, MAP_NORESERVE mapping (as the arena's reserve); a commit makes pages read-write
+/// (zero-filled on first touch), a decommit drops them and makes them inaccessible again, as Windows' MEM_DECOMMIT.
+/// The write watch is the page table: a page of a slot is reported written when it is present (or swapped out) in
+/// `/proc/self/pagemap`. A page only read maps the shared zero page and counts as written too, which is conservative
+/// (the plan builder then scans / copies its zeros); a page never touched since the slot's pages were dropped is
+/// absent and still zero, the same guarantee `GetWriteWatch` gives. A taken slot's pages up to its last user's dirty
+/// mark are zeroed by dropping them ([`zero_slot_range`]): absent again, as a reset watch would report them.
+#[cfg(target_os = "linux")]
+mod sys {
+    pub unsafe fn reserve_at(at: usize, n: usize) -> usize {
+        let fixed = if at != 0 { libc::MAP_FIXED_NOREPLACE } else { 0 };
+        let p = libc::mmap(at as *mut _, n, libc::PROT_NONE, libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE | fixed, -1, 0);
+        if p == libc::MAP_FAILED {
+            return 0;
+        }
+        if at != 0 && p as usize != at {
+            // a kernel without MAP_FIXED_NOREPLACE took the address as a hint only
+            libc::munmap(p, n);
+            return 0;
+        }
+        p as usize
+    }
+    /// Pages of `[a, a + n)` present or swapped (see the module note), ascending. Nothing is reset: the caller's
+    /// reset point is the slot's decommit at release (its pages are absent again).
+    pub unsafe fn written(a: usize, n: usize) -> Option<Vec<usize>> {
+        use std::io::{Read, Seek, SeekFrom};
+        // opened per call (a prepare or a slot take, off the game thread): no handle in a static a rollback load rewinds
+        let mut f = std::fs::File::open("/proc/self/pagemap").ok()?;
+        let pages = n / 4096;
+        let mut out = Vec::new();
+        let mut buf = vec![0u8; 8 * 4096];
+        let mut k = 0;
+        while k < pages {
+            let m = (pages - k).min(4096);
+            f.seek(SeekFrom::Start(((a / 4096 + k) * 8) as u64)).ok()?;
+            f.read_exact(&mut buf[..m * 8]).ok()?;
+            for i in 0..m {
+                let e = u64::from_le_bytes(buf[i * 8..i * 8 + 8].try_into().unwrap());
+                if e & (3 << 62) != 0 {
+                    out.push(a + (k + i) * 4096);
+                }
+            }
+            k += m;
+        }
+        Some(out)
+    }
+    pub unsafe fn commit(at: usize, n: usize) -> bool {
+        libc::mprotect(at as *mut _, n, libc::PROT_READ | libc::PROT_WRITE) == 0
+    }
+    pub unsafe fn decommit(at: usize, n: usize) {
+        libc::madvise(at as *mut _, n, libc::MADV_DONTNEED);
+        libc::mprotect(at as *mut _, n, libc::PROT_NONE);
+    }
+    /// Zero `[at, at + n)` of a committed slot by dropping its pages (whole pages; a partial last page is written):
+    /// they read zero and are absent again, so the write watch above does not count them. During a fight
+    /// ([`super::set_in_fight`]) the pages are written with zeros instead and stay resident: no page is given back
+    /// mid-match (the plan cache cap's rule, perf.md); they then count as written (more scanning, same plan).
+    pub unsafe fn zero_slot_range(at: usize, n: usize) {
+        if super::in_fight() {
+            core::ptr::write_bytes(at as *mut u8, 0, n);
+            return;
+        }
+        let a = at & !0xFFF;
+        let full = (at + n) & !0xFFF;
+        if full > a {
+            libc::madvise(a as *mut _, full - a, libc::MADV_DONTNEED);
+        }
+        if at + n > full.max(at) {
+            core::ptr::write_bytes(full.max(at) as *mut u8, 0, at + n - full.max(at));
+        }
+    }
+}
+#[cfg(not(any(windows, target_os = "linux")))]
 mod sys {
     pub unsafe fn reserve(_n: usize) -> usize {
         0
@@ -141,6 +217,9 @@ mod sys {
         false
     }
     pub unsafe fn decommit(_at: usize, _n: usize) {}
+    pub unsafe fn zero_slot_range(at: usize, n: usize) {
+        core::ptr::write_bytes(at as *mut u8, 0, n);
+    }
 }
 
 /// Reserve the range (once, at boot, before any snapshot). False: not supported here (the service stays off).
@@ -199,7 +278,11 @@ pub fn take_slot() -> Option<usize> {
         if s.used.compare_exchange(m, m | (1 << free), AcqRel, Acquire).is_ok() {
             let d = s.dirty[free].swap(0, AcqRel);
             if d > 0 {
-                unsafe { core::ptr::write_bytes((s.base + free * SLOT) as *mut u8, 0, d) };
+                let t0 = std::time::Instant::now();
+                unsafe { sys::zero_slot_range(s.base + free * SLOT, d) };
+                if crate::arena::rb_diag() {
+                    crate::arena::rb_diag_log("recheap take_slot zero (KB)", d >> 10, t0.elapsed().as_micros() as u64);
+                }
             }
             // the zeroing (and the last user's writes) are not this user's writes
             let _ = unsafe { sys::written(s.base + free * SLOT, SLOT - META) };
@@ -229,8 +312,15 @@ pub fn release_slot(slot: usize) {
         unsafe { sys::decommit(s.base + slot * SLOT, SLOT) };
         s.dirty[slot].store(0, Release);
     } else if d > KEEP_COMMITTED {
+        let t0 = std::time::Instant::now();
+        let _z = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("recheap release decommit"));
         unsafe { sys::decommit(s.base + slot * SLOT + KEEP_COMMITTED, SLOT - META - KEEP_COMMITTED) };
         s.dirty[slot].store(KEEP_COMMITTED, Release);
+        if crate::arena::rb_diag() {
+            crate::arena::rb_diag_log("recheap release_slot decommit (dirty KB)", d >> 10, t0.elapsed().as_micros() as u64);
+        }
+    } else if crate::arena::rb_diag() {
+        crate::arena::rb_diag_log("recheap release_slot (dirty KB, no decommit)", d >> 10, 0);
     }
     s.used.fetch_and(!(1u64 << slot), AcqRel);
 }
@@ -254,6 +344,20 @@ pub fn drain_decommits() {
         s.dirty[slot].store(0, Release);
         s.used.fetch_and(!(1u64 << slot), AcqRel);
     }
+}
+
+/// A fight scene is on (VS / sudden death; set by the asset service's `scene_prefetch` at each scene change). While
+/// it is, the host's background memory work holds off so that nothing competes with the fight's ticks: the asset
+/// worker starts no job, a hint evicts no plan (a plan's drop decommits its slot on the thread that drops it, the
+/// game's: 20-80 ms ticks on Windows), the snapshot page reaper waits, and Linux slot zeroing writes instead of
+/// dropping pages. Host state off the snapshot (`arena::SysStatic`): a plain static was rewound by a rollback load
+/// to its value at the session's base, which can predate the fight.
+static IN_FIGHT: crate::arena::SysStatic<bool> = crate::arena::SysStatic::new(|| false);
+pub fn set_in_fight(on: bool) {
+    IN_FIGHT.with(|f| *f = on);
+}
+pub fn in_fight() -> bool {
+    IN_FIGHT.with(|f| *f)
 }
 
 /// Note how far slot `slot` was written (its taker zeroes that much on reuse).

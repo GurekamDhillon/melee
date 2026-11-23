@@ -990,7 +990,9 @@ fn worker_main() {
                 }
                 // disc hints first (a load is coming); a kept-copy job only once the game's decodes went quiet
                 let since = now_ms().saturating_sub(GAME_DECODE_AT.load(core::sync::atomic::Ordering::Relaxed));
-                let pick = if since < DISC_QUIET_MS {
+                // no job while a fight is on (recheap::in_fight): its slot take, page commits and decode compete
+                // with the fight's ticks; the queue waits for the fight's end (a load meanwhile decodes in place)
+                let pick = if since < DISC_QUIET_MS || recheap::in_fight() {
                     None
                 } else {
                     g.jobs.iter().position(|j| matches!(j.src, Src::Disc(..))).or(if since >= BYTES_QUIET_MS { (!g.jobs.is_empty()).then_some(0) } else { None })
@@ -1029,7 +1031,14 @@ fn worker_main() {
         let res = match bytes {
             None => Err(NoPlan::NoSlot), // the read failed: not the file's fault
             Some(b) if !hdr_ok(&b) => Err(NoPlan::Unsafe),
-            Some(b) => std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).unwrap_or(Err(NoPlan::Unsafe)),
+            Some(b) => {
+                let t0 = std::time::Instant::now();
+                let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).unwrap_or(Err(NoPlan::Unsafe));
+                if crate::arena::rb_diag() {
+                    crate::arena::rb_diag_log(&format!("asset worker prepare entry {:#x} (KB)", job.entry), b.len() >> 10, t0.elapsed().as_micros() as u64);
+                }
+                r
+            }
         };
         let (plan, why) = match res { Ok(p) => (Some(p), None), Err(e) => (None, Some(e)) };
         let mut g = s.m.lock().unwrap();
@@ -1103,12 +1112,20 @@ fn hint_entry_pri(entry: i32, heap: i32, gr: Option<i32>, low: bool, small: bool
         }
         return;
     }
-    // a hint outranks a cached plan nobody asked for lately: make room (least recently used first)
+    // a hint outranks a cached plan nobody asked for lately: make room (least recently used first). Not during a
+    // fight: dropping a plan gives its slot's pages back on this (the game's) thread; the hint is refused instead
+    let low = low || recheap::in_fight();
     if !low {
         trim_plans(&mut g.entries, 8 * len, None);
         while g.entries.len() >= KEEP {
             let Some(old) = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).min_by_key(|&i| g.entries[i].used) else { break };
-            g.entries.remove(old);
+            let t0 = std::time::Instant::now();
+            let e = g.entries.remove(old);
+            let n = e.len;
+            drop(e);
+            if crate::arena::rb_diag() {
+                crate::arena::rb_diag_log("asset hint evicts a plan (KB)", n >> 10, t0.elapsed().as_micros() as u64);
+            }
         }
     }
     let held: usize = g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum();
@@ -1164,6 +1181,8 @@ pub fn scene_prefetch(minor: i32) {
     }
     let fight = minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32;
     IN_FIGHT.store(fight, Relaxed);
+    // a fight is on: recheap gives no slot page back until it ends (Linux `zero_slot_range`)
+    recheap::set_in_fight(fight);
     if minor == melee_types::GS_VS as i32 || minor == melee_types::GS_SUDDEN_DEATH as i32 {
         hint_files(&["IfCoGet.dat", "GmRst", "SdRst", "TyDatai"]);
     } else if minor == melee_types::GS_RESULTS as i32 {
@@ -1183,6 +1202,17 @@ pub fn hint_vs_match(picks: &[(i32, u8)], gr: i32) {
     }
     hint_stage(gr);
     hint_fighters(picks);
+}
+
+/// The ground kind of external stage `stkind` (`stage_id_map`; 0: none / out of range). Reads an immutable table.
+pub fn stage_grkind(stkind: i32) -> i32 {
+    unsafe {
+        let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+        if stkind < 0 || stkind as usize >= map.len() {
+            return 0;
+        }
+        map[stkind as usize].grkind as i32
+    }
 }
 
 fn hint_fighters(picks: &[(i32, u8)]) {

@@ -719,7 +719,8 @@ impl RetailPlay {
                 // the match's files to the asset worker first (the relaunched process had them at its boot): the
                 // select stays up a few ticks while they are read, so the match's first tick applies ready plans
                 let picks: Vec<(i32, u8)> = scn.players.iter().flatten().map(|p| (p.ckind, p.color.max(0) as u8)).collect();
-                melee_engine::asset::hint_vs_match(&picks, 0);
+                // and the stage the decider picked (its file prepared for that stage's ground kind)
+                melee_engine::asset::hint_vs_match(&picks, melee_engine::asset::stage_grkind(scn.stage));
                 melee_engine::scenario::install(scn);
                 *PENDING_GOTO.lock().unwrap() = Some((mode, 0));
             }

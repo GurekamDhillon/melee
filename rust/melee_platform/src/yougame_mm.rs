@@ -246,13 +246,24 @@ impl Bridge for StdioBridge {
     }
 }
 
+/// A lobby `compatibility` value YouGame accepts: 1-64 characters from `[A-Za-z0-9._:-]` (SDK "Online menu
+/// integration"). Anything else is mapped to `-` and cut at 64; an empty value becomes `default`. The site refuses
+/// a lobby whose compatibility breaks the rule with "Invalid lobby configuration; public queues allow one local
+/// player per device" (one message for every lobby check), which is what `gd-melee-rust/<version>` got.
+pub fn lobby_compat(raw: &str) -> String {
+    let s: String = raw.chars().map(|c| if c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | ':' | '-') { c } else { '-' }).take(64).collect();
+    if s.is_empty() { "default".into() } else { s }
+}
+
 /// The `mpTicket` members for a 1v1 search (Unranked or Direct): two players, singles, our lobby contract,
 /// never ranked here; Unranked stays in the room after a match (`afterMatch: stay`), Direct names the code.
+/// A public queue seats one local player per device: `maxLocalPlayers` is always 1 and no local seats are sent
+/// (the port that pressed Start plays; pad-mirror slots and other plugged ports never reach the ticket).
 pub fn ticket_fields(mode: i32, compat: &str, direct: Option<&str>) -> String {
     use crate::yougame::json_str;
     let mut f = format!(
         r#""players":2,"mode":"singles","lobby":{{"version":1,"minPlayers":2,"maxLocalPlayers":1,"compatibility":{}}},"ranked":false"#,
-        json_str(compat)
+        json_str(&lobby_compat(compat))
     );
     if mode == MODE_UNRANKED {
         f.push_str(r#","afterMatch":"stay""#);

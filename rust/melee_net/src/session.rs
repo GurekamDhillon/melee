@@ -422,6 +422,13 @@ pub struct RbSession<G: RbGame> {
     /// The stall run in progress: (first frame, ticks, why: 1 the rollback window is full, 2 the end waits for the
     /// peer's last inputs), and how many runs were logged (the first 40).
     stall_run: (i32, i32, u8),
+    /// The current stall run's detail for its log line: its wall-clock start and the worst lag (frames past the
+    /// newest confirmed frame) it saw.
+    stall_detail: (Option<std::time::Instant>, i32),
+    /// The newest confirmed frame and when it last advanced (the stall log's "peer input last arrived" age).
+    conf_seen: (i32, Option<std::time::Instant>),
+    /// The link's ping (ms), set by the driver each tick (0: unknown): the stall log names it.
+    pub link_ping_ms: u32,
     stalls_logged: u32,
     hring: [(i32, u32); RING],
     hlog_next: i32,
@@ -493,6 +500,9 @@ impl<G: RbGame> RbSession<G> {
             epoch: 0,
             wait_ticks: 0,
             stall_run: (0, 0, 0),
+            stall_detail: (None, 0),
+            conf_seen: (i32::MIN, None),
+            link_ping_ms: 0,
             stalls_logged: 0,
             hring: [(i32::MIN, 0); RING],
             hlog_next: FIRST,
@@ -1020,6 +1030,9 @@ impl<G: RbGame> RbSession<G> {
         if conf == i32::MAX {
             conf = frame;
         }
+        if conf > self.conf_seen.0 {
+            self.conf_seen = (conf, Some(std::time::Instant::now()));
+        }
         self.plan = Plan { n, new_frame: true, ..Plan::default() };
         if self.first_wrong != NONE {
             let f = self.first_wrong;
@@ -1040,8 +1053,10 @@ impl<G: RbGame> RbSession<G> {
             let why = if n - conf > self.cfg.maxb { 1 } else { 2 };
             if self.stall_run.1 == 0 {
                 self.stall_run = (frame, 0, why);
+                self.stall_detail = (Some(std::time::Instant::now()), 0);
             }
             self.stall_run.1 += 1;
+            self.stall_detail.1 = self.stall_detail.1.max(n - conf);
         } else if self.start_hold && n == FIRST + 1 {
             self.plan.new_frame = false;
             self.stats.start_hold += 1;
@@ -1055,7 +1070,16 @@ impl<G: RbGame> RbSession<G> {
             if self.stalls_logged < 40 {
                 self.stalls_logged += 1;
                 let (f, k, why) = self.stall_run;
-                eprintln!("netplay: stall at frame {f}: {k} ticks, {}", if why == 1 { "no peer input within the rollback window" } else { "the end waits for the peer's last inputs" });
+                let ms = |t: Option<std::time::Instant>| t.map_or(-1.0, |t| t.elapsed().as_secs_f64() * 1e3);
+                eprintln!(
+                    "netplay: stall at frame {f}: {k} ticks ({:.0} ms), {}; lag {} frames past the newest confirmed (max {}), peer input last advanced {:.0} ms ago, ping {} ms",
+                    ms(self.stall_detail.0),
+                    if why == 1 { "no peer input within the rollback window" } else { "the end waits for the peer's last inputs" },
+                    self.stall_detail.1,
+                    self.cfg.maxb,
+                    ms(self.conf_seen.1),
+                    self.link_ping_ms
+                );
             }
             self.stall_run = (0, 0, 0);
         }

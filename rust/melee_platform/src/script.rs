@@ -8,6 +8,8 @@ use crate::pad::*;
 pub const GW_SCRIPT_MAX: usize = 8192;
 
 /// Set by the host's scene flow each tick: a live match (VS / sudden death) is on.
+/// Presents shown so far (main_loop counts them; the play heartbeat logs the count per second).
+pub static PRESENTS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 pub static IN_MATCH: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 /// Set by the host's scene flow each tick: the current scene kind (-1 before the first), for `until` lines.
 pub static SCENE: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);

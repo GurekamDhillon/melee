@@ -1408,6 +1408,10 @@ impl Game for Play {
         self.quit
     }
 
+    fn present_note(&mut self) -> String {
+        self.presenter.as_ref().map_or_else(String::new, |p| p.present_note())
+    }
+
     fn display_stats(&mut self) -> Option<(u64, u64, f64)> {
         self.presenter.as_ref().and_then(|p| p.frame_stats())
     }

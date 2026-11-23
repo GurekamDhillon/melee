@@ -193,6 +193,7 @@ impl NetDriver {
             params: None,
             slippi: None,
             mu: Some(Box::new(run)),
+            lat: crate::inputlat::LatProbe::from_env(),
             match_no: 0,
             all_finals: Vec::new(),
             early_on: false,
@@ -226,6 +227,7 @@ impl NetDriver {
         let online = |s: i32| s - FIRST + 1;
         let NetPhase::InMatch(g) = &mut self.phase else { return false };
         let mr = self.mu.as_mut().unwrap();
+        let lat = &mut self.lat;
         let mut s = self.sess.borrow_mut();
         let (lp, rp) = (mr.local, mr.remote);
         let shared = mr.shared.clone();
@@ -234,6 +236,9 @@ impl NetDriver {
         link.poll();
         for (f, pad) in link.input.take_fresh() {
             s.submit_remote_input(rp * 2, sess(f), &pad_input(&pad));
+            if let Some(l) = lat.as_mut() {
+                l.push(b'R', f, crate::inputlat::now_us(), online(s.current_frame()) as i64);
+            }
         }
         // early inputs (rev 2): the peer's SAMPLEs predict its unconfirmed frames
         if !s.hints_on && mr.early {
@@ -279,6 +284,7 @@ impl NetDriver {
             s.submit_local_input(lp * 2, ff, &i);
             mr.last_local = ff;
         }
+        let sent_before = mr.last_sent;
         for ff in (mr.last_sent + 1)..=(f + mr.delay + extra) {
             let Some(i) = s.local_input_for_send(lp * 2, ff) else { break };
             if online(ff) >= 1 {
@@ -290,6 +296,13 @@ impl NetDriver {
             link.input.set_checksum(ckf, ck);
         }
         link.send_commit();
+        if let Some(l) = lat.as_mut() {
+            let t = crate::inputlat::now_us();
+            for ff in (sent_before + 1)..=mr.last_sent {
+                l.push(b'S', online(ff), l.sample_us, t);
+            }
+            l.push(b'T', online(f), l.sample_us, t);
+        }
         // the link is free for the pump and the sampler while the frames run
         drop(guard);
         if mr.done_at.is_none() && gone.is_none() {

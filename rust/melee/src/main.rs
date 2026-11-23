@@ -77,6 +77,7 @@ mod netplay;
 mod slippi_css_host;
 mod slippi_link;
 mod slippi_np;
+mod inputlat;
 #[cfg(feature = "real-net")]
 mod mu_np;
 mod yougame_search;

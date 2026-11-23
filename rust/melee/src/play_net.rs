@@ -1987,7 +1987,7 @@ impl NetDriver {
             compared_upto: 0,
             soft: 0,
             hard: 0,
-            ts: melee_net::time_sync::TimeSync::new(melee_net::time_sync::old_rule()),
+            ts: melee_net::time_sync::TimeSync::new(melee_net::time_sync::slippi_old_rule()),
             last_rx: None,
             loop_t: None,
             frames: arg(&sub, "--frames").and_then(|v| v.parse().ok()),

@@ -581,7 +581,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let mut done_at: Option<Instant> = None;
     let mut ticks = 0u64;
     let mut ended = false;
-    let mut ts = melee_net::time_sync::TimeSync::new(melee_net::time_sync::old_rule());
+    let mut ts = melee_net::time_sync::TimeSync::new(melee_net::time_sync::slippi_old_rule());
     let mut forced_resims = 0u32;
     let shift = num("--script-shift", 0) as i32;
     // --padgen SEED: the session's deterministic pad generator instead of the (1800-frame) scenario script, for long matches

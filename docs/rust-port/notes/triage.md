@@ -342,7 +342,7 @@ tu_gm_1832 (the oracle's HSD_identityMtx). The Linux C regeneration recipe: the 
 system libclang.so. It reproduces chars.txt byte for byte, gro_grcorneria 104/105 (the 105th is address dependent) and
 vectors_r4/r10 except the stale rows.
 
-Still failing in melee_modes (20 of 108 binaries at the start, 9 fixed), classified, not changed:
+Still failing in melee_modes (at the start 20 of 108 test binaries failed and the lib test target did not compile; now 18 of 109, 91 pass), classified, not changed:
 
 | test | class | cause |
 |---|---|---|

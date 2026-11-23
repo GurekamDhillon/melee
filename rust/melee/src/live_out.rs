@@ -179,7 +179,8 @@ pub struct Opts {
     pub nick: String,
 }
 
-static THREADS: Mutex<Vec<std::thread::JoinHandle<()>>> = Mutex::new(Vec::new());
+/// SysStatic: `start` can run inside a rollback session, so the handle list must not live where a load rewinds it.
+static THREADS: melee_engine::arena::SysStatic<Vec<std::thread::JoinHandle<()>>> = melee_engine::arena::SysStatic::new(Vec::new);
 static SHARED: OnceLock<Shared> = OnceLock::new();
 
 /// Start the output threads (before the exporter runs). Errors (a port in use, an unreadable key) are returned.
@@ -195,13 +196,13 @@ pub fn start(o: Opts) -> Result<(), String> {
         Some(p) => Some((o.bind.parse().map_err(|_| format!("--spectate-bind {}: an IPv4 address", o.bind))?, p)),
         None => None,
     };
-    let mut th = THREADS.lock().unwrap();
+    let mut hs: Vec<std::thread::JoinHandle<()>> = Vec::new();
     {
         let sh = shared.clone();
         let nick = o.nick.clone();
         // the ENet host lives on its thread (its transport is not Send): the bind result comes back here
         let (ok_tx, ok_rx) = channel::<Result<(), String>>();
-        th.push(
+        hs.push(
             std::thread::Builder::new()
                 .name("live-hub".into())
                 .spawn(move || {
@@ -228,8 +229,9 @@ pub fn start(o: Opts) -> Result<(), String> {
     }
     if let (Some(url), Some(k)) = (o.relay_url.clone(), key) {
         let sh = shared.clone();
-        th.push(std::thread::Builder::new().name("live-relay".into()).spawn(move || relay_thread(url, k, sh)).map_err(|e| e.to_string())?);
+        hs.push(std::thread::Builder::new().name("live-relay".into()).spawn(move || relay_thread(url, k, sh)).map_err(|e| e.to_string())?);
     }
+    THREADS.with(|th| th.append(&mut hs));
     let _ = SHARED.set(shared);
     let _ = TX.set(Mutex::new(tx));
     Ok(())
@@ -242,7 +244,7 @@ pub fn finish(secs: u64) {
     std::thread::sleep(Duration::from_millis(50));
     l.lock().unwrap().closed = true;
     let deadline = Instant::now() + Duration::from_secs(secs);
-    let hs: Vec<_> = std::mem::take(&mut *THREADS.lock().unwrap());
+    let hs: Vec<_> = THREADS.with(std::mem::take);
     for h in hs {
         while !h.is_finished() && Instant::now() < deadline {
             std::thread::sleep(Duration::from_millis(20));

@@ -341,9 +341,29 @@ pub mod engine_game {
             }
             a
         };
+        // MELEE_SNAP_THREAD_CHURN=N (the rollback-statics regression run): every N frames a helper thread starts and
+        // ends (one joined, one left to end on its own) while the snapshot base is alive. A load that rewound the
+        // runtime's thread bookkeeping (std's statics) broke a later thread start or the session's end.
+        let churn: i32 = std::env::var("MELEE_SNAP_THREAD_CHURN").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
+        let mut churned = 0u32;
         while run < frames && !g.e.ended {
             st.tick(&mut g, &mut |f| script(f));
             run += 1;
+            if churn > 0 && run % churn == 0 {
+                let _s = melee_engine::arena::SysScope::enter();
+                let work = move || {
+                    melee_engine::arena::mark_foreign_thread();
+                    let v: Vec<u64> = (0..256).collect();
+                    std::hint::black_box(v.iter().sum::<u64>())
+                };
+                if let Ok(h) = std::thread::Builder::new().name(format!("churn-{run}")).spawn(work) {
+                    let _ = h.join();
+                    churned += 1;
+                }
+                if std::thread::Builder::new().name(format!("churn-detached-{run}")).spawn(work).is_ok() {
+                    churned += 1;
+                }
+            }
             if let Some(gm) = &golden {
                 let gf = g.e.frames as i32 - 1;
                 if let Some(&want) = gm.get(&gf) {
@@ -364,6 +384,9 @@ pub mod engine_game {
         {
             let t = |i: usize| t_ns()[i].load(std::sync::atomic::Ordering::Relaxed) as f64 / 1e6 / run.max(1) as f64;
             eprintln!("melee: per tick ms: save {:.3} load {:.3} state_hash {:.3} game_hash {:.3} run_frame(tick) {:.3}; total {:.3}", t(0), t(1), t(2), t(3), t(4), t0.elapsed().as_secs_f64() * 1e3 / run.max(1) as f64);
+        }
+        if churn > 0 {
+            eprintln!("melee: synctest thread churn: {churned} threads started and ended mid-session");
         }
         eprintln!("melee: engine synctest depth {k}: {run} frames, {} rollback passes, {} hash checks, {} MISMATCHES; golden {}/{} frames equal",
             st.passes, st.checked, st.mismatches.len(), n - bad, n);

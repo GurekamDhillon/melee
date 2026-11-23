@@ -631,8 +631,8 @@ pub mod bg {
     /// `snapshot::prewarm` (before a match's capture) and by `begin` when nothing called that.
     ///
     /// Why one thread that never ends: a thread's start and end write the runtime's statics (std's and glibc's thread
-    /// bookkeeping), and a rollback load rewinds every static of the executable on Linux (no PDB names std's own
-    /// objects as host-only there). A helper per base that ended mid-session had a later load write its old
+    /// bookkeeping), and a rollback load rewound every static of the executable on Linux before the ELF
+    /// host mask (snapmask.rs) named std's own objects as host-only there. A helper per base that ended mid-session had a later load write its old
     /// bookkeeping back, and the next thread std started at the session's end panicked in a btree assertion (2 of 4
     /// synctests; 0 of 6 with the helper kept alive). This returns once the thread runs, so its start is done before a
     /// capture copies the statics; it never ends.

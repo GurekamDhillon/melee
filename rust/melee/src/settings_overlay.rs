@@ -106,6 +106,8 @@ pub struct Change {
 
 pub struct Overlay {
     pub open: bool,
+    /// The device row was built while the device prefetch was running (filled at the first open).
+    devices_pending: bool,
     pub pages: Vec<Page>,
     page: usize,
     row: usize,
@@ -200,7 +202,55 @@ fn toggle(key: &str, label: &str, dflt: bool, live: bool, help: &str) -> Row {
     Row { key: key.into(), label: label.into(), kind: Kind::Toggle, value: v as i32, live, help: help.into(), note: String::new() }
 }
 
+/// The output-device list, enumerated once off the game thread (WASAPI enumeration takes ~100 ms, and the first
+/// `Overlay::new` runs on the first tick of a match: a fight-frame hitch). Host state on the system heap
+/// (`SysStatic`): a rollback load never rewinds it.
+enum DevState {
+    Idle,
+    Pending,
+    Ready(Vec<String>),
+}
+static DEVICES: melee_engine::arena::SysStatic<DevState> = melee_engine::arena::SysStatic::new(|| DevState::Idle);
+
+/// Start enumerating the output devices on a helper thread (once); `Overlay::new` then takes the list without waiting.
+pub fn prefetch_devices() {
+    let start = DEVICES.with(|d| if matches!(d, DevState::Idle) { *d = DevState::Pending; true } else { false });
+    if start {
+        let _ = std::thread::Builder::new().name("audio-devices".into()).spawn(|| {
+            let v = melee_audio::output::list_devices();
+            DEVICES.with(|d| *d = DevState::Ready(v));
+        });
+    }
+}
+
+/// The device list: the prefetched one, or enumerated here when no prefetch was started (as before); None while the
+/// prefetch is still running (the row is filled when the overlay opens).
+fn cached_devices() -> Option<Vec<String>> {
+    let st = DEVICES.with(|d| match d { DevState::Idle => Some(None), DevState::Pending => None, DevState::Ready(v) => Some(Some(v.clone())) });
+    match st {
+        Some(Some(v)) => Some(v),
+        Some(None) => Some(melee_audio::output::list_devices()),
+        None => None,
+    }
+}
+
 impl Overlay {
+    /// The device row of a list built while the prefetch was running: filled at the first open.
+    fn fill_devices(&mut self) {
+        if !self.devices_pending {
+            return;
+        }
+        let v = cached_devices().unwrap_or_else(melee_audio::output::list_devices);
+        self.devices_pending = false;
+        for p in &mut self.pages {
+            for r in &mut p.rows {
+                if r.key == "audio_device" {
+                    *r = device_row(&v);
+                }
+            }
+        }
+    }
+
     /// The pages from the current settings; `volume` the live master volume.
     pub fn new(volume: i32) -> Overlay {
         let onoff = [("Off", "off"), ("On", "on")];
@@ -218,6 +268,8 @@ impl Overlay {
             choice("render_scale", "Internal resolution", &[("Auto", "auto"), ("1x", "1"), ("2x", "2"), ("3x", "3"), ("4x", "4"), ("6x", "6"), ("8x", "8")], "auto", true, "x 480 lines."),
             msaa_row(),
         ];
+        let devices = cached_devices();
+        let devices_pending = devices.is_none();
         let audio = vec![Row {
             key: "volume".into(),
             label: "Master volume".into(),
@@ -229,7 +281,7 @@ impl Overlay {
         },
         slider("music", "Music", 100, "The music stream only (Hero's Music slider); master volume applies on top."),
         slider("sfx", "SFX", 100, "Every sound but the music: fighters, stages, menus, announcer."),
-        device_row(&melee_audio::output::list_devices())];
+        device_row(&devices.unwrap_or_default())];
         let overlays = vec![
             toggle("overlay", "Performance HUD", false, true, "fps, frame time, sim rate; netplay ping / delay / rollbacks (F3)."),
             toggle("input_display", "Input display", false, true, "Sticks, triggers and buttons per port (F6)."),
@@ -295,6 +347,7 @@ impl Overlay {
             shown: false,
             last_quads: 0,
             window_mode: false,
+            devices_pending,
         }
     }
 
@@ -302,6 +355,7 @@ impl Overlay {
     /// opens at once on `tab` (his `--settings-tab` names; unknown ones keep VIDEO).
     pub fn into_window(mut self, tab: Option<&str>) -> Overlay {
         self.window_mode = true;
+        self.fill_devices();
         self.open = true;
         if let Some(s) = self.pages.iter_mut().find(|p| p.name == "SESSION") {
             s.rows.retain(|r| r.key == "quit");
@@ -361,6 +415,9 @@ impl Overlay {
 
     fn toggle_open(&mut self, owner: Option<usize>) {
         self.open = !self.open;
+        if self.open {
+            self.fill_devices();
+        }
         self.owner = if self.open { owner } else { None };
         self.held = 0;
         eprintln!("settings overlay: {}{}", if self.open { "open" } else { "closed" }, owner.map_or(String::new(), |p| format!(" (port {})", p + 1)));

@@ -216,6 +216,9 @@ pub struct RetailPlay {
 
 impl RetailPlay {
     pub fn new(iso: String, mods_dir: Option<String>, presets: Presets, headless: bool, shot_dir: Option<PathBuf>, shot_ages: Vec<u32>, quit_after: Option<u32>, max_frames: Option<u64>) -> RetailPlay {
+        if !headless && crate::cfg::flag("settings_overlay", true) {
+            crate::settings_overlay::prefetch_devices(); // off the match's first tick (the overlay is built there)
+        }
         RetailPlay {
             iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, handed_tick: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,

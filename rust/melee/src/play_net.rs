@@ -1761,7 +1761,7 @@ impl NetDriver {
         };
         crate::np_hud::NetHud {
             host: self.host,
-            ping_ms: net.map_or(0, |n| n.net_rtt_ms()),
+            ping_ms: self.slippi.as_ref().map_or_else(|| net.map_or(0, |n| n.net_rtt_ms()), |sr| (sr.link.net_ping_us() / 1000) as u32),
             auto_rtt_ms: net.map_or(0, |n| n.rtt_ms()),
             silent_ms: net.map_or(0, |n| n.silent_ms()),
             delay: s.cfg.delay,
@@ -1781,7 +1781,10 @@ impl NetDriver {
     pub fn status(&mut self) -> String {
         let s = self.sess.borrow();
         let st = s.stats;
-        let ping = self.net.as_ref().map_or(0, |n| n.net_rtt_ms());
+        let ping = match &self.slippi {
+            Some(sr) => (sr.link.net_ping_us() / 1000) as u64,
+            None => self.net.as_ref().map_or(0, |n| n.net_rtt_ms() as u64),
+        };
         let d = st.rollbacks - self.last_rb.0;
         self.last_rb = (st.rollbacks, d, st.depth_max);
         let state = if let Some(e) = &self.error {
@@ -1800,11 +1803,25 @@ impl NetDriver {
         let s = self.sess.borrow();
         let st = s.stats;
         let lg = self.log.borrow();
+        // a Slippi-wire match keeps its final checksums (by online frame) and its link in the SlippiRun, not in
+        // `finals` / `net` (empty there: the line said "0 final hashes ... ping 0 ms")
+        let (nfin, last_fin, ping_ms, sync) = match &self.slippi {
+            Some(sr) => (
+                sr.finals.len(),
+                sr.finals.keys().next_back().map_or(-1, |&k| k - 2),
+                (sr.link.net_ping_us() / 1000) as u64,
+                format!(
+                    "; Slippi: compared {} ({} soft, {} HARD); start hold {} ticks; time sync held {} advanced {} frames{}",
+                    sr.compared, sr.soft, sr.hard, st.start_hold, sr.ts.held, sr.ts.advanced, if sr.ts.old { " (old rule)" } else { "" }
+                ),
+            ),
+            None => (self.finals.len(), self.finals.last().map_or(-1, |x| x.0 - 1 - FIRST), self.net.as_ref().map_or(0, |n| n.net_rtt_ms() as u64), String::new()),
+        };
         format!(
-            "netplay {}: {} final hashes (through game frame {}), rollbacks {} (max depth {}, resim {}), stalls {}, waits {}, session desyncs {}, checksum desyncs {}, ping {} ms, input arrived {:.2} frames after due; net {:?}",
+            "netplay {}: {} final hashes (through game frame {}), rollbacks {} (max depth {}, resim {}), stalls {}, waits {}, session desyncs {}, checksum desyncs {}, ping {} ms, input arrived {:.2} frames after due; net {:?}{}",
             self.tag(),
-            self.finals.len(),
-            self.finals.last().map_or(-1, |x| x.0 - 1 - FIRST),
+            nfin,
+            last_fin,
             st.rollbacks,
             st.depth_max,
             st.resim,
@@ -1812,9 +1829,10 @@ impl NetDriver {
             st.waits,
             st.desyncs,
             lg.desyncs.len(),
-            self.net.as_ref().map_or(0, |n| n.net_rtt_ms()),
+            ping_ms,
             if st.arrive_n > 0 { st.arrive_sum as f64 / st.arrive_n as f64 } else { 0.0 },
-            self.net.as_ref().map(|n| n.stats())
+            self.net.as_ref().map(|n| n.stats()),
+            sync
         ) + &self.early_summary(&s)
     }
 
@@ -1866,7 +1884,8 @@ pub struct SlippiRun {
     compared_upto: i32,
     soft: u32,
     hard: u32,
-    skip_checked: i32,
+    /// time sync (melee_net::time_sync): holds when ahead, extra frames when behind; local pacing only
+    ts: melee_net::time_sync::TimeSync,
     last_rx: Option<Instant>,
     pub loop_t: Option<Instant>,
     /// test hooks: stop after this many final checksums, write them here (`frame,checksum`, as slippi-netplay --out),
@@ -1968,7 +1987,7 @@ impl NetDriver {
             compared_upto: 0,
             soft: 0,
             hard: 0,
-            skip_checked: 0,
+            ts: melee_net::time_sync::TimeSync::new(melee_net::time_sync::old_rule()),
             last_rx: None,
             loop_t: None,
             frames: arg(&sub, "--frames").and_then(|v| v.parse().ok()),
@@ -2060,9 +2079,11 @@ impl NetDriver {
         if err.is_none() && sr.done_at.is_none() && matches!(sr.link.status, Status::Failed | Status::Disconnected) {
             err = Some(format!("link {:?}", sr.link.status));
         }
+        // a peer still loading gets FIRST_PAD_S (the start hold waits for it); after its first pad, SILENCE_S
+        let (first_s, quiet_s) = if sr.ts.old { (120, 10) } else { (melee_net::time_sync::FIRST_PAD_S, melee_net::time_sync::SILENCE_S) };
         let silent = match sr.last_rx {
-            Some(t) => t.elapsed() > Duration::from_secs(10),
-            None => sr.loop_t.is_some_and(|t| t.elapsed() > Duration::from_secs(120)),
+            Some(t) => t.elapsed() > Duration::from_secs(quiet_s),
+            None => sr.loop_t.is_some_and(|t| t.elapsed() > Duration::from_secs(first_s)),
         };
         if err.is_none() && silent && sr.done_at.is_none() {
             err = Some("no pads from the peer".into());
@@ -2080,7 +2101,17 @@ impl NetDriver {
             }
         }
         let f = s.current_frame();
-        for ff in (sr.last_local + 1).max(f)..=f + sr.delay {
+        // start in step: online frame 2 waits for the peer's first pad (a peer still loading the stage)
+        s.start_hold = !sr.ts.old && sr.last_rx.is_none();
+        let step = {
+            let link = &sr.link;
+            sr.ts.step(online(f), || link.time_offset_us())
+        };
+        if step.hold > 0 {
+            s.request_wait(step.hold);
+        }
+        let extra = step.advance as i32;
+        for ff in (sr.last_local + 1).max(f)..=f + sr.delay + extra {
             let mut i = match sr.padgen {
                 Some(gs) => melee_net::session::rb_gen(gs, lp * 2, ff),
                 None => input_of(local),
@@ -2098,7 +2129,7 @@ impl NetDriver {
         }
         let (ckf, ck) = sr.finals.iter().next_back().map_or((0, 0), |(a, b)| (*a, *b));
         let sent_before = sr.last_sent;
-        for ff in (sr.last_sent + 1)..=(f + sr.delay) {
+        for ff in (sr.last_sent + 1)..=(f + sr.delay + extra) {
             let Some(i) = s.local_input_for_send(lp * 2, ff) else { break };
             let mut p = [0u8; PAD_WIRE];
             p[..8].copy_from_slice(&pad_bytes(&i));
@@ -2119,16 +2150,12 @@ impl NetDriver {
             sr.link.resend_pads();
         }
         sr.link.flush();
-        let of = online(s.current_frame());
-        if of > 0 && of % 30 == 0 && of != sr.skip_checked {
-            sr.skip_checked = of;
-            let off = sr.link.time_offset_us();
-            if off > 10000 {
-                s.request_wait((((off - 10000) as i64 / 16683) + 1).min(5) as i32);
-            }
-        }
         if sr.done_at.is_none() {
             run_tick(&mut s, &mut **g, None);
+            // behind the peer: one extra frame this tick (only when this tick ran its new frame)
+            if extra > 0 && s.current_frame() > f {
+                run_tick(&mut s, &mut **g, None);
+            }
         }
         let conf = s.confirmed_frame();
         let from = sr.finals.keys().next_back().map_or(2, |k| k + 1);

@@ -35,6 +35,8 @@ pub(crate) struct Degraded {
     pub(crate) inner: Box<dyn Transport>,
     pub(crate) lag: Duration,
     pub(crate) loss_pct: u32,
+    /// test: each datagram's lag gets 0..jitter more (uniform); order kept (a datagram never passes an earlier one)
+    pub(crate) jitter: Duration,
     pub(crate) rng: u32,
     /// (release time, from, datagram, simulated arrival: the real arrival plus the lag, for the displayed round trip)
     pub(crate) q: VecDeque<(Instant, Addr, Vec<u8>, Instant)>,
@@ -57,7 +59,14 @@ impl Transport for Degraded {
                 continue;
             }
             let arrived = melee_net::transport::rx_stamp().unwrap_or_else(Instant::now);
-            self.q.push_back((Instant::now() + self.lag, a, tmp[..n as usize].to_vec(), arrived + self.lag));
+            let mut lag = self.lag;
+            if !self.jitter.is_zero() {
+                self.rng = self.rng.wrapping_mul(1664525).wrapping_add(1013904223);
+                lag += self.jitter.mul_f64(((self.rng >> 8) & 0xFFFF) as f64 / 65536.0);
+            }
+            // in order: a later datagram is released no earlier than the one before it
+            let rel = (Instant::now() + lag).max(self.q.back().map_or(Instant::now(), |b| b.0));
+            self.q.push_back((rel, a, tmp[..n as usize].to_vec(), arrived + lag));
         }
         if let Some(f) = self.q.front() {
             if f.0 <= Instant::now() {
@@ -143,7 +152,7 @@ fn netplay_with<G: NetGame + 'static>(args: &[String]) -> std::process::ExitCode
         },
         None => (None, Box::new(udp)),
     };
-    let tp: Box<dyn Transport> = Box::new(Degraded { inner: base, lag, loss_pct: loss, rng: 0x1234_5678 ^ local_port as u32, q: VecDeque::new() });
+    let tp: Box<dyn Transport> = Box::new(Degraded { inner: base, lag, loss_pct: loss, jitter: Duration::ZERO, rng: 0x1234_5678 ^ local_port as u32, q: VecDeque::new() });
     let settings = RoomSettings {
         host,
         ck,

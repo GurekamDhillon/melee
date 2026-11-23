@@ -80,6 +80,29 @@ fn locked_and_slippi_routes_never_call_the_bridge() {
     assert!(b.sent.is_empty());
 }
 
+/// The staging refusal (Nov 22): "Invalid lobby configuration; public queues allow one local player per device".
+/// The ticket body for a public queue must carry exactly one local player and a compatibility the site accepts.
+#[test]
+fn public_queue_ticket_body_is_one_local_player_and_valid_lobby() {
+    let mut b = FakeBridge::new(vec![("mpTicket", ok_ticket())]);
+    let s = start_search(&mut b, MODE_UNRANKED, true, false, true, "gd-melee-rust/0.1.0");
+    assert!(s.ticket.unwrap().is_ok());
+    let (ty, f) = &b.sent[0];
+    assert_eq!(ty, "mpTicket");
+    assert_eq!(
+        f,
+        r#""players":2,"mode":"singles","lobby":{"version":1,"minPlayers":2,"maxLocalPlayers":1,"compatibility":"gd-melee-rust-0.1.0"},"ranked":false,"afterMatch":"stay""#
+    );
+    for bad in ["local_players", "localPlayers", "party_local", "local_partner", "maxLocalPlayers\":2"] {
+        assert!(!f.contains(bad), "{bad} in {f}");
+    }
+    let c = json_string(f, "compatibility").unwrap();
+    assert!((1..=64).contains(&c.len()) && c.chars().all(|c| c.is_ascii_alphanumeric() || ".:_-".contains(c)), "{c}");
+    assert_eq!(lobby_compat("gd-melee-rust:1.2.3"), "gd-melee-rust:1.2.3");
+    assert_eq!(lobby_compat(""), "default");
+    assert_eq!(lobby_compat(&"x".repeat(80)).len(), 64);
+}
+
 #[test]
 fn refusals_and_silence() {
     let mut b = FakeBridge::new(vec![("mpTicket", Some(r#"{"re":1,"ok":false,"error":"signed out"}"#.into()))]);

@@ -31,6 +31,7 @@ pub mod sim;
 pub mod slippi;
 pub mod slippi_mm;
 pub mod slippi_spectate;
+pub mod time_sync;
 pub mod transport;
 pub mod wire;
 pub mod yougame_room;

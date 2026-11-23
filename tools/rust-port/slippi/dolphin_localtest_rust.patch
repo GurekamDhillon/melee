@@ -1,0 +1,58 @@
+diff --git i/matchmaking/src/client.rs w/matchmaking/src/client.rs
+index 32144ae..88f9ede 100644
+--- i/matchmaking/src/client.rs
++++ w/matchmaking/src/client.rs
+@@ -148,6 +148,12 @@ impl MatchmakingClient {
+                 PROD_URL.to_string()
+             }
+         });
++        // GD local test: SLIPPI_LOCAL_TEST only ever talks to a loopback mock
++        let url = if std::env::var_os("SLIPPI_LOCAL_TEST").is_some() && !url.starts_with("ws://127.0.0.1:") {
++            "ws://127.0.0.1:9/refused-not-loopback".to_string()
++        } else {
++            url
++        };
+ 
+         Self {
+             user_manager,
+diff --git i/slippi-gg-api/src/lib.rs w/slippi-gg-api/src/lib.rs
+index 5be1526..0d237ca 100644
+--- i/slippi-gg-api/src/lib.rs
++++ w/slippi-gg-api/src/lib.rs
+@@ -17,6 +17,10 @@ struct Ipv4Resolver;
+ impl Resolver for Ipv4Resolver {
+     /// Forces IPV4 addresses only.
+     fn resolve(&self, netloc: &str) -> io::Result<Vec<SocketAddr>> {
++        // GD local test: SLIPPI_LOCAL_TEST refuses every web request before DNS (user API, rank, game reports)
++        if std::env::var_os("SLIPPI_LOCAL_TEST").is_some() {
++            return Err(io::Error::new(io::ErrorKind::PermissionDenied, "SLIPPI_LOCAL_TEST: web API refused"));
++        }
+         ToSocketAddrs::to_socket_addrs(netloc).map(|iter| {
+             let vec = iter.filter(|s| s.is_ipv4()).collect::<Vec<SocketAddr>>();
+ 
+diff --git i/user/src/lib.rs w/user/src/lib.rs
+index c93d1bb..5e96b91 100644
+--- i/user/src/lib.rs
++++ w/user/src/lib.rs
+@@ -210,6 +210,10 @@ impl UserManager {
+     /// Pops open a browser window for the older authentication flow. This is less encountered by
+     /// users as time goes on, but may still be used.
+     pub fn open_login_page(&self) {
++        // GD local test: no browser pages
++        if std::env::var_os("SLIPPI_LOCAL_TEST").is_some() {
++            return;
++        }
+         let path_ref = self.user_json_path.as_path();
+ 
+         if let Some(path) = path_ref.to_str() {
+@@ -230,6 +234,10 @@ impl UserManager {
+     /// Pops open a browser window for the update URL. This is less encountered by users as time goes
+     /// by, but still used.
+     pub fn update_app(&self) -> bool {
++        // GD local test: no browser pages
++        if std::env::var_os("SLIPPI_LOCAL_TEST").is_some() {
++            return false;
++        }
+         if let Err(error) = open::that_detached("https://slippi.gg/downloads?update=true") {
+             tracing::error!(target: Log::SlippiOnline, ?error, "Failed to open update URL");
+             return false;

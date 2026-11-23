@@ -1,0 +1,10 @@
+--- a/Source/Core/Core/Slippi/SlippiNetplay.cpp
++++ b/Source/Core/Core/Slippi/SlippiNetplay.cpp
+@@ -5,6 +5,7 @@
+ #include <algorithm>
+ #include <cstdio>
+ #include <cstdlib>
++#include "Common/CommonTypes.h"  // GD linux: no precompiled header here
+ 
+ // GD slippi-p1: SLIPPI_CHECKSUM_LOG=<file> logs every (checksum frame, checksum) sent and received
+ static void SlpTestChecksumLog(const char* dir, int player, s32 frame, s32 cf, u32 cs, u8 rng)

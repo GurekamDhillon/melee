@@ -384,7 +384,8 @@ pub struct RbStats {
     /// the mean is how many frames after it was due the peer's input arrived (the effective input lag)
     pub arrive_n: i32,
     pub arrive_sum: i64,
-    /// ticks held at the start (online frame 2) until the peer's first pad arrived ([`RbSession::start_hold`])
+    /// ticks held at the start until the peer's first input: the start hold at online frame 2 ([`RbSession::start_hold`]),
+    /// or without it the rollback window filling before that input (the peer still loading)
     pub start_hold: i32,
 }
 
@@ -419,7 +420,7 @@ pub struct RbSession<G: RbGame> {
     in_match: bool,
     epoch: i32,
     wait_ticks: i32,
-    /// The stall run in progress: (first frame, ticks, why: 1 the rollback window is full, 2 the end waits for the
+    /// The stall run in progress: (first frame, ticks, why: 1 the rollback window is full, 3 the same before the peer's first input, 2 the end waits for the
     /// peer's last inputs), and how many runs were logged (the first 40).
     stall_run: (i32, i32, u8),
     stalls_logged: u32,
@@ -1036,8 +1037,15 @@ impl<G: RbGame> RbSession<G> {
         }
         if frame >= FIRST && (n - conf > self.cfg.maxb || (n > self.last && conf < self.last)) {
             self.plan.new_frame = false;
-            self.stats.stall_ticks += 1;
-            let why = if n - conf > self.cfg.maxb { 1 } else { 2 };
+            // before the peer's first input (conf still at the delay's neutral frames) the window-full wait is the
+            // peer still loading the stage, as Slippi Dolphin's skipped frames at the start: counted as the start
+            // hold, not as an in-match stall (same ticks held either way; only the counters differ)
+            let why = if n - conf > self.cfg.maxb { if conf <= FIRST + self.cfg.delay - 1 { 3 } else { 1 } } else { 2 };
+            if why == 3 {
+                self.stats.start_hold += 1;
+            } else {
+                self.stats.stall_ticks += 1;
+            }
             if self.stall_run.1 == 0 {
                 self.stall_run = (frame, 0, why);
             }
@@ -1055,7 +1063,7 @@ impl<G: RbGame> RbSession<G> {
             if self.stalls_logged < 40 {
                 self.stalls_logged += 1;
                 let (f, k, why) = self.stall_run;
-                eprintln!("netplay: stall at frame {f}: {k} ticks, {}", if why == 1 { "no peer input within the rollback window" } else { "the end waits for the peer's last inputs" });
+                eprintln!("netplay: stall at frame {f}: {k} ticks, {}", match why { 1 => "no peer input within the rollback window", 3 => "waiting for the peer's first inputs (start)", _ => "the end waits for the peer's last inputs" });
             }
             self.stall_run = (0, 0, 0);
         }

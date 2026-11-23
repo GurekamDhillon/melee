@@ -107,7 +107,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 | Vanilla segment `--slippi-menus off --vanilla-only [--vanilla-game]` | yes | accepted; the Rust Port is always vanilla | OK |
 | Build tab / warm cache `--hidden --frames N --log-file F` | yes | headless N-frame run, log to F | OK |
 | Settings button `--settings-window [--settings-standby PID] [--settings-tab T]` | own panel | no panel; the PR opens the Source Port's panel (it writes the ini we read), else a message | PART |
-| port-settings.ini display / audio | all keys | fullscreen, exclusivefullscreen, widescreen, truewidescreen, window, scale, msaa, vsync, volume, music, backgroundinput; not fps, backend, ssaa, dlss*, audio_device / ASIO, HUD / overlay keys | PART |
+| port-settings.ini display / audio | all keys | fullscreen, exclusivefullscreen, widescreen, truewidescreen, window, scale, msaa, vsync, volume, music, backgroundinput; `fps` -> our fps cap (0 / unlocked = off, 30..2000 clamped to our 1000, -1 / monitor = follows the display, nothing set; a limit on presented frames only, no interpolation); `ssaa` 2..4 multiplies a numeric `scale` into our render scale (cap 8), with an automatic scale it is logged and left (auto already supersamples); `--fps` likewise; not backend, dlss*, audio_device / ASIO, HUD / overlay keys | PART |
 | bindings `key_*`, `pad<n>_*`, `gc<n>_*` | yes | yes | OK |
 | bindings `ds4<n>_*`, `swpro<n>_*` | yes | yes, by position through gilrs (this branch; a DualSense uses the DS4 table) | OK |
 | bindings `hid<n>_*`, `hid<n>_invert` (generic HID pads, box controllers in DInput) | yes | yes: 32-bit masks (bit N = button N+1, hat on bits 28..31, a signed spelling of bit 31 read back unsigned) for a generic / box pad that gilrs gives as a raw controller (Windows WGI; Linux evdev by button order); an XInput-layout pad keeps `pad<n>`. Not tried on real hardware (no box here) | PART |
@@ -133,7 +133,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 **Not done here, with estimates:** P2P Direct / mu_net (1-2 weeks, notes/mu-net-feasibility.md); code mods with
 their own main.dol (the PPC interpreter, on hold for sc00p); TE packs / .gci loader (2-4 days once the interpreter
 exists, most TE content is PPC code); per-binding levels (0.5 day); a real `--settings-window` (our overlay in its own window writing
-port-settings.ini: 2-3 days); fps / ssaa keys (1 day); backend choice and DLSS (not planned: wgpu only); audio
+port-settings.ini: 2-3 days); backend choice and DLSS (not planned: wgpu only); audio
 device selection (1 day); an update channel (1 day once Hero agrees on a feed).
 
 Launcher patch: one commit on his main 6c9472f, branch `rust-port-engine` (see the round-three report). The

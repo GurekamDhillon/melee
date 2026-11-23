@@ -521,7 +521,13 @@ fn tex_offset(o: u32) -> f32 {
 /// Aurora `fill_uniform`: the uniform block for `info` from the current state. `textures[i]` is the
 /// object bound to map i (for `texture_size_bias`).
 pub fn fill_uniform(st: &GxState, info: &ShaderInfo, textures: &[TexObj; MAX_TEXTURES]) -> Vec<u8> {
-    let mut b: Vec<u8> = Vec::with_capacity(info.uniform_size as usize);
+    fill_uniform_in(st, info, textures, Vec::new())
+}
+
+/// [`fill_uniform`] into `b` (emptied first; a spare Vec keeps its allocation).
+pub fn fill_uniform_in(st: &GxState, info: &ShaderInfo, textures: &[TexObj; MAX_TEXTURES], mut b: Vec<u8>) -> Vec<u8> {
+    b.clear();
+    b.reserve(info.uniform_size as usize);
     let f = |b: &mut Vec<u8>, v: f32| b.extend_from_slice(&v.to_le_bytes());
     // whole f32 runs at once (the little-endian bytes of each value, in order)
     fn floats(b: &mut Vec<u8>, v: &[f32]) {

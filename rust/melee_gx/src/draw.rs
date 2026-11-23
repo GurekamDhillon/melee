@@ -149,6 +149,12 @@ fn max_index_for_attr(st: &GxState, attr: u32, fmt: u32, verts: &[u8], n: u16) -
 
 /// Aurora `prepare_idx_buffer` (vtxStart = 0).
 pub fn prepare_idx_buffer(prim: u32, vtx_count: u16) -> Vec<u16> {
+    prepare_idx_buffer_in(prim, vtx_count, Vec::new())
+}
+
+/// [`prepare_idx_buffer`] into `b` (emptied first; a spare Vec keeps its allocation).
+pub fn prepare_idx_buffer_in(prim: u32, vtx_count: u16, mut b: Vec<u16>) -> Vec<u16> {
+    b.clear();
     let n = vtx_count as usize;
     // sized up front: growing it index by index was ~40% of all allocations in a 4-CPU Temple tick
     let cap = match prim {
@@ -157,7 +163,7 @@ pub fn prepare_idx_buffer(prim: u32, vtx_count: u16) -> Vec<u16> {
         GX_LINES | GX_LINESTRIP | GX_POINTS => 6,
         _ => n,
     };
-    let mut b = Vec::with_capacity(cap);
+    b.reserve(cap);
     match prim {
         GX_QUADS => {
             let mut v = 0u16;
@@ -234,10 +240,14 @@ pub fn build_draw(
     };
     let palette = if config.shader.pn_palette { st.palette.clone() } else { None };
     let textures: [TexObj; MAX_TEXTURES] = st.loaded_textures.clone();
-    let uniform = shader::fill_uniform(st, &info, &textures);
+    let ub = st.spares.bytes(info.uniform_size as usize);
+    let uniform = shader::fill_uniform_in(st, &info, &textures, ub);
     let indices = match indices {
         Some(i) => i,
-        None if prim != GX_TRIANGLES => prepare_idx_buffer(prim, vtx_count),
+        None if prim != GX_TRIANGLES => {
+            let b = st.spares.idx(0);
+            prepare_idx_buffer_in(prim, vtx_count, b)
+        }
         None => Vec::new(),
     };
     let instance_count = match prim {

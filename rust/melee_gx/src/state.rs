@@ -437,6 +437,75 @@ pub struct ClipRect {
     pub height: i32,
 }
 
+/// Spare (emptied) Vecs the decoder fills instead of allocating: vertex and uniform bytes, index buffers and a draw
+/// list. Filled from [`crate::render::Recycle`] by the async decode thread; empty otherwise (every take then allocates
+/// as before). A clone of the state starts without spares.
+#[derive(Default)]
+pub struct Spares {
+    pub bytes: Vec<Vec<u8>>,
+    pub idx: Vec<Vec<u16>>,
+    pub list: Option<Vec<crate::draw::DrawCmd>>,
+}
+
+impl Clone for Spares {
+    fn clone(&self) -> Self {
+        Self::default()
+    }
+}
+
+impl std::fmt::Debug for Spares {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Spares({}, {})", self.bytes.len(), self.idx.len())
+    }
+}
+
+/// Most spare byte / index Vecs kept, and the largest kept (one huge draw must not pin its memory).
+const SPARE_MAX: usize = 8192;
+const SPARE_MAX_LEN: usize = 1 << 20;
+
+impl Spares {
+    /// Take a frame apart into spares: its vertex, uniform and index Vecs, and its list as the next frame's.
+    pub fn harvest(&mut self, mut f: Vec<crate::draw::DrawCmd>) {
+        for d in f.iter_mut() {
+            for v in [std::mem::take(&mut d.verts), std::mem::take(&mut d.uniform)] {
+                if v.capacity() != 0 && v.capacity() <= SPARE_MAX_LEN && self.bytes.len() < SPARE_MAX {
+                    self.bytes.push(v);
+                }
+            }
+            let i = std::mem::take(&mut d.indices);
+            if i.capacity() != 0 && i.capacity() * 2 <= SPARE_MAX_LEN && self.idx.len() < SPARE_MAX {
+                self.idx.push(i);
+            }
+        }
+        f.clear();
+        if self.list.as_ref().is_none_or(|l| l.capacity() < f.capacity()) {
+            self.list = Some(f);
+        }
+    }
+    /// An empty byte Vec with room for `n` (a spare one when there is one).
+    pub fn bytes(&mut self, n: usize) -> Vec<u8> {
+        match self.bytes.pop() {
+            Some(mut v) => {
+                v.clear();
+                v.reserve(n);
+                v
+            }
+            None => Vec::with_capacity(n),
+        }
+    }
+    /// An empty index Vec with room for `n`.
+    pub fn idx(&mut self, n: usize) -> Vec<u16> {
+        match self.idx.pop() {
+            Some(mut v) => {
+                v.clear();
+                v.reserve(n);
+                v
+            }
+            None => Vec::with_capacity(n),
+        }
+    }
+}
+
 /// Aurora `GXState` (the decoded part; caches and shadow registers below).
 #[derive(Clone, Debug)]
 pub struct GxState {
@@ -524,6 +593,8 @@ pub struct GxState {
     pub last_config: Option<(std::sync::Arc<crate::shader::PipelineConfig>, crate::shader::ShaderInfo)>,
     /// Warnings worth surfacing (unknown subcommands, unsupported features).
     pub warnings: Vec<String>,
+    /// Emptied Vecs of retired frames to build draws from (async decode only; see [`crate::render::Recycle`]).
+    pub spares: Spares,
     /// The PC matrix palette (Aurora `g_palette`): set by GX_AURORA_LOAD_PALETTE, cleared by END_PALETTE and with
     /// the frame (`take_draws`).
     pub palette: Option<std::sync::Arc<Vec<f32>>>,
@@ -622,6 +693,7 @@ impl Default for GxState {
             last_config: None,
             palette: None,
             warnings: Vec::new(),
+            spares: Spares::default(),
         }
     }
 }
@@ -787,7 +859,8 @@ impl GxState {
             r.take(have);
             return;
         }
-        let verts = r.take(total).to_vec();
+        let mut verts = self.spares.bytes(total);
+        verts.extend_from_slice(r.take(total));
         if let Some(d) = crate::draw::build_draw(self, prim, fmt, vtx_count, verts, indices) {
             self.draws.push(d);
         }
@@ -1775,7 +1848,11 @@ impl GxState {
         self.palette = None; // a palette never outlives the frame
         self.pose_tags = [0; 10];
         self.pose_cam = 0;
-        std::mem::replace(&mut self.draws, Vec::with_capacity(cap))
+        let next = match self.spares.list.take() {
+            Some(l) if l.capacity() >= cap => l,
+            _ => Vec::with_capacity(cap),
+        };
+        std::mem::replace(&mut self.draws, next)
     }
 }
 

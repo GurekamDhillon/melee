@@ -12,6 +12,11 @@
 //!
 //! `MELEE_TIMESYNC_OLD=1` keeps the previous rule (hold up to 5 frames on any offset over 10 ms all match, no
 //! catch-up, no start hold) for A/B runs.
+//!
+//! Against a Slippi-wire peer (real Slippi Dolphin) the previous rule is the DEFAULT ([`slippi_old_rule`]): the
+//! staging build of 86dbd5424 had an instant HARD desync against a real Slippi player (Dream Land, online frame 125,
+//! the remote checksum constant while ours moved) and the new rule was only ever tested engine vs engine and vs the
+//! local mainline Dolphin. `MELEE_TIMESYNC_NEW=1` opts a Slippi-wire match into the new rule for testing.
 
 /// One console frame at 59.94 Hz.
 pub const FRAME_US: i32 = 16683;
@@ -61,6 +66,12 @@ pub fn hold_frames_old(offset_us: i32) -> i32 {
 /// Whether the A/B switch asks for the previous behaviour.
 pub fn old_rule() -> bool {
     std::env::var_os("MELEE_TIMESYNC_OLD").is_some_and(|v| v == "1")
+}
+
+/// The rule for a Slippi-wire match (`slippi-netplay`, `play --slippi-*`): the previous rule unless
+/// `MELEE_TIMESYNC_NEW=1` (and never with `MELEE_TIMESYNC_OLD=1`).
+pub fn slippi_old_rule() -> bool {
+    old_rule() || !std::env::var_os("MELEE_TIMESYNC_NEW").is_some_and(|v| v == "1")
 }
 
 /// What a tick should do.
@@ -153,6 +164,13 @@ mod tests {
         assert!(t.step(160, || 0).advance);
         assert!(!t.step(165, || 0).advance);
         assert_eq!(t.advanced, 3);
+    }
+
+    #[test]
+    fn slippi_wire_defaults_to_the_old_rule() {
+        if std::env::var_os("MELEE_TIMESYNC_NEW").is_none() {
+            assert!(slippi_old_rule());
+        }
     }
 
     #[test]

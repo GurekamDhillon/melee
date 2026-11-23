@@ -5,6 +5,9 @@
 //! puts all of them back, so the engine continues exactly where it was; nothing here knows what the bytes mean.
 //! Statics of the harness that must survive a load do not exist: the harness keeps its state in values it owns on
 //! the system heap (see `arena`), and the few flags the load itself overwrites are put back by the caller.
+//! The one exception is the statics' host-only bytes (std's, the runtime libraries' and the platform crates' objects,
+//! which other threads write at any time): a load leaves them alone when the image's PDB or snapmask sidecar names
+//! them (`snapmask`).
 //!
 //! Cost: every page carries the epoch it was last written in (the OS write watch for the arena and the host block,
 //! `pagewatch` for the statics), so a save after the previous save or load reads only the pages written since and a
@@ -482,8 +485,8 @@ pub struct Base {
     no_inc: bool,
     /// MELEE_SNAP_CHECK=N: every Nth save and load is checked page by page against the full state (see `check`).
     check_every: u64,
-    /// MELEE_SNAP_CHECK's host-only statics pages (snapmask.rs), skipped by the load check.
-    host_mask: Option<Vec<Vec<u64>>>,
+    /// The statics' host-only bytes (snapmask.rs): a load leaves them alone and the load check skips them.
+    host_mask: Option<crate::snapmask::HostMask>,
     /// MELEE_SNAP_CHECK_POKE: write [`CHECK_POKE`] before each load check (the mask's self-test).
     poke: bool,
     /// Per-page digests of the hashed range (the host block), so `page_hash` only rehashes pages written since its
@@ -775,7 +778,7 @@ impl Base {
         let arena_len = ranges[0].1;
         let n = ranges.len();
         let scan = std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_some();
-        let host_mask = if std::env::var_os("MELEE_SNAP_CHECK").is_some() && std::env::var_os("MELEE_SNAP_CHECK_NOMASK").is_none() { crate::snapmask::host_only(&ranges, STATIC0) } else { None };
+        let host_mask = if std::env::var_os("MELEE_SNAP_CHECK_NOMASK").is_none() { crate::snapmask::host_only(&ranges, STATIC0) } else { None };
         let b = Base {
             dirty: std::cell::RefCell::new(vec![Default::default(); n]),
             since: std::cell::RefCell::new(vec![Default::default(); n]),
@@ -1096,7 +1099,7 @@ impl Base {
             // what was written after the save read it (the save's own allocations bump a static counter) is not `s`
             self.refresh();
             let since = self.since.borrow();
-            self.check(&s, "save", Some(&since[..]));
+            self.check(&s, "save", Some(&since[..]), self.host_mask.as_ref());
         }
         self.close(id, Rc::downgrade(&s));
         (s, fresh)
@@ -1163,12 +1166,37 @@ impl Base {
                     while k < r.pages.len() && r.pages[k].0 < pi {
                         k += 1;
                     }
+                    // host-only statics bytes stay as they are: other threads write them at any time (snapmask.rs)
+                    let spans = match &self.host_mask {
+                        Some(m) if ri >= STATIC0 => {
+                            if m.skipped(ri, pi) {
+                                continue;
+                            }
+                            m.spans(ri, pi)
+                        }
+                        _ => None,
+                    };
                     let pi = pi as usize;
                     let dst = &mut live[pi * PAGE..(pi + 1) * PAGE];
                     let src: &[u8] = if k < r.pages.len() && r.pages[k].0 as usize == pi { &r.pages[k].1[..] } else { self.base_page(ri, pi) };
-                    if dst != src {
-                        dst.copy_from_slice(src);
-                        st.load_copied += 1;
+                    match spans {
+                        None => {
+                            if dst != src {
+                                dst.copy_from_slice(src);
+                                st.load_copied += 1;
+                            }
+                        }
+                        Some(sp) => {
+                            let mut any = false;
+                            for &(a, b) in sp {
+                                let (a, b) = (a as usize, b as usize);
+                                if dst[a..b] != src[a..b] {
+                                    dst[a..b].copy_from_slice(&src[a..b]);
+                                    any = true;
+                                }
+                            }
+                            st.load_copied += any as u64;
+                        }
                     }
                 }
             }
@@ -1189,7 +1217,7 @@ impl Base {
                     // MELEE_SNAP_CHECK_POKE: a game-crate static written behind the load's back; the check must catch it
                     CHECK_POKE.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
                 }
-                self.check(s, "load", self.host_mask.as_deref());
+                self.check(s, "load", None, self.host_mask.as_ref());
             }
         }
         // the live state is `s` now (the load's own writes show up as written in the next epoch: compared once)
@@ -1205,7 +1233,7 @@ impl Base {
     /// MELEE_SNAP_CHECK: the live state must equal `s` page for page, as a full-copy restore would leave it: every page
     /// of the host block and the statics, and every arena page ever written (an arena page never written is its base
     /// page by the copy-on-write store's construction, and `s` holds only pages that differ from the base).
-    fn check(&self, s: &Snapshot, what: &str, skip: Option<&[Vec<u64>]>) {
+    fn check(&self, s: &Snapshot, what: &str, skip: Option<&[Vec<u64>]>, mask: Option<&crate::snapmask::HostMask>) {
         // allocation free until the verdict (see `load`)
         let mut bad = [(0usize, 0u32); 8];
         let mut nbad = 0usize;
@@ -1215,12 +1243,18 @@ impl Base {
             let live = unsafe { bytes(r.addr, r.len) };
             let np = (r.len / PAGE) as u32;
             let mut one = |pi: u32| {
-                if skip.is_some_and(|sk| bit_of(&sk[ri], pi as usize)) {
+                let sk = mask.filter(|_| ri >= STATIC0);
+                if skip.is_some_and(|sk| bit_of(&sk[ri], pi as usize)) || sk.is_some_and(|m| m.skipped(ri, pi)) {
                     return;
                 }
                 n += 1;
                 let want = r.page(pi).unwrap_or_else(|| self.base_page(ri, pi as usize));
-                if &live[pi as usize * PAGE..(pi as usize + 1) * PAGE] != want {
+                let have = &live[pi as usize * PAGE..(pi as usize + 1) * PAGE];
+                let differs = match sk.and_then(|m| m.spans(ri, pi)) {
+                    Some(sp) => sp.iter().any(|&(a, b)| have[a as usize..b as usize] != want[a as usize..b as usize]),
+                    None => have != want,
+                };
+                if differs {
                     if nbad < bad.len() {
                         bad[nbad] = (ri, pi);
                     }

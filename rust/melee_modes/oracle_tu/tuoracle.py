@@ -1689,6 +1689,12 @@ def main():
     cdir = OUT_ROOT / stem
     cdir.mkdir(parents=True, exist_ok=True)
     (cdir / "wrap.c").write_text(c, newline="\n")
+    # cfg rust_immutable: externs the C declares writable but the port keeps as an immutable `static` table: the
+    # stream draw stays (same sequence as the C) but nothing is written, and reads go through addr_of!
+    for n in cfg.get("rust_immutable", ()):
+        r = re.sub(r"\(\*core::ptr::addr_of_mut!\(m::ext::" + n + r"\)\)\[i0\] = (rt::draw_\w+\(&mut rt::ST\));",
+                   r"let _ = \1; // " + n + " is an immutable table in the port: not randomised", r)
+        r = r.replace(f"addr_of_mut!(m::ext::{n})", f"addr_of!(m::ext::{n})")
     (ROOT / f"rust/melee_modes/tests/tu_{stem}.rs").write_text(r.replace(".__", "._x0"), newline="\n")
     # regenerate runner Rust after callbacks known (emit_c ran first, emit_rust second: both complete)
     print(f"{stem}: {len(tg.test_funcs)} functions, {len(tg.objs)} state objects, {len(tg.ext)} external functions mocked")

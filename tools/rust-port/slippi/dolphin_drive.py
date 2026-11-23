@@ -91,6 +91,8 @@ class Dolphin:
         t = time.time()
         while time.time() - t < 30:
             s = self.poll()
+            if s and s[0] < start:
+                start = s[0]  # the logged frame counter restarts at a scene change (the game's end)
             if s and s[0] >= start + n:
                 return s
             time.sleep(0.004)
@@ -130,6 +132,8 @@ def main():
     ap.add_argument("--pads", type=int, default=1, help="seed of the scripted in-game pads")
     ap.add_argument("--frames", type=int, default=3600, help="in-game frames to play (the game may end first)")
     ap.add_argument("--timeout", type=int, default=600)
+    ap.add_argument("--mode", default="direct", choices=["direct", "unranked"])
+    ap.add_argument("--games", type=int, default=1, help="games in a row (unranked: search again after each)")
     a = ap.parse_args()
     d = Dolphin(a.name, a.state, a.pipe)
     d.open()
@@ -227,25 +231,40 @@ def in_game(s):
 
 
 def play(d, a):
-    to_direct(d)
+    to_mode(d, 1 if a.mode == "unranked" else 2)
     x, y = CSS[a.play] if a.play in CSS else map(float, a.play.split(","))
-    n = len(d.poll())
-    css_goto(d, x, y, n - 2, n - 1)
-    d.tap("A", after=20)
-    if not d.poll()[4] & 0xFF:
-        raise SystemExit(f"drive: no character under the hand at {a.play}")
-    # START: lock in and open the code entry; Z takes the autocomplete suggestion (Slippi/direct-codes.json of
-    # this throwaway user dir); START and A confirm; then the search runs
-    d.tap("START", after=60)
-    d.tap("Z", after=20)
-    d.tap("START", after=20)
-    d.tap("A", after=30)
-    log(f"searching: {d.fmt()}")
-    d.until(in_game, "the online game", timeout=a.timeout)
-    s = d.poll()
+    for game in range(1, a.games + 1):
+        if game > 1:
+            # Slippi online: after a game the CSS comes back (unranked: idle, the fighter kept); START searches again
+            d.until(lambda s: major(s) == 8 and not in_game(s) and (s[3] >> 24) in (1, 2), "the online CSS again", timeout=180)
+            d.frames(90)
+            log(f"game {game}: back at the CSS: {d.fmt()}")
+        n = len(d.poll())
+        if not d.poll()[4] & 0xFF:
+            css_goto(d, x, y, n - 2, n - 1)
+            d.tap("A", after=20)
+            if not d.poll()[4] & 0xFF:
+                raise SystemExit(f"drive: no character under the hand at {a.play}")
+        if a.mode == "unranked":
+            # START: lock in and search (no code entry)
+            d.tap("START", after=30)
+        else:
+            # START: lock in and open the code entry; Z takes the autocomplete suggestion (Slippi/direct-codes.json of
+            # this throwaway user dir); START and A confirm; then the search runs
+            d.tap("START", after=60)
+            d.tap("Z", after=20)
+            d.tap("START", after=20)
+            d.tap("A", after=30)
+        log(f"searching: {d.fmt()}")
+        d.until(in_game, "the online game", timeout=a.timeout)
+        s = d.poll()
+        play_game(d, a, s, a.pads + 7919 * (game - 1))
+
+
+def play_game(d, a, s, seed):
     log(f"in game at log frame {s[0]}: {d.fmt()}")
     # scripted pads: a new random pad every 3-12 frames, from --pads (a plain LCG, so a run is repeatable)
-    rng = a.pads * 2654435761 & 0xFFFFFFFF
+    rng = seed * 2654435761 & 0xFFFFFFFF
     def r(n):
         nonlocal rng
         rng = (rng * 1103515245 + 12345) & 0x7FFFFFFF
@@ -278,16 +297,20 @@ def play(d, a):
 
 
 def to_direct(d):
-    """Online submenu (MenuFlow.cur_menu 8) -> Direct (hovered 2) -> the online CSS in direct mode."""
+    to_mode(d, 2)
+
+
+def to_mode(d, want):
+    """Online submenu (MenuFlow.cur_menu 8) -> Unranked (hovered 1) or Direct (2) -> the online CSS in that mode."""
     s = d.until(lambda s: (s[2] >> 24) == 8 and (s[3] >> 16) & 0xFF == 1, "online submenu, logged in")
     for _ in range(10):
         h = s[2] & 0xFFFF
-        if h == 2:
+        if h == want:
             break
-        d.tap("D_DOWN" if h < 2 else "D_UP", after=10)
+        d.tap("D_DOWN" if h < want else "D_UP", after=10)
         s = d.poll()
     d.tap("A")
-    d.until(lambda s: major(s) == 8 and (s[3] >> 24) == 2, "online CSS, direct mode")
+    d.until(lambda s: major(s) == 8 and (s[3] >> 24) == want, f"online CSS, mode {want}")
     d.frames(30)
 
 

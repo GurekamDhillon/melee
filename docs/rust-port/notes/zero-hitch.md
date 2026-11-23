@@ -856,3 +856,21 @@ code inside a fight unless a file is decoded there.
   laptop as always).
 - Two-peer rematch (`menu_slp_check.sh rematch`, this branch on 36b93c1d0): PASS, 0 soft / 0 HARD desyncs in every
   game, both peers' .slp agree.
+
+## Rollback resimulation ticks over 16 ms (port/resimcost, 2026-11-22)
+Rust-vs-Rust Slippi pair at 45 ms lag (mock_mm relay, MELEE_PROFILE=1): the peer that rolls back had 26 fight ticks over
+16 ms around online frames 85-140 (one netplay step = snapshot load + ~6 resimulated frames + the shown frame; a step
+over the 16.7 ms slot made the loop run two ticks in the next interval, so whole frames reached 30-48 ms). Two causes,
+both render-only (no game state touched; synctest 4/7 with MELEE_SNAP_CHECK=1 clean, 0 desyncs in every pair):
+1. `gxbridge::on_state_load` dropped every copy of game memory made in the last 32 frames, including whole archive-image
+   blocks; the first resimulated frame after each load re-copied them (2.5-4.3 ms instead of ~1 ms), and the re-copy was
+   recent again, so it repeated at every rollback. Now those copies are only put in doubt: the next lookup compares the
+   copy with the live bytes and keeps it when equal (`check_suspect`), re-making it only when the load changed them.
+2. `GxState::take_draws` sized the next frame's list by the last frame, and a resimulated frame draws ~30 (display lists
+   suppressed): the shown frame grew its ~1200-draw list from there, `grow_one<DrawCmd>` ~17% of a shown netplay frame.
+   It now keeps a slowly decaying high-water mark plus an eighth of headroom.
+Matrix (2 runs each, both peers): 45 ms base 2/1 and 35/16 ticks over 16 ms (worst 37.7 / 86.6 ms), fixed 1/4 and 7/10
+where every remaining offender is match start (tick 1) or the pre-GO ticks under machine contention, none in the
+rollback window; 30 and 60 ms clean in the rollback window both ways. Left: the shown netplay frame still decodes GX on
+the game thread (~60% of it; `prepare_rollback_run` keeps MELEE_GX_SYNC since 2026-11-03, before the GX state moved to the
+system heap on 2026-11-16, so the decode thread may now be safe for rollback runs: unverified).

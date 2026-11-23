@@ -25,7 +25,7 @@ g4.FUNCS = {
     "src/melee/lb/lbrefract.c": REFRACT,
     "src/melee/lb/lbaudio_ax.c": ["fn_80025E38"],
     "src/melee/gm/gm_1601.c": ["fn_80161004", "gm_801688AC"],
-    "src/melee/gm/gm_17C0.c": ["fn_8017DE54"],
+    "src/melee/gm/gm_17DB.c": ["fn_8017DE54"],
     "src/melee/gm/gm_1832.c": ["fn_801859C8"],
     "src/melee/gm/gmtoulib.c": ["gmTournament_SetTripleRightCoords"],
 }

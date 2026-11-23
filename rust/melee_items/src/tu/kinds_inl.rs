@@ -377,7 +377,7 @@ pub fn shims() -> std::vec::Vec<(usize, usize)> {
             static __stop_melee_pred_shims: Shim;
         }
         let a = core::ptr::addr_of!(__start_melee_pred_shims);
-        let n = (core::ptr::addr_of!(__stop_melee_pred_shims) as usize - a as usize) / core::mem::size_of::<Shim>();
+        let n = (core::ptr::addr_of!(__stop_melee_pred_shims) as usize - a as usize) / core::mem::size_of::<Shim>();  // semantics: allow(host: shim table length from linker section bounds)
         core::slice::from_raw_parts(a, n)
     };
     #[cfg(windows)]

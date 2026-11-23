@@ -287,6 +287,8 @@ CALLBACK_NAMES = [
     "grCorneria_801E2480", "fn_801E12D0", "fn_801E12D4", "smashTaunt_801E24AC",
 ]
 
+BF_ORDER = ("a union-aliased bitfield read after a whole-byte or float store (xC4.value, xC6.value, offset_y): native C "
+            "bitfields are LSB-first, the GameCube's (and the port's accessors) MSB-first")
 SPEC = dict(
     src="src/melee/gr/grcorneria.c",
     rust_mod="grcorneria",
@@ -337,7 +339,6 @@ use core::ptr::null_mut;""",
     links_c="    NN = 0; NIDM = 0; yakumono_param = (void*) OP_grCorneria_YakumonoParam[0]; OPLH[HSD_GOBJ_PLINK_FIGHTER] = &OGO[0];",
     links_rs="    NN = 0; NIDM = 0; t::yakumono_param = addr_of_mut!(OP_grCorneria_YakumonoParam[0]) as *mut _;",
     hooks_rs="""    melee_world::tu::grinl::ext::STAGE_INFO = Some(|| addr_of_mut!(G_stage_info) as *mut StageInfo);
-    melee_world::tu::grcorneria::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
     melee_world::tu::grcorneria::ext::HSD_GOBJPLINKHEAD = Some(|_l: i32| addr_of_mut!(OGO[0]));
     melee_world::tu::grcorneria::ext::HSD_PADMASTERSTATUS = Some(|| addr_of_mut!(OPAD) as *mut HSD_PadStatus);
     melee_world::tu::grcorneria::ext::HSD_SISLIB_804D1124 = Some(|| addr_of_mut!(OSIS) as *mut *mut SIS);""",
@@ -362,4 +363,28 @@ use core::ptr::null_mut;""",
     },
     fnvals={**{n: f"t::{n}" for n in CALLBACK_NAMES}, "grDisplay_801C5DB0": "t::ext::grDisplay_801C5DB0"},
     funcs=funcs,
+    # what the native C cannot reproduce (traced on Linux 2026-11-23 with per-region / per-bitfield dumps of both sides:
+    # images equal, only these differ); the test reports them and fails on any other function
+    native_differ={
+        "grCorneria_801DD2C0": BF_ORDER,
+        "grCorneria_801DD350": BF_ORDER,
+        "grCorneria_801DD9A8": BF_ORDER,
+        "grCorneria_801DFBCC": BF_ORDER,
+        "grCorneria_801E0DE4": BF_ORDER,
+        "grCorneria_801E0E14": BF_ORDER,
+        "grCorneria_801E0E40": BF_ORDER,
+        "grCorneria_801E0F34": BF_ORDER,
+        "grCorneria_801E0F6C": BF_ORDER,
+        "grCorneria_801E1970": BF_ORDER,
+        "smashTaunt_801E24AC": BF_ORDER,
+        "smashTaunt_801E2550": BF_ORDER,
+        "grCorneria_801E25C4": BF_ORDER,
+        "grCorneria_801E2738": BF_ORDER,
+        "grCorneria_801E277C": BF_ORDER,
+        "grCorneria_801E2B80": BF_ORDER,
+        "grCorneria_801E2C34": BF_ORDER,
+        "grCorneria_801DED50": "reads the ship offset_x through the union where the native layout keeps the high half of an 8-byte pointer (address dependent: two C runs differ) + BF_ORDER",
+        "grCorneria_801DFC2C": "memzero(&xC8, 0x18) is 0x18 GameCube bytes (4-byte pointers): the port clears the six GC fields by name, the native C stops after base_x",
+        "grCorneria_801E03C8": "declared UNK_T with no return statement: the native C hashes whatever is in rax, the port returns nothing",
+    },
 )

@@ -426,7 +426,7 @@ mod tests {
     #[test]
     fn rows_and_locks() {
         assert_eq!(ROWS[0], MODE_RANKED);
-        assert!(!row_unlocked(0) && !row_unlocked(row_of(MODE_RANKED)));
+        assert!(!row_unlocked(0) && !row_unlocked(row_of(MODE_RANKED) as i32));
         assert!(row_unlocked(1) && row_unlocked(2));
         assert!(!row_unlocked(3) && !row_unlocked(4));
         PICK.store(MODE_RANKED, Ordering::Relaxed);

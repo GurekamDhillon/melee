@@ -376,12 +376,33 @@ fn written_runs(cum: &[u64], limit: usize, addr: usize, out: &mut Vec<u64>) {
             continue;
         }
         let s = i;
-        while i < limit && bit(i) {
-            i += 1;
+        // one call over runs a short gap apart: a page of the gap was never written (no cow bit), so its watch has
+        // nothing to report or reset, and the result is the same with fewer GetWriteWatch calls (each scans little
+        // but costs a kernel entry: the arena's written pages lie in many short runs)
+        loop {
+            while i < limit && bit(i) {
+                i += 1;
+            }
+            let mut j = i;
+            while j < limit && j < i + RUN_GAP && !bit(j) {
+                j += 1;
+            }
+            if j < limit && j < i + RUN_GAP {
+                i = j;
+                continue;
+            }
+            break;
         }
         written_pages(addr + s * PAGE, (i - s) * PAGE, addr, out);
     }
 }
+
+/// [`written_runs`]: runs of written pages at most this many pages apart are read in one call (Windows; elsewhere a
+/// fallback marks a whole range written, so the runs stay apart there).
+#[cfg(windows)]
+const RUN_GAP: usize = 64;
+#[cfg(not(windows))]
+const RUN_GAP: usize = 0;
 
 fn set_bit(v: &mut Vec<u64>, i: usize) {
     if v.len() <= i / 64 {

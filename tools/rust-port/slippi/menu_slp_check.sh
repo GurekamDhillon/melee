@@ -9,7 +9,7 @@
 #   quit:    one Unranked game; B quits mid-match (MELEE_SLIPPI_NP_QUIT_AT=600); A's .slp must still be written, with a
 #            Game End, and play in `melee slpcheck` (parsed, not refused)
 # usage: menu_slp_check.sh OUTDIR rematch|quit [--mm-port P] [--lag-ms N] [--loss-pct N]   (EXE=<melee binary>;
-#   GW_ISO_VANILLA set by the caller). --lag-ms / --loss-pct go to the mock's relay: many rollbacks (the stress run).
+#   GW_ISO_VANILLA set by the caller; SLPCHECK_TITLE=<word> prefixes both window titles). --lag-ms / --loss-pct go to the mock's relay: many rollbacks (the stress run).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"
 B="${EXE:-$repo/rust/target/release/melee}"; O=$1; mode=$2; shift 2
@@ -28,7 +28,7 @@ sleep 2
 side() { # side NAME CODE NPPORT SCRIPT G2SCRIPT G3SCRIPT [ENV=VALUE ...]
   local s; s=$(echo $1 | tr AB ab)
   local name=$1 code=$2 port=$3 script=$4 g2=$5 g3=$6; shift 6
-  ( cd "$repo/rust" && env "$@" MELEE_WINDOW_TITLE="slpcheck:$name:$mode" MELEE_RETAIL_FIRST=1 MELEE_CARD=0 MELEE_PAD_SCRIPT="$script" \
+  ( cd "$repo/rust" && env "$@" MELEE_WINDOW_TITLE="${SLPCHECK_TITLE:+$SLPCHECK_TITLE:}slpcheck:$name:$mode" MELEE_RETAIL_FIRST=1 MELEE_CARD=0 MELEE_PAD_SCRIPT="$script" \
     MELEE_SLIPPI_SET_PAD_SCRIPT_G2="$g2" MELEE_SLIPPI_SET_PAD_SCRIPT_G3="$g3" MELEE_SLIPPI_SET_MAX_FRAMES=1500 \
     MELEE_SLIPPI_MM_URL="ws://127.0.0.1:$mmp/v1/queue" MELEE_SLIPPI_NP_PORT=$port MELEE_SLIPPI_TEST_CODE="$code" \
     MELEE_SLIPPI_NP_OUT="$O/$s.csv" MELEE_SLIPPI_NP_MAX_SECONDS=420 MELEE_SLIPPI_NP_PADGEN=7 MELEE_SLP_DIR="$O/slp-$s" \

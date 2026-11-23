@@ -1519,6 +1519,7 @@ dependencies = [
  "melee_fighter",
  "melee_runtime",
  "melee_types",
+ "ring",
  "rustls",
  "webpki-roots",
 ]

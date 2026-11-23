@@ -222,6 +222,11 @@ pub struct Host {
     events: VecDeque<Event>,
     /// Count of datagrams this host could not parse or had to drop (bad peer id, session, address).
     pub dropped: u64,
+    /// Keep-alive ping interval and the gone-peer timeouts (`enet_peer_ping_interval` / `enet_peer_timeout`, here for
+    /// every peer of the host): ENet's defaults unless set ([`Host::set_timing`]).
+    ping_interval_ms: u32,
+    timeout_min_ms: u32,
+    timeout_max_ms: u32,
 }
 
 impl Host {
@@ -238,11 +243,25 @@ impl Host {
             rng: seed | 1,
             events: VecDeque::new(),
             dropped: 0,
+            ping_interval_ms: PING_INTERVAL_MS,
+            timeout_min_ms: TIMEOUT_MINIMUM_MS,
+            timeout_max_ms: TIMEOUT_MS,
         }
     }
     /// A virtual millisecond clock (tests); the default is the wall clock since creation.
     pub fn set_clock(&mut self, clock: Box<dyn Fn() -> u32>) {
         self.clock = Some(clock);
+    }
+    /// `enet_peer_ping_interval(ping)` and `enet_peer_timeout(32, min, max)` for every peer (mu_net: 250, 4000, 8000).
+    pub fn set_timing(&mut self, ping_ms: u32, timeout_min_ms: u32, timeout_max_ms: u32) {
+        self.ping_interval_ms = ping_ms.max(1);
+        self.timeout_min_ms = timeout_min_ms;
+        self.timeout_max_ms = timeout_max_ms.max(timeout_min_ms);
+    }
+    /// One datagram outside ENet framing from this host's socket (mu_net's one-byte punch / keep-alive; a 1-byte
+    /// datagram is below any ENet header, so a receiving host drops it).
+    pub fn send_raw(&mut self, to: Addr, data: &[u8]) {
+        self.tp.send(&to, data);
     }
     pub fn set_seed(&mut self, seed: u64) {
         self.rng = seed | 1;
@@ -449,6 +468,7 @@ impl Host {
     }
 
     fn timers(&mut self, i: usize, now: u32) {
+        let (ping_ms, min_ms, max_ms) = (self.ping_interval_ms, self.timeout_min_ms, self.timeout_max_ms);
         let p = &mut self.peers[i];
         match p.state {
             PeerState::Disconnected => return,
@@ -474,7 +494,7 @@ impl Host {
         // (the minimum on a live link only: a CONNECT still resent waits out TIMEOUT_MS, as the select's connect
         // window relies on, the opponent may start listening late)
         let limit = limit && p.state == PeerState::Connected;
-        if gone(oldest, TIMEOUT_MS) || (limit && gone(earliest, TIMEOUT_MINIMUM_MS)) {
+        if gone(oldest, max_ms) || (limit && gone(earliest, min_ms)) {
             let was = p.state;
             let data = p.event_data;
             p.reset();
@@ -484,7 +504,7 @@ impl Host {
             return;
         }
         // keep-alive: ENet pings every interval when nothing reliable is in flight
-        if p.state == PeerState::Connected && p.sent.is_empty() && p.out_reliable.is_empty() && now.wrapping_sub(p.last_ack_time.max(p.last_receive)) >= PING_INTERVAL_MS {
+        if p.state == PeerState::Connected && p.sent.is_empty() && p.out_reliable.is_empty() && now.wrapping_sub(p.last_ack_time.max(p.last_receive)) >= ping_ms {
             p.last_ack_time = now;
             Self::queue_reliable(p, 0xFF, vec![CMD_PING | FLAG_ACK, 0xFF, 0, 0]);
         }

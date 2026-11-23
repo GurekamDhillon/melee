@@ -1093,6 +1093,14 @@ pub enum NetPhase {
     Done,
 }
 
+#[cfg(feature = "real-net")]
+#[path = "mu_play.rs"]
+mod mu_play;
+#[cfg(feature = "real-net")]
+pub type MuBox = Box<mu_play::MuRun>;
+#[cfg(not(feature = "real-net"))]
+pub type MuBox = Box<()>;
+
 pub struct NetDriver {
     /// holds the netplay content lock (melee_data::netid::freeze) for as long as this session exists
     _frozen: NetidThaw,
@@ -1127,6 +1135,8 @@ pub struct NetDriver {
     params: Option<RoomParams>,
     /// `play --slippi-mm`: the match runs over the Slippi wire (slippi_np.rs) instead of a room
     pub slippi: Option<Box<SlippiRun>>,
+    /// `play --p2p-*`: a P2P Direct match over mu_net (mu_play.rs)
+    pub mu: Option<MuBox>,
     /// matches played on this connection before the current one
     pub match_no: u32,
     /// the final hashes of the earlier matches
@@ -1426,6 +1436,7 @@ impl NetDriver {
             lab,
             params: Some(rp),
             slippi: None,
+            mu: None,
             match_no: 0,
             all_finals: Vec::new(),
             early_on,
@@ -1496,6 +1507,10 @@ impl NetDriver {
             sr.link.start_game();
             sr.loop_t = Some(Instant::now());
         }
+        #[cfg(feature = "real-net")]
+        if self.mu.is_some() {
+            self.begin_mu(&mut g);
+        }
         self.phase = NetPhase::InMatch(Box::new(g));
         log(&format!("netplay {}: match scene, waiting for the peer", self.tag()));
     }
@@ -1514,6 +1529,14 @@ impl NetDriver {
     /// Right after the game read the controllers for a tick (retail_flow `tick`): start the early-inputs sampler
     /// once the match runs with a peer that announced them, and tell it this tick's poll.
     pub fn pre_tick(&mut self, pads: &melee_platform::PadSystem) {
+        #[cfg(feature = "real-net")]
+        if let Some(mr) = self.mu.as_mut() {
+            // the scene boot: keep the link serviced (pings, the peer's commits) until the match takes it
+            if !matches!(self.phase, NetPhase::InMatch(_)) {
+                mr.link.poll();
+            }
+            return;
+        }
         if let Some(sr) = self.slippi.as_mut() {
             // the scene boot: keep the ENet link serviced (acks, pings) until the match takes it
             if !matches!(self.phase, NetPhase::InMatch(_)) {
@@ -1585,6 +1608,10 @@ impl NetDriver {
         if self.slippi.is_some() {
             let _ = rec;
             return self.tick_slippi(local);
+        }
+        #[cfg(feature = "real-net")]
+        if self.mu.is_some() {
+            return self.tick_mu(local);
         }
         let Some(net) = self.net.as_mut() else {
             self.error = Some("no connection".into());
@@ -1880,6 +1907,10 @@ pub struct SlippiRun {
 impl NetDriver {
     /// A Slippi-wire match's checksum comparisons so far: (soft, hard) desyncs (Hero's "Desync Risk" / "DESYNC DETECTED").
     pub fn slippi_desyncs(&self) -> Option<(u32, u32)> {
+        #[cfg(feature = "real-net")]
+        if self.mu.is_some() {
+            return self.mu_desyncs();
+        }
         self.slippi.as_ref().map(|sr| (sr.soft, sr.hard))
     }
 }
@@ -1993,6 +2024,7 @@ impl NetDriver {
             lab: false,
             params: None,
             slippi: Some(Box::new(run)),
+            mu: None,
             match_no: 0,
             all_finals: Vec::new(),
             early_on: false,

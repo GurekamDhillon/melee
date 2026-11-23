@@ -71,7 +71,8 @@ Detection: argv starts with a flag only the launcher sends (`--iso`, `--settings
 | `--volume`, `--fullscreen`, `--widescreen`, `--vsync`, `--window`, `--scale`, `--log-file` | override the file |
 | `--card-dir <..>\User\GC\CardA` | `MELEE_CARD_PATH=<..>\User\GC\RustPort` (our `USA\Card A` .gci tree, kept apart from his folder) |
 | `--threaded-renderer`, `--sys-dir`, `--user-dir`, `--lobby-status-file`, vanilla flags, `--fps`, `--backend`, `--dlss*`... | accepted, logged, no effect |
-| `--mod-*`, `--replay`, `--lobby-*`, `--local-peer`, `--p2p-*` | refused: log line, exit code 3 |
+| `--p2p-K V` | passed to `melee play` unchanged (P2P Direct, mu_net) |
+| `--mod-*`, `--replay`, `--lobby-*`, `--local-peer` | refused: log line, exit code 3 |
 | `MELEE_NO_GC_ADAPTER` | `MELEE_PAD_IGNORE_ADAPTER=1` |
 | anything else | passed to `melee play` unchanged (so test args like `--skip-intro --quit-after-matches 1` work) |
 
@@ -120,7 +121,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 | lobby status `--lobby-status-file` | `{"status","stocks"}` | same schema (also says "In match" offline) | OK |
 | lobby result mailbox `<status file>.results` (new since 11-04) | a line per lobby game | same line, `--lobby-direct` games only (this branch) | OK |
 | Slippi Direct `--lobby-direct CODE --lobby-character N` | yes | Slippi wire path (real Slippi only with the player's login); PR tags the build `<version>:rust` | OK, not tried against a real peer |
-| P2P Direct `--p2p-*` (mu_net) | yes | refused; the PR shows his "needs the Source Port" message | REFUSED |
+| P2P Direct `--p2p-*` (mu_net) | yes | passed through to `play`; Rust vs Rust only, Rust vs Source Port fails VERIFY (different sims), exit 2 | PART: Rust vs Rust only; Rust vs Source Port fails VERIFY (different sims), exit 2 |
 | YouGame: `--online-mode`, `YOUGAME_BRIDGE` / `YOUGAME_TOKEN`, `MELEE_YOUGAME_*` | yes | `--online-mode` opens the online menus; bridge vars read by melee_platform/yougame.rs; extension channel untested | PART |
 | mod disc `--mod-iso`, or `--iso M --mod-base-iso R` | yes | data-only discs (main.dol identical to retail); code mods refused | PART |
 | TE packs `--mod-gci`, `--mod-dir`, `--mod-profile` | yes | refused; the PR keeps TE launches on the catalog's engine | REFUSED |

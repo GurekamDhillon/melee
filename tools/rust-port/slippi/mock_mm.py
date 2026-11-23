@@ -246,16 +246,20 @@ class Server:
                     out, dest, d = ry, pb, "A>B"
                 else:
                     out, dest, d = rx, pa, "B>A"
+                hold = None
                 if self.loss and self.drop():
                     d += "x"
                 elif self.lag or self.jitter or self.extra[d]:
                     j = random.uniform(0, self.jitter) if self.jitter else 0.0
-                    held.append((time.time() + self.lag + self.extra[d] + j, out, data, dest))
+                    hold = self.lag + self.extra[d] + j
+                    held.append((time.time() + hold, out, data, dest))
                     held.sort(key=lambda h: h[0])  # jitter reorders datagrams, as a real path may
                 else:
                     out.sendto(data, dest)
                 if self.capture:
-                    self.capture.write(f"{int((time.time() - self.t0) * 1000)} {d} {data.hex()}\n")
+                    # with --jitter-ms each line also carries the datagram's hold time (ms): its delivery order
+                    tail = f" {hold * 1000:.2f}" if self.jitter and hold is not None else ""
+                    self.capture.write(f"{int((time.time() - self.t0) * 1000)} {d} {data.hex()}{tail}\n")
                     self.capture.flush()
 
 

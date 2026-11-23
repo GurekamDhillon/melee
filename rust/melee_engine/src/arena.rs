@@ -62,7 +62,15 @@ mod sys {
 mod sys {
     pub unsafe fn reserve(cap: usize) -> *mut core::ffi::c_void {
         let p = libc::mmap(core::ptr::null_mut(), cap, libc::PROT_NONE, libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE, -1, 0);
-        if p == libc::MAP_FAILED { core::ptr::null_mut() } else { p }
+        if p == libc::MAP_FAILED {
+            return core::ptr::null_mut();
+        }
+        // 4 KB pages only (no transparent huge pages): the snapshot's write tracking is per page (soft-dirty), and a
+        // write anywhere in a 2 MB huge page marks all 512 of its pages written, so every save copied and every hash
+        // digested ~8x the pages the game actually wrote (crate::snapshot, notes/perf.md "Rollback snapshots")
+        #[cfg(target_os = "linux")]
+        libc::madvise(p, cap, libc::MADV_NOHUGEPAGE);
+        p
     }
     pub unsafe fn commit(at: usize, len: usize) -> bool {
         libc::mprotect(at as *mut _, len, libc::PROT_READ | libc::PROT_WRITE) == 0
@@ -163,6 +171,18 @@ pub fn used_range() -> (usize, usize) {
             return (0, 0);
         }
         (BASE, ((BUMP + 0xFFF) & !0xFFF) - BASE)
+    }
+}
+
+/// `(start, len)` of the arena's whole reservation (every page `used_range` can ever cover), or `(0, 0)` before the
+/// first allocation.
+pub fn reserved_range() -> (usize, usize) {
+    unsafe {
+        if BASE == 0 {
+            return (0, 0);
+        }
+        // BASE is the mapping's start rounded up to 64 KB: the reservation's last 64 KB may lie past the mapping
+        (BASE, CAP - 0x10000)
     }
 }
 

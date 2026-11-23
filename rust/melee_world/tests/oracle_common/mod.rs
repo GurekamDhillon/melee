@@ -6,6 +6,8 @@
 
 use core::ffi::c_void;
 use melee_types::{Vec2, Vec3};
+#[path = "../../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 
 pub static mut RS: u32 = 0;
 pub fn rnd() -> u32 {
@@ -138,6 +140,11 @@ pub fn normptr(p: usize) -> u64 {
             if f == p {
                 return (0x1000 + i as u64) << 32;
             }
+        }
+        // a fn the library stored can be a crate-local copy of the registered one (rustc inlines small leaf fns
+        // across crates): match it by symbol (docs/rust-port/notes/fn-identity.md 1)
+        if let Some(i) = fnsym::find(&*core::ptr::addr_of!(OFNS), p) {
+            return (0x1000 + i as u64) << 32;
         }
     }
     (0xFFFFu64 << 32) | 1

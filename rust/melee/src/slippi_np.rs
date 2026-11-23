@@ -398,7 +398,7 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
         let decider = args.iter().any(|a| a == "--host");
         let (lag, loss) = (Duration::from_millis(num("--lag-ms", 0) as u64), num("--loss-pct", 0) as u32);
         let t = crate::slippi_link::take(&spec, 0, num("--port", 0) as u16, |udp| {
-            Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, rng: 0x5150_0000 ^ local_port as u32, q: VecDeque::new() })
+            Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, jitter: Duration::from_millis(num("--jitter-ms", 0) as u64), rng: 0x5150_0000 ^ local_port as u32, q: VecDeque::new() })
         })
         .map_err(|e| (1, e))?;
         let tag = if decider { "decider" } else { "guest" };
@@ -432,6 +432,7 @@ pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, Lin
         inner: Box::new(udp),
         lag: Duration::from_millis(num("--lag-ms", 0) as u64),
         loss_pct: num("--loss-pct", 0) as u32,
+        jitter: Duration::from_millis(num("--jitter-ms", 0) as u64),
         rng: 0x5150_0000 ^ local_port as u32,
         q: VecDeque::new(),
     });
@@ -558,6 +559,16 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     s.set_local_port(local_port as usize);
     s.set_delay(delay);
     cl.start_game();
+    // test hook: MELEE_NP_LOAD_DELAY_MS=N starts this side's frames N ms late (a slower stage load, as a Slippi Dolphin
+    // peer's): the link keeps polling, the peer's pads queue
+    if let Some(ms) = std::env::var("MELEE_NP_LOAD_DELAY_MS").ok().and_then(|v| v.parse::<u64>().ok()) {
+        let t = Instant::now();
+        while t.elapsed() < Duration::from_millis(ms) {
+            cl.poll();
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        eprintln!("melee: {tag}: MELEE_NP_LOAD_DELAY_MS: frames start {ms} ms late");
+    }
 
     let mut rnd: u32 = rng_offset.wrapping_mul(2654435761) ^ (local_port as u32 + 1);
     let mut last_sent = FIRST - 1;
@@ -570,7 +581,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let mut done_at: Option<Instant> = None;
     let mut ticks = 0u64;
     let mut ended = false;
-    let mut skip_checked = 0;
+    let mut ts = melee_net::time_sync::TimeSync::new(melee_net::time_sync::old_rule());
     let mut forced_resims = 0u32;
     let shift = num("--script-shift", 0) as i32;
     // --padgen SEED: the session's deterministic pad generator instead of the (1800-frame) scenario script, for long matches
@@ -578,8 +589,8 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let start_at = std::env::var("MELEE_NP_START_AT").ok().and_then(|v| v.parse::<i32>().ok());
     // no remote pad for this long ends the run with a report instead of a silent stall: generous until the first pad
     // (the peer may still be loading), short after it
-    let first_pad_s = num("--first-pad-seconds", 120) as u64;
-    let silence_s = num("--silence-seconds", 10) as u64;
+    let first_pad_s = num("--first-pad-seconds", if ts.old { 120 } else { melee_net::time_sync::FIRST_PAD_S as i64 }) as u64;
+    let silence_s = num("--silence-seconds", if ts.old { 10 } else { melee_net::time_sync::SILENCE_S as i64 }) as u64;
     let mut last_rx: Option<Instant> = None;
     let loop_t = Instant::now();
     let mut failed = false;
@@ -666,7 +677,14 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         }
         // local controller: the script, known `delay` frames ahead
         let f = s.current_frame();
-        for ff in f..=f + delay {
+        // start in step: online frame 2 waits for the peer's first pad
+        s.start_hold = !ts.old && last_rx.is_none();
+        let step = ts.step(online(f), || cl.time_offset_us());
+        if step.hold > 0 {
+            s.request_wait(step.hold);
+        }
+        let extra = step.advance as i32;
+        for ff in f..=f + delay + extra {
             let mut i = match padgen {
                 Some(g) => melee_net::session::rb_gen(g, local_port as usize * 2, ff),
                 None => script_input(local_port as usize, ff - FIRST - shift),
@@ -680,7 +698,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         }
         let (ckf, ck) = finals.iter().next_back().map_or((0, 0), |(a, b)| (*a, *b));
         let sent_before = last_sent;
-        for ff in (last_sent + 1)..=(f + delay) {
+        for ff in (last_sent + 1)..=(f + delay + extra) {
             let Some(i) = s.local_input_for_send(local_port as usize * 2, ff) else { break };
             let mut p = [0u8; PAD_WIRE];
             p[..8].copy_from_slice(&pad_bytes(&i));
@@ -702,15 +720,10 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             cl.flush();
         }
         // Slippi's skip rule: well ahead of the peer, wait (only on frames that are multiples of 30)
-        let of = online(s.current_frame());
-        if of > 0 && of % 30 == 0 && of != skip_checked {
-            skip_checked = of;
-            let off = cl.time_offset_us();
-            if off > 10000 {
-                s.request_wait((((off - 10000) as i64 / 16683) + 1).min(5) as i32);
-            }
-        }
         run_tick(&mut s, &mut game, None);
+        if extra > 0 && s.current_frame() > f {
+            run_tick(&mut s, &mut game, None);
+        }
         // newly finalized local checksums: the session's own finality rule (the state entering the frame is final once
         // the frame before it is confirmed and no rollback below it is pending), after this tick's resimulation
         let conf = s.confirmed_frame();
@@ -788,8 +801,8 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     eprintln!("melee: {tag}: tick work (poll + sim + send) mean {} us, max {} us", work_sum / ticks.max(1), work_max);
     let last = finals.keys().next_back().copied().unwrap_or(0);
     eprintln!(
-        "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; ping {} us (pad acks {} us); pads sent {} received {}; enet resent {}",
-        finals.len(), st.rollbacks, st.depth_max, st.resim, st.stall_ticks, st.waits, cl.net_ping_us(), cl.ping_us(), cl.stats.pads_sent, cl.stats.pads_received,
+        "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; start hold {} ticks; time sync held {} advanced {}{}; ping {} us (pad acks {} us); pads sent {} received {}; enet resent {}",
+        finals.len(), st.rollbacks, st.depth_max, st.resim, st.stall_ticks, st.waits, st.start_hold, ts.held, ts.advanced, if ts.old { " (old rule)" } else { "" }, cl.net_ping_us(), cl.ping_us(), cl.stats.pads_sent, cl.stats.pads_received,
         cl.host.peers.iter().map(|p| p.stats_resent).sum::<u64>()
     );
     if !failed && hard == 0 && soft == 0 && compared > 0 && (last >= frames || ended) {

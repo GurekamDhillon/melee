@@ -338,8 +338,11 @@ impl RetailPlay {
         // never snapshots the arena (play turns trim on), so the thread's frames may hold its blocks. Without this the
         // FIFO decode and draw packing ran inside every tick (Temple 4P: tick p50 5.7 ms instead of ~2).
         // MELEE_GX_SYNC=1 keeps decoding in the tick; headless runs (golden, gate) never decode on a thread.
-        if !self.headless && melee_engine::arena::trim() && std::env::var_os("MELEE_GX_SYNC").is_none() {
-            melee_engine::gxbridge::shim().gx.enable_async(melee_engine::arena::mark_foreign_thread);
+        // A rollback run (no trim) decodes on the thread too: its jobs wait out every snapshot save / load
+        // (gxbridge::enable_async, notes/zero-hitch.md "Async decode in rollback runs").
+        if !self.headless && std::env::var_os("MELEE_GX_SYNC").is_none() {
+            melee_engine::gxbridge::enable_async();
+            log(&format!("GX decode on its thread{}", if melee_engine::arena::trim() { "" } else { " (rollback run: jobs wait out snapshots)" }));
             // screenshots show exactly their tick: take each frame when it is decoded
             melee_engine::gxbridge::shim().wait_frame = self.shot_dir.is_some() && std::env::var_os("MELEE_SHOT_NOWAIT").is_none();
         }

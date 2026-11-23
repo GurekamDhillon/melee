@@ -50,8 +50,8 @@ pub const SCENE_VS: u8 = 2;
 /// Allocator / renderer modes a run that snapshots the engine needs (and a replay of such a run repeats).
 pub fn prepare_rollback_run() {
     melee_engine::arena::set_trim(false);
-    // the GX decode thread would hold arena blocks across a load
-    std::env::set_var("MELEE_GX_SYNC", "1");
+    // GX decode may run on its thread (Nov 23): the render state is off the snapshot since Nov 16 (gxbridge), and the
+    // thread's jobs wait out each save / load (arena::bg_job_begin). MELEE_GX_SYNC=1 still keeps it in the tick.
     // the sound is game state (a static, its buffers in the arena) a load restores: the mix stays on the game thread
     // (the mixer thread would hold the sound's lock while a snapshot copies it)
     std::env::set_var("MELEE_AUDIO_GAME_THREAD", "1");
@@ -266,7 +266,10 @@ impl ModesGame {
         }
         let s = RbGame::save(self);
         unsafe { melee_modes::tu::gmscene::RENDER_ONLY = true };
+        // async decode: take exactly this redraw's frame (not the newest one the thread finished)
+        let wait = std::mem::replace(&mut melee_engine::gxbridge::shim().wait_frame, true);
         self.step(pads);
+        melee_engine::gxbridge::shim().wait_frame = wait;
         unsafe { melee_modes::tu::gmscene::RENDER_ONLY = false };
         let f = self.raw.take().map(|f| self.detach.detach(f));
         RbGame::load(self, &s);

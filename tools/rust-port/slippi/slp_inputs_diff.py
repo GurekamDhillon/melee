@@ -4,7 +4,7 @@
 `play --slp`): per frame and port, the pre-frame event (0x37) each side's game ran with, the last copy of a frame
 (a rolled-back frame is written again). Nothing is logged during the match, so the run's timing is unchanged.
     python -I slp_inputs_diff.py A.slp B.slp [--shift N] [--show K]
-Prints common port-frames, the first frames whose inputs (physical buttons, stick, c-stick, analog triggers) or
+Without --shift the frame offset is the one whose post-frame states agree most. Prints common port-frames, the first frames whose inputs (physical buttons, stick, c-stick, analog triggers) or
 pre-frame random seed differ, and the first post-frame (0x38) state difference for context."""
 import struct
 import sys
@@ -39,7 +39,15 @@ def load(path):
 def main():
     a_pre, a_post = load(sys.argv[1])
     b_pre, b_post = load(sys.argv[2])
-    shift = int(sys.argv[sys.argv.index("--shift") + 1]) if "--shift" in sys.argv else 0
+    if "--shift" in sys.argv:
+        shift = int(sys.argv[sys.argv.index("--shift") + 1])
+    else:
+        # the frame numbering of the two files can differ by a frame (the engine's .slp vs Dolphin's): take the shift
+        # whose post-frame states agree most
+        def agree(k):
+            return sum(1 for (f, port), v in b_post.items() if a_post.get((f + k, port)) == v)
+        shift = max(range(-3, 4), key=agree)
+    print(f"shift {shift} (B frame f = A frame f{shift:+d})")
     show = int(sys.argv[sys.argv.index("--show") + 1]) if "--show" in sys.argv else 6
     common, bad = 0, []
     for (f, port), v in sorted(b_pre.items()):
@@ -50,7 +58,11 @@ def main():
         diff = {k: (w[k], v[k]) for k in v if w[k] != v[k]}
         if diff:
             bad.append((f, port, diff))
-    print(f"pre-frame: common port-frames {common}, differing {len(bad)}")
+    # before frame -39 (the first actionable frame, Slippi's counting) the engine's .slp records its own stick a frame
+    # or two early; the game's state is unaffected (the post-frame events agree), so those are counted apart
+    early = [b for b in bad if b[0] < -39]
+    bad = [b for b in bad if b[0] >= -39]
+    print(f"pre-frame: common port-frames {common}, differing {len(bad)} from frame -39 ({len(early)} before)")
     for f, port, diff in bad[:show]:
         print(f"  frame {f} port {port}: " + "; ".join(f"{k} A={x} B={y}" for k, (x, y) in diff.items()))
     pc = [(f, port) for (f, port), v in sorted(b_post.items()) if a_post.get((f + shift, port), v) != v]

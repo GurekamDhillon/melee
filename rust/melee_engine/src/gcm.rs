@@ -9,6 +9,9 @@ pub type Overlay = Box<dyn Fn(&str) -> Option<Vec<u8>>>;
 pub struct Gcm {
     f: Option<std::fs::File>,
     fst: Vec<u8>,
+    /// Each FST entry's name as (start, length) in `fst`, found once at open: `DVDConvertPathToEntrynum` runs every
+    /// frame of a match (the stock icons' file lookup) and walked the root's ~1000 names with a NUL search each.
+    names: Vec<(u32, u32)>,
     /// Mounted mods: a path they answer resolves to the same entry number, whose bytes are replaced.
     overlay: Option<Overlay>,
     replaced: std::cell::RefCell<std::collections::HashMap<i32, std::sync::Arc<[u8]>>>,
@@ -23,6 +26,32 @@ fn be32(b: &[u8], at: usize) -> u32 {
     u32::from_be_bytes(b[at..at + 4].try_into().unwrap())
 }
 
+/// The name of FST entry `i` (the bytes up to the NUL; none: empty), as an absolute range of `fst`.
+fn name_range(fst: &[u8], i: usize) -> (usize, usize) {
+    let start = be32(fst, 8) as usize * 12;
+    let no = (be32(fst, i * 12) & 0xFF_FFFF) as usize;
+    let names = &fst[start..];
+    let end = names[no..].iter().position(|&c| c == 0).unwrap_or(0);
+    (start + no, end)
+}
+
+/// [`name_range`] of every entry (an entry whose name lies outside the table keeps the old lazy path, see `name`).
+fn name_index(fst: &[u8]) -> Vec<(u32, u32)> {
+    let n = be32(fst, 8) as usize;
+    let start = n * 12;
+    (0..n)
+        .map(|i| {
+            let no = (be32(fst, i * 12) & 0xFF_FFFF) as usize;
+            if start + no <= fst.len() {
+                let (a, l) = name_range(fst, i);
+                (a as u32, l as u32)
+            } else {
+                (u32::MAX, 0)
+            }
+        })
+        .collect()
+}
+
 impl Gcm {
     pub fn open(path: &str) -> Result<Self, String> {
         #[cfg(feature = "corev1")]
@@ -30,12 +59,14 @@ impl Gcm {
             // core v1: the host owns the disc; every read goes through its disc_read (the path is not opened)
             let h = read_at(None, 0x424, 8)?;
             let fst = read_at(None, be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-            return Ok(Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default(), path: None });
+            let names = name_index(&fst);
+            return Ok(Self { f: None, fst, names, overlay: None, replaced: Default::default(), added: Default::default(), path: None });
         }
         let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
         let h = read_at(Some(&mut f), 0x424, 8)?;
         let fst = read_at(Some(&mut f), be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-        Ok(Self { f: Some(f), fst, overlay: None, replaced: Default::default(), added: Default::default(), path: Some(path.to_string()) })
+        let names = name_index(&fst);
+        Ok(Self { f: Some(f), fst, names, overlay: None, replaced: Default::default(), added: Default::default(), path: Some(path.to_string()) })
     }
 
     /// A disc with only the root directory: for headless runs that load no files.
@@ -43,7 +74,8 @@ impl Gcm {
         let mut fst = vec![0u8; 12];
         fst[0] = 1;
         fst[11] = 1;
-        Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default(), path: None }
+        let names = name_index(&fst);
+        Self { f: None, fst, names, overlay: None, replaced: Default::default(), added: Default::default(), path: None }
     }
 
     /// Mount `f` over the disc: every file it answers replaces the disc's file of that path (same entry number).
@@ -102,10 +134,13 @@ impl Gcm {
     }
 
     fn name(&self, i: usize) -> &[u8] {
-        let names = &self.fst[self.count() * 12..];
-        let no = (be32(&self.fst, i * 12) & 0xFF_FFFF) as usize;
-        let end = names[no..].iter().position(|&c| c == 0).unwrap_or(0);
-        &names[no..no + end]
+        match self.names.get(i) {
+            Some(&(a, l)) if a != u32::MAX => &self.fst[a as usize..a as usize + l as usize],
+            _ => {
+                let (a, l) = name_range(&self.fst, i);
+                &self.fst[a..a + l]
+            }
+        }
     }
 
     /// The game's own name of disc entry `e` (the file name in the disc's table, no folder), for diagnostics; an

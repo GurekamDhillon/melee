@@ -860,6 +860,29 @@ mod tests {
 /// pause's drop clears `BG_PAUSE` afterwards.
 static BG_PAUSE: AtomicBool = AtomicBool::new(false);
 static BG_BUSY: AtomicBool = AtomicBool::new(false);
+/// [`BG_BUSY`] of the GX decode thread (a rollback run's render-only decode, `gxbridge::enable_async`): a flag of its
+/// own, so the two background threads never clear each other's.
+static JOB_BUSY: AtomicBool = AtomicBool::new(false);
+
+/// The GX decode thread starts a job: waits while snapshot work runs (see [`BG_PAUSE`]), then holds it off until
+/// [`bg_job_end`]. The job runs on the system heap and touches no game memory, but it writes statics (the allocator's
+/// counters, std's locks) that a save copies and a load writes back.
+pub fn bg_job_begin() {
+    loop {
+        JOB_BUSY.store(true, SeqCst);
+        if !BG_PAUSE.load(SeqCst) {
+            return;
+        }
+        JOB_BUSY.store(false, SeqCst);
+        while BG_PAUSE.load(SeqCst) {
+            std::thread::yield_now();
+        }
+    }
+}
+/// See [`bg_job_begin`].
+pub fn bg_job_end() {
+    JOB_BUSY.store(false, SeqCst);
+}
 
 fn bg_begin() -> bool {
     BG_BUSY.store(true, SeqCst);
@@ -881,7 +904,7 @@ pub struct BgPause(());
 impl BgPause {
     pub fn enter() -> BgPause {
         BG_PAUSE.store(true, SeqCst);
-        while BG_BUSY.load(SeqCst) {
+        while BG_BUSY.load(SeqCst) || JOB_BUSY.load(SeqCst) {
             std::thread::yield_now();
         }
         BgPause(())

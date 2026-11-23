@@ -7,7 +7,7 @@
 # 127.0.0.1 (np_dolphin_pair.sh also runs everything in a private network namespace with loopback only).
 #   run_np_dolphin.sh NAME OUT MMPORT CODE OPP_CODE [ADDRS]
 # The user dir OUT/user_NAME is made fresh each run: a throwaway test profile (fake uid, no play key, CODE), never a
-# real Slippi user.json (latestVersion must parse as semver: an empty one throws in prepareOnlineStatus). The disc comes from GW_ISO_VANILLA and is never printed. Prints the PID and returns at once.
+# real Slippi user.json. NP_REPLAY_DIR=D: Dolphin saves its .slp there (latestVersion must parse as semver: an empty one throws in prepareOnlineStatus). The disc comes from GW_ISO_VANILLA and is never printed. Prints the PID and returns at once.
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 N=$1; O=$2; MMP=$3; CODE=$4; OPP=$5
 ADDRS=${6:-804a04f0,804d6640,804d6cf4,80479d60,804c1fac,804a0bc0,81155a8c,81155a90}
@@ -43,7 +43,9 @@ Enabled = False
 PermissionAsked = True
 [Slippi]
 EnableSpectator = False
-SaveReplays = False
+SaveReplays = $([ -n "$NP_REPLAY_DIR" ] && echo True || echo False)
+ReplayDir = ${NP_REPLAY_DIR:-$O/replays}
+ReplayMonthlyFolders = False
 EnableJukebox = False
 EnableQuickChat = 0
 InputSuggestions = False

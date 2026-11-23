@@ -835,3 +835,24 @@ On Linux without port/matchload2 there is no asset service, so every hat decodes
 rust-port 119.6 / 96.7 / 121.5 ms; + matchload2 40.3 / 48.8 / 126.4; + matchload2 + these changes 40.5 / 34.0 / 56.4.
 Not under 16 ms on the laptop. Left in a good 34 ms run: ~40 hat applies / small in-place decodes (15 ms), the read
 chain (9 ms, two copies of every file), audio banks.
+
+### Fight-scene gate, vanilla_bf (Linux, AC + performance; gate script adapted: exe without .exe, `ps` busy check with
+GATE_ALLOW_BUSY=1, python3; other lanes' games on the machine), frames over 16 ms in fights:
+| base | rust-port 36b93c1d0 | this branch on it | rust-port d456c9380 | this branch on it |
+|---|---|---|---|---|
+| runs | 240, 247 | 620, 0 | 0, 0 | 1, 0 |
+The 36b93c1d0 runs came in bursts (ticks 1500-7500, at different times in each run; tick p50 2.75 ms in both builds,
+the game thread itself slow inside them: CPU frequency / core placement while other games ran), and the second pair
+overlapped each other. On d456c9380 the machine was quieter: the one over-16 frame (16.4 ms, tick 3676) was a slow gobj
+proc with 6.5 ms of game-thread CPU in the frame (the thread was off the CPU), no load in it. These changes run no
+code inside a fight unless a file is decoded there.
+
+### Proof (all on Linux)
+- NHV1 + tick log over retail_full, 6000 ticks (4292 match frames): rust-port vs this branch EQUAL, on 36b93c1d0 and
+  again on d456c9380; zero-tail on vs off EQUAL.
+- Arena digests (this branch + port/matchload2 merged locally for the Linux asset service, ASLR off, retail_full 4000
+  ticks): zero-tail on vs off 769/769 loads identical; service on vs `MELEE_ASSETS=off` 769/769 identical.
+- gate.sh: 4 goldens all frames, synctest depth 4 0 mismatches, audio = C (semantics lint and snapguard fail on the
+  laptop as always).
+- Two-peer rematch (`menu_slp_check.sh rematch`, this branch on 36b93c1d0): PASS, 0 soft / 0 HARD desyncs in every
+  game, both peers' .slp agree.

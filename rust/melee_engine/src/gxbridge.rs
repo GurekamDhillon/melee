@@ -160,6 +160,14 @@ fn objs() -> &'static mut Objs {
     unsafe { &mut *objs_ptr() }
 }
 
+/// GX decode on its own thread (render-only), safe in a run that snapshots: the thread's jobs see only the shim's
+/// system-heap copies of game memory, its allocations go to the system heap, and each job waits out snapshot capture,
+/// save and load (`arena::bg_job_begin`), which rewrite the statics the job writes. The channels are made here, on the
+/// system heap.
+pub fn enable_async() { let _sys = SysScope::enter();
+    shim().gx.enable_async_gated(crate::arena::mark_foreign_thread, crate::arena::bg_job_begin, crate::arena::bg_job_end)
+}
+
 /// The finished frame (`GXCopyDisp` ends it), for the presenter.
 pub fn take_frame() -> Option<Vec<DrawCmd>> { let _sys = SysScope::enter();
     shim().take_frame()

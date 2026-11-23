@@ -348,6 +348,13 @@ impl Gx {
     /// The decoded state moves to the thread: `self.state` only mirrors the copy-clear of the last collected frame.
     /// `init` runs first on the new thread. Decoding is render-only: no game code reads `GxState`.
     pub fn enable_async(&mut self, init: fn()) {
+        fn open() {}
+        self.enable_async_gated(init, open, open)
+    }
+    /// [`Gx::enable_async`] with every job run between `gate()` and `ungate()`: a rollback run passes the arena's
+    /// background-thread pause (`arena::bg_job_begin` / `bg_job_end`), so no job runs while a snapshot is captured,
+    /// saved or loaded (a load rewrites every writable static, std's locks and the allocator's counters included).
+    pub fn enable_async_gated(&mut self, init: fn(), gate: fn(), ungate: fn()) {
         if self.worker.is_some() {
             return;
         }
@@ -363,16 +370,20 @@ impl Gx {
             .name("gx decode".into())
             .spawn(move || {
                 init();
+                // read once here: an env read takes std's ENV_LOCK, a static
+                let warn = std::env::var_os("MELEE_GX_WARN").is_some();
                 while let Ok(job) = jobs.recv() {
-                    match job {
+                    gate();
+                    let go = match job {
                         Job::Process(mut buf, res) => {
                             st.process(&buf, &res);
                             drop(res);
                             buf.clear();
                             let _ = ptx.send(buf);
+                            true
                         }
                         Job::End(pose) => {
-                            if std::env::var_os("MELEE_GX_WARN").is_some() { for w in &st.warnings { eprintln!("gx warn: {w}"); } }
+                            if warn { for w in &st.warnings { eprintln!("gx warn: {w}"); } }
                             st.warnings.clear();
                             let draws = st.take_draws();
                             let f = pipes.lock().unwrap().clone();
@@ -381,10 +392,12 @@ impl Gx {
                             }
                             let packed = crate::render::pack(&draws);
                             let f = AsyncFrame { draws, clear_color: st.clear_color, clear_depth: st.clear_depth, packed, pose };
-                            if ftx.send(f).is_err() {
-                                break;
-                            }
+                            ftx.send(f).is_ok()
                         }
+                    };
+                    ungate();
+                    if !go {
+                        break;
                     }
                 }
             })

@@ -6,6 +6,7 @@
 //! - `wire`: the message codecs; `desc`: the session descriptor and its digest; `sec`: HELLO, keys, packets.
 
 pub mod blake2b;
+pub mod conn;
 pub mod crypto;
 pub mod desc;
 pub mod sec;

@@ -257,6 +257,7 @@ pub mod bg {
         // ~16 KB per match); no helper or handler touches it while START == 0
         let buf = &mut *core::ptr::addr_of_mut!(STATE_BUF);
         if buf.len() < pages {
+            let _s = crate::arena::SysScope::enter(); // the system heap: a rollback load never rewinds it
             *buf = Vec::from_iter((0..pages).map(|_| AtomicU8::new(0)));
         } else {
             buf[..pages].iter().for_each(|a| a.store(0, Relaxed));

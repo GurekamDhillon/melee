@@ -46,3 +46,4 @@ melee/src/nucleus/http.rs	OVERRIDE_HOST	OnceLock set once
 melee/src/nucleus/http.rs	UA	OnceLock set once
 melee/src/slippi_link.rs	MEM_ASK	the link handoff between the select session thread and the boot of the in-process match; never touched by a simulated tick
 melee/src/slippi_link.rs	MEM_SLOT	the link handoff between the select session thread and the boot of the in-process match; never touched by a simulated tick
+melee_engine/src/cow.rs	STATE_BUF	allocated in the system heap (SysScope) at a capture, only grown or cleared there; never touched by a simulated tick

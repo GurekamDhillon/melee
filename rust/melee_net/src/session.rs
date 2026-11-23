@@ -384,6 +384,8 @@ pub struct RbStats {
     /// the mean is how many frames after it was due the peer's input arrived (the effective input lag)
     pub arrive_n: i32,
     pub arrive_sum: i64,
+    /// ticks held at the start (online frame 2) until the peer's first pad arrived ([`RbSession::start_hold`])
+    pub start_hold: i32,
 }
 
 /// The snapshot ring (gw_snap.c's session slots): `k + 2` slots, k = maxb + 1.
@@ -457,6 +459,10 @@ pub struct RbSession<G: RbGame> {
     hint_used: Vec<[(i32, bool, RbInput); RING]>,
     pub hint_trust: [crate::early::Trust; SLOTS],
     pub hint_stats: HintStats,
+    /// Set by the caller each tick while the peer has sent no pad yet: online frame 2 (session `FIRST + 1`) is not
+    /// run until it clears, so the match starts in step with a peer still loading instead of running into the
+    /// rollback limit a few frames in (local pacing only; the pads sent are unchanged).
+    pub start_hold: bool,
 }
 
 /// Early-input prediction statistics (this match).
@@ -518,6 +524,7 @@ impl<G: RbGame> RbSession<G> {
             hint_used: vec![[(i32::MIN, false, RbInput::default()); RING]; SLOTS],
             hint_trust: [crate::early::Trust::default(); SLOTS],
             hint_stats: HintStats::default(),
+            start_hold: false,
         }
     }
 
@@ -1035,6 +1042,9 @@ impl<G: RbGame> RbSession<G> {
                 self.stall_run = (frame, 0, why);
             }
             self.stall_run.1 += 1;
+        } else if self.start_hold && n == FIRST + 1 {
+            self.plan.new_frame = false;
+            self.stats.start_hold += 1;
         } else if self.wait_ticks > 0 && frame >= FIRST {
             self.wait_ticks -= 1;
             self.plan.new_frame = false;

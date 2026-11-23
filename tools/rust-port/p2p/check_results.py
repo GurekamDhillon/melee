@@ -17,13 +17,24 @@ def verify(sodium, j, body):
     sig = bytes.fromhex(j["signature"])
     pk = bytes.fromhex(j["identity"])
     msg = DOMAIN + body.encode()
+    if sodium is None:  # no libsodium (Windows): the `cryptography` package verifies the same Ed25519 signature
+        from cryptography.exceptions import InvalidSignature
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+        try:
+            Ed25519PublicKey.from_public_bytes(pk).verify(sig, msg)
+            return True
+        except InvalidSignature:
+            return False
     return sodium.crypto_sign_verify_detached(sig, msg, ctypes.c_ulonglong(len(msg)), pk) == 0
 
 
 def main():
     a_path, b_path, ka, kb = sys.argv[1:5]
-    sodium = ctypes.CDLL("libsodium.so.26")
-    sodium.sodium_init()
+    try:
+        sodium = ctypes.CDLL("libsodium.so.26")
+        sodium.sodium_init()
+    except OSError:
+        sodium = None
     (a, ab), (b, bb) = load(a_path), load(b_path)
     A, B = a["body"], b["body"]
     checks = [

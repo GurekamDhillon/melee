@@ -405,7 +405,14 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
                 let v = take(&mut i).unwrap_or_default();
                 p.notes.push(format!("{f} {v}: accepted, nothing to do"));
             }
-            f if REFUSED.contains(&f) || f.starts_with("--p2p-") => {
+            // P2P Direct (mu_net): every `--p2p-K V` pair goes to `melee play` unchanged
+            f if f.starts_with("--p2p-") => {
+                p.play_args.push(args[i].clone());
+                if let Some(v) = take(&mut i) {
+                    p.play_args.push(v);
+                }
+            }
+            f if REFUSED.contains(&f) => {
                 let v = take(&mut i).unwrap_or_default();
                 p.refused.push(format!("{f} {v}"));
             }
@@ -647,9 +654,9 @@ mod tests {
         assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_VOLUME").unwrap().1, "7");
         assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_RENDER_SCALE").unwrap().1, "auto");
         assert!(!p.env.iter().any(|(k, _)| k == "MELEE_WINDOW"));
-        assert_eq!(p.refused.len(), 2);
-        assert_eq!(p.refused[0], "--p2p-port 5000");
-        assert!(p.refused[1].starts_with("--mod-iso m.iso ("), "{:?}", p.refused);
+        assert_eq!(p.refused.len(), 1);
+        assert!(p.refused[0].starts_with("--mod-iso m.iso ("), "{:?}", p.refused);
+        assert!(p.play_args.windows(2).any(|w| w[0] == "--p2p-port" && w[1] == "5000"), "{:?}", p.play_args);
     }
 
     #[test]
@@ -799,9 +806,12 @@ volume 5
         let e = envs(&[("MELEE_SLIPPI_MM_URL", "ws://127.0.0.1:1/v1/queue")]);
         let p = plan_env(&s(&["--iso", "d", "--lobby-direct", "ab#1", "--lobby-character", "300"]), Path::new("."), &|_| None, &e);
         assert_eq!(p.refused.len(), 2, "{:?}", p.refused);
-        // P2P Direct (Hero's own mu_net protocol) is still refused: exit 3, not a different game
+        // P2P Direct (Hero's mu_net protocol) is passed through to `play`, pair by pair
         let p = plan_env(&s(&["--iso", "d", "--p2p-port", "5000", "--p2p-connect-seconds", "45", "--p2p-games", "1"]), Path::new("."), &|_| None, &e);
-        assert_eq!(p.refused.len(), 3);
+        assert_eq!(p.refused.len(), 0, "{:?}", p.refused);
+        for (k, v) in [("--p2p-port", "5000"), ("--p2p-connect-seconds", "45"), ("--p2p-games", "1")] {
+            assert!(p.play_args.windows(2).any(|w| w[0] == k && w[1] == v), "{k}: {:?}", p.play_args);
+        }
     }
 
     #[test]

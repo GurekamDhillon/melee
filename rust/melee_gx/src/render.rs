@@ -979,7 +979,7 @@ impl Recycle {
     }
     /// Take a retired frame apart: its draw list and every draw's vertex, uniform and index Vecs become spares; the rest
     /// (Arcs of configs, arrays, textures) is dropped here. Call on a thread off the game's path (the frame drop thread).
-    pub fn frame(&self, mut draws: Vec<DrawCmd>) {
+    pub fn take_back(&self, mut draws: Vec<DrawCmd>) {
         let mut bytes = Vec::with_capacity(draws.len() * 2);
         let mut idx = Vec::with_capacity(draws.len());
         for d in draws.iter_mut() {

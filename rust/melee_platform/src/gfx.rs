@@ -453,7 +453,7 @@ impl Presenter {
             let _ = std::thread::Builder::new().name("gx frame drop".into()).spawn(move || {
                 // the frame's Vecs go back to the GX decode thread for later frames (melee_gx::render::Recycle)
                 while let Ok(v) = rx.recv() {
-                    recycle.frame(v);
+                    recycle.take_back(v);
                 }
             });
             tx

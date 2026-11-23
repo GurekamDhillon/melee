@@ -1555,7 +1555,7 @@ impl Renderer {
         let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default(), asyncq: Default::default(), pending: Default::default(), cache, cache_path, unsaved: Default::default() });
         // compile every pipeline earlier runs needed, off the frame path, while the game boots
         pipes.start_warm();
-        Ok(Self {
+        let mut r = Self {
             adapter,
             last_fill_us: 0,
             device,
@@ -1605,7 +1605,16 @@ impl Renderer {
             fx_widen: 1.0,
             ui_tilt: [0.0; 2],
             fx_phase: None,
-        })
+        };
+        // The EFB copy pipelines are built here, at boot, not at their first use: the first copy comes a few ticks
+        // into the first fight, and building them there (shader + pipeline creation) took 18-27 ms of that frame's
+        // draw (Windows, Vulkan).
+        let t = std::time::Instant::now();
+        r.copy_pipeline();
+        if prof() {
+            eprintln!("gxprof EFB copy pipelines built at boot in {:?}", t.elapsed());
+        }
+        Ok(r)
     }
 
     /// A fatal GPU error (device lost, out of video memory, an unexpected wgpu error): the caller should stop

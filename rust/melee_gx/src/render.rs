@@ -405,6 +405,10 @@ pub struct Renderer {
     /// Textures of the frame being prepared, converted ahead on several threads ([`Renderer::convert_ahead`]);
     /// `texture_view` takes its texture from here instead of converting it.
     tex_ready: FxMap<TexKey, texture::Converted>,
+    /// Per draw of the frame `convert_ahead` walked: the index of its run of draws with [`same_textures`] state
+    /// (consecutive, an equivalence), so `prepare` answers "same textures as an earlier draw of the run" without
+    /// comparing the two records again. Empty when `convert_ahead` did not walk the frame.
+    tex_run: Vec<u32>,
     /// The EFB targets of the previous shape (`set_target`): (width, height, samples) and color, depth, msaa.
     spare_targets: Option<((u32, u32, u32), (wgpu::Texture, wgpu::Texture, Option<wgpu::Texture>))>,
     /// `tex_override::generation()` the decoded textures were made under.
@@ -1582,6 +1586,7 @@ impl Renderer {
             tex_alias: FxMap::default(),
             tex_bytes: 0,
             tex_ready: FxMap::default(),
+            tex_run: Vec::new(),
             spare_targets: None,
             ovr_gen: crate::tex_override::generation(),
             prepared: 0,
@@ -1819,6 +1824,7 @@ impl Renderer {
     /// with few or small new textures converts them in place as before.
     fn convert_ahead(&mut self, draws: &[DrawCmd]) {
         self.tex_ready.clear();
+        self.tex_run.clear();
         if crate::tex_override::active() {
             return; // a registered override replaces a texture by its key's bytes: left to the one path that looks it up
         }
@@ -1835,10 +1841,17 @@ impl Renderer {
         let mut jobs: Vec<Job<'_>> = Vec::new();
         let mut bytes = 0usize;
         let mut prev: Option<usize> = None;
+        let mut run = 0u32;
+        self.tex_run.reserve(draws.len());
         for (di, d) in draws.iter().enumerate() {
             if prev.is_some_and(|j| same_textures(&draws[j], d)) {
+                self.tex_run.push(run);
                 continue;
             }
+            if prev.is_some() {
+                run += 1;
+            }
+            self.tex_run.push(run);
             prev = Some(di);
             for i in 0..MAX_TEXTURES {
                 if d.info.sampled_textures & (1 << i) == 0 && d.info.sampled_ind_textures & (1 << i) == 0 {
@@ -2296,6 +2309,7 @@ impl Renderer {
         // the previous unmerged draw: a run of draws over one material differs only in its uniforms (so the
         // batcher keeps them apart) and shares the texture bind group (8 maps of key hashing otherwise)
         let mut prev_tex: Option<usize> = None;
+        let tex_run = std::mem::take(&mut self.tex_run);
         // MELEE_GX_PROF only (a clock read per draw is not free): time in pipeline / texture resolution, factory calls
         let profiling = prof();
         let (mut t_pipe, mut t_tex, mut n_factory) = (std::time::Duration::ZERO, std::time::Duration::ZERO, 0usize);
@@ -2339,7 +2353,9 @@ impl Renderer {
                 t_pipe += t.elapsed();
             }
             let tq = profiling.then(std::time::Instant::now);
-            if let Some(j) = prev_tex.filter(|&j| same_textures(&draws[j], d)) {
+            // one run of convert_ahead: same textures by transitivity; else compare (a run broken only by skipped draws)
+            let same_run = |j: usize| tex_run.len() == draws.len() && tex_run[j] == tex_run[i];
+            if let Some(j) = prev_tex.filter(|&j| same_run(j) || same_textures(&draws[j], d)) {
                 fc.draws[i].tex_bg = fc.draws[j].tex_bg.clone();
                 n_reuse += 1;
             } else {
@@ -2355,6 +2371,7 @@ impl Renderer {
             }
             prev_tex = Some(i);
         }
+        self.tex_run = tex_run;
         fc.last_pipe = last_pipe;
         self.frames[self.fc] = fc;
         if prof() {

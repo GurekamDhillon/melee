@@ -7,7 +7,7 @@
 
 use super::*;
 use crate::mu_np::{establish, scene_of, P2pOptions};
-use melee_net::mu_net::link::Link;
+use melee_net::mu_net::link::{Link, NextGame};
 use melee_net::mu_net::result::{path_for_game, GameResult, PlayerResult};
 
 /// The match's network half, driven one render tick at a time by the retail flow.
@@ -33,6 +33,8 @@ pub struct MuRun {
     /// the session ended before the game reported its end (BYE, a lost connection, 7 s without input)
     disconnected: bool,
     written: bool,
+    /// early inputs on for this run (np_early::enabled): the peer's SAMPLEs are used for prediction
+    early: bool,
     /// test hooks: `--mu-test-frames N` ends the match after N final checksums (a scripted match that never reaches
     /// GAME!), `--mu-test-padgen SEED` plays the session's generated pads instead of the local controller
     frames: Option<i32>,
@@ -103,6 +105,7 @@ impl NetDriver {
             done_at: None,
             disconnected: false,
             written: false,
+            early: crate::np_early::enabled(args),
             frames: val("--mu-test-frames").and_then(|v| v.parse().ok()),
             padgen: val("--mu-test-padgen").and_then(|v| v.parse().ok()),
             opts: o,
@@ -171,6 +174,14 @@ impl NetDriver {
         mr.link.poll();
         for (f, pad) in mr.link.input.take_fresh() {
             s.submit_remote_input(rp * 2, sess(f), &pad_input(&pad));
+        }
+        // early inputs (rev 2): the peer's SAMPLEs predict its unconfirmed frames
+        if !s.hints_on && mr.early {
+            s.hints_on = true;
+            mr.link.input.samples_on = true;
+        }
+        for (t, pad) in mr.link.input.take_samples() {
+            s.submit_hint(rp * 2, sess(t), &crate::mu_np::hint_of(&pad));
         }
         let mut gone: Option<String> = None;
         if mr.done_at.is_none() {
@@ -261,9 +272,12 @@ impl NetDriver {
         if (reached || g.e.ended) && mr.done_at.is_none() {
             mr.done_at = Some(Instant::now());
             mr.link.report_end();
+            // several games (plan 2.12): NEXT when the game ended by itself with no checksum disagreement
+            mr.link.offer_next(true, mr.hard > 0);
         }
-        // the end: the peer's RESULT compared (or 1.5 s for it), or the session gone
-        let end_now = mr.done_at.is_some_and(|t| (mr.link.peer_agreement().is_some() && t.elapsed() > Duration::from_millis(300)) || t.elapsed() > Duration::from_millis(1500));
+        // the end: the peer's RESULT compared (or 1.5 s for it) and the next game settled, or the session gone
+        let end_now = mr.link.next != NextGame::Waiting
+            && mr.done_at.is_some_and(|t| (mr.link.peer_agreement().is_some() && t.elapsed() > Duration::from_millis(300)) || t.elapsed() > Duration::from_millis(1500));
         let cur = s.current_frame();
         drop(s);
         if !end_now && gone.is_none() {
@@ -292,11 +306,62 @@ impl NetDriver {
                 None => "not compared",
             }
         ));
-        mr.link.close();
+        if mr.link.next != NextGame::Agreed {
+            mr.link.close();
+        }
         // a game that was played is exit 0 for the launcher, even one the other player left (the result file says it)
         self.end_frame = Some(cur);
         self.linger = 0;
         true
+    }
+
+    /// After a match whose next game both sides agreed (NEXT): the session moves to it (descriptor, frame base,
+    /// transcript), this driver is reset for it, and the next match's scenario comes back for the engine
+    /// (`Engine::next_vs`). None when the session is over.
+    pub fn mu_next_match(&mut self) -> Option<melee_engine::scenario::Scenario> {
+        let mr = self.mu.as_mut()?;
+        if mr.link.next != NextGame::Agreed || !mr.link.begin_next_game() {
+            if let NextGame::Over(w) = &mr.link.next {
+                log(&format!("netplay {}: P2P: no further game: {w}", if self.host { "host" } else { "guest" }));
+            }
+            return None;
+        }
+        let d = mr.link.descriptor()?.clone();
+        let scene = scene_of(&d).ok()?;
+        let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).ok()?;
+        melee_core::slippi_online::enable(d.rng_seed);
+        if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
+            crate::slippi_np::online_codes(d.alt_stage);
+        }
+        if let Some(st) = melee_core::slippi_online::state() {
+            st.pending = Default::default();
+            for (p, c) in mr.chars.iter().enumerate() {
+                st.pending[p].ext_char = *c;
+            }
+        }
+        melee_modes::tu::envoy::set_net_salt(d.rng_seed);
+        std::env::set_var("MELEE_TEST_SEED", d.rng_seed.to_string());
+        mr.last_sent = FIRST - 1;
+        mr.last_local = FIRST - 1;
+        mr.finals.clear();
+        mr.compared = 0;
+        mr.compared_upto = 0;
+        mr.soft = 0;
+        mr.hard = 0;
+        mr.ts = melee_net::time_sync::TimeSync::new(melee_net::time_sync::old_rule());
+        mr.started = false;
+        mr.done_at = None;
+        mr.disconnected = false;
+        mr.written = false;
+        let (tag, game) = (if self.host { "host" } else { "guest" }, mr.link.game);
+        log(&format!("netplay {tag}: P2P: game {game} of the session: stage {}, seed {:08x}", d.stage, d.rng_seed));
+        self.agreed.seed = d.rng_seed;
+        self.end_frame = None;
+        self.linger = 0;
+        self.started_at = None;
+        self.match_no += 1;
+        self.phase = NetPhase::PreMatch;
+        Some(scn)
     }
 
     /// A P2P match's checksum comparisons: (soft, hard).

@@ -39,4 +39,11 @@ wait $A; RA=$?
 wait $B; RB=$?
 grep -h "P2P\|p2p:" "$OUT/a.log" "$OUT/b.log" | grep -E "final checksums|DESYNC|could not|result file|connected" | sed "s|$OUT/||g"
 echo "play_pair: exit A=$RA B=$RB"
-python3 -I "$HERE/check_results.py" "$OUT/a/res.json" "$OUT/b/res.json" "$KA" "$KB" && [ $RA -eq 0 ] && [ $RB -eq 0 ]
+# every game of the session (--p2p-games N: res.json, res.g2.json, ...): both sides' files agree
+ok=0
+for fa in "$OUT"/a/res*.json; do
+  fb="$OUT/b/$(basename "$fa")"
+  echo "play_pair: $(basename "$fa")"
+  python3 -I "$HERE/check_results.py" "$fa" "$fb" "$KA" "$KB" || ok=1
+done
+[ $ok -eq 0 ] && [ $RA -eq 0 ] && [ $RB -eq 0 ]

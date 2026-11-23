@@ -65,6 +65,8 @@ pub struct Input {
     /// early inputs: target frame (game numbering) -> pad, at most MAX_SAMPLES; only kept when `samples_on`
     pub samples: BTreeMap<i32, Pad>,
     pub samples_on: bool,
+    /// samples taken since the last `take_samples` (target in game numbering, pad), for the game's predictor
+    fresh_samples: Vec<(i32, Pad)>,
     pub stats: Stats,
 }
 
@@ -90,6 +92,7 @@ impl Input {
             last_progress_us: now_us,
             samples: BTreeMap::new(),
             samples_on: false,
+            fresh_samples: Vec::new(),
             stats: Stats::default(),
         }
     }
@@ -167,6 +170,16 @@ impl Input {
         Msg::Ping { stamp: now_us as u32 }
     }
 
+    /// The early-input samples taken since the last call (target frame, pad): predictions only.
+    pub fn take_samples(&mut self) -> Vec<(i32, Pad)> {
+        std::mem::take(&mut self.fresh_samples)
+    }
+
+    /// Our SAMPLE (revision 2): `target` (game numbering) is the pad frame the change first appears in.
+    pub fn build_sample(&self, target: i32, slot: u8, pad: Pad) -> Msg {
+        Msg::Sample { version: SAMPLE_VERSION, target: self.base + target, slot, pad }
+    }
+
     /// The peer frames taken since the last call, in order.
     pub fn take_fresh(&mut self) -> Vec<(i32, Pad)> {
         std::mem::take(&mut self.fresh)
@@ -215,6 +228,7 @@ impl Input {
                 let t = *target - self.base;
                 if t > self.remote_latest {
                     self.samples.insert(t, *pad);
+                    self.fresh_samples.push((t, *pad));
                     while self.samples.len() > MAX_SAMPLES {
                         self.samples.pop_first();
                     }

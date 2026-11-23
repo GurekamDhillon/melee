@@ -115,6 +115,39 @@ fn request_banks(flags: u32, mask: u64) {
     });
 }
 
+/// settings.cfg `music` / `sfx` (0..100, default 100; `MELEE_MUSIC` / `MELEE_SFX` win) into the mixer. Host settings:
+/// they scale the voices' output only, so a golden / hash run at the defaults is the C mix bit for bit.
+pub fn apply_mix_settings() {
+    let mut s = crate::cfg::open();
+    let (m, x) = (s.get_int("music", 100).clamp(0, 100), s.get_int("sfx", 100).clamp(0, 100));
+    melee_audio::ax::set_music_volume(m);
+    melee_audio::ax::set_sfx_volume(x);
+    if m != 100 || x != 100 {
+        eprintln!("audio: music {m}%, sfx {x}% (master volume and the host page gain multiply on top)");
+    }
+}
+
+/// The output-driver settings: the environment, plus settings.cfg `audio_device` (Hero's key; a device name, empty =
+/// the system default). Read once at boot: a new device applies on the next launch, as in Hero's settings page.
+fn driver_config() -> melee_audio::output::DriverConfig {
+    let mut cfg = melee_audio::output::DriverConfig::from_env(false);
+    if cfg.device_name.is_none() {
+        cfg.device_name = crate::cfg::text("audio_device");
+    }
+    cfg
+}
+
+/// The output devices, in the log (names only; the chosen one marked).
+fn log_devices(chosen: Option<&str>) {
+    let list = melee_audio::output::list_devices();
+    let dflt = melee_audio::output::default_device();
+    eprintln!("audio: {} output device(s); using {}", list.len(), chosen.filter(|c| !c.is_empty()).unwrap_or("the system default"));
+    for (i, d) in list.iter().enumerate() {
+        let mark = if chosen == Some(d.as_str()) { " [chosen]" } else if dflt.as_deref() == Some(d.as_str()) { " [default]" } else { "" };
+        eprintln!("audio:   device {i}: {d}{mark}");
+    }
+}
+
 /// The mix goes to the host (core v1.1 `audio_out`) instead of an output device of our own.
 pub static HOST_MIX: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -122,6 +155,7 @@ impl Audio {
     /// Boot the sound from the disc and open the output. `Err` leaves the game silent.
     pub fn boot(iso: &str, headless: bool) -> Result<Audio, String> {
         crate::engine_audio::boot_sound(iso, false)?;
+        apply_mix_settings();
         // the device / mixer allocations are the harness's, never the game arena's (melee_audio::output::HOST_HEAP)
         let _ = melee_audio::output::HOST_HEAP.set(|on| {
             let prev = melee_engine::arena::active();
@@ -135,21 +169,36 @@ impl Audio {
         // MELEE_WINDOW_HIDDEN: an agent's hidden run opens no device (the mix still runs, uncaptured). With
         // MELEE_AUDIO_DUMP it still runs the frame driver, deviceless (the WAV capture, the mixer gain log lines).
         if melee_platform::window_hidden() && std::env::var_os("MELEE_AUDIO_DUMP").is_some_and(|v| !v.is_empty()) {
-            let mut cfg = melee_audio::output::DriverConfig::from_env(false);
+            let mut cfg = driver_config();
             cfg.device = false;
+            log_devices(cfg.device_name.as_deref());
             let out = sim::Output::new(cfg);
             return Ok(Audio { out: Some(out), dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 });
         }
         if melee_platform::window_hidden() {
             return Ok(Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 });
         }
-        let out = sim::Output::new(melee_audio::output::DriverConfig::from_env(false));
+        let cfg = driver_config();
+        log_devices(cfg.device_name.as_deref());
+        let out = sim::Output::new(cfg);
         Ok(Audio { out: Some(out), dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 })
     }
 
     /// Once per video frame: the game's own per-frame audio (`lbAudioAx_80027DF8`), then the 5 ms
     /// frames the device is owed.
     pub fn tick(&mut self) {
+        // MELEE_AUDIO_DBG: a gap between two ticks longer than the ring's cushion is an underrun on a real device
+        // (the producer runs only here, on the game thread); logged with or without a device.
+        if std::env::var_os("MELEE_AUDIO_DBG").is_some() {
+            thread_local!(static LAST: std::cell::Cell<Option<std::time::Instant>> = const { std::cell::Cell::new(None) });
+            let now = std::time::Instant::now();
+            if let Some(t) = LAST.with(|l| l.replace(Some(now))) {
+                let ms = now.duration_since(t).as_millis();
+                if ms >= 40 {
+                    eprintln!("audio: game thread gap {ms} ms between audio ticks");
+                }
+            }
+        }
         crate::engine_audio::petey_music(); // the live path (the golden one runs it from dsp_frame)
         // an engine scene runs `lbAudioAx_80027DF8` itself (gmscene's loop); the stand-in scenes get it here
         if !crate::engine_audio::take_frame_ran() {
@@ -208,6 +257,16 @@ impl Audio {
         }
     }
 
+    /// Live music volume (0..100; settings `music`, Hero's "Music" slider): the HPS stream voices only.
+    pub fn set_music(&mut self, percent: i32) {
+        melee_audio::ax::set_music_volume(percent);
+    }
+
+    /// Live SFX volume (0..100; settings `sfx`): every voice but the music stream.
+    pub fn set_sfx(&mut self, percent: i32) {
+        melee_audio::ax::set_sfx_volume(percent);
+    }
+
     /// A handle for the headless `golden` run, which owns the DSP clock itself.
     pub fn detached() -> Audio {
         Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: true.into(), ducked: false.into(), last_underruns: 0 }
@@ -248,6 +307,19 @@ impl Audio {
             }
             (None, Some(c)) => format!("audio: captured {} sub-frames, no device", c.len() / 320),
             (None, None) => "audio: virtual clock, no device".into(),
+        }
+    }
+
+    /// Fight or not, once per tick before `tick`. Outside fights (title, menus, results, the transitions between them)
+    /// the game thread blocks on file and sound-bank loads for up to ~100 ms (a YouGame first launch: more), and it is
+    /// the ring's only producer: there the ring keeps `LOAD_CUSHION_MS` buffered instead of the low-latency cushion, so
+    /// a load never starves the device. In a fight (no loads; the zero-lag gate) the usual cushion applies; the deeper
+    /// fill drains by itself, no sample dropped or added, so the mix is the same sample for sample.
+    pub fn set_fight(&mut self, fight: bool) {
+        const LOAD_CUSHION_MS: u32 = 160;
+        if let Some(o) = self.out.as_ref() {
+            let deep = !fight && !o.driver.cfg.low_latency;
+            o.driver.ring.set_floor(if deep { LOAD_CUSHION_MS / 5 } else { 0 });
         }
     }
 

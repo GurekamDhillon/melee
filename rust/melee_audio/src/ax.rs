@@ -59,6 +59,38 @@ pub struct Voice {
     pub itd_tr: i32,
     /// Last main L/R/S contribution, for the de-pop ramp.
     pub last_out: [i32; 3],
+    /// A music stream voice (the HPS PStream), gained by [`music_gain`]; every other voice is SFX ([`sfx_gain`]).
+    pub music: bool,
+}
+
+// ---- music / SFX gain (host settings, never game-visible) ------------------------------------
+//
+// The PC settings "Music" and "SFX" sliders (0..100, linear). Applied in the mix to each voice's sample before its
+// sends (dry and aux alike), so at 100 / 100 the mix is bit-for-bit the C shim's. Statics, not fields of `Ax`: a
+// rollback load rewrites the `Sound` this mixer lives in, and a setting must not be rewound with it. Plain atomics
+// (no heap), so no SysStatic is needed.
+static MUSIC_Q15: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(1 << 15);
+static SFX_Q15: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(1 << 15);
+
+fn pct_q15(percent: i32) -> i32 {
+    (percent.clamp(0, 100) << 15) / 100
+}
+
+/// Set the music volume (0..100).
+pub fn set_music_volume(percent: i32) {
+    MUSIC_Q15.store(pct_q15(percent), std::sync::atomic::Ordering::Relaxed);
+}
+/// Set the SFX volume (0..100): every voice that is not the music stream, and the native clips.
+pub fn set_sfx_volume(percent: i32) {
+    SFX_Q15.store(pct_q15(percent), std::sync::atomic::Ordering::Relaxed);
+}
+/// The music gain in Q15 (32768 = unchanged).
+pub fn music_gain() -> i32 {
+    MUSIC_Q15.load(std::sync::atomic::Ordering::Relaxed)
+}
+/// The SFX gain in Q15 (32768 = unchanged).
+pub fn sfx_gain() -> i32 {
+    SFX_Q15.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 impl Default for Voice {
@@ -84,6 +116,7 @@ impl Default for Voice {
             itd_tl: 0,
             itd_tr: 0,
             last_out: [0; 3],
+            music: false,
         }
     }
 }
@@ -215,6 +248,7 @@ fn mix_voice(
     bus_b: &mut [i32; BUS_SAMPLES],
     dpop: &mut [i32; 3],
     dpop_step: &mut [i32; 3],
+    gain: i32,
 ) {
     let mut ended = false;
     const F: usize = FRAME_SAMPLES;
@@ -244,7 +278,10 @@ fn mix_voice(
             }
         }
 
-        let v = sample.wrapping_mul(s.volume) >> 15;
+        let mut v = sample.wrapping_mul(s.volume) >> 15;
+        if gain != 1 << 15 {
+            v = v.wrapping_mul(gain) >> 15;
+        }
 
         // ITD: the main L and R sends delayed independently by up to 31 samples.
         s.itd_hist[s.itd_pos as usize] = v as i16;
@@ -332,6 +369,13 @@ impl Ax {
     fn log(&mut self, s: &str) {
         if let Some(l) = self.log.as_mut() {
             l(s);
+        }
+    }
+
+    /// Mark a voice as the music stream's (host-side; [`music_gain`] applies to it until it is acquired again).
+    pub fn set_voice_music(&mut self, voice: usize, music: bool) {
+        if voice < NUM_VOICES {
+            self.voices[voice].music = music;
         }
     }
 
@@ -777,6 +821,7 @@ impl Ax {
 
     fn mix_clips(&mut self) {
         let b = &mut *self.clips;
+        let g = sfx_gain() as i64;
         for c in b.slot.iter_mut() {
             let Some(pcm) = c.pcm.as_ref() else { continue };
             let mut i = 0;
@@ -784,8 +829,12 @@ impl Ax {
                 let f = c.pos as usize * c.channels;
                 let l = pcm[f] as i32;
                 let r = if c.channels == 2 { pcm[f + 1] as i32 } else { l };
-                self.acc[0][i] = self.acc[0][i].wrapping_add(l * c.gain / 127);
-                self.acc[1][i] = self.acc[1][i].wrapping_add(r * c.gain / 127);
+                let (mut l, mut r) = (l * c.gain / 127, r * c.gain / 127);
+                if g != 1 << 15 {
+                    (l, r) = (((l as i64 * g) >> 15) as i32, ((r as i64 * g) >> 15) as i32);
+                }
+                self.acc[0][i] = self.acc[0][i].wrapping_add(l);
+                self.acc[1][i] = self.acc[1][i].wrapping_add(r);
                 b.frames_mixed = b.frames_mixed.wrapping_add(1);
                 i += 1;
                 c.pos += 1;
@@ -807,10 +856,12 @@ impl Ax {
         self.aux_a.bus.fill(0);
         self.aux_b.bus.fill(0);
 
+        let (music, sfx) = (music_gain(), sfx_gain());
         for i in 0..NUM_VOICES {
             let s = &mut self.voices[i];
             if self.in_use[i] && s.dec.active && s.configured {
-                mix_voice(s, aram, &mut self.acc, &mut self.aux_a.bus, &mut self.aux_b.bus, &mut self.dpop, &mut self.dpop_step);
+                let g = if s.music { music } else { sfx };
+                mix_voice(s, aram, &mut self.acc, &mut self.aux_a.bus, &mut self.aux_b.bus, &mut self.dpop, &mut self.dpop_step, g);
                 if s.dec.active {
                     active += 1;
                 }

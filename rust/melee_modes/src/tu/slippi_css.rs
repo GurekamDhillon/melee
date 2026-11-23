@@ -313,6 +313,7 @@ pub unsafe fn inputs(trigger: u32, held: u32, ready: bool, ck: i8, color: u8) ->
                     o.start_locks = true;
                     o.winner = WINNER_NULL;
                     o.chose_stage = None;
+                    o.error.clear(); // the "opponent left" note goes with the new search
                     eprintln!("online css: idle: Start, searching again");
                 }
             });
@@ -528,12 +529,15 @@ pub fn panel_lines(o: &Online, user: &(String, String)) -> [String; LINES] {
             _ => String::new(),
         };
     }
+    // idle after the opponent left (the host keeps a note): the select says so until the next Start
+    let left = o.conn == CONN_IDLE && !o.search_again && !o.error.is_empty();
     l[L_PLAYING] = match o.conn {
         CONN_SUCCESS => "Playing:".into(),
         CONN_OPPONENT_CONNECTING => "Found:".into(),
+        _ if left => "Opponent left".into(),
         _ => String::new(),
     };
-    if !l[L_PLAYING].is_empty() {
+    if !l[L_PLAYING].is_empty() && !left {
         l[L_OPP] = opp;
     }
     let (name, code) = user;
@@ -677,6 +681,14 @@ mod tests {
         assert_eq!((l[L_USER].as_str(), l[L_USER + 1].as_str(), l[L_USER + 3].as_str()), ("User", "Name", "TEST\u{FF03}123"));
         let idl = Online { mode: so::MODE_DIRECT, conn: CONN_IDLE, chosen: true, ..Default::default() };
         assert_eq!(panel_lines(&idl, &none)[L_STATUS + 1], "Press START to search");
+        // the opponent left: idle, the note shown, no search; after Start it reads "Searching"
+        let mut gone = Online { mode: so::MODE_UNRANKED, conn: CONN_IDLE, chosen: true, error: "Your opponent disconnected".into(), ..Default::default() };
+        let l = panel_lines(&gone, &none);
+        assert_eq!((l[L_PLAYING].as_str(), l[L_OPP].as_str(), l[L_STATUS + 1].as_str()), ("Opponent left", "", "Press START to search"));
+        gone.search_again = true;
+        gone.error.clear();
+        let l = panel_lines(&gone, &none);
+        assert_eq!((l[L_PLAYING].as_str(), l[L_STATUS + 1].as_str()), ("", "Searching for opponent"));
         assert!(stage_allowed(0x1F) && stage_allowed(0x02) && !stage_allowed(0x15) && !stage_allowed(0));
     }
 

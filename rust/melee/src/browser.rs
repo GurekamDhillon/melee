@@ -844,6 +844,9 @@ impl RetailPlay {
         if crate::slippi_link::inprocess() {
             return self.slippi_back_inprocess(kv, pad);
         }
+        if melee_platform::yougame::refuse_child("online select relaunch") {
+            return false;
+        }
         let cur: Vec<String> = std::env::args().skip(1).collect();
         // the match's own arguments go; the menus' stay (`--slippi-menus on`)
         let mut args: Vec<String> = Vec::new();
@@ -916,6 +919,10 @@ impl RetailPlay {
     }
 
     fn relaunch(&mut self, extra: &[String], scene: Option<&str>, to_menu: bool, what: &str) -> Option<std::process::Child> {
+        if melee_platform::yougame::refuse_child(&format!("relaunch for {what}")) {
+            self.ui_status(1, "not available in the YouGame app");
+            return None;
+        }
         let mut args: Vec<String> = Vec::new();
         let cur: Vec<String> = std::env::args().skip(1).collect();
         let mut i = 0;

@@ -891,6 +891,7 @@ impl RetailPlay {
             // a rollback run: the sound state is a static the load restores, so what it allocates must be in the arena too
             let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
             let t = std::time::Instant::now();
+            au.set_fight(matches!(self.cur.1, 2 | 3)); // vs, suddendeath (scene_name)
             { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "tick: audio tick"); au.tick(); }
             if melee_core::frameprof::on() {
                 melee_core::frameprof::set_audio_underruns(au.underruns() as u64);
@@ -1083,6 +1084,20 @@ impl RetailPlay {
         if self.shot_dir.is_some() && self.shot_ages.contains(&self.age) {
             self.shot_pending = Some(format!("{:02}_{}_{:04}", self.scene_no, scene_name(self.cur.1), self.age));
         }
+        // MELEE_SHOT_MATCH_FRAMES="a,b,..": a match shot at the first tick whose game frame (gm_GetFrameCount) reaches each
+        // one, named by that frame: frame-exact captures across runs whose ticks differ (a rollback run's stalls, an
+        // in-process match's entry vs a relaunched one's)
+        if self.shot_dir.is_some() && self.cur.1 == 2 {
+            if let Ok(v) = std::env::var("MELEE_SHOT_MATCH_FRAMES") {
+                static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+                let f = melee_modes::tu_ext::gm_GetFrameCount();
+                let last = NEXT.load(std::sync::atomic::Ordering::Relaxed);
+                if let Some(t) = v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()).filter(|&t| t > last && f >= t).max() {
+                    NEXT.store(t, std::sync::atomic::Ordering::Relaxed);
+                    self.shot_pending = Some(format!("{:02}_vs_f{:05}_at{:05}", self.scene_no, t, f));
+                }
+            }
+        }
     }
 
 
@@ -1137,6 +1152,14 @@ impl RetailPlay {
                     }
                     if std::env::var_os("MELEE_VOLUME").is_none() {
                         let _ = melee_audio::output::save_volume(v);
+                    }
+                }
+                "music" | "sfx" => {
+                    let v: i32 = c.value.parse().unwrap_or(100);
+                    if c.key == "music" {
+                        melee_audio::ax::set_music_volume(v);
+                    } else {
+                        melee_audio::ax::set_sfx_volume(v);
                     }
                 }
                 "action:menu" => self.exit_req = Some(true),

@@ -36,7 +36,7 @@ Your Melee NTSC 1.02 disc is the one the launcher already knows; nothing from it
 
 Reads the launcher's port-settings.ini (display, volume, keyboard and controller bindings, background input).
 Saves go to User\\GC\\RustPort, replays (.mrpl) to <replay folder>\\RustPort, the log to melee_port.log.
-Not supported yet: online lobbies, mods that change the game's code, .slp replays. Those are refused with exit code 3.
+Plays .slp replays from the Replays page and Slippi Direct from the lobby. Not supported yet: P2P Direct, TE packs, mods that change the game's code (refused with exit code 3).
 EOF
 if [ -n "$LAUNCHER" ]; then cp "$LAUNCHER" "$OUT/MeleeUnlockedLauncher.exe"; fi
 # nothing but the expected files, and nothing disc-shaped

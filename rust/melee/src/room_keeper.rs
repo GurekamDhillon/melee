@@ -50,7 +50,13 @@ pub fn next_game() {
 
 /// YouGame rooms play their matches in this process too (`MELEE_YOUGAME_INPROCESS=0`: the relaunch per match).
 pub fn wants_inprocess() -> bool {
-    std::env::var("MELEE_YOUGAME_INPROCESS").map_or(true, |v| v != "0")
+    let off = std::env::var("MELEE_YOUGAME_INPROCESS").is_ok_and(|v| v == "0");
+    // the relaunch hands the Slippi link over loopback TCP (slippi_link::keep), which the YouGame sandbox denies
+    if off && melee_platform::yougame::sandboxed() {
+        eprintln!("melee: MELEE_YOUGAME_INPROCESS=0 is ignored under YouGame (its relaunch handoff needs loopback, which the sandbox denies)");
+        return true;
+    }
+    !off
 }
 
 /// The kept room's match runs in this process from now on.

@@ -797,3 +797,10 @@ Reading:
 - Fixed at the cause (port/livedesync): Unranked/Ranked matches now set `disable_pausing` as Slippi's match block
   does, so that tick no longer exists online. Not re-measured live; if a 16 ms+ tick shows again in an online match,
   sample it with `MELEE_SAMPLE_SLOW_MS`.
+
+## Fight scenes only (2026-11-22)
+
+The owner: over-16 ms frames before or outside fight scenes are fine. `zero_hitch_check.py` now fails only on frames in
+a fight scene (`vs`, `suddendeath`; rollback resimulations run inside them), not their match-start (load) frame. Title,
+menus, loads and the select <-> match transitions are listed as "outside fights (not failed)". `--all-scenes` restores
+the old rule. So vanilla_bf's title-load tick (24-36 ms) is reported, not a failure.

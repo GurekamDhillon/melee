@@ -95,42 +95,48 @@ Hidden launcher, `LOCALAPPDATA` redirected so the user's remembered ISO is untou
 mapped (window 640x480, scale 2, vsync, volume 3), title -> VS -> match -> results, `quit after 1 matches`,
 `game exit 0`: **LAUNCH OK**.
 
-## 4. Gaps for parity with what his launcher offers (re-checked against rust-port 5138e0ba5, 2026-11-04)
+## 4. Contract with his current launcher (re-audited 2026-11-22: melee-unlocked 1.0.7, main 6c9472f; branch port/mucompat)
 
-Sections 5 and 6 closed some of the original list; the merges since 2026-11-03 added engine-side features that his
-launcher cannot reach yet. State per area (code: `rust/melee/src/launcher_compat.rs` unless named):
+Supersedes the 2026-11-04 gap list. OK = same result as the Source Port; PART = works with a stated difference;
+MISSING = not there; REFUSED = we exit 3 on purpose rather than start a different game than the one asked for.
 
-- **Online:** still no Slippi lobby (`--lobby-direct`, `--lobby-character`), no P2P Direct (`--p2p-*`, his mu_net
-  protocol: mu-net-feasibility.md), no lobby status JSON: all refused (exit 3). Our own online (`melee netplay`, host
-  / join from the retail CSS with rematches, read-only spectators, `melee_relay`; notes/net.md,
-  notes/spectate-replay.md) is a different protocol, reachable from the in-game browser's Online section, not from
-  his launcher.
-- **Mods:** data-only `--mod-iso` plays (section 5); `--mod-gci`, `--mod-dir`, `--mod-profile` and TE packs are
-  refused. Cosmetic imports now exist on our side (`melee cosmetics import`: costume .dat / .usd, mod ZIP, Nucleus
-  vault ZIP, portrait / stock PNG; `cosmetics.rs`, `cosmetics_import.rs`) and skins are picked in the settings
-  overlay or the browser, but nothing maps his cosmetic or music-pack folders. Gameplay codes (UCF and others) are
-  opt-in match rules (`--codes` / `MELEE_CODES`, `melee_core::codes`, notes/gameplay-codes.md); his Gecko lists and
-  code toggles are not read.
-- **Replays:** every match is recorded (`.mrpl` in `--replay-dir`'s `RustPort` subfolder, `.slp` export in the
-  folder). Playback exists in the engine (`melee play --replay`, the browser's Replays section, playback controls),
-  but the launcher's `--replay <slp>` and `--as-experienced` / `--trace` are refused.
-- **1P modes** through the retail menus as far as melee_modes has them; the coverage set (classic, adventure,
-  all-star, target test) passes (STATUS.md).
-- **Controller mapping:** `key_*`, `pad<n>_*`, `gc<n>_*` and `backgroundinput` are read (section 5). Not read: his
-  `ds4<n>_*` / `swpro<n>_*` tables, `rumble`, PhobGCC tools. Our own profiles (deadzones, remaps, box mode + SOCD,
-  `melee_platform::profiles`) are configured through `controllers.ini`, not his file.
-- **Video / audio:** the engine now has an fps cap, render-only interpolation, widescreen, vsync and MSAA, several
-  of them live from the in-game settings overlay (`settings_overlay.rs`, `display.rs`). From his side only
-  `fullscreen`, `widescreen` / `truewidescreen`, `window`, `scale`, `msaa`, `vsync`, `volume` and
-  `backgroundinput` are mapped; `--fps`, `--backend`, `--dlss*`, `--ssao`, `--frame-mode` and the `fps` key are
-  accepted and ignored. Not present at all: backend choice, DLSS / frame generation, SSAA, CRT / shader presets,
-  audio device / ASIO selection, a separate music volume.
-- **Settings button:** `--settings-window` still exits 0 at once. The engine now has its own in-game overlay (F1, or
-  hold D-pad Down and press Start) that writes our settings.cfg, not his `port-settings.ini`.
-- **Saves:** separate card folder (`User\GC\RustPort`); importing his `CardA` .gci files is not done.
-- **Crash flow:** we write `melee_port_crash.txt` but no `.dmp`; the patch keeps reports local. Posting Rust reports
-  anywhere needs Hero's agreement and an engine name on his relay.
-- **Packaging:** closed by section 5 (GAME BUILD segment, version resource, `package.sh`); no updater channel.
+| launcher contract | Source Port | Rust Port | state |
+|---|---|---|---|
+| engine pick: GAME BUILD row, `launcher.ini engine=` | engines 0 / 1 | "Rust Port" segment, `engine=2`, only when `rust\melee.exe` exists (launcher PR branch) | OK with PR |
+| PLAY: `--iso --threaded-renderer --settings-path [--sys-dir --user-dir --replay-dir --card-dir --sysgen-data-dir]` | yes | translated by launcher_compat.rs | OK |
+| Vanilla segment `--slippi-menus off --vanilla-only [--vanilla-game]` | yes | accepted; the Rust Port is always vanilla | OK |
+| Build tab / warm cache `--hidden --frames N --log-file F` | yes | headless N-frame run, log to F | OK |
+| Settings button `--settings-window [--settings-standby PID] [--settings-tab T]` | own panel | our overlay in its own window, reads/writes port-settings.ini (section 7); the PR starts it | OK |
+| port-settings.ini display / audio | all keys | fullscreen, exclusivefullscreen, widescreen, truewidescreen, window, scale, msaa, vsync, volume, music, backgroundinput; not fps, backend, ssaa, dlss*, audio_device / ASIO, HUD / overlay keys | PART |
+| bindings `key_*`, `pad<n>_*`, `gc<n>_*` | yes | yes | OK |
+| bindings `ds4<n>_*`, `swpro<n>_*` | yes | yes, by position through gilrs (this branch; a DualSense uses the DS4 table) | OK |
+| bindings `hid<n>_*`, box mode, stick modifier, per-binding levels | yes | no | MISSING |
+| `rumble` | gamepads and adapter | `rumble 0` stops adapter rumble (this branch); gamepad rumble not implemented at all | PART |
+| `MELEE_NO_GC_ADAPTER` (his test runs) | yes | `MELEE_PAD_IGNORE_ADAPTER=1` | OK |
+| replays into `--replay-dir` (his viewer lists `.slp`) | `.slp` | one `.slp` per match, plus `.mrpl` in `RustPort\` | OK |
+| Replays page `--replay <slp> [--as-experienced]` | plays | plays (slp_play.rs); the PR routes the page to the Rust Port when picked; `--as-experienced` ignored | PART |
+| lobby status `--lobby-status-file` | `{"status","stocks"}` | same schema (also says "In match" offline) | OK |
+| lobby result mailbox `<status file>.results` (new since 11-04) | a line per lobby game | same line, `--lobby-direct` games only (this branch) | OK |
+| Slippi Direct `--lobby-direct CODE --lobby-character N` | yes | Slippi wire path (real Slippi only with the player's login); PR tags the build `<version>:rust` | OK, not tried against a real peer |
+| P2P Direct `--p2p-*` (mu_net) | yes | refused; the PR shows his "needs the Source Port" message | REFUSED |
+| YouGame: `--online-mode`, `YOUGAME_BRIDGE` / `YOUGAME_TOKEN`, `MELEE_YOUGAME_*` | yes | `--online-mode` opens the online menus; bridge vars read by melee_platform/yougame.rs; extension channel untested | PART |
+| mod disc `--mod-iso`, or `--iso M --mod-base-iso R` | yes | data-only discs (main.dol identical to retail); code mods refused | PART |
+| TE packs `--mod-gci`, `--mod-dir`, `--mod-profile` | yes | refused; the PR keeps TE launches on the catalog's engine | REFUSED |
+| saves `--card-dir` | his CardA | `User\GC\RustPort`, CardA imported once (card_import.rs) | PART |
+| crash files `melee_port_crash.txt` (+ `.dmp`), `melee_port.log` | yes | yes; the PR sends them through `crash_report::offer` / Send logs named "Rust Port" | OK |
+| exit codes | 0; non-zero after a lobby game = "could not connect" | 0; 3 = request not supported | OK |
+| FileVersion check | must match the launcher | the PR skips it for the Rust exe | OK with PR |
+| updates | release zips | none; the `package.sh` folder is extracted over his | MISSING |
+
+**Not done here, with estimates:** P2P Direct / mu_net (1-2 weeks, notes/mu-net-feasibility.md); code mods with
+their own main.dol (the PPC interpreter, on hold for sc00p); TE packs / .gci loader (2-4 days once the interpreter
+exists, most TE content is PPC code); `hid<n>` tables, box mode and the stick modifier (1 day); gamepad rumble
+through gilrs force feedback (half a day); fps / ssaa keys (1 day); backend choice and DLSS (not planned: wgpu only); audio
+device selection (1 day); an update channel (1 day once Hero agrees on a feed).
+
+Launcher patch: one commit on his main 6c9472f, branch `rust-port-engine` (see the round-three report). The
+test-only network skip (no YouGame refresh, no lobby/DHT in `MELEE_LAUNCHER_TEST` runs) is a separate local commit
+and never part of the PR.
 
 ## 5. Drop-in round two (2026-11-03, port/launch2)
 
@@ -171,3 +177,30 @@ profiles; the current list is §4.
   worker `std::thread` was still joinable when statics were destroyed: `std::terminate`, CRT fail-fast, process exit
   `0xC0000409` (bash shows 127). Not a bug in his launcher (its close path goes through `WM_DESTROY`). The hooks now
   call `DestroyWindow`; the launcher exits 0 (LAUNCH OK and BUILD OK both print `launcher exit: 0`).
+
+## 7. Our own settings window (2026-11-22, port/musettings)
+
+`melee.exe --settings-window --settings-path <port-settings.ini> [--settings-tab <name>] [--settings-standby <pid>]`
+(`rust/melee/src/settings_window.rs`) opens the in-game settings overlay (settings_overlay.rs, same pages and look,
+panel centred) alone in an 800x600 window: no disc, no engine; text is the bundled fonts.
+
+- **Files:** on open his ini's display/audio values (port_ini.rs, the reverse of `map_settings`) are copied into
+  settings.cfg and audio.cfg; each change goes to settings.cfg (as in game) and the shared keys to his ini at once:
+  `widescreen` (+ `truewidescreen 0`), `fullscreen` + `exclusivefullscreen`, `vsync`, `scale` (0 = auto), `msaa`,
+  `volume`, `music`. Only those lines are rewritten; every other line (controls tables, unknown keys, comments, CRLF)
+  is kept byte for byte. The controls tables are not edited (no bindings page).
+- **Tabs:** his names; `video`, `audio`, `game`, `overlays`, `customize` match our pages, `mods` -> CUSTOMIZE (skins),
+  `controls` / `gecko` keep VIDEO. SESSION holds only "Close settings".
+- **Standby:** waits on `Local\MeleeUnlockedSettingsShow-<pid>` / `...Quit-<pid>` / the launcher's exit before any
+  window or GPU device exists (no cost while waiting; the window takes a moment to appear after the click). Show:
+  re-read the files, open; quit or launcher gone: exit 0. The GC adapter is not touched while waiting.
+- **Input:** controllers (D-pad / stick, A, B, L/R pages) and keyboard (arrows, Enter, Escape, Tab). Closing (B,
+  Escape, "Close settings", the title bar X) exits 0. Log `melee_settings.log` (never the game's `melee_port.log`).
+- **Launcher patch:** `pr/rust-port-engine` commit 2ab6d6f3 (and the squashed `scratch/ext/0001-...patch`): Settings
+  and its standby copy start `game_exe()`, i.e. `rust\melee.exe` with the Rust Port picked; the Source Port fallback
+  and the "no settings window" message are gone.
+- **Tests:** `cargo test -p melee --bin melee port_ini launcher_compat settings_overlay`;
+  `bash tools/rust-port/launcher/settings_window_test.sh <melee.exe> [shot dir]` (hidden: open + script changes the
+  volume + quit, the ini asserted; standby shown by the event; standby ended by the launcher's exit; with a shot dir,
+  720p/1080p pictures via `MELEE_SETTINGS_SHOT`). Hooks: `MELEE_SETTINGS_SCRIPT`, `MELEE_SETTINGS_SHOT`,
+  `MELEE_SETTINGS_MAX_TICKS`.

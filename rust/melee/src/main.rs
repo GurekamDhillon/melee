@@ -37,6 +37,8 @@ mod cosmetics_import;
 mod card_import;
 mod nucleus;
 mod settings_overlay;
+mod settings_window;
+mod port_ini;
 mod crash;
 mod hang;
 mod launcher_compat;
@@ -82,6 +84,7 @@ mod slp_export;
 mod spectate;
 mod replay_ctl;
 mod slp_play;
+mod slippi_spectate;
 mod replays;
 mod np_lockstep;
 mod np_mux;
@@ -597,12 +600,9 @@ fn main_inner() -> ExitCode {
         return ExitCode::from(2);
     }
     match args.first().map(String::as_str) {
-        // The launcher's Settings button: the Rust engine has no panel of its own (it reads the port-settings.ini the
-        // Source Port's panel writes), so this exits at once and the launcher does not keep a standby copy.
-        Some(launcher_compat::SETTINGS_WINDOW) => {
-            eprintln!("launcher-compat: --settings-window: the Rust engine has no settings panel; it reads port-settings.ini");
-            ExitCode::SUCCESS
-        }
+        // The launcher's Settings button (and its standby copy): our settings overlay in a window of its own, editing
+        // his port-settings.ini and our settings.cfg (settings_window.rs)
+        Some(launcher_compat::SETTINGS_WINDOW) => settings_window::run(&args[1..]),
         None | Some("selftest") => {
             selftest();
             ExitCode::SUCCESS
@@ -657,6 +657,7 @@ fn main_inner() -> ExitCode {
         Some("slippi-replay") => slippi_np::slippi_replay(&args),
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
+        Some("slp-spectate") => slippi_spectate::watch_cmd(&args),
         Some("replays") => replays::replays(&args),
         Some("cosmetics") => cosmetics::cli(&args[1..]),
         Some("card-import") => card_import::cli(&args[1..]),

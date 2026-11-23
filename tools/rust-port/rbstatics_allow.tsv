@@ -44,3 +44,5 @@ melee/src/geno_suite.rs	TESTS	the Geno test suite (melee geno-suite), which neve
 melee/src/lab.rs	CMDS	OnceLock, filled once (a rewind to empty only refills)
 melee/src/nucleus/http.rs	OVERRIDE_HOST	OnceLock set once
 melee/src/nucleus/http.rs	UA	OnceLock set once
+melee/src/slippi_link.rs	MEM_ASK	the link handoff between the select session thread and the boot of the in-process match; never touched by a simulated tick
+melee/src/slippi_link.rs	MEM_SLOT	the link handoff between the select session thread and the boot of the in-process match; never touched by a simulated tick

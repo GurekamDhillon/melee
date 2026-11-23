@@ -139,6 +139,35 @@ thread_local! {
     static GAME_THREAD: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
 }
 
+/// `MELEE_RB_DIAG=1` (diagnostics): host-side memory work that can land inside a fight tick (snapshot page frees and
+/// the reaper's sends, recheap slot zeroing / decommits, pre-faulter rounds) is logged with its time and thread, and
+/// timed as a frame-profiler span. Read once, under [`SysScope`] (a rollback load may rewind the flag to unread: it
+/// is read again, same answer).
+pub fn rb_diag() -> bool {
+    static S: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
+    match S.load(Relaxed) {
+        1 => false,
+        2 => true,
+        _ => {
+            let on = {
+                let _s = SysScope::enter();
+                std::env::var_os("MELEE_RB_DIAG").is_some()
+            };
+            S.store(if on { 2 } else { 1 }, Relaxed);
+            on
+        }
+    }
+}
+/// True on the thread that runs the game (entered a [`GameScope`]).
+pub fn on_game_thread() -> bool {
+    GAME_THREAD.with(|g| g.get())
+}
+/// One [`rb_diag`] line: `what`, a count, the time it took (us), and which thread.
+pub fn rb_diag_log(what: &str, n: usize, us: u64) {
+    let _s = SysScope::enter();
+    eprintln!("rbdiag: {what} n={n} {us} us on {}", if on_game_thread() { "GAME" } else { "bg" });
+}
+
 /// Mark the calling thread as one whose allocations never go to the arena.
 pub fn mark_foreign_thread() {
     FOREIGN.with(|f| f.set(true));
@@ -547,7 +576,7 @@ unsafe fn tail_decommit(a: usize, b: usize) {
 }
 
 /// The background thread: decommit the queued tails (the system calls run outside the arena lock).
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "linux"))]
 fn tails_drain() {
     loop {
         let mut local = [(0usize, 0usize); 16];
@@ -865,7 +894,7 @@ impl Drop for BgPause {
 }
 
 /// Bytes past the bump pointer the pre-faulter keeps resident.
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "linux"))]
 const PREFAULT_AHEAD: usize = 96 << 20;
 
 /// Start the pre-faulter (boot, once; `MELEE_ARENA_PREFAULT=off` keeps it off): a thread that keeps the pages just past
@@ -874,7 +903,13 @@ const PREFAULT_AHEAD: usize = 96 << 20;
 /// already backed by a zeroed physical page, so the game thread's first write does not fault. Nothing is written: the
 /// arena's bytes, blocks and write-watch state are exactly as without it (commits ahead are what `alloc_locked` would do
 /// at its next step, made earlier, under the same lock).
-#[cfg(windows)]
+///
+/// Linux: a read of an untouched anonymous page maps the shared zero page, and the first write still faults, so the
+/// pages are populated writable instead (`madvise(MADV_POPULATE_WRITE)`, Linux 5.14+): the kernel faults them in as a
+/// write would, without writing a byte (a page already present keeps its contents; one dropped by a decommit comes
+/// back zero, which is what it reads anyway). Without it the select -> match tick of the online flow paid ~4k
+/// demand-zero faults inside ItCo's apply and the fighter files' (see [`touch_pages`]).
+#[cfg(any(windows, target_os = "linux"))]
 pub fn start_prefault() {
     {
         let _s = SysScope::enter();
@@ -890,14 +925,7 @@ pub fn start_prefault() {
     let _s = SysScope::enter();
     let _ = std::thread::Builder::new().name("arena-prefault".into()).spawn(|| {
         mark_foreign_thread();
-        extern "system" {
-            fn GetCurrentThread() -> *mut core::ffi::c_void;
-            fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
-            fn GetCurrentProcess() -> *mut core::ffi::c_void;
-            fn ReadProcessMemory(h: *mut core::ffi::c_void, base: *const core::ffi::c_void, buf: *mut core::ffi::c_void, n: usize, read: *mut usize) -> i32;
-        }
-        let me = unsafe { GetCurrentProcess() };
-        unsafe { SetThreadPriority(GetCurrentThread(), -1) }; // below normal: never ahead of the game thread
+        lower_thread_priority(); // below normal: never ahead of the game thread
         BG_ALIVE.store(true, Relaxed);
         let mut touched = 0usize;
         loop {
@@ -925,23 +953,20 @@ pub fn start_prefault() {
             }
             let committed = unsafe { core::ptr::read_volatile(&raw const COMMITTED) };
             let mut p = (touched.max(bump) + 0xFFF) & !0xFFF;
+            let (p0, t0) = (p, std::time::Instant::now());
             let end = want.min(committed);
-            let mut n = 0;
             while p < end && !bg_paused() {
-                // Touch the page through the kernel, not with a plain load. `bump` above is a moment old: the game
-                // thread can since have handed out a block here and freed it again, and a freed block of 64 KB or
-                // more is decommitted when the keep list is full. A plain load of a decommitted page is an access
-                // violation that ends the game (seen at match starts); this read just fails for that page and
-                // faults the others in the same way.
-                let mut b = 0u8;
-                unsafe { ReadProcessMemory(me, p as *const _, (&raw mut b).cast(), 1, core::ptr::null_mut()) };
-                p += 0x1000;
-                n += 1;
-                if n % 256 == 0 {
-                    std::thread::yield_now();
+                let q = (p + (256 << 12)).min(end);
+                if !touch_pages(p, q) {
+                    break;
                 }
+                p = q;
+                std::thread::yield_now();
             }
             touched = touched.max(p.min(end));
+            if p > p0 && rb_diag() {
+                rb_diag_log("prefault round (pages)", (p - p0) >> 12, t0.elapsed().as_micros() as u64);
+            }
             keep::zero_some();
             tails_drain();
             bg_end();
@@ -949,8 +974,54 @@ pub fn start_prefault() {
         }
     });
 }
-#[cfg(not(windows))]
+#[cfg(not(any(windows, target_os = "linux")))]
 pub fn start_prefault() {}
+
+/// The pre-faulter's thread priority: below normal (Windows), nice +5 for this thread only (Linux).
+#[cfg(windows)]
+fn lower_thread_priority() {
+    extern "system" {
+        fn GetCurrentThread() -> *mut core::ffi::c_void;
+        fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
+    }
+    unsafe { SetThreadPriority(GetCurrentThread(), -1) };
+}
+#[cfg(target_os = "linux")]
+fn lower_thread_priority() {
+    unsafe { libc::setpriority(libc::PRIO_PROCESS, libc::gettid() as libc::id_t, 5) };
+}
+
+/// Make the pages of `[a, b)` (page aligned, committed) resident without changing a byte (the pre-faulter). False:
+/// the system cannot do it (the pre-faulter stops touching this round).
+///
+/// Windows: through the kernel, not with a plain load. The bump the caller read is a moment old: the game thread can
+/// since have handed out a block here and freed it again, and a freed block of 64 KB or more is decommitted when the
+/// keep list is full. A plain load of a decommitted page is an access violation that ends the game (seen at match
+/// starts); `ReadProcessMemory` just fails for that page and faults the others in the same way.
+#[cfg(windows)]
+fn touch_pages(a: usize, b: usize) -> bool {
+    extern "system" {
+        fn GetCurrentProcess() -> *mut core::ffi::c_void;
+        fn ReadProcessMemory(h: *mut core::ffi::c_void, base: *const core::ffi::c_void, buf: *mut core::ffi::c_void, n: usize, read: *mut usize) -> i32;
+    }
+    let me = unsafe { GetCurrentProcess() };
+    let mut p = a;
+    while p < b {
+        let mut x = 0u8;
+        unsafe { ReadProcessMemory(me, p as *const _, (&raw mut x).cast(), 1, core::ptr::null_mut()) };
+        p += 0x1000;
+    }
+    true
+}
+/// Linux: `MADV_POPULATE_WRITE` faults the range in writable, as the game thread's first write would, and writes
+/// nothing (contents are kept; a page a decommit dropped reads zero either way). Safe against the game thread using
+/// the same pages at the same time. EINVAL: a kernel before 5.14 (no pre-faulting then, as before).
+#[cfg(target_os = "linux")]
+fn touch_pages(a: usize, b: usize) -> bool {
+    const MADV_POPULATE_WRITE: i32 = 23;
+    let r = unsafe { libc::madvise(a as *mut _, b - a, MADV_POPULATE_WRITE) };
+    r == 0 || std::io::Error::last_os_error().raw_os_error() != Some(libc::EINVAL)
+}
 
 /// Trim mode keeps big freed blocks RESIDENT instead of decommitting them (`MELEE_ARENA_KEEP=off` restores the
 /// decommit; `MELEE_ARENA_KEEP=<MB>` sets the cap, default 256). A decommit made the block's whole pages past +16 read

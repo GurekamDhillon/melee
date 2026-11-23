@@ -658,9 +658,109 @@ fn page_digest(pi: usize, p: &[u8]) -> u64 {
     h ^ (h >> 33)
 }
 
-type Pool = Rc<std::cell::RefCell<Vec<Rc<[u8; PAGE]>>>>;
+type Pool = Rc<PagePool>;
 /// Most page buffers kept for reuse (64 MB, the Lab ring's churn; more are freed).
 const POOL_MAX: usize = 16384;
+
+/// The page buffers kept for reuse. When the last snapshot of a session goes (the session's end: the online loop's
+/// match -> select), its buffers are freed on the page reaper thread ([`reap_pages`]), not the game thread.
+pub struct PagePool(std::cell::RefCell<Vec<Rc<[u8; PAGE]>>>);
+impl std::ops::Deref for PagePool {
+    type Target = std::cell::RefCell<Vec<Rc<[u8; PAGE]>>>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl Drop for PagePool {
+    fn drop(&mut self) {
+        reap_pages(std::mem::take(self.0.get_mut()));
+    }
+}
+
+/// Unshared page buffers on their way to the reaper thread. Each `Rc` in it has strong count 1 and no weak
+/// reference ([`reap_pages`] checks), so nothing on the sending thread can touch its counts again: moving it to
+/// another thread and dropping it there is sound although `Rc` is not `Send`.
+struct Reaped(Vec<Rc<[u8; PAGE]>>);
+unsafe impl Send for Reaped {}
+
+/// The page reaper's channel. Host state off the snapshot (`arena::SysStatic`): a rollback load rewinds only the
+/// pointer to it (the same value, or null before its first use: a second reaper is started then, the old one idles).
+static REAPER: arena::SysStatic<Option<std::sync::mpsc::Sender<Reaped>>> = arena::SysStatic::new(|| None);
+
+/// `MELEE_SNAP_REAPER=off`: free on the calling thread, as before (A/B). Read once (under SysScope by the caller).
+fn reaper_off() -> bool {
+    static S: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
+    match S.load(core::sync::atomic::Ordering::Relaxed) {
+        1 => false,
+        2 => true,
+        _ => {
+            let off = std::env::var("MELEE_SNAP_REAPER").is_ok_and(|v| v == "off");
+            S.store(if off { 2 } else { 1 }, core::sync::atomic::Ordering::Relaxed);
+            off
+        }
+    }
+}
+
+/// Free page buffers on a background thread. A session's snapshots hold tens of thousands of 4 KB buffers; freeing
+/// them at its end took 25-40 ms of the game thread on the in-process online loop's match -> select tick (the laptop,
+/// power-saver). They are system-heap buffers no game state refers to (snapshot copies), so when they are freed
+/// changes nothing the game can see. Shared buffers (another snapshot still holds them) are only released here.
+fn reap_pages(pages: Vec<Rc<[u8; PAGE]>>) {
+    let t0 = std::time::Instant::now();
+    let n = pages.len();
+    if n < 256 {
+        drop(pages); // a few: freed here (a steady-state ring's churn)
+        if n > 0 && arena::rb_diag() {
+            arena::rb_diag_log("reap: freed in place", n, t0.elapsed().as_micros() as u64);
+        }
+        return;
+    }
+    let _s = arena::SysScope::enter();
+    if reaper_off() {
+        drop(pages);
+        return;
+    }
+    let (unique, shared): (Vec<_>, Vec<_>) = pages.into_iter().partition(|p| Rc::strong_count(p) == 1 && Rc::weak_count(p) == 0);
+    drop(shared);
+    let mut job = Some(Reaped(unique));
+    REAPER.with(|r| {
+        if r.is_none() {
+            let (tx, rx) = std::sync::mpsc::channel::<Reaped>();
+            let ok = std::thread::Builder::new()
+                .name("snapshot-reaper".into())
+                .spawn(move || {
+                    arena::mark_foreign_thread();
+                    for Reaped(v) in rx {
+                        // never during a fight (recheap::in_fight): the frees wait for its end, then go in steps,
+                        // yielding: never a long hold of the allocator's lock against the game thread
+                        while crate::recheap::in_fight() {
+                            std::thread::sleep(std::time::Duration::from_millis(50));
+                        }
+                        let mut v = v;
+                        while !v.is_empty() {
+                            let n = v.len().saturating_sub(512);
+                            drop(v.split_off(n));
+                            std::thread::yield_now();
+                        }
+                    }
+                })
+                .is_ok();
+            if ok {
+                *r = Some(tx);
+            }
+        }
+        if let Some(tx) = r.as_ref() {
+            if let Err(e) = tx.send(job.take().unwrap()) {
+                job = Some(e.0);
+            }
+        }
+    });
+    let inline = job.is_some();
+    drop(job); // no reaper: freed here, as before
+    if arena::rb_diag() {
+        arena::rb_diag_log(if inline { "reap: no reaper, freed in place" } else { "reap: sent to the reaper" }, n, t0.elapsed().as_micros() as u64);
+    }
+}
 
 #[derive(Clone)]
 struct RangeSnap {
@@ -690,13 +790,34 @@ pub struct Snapshot {
 impl Drop for Snapshot {
     /// Pages no other snapshot shares go back to the pool.
     fn drop(&mut self) {
+        let t0 = std::time::Instant::now();
         let Ok(mut pool) = self.pool.try_borrow_mut() else { return };
+        // unshared pages past the pool's cap go to the reaper (in bulk: a session's end) instead of being freed here
+        let mut spill = Vec::new();
         for r in &mut self.ranges {
             for (_, p) in r.pages.drain(..) {
-                if pool.len() < POOL_MAX && Rc::strong_count(&p) == 1 && Rc::weak_count(&p) == 0 {
-                    pool.push(p);
+                if Rc::strong_count(&p) == 1 && Rc::weak_count(&p) == 0 {
+                    if pool.len() < POOL_MAX {
+                        pool.push(p);
+                    } else {
+                        let _s = arena::SysScope::enter();
+                        spill.push(p);
+                    }
                 }
             }
+        }
+        let np = pool.len();
+        drop(pool);
+        let _s = arena::SysScope::enter();
+        let ns = spill.len();
+        {
+            let _z = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || {
+                melee_core::frameprof::Text::new().s("snapshot drop spill ").n(ns as i64)
+            });
+            reap_pages(spill);
+        }
+        if ns > 0 && arena::rb_diag() {
+            arena::rb_diag_log(&format!("snapshot drop: spill (pool {np})"), ns, t0.elapsed().as_micros() as u64);
         }
     }
 }
@@ -787,7 +908,7 @@ impl Base {
             static_watch: false,
             ranges, data, arena_len,
             // reserved now: a push never reallocates, wherever a snapshot is dropped
-            pool: Rc::new(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX))), next_id: std::cell::Cell::new(1),
+            pool: Rc::new(PagePool(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX)))), next_id: std::cell::Cell::new(1),
             no_inc: std::env::var_os("MELEE_SNAP_NOINC").is_some(),
             check_every: std::env::var("MELEE_SNAP_CHECK").ok().map(|v| v.parse().unwrap_or(1).max(1)).unwrap_or(0),
             host_mask,

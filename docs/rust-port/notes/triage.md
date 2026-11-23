@@ -326,3 +326,39 @@ the ppc32 dump). What the sync (363720e12, incl. #3583 "name all anonymous types
   | `melee_world__tu_grt_stages_c` | melee_world\tests\tu_grt_stages_c.rs:2898:9:: assertion `left == right` failed: grtpeach: line 0 differs (rerun with GRT_VERBOSE=1 for the Rust trace) |
   | `mex-import__ppc_oracle` | E:\Projects\Melee Workspace\worktrees\mrg2\tools\mex-import\tests\ppc_oracle.rs:157:5:: 4 of 6000 cases differ: |
   | `mex-import__remap` | E:\Projects\Melee Workspace\worktrees\mrg2\tools\mex-import\tests\remap.rs:79:13:: assertion `left == right` failed: Fighter +0x230b size 4 (round 0) |
+
+
+## Known test failures, Linux laptop (port/testfix3, 2026-11-23)
+
+Built with `oracle_tests.sh` flags (merge-functions off), run per binary with one test thread. Fixed on the branch:
+kinds_itlikelike (NaN sign of `vel.x *= -1.0`, a port bug), semantics lint (0 on nightly-2026-02-14 and -11-13),
+gro_grcorneria and chars_ref (harness fn naming / callback alias; the rest listed in the tests' `NATIVE_DIFFER` with
+reasons: GameCube union / pointer layouts the native C cannot reproduce), melee_modes lib tests (compile),
+oracle_r4 / oracle_r10 (regenerated from the C), s497_rt / turef / world-oracle fn naming (`fnsym` fallback),
+tu_gm_1832 (the oracle's HSD_identityMtx). The Linux C regeneration recipe: the generators' own flags with
+`--target=x86_64-unknown-linux-gnu -U__INTPTR_TYPE__ -D__INTPTR_TYPE__="long long" -U__UINTPTR_TYPE__
+-D__UINTPTR_TYPE__="unsigned long long"`, `-Wl,--unresolved-symbols=ignore-all` for `/FORCE:UNRESOLVED`, `-static`
+(and a `_flushall` stub for chref -v); libclang through `LLVM_DIR` pointing at a dir whose `bin/libclang.dll` is the
+system libclang.so. It reproduces chars.txt byte for byte, gro_grcorneria 104/105 (the 105th is address dependent) and
+vectors_r4/r10 except the stale rows.
+
+Still failing in melee_modes (20 of 108 binaries at the start, 9 fixed), classified, not changed:
+
+| test | class | cause |
+|---|---|---|
+| oracle (round 1) | stale expectation | all 33 rows are NaN -> int: calcPan with end = 0 (29), toFeet (1), toMeters (3) NaN inputs. The data recorded the old saturating 0; fctiwz gives 0x80000000 (lower.py 9a80f22d1, the port since 6c72a9dfa). Regeneration is blocked by the upstream renames (`inlineA1` is now `getNametagColorFrame`, gm_1601's types). |
+| s497_gmscdata | intentional port extension | the port's scene table has Envoy's GS_ENVOY_SEL row (7462e824b): gm_GetNumGameScenes 0x2e vs 0x2d and one extra row in the dump |
+| s497_gmscene | intentional port extension | gm_803DA888[7] is the Tag / transition freeze mask in the port (b87d28d94), 0 in the C (the fn-identity half is fixed) |
+| tu_gm_16A2 | stale expectation | op 13 case 285 is an empty queue (arg4[0] == -2): the C and the port both got the TARGET_PC terminator guard in 5138e0ba5 (adventure step 2 crash), after the data (2026-10-22) |
+| tuo_gmopeningmode | stale expectation | onExitTitle 800/800: the debug-menu shortcut is gated by MELEE_DEBUG_MENU in the C (TARGET_PC) and the port since 7fef65275; the data is from 2026-10-21 |
+| tuo_gmmultiman | stale (known) | gm_801B6428 38 of 2060, the same set as on Windows (port/regen1); the C side cannot be regenerated against the current headers there |
+| tu_gmfrontend, tu_gmregclear, tu_gmregenddisp, tu_gmresult | stale expectation (probable) | every mismatching case has equal return and call log and a different state hash: the hashed records changed since the data (upstream-sync renames / layout) |
+| tu_gmvs | port extension (probable) | op 94 fn_8016E2BC: same state, different trace; gmvs.rs carries the Slippi 1.x Neutral Spawn / replay paths (eddd7a4e0, 43ca69c20) the C TU does not |
+| tu_gmscenelaunch | not established | op 0 case 2: same trace, different state hash |
+| tu_lb_020A | environment (probable) | op 3 lbBgFlash_80021410: state hash differs in bit 31 only, the trace carries NaNs (0xFFC00000): host NaN sign propagation through `-(a + b)` |
+| tu_gmvsmode | harness gap | aborts: the test reaches HSD_GetHeap, whose hook only the melee_link table installs ("TODO: not ported" panic in an extern "C" fn) |
+| tu_script_game | harness gap | SIGSEGV in script_echo_live_owner: HSD_GObjPLinkHead is null in the harness (ScriptGame_EchoCapture walks the fighter plink) |
+| tu_script_game_t, tu_geno_game, tu_geno_game_g | stale expectation (probable) | 4 / 6 / 8 script / Geno functions differ in all 40 cases (pc/ tooling TUs, not game code) |
+
+Not reproduced here: kinds_itlikelike op 90 and an itLikelike segfault (6 runs of the oracle build), and a semantics
+lint count of 21 (5 on nightly-2026-11-13 and 1 on the gate's nightly-2026-02-14 before the fix, 0 after).

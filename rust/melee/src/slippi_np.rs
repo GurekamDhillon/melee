@@ -54,11 +54,15 @@ fn online(s: i32) -> i32 {
 /// divergence), and the online code paths of ftLib and the FD background. A replay of an online game gets the same
 /// value from its Game Start block (`install_replay`).
 /// The online codeset's gameplay codes we have as `melee_core::codes` bits: NeutralSpawn, FreezeGlitchFix,
-/// PreventWobbling, the ledge-grab limit (45), UCF 0.84 (setting the word turns off the default UCF otherwise) and, unless the match's `alt_stage_mode` asks for the moving stage,
-/// frozen Pokemon Stadium (slippi-online-patches.md section 3).
+/// PreventWobbling, the ledge-grab limit (45), UCF 0.84 (setting the word turns off the default UCF otherwise) and
+/// frozen Pokemon Stadium only when the match's `alt_stage_mode` is set: InitOnlinePlay stores MSRB_ALT_STAGE_MODE as
+/// IngameCheckIfFrozen's toggle byte ("0 = unfrozen, 1 = frozen"), which returns from the stadium's think at entry. An
+/// Unranked match sends 0 and its Stadium transforms (the inverted test froze ours: a HARD desync at the first
+/// transformation, ~70 s in, against Slippi Dolphin).
 pub fn online_codes(alt_stage_mode: u8) {
     use melee_core::codes as c;
-    let frozen = if alt_stage_mode == 0 { c::FROZEN_PS } else { 0 };
+    let frozen = if alt_stage_mode != 0 { c::FROZEN_PS } else { 0 };
+    c::set_ps_freeze_at_entry(alt_stage_mode != 0);
     let w = std::env::var("MELEE_SLIPPI_ONLINE_BITS").ok().and_then(|v| u32::from_str_radix(&v, 16).ok());
     c::set_ps_camera_independent_monitor(true);
     c::set(w.unwrap_or(c::UCF | c::NEUTRAL_SPAWN | c::FREEZE_FIX | c::NO_WOBBLE | c::LGL | frozen), 45);

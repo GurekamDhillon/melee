@@ -155,6 +155,9 @@ pub struct ModesGame {
     /// A Slippi-wire match (`play --slippi-mm`): the online seed-bit mix and desync checksum per frame, as
     /// `netmatch::engine_game::EngineGame` keeps them for the headless `slippi-netplay`.
     pub slippi: Option<Box<SlippiSim>>,
+    /// `state_hash` ran and nothing has run since: the next `save` may skip the host block's write-watch scan
+    /// (`Base::save_after_hash`). Cleared by everything that runs or loads the game.
+    hashed: core::cell::Cell<bool>,
 }
 
 /// Slippi online state a [`ModesGame`] keeps per session frame (on the system heap: never rolled back).
@@ -188,7 +191,7 @@ impl ModesGame {
     pub fn new(e: Engine) -> Self {
         // the snapshot base is captured at the match's first frames: its copy buffers are made ahead (helper thread)
         melee_engine::snapshot::prewarm();
-        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default(), slippi: None }
+        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default(), slippi: None, hashed: Default::default() }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
         if self.base.borrow().is_none() {
@@ -204,6 +207,7 @@ impl ModesGame {
     }
     /// One engine tick with these pads; the frame it drew is kept on the system heap.
     pub fn step(&mut self, pads: [PADStatus; 4]) {
+        self.hashed.set(false);
         self.held = None;
         self.e.set_pads(Some(pads));
         self.e.tick();
@@ -261,6 +265,7 @@ impl ModesGame {
     /// pass leaves no trace in the game (hash-neutral); its frame is detached before the load and is what
     /// `take_frame` hands out next.
     pub fn redraw(&mut self, pads: [PADStatus; 4]) {
+        self.hashed.set(false);
         if self.e.ended {
             return;
         }
@@ -295,9 +300,11 @@ impl RbGame for ModesGame {
     }
     fn save(&self) -> ModesSnap {
         let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot save");
-        ModesSnap { mem: self.with_base(|b| b.save()), frames: self.e.frames, ended: self.e.ended }
+        let after_hash = self.hashed.replace(false);
+        ModesSnap { mem: self.with_base(|b| if after_hash { b.save_after_hash() } else { b.save() }), frames: self.e.frames, ended: self.e.ended }
     }
     fn load(&mut self, s: &ModesSnap) {
+        self.hashed.set(false);
         let _z = melee_core::tracy::zone("netplay snapshot load (rollback)");
         let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot load");
         // the held frame is render state on the system heap (gxbridge), outside the snapshot: freed as usual
@@ -311,7 +318,9 @@ impl RbGame for ModesGame {
     }
     fn state_hash(&self) -> u32 {
         let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: state hash");
-        self.with_base(|b| b.page_hash())
+        let h = self.with_base(|b| b.page_hash());
+        self.hashed.set(true);
+        h
     }
     fn game_hash(&self) -> u32 {
         // the session hash: NHV1 with the sim mods' gd_hash_word mixed in when they gave one (NHV1 itself stays the
@@ -327,6 +336,7 @@ impl RbGame for ModesGame {
         melee_modhost::session_hash_with(self.e.neutral_row()[0], w)
     }
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool) {
+        self.hashed.set(false);
         let _z = melee_core::tracy::zone(if resim { "netplay resim frame" } else { "netplay frame" });
         let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, if resim { "netplay: resim frame" } else { "netplay: frame" });
         if self.e.ended {

@@ -494,6 +494,9 @@ pub struct Base {
     hcache: std::cell::RefCell<HashCache>,
     /// MELEE_HASH_VERIFY: recompute every digest on each `page_hash` and panic if a cached one is stale.
     hash_verify: bool,
+    /// [`Base::save_after_hash`]: the next `refresh` leaves the host block's write watch alone (`page_hash` read and
+    /// reset it just before, with nothing run in between).
+    skip_host: core::cell::Cell<bool>,
     pub stats: std::cell::RefCell<Stats>,
 }
 
@@ -918,6 +921,7 @@ impl Base {
             poke: std::env::var_os("MELEE_SNAP_CHECK_POKE").is_some(),
             hcache: Default::default(),
             hash_verify: std::env::var_os("MELEE_HASH_VERIFY").is_some(),
+            skip_host: core::cell::Cell::new(false),
             stats: Default::default(),
         };
         let mut b = b;
@@ -988,7 +992,9 @@ impl Base {
             written_pages(a0 + cow_len, l0 - cow_len, a0, &mut since[0]);
         }
         drop((d, since));
-        self.refresh_host();
+        if !self.skip_host.replace(false) {
+            self.refresh_host();
+        }
         let mut d = self.dirty.borrow_mut();
         let mut since = self.since.borrow_mut();
         let mut hot = self.hot.borrow_mut();
@@ -1122,6 +1128,16 @@ impl Base {
     /// Save the current state.
     pub fn save(&self) -> SnapRef {
         self.save_after(None).0
+    }
+
+    /// [`Base::save`] right after [`Base::page_hash`] with nothing run in between (the rollback session hashes then
+    /// saves each frame): the hash already read and reset the host block's write watch, so the save does not scan
+    /// it again (a full-block `GetWriteWatch`, ~4% of a rolling-back peer's game thread). Only for that sequence.
+    pub fn save_after_hash(&self) -> SnapRef {
+        self.skip_host.set(true);
+        let s = self.save();
+        self.skip_host.set(false);
+        s
     }
 
     /// Save the current state, sharing every page that is unchanged since `prev` (default: the snapshot the live

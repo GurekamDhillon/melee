@@ -34,6 +34,25 @@ fn log(s: &str) {
     eprintln!("{s}");
 }
 
+/// The rooms URL as a WebSocket URL. The app's `mpTicket` answer carries the rooms server's `url` as the web SDK
+/// reads it; Hero's client (`parse_url`) takes `https://` / `http://` as well as `wss://` / `ws://` and opens the
+/// upgrade on that host, so the same two are mapped here (`Ws::connect_to` knows only ws and wss). A bare host gets
+/// `wss://`. Anything else is refused by scheme alone (the URL can carry a token, so it is never put in a message).
+pub fn rooms_url(url: &str) -> Result<String, String> {
+    let u = url.trim();
+    let lower = u.to_ascii_lowercase();
+    for (from, to) in [("wss://", "wss://"), ("ws://", "ws://"), ("https://", "wss://"), ("http://", "ws://")] {
+        if lower.starts_with(from) {
+            return Ok(format!("{to}{}", &u[from.len()..]));
+        }
+    }
+    match u.split_once("://") {
+        Some((scheme, _)) => Err(format!("the rooms URL has an unsupported scheme ({})", scheme.chars().take(12).collect::<String>())),
+        None if !u.is_empty() && !u.starts_with('/') => Ok(format!("wss://{u}")),
+        None => Err("the rooms URL has no host".into()),
+    }
+}
+
 /// The rooms URL is reachable here: always in a normal run; only loopback in an agent or scripted one.
 fn target(url: &str, agent: bool) -> Result<melee_net::slippi_mm::Target, String> {
     use melee_net::slippi_mm::Target;
@@ -63,6 +82,9 @@ pub fn yougame_side(
     if cancel.load(Ordering::SeqCst) {
         return Err("Cancelled".into());
     }
+    let rooms = rooms_url(&t.url)?;
+    log(&format!("yougame: rooms url scheme {}", t.url.split("://").next().filter(|_| t.url.contains("://")).unwrap_or("(none)").chars().take(12).collect::<String>()));
+    let t = ym::Ticket { url: rooms, ..t };
     let tgt = target(&t.url, agent)?;
     let loopback = matches!(tgt, melee_net::slippi_mm::Target::Loopback);
     let mut opener = yr::WsOpener { url: t.url.clone(), target: tgt };
@@ -320,5 +342,36 @@ pub fn pair(route: ym::Route, mode: i32, sub: &[String], max_s: u64, agent: bool
             { stop.store(true, Ordering::SeqCst); sstop.store(true, Ordering::SeqCst); }
             return Err("timed out".into());
         }
+    }
+}
+
+#[cfg(test)]
+mod url_tests {
+    use super::{rooms_url, target};
+
+    #[test]
+    fn app_urls_become_websocket_urls() {
+        assert_eq!(rooms_url("https://rooms.example.test").unwrap(), "wss://rooms.example.test");
+        assert_eq!(rooms_url("http://127.0.0.1:8123/x").unwrap(), "ws://127.0.0.1:8123/x");
+        assert_eq!(rooms_url("HTTPS://Rooms.Example.test/a").unwrap(), "wss://Rooms.Example.test/a");
+        assert_eq!(rooms_url("wss://r.example.test").unwrap(), "wss://r.example.test");
+        assert_eq!(rooms_url("ws://127.0.0.1:1").unwrap(), "ws://127.0.0.1:1");
+        assert_eq!(rooms_url("rooms.example.test").unwrap(), "wss://rooms.example.test");
+    }
+
+    #[test]
+    fn bad_urls_are_refused_without_echoing_them() {
+        let e = rooms_url("ftp://h/?ticket=SECRET").unwrap_err();
+        assert!(e.contains("ftp") && !e.contains("SECRET"));
+        assert!(rooms_url("").is_err());
+        assert!(rooms_url("/relative").is_err());
+    }
+
+    #[test]
+    fn agent_runs_still_reach_only_loopback() {
+        let l = rooms_url("http://127.0.0.1:9000").unwrap();
+        assert!(target(&l, true).is_ok());
+        assert!(target(&rooms_url("https://rooms.example.test").unwrap(), true).is_err());
+        assert!(target(&rooms_url("https://rooms.example.test").unwrap(), false).is_ok());
     }
 }

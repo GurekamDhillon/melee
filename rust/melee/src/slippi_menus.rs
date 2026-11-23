@@ -66,7 +66,7 @@ pub fn load(args: &[String], iso: Option<&str>) -> Option<Arc<SysFiles>> {
             };
             let cache = melee_data::sysfiles::default_cache_dir();
             let mut disc = |n: &str| gcm.read_vanilla(n).map_err(|_| format!("{n}: not on the disc"));
-            let mut fetch = |u: &str| melee_data::sysfiles::fetch_curl(u);
+            let mut fetch = |u: &str| crate::nucleus::http::get_slippi_sys(u, 4_000_000);
             match SysFiles::build(&cache, &mut disc, &mut fetch) {
                 Ok(s) => {
                     for (n, size, h) in &s.built {

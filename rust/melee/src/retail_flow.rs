@@ -891,6 +891,7 @@ impl RetailPlay {
             // a rollback run: the sound state is a static the load restores, so what it allocates must be in the arena too
             let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
             let t = std::time::Instant::now();
+            au.set_fight(matches!(self.cur.1, 2 | 3)); // vs, suddendeath (scene_name)
             { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "tick: audio tick"); au.tick(); }
             if melee_core::frameprof::on() {
                 melee_core::frameprof::set_audio_underruns(au.underruns() as u64);

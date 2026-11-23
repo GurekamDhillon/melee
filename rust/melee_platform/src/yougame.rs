@@ -67,6 +67,15 @@ pub fn embedded() -> bool {
 pub fn sandboxed() -> bool {
     active() || std::env::var_os("YOUGAME_DATA").is_some_and(|d| !d.is_empty())
 }
+/// The YouGame sandbox runs one process: no child processes and no external tools. True (and one log line) when a
+/// spawn for `what` must be skipped.
+pub fn refuse_child(what: &str) -> bool {
+    if sandboxed() {
+        crate::plog!("yougame: {what}: skipped (the app's sandbox runs no child processes)");
+        return true;
+    }
+    false
+}
 /// YOUGAME_DATA: the per-game writable folder the app gives us.
 pub fn data_dir() -> Option<&'static str> {
     st().and_then(|s| s.data.as_deref())

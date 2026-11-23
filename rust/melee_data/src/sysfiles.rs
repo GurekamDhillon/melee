@@ -170,7 +170,8 @@ impl SysFiles {
     }
 }
 
-/// Fetch one manifest URL with the system curl (Windows 10+ ships it). Only Slippi's public GitHub raw files are
+/// Fetch one manifest URL with the system curl (Windows 10+ ships it); the disc-gated test only. The game fetches
+/// in-process (nucleus/http.rs get_slippi_sys): no child process under the YouGame sandbox. Only Slippi's public GitHub raw files are
 /// allowed; no credentials, no cookies. The caller checks the hash.
 pub fn fetch_curl(url: &str) -> Result<Vec<u8>, String> {
     const ALLOWED: &str = "https://raw.githubusercontent.com/project-slippi/Ishiiruka/";

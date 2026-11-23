@@ -537,6 +537,11 @@ static PREWARM: crate::arena::SysStatic<Vec<Vec<u8>>> = crate::arena::SysStatic:
 /// netplay match start otherwise spends ~40 ms in the first-touch faults of ~its fresh buffers, which more threads do
 /// not speed up. Presentation-neutral: the buffers hold nothing until the capture copies the state into them.
 pub fn prewarm() {
+    // Linux: the host block's background copy helper (one thread for the process) starts here, before the capture
+    #[cfg(target_os = "linux")]
+    if bg_copy() {
+        crate::cow::bg::spawn_helper();
+    }
     let sizes: Vec<usize> = ranges().iter().map(|r| r.1).collect();
     if PREWARM.with(|g| g.len() == sizes.len() && g.iter().zip(&sizes).skip(1).all(|(v, &l)| v.len() == l)) {
         return;
@@ -967,6 +972,7 @@ impl Base {
                     Some(v) if v.len() == l => v,
                     _ => vec![0u8; l],
                 };
+                let _zb = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "snapshot capture: host base start (bg)");
                 match unsafe { crate::cow::bg::begin(a, l, v.as_mut_ptr()) } {
                     Ok(()) => {
                         b.data[i] = v;

@@ -526,7 +526,7 @@ pub use imp_unix::*;
 #[cfg(target_os = "linux")]
 pub mod bg {
     use core::ffi::c_void;
-    use core::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering::*};
+    use core::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, AtomicUsize, Ordering::*};
     const PAGE: usize = 4096;
     /// Pages per helper step (one mprotect each).
     const RUN: usize = 64;
@@ -538,27 +538,55 @@ pub mod bg {
     static LEN: AtomicUsize = AtomicUsize::new(0);
     static DST: AtomicUsize = AtomicUsize::new(0);
     static STATE: AtomicUsize = AtomicUsize::new(0);
-    /// Set by `release_copy`: the helper may end.
-    static STOP: AtomicBool = AtomicBool::new(false);
-    /// Set by the helper once it runs. A thread's start and end write the runtime's statics (std's and glibc's thread
-    /// bookkeeping), and a rollback load rewinds every static of the executable on Linux (no PDB names std's own
-    /// objects as host-only there): a helper that ended mid-session had a load write its old bookkeeping back, and the
-    /// next thread std started at the session's end panicked in a btree assertion (2 of 4 synctests; 0 of 6 with the
-    /// helper kept alive). So `begin` waits until the helper runs, before the capture copies the statics, and the
-    /// helper stays parked once its copy is done, until `release_copy` (the base's drop: no load follows) lets it end.
-    static READY: AtomicBool = AtomicBool::new(false);
-    /// The write-fault counter (stats), off the snapshot (a load would rewind a static one): the address of
-    /// FAULT_CELL's value, set at `begin`.
+    /// The address of the control block's fault counter (set at `begin`; the handler counts there).
     static FAULTS_AT: AtomicUsize = AtomicUsize::new(0);
-    static FAULT_CELL: crate::arena::SysStatic<AtomicUsize> = crate::arena::SysStatic::new(|| AtomicUsize::new(0));
     /// The last range `begin` protected, kept after `release_copy`: a fault another thread took in it just before the
     /// release made the range writable again re-runs the write instead of being passed on as not ours.
     static LAST_START: AtomicUsize = AtomicUsize::new(0);
     static LAST_LEN: AtomicUsize = AtomicUsize::new(0);
-    /// The helper and the per-page state buffer live on the system heap (a rollback load never rewinds them); the
-    /// buffer is kept and cleared from one base to the next.
-    static THREAD: crate::arena::SysStatic<Option<std::thread::JoinHandle<()>>> = crate::arena::SysStatic::new(|| None);
+
+    /// The helper's control block, on the system heap (`SysStatic`): a rollback load rewinds every static of the
+    /// executable, so a job flag kept in a static could be written back to "requested" or "running" after the helper
+    /// finished, and `release_copy` would wait forever.
+    struct Ctl {
+        /// 0 idle, 1 a copy requested (`begin`), 2 the helper is copying
+        job: AtomicU8,
+        /// set by `release_copy`: the helper stops after its current run of pages
+        stop: AtomicBool,
+        /// set by the helper once it runs
+        ready: AtomicBool,
+        faults: AtomicUsize,
+        /// MELEE_SNAP_BGCOPY_DELAY_MS (test knob): the helper starts each copy this many ms late, so the first frames'
+        /// writes (and a synctest's loads) take the fault path
+        delay_ms: AtomicU64,
+    }
+    /// The control block's address (a leaked box made on first use; it never moves).
+    static CTL: crate::arena::SysStatic<usize> = crate::arena::SysStatic::new(|| 0);
+    /// The helper, to unpark it (only the game thread touches this).
+    static HELPER: crate::arena::SysStatic<Option<std::thread::Thread>> = crate::arena::SysStatic::new(|| None);
+    /// The per-page state buffer, kept and cleared from one base to the next (system heap).
     static STATE_BUF: crate::arena::SysStatic<Vec<AtomicU8>> = crate::arena::SysStatic::new(Vec::new);
+
+    fn ctl() -> &'static Ctl {
+        let p = CTL.with(|p| {
+            if *p == 0 {
+                let c = Ctl {
+                    job: AtomicU8::new(0),
+                    stop: AtomicBool::new(false),
+                    ready: AtomicBool::new(false),
+                    faults: AtomicUsize::new(0),
+                    delay_ms: AtomicU64::new(0),
+                };
+                *p = Box::leak(Box::new(c)) as *const Ctl as usize;
+            }
+            *p
+        });
+        unsafe { &*(p as *const Ctl) }
+    }
+
+    fn helper() -> Option<std::thread::Thread> {
+        HELPER.with(|h| h.clone())
+    }
 
     unsafe fn state(i: usize) -> &'static AtomicU8 {
         &*(STATE.load(Relaxed) as *const AtomicU8).add(i)
@@ -599,7 +627,56 @@ pub mod bg {
         true
     }
 
-    /// Start: `[start, start+len)` read-only, its base copied into `dst` (len bytes) by a helper thread.
+    /// Start the copy helper unless it runs: one thread for the whole process, parked between copies. Called by
+    /// `snapshot::prewarm` (before a match's capture) and by `begin` when nothing called that.
+    ///
+    /// Why one thread that never ends: a thread's start and end write the runtime's statics (std's and glibc's thread
+    /// bookkeeping), and a rollback load rewinds every static of the executable on Linux (no PDB names std's own
+    /// objects as host-only there). A helper per base that ended mid-session had a later load write its old
+    /// bookkeeping back, and the next thread std started at the session's end panicked in a btree assertion (2 of 4
+    /// synctests; 0 of 6 with the helper kept alive). This returns once the thread runs, so its start is done before a
+    /// capture copies the statics; it never ends.
+    pub fn spawn_helper() {
+        let c = ctl();
+        if HELPER.with(|h| h.is_some()) {
+            return;
+        }
+        let _s = crate::arena::SysScope::enter();
+        let h = std::thread::Builder::new().name("snapshot-base-copy".into()).spawn(move || {
+            c.ready.store(true, Release);
+            loop {
+                while c.job.load(Acquire) != 1 {
+                    std::thread::park();
+                }
+                c.job.store(2, Release);
+                let delay = c.delay_ms.load(Relaxed);
+                if delay > 0 {
+                    std::thread::sleep(std::time::Duration::from_millis(delay));
+                }
+                let (start, pages) = (START.load(Acquire), LEN.load(Relaxed) / PAGE);
+                let mut i = 0;
+                while start != 0 && i < pages && !c.stop.load(Acquire) {
+                    let n = RUN.min(pages - i);
+                    for k in i..i + n {
+                        unsafe { claim_copy(k) };
+                    }
+                    // every page of the run is copied: writes to it need no fault any more
+                    unsafe { libc::mprotect((start + i * PAGE) as *mut c_void, n * PAGE, libc::PROT_READ | libc::PROT_WRITE) };
+                    i += n;
+                }
+                c.job.store(0, Release);
+            }
+        });
+        if let Ok(h) = h {
+            while !c.ready.load(Acquire) {
+                std::thread::yield_now();
+            }
+            // the handle is dropped (detached); the Thread is kept to unpark it
+            HELPER.with(|t| *t = Some(h.thread().clone()));
+        }
+    }
+
+    /// Start: `[start, start+len)` read-only, its base copied into `dst` (len bytes) by the helper.
     pub unsafe fn begin(start: usize, len: usize, dst: *mut u8) -> Result<(), String> {
         if START.load(Relaxed) != 0 {
             return Err("a background base copy is already active".into());
@@ -607,6 +684,8 @@ pub mod bg {
         if start % PAGE != 0 || len % PAGE != 0 || len == 0 {
             return Err("the range is not page aligned".into());
         }
+        spawn_helper();
+        let c = ctl();
         let pages = len / PAGE;
         let ptr = STATE_BUF.with(|buf| {
             if buf.len() < pages {
@@ -617,17 +696,19 @@ pub mod bg {
             buf.as_ptr() as usize
         });
         super::imp_unix::install()?;
+        c.faults.store(0, Relaxed);
+        c.stop.store(false, Relaxed);
+        let delay = {
+            let _s = crate::arena::SysScope::enter();
+            std::env::var("MELEE_SNAP_BGCOPY_DELAY_MS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(0)
+        };
+        c.delay_ms.store(delay, Relaxed);
+        FAULTS_AT.store(&c.faults as *const AtomicUsize as usize, Relaxed);
         STATE.store(ptr, Relaxed);
         DST.store(dst as usize, Relaxed);
         LEN.store(len, Relaxed);
         LAST_LEN.store(len, Relaxed);
         LAST_START.store(start, Relaxed);
-        STOP.store(false, Relaxed);
-        READY.store(false, Relaxed);
-        FAULTS_AT.store(FAULT_CELL.with(|c| {
-            c.store(0, Relaxed);
-            c as *const AtomicUsize as usize
-        }), Relaxed);
         START.store(start, Release);
         if libc::mprotect(start as *mut c_void, len, libc::PROT_READ) != 0 {
             // nothing was made read-only: no page needs a copy
@@ -635,39 +716,12 @@ pub mod bg {
             super::imp_unix::uninstall_if_idle();
             return Err(format!("mprotect failed ({})", std::io::Error::last_os_error()));
         }
-        let _s = crate::arena::SysScope::enter();
-        // test knob: the helper starts copying this many ms late, so the writes of the first frames take the fault path
-        let delay = std::env::var("MELEE_SNAP_BGCOPY_DELAY_MS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(0);
-        let h = std::thread::Builder::new()
-            .name("snapshot-base-copy".into())
-            .spawn(move || {
-                READY.store(true, Release);
-                if delay > 0 {
-                    std::thread::sleep(std::time::Duration::from_millis(delay));
-                }
-                let mut i = 0;
-                while i < pages {
-                    let n = RUN.min(pages - i);
-                    for k in i..i + n {
-                        claim_copy(k);
-                    }
-                    // every page of the run is copied: writes to it need no fault any more
-                    libc::mprotect((start + i * PAGE) as *mut c_void, n * PAGE, libc::PROT_READ | libc::PROT_WRITE);
-                    i += n;
-                }
-                // stay (parked) until `release_copy`: see READY
-                while !STOP.load(Acquire) {
-                    std::thread::park();
-                }
-            })
-            .ok();
-        if h.is_some() {
-            while !READY.load(Acquire) {
-                core::hint::spin_loop();
-            }
+        // no helper (it could not start): the handler alone copies; pages never written stay read-only until
+        // `release_copy`
+        if let Some(t) = helper() {
+            c.job.store(1, Release);
+            t.unpark();
         }
-        // no helper: the handler alone copies (pages never written stay read-only until `release_copy`)
-        THREAD.with(|t| *t = h);
         Ok(())
     }
 
@@ -683,29 +737,25 @@ pub mod bg {
     }
 
     pub fn faults() -> usize {
-        let f = FAULTS_AT.load(Relaxed);
-        if f == 0 { 0 } else { unsafe { (*(f as *const AtomicUsize)).load(Relaxed) } }
+        ctl().faults.load(Relaxed)
     }
 
-    /// Wait for the helper to end (it ends only after `release_copy` set STOP).
-    fn finish() {
-        if let Some(t) = THREAD.with(|t| t.take()) {
-            let _ = t.join();
-        }
-    }
-
-    /// Stop: the helper ends, every page is copied, the range writable. The base buffer is then complete (the caller
-    /// keeps using it).
+    /// Stop: the helper ends its copy, every page is copied, the range writable. The base buffer is then complete (the
+    /// caller keeps using it).
     pub unsafe fn release_copy() {
         let s = START.load(Relaxed);
         if s == 0 {
             return;
         }
-        STOP.store(true, Release);
-        if let Some(t) = THREAD.with(|t| t.as_ref().map(|h| h.thread().clone())) {
+        let c = ctl();
+        c.stop.store(true, Release);
+        if let Some(t) = helper() {
+            // a copy not picked up yet is picked up and stopped at once; one in progress ends after its run
             t.unpark();
+            while c.job.load(Acquire) != 0 {
+                std::thread::yield_now();
+            }
         }
-        finish();
         let l = LEN.load(Relaxed);
         for i in 0..l / PAGE {
             claim_copy(i);

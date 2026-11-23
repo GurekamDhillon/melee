@@ -224,9 +224,13 @@ as his game does; the build needs `--features real-net` (the `mu-net` feature of
 | M3 input session | done (`mu_net::{input,link}`) | unit tests + two Links, 1200 frames with 1/7 datagrams lost, RESULTs agree |
 | M4 headless match | done (`melee mu-netplay`, `tools/rust-port/p2p/mu_pair.sh`) | 1200 frames 0 desyncs; 40 ms lag, 10 ms jitter, 5 % loss / reorder, 2 % dup: ~80 rollbacks, 0 desyncs, transcripts agree; build mismatch exits 2/2 |
 | M5 `play --p2p-*` | done (`mu_play.rs`, `mu_result`, `play_pair.sh`, `check_results.py`) | two hidden windowed peers with his launcher's line: exit 0/0, 0 desyncs, both signed result files verify and agree; peer killed mid-match: exit 0, `disconnected: true`; no peer: exit 2 |
-| M6 several games | not started: INFO announces 1 game, so `--p2p-games 0` plays one game and ends cleanly | |
+| M6 several games | done (`Link::{offer_next,begin_next_game}`, `NextGame`; headless `mu_netplay` loop; windowed `mu_next_match` + `Engine::next_vs`) | link tests (3 games over one connection, quit / desync / closed connection end the session); `mu_pair.sh --p2p-games 3`: 3 games, 0 desyncs, stages from the pool; `play_pair.sh --p2p-games 3`: 3 windowed games, all 3 result-file pairs agree; ours vs his reference harness, 3 games: the same chained descriptors (stage 8 then 32, same seeds and digests) and agreeing transcripts |
 | M7 SAMPLE | received and counted / kept (`Input::samples`), never sent; not used for prediction yet | |
 | M8 wire check vs his build | done (2026-11-22, his `d9448c66`) | see "M8 evidence" below |
+
+Rust-vs-Rust pair tests (M4-M6) prove our two peers agree with each other, not that we match another client; the
+cross-client evidence is M8's (his reference mu_net). The time sync is `melee_net::time_sync` from the timesync
+merge, which is under suspicion for Slippi live play (port/livesync): re-run the pair tests when that lands.
 
 Known gaps: the result file's `mode`, `tiebreak_index`, `lras_initiator`, `synced_timer`, `damage_done`,
 `synced_damage` and `game_info_hash` are left at his defaults (0 / -1); `stocks` / `synced_stocks`, `winner`,

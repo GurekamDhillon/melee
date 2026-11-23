@@ -422,6 +422,32 @@ impl RetailPlay {
                         log(&format!("netplay {}: match over at game frame {}", nd.tag(), nd.end_frame.unwrap() - melee_net::session::FIRST));
                         log(&nd.summary());
                         nd.write_hashes();
+                        // P2P Direct with several games (mu_play.rs): the next match agreed over the same connection
+                        // starts in this engine at once (Engine::next_vs), as the C mode loop's next VS scene
+                        #[cfg(feature = "real-net")]
+                        if nd.mu.is_some() {
+                            if let NetPhase::InMatch(_) = &nd.phase {
+                                let g = std::mem::replace(&mut nd.phase, NetPhase::Done);
+                                if let Some(scn) = nd.mu_next_match() {
+                                    if let NetPhase::InMatch(g) = g {
+                                        let (mut e, _) = g.into_engine();
+                                        match e.next_vs(scn) {
+                                            Ok(()) => {
+                                                self.e = Some(e);
+                                                self.arm = true;
+                                                return false;
+                                            }
+                                            Err(er) => {
+                                                log(&format!("netplay: P2P: the next match did not load: {er}"));
+                                                self.e = Some(e);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    nd.phase = g;
+                                }
+                            }
+                        }
                         // --np-css: back to the menus in lockstep (results -> CSS -> the next match); else one match
                         let next = if nd.css() { NetPhase::PreMatch } else { NetPhase::Done };
                         if let Some(ls) = nd.ls.as_mut() {

@@ -365,6 +365,11 @@ mod imp_unix {
 
     unsafe extern "C" fn handler(_sig: i32, info: *mut libc::siginfo_t, _ctx: *mut c_void) {
         let addr = (*info).si_addr() as usize;
+        // the host block's background base copy (`bg`) shares this handler
+        #[cfg(target_os = "linux")]
+        if super::bg::on_fault(addr) {
+            return;
+        }
         if START == 0 || addr < START || addr >= START + LEN {
             // not ours: hand the signal back to whoever had it
             libc::sigaction(libc::SIGSEGV, OLD.as_ptr(), core::ptr::null_mut());
@@ -417,16 +422,7 @@ mod imp_unix {
         }
         START = start;
         LEN = len;
-        if !INSTALLED {
-            let mut sa: libc::sigaction = core::mem::zeroed();
-            sa.sa_sigaction = handler as usize;
-            sa.sa_flags = libc::SA_SIGINFO | libc::SA_ONSTACK;
-            libc::sigemptyset(&mut sa.sa_mask);
-            if libc::sigaction(libc::SIGSEGV, &sa, OLD.as_mut_ptr()) != 0 {
-                return Err("sigaction failed".into());
-            }
-            INSTALLED = true;
-        }
+        install()?;
         if libc::mprotect(start as *mut c_void, len, libc::PROT_READ) != 0 {
             return Err("mprotect failed".into());
         }
@@ -440,13 +436,38 @@ mod imp_unix {
             return;
         }
         libc::mprotect(START as *mut c_void, LEN, libc::PROT_READ | libc::PROT_WRITE);
-        if INSTALLED {
+        START = 0;
+        uninstall_if_idle();
+        // the saved pages are of no use once the base is gone: give them back (the mapping is reused)
+        libc::madvise(STORE as *mut c_void, LEN, libc::MADV_DONTNEED);
+    }
+
+    /// Install the SIGSEGV handler unless it is in place (one handler for the arena range and the host block's
+    /// background copy, `bg`).
+    pub(crate) unsafe fn install() -> Result<(), String> {
+        if !INSTALLED {
+            let mut sa: libc::sigaction = core::mem::zeroed();
+            sa.sa_sigaction = handler as usize;
+            sa.sa_flags = libc::SA_SIGINFO | libc::SA_ONSTACK;
+            libc::sigemptyset(&mut sa.sa_mask);
+            if libc::sigaction(libc::SIGSEGV, &sa, OLD.as_mut_ptr()) != 0 {
+                return Err("sigaction failed".into());
+            }
+            INSTALLED = true;
+        }
+        Ok(())
+    }
+
+    /// Put the previous SIGSEGV handler back once neither the arena range nor the background copy is active.
+    pub(crate) unsafe fn uninstall_if_idle() {
+        #[cfg(target_os = "linux")]
+        if super::bg::active() {
+            return;
+        }
+        if INSTALLED && START == 0 {
             libc::sigaction(libc::SIGSEGV, OLD.as_ptr(), core::ptr::null_mut());
             INSTALLED = false;
         }
-        // the saved pages are of no use once the base is gone: give them back (the mapping is reused)
-        libc::madvise(STORE as *mut c_void, LEN, libc::MADV_DONTNEED);
-        START = 0;
     }
 
     /// The saved base page at `page_addr`, when it was written since `protect`.
@@ -488,3 +509,171 @@ mod imp_unix {
 
 #[cfg(unix)]
 pub use imp_unix::*;
+
+/// Linux: the host block's base copied in the background, as `bg` on Windows (see there): at capture the range goes
+/// read-only (`mprotect`), a helper thread copies it into the base buffer page by page and makes each copied run
+/// writable again, and a write that gets to a page first raises SIGSEGV; the shared handler (`imp_unix`) copies that
+/// page itself (or waits for the helper's copy of it) and makes it writable before the write re-runs. The capture
+/// costs one `mprotect` instead of a 64 MB copy on the game thread.
+///
+/// The range stays registered on the userfaultfd write watch (`snapshot::wpwatch`) the whole time: `mprotect` changes
+/// the VMA's permissions only, a page's write-protect marker stays, so a write after the handler made the page
+/// writable still resolves through the watch and reads as written at the next save (soft-dirty likewise; either way
+/// a page the helper merely made writable reads as unwritten, as it should). The handler runs inside whatever code
+/// faulted: no locks, no allocation (the per-page state is allocated at `begin`, on the system heap).
+/// Per page: 0 = not copied, 1 = being copied, 2 = copied (the base buffer holds the page as it was at capture).
+/// A page that is not yet 2 was not written since the capture: its live bytes are its base bytes.
+#[cfg(target_os = "linux")]
+pub mod bg {
+    use core::ffi::c_void;
+    use core::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering::*};
+    const PAGE: usize = 4096;
+    /// Pages per helper step (one mprotect each).
+    const RUN: usize = 64;
+
+    // Plain atomics, read by the signal handler. They are set at `begin`, before the capture copies the statics, and
+    // stay as they are until `release_copy` at the base's drop, so a rollback load (which rewinds the statics) writes
+    // back the same values; FAULTS is a stats counter only.
+    static START: AtomicUsize = AtomicUsize::new(0);
+    static LEN: AtomicUsize = AtomicUsize::new(0);
+    static DST: AtomicUsize = AtomicUsize::new(0);
+    static STATE: AtomicUsize = AtomicUsize::new(0);
+    static STOP: AtomicBool = AtomicBool::new(false);
+    static FAULTS: AtomicUsize = AtomicUsize::new(0);
+    /// The last range `begin` protected, kept after `release_copy`: a fault another thread took in it just before the
+    /// release made the range writable again re-runs the write instead of being passed on as not ours.
+    static LAST_START: AtomicUsize = AtomicUsize::new(0);
+    static LAST_LEN: AtomicUsize = AtomicUsize::new(0);
+    /// The helper and the per-page state buffer live on the system heap (a rollback load never rewinds them); the
+    /// buffer is kept and cleared from one base to the next.
+    static THREAD: crate::arena::SysStatic<Option<std::thread::JoinHandle<()>>> = crate::arena::SysStatic::new(|| None);
+    static STATE_BUF: crate::arena::SysStatic<Vec<AtomicU8>> = crate::arena::SysStatic::new(Vec::new);
+
+    unsafe fn state(i: usize) -> &'static AtomicU8 {
+        &*(STATE.load(Relaxed) as *const AtomicU8).add(i)
+    }
+
+    /// Copy page `i` into the base buffer unless someone did (or is doing) it; returns once it is copied.
+    unsafe fn claim_copy(i: usize) {
+        let st = state(i);
+        loop {
+            match st.compare_exchange(0, 1, Acquire, Acquire) {
+                Ok(_) => {
+                    let (s, d) = (START.load(Relaxed), DST.load(Relaxed));
+                    core::ptr::copy_nonoverlapping((s + i * PAGE) as *const u8, (d + i * PAGE) as *mut u8, PAGE);
+                    st.store(2, Release);
+                    return;
+                }
+                Err(2) => return,
+                Err(_) => core::hint::spin_loop(),
+            }
+        }
+    }
+
+    /// The SIGSEGV handler's part: true when `addr` is in the range (the page is now copied and writable, re-run).
+    pub(crate) unsafe fn on_fault(addr: usize) -> bool {
+        let (s, l) = (START.load(Acquire), LEN.load(Relaxed));
+        if s == 0 || addr < s || addr >= s + l {
+            let (ls, ll) = (LAST_START.load(Relaxed), LAST_LEN.load(Relaxed));
+            // released meanwhile: the whole range is writable again
+            return s == 0 && ls != 0 && addr >= ls && addr < ls + ll;
+        }
+        let i = (addr - s) / PAGE;
+        claim_copy(i);
+        FAULTS.fetch_add(1, Relaxed);
+        libc::mprotect((s + i * PAGE) as *mut c_void, PAGE, libc::PROT_READ | libc::PROT_WRITE);
+        true
+    }
+
+    /// Start: `[start, start+len)` read-only, its base copied into `dst` (len bytes) by a helper thread.
+    pub unsafe fn begin(start: usize, len: usize, dst: *mut u8) -> Result<(), String> {
+        if START.load(Relaxed) != 0 {
+            return Err("a background base copy is already active".into());
+        }
+        if start % PAGE != 0 || len % PAGE != 0 || len == 0 {
+            return Err("the range is not page aligned".into());
+        }
+        let pages = len / PAGE;
+        let ptr = STATE_BUF.with(|buf| {
+            if buf.len() < pages {
+                *buf = Vec::from_iter((0..pages).map(|_| AtomicU8::new(0)));
+            } else {
+                buf[..pages].iter().for_each(|a| a.store(0, Relaxed));
+            }
+            buf.as_ptr() as usize
+        });
+        super::imp_unix::install()?;
+        STATE.store(ptr, Relaxed);
+        DST.store(dst as usize, Relaxed);
+        LEN.store(len, Relaxed);
+        LAST_LEN.store(len, Relaxed);
+        LAST_START.store(start, Relaxed);
+        STOP.store(false, Relaxed);
+        FAULTS.store(0, Relaxed);
+        START.store(start, Release);
+        if libc::mprotect(start as *mut c_void, len, libc::PROT_READ) != 0 {
+            // nothing was made read-only: no page needs a copy
+            START.store(0, Release);
+            super::imp_unix::uninstall_if_idle();
+            return Err(format!("mprotect failed ({})", std::io::Error::last_os_error()));
+        }
+        let _s = crate::arena::SysScope::enter();
+        let h = std::thread::Builder::new()
+            .name("snapshot-base-copy".into())
+            .spawn(move || {
+                let mut i = 0;
+                while i < pages && !STOP.load(Relaxed) {
+                    let n = RUN.min(pages - i);
+                    for k in i..i + n {
+                        claim_copy(k);
+                    }
+                    // every page of the run is copied: writes to it need no fault any more
+                    libc::mprotect((start + i * PAGE) as *mut c_void, n * PAGE, libc::PROT_READ | libc::PROT_WRITE);
+                    i += n;
+                }
+            })
+            .ok();
+        // no helper: the handler alone copies (pages never written stay read-only until `release_copy`)
+        THREAD.with(|t| *t = h);
+        Ok(())
+    }
+
+    /// The base copy of page `i` is in the buffer (else the live page is still the base page).
+    #[inline]
+    pub fn copied(i: usize) -> bool {
+        let s = START.load(Relaxed);
+        s != 0 && i < LEN.load(Relaxed) / PAGE && unsafe { state(i).load(Acquire) == 2 }
+    }
+
+    pub fn active() -> bool {
+        START.load(Relaxed) != 0
+    }
+
+    pub fn faults() -> usize {
+        FAULTS.load(Relaxed)
+    }
+
+    /// Wait for the helper to finish (every page copied, the range writable again).
+    pub fn finish() {
+        if let Some(t) = THREAD.with(|t| t.take()) {
+            let _ = t.join();
+        }
+    }
+
+    /// Stop: the helper ends, every page is copied, the range writable. The base buffer is then complete (the caller
+    /// keeps using it).
+    pub unsafe fn release_copy() {
+        let s = START.load(Relaxed);
+        if s == 0 {
+            return;
+        }
+        finish();
+        let l = LEN.load(Relaxed);
+        for i in 0..l / PAGE {
+            claim_copy(i);
+        }
+        libc::mprotect(s as *mut c_void, l, libc::PROT_READ | libc::PROT_WRITE);
+        START.store(0, Release);
+        super::imp_unix::uninstall_if_idle();
+    }
+}

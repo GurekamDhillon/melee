@@ -7,7 +7,8 @@
 #   soak_dolphin_linux.sh OUTDIR [--minutes M] [--lag-ms N] [--jitter-ms N] [--stage S] [--mm-port P]
 # The engine logs its `mem after` line (arena, system heap, caches) every MELEE_MEM_EVERY ticks (default 3600).
 # OUTDIR/matches.tsv: per match (engine log order) the engine's RSS / PSS / private dirty right after the match, its
-# Slippi line (compared, soft, HARD, ticks over 16 ms) and rollbacks; OUTDIR/rss.tsv: a sample every 30 s.
+# Slippi line (compared, soft, HARD, ticks over 16 ms) and rollbacks; OUTDIR/rss.tsv: a sample every 60 s, with
+# the resident memory by mapping kind and the thread count (smaps_cat.py).
 # The engine's window title starts with "soak:" and the mock runs with MELEE_SOAK=1 (the lane watchdog's 3 h limit).
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"
 if [ -z "$NP_IN_NETNS" ]; then
@@ -60,11 +61,13 @@ mem() { # rss pss private_dirty (kB) of the engine
   echo "${r:-0} ${p:-0} ${d:-0}"
 }
 printf 'match\tt_s\trss_kB\tpss_kB\tprivate_dirty_kB\tload1\tslippi_line\trollbacks_line\n' > "$O/matches.tsv"
-printf 't_s\trss_kB\tpss_kB\tprivate_dirty_kB\n' > "$O/rss.tsv"
+printf 't_s\trss_kB\tpss_kB\tprivate_dirty_kB\tload1\tsmaps_by_kind_kB\n' > "$O/rss.tsv"
 t0=$(date +%s); seen=0; last=0
 while kill -0 $epid 2>/dev/null && [ $(( $(date +%s) - t0 )) -lt $((mins * 60)) ]; do
   now=$(( $(date +%s) - t0 ))
-  if [ $((now - last)) -ge 30 ]; then last=$now; echo -e "$now\t$(mem | tr ' ' '\t')" >> "$O/rss.tsv"; fi
+  if [ $((now - last)) -ge 60 ]; then
+    last=$now; echo -e "$now\t$(mem | tr ' ' '\t')\t$(cut -d' ' -f1 /proc/loadavg)\t$(python3 -I "$here/smaps_cat.py" $epid)" >> "$O/rss.tsv"
+  fi
   n=$(grep -c "final hashes (through" "$O/engine.log" 2>/dev/null)
   if [ "${n:-0}" -gt "$seen" ]; then
     sleep 3  # the match's teardown

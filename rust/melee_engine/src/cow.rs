@@ -533,13 +533,24 @@ pub mod bg {
 
     // Plain atomics, read by the signal handler. They are set at `begin`, before the capture copies the statics, and
     // stay as they are until `release_copy` at the base's drop, so a rollback load (which rewinds the statics) writes
-    // back the same values; FAULTS is a stats counter only.
+    // back the same values.
     static START: AtomicUsize = AtomicUsize::new(0);
     static LEN: AtomicUsize = AtomicUsize::new(0);
     static DST: AtomicUsize = AtomicUsize::new(0);
     static STATE: AtomicUsize = AtomicUsize::new(0);
+    /// Set by `release_copy`: the helper may end.
     static STOP: AtomicBool = AtomicBool::new(false);
-    static FAULTS: AtomicUsize = AtomicUsize::new(0);
+    /// Set by the helper once it runs. A thread's start and end write the runtime's statics (std's and glibc's thread
+    /// bookkeeping), and a rollback load rewinds every static of the executable on Linux (no PDB names std's own
+    /// objects as host-only there): a helper that ended mid-session had a load write its old bookkeeping back, and the
+    /// next thread std started at the session's end panicked in a btree assertion (2 of 4 synctests; 0 of 6 with the
+    /// helper kept alive). So `begin` waits until the helper runs, before the capture copies the statics, and the
+    /// helper stays parked once its copy is done, until `release_copy` (the base's drop: no load follows) lets it end.
+    static READY: AtomicBool = AtomicBool::new(false);
+    /// The write-fault counter (stats), off the snapshot (a load would rewind a static one): the address of
+    /// FAULT_CELL's value, set at `begin`.
+    static FAULTS_AT: AtomicUsize = AtomicUsize::new(0);
+    static FAULT_CELL: crate::arena::SysStatic<AtomicUsize> = crate::arena::SysStatic::new(|| AtomicUsize::new(0));
     /// The last range `begin` protected, kept after `release_copy`: a fault another thread took in it just before the
     /// release made the range writable again re-runs the write instead of being passed on as not ours.
     static LAST_START: AtomicUsize = AtomicUsize::new(0);
@@ -580,7 +591,10 @@ pub mod bg {
         }
         let i = (addr - s) / PAGE;
         claim_copy(i);
-        FAULTS.fetch_add(1, Relaxed);
+        let f = FAULTS_AT.load(Relaxed);
+        if f != 0 {
+            (*(f as *const AtomicUsize)).fetch_add(1, Relaxed);
+        }
         libc::mprotect((s + i * PAGE) as *mut c_void, PAGE, libc::PROT_READ | libc::PROT_WRITE);
         true
     }
@@ -609,7 +623,11 @@ pub mod bg {
         LAST_LEN.store(len, Relaxed);
         LAST_START.store(start, Relaxed);
         STOP.store(false, Relaxed);
-        FAULTS.store(0, Relaxed);
+        READY.store(false, Relaxed);
+        FAULTS_AT.store(FAULT_CELL.with(|c| {
+            c.store(0, Relaxed);
+            c as *const AtomicUsize as usize
+        }), Relaxed);
         START.store(start, Release);
         if libc::mprotect(start as *mut c_void, len, libc::PROT_READ) != 0 {
             // nothing was made read-only: no page needs a copy
@@ -618,11 +636,17 @@ pub mod bg {
             return Err(format!("mprotect failed ({})", std::io::Error::last_os_error()));
         }
         let _s = crate::arena::SysScope::enter();
+        // test knob: the helper starts copying this many ms late, so the writes of the first frames take the fault path
+        let delay = std::env::var("MELEE_SNAP_BGCOPY_DELAY_MS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(0);
         let h = std::thread::Builder::new()
             .name("snapshot-base-copy".into())
             .spawn(move || {
+                READY.store(true, Release);
+                if delay > 0 {
+                    std::thread::sleep(std::time::Duration::from_millis(delay));
+                }
                 let mut i = 0;
-                while i < pages && !STOP.load(Relaxed) {
+                while i < pages {
                     let n = RUN.min(pages - i);
                     for k in i..i + n {
                         claim_copy(k);
@@ -631,8 +655,17 @@ pub mod bg {
                     libc::mprotect((start + i * PAGE) as *mut c_void, n * PAGE, libc::PROT_READ | libc::PROT_WRITE);
                     i += n;
                 }
+                // stay (parked) until `release_copy`: see READY
+                while !STOP.load(Acquire) {
+                    std::thread::park();
+                }
             })
             .ok();
+        if h.is_some() {
+            while !READY.load(Acquire) {
+                core::hint::spin_loop();
+            }
+        }
         // no helper: the handler alone copies (pages never written stay read-only until `release_copy`)
         THREAD.with(|t| *t = h);
         Ok(())
@@ -650,11 +683,12 @@ pub mod bg {
     }
 
     pub fn faults() -> usize {
-        FAULTS.load(Relaxed)
+        let f = FAULTS_AT.load(Relaxed);
+        if f == 0 { 0 } else { unsafe { (*(f as *const AtomicUsize)).load(Relaxed) } }
     }
 
-    /// Wait for the helper to finish (every page copied, the range writable again).
-    pub fn finish() {
+    /// Wait for the helper to end (it ends only after `release_copy` set STOP).
+    fn finish() {
         if let Some(t) = THREAD.with(|t| t.take()) {
             let _ = t.join();
         }
@@ -666,6 +700,10 @@ pub mod bg {
         let s = START.load(Relaxed);
         if s == 0 {
             return;
+        }
+        STOP.store(true, Release);
+        if let Some(t) = THREAD.with(|t| t.as_ref().map(|h| h.thread().clone())) {
+            t.unpark();
         }
         finish();
         let l = LEN.load(Relaxed);

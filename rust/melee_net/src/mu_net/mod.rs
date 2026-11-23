@@ -9,5 +9,7 @@ pub mod blake2b;
 pub mod conn;
 pub mod crypto;
 pub mod desc;
+pub mod input;
+pub mod link;
 pub mod sec;
 pub mod wire;

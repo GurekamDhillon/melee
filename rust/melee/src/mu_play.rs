@@ -25,7 +25,9 @@ pub struct MuRun {
     compared_upto: i32,
     pub soft: u32,
     pub hard: u32,
-    skip_checked: i32,
+    /// time sync (melee_net::time_sync, the same numbers as mu_net's section 8): holds when ahead, extra frames
+    /// when behind; local pacing only
+    ts: melee_net::time_sync::TimeSync,
     started: bool,
     done_at: Option<Instant>,
     /// the session ended before the game reported its end (BYE, a lost connection, 7 s without input)
@@ -96,7 +98,7 @@ impl NetDriver {
             compared_upto: 0,
             soft: 0,
             hard: 0,
-            skip_checked: 0,
+            ts: melee_net::time_sync::TimeSync::new(melee_net::time_sync::old_rule()),
             started: false,
             done_at: None,
             disconnected: false,
@@ -184,7 +186,17 @@ impl NetDriver {
             log(&format!("netplay {tag}: P2P Direct match started (delay {})", mr.delay));
         }
         let f = s.current_frame();
-        for ff in (mr.last_local + 1).max(f)..=f + mr.delay {
+        // start in step: online frame 2 waits for the peer's first frame (a peer still loading the stage)
+        s.start_hold = !mr.ts.old && mr.link.input.remote_latest() == 0;
+        let step = {
+            let input = &mr.link.input;
+            mr.ts.step(online(f), || input.time_offset_us())
+        };
+        if step.hold > 0 {
+            s.request_wait(step.hold);
+        }
+        let extra = step.advance as i32;
+        for ff in (mr.last_local + 1).max(f)..=f + mr.delay + extra {
             let i = if online(ff) <= mr.delay {
                 pad_input(&[0; 8])
             } else {
@@ -196,7 +208,7 @@ impl NetDriver {
             s.submit_local_input(lp * 2, ff, &i);
             mr.last_local = ff;
         }
-        for ff in (mr.last_sent + 1)..=(f + mr.delay) {
+        for ff in (mr.last_sent + 1)..=(f + mr.delay + extra) {
             let Some(i) = s.local_input_for_send(lp * 2, ff) else { break };
             if online(ff) >= 1 {
                 mr.link.commit(online(ff), pad_bytes(&i));
@@ -207,16 +219,12 @@ impl NetDriver {
             mr.link.input.set_checksum(ckf, ck);
         }
         mr.link.send_commit();
-        let of = online(s.current_frame());
-        if of > 0 && of % 30 == 0 && of != mr.skip_checked {
-            mr.skip_checked = of;
-            let off = mr.link.input.time_offset_us();
-            if off > 10000 {
-                s.request_wait((((off - 10000) as i64 / 16683) + 1).min(5) as i32);
-            }
-        }
         if mr.done_at.is_none() && gone.is_none() {
             run_tick(&mut s, &mut **g, None);
+            // behind the peer: one extra frame this tick (only when this tick ran its new frame)
+            if extra > 0 && s.current_frame() > f {
+                run_tick(&mut s, &mut **g, None);
+            }
         }
         let conf = s.confirmed_frame();
         mr.link.input.set_floor(online(conf));

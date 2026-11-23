@@ -270,7 +270,12 @@ pub fn establish(o: &P2pOptions, tag: &str, args: &[String]) -> Result<Link, Str
         Box::new(crate::play_net::Degraded::new(Box::new(tp), &n, 0x5eed ^ o.slot as u32))
     };
     let conn = Connector::start(tp, identity, desc, o.slot, &o.peers, o.expect, limit, now)?;
-    let mut link = Link::new(conn, o.slot, o.games.min(u16::MAX as u32) as u16, now);
+    // several games over one connection (INFO / NEXT, plan M6) are not played yet: INFO says one game, so a peer of
+    // any revision ends the session after it (no NEXT is sent)
+    if o.games != 1 {
+        eprintln!("p2p: {tag}: --p2p-games {} asked; this build plays one game per session", o.games);
+    }
+    let mut link = Link::new(conn, o.slot, 1, now);
     loop {
         link.poll();
         if link.ready() {
@@ -395,7 +400,7 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
     let mut last_sent = FIRST - 1;
     let mut finals: BTreeMap<i32, u32> = BTreeMap::new();
     let (mut compared, mut compared_upto, mut soft, mut hard) = (0u32, 0i32, 0u32, 0u32);
-    let mut skip_checked = 0;
+    let mut ts = melee_net::time_sync::TimeSync::new(melee_net::time_sync::old_rule());
     let mut ended = false;
     let mut failed = false;
     let mut done_at: Option<Instant> = None;
@@ -429,7 +434,13 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
         }
         // local pads, `delay` frames ahead; online frames 1..=delay carry the zero pad (the protocol's commit rule)
         let f = s.current_frame();
-        for ff in f..=f + delay {
+        s.start_hold = !ts.old && link.input.remote_latest() == 0;
+        let step = ts.step(online(f), || link.input.time_offset_us());
+        if step.hold > 0 {
+            s.request_wait(step.hold);
+        }
+        let extra = step.advance as i32;
+        for ff in f..=f + delay + extra {
             let i = if online(ff) <= delay {
                 pad_input(&[0; 8])
             } else {
@@ -440,7 +451,7 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
             };
             s.submit_local_input(local * 2, ff, &i);
         }
-        for ff in (last_sent + 1)..=(f + delay) {
+        for ff in (last_sent + 1)..=(f + delay + extra) {
             let Some(i) = s.local_input_for_send(local * 2, ff) else { break };
             if online(ff) >= 1 {
                 link.commit(online(ff), pad_bytes(&i));
@@ -451,16 +462,10 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
             link.input.set_checksum(ckf, ck);
         }
         link.send_commit();
-        // the time-sync hold (plan 2.10): ahead by more than 10 ms, checked every 30 frames
-        let of = online(s.current_frame());
-        if of > 0 && of % 30 == 0 && of != skip_checked {
-            skip_checked = of;
-            let off = link.input.time_offset_us();
-            if off > 10000 {
-                s.request_wait((((off - 10000) as i64 / 16683) + 1).min(5) as i32);
-            }
-        }
         run_tick(&mut s, &mut game, None);
+        if extra > 0 && s.current_frame() > f {
+            run_tick(&mut s, &mut game, None);
+        }
         let conf = s.confirmed_frame();
         link.input.set_floor(online(conf));
         link.advance_transcript();
@@ -522,7 +527,7 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
     let tr = link.transcript.as_ref().map_or((0, String::new()), |t| (t.frames, hex(&t.digest()[..8])));
     let st = &link.input.stats;
     eprintln!(
-        "p2p: {tag}: {} final checksums, {compared} compared: {soft} soft, {hard} HARD desyncs; transcript {} frames {} (peer {}); rollbacks {}, stalls {}, waits {}; ping {} us; commits sent {} received {}, gaps {}, conflicts {}",
+        "p2p: {tag}: {} final checksums, {compared} compared: {soft} soft, {hard} HARD desyncs; transcript {} frames {} (peer {}); rollbacks {}, stalls {}, waits {}, time sync held {} advanced {}; ping {} us; commits sent {} received {}, gaps {}, conflicts {}",
         finals.len(),
         tr.0,
         tr.1,
@@ -534,6 +539,8 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
         s.stats.rollbacks,
         s.stats.stall_ticks,
         s.stats.waits,
+        ts.held,
+        ts.advanced,
         link.input.ping_us().unwrap_or(0),
         st.commits_sent,
         st.commits_received,

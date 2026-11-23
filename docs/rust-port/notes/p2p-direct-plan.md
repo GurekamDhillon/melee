@@ -199,7 +199,7 @@ Plain 1200, protected 1226, HELLO 160, 128 frames per COMMIT, 200 frames lead, r
 | descriptor, digest, next | `session_types.cpp` | | `mu_net::desc` |
 | connector (dial, punch, path choice) | `peer_connector.cpp` | ENet host | `mu_net::conn` |
 | COMMIT/ACK/PING/SAMPLE, time offset | `input_transport.cpp` | offset maths as `slippi.rs` | `mu_net::input` |
-| rollback, stall, time sync, checksums | `rollback_session.cpp` + game ASM | `session::RbSession`, `slippi_online` checksum + compare, `play_net` Slippi path | a `MuRun` beside `SlippiRun` in `play_net` |
+| rollback, stall, time sync, checksums | `rollback_session.cpp` + game ASM | `session::RbSession`, `time_sync::TimeSync` (the same section-8 numbers), `slippi_online` checksum + compare, `play_net` Slippi path | a `MuRun` beside `SlippiRun` in `play_net` |
 | match setup | `source_p2p.cpp` | `NetDriver::connect_slippi` scenario building, `slippi_online::enable(seed)` | `NetDriver::connect_mu` from `--p2p-*` |
 | identity file | `peer_identity.cpp` | | read `ed_seed` (or 32 raw bytes); create only when missing |
 | result file | `result_outbox.cpp` | Slippi game-end report fields we already compute for ranked | JSON writer + signature |
@@ -212,6 +212,26 @@ Slippi path's (`online frame 1 = session FIRST`).
 Launcher mapping wanted from the desktop (`launcher_compat.rs::plan_env`): instead of refusing them, pass every
 `--p2p-K V` through unchanged into `play_args` (play's own parser takes `--p2p-*` and routes to the mu path), e.g.
 `f if f.starts_with("--p2p-") => { play.push(f.into()); play.push(next_value) }` (all of his `--p2p-*` take a value).
+`play` then exits 2 when no game was played (connect / handshake / identity / port failure) and 0 after the game,
+as his game does; the build needs `--features real-net` (the `mu-net` feature of melee_net).
+
+## 3b. Status (2026-11-22, port/p2pdirect)
+
+| milestone | state | proof |
+| --- | --- | --- |
+| M1 crypto + wire | done (`melee_net::mu_net::{blake2b,crypto,wire,desc,sec}`) | unit tests; vectors from libsodium / hashlib |
+| M2 connector | done (`mu_net::conn`) | 6 tests over loopback UDP (both dial, one listens, build mismatch, stranger, nobody, neighbours) |
+| M3 input session | done (`mu_net::{input,link}`) | unit tests + two Links, 1200 frames with 1/7 datagrams lost, RESULTs agree |
+| M4 headless match | done (`melee mu-netplay`, `tools/rust-port/p2p/mu_pair.sh`) | 1200 frames 0 desyncs; 40 ms lag, 10 ms jitter, 5 % loss / reorder, 2 % dup: ~80 rollbacks, 0 desyncs, transcripts agree; build mismatch exits 2/2 |
+| M5 `play --p2p-*` | done (`mu_play.rs`, `mu_result`, `play_pair.sh`, `check_results.py`) | two hidden windowed peers with his launcher's line: exit 0/0, 0 desyncs, both signed result files verify and agree; peer killed mid-match: exit 0, `disconnected: true`; no peer: exit 2 |
+| M6 several games | not started: INFO announces 1 game, so `--p2p-games 0` plays one game and ends cleanly | |
+| M7 SAMPLE | received and counted / kept (`Input::samples`), never sent; not used for prediction yet | |
+| M8 wire check vs his build | not started | |
+
+Known gaps: the result file's `mode`, `tiebreak_index`, `lras_initiator`, `synced_timer`, `damage_done`,
+`synced_damage` and `game_info_hash` are left at his defaults (0 / -1); `stocks` / `synced_stocks`, `winner`,
+`has_outcome`, `end_method` (2 stocks, 1 time) are filled. Pause is on (as a Slippi Direct match). Failure
+diagnosis is one sentence per stage reached, not his four-way NAT diagnosis.
 
 ## 4. Milestones (each with its own test; pushed when green)
 

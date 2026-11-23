@@ -188,7 +188,9 @@ impl Audio {
             let out = sim::Output::new(cfg);
             return Ok(Audio { out: Some(out), dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0, seg: Default::default() });
         }
-        if melee_platform::window_hidden() {
+        // MELEE_AUDIO_HIDDEN_DEVICE=1: a hidden run that opens the real device anyway (latency/underrun measurements;
+        // keep MELEE_VOLUME low)
+        if melee_platform::window_hidden() && std::env::var_os("MELEE_AUDIO_HIDDEN_DEVICE").is_none_or(|v| v != "1") {
             return Ok(Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0, seg: Default::default() });
         }
         let cfg = driver_config();

@@ -77,19 +77,25 @@ pub fn Fighter_SetDamageCallback_ftLk_800EAF58(gobj: *mut HSD_GObj) {
 }
 
 /// `ftLk_800EAF38` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLk_800EAF38(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFE0D0121u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLk_800EAF38");
     ftLk_800EAF38(g);
 }
 
 /// `ftLk_800EAF58` as a Fighter callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLk_800EAF58(g: *mut HSD_GObj) {
+    core::hint::black_box(0x821B4877u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLk_800EAF58");
     ftLk_800EAF58(g);
 }
 
 /// `ftLk_800EB334` as a Fighter callback entry (the shield-hit callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftLk_800EB334(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAD9D3609u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftLk_800EB334");
     ftLk_800EB334(g);
 }

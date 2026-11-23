@@ -21,7 +21,10 @@ pub fn t64(d: f64) {
 }
 pub static mut H: u32 = 0;
 pub static mut HDBG: bool = false;
-pub fn hm(v: u32) {
+pub fn hm(mut v: u32) {
+    // every f32 NaN bit pattern hashes as one: neither the native C nor LLVM keeps Gekko's NaN sign / operand choice
+    // (tools/rust-port/referee nanprobe rows 6-27), and the drivers feed NaN on purpose (rg() case 2). gen/kinds/tu/mtu_common.h's HM does the same.
+    if v & 0x7F80_0000 == 0x7F80_0000 && v & 0x7F_FFFF != 0 { v = 0x7FC0_0000; }
     unsafe {
         H = H.wrapping_mul(0x0100_0193) ^ v;
         if HDBG {
@@ -92,17 +95,23 @@ static mut FP: Vec<usize> = Vec::new();
 pub fn freg(f: usize) {
     unsafe { FP.push(f) }
 }
+/// The registered fn at `a`, by identity only: its address, or the address of the callback a state-table shim calls
+/// (melee_items::tu::kinds_inl::shims, recorded at link time). Every compared fn has one unfoldable address
+/// (tools/rust-port/fn_identity.py), so no symbol lookup is needed: symbolization named neighbours on Windows.
+fn ident(a: usize) -> Option<usize> {
+    static SHIMS: std::sync::OnceLock<std::collections::HashMap<usize, usize>> = std::sync::OnceLock::new();
+    let fp = unsafe { &*core::ptr::addr_of!(FP) };
+    let at = |x: usize| fp.iter().position(|&f| f == x);
+    at(a).or_else(|| SHIMS.get_or_init(|| melee_items::tu::kinds_inl::shims().into_iter().collect()).get(&a).and_then(|&t| at(t)))
+}
 pub fn fi<F: Copy>(f: Option<F>) -> u32 {
     match f {
         None => 0,
         Some(f) => {
             assert_eq!(core::mem::size_of::<F>(), core::mem::size_of::<usize>());
             let a: usize = unsafe { core::mem::transmute_copy(&f) };
-            unsafe {
-                // by address, else by symbol (a lib-stored pointer can be a crate-local copy: fnsym.rs)
-                if let Some(i) = fnsym::find(&*core::ptr::addr_of!(FP), a) {
-                    return (i + 1) as u32;
-                }
+            if let Some(i) = ident(a) {
+                return (i + 1) as u32;
             }
             0xFFFF_FFFE
         }
@@ -134,8 +143,7 @@ pub fn pi<T>(p: *const T) -> u32 {
                 return (((i + 1) as u32) << 16) | (a - b) as u32;
             }
         }
-        // by address, else by symbol (a lib-stored pointer can be a crate-local copy: fnsym.rs)
-        if let Some(i) = fnsym::find(&*core::ptr::addr_of!(FP), a) {
+        if let Some(i) = ident(a) {
             return 0xF000_0000 | (i + 1) as u32;
         }
     }

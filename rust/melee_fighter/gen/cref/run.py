@@ -70,7 +70,7 @@ EXTRACTS = {
                 ("src/melee/pl/player.c", "void Player_80031DA8(", "void Player_InitOrResetPlayer("),
                 ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif"),
                 ("src/melee/pl/pl_040D.c", "void pl_80040DDC(", None),
-                ("src/melee/pl/plbonuslib.c", "static inline bool unk_cond(", "void pl_8003D644("),
+                ("src/melee/pl/plbonuslib.c", "static inline Pl_ItemLog match_item_kind(", "void plBonusLib_8003D514("),
                 # group 3 round 10: pl_8003DF44..pl_8003ED0C (src/plbonus2.rs)
                 ("src/melee/pl/plbonuslib.c", "void pl_8003DF44(", "void fn_8003EE2C("),
                 ("src/melee/pl/plbonuslib.c", "int pl_8003FBFC(", None)],
@@ -79,6 +79,7 @@ EXTRACTS = {
                  ("src/melee/pl/player.c", "StaticPlayer* Player_GetPtrForSlot(", "void Player_80031AD0("),
                  ("src/melee/pl/player.c", "void Player_80031DA8(", "void Player_InitOrResetPlayer("),
                  ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif"),
+                 *[("src/melee/pl/pltrick.c", "fn:" + n, None) for n in ("pl_800386D8", "pl_800386E8", "fn_80038700")],
                  ("src/melee/pl/plbonus.c", "static void setFlag(", "void pl_8003891C("),
                  ("src/melee/pl/plbonus.c", "void pl_80038F10(", "void pl_80039450(")],
     "ft0877": [("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_80080174("),

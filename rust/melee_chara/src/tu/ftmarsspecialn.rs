@@ -47,7 +47,9 @@ unsafe fn hip_joint(fp: *mut Fighter) -> *mut HSD_JObj {
 }
 
 /// `ftMs_SpecialN_80136730` as a Fighter callback entry (`x21EC`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftMs_SpecialN_80136730(g: *mut HSD_GObj) {
+    core::hint::black_box(0x9706AAF5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftMs_SpecialN_80136730");
     crate::tu::ftmars::ftMs_SpecialN_80136730(g);
 }

@@ -6474,10 +6474,7 @@ pub unsafe extern "C" fn geno_build_rows(mut fp: *mut Fighter, mut p: i32) {
             slot += 1;
         }
         if ((*row).input_cb.is_none()
-            || (*row).input_cb
-                == Some(
-                    geno_cb_nothing as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
-                )) && (*row).anim_id >= 0 as i32
+            || (*row).input_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, geno_cb_nothing as unsafe extern "C" fn(*mut Fighter_GObj) -> ()))) && (*row).anim_id >= 0 as i32
             && (*row).anim_id <= 0x3ff as i32 && !(*fp).ft_data.is_null()
             && !(*(*fp).ft_data).xC.is_null()
             && GenoGame_ScriptHasIasa(
@@ -6767,7 +6764,8 @@ pub unsafe extern "C" fn geno_cb_anim_loop(mut gobj: *mut Fighter_GObj) {
 }
 
 #[inline(never)] // compared by address (input_cb): keep one copy
-pub unsafe extern "C" fn geno_cb_nothing(mut gobj: *mut Fighter_GObj) { melee_core::ct!("geno_cb_nothing");}
+#[inline(never)]
+pub unsafe extern "C" fn geno_cb_nothing(mut gobj: *mut Fighter_GObj) { core::hint::black_box(0xA43DA92Au32); /* fn identity */ melee_core::ct!("geno_cb_nothing");}
 
 pub unsafe extern "C" fn geno_cb_phys_air(mut gobj: *mut Fighter_GObj) {
     melee_core::ct!("geno_cb_phys_air");
@@ -13205,10 +13203,12 @@ pub unsafe extern "C" fn Geno_ItemFamilyEvent(
     );
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn Geno_ItemDraw(
     mut g: *mut HSD_GObj,
     mut code: i32,
 ) {
+    core::hint::black_box(0x261B6998u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("Geno_ItemDraw");
     let mut i: i32 = 0;
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();

@@ -294,7 +294,9 @@ pub unsafe extern "C" fn grTest_80207044(gobj_id: i32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA969887Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
@@ -309,7 +311,9 @@ pub unsafe extern "C" fn grTest_80207168(gobj: *mut HSD_GObj) {
     
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x019FC15Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
@@ -362,7 +366,9 @@ pub unsafe extern "C" fn stageGObj2_X8Callback(gobj: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x59CE8945u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }

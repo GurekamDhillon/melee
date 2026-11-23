@@ -93,7 +93,7 @@ int main(void)
             CD.x71C = rw(); CD.x720 = rw(); CD.x724 = rw(); CD.x728 = rw(); CD.x72C = rw(); CD.x730 = rw();
             CD.leadead_grab_timer_step = rw(); CD.leadead_grab_break_threshold = rw();
             CD.x370 = rw(); CD.x73C = (int) rnd();
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.dmg.x1830_percent = rw();
             F.dmg.x1868_source = &ITEM;
             F.mv.co.captureleadead.x0 = &ITEM;

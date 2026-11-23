@@ -7,3 +7,6 @@ publish.workspace = true
 description = "The Geno registry and the script-facing game interface (ScriptGame); no Lua"
 
 [dependencies]
+
+[lints]
+workspace = true

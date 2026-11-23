@@ -22,7 +22,7 @@ fn be32(v: u32) -> [u8; 4] {
 }
 
 /// What the C reads from the environment, settings and other modules, supplied by the host.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Env {
     /// `MELEE_SLP_RESYNC=1`
     pub resync: bool,
@@ -58,6 +58,33 @@ pub struct Env {
     pub time: i64,
     /// the LAB recordings folder (`gr_dir`)
     pub rec_dir: String,
+}
+
+impl Default for Env {
+    /// All off, as the C's globals start; `slippi_local_port` is -1 as `gw_rb_slippi_local_port()` answers outside the
+    /// experimental Slippi rollback mode (a derived 0 put every playback in that mode: `resync_seed` / `checksum_seed` then
+    /// forced `game seed + (frame + 123) << 16` instead of the file's Frame Start seed).
+    fn default() -> Self {
+        Env {
+            resync: false,
+            parity: false,
+            no_ucf073: false,
+            slippi_codes: None,
+            frozen_ps: false,
+            deterministic: None,
+            ucf: None,
+            ucf_setting: 0,
+            slippi_local_port: -1,
+            match_turbo_rules: 0,
+            stage_skin: None,
+            gdlp_record: None,
+            gdlp_record_setting: 0,
+            identity: None,
+            mods_describe: String::new(),
+            time: 0,
+            rec_dir: String::new(),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -174,6 +201,19 @@ impl Player {
 
     /// `rp_load` for a replay file: `path` is only used in the log line. `trace` = `MELEE_STATE_TRACE`
     /// is set (the trace buffers are then created if the replay is active).
+    /// A `.slp` still being written (a live spectator's file) grew: parse it again and take its frames, keeping the
+    /// playback where it is. False when the new bytes do not parse (the old frames stay).
+    pub fn reload_slp(&mut self, data: &[u8]) -> bool {
+        let mut parsed = Replay::empty();
+        if replay::parse_into(&mut parsed, data, self.parity).is_err() || parsed.last < self.r.last {
+            return false;
+        }
+        self.r = parsed;
+        let n = self.r.post.as_ref().map_or(0, |p| p.len());
+        self.post_seen.resize(n, false);
+        true
+    }
+
     pub fn load_slp(&mut self, path: &str, data: &[u8], trace: bool) {
         let mut parsed = Replay::empty();
         let res = replay::parse_into(&mut parsed, data, self.env.parity);
@@ -465,7 +505,7 @@ impl Player {
         }
         if self.r.online || self.resync {
             if let Some(s) = self.frame_seed() {
-                if self.r.online && s != 0 {
+                if self.r.online && s != 0 && !self.r.fs_forced {
                     // The console forces a seed of the Frame Start form (game seed + n * 0x10000); the event's n can lag by whole
                     // frames late in a match, so the forced value is recovered from the first recorded Pre-Frame seed.
                     let pre = (0..4).find_map(|p| self.rp_cur(p, false).map(|i| i.seed).filter(|&x| x != 0));

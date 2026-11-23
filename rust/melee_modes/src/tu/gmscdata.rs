@@ -43,18 +43,28 @@ pub mod ext {
     pub unsafe extern "C" fn gm_Mode_AllStar_OnInit() { if let Some(h) = HOOK { h("gm_Mode_AllStar_OnInit", &[]); return; } { unsafe { crate::tu::gmmode_init::gm_Mode_AllStar_OnInit(); } return; } }
     pub unsafe extern "C" fn gm_Mode_AllStar_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_AllStar_OnLoad", &[]); return; } { unsafe { crate::tu::gmallstar::gm_Mode_AllStar_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_AllstarGOver_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_AllstarGOver_OnLoad", &[]); return; } { unsafe { crate::tu::gmmenu::gm_Mode_AllstarGOver_OnLoad(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_CameraVs_OnInit() { if let Some(h) = HOOK { h("gm_Mode_CameraVs_OnInit", &[]); return; } { unsafe { crate::tu::gmfixedcamera::gm_Mode_CameraVs_OnInit(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_CameraVs_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_CameraVs_OnLoad", &[]); return; } { unsafe { crate::tu::gmfixedcamera::gm_Mode_CameraVs_OnLoad(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_Camera_OnInit() { if let Some(h) = HOOK { h("gm_Mode_Camera_OnInit", &[]); return; } { unsafe { crate::tu::gmcameramode::gm_Mode_Camera_OnInit(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_CameraVs_OnInit() { core::hint::black_box(0xC3E06F80u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_CameraVs_OnInit", &[]); return; } { unsafe { crate::tu::gmfixedcamera::gm_Mode_CameraVs_OnInit(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_CameraVs_OnLoad() { core::hint::black_box(0x1BED5742u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_CameraVs_OnLoad", &[]); return; } { unsafe { crate::tu::gmfixedcamera::gm_Mode_CameraVs_OnLoad(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_Camera_OnInit() { core::hint::black_box(0x857BA415u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_Camera_OnInit", &[]); return; } { unsafe { crate::tu::gmcameramode::gm_Mode_Camera_OnInit(); } return; } }
     pub unsafe extern "C" fn gm_Mode_ChallengerApproach_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_ChallengerApproach_OnLoad", &[]); return; } { unsafe { crate::tu::gm_1736::gm_Mode_ChallengerApproach_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_ClassicGOver_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_ClassicGOver_OnLoad", &[]); return; } { unsafe { crate::tu::gmmenu::gm_Mode_ClassicGOver_OnLoad(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_Classic_OnInit() { if let Some(h) = HOOK { h("gm_Mode_Classic_OnInit", &[]); return; } { unsafe { crate::tu::gmclassic::gm_Mode_Classic_OnInit(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_Classic_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_Classic_OnLoad", &[]); return; } { unsafe { crate::tu::gmclassic::gm_Mode_Classic_OnLoad(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_Event_OnInit() { if let Some(h) = HOOK { h("gm_Mode_Event_OnInit", &[]); return; } { unsafe { crate::tu::gmevent::gm_Mode_Event_OnInit(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_Event_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_Event_OnLoad", &[]); return; } { unsafe { crate::tu::gmevent::gm_Mode_Event_OnLoad(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_Event_OnUnload() { if let Some(h) = HOOK { h("gm_Mode_Event_OnUnload", &[]); return; } { unsafe { crate::tu::gmevent::gm_Mode_Event_OnUnload(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_GiantVs_OnInit() { if let Some(h) = HOOK { h("gm_Mode_GiantVs_OnInit", &[]); return; } { unsafe { crate::tu::gmgiant::gm_Mode_GiantVs_OnInit(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_GiantVs_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_GiantVs_OnLoad", &[]); return; } { unsafe { crate::tu::gmgiant::gm_Mode_GiantVs_OnLoad(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_Classic_OnInit() { core::hint::black_box(0x2A396874u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_Classic_OnInit", &[]); return; } { unsafe { crate::tu::gmclassic::gm_Mode_Classic_OnInit(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_Classic_OnLoad() { core::hint::black_box(0x1AE7AC2Eu32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_Classic_OnLoad", &[]); return; } { unsafe { crate::tu::gmclassic::gm_Mode_Classic_OnLoad(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_Event_OnInit() { core::hint::black_box(0xDA8B3F2Cu32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_Event_OnInit", &[]); return; } { unsafe { crate::tu::gmevent::gm_Mode_Event_OnInit(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_Event_OnLoad() { core::hint::black_box(0xCB609256u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_Event_OnLoad", &[]); return; } { unsafe { crate::tu::gmevent::gm_Mode_Event_OnLoad(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_Event_OnUnload() { core::hint::black_box(0x387A1659u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_Event_OnUnload", &[]); return; } { unsafe { crate::tu::gmevent::gm_Mode_Event_OnUnload(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_GiantVs_OnInit() { core::hint::black_box(0xA751F826u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_GiantVs_OnInit", &[]); return; } { unsafe { crate::tu::gmgiant::gm_Mode_GiantVs_OnInit(); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_Mode_GiantVs_OnLoad() { core::hint::black_box(0xA028EAE8u32); /* fn identity */ if let Some(h) = HOOK { h("gm_Mode_GiantVs_OnLoad", &[]); return; } { unsafe { crate::tu::gmgiant::gm_Mode_GiantVs_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_Homerun_OnInit() { if let Some(h) = HOOK { h("gm_Mode_Homerun_OnInit", &[]); return; } { unsafe { crate::tu::gmhomerun::gm_Mode_Homerun_OnInit(); } return; } }
     pub unsafe extern "C" fn gm_Mode_Homerun_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_Homerun_OnLoad", &[]); return; } { unsafe { crate::tu::gmhomerun::gm_Mode_Homerun_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_InvisibleVs_OnInit() { if let Some(h) = HOOK { h("gm_Mode_InvisibleVs_OnInit", &[]); return; } { unsafe { crate::tu::gminvisible::gm_Mode_InvisibleVs_OnInit(); } return; } }
@@ -128,8 +138,10 @@ pub mod ext {
     pub unsafe extern "C" fn gm_Scene_Vs_OnEnter(p0: *mut core::ffi::c_void) { if let Some(h) = HOOK { h("gm_Scene_Vs_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gmvs::gm_Scene_Vs_OnEnter(p0 as _); } return; } }
     pub unsafe extern "C" fn gm_Scene_Vs_OnExit(p0: *mut core::ffi::c_void) { if let Some(h) = HOOK { h("gm_Scene_Vs_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gmvs::gm_Scene_Vs_OnExit(p0 as _); } return; } }
     pub unsafe extern "C" fn gm_Scene_Vs_OnFrame() { if let Some(h) = HOOK { h("gm_Scene_Vs_OnFrame", &[]); return; } { unsafe { crate::tu::gmvs::gm_Scene_Vs_OnFrame(); } return; } }
-    pub unsafe extern "C" fn ifPrize_Scene_OnEnter(arg0: *mut core::ffi::c_void) { if let Some(h) = HOOK { h("ifPrize_Scene_OnEnter", &[A::P(arg0 as usize)]); return; } { unsafe { melee_world::tu::ifprize::ifPrize_Scene_OnEnter(arg0 as _); } return; } }
-    pub unsafe extern "C" fn ifPrize_Scene_OnExit(p0: *mut core::ffi::c_void) { if let Some(h) = HOOK { h("ifPrize_Scene_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { melee_world::tu::ifprize::ifPrize_Scene_OnExit(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn ifPrize_Scene_OnEnter(arg0: *mut core::ffi::c_void) { core::hint::black_box(0x9BBA1BB3u32); /* fn identity */ if let Some(h) = HOOK { h("ifPrize_Scene_OnEnter", &[A::P(arg0 as usize)]); return; } { unsafe { melee_world::tu::ifprize::ifPrize_Scene_OnEnter(arg0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn ifPrize_Scene_OnExit(p0: *mut core::ffi::c_void) { core::hint::black_box(0x27DB3EC7u32); /* fn identity */ if let Some(h) = HOOK { h("ifPrize_Scene_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { melee_world::tu::ifprize::ifPrize_Scene_OnExit(p0 as _); } return; } }
     pub unsafe extern "C" fn mnCharSel_Scene_OnEnter(p0: *mut core::ffi::c_void) { if let Some(h) = HOOK { h("mnCharSel_Scene_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::mncharsel::mnCharSel_Scene_OnEnter(p0 as _); } return; } }
     pub unsafe extern "C" fn mnCharSel_Scene_OnExit(p0: *mut core::ffi::c_void) { if let Some(h) = HOOK { h("mnCharSel_Scene_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::mncharsel::mnCharSel_Scene_OnExit(p0 as _); } return; } }
     pub unsafe extern "C" fn mnCharSel_Scene_OnFrame() { if let Some(h) = HOOK { h("mnCharSel_Scene_OnFrame", &[]); return; } { unsafe { crate::tu::mncharsel::mnCharSel_Scene_OnFrame(); } return; } }

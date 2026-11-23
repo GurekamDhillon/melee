@@ -45,3 +45,6 @@ layout-walk = []
 name = "layout_walk"
 path = "../../tools/rust-port/layout/walk.rs"
 required-features = ["layout-walk"]
+
+[lints]
+workspace = true

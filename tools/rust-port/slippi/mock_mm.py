@@ -12,7 +12,7 @@ and the engines run with `--mm-lan` (docs/rust-port/notes/linux.md, cross-OS net
 Point Slippi Dolphin at it with SLIPPI_MM_URL=ws://127.0.0.1:43110/v1/queue (and SLIPPI_LOCAL_TEST=1, the local Dolphin
 patch). The protocol is the one in Externals/SlippiRustExtensions/matchmaking (protocol.rs, client.rs) and
 SlippiMatchmaking.cpp's match handler: `join` -> `joined{ticketId, token}` and `status` every 2 s; once two `join`s
-are queued (any mode, any code) both get `match{matchId, isHost, players[...], stages}`.
+are queued (Direct with matching codes, or Unranked from 127.0.0.1 only; Ranked is refused) both get `match{matchId, isHost, players[...], stages}`.
 
 The relay: each player is told its opponent is at 127.0.0.1:<relay port>, and the relay forwards datagrams between the
 two real netplay ports, so both ENet peers talk through it unchanged. Every datagram is appended to the capture file as
@@ -98,6 +98,7 @@ class Conn:
 
 class Server:
     def __init__(self, port, capture, delay_ms, stages=None, lag_ms=0, loss_pct=0):
+        self.error, self.latest = "", ""
         self.port = port
         self.bind = LOOP
         self.capture = open(capture, "w") if capture else None
@@ -141,6 +142,20 @@ class Server:
                 if kind == "join":
                     n += 1
                     user = msg.get("user", {})
+                    # unranked (mode 1) only between players on this machine (127.0.0.1); ranked (0) never
+                    mode = msg.get("search", {}).get("mode")
+                    if mode == 0 or (mode == 1 and msg["_peer_ip"] != LOOP):
+                        log(f"join refused: mode {mode} from {msg['_peer_ip']}")
+                        c.send({"type": "error", "error": "mode not offered by the local mock"})
+                        continue
+                    if self.error:
+                        # --error: answer every join as Slippi's server answers an outdated client
+                        log(f"join answered with the --error reply (appVersion {msg.get('appVersion')})")
+                        reply = {"type": "error", "error": self.error}
+                        if self.latest:
+                            reply["latestVersion"] = self.latest
+                        c.send(reply)
+                        continue
                     log(f"join from {user.get('connectCode')} mode {msg.get('search', {}).get('mode')} "
                         f"port {msg.get('port')} lan {msg.get('ipAddressLan')} appVersion {msg.get('appVersion')} "
                         f"keys {sorted(msg.keys())}")
@@ -245,8 +260,10 @@ def main():
     ap.add_argument("--delay-ms", type=int, default=0)
     ap.add_argument("--stages", default="", help="comma-separated external stage ids for the match (default the 1v1 list)")
     ap.add_argument("--lag-ms", type=int, default=0, help="relay: one-way delay per datagram")
-    ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this % of datagrams")
+    ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this %% of datagrams")
     ap.add_argument("--bind", default=LOOP, help="listen/relay address (default loopback; a private address for --mm-lan peers)")
+    ap.add_argument("--error", default="", help="answer every join with this server error (the outdated-client check)")
+    ap.add_argument("--latest-version", default="", help="with --error: the reply's latestVersion")
     a = ap.parse_args()
     ip = ipaddress.ip_address(a.bind)
     if not (ip.is_loopback or ip.is_private):
@@ -254,6 +271,7 @@ def main():
     stages = [int(x, 0) for x in a.stages.split(",") if x]
     srv = Server(a.port, a.capture, a.delay_ms, stages, a.lag_ms, a.loss_pct)
     srv.bind = a.bind
+    srv.error, srv.latest = a.error, a.latest_version
     srv.serve()
 
 

@@ -258,7 +258,8 @@ pub fn stale_multiplier(table: &StaleMoveTable, move_id: i32, decrements: &[f32]
 
 /// `ft_80089228(fp, attack_id, arg2, damage)`: damage after staling.
 pub fn apply_staling(fp: &Fighter, attack_id: i32, _arg2: i32, damage: f32) -> f32 {
-    if unsafe { DB_LEVEL } >= DBL_KIND_DEBUG_ROM {
+    // m-ex codes.gct 0x80089250 (blt -> b) drops this early-out: staling applies at any DbLevel
+    if unsafe { DB_LEVEL } >= DBL_KIND_DEBUG_ROM && !melee_core::codes::disc_writes(0x8008_9250, 0x4800_0008) {
         return damage;
     }
     let dec = unsafe {

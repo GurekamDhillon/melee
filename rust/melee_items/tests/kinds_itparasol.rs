@@ -124,27 +124,27 @@ fn itparasol_matches_c() {
                     0 => { let v1: i32 = [1, 2, 4, 5, 6, 7, 8, 9, 10][(rnd() % 9) as usize] as i32; ret = m::it_8028B08C(&raw mut GO[0], v1) as u32; } // it_8028B08C
                     1 => {  m::itParasol_Logic13_Spawned(&raw mut GO[0]); } // itParasol_Logic13_Spawned
                     2 => {  m::it_8028B0EC(&raw mut GO[0]); } // it_8028B0EC
-                    3 => {  ret = m::itParasol_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itParasol_UnkMotion0_Anim
+                    3 => {  ret = ((m::itParasol_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_UnkMotion0_Anim
                     4 => {  m::itParasol_UnkMotion0_Phys(&raw mut GO[0]); } // itParasol_UnkMotion0_Phys
-                    5 => {  ret = m::itParasol_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itParasol_UnkMotion0_Coll
+                    5 => {  ret = ((m::itParasol_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_UnkMotion0_Coll
                     6 => {  m::it_8028B17C(&raw mut GO[0]); } // it_8028B17C
-                    7 => {  ret = m::itParasol_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itParasol_UnkMotion2_Anim
+                    7 => {  ret = ((m::itParasol_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_UnkMotion2_Anim
                     8 => {  m::itParasol_UnkMotion1_Phys(&raw mut GO[0]); } // itParasol_UnkMotion1_Phys
-                    9 => {  ret = m::itParasol_UnkMotion2_Coll(&raw mut GO[0]) as u32; } // itParasol_UnkMotion2_Coll
+                    9 => {  ret = ((m::itParasol_UnkMotion2_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_UnkMotion2_Coll
                     10 => {  m::itParasol_Logic13_Dropped(&raw mut GO[0]); } // itParasol_Logic13_Dropped
                     11 => {  m::itParasol_Logic13_Thrown(&raw mut GO[0]); } // itParasol_Logic13_Thrown
                     12 => {  m::itParasol_UnkMotion2_Phys(&raw mut GO[0]); } // itParasol_UnkMotion2_Phys
-                    13 => {  ret = m::itParasol_Logic13_DmgDealt(&raw mut GO[0]) as u32; } // itParasol_Logic13_DmgDealt
-                    14 => {  ret = m::itParasol_Logic13_Clanked(&raw mut GO[0]) as u32; } // itParasol_Logic13_Clanked
-                    15 => {  ret = m::itParasol_Logic13_HitShield(&raw mut GO[0]) as u32; } // itParasol_Logic13_HitShield
-                    16 => {  ret = m::itParasol_Logic13_Reflected(&raw mut GO[0]) as u32; } // itParasol_Logic13_Reflected
-                    17 => {  ret = m::itParasol_Logic13_ShieldBounced(&raw mut GO[0]) as u32; } // itParasol_Logic13_ShieldBounced
+                    13 => {  ret = ((m::itParasol_Logic13_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_Logic13_DmgDealt
+                    14 => {  ret = ((m::itParasol_Logic13_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_Logic13_Clanked
+                    15 => {  ret = ((m::itParasol_Logic13_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_Logic13_HitShield
+                    16 => {  ret = ((m::itParasol_Logic13_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_Logic13_Reflected
+                    17 => {  ret = ((m::itParasol_Logic13_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_Logic13_ShieldBounced
                     18 => {  m::itParasol_Logic13_EnteredAir(&raw mut GO[0]); } // itParasol_Logic13_EnteredAir
-                    19 => {  ret = m::itParasol_UnkMotion3_Anim(&raw mut GO[0]) as u32; } // itParasol_UnkMotion3_Anim
+                    19 => {  ret = ((m::itParasol_UnkMotion3_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_UnkMotion3_Anim
                     20 => {  m::itParasol_UnkMotion3_Phys(&raw mut GO[0]); } // itParasol_UnkMotion3_Phys
-                    21 => {  ret = m::itParasol_UnkMotion3_Coll(&raw mut GO[0]) as u32; } // itParasol_UnkMotion3_Coll
+                    21 => {  ret = ((m::itParasol_UnkMotion3_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_UnkMotion3_Coll
                     22 => {  m::itParasol_Logic13_PickedUp(&raw mut GO[0]); } // itParasol_Logic13_PickedUp
-                    23 => {  ret = m::itParasol_UnkMotion10_Anim(&raw mut GO[0]) as u32; } // itParasol_UnkMotion10_Anim
+                    23 => {  ret = ((m::itParasol_UnkMotion10_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itParasol_UnkMotion10_Anim
                     24 => {  m::itParasol_UnkMotion10_Phys(&raw mut GO[0]); } // itParasol_UnkMotion10_Phys
                     25 => { let v1: f32 = rw() as f32; m::it_8028B618(&raw mut GO[0], v1); } // it_8028B618
                     26 => { let v1: f32 = rw() as f32; m::it_8028B648(&raw mut GO[0], v1); } // it_8028B648

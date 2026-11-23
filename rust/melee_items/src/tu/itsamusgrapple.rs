@@ -180,8 +180,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { super::it_802A2474(a0) }
-        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { super::it_802A24A0(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { core::hint::black_box(0xBFC4D99Eu32); /* fn identity */ super::it_802A2474(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0x3040C86Cu32); /* fn identity */ super::it_802A24A0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -364,13 +366,17 @@ unsafe fn samus_grapple_state_sync(fp: *mut Fighter) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusGrapple_Logic53_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA0A9DE6Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusGrapple_Logic53_Spawned");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.samusgrapple.unk_10 = None;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B7160(gobj: *mut Fighter_GObj, data: *mut itSamusGrapple_HitboxData) {
+    core::hint::black_box(0x9EA8EF88u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B7160");
     let fp = GET_FIGHTER(gobj);
     let hit_group = (*data).create_hitbox.create_hitbox_0.hit_group();
@@ -428,7 +434,9 @@ pub unsafe extern "C" fn it_802B7160(gobj: *mut Fighter_GObj, data: *mut itSamus
     ext::ScriptGame_HitRuleCreate(fp, hitbox, 0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B743C(gobj: *mut HSD_GObj, ip: *mut Item, type_: i32) {
+    core::hint::black_box(0xB19DAAFBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B743C");
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
     let jobj: *mut HSD_JObj;
@@ -479,7 +487,9 @@ unsafe fn samus_grapple_setup_tail(ip: *mut Item, link_gobj: *mut HSD_GObj) {
     ext::HSD_JObjReqAnimAll((*tail_jobj).child, 0.0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B75FC(ip: *mut Item, jobj_arg: *mut HSD_JObj, arg2: i32, scale: f32) -> *mut HSD_JObj {
+    core::hint::black_box(0xFD7EEFB5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B75FC");
     let coeff: f32;
     let mut prev_link: *mut ItemLink;
@@ -577,7 +587,9 @@ pub unsafe extern "C" fn it_802B75FC(ip: *mut Item, jobj_arg: *mut HSD_JObj, arg
     result
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B7B84(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8589E827u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B7B84");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
@@ -605,7 +617,9 @@ pub unsafe extern "C" fn it_802B7B84(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B7C18(owner: *mut Fighter_GObj, pos: *mut Vec3, facing_dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0x91092189u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B7C18");
     let fp = GET_FIGHTER(owner);
     let mut spawn: SpawnItem = core::mem::zeroed();
@@ -702,7 +716,9 @@ unsafe fn fn_802B7E34_anim_inline(gobj: *mut Item_GObj, ip: *mut Item, m: *mut [
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B7E34(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x33ED760Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B7E34");
     let mut m: [[f32; 4]; 3] = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -716,12 +732,16 @@ pub unsafe extern "C" fn fn_802B7E34(gobj: *mut Item_GObj) {
     it_802B7B84(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x716C74D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion0_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B7E34);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B805C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x66BE4019u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B805C");
     let ip = GET_ITEM(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
@@ -779,12 +799,16 @@ pub unsafe extern "C" fn fn_802B805C(gobj: *mut Item_GObj) {
     samus_grapple_anim(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC01866A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion1_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B805C);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B8384(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6102F788u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B8384");
     let ip = GET_ITEM(gobj);
     let owner = (*ip).owner;
@@ -816,12 +840,16 @@ pub unsafe extern "C" fn fn_802B8384(gobj: *mut Item_GObj) {
     samus_grapple_anim(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x01D24F11u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion2_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8384);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B8524(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x86A639E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B8524");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
@@ -841,12 +869,16 @@ pub unsafe extern "C" fn fn_802B8524(gobj: *mut Item_GObj) {
     it_802BAA58(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7F6C9DC8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion3_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8524);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B8684(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8C27A86Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B8684");
     let mut pos: Vec3 = core::mem::zeroed();
     let mut m: [[f32; 4]; 3] = core::mem::zeroed();
@@ -874,12 +906,16 @@ pub unsafe extern "C" fn fn_802B8684(gobj: *mut Item_GObj) {
     samus_grapple_anim(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC7002AE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion4_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8684);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B8814(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x7EAEE9E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B8814");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
@@ -903,7 +939,9 @@ pub unsafe extern "C" fn fn_802B8814(gobj: *mut Item_GObj) {
     samus_grapple_anim(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x099A1D46u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion5_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8814);
 }
@@ -922,7 +960,9 @@ unsafe fn itGrappleCheckCollision(head: *mut ItemLink, fp: *mut Fighter, pos: *m
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B895C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9925EC1Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B895C");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
@@ -954,12 +994,16 @@ pub unsafe extern "C" fn fn_802B895C(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x24ED0665u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion6_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B895C);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B8B54(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x205C811Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B8B54");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
@@ -995,12 +1039,16 @@ pub unsafe extern "C" fn fn_802B8B54(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion7_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB99B097Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion7_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8B54);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802B8D38(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC1FEF3B2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802B8D38");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
@@ -1055,12 +1103,16 @@ pub unsafe extern "C" fn fn_802B8D38(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2DA7C29Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusgrapple_UnkMotion8_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8D38);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B900C(mut link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, dist: f32) {
+    core::hint::black_box(0x3898E66Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B900C");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut prev = (*link).prev;
@@ -1092,7 +1144,9 @@ pub unsafe extern "C" fn it_802B900C(mut link: *mut ItemLink, pos: *mut Vec3, at
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B91C4(mut link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, dist: f32) {
+    core::hint::black_box(0xF6E18C9Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B91C4");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut prev = (*link).prev;
@@ -1154,7 +1208,9 @@ unsafe fn it_802B9328_grav(vely: f32) -> f32 {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B9328(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) -> i32 {
+    core::hint::black_box(0xC1DC2ED8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B9328");
     let mut cur: *mut ItemLink;
     let mut next: *mut ItemLink;
@@ -1260,7 +1316,9 @@ pub unsafe extern "C" fn it_802B9328(link: *mut ItemLink, pos: *mut Vec3, attrs:
     3
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B99A0(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) -> i32 {
+    core::hint::black_box(0xE4D568ADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B99A0");
     let mut dir: Vec3 = core::mem::zeroed();
     let grapple_ip = (*(*fp).u.ss.x223C).user_data as *mut Item;
@@ -1335,7 +1393,9 @@ pub unsafe extern "C" fn it_802B99A0(link: *mut ItemLink, pos: *mut Vec3, attrs:
     3
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B9CE8(mut link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) {
+    core::hint::black_box(0xE034F5F7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B9CE8");
     let mut prev: *mut ItemLink;
     let mut d: f32;
@@ -1393,7 +1453,9 @@ pub unsafe extern "C" fn it_802B9CE8(mut link: *mut ItemLink, pos: *mut Vec3, at
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802B9FD4(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes) -> bool {
+    core::hint::black_box(0x12BBB5A9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802B9FD4");
     let mut cur: *mut ItemLink;
     let mut dir: Vec3 = core::mem::zeroed();
@@ -1430,7 +1492,9 @@ pub unsafe extern "C" fn it_802B9FD4(link: *mut ItemLink, pos: *mut Vec3, attrs:
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BA194(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, target_dist: f32) -> bool {
+    core::hint::black_box(0x5D354939u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BA194");
     let mut next: *mut ItemLink;
     let mut cur: *mut ItemLink;
@@ -1527,7 +1591,9 @@ unsafe fn Item_RetractChain(
     *remaining_out = remaining;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BA2D8(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, target_dist: f32) -> bool {
+    core::hint::black_box(0x28DF4A89u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BA2D8");
     let mut next: *mut ItemLink = null_mut();
     let mut cur: *mut ItemLink = null_mut();
@@ -1542,6 +1608,7 @@ pub unsafe extern "C" fn it_802BA2D8(link: *mut ItemLink, pos: *mut Vec3, attrs:
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BA3BC(
     mut tail: *mut ItemLink,
     mut head: *mut ItemLink,
@@ -1549,6 +1616,7 @@ pub unsafe extern "C" fn it_802BA3BC(
     attrs: *mut itSamusGrappleAttributes,
     target_dist: f32,
 ) -> bool {
+    core::hint::black_box(0x50FDB691u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BA3BC");
     let mut dir: Vec3 = core::mem::zeroed();
     let saved_pos: Vec3;
@@ -1613,7 +1681,9 @@ pub unsafe extern "C" fn it_802BA3BC(
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BA5DC(tail: *mut ItemLink, head: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes) {
+    core::hint::black_box(0xBBA46145u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BA5DC");
     let saved_pos: Vec3;
     let mut link: *mut ItemLink;
@@ -1663,7 +1733,9 @@ pub unsafe extern "C" fn it_802BA5DC(tail: *mut ItemLink, head: *mut ItemLink, p
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BA760(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) -> bool {
+    core::hint::black_box(0x0A30D688u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BA760");
     let mut dir: Vec3 = core::mem::zeroed();
     let da = (*(*fp).ft_data).ext_attr as *mut ftSs_DatAttrs;
@@ -1711,13 +1783,17 @@ pub unsafe extern "C" fn it_802BA760(link: *mut ItemLink, pos: *mut Vec3, attrs:
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusGrapple_Logic53_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x1C1AF1B6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusGrapple_Logic53_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BA9B8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF7C6A926u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BA9B8");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
@@ -1725,7 +1801,9 @@ pub unsafe extern "C" fn it_802BA9B8(gobj: *mut Item_GObj) {
     ext::it_802A2428(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAA08(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB1D9770Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAA08");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
@@ -1733,14 +1811,18 @@ pub unsafe extern "C" fn it_802BAA08(gobj: *mut Item_GObj) {
     ext::it_802A2428(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAA58(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xAFD2B821u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAA58");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAA94(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2BEFFD69u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAA94");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
@@ -1748,7 +1830,9 @@ pub unsafe extern "C" fn it_802BAA94(gobj: *mut Item_GObj) {
     ext::it_802A2428(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAAE4(gobj: *mut Item_GObj, vel: *mut Vec3) {
+    core::hint::black_box(0x2C985B85u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAAE4");
     let ip = GET_ITEM(gobj);
     let link = (*ip).xDD4_itemVar.samusgrapple.x0;
@@ -1757,20 +1841,26 @@ pub unsafe extern "C" fn it_802BAAE4(gobj: *mut Item_GObj, vel: *mut Vec3) {
     ext::it_802A2428(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAB40(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xFED39821u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAB40");
     ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAB7C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xB3D560A7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAB7C");
     ext::Item_80268E5C(gobj, 7, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
 /// Set grapple beam state and store duration.
+#[inline(never)]
 pub unsafe extern "C" fn it_802BABB8(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xFA1C292Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BABB8");
     let ip = (*gobj).user_data as *mut Item;
     let fp = (*(*ip).owner).user_data as *mut Fighter;
@@ -1780,7 +1870,9 @@ pub unsafe extern "C" fn it_802BABB8(gobj: *mut Item_GObj) {
     (*fp).mv.ss.grapple.x4 = (*da).xD0 as f32;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAC3C(gobj: *mut Fighter_GObj) {
+    core::hint::black_box(0x7F42EC28u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAC3C");
     let fp = GET_FIGHTER(gobj);
     if !(*fp).u.ss.x223C.is_null() {
@@ -1792,7 +1884,9 @@ pub unsafe extern "C" fn it_802BAC3C(gobj: *mut Fighter_GObj) {
     (*fp).accessory3_cb = None;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BAC80(gobj: *mut Fighter_GObj) {
+    core::hint::black_box(0x8831B132u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BAC80");
     let fp = GET_FIGHTER(gobj);
     if !(*fp).u.ss.x223C.is_null() {
@@ -1803,7 +1897,9 @@ pub unsafe extern "C" fn it_802BAC80(gobj: *mut Fighter_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802BACC4(gobj: *mut Fighter_GObj) {
+    core::hint::black_box(0x152DB4CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BACC4");
     let fp = GET_FIGHTER(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
@@ -1825,7 +1921,9 @@ pub unsafe extern "C" fn it_802BACC4(gobj: *mut Fighter_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itSamusGrapple_Logic53_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0xA904A484u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itSamusGrapple_Logic53_EvtUnk");
     let item = GET_ITEM(gobj);
     ext::it_8026B894(gobj, arg1);

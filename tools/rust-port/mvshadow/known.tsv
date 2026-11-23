@@ -1,0 +1,9 @@
+# Known drifted-read sites of the mvshadow guard (guard.py): file, enclosing fn, mv path, why it is harmless.
+# A site is listed only after reading it: the value read equals what the GameCube reads, or the drifted bytes are unused.
+# file	fn	path	why
+melee_fighter/src/tu/ft_0d27.rs	fn_800d2bf8	co.common	copies all of co.common, uses only x14..x58 (as the C); the drifted byte +12 (x4.z) is never read
+melee_fighter/src/tu/ftCo_YoshiEgg.rs	ftCo_800BBCC0	co.yoshiegg	copies all of yoshiegg, uses scale/x10/x14/x18/xC; the drifted x8 is never read
+melee_chara/src/tu/ftkirbyyoshiegg.rs	ftKb_SpecialNYs_8010AC78	co.walk.fast_anim_frame	the port writes walk.fast_anim_frame and its GameCube alias yoshiegg.x10 with one value
+melee_chara/src/tu/ftkirbyyoshiegg.rs	ftCo_KirbyYoshiEgg_Anim	kb.specialhi.x8.f	ca.specialhi.vel.y and its GameCube alias yoshiegg.x8 are both written 0.0
+melee_fighter/src/tu/ftCo_Throw.rs	ftCo_ThrowF_Phys	co.throw_.xC.y	throw_.xC and its GameCube aliases fighterthrow.self_vel_y/_x are written with one value (ftCo_Throw.rs, the cmd_vars[0] block)
+melee_fighter/src/tu/ftCo_Throw.rs	ftCo_ThrowF_Phys	co.throw_.xC.z	as co.throw_.xC.y

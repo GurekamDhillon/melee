@@ -45,7 +45,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `fn_8012E644` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8012E644(g: *mut HSD_GObj) {
+    core::hint::black_box(0x49E380A3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8012E644");
     fn_8012E644(g);
 }

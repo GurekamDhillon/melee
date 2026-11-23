@@ -19,7 +19,7 @@ MINE = {
                       ("ftCo_800DA824", "fn_800DAC78", "fn_800DAA40", "fn_800DAD18",
                        "ftCo_CapturePulledHi_Phys", "ftCo_800DB464")],
                     (CO + "ftCo_CaptureKirby.c", "fn:ftCo_800BD19C", None),
-                    (CO + "ftCo_CaptureKirby.c", "static inline void inlineB0(", None)],
+                    (CO + "ftCo_CaptureKirby.c", "struct inlineB0_scale_pad {", None)],
 }
 run.EXTRACTS.update(MINE)
 

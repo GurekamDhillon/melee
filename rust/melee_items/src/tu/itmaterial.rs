@@ -145,7 +145,9 @@ fn item_of(gobj: *mut HSD_GObj) -> *mut Item {
 fn os_report(_msg: &str) {}
 
 /// `it_80277D08`: registers the `it_mobj` class under `hsdMObj`'s base class.
+#[inline(never)]
 pub unsafe extern "C" fn it_80277D08() {
+    core::hint::black_box(0x30E33B27u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80277D08");
     let m = &raw mut it_mobj;
     ext::hsdInitClassInfo(
@@ -164,7 +166,9 @@ pub unsafe extern "C" fn it_80277D08() {
 }
 
 /// `fn_80277D8C`: the material setup callback (TEV state, shadow/toon chaining, render mode).
+#[inline(never)]
 pub unsafe extern "C" fn fn_80277D8C(mobj: *mut HSD_MObj, rendermode_arg: u32, unused_arg: u32) {
+    core::hint::black_box(0xCF71EB85u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_80277D8C");
     let _ = unused_arg;
     let mut tobj2: *mut HSD_TObj;
@@ -231,7 +235,9 @@ pub unsafe extern "C" fn fn_80277D8C(mobj: *mut HSD_MObj, rendermode_arg: u32, u
 
 /// `it_80277F90`: for an item with a light overlay (and no `xDCF.b4`), fills `arg2` with a color constant
 /// and a TEV stage; otherwise returns NULL.
+#[inline(never)]
 pub unsafe extern "C" fn it_80277F90(item: *mut Item, mobj: *mut HSD_MObj, arg2: *mut HSD_TExp) -> *mut HSD_TExp {
+    core::hint::black_box(0x0FFC11F4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80277F90");
     let mut desc: HSD_TevDesc;
     let info = &raw mut it_mobj;
@@ -270,7 +276,9 @@ pub unsafe extern "C" fn it_80277F90(item: *mut Item, mobj: *mut HSD_MObj, arg2:
 }
 
 /// `it_80278108`: the item's color overlay / body color / shadow-ratio TEV stages.
+#[inline(never)]
 pub unsafe extern "C" fn it_80278108(item: *mut Item, mobj: *mut HSD_MObj, texp: *mut HSD_TExp) {
+    core::hint::black_box(0x7D36DF3Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80278108");
     let mut sp168: _GXColor = core::mem::zeroed();
     let mut spFC: HSD_TECnst = core::mem::zeroed();
@@ -398,7 +406,9 @@ pub unsafe extern "C" fn it_80278108(item: *mut Item, mobj: *mut HSD_MObj, texp:
 }
 
 /// `it_80278574`: walks the jobj tree under `gobj` and sets every material's diffuse color to `arg1`.
+#[inline(never)]
 pub unsafe extern "C" fn it_80278574(gobj: *mut HSD_GObj, arg1: *mut _GXColor) {
+    core::hint::black_box(0xCB9EC528u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_80278574");
     let mut var_r31: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     while !var_r31.is_null() {

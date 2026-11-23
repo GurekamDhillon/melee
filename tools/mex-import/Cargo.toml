@@ -17,3 +17,6 @@ path = "src/main.rs"
 [dependencies]
 melee_core.workspace = true
 melee_types.workspace = true
+
+[lints]
+workspace = true

@@ -68,11 +68,16 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn gmCamera_801A3098() { super::gmCamera_801A3098() }
-        pub unsafe extern "C" fn gmCamera_801A30E4() { super::gmCamera_801A30E4() }
-        pub unsafe extern "C" fn gmCamera_801A31FC() { super::gmCamera_801A31FC() }
-        pub unsafe extern "C" fn gm_80165268(a0: i32) { super::gm_80165268(a0) }
-        pub unsafe extern "C" fn gm_CameraModeVSGetPauser() -> i32 { super::gm_CameraModeVSGetPauser() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gmCamera_801A3098() { core::hint::black_box(0x58678A39u32); /* fn identity */ super::gmCamera_801A3098() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gmCamera_801A30E4() { core::hint::black_box(0x6485B231u32); /* fn identity */ super::gmCamera_801A30E4() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gmCamera_801A31FC() { core::hint::black_box(0xE26479E4u32); /* fn identity */ super::gmCamera_801A31FC() }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_80165268(a0: i32) { core::hint::black_box(0xA55E18DEu32); /* fn identity */ super::gm_80165268(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_CameraModeVSGetPauser() -> i32 { core::hint::black_box(0x433AE269u32); /* fn identity */ super::gm_CameraModeVSGetPauser() }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_world::gmmain::gmMainLib_804D3EE0;
@@ -116,7 +121,9 @@ pub fn gm_801B23F0() {
 }
 
 /// 1B24B4
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B24B4(_arg0: *mut GameModeState) {
+    core::hint::black_box(0x2E07DBCFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B24B4");
     let temp_r31 = &raw mut (*ext::lbDvd_GetPreloadCacheScene()).game_cache;
     ext::lbDvd_SetupVsPreloadCache();
@@ -128,7 +135,9 @@ pub unsafe extern "C" fn gm_801B24B4(_arg0: *mut GameModeState) {
 }
 
 /// 1B2510
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B2510(state: *mut GameModeState) {
+    core::hint::black_box(0xC595691Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B2510");
     let data = ext::gm_GetGameModeStateExitData(state) as *mut i32;
     let temp_r0 = *data;
@@ -138,7 +147,9 @@ pub unsafe extern "C" fn gm_801B2510(state: *mut GameModeState) {
 }
 
 /// 1B254C
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B254C(state: *mut GameModeState) {
+    core::hint::black_box(0x7689B3CFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B254C");
     let temp_r31 = row();
     let temp_r30 = ext::gm_GetGameModeStateEnterData(state) as *mut CSSData;
@@ -157,7 +168,9 @@ pub unsafe extern "C" fn gm_801B254C(state: *mut GameModeState) {
 }
 
 /// 1B25D4
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B25D4(state: *mut GameModeState) {
+    core::hint::black_box(0x4312A236u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B25D4");
     let temp_r31 = row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(state) as *mut CSSData;
@@ -179,7 +192,9 @@ pub unsafe extern "C" fn gm_801B25D4(state: *mut GameModeState) {
 }
 
 /// 1B26AC
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B26AC(state: *mut GameModeState) {
+    core::hint::black_box(0x0932B28Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B26AC");
     let vs = row();
     let sss = ext::gm_GetGameModeStateEnterData(state) as *mut SSSData;
@@ -189,7 +204,9 @@ pub unsafe extern "C" fn gm_801B26AC(state: *mut GameModeState) {
 }
 
 /// 1B2704
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B2704(arg0: *mut GameModeState) {
+    core::hint::black_box(0xE6648D6Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B2704");
     let temp_r31 = row();
     let var_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut SSSData;
@@ -204,7 +221,9 @@ pub unsafe extern "C" fn gm_801B2704(arg0: *mut GameModeState) {
 }
 
 /// 1B2790
+#[inline(never)]
 pub unsafe extern "C" fn gm_PrepCameraModeVSScene(state: *mut GameModeState) {
+    core::hint::black_box(0x3725F4F4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_PrepCameraModeVSScene");
     let vs = row();
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
@@ -247,7 +266,9 @@ pub unsafe extern "C" fn gm_PrepCameraModeVSScene(state: *mut GameModeState) {
 }
 
 /// 1B2AF8
+#[inline(never)]
 pub unsafe extern "C" fn gm_801B2AF8(_arg0: *mut GameModeState) {
+    core::hint::black_box(0x318E475Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_801B2AF8");
     let vs = row();
     let ko_counts = ext::gmVsMelee_GetKOCounts();

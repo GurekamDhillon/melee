@@ -941,6 +941,11 @@ fn gn_clip_load(p: usize, slot: usize, file: &str) -> Option<(std::sync::Arc<[i1
     }
 }
 
+/// The netplay harness is running a resimulated frame (host outputs such as rumble stay silent then).
+pub fn net_resimulating() -> bool {
+    gn_rb_active()
+}
+
 /// gw_rb_active (as the define audio sees it): the netplay harness is running a resimulated frame ([`net_frame`]).
 fn gn_rb_active() -> bool {
     let n = &gn_host().net;

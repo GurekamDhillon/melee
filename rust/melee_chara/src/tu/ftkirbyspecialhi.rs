@@ -136,7 +136,9 @@ unsafe fn set_hitlag_cbs(fp: *mut Fighter) {
 }
 
 /// Accessory callback entry for `fn_800F21E8`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F21E8(g: G) {
+    core::hint::black_box(0x1184E8D0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F21E8");
     fn_800F21E8(g);
 }

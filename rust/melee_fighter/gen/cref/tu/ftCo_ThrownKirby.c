@@ -68,10 +68,10 @@ static u32 state_hash(void)
     HM(B(F.facing_dir)); HM(B(F.self_vel.x)); HM(B(F.self_vel.y)); HM(B(F.self_vel.z)); HM(B(F.grab_timer));
     HM(PI(F.mv.co.thrownkirby.thrower_gobj)); HM(B(F.mv.co.thrownkirby.x4)); HM(B(F.mv.co.thrownkirby.x8));
     HM(B(F.mv.co.thrownkirby.xC)); HM(B(F.mv.co.thrownkirby.x10)); HM(F.mv.co.thrownkirby.x14);
-    HM(F.mv.co.thrownkirby.x18_b0); HM(F.mv.co.thrownkirby.x18_b1);
+    HM(F.mv.co.thrownkirby.x18_u.x0.x18_b0); HM(F.mv.co.thrownkirby.x18_u.x0.x18_b1);
     HM(B(F.mv.co.thrownkirby.scale.x)); HM(B(F.mv.co.thrownkirby.scale.y)); HM(B(F.mv.co.thrownkirby.scale.z));
     HM(F.take_dmg_cb != NULL); HM(F.take_dmg_2_cb != NULL); HM(F.accessory4_cb != NULL); HM(F.invisible);
-    HM(F.u.kb.hat.kind); HM(F2.u.kb.hat.kind); HM(F2.mv.co.thrownkirby.x18_b1);
+    HM(F.u.kb.hat.kind); HM(F2.u.kb.hat.kind); HM(F2.mv.co.thrownkirby.x18_u.x0.x18_b1);
     HM(B(JO.scale.x)); HM(B(JO.scale.y)); HM(B(JO.scale.z));
     HM(B(JO2.scale.x)); HM(B(JO2.scale.y)); HM(B(JO2.scale.z));
     return H;
@@ -105,7 +105,7 @@ int main(void)
             F.co_attrs.xDC = rw(); F.co_attrs.kirby_b_star_damage = (rnd() & 1) ? (float) (rnd() % 30) : rw();
             F.mv.co.thrownkirby.x4 = rw(); F.mv.co.thrownkirby.xC = rg();
             F.mv.co.thrownkirby.x10 = (rnd() & 7) ? rw() : 0.0f;
-            F.mv.co.thrownkirby.x18_b0 = rnd() & 1; F.mv.co.thrownkirby.x18_b1 = rnd() & 1;
+            F.mv.co.thrownkirby.x18_u.x0.x18_b0 = rnd() & 1; F.mv.co.thrownkirby.x18_u.x0.x18_b1 = rnd() & 1;
             F.mv.co.thrownkirby.scale.x = rw(); F.mv.co.thrownkirby.scale.y = rw(); F.mv.co.thrownkirby.scale.z = rw();
             F.mv.ca.specialhi.vel.x = rw();
             F.mv.ca.specialhi.vel.y = (rnd() & 1) ? rw() : 0.0f;

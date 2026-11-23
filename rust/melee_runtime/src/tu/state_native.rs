@@ -63,10 +63,14 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() { super::_HSD_StateInvalidateColorChannel() }
-        pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() { super::_HSD_StateInvalidateTevRegister() }
-        pub unsafe extern "C" fn _HSD_StateInvalidateTevStage() { super::_HSD_StateInvalidateTevStage() }
-        pub unsafe extern "C" fn _HSD_StateInvalidateTexCoordGen() { super::_HSD_StateInvalidateTexCoordGen() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() { core::hint::black_box(0xA62F5197u32); /* fn identity */ super::_HSD_StateInvalidateColorChannel() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() { core::hint::black_box(0x0E1E21F1u32); /* fn identity */ super::_HSD_StateInvalidateTevRegister() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateTevStage() { core::hint::black_box(0xD9E76BA6u32); /* fn identity */ super::_HSD_StateInvalidateTevStage() }
+        #[inline(never)]
+        pub unsafe extern "C" fn _HSD_StateInvalidateTexCoordGen() { core::hint::black_box(0x29496483u32); /* fn identity */ super::_HSD_StateInvalidateTexCoordGen() }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -403,7 +407,9 @@ pub unsafe fn HSD_StateSetDither(arg0: i32) {
 }
 
 /// `_HSD_StateInvalidatePrimitive`.
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_StateInvalidatePrimitive() {
+    core::hint::black_box(0xD29B307Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_StateInvalidatePrimitive");
     state_line_width = 0;
     state_point_size = 0;
@@ -411,13 +417,17 @@ pub unsafe extern "C" fn _HSD_StateInvalidatePrimitive() {
 }
 
 /// `_HSD_StateInvalidateVtxAttr`.
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_StateInvalidateVtxAttr() {
+    core::hint::black_box(0xB769546Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_StateInvalidateVtxAttr");
     ext::HSD_ClearVtxDesc();
 }
 
 /// `_HSD_StateInvalidateRenderMode`.
+#[inline(never)]
 pub unsafe extern "C" fn _HSD_StateInvalidateRenderMode() {
+    core::hint::black_box(0x9697F236u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_HSD_StateInvalidateRenderMode");
     state_blend_type = -1;
     state_src_factor = -1;

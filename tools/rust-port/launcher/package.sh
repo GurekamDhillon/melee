@@ -17,6 +17,13 @@ fi
 [ -f "$exe" ] || { echo "no melee.exe at $exe"; exit 1; }
 rm -rf "$OUT"; mkdir -p "$OUT/rust"
 cp "$exe" "$OUT/rust/melee.exe"
+# MELEE_SNAP_CHECK's host-only page mask (snapmask.rs) as a small sidecar written from the PDB, so the folder needs no PDB
+pdb="${exe%.exe}.pdb"
+if [ -f "$pdb" ]; then
+  cp "$pdb" "$OUT/rust/melee.pdb" && "$OUT/rust/melee.exe" --write-snapmask; rm -f "$OUT/rust/melee.pdb"
+else
+  echo "package: no $pdb; no snapmask (MELEE_SNAP_CHECK compares every statics page)"
+fi
 hash="$(git -C "$repo" rev-parse --short HEAD)"; ver="$(sed -n 's/^version = "\(.*\)"/\1/p' "$repo/rust/Cargo.toml" | head -1)"
 echo "melee $ver ($hash), Rust port" > "$OUT/rust/version.txt"
 [ -f "$repo/LICENSE" ] && cp "$repo/LICENSE" "$OUT/rust/LICENSE.txt"
@@ -29,11 +36,11 @@ Your Melee NTSC 1.02 disc is the one the launcher already knows; nothing from it
 
 Reads the launcher's port-settings.ini (display, volume, keyboard and controller bindings, background input).
 Saves go to User\\GC\\RustPort, replays (.mrpl) to <replay folder>\\RustPort, the log to melee_port.log.
-Not supported yet: online lobbies, mods that change the game's code, .slp replays. Those are refused with exit code 3.
+Plays .slp replays from the Replays page and Slippi Direct from the lobby. Not supported yet: P2P Direct, TE packs, mods that change the game's code (refused with exit code 3).
 EOF
 if [ -n "$LAUNCHER" ]; then cp "$LAUNCHER" "$OUT/MeleeUnlockedLauncher.exe"; fi
 # nothing but the expected files, and nothing disc-shaped
-bad=$(cd "$OUT" && find . -type f | grep -viE '^\./(rust/(melee\.exe|version\.txt|README\.txt|LICENSE\.txt)|MeleeUnlockedLauncher\.exe)$' || true)
+bad=$(cd "$OUT" && find . -type f | grep -viE '^\./(rust/(melee\.exe|melee\.snapmask|version\.txt|README\.txt|LICENSE\.txt)|MeleeUnlockedLauncher\.exe)$' || true)
 disc=$(cd "$OUT" && find . -type f -iregex '.*\.\(iso\|gcm\|dat\|usd\|ssm\|hps\|thp\|dol\|gci\|sem\)$' || true)
 [ -z "$bad$disc" ] || { echo "unexpected files in the package: $bad $disc"; exit 1; }
 rm -f "$OUT.zip"

@@ -50,7 +50,9 @@ pub static mut it_803F83E0: [ItemStateTable; 1] = [
     st_row(-1, pred_b!(itMato_UnkMotion0_Anim), Some(itMato_UnkMotion0_Phys), pred_b!(itMato_UnkMotion0_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D84F8(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x3EAAC7D5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D84F8");
     let it = GET_ITEM(item_gobj);
     ext::it_8027B730(item_gobj);
@@ -60,7 +62,9 @@ pub unsafe extern "C" fn it_802D84F8(item_gobj: *mut Item_GObj) {
     it_802D8554(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D8554(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD5A37EC1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D8554");
     let it = GET_ITEM(item_gobj);
     (*it).x40_vel.y = 0.0;
@@ -68,12 +72,16 @@ pub unsafe extern "C" fn it_802D8554(item_gobj: *mut Item_GObj) {
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMato_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6378DF1Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMato_UnkMotion0_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMato_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6A3C766Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMato_UnkMotion0_Phys");
     let it = GET_ITEM(item_gobj);
     if !(*it).xDD4_itemVar.mato.x0.is_null() {
@@ -86,12 +94,16 @@ pub unsafe extern "C" fn itMato_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMato_UnkMotion0_Coll(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x148DFAF9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMato_UnkMotion0_Coll");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802D85F4(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x43CD79F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D85F4");
     // TARGET_PC: scripted targets are owned by the Lua stage layer, not Ground_801C4210's counter.
     if ext::ScriptGame_TargetDestroyed(item_gobj) != 0 {

@@ -190,9 +190,9 @@ fn fill_fighter(p: &mut Fighter, own: *mut HSD_GObj) {
 fn cb_code(c: Option<unsafe extern "C" fn(*mut HSD_GObj)>, own: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> u32 {
     if c.is_none() {
         0
-    } else if c == own {
+    } else if matches!((c, own), (Some(a), Some(b)) if core::ptr::fn_addr_eq(a, b)) {
         1
-    } else if c == Some(pre_cb as unsafe extern "C" fn(*mut HSD_GObj)) {
+    } else if c.is_some_and(|p| core::ptr::fn_addr_eq(p, pre_cb as unsafe extern "C" fn(*mut HSD_GObj))) {
         2
     } else {
         3

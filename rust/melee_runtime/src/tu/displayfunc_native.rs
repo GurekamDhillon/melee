@@ -375,7 +375,9 @@ pub unsafe fn _HSD_mkEnvelopeModelNodeMtx(m: *mut HSD_JObj, mtx: *mut [f32; 4]) 
 }
 
 /// `HSD_JObjDispSub`.
+#[inline(never)]
 pub unsafe extern "C" fn HSD_JObjDispSub(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], pmtx: *mut [f32; 4], trsp_mask: u32, rendermode: u32) {
+    core::hint::black_box(0xE29CC420u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_JObjDispSub");
     ext::HSD_JObjSetCurrent(jobj);
     let dobj_trsp = trsp_mask << DOBJ_TRSP_SHIFT;

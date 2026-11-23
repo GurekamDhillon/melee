@@ -17,9 +17,12 @@
 //! iteration on the caller's thread: no threads, no blocking.
 
 pub mod app;
+pub mod blob;
 pub mod early;
 pub mod enet;
 pub mod hash;
+#[cfg(feature = "mu-net")]
+pub mod mu_net;
 pub mod net;
 pub mod pad;
 pub mod rollback;
@@ -27,8 +30,13 @@ pub mod session;
 pub mod sim;
 pub mod slippi;
 pub mod slippi_mm;
+pub mod slippi_spectate;
+pub mod time_sync;
 pub mod transport;
 pub mod wire;
+pub mod yougame_room;
+pub mod yougame_punch;
+pub mod yougame_relay;
 
 pub use hash::{hash64, hash_file};
 pub use net::{Callbacks, Config, Event, Net, RemoteConfig, State, Stats};

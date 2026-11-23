@@ -168,14 +168,20 @@ pub mod ext {
     hook!(HSD_GOBJ_CAMERAKIND, hsd_gobj_camera_kind, () -> u8);
 
     /// `HSD_GObj_803910D8` (render callback, gm's GX link): address only.
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: isize) {
+        core::hint::black_box(0x9D4F327Fu32); // fn identity (tools/rust-port/fn_identity.py)
         unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj, _code as i32) }
     }
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): addresses only.
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _code: isize) {
+        core::hint::black_box(0xBA1246ECu32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _code as _); } return; };
     }
+    #[inline(never)]
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: isize) {
+        core::hint::black_box(0x4DFBEC32u32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }

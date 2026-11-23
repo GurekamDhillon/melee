@@ -29,7 +29,7 @@ fn torch_lifecycle() {
     t::ftGw_ItemTorchSetup(gp);
     assert_eq!(take(), "spawn 1 2 3 part 32 facing 1");
     assert_eq!(unsafe { w.f.u.gw.x2254_fireGObj }, fake(0x300));
-    assert!(w.f.death2_cb == Some(mine as unsafe extern "C" fn(*mut HSD_GObj)));
+    assert!(w.f.death2_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, mine as unsafe extern "C" fn(*mut HSD_GObj))));
     assert!(w.f.take_dmg_cb.is_some() && w.f.pre_hitlag_cb.is_some() && w.f.post_hitlag_cb.is_some());
     assert!(w.f.accessory4_cb.is_none());
 

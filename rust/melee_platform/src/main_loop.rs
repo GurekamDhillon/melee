@@ -30,7 +30,7 @@ pub trait Game {
     fn tick(&mut self, pads: &mut PadSystem);
     /// Draw. `alpha` in [0,1): how far into the next tick real time is.
     fn present(&mut self, _window: &Arc<Window>, _alpha: f64) {}
-    /// Render-only interpolation switched on/off (MELEE_INTERP, or auto above 60 fps).
+    /// Render-only interpolation switched on/off (MELEE_INTERP=1; off by default).
     fn set_interp(&mut self, _on: bool) {}
     /// The window's client area changed (physical pixels); reconfigure a swapchain here.
     fn resized(&mut self, _width: u32, _height: u32) {}
@@ -41,6 +41,11 @@ pub trait Game {
     /// Return true to present before the next tick runs (a screenshot of this tick's frame is pending).
     fn present_now(&self) -> bool {
         false
+    }
+    /// False while boot work the first ticks need is still in flight (the asset worker's boot hints): the loop keeps
+    /// presenting the loading frame and starts the tick clock once this is true (or after [`BOOT_WAIT_MAX`]).
+    fn boot_ready(&mut self) -> bool {
+        true
     }
     /// Extra state for the MELEE_SHOW_FPS title line (netplay: ping, rollbacks), asked once a second.
     fn status_line(&mut self) -> Option<String> {
@@ -74,8 +79,8 @@ pub struct Pacing {
     /// Presented frames per second (0: no cap).
     pub fps_cap: Option<f64>,
     pub vsync: Option<bool>,
-    /// Render-side interpolation: Some(forced) or None (auto above 60 fps).
-    pub interp: Option<Option<bool>>,
+    /// Render-side interpolation on/off (off by default; one rendered frame per tick).
+    pub interp: Option<bool>,
 }
 
 /// `--vrr` / `MELEE_VRR`: whether the display follows the frames (G-Sync / FreeSync).
@@ -136,6 +141,9 @@ pub fn sleep_until(t: Instant) {
         }
     }
 }
+
+/// The longest the tick clock waits at boot for [`Game::boot_ready`].
+const BOOT_WAIT_MAX: Duration = Duration::from_millis(600);
 
 /// One timer wait of `d`: on Windows a per-thread CREATE_WAITABLE_TIMER_HIGH_RESOLUTION timer (no timeBeginPeriod
 /// needed), elsewhere `thread::sleep`.
@@ -368,8 +376,8 @@ struct App<G: Game> {
     quit: bool,
     /// Render as often as the swapchain allows instead of once per tick.
     decoupled: bool,
-    /// MELEE_INTERP: Some(forced) or None (auto: on when rendering above 60 fps).
-    interp_env: Option<bool>,
+    /// MELEE_INTERP=1: interpolation explicitly on (testing); otherwise off.
+    interp_env: bool,
     interp: bool,
     show_fps: bool,
     fps_t0: Option<Instant>,
@@ -412,6 +420,12 @@ struct App<G: Game> {
     present_at: Option<Instant>,
     /// Paced: present before running the due tick (its slot was due within half a period after the tick).
     present_first: bool,
+    /// The tick clock runs from the first present (a window's): the time from window creation to that present
+    /// (device, swapchain, first pipelines) is not owed to the sim, so boot starts without a catch-up burst.
+    clock_started: bool,
+    /// The first present (the boot wait's start).
+    boot_t0: Option<Instant>,
+    boot_done: bool,
     /// VRR detection: the probe's end, the last statistics sample, verdicts in a row.
     vrr_probe_until: Option<Instant>,
     vrr_last: Option<(u64, u64, f64)>,
@@ -422,6 +436,8 @@ struct App<G: Game> {
     presented_tick: u64,
     /// YouGame bridge: the Tab press was taken as Shift+Tab, so its release is ours too.
     yg_tab: bool,
+    /// The YouGame player box (YOUGAME_EMBED=1): adoption state and the box commands held until then.
+    ygbox: YgBox,
     /// The profiler's last display line (frameprof::info only when it changes).
     profile_line: String,
 }
@@ -509,14 +525,12 @@ impl<G: Game> App<G> {
         }
         if let Some(i) = p.interp {
             self.interp_env = i;
-            if let Some(on) = i {
-                if on != self.interp {
-                    self.interp = on;
-                    self.game.set_interp(on);
-                }
+            if i != self.interp {
+                self.interp = i;
+                self.game.set_interp(i);
             }
         }
-        plog!("gw: video: pacing (live): fps cap {}, vsync {}, interp {}", if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() }, if self.vsync { "on" } else { "off" }, match self.interp_env { None => "auto", Some(true) => "on", Some(false) => "off" });
+        plog!("gw: video: pacing (live): fps cap {}, vsync {}, interp {}", if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() }, if self.vsync { "on" } else { "off" }, if self.interp_env { "on" } else { "off" });
     }
 
     /// One present (the window's RedrawRequested; a hidden window gets none from Windows, so `ask_redraw` calls it).
@@ -548,6 +562,11 @@ impl<G: Game> App<G> {
             }
             let d = t.elapsed();
             self.present_time += d;
+            if !self.clock_started {
+                self.clock_started = true;
+                self.last = Some(Instant::now());
+                self.clock.forgive();
+            }
             if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
                 use std::io::Write;
                 let _ = writeln!(f, "P,{},{:.3},{:.3}", self.frames, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
@@ -583,6 +602,24 @@ impl<G: Game> App<G> {
         }
     }
 
+    /// After the first present (the game may boot its host here, which queues the boot hints): hold the tick clock, presenting the
+    /// loading frame, until [`Game::boot_ready`] or [`BOOT_WAIT_MAX`]; then restart it from now (no catch-up).
+    /// Pacing only: the ticks are unchanged.
+    fn boot_holding(&mut self) -> bool {
+        if self.boot_done || self.window.is_none() || !self.clock_started {
+            return false;
+        }
+        let t0 = *self.boot_t0.get_or_insert_with(Instant::now);
+        if self.game.boot_ready() || t0.elapsed() >= BOOT_WAIT_MAX {
+            self.boot_done = true;
+            self.last = Some(Instant::now());
+            self.clock.forgive();
+            plog!("gw: boot: tick clock held {:.1} ms for the boot hints", t0.elapsed().as_secs_f64() * 1e3);
+            return false;
+        }
+        true
+    }
+
     fn run_due_ticks(&mut self) {
         self.run_due_ticks_at(Instant::now());
     }
@@ -595,6 +632,12 @@ impl<G: Game> App<G> {
             // loop calls here again, and a tick that had come due meanwhile would make the shot the NEXT frame's,
             // run to run as the load fell (Pokemon Stadium shots at one scene age differed by a tick). The time
             // stays in the clock; the ticks run right after the present.
+            return;
+        }
+        if !self.clock_started && self.window.is_some() {
+            return; // the first present starts the clock (pacing only: the ticks are unchanged)
+        }
+        if self.boot_holding() {
             return;
         }
         let dt = self.last.map(|l| now.saturating_duration_since(l)).unwrap_or_default();
@@ -632,6 +675,9 @@ impl<G: Game> App<G> {
             if self.game.present_now() {
                 break; // the rest of the due time stays in the clock
             }
+            if !self.boot_done && self.window.is_some() {
+                break; // the boot hold decides when the next tick runs
+            }
             if el >= LOAD_TICK {
                 // A scene load (archive parse, device open): the real time it took is not owed to the sim. Without
                 // this the next advance runs MAX_CATCH_UP ticks back to back (a fast-forward burst right after the
@@ -643,7 +689,7 @@ impl<G: Game> App<G> {
         }
     }
 
-    /// Once a second: measure render fps / sim tps, apply the MELEE_INTERP auto rule, show MELEE_SHOW_FPS.
+    /// Once a second: measure render fps / sim tps, apply MELEE_INTERP, show MELEE_SHOW_FPS.
     fn fps_tick(&mut self, w: &Arc<Window>) {
         let now = Instant::now();
         let t0 = *self.fps_t0.get_or_insert(now);
@@ -658,7 +704,7 @@ impl<G: Game> App<G> {
         self.fps_ticks0 = self.clock.ticks;
         let (sim_ms, ren_ms) = (std::mem::take(&mut self.tick_time).as_secs_f64() * 1e3, std::mem::take(&mut self.present_time).as_secs_f64() * 1e3);
         // interpolation is off unless forced on (MELEE_INTERP=1): one rendered frame per sim tick
-        let want = self.interp_env.unwrap_or(false);
+        let want = self.interp_env;
         if want != self.interp {
             self.interp = want;
             self.game.set_interp(want);
@@ -672,7 +718,9 @@ impl<G: Game> App<G> {
             if !extra.is_empty() {
                 plog!("gw: status:{extra}");
             }
-            w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps{extra}", self.cfg.title));
+            if !crate::yougame::embedded() {
+                w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps{extra}", self.cfg.title));
+            }
         }
     }
 
@@ -689,7 +737,7 @@ impl<G: Game> App<G> {
             "{:.0} Hz refresh, vsync {}, fps cap {}, VRR {}, interpolation {} ({}), window {}x{}, fullscreen {:?}, expected frame interval {:.2} ms",
             self.refresh_hz, if self.vsync { "on" } else { "off" }, if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() },
             match self.vrr { Some(true) => "detected", Some(false) => "no", None => "probing" }, if self.interp { "on" } else { "off" },
-            match self.interp_env { None => "auto", Some(true) => "forced on", Some(false) => "forced off" },
+            if self.interp_env { "explicit on" } else { "default off" },
             self.window.as_ref().map_or(0, |w| w.inner_size().width), self.window.as_ref().map_or(0, |w| w.inner_size().height), self.fullscreen, exp / 1e3
         );
         if line != self.profile_line {
@@ -847,6 +895,12 @@ impl<G: Game> ApplicationHandler for App<G> {
                     crate::yougame::focus_lost();
                 }
             }
+            WindowEvent::MouseInput { state: ElementState::Pressed, .. } if crate::yougame::embedded() => {
+                // a child window does not take the keyboard by itself: a click into the box does
+                if let Some(w) = self.window.as_ref() {
+                    ygwin::focus(w, true);
+                }
+            }
             WindowEvent::ModifiersChanged(m) => self.mods = m.state(),
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(k) = event.physical_key {
@@ -866,6 +920,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                         }
                     }
                     let enter = matches!(k, KeyCode::Enter | KeyCode::NumpadEnter);
+                    if enter && self.mods.alt_key() && crate::yougame::embedded() {
+                        return; // the page owns full screen in the player box; winit's style change would undo WS_CHILD
+                    }
                     if enter && self.mods.alt_key() {
                         // Alt+Enter: fullscreen <-> window (the key never reaches the pads)
                         if event.state == ElementState::Pressed && !event.repeat {
@@ -931,7 +988,8 @@ impl<G: Game> ApplicationHandler for App<G> {
                 self.quit = true;
             }
             if let Some(w) = self.window.as_ref() {
-                yougame_box(w, crate::yougame::take_box_commands());
+                let w = Arc::clone(w);
+                self.ygbox.run(&w, crate::yougame::take_box_commands());
             }
         }
         if !self.present_first {
@@ -942,6 +1000,13 @@ impl<G: Game> ApplicationHandler for App<G> {
             return;
         }
         self.vrr_tick();
+        if self.boot_holding() {
+            // boot: the loading frame until the boot work is in (pacing only; no tick runs meanwhile)
+            sleep_until(Instant::now() + Duration::from_millis(4));
+            self.ask_redraw(el);
+            el.set_control_flow(ControlFlow::Poll);
+            return;
+        }
         if let (Some(period), true) = (self.cap_period(), self.decoupled && self.window.is_some()) {
             // paced: present on a fixed grid; sleep to the next slot, or to the next tick if that comes first
             let now = Instant::now();
@@ -1023,23 +1088,157 @@ fn yougame_box_attrs(mut attrs: winit::window::WindowAttributes) -> winit::windo
     attrs
 }
 
-/// The player box's commands, on the window thread: `rect x y w h`, `show` / `hide`, `focus` (`blur`, `view`,
-/// `volume` are logged and ignored).
-fn yougame_box(w: &Window, cmds: Vec<String>) {
-    if window_hidden() {
-        return; // a hidden run is never shown or focused
-    }
-    for c in cmds {
-        let n: Vec<i32> = c.split_whitespace().skip(1).filter_map(|v| v.parse().ok()).collect();
-        match c.split_whitespace().next().unwrap_or("") {
-            "rect" if n.len() == 4 && n[2] > 0 && n[3] > 0 => {
-                w.set_outer_position(winit::dpi::PhysicalPosition::new(n[0], n[1]));
-                let _ = w.request_inner_size(winit::dpi::PhysicalSize::new(n[2] as u32, n[3] as u32));
+/// How long the window waits for the app's launcher to adopt it before showing itself on its own (Hero's is 30 s too).
+const YG_ADOPT_WAIT: Duration = Duration::from_secs(30);
+
+/// The player box's commands, on the window thread: `rect x y w h`, `show` / `hide`, `focus` / `blur` (`view`,
+/// `scale`, ... are ignored; `volume` never comes here, the stdin thread applies it). The launcher (yougame-sandbox.exe) makes our window a child of the app's
+/// (WS_CHILD, then SetParent) from outside the process. winit's own setters rewrite GWL_STYLE from its flags
+/// (set_visible), which dropped WS_CHILD and tore the window back out to the desktop, and its focus_window fakes
+/// an Alt key press. So the box is driven with plain Win32 calls on the HWND, and winit's flags are left alone.
+#[derive(Default)]
+struct YgBox {
+    t0: Option<Instant>,
+    adopted: bool,
+    standalone: bool,
+    held: Vec<String>,
+}
+
+impl YgBox {
+    fn run(&mut self, w: &Window, cmds: Vec<String>) {
+        if window_hidden() {
+            return; // a hidden run is never shown or focused
+        }
+        let t0 = *self.t0.get_or_insert_with(Instant::now);
+        if !self.adopted && !self.standalone {
+            if ygwin::adopted(w) {
+                self.adopted = true;
+                plog!("yougame: window: in the YouGame player box (adopted after {} ms)", t0.elapsed().as_millis());
+            } else if t0.elapsed() >= YG_ADOPT_WAIT {
+                self.standalone = true;
+                self.held.clear();
+                plog!("yougame: window: the app did not take the window into its player box; showing it on its own");
+                w.set_decorations(true);
+                w.set_visible(true);
+            } else {
+                // Not adopted yet: a rect is parent-relative, so applying it now would put the window on the desktop.
+                self.held.extend(cmds);
+                if self.held.len() > 64 {
+                    let n = self.held.len() - 64;
+                    self.held.drain(..n);
+                }
+                return;
             }
-            "show" => w.set_visible(true),
-            "hide" => w.set_visible(false),
-            "focus" => w.focus_window(),
-            _ => plog!("yougame: player box command ignored: {}", c.chars().take(60).collect::<String>()),
+        }
+        if self.standalone {
+            return;
+        }
+        let cmds = if self.held.is_empty() {
+            cmds
+        } else {
+            let mut h = std::mem::take(&mut self.held);
+            h.extend(cmds);
+            h
+        };
+        for c in cmds {
+            let mut it = c.split_whitespace();
+            let verb = it.next().unwrap_or("");
+            let n: Vec<i32> = it.map_while(|v| v.parse().ok()).collect();
+            match verb {
+                "rect" if n.len() == 4 && n[2] > 0 && n[3] > 0 => ygwin::place(w, n[0], n[1], n[2].min(16384), n[3].min(16384)),
+                "show" => ygwin::show(w, true),
+                "hide" => ygwin::show(w, false),
+                "focus" => ygwin::focus(w, true),
+                "blur" => ygwin::focus(w, false),
+                _ => plog!("yougame: player box command ignored: {}", c.chars().take(60).collect::<String>()),
+            }
+        }
+    }
+}
+
+/// Win32 calls on our own HWND for the player box (other platforms: winit's, which keep no style of their own).
+#[cfg(windows)]
+mod ygwin {
+    use windows_sys::Win32::Foundation::HWND;
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetFocus, SetFocus};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        GetAncestor, GetDesktopWindow, GetWindowLongPtrW, SetWindowPos, ShowWindow, GA_PARENT, GWL_STYLE, HWND_TOP, SWP_NOACTIVATE,
+        SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SW_HIDE, SW_SHOWNA, WS_CHILD,
+    };
+    use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use winit::window::Window;
+
+    fn hwnd(w: &Window) -> Option<HWND> {
+        match w.window_handle().ok()?.as_raw() {
+            RawWindowHandle::Win32(h) => Some(h.hwnd.get() as HWND),
+            _ => None,
+        }
+    }
+
+    /// Adopted = WS_CHILD and a real parent (the launcher sets WS_CHILD before SetParent; a parent alone is no proof).
+    pub fn adopted(w: &Window) -> bool {
+        let Some(h) = hwnd(w) else { return false };
+        // SAFETY: plain queries on our own live window.
+        unsafe {
+            let p = GetAncestor(h, GA_PARENT);
+            !p.is_null() && p != GetDesktopWindow() && (GetWindowLongPtrW(h, GWL_STYLE) as u32 & WS_CHILD) != 0
+        }
+    }
+
+    /// Parent-relative physical pixels, as the app sends them. WM_SIZE follows synchronously (winit's Resized).
+    pub fn place(w: &Window, x: i32, y: i32, cw: i32, ch: i32) {
+        let Some(h) = hwnd(w) else { return };
+        // SAFETY: our own window, on its own thread.
+        unsafe { SetWindowPos(h, std::ptr::null_mut(), x, y, cw, ch, SWP_NOZORDER | SWP_NOACTIVATE) };
+    }
+
+    pub fn show(w: &Window, on: bool) {
+        let Some(h) = hwnd(w) else { return };
+        // SAFETY: as above. SW_SHOWNA: shown without taking activation; a hide while holding the keys hands them back.
+        unsafe {
+            if !on && GetFocus() == h {
+                SetFocus(GetAncestor(h, GA_PARENT));
+            }
+            ShowWindow(h, if on { SW_SHOWNA } else { SW_HIDE });
+            if on {
+                SetWindowPos(h, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            }
+        }
+    }
+
+    /// The keyboard to the game (`focus`, a click) or back to the app (`blur`). SetFocus works across the two
+    /// processes because a child's input queue is attached to its parent's; no synthesized input.
+    pub fn focus(w: &Window, on: bool) {
+        let Some(h) = hwnd(w) else { return };
+        // SAFETY: as above.
+        unsafe {
+            if on {
+                if GetFocus() != h {
+                    SetFocus(h);
+                }
+            } else if GetFocus() == h {
+                SetFocus(GetAncestor(h, GA_PARENT));
+            }
+        }
+    }
+}
+
+#[cfg(not(windows))]
+mod ygwin {
+    use winit::window::Window;
+    pub fn adopted(_: &Window) -> bool {
+        true
+    }
+    pub fn place(w: &Window, x: i32, y: i32, cw: i32, ch: i32) {
+        w.set_outer_position(winit::dpi::PhysicalPosition::new(x, y));
+        let _ = w.request_inner_size(winit::dpi::PhysicalSize::new(cw as u32, ch as u32));
+    }
+    pub fn show(w: &Window, on: bool) {
+        w.set_visible(on);
+    }
+    pub fn focus(w: &Window, on: bool) {
+        if on {
+            w.focus_window();
         }
     }
 }
@@ -1063,7 +1262,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         // brings back rendering at the display rate.
         decoupled: env_bool("MELEE_RENDER_DECOUPLED").unwrap_or(env_bool("MELEE_INTERP") == Some(true)),
         presented_tick: u64::MAX,
-        interp_env: env_bool("MELEE_INTERP"),
+        interp_env: env_bool("MELEE_INTERP") == Some(true),
         interp: false,
         show_fps: env_bool("MELEE_SHOW_FPS").unwrap_or(false),
         fps_t0: None,
@@ -1094,11 +1293,15 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         next_present: None,
         present_at: None,
         present_first: false,
+        clock_started: false,
+        boot_t0: None,
+        boot_done: false,
         vrr_probe_until: None,
         vrr_last: None,
         vrr_votes: (None, 0),
         stale: 0,
         yg_tab: false,
+        ygbox: YgBox::default(),
         profile_line: String::new(),
     };
     if let Some(f) = app.trace.as_mut() {
@@ -1106,7 +1309,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         let unix = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
         let _ = writeln!(f, "S,0,{:.3},0", unix.as_secs_f64() * 1e3);
     }
-    if app.interp_env == Some(true) {
+    if app.interp_env {
         app.interp = true;
         app.game.set_interp(true);
     }

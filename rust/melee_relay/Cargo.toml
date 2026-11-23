@@ -7,3 +7,6 @@ publish.workspace = true
 description = "Self-hostable rendezvous / relay server for netplay: room codes, address introduction for UDP hole punching, relay fallback, random queue (the GDMR/GDMD protocol of tools/netplay/server/gdmelee_server.py)"
 
 [dependencies]
+
+[lints]
+workspace = true

@@ -323,12 +323,80 @@ macro_rules! kinds_jobj_inl {
 }
 pub use kinds_jobj_inl;
 
+/// One `int`-returning shim and the callback it calls: a [`pred_b!`] adapter or a TU's `<callback>_p` ([`pred_i32!`]).
+/// Gathered at link time into one section ([`shims`]), so a harness maps a stored shim to its callback by address.
+#[repr(C)]
+pub struct Shim {
+    pub shim: *const (),
+    pub target: *const (),
+}
+unsafe impl Sync for Shim {}
+
+/// Record (shim, callback) in the shim section. ELF: section `melee_pred_shims` (the linker's `__start_` / `__stop_`
+/// symbols bound it); MSVC: `.mps$m`, which the linker sorts between `.mps$a` and `.mps$z` (the bounds below). Other
+/// targets record nothing (the harness then falls back to fnsym).
+#[macro_export]
+macro_rules! kinds_shim_entry {
+    ($shim:expr, $($f:tt)*) => {
+        const _: () = {
+            #[used]
+            #[cfg_attr(all(unix, not(target_vendor = "apple")), link_section = "melee_pred_shims")]
+            #[cfg_attr(windows, link_section = ".mps$m")]
+            static SHIM: $crate::tu::kinds_inl::Shim =
+                $crate::tu::kinds_inl::Shim { shim: $shim as *const (), target: ($($f)*) as *const () };
+        };
+    };
+}
+pub use kinds_shim_entry as shim_entry;
+
+/// The `<callback>_p` shims a TU defines by name (`pred_i32! { fooAnim_p => fooAnim; }`), each recorded as [`pred_b!`]'s.
+#[macro_export]
+macro_rules! kinds_pred_i32 {
+    ($($name:ident => $f:ident;)*) => { $(
+        pub unsafe extern "C" fn $name(g: *mut HSD_GObj) -> i32 { $f(g) as i32 }
+        $crate::tu::kinds_inl::shim_entry!($name as unsafe extern "C" fn(*mut HSD_GObj) -> i32, $f);
+    )* };
+}
+pub use kinds_pred_i32 as pred_i32;
+
+#[cfg(windows)]
+#[used]
+#[link_section = ".mps$a"]
+static SHIMS_A: Shim = Shim { shim: core::ptr::null(), target: core::ptr::null() };
+#[cfg(windows)]
+#[used]
+#[link_section = ".mps$z"]
+static SHIMS_Z: Shim = Shim { shim: core::ptr::null(), target: core::ptr::null() };
+
+/// Every recorded (shim, callback), as addresses. Null entries (the MSVC bounds, alignment padding) are skipped.
+pub fn shims() -> std::vec::Vec<(usize, usize)> {
+    #[cfg(all(unix, not(target_vendor = "apple")))]
+    let all: &[Shim] = unsafe {
+        extern "C" {
+            static __start_melee_pred_shims: Shim;
+            static __stop_melee_pred_shims: Shim;
+        }
+        let a = core::ptr::addr_of!(__start_melee_pred_shims);
+        let n = (core::ptr::addr_of!(__stop_melee_pred_shims) as usize - a as usize) / core::mem::size_of::<Shim>();
+        core::slice::from_raw_parts(a, n)
+    };
+    #[cfg(windows)]
+    let all: &[Shim] = unsafe {
+        let a = core::ptr::addr_of!(SHIMS_A);
+        let n = (core::ptr::addr_of!(SHIMS_Z) as usize - a as usize) / core::mem::size_of::<Shim>();  // semantics: allow(host: shim table length from linker section bounds)
+        core::slice::from_raw_parts(a, n)
+    };
+    #[cfg(not(any(windows, all(unix, not(target_vendor = "apple")))))]
+    let all: &[Shim] = &[];
+    all.iter().filter(|s| !s.shim.is_null()).map(|s| (s.shim as usize, s.target as usize)).collect()
+}
+
 /// A state-table predicate slot from a `bool`-returning function, through a real `int`-returning shim: a Rust `bool` comes back in
 /// `al` only, and the C side (`animated`, `collided`, ... read as `int`) tests all of `eax`, whose upper bits are whatever the
 /// callee left there (a transmute of the function pointer made items vanish at random: cpu_peach frame 1572).
-/// The shim is one generic fn, [`pred_adapter`], instantiated per callback on a block-local type named after it, so
-/// its symbol names the C function (`pred_adapter::<..::itBat_UnkMotion0_Anim>`): the TU oracles identify the
-/// function a state-table row holds by symbol (melee_core/test_support/fnsym.rs).
+/// The shim is one generic fn, [`pred_adapter`], instantiated per callback on a block-local type named after it; each
+/// expansion also records (shim, callback) in [`SHIMS`], so the TU oracles name the function a state-table row holds
+/// by address, with no symbol lookup (Windows symbolization named neighbours: the kinds run on 1cf053a04).
 macro_rules! pred_b {
     ($($p:ident)::+) => { $crate::tu::kinds_inl::pred_b!(@ [$($p)::+] $($p)+) };
     (@ [$($f:tt)*] $last:ident) => {{
@@ -339,6 +407,7 @@ macro_rules! pred_b {
                 unsafe { ($($f)*)(g) as i32 }
             }
         }
+        $crate::tu::kinds_inl::shim_entry!($crate::tu::kinds_inl::pred_adapter::<$last>, $($f)*);
         Some($crate::tu::kinds_inl::pred_adapter::<$last> as unsafe extern "C" fn(*mut HSD_GObj) -> i32)
     }};
     (@ [$($f:tt)*] $first:ident $($rest:ident)+) => { $crate::tu::kinds_inl::pred_b!(@ [$($f)*] $($rest)+) };

@@ -3,7 +3,8 @@
 //! `0653df819` speaks it (`SlippiNetplay.cpp`): `sf::Packet` encoding (big-endian integers, bool = 1 byte, string =
 //! u32 length + bytes), three ENet channels (0 reliable for everything but the pads, 1 unsequenced for pads, acks
 //! and suggestions, 2 unsequenced for the acks sent while handling a pad), a resend-until-acked local pad queue of
-//! up to 128 frames, acks only for pads that added frames, ping from ack round trips and Slippi's time offset.
+//! up to 128 frames (sent again on stalled frames, `resend_pads`), acks only for pads that added frames, ping from
+//! ack round trips and Slippi's time offset.
 //!
 //! Direct connections only: both sides know the other's address and connect to it at once (as Slippi does after
 //! matchmaking). Nothing here talks to a matchmaking server, STUN or any Slippi service.
@@ -182,6 +183,9 @@ pub fn encode_ack(frame: i32, port: u8) -> Vec<u8> {
 }
 
 /// `Note::Disconnected` reason when the peer address started a new match during ours (its process restarted).
+/// The first bytes of a link `Client::export` wrote.
+pub const LINK_MAGIC: &[u8] = b"SLNK1";
+
 pub const REASON_PEER_RESTARTED: u32 = 0xFFFF_FFF0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -214,6 +218,9 @@ struct Timing {
 /// One remote player's link and pad state (1v1: there is one).
 struct Remote {
     addr: Addr,
+    /// Hero's public fallback (slippi_address.h): the public address tried 2 s into a LAN attempt.
+    fallback: Option<Addr>,
+    fallback_started: bool,
     port: u8,
     /// The ENet peer slots we hold to this address (two when both sides connected at once).
     links: Vec<usize>,
@@ -257,6 +264,8 @@ pub struct ClientStats {
     pub acks_sent: u64,
     pub acks_received: u64,
     pub max_queue: usize,
+    /// Pad packets sent by [`Client::resend_pads`]: the unacked queue again, on a frame with no new local pad.
+    pub pads_resent: u64,
 }
 
 impl Client {
@@ -270,6 +279,8 @@ impl Client {
             status: Status::Initiated,
             remote: Remote {
                 addr: remote,
+                fallback: None,
+                fallback_started: false,
                 port: remote_port,
                 links: first.into_iter().collect(),
                 active: None,
@@ -297,6 +308,225 @@ impl Client {
         c.started_at_us = c.now_us();
         c
     }
+    /// Hero's `public_fallbacks_`: the opponent's public address, connected to when the first address has not
+    /// answered after 2 s (the LAN address of a player behind the same router).
+    pub fn set_fallback(&mut self, a: Option<Addr>) {
+        self.remote.fallback = a.filter(|f| *f != self.remote.addr);
+    }
+
+    /// The whole link for another process (`import`): the ENet host, the opponent's state and the notes not yet
+    /// read. Nothing is sent: the opponent sees one link that goes on (Slippi Dolphin keeps one client from the select
+    /// into the match and does not take a second connection after the first drops).
+    pub fn export(&self) -> Vec<u8> {
+        use crate::blob::W;
+        let mut w = W::default();
+        w.0.extend_from_slice(LINK_MAGIC);
+        w.bytes(&self.host.export());
+        w.i64(self.now_us());
+        w.u8(self.local_port);
+        w.u8(match self.status {
+            Status::Initiated => 0,
+            Status::Connected => 1,
+            Status::Failed => 2,
+            Status::Disconnected => 3,
+        });
+        let rm = &self.remote;
+        w.addr(rm.addr);
+        w.u8(rm.fallback.is_some() as u8);
+        w.addr(rm.fallback.unwrap_or_default());
+        w.u8(rm.fallback_started as u8);
+        w.u8(rm.port);
+        w.u32(rm.links.len() as u32);
+        for &l in &rm.links {
+            w.u32(l as u32);
+        }
+        w.u32(rm.active.map_or(u32::MAX, |a| a as u32));
+        w.u32(rm.head_frame as u32);
+        w.u32(rm.last_acked as u32);
+        w.u32(rm.ack_timers.len() as u32);
+        for t in &rm.ack_timers {
+            w.u32(t.frame as u32);
+            w.i64(t.time_us);
+        }
+        w.i64(rm.ping_us);
+        w.u32(rm.last_timing.frame as u32);
+        w.i64(rm.last_timing.time_us);
+        w.u32(rm.offsets.len() as u32);
+        for &o in &rm.offsets {
+            w.u32(o as u32);
+        }
+        w.u32(rm.offset_idx as u32);
+        fn sel(w: &mut crate::blob::W, s: Option<Selections>) {
+            match s {
+                Some(s) => {
+                    w.u8(1);
+                    w.bytes(&s.encode()[1..]);
+                }
+                None => w.u8(0),
+            }
+        }
+        sel(&mut w, rm.selections);
+        w.u32(self.local_queue.len() as u32);
+        for (f, pad, cf, cs) in &self.local_queue {
+            w.u32(*f as u32);
+            w.0.extend_from_slice(pad);
+            w.u32(*cf as u32);
+            w.u32(*cs);
+        }
+        w.u8(self.has_game_started as u8);
+        w.u8(self.in_game as u8);
+        w.u32(self.notes.len() as u32);
+        for n in &self.notes {
+            match n {
+                Note::Connected => w.u8(0),
+                Note::Selections(s) => {
+                    w.u8(1);
+                    sel(&mut w, Some(*s));
+                }
+                Note::Pad { port, frame, pad } => {
+                    w.u8(2);
+                    w.u8(*port);
+                    w.u32(*frame as u32);
+                    w.0.extend_from_slice(pad);
+                }
+                Note::Checksum { port, frame, value } => {
+                    w.u8(3);
+                    w.u8(*port);
+                    w.u32(*frame as u32);
+                    w.u32(*value);
+                }
+                Note::Chat { port, id } => {
+                    w.u8(4);
+                    w.u8(*port);
+                    w.u32(*id as u32);
+                }
+                Note::Disconnected { reason } => {
+                    w.u8(5);
+                    w.u32(*reason);
+                }
+            }
+        }
+        w.i64(self.started_at_us);
+        w.i64(self.connect_timeout_ms);
+        w.u32(self.remote_checksums.len() as u32);
+        for (f, c) in &self.remote_checksums {
+            w.u32(*f as u32);
+            w.u32(*c);
+        }
+        let s = &self.stats;
+        for v in [s.pads_sent, s.pads_received, s.acks_sent, s.acks_received, s.max_queue as u64, s.pads_resent] {
+            w.u64(v);
+        }
+        w.i64(self.last_probe_us);
+        w.0
+    }
+
+    /// The link `export` wrote, going on over `tp` (a socket on the same local port). None for a malformed blob.
+    pub fn import(tp: Box<dyn Transport>, b: &[u8]) -> Option<Client> {
+        let b = b.strip_prefix(LINK_MAGIC)?;
+        let mut r = crate::blob::R::new(b);
+        let hb = r.bytes()?;
+        let mut hr = crate::blob::R::new(&hb);
+        let host = Host::import(tp, &mut hr)?;
+        if !hr.done() {
+            return None;
+        }
+        let now_us = r.i64()?;
+        let local_port = r.u8()?;
+        let status = match r.u8()? {
+            0 => Status::Initiated,
+            1 => Status::Connected,
+            2 => Status::Failed,
+            3 => Status::Disconnected,
+            _ => return None,
+        };
+        fn sel(r: &mut crate::blob::R) -> Option<Option<Selections>> {
+            Some(match r.u8()? {
+                0 => None,
+                _ => Some(Selections::decode(&mut PacketR::new(&r.bytes()?))?),
+            })
+        }
+        fn pad(r: &mut crate::blob::R) -> Option<[u8; PAD_WIRE]> {
+            let mut p = [0u8; PAD_WIRE];
+            for v in p.iter_mut() {
+                *v = r.u8()?;
+            }
+            Some(p)
+        }
+        let addr = r.addr()?;
+        let has_fb = r.u8()? != 0;
+        let fb = r.addr()?;
+        let fallback_started = r.u8()? != 0;
+        let port = r.u8()?;
+        let mut links = Vec::new();
+        for _ in 0..r.u32()? {
+            links.push(r.u32()? as usize);
+        }
+        let active = Some(r.u32()?).filter(|&a| a != u32::MAX).map(|a| a as usize);
+        let head_frame = r.u32()? as i32;
+        let last_acked = r.u32()? as i32;
+        let mut ack_timers = VecDeque::new();
+        for _ in 0..r.u32()? {
+            ack_timers.push_back(Timing { frame: r.u32()? as i32, time_us: r.i64()? });
+        }
+        let ping_us = r.i64()?;
+        let last_timing = Timing { frame: r.u32()? as i32, time_us: r.i64()? };
+        let mut offsets = Vec::new();
+        for _ in 0..r.u32()? {
+            offsets.push(r.u32()? as i32);
+        }
+        let offset_idx = r.u32()? as usize;
+        let selections = sel(&mut r)?;
+        let mut local_queue = VecDeque::new();
+        for _ in 0..r.u32()? {
+            local_queue.push_back((r.u32()? as i32, pad(&mut r)?, r.u32()? as i32, r.u32()?));
+        }
+        let has_game_started = r.u8()? != 0;
+        let in_game = r.u8()? != 0;
+        let mut notes = VecDeque::new();
+        for _ in 0..r.u32()? {
+            notes.push_back(match r.u8()? {
+                0 => Note::Connected,
+                1 => Note::Selections(sel(&mut r)??),
+                2 => Note::Pad { port: r.u8()?, frame: r.u32()? as i32, pad: pad(&mut r)? },
+                3 => Note::Checksum { port: r.u8()?, frame: r.u32()? as i32, value: r.u32()? },
+                4 => Note::Chat { port: r.u8()?, id: r.u32()? as i32 },
+                5 => Note::Disconnected { reason: r.u32()? },
+                _ => return None,
+            });
+        }
+        let started_at_us = r.i64()?;
+        let connect_timeout_ms = r.i64()?;
+        let mut remote_checksums = BTreeMap::new();
+        for _ in 0..r.u32()? {
+            let f = r.u32()? as i32;
+            remote_checksums.insert(f, r.u32()?);
+        }
+        let stats = ClientStats { pads_sent: r.u64()?, pads_received: r.u64()?, acks_sent: r.u64()?, acks_received: r.u64()?, max_queue: r.u64()? as usize, pads_resent: r.u64()? };
+        let last_probe_us = r.i64()?;
+        if !r.done() {
+            return None;
+        }
+        Some(Client {
+            host,
+            local_port,
+            status,
+            remote: Remote { addr, fallback: has_fb.then_some(fb), fallback_started, port, links, active, head_frame, last_acked, ack_timers, ping_us, last_timing, offsets, offset_idx, selections },
+            local_queue,
+            has_game_started,
+            in_game,
+            notes,
+            // the client clock continues from the exporter's
+            t0: Instant::now().checked_sub(std::time::Duration::from_micros(now_us.max(0) as u64))?,
+            clock_us: None,
+            started_at_us,
+            connect_timeout_ms,
+            remote_checksums,
+            stats,
+            last_probe_us,
+        })
+    }
+
     pub fn set_clock_us(&mut self, f: Box<dyn Fn() -> i64>) {
         self.clock_us = Some(f);
         self.started_at_us = self.now_us();
@@ -360,6 +590,13 @@ impl Client {
         self.remote.ack_timers.clear();
     }
 
+    /// The match is over and the link stays for the set's next game (Slippi Dolphin keeps one client through a Direct
+    /// set): the next selections are the opponent's next lock-in, not a restarted peer, and the opponent's link going
+    /// down is no longer the match's.
+    pub fn end_game(&mut self) {
+        self.in_game = false;
+    }
+
     /// `SendSlippiPad`: queue the local pad for `frame` (with the finalized checksum it carries) and send every
     /// unacked pad, newest first.
     pub fn send_pad(&mut self, frame: i32, pad: [u8; PAD_WIRE], checksum_frame: i32, checksum: u32) {
@@ -367,25 +604,43 @@ impl Client {
             return;
         }
         self.local_queue.push_front((frame, pad, checksum_frame, checksum));
-        let mut min_ack = self.remote.last_acked;
-        let cur = self.local_queue.front().unwrap().0;
-        min_ack = min_ack.max(cur - 128);
+        if self.send_local_queue() {
+            self.stats.max_queue = self.stats.max_queue.max(self.local_queue.len());
+            self.stats.pads_sent += 1;
+        }
+    }
+
+    /// `SendSlippiPad(nullptr)`: send the unacked pads again with no new one. The game calls it on every frame it
+    /// stalls waiting for the peer (Slippi's skipped frame, a full rollback window, past its last frame), as the
+    /// game's stalled frame does in Slippi Dolphin: pads are unsequenced and unreliable, so a lost newest packet is
+    /// only repaired by a later packet carrying the queue.
+    pub fn resend_pads(&mut self) {
+        if matches!(self.status, Status::Failed | Status::Disconnected) {
+            return;
+        }
+        if self.send_local_queue() {
+            self.stats.pads_resent += 1;
+        }
+    }
+
+    /// Drop the acked pads (and any older than the 128-frame window), then send the rest as one pad packet, newest
+    /// first, with its send timing and ack timer (a resend's too, as in Slippi Dolphin). False when nothing is left
+    /// unacked.
+    fn send_local_queue(&mut self) -> bool {
+        let Some(cur) = self.local_queue.front().map(|q| q.0) else { return false };
+        let min_ack = self.remote.last_acked.max(cur - 128);
         while self.local_queue.back().map_or(false, |b| b.0 < min_ack) {
             self.local_queue.pop_back();
         }
-        if self.local_queue.is_empty() {
-            return;
-        }
-        self.stats.max_queue = self.stats.max_queue.max(self.local_queue.len());
-        let f = self.local_queue.front().unwrap();
+        let Some(f) = self.local_queue.front() else { return false };
         let m = PadMsg { frame: f.0, port: self.local_port, checksum_frame: f.2, checksum: f.3, pads: self.local_queue.iter().map(|q| q.1).collect() };
         let b = m.encode();
         self.send(&b);
-        self.stats.pads_sent += 1;
         let now = self.now_us();
         self.has_game_started = true;
         self.remote.last_timing = Timing { frame: m.frame, time_us: now };
         self.remote.ack_timers.push_back(Timing { frame: m.frame, time_us: now });
+        true
     }
 
     /// Put the queued datagrams on the wire now (`enet_host_flush`) instead of at the next `poll`: called right
@@ -433,14 +688,29 @@ impl Client {
                 }
             }
         }
+        // Hero's public_fallback_due: 2 s with no link to the first address, the public one as well
+        if self.status == Status::Initiated && !self.remote.fallback_started && (self.now_us() - self.started_at_us) / 1000 >= 2000 {
+            if let Some(f) = self.remote.fallback {
+                self.remote.fallback_started = true;
+                eprintln!("slippi: LAN connection pending; trying public address fallback");
+                if let Some(l) = self.host.connect(f, 3, 0) {
+                    self.remote.links.push(l);
+                }
+            }
+        }
         if self.status == Status::Initiated && (self.now_us() - self.started_at_us) / 1000 >= self.connect_timeout_ms {
             self.status = Status::Failed;
         }
     }
 
     fn on_connect(&mut self, peer: usize) {
-        if self.host.peers[peer].addr != self.remote.addr {
-            // only the expected player may join a direct match
+        // only the expected player may join: as Slippi Dolphin and Hero match a connecting peer, its exact address,
+        // else the same host (a NAT that maps the opponent's port anew for us: its CONNECT comes from another port
+        // than matchmaking named), else the public fallback's host. Before the link is up only.
+        let a = self.host.peers[peer].addr;
+        let same_host = |b: Addr| b.ip == a.ip && b.ip6 == a.ip6;
+        let known = a == self.remote.addr || (self.remote.active.is_none() && (same_host(self.remote.addr) || self.remote.fallback.is_some_and(same_host)));
+        if !known {
             self.host.disconnect(peer, 0);
             return;
         }
@@ -454,12 +724,14 @@ impl Client {
             // was listening, so ENet resends it with backoff at ~0.5, 1.5, 3.5, 7.5 s...) is dropped silently,
             // else a late resend opens a second link mid-match that the duplicate-link rule then disconnects
             for l in 0..self.host.peers.len() {
-                if l != peer && self.host.peers[l].state == PeerState::Connecting && self.host.peers[l].addr == self.remote.addr {
+                let la = self.host.peers[l].addr;
+                if l != peer && self.host.peers[l].state == PeerState::Connecting && (la == self.remote.addr || Some(la) == self.remote.fallback) {
                     self.host.reset_peer(l);
                     self.remote.links.retain(|&x| x != l);
                 }
             }
             self.remote.active = Some(peer);
+            self.remote.addr = a;
             if self.status == Status::Initiated {
                 self.status = Status::Connected;
                 self.notes.push_back(Note::Connected);
@@ -481,6 +753,8 @@ impl Client {
             self.remote.active = self.remote.links.iter().copied().find(|&l| self.host.peers[l].state == PeerState::Connected);
         }
         if self.remote.active.is_none() && self.status == Status::Connected {
+            // once: the peer's DISCONNECT (its reason word), or ENet's timeout (0: a dead process, ~5-7 s on a fast link)
+            eprintln!("slippi: the opponent's link is down (reason {data}{})", if self.in_game { ", in a match" } else { "" });
             self.status = Status::Disconnected;
             self.notes.push_back(Note::Disconnected { reason: data });
         }
@@ -577,6 +851,8 @@ impl Client {
                 self.remote.selections = Some(s);
                 self.has_game_started = false;
                 self.remote.head_frame = 0;
+                // a set's next game: the last game's checksums are not this one's (its frames start again at 1)
+                self.remote_checksums.clear();
                 self.notes.push_back(Note::Selections(s));
             }
             MSG_CHAT_MESSAGE => {

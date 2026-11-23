@@ -9,8 +9,13 @@
 //! wider target (Aurora's AURORA_VIEWPORT_ASPECT), and the text canvases that ask for it (`HSD_SisLib_SetWideCanvas`)
 //! widen with `View_AspectBits`.
 //!
-//! The simulation never reads this: the C keeps logic on the authored aspect (`Camera_LogicToScreen`,
-//! `HSD_CObjGetAuthoredAspect`), and the headless engine (golden / gate runs) installs its own fixed values instead
+//! The simulation DOES read the hooks' answers (Camera_LogicToScreen's offscreen flags, Pokemon Stadium's display
+//! procs), so what they answer is a session setting, the *sim view* ([`set_sim_view`]): 4:3, or a fixed wide content
+//! aspect (camera widescreen). It is decided once per session, never by the live window: the local default comes from
+//! the display options when `melee play` starts ([`local_sim_view`]); a netplay guest adopts the host's (the agreed
+//! scene's `np_rules` `v` field); a recording (.mrpl `sim_view`, .slp metadata `simView`) carries it to its playback.
+//! The window then only decides how the picture is fitted (letterbox / pillarbox, the renderer-side widening).
+//! Runs with no sim view (golden / gate / slpcheck of console replays) install the C recordings' fixed values instead
 //! of these hooks (engine.rs `boot_host`).
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU32, Ordering::Relaxed};
 
@@ -25,6 +30,65 @@ static SCENE: AtomicI32 = AtomicI32::new(-1);
 /// game's hooks keep answering 4:3 and only the presenter widens perspective draws (melee_gx `interp::Widen`), so a
 /// widescreen run simulates exactly what a 4:3 one does.
 static CAMERA_MODE: AtomicBool = AtomicBool::new(false);
+/// The session's sim view: [`SIM_UNSET`], 0 (4:3) or the wide content aspect as f32 bits.
+static SIM: AtomicU32 = AtomicU32::new(SIM_UNSET);
+pub const SIM_UNSET: u32 = u32::MAX;
+
+/// Set the session's sim view (0 = 4:3, else the wide content aspect's f32 bits, clamped to 4:3..32:9).
+pub fn set_sim_view(bits: u32) {
+    let b = if bits == 0 || bits == SIM_UNSET {
+        bits
+    } else {
+        let a = f32::from_bits(bits);
+        if !a.is_finite() || a <= MIN_ASPECT { 0 } else { a.min(MAX_ASPECT).to_bits() }
+    };
+    SIM.store(b, Relaxed);
+}
+
+/// The session's sim view, None before one was set (golden / gate / console-replay runs).
+pub fn sim_view() -> Option<u32> {
+    let b = SIM.load(Relaxed);
+    (b != SIM_UNSET).then_some(b)
+}
+
+/// The sim view as the hooks use it: 0 (4:3) when none was set.
+fn sim_bits() -> u32 {
+    sim_view().unwrap_or(0)
+}
+
+/// This machine's own sim view from its display options: the camera widescreen mode with widescreen on gives the
+/// configured window's content aspect (16:9 without a size); anything else is 4:3 (renderer-side widescreen leaves
+/// the simulation a 4:3 run's).
+pub fn local_sim_view() -> u32 {
+    if !(camera_mode() && widescreen()) {
+        return 0;
+    }
+    let win = f32::from_bits(WINDOW.load(Relaxed));
+    let a = if win > 0.0 { content_aspect(win, 1.0, true) } else { 16.0 / 9.0 };
+    if a <= MIN_ASPECT { 0 } else { a.to_bits() }
+}
+
+/// The text form (replay headers, .slp metadata): `4:3` or `wide:<f32 bits hex>`.
+pub fn encode_sim_view(bits: u32) -> String {
+    if bits == 0 { "4:3".into() } else { format!("wide:{bits:08x}") }
+}
+
+pub fn parse_sim_view(s: &str) -> Option<u32> {
+    match s.trim() {
+        "4:3" => Some(0),
+        t => {
+            let b = u32::from_str_radix(t.strip_prefix("wide:")?, 16).ok()?;
+            let a = f32::from_bits(b);
+            (a.is_finite() && a > MIN_ASPECT && a <= MAX_ASPECT).then_some(b)
+        }
+    }
+}
+
+/// Renderer-side widening applies (the presenter widens perspective draws): widescreen in the renderer mode, and the
+/// session's cameras are not already wide.
+pub fn renderer_widen() -> bool {
+    widescreen() && !camera_mode() && sim_bits() == 0
+}
 
 pub fn set_camera_mode(on: bool) {
     CAMERA_MODE.store(on, Relaxed);
@@ -97,6 +161,14 @@ pub fn wide_now() -> bool {
 
 /// The content aspect for the current scene and window (4:3 unless [`wide_now`]).
 pub fn aspect() -> f32 {
+    let s = sim_bits();
+    if s != 0 {
+        // the session's cameras are wide: the content is exactly that aspect (fitted into whatever window)
+        return if scene_wide(scene()) { f32::from_bits(s) } else { MIN_ASPECT };
+    }
+    if camera_mode() {
+        return MIN_ASPECT; // a 4:3 session in the camera mode: pillarboxed
+    }
     let win = f32::from_bits(WINDOW.load(Relaxed));
     let wide = wide_now();
     if wide && win > 0.0 {
@@ -108,6 +180,13 @@ pub fn aspect() -> f32 {
 
 /// The content aspect a widened scene (a match) will have in this window: the presenter makes its EFB targets ahead.
 pub fn wide_aspect() -> f32 {
+    let s = sim_bits();
+    if s != 0 {
+        return f32::from_bits(s);
+    }
+    if camera_mode() {
+        return MIN_ASPECT;
+    }
     let win = f32::from_bits(WINDOW.load(Relaxed));
     if widescreen() && win > 0.0 {
         content_aspect(win, 1.0, true)
@@ -118,18 +197,20 @@ pub fn wide_aspect() -> f32 {
 
 /// `gw_View_ProjectionScaleBits`.
 pub fn projection_scale_bits() -> i32 {
-    if !camera_mode() {
+    let s = sim_bits();
+    if s == 0 || !scene_wide(scene()) {
         return 1.0f32.to_bits() as i32;
     }
-    projection_scale(aspect(), wide_now()).to_bits() as i32
+    projection_scale(f32::from_bits(s), true).to_bits() as i32
 }
 
 /// `gw_View_AspectBits`.
 pub fn aspect_bits() -> i32 {
-    if !camera_mode() {
+    let s = sim_bits();
+    if s == 0 || !scene_wide(scene()) {
         return MIN_ASPECT.to_bits() as i32;
     }
-    aspect().to_bits() as i32
+    s as i32
 }
 
 /// Route the game's view hooks here (windowed play only; see the module doc).
@@ -162,29 +243,43 @@ mod tests {
     }
 
     #[test]
-    fn hooks_follow_scene_and_setting() {
+    fn hooks_follow_the_session_not_the_window() {
         set_camera_mode(true);
         set_window(1920, 1080);
         set_widescreen(false);
-        scene_begin(2);
-        assert_eq!(aspect_bits(), MIN_ASPECT.to_bits() as i32);
-        assert_eq!(projection_scale_bits(), 1.0f32.to_bits() as i32);
+        assert_eq!(local_sim_view(), 0);
         set_widescreen(true);
-        assert!((aspect() - 16.0 / 9.0).abs() < 1e-6);
+        let wide = local_sim_view();
+        assert!((f32::from_bits(wide) - 16.0 / 9.0).abs() < 1e-6);
+        set_sim_view(wide);
+        scene_begin(2);
+        assert_eq!(f32::from_bits(projection_scale_bits() as u32), projection_scale(16.0 / 9.0, true));
+        assert_eq!(aspect_bits(), wide as i32);
+        // a resize changes nothing the simulation sees
+        set_window(800, 600);
         assert_eq!(f32::from_bits(projection_scale_bits() as u32), projection_scale(16.0 / 9.0, true));
         scene_begin(8); // the CSS stays 4:3
-        assert_eq!(aspect(), MIN_ASPECT);
         assert_eq!(projection_scale_bits(), 1.0f32.to_bits() as i32);
-        set_widescreen(false);
-        scene_begin(-1);
-        // renderer mode: the game always sees 4:3
-        set_camera_mode(false);
-        set_widescreen(true);
+        assert_eq!(aspect(), MIN_ASPECT);
+        // a 4:3 session (e.g. the host's) in a wide camera-mode window: the hooks answer 4:3
         scene_begin(2);
-        assert!((aspect() - 16.0 / 9.0).abs() < 1e-6);
+        set_sim_view(0);
+        set_window(1920, 1080);
         assert_eq!(projection_scale_bits(), 1.0f32.to_bits() as i32);
         assert_eq!(aspect_bits(), MIN_ASPECT.to_bits() as i32);
+        assert_eq!(aspect(), MIN_ASPECT);
+        // renderer mode: the game sees 4:3, the presenter widens
+        set_camera_mode(false);
+        assert_eq!(local_sim_view(), 0);
+        assert!((aspect() - 16.0 / 9.0).abs() < 1e-6 && renderer_widen());
+        // ... unless the session's cameras are wide (a camera-mode host): no double widening
+        set_sim_view(wide);
+        assert!(!renderer_widen() && (aspect() - 16.0 / 9.0).abs() < 1e-6);
+        assert_eq!(parse_sim_view(&encode_sim_view(wide)), Some(wide));
+        assert_eq!(parse_sim_view("4:3"), Some(0));
+        assert_eq!(parse_sim_view("wide:3f800000"), None);
         set_widescreen(false);
+        set_sim_view(SIM_UNSET);
         scene_begin(-1);
     }
 }

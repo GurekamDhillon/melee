@@ -115,7 +115,9 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 
 pub static mut it_803F6C98: [ItemStateTable; 1] = [ItemStateTable { anim_id: 0, animated: None, physics_updated: None, collided: None }];
 
+#[inline(never)]
 pub unsafe extern "C" fn itKirbyHammer_Logic8_Destroyed(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC2DA949Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbyHammer_Logic8_Destroyed");
     let it = get_item(gobj);
     if (*it).owner.is_null() {
@@ -124,12 +126,16 @@ pub unsafe extern "C" fn itKirbyHammer_Logic8_Destroyed(gobj: *mut Item_GObj) {
     ext::ftKb_SpecialAirLw_800F539C((*it).owner as *mut Fighter_GObj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802ADC34(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x623093DCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802ADC34");
     ext::Item_8026A8EC(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn setupHammerParticles(parent: *mut HSD_GObj, item_gobj: *mut Item_GObj, sfx: Fighter_Part, vars: u32) {
+    core::hint::black_box(0xB70CD8A1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("setupHammerParticles");
     let it = get_item(item_gobj);
     (*it).xDD4_itemVar.kirbyhammer.x0 = vars;
@@ -140,7 +146,9 @@ pub unsafe extern "C" fn setupHammerParticles(parent: *mut HSD_GObj, item_gobj: 
     ext::efAsync_Spawn(item_gobj, &raw mut (*((*item_gobj).user_data as *mut Item)).xBC0 as *mut c_void, 0, particle_id, jobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802ADC54(parent: *mut HSD_GObj, pos: *mut Vec, sfx: Fighter_Part, vars: u32, dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xE63EDB32u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802ADC54");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Kirby_Hammer;
@@ -154,12 +162,16 @@ pub unsafe extern "C" fn it_802ADC54(parent: *mut HSD_GObj, pos: *mut Vec, sfx: 
     item_gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itKirbyHammer_Logic8_PickedUp(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x29049082u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itKirbyHammer_Logic8_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as _);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802ADDB0(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFFC97F40u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802ADDB0");
     ext::it_8026B894(gobj, ref_gobj);
 }

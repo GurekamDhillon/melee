@@ -263,15 +263,21 @@ unsafe fn set_chain_callbacks(fp: *mut Fighter) {
     (*fp).post_hitlag_cb = Some(cb_ftSk_SpecialS_ChainSomething);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftSk_SpecialS_8011097C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x27165C5Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftSk_SpecialS_8011097C");
     ftSk_SpecialS_8011097C(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftSk_SpecialS_80110EE8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xAA0B648Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftSk_SpecialS_80110EE8");
     ftSk_SpecialS_80110EE8(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftSk_SpecialS_ChainSomething(g: *mut HSD_GObj) {
+    core::hint::black_box(0x03BC578Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftSk_SpecialS_ChainSomething");
     ftSk_SpecialS_ChainSomething(g);
 }

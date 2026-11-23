@@ -1,4 +1,4 @@
-# Rust port: status (read this first; checked against rust-port 5138e0ba5, 2026-11-04)
+# Rust port: status (read this first; replay numbers refreshed 2026-11-21 on rust-port 232ae5633; other sections last checked 2026-11-04)
 
 ## Orientation
 - **What this is:** a native Rust port of GD's Melee (the PC decomp build), little-endian, no emulation. Game logic is
@@ -16,12 +16,12 @@
   - coverage goldens: 182 pass, 30 fail, 10 no golden (C run failed or blocked) (notes/coverage.md "port/onepseed",
     2026-11-08: the goldens with CPU fighters were re-recorded after the ftCo_800ADE48 C mirror of ef0c6dad2; the 30 are
     real engine-vs-C divergences listed there; `docs/rust-port/golden/coverage/results.tsv`).
-  - external Slippi replays: 38 of 125 frame-exact against the console's post-frame data (notes/slpcheck.md round 2,
-    2026-11-02; not re-measured since).
+  - Slippi replays: 12,012 of 12,265 match byte for byte across 5 sets (ext 125/125, hero 426/428, lunar 348/351,
+    gang 3428/3561, lunar2 7685/7800; notes/replay-results.md, 2026-11-21).
   - speed: about 9x cheaper per sim frame than melee-unlocked's Static Recomp headless playback on one replay
     (notes/bench-unlocked.md, 2026-11-02, one machine).
-- **Known gaps:** 87 of 125 external replays still diverge (Stadium / Fountain platforms, 1-ULP contraction sites, hit
-  timing; notes/slpcheck.md); launcher parity gaps (online lobby protocols, `--mod-gci` / TE packs, `.slp` playback
+- **Known gaps:** 253 of 12,265 replays still diverge: 97 engine bugs (Slippi 3.20.0 timer / RNG / wind, 3.19.1 ULP drift,
+  one ICs spawn), 115 recording artifacts, 41 unknown (notes/replay-results.md); launcher parity gaps (online lobby protocols, `--mod-gci` / TE packs, `.slp` playback
   from the launcher, his DS4 / Switch binding tables; notes/launcher-seam.md section 4); consolidation step 23
   unfinished and step 24 (lint enforcing, empty baseline) not started; audio `--pause` / `--time-secs` proofs open;
   user-only checks (visuals, audio by ear, real controllers, online across machines).
@@ -156,7 +156,7 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 - Round 6 (cov2): Rainbow Cruise, char_ness and Fountain pass (native union arm aliases in Kirby SpecialLw / ThrownKirby / CaptureKirby / grIzumi; Kirby hat archives now decode through `dat_custom::kirbyhat`, notes/coverage.md round 6). Left from that cluster: Temple 2477 (Sheik chain item state), Great Bay 1623 (Tingle balloon state), Yoshi's Story 590 and items_hi_yoshistory 2805 (Jigglypuff retail callbacks, blocker D: `ftData_SpecialS[15]` is not set on the engine). Items Stadium (3529): `ftCo_800D3158` death with a garbage `fp->player_id` (192). Corneria (955, 512 owned-gobj cap).
 - Item hash divergences (`itemsum`): Mario 455 (Yoshi stars), Mushroom Kingdom II 803, Ice Mt 1472, Great Bay 1623, Temple 2477, Mewtwo 2116, cpulv9_marth_sheik 1798. Fighter hashes at 442 to 3502 (Sheik / Zelda, Kirby, Yoshi, Roy, Bowser, Ness, Zelda, Captain). Method: C call trace + temporary DBG prints (notes/coverage.md round 4); suspect more PC-build ABI/UB differences in the goldens before suspecting the Rust ports.
 
-## Current blockers (slpcheck, 2026-11-02, port/replays)
+## Earlier blockers (slpcheck, 2026-11-02, port/replays; history, see notes/replay-results.md for today)
 `melee slpcheck --slp F` compares the engine with the console's own post-frame data (notes/slpcheck.md). 125 external replays: **38 frame-exact**
 (was 0), median first divergence of the other 87 = frame 2322 (was 1157). Fixed this round: the match was seeded with 0 (`Replay_ApplyMatch` seam), the
 synthetic Frame Start seeds were forced every frame (the console RNG is continuous; Pre-Frame seeds chain by LCG steps), the BGM-pick draw on stages 3/31/32,

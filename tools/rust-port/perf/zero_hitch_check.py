@@ -16,6 +16,12 @@ Contention (notes/profiling.md): a profile with the `contended` column marks an 
 the machine was >= 80% busy and the game thread got under 70% of the frame's work time on the CPU (starved by other
 processes). Those are listed apart and do not fail the gate (re-run on a quiet machine); --strict-contended fails on
 them too. Older profiles without the column count every offender as clean.
+A first frame holding stage/fighter events (a `--match` run's match-start tick) is not exempt: it is listed as
+"match start" and counted.
+Fight scenes only (the owner, 2026-11-22: over-16 ms frames before or outside fight scenes are fine): only frames in a
+fight scene (`vs`, `suddendeath`; rollback resimulations run inside them) fail the gate. Title, menus, loads and the
+select <-> match transitions (a match-start frame with the stage/fighter loads included) are listed as "outside fights"
+and reported, not failed. --all-scenes counts every scene, as before.
 Exit 0 = pass, 1 = clean offenders, 2 = bad input.
 """
 import csv, json, os, sys
@@ -32,6 +38,9 @@ def main():
     label = opt("--label", os.path.basename(path))
     strict_start = "--strict-start" in a
     strict_cont = "--strict-contended" in a
+    all_scenes = "--all-scenes" in a
+    # a fight frame: the VS / sudden-death scene (retail_flow::scene_name), not its match-start (load) tick
+    fight = lambda o: o["scene"].split(" ")[0] in ("vs", "suddendeath") and not o["cause"].startswith("match start")
     jl = path[:-4] + ".jsonl"
     rows = list(csv.DictReader(open(path, newline="")))
     if not rows:
@@ -79,16 +88,26 @@ def main():
         files = [e.get("text", "") for e in ev if e["kind"] == "file"]
         # timed phases (spans of kind note/fighter/stage/envoy with ms >= 0.5): the named split of the engine step
         phases = [f'{e.get("text", "")[:48]} {e.get("ms", 0):.1f}' for e in ev if e["kind"] in ("note", "fighter", "stage", "envoy") and e.get("ms", 0) >= 0.5]
-        startup = i == 0
+        # the first frame is window creation ("startup", exempt) unless the match starts in it (a `--match` run): then it
+        # is the match-start tick and counts like any other frame
+        match_start = any(e["kind"] in ("stage", "fighter") for e in ev)
+        startup = i == 0 and not match_start
+        tag = "startup: " if startup else ("match start: " if match_start else "")
         cont = r.get("contended", "") == "1"
-        offenders.append(dict(cont=cont, cpu=r.get("thread_cpu_ms", ""), sys=r.get("sys_cpu_pct", ""), t=t0 / 1000, iv=iv, tk=tk, scene=r.get("scene", ""), tick=r.get("tick", ""), cause=("startup: " if startup else "") + cause,
+        offenders.append(dict(cont=cont, cpu=r.get("thread_cpu_ms", ""), sys=r.get("sys_cpu_pct", ""), t=t0 / 1000, iv=iv, tk=tk, scene=r.get("scene", ""), tick=r.get("tick", ""), cause=tag + cause,
                               parts=parts, ctx=ctx, files=files, phases=phases, startup=startup))
     real = [o for o in offenders if strict_start or not o["startup"]]
+    nstart = len(offenders) - len(real)
+    outside = [] if all_scenes else [o for o in real if not fight(o)]
+    real = [o for o in real if all_scenes or fight(o)]
     cont = [o for o in real if o["cont"]]
     clean = [o for o in real if not o["cont"]]
     print(f"== {label}: {len(rows)} frames, budget {budget} ms: {len(real)} over budget ({len(clean)} clean, {len(cont)} contended)"
-          + (f" (+{len(offenders) - len(real)} startup)" if len(offenders) != len(real) else "")
-          + f"; {tight} presents over 1.5x the display interval")
+          + (f" (+{nstart} startup)" if nstart else "")
+          + f"; {tight} presents over 1.5x the display interval"
+          + (f"; {len(outside)} more outside fights (reported, not failed)" if outside else ""))
+    for o in outside:
+        o["cause"] = "outside fights (not failed): " + o["cause"]
     by = defaultdict(list)
     for o in offenders: by[o["cause"]].append(o)
     for o in offenders:

@@ -353,7 +353,9 @@ pub unsafe fn lb_8000B804(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
 }
 
 /// `HSD_JObjWalkTree` callback (static): sets the AObj rate when the walk says so.
+#[inline(never)]
 pub unsafe extern "C" fn lb_8000B9D8(jobj: *mut HSD_JObj, arg1: *mut *mut f32, arg2: i32) {
+    core::hint::black_box(0xB747142Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lb_8000B9D8");
     let tmp = *arg1;
     if arg2 != 0 {

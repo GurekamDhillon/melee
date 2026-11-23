@@ -198,7 +198,9 @@ pub unsafe extern "C" fn grShrineRoute_802088C0(gobj_id: i32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5C23AB28u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
@@ -1073,6 +1075,7 @@ pub unsafe extern "C" fn grShrineRoute_8020AD24(arg: i32) -> i32 {
 }
 
 /// The joint contact callback of the six route spots (`mpLib_JointCollisionCallback`).
+#[inline(never)]
 pub unsafe extern "C" fn onJointCollision(
     user_data: *mut c_void,
     _joint_id: i32,
@@ -1081,6 +1084,7 @@ pub unsafe extern "C" fn onJointCollision(
     ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    core::hint::black_box(0x8B00C407u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onJointCollision");
     let gp = user_data as *mut Ground;
 

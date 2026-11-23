@@ -131,38 +131,38 @@ fn itmball_matches_c() {
                     0 => {  m::itMball_Destroyed(&raw mut GO[0]); } // itMball_Destroyed
                     1 => {  m::itMball_Spawned(&raw mut GO[0]); } // itMball_Spawned
                     2 => {  m::itMball_80297944(&raw mut GO[0]); } // itMball_80297944
-                    3 => {  ret = m::itMball_Motion0_Anim(&raw mut GO[0]) as u32; } // itMball_Motion0_Anim
+                    3 => {  ret = ((m::itMball_Motion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion0_Anim
                     4 => {  m::itMball_Motion0_Phys(&raw mut GO[0]); } // itMball_Motion0_Phys
-                    5 => {  ret = m::itMball_Motion0_Coll(&raw mut GO[0]) as u32; } // itMball_Motion0_Coll
+                    5 => {  ret = ((m::itMball_Motion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion0_Coll
                     6 => {  m::itMball_802979D4(&raw mut GO[0]); } // itMball_802979D4
-                    7 => {  ret = m::itMball_Motion3_Anim(&raw mut GO[0]) as u32; } // itMball_Motion3_Anim
+                    7 => {  ret = ((m::itMball_Motion3_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion3_Anim
                     8 => {  m::itMball_Motion1_Phys(&raw mut GO[0]); } // itMball_Motion1_Phys
-                    9 => {  ret = m::itMball_Motion1_Coll(&raw mut GO[0]) as u32; } // itMball_Motion1_Coll
+                    9 => {  ret = ((m::itMball_Motion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion1_Coll
                     10 => {  m::itMball_PickedUp(&raw mut GO[0]); } // itMball_PickedUp
-                    11 => {  ret = m::itMball_Motion2_Anim(&raw mut GO[0]) as u32; } // itMball_Motion2_Anim
+                    11 => {  ret = ((m::itMball_Motion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion2_Anim
                     12 => {  m::itMball_Motion2_Phys(&raw mut GO[0]); } // itMball_Motion2_Phys
                     13 => {  m::itMball_Dropped(&raw mut GO[0]); } // itMball_Dropped
                     14 => {  m::itMball_Thrown(&raw mut GO[0]); } // itMball_Thrown
                     15 => {  m::itMball_Motion3_Phys(&raw mut GO[0]); } // itMball_Motion3_Phys
-                    16 => {  ret = m::itMball_Motion3_Coll(&raw mut GO[0]) as u32; } // itMball_Motion3_Coll
-                    17 => {  ret = m::itMball_DmgDealt(&raw mut GO[0]) as u32; } // itMball_DmgDealt
+                    16 => {  ret = ((m::itMball_Motion3_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion3_Coll
+                    17 => {  ret = ((m::itMball_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_DmgDealt
                     18 => {  m::itMball_EnteredAir(&raw mut GO[0]); } // itMball_EnteredAir
-                    19 => {  ret = m::itMball_Motion4_Anim(&raw mut GO[0]) as u32; } // itMball_Motion4_Anim
+                    19 => {  ret = ((m::itMball_Motion4_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion4_Anim
                     20 => {  m::itMball_Motion4_Phys(&raw mut GO[0]); } // itMball_Motion4_Phys
-                    21 => {  ret = m::itMball_Motion4_Coll(&raw mut GO[0]) as u32; } // itMball_Motion4_Coll
+                    21 => {  ret = ((m::itMball_Motion4_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion4_Coll
                     22 => {  m::itMball_80297CC4(&raw mut GO[0]); } // itMball_80297CC4
                     23 => {  m::itMball_OnAccessory(&raw mut GO[0]); } // itMball_OnAccessory
-                    24 => {  ret = m::itMball_Motion5_Anim(&raw mut GO[0]) as u32; } // itMball_Motion5_Anim
+                    24 => {  ret = ((m::itMball_Motion5_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion5_Anim
                     25 => {  m::itMball_Motion5_Phys(&raw mut GO[0]); } // itMball_Motion5_Phys
-                    26 => {  ret = m::itMball_Motion5_Coll(&raw mut GO[0]) as u32; } // itMball_Motion5_Coll
+                    26 => {  ret = ((m::itMball_Motion5_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion5_Coll
                     27 => {  m::itMball_80297E8C(&raw mut GO[0]); } // itMball_80297E8C
-                    28 => {  ret = m::itMball_Motion6_Anim(&raw mut GO[0]) as u32; } // itMball_Motion6_Anim
+                    28 => {  ret = ((m::itMball_Motion6_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion6_Anim
                     29 => {  m::itMball_Motion6_Phys(&raw mut GO[0]); } // itMball_Motion6_Phys
-                    30 => {  ret = m::itMball_Motion6_Coll(&raw mut GO[0]) as u32; } // itMball_Motion6_Coll
-                    31 => {  ret = m::itMball_Clanked(&raw mut GO[0]) as u32; } // itMball_Clanked
-                    32 => {  ret = m::itMball_Reflected(&raw mut GO[0]) as u32; } // itMball_Reflected
-                    33 => {  ret = m::itMball_HitShield(&raw mut GO[0]) as u32; } // itMball_HitShield
-                    34 => {  ret = m::itMball_ShieldBounced(&raw mut GO[0]) as u32; } // itMball_ShieldBounced
+                    30 => {  ret = ((m::itMball_Motion6_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Motion6_Coll
+                    31 => {  ret = ((m::itMball_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Clanked
+                    32 => {  ret = ((m::itMball_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_Reflected
+                    33 => {  ret = ((m::itMball_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_HitShield
+                    34 => {  ret = ((m::itMball_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itMball_ShieldBounced
                     35 => {  m::itMball_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itMball_EvtUnk
                     36 => { for j in 0..7 { let row = &m::it_803F6488[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

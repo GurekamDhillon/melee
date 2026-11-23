@@ -108,7 +108,9 @@ pub static mut it_803F7898: [ItemStateTable; 4] = [
 ];
 
 /// `HSD_GObj* itGamewatchGreenhouse_Spawn(HSD_GObj*, Vec3*, Fighter_Part, float)`
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_Spawn(parent: *mut HSD_GObj, pos: *mut Vec, part: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    core::hint::black_box(0xB178C965u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Greenhouse;
@@ -124,7 +126,9 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Spawn(parent: *mut HSD_GObj, pos:
     null_mut()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_Destroyed(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE2995059u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).owner.is_null() {
@@ -132,7 +136,9 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Destroyed(item_gobj: *mut HSD_GOb
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6328(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x857789C4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_802C6328");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
@@ -141,17 +147,23 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_802C6328(item_gobj: *mut HSD_GObj
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6374(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0F70143Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_802C6374");
     ext::it_8026B724(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6394(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7B6AAE13u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_802C6394");
     ext::it_8026B73C(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_PickedUp(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA2E0959Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_PickedUp");
     let item = GET_ITEM(item_gobj);
     (*item).xDB0_itcmd_var1 = 0;
@@ -166,22 +178,30 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_PickedUp(item_gobj: *mut HSD_GObj
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6430(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD428B7E4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_802C6430");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6458(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD024346Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_802C6458");
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6480(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD6449187u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_802C6480");
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE as u32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C64A8(item_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x47B72A5Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_802C64A8");
     ext::Item_80268E5C(item_gobj, 3, ITEM_ANIM_UPDATE as u32);
 }
@@ -197,7 +217,9 @@ pub unsafe fn greenhouse_Check(item_gobj: *mut HSD_GObj) -> i32 {
     1
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_Motion3_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x7C40CAE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_Motion3_Anim");
     if greenhouse_Check(item_gobj) != 0 {
         itGamewatchGreenhouse_Destroyed(item_gobj);
@@ -206,7 +228,9 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Motion3_Anim(item_gobj: *mut HSD_
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_Motion2_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x2EECB67Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_Motion2_Anim");
     if ext::it_80272C6C(item_gobj) == 0 {
         ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE as u32);
@@ -218,7 +242,9 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Motion2_Anim(item_gobj: *mut HSD_
     0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itGamewatchGreenhouse_EvtUnk(item_gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD35176D5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itGamewatchGreenhouse_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

@@ -62,7 +62,9 @@ pub static mut it_803F8E90: [ItemStateTable; 2] = [
     st_row(0, pred_b!(itOctarockstone_UnkMotion1_Anim), Some(itOctarockstone_UnkMotion1_Phys), pred_b!(itOctarockstone_UnkMotion1_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_802E878C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x4382FBE1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_802E878C");
     let ip = GET_ITEM(gobj);
     (*ip).xD5C = 0;
@@ -71,43 +73,59 @@ pub unsafe extern "C" fn itOctarockstone_802E878C(gobj: *mut Item_GObj) {
     itOctarockstone_802E883C(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_Logic4_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB5E76765u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_Logic4_DmgDealt");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_Logic4_Clanked(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x2F280245u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_Logic4_Clanked");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_Logic4_HitShield(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x844B0671u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_Logic4_HitShield");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_Logic4_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x17E2FD47u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_Logic4_Absorbed");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_Logic4_Reflected(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xD0D535E5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_Logic4_Reflected");
     ext::it_80273030(gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_Logic4_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xC6CAABA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_Logic4_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_802E883C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA4A79A7Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_802E883C");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x0C41041Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
@@ -115,9 +133,12 @@ pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Anim(gobj: *mut Item_GObj) -
     false
 }
 
-pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itOctarockstone_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x13049B6Bu32); /* fn identity */ melee_core::ct!("itOctarockstone_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xBD561FF9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
 
@@ -132,7 +153,9 @@ pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Coll(gobj: *mut Item_GObj) -
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_802E890C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x000DB9E7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_802E890C");
     let ip = GET_ITEM(gobj);
     ext::it_802762BC(ip);
@@ -140,23 +163,31 @@ pub unsafe extern "C" fn itOctarockstone_802E890C(gobj: *mut Item_GObj) {
     ext::Item_8026AE84(ip, 0x138, 0x7F, 0x40);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x59951887u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_UnkMotion1_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x46E36CFAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xCAA22990u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_UnkMotion1_Coll");
     ext::it_8026DFB0(gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itOctarockstone_802E89B0(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xC57FA128u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itOctarockstone_802E89B0");
     ext::it_8026B894(gobj, ref_gobj);
 }
@@ -171,7 +202,9 @@ fn getX(x1: f32, x2: f32) -> f32 {
     res
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802E89D0(gobj: *mut Item_GObj, horiz_speed: f32, min_vy: f32, max_vy: f32) {
+    core::hint::black_box(0x4C874769u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E89D0");
     let ip = GET_ITEM(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
@@ -203,7 +236,9 @@ pub unsafe extern "C" fn it_802E89D0(gobj: *mut Item_GObj, horiz_speed: f32, min
 }
 
 /// Spawns an Octarock stone projectile.
+#[inline(never)]
 pub unsafe extern "C" fn it_802E8ADC(gobj: *mut Item_GObj, pos: *mut Vec3, dir: i32, horiz_speed: f32, min_vy: f32, max_vy: f32) {
+    core::hint::black_box(0xC57BBCE8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802E8ADC");
     let mut spawn: SpawnItem = core::mem::zeroed();
 

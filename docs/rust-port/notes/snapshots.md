@@ -20,3 +20,11 @@ read by the sim (only `play`'s "mem after" line, which rollbacks/seeks also made
 lives in a system-heap cell; the static only holds its address, set once at startup before any snapshot base.
 MELEE_SNAP_CHECK now prints the differing bytes and the RVA of the first one; map it with
 `llvm-pdbutil dump -section-contribs melee.pdb` (.data starts at the section's RVA) and `llvm-objdump -d` for writers.
+
+### The host-only page mask needs the PDB or its sidecar
+MELEE_SNAP_CHECK skips statics pages holding no game crate's data (`melee_engine/src/snapmask.rs`). The span list comes
+from `<exe>.snapmask` beside the exe when its recorded exe size matches, else from `<exe>.pdb`; with neither, every page
+is compared (and the check reports host-only noise). `melee --write-snapmask` writes the sidecar from the PDB beside
+the exe and exits. `tools/rust-port/launcher/package.sh` does this into the package (the PDB itself is not shipped);
+dev builds and the candidate folders (`melee-candidateN.exe` + `melee-candidateN.pdb`) keep the PDB beside the exe,
+and copies of a built exe must carry its `.pdb` (or `.snapmask`) with the same base name.

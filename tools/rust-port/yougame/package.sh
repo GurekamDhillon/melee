@@ -2,7 +2,7 @@
 # The YouGame desktop build of the Rust engine (Windows x64), for a "Patches" listing: the player's own disc comes
 # from the YouGame app ("disc": true, {disc} in yougame-native.json); nothing of the disc is in the zip.
 #   bash tools/rust-port/yougame/package.sh [--skip-build] [--out DIR]
-# Builds melee.exe (release, cargo -j 4, own target dir YG_TARGET_DIR, static CRT, paths remapped), lays out
+# Builds melee.exe (release, cargo -j 3, own target dir YG_TARGET_DIR, static CRT, paths remapped), lays out
 #   melee-rust/melee.exe  yougame-native.json  version.txt  LICENSE.txt (GPL-3, rust/LICENSE)
 #   THIRD_PARTY_NOTICES.txt (every crate linked in, with its licence texts)  README.txt
 # zips it, then audits the zip: no disc data (GameCube/Wii disc headers, Melee's DAT/USD/HPS file names, big
@@ -23,14 +23,14 @@ while [ $# -gt 0 ]; do
 done
 # A target of its own: the release exe is built with the CRT linked in (no vcruntime140.dll to ship) and every
 # build-machine path remapped (panic locations and the PDB path would otherwise carry the user's folders).
-target="${YG_TARGET_DIR:-$(cd "$repo/../.." 2>/dev/null && pwd)/_build/cargo-ygpack}"
+target="${YG_TARGET_DIR:-$(cd "$repo/.." 2>/dev/null && pwd)/_build/cargo-ygpack}"
 export CARGO_TARGET_DIR="$target"
 unset RUSTFLAGS
 win() { cygpath -w "$1" 2>/dev/null || echo "$1"; }
 cargo_home="${CARGO_HOME:-$HOME/.cargo}"
 rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"
 flags=("-Ctarget-feature=+crt-static" "-Clink-arg=/PDBALTPATH:melee.pdb")
-ws_root="$(cd "$repo/../.." && pwd)"
+ws_root="$(cd "$repo/.." && pwd)"
 for pair in "$cargo_home/registry/src=crates" "$cargo_home=cargo" "$rustup_home=rustup" "$repo=melee" "$target=target" "$ws_root=workspace"; do
   from="$(win "${pair%%=*}")"; to="${pair#*=}"
   fwd="$(printf '%s' "$from" | tr '\\' '/')"
@@ -39,7 +39,7 @@ done
 CARGO_ENCODED_RUSTFLAGS="$(IFS=$''; echo "${flags[*]}")"
 export CARGO_ENCODED_RUSTFLAGS
 if [ $build = 1 ]; then
-  (cd "$repo/rust" && cargo build -j 4 --release -p melee 2>&1 | tail -2)
+  (cd "$repo/rust" && cargo build -j "${YG_JOBS:-3}" --release -p melee --features real-net 2>&1 | tail -2)
 fi
 exe="$target/release/melee.exe"
 [ -f "$exe" ] || { echo "package: no $exe" >&2; exit 1; }

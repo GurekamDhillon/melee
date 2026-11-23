@@ -309,7 +309,9 @@ pub unsafe fn hsdFreeMemPiece(mem: *mut c_void, size: i32) {
 }
 
 /// `_hsdClassAlloc`.
+#[inline(never)]
 pub unsafe extern "C" fn _hsdClassAlloc(info: *mut HSD_ClassInfo) -> *mut HSD_Class {
+    core::hint::black_box(0x22787DBCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_hsdClassAlloc");
     let mem_piece = hsdAllocMemPiece((*info).head.obj_size as i32) as *mut HSD_Class;
     if !mem_piece.is_null() {
@@ -322,16 +324,21 @@ pub unsafe extern "C" fn _hsdClassAlloc(info: *mut HSD_ClassInfo) -> *mut HSD_Cl
 }
 
 /// `_hsdClassInit`.
+#[inline(never)]
 pub unsafe extern "C" fn _hsdClassInit(_arg0: *mut HSD_Class) -> i32 {
+    core::hint::black_box(0x769C9471u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_hsdClassInit");
     0
 }
 
 /// `_hsdClassRelease`.
-pub unsafe extern "C" fn _hsdClassRelease(_cls: *mut HSD_Class) { melee_core::ct!("_hsdClassRelease");}
+#[inline(never)]
+pub unsafe extern "C" fn _hsdClassRelease(_cls: *mut HSD_Class) { core::hint::black_box(0xFC8D9E7Cu32); /* fn identity */ melee_core::ct!("_hsdClassRelease");}
 
 /// `_hsdClassDestroy`.
+#[inline(never)]
 pub unsafe extern "C" fn _hsdClassDestroy(cls: *mut HSD_Class) {
+    core::hint::black_box(0x52B49BA7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_hsdClassDestroy");
     let info = (*cls).class_info;
     (*info).head.nb_exist = (*info).head.nb_exist.wrapping_sub(1);
@@ -339,7 +346,9 @@ pub unsafe extern "C" fn _hsdClassDestroy(cls: *mut HSD_Class) {
 }
 
 /// `_hsdClassAmnesia`.
+#[inline(never)]
 pub unsafe extern "C" fn _hsdClassAmnesia(info: *mut HSD_ClassInfo) {
+    core::hint::black_box(0xFBE0BB7Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_hsdClassAmnesia");
     (*info).head.nb_exist = 0;
     (*info).head.nb_peak = 0;
@@ -351,7 +360,9 @@ pub unsafe extern "C" fn _hsdClassAmnesia(info: *mut HSD_ClassInfo) {
 }
 
 /// `_hsdClassInfoInit`.
+#[inline(never)]
 pub unsafe extern "C" fn _hsdClassInfoInit() {
+    core::hint::black_box(0x96AB57FDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("_hsdClassInfoInit");
     hsdInitClassInfo(
         core::ptr::addr_of_mut!(hsdClass),

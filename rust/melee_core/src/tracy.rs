@@ -127,21 +127,19 @@ pub fn message(f: impl FnOnce() -> String) {
 #[cfg(feature = "profile-tracy")]
 fn intern(name: &'static str) -> tracy_client::FrameName {
     use std::collections::HashMap;
-    use std::sync::Mutex;
-    static NAMES: Mutex<Option<HashMap<&'static str, tracy_client::FrameName>>> = Mutex::new(None);
-    let mut g = NAMES.lock().unwrap();
-    *g.get_or_insert_with(HashMap::new).entry(name).or_insert_with(|| {
-        tracy_client::FrameName::new_leak(name.to_string())
-    })
+    // per thread (TLS is not in a rollback snapshot; a static table grown on the system heap was rewound)
+    thread_local! {
+        static NAMES: core::cell::RefCell<HashMap<&'static str, tracy_client::FrameName>> = core::cell::RefCell::new(HashMap::new());
+    }
+    NAMES.with(|n| *n.borrow_mut().entry(name).or_insert_with(|| tracy_client::FrameName::new_leak(name.to_string())))
 }
 
 #[cfg(feature = "profile-tracy")]
 fn intern_plot(name: &'static str) -> tracy_client::PlotName {
     use std::collections::HashMap;
-    use std::sync::Mutex;
-    static NAMES: Mutex<Option<HashMap<&'static str, tracy_client::PlotName>>> = Mutex::new(None);
-    let mut g = NAMES.lock().unwrap();
-    *g.get_or_insert_with(HashMap::new).entry(name).or_insert_with(|| {
-        tracy_client::PlotName::new_leak(name.to_string())
-    })
+    // per thread (TLS is not in a rollback snapshot)
+    thread_local! {
+        static NAMES: core::cell::RefCell<HashMap<&'static str, tracy_client::PlotName>> = core::cell::RefCell::new(HashMap::new());
+    }
+    NAMES.with(|n| *n.borrow_mut().entry(name).or_insert_with(|| tracy_client::PlotName::new_leak(name.to_string())))
 }

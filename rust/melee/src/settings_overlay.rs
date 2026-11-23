@@ -132,10 +132,30 @@ pub struct Overlay {
     pub shown: bool,
     /// Quads of the last drawn frame (log / tests).
     pub last_quads: usize,
+    /// The launcher's settings window (settings_window.rs): the panel centred in its own window.
+    pub window_mode: bool,
 }
 
 fn cfg_val(key: &str) -> Option<String> {
     crate::cfg::text(key)
+}
+
+/// A live 0..100 slider (step 5) from settings.cfg.
+fn slider(key: &str, label: &str, dflt: i32, help: &str) -> Row {
+    let value = cfg_val(key).and_then(|v| v.trim().parse::<i32>().ok()).unwrap_or(dflt).clamp(0, 100);
+    Row { key: key.into(), label: label.into(), kind: Kind::Slider { lo: 0, hi: 100, step: 5 }, value, live: true, help: help.into(), note: String::new() }
+}
+
+/// Hero's "Output device": the system default or one device by name (`audio_device`); applies on the next launch.
+fn device_row(devices: &[String]) -> Row {
+    let cur = cfg_val("audio_device").unwrap_or_default();
+    let mut c: Vec<(String, String)> = vec![("System default".into(), String::new())];
+    c.extend(devices.iter().map(|d| (d.clone(), d.clone())));
+    if !cur.is_empty() && !devices.contains(&cur) {
+        c.push((format!("{cur} (not connected)"), cur.clone()));
+    }
+    let value = c.iter().position(|o| o.1 == cur).unwrap_or(0) as i32;
+    Row { key: "audio_device".into(), label: "Output device".into(), kind: Kind::Choice(c), value, live: false, help: "Applies after restart (as Hero's).".into(), note: String::new() }
 }
 
 fn choice(key: &str, label: &str, opts: &[(&str, &str)], dflt: &str, live: bool, help: &str) -> Row {
@@ -183,7 +203,7 @@ fn toggle(key: &str, label: &str, dflt: bool, live: bool, help: &str) -> Row {
 impl Overlay {
     /// The pages from the current settings; `volume` the live master volume.
     pub fn new(volume: i32) -> Overlay {
-        let onoff = [("Auto", "auto"), ("On", "on"), ("Off", "off")];
+        let onoff = [("Off", "off"), ("On", "on")];
         // Live: the presenter and the pacer take these at once (presentation only). Widescreen is live in the renderer
         // mode (the game's view hooks keep answering 4:3); the camera mode is fixed for the run. MSAA is baked into
         // every pipeline (the sample count), so it waits for the next launch.
@@ -193,7 +213,7 @@ impl Overlay {
             choice("fullscreen", "Fullscreen", &[("Off", "off"), ("Borderless", "borderless"), ("Exclusive", "exclusive")], "off", false, "Alt+Enter toggles at any time."),
             toggle("vsync", "VSync", true, true, "Off: present as fast as the cap allows."),
             choice("fps_cap", "Frame cap", &[("Off", "off"), ("60", "60"), ("120", "120"), ("144", "144"), ("165", "165"), ("240", "240")], "off", true, "Presented frames per second; the game always runs at 60."),
-            choice("interp", "Frame interpolation", &onoff, "auto", true, "Render-only in-between frames (auto: on above 60 fps)."),
+            choice("interp", "Frame interpolation", &onoff, "off", true, "Render-only in-between frames, for testing. Off: one frame per 60 Hz tick."),
             choice("interp_mode", "Interpolation mode", &[("Interpolate", "interpolate"), ("Extrapolate", "extrapolate")], "interpolate", true, "Extrapolate adds no latency."),
             choice("render_scale", "Internal resolution", &[("Auto", "auto"), ("1x", "1"), ("2x", "2"), ("3x", "3"), ("4x", "4"), ("6x", "6"), ("8x", "8")], "auto", true, "x 480 lines."),
             msaa_row(),
@@ -206,7 +226,10 @@ impl Overlay {
             live: true,
             help: "Output gain only; the game's mix is untouched.".into(),
             note: String::new(),
-        }];
+        },
+        slider("music", "Music", 100, "The music stream only (Hero's Music slider); master volume applies on top."),
+        slider("sfx", "SFX", 100, "Every sound but the music: fighters, stages, menus, announcer."),
+        device_row(&melee_audio::output::list_devices())];
         let overlays = vec![
             toggle("overlay", "Performance HUD", false, true, "fps, frame time, sim rate; netplay ping / delay / rollbacks (F3)."),
             toggle("input_display", "Input display", false, true, "Sticks, triggers and buttons per port (F6)."),
@@ -271,7 +294,44 @@ impl Overlay {
             own: None,
             shown: false,
             last_quads: 0,
+            window_mode: false,
         }
+    }
+
+    /// The launcher's settings window: no game to return to, so SESSION holds only "Close settings" (`action:quit`);
+    /// opens at once on `tab` (his `--settings-tab` names; unknown ones keep VIDEO).
+    pub fn into_window(mut self, tab: Option<&str>) -> Overlay {
+        self.window_mode = true;
+        self.open = true;
+        if let Some(s) = self.pages.iter_mut().find(|p| p.name == "SESSION") {
+            s.rows.retain(|r| r.key == "quit");
+            if let Some(r) = s.rows.first_mut() {
+                r.label = "Close settings".into();
+                r.help = "Every change is already saved.".into();
+            }
+        }
+        self.page = 1;
+        if let Some(t) = tab {
+            self.select_page(t);
+        }
+        self
+    }
+
+    /// Show the page named `name` (case-insensitive); his `mods` tab is our CUSTOMIZE (skins). False: no such page.
+    pub fn select_page(&mut self, name: &str) -> bool {
+        let want = if name.eq_ignore_ascii_case("mods") { "CUSTOMIZE" } else { name };
+        match self.pages.iter().position(|p| p.name.eq_ignore_ascii_case(want)) {
+            Some(i) => {
+                self.page = i;
+                self.row = 0;
+                true
+            }
+            None => false,
+        }
+    }
+
+    pub fn page_name(&self) -> &'static str {
+        self.pages[self.page].name
     }
 
     pub fn take_changes(&mut self) -> Vec<Change> {
@@ -490,7 +550,8 @@ impl Overlay {
         let t = &palette_theme(self.theme, self.palette);
         let mut p = Pen::new(0xFFFF);
         p.layer = cmd::LAYER_MODAL;
-        let (x, y, w, h) = (276.0f32, 36.0f32, 350.0f32, 408.0f32);
+        let (w, h) = (350.0f32, 408.0f32);
+        let (x, y) = if self.window_mode { ((640.0 - w) * 0.5, (480.0 - h) * 0.5) } else { (276.0f32, 36.0f32) };
         let fill = t[theme::TOK_SLICE_FILL as usize] as usize;
         let border = t[theme::TOK_SLICE_BORDER as usize] as usize;
         let sh = t[theme::TOK_SHADOW as usize];
@@ -507,7 +568,7 @@ impl Overlay {
         }
         let (text, muted, accent, ink, div) = (t[theme::TOK_TEXT as usize], t[theme::TOK_MUTED as usize], t[theme::TOK_ACCENT as usize], t[theme::TOK_ACCENT_INK as usize], t[theme::TOK_DIVIDER as usize]);
         b.text(&p, a, x + 14.0, y + 12.0, ROLE_BIG, text, cmd::ALIGN_LEFT, 0.0, "SETTINGS");
-        b.text(&p, a, x + w - 14.0, y + 16.0, cmd::ROLE_LABEL, muted, cmd::ALIGN_RIGHT, 0.0, "L/R page  B close");
+        b.text(&p, a, x + w - 14.0, y + 16.0, cmd::ROLE_LABEL, muted, cmd::ALIGN_RIGHT, 0.0, if self.window_mode { "L/R or Tab page  B close" } else { "L/R page  B close" });
         // tabs
         let mut tx = x + 10.0;
         for (i, pg) in self.pages.iter().enumerate() {

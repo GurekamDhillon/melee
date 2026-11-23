@@ -237,39 +237,57 @@ pub fn FTKB_IS_KIRBY(kind: i32) -> bool {
 // ---------------------------------------------------------------------------------------------
 // Callbacks stored in Fighter fields (extern "C" entries of the Rust ports below).
 // ---------------------------------------------------------------------------------------------
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F6178(g: G) {
+    core::hint::black_box(0x79D14E2Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F6178");
     fn_800F6178(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F6210(g: G) {
+    core::hint::black_box(0x4E858DD4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F6210");
     fn_800F6210(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F6280(g: G) {
+    core::hint::black_box(0xC49C0DE5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F6280");
     fn_800F6280(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F6318(g: G) {
+    core::hint::black_box(0x53F374A3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F6318");
     fn_800F6318(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCo_800BD1DC(g: G, victim: G) {
+    core::hint::black_box(0x136A1ED3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCo_800BD1DC");
     ext::ftCo_800BD1DC(g, victim)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F6588(g: G) {
+    core::hint::black_box(0xC44CB580u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F6588");
     fn_800F6588(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F6638(g: G) {
+    core::hint::black_box(0x973F5AC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F6638");
     fn_800F6638(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F66E8(g: G) {
+    core::hint::black_box(0x136BAA94u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F66E8");
     fn_800F66E8(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_800F6798(g: G) {
+    core::hint::black_box(0x277E60FFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_800F6798");
     fn_800F6798(g)
 }

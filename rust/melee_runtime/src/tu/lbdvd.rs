@@ -124,7 +124,9 @@ unsafe fn entry_at(i: usize) -> *mut PreloadEntry {
 
 // ---- TARGET_PC six-slot budget -------------------------------------------------------------
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_IsPlanningSixSlot() -> i32 {
+    core::hint::black_box(0x8940E277u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_IsPlanningSixSlot");
     six_budget_check
 }
@@ -203,7 +205,9 @@ unsafe fn lbDvd_SixBudget() -> i32 {
     ok
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_TrySetupSixSlotCache() -> i32 {
+    core::hint::black_box(0xCAAB9940u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_TrySetupSixSlotCache");
     let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
     let saved = preloadCache;
@@ -229,7 +233,9 @@ pub unsafe extern "C" fn lbDvd_TrySetupSixSlotCache() -> i32 {
     ok
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_SixBudgetTest() -> i32 {
+    core::hint::black_box(0xD0CBB1CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_SixBudgetTest");
     let saved = preloadCache;
     let saved_ok = six_budget_ok;
@@ -252,7 +258,9 @@ pub unsafe extern "C" fn lbDvd_SixBudgetTest() -> i32 {
 
 // ---- the cache -----------------------------------------------------------------------------
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache() {
+    core::hint::black_box(0xA4D69C6Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_SetupVsPreloadCache");
     lbDvd_80018C6C();
     lbDvd_80018254();
@@ -262,7 +270,9 @@ pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache() {
     lbDvd_80017700(4);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_800174E8(index: i32) {
+    core::hint::black_box(0x3C7FB5C1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_800174E8");
     let entry = entry_at(index as usize);
     if !(*entry).archive.is_null() {
@@ -274,7 +284,9 @@ pub unsafe extern "C" fn lbDvd_800174E8(index: i32) {
     *entry = lbDvd_803BA68C;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80017598(heap: i32) -> bool {
+    core::hint::black_box(0xA757A3C6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80017598");
     let mut no_change = false;
     let enabled = ext::OSDisableInterrupts();
@@ -314,16 +326,19 @@ pub unsafe fn lbDvd_80017644(heap: i32) -> bool {
     no_change
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80017700(arg0: i32) {
+    core::hint::black_box(0x8274F175u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80017700");
     while lbDvd_80017644(arg0) {
-        ext::lb_800195D0();
+        wait_step();
     }
 }
 
 /// The engine's asset service: told every disc entry the preload cache registers (a hint, never sim-visible).
 pub static mut ASSET_HINT: Option<fn(i32, i32)> = None;
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80017740(
     ty: i32,
     entry_num: i32,
@@ -335,6 +350,7 @@ pub unsafe extern "C" fn lbDvd_80017740(
     arg7: u8,
     effect_index: i32,
 ) -> *mut c_void {
+    core::hint::black_box(0x0A6B3A31u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80017740");
     if let Some(h) = ASSET_HINT {
         h(entry_num, heap);
@@ -385,13 +401,17 @@ pub unsafe extern "C" fn lbDvd_80017740(
     entry as *mut c_void
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_800178E8(arg0: i32, name: *const i8, arg2: i32, arg3: i32, arg4: i32, arg5: i32, arg6: i32, arg7: u8, arg8: i32) {
+    core::hint::black_box(0xA8863895u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_800178E8");
     let entry = ext::DVDConvertPathToEntrynum(ext::lbFileGetFullName(name));
     lbDvd_80017740(arg0, entry, arg2, arg3, arg4 as u32, arg5, arg6, arg7, arg8);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80017960() {
+    core::hint::black_box(0x9DDC7CEDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80017960");
     let game_cache = &raw mut preloadCache.new_scene.game_cache;
 
@@ -454,7 +474,9 @@ unsafe fn lbDvd_CleanupPreloadHeap(heap: i32) -> i32 {
     ext::lbHeap_80015D6C(heap as u32, Some(lbDvd_80017A80), heap as u32)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_CachePreloadedFile(index: i32) {
+    core::hint::black_box(0x7F3D95B8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_CachePreloadedFile");
     let pe = entry_at(index as usize);
 
@@ -491,7 +513,9 @@ pub unsafe extern "C" fn lbDvd_CachePreloadedFile(index: i32) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80017CC4() {
+    core::hint::black_box(0x23776646u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80017CC4");
     let mut file_to_cache: i32 = -1;
     let mut file_already_cached: i32 = -1;
@@ -551,7 +575,9 @@ pub unsafe extern "C" fn lbDvd_80017CC4() {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80017E64(key: i32, index: usize, value: *mut c_void, cancelflag: bool) {
+    core::hint::black_box(0xFF5B2725u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80017E64");
     let pe = entry_at(index);
     assert!(!cancelflag, "lbdvd.c:827 0");
@@ -559,7 +585,9 @@ pub unsafe extern "C" fn lbDvd_80017E64(key: i32, index: usize, value: *mut c_vo
     lbDvd_80017CC4();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_GetPreloadedArchive(entry_num: isize) -> *mut c_void {
+    core::hint::black_box(0x12DCD112u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_GetPreloadedArchive");
     let interrupt = ext::OSDisableInterrupts();
 
@@ -706,7 +734,9 @@ unsafe fn cstr_bytes<'a>(p: *const i8) -> &'a [u8] {
     core::ffi::CStr::from_ptr(p).to_bytes()
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_8001819C(basename: *const i8) -> *mut HSD_Archive {
+    core::hint::black_box(0x681D9684u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_8001819C");
     let filename = ext::lbFileGetFullName(basename);
     let archive = lbDvd_GetPreloadedArchive(ext::DVDConvertPathToEntrynum(filename) as isize) as *mut HSD_Archive;
@@ -743,17 +773,23 @@ pub unsafe extern "C" fn lbDvd_8001819C(basename: *const i8) -> *mut HSD_Archive
     archive
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState {
+    core::hint::black_box(0xA23DDB13u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_GetPreloadCacheScene");
     &raw mut preloadCache.scene
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_8001823C() {
+    core::hint::black_box(0x56E586D3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_8001823C");
     (*lbDvd_GetPreloadCacheScene()).mode_scene_changes = preloadCache.new_scene.mode_scene_changes.wrapping_add(1);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80018254() {
+    core::hint::black_box(0x47D664ACu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80018254");
     if scene_eq(&preloadCache.new_scene, &preloadCache.scene) {
         return;
@@ -769,6 +805,7 @@ pub unsafe extern "C" fn lbDvd_80018254() {
         }
     }
 
+    let _zh_reg = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("preload: register"));
     match preloadCache.persistent_heaps {
         0 => {}
         1 => inline1(),
@@ -814,7 +851,9 @@ pub unsafe extern "C" fn lbDvd_80018254() {
             return;
         }
     }
+    drop(_zh_reg);
     if six_budget_check == 0 {
+        let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("preload: read chain (80017CC4)"));
         lbDvd_80017CC4();
     }
     ext::OSRestoreInterrupts(enabled);
@@ -835,7 +874,9 @@ unsafe fn inline3(entry: *mut PreloadEntry) -> (bool, bool) {
     (var_r9, var_r10)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_800187F4(entry_num: i32) -> i32 {
+    core::hint::black_box(0x2779DDFCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_800187F4");
     let mut result = 0;
     let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
@@ -884,15 +925,25 @@ pub unsafe extern "C" fn lbDvd_800187F4(entry_num: i32) -> i32 {
     result
 }
 
+/// One pass of a preload wait (`lb_800195D0`, a retrace of the frame loop). TARGET_PC: the alarm interrupt that steps a
+/// heap compaction (lbmemory.rs COPY_ALARM) fires during the wait, as on the console. These spins only last while a heap
+/// is being compacted (`persistent_heap`; reads complete synchronously), and without the alarm the compaction never
+/// finishes: a scene change soon after the previous one (CSS -> main menu -> CSS -> main menu) spun forever in
+/// lbDvd_80018CF4.
+unsafe fn wait_step() {
+    ext::lb_800195D0();
+    crate::tu::lbmemory::lbMemory_FireCopyAlarm();
+}
+
 unsafe fn lbDvd_800189EC(entry_num: i32) {
     while lbDvd_800187F4(entry_num) == 1 {
-        ext::lb_800195D0();
-        // TARGET_PC: the alarm interrupt that steps a heap compaction (lbmemory.rs COPY_ALARM) fires during the wait
-        crate::tu::lbmemory::lbMemory_FireCopyAlarm();
+        wait_step();
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80018A2C(arg0: u8) -> i32 {
+    core::hint::black_box(0x04D2418Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80018A2C");
     let mut result = 0;
     let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
@@ -950,14 +1001,18 @@ pub unsafe extern "C" fn lbDvd_80018A2C(arg0: u8) -> i32 {
     result
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80018C2C(arg0: u8) {
+    core::hint::black_box(0xAEE511E9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80018C2C");
     while lbDvd_80018A2C(arg0) == 1 {
-        ext::lb_800195D0();
+        wait_step();
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80018C6C() {
+    core::hint::black_box(0xC6EFC50Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80018C6C");
     match preloadCache.persistent_heaps {
         1 => {
@@ -981,13 +1036,15 @@ unsafe fn inline0() {
         if ext::lbHeap_800158E8(lbDvd_804D37F4[i]) == 1 {
             let tmp = lbDvd_804D37F4[i];
             while lbDvd_80017598(tmp) {
-                ext::lb_800195D0();
+                wait_step();
             }
         }
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80018CF4(arg0: i32) {
+    core::hint::black_box(0x0EDA12E8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80018CF4");
     if preloadCache.persistent_heaps != arg0 {
         (*lbDvd_GetPreloadCacheScene()).mode_scene_changes = preloadCache.new_scene.mode_scene_changes.wrapping_add(1);
@@ -1026,24 +1083,28 @@ pub unsafe extern "C" fn lbDvd_80018CF4(arg0: i32) {
     }
     if ext::lbHeap_800158E8(2) == 1 {
         while lbDvd_80017598(2) {
-            ext::lb_800195D0();
+            wait_step();
         }
     }
     if ext::lbHeap_800158E8(3) == 1 {
         while lbDvd_80017598(3) {
-            ext::lb_800195D0();
+            wait_step();
         }
     }
     inline0();
     ext::lbHeap_80015900();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80018F58(value: bool) {
+    core::hint::black_box(0xC53D7D24u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80018F58");
     preloadCache.preloaded = value as i32;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn lbDvd_80018F68() {
+    core::hint::black_box(0x4745058Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("lbDvd_80018F68");
     preloadCache.persistent_heaps = 0;
     *lbDvd_GetPreloadCacheScene() = preload_cache_scene;

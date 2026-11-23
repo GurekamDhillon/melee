@@ -1,0 +1,12 @@
+# Slippi Unranked after a match (menu_unranked_back.sh): side B, the window relaunched into the menus after the
+# results and on to the online select of the same mode, idle: wait for it, pick a fighter, Start once (searches again)
+until 8
+60 0000 0 0
+24 0000 0 100
+10 0000 0 0
+16 0000 100 0
+10 0000 0 0
+2 0100 0 0
+30 0000 0 0
+2 1000 0 0
+900 0000 0 0

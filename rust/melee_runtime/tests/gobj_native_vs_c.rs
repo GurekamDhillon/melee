@@ -194,9 +194,9 @@ unsafe fn state() {
         hw(gid((*g).prev_gx) as u32);
         hw(pid((*g).proc) as u32);
         let rc = (*g).render_cb;
-        hw(if rc == Some(render_a as unsafe extern "C" fn(*mut HSD_GObj, isize)) {
+        hw(if rc.is_some_and(|p| core::ptr::fn_addr_eq(p, render_a as unsafe extern "C" fn(*mut HSD_GObj, isize))) {
             1
-        } else if rc == Some(render_b as unsafe extern "C" fn(*mut HSD_GObj, isize)) {
+        } else if rc.is_some_and(|p| core::ptr::fn_addr_eq(p, render_b as unsafe extern "C" fn(*mut HSD_GObj, isize))) {
             2
         } else if rc.is_some() {
             3
@@ -224,7 +224,7 @@ unsafe fn state() {
         hw((*p).flags_3() as u32);
         hw(gid((*p).gobj) as u32);
         for (c, f) in table.iter().enumerate() {
-            if (*p).on_invoke == *f {
+            if match ((*p).on_invoke, *f) { (Some(a), Some(b)) => core::ptr::fn_addr_eq(a, b), (a, b) => a.is_none() && b.is_none() } {
                 hw(100 + c as u32);
             }
         }

@@ -113,7 +113,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftCl_Init_80149114` as a Fighter callback entry (the shield-hit callback).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftCl_Init_80149114(g: *mut HSD_GObj) {
+    core::hint::black_box(0xEF8B8CC6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftCl_Init_80149114");
     ftCl_Init_80149114(g);
 }

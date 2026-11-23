@@ -92,10 +92,16 @@ pub fn open() -> Option<Arc<UsbAdapter>> {
             );
             if dev == INVALID_HANDLE_VALUE {
                 let e = GetLastError();
+                // The hotplug thread retries every second: say it once, not once a second. Access denied is another
+                // program holding the adapter, or a sandbox without USB access (the YouGame app's AppContainer).
+                static SAID: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
+                if SAID.swap(e, std::sync::atomic::Ordering::Relaxed) == e {
+                    continue;
+                }
                 plog!(
                     "gw: gc adapter: found {} but CreateFile failed (error {e}{})",
                     lower.trim_end_matches('\0'),
-                    if e == ERROR_ACCESS_DENIED { ": another program holds it" } else { "" }
+                    if e == ERROR_ACCESS_DENIED { ": another program holds it, or this sandbox has no USB access" } else { "" }
                 );
                 continue;
             }

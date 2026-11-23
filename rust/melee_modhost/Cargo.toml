@@ -23,3 +23,6 @@ wasmi = { version = "2.0.0", default-features = false, features = ["std", "valid
 
 [dev-dependencies]
 wat = "1"
+
+[lints]
+workspace = true

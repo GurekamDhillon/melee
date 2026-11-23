@@ -67,7 +67,9 @@ pub static mut HSD_SisLib_804D1110: [*mut HSD_Archive; 5] = [::core::ptr::null::
 >() as *mut HSD_Archive; 5];
 pub static mut HSD_SisLib_804D1124: [*mut SIS; 5] = [::core::ptr::null::<SIS>()
     as *mut SIS; 5];
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_Alloc(mut size: s32) -> *mut ::core::ffi::c_void {
+    core::hint::black_box(0x9A16D059u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_Alloc");
     let mut best: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut alloc_tail: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
@@ -159,7 +161,9 @@ pub unsafe extern "C" fn HSD_SisLib_Alloc(mut size: s32) -> *mut ::core::ffi::c_
     }
     return sb_read!(best, data) as *mut ::core::ffi::c_void;
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_Free(mut ptr: *mut ::core::ffi::c_void) {
+    core::hint::black_box(0x99BE640Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_Free");
     let mut free_cur: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut free_tail: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
@@ -213,7 +217,9 @@ pub unsafe extern "C" fn HSD_SisLib_Free(mut ptr: *mut ::core::ffi::c_void) {
     }
     sb_write!(alloc_cur, next, ::core::ptr::null_mut::<SisBlock>());
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5A2C(mut ptr: *mut ::core::ffi::c_void) {
+    core::hint::black_box(0x4A90D9BDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5A2C");
     let mut next_text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut alloc: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
@@ -246,6 +252,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5A2C(mut ptr: *mut ::core::ffi::c_void) 
         curr = next_text;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5ACC(
     mut font_idx: ::core::ffi::c_int,
     mut context_id: s32,
@@ -255,6 +262,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5ACC(
     mut box_w: f32,
     mut box_h: f32,
 ) -> *mut HSD_Text {
+    core::hint::black_box(0x0B0974E4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5ACC");
     let mut list_cur: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut list_tail: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
@@ -361,7 +369,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5ACC(
     (*text).font_idx = font_idx as u8;
     return text;
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5CC4(mut text: *mut HSD_Text) {
+    core::hint::black_box(0x9B097EC7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5CC4");
     let mut curr: *mut HSD_Text = HSD_SisLib_804D7978;
     while !curr.is_null() {
@@ -378,7 +388,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5CC4(mut text: *mut HSD_Text) {
         curr = next;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5D30() {
+    core::hint::black_box(0x037A7A26u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5D30");
     let mut curr: *mut HSD_Text = HSD_SisLib_804D7978;
     while !curr.is_null() {
@@ -393,7 +405,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5D30() {
     }
 }
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5DA0_inline0(mut font_idx: s32) {
+    core::hint::black_box(0xB45DF9E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5DA0_inline0");
     let mut curr: *mut HSD_Text = HSD_SisLib_804D7978;
     while !curr.is_null() {
@@ -409,7 +423,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5DA0_inline0(mut font_idx: s32) {
         curr = next;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5DA0(mut font_idx: s32) {
+    core::hint::black_box(0x974E4384u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5DA0");
     let mut last: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<sislib_UnkAlloc3>();
     let mut curr: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<sislib_UnkAlloc3>();
@@ -435,7 +451,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5DA0(mut font_idx: s32) {
 }
 pub static mut HSD_SisLib_804D796C: *mut SisBlock = ::core::ptr::null::<SisBlock>()
     as *mut SisBlock;
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5E70() {
+    core::hint::black_box(0x30E89FEDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5E70");
     let mut curr: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<sislib_UnkAlloc3>();
     HSD_SisLib_803A5D30();
@@ -458,7 +476,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5E70() {
     sb_write!(free_head, size, (HSD_SisLib_804D7968 as usize)
         .wrapping_sub(::core::mem::size_of::<SisBlock>() as usize) as u32);
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5F50(mut font_idx: s32) {
+    core::hint::black_box(0x428CB39Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5F50");
     let mut archive_ptr: *mut *mut HSD_Archive = ::core::ptr::null_mut::<
         *mut HSD_Archive,
@@ -472,7 +492,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5F50(mut font_idx: s32) {
         HSD_SisLib_804D1124[font_idx as usize] = ::core::ptr::null_mut::<SIS>();
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A5FBC() {
+    core::hint::black_box(0xA07DDFDCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A5FBC");
     let mut i: ::core::ffi::c_int = 0;
     HSD_SisLib_803A5E70();
@@ -490,7 +512,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5FBC() {
 /// Multiplier on the retail text pool sizes for the native 8-byte-pointer structs (see `HSD_SisLib_803A6048`).
 /// The C-oracle test (tests/tu_sislib.rs) sets it to 1 to compare against the retail layout.
 pub static mut HSD_SISLIB_POOL_SCALE: u32 = if ::core::mem::size_of::<usize>() >= 8 { 2 } else { 1 };
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A6048(mut size: u32) {
+    core::hint::black_box(0x0A4ADFEEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A6048");
     let mut i: ::core::ffi::c_int = 0;
     // The callers pass the retail pool sizes (0x2400 / 0x4800 / 0xC000), measured for 32-bit `SisBlock` / `HSD_Text`.
@@ -516,7 +540,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A6048(mut size: u32) {
         i += 1;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn fn_803A60EC(mut gobj: *mut ::core::ffi::c_void) {
+    core::hint::black_box(0x6466364Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_803A60EC");
     let mut curr: *mut sislib_UnkAlloc3 = HSD_SisLib_804D797C;
     while !curr.is_null() {
@@ -527,10 +553,12 @@ pub unsafe extern "C" fn fn_803A60EC(mut gobj: *mut ::core::ffi::c_void) {
         curr = (*curr).x0;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn sislib_WideCamera(
     mut gobj: *mut HSD_GObj,
     mut pass: isize,
 ) {
+    core::hint::black_box(0xF1D8CB54u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("sislib_WideCamera");
 
     let aspect = f32::from_bits(View_AspectBits() as u32);
@@ -547,10 +575,12 @@ pub unsafe extern "C" fn sislib_WideCamera(
     );
     HSD_GObj_803910D8(gobj, pass as i32);
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_SetWideCanvas(
     mut font_idx: ::core::ffi::c_int,
     mut canvas: ::core::ffi::c_int,
 ) {
+    core::hint::black_box(0xF925685Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_SetWideCanvas");
     let mut entry: *mut sislib_UnkAlloc3 = HSD_SisLib_804D797C;
     let mut index: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -573,6 +603,7 @@ pub unsafe extern "C" fn HSD_SisLib_SetWideCanvas(
         entry = (*entry).x0;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A611C(
     mut font_idx: ::core::ffi::c_int,
     mut parent_gobj: *mut HSD_GObj,
@@ -583,6 +614,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A611C(
     mut gx_prio: u8,
     mut render_prio: u32,
 ) -> ::core::ffi::c_int {
+    core::hint::black_box(0x95D58E9Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A611C");
     let mut count: ::core::ffi::c_int = 0;
     let mut list_tail: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<
@@ -662,11 +694,13 @@ pub unsafe extern "C" fn HSD_SisLib_803A611C(
     }
     return count;
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A62A0(
     mut font_idx: s32,
     mut archive_name: *mut ::core::ffi::c_char,
     mut symbol_name: *mut ::core::ffi::c_char,
 ) {
+    core::hint::black_box(0x31FF6E95u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A62A0");
     let mut tmp: *mut HSD_Archive = HSD_SisLib_803A945C(archive_name);
     HSD_SisLib_804D1110[font_idx as usize] = tmp;
@@ -692,7 +726,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A62A0(
         panic!("HSD_SisLib panic");
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SisLib_803A6368(mut text: *mut HSD_Text, mut sis_idx: s32) {
+    core::hint::black_box(0x9FE9B339u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SisLib_803A6368");
     let mut sis_table: *mut *mut SIS = ::core::ptr::null_mut::<*mut SIS>();
     let mut i: s32 = 0;
@@ -771,9 +807,11 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_803910D8(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { core::hint::black_box(0xA915623Fu32); /* fn identity */ super::HSD_GObj_803910D8(a0, a1) }
         #[cfg_attr(fptrace, melee_fptrace::trace)]
-        pub unsafe extern "C" fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: i32) { super::HSD_SisLib_803A84BC(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: i32) { core::hint::black_box(0x0AEF10AFu32); /* fn identity */ super::HSD_SisLib_803A84BC(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::gobj_native::HSD_GObj_CameraKind;

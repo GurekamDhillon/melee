@@ -32,12 +32,17 @@ mod controls_store;
 mod firstrun;
 mod geno_suite;
 mod cosmetics;
+mod slippi_menus;
 mod cosmetics_import;
+mod card_import;
 mod nucleus;
 mod settings_overlay;
+mod settings_window;
+mod port_ini;
 mod crash;
 mod hang;
 mod launcher_compat;
+mod lobby_status;
 mod display;
 mod prof;
 mod profile;
@@ -56,7 +61,9 @@ mod retail_flow;
 mod envoy_fx;
 mod audio;
 mod stage_anim;
+mod frametime;
 mod slpcheck;
+mod slpbatch;
 mod snap;
 mod fighter_fields;
 mod diff;
@@ -67,12 +74,21 @@ mod diff_layout;
 mod dolphin_oracle;
 mod netmatch;
 mod netplay;
+mod slippi_css_host;
+mod slippi_link;
 mod slippi_np;
+mod inputlat;
+#[cfg(feature = "real-net")]
+mod mu_np;
+mod yougame_search;
+mod room_keeper;
 mod play_net;
 mod slp_export;
 mod live_out;
 mod spectate;
 mod replay_ctl;
+mod slp_play;
+mod slippi_spectate;
 mod replays;
 mod np_lockstep;
 mod np_mux;
@@ -89,6 +105,7 @@ mod pose_dump;
 mod script_events;
 mod cov1p;
 mod envoy_store;
+mod warm_pass;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {
@@ -506,6 +523,21 @@ fn main() -> ExitCode {
     code
 }
 fn main_inner() -> ExitCode {
+    // Packaging: `melee --write-snapmask` writes MELEE_SNAP_CHECK's host-only span list beside the exe from its PDB
+    // (snapmask.rs), so a packaged exe carries the mask without shipping the PDB. Nothing else runs.
+    if std::env::args().nth(1).as_deref() == Some("--write-snapmask") {
+        let r = std::env::current_exe().map_err(|e| e.to_string()).and_then(|e| melee_engine::snapmask::write_sidecar(&e));
+        return match r {
+            Ok(n) => {
+                println!("snapmask: {n} game spans written");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("snapmask: {e}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     // The YouGame app's stdio bridge (notes/yougame.md): first, before anything can print to stdout or open the log.
     let yougame = melee_platform::yougame::init();
     // Saves that follow the account (yougame_saves.rs): before anything reads the card or settings.
@@ -572,12 +604,9 @@ fn main_inner() -> ExitCode {
         return ExitCode::from(2);
     }
     match args.first().map(String::as_str) {
-        // The launcher's Settings button: the Rust engine has no panel of its own (it reads the port-settings.ini the
-        // Source Port's panel writes), so this exits at once and the launcher does not keep a standby copy.
-        Some(launcher_compat::SETTINGS_WINDOW) => {
-            eprintln!("launcher-compat: --settings-window: the Rust engine has no settings panel; it reads port-settings.ini");
-            ExitCode::SUCCESS
-        }
+        // The launcher's Settings button (and its standby copy): our settings overlay in a window of its own, editing
+        // his port-settings.ini and our settings.cfg (settings_window.rs)
+        Some(launcher_compat::SETTINGS_WINDOW) => settings_window::run(&args[1..]),
         None | Some("selftest") => {
             selftest();
             ExitCode::SUCCESS
@@ -630,10 +659,19 @@ fn main_inner() -> ExitCode {
         Some("netplay") => netplay::netplay(&args),
         Some("slippi-netplay") => slippi_np::slippi_netplay(&args),
         Some("slippi-replay") => slippi_np::slippi_replay(&args),
+        #[cfg(feature = "real-net")]
+        Some("mu-netplay") => mu_np::mu_netplay(&args),
+        #[cfg(not(feature = "real-net"))]
+        Some("mu-netplay") => {
+            eprintln!("melee: mu-netplay (P2P Direct) needs a build with --features real-net");
+            ExitCode::FAILURE
+        }
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
+        Some("slp-spectate") => slippi_spectate::watch_cmd(&args),
         Some("replays") => replays::replays(&args),
         Some("cosmetics") => cosmetics::cli(&args[1..]),
+        Some("card-import") => card_import::cli(&args[1..]),
         Some("spectate") => {
             // `melee spectate TARGET [play options]` = `melee play --spectate TARGET ...`
             let mut a = vec!["play".to_string(), "--spectate".to_string()];
@@ -805,9 +843,14 @@ pub(crate) fn engine_mods_overlay(args: &[String]) -> Result<Option<melee_engine
     let iso = iso_path(args).ok();
     let sh = if crate::cfg::flag("cosmetics", true) { iso.as_deref().and_then(cosmetics::boot) } else { None };
     cosmetics::set_booted(sh.clone());
-    Ok(match sh {
+    let o = match sh {
         Some(sh) => Some(cosmetics::overlay(sh, under)),
         None => under,
+    };
+    // `--slippi-menus on`: Slippi's menu files over everything (all or nothing; off leaves the boot unchanged)
+    Ok(match slippi_menus::load(args, iso.as_deref()) {
+        Some(s) => Some(slippi_menus::wrap(s, o)),
+        None => o,
     })
 }
 
@@ -1065,7 +1108,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
     let pause: Option<(usize, usize)> = get("--pause").and_then(|v| v.split_once(':').and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?))));
     let mut csv_file = std::fs::File::create(&out).ok();
     let mut csv_written = 0usize;
-    let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
+    let mut csv = String::from(slp_play::CSV_HEADER);
     let calltrace_out = get("--calltrace");
     if calltrace_out.is_some() && !melee_core::ct::ENABLED {
         eprintln!("melee: --calltrace needs a build with `--features calltrace`");
@@ -1108,12 +1151,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
         if replay {
             // gmscene.c: `Replay_Tick`, then the forced seed; the fighters read the recorded inputs through the `Replay_*` platform hooks
-            let pl = unsafe { REPLAY.as_mut().unwrap() };
-            pl.tick();
-            let sd = pl.resync_seed();
-            if sd != 0 {
-                melee_runtime::tu::random::global::state().set_logic_seed(sd);
-            }
+            slp_play::replay_frame();
         }
         if idle || pause.is_some() {
             let mut pads = [melee_types::PADStatus::zeroed(); 4];
@@ -1192,11 +1230,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
             eprintln!("f{f} {}", e.debug_fighter(0));
             eprintln!("f{f} {}", e.debug_fighter(1));
         }
-        csv.push_str(&format!("{f},{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]));
-        for w in &r[4..16] {
-            csv.push_str(&format!(",{w:08X}"));
-        }
-        csv.push('\n');
+        csv.push_str(&slp_play::csv_row(f, &r));
         // written every frame: a crash later in the run keeps the frames that were produced
         // (appended through one open handle: rewriting the whole file each frame cost ~half the run on Windows)
         if let Some(f) = csv_file.as_mut() {
@@ -1261,15 +1295,27 @@ pub(crate) fn set_replay_db_level(v: Option<i32>) {
     }
 }
 
-fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
+/// A replay our exporter wrote carries the codes word its match ran with (`gameplayCodes`); the spawn follows its
+/// Neutral Spawn bit, not the Neutral Spawn every Slippi replay is played with. Other files: unchanged.
+pub(crate) fn apply_recorded_spawn(data: &[u8]) {
+    let ns = melee_data::slp::gd_gameplay_codes(data).and_then(|s| melee_core::codes::decode(&s)).map(|(w, _)| w & melee_core::codes::NEUTRAL_SPAWN != 0);
+    melee_core::codes::set_replay_no_neutral_spawn(ns == Some(false));
+    if ns == Some(false) {
+        eprintln!("melee: replay recorded without Neutral Spawn (gameplayCodes): fighters spawn on the stage's joints");
+    }
+}
+
+pub(crate) fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
     // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
     let parsed = melee_data::slp::parse(&data, false).ok();
+    crate::slp_export::apply_sim_view(&data);
     let ws = parsed.as_ref().and_then(|f| melee_data::slp::widescreen_code(&f.gecko));
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     melee_core::codes::set_ps_camera_independent_monitor(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_camera_independent_monitor_code(&f.gecko)));
     melee_core::codes::set_ps_preload_transformations(parsed.as_ref().is_some_and(melee_data::slp::ps_preload_transformations));
     melee_core::codes::set_ps_freeze_at_entry(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_freeze_at_entry_code(&f.gecko)));
+    apply_recorded_spawn(&data);
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, identity: gdlp, ..Default::default() });
     if pl.env.slippi_codes.is_none() && parsed.as_ref().is_some_and(|f| melee_data::slp::online_codeset(&f.gecko)) {
         pl.env.slippi_codes = Some("online".into());

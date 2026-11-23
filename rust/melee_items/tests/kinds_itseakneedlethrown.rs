@@ -133,27 +133,27 @@ fn itseakneedlethrown_matches_c() {
                     2 => {  m::itSeakNeedleThrown_Logic109_Destroyed(&raw mut GO[0]); } // itSeakNeedleThrown_Logic109_Destroyed
                     3 => {  m::it_802AFF08(&raw mut GO[0], &raw mut GO[1]); } // it_802AFF08
                     4 => {  m::it_802B00F4(&raw mut GO[0], &raw mut GO[1]); } // it_802B00F4
-                    5 => {  ret = m::itSeakneedlethrown_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion0_Anim
-                    6 => {  ret = m::itSeakneedlethrown_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion1_Anim
-                    7 => {  ret = m::itSeakneedlethrown_UnkMotion2_Anim(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion2_Anim
-                    8 => {  ret = m::itSeakneedlethrown_UnkMotion3_Anim(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion3_Anim
-                    9 => {  ret = m::itSeakneedlethrown_UnkMotion4_Anim(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion4_Anim
+                    5 => {  ret = ((m::itSeakneedlethrown_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion0_Anim
+                    6 => {  ret = ((m::itSeakneedlethrown_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion1_Anim
+                    7 => {  ret = ((m::itSeakneedlethrown_UnkMotion2_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion2_Anim
+                    8 => {  ret = ((m::itSeakneedlethrown_UnkMotion3_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion3_Anim
+                    9 => {  ret = ((m::itSeakneedlethrown_UnkMotion4_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion4_Anim
                     10 => {  m::itSeakneedlethrown_UnkMotion0_Phys(&raw mut GO[0]); } // itSeakneedlethrown_UnkMotion0_Phys
                     11 => {  m::itSeakneedlethrown_UnkMotion1_Phys(&raw mut GO[0]); } // itSeakneedlethrown_UnkMotion1_Phys
                     12 => {  m::itSeakneedlethrown_UnkMotion2_Phys(&raw mut GO[0]); } // itSeakneedlethrown_UnkMotion2_Phys
                     13 => {  m::itSeakneedlethrown_UnkMotion3_Phys(&raw mut GO[0]); } // itSeakneedlethrown_UnkMotion3_Phys
                     14 => {  m::itSeakneedlethrown_UnkMotion4_Phys(&raw mut GO[0]); } // itSeakneedlethrown_UnkMotion4_Phys
-                    15 => {  ret = m::itSeakneedlethrown_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion0_Coll
-                    16 => {  ret = m::itSeakneedlethrown_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion1_Coll
-                    17 => {  ret = m::itSeakneedlethrown_UnkMotion2_Coll(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion2_Coll
-                    18 => {  ret = m::itSeakneedlethrown_UnkMotion3_Coll(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion3_Coll
-                    19 => {  ret = m::itSeakneedlethrown_UnkMotion4_Coll(&raw mut GO[0]) as u32; } // itSeakneedlethrown_UnkMotion4_Coll
-                    20 => {  ret = m::it_2725_Logic109_DmgDealt(&raw mut GO[0]) as u32; } // it_2725_Logic109_DmgDealt
-                    21 => {  ret = m::it_2725_Logic109_Clanked(&raw mut GO[0]) as u32; } // it_2725_Logic109_Clanked
-                    22 => {  ret = m::it_2725_Logic109_DmgReceived(&raw mut GO[0]) as u32; } // it_2725_Logic109_DmgReceived
-                    23 => {  ret = m::it_2725_Logic109_Reflected(&raw mut GO[0]) as u32; } // it_2725_Logic109_Reflected
-                    24 => {  ret = m::it_2725_Logic109_ShieldBounced(&raw mut GO[0]) as u32; } // it_2725_Logic109_ShieldBounced
-                    25 => {  ret = m::it_2725_Logic109_HitShield(&raw mut GO[0]) as u32; } // it_2725_Logic109_HitShield
+                    15 => {  ret = ((m::itSeakneedlethrown_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion0_Coll
+                    16 => {  ret = ((m::itSeakneedlethrown_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion1_Coll
+                    17 => {  ret = ((m::itSeakneedlethrown_UnkMotion2_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion2_Coll
+                    18 => {  ret = ((m::itSeakneedlethrown_UnkMotion3_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion3_Coll
+                    19 => {  ret = ((m::itSeakneedlethrown_UnkMotion4_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakneedlethrown_UnkMotion4_Coll
+                    20 => {  ret = ((m::it_2725_Logic109_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic109_DmgDealt
+                    21 => {  ret = ((m::it_2725_Logic109_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic109_Clanked
+                    22 => {  ret = ((m::it_2725_Logic109_DmgReceived(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic109_DmgReceived
+                    23 => {  ret = ((m::it_2725_Logic109_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic109_Reflected
+                    24 => {  ret = ((m::it_2725_Logic109_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic109_ShieldBounced
+                    25 => {  ret = ((m::it_2725_Logic109_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic109_HitShield
                     26 => {  m::itSeakNeedleThrown_Logic109_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itSeakNeedleThrown_Logic109_EvtUnk
                     27 => { for j in 0..5 { let row = &m::it_803F6F50[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

@@ -143,26 +143,26 @@ fn itpeachturnip_matches_c() {
                 setup(PROFTAB[op as usize] as i32);
                 let mut ret = 0u32;
                 match op {
-                    0 => {  ret = m::decrease_lifetimer(&raw mut GO[0]) as u32; } // decrease_lifetimer
+                    0 => {  ret = ((m::decrease_lifetimer(&raw mut GO[0])) as i32 != 0) as u32; } // decrease_lifetimer
                     1 => {  ret = m::it_802BD32C(&raw mut GO[0]) as u32; } // it_802BD32C
                     2 => {  m::it_802BD45C(&raw mut GO[0]); } // it_802BD45C
                     3 => {  m::itPeachTurnip_Logic56_Destroyed(&raw mut GO[0]); } // itPeachTurnip_Logic56_Destroyed
                     4 => { let v2: Fighter_Part = fv() as i32 as Fighter_Part; let v3: ItemKind = KK[(rnd() % 6) as usize] as ItemKind; let v4: f32 = rw() as f32; ret = pi(m::it_802BD4AC(&raw mut GO[0], &raw mut VA[0], v2, v3, v4)); } // it_802BD4AC
                     5 => {  m::itPeachTurnip_Logic56_PickedUp(&raw mut GO[0]); } // itPeachTurnip_Logic56_PickedUp
-                    6 => {  ret = m::itPeachturnip_UnkMotion4_Anim(&raw mut GO[0]) as u32; } // itPeachturnip_UnkMotion4_Anim
+                    6 => {  ret = ((m::itPeachturnip_UnkMotion4_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachturnip_UnkMotion4_Anim
                     7 => {  m::itPeachturnip_UnkMotion4_Phys(&raw mut GO[0]); } // itPeachturnip_UnkMotion4_Phys
-                    8 => {  ret = m::itPeachturnip_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itPeachturnip_UnkMotion1_Anim
+                    8 => {  ret = ((m::itPeachturnip_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachturnip_UnkMotion1_Anim
                     9 => {  m::itPeachturnip_UnkMotion1_Phys(&raw mut GO[0]); } // itPeachturnip_UnkMotion1_Phys
                     10 => {  m::itPeachTurnip_Logic56_Thrown(&raw mut GO[0]); } // itPeachTurnip_Logic56_Thrown
-                    11 => {  ret = m::itPeachturnip_UnkMotion3_Anim(&raw mut GO[0]) as u32; } // itPeachturnip_UnkMotion3_Anim
+                    11 => {  ret = ((m::itPeachturnip_UnkMotion3_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachturnip_UnkMotion3_Anim
                     12 => {  m::itPeachturnip_UnkMotion3_Phys(&raw mut GO[0]); } // itPeachturnip_UnkMotion3_Phys
-                    13 => {  ret = m::itPeachturnip_UnkMotion3_Coll(&raw mut GO[0]) as u32; } // itPeachturnip_UnkMotion3_Coll
+                    13 => {  ret = ((m::itPeachturnip_UnkMotion3_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachturnip_UnkMotion3_Coll
                     14 => {  m::itPeachTurnip_Logic56_Dropped(&raw mut GO[0]); } // itPeachTurnip_Logic56_Dropped
-                    15 => {  ret = m::itPeachTurnip_Logic56_DmgDealt(&raw mut GO[0]) as u32; } // itPeachTurnip_Logic56_DmgDealt
-                    16 => {  ret = m::itPeachTurnip_Logic56_Clanked(&raw mut GO[0]) as u32; } // itPeachTurnip_Logic56_Clanked
-                    17 => {  ret = m::itPeachTurnip_Logic56_Reflected(&raw mut GO[0]) as u32; } // itPeachTurnip_Logic56_Reflected
-                    18 => {  ret = m::itPeachTurnip_Logic56_HitShield(&raw mut GO[0]) as u32; } // itPeachTurnip_Logic56_HitShield
-                    19 => {  ret = m::itPeachTurnip_Logic56_ShieldBounced(&raw mut GO[0]) as u32; } // itPeachTurnip_Logic56_ShieldBounced
+                    15 => {  ret = ((m::itPeachTurnip_Logic56_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachTurnip_Logic56_DmgDealt
+                    16 => {  ret = ((m::itPeachTurnip_Logic56_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachTurnip_Logic56_Clanked
+                    17 => {  ret = ((m::itPeachTurnip_Logic56_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachTurnip_Logic56_Reflected
+                    18 => {  ret = ((m::itPeachTurnip_Logic56_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachTurnip_Logic56_HitShield
+                    19 => {  ret = ((m::itPeachTurnip_Logic56_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachTurnip_Logic56_ShieldBounced
                     20 => {  m::itPeachTurnip_Logic56_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itPeachTurnip_Logic56_EvtUnk
                     21 => { for j in 0..5 { let row = &m::it_803F74A8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

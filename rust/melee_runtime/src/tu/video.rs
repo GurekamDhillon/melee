@@ -83,7 +83,9 @@ pub unsafe fn HSD_VISetUserGXDrawDoneCallback(cb:HSD_VIGXDrawDoneCallback)->HSD_
     let old=HSD_VIData.drawdone.cb; let intr=ext::OSDisableInterrupts();
     HSD_VIData.drawdone.cb=cb; ext::OSRestoreInterrupts(intr); old
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_VIPreRetraceCB(retraceCount:u32) {
+    core::hint::black_box(0x8C66DBCBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_VIPreRetraceCB");
     let mut flush=false; let mut renew=false;
     let mut idx=HSD_VISearchXFBByStatus(HSD_VI_XFB_NEXT);
@@ -116,7 +118,9 @@ pub unsafe extern "C" fn HSD_VIPreRetraceCB(retraceCount:u32) {
     }
     if let Some(cb)=HSD_VIData.pre_cb {cb(retraceCount);}
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_VIPostRetraceCB(retraceCount:u32) {
+    core::hint::black_box(0xB6D489B8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_VIPostRetraceCB");
     let next=HSD_VISearchXFBByStatus(HSD_VI_XFB_NEXT);
     if next != -1 {
@@ -134,7 +138,9 @@ pub unsafe extern "C" fn HSD_VIPostRetraceCB(retraceCount:u32) {
     }
     if let Some(cb)=HSD_VIData.post_cb {cb(retraceCount);}
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_VIGXDrawDoneCB() {
+    core::hint::black_box(0xBD103853u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_VIGXDrawDoneCB");
     HSD_VIData.drawdone.waiting=0;
     if let Some(cb)=HSD_VIData.drawdone.cb {cb(HSD_VIData.drawdone.arg);}

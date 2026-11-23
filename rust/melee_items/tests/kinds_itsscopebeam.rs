@@ -128,15 +128,15 @@ fn itsscopebeam_matches_c() {
                 match op {
                     0 => { let v2: i32 = (rnd() % 10) as i32 as i32; let v3: f32 = rw() as f32; m::it_80298DEC(&raw mut GO[0], &raw mut VA[0], v2, v3); } // it_80298DEC
                     1 => {  m::it_80298ED0(&raw mut GO[0], &raw mut GO[1]); } // it_80298ED0
-                    2 => {  ret = m::itSscopebeam_UnkMotion9_Anim(&raw mut GO[0]) as u32; } // itSscopebeam_UnkMotion9_Anim
+                    2 => {  ret = ((m::itSscopebeam_UnkMotion9_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSscopebeam_UnkMotion9_Anim
                     3 => {  m::itSscopebeam_UnkMotion9_Phys(&raw mut GO[0]); } // itSscopebeam_UnkMotion9_Phys
-                    4 => {  ret = m::itSscopebeam_UnkMotion9_Coll(&raw mut GO[0]) as u32; } // itSscopebeam_UnkMotion9_Coll
-                    5 => {  ret = m::itSScopeBeam_Logic38_DmgDealt(&raw mut GO[0]) as u32; } // itSScopeBeam_Logic38_DmgDealt
-                    6 => {  ret = m::itSScopeBeam_Logic38_Clanked(&raw mut GO[0]) as u32; } // itSScopeBeam_Logic38_Clanked
-                    7 => {  ret = m::itSScopeBeam_Logic38_HitShield(&raw mut GO[0]) as u32; } // itSScopeBeam_Logic38_HitShield
-                    8 => {  ret = m::itSScopeBeam_Logic38_Absorbed(&raw mut GO[0]) as u32; } // itSScopeBeam_Logic38_Absorbed
-                    9 => {  ret = m::itSScopeBeam_Logic38_ShieldBounced(&raw mut GO[0]) as u32; } // itSScopeBeam_Logic38_ShieldBounced
-                    10 => {  ret = m::itSScopeBeam_Logic38_Reflected(&raw mut GO[0]) as u32; } // itSScopeBeam_Logic38_Reflected
+                    4 => {  ret = ((m::itSscopebeam_UnkMotion9_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itSscopebeam_UnkMotion9_Coll
+                    5 => {  ret = ((m::itSScopeBeam_Logic38_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itSScopeBeam_Logic38_DmgDealt
+                    6 => {  ret = ((m::itSScopeBeam_Logic38_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itSScopeBeam_Logic38_Clanked
+                    7 => {  ret = ((m::itSScopeBeam_Logic38_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itSScopeBeam_Logic38_HitShield
+                    8 => {  ret = ((m::itSScopeBeam_Logic38_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // itSScopeBeam_Logic38_Absorbed
+                    9 => {  ret = ((m::itSScopeBeam_Logic38_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itSScopeBeam_Logic38_ShieldBounced
+                    10 => {  ret = ((m::itSScopeBeam_Logic38_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itSScopeBeam_Logic38_Reflected
                     11 => {  m::itSScopeBeam_Logic38_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itSScopeBeam_Logic38_EvtUnk
                     12 => { for j in 0..10 { let row = &m::it_803F6568[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

@@ -20,7 +20,9 @@ pub mod ext {
     /// `grDisplay_801C5DB0`: an `extern "C"` function so it can be stored in `GObj_RenderFunc`
     /// (most TUs only pass it as a render callback); a direct call goes to the hook above.
     #[allow(non_snake_case)]
+    #[inline(never)]
     pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) {
+        core::hint::black_box(0xEA938F56u32); // fn identity (tools/rust-port/fn_identity.py)
         match GRDISPLAY_801C5DB0 {
             Some(f) => f(a0, a1),
             None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },

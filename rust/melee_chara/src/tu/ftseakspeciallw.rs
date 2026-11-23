@@ -74,7 +74,9 @@ pub mod ext {
             }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftZd_SpecialLw_8013B4D8(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD375C8E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftZd_SpecialLw_8013B4D8");
     ext::ftZd_SpecialLw_8013B4D8(g);
 }
@@ -107,15 +109,21 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
     (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80114034(g: *mut HSD_GObj) {
+    core::hint::black_box(0x680C9808u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80114034");
     fn_80114034(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_801140B0(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF1493CADu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_801140B0");
     fn_801140B0(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8011412C(g: *mut HSD_GObj) {
+    core::hint::black_box(0x7A814F13u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8011412C");
     fn_8011412C(g);
 }

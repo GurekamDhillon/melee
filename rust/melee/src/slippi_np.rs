@@ -21,6 +21,17 @@ use std::collections::{BTreeMap, VecDeque};
 use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
+/// `k`'s value in `args` (for `yougame_search`).
+pub fn arg_value(args: &[String], k: &str) -> Option<String> {
+    arg(args, k)
+}
+
+/// [`pair`], ended early (`Err((0, "Cancelled"))`) once `stop` is set: checked on each matchmaking message (the
+/// server's status every 2 s), when the search closes its connection.
+pub fn pair_cancellable(args: &[String], max_s: u64, stop: &std::sync::atomic::AtomicBool) -> Result<Paired, LinkErr> {
+    pair_with(args, max_s, Some(stop))
+}
+
 fn arg(args: &[String], k: &str) -> Option<String> {
     args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned()
 }
@@ -43,11 +54,15 @@ fn online(s: i32) -> i32 {
 /// divergence), and the online code paths of ftLib and the FD background. A replay of an online game gets the same
 /// value from its Game Start block (`install_replay`).
 /// The online codeset's gameplay codes we have as `melee_core::codes` bits: NeutralSpawn, FreezeGlitchFix,
-/// PreventWobbling, the ledge-grab limit (45), UCF 0.84 (setting the word turns off the default UCF otherwise) and, unless the match's `alt_stage_mode` asks for the moving stage,
-/// frozen Pokemon Stadium (slippi-online-patches.md section 3).
+/// PreventWobbling, the ledge-grab limit (45), UCF 0.84 (setting the word turns off the default UCF otherwise) and
+/// frozen Pokemon Stadium only when the match's `alt_stage_mode` is set: InitOnlinePlay stores MSRB_ALT_STAGE_MODE as
+/// IngameCheckIfFrozen's toggle byte ("0 = unfrozen, 1 = frozen"), which returns from the stadium's think at entry. An
+/// Unranked match sends 0 and its Stadium transforms (the inverted test froze ours: a HARD desync at the first
+/// transformation, ~70 s in, against Slippi Dolphin).
 pub fn online_codes(alt_stage_mode: u8) {
     use melee_core::codes as c;
-    let frozen = if alt_stage_mode == 0 { c::FROZEN_PS } else { 0 };
+    let frozen = if alt_stage_mode != 0 { c::FROZEN_PS } else { 0 };
+    c::set_ps_freeze_at_entry(alt_stage_mode != 0);
     let w = std::env::var("MELEE_SLIPPI_ONLINE_BITS").ok().and_then(|v| u32::from_str_radix(&v, 16).ok());
     c::set_ps_camera_independent_monitor(true);
     c::set(w.unwrap_or(c::UCF | c::NEUTRAL_SPAWN | c::FREEZE_FIX | c::NO_WOBBLE | c::LGL | frozen), 45);
@@ -60,7 +75,10 @@ pub fn online_codes(alt_stage_mode: u8) {
 
 pub const LEGAL_STAGES: [u16; 6] = [0x02, 0x03, 0x08, 0x1C, 0x1F, 0x20];
 
-pub fn online_scene(sel: &[Selections; 2]) -> Result<(String, u16), String> {
+/// `pause_allowed`: Dolphin's match block byte 2 bit 0x8 (`disable_pausing`) is set in every mode but Direct
+/// (`prepareOnlineMatchState`; Hero's slippi_online.cpp does the same). A pause the peer's game does not take is a
+/// HARD desync at once (the live Unranked test of 9f552c0d5: a stray Start at online frame 1093).
+pub fn online_scene(sel: &[Selections; 2], pause_allowed: bool) -> Result<(String, u16), String> {
     let stage = sel.iter().find(|s| s.is_stage_selected).map_or(0x1F, |s| s.stage_id);
     // internal stage ids (`stage=ext:N`): the legal set of Slippi's online modes (Fountain of Dreams, Pokemon Stadium,
     // Yoshi's Story, Dreamland, Battlefield, Final Destination); others are not tested on the engine
@@ -75,16 +93,150 @@ pub fn online_scene(sel: &[Selections; 2]) -> Result<(String, u16), String> {
         let shade = if mirror && i == 1 { "/shade1" } else { "" };
         t += &format!("p{}=ck:{}/human/c{}{shade};", i + 1, s.character_id, s.character_color);
     }
-    t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks=4;minutes=8;items=off");
+    // tests against the local mock only (MELEE_SLIPPI_MM_URL): MELEE_SLIPPI_TEST_STOCKS shortens a match that must
+    // end on stocks (both sides set the same); never with Slippi's servers or a real opponent
+    let stocks = std::env::var("MELEE_SLIPPI_TEST_STOCKS").ok().filter(|_| std::env::var_os("MELEE_SLIPPI_MM_URL").is_some()).and_then(|v| v.parse::<u8>().ok()).filter(|n| (1..=4).contains(n)).unwrap_or(4);
+    t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks={stocks};minutes=8;items=off;pause={}", pause_allowed as u8);
     Ok((t, stage))
 }
 
-pub fn slippi_netplay(args: &[String]) -> ExitCode {
+/// Whether the match allows pausing: Slippi Direct only. `--pause 0|1` says it (the online select's handoff passes
+/// `--slippi-pause 1` for Direct); otherwise a linked match (the select's handoff) has it off, and a `--mm` match
+/// or a direct `--host|--join` peer (Direct) has it on unless `--mm-mode` is not direct.
+fn pause_allowed(args: &[String], linked: bool) -> bool {
+    match arg(args, "--pause").as_deref() {
+        Some(v) => v.starts_with('1'),
+        None => !linked && matches!(arg(args, "--mm-mode").as_deref(), None | Some("direct")),
+    }
+}
+
+/// A Slippi link after matchmaking (or the given peer), the ENet connection and the MATCH_SELECTIONS exchange.
+pub struct Linked {
+    pub cl: Client,
+    pub decider: bool,
+    pub local_port: u8,
+    pub remote_port: u8,
+    pub by_port: [Selections; 2],
+    pub rng_offset: u32,
+    pub scene: String,
+    pub stage: u16,
+}
+
+/// Why [`establish`] stopped: the exit code (0: the join-and-leave check left the queue on purpose) and the message.
+pub type LinkErr = (u8, String);
+
+/// Matchmaking (`--mm`) or a direct peer (`--host|--join --peer`), the connection and the selections exchange: the part
+/// of a Slippi match before the scene boots, shared by `slippi-netplay` (headless) and `play --slippi-mm` (rendered).
+/// Who the opponent is and how to reach them: matchmaking's answer (`--mm`), or a direct `--host|--join --peer`.
+pub struct Paired {
+    pub decider: bool,
+    pub local_port: u8,
+    pub remote_port: u8,
+    pub peer: melee_net::transport::Addr,
+    /// Hero's public fallback: the opponent's public address when `peer` is its LAN address (same router).
+    pub fallback: Option<melee_net::transport::Addr>,
+    pub bind_ip: u32,
+    /// The opponent's connect code from matchmaking (empty for a direct link).
+    pub opp_code: String,
+}
+
+/// Hero (slippi_net.cpp, Slippi 3.7.0): the netplay port is bound before the search and asks STUN through it, so
+/// the NAT mapping the opponent will use exists and the join names it; a keepalive every 15 s holds it while queued.
+/// The socket is released (the mapping stays) just before the netplay client binds the same port.
+struct PortHold {
+    stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    thread: std::thread::JoinHandle<()>,
+}
+
+static HOLD: std::sync::Mutex<Option<PortHold>> = std::sync::Mutex::new(None);
+
+/// Close the netplay port the search held (no-op when none); the netplay client binds it next.
+pub fn release_port() {
+    let h = HOLD.lock().ok().and_then(|mut g| g.take());
+    if let Some(h) = h {
+        h.stop.store(true, std::sync::atomic::Ordering::SeqCst);
+        let _ = h.thread.join();
+    }
+}
+
+/// STUN servers for the Slippi search: `MELEE_SLIPPI_STUN` (comma-separated ip:port; loopback only on agent
+/// runs), else Hero's list in a real run, none on a mock run.
+fn slippi_stun_servers(real: bool) -> Vec<std::net::SocketAddr> {
+    let agent = std::env::var("MELEE_WINDOW_HIDDEN").is_ok_and(|v| v == "1") || std::env::var_os("MELEE_PAD_SCRIPT").is_some();
+    match std::env::var("MELEE_SLIPPI_STUN").ok().filter(|v| !v.is_empty()) {
+        Some(v) => v.split(',').filter_map(|a| a.trim().parse::<std::net::SocketAddr>().ok()).filter(|a| !agent || a.ip().is_loopback()).collect(),
+        None if real => melee_net::yougame_punch::resolve(&melee_net::yougame_punch::STUN_SERVERS),
+        None => Vec::new(),
+    }
+}
+
+/// Bind the netplay port and ask two STUN servers through it: (public address, NAT type). The socket is kept
+/// (keepalives to the first server that answered) until [`release_port`].
+fn stun_and_hold(bind_ip: u32, port: u16, servers: &[std::net::SocketAddr], stopped: &dyn Fn() -> bool) -> (Option<std::net::SocketAddrV4>, String) {
+    use melee_net::yougame_punch::stun;
+    release_port();
+    let Ok(sock) = std::net::UdpSocket::bind((std::net::Ipv4Addr::from(bind_ip), port)) else {
+        eprintln!("slippi: netplay port {port} busy before the search; no STUN");
+        return (None, String::new());
+    };
+    let (mut a, mut b, mut used) = (None, None, None);
+    for s in servers {
+        if a.is_none() {
+            a = stun(&sock, std::slice::from_ref(s), stopped);
+            if a.is_some() {
+                used = Some(*s);
+            }
+        } else if let Some(x) = stun(&sock, std::slice::from_ref(s), stopped) {
+            b = Some(x);
+            break;
+        }
+    }
+    let answers = a.is_some() as u8 + b.is_some() as u8;
+    if servers.is_empty() {
+        eprintln!("slippi: STUN not asked");
+    } else if answers == 0 {
+        eprintln!("slippi: STUN lookup failed; the matchmaking service will use the address it observes");
+    } else {
+        eprintln!("slippi: STUN servers answered: {answers} of 2");
+    }
+    let nat = match (a, b) {
+        (Some(x), Some(y)) => {
+            if x == y {
+                "cone"
+            } else {
+                "symmetric"
+            }
+        }
+        _ => "unknown",
+    };
+    eprintln!("slippi: NAT type: {nat}");
+    let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let st = stop.clone();
+    let thread = std::thread::spawn(move || {
+        let mut last = Instant::now();
+        while !st.load(std::sync::atomic::Ordering::SeqCst) {
+            std::thread::sleep(Duration::from_millis(50));
+            if let (Some(to), true) = (used, last.elapsed() >= Duration::from_secs(15)) {
+                last = Instant::now();
+                let _ = sock.send_to(&melee_net::yougame_punch::stun_request(), to);
+            }
+        }
+        drop(sock);
+    });
+    if let Ok(mut g) = HOLD.lock() {
+        *g = Some(PortHold { stop, thread });
+    }
+    (a, nat.to_string())
+}
+
+/// The matchmaking half of [`establish`]: no netplay connection yet (the online CSS holds its own, `slippi_css`).
+pub fn pair(args: &[String], max_s: u64) -> Result<Paired, LinkErr> {
+    pair_with(args, max_s, None)
+}
+
+fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::AtomicBool>) -> Result<Paired, LinkErr> {
+    let stopped = || stop.is_some_and(|s| s.load(std::sync::atomic::Ordering::SeqCst));
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
-    let delay = num("--delay", 2) as i32;
-    let frames = num("--frames", 3600) as i32;
-    let max_s = num("--max-seconds", 600) as u64;
-    let t0 = Instant::now();
     // --mm ws://127.0.0.1:P/v1/queue: be paired through a (local mock) matchmaking server, as Slippi Dolphin is;
     // otherwise direct: --host|--join with --peer
     // --mm-real: the only way to reach a matchmaking server that is not on loopback (Slippi's own, wss://). The account
@@ -94,14 +246,13 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     // Windows host, two LAN boxes): ws:// to a private literal IPv4, sockets bound to every interface
     let lan = !real && args.iter().any(|a| a == "--mm-lan");
     let bind_ip: u32 = if real || lan { 0 } else { 0x7F000001 };
-    let (decider, local_port, remote_port, peer) = if let Some(url) = arg(args, "--mm") {
+    let (decider, local_port, remote_port, peer, opp_code, fallback) = if let Some(url) = arg(args, "--mm") {
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));
-        let mut app_version = arg(args, "--app-version").unwrap_or_else(|| "4.0.0-mainline-beta.20".into());
+        let app_version = arg(args, "--app-version").unwrap_or_else(|| melee_net::slippi_mm::SLIPPI_SEMVER.into());
         if real {
             let Some(path) = arg(args, "--user-json") else {
-                eprintln!("melee: --mm-real needs --user-json (a copy of the account's Slippi user.json)");
-                return ExitCode::from(2);
+                return Err((2, format!("--mm-real needs --user-json (a copy of the account's Slippi user.json)")));
             };
             let acct = std::fs::read_to_string(&path).ok().and_then(|t| melee_net::slippi_mm::Json::parse(&t));
             let field = |k: &str| acct.as_ref().and_then(|j| j.get(k)).and_then(|v| v.str()).map(str::to_string);
@@ -109,29 +260,47 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
                 (Some(u), Some(k), Some(c)) => {
                     (uid, play_key, code) = (u, k, c);
                     display = field("displayName").unwrap_or(display);
-                    // the server refuses an outdated client: the account's own latestVersion unless --app-version
-                    if arg(args, "--app-version").is_none() {
-                        app_version = field("latestVersion").unwrap_or(app_version);
+                    // Hero's version gate: the join always names this build's own version (SLIPPI_SEMVER); when the
+                    // account knows a newer Slippi release, this build stays out of matchmaking instead
+                    if let Err(e) = melee_net::slippi_mm::version_gate(&field("latestVersion").unwrap_or_default()) {
+                        eprintln!("slippi: matchmaking blocked: a newer Slippi is out than this build speaks ({})", melee_net::slippi_mm::SLIPPI_SEMVER);
+                        return Err((2, e));
                     }
                 }
                 _ => {
-                    eprintln!("melee: --user-json: not a Slippi user.json (uid, playKey, connectCode)");
-                    return ExitCode::from(2);
+                    return Err((2, format!("--user-json: not a Slippi user.json (uid, playKey, connectCode)")));
                 }
             }
         }
         let mode = match arg(args, "--mm-mode").as_deref() {
             None | Some("direct") => 2,
-            Some("unranked") if real => 1,
+            // unranked: Slippi's real server (--mm-real, the join-and-leave check) or a local mock on 127.0.0.1 only
+            // (`Target::Loopback` refuses any other address); never over --mm-lan
+            Some("unranked") if real || !lan => 1,
             Some(m) => {
-                eprintln!("melee: --mm-mode {m}: only direct (or unranked with --mm-real, for a join-and-leave check); never ranked");
-                return ExitCode::from(2);
+                return Err((2, format!("--mm-mode {m}: only direct, or unranked with --mm-real or a loopback mock; never ranked")));
             }
         };
+        // the WebSocket service (Slippi 3.7.0, Hero's path): STUN from the netplay port first; the ENet service
+        // observes the address itself
+        let port0 = num("--port", 0) as u16;
+        let mut lan_ip = arg(args, "--lan-ip").unwrap_or_default();
+        let (reflexive, nat_type) = if !url.starts_with("enet://") && port0 != 0 {
+            let servers = slippi_stun_servers(real);
+            if lan_ip.is_empty() && (real || lan) {
+                // Hero's local_address_string: this machine's address towards the (first) STUN server
+                lan_ip = servers.first().and_then(|s| melee_net::slippi_mm::local_ip_towards(*s)).map(|i| i.to_string()).unwrap_or_default();
+            }
+            stun_and_hold(bind_ip, port0, &servers, &stopped)
+        } else {
+            (None, String::new())
+        };
         let req = melee_net::slippi_mm::JoinRequest {
+            reflexive,
+            nat_type,
             uid,
             play_key,
-            lan_ip: arg(args, "--lan-ip").unwrap_or_default(),
+            lan_ip,
             display_name: display,
             connect_code: code,
             mode,
@@ -140,8 +309,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             port: num("--port", 0) as u16,
         };
         if req.port == 0 {
-            eprintln!("melee: --mm needs --port (the netplay port the server is told)");
-            return ExitCode::from(2);
+            return Err((2, format!("--mm needs --port (the netplay port the server is told)")));
         }
         // a real server's messages carry account data (uids, codes, addresses): only their type is shown
         let shown = |t: &str| {
@@ -155,7 +323,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         // --mm-leave-after-joined: close as soon as the server has accepted the join (the unranked check: never stays
         // queued long enough to be matched on purpose)
         let leave_early = args.iter().any(|a| a == "--mm-leave-after-joined");
-        let leave = |t: &str| leave_early && melee_net::slippi_mm::Json::parse(t).is_some_and(|j| j.get("type").and_then(|v| v.str()) .is_some_and(|t| t == "joined" || t == "create-ticket-resp"));
+        let leave = |t: &str| stopped() || leave_early && melee_net::slippi_mm::Json::parse(t).is_some_and(|j| j.get("type").and_then(|v| v.str()) .is_some_and(|t| t == "joined" || t == "create-ticket-resp"));
         let target = if real {
             melee_net::slippi_mm::Target::Real
         } else if lan {
@@ -170,41 +338,83 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         } else {
             melee_net::slippi_mm::join_to(&url, &req, Duration::from_secs(max_s), target, shown, leave)
         };
+        if res.is_err() {
+            release_port();
+        }
         let m = match res {
+            Err(e) if e == "left" && stopped() => {
+                eprintln!("melee: mm: search cancelled (the other pool matched first, or the player left)");
+                return Err((0, "Cancelled".into()));
+            }
             Err(e) if e == "left" => {
-                eprintln!("melee: matchmaking: accepted (joined), left the queue at once");
-                return ExitCode::SUCCESS;
+                return Err((0, format!("matchmaking: accepted (joined), left the queue at once")));
             }
             Ok(m) => m,
             Err(e) => {
-                eprintln!("melee: matchmaking: {e}");
-                return ExitCode::FAILURE;
+                return Err((1, format!("matchmaking: {e}")));
             }
         };
-        let (Some(li), Some((ri, ra))) = (m.local_index(), m.remote_addresses().into_iter().next()) else {
-            eprintln!("melee: matchmaking: the match has no local or remote player");
-            return ExitCode::FAILURE;
+        let (Some(li), Some((ri, ra, rfb))) = (m.local_index(), m.remote_addresses().into_iter().next()) else {
+            return Err((1, format!("matchmaking: the match has no local or remote player")));
         };
         let Some(peer) = addr_parse(&ra, 51441) else {
-            eprintln!("melee: matchmaking: bad remote address {ra}");
-            return ExitCode::FAILURE;
+            return Err((1, format!("matchmaking: bad remote address {ra}")));
         };
         if real {
             eprintln!("melee: matched: local player {li}, remote {ri}, decider {}, stages {:?}", m.is_host, m.stages);
         } else {
             eprintln!("melee: matched ({}): local player {li}, remote {ri} at {ra}, decider {}, stages {:?}", m.match_id, m.is_host, m.stages);
         }
-        (m.is_host, li, ri, peer)
+        let opp = m.players.iter().find(|p| !p.is_local).map(|p| p.connect_code.clone()).unwrap_or_default();
+        // the players' names by port (display name, else connect code) for the match's name tags (`tags_env`)
+        let mut names: [String; 4] = Default::default();
+        for p in &m.players {
+            if let Some(n) = names.get_mut(p.port.saturating_sub(1) as usize) {
+                *n = if p.display_name.trim().is_empty() { p.connect_code.clone() } else { p.display_name.clone() };
+            }
+        }
+        std::env::set_var("MELEE_SLIPPI_MM_NAMES", names.join("\t"));
+        let fb = rfb.and_then(|f| addr_parse(&f, 51441));
+        (m.is_host, li, ri, peer, opp, fb)
     } else {
         let host = args.iter().any(|a| a == "--host");
         let Some(peer) = arg(args, "--peer").and_then(|p| addr_parse(&p, 51600)) else {
-            eprintln!("usage: melee slippi-netplay (--host|--join) --port P --peer IP:PORT [--delay D] [--lag-ms N] [--loss-pct P] [--frames N] [--out CSV] [--max-seconds S]");
-            eprintln!("       melee slippi-netplay --mm ws://127.0.0.1:P/v1/queue --port P [--code C] [--search C] [--char EXT] [--color N] [--stage EXT] [...]");
-            return ExitCode::from(2);
+            return Err((2, "usage: melee slippi-netplay (--host|--join) --port P --peer IP:PORT [--delay D] [--lag-ms N] [--loss-pct P] [--frames N] [--out CSV] [--max-seconds S]
+       melee slippi-netplay --mm ws://127.0.0.1:P/v1/queue --port P [--code C] [--search C] [--char EXT] [--color N] [--stage EXT] [...]".into()));
         };
-        let lp: u8 = if host { 0 } else { 1 };
-        (host, lp, 1 - lp, peer)
+        // --local-port: the player index matchmaking gave (a link the online CSS paired; otherwise the host is 0)
+        let lp: u8 = arg(args, "--local-port").and_then(|v| v.parse().ok()).filter(|&p: &u8| p < 2).unwrap_or(if host { 0 } else { 1 });
+        (host, lp, 1 - lp, peer, String::new(), None)
     };
+    Ok(Paired { decider, local_port, remote_port, peer, fallback, bind_ip, opp_code })
+}
+
+pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
+    let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+    // --link (the online select's handoff): the select's link goes on, as one Slippi client from the select into the
+    // match; no new connection (Slippi Dolphin takes none after its first link drops) and no selections sent again
+    if let Some(spec) = arg(args, "--link") {
+        let local_port: u8 = arg(args, "--local-port").and_then(|v| v.parse().ok()).filter(|&p: &u8| p < 2).unwrap_or(0);
+        let decider = args.iter().any(|a| a == "--host");
+        let (lag, loss) = (Duration::from_millis(num("--lag-ms", 0) as u64), num("--loss-pct", 0) as u32);
+        let t = crate::slippi_link::take(&spec, 0, num("--port", 0) as u16, |udp| {
+            Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, jitter: Duration::from_millis(num("--jitter-ms", 0) as u64), rng: 0x5150_0000 ^ local_port as u32, q: VecDeque::new() })
+        })
+        .map_err(|e| (1, e))?;
+        let tag = if decider { "decider" } else { "guest" };
+        if t.cl.status != Status::Connected {
+            return Err((1, format!("{tag}: the select's link was {:?} at the handoff", t.cl.status)));
+        }
+        let remote_port = 1 - local_port;
+        let mut by_port = [t.mine; 2];
+        by_port[remote_port as usize & 1] = t.theirs;
+        let rng_offset = if decider { t.mine.rng_offset } else { t.theirs.rng_offset };
+        let (scene, stage) = online_scene(&by_port, pause_allowed(args, true)).map_err(|e| (1, format!("{e}")))?;
+        eprintln!("melee: {tag}: the select's link taken over after {:.2}s, rng_offset {rng_offset:#06x}, stage {stage:#x}, scene {scene}", t0.elapsed().as_secs_f32());
+        return Ok(Linked { cl: t.cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage });
+    }
+    let Paired { decider, local_port, remote_port, peer, fallback, bind_ip, opp_code: _ } = pair(args, max_s)?;
+    release_port();
     let tag = if decider { "decider" } else { "guest" };
     let udp = match UdpTransport::open(bind_ip, num("--port", 0) as u16) {
         Ok(mut u) => {
@@ -215,18 +425,19 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             u
         }
         Err(e) => {
-            eprintln!("melee: bind: {e}");
-            return ExitCode::FAILURE;
+            return Err((1, format!("bind: {e}")));
         }
     };
     let tp: Box<dyn Transport> = Box::new(Degraded {
         inner: Box::new(udp),
         lag: Duration::from_millis(num("--lag-ms", 0) as u64),
         loss_pct: num("--loss-pct", 0) as u32,
+        jitter: Duration::from_millis(num("--jitter-ms", 0) as u64),
         rng: 0x5150_0000 ^ local_port as u32,
         q: VecDeque::new(),
     });
     let mut cl = Client::new(tp, local_port, peer, remote_port);
+    cl.set_fallback(fallback);
     cl.connect_timeout_ms = 30000;
     // connect, then exchange MATCH_SELECTIONS (the decider's rng_offset is the match's)
     let rng_offset = (std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.subsec_nanos()).unwrap_or(1) ^ 0x9E37_79B9) % 0xFFFF;
@@ -237,7 +448,8 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         is_character_selected: true,
         player_idx: local_port,
         stage_id: num("--stage", 0x20) as u16,
-        is_stage_selected: true,
+        // --stage-unset: no stage from this side (Direct's winner: the loser's pick stands)
+        is_stage_selected: !args.iter().any(|a| a == "--stage-unset"),
         rng_offset,
         ..Default::default()
     };
@@ -258,8 +470,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             eprintln!("melee: {tag}: connected after {:.2}s", t0.elapsed().as_secs_f32());
         }
         if matches!(cl.status, Status::Failed | Status::Disconnected) || t0.elapsed().as_secs() > max_s {
-            eprintln!("melee: {tag}: connection failed ({:?})", cl.status);
-            return ExitCode::FAILURE;
+            return Err((1, format!("{tag}: connection failed ({:?})", cl.status)));
         }
         std::thread::sleep(Duration::from_millis(1));
     }
@@ -267,14 +478,30 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let mut by_port = [mine; 2];
     by_port[remote_port as usize & 1] = theirs;
     let rng_offset = if decider { mine.rng_offset } else { theirs.rng_offset };
-    let (scene, stage) = match online_scene(&by_port) {
+    let (scene, stage) = match online_scene(&by_port, pause_allowed(args, false)) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("melee: {e}");
-            return ExitCode::FAILURE;
+            return Err((1, format!("{e}")));
         }
     };
     eprintln!("melee: {tag}: selections exchanged, rng_offset {rng_offset:#06x}, stage {stage:#x}, scene {scene}");
+    Ok(Linked { cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage })
+}
+
+pub fn slippi_netplay(args: &[String]) -> ExitCode {
+    let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+    let delay = num("--delay", 2) as i32;
+    let frames = num("--frames", 3600) as i32;
+    let max_s = num("--max-seconds", 600) as u64;
+    let t0 = Instant::now();
+    let Linked { mut cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage: _ } = match establish(args, t0, max_s) {
+        Ok(l) => l,
+        Err((c, m)) => {
+            eprintln!("melee: {m}");
+            return ExitCode::from(c);
+        }
+    };
+    let tag = if decider { "decider" } else { "guest" };
     melee_core::slippi_online::enable(rng_offset);
     if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
         online_codes(by_port.iter().map(|s| s.alt_stage_mode).max().unwrap_or(0));
@@ -332,6 +559,16 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     s.set_local_port(local_port as usize);
     s.set_delay(delay);
     cl.start_game();
+    // test hook: MELEE_NP_LOAD_DELAY_MS=N starts this side's frames N ms late (a slower stage load, as a Slippi Dolphin
+    // peer's): the link keeps polling, the peer's pads queue
+    if let Some(ms) = std::env::var("MELEE_NP_LOAD_DELAY_MS").ok().and_then(|v| v.parse::<u64>().ok()) {
+        let t = Instant::now();
+        while t.elapsed() < Duration::from_millis(ms) {
+            cl.poll();
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        eprintln!("melee: {tag}: MELEE_NP_LOAD_DELAY_MS: frames start {ms} ms late");
+    }
 
     let mut rnd: u32 = rng_offset.wrapping_mul(2654435761) ^ (local_port as u32 + 1);
     let mut last_sent = FIRST - 1;
@@ -344,15 +581,16 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let mut done_at: Option<Instant> = None;
     let mut ticks = 0u64;
     let mut ended = false;
-    let mut skip_checked = 0;
+    let mut ts = melee_net::time_sync::TimeSync::new(melee_net::time_sync::slippi_old_rule());
     let mut forced_resims = 0u32;
     let shift = num("--script-shift", 0) as i32;
     // --padgen SEED: the session's deterministic pad generator instead of the (1800-frame) scenario script, for long matches
     let padgen = arg(args, "--padgen").and_then(|v| v.parse::<u32>().ok());
+    let start_at = std::env::var("MELEE_NP_START_AT").ok().and_then(|v| v.parse::<i32>().ok());
     // no remote pad for this long ends the run with a report instead of a silent stall: generous until the first pad
     // (the peer may still be loading), short after it
-    let first_pad_s = num("--first-pad-seconds", 120) as u64;
-    let silence_s = num("--silence-seconds", 10) as u64;
+    let first_pad_s = num("--first-pad-seconds", if ts.old { 120 } else { melee_net::time_sync::FIRST_PAD_S as i64 }) as u64;
+    let silence_s = num("--silence-seconds", if ts.old { 10 } else { melee_net::time_sync::SILENCE_S as i64 }) as u64;
     let mut last_rx: Option<Instant> = None;
     let loop_t = Instant::now();
     let mut failed = false;
@@ -439,15 +677,28 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         }
         // local controller: the script, known `delay` frames ahead
         let f = s.current_frame();
-        for ff in f..=f + delay {
-            let i = match padgen {
+        // start in step: online frame 2 waits for the peer's first pad
+        s.start_hold = !ts.old && last_rx.is_none();
+        let step = ts.step(online(f), || cl.time_offset_us());
+        if step.hold > 0 {
+            s.request_wait(step.hold);
+        }
+        let extra = step.advance as i32;
+        for ff in f..=f + delay + extra {
+            let mut i = match padgen {
                 Some(g) => melee_net::session::rb_gen(g, local_port as usize * 2, ff),
                 None => script_input(local_port as usize, ff - FIRST - shift),
             };
+            // test hook: MELEE_NP_START_AT=N holds Start (PAD_BUTTON_START 0x1000) on online frames N..N+3 (a stray
+            // Start: in Unranked the match must not pause; see online_scene's pause_allowed)
+            if start_at.is_some_and(|n| (n..n + 4).contains(&online(ff))) {
+                i.buttons |= 0x1000;
+            }
             s.submit_local_input(local_port as usize * 2, ff, &i);
         }
         let (ckf, ck) = finals.iter().next_back().map_or((0, 0), |(a, b)| (*a, *b));
-        for ff in (last_sent + 1)..=(f + delay) {
+        let sent_before = last_sent;
+        for ff in (last_sent + 1)..=(f + delay + extra) {
             let Some(i) = s.local_input_for_send(local_port as usize * 2, ff) else { break };
             let mut p = [0u8; PAD_WIRE];
             p[..8].copy_from_slice(&pad_bytes(&i));
@@ -459,20 +710,20 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             cl.send_pad(online(ff), p, ckf, ck);
             last_sent = ff;
         }
+        // a stalled tick (no new local pad) sends the unacked pads again, as Slippi Dolphin's skipped frame does
+        // (`SendSlippiPad(nullptr)`): a lost newest packet is repaired by nothing else
+        if last_sent == sent_before {
+            cl.resend_pads();
+        }
         // on the wire now, not at the next tick's poll (~16 ms later); MELEE_NP_LATE_SEND=1 keeps the old timing (A/B)
         if !late_send {
             cl.flush();
         }
         // Slippi's skip rule: well ahead of the peer, wait (only on frames that are multiples of 30)
-        let of = online(s.current_frame());
-        if of > 0 && of % 30 == 0 && of != skip_checked {
-            skip_checked = of;
-            let off = cl.time_offset_us();
-            if off > 10000 {
-                s.request_wait((((off - 10000) as i64 / 16683) + 1).min(5) as i32);
-            }
-        }
         run_tick(&mut s, &mut game, None);
+        if extra > 0 && s.current_frame() > f {
+            run_tick(&mut s, &mut game, None);
+        }
         // newly finalized local checksums: the session's own finality rule (the state entering the frame is final once
         // the frame before it is confirmed and no rollback below it is pending), after this tick's resimulation
         let conf = s.confirmed_frame();
@@ -550,8 +801,8 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     eprintln!("melee: {tag}: tick work (poll + sim + send) mean {} us, max {} us", work_sum / ticks.max(1), work_max);
     let last = finals.keys().next_back().copied().unwrap_or(0);
     eprintln!(
-        "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; ping {} us (pad acks {} us); pads sent {} received {}; enet resent {}",
-        finals.len(), st.rollbacks, st.depth_max, st.resim, st.stall_ticks, st.waits, cl.net_ping_us(), cl.ping_us(), cl.stats.pads_sent, cl.stats.pads_received,
+        "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; start hold {} ticks; time sync held {} advanced {}{}; ping {} us (pad acks {} us); pads sent {} received {}; enet resent {}",
+        finals.len(), st.rollbacks, st.depth_max, st.resim, st.stall_ticks, st.waits, st.start_hold, ts.held, ts.advanced, if ts.old { " (old rule)" } else { "" }, cl.net_ping_us(), cl.ping_us(), cl.stats.pads_sent, cl.stats.pads_received,
         cl.host.peers.iter().map(|p| p.stats_resent).sum::<u64>()
     );
     if !failed && hard == 0 && soft == 0 && compared > 0 && (last >= frames || ended) {

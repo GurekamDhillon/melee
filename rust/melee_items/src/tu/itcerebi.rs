@@ -93,8 +93,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { super::efLib_PauseAll(a0) }
-        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { super::efLib_ResumeAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_PauseAll(a0: *mut HSD_GObj) { core::hint::black_box(0x41B2C074u32); /* fn identity */ super::efLib_PauseAll(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { core::hint::black_box(0x346E73A9u32); /* fn identity */ super::efLib_ResumeAll(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -125,7 +127,9 @@ unsafe fn Item_EnterAirStateWithHitlagAndStateDesc(gobj: *mut Item_GObj) {
     ext::it_80273670(gobj, 0, 0.0);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_Logic23_Spawned(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF05001E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_Logic23_Spawned");
     let item = GET_ITEM(gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
@@ -135,20 +139,26 @@ pub unsafe extern "C" fn itCerebi_Logic23_Spawned(gobj: *mut Item_GObj) {
 }
 
 /// 2D3F4C
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3F4C(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    core::hint::black_box(0x360B5FA2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3F4C");
     ext::it_8026B894(gobj, arg1);
 }
 
 /// 2D3F6C
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3F6C(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x66072E04u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3F6C");
     ext::it_80273454(gobj);
     it_802D3FA0(gobj);
 }
 
 /// 2D3FA0
+#[inline(never)]
 pub unsafe extern "C" fn it_802D3FA0(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x05E9B7A2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D3FA0");
     let item = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -158,7 +168,9 @@ pub unsafe extern "C" fn it_802D3FA0(gobj: *mut Item_GObj) {
     ext::efSync_Spawn(0x472, gobj, jobj, &mut f);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x6986FA87u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802D4070(gobj);
@@ -166,15 +178,20 @@ pub unsafe extern "C" fn itCerebi_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool 
     false
 }
 
-pub unsafe extern "C" fn itCerebi_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itCerebi_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itCerebi_UnkMotion1_Phys(_gobj: *mut Item_GObj) { core::hint::black_box(0x56D54EFAu32); /* fn identity */ melee_core::ct!("itCerebi_UnkMotion1_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xDA940B90u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion1_Coll");
     false
 }
 
 /// 2D4070
+#[inline(never)]
 pub unsafe extern "C" fn it_802D4070(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xEF6612F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D4070");
     let item = GET_ITEM(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
@@ -189,7 +206,9 @@ pub unsafe extern "C" fn it_802D4070(gobj: *mut Item_GObj) {
     (*item).x40_vel.y = *attrs.add(2);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x0E3E8BA4u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion2_Anim");
     let item = GET_ITEM(gobj);
     if (*item).pos.y > ext::Stage_GetBlastZoneTopOffset() {
@@ -198,30 +217,40 @@ pub unsafe extern "C" fn itCerebi_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool 
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xF044F949u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion2_Phys");
     let item = GET_ITEM(gobj);
     (*item).x40_vel.y += *((*(*item).xC4_article_data).x4_specialAttributes as *mut f32).add(3);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x9ACA9953u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion2_Coll");
     false
 }
 
 /// 2D4168
+#[inline(never)]
 pub unsafe extern "C" fn it_802D4168(gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD7F1540Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802D4168");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x1C32E61Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    core::hint::black_box(0x22F67D6Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         ext::it_80273454(gobj);
@@ -234,7 +263,9 @@ pub unsafe extern "C" fn itCerebi_UnkMotion0_Phys(gobj: *mut Item_GObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itCerebi_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xCD4801F9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCerebi_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D3F6C)) != 0
 }

@@ -62,7 +62,9 @@ const transition_flags: u32 = (Ft_MF_KeepColAnimHitStatus
     | Ft_MF_Unk27) as u32;
 
 /// `ftGw_SpecialN_CreateSausage` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialN_CreateSausage(g: *mut HSD_GObj) {
+    core::hint::black_box(0x44AD25CAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialN_CreateSausage");
     ftGw_SpecialN_CreateSausage(g);
 }

@@ -103,7 +103,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x27E6393Au32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
 }
@@ -173,7 +174,9 @@ pub static it_803F6818: [ItemStateTable; 3] = [
 ];
 
 /// `void it_8029CD18(Item_GObj*, int)`: draws the ghost jobj, when there is one, after the item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029CD18(item_gobj: *mut Item_GObj, arg1: i32) {
+    core::hint::black_box(0x8C423981u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029CD18");
     let item = item_of(item_gobj);
     let jobj = (*item).xDD4_itemVar.foxillusion.xDDC;
@@ -186,7 +189,9 @@ pub unsafe extern "C" fn it_8029CD18(item_gobj: *mut Item_GObj, arg1: i32) {
 
 /// `HSD_JObj* it_8029CD78(Item_GObj*)`: loads the ghost jobj from the article joint, with the item jobj's
 /// rotation and the item scale.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029CD78(item_gobj: *mut Item_GObj) -> *mut HSD_JObj {
+    core::hint::black_box(0x90514A57u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029CD78");
     let mut quat: Quaternion = core::mem::zeroed();
     let item = item_of(item_gobj);
@@ -203,7 +208,9 @@ pub unsafe extern "C" fn it_8029CD78(item_gobj: *mut Item_GObj) -> *mut HSD_JObj
 }
 
 /// `Item_GObj* it_8029CEB4(HSD_GObj* parent, Vec3* pos, ItemKind, f32 dir)`: spawns the illusion item.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029CEB4(parent: *mut HSD_GObj, pos: *mut Vec, kind: ItemKind, dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0xF5498295u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029CEB4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
@@ -220,7 +227,9 @@ pub unsafe extern "C" fn it_8029CEB4(parent: *mut HSD_GObj, pos: *mut Vec, kind:
 }
 
 /// `bool itFoxIllusion_Logic14_DmgDealt(Item_GObj*)`: clears the hitlag counter.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxIllusion_Logic14_DmgDealt(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xAA05EE44u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxIllusion_Logic14_DmgDealt");
     let item = item_of(item_gobj);
     (*item).xCA8 = 0;
@@ -228,7 +237,9 @@ pub unsafe extern "C" fn itFoxIllusion_Logic14_DmgDealt(item_gobj: *mut Item_GOb
 }
 
 /// `void itFoxIllusion_Logic14_Destroyed(Item_GObj*)`: removes the ghost jobj and the owner link.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxIllusion_Logic14_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2462BEE1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxIllusion_Logic14_Destroyed");
     let item = item_of(item_gobj);
     if !(*item).xDD4_itemVar.foxillusion.xDDC.is_null() {
@@ -240,7 +251,9 @@ pub unsafe extern "C" fn itFoxIllusion_Logic14_Destroyed(item_gobj: *mut Item_GO
 }
 
 /// `void it_8029CFF0(Item_GObj*)`: item init: lifetime from the attributes, the model joint, the first state.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029CFF0(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x5825E130u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029CFF0");
     let item = item_of(item_gobj);
     (*item).xD44_lifeTimer = *((*(*item).xC4_article_data).x4_specialAttributes as *const f32);
@@ -258,7 +271,9 @@ pub unsafe extern "C" fn it_8029CFF0(item_gobj: *mut Item_GObj) {
 
 /// `bool itFoxillusion_UnkMotion0_Anim(Item_GObj*)`: creates the ghost jobj when the fighter's cmd var is 2,
 /// ends the item when the fighter says so, counts the lifetime down.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xD554521Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion0_Anim");
     let temp_r31 = item_of(item_gobj);
     if !(*temp_r31).owner.is_null()
@@ -301,39 +316,51 @@ pub unsafe fn itFoxillusion_Phys(item_gobj: *mut Item_GObj, ghost_pos: *mut Vec)
 }
 
 /// `void itFoxillusion_UnkMotion0_Phys(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x277C7951u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion0_Phys");
     let mut ghost_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     itFoxillusion_Phys(item_gobj, &mut ghost_pos);
 }
 
 /// `bool itFoxillusion_UnkMotion0_Coll(Item_GObj*)`: does nothing.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion0_Coll(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x445A966Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion0_Coll");
     0
 }
 
 /// `bool itFoxillusion_UnkMotion1_Anim(Item_GObj*)`: same as state 0.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x5F06D5EDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion1_Anim");
     itFoxillusion_UnkMotion0_Anim(item_gobj)
 }
 
 /// `void itFoxillusion_UnkMotion1_Phys(Item_GObj*)`.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x8BCBA608u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion1_Phys");
     let mut ghost_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     itFoxillusion_Phys(item_gobj, &mut ghost_pos);
 }
 
 /// `bool itFoxillusion_UnkMotion1_Coll(Item_GObj*)`: does nothing.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion1_Coll(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x59A6AC9Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion1_Coll");
     0
 }
 
 /// `void it_8029D798(Item_GObj*)`: enters the fade-out state with the second lifetime from the attributes.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029D798(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6FC39B0Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029D798");
     let item = item_of(item_gobj);
     let jobj = jobj_of(item_gobj);
@@ -344,7 +371,9 @@ pub unsafe extern "C" fn it_8029D798(item_gobj: *mut Item_GObj) {
 }
 
 /// `bool itFoxillusion_UnkMotion2_Anim(Item_GObj*)`: fade-out countdown.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0xFF70BC76u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion2_Anim");
     let item = item_of(item_gobj);
     let tmp = if !(*item).owner.is_null() { ext::ftFx_SpecialS_CheckGhostRemove((*item).owner) != 0 } else { true };
@@ -360,7 +389,9 @@ pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Anim(item_gobj: *mut Item_GObj
 }
 
 /// `void itFoxillusion_UnkMotion2_Phys(Item_GObj*)`: moves the ghost jobj to the fighter's ghost position.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xD6822713u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion2_Phys");
     let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let item = item_of(item_gobj);
@@ -372,13 +403,17 @@ pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Phys(item_gobj: *mut Item_GObj
 }
 
 /// `bool itFoxillusion_UnkMotion2_Coll(Item_GObj*)`: does nothing.
+#[inline(never)]
 pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Coll(arg0: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x2E492D31u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itFoxillusion_UnkMotion2_Coll");
     0
 }
 
 /// `void it_8029D948(Item_GObj*, HSD_GObj*)`: removes the gobj interaction references.
+#[inline(never)]
 pub unsafe extern "C" fn it_8029D948(item_gobj: *mut Item_GObj, r#ref: *mut HSD_GObj) {
+    core::hint::black_box(0xD0236A34u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_8029D948");
     ext::it_8026B894(item_gobj, r#ref);
 }

@@ -17,7 +17,7 @@ pub fn install() {
         efAsync_Spawn = Some(|a0, a1, a2, a3, a4| { t(1004); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); });
         itColl_BounceOffShield = Some(|a0| { t(1005); t(pi(a0)); (fv() & 1) as i32 });
         it_8026B894 = Some(|a0, a1| { t(1006); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
-        it_8026BB68 = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); tvec(a1); });
+        it_8026BB68 = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
         it_8026D9A0 = Some(|a0| { t(1008); t(pi(a0)); fv() as _ });
         it_80272860 = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); });
         it_80273030 = Some(|a0| { t(1010); t(pi(a0)); (fv() & 1) as i32 });
@@ -212,7 +212,7 @@ pub fn fill_Item(p: &mut Item) {
     p.x378_itemColl.xE4_ecb.left.x = rg();
     p.x378_itemColl.xE4_ecb.left.y = rg();
     p.x378_itemColl.ecb_source.kind = fv() as _;
-    for j0 in 0..56 { unsafe { *(base(&p.x378_itemColl.ecb_source) as *mut u8).add(8 + j0) = rnd() as u8; } }
+    for i0 in 0..56 { unsafe { *(&mut p.x378_itemColl.ecb_source.x4 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.x378_itemColl.ecb_source.x124 = rg();
     p.x378_itemColl.ecb_source.x128 = rg();
     p.x378_itemColl.ecb_source.x12C = rg();
@@ -363,7 +363,7 @@ pub fn fill_Item(p: &mut Item) {
     for i1 in 0..12 {
     p.x5D4_hitboxes[i0].hit.victims_2[i1].x4 = fv() as _;
     }
-    for j1 in 0..8 { unsafe { *(base(&p.x5D4_hitboxes[i0].hit) as *mut u8).add(504 + j1) = rnd() as u8; } }
+    for i1 in 0..8 { unsafe { *(&mut p.x5D4_hitboxes[i0].hit.x134 as *mut _ as *mut u8).add(i1) = rnd() as u8; } }
     p.x5D4_hitboxes[i0].set_x138(fv() as _);
     p.x5D4_hitboxes[i0].set_x138_b1_7(fv() as _);
     for i1 in 0..3 {
@@ -467,9 +467,9 @@ pub fn fill_Item(p: &mut Item) {
     p.xC6C = rg();
     p.xC70 = rg();
     p.xC74 = fv() as _;
-    p.xC78.x = (rg()).to_bits().cast_signed();
-    p.xC78.y = (rg()).to_bits().cast_signed();
-    p.xC80.x = fv() as _;
+    p.xC78.x = fv() as _;
+    p.xC78.y = fv() as _;
+    p.xC80.x = rg();
     p.xC80.y = fv() as _;
     p.xC88 = fv() as _;
     p.xC8C = fv() as _;
@@ -538,9 +538,9 @@ pub fn fill_Item(p: &mut Item) {
     p.xD90.x0.set_count_x1A0(fv() as _);
     p.xD90.x0.set_count_specials(fv() as _);
     p.xD90.x0.x2073 = fv() as _;
-    p.xD94.x = (rg()).to_bits().cast_signed();
-    p.xD94.y = (rg()).to_bits().cast_signed();
-    p.xD9C.x = fv() as _;
+    p.xD94.x = fv() as _;
+    p.xD94.y = fv() as _;
+    p.xD9C.x = rg();
     p.xD9C.y = fv() as _;
     p.xDA4_word = fv() as _;
     p.xDA8_short = fv() as _;
@@ -619,7 +619,13 @@ pub fn fill_Item(p: &mut Item) {
     p.xDCC_flag.set_b2(fv() as _);
     p.xDCC_flag.set_b3(fv() as _);
     p.xDCC_flag.set_b4567(fv() as _);
-    for j0 in 0..1 { unsafe { *(base(&p.xDCD_flag) as *mut u8).add(0 + j0) = rnd() as u8; } }
+    p.xDCD_flag.x0.set_b01(fv() as _);
+    p.xDCD_flag.x0.set_b2(fv() as _);
+    p.xDCD_flag.x0.set_b3(fv() as _);
+    p.xDCD_flag.x0.set_b4(fv() as _);
+    p.xDCD_flag.x0.set_b5(fv() as _);
+    p.xDCD_flag.x0.set_b6(fv() as _);
+    p.xDCD_flag.x0.set_b7(fv() as _);
     p.xDCE_flag.x0.set_b0(fv() as _);
     p.xDCE_flag.x0.set_b1(fv() as _);
     p.xDCE_flag.x0.set_b2(fv() as _);
@@ -816,7 +822,7 @@ pub fn hash_Item(p: &Item) {
     hm(p.x378_itemColl.xE4_ecb.left.x.to_bits());
     hm(p.x378_itemColl.xE4_ecb.left.y.to_bits());
     hm(p.x378_itemColl.ecb_source.kind as u32);
-    for j0 in 0..56 { unsafe { hm(*base(&p.x378_itemColl.ecb_source).add(8 + j0) as u32); } }
+    for i0 in 0..56 { unsafe { hm(*(&p.x378_itemColl.ecb_source.x4 as *const _ as *const u8).add(i0) as u32); } }
     hm(p.x378_itemColl.ecb_source.x124.to_bits());
     hm(p.x378_itemColl.ecb_source.x128.to_bits());
     hm(p.x378_itemColl.ecb_source.x12C.to_bits());
@@ -977,7 +983,7 @@ pub fn hash_Item(p: &Item) {
     hm(pi(p.x5D4_hitboxes[i0].hit.victims_2[i1].victim));
     hm(p.x5D4_hitboxes[i0].hit.victims_2[i1].x4 as u32);
     }
-    for j1 in 0..8 { unsafe { hm(*base(&p.x5D4_hitboxes[i0].hit).add(504 + j1) as u32); } }
+    for i1 in 0..8 { unsafe { hm(*(&p.x5D4_hitboxes[i0].hit.x134 as *const _ as *const u8).add(i1) as u32); } }
     hm(p.x5D4_hitboxes[i0].x138() as u32);
     hm(p.x5D4_hitboxes[i0].x138_b1_7() as u32);
     for i1 in 0..3 {
@@ -1086,9 +1092,9 @@ pub fn hash_Item(p: &Item) {
     hm(p.xC6C.to_bits());
     hm(p.xC70.to_bits());
     hm(p.xC74 as u32);
-    hm(p.xC78.x.cast_unsigned());
-    hm(p.xC78.y.cast_unsigned());
-    hm(p.xC80.x as u32);
+    hm(p.xC78.x as u32);
+    hm(p.xC78.y as u32);
+    hm(p.xC80.x.to_bits());
     hm(p.xC80.y as u32);
     hm(p.xC88 as u32);
     hm(p.xC8C as u32);
@@ -1175,9 +1181,9 @@ pub fn hash_Item(p: &Item) {
     hm(p.xD90.x0.count_x1A0() as u32);
     hm(p.xD90.x0.count_specials() as u32);
     hm(p.xD90.x0.x2073 as u32);
-    hm(p.xD94.x.cast_unsigned());
-    hm(p.xD94.y.cast_unsigned());
-    hm(p.xD9C.x as u32);
+    hm(p.xD94.x as u32);
+    hm(p.xD94.y as u32);
+    hm(p.xD9C.x.to_bits());
     hm(p.xD9C.y as u32);
     hm(p.xDA4_word as u32);
     hm(p.xDA8_short as u32);
@@ -1256,7 +1262,13 @@ pub fn hash_Item(p: &Item) {
     hm(p.xDCC_flag.b2() as u32);
     hm(p.xDCC_flag.b3() as u32);
     hm(p.xDCC_flag.b4567() as u32);
-    for j0 in 0..1 { unsafe { hm(*base(&p.xDCD_flag).add(0 + j0) as u32); } }
+    hm(p.xDCD_flag.x0.b01() as u32);
+    hm(p.xDCD_flag.x0.b2() as u32);
+    hm(p.xDCD_flag.x0.b3() as u32);
+    hm(p.xDCD_flag.x0.b4() as u32);
+    hm(p.xDCD_flag.x0.b5() as u32);
+    hm(p.xDCD_flag.x0.b6() as u32);
+    hm(p.xDCD_flag.x0.b7() as u32);
     hm(p.xDCE_flag.x0.b0() as u32);
     hm(p.xDCE_flag.x0.b1() as u32);
     hm(p.xDCE_flag.x0.b2() as u32);
@@ -1381,7 +1393,7 @@ pub fn fill_ItemAttr(p: &mut ItemAttr) {
     p.set_x1_8(fv() as _);
     p.x3 = fv() as _;
     p.x4_throw_speed_mul = rg();
-    p.x8 = fv() as _;
+    p.x8 = rg();
     p.xC_spin_speed = rg();
     p.x10_fall_speed = rg();
     p.x14_fall_speed_max = rg();
@@ -1428,7 +1440,7 @@ pub fn hash_ItemAttr(p: &ItemAttr) {
     hm(p.x1_8() as u32);
     hm(p.x3 as u32);
     hm(p.x4_throw_speed_mul.to_bits());
-    hm(p.x8 as u32);
+    hm(p.x8.to_bits());
     hm(p.xC_spin_speed.to_bits());
     hm(p.x10_fall_speed.to_bits());
     hm(p.x14_fall_speed_max.to_bits());

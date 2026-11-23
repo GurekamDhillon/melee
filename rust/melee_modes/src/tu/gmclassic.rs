@@ -118,17 +118,28 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn gm_8017EB3C(a0: u8, a1: u8) -> u8 { super::gm_8017EB3C(a0, a1) }
-        pub unsafe extern "C" fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EB64(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EB98(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EBCC(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017EC00(a0: u8, a1: u8) -> f32 { super::gm_8017EC00(a0, a1) }
-        pub unsafe extern "C" fn gm_8017EC50(a0: u8, a1: u8) -> f32 { super::gm_8017EC50(a0, a1) }
-        pub unsafe extern "C" fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ECA0(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ECD4(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ED08(a0, a1, a2) }
-        pub unsafe extern "C" fn gm_8017ED3C(a0: u8, a1: u8) -> f32 { super::gm_8017ED3C(a0, a1) }
-        pub unsafe extern "C" fn gm_8017ED8C(a0: u8, a1: u8) -> f32 { super::gm_8017ED8C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EB3C(a0: u8, a1: u8) -> u8 { core::hint::black_box(0xCEFB9C87u32); /* fn identity */ super::gm_8017EB3C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xDA0879CBu32); /* fn identity */ super::gm_8017EB64(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xCBE392E8u32); /* fn identity */ super::gm_8017EB98(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0x6ED3F5F7u32); /* fn identity */ super::gm_8017EBCC(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EC00(a0: u8, a1: u8) -> f32 { core::hint::black_box(0x5B620916u32); /* fn identity */ super::gm_8017EC00(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017EC50(a0: u8, a1: u8) -> f32 { core::hint::black_box(0xE95A99DBu32); /* fn identity */ super::gm_8017EC50(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0x60ED8FCFu32); /* fn identity */ super::gm_8017ECA0(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xDEE18A36u32); /* fn identity */ super::gm_8017ECD4(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8 { core::hint::black_box(0xB065311Fu32); /* fn identity */ super::gm_8017ED08(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ED3C(a0: u8, a1: u8) -> f32 { core::hint::black_box(0x395DBA05u32); /* fn identity */ super::gm_8017ED3C(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn gm_8017ED8C(a0: u8, a1: u8) -> f32 { core::hint::black_box(0x795152D2u32); /* fn identity */ super::gm_8017ED8C(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     // gm_17c0.c defines them (CSSData, DebugGameOverData, MatchExitInfo, StartMeleeData): the 8-byte stand-ins here
@@ -725,7 +736,9 @@ pub unsafe fn gmClassic_GetStKind(entry: *mut gm_803DDEC8Struct, ad: *mut UnkAll
 }
 
 /// 1B3500: the intro scene's enter handler
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3500(arg0: *mut GameModeState) {
+    core::hint::black_box(0x3FBF2253u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3500");
     let sd = ext::gm_GetGameModeStateEnterData(arg0) as *mut gmClassicIntroData;
     let m = &raw mut gmClassic_803DDEC8;
@@ -889,7 +902,9 @@ pub unsafe extern "C" fn gmClassic_801B3500(arg0: *mut GameModeState) {
 }
 
 /// 1B3A34: the VS scene's enter handler
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3A34(arg0: *mut GameModeState) {
+    core::hint::black_box(0x8D6AB3C8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3A34");
     let temp_r30 = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
     let m = &raw mut gmClassic_803DDEC8;
@@ -927,7 +942,9 @@ pub unsafe extern "C" fn gmClassic_801B3A34(arg0: *mut GameModeState) {
 }
 
 /// 1B3B40: the VS scene's exit handler (records the result, the all-star clear, the time records)
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3B40(arg0: *mut GameModeState) {
+    core::hint::black_box(0xFA1346BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3B40");
     let mei = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     let asd = ext::gm_GetAllStarData();
@@ -985,21 +1002,27 @@ pub unsafe extern "C" fn gmClassic_801B3B40(arg0: *mut GameModeState) {
 }
 
 /// 1B3D44
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3D44(scene: *mut GameModeState) {
+    core::hint::black_box(0xDC5BF1F0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3D44");
     let temp_r31 = ext::gm_GetGameModeStateEnterData(scene) as *mut DebugGameOverData;
     ext::gm_8017C9A8(temp_r31, &raw mut (*ext::gm_GetAllStarData()).x0, 1);
 }
 
 /// 1B3D84
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3D84(scene: *mut GameModeState) {
+    core::hint::black_box(0x5C3EA65Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3D84");
     let temp_r30 = ext::gm_GetGameModeStateExitData(scene) as *mut DebugGameOverData;
     ext::gm_8017CA38(temp_r30, &raw mut (*ext::gm_GetAllStarData()).x0, ext::gmMainLib_8015CDC8(), 1);
 }
 
 /// 1B3DD8
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3DD8(scene: *mut GameModeState) {
+    core::hint::black_box(0x69716064u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3DD8");
     let css = ext::gm_GetGameModeStateEnterData(scene) as *mut CSSData;
     let temp_r31 = ext::gmMainLib_8015CDC8();
@@ -1018,7 +1041,9 @@ pub unsafe extern "C" fn gmClassic_801B3DD8(scene: *mut GameModeState) {
 }
 
 /// 1B3E44
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3E44(scene: *mut GameModeState) {
+    core::hint::black_box(0x5C308C9Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3E44");
     let temp_r30 = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     let temp_r29 = ext::gmMainLib_8015CDC8();
@@ -1049,7 +1074,9 @@ pub unsafe extern "C" fn gmClassic_801B3E44(scene: *mut GameModeState) {
 }
 
 /// 1B3F18
+#[inline(never)]
 pub unsafe extern "C" fn gmClassic_801B3F18(_scene: *mut GameModeState) {
+    core::hint::black_box(0x44C04ADFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gmClassic_801B3F18");
     ext::gm_SetPendingGameMode(GM_MENU as u8);
     ext::gm_SetNewGameModePending();

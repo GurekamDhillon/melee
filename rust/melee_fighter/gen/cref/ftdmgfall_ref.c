@@ -16,7 +16,7 @@
 #include <Runtime/platform.h>
 
 ftCommonData* p_ftCommonData;
-Vec2** Fighter_804D6530;
+struct ftDamageShifts* Fighter_804D6530;
 FighterPartsTable** ftPartsTable;
 Fighter_804D6540_t** Fighter_804D6540;
 void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; for (;;) {} }
@@ -90,7 +90,7 @@ int main(void)
     int op, k, i, j;
     GO.user_data = &F;
     p_ftCommonData = &CD;
-    Fighter_804D6530 = T6530;
+    Fighter_804D6530 = (struct ftDamageShifts*) T6530;
     ftPartsTable = PTP;
     Fighter_804D6540 = T40P;
     for (op = 0; op < NOPS; op++) {

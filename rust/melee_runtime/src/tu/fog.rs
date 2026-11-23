@@ -258,7 +258,9 @@ pub unsafe fn HSD_FogInterpretAnim(fog: *mut HSD_Fog) {
 }
 
 /// `FogUpdateFunc(obj, type, val)`.
+#[inline(never)]
 pub unsafe extern "C" fn FogUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_ObjData) {
+    core::hint::black_box(0x567E5610u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("FogUpdateFunc");
     let fog = obj as *mut HSD_Fog;
     if !fog.is_null() {
@@ -281,7 +283,9 @@ pub unsafe extern "C" fn FogUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_
 
 /// `FogRelease` (class `release`): drop the adj (ref_DEC, then its release + destroy), remove the
 /// AObj, then the parent class release.
+#[inline(never)]
 pub unsafe extern "C" fn FogRelease(o: *mut HSD_Class) {
+    core::hint::black_box(0x4F52E38Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("FogRelease");
     let fog = o as *mut HSD_Fog;
     if !(*fog).fog_adj.is_null() {
@@ -302,7 +306,9 @@ pub unsafe extern "C" fn FogRelease(o: *mut HSD_Class) {
 }
 
 /// `FogInfoInit`.
+#[inline(never)]
 pub unsafe extern "C" fn FogInfoInit() {
+    core::hint::black_box(0x9A0238CDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("FogInfoInit");
     ext::hsdInitClassInfo(
         addr_of_mut!(hsdFog).cast(),
@@ -316,7 +322,9 @@ pub unsafe extern "C" fn FogInfoInit() {
 }
 
 /// `FogAdjInfoInit`.
+#[inline(never)]
 pub unsafe extern "C" fn FogAdjInfoInit() {
+    core::hint::black_box(0x809755F6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("FogAdjInfoInit");
     ext::hsdInitClassInfo(
         addr_of_mut!(hsdFogAdj).cast(),

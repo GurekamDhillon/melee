@@ -148,6 +148,12 @@ unsafe fn sisEndKerning(data: *mut u8, out_idx: &mut i32, has_kerning: &mut i32)
     *out_idx = idx + 1;
 }
 
+/// Room for `HSD_SisLib_803A67EC`'s output. The C declares `u8 encoded[128]` but caps only its INPUT (0x80
+/// characters): one character can emit up to 7 bytes (a 5-byte line opener plus its 2 glyph bytes), so a long
+/// string overran the C's stack array. 0x80 * 7 + the closing 0xB and NUL fit in this bound; every string the C
+/// encoded within 128 bytes encodes byte-identically.
+pub const SIS_ENCODED_MAX: usize = 0x80 * 7 + 2;
+
 /// `HSD_SisLib_803A67EC` (0x803A67EC): ASCII / Shift-JIS to SIS glyph codes. Returns the encoded
 /// length. `string` must be NUL-terminated or at least 0x80 bytes (the C reads up to 0x80).
 pub unsafe fn HSD_SisLib_803A67EC(data: *mut u8, string: *const u8) -> i32 {
@@ -258,6 +264,7 @@ fn fullwidth_utf8_to_sjis(b0: u8, b1: u8, b2: u8) -> Option<(u8, u8)> {
         b'"' => (0x81, 0x68),
         b'-' => (0x81, 0x7C),
         b'&' => (0x81, 0x95),
+        b'#' => (0x81, 0x94),
         _ => return None,
     })
 }
@@ -304,7 +311,7 @@ pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: Opti
 /// 0x817C, the CSS's 0x8145 dots), which a `&str` cannot carry.
 pub unsafe fn HSD_SisLib_803A6B98_bytes(text: *mut HSD_Text, x: f32, y: f32, fmt: Option<&[u8]>) -> i32 {
     melee_core::ct!("HSD_SisLib_803A6B98");
-    let mut encoded = [0u8; 128];
+    let mut encoded = [0u8; SIS_ENCODED_MAX];
     let mut encoded_len: i32 = 0;
     let alloc = (*text).alloc_data as *mut SisBlock;
     encoded[0] = 0;
@@ -410,7 +417,7 @@ pub unsafe fn HSD_SisLib_803A70A0(text: *mut HSD_Text, entry_idx: i32, fmt: Opti
 /// `HSD_SisLib_803A70A0` on the formatted C bytes (Shift-JIS, see `HSD_SisLib_803A6B98_bytes`).
 pub unsafe fn HSD_SisLib_803A70A0_bytes(text: *mut HSD_Text, entry_idx: i32, fmt: Option<&[u8]>) -> i32 {
     melee_core::ct!("HSD_SisLib_803A70A0");
-    let mut encoded = [0u8; 128];
+    let mut encoded = [0u8; SIS_ENCODED_MAX];
     let mut old_size: i32 = 0;
     let mut result: i32 = 0;
 
@@ -525,4 +532,22 @@ pub unsafe fn HSD_SisLib_803A7664(text: *mut HSD_Text) {
     (*data).x0 = (*data).x4;
     *((*data).x0 as *mut u8) = 0;
     (*data).xC = 0;
+}
+
+#[cfg(test)]
+mod encode_bound_tests {
+    use super::*;
+
+    // The owner's crash: a long Slippi server error encoded past the C's 128-byte array.
+    #[test]
+    fn long_strings_stay_inside_the_encode_buffer() {
+        let worst: std::vec::Vec<u8> = b"A.".iter().cycle().take(127).copied().collect();
+        let msg = b"matchmaking: server error: A new version has been released. Return to menu to update";
+        for s in [&worst[..], &msg[..]] {
+            let buffer = format_buffer(s);
+            let mut out = [0u8; SIS_ENCODED_MAX];
+            let n = unsafe { HSD_SisLib_803A67EC(out.as_mut_ptr(), buffer.as_ptr()) } as usize;
+            assert!(n > 128 && n < SIS_ENCODED_MAX, "{n}");
+        }
+    }
 }

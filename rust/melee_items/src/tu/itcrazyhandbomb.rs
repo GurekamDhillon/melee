@@ -126,7 +126,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0xE657449Cu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub static mut result: i32 = unsafe { core::mem::zeroed() };
@@ -146,9 +147,7 @@ pub fn MTXDegToRad(a: f32) -> f32 {
     a * 0.01745329252f32
 }
 
-macro_rules! pred_i32 {
-    ($($name:ident => $f:ident;)*) => { $( pub unsafe extern "C" fn $name(g: *mut HSD_GObj) -> i32 { $f(g) as i32 } )* };
-}
+use crate::tu::kinds_inl::pred_i32; // the named `_p` shims, recorded for the oracles by address
 
 #[inline]
 unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {
@@ -162,7 +161,9 @@ unsafe fn sa<'a, T>(ip: *mut Item) -> &'a T {
 }
 
 /// `it_802F0F6C` (itcrazyhandbomb.c): spawn a bomb of `kind` from `owner`.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F0F6C(owner: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) {
+    core::hint::black_box(0xC47F1D65u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F0F6C");
     let mut spawnitem: SpawnItem = core::mem::zeroed();
     spawnitem.kind = kind;
@@ -176,7 +177,9 @@ pub unsafe extern "C" fn it_802F0F6C(owner: *mut HSD_GObj, prev_pos: *mut Vec3, 
 }
 
 /// `it_802F1030` (itcrazyhandbomb.c): hide and detonate the bomb.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F1030(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8E704832u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F1030");
     ext::HSD_JObjSetFlagsAll((*gobj).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN);
     ext::it_8026BD24(gobj);
@@ -188,26 +191,34 @@ pub unsafe extern "C" fn it_802F1030(gobj: *mut HSD_GObj) {
 }
 
 /// `itCrazyHandBomb_Logic86_EvtUnk`: `it_8026B894`.
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyHandBomb_Logic86_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x52EB5538u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyHandBomb_Logic86_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `itCrazyHandBomb_Logic86_DmgDealt`: detonate, true.
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyHandBomb_Logic86_DmgDealt(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x696B0881u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyHandBomb_Logic86_DmgDealt");
     it_802F1344(gobj);
     true
 }
 
 /// `itCrazyHandBomb_Logic86_Reflected`: `it_80273030`.
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyHandBomb_Logic86_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xA4397AE9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyHandBomb_Logic86_Reflected");
     ext::it_80273030(gobj)
 }
 
 /// `it_802F10F8` (itcrazyhandbomb.c): launch the bomb upwards at `x0` velocity and arm it.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F10F8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x1367C207u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F10F8");
     let ip = item_of(gobj);
     let attrs = sa::<itCrazyHandBombAttributes>(ip);
@@ -218,13 +229,17 @@ pub unsafe extern "C" fn it_802F10F8(gobj: *mut HSD_GObj) {
 }
 
 /// `itCrazyhandbomb_UnkMotion0_Anim` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x48F1E948u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyhandbomb_UnkMotion0_Anim");
     false
 }
 
 /// `itCrazyhandbomb_UnkMotion0_Phys`: drift with the attribute motion and spin one axis.
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF03ED28Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyhandbomb_UnkMotion0_Phys");
     let ip = item_of(gobj);
     let attrs = sa::<itCrazyHandBombAttributes>(ip);
@@ -245,7 +260,9 @@ pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itCrazyhandbomb_UnkMotion0_Coll`: detonate when airborne.
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0x9C1D87DFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyhandbomb_UnkMotion0_Coll");
     let ip = item_of(gobj);
     if (*ip).ground_or_air == GA_Air {
@@ -256,10 +273,13 @@ pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Coll(gobj: *mut HSD_GObj) ->
 
 /// `it_802F1340`: the on-accessory callback once the bomb is armed (empty). The C declares it
 /// with no parameters and stores it as an `HSD_GObjEvent` through a cast (same address either way).
-pub unsafe extern "C" fn it_802F1340() { melee_core::ct!("it_802F1340");}
+#[inline(never)]
+pub unsafe extern "C" fn it_802F1340() { core::hint::black_box(0x43C39D8Cu32); /* fn identity */ melee_core::ct!("it_802F1340");}
 
 /// `it_802F1344`: switch to motion 1 and arm the explosion callback.
+#[inline(never)]
 pub unsafe extern "C" fn it_802F1344(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x3FC39740u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802F1344");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -267,22 +287,28 @@ pub unsafe extern "C" fn it_802F1344(gobj: *mut HSD_GObj) {
 }
 
 /// `itCrazyhandbomb_UnkMotion1_Anim`: `it_802751D8`.
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0xB8E0F6C9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyhandbomb_UnkMotion1_Anim");
     ext::it_802751D8(gobj)
 }
 
 /// `itCrazyhandbomb_UnkMotion1_Phys` (empty).
-pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCrazyhandbomb_UnkMotion1_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { core::hint::black_box(0xEDACD524u32); /* fn identity */ melee_core::ct!("itCrazyhandbomb_UnkMotion1_Phys");}
 
 /// `itCrazyhandbomb_UnkMotion1_Coll` (returns false).
+#[inline(never)]
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Coll(_gobj: *mut HSD_GObj) -> bool {
+    core::hint::black_box(0xCD324F0Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itCrazyhandbomb_UnkMotion1_Coll");
     false
 }
 
 /// `it_802F13B0` (empty), the armed-bomb on-accessory callback.
-pub unsafe extern "C" fn it_802F13B0(_gobj: *mut HSD_GObj) { melee_core::ct!("it_802F13B0");}
+#[inline(never)]
+pub unsafe extern "C" fn it_802F13B0(_gobj: *mut HSD_GObj) { core::hint::black_box(0x57E64F4Au32); /* fn identity */ melee_core::ct!("it_802F13B0");}
 
 pred_i32! {
     itCrazyhandbomb_UnkMotion0_Anim_p => itCrazyhandbomb_UnkMotion0_Anim;

@@ -877,6 +877,7 @@ impl Play {
                 let disc = crate::engine_disc(&self.iso)?;
                 unsafe {
                     melee_engine::engine::RENDER = !self.headless;
+            melee_engine::engine::PLAY_VIEW = true;
                     std::env::set_var("MELEE_TEST_SEED", "12345");
                     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
                         std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
@@ -1280,6 +1281,7 @@ impl Play {
             let frame = self.em.as_mut().and_then(|m| m.frame.take());
             let packed = self.em.as_mut().and_then(|m| m.packed.take());
             let p = self.presenter.as_mut().unwrap();
+            p.set_true_widescreen(melee_engine::view::renderer_widen());
             p.set_content_aspect(melee_engine::view::aspect());
             let pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
             p.set_match_scene(true);
@@ -1444,6 +1446,10 @@ const USAGE: &str = "usage: melee play --iso DISC.iso [--time-secs N | --stocks 
        protocol, as Slippi Dolphin's 51441) [--relay-url ws(s)://.. --relay-key KEYFILE] (outbound to the bracket server)";
 
 pub fn play(args: &[String]) -> ExitCode {
+    // `--replay FILE.slp`: a Slippi replay, played by the sim's Slippi player in this window (slp_play.rs)
+    if let Some(p) = args.iter().position(|a| a == "--replay").and_then(|i| args.get(i + 1)).filter(|p| crate::slp_play::is_slp(p)) {
+        return crate::slp_play::play(args, p);
+    }
     // `--replay FILE`: the file's play options decide the boot (the command line's window options still apply)
     let mut feed = None;
     let merged: Vec<String>;
@@ -1553,6 +1559,7 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         return ExitCode::FAILURE;
     }
+    crate::warm_pass::maybe_start(&iso, args); // first run: a hidden below-normal helper fills the pipeline list
     // Optional second disc (Brawl) and the first-run build step (firstrun.rs): a failure is told, Melee still plays.
     let brawl = get("--brawl-disc").or_else(|| std::env::var("MELEE_BRAWL_DISC").ok()).filter(|s| !s.is_empty());
     match crate::firstrun::run(brawl.as_deref(), &mut |f, l| eprintln!("first-run: {:3.0}% {l}", f * 100.0)) {
@@ -1671,6 +1678,7 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
         if let Some(f) = feed.as_ref() {
             crate::play_net::apply_controls_meta(&f.r);
+            crate::play_net::apply_view_meta(&f.r);
             // slice 0: the recorded pick and content mask (an older replay has none: the args' pick as before)
             if let Some(t) = f.r.meta("sse") {
                 melee_modes::tu::explore::apply_header_token(t);
@@ -1738,6 +1746,44 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
             }
         }
+        // `--slippi-mm URL ...` (the online menu's pick): a Slippi-wire match in this window. Matchmaking, the
+        // connection and the selections happen here, before the window, like --netplay; the boot goes straight to it.
+        let mut slippi_scn = None;
+        // `--p2p-port P --p2p-peer A:P ...` (Hero's launcher lobby, P2P Direct): a mu_net match in this window, agreed in
+        // the lobby; connect and handshake here, before the window. No game played: exit 2, as his game does.
+        if !netplay && args.iter().any(|a| a.starts_with("--p2p-")) {
+            #[cfg(feature = "real-net")]
+            match crate::play_net::NetDriver::connect_mu(args) {
+                Ok((n, scn)) => {
+                    seed = Some(n.agreed.seed);
+                    slippi_scn = Some(scn);
+                    net = Some(n);
+                }
+                Err(e) => {
+                    crate::disc::tell_player(&format!("p2p: the P2P Direct match could not start: {e}"));
+                    return ExitCode::from(2);
+                }
+            }
+            #[cfg(not(feature = "real-net"))]
+            {
+                crate::disc::tell_player("p2p: P2P Direct needs a build with --features real-net");
+                return ExitCode::from(2);
+            }
+        }
+        if !netplay && slippi_scn.is_none() && (get("--slippi-mm").is_some() || get("--slippi-peer").is_some()) {
+            match crate::play_net::NetDriver::connect_slippi(args) {
+                Ok((n, scn)) => {
+                    seed = Some(n.agreed.seed);
+                    slippi_scn = Some(scn);
+                    net = Some(n);
+                }
+                Err(e) => {
+                    // never a silent exit: the log (MELEE_LOG_FILE) and a message on screen
+                    crate::disc::tell_player(&format!("slippi: the online match could not start: {e}"));
+                    return ExitCode::FAILURE;
+                }
+            }
+        }
         let sync_k = std::env::var("MELEE_PLAY_SYNCTEST").ok().and_then(|v| v.parse::<i32>().ok()).filter(|&k| k > 0);
         // --replay-seekable / a seek control: the playback snapshots the match (the rollback allocator modes)
         let seekable = feed.is_some() && (has("--replay-seekable") || get("--replay-seek").is_some() || get("--replay-ctl").is_some_and(|c| c.contains("seek") || c.contains("back")));
@@ -1752,7 +1798,14 @@ pub fn play(args: &[String]) -> ExitCode {
         // a core v1.1 host that keeps savestates (corev1.rs): a plain match, snapshotted like a synctest's
         // MELEE_PLAY_HOSTED=1: the same session in our own build (its tests)
         let hosted = (crate::retail_flow::HOSTED_STATES.load(std::sync::atomic::Ordering::Relaxed) || std::env::var("MELEE_PLAY_HOSTED").is_ok_and(|v| v == "1")) && net.is_none() && sync_k.is_none() && feed.is_none() && !lab_mod;
-        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod || hosted;
+        // the online menus (`--slippi-menus on`) play their matches in this process and window (slippi_link::inprocess):
+        // the run is in the rollback modes from the boot, as a match process's was
+        let online_inproc = net.is_none() && feed.is_none() && sync_k.is_none() && !lab_mod && !hosted && !has("--headless") && crate::slippi_link::wants_inprocess(args);
+        crate::slippi_link::set_inprocess(online_inproc);
+        if online_inproc {
+            log("online menus: the online matches run in this window (one process for the whole online loop)");
+        }
+        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod || hosted || online_inproc;
         if rollback_mode {
             crate::play_net::prepare_rollback_run();
             // the GX shim (a static the snapshots restore) with all its buffers and Arcs in the arena from the start
@@ -1762,6 +1815,10 @@ pub fn play(args: &[String]) -> ExitCode {
         let seed = seed.unwrap_or_else(|| std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345));
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());
         let mut presets = presets;
+        let slippi_wire = slippi_scn.is_some();
+        if let Some(scn) = slippi_scn {
+            presets.scenario = Some(scn);
+        }
         if let Some(r) = &np_rules {
             presets.stocks = r.stocks;
             presets.time_secs = r.time_secs;
@@ -1853,6 +1910,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 meta.push(("np_role".into(), "host".into()));
                 meta.extend(crate::play_net::controls_meta());
             meta.push(crate::play_net::sse_meta());
+            meta.push(crate::play_net::view_meta());
                 rp.rec = Some((String::new(), crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() }));
             }
         }
@@ -1876,6 +1934,7 @@ pub fn play(args: &[String]) -> ExitCode {
             }
             meta.extend(crate::play_net::controls_meta());
             meta.push(crate::play_net::sse_meta());
+            meta.push(crate::play_net::view_meta());
             let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }
@@ -1883,7 +1942,18 @@ pub fn play(args: &[String]) -> ExitCode {
         // MELEE_SLP_RECORD=<file> (the C build's recording variable) is the same export when --slp is not given: Game Start,
         // Frame Start, Pre-Frame, Post-Frame, Frame Bookend, Game End and metadata, so the file plays in Slippi Dolphin.
         if let Some(spec) = get("--slp").or_else(|| std::env::var("MELEE_SLP_RECORD").ok().filter(|s| !s.is_empty())) {
-            if rollback_mode && rp.feed.is_none() {
+            if slippi_wire && net.is_some() {
+                // the Slippi-wire match (the online select's): recorded live from its confirmed frames, as Slippi Dolphin
+                // records an online game; no --record needed (the select's relaunch drops it)
+                crate::slp_export::install(&spec, "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+                crate::slp_export::set_disc(&game.iso);
+                crate::slp_export::live_rollback();
+            } else if online_inproc {
+                // the menus' run in the rollback run modes (the online loop in one window): offline matches record per
+                // tick; an online match switches to the live export while it runs (browser.rs slippi_match_inprocess)
+                crate::slp_export::install(&spec, "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+                crate::slp_export::set_disc(&game.iso);
+            } else if rollback_mode && rp.feed.is_none() {
                 if net.is_some() && rp.rec.is_some() {
                     crate::play_net::SLP_AFTER.with(|c| *c.borrow_mut() = Some(spec.clone()));
                 } else {
@@ -1894,6 +1964,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 // playedOn: readers take only Slippi's values (py-slippi: console, dolphin, network, nintendont)
                 let online = net.is_some() || rp.feed.as_ref().map_or(false, |f| f.r.meta("np_role").is_some());
                 crate::slp_export::install(&spec, if online { "network" } else { "console" }, ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+                crate::slp_export::set_disc(&game.iso);
             }
         }
         // the live output child (a spectator with --spectate-port / --relay-url): the exporter feeds live_out.rs
@@ -1914,10 +1985,25 @@ pub fn play(args: &[String]) -> ExitCode {
                 crate::slp_export::install("", "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
             }
         }
+        // the Slippi spectator feed of the exported match (slippi_spectate.rs): read-only, loopback, off under YouGame
+        if crate::slp_export::active() {
+            crate::slippi_spectate::start();
+        } else if slippi_wire && net.is_some() {
+            // no --slp: the Slippi-wire match is still kept in memory and written only if a hard desync is seen (YouGame
+            // sandbox, or MELEE_DESYNC_SLP); after the spectator feed's check so that feed stays off
+            crate::slp_export::arm_for_desync(Some(&game.iso));
+        }
         rp.net = net;
         let code = crate::retail_flow::run(rp, has("--headless"));
+        crate::slippi_spectate::stop();
         if live_child {
             crate::live_out::finish(get("--live-linger").and_then(|v| v.parse().ok()).unwrap_or(10));
+        }
+        // the online select's link kept for the relaunched match, or a set's match's for the next game's select: stay until taken over
+        crate::slippi_link::finish();
+        // a YouGame room kept through a relaunched match: the window is closed; wait for the match process
+        if let Some(c) = crate::room_keeper::finish() {
+            eprintln!("play: the match process exited ({c})");
         }
         return code;
     }
@@ -1983,6 +2069,7 @@ pub fn play(args: &[String]) -> ExitCode {
     match run_windowed(game, pads, cfg) {
         Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));
+            crate::slippi_link::finish();
             ExitCode::SUCCESS
         }
         Err(e) => {

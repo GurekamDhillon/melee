@@ -22,17 +22,17 @@
 //! * `MELEE_NO_GC_ADAPTER` (the launcher's test runs) means `MELEE_PAD_IGNORE_ADAPTER=1`.
 //!
 //! Options with no Rust counterpart that change nothing for an offline game (`--threaded-renderer`, `--sys-dir`,
-//! `--user-dir`, `--lobby-status-file`, the vanilla flags) are accepted and logged. Ones that would
-//! change the game (mods, peer-to-peer and Slippi lobby matches, replays) are refused with exit code 3 and a line in the
+//! `--user-dir`, `--sysgen-data-dir`, the vanilla flags) are accepted and logged. Ones that would
+//! change the game (mods, peer-to-peer and Slippi lobby matches) are refused with exit code 3 and a line in the
 //! log, rather than starting a game other than the one asked for. Anything else is passed to `melee play` as given.
 use std::path::{Path, PathBuf};
 
 /// Launcher options that take a value and are accepted without effect.
-const IGNORED_VALUE: &[&str] = &["--sys-dir", "--user-dir", "--lobby-status-file", "--slippi-menus", "--online-delay", "--language", "--backend", "--fps", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
+const IGNORED_VALUE: &[&str] = &["--sys-dir", "--sysgen-data-dir", "--slippi-menus", "--online-delay", "--language", "--backend", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
 /// Launcher switches accepted without effect.
-const IGNORED_SWITCH: &[&str] = &["--threaded-renderer", "--vanilla-only", "--vanilla-game", "--no-mod-autodetect", "--quiet"];
+const IGNORED_SWITCH: &[&str] = &["--as-experienced", "--threaded-renderer", "--vanilla-only", "--vanilla-game", "--no-mod-autodetect", "--quiet"];
 /// Options that would start a different game than an offline vanilla one; refused.
-const REFUSED: &[&str] = &["--mod-gci", "--mod-dir", "--mod-profile", "--replay", "--lobby-direct", "--lobby-character", "--local-peer"];
+const REFUSED: &[&str] = &["--mod-gci", "--mod-dir", "--mod-profile", "--local-peer"];
 /// The flags only the launcher's command line starts with (a `melee` subcommand never begins with `--`).
 const LAUNCHER_FIRST: &[&str] = &["--iso", "--settings-path", "--card-dir", "--sys-dir", "--lobby-status-file", "--threaded-renderer", "--settings-window"];
 
@@ -77,6 +77,54 @@ fn on(v: &str) -> bool {
 
 /// The launcher's settings mapped onto our `MELEE_<KEY>` names (display.rs, melee_audio output.rs).
 pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
+    map_settings_notes(kv).0
+}
+
+/// His `fps` (the ini key, `--fps`): `-1` / `monitor` follows the display, `0` / `unlocked` is no cap, 30 and up is a
+/// cap (his limit 2000); the ini ignores anything else. Ours is the presenter's `fps_cap` (20..=1000, `off`): a limit on
+/// presented frames only, the simulation stays at 60 Hz and nothing is interpolated. `Ok(None)` = leave ours alone.
+pub fn fps_cap_value(v: &str) -> Result<Option<String>, String> {
+    let w = v.trim().to_ascii_lowercase();
+    match w.as_str() {
+        "unlocked" | "0" => return Ok(Some("off".into())),
+        // our presenter already follows the display while vsync is on; there is no separate cap to set
+        "monitor" | "-1" => return Err("follows the display (vsync); no separate cap here".into()),
+        _ => {}
+    }
+    let Ok(rate) = w.parse::<f64>() else { return Err("not a number: ignored".into()) };
+    if rate < 30.0 {
+        return Err("below 30: ignored, as his settings reader does".into());
+    }
+    let n = rate.round().min(2000.0) as u32;
+    if n > 1000 {
+        return Ok(Some("1000".into()));
+    }
+    Ok(Some(n.to_string()))
+}
+
+/// His `ssaa` (1..4, supersampling of the whole picture on top of `scale`, the internal resolution multiplier). Our
+/// render scale is that multiplier and the window is a downsample of it, so a numeric scale is multiplied by it (capped
+/// at our 8). Returns the render scale to use and a note; None = no change (ssaa 1, unreadable, or an automatic scale,
+/// which already supersamples a small window).
+pub fn ssaa_render_scale(ssaa: &str, scale: Option<i64>) -> (Option<u32>, Option<String>) {
+    let Some(a) = ssaa.trim().parse::<i64>().ok().filter(|a| (1..=4).contains(a)) else {
+        return (None, Some(format!("ssaa {}: not 1..4, ignored (his reader does the same)", ssaa.trim())));
+    };
+    if a == 1 {
+        return (None, None);
+    }
+    match scale.filter(|&s| s > 0) {
+        Some(s) => {
+            let r = (s * a).min(8) as u32;
+            (Some(r), Some(format!("ssaa {a} x scale {s} -> render scale {r}{}", if s * a > 8 { " (capped at 8)" } else { "" })))
+        }
+        None => (None, Some(format!("ssaa {a}: the render scale is automatic here (it already supersamples a small window), nothing to do"))),
+    }
+}
+
+/// [`map_settings`] with what was accepted, changed or ignored on the way (for the log).
+pub fn map_settings_notes(kv: &[(String, String)]) -> (Vec<(String, String)>, Vec<String>) {
+    let mut notes = Vec::new();
     let get = |k: &str| kv.iter().rev().find(|(a, _)| a == k).map(|(_, v)| v.as_str());
     let mut out = Vec::new();
     if let Some(fs) = get("fullscreen") {
@@ -91,8 +139,27 @@ pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
         out.push(("MELEE_WINDOW".into(), w.to_string()));
     }
     // the Source Port's internal resolution multiplier (efb_scale); 0 or below is its automatic choice
-    if let Some(s) = get("scale").and_then(|s| s.trim().parse::<i64>().ok()) {
+    let scale = get("scale").and_then(|s| s.trim().parse::<i64>().ok());
+    if let Some(s) = scale {
         out.push(("MELEE_RENDER_SCALE".into(), if s <= 0 { "auto".into() } else { s.min(8).to_string() }));
+    }
+    if let Some(a) = get("ssaa") {
+        let (r, note) = ssaa_render_scale(a, scale);
+        notes.extend(note);
+        if let Some(r) = r {
+            out.retain(|(k, _)| k != "MELEE_RENDER_SCALE");
+            out.push(("MELEE_RENDER_SCALE".into(), r.to_string()));
+        }
+    }
+    if let Some(f) = get("fps") {
+        match fps_cap_value(f) {
+            Ok(Some(c)) => {
+                notes.push(format!("fps {} -> fps cap {c} (presented frames only; the game stays at 60 Hz, no interpolation)", f.trim()));
+                out.push(("MELEE_FPS_CAP".into(), c));
+            }
+            Ok(None) => {}
+            Err(why) => notes.push(format!("fps {}: {why}", f.trim())),
+        }
     }
     if let Some(m) = get("msaa").and_then(|s| s.trim().parse::<u32>().ok()) {
         let m = [8, 4, 2, 1].into_iter().find(|&n| m >= n).unwrap_or(1);
@@ -104,11 +171,20 @@ pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
     if let Some(v) = get("volume").and_then(|s| s.trim().parse::<i32>().ok()) {
         out.push(("MELEE_VOLUME".into(), v.clamp(0, 100).to_string()));
     }
+    // His `audio_device` is a WASAPI endpoint id (empty = the system default), not a name our output can open: it goes
+    // on as MELEE_AUDIO_DEVICE_ID and the audio boot turns it into a device name (audio.rs, audio_endpoint::choose_device).
+    if let Some(d) = get("audio_device").filter(|d| !d.trim().is_empty()) {
+        out.push(("MELEE_AUDIO_DEVICE_ID".into(), d.trim().to_string()));
+    }
+    // Hero's "Music" slider (pc_settings `music`, 0..100).
+    if let Some(v) = get("music").and_then(|s| s.trim().parse::<i32>().ok()) {
+        out.push(("MELEE_MUSIC".into(), v.clamp(0, 100).to_string()));
+    }
     // the adapter keeps reading with the window in the background (melee_platform PadSystem::background_input)
     if let Some(v) = get("backgroundinput") {
         out.push(("MELEE_BACKGROUND_INPUT".into(), (on(v) as u8).to_string()));
     }
-    out
+    (out, notes)
 }
 
 fn push_env(env: &mut Vec<(String, String)>, k: &str, v: String) {
@@ -118,11 +194,65 @@ fn push_env(env: &mut Vec<(String, String)>, k: &str, v: String) {
 
 /// Translate the launcher's command line. `read` returns a file's text (the settings file).
 pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>) -> Plan {
+    plan_env(args, cwd, read, &|k| std::env::var(k).ok().filter(|v| !v.is_empty()))
+}
+
+/// Slippi's own matchmaking server: only with the player's login, never from an agent or test run.
+pub const SLIPPI_MM_REAL: &str = "wss://matchmaking.slippi.gg/v1/queue";
+
+/// Hero's main.cpp `--lobby-direct` check: `NAME#123`, upper-case letters / digits before the `#`, digits after, at
+/// most 18 characters.
+pub fn lobby_code_ok(code: &str) -> bool {
+    let Some(hash) = code.find('#') else { return false };
+    hash > 0
+        && hash < code.len() - 1
+        && code.len() <= 18
+        && code.char_indices().all(|(i, c)| i == hash || c.is_ascii_digit() || (i < hash && c.is_ascii_uppercase()))
+}
+
+/// The lobby's Direct button (`--lobby-direct CODE --lobby-character N`, H:launcher.cpp:2905) as a Slippi Direct
+/// match through our Slippi-wire path (`play --slippi-mm ...`, play_net::connect_slippi): matchmaking to CODE with
+/// external character N, the match in this window, exit 0 after it and non-zero when it cannot connect (his
+/// "could not connect" box, H:launcher.cpp:2758-2770). The login is the player's Slippi user.json
+/// (`YOUGAME_SLIPPI_USER_JSON`, else `user.json` in `--user-dir`; only its path here, slippi_np reads it). A test or
+/// agent run (`MELEE_SLIPPI_MM_URL`, a pad script, a hidden window or `MELEE_LAUNCHER_TEST`) never reaches Slippi's
+/// servers: it needs the loopback mock and a test code (`MELEE_SLIPPI_TEST_CODE`).
+fn lobby_direct_args(code: &str, character: u8, user_dir: Option<&str>, env: &dyn Fn(&str) -> Option<String>) -> Result<Vec<String>, String> {
+    let port = env("MELEE_SLIPPI_NP_PORT").or_else(|| env("YOUGAME_SLIPPI_UDP_PORT")).unwrap_or_else(|| "51441".into());
+    let mut out: Vec<String> = Vec::new();
+    let agent = env("MELEE_PAD_SCRIPT").is_some() || env("MELEE_WINDOW_HIDDEN").is_some_and(|v| v == "1") || env("MELEE_LAUNCHER_TEST").is_some();
+    if let Some(url) = env("MELEE_SLIPPI_MM_URL") {
+        let host = url.split("://").nth(1).unwrap_or("").split(['/', ':']).next().unwrap_or("");
+        if host != "127.0.0.1" && host != "localhost" {
+            return Err("MELEE_SLIPPI_MM_URL must be a loopback mock".into());
+        }
+        out.extend(["--slippi-mm".to_string(), url, "--slippi-port".into(), port]);
+        out.extend(["--slippi-code".to_string(), env("MELEE_SLIPPI_TEST_CODE").unwrap_or_else(|| "RUST#001".into())]);
+    } else if agent {
+        return Err("a test run needs the loopback mock (MELEE_SLIPPI_MM_URL), never Slippi's servers".into());
+    } else {
+        let login = env("YOUGAME_SLIPPI_USER_JSON").or_else(|| user_dir.map(|d| Path::new(d).join("user.json").display().to_string()));
+        let Some(login) = login else { return Err("no Slippi login (--user-dir)".into()) };
+        out.extend(["--slippi-mm", SLIPPI_MM_REAL, "--slippi-mm-real", "--slippi-user-json"].map(String::from));
+        out.extend([login, "--slippi-port".into(), port]);
+    }
+    out.extend(["--slippi-mm-mode", "direct", "--slippi-search"].map(String::from));
+    out.extend([code.to_string(), "--slippi-char".into(), character.to_string()]);
+    if let Some(s) = env("MELEE_SLIPPI_NP_MAX_SECONDS") {
+        out.extend(["--slippi-max-seconds".to_string(), s]);
+    }
+    Ok(out)
+}
+
+/// `plan` with the environment as a lookup (tests).
+pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>, env: &dyn Fn(&str) -> Option<String>) -> Plan {
     let mut p = Plan { play_args: vec!["play".into()], ..Plan::default() };
     let args: Vec<&String> = args.iter().skip(if args.first().is_some_and(|a| a == "play") { 1 } else { 0 }).collect();
     let mut cli_env: Vec<(String, String)> = Vec::new();
     let mut base_iso: Option<String> = None;
     let mut mod_iso: Option<String> = None;
+    let mut settings_path: Option<String> = None;
+    let (mut lobby_code, mut lobby_char, mut user_dir): (Option<String>, Option<u8>, Option<String>) = (None, None, None);
     let mut i = 0;
     while i < args.len() {
         let a = args[i].as_str();
@@ -140,6 +270,23 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
         };
         match flag {
             "--launcher-compat" => {}
+            // the lobby's Direct button (lobby_direct_args), with Hero's checks
+            "--lobby-direct" => {
+                let c = take(&mut i).unwrap_or_default();
+                if lobby_code_ok(&c) {
+                    lobby_code = Some(c);
+                } else {
+                    p.refused.push("--lobby-direct (invalid code)".into());
+                }
+            }
+            "--lobby-character" => match take(&mut i).and_then(|v| v.parse::<u8>().ok()) {
+                Some(n) => lobby_char = Some(n),
+                None => p.refused.push("--lobby-character (invalid, 0..255)".into()),
+            },
+            "--user-dir" => {
+                user_dir = take(&mut i);
+                p.notes.push("--user-dir: the Slippi login's folder (lobby Direct only)".into());
+            }
             "--iso" => {
                 base_iso = take(&mut i);
             }
@@ -159,9 +306,10 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
                 }
             }
             "--settings-window" => p.play_args[0] = SETTINGS_WINDOW.into(),
+            // our settings window (settings_window.rs) reads them itself
             "--settings-standby" | "--settings-tab" => {
                 let v = take(&mut i).unwrap_or_default();
-                p.notes.push(format!("{flag} {v}: no settings panel in the Rust engine"));
+                p.play_args.extend([flag.to_string(), v]);
             }
             "--replay-dir" => {
                 // our own replays (.mrpl) in a folder of their own, so his .slp viewer never meets them
@@ -177,10 +325,12 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
             }
             "--settings-path" => {
                 if let Some(path) = take(&mut i) {
+                    settings_path = Some(path.clone());
                     match read(Path::new(&path)) {
                         Some(text) => {
                             push_env(&mut p.env, "MELEE_PORT_SETTINGS", path.clone());
-                            let m = map_settings(&parse_settings(&text));
+                            let (m, extra) = map_settings_notes(&parse_settings(&text));
+                            p.notes.extend(extra);
                             p.notes.push(format!("settings {} -> {}", path, m.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join(" ")));
                             for (k, v) in m {
                                 push_env(&mut p.env, &k, v);
@@ -196,11 +346,23 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
                     let base = d.parent().map(|q| q.join("RustPort")).unwrap_or_else(|| d.join("RustPort"));
                     p.notes.push(format!("card {} -> {}", d.display(), base.display()));
                     push_env(&mut p.env, "MELEE_CARD_PATH", base.display().to_string());
+                    p.notes.push(crate::card_import::on_launch(&d, &base));
                 }
             }
             "--volume" => {
                 if let Some(v) = take(&mut i).and_then(|v| v.parse::<i32>().ok()) {
                     push_env(&mut cli_env, "MELEE_VOLUME", v.clamp(0, 100).to_string());
+                }
+            }
+            "--fps" => {
+                let v = take(&mut i).unwrap_or_default();
+                match fps_cap_value(&v) {
+                    Ok(Some(c)) => {
+                        p.notes.push(format!("--fps {v} -> fps cap {c}"));
+                        push_env(&mut cli_env, "MELEE_FPS_CAP", c);
+                    }
+                    Ok(None) => {}
+                    Err(why) => p.notes.push(format!("--fps {v}: {why}")),
                 }
             }
             "--music" | "--log-file" | "--scale" | "--frame-times" => {
@@ -210,6 +372,24 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
                     "--scale" => push_env(&mut cli_env, "MELEE_RENDER_SCALE", v),
                     _ => p.notes.push(format!("{flag} {v}: no Rust counterpart, ignored")),
                 }
+            }
+            // the lobby's status mailbox (lobby_status.rs): {"status":"In game"|"In match","stocks":[n]}
+            "--lobby-status-file" => {
+                if let Some(f) = take(&mut i) {
+                    p.notes.push(format!("--lobby-status-file {f}: status written there"));
+                    push_env(&mut p.env, "MELEE_LOBBY_STATUS_FILE", f);
+                }
+            }
+            // the YouGame restart into a mode (his main.cpp: direct 2, ranked 1, else 0): MELEE_ONLINE_MODE for the
+            // online browser; an unknown word is the plain online menu, as his port reads it
+            "--online-mode" => {
+                let m = take(&mut i).unwrap_or_default();
+                let m = match m.as_str() { "direct" | "ranked" => m, _ => "unranked".to_string() };
+                p.notes.push(format!("--online-mode {m}: MELEE_ONLINE_MODE"));
+                push_env(&mut p.env, "MELEE_ONLINE_MODE", m);
+                // the online menus carry the mode's select (browser.rs lands there on the first menu frame)
+                push_env(&mut p.env, "MELEE_SLIPPI_MENUS", "on".into());
+                push_env(&mut p.env, "MELEE_BOOT_MENU", "1".into());
             }
             "--no-music" => p.notes.push("--no-music: no separate music volume, ignored".into()),
             "--fullscreen" => push_env(&mut cli_env, "MELEE_FULLSCREEN", "borderless".into()),
@@ -225,7 +405,14 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
                 let v = take(&mut i).unwrap_or_default();
                 p.notes.push(format!("{f} {v}: accepted, nothing to do"));
             }
-            f if REFUSED.contains(&f) || f.starts_with("--p2p-") => {
+            // P2P Direct (mu_net): every `--p2p-K V` pair goes to `melee play` unchanged
+            f if f.starts_with("--p2p-") => {
+                p.play_args.push(args[i].clone());
+                if let Some(v) = take(&mut i) {
+                    p.play_args.push(v);
+                }
+            }
+            f if REFUSED.contains(&f) => {
                 let v = take(&mut i).unwrap_or_default();
                 p.refused.push(format!("{f} {v}"));
             }
@@ -244,14 +431,54 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
         },
         (None, None) => {}
     }
+    if let Some(code) = lobby_code {
+        // Hero's default character is Fox (slippi_online.h: lobby_character = 2)
+        let ch = lobby_char.unwrap_or(2);
+        match lobby_direct_args(&code, ch, user_dir.as_deref(), env) {
+            Ok(a) => {
+                p.notes.push(format!("--lobby-direct {}: Slippi Direct, character {ch}", mask_code(&code)));
+                p.play_args.extend(a);
+                // the result goes to the lobby's mailbox (lobby_status::publish_result)
+                push_env(&mut p.env, "MELEE_LOBBY_DIRECT", "1".into());
+            }
+            Err(why) => p.refused.push(format!("--lobby-direct ({why})")),
+        }
+    } else if lobby_char.is_some() {
+        p.notes.push("--lobby-character without --lobby-direct: ignored".into());
+    }
     // the hidden warm-up runs (Build tab, warm cache) are not games anyone played: no replay
     if p.play_args.iter().any(|a| a == "--headless") {
         if let Some(i) = p.play_args.iter().position(|a| a == "--record") {
             p.play_args.drain(i..(i + 2).min(p.play_args.len()));
         }
     }
+    // `--replay FILE.slp` plays a replay in the window (slp_play.rs): nothing to record or export
+    if p.play_args.iter().any(|a| a == "--replay") {
+        for flag in ["--record", "--slp"] {
+            if let Some(i) = p.play_args.iter().position(|a| a == flag) {
+                p.play_args.drain(i..(i + 2).min(p.play_args.len()));
+            }
+        }
+    }
     if p.play_args[0] == SETTINGS_WINDOW {
+        // the panel edits the file itself: none of its values become MELEE_* overrides (they would pin the rows), and
+        // its log is its own, so a standby copy never rotates the game's melee_port.log (his main.cpp does the same)
+        let mut keep: Vec<String> = Vec::new();
+        for w in p.play_args[1..].windows(2) {
+            if w[0] == "--settings-standby" || w[0] == "--settings-tab" {
+                keep.extend(w.iter().cloned());
+            }
+        }
         p.play_args.truncate(1);
+        p.play_args.extend(keep);
+        if let Some(sp) = settings_path {
+            p.play_args.extend(["--settings-path".to_string(), sp]);
+        }
+        p.env.retain(|(k, _)| k == "MELEE_CARD_PATH");
+        if !cli_env.iter().any(|(k, _)| k == "MELEE_LOG_FILE") {
+            push_env(&mut cli_env, "MELEE_LOG_FILE", "melee_settings.log".into());
+        }
+        cli_env.retain(|(k, _)| k == "MELEE_LOG_FILE");
     }
     for (k, v) in cli_env {
         push_env(&mut p.env, &k, v);
@@ -265,10 +492,16 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
         }
     }
     push_env(&mut p.env, "MELEE_CRASH_COPY", cwd.join("melee_port_crash.txt").display().to_string());
-    if std::env::var_os("MELEE_NO_GC_ADAPTER").is_some() {
+    if env("MELEE_NO_GC_ADAPTER").is_some() {
         push_env(&mut p.env, "MELEE_PAD_IGNORE_ADAPTER", "1".into());
     }
     p
+}
+
+/// A connect code for the log: the tag's first letter and the number's length only.
+pub fn mask_code(code: &str) -> String {
+    let (tag, num) = code.split_once('#').unwrap_or((code, ""));
+    format!("{}***#{}", tag.chars().next().unwrap_or('?'), "*".repeat(num.len()))
 }
 
 fn read_bytes(path: &Path, off: u64, len: usize) -> Option<Vec<u8>> {
@@ -346,16 +579,25 @@ pub fn apply_input(pads: &mut melee_platform::PadSystem) {
     }
     let Some(text) = std::env::var_os("MELEE_PORT_SETTINGS").and_then(|p| std::fs::read_to_string(p).ok()) else { return };
     let b = melee_platform::bindings::parse(&text);
-    if b.lines == 0 {
+    if b.lines == 0 && b.rumble.is_none() {
         return;
     }
-    let pads_n = b.xinput.iter().filter(|m| m.is_some()).count();
+    let pads_n = b.xinput.iter().chain(&b.ds4).chain(&b.swpro).filter(|m| m.is_some()).count();
+    let hid_n = b.hid.iter().filter(|m| m.is_some()).count();
+    let box_kb = b.keyboard_extra.as_ref().is_some_and(|e| e.box_mode);
     let gc_n = b.gc.iter().filter(|m| m.is_some()).count();
-    eprintln!("launcher-compat: controls from port-settings.ini: keyboard {}, {pads_n} gamepad table(s), {gc_n} adapter remap(s)", if b.keyboard.is_some() { "remapped" } else { "default" });
-    if let Some(kb) = b.keyboard {
+    eprintln!("launcher-compat: controls from port-settings.ini: keyboard {}{}, {pads_n} gamepad table(s), {hid_n} HID table(s), {gc_n} adapter remap(s), stick modifier {}%", if b.keyboard.is_some() { "remapped" } else { "default" }, if box_kb { " (box mode)" } else { "" }, b.stick_mod_pct.unwrap_or(melee_platform::bindings::STICK_MOD_DEFAULT));
+    if let Some(kb) = b.keyboard.clone() {
         pads.keyboard[0] = kb;
     }
-    pads.pad_maps = b.xinput;
+    pads.pad_maps = melee_platform::bindings::PortMaps::from_bindings(&b);
+    pads.keyboard_extra = b.keyboard_extra.clone();
+    pads.stick_mod_pct = b.stick_mod_pct.unwrap_or(melee_platform::bindings::STICK_MOD_DEFAULT);
+    // the launcher's Rumble switch (an explicit MELEE_RUMBLE wins)
+    if let (Some(r), None) = (b.rumble, std::env::var_os("MELEE_RUMBLE")) {
+        pads.rumble = r;
+    }
+    eprintln!("launcher-compat: rumble {} (gamepad force feedback and the adapter's motors)", if pads.rumble { "on" } else { "off" });
     pads.gc_maps = b.gc;
 }
 
@@ -379,7 +621,7 @@ mod tests {
     #[test]
     #[cfg_attr(not(windows), ignore = "the Windows launcher's command line: its paths only split on `\\` on Windows")]
     fn maps_the_launchers_command_line() {
-        let ini = "fps 60\nscale 3\nfullscreen 1\nexclusivefullscreen 0\nvsync 0\nwidescreen 1\nwindow 1600x1200\nvolume 40\nmsaa 4\n";
+        let ini = "fps 60\nscale 3\nfullscreen 1\nexclusivefullscreen 0\nvsync 0\nwidescreen 1\nwindow 1600x1200\nvolume 40\nmusic 25\nmsaa 4\n";
         let args = s(&[
             "--iso", "C:\\d\\melee.iso", "--threaded-renderer", "--settings-path", "C:\\g\\port-settings.ini", "--sys-dir", "C:\\g\\Sys",
             "--replay-dir", "C:\\g\\Replays", "--card-dir", "C:\\g\\User\\GC\\CardA", "--slippi-menus", "off", "--vanilla-only",
@@ -399,6 +641,7 @@ mod tests {
         assert_eq!(env("MELEE_MSAA"), Some("4"));
         assert_eq!(env("MELEE_VSYNC"), Some("off"));
         assert_eq!(env("MELEE_VOLUME"), Some("40"));
+        assert_eq!(env("MELEE_MUSIC"), Some("25"));
         assert_eq!(env("MELEE_SLP_DIR"), Some(r"C:\g\Replays"));
         assert_eq!(env("MELEE_CARD_PATH"), Some(Path::new("C:\\g\\User\\GC").join("RustPort").display().to_string().as_str()));
         assert!(env("MELEE_LOG_FILE").unwrap().ends_with("melee_port.log"));
@@ -411,9 +654,16 @@ mod tests {
         assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_VOLUME").unwrap().1, "7");
         assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_RENDER_SCALE").unwrap().1, "auto");
         assert!(!p.env.iter().any(|(k, _)| k == "MELEE_WINDOW"));
-        assert_eq!(p.refused.len(), 2);
-        assert_eq!(p.refused[0], "--p2p-port 5000");
-        assert!(p.refused[1].starts_with("--mod-iso m.iso ("), "{:?}", p.refused);
+        assert_eq!(p.refused.len(), 1);
+        assert!(p.refused[0].starts_with("--mod-iso m.iso ("), "{:?}", p.refused);
+        assert!(p.play_args.windows(2).any(|w| w[0] == "--p2p-port" && w[1] == "5000"), "{:?}", p.play_args);
+    }
+
+    #[test]
+    fn replay_passes_through_to_play() {
+        let p = plan(&s(&["--iso", "d.iso", "--settings-path", "s", "--replay-dir", r"C:\g\R", "--replay", "x.slp", "--as-experienced"]), Path::new("."), &|_| None);
+        assert!(p.refused.is_empty(), "{:?}", p.refused);
+        assert_eq!(p.play_args, s(&["play", "--iso", "d.iso", "--replay", "x.slp"]));
     }
 
     #[test]
@@ -425,8 +675,143 @@ mod tests {
         assert_eq!(env("MELEE_BACKGROUND_INPUT").as_deref(), Some("1"));
         assert!(env("MELEE_LOG_FILE").unwrap().ends_with("launcher_build.log"));
         assert!(detect(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x"])));
-        let p = plan(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x"]), Path::new("."), &|_| None);
-        assert_eq!(p.play_args, s(&[SETTINGS_WINDOW]));
+        let p = plan(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x", "--settings-tab", "audio"]), Path::new("."), &|_| Some("volume 40
+vsync 0
+".into()));
+        assert_eq!(p.play_args, s(&[SETTINGS_WINDOW, "--settings-standby", "12", "--settings-tab", "audio", "--settings-path", "x"]));
+        let env = |k: &str| p.env.iter().find(|(a, _)| a == k).map(|(_, v)| v.clone());
+        assert_eq!(env("MELEE_VOLUME"), None, "the panel's values never become overrides");
+        assert_eq!(env("MELEE_VSYNC"), None);
+        assert!(env("MELEE_LOG_FILE").unwrap().ends_with("melee_settings.log"));
+    }
+
+    #[test]
+    fn fps_key_maps_to_our_cap() {
+        assert_eq!(fps_cap_value("60"), Ok(Some("60".into())));
+        assert_eq!(fps_cap_value("143.9"), Ok(Some("144".into())));
+        assert_eq!(fps_cap_value("0"), Ok(Some("off".into())));
+        assert_eq!(fps_cap_value("unlocked"), Ok(Some("off".into())));
+        assert_eq!(fps_cap_value("2000"), Ok(Some("1000".into())), "his limit is 2000, ours 1000");
+        assert!(fps_cap_value("-1").is_err() && fps_cap_value("monitor").is_err(), "follows the display: nothing to set");
+        assert!(fps_cap_value("29").is_err() && fps_cap_value("abc").is_err(), "his reader ignores these");
+        let m = |ini: &str| map_settings_notes(&parse_settings(ini));
+        let (env, notes) = m("fps 240\n");
+        assert_eq!(env, vec![("MELEE_FPS_CAP".to_string(), "240".to_string())]);
+        assert!(notes[0].contains("no interpolation"), "{notes:?}");
+        let (env, notes) = m("fps -1\n");
+        assert!(env.is_empty() && notes[0].contains("follows the display"), "{notes:?}");
+        // the command line: `--fps` (value) overrides the file, `monitor` / `unlocked` are his words
+        let p = plan(&s(&["--iso", "a", "--settings-path", "s", "--fps", "120"]), Path::new("."), &|_| Some("fps 60\n".into()));
+        assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_FPS_CAP").unwrap().1, "120");
+        let p = plan(&s(&["--iso", "a", "--fps", "unlocked"]), Path::new("."), &|_| None);
+        assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_FPS_CAP").unwrap().1, "off");
+        assert!(p.refused.is_empty());
+    }
+
+    #[test]
+    fn fps_reaches_the_display_cap() {
+        // the env the plan sets is what display.rs reads for `fps_cap`
+        let d = crate::display::Display::resolve(&[], &mut |k| (k == "fps_cap").then(|| "144".to_string())).unwrap();
+        assert_eq!(d.fps_cap, 144);
+    }
+
+    #[test]
+    fn ssaa_multiplies_a_numeric_render_scale() {
+        assert_eq!(ssaa_render_scale("2", Some(2)).0, Some(4));
+        assert_eq!(ssaa_render_scale("4", Some(3)).0, Some(8), "capped at our 8");
+        assert_eq!(ssaa_render_scale("1", Some(3)), (None, None));
+        // an automatic scale (0 or absent) already supersamples a small window: accepted, logged, nothing to do
+        let (r, note) = ssaa_render_scale("3", Some(0));
+        assert_eq!(r, None);
+        assert!(note.unwrap().contains("automatic"));
+        assert_eq!(ssaa_render_scale("3", None).0, None);
+        // out of his 1..4: ignored
+        assert_eq!(ssaa_render_scale("9", Some(2)).0, None);
+        let (env, notes) = map_settings_notes(&parse_settings("scale 2\nssaa 2\n"));
+        assert_eq!(env.iter().filter(|(k, _)| k == "MELEE_RENDER_SCALE").map(|(_, v)| v.as_str()).collect::<Vec<_>>(), ["4"]);
+        assert!(notes[0].contains("render scale 4"), "{notes:?}");
+        let (env, _) = map_settings_notes(&parse_settings("ssaa 4\nscale 0\n"));
+        assert_eq!(env.iter().find(|(k, _)| k == "MELEE_RENDER_SCALE").unwrap().1, "auto");
+    }
+
+    #[test]
+    fn audio_device_id_goes_to_the_audio_boot() {
+        let (env, _) = map_settings_notes(&parse_settings("audio_device {0.0.0.00000000}.{abc}
+volume 5
+"));
+        assert!(env.contains(&("MELEE_AUDIO_DEVICE_ID".to_string(), "{0.0.0.00000000}.{abc}".to_string())));
+        // empty = the system default: nothing set
+        let (env, _) = map_settings_notes(&parse_settings("audio_device 
+volume 5
+"));
+        assert!(!env.iter().any(|(k, _)| k == "MELEE_AUDIO_DEVICE_ID"));
+    }
+
+    #[test]
+    fn launcher_05871a4a_arguments() {
+        let p = plan(&s(&["--iso", "d.iso", "--sysgen-data-dir", "L/MeleeUnlocked-YouGame", "--lobby-status-file", "g.json", "--online-mode", "direct"]), Path::new("."), &|_| None);
+        assert!(p.refused.is_empty());
+        assert_eq!(p.play_args, s(&["play", "--iso", "d.iso"]));
+        let env = |k: &str| p.env.iter().find(|(a, _)| a == k).map(|(_, v)| v.clone());
+        assert_eq!(env("MELEE_LOBBY_STATUS_FILE").as_deref(), Some("g.json"));
+        assert_eq!(env("MELEE_ONLINE_MODE").as_deref(), Some("direct"));
+        assert_eq!(env("MELEE_SLIPPI_MENUS").as_deref(), Some("on"));
+        let p = plan(&s(&["--iso", "d", "--online-mode", "x"]), Path::new("."), &|_| None);
+        assert_eq!(p.env.iter().find(|(a, _)| a == "MELEE_ONLINE_MODE").unwrap().1, "unranked");
+    }
+
+    fn envs(kv: &'static [(&'static str, &'static str)]) -> impl Fn(&str) -> Option<String> {
+        move |k| kv.iter().find(|(a, _)| *a == k).map(|(_, v)| v.to_string())
+    }
+
+    #[test]
+    fn lobby_direct_maps_to_slippi_direct() {
+        let args = s(&["--iso", "d.iso", "--user-dir", "U", "--lobby-status-file", "g.json", "--lobby-direct", "BBBB#002", "--lobby-character", "9"]);
+        // a test run: the loopback mock and the test code
+        let e = envs(&[("MELEE_SLIPPI_MM_URL", "ws://127.0.0.1:43170/v1/queue"), ("MELEE_SLIPPI_TEST_CODE", "AAAA#001"), ("MELEE_SLIPPI_NP_PORT", "43270"), ("MELEE_PAD_SCRIPT", "x")]);
+        let p = plan_env(&args, Path::new("."), &|_| None, &e);
+        assert!(p.refused.is_empty(), "{:?}", p.refused);
+        assert_eq!(
+            p.play_args,
+            s(&["play", "--iso", "d.iso", "--slippi-mm", "ws://127.0.0.1:43170/v1/queue", "--slippi-port", "43270", "--slippi-code", "AAAA#001", "--slippi-mm-mode", "direct", "--slippi-search", "BBBB#002", "--slippi-char", "9"])
+        );
+        assert!(p.notes.iter().any(|n| n.contains("B***#***") && !n.contains("BBBB")));
+        assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_LOBBY_STATUS_FILE").unwrap().1, "g.json");
+        // a player's run: Slippi's server with the login in --user-dir (only its path), default port, Fox by default
+        let p = plan_env(&s(&["--iso", "d.iso", "--user-dir", "U", "--lobby-direct", "AB#1"]), Path::new("."), &|_| None, &envs(&[]));
+        assert!(p.refused.is_empty(), "{:?}", p.refused);
+        let user = Path::new("U").join("user.json").display().to_string();
+        assert_eq!(p.play_args[3..], s(&["--slippi-mm", SLIPPI_MM_REAL, "--slippi-mm-real", "--slippi-user-json", &user, "--slippi-port", "51441", "--slippi-mm-mode", "direct", "--slippi-search", "AB#1", "--slippi-char", "2"]));
+    }
+
+    #[test]
+    fn lobby_direct_never_reaches_slippi_from_a_test() {
+        let args = s(&["--iso", "d.iso", "--user-dir", "U", "--lobby-direct", "AB#1", "--lobby-character", "2"]);
+        for e in [&[("MELEE_LAUNCHER_TEST", "1")][..], &[("MELEE_WINDOW_HIDDEN", "1")], &[("MELEE_PAD_SCRIPT", "p.txt")], &[("MELEE_SLIPPI_MM_URL", "wss://matchmaking.slippi.gg/v1/queue")]] {
+            let kv: &'static [(&str, &str)] = Box::leak(e.to_vec().into_boxed_slice());
+            let p = plan_env(&args, Path::new("."), &|_| None, &envs(kv));
+            assert_eq!(p.refused.len(), 1, "{e:?}");
+            assert!(!p.play_args.iter().any(|a| a.contains("slippi.gg")), "{e:?}");
+        }
+    }
+
+    #[test]
+    fn lobby_direct_checks_like_hero() {
+        for bad in ["", "AB", "#12", "AB#", "ab#1", "A-B#1", "AB#1C", "ABCDEFGHIJKLMNOP#12"] {
+            assert!(!lobby_code_ok(bad), "{bad}");
+        }
+        for good in ["AB#1", "A1B#99", "ABCDEFGH#123456789"] {
+            assert!(lobby_code_ok(good), "{good}");
+        }
+        let e = envs(&[("MELEE_SLIPPI_MM_URL", "ws://127.0.0.1:1/v1/queue")]);
+        let p = plan_env(&s(&["--iso", "d", "--lobby-direct", "ab#1", "--lobby-character", "300"]), Path::new("."), &|_| None, &e);
+        assert_eq!(p.refused.len(), 2, "{:?}", p.refused);
+        // P2P Direct (Hero's mu_net protocol) is passed through to `play`, pair by pair
+        let p = plan_env(&s(&["--iso", "d", "--p2p-port", "5000", "--p2p-connect-seconds", "45", "--p2p-games", "1"]), Path::new("."), &|_| None, &e);
+        assert_eq!(p.refused.len(), 0, "{:?}", p.refused);
+        for (k, v) in [("--p2p-port", "5000"), ("--p2p-connect-seconds", "45"), ("--p2p-games", "1")] {
+            assert!(p.play_args.windows(2).any(|w| w[0] == k && w[1] == v), "{k}: {:?}", p.play_args);
+        }
     }
 
     #[test]

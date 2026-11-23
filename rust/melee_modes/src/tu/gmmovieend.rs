@@ -129,35 +129,45 @@ pub mod ext {
                 }
             }
     pub static mut H_un_802FF710: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF710()  {
+                core::hint::black_box(0x5D849F7Cu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF710 {
                     Some(f) => f(),
                     None => { unsafe { melee_world::tu::if_2FF2::un_802FF710(); } return; },
                 }
             }
     pub static mut H_un_802FF6A0: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF6A0()  {
+                core::hint::black_box(0xEA7B0813u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF6A0 {
                     Some(f) => f(),
                     None => { unsafe { melee_world::tu::if_2FF2::un_802FF6A0(); } return; },
                 }
             }
     pub static mut H_un_80304168: Option<unsafe extern "C" fn(*mut core::ffi::c_void, i32, i32, i32) -> *mut melee_types::HSD_GObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_80304168(a0: *mut core::ffi::c_void, a1: i32, a2: i32, a3: i32) -> *mut melee_types::HSD_GObj {
+                core::hint::black_box(0x1C593A80u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_80304168 {
                     Some(f) => f(a0, a1, a2, a3),
                     None => { return unsafe { melee_world::tu::textlib_1::un_80304168(a0 as _, a1 as _, a2 as _, a3 as _) as _ }; },
                 }
             }
     pub static mut H_un_80302DF8: Option<unsafe extern "C" fn(*mut melee_types::un_80304138_objalloc_t, Option<unsafe extern "C" fn(u32) -> i32>) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_80302DF8(a0: *mut melee_types::un_80304138_objalloc_t, a1: Option<unsafe extern "C" fn(u32) -> i32>)  {
+                core::hint::black_box(0x3921D87Du32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_80302DF8 {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_world::tu::textlib::un_80302DF8(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_un_80302DF0: Option<unsafe extern "C" fn() -> *mut melee_types::un_80304138_objalloc_t> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_80302DF0() -> *mut melee_types::un_80304138_objalloc_t {
+                core::hint::black_box(0x3121CBE5u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_80302DF0 {
                     Some(f) => f(),
                     None => { return unsafe { melee_world::tu::textlib::un_80302DF0() as _ }; },
@@ -189,7 +199,9 @@ pub mod ext {
                 }
             }
     pub static mut H_gm_801BEFB0: Option<unsafe extern "C" fn() -> u32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn gm_801BEFB0() -> u32 {
+                core::hint::black_box(0xE7E65569u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_gm_801BEFB0 {
                     Some(f) => f(),
                     None => { return unsafe { crate::tu::gmgover::gm_801BEFB0() as _ }; },
@@ -240,7 +252,9 @@ pub mod ext {
                 }
             }
     pub static mut H_gm_801BF010: Option<unsafe extern "C" fn() -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn gm_801BF010() -> i32 {
+                core::hint::black_box(0x92154517u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_gm_801BF010 {
                     Some(f) => f(),
                     None => { return unsafe { crate::tu::gmgover::gm_801BF010() as _ }; },
@@ -280,7 +294,9 @@ pub mod ext {
     pub use crate::tu::gmmain_lib::gmMainLib_8046B0F0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(arg0: *mut GameModeState) {
+    core::hint::black_box(0x16B8BFF3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_ModeState_ApproachVs_OnExit");
     let temp_r30 = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     let temp_r31 = ext::gm_GetChallengerData();
@@ -303,7 +319,9 @@ pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(arg0: *mut GameModeState
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(_arg0: *mut GameModeState) {
+    core::hint::black_box(0x78644A4Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("gm_ModeState_Prize_OnExit");
     ext::gm_SetNextGameModeStateId(0);
 }

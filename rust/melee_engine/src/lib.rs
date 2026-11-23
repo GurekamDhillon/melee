@@ -50,6 +50,8 @@ pub mod seams;
 pub mod seams_gen;
 pub mod view;
 pub mod snapshot;
+pub mod snapmask;
+pub mod workers;
 
 pub use engine::Engine;
 pub use host::Host;

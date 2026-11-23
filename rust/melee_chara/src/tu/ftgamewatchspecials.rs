@@ -98,17 +98,23 @@ const transition_flags: u32 = (Ft_MF_KeepColAnimHitStatus
     | Ft_MF_Unk27) as u32;
 
 /// `ftGw_SpecialS_ItemJudgementSetup` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialS_ItemJudgementSetup(g: *mut HSD_GObj) {
+    core::hint::black_box(0x2F0AE2DCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialS_ItemJudgementSetup");
     ftGw_SpecialS_ItemJudgementSetup(g);
 }
 /// `ftGw_SpecialS_ItemJudgementEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialS_ItemJudgementEnterHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0x2C8FB688u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialS_ItemJudgementEnterHitlag");
     ftGw_SpecialS_ItemJudgementEnterHitlag(g);
 }
 /// `ftGw_SpecialS_ItemJudgementExitHitlag` as a Fighter callback entry (post_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialS_ItemJudgementExitHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0x39DE00ECu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialS_ItemJudgementExitHitlag");
     ftGw_SpecialS_ItemJudgementExitHitlag(g);
 }

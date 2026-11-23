@@ -60,7 +60,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { core::hint::black_box(0x49F58C7Eu32); /* fn identity */ super::hsdIsDescendantOf(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::object::hsdObj;
@@ -135,7 +136,9 @@ pub unsafe fn HSD_WObjAddAnim(wobj: *mut HSD_WObj, anim: *mut HSD_WObjAnim) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn WObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_ObjData) {
+    core::hint::black_box(0x7A5C30B0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("WObjUpdateFunc");
     let wobj = obj as *mut HSD_WObj;
     if wobj.is_null() {
@@ -173,7 +176,9 @@ pub unsafe fn HSD_WObjInterpretAnim(wobj: *mut HSD_WObj) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn WObjLoad(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) -> i32 {
+    core::hint::black_box(0xF602C76Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("WObjLoad");
     HSD_WObjSetPosition(wobj, addr_of_mut!((*desc).pos));
     if !(*wobj).robj.is_null() {
@@ -284,7 +289,9 @@ pub unsafe fn HSD_WObjAlloc() -> *mut HSD_WObj {
     wobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn WObjRelease(o: *mut HSD_Class) {
+    core::hint::black_box(0x833760ECu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("WObjRelease");
     let wobj = o as *mut HSD_WObj;
     ext::HSD_RObjRemoveAll((*wobj).robj);
@@ -293,7 +300,9 @@ pub unsafe extern "C" fn WObjRelease(o: *mut HSD_Class) {
     ((*parent).release.expect("parent release"))(o);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn WObjAmnesia(info: *mut HSD_ClassInfo) {
+    core::hint::black_box(0xDF71428Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("WObjAmnesia");
     if info == default_class {
         default_class = null_mut();
@@ -302,7 +311,9 @@ pub unsafe extern "C" fn WObjAmnesia(info: *mut HSD_ClassInfo) {
     ((*parent).amnesia.expect("parent amnesia"))(info);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn WObjInfoInit() {
+    core::hint::black_box(0x7F24BAEDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("WObjInfoInit");
     ext::hsdInitClassInfo(
         addr_of_mut!(hsdWObj).cast(),

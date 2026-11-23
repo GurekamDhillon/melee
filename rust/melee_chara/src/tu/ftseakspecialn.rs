@@ -106,7 +106,9 @@ unsafe fn set_damage_callback(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) {
     (*fp).death2_cb = cb;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_shootNeedles(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB3E2D6AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_shootNeedles");
     shootNeedles(g);
 }
@@ -131,7 +133,7 @@ pub fn ftSk_SpecialN_80111FBC(gobj: *mut HSD_GObj) {
                 (*fp).u.sk.x0 -= 1;
             }
             let cb = crate::tu::ftseak::cb_ftSk_Init_80110198 as unsafe extern "C" fn(*mut HSD_GObj);
-            if (*fp).death2_cb == Some(cb) || (*fp).take_dmg_cb == Some(cb) {
+            if (*fp).death2_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, cb)) || (*fp).take_dmg_cb.is_some_and(|p| core::ptr::fn_addr_eq(p, cb)) {
                 ftSk_SpecialN_801120D4(gobj);
             }
         }

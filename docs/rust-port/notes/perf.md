@@ -145,6 +145,27 @@ and statics in full, every ever-written arena page): pad and cpu, 600 frames, 11
 compared) and `MELEE_SNAP_STATIC_SCAN=1` (statics compared in full) are the fallbacks. The Lab ring save went from
 1314-1427 us to 333 us each (`lab-check` lab perf line).
 
+## Linux: huge pages and the write watch (2026-11-22, port/kohitch)
+Two-peer netplay (the in-process online loop, `menu_slp_check.sh rematch`) on the laptop (i7-1370P, kernel 7.2, THP
+`always`): every fight tick cost 10-14 ms, so a one-frame rollback or a catch-up after a late peer input went over 16 ms
+(the slow ticks seen around the last KO / GAME!, where more effects write more pages). Measured per save: ~2470 pages
+copied, 1530 host pages digested per state hash, `/proc/self/clear_refs` 1.6-4 ms. Two causes, both host-side:
+1. Transparent huge pages: soft-dirty marks a whole 2 MB huge page written on one write, so the statics' .data/.bss
+   (~1000 pages a save), the host block and the arena read as 8x the pages the game wrote. `snapshot::small_pages` (at
+   `Base::capture`) advises the ranges MADV_NOHUGEPAGE and splits huge pages already there (MADV_COLD on 4 KB of each);
+   the arena reserve (`arena.rs sys::reserve`) and the host block (`lowmem.rs alloc_low`) are advised at their mmap.
+   Copied per save 2470 -> 297, digested per hash 1530 -> 223.
+2. Soft-dirty's clear is process-wide: it walks every page table of the process and makes every thread's next write
+   to any page fault (that fault cost sat inside the game step too). `snapshot::wpwatch` uses userfaultfd's
+   asynchronous write protection instead (kernel 6.7+, UFFD_FEATURE_WP_ASYNC, unprivileged with UFFD_USER_MODE_ONLY):
+   the ranges are registered once and the PAGEMAP_SCAN ioctl reads-and-rearms one range at a time, the Windows
+   write watch's semantics. Soft-dirty stays as the fallback (old kernel, MELEE_SNAP_NO_UFFD=1), and its clear runs
+   only when a range used it.
+Result (fight ticks, profiler on, interleaved runs): avg 9.8-11.3 ms -> 3.4-3.6 ms (THP fix alone: 7.2-8.3 ms); fight
+frames over 16 ms per profile 10-230 -> 0 (and 0 with the mock relay's --lag-ms 30, 354 rollbacks). Pages copied per
+save are the same with either watch (the same writes are seen), so the state is unchanged; MELEE_SNAP_CHECK still
+compares every save and load with the full state.
+
 ## Snapshot perf guard
 `tools/rust-port/perf/snapguard.sh` (run by `gate.sh` for the release profile; `SNAPGUARD=0` skips it) runs the cpu_fox_falco_dl
 depth-7 synctest 3 times (`--runs N`), takes the minimum of save, load and total ms per tick, and fails when one is more than
@@ -258,3 +279,100 @@ Checks: `tools/rust-port/gate.sh --skip-build` on the new exe (goldens, synctest
 on the old exe under the same load: see the commit message. Draw order, uniforms and EFB copies are unchanged by
 construction (the split only moves when a prepared frame is drawn); the Stadium shots of the new exe are identical
 across 3 runs and equal to the baseline's run-2/run-3 shots (the ones where no extra tick slipped in).
+
+## slpcheck --render: GX decode off the tick (port/simdraw, 2026-11-21)
+
+Profiled with the in-process sampler (`MELEE_SAMPLE=<file> MELEE_SAMPLE_GATE=1 melee slpcheck ... --render`: the gate
+keeps only the engine tick; when dbghelp names nothing, the report's addresses symbolize offline against the PDB at
+`address - "prof: exe base" + 0x140000000`). Of the 1.44 ms rendered tick on Game_20261023T125724, 51% was
+`gxbridge::finish_frame` -> `GxShim::copy_disp` -> `Gx::drain` -> `GxState::process` / `draw::build_draw` (the FIFO
+decode and DrawCmd building, plus its allocations), work the play and retail paths already do on the `gx decode`
+thread (`Gx::enable_async`). slpcheck ran it synchronously. `--render` now enables the same async decode (with
+`wait_frame`, so the render span takes exactly this tick's frame; `MELEE_GX_SYNC=1` restores the old path).
+The rest of the gap to the sim-only tick is the draw callbacks' own GX calls (`HSD_JObjDispAll` -> `HSD_DObjDisp`,
+`HSD_MObjSetup`, `GXLoadTexObj`, `GXCallDisplayList`): spread thin, no single hot spot.
+
+| replay | sim cpu before (mean/p99/max) | sim cpu after | render wall before | render wall after | frame wall before / after |
+|---|---|---|---|---|---|
+| Game_20261023T125724 | 1.438 / 2.274 / 3.205 | 0.661 / 1.227 / 1.793 | 1.169 | 2.188 | 2.651 / 2.790 |
+| Game_20260613T223503 | 2.611 / 4.265 / 5.394 | 0.783 / 1.366 / 1.909 | 2.323 | 3.486 | 5.139 / 4.276 |
+| Game_20251228T235414 | 3.255 / 4.703 / 5.811 | 0.885 / 1.356 / 1.955 | 2.710 | 4.698 | 6.007 / 5.598 |
+
+The render span now includes waiting for the decode thread (its CPU is on that thread, not in `render_cpu_ms`), so
+render wall grows by about what the tick lost; slpcheck waits for every frame, play overlaps the decode with the next tick.
+
+# Live play vs Hero's Source Port, re-run (2026-11-22, branch port/nightbench-1122)
+Task: re-run the bench-live comparison (notes/bench-live.md, last set 2026-11-03, tick 1.30 / 0.81 ms) against a current
+Source Port. Same scenarios, same harness (`bench-live/` scripts, copied to scratch and adapted: spaces in the path, the
+`MELEE_INPUT=n` env, the Source Port's `--sys-dir`), 3 runs each, one game at a time, Rust then Hero alternating, medians.
+
+## What was measured
+| | Rust port | Hero's Source Port |
+|---|---|---|
+| build | pub/rust-port 839886736, `cargo build --release -p melee --bin melee` (rustc 1.102.0-nightly, release profile, `debug = 1`, no fat LTO, -j 2, private target dir) | Melee Unlocked **0.9.120 (YouGame build 103)**, `melee_source.exe` as installed on this machine by the YouGame desktop app on 2026-11-20 (his prebuilt release; not built by us). His repo has since moved on (origin/main tip is newer, a 0.9.991 launcher exists), so this is not necessarily his newest code |
+| renderer / window | wgpu (D3D12), visible, unfocused (`MELEE_WINDOW_UNFOCUSED=1`), bottom of the z-order | his D3D12 renderer, `--hidden --threaded-renderer` (a visible window takes focus; his hidden window may make Present cheaper, unverified, as before) |
+| env / flags | `MELEE_INPUT=n MELEE_PAD_IGNORE_ADAPTER=1 MELEE_VOLUME=3 MELEE_VSYNC=off MELEE_INTERP=1 MELEE_RENDER_SCALE=2 MELEE_WINDOW_TITLE="nightbench: rust 839886736 ..."`, `play --match ... --items OFF --stocks 4 --max-frames 3603` | `--fps unlocked --frame-mode interpolate --time-base 1 --window 1280x960 --scale 2 --dlss off --volume 0 --no-music --script s_hyrule.txt|s_fd.txt`, `MELEE_PRESENT_UNCAPPED=1`; his menu walk (script) still reaches the match with 0.9.120 |
+| scenarios | Hyrule Temple 4 CPUs (fox/marth/falco/peach cpu9), Final Destination fox vs marth cpu9; items off, stock 4, 1280x960 at 2x, vsync off, 3600 match frames | same |
+
+Machine: Core Ultra 7 265F, 32 GB, RTX 5070, Windows 11 26200. NOT an empty machine: other agents' sessions were
+running all night. A run only started when `quiet.sh` saw no melee / melee-slippi / melee_source / Dolphin / cargo / rustc /
+link / cl process, machine CPU under 30 % (instantaneous counter) and more than 3 GB free; the measured CPU before the 12 runs was
+7 to 26 % (browser and chat apps in the background), free RAM 5.3 to 10 GB. Build lock held for the whole set. One discarded
+warm-up run per scenario (cold pipeline cache) came first.
+
+## Results (medians of 3)
+| | Rust Temple 4P | Hero 0.9.120 Temple 4P | Rust FD 2P | Hero 0.9.120 FD 2P |
+|---|---|---|---|---|
+| sim per tick p50 (ours: wall of `Game::tick`; his: game-thread `cpu_ms`) | **1.84** ms (mean 1.90, p99 2.8) | 3.35 ms (mean 3.45) | **1.16** ms (mean 1.35, p99 3.8) | 1.85 ms (mean 1.86) |
+| render fps, average | **812** | 470 | 1150 | 1186 |
+| render fps, 1% low | **233** | 136 | 207 | **373** |
+| frame time p50 / p95 / p99 (ms) | 1.04 / 2.69 / **3.45** | 1.81 / 4.03 / 5.27 | 0.70 / 1.78 / 2.91 | 0.74 / 1.68 / **2.24** |
+| process CPU per rendered frame | 1.80 ms | 2.84 ms | 1.21 ms | 0.90 ms |
+| working set peak | 1053 MB | 1270 MB | 1019 MB | 1190 MB |
+| private bytes peak | 1462 MB | 1413 MB | 1402 MB | 1338 MB |
+| draws per presented frame (his column, after his merge) | not logged | 1027 | not logged | 472 |
+
+Per-run: Rust Temple fps 622 / 835 / 813, 1% low 162 / 233 / 241, p99 4.55 / 3.45 / 3.37; Hero Temple fps 470 / 445 / 596, 1% low 136 / 129 / 187.
+Rust FD fps 1150 / 840 / 1289, 1% low 207 / 110 / 324, p99 2.91 / 4.88 / 2.30; Hero FD fps 1113 / 1186 / 1229, 1% low 306 / 373 / 379, p99 2.63 / 2.24 / 2.15.
+
+## Reading
+- Temple 4P: ahead on every row except peak private bytes (1.04x his). Tick 0.55x of his CPU per tick, 1% low 1.7x, p99 frame 0.65x.
+- FD 2P: tick is 0.63x of his, but average fps is level (1150 vs 1186) and the **1% low trails** (207 vs 373; the p99 frame is 2.91 vs 2.24 ms). Our FD spread is wide (1% low 110 to 324 across the 3 runs; the 110 run also has the worst p99 of the set at 4.88 ms), his is narrow (306 to 379). Three runs do not say whether that is our engine or a background spike, but it is not "no worse 1% lows", so **the README speed row stays "Provisional"** and was not changed.
+- **Not as good as the 2026-11-03 set.** Same method, the same machine: our tick went 1.30 to 1.84 ms (Temple) and 0.81 to 1.16 ms (FD), our private-bytes peak 690 to 1462 MB (Temple) and 608 to 1402 MB (FD), the FD 1% low 444 to 207. Hero's own numbers moved less (tick 3.97 to 3.35 and 2.15 to 1.85 ms, memory 1109 to 1413 MB). This run has more background load (CPU 7 to 26 % before each run against 0 to 15 % on 2026-11-03), which accounts for some of the tick, but not the memory: a 2x private-bytes growth since perf2 (01058c072) is a real change in the engine between that build and 839886736 and is worth bisecting (the Slippi menus, the wasm mod host and the modes added since are the suspects; not investigated here).
+- With the memory growth our "about half of his" claim of 2026-11-03 no longer holds; at this tip we are about level (1.0x to 1.05x).
+
+## Caveats
+- Everything in bench-live.md's caveats still applies: hidden window on his side, Slippi layer and sub-frame interpolation work on his side, the two sim columns are different quantities (wall of `Game::tick` against game-thread `cpu_ms`), different renderers, GX parity not complete on ours (fewer draws), our release profile without fat LTO (`--profile perf` is about 25 % faster) against his MSVC/GCC release.
+- The Source Port is a 2026-11-20 release (0.9.120, YouGame build 103), not the tip of his repo; the number is "his current shipped build on this machine".
+- 3 runs, a shared machine (see above), CPU 7 to 26 % before each run. Run-to-run spread on our FD set is large.
+- Hero's per-run `sim_ms` (wall) reads a constant 13.4 ms: pacing, not cost; only `cpu_ms` is meaningful. His startup (scripted menu walk) is 45 s, ours 1 s: not comparable.
+- Scripts: `scratch/nightbench/` (`all.sh`, `run_r.sh`, `run_h.sh`, `quiet.sh`; per-run output in `N_R_*`, `N_H_*`), the unchanged bench-live scripts otherwise.
+
+## Windows private bytes regression (Nov 22, port/memwin)
+Peak private bytes went from ~690/608 MB (Temple 4P / FD 2P, 01058c072) to ~1460/1400 MB (839886736); Linux RSS level.
+VirtualQuery + QueryWorkingSet walk per allocation at 45 s of Temple 4P (private commit / private working set, MB):
+01058c072 682 / 488; tip 1399 / 954; tip with MELEE_ASSETS=off 968 / 732.
+- ~440 MB: the asset service's recording heap (recheap, 64 x 1 GB slots at 0x5C7A00000000). It only exists on Windows
+  (`recheap::init` is false elsewhere, so the service is off on Linux: the reason Linux showed nothing). 43 slots held by
+  kept plans: 389 MB committed, 180 MB resident. Of that, the block records + event log were 88 MB committed (1 MB steps
+  per slot) and 9 MB touched; the block area 301 / 171 (blocks a decode allocates and never writes: alloc_zeroed and
+  Vec capacity, which the plan never reads either).
+- ~290 MB with the service off: system-heap segments (15.8 MB NT heap segments, 3 -> 16-22), all resident, grown over
+  many commits (first-parent bisect on commit with assets off: 688 @194, 776 @291, 775 @315, 792 @316, 854 @321,
+  883 @318/327, 875 @340, 968 tip): real allocations, no single culprit. `system heap` in MELEE_MEM_EVERY lines: 229 MB
+  at tick 0, 314 MB at tick 2400 (Temple 4P, assets off).
+- Unchanged and fine: arena 16 GB reserve 210 committed / 202 resident; lowmem 64 MB committed / 12 resident (same at
+  01058c072); GX data/block cache 9 MB.
+Fix (3876d6158): recheap commits records/event log in 64 KB steps, blocks in 256 KB (meta 88 -> 12 MB). The untouched
+block area is left: commit-on-fault would race the crash/cow/pagewatch VEHs and kernel-mode reads, and a decommit after
+the plan breaks the whole-block apply copy. Gate: 4 goldens, synctest, audio, snapguard ok (lint FAIL is the
+pre-existing lobby_status.rs R1, not this change).
+
+Live-play bench (nightbench run_r.sh, 3 runs each, medians; before = 9311b3f0c, after = 3876d6158):
+| scenario | build | peak private MB | peak WS MB | tick p50 / mean ms | fps | 1% low fps |
+|---|---|---|---|---|---|---|
+| Temple 4P | before | 1515 | 1075 | 1.82 / 1.88 | 60.0 | 58.1 |
+| Temple 4P | after | 1408 | 1066 | 1.85 / 1.89 | 60.0 | 56.6 |
+| FD 2P | before | 1423 | 1014 | 1.10 / 1.15 | 60.0 | 59.0 |
+| FD 2P | after | 1346 | 1018 | 1.07 / 1.12 | 60.0 | 58.9 |
+Next levers (not done): the plan cache size (KEEP_BYTES 1.5 GB, KEEP 58 slots) and the system-heap growth.

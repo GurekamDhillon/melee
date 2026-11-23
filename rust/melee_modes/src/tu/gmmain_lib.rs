@@ -1269,25 +1269,25 @@ pub unsafe fn gmMainLib_8015FB68() {
     ext::Toy_80311960();
 }
 
-/// C `gmMainLib_MexApplyTournamentDefaults` (PC only, opt-in through MELEE_MEX): applies the
+/// C `gmMainLib_MexApplyTournamentDefaults` (PC only, opt-in through MELEE_MEX, or the disc's codes.gct writes to gmMainLib_DefaultGameRules/Prefs): applies the
 /// tournament-standard defaults to the default rules and prefs before they are copied in.
 pub unsafe fn gmMainLib_MexApplyTournamentDefaults() {
     melee_core::ct!("gmMainLib_MexApplyTournamentDefaults");
-    if ext::Mex_Enabled("default_stock_mode") != 0 {
+    if (ext::Mex_Enabled("default_stock_mode") != 0 || melee_core::codes::disc_writes(0x803D4A48, 0x0034_0100)) {
         gmMainLib_DefaultGameRules.mode = 1;
         gmMainLib_DefaultGameRules.time_limit = 0;
     }
-    if ext::Mex_Enabled("default_4_stocks") != 0 {
+    if (ext::Mex_Enabled("default_4_stocks") != 0 || melee_core::codes::disc_writes(0x803D4A4C, 0x0400_0A00)) {
         gmMainLib_DefaultGameRules.stock_count = 4;
     }
-    if ext::Mex_Enabled("default_8_minutes") != 0 {
+    if (ext::Mex_Enabled("default_8_minutes") != 0 || melee_core::codes::disc_writes(0x803D4A50, 0x0801_0100)) {
         gmMainLib_DefaultGameRules.stock_time_limit = 8;
         gmMainLib_DefaultGameRules.friendly_fire = 1;
     }
-    if ext::Mex_Enabled("default_no_items") != 0 {
+    if (ext::Mex_Enabled("default_no_items") != 0 || melee_core::codes::disc_writes(0x803D4A60, 0xFF00_0000)) {
         gmMainLib_DefaultGamePrefs.item_freq = 0xFF;
     }
-    if ext::Mex_Enabled("default_tournament_stages") != 0 {
+    if (ext::Mex_Enabled("default_tournament_stages") != 0 || melee_core::codes::disc_writes(0x803D4A78, 0xE700_00B0)) {
         gmMainLib_DefaultGamePrefs.stage_mask = 0xE70000B0;
     }
 }

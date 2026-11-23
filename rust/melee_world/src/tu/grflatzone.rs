@@ -84,8 +84,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x231FAB65u32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { core::hint::black_box(0x081C29B3u32); /* fn identity */ super::HSD_Randi(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::ground::stage_info;
@@ -300,10 +302,13 @@ unsafe fn sign_random() -> f32 {
 }
 
 /// 216E74
-pub unsafe extern "C" fn grFlatzone_80216E74(_arg0: i32) { melee_core::ct!("grFlatzone_80216E74");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80216E74(_arg0: i32) { core::hint::black_box(0xC7E578F3u32); /* fn identity */ melee_core::ct!("grFlatzone_80216E74");}
 
 /// 216E78
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80216E78() {
+    core::hint::black_box(0xD3E58BD7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80216E78");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grFlatzone_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
@@ -325,10 +330,12 @@ pub unsafe extern "C" fn grFlatzone_80216E78() {
 }
 
 /// grFlatzone_UnkStage0_OnLoad
-pub unsafe extern "C" fn grFlatzone_UnkStage0_OnLoad() { melee_core::ct!("grFlatzone_UnkStage0_OnLoad");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_UnkStage0_OnLoad() { core::hint::black_box(0xC6638766u32); /* fn identity */ melee_core::ct!("grFlatzone_UnkStage0_OnLoad");}
 
 /// grFlatzone_UnkStage0_OnStart
-pub unsafe extern "C" fn grFlatzone_UnkStage0_OnStart() { melee_core::ct!("grFlatzone_UnkStage0_OnStart");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_UnkStage0_OnStart() { core::hint::black_box(0x2E3E8BC6u32); /* fn identity */ melee_core::ct!("grFlatzone_UnkStage0_OnStart");}
 
 /// `grFlatzone_80216F48_inline` (static inline)
 #[inline]
@@ -338,7 +345,9 @@ pub unsafe fn grFlatzone_80216F48_inline(arg0: i32) -> *mut HSD_GObj {
 }
 
 /// 216F48: sets up stage gobj `gobj_id` with its row of the callback table.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80216F48(gobj_id: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x9DA3EA5Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80216F48");
     let callbacks = &raw mut grFz_StageCallbacks[gobj_id as usize];
     let gobj = grFlatzone_80216F48_inline(gobj_id);
@@ -350,26 +359,34 @@ pub unsafe extern "C" fn grFlatzone_80216F48(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 /// stageGObj0_OnInit
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x03236B83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 217064
-pub unsafe extern "C" fn grFlatzone_80217064(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217064");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217064(_gobj: *mut HSD_GObj) { core::hint::black_box(0xF9E6C54Cu32); /* fn identity */ melee_core::ct!("grFlatzone_80217064");}
 
 /// 217068
-pub unsafe extern "C" fn grFlatzone_80217068(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217068");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217068(_gobj: *mut HSD_GObj) { core::hint::black_box(0xFDE6CB98u32); /* fn identity */ melee_core::ct!("grFlatzone_80217068");}
 
 /// 21706C
+#[inline(never)]
 pub unsafe extern "C" fn fn_8021706C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xFE934305u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_8021706C");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.flatzone.xC4 = 0;
 }
 
 /// 21707C: gobj 2 (the building swap timer).
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_8021707C(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x08E91B80u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_8021707C");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -396,7 +413,9 @@ pub unsafe fn grFlatzone_802171D4_inline(gobj: *mut HSD_GObj) {
 }
 
 /// 2171D4
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_802171D4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xEDAD0C09u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_802171D4");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone.xC4 == 0 && (*gp).u.flatzone.xC7 != 0 {
@@ -442,10 +461,13 @@ pub unsafe extern "C" fn grFlatzone_802171D4(gobj: *mut HSD_GObj) {
 }
 
 /// 2173D0
-pub unsafe extern "C" fn grFlatzone_802173D0(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_802173D0");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_802173D0(_gobj: *mut HSD_GObj) { core::hint::black_box(0x13DF149Fu32); /* fn identity */ melee_core::ct!("grFlatzone_802173D0");}
 
 /// 2173D4
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_802173D4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x0FDF0E53u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_802173D4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -455,20 +477,26 @@ pub unsafe extern "C" fn grFlatzone_802173D4(gobj: *mut HSD_GObj) {
 }
 
 /// 217438
-pub unsafe extern "C" fn grFlatzone_80217438(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217438");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217438(_gobj: *mut HSD_GObj) { core::hint::black_box(0x373F1471u32); /* fn identity */ melee_core::ct!("grFlatzone_80217438");}
 
 /// 21743C
-pub unsafe extern "C" fn grFlatzone_8021743C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_8021743C");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_8021743C(_gobj: *mut HSD_GObj) { core::hint::black_box(0xDC3E8530u32); /* fn identity */ melee_core::ct!("grFlatzone_8021743C");}
 
 /// 217440
+#[inline(never)]
 pub unsafe extern "C" fn fn_80217440(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4C39901Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_80217440");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.flatzone.xC4 = 0;
 }
 
 /// 217450: gobj 5 (the background machine) init.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217450(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x334E18AFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217450");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -485,7 +513,9 @@ pub unsafe extern "C" fn grFlatzone_80217450(gobj: *mut HSD_GObj) {
 }
 
 /// 2174EC: gobj 5 per frame: picks the next animation of the background machine.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_802174EC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE4268CE2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_802174EC");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone3.xC4 == 0 && (*gp).u.flatzone3.xC7 != 8 && (*gp).u.flatzone3.xC9 != 0 {
@@ -520,10 +550,13 @@ pub unsafe extern "C" fn grFlatzone_802174EC(gobj: *mut HSD_GObj) {
 }
 
 /// 217644
-pub unsafe extern "C" fn grFlatzone_80217644(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217644");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217644(_gobj: *mut HSD_GObj) { core::hint::black_box(0x6457ED54u32); /* fn identity */ melee_core::ct!("grFlatzone_80217644");}
 
 /// 217648: gobj 3 (the crane) init.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217648(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5857DA70u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217648");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -549,7 +582,9 @@ unsafe fn map2_anim(anim: i32) {
 }
 
 /// 2176BC: gobj 3 per frame: the crane's drop sequence (see the file comment for the aliasing).
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_802176BC(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xF251B3EBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_802176BC");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -673,10 +708,13 @@ pub unsafe extern "C" fn grFlatzone_802176BC(gobj: *mut HSD_GObj) {
 }
 
 /// 217CD0
-pub unsafe extern "C" fn grFlatzone_80217CD0(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217CD0");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217CD0(_gobj: *mut HSD_GObj) { core::hint::black_box(0xB790834Fu32); /* fn identity */ melee_core::ct!("grFlatzone_80217CD0");}
 
 /// 217CD4
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217CD4(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xB3907D03u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217CD4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -686,7 +724,9 @@ pub unsafe extern "C" fn grFlatzone_80217CD4(gobj: *mut HSD_GObj) {
 }
 
 /// 217D30
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217D30(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD51B2DA9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217D30");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone.xC4 != 0 {
@@ -705,10 +745,13 @@ pub unsafe extern "C" fn grFlatzone_80217D30(gobj: *mut HSD_GObj) {
 }
 
 /// 217DA4
-pub unsafe extern "C" fn grFlatzone_80217DA4(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217DA4");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217DA4(_gobj: *mut HSD_GObj) { core::hint::black_box(0x640A6877u32); /* fn identity */ melee_core::ct!("grFlatzone_80217DA4");}
 
 /// 217DA8
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217DA8(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x580A5593u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217DA8");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -718,25 +761,33 @@ pub unsafe extern "C" fn grFlatzone_80217DA8(gobj: *mut HSD_GObj) {
 }
 
 /// 217E04
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217E04(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x55B4D591u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217E04");
     grFlatzone_80217D30(gobj);
 }
 
 /// 217E78
-pub unsafe extern "C" fn grFlatzone_80217E78(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E78");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217E78(_gobj: *mut HSD_GObj) { core::hint::black_box(0x4FAE105Au32); /* fn identity */ melee_core::ct!("grFlatzone_80217E78");}
 
 /// 217E7C
-pub unsafe extern "C" fn grFlatzone_80217E7C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E7C");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217E7C(_gobj: *mut HSD_GObj) { core::hint::black_box(0xD6AD51DFu32); /* fn identity */ melee_core::ct!("grFlatzone_80217E7C");}
 
 /// 217E88
-pub unsafe extern "C" fn grFlatzone_80217E88(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E88");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217E88(_gobj: *mut HSD_GObj) { core::hint::black_box(0xD1C9207Du32); /* fn identity */ melee_core::ct!("grFlatzone_80217E88");}
 
 /// 217E8C
-pub unsafe extern "C" fn grFlatzone_80217E8C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E8C");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_80217E8C(_gobj: *mut HSD_GObj) { core::hint::black_box(0xF6C95ABCu32); /* fn identity */ melee_core::ct!("grFlatzone_80217E8C");}
 
 /// 217E90: gobj 8 (the item rain) init.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217E90(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xC3C6CBDCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217E90");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -747,7 +798,9 @@ pub unsafe extern "C" fn grFlatzone_80217E90(gobj: *mut HSD_GObj) {
 }
 
 /// 217EF0: gobj 8 per frame: drops an item every `unk14` frames while the counter runs.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80217EF0(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4CE9D89Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80217EF0");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone3.xC4 != 0 {
@@ -787,10 +840,13 @@ pub unsafe extern "C" fn grFlatzone_80217EF0(gobj: *mut HSD_GObj) {
 }
 
 /// 21805C
-pub unsafe extern "C" fn grFlatzone_8021805C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_8021805C");}
+#[inline(never)]
+pub unsafe extern "C" fn grFlatzone_8021805C(_gobj: *mut HSD_GObj) { core::hint::black_box(0x0CF7828Du32); /* fn identity */ melee_core::ct!("grFlatzone_8021805C");}
 
 /// 218060: picks the background machine's next (state, step) and starts its animation.
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80218060(arg0: i32) {
+    core::hint::black_box(0x4BFEA17Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80218060");
     let gobj = ext::Ground_GetMapGObj(5);
     if !gobj.is_null() {
@@ -855,13 +911,17 @@ pub unsafe fn grFlatzone_802181B4_inline() {
 }
 
 /// 2181B4
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_802181B4() {
+    core::hint::black_box(0x592BED90u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_802181B4");
     grFlatzone_802181B4_inline();
 }
 
 /// 218260
+#[inline(never)]
 pub unsafe extern "C" fn grFlatzone_80218260() {
+    core::hint::black_box(0x75D80425u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grFlatzone_80218260");
     let gobj = ext::Ground_GetMapGObj(5);
     if !gobj.is_null() {

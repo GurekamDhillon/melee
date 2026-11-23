@@ -62,7 +62,15 @@ mod sys {
 mod sys {
     pub unsafe fn reserve(cap: usize) -> *mut core::ffi::c_void {
         let p = libc::mmap(core::ptr::null_mut(), cap, libc::PROT_NONE, libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE, -1, 0);
-        if p == libc::MAP_FAILED { core::ptr::null_mut() } else { p }
+        if p == libc::MAP_FAILED {
+            return core::ptr::null_mut();
+        }
+        // 4 KB pages only (no transparent huge pages): the snapshot's write tracking is per page (soft-dirty), and a
+        // write anywhere in a 2 MB huge page marks all 512 of its pages written, so every save copied and every hash
+        // digested ~8x the pages the game actually wrote (crate::snapshot, notes/perf.md "Rollback snapshots")
+        #[cfg(target_os = "linux")]
+        libc::madvise(p, cap, libc::MADV_NOHUGEPAGE);
+        p
     }
     pub unsafe fn commit(at: usize, len: usize) -> bool {
         libc::mprotect(at as *mut _, len, libc::PROT_READ | libc::PROT_WRITE) == 0
@@ -163,6 +171,18 @@ pub fn used_range() -> (usize, usize) {
             return (0, 0);
         }
         (BASE, ((BUMP + 0xFFF) & !0xFFF) - BASE)
+    }
+}
+
+/// `(start, len)` of the arena's whole reservation (every page `used_range` can ever cover), or `(0, 0)` before the
+/// first allocation.
+pub fn reserved_range() -> (usize, usize) {
+    unsafe {
+        if BASE == 0 {
+            return (0, 0);
+        }
+        // BASE is the mapping's start rounded up to 64 KB: the reservation's last 64 KB may lie past the mapping
+        (BASE, CAP - 0x10000)
     }
 }
 
@@ -341,16 +361,20 @@ thread_local! {
     pub static PROF_NS: core::cell::Cell<(u64, u64, u64)> = const { core::cell::Cell::new((0, 0, 0)) };
 }
 
-/// Set once the arena was ever snapshotted (a load may then have left bytes past the bump pointer).
+/// Set once the arena was ever snapshotted (diagnostics). It used to mean "fresh bump memory is no longer known to be
+/// zero", but a load zeroes the arena memory the discarded timeline bumped into (`snapshot::Base::load_with`), so memory
+/// past the bump pointer is zero after a load too. With the old rule every netplay (snapshotting) run zeroed and copied
+/// whole fresh blocks: a fighter file's 14 MB of fresh big blocks, fighter create 5.6 ms vs 1.1 ms solo.
+#[allow(dead_code)]
 static SNAPSHOTTED: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 
-/// Called by `snapshot::Base::capture`: from now on fresh bump memory is not known to be zero.
+/// Called by `snapshot::Base::capture`.
 pub fn note_snapshot() {
     SNAPSHOTTED.store(true, Relaxed);
 }
 
-/// [`alloc`] for a zeroed block: zeroes it unless it is fresh bump memory and the arena was never snapshotted (pages
-/// past the bump pointer were never handed out: still the OS's zero pages). A multi-MB zeroed table then costs only
+/// [`alloc`] for a zeroed block: zeroes it unless it is fresh bump memory (pages past the bump pointer are still the OS's
+/// zero pages, or zeroed by the snapshot load that rewound the bump pointer below them). A multi-MB zeroed table then costs only
 /// the pages that are touched (the archive decoder's shared tables, `gcdecode::shared_array`).
 #[cfg(any(windows, unix))]
 pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
@@ -367,7 +391,7 @@ pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
     if ZERO_ALL.with(|z| z.get()) {
         note_asset_block(p, l.size());
     }
-    if !p.is_null() && !(fresh && !SNAPSHOTTED.load(Relaxed)) {
+    if !p.is_null() && !fresh {
         let n = l.size();
         if !fresh && TRIM && class_of(n).is_some_and(|(_, cs)| cs >= TRIM_MIN) {
             // a recycled trimmed block: `free` decommitted its whole pages past the first 16 bytes, and the allocation
@@ -425,8 +449,8 @@ pub unsafe fn alloc_many(ls: &[(usize, usize, usize)], out: &mut Vec<usize>) -> 
         if p.is_null() {
             return false;
         }
-        // bit 0: fresh bump memory never handed out and never snapshotted (still the OS's zero pages)
-        out.push(p as usize | (FRESH && !SNAPSHOTTED.load(Relaxed)) as usize);
+        // bit 0: fresh bump memory (zero: see alloc_zeroed)
+        out.push(p as usize | FRESH as usize);
     }
     true
 }
@@ -1026,4 +1050,47 @@ mod keep {
     pub unsafe fn take_upto(_: usize, _: usize, _: usize) -> bool { false }
     pub fn zero_some() {}
     pub fn init() {}
+}
+
+/// A host static that a rollback must not rewind: the static itself holds only a pointer, set once, to a block on the
+/// system heap made under [`SysScope`]; the value lives in that block, and every access runs under `SysScope`, so its
+/// own allocations stay off the arena too.
+///
+/// Why: a rollback load restores every writable static of the executable (and the arena). A plain
+/// `static X: Mutex<Vec<String>>` mutated on the system heap after a snapshot gets an old header back, pointing at a
+/// buffer since freed or moved: the next drop frees it twice (`free(): double free` in
+/// `retail_flow::transition_time`, the in-process online loop). Rewinding this pointer restores the same value; a load
+/// from before the first use resets it to null, so the next use starts a fresh block (the old one is leaked, never
+/// freed twice). The `Mutex` is in the block as well, so a load cannot leave it held either.
+pub struct SysStatic<T: 'static> {
+    p: core::sync::atomic::AtomicPtr<std::sync::Mutex<T>>,
+    init: fn() -> T,
+}
+
+impl<T: 'static> SysStatic<T> {
+    pub const fn new(init: fn() -> T) -> Self {
+        SysStatic { p: core::sync::atomic::AtomicPtr::new(core::ptr::null_mut()), init }
+    }
+
+    fn cell(&self) -> &'static std::sync::Mutex<T> {
+        let p = self.p.load(Acquire);
+        if !p.is_null() {
+            return unsafe { &*p };
+        }
+        let b = Box::into_raw(Box::new(std::sync::Mutex::new((self.init)())));
+        match self.p.compare_exchange(core::ptr::null_mut(), b, AcqRel, Acquire) {
+            Ok(_) => unsafe { &*b },
+            Err(other) => {
+                drop(unsafe { Box::from_raw(b) });
+                unsafe { &*other }
+            }
+        }
+    }
+
+    /// The value, locked, with this thread's allocations on the system heap for the call.
+    pub fn with<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
+        let _s = SysScope::enter();
+        let mut g = self.cell().lock().unwrap_or_else(|e| e.into_inner());
+        f(&mut g)
+    }
 }

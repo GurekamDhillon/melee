@@ -7,12 +7,63 @@
 //! Presets: `--stocks N` / `--time-secs N` / `--items F` are written into the saved VS rules (`GameRules` /
 //! `GamePrefs`) the rules menu edits; `--match a,b/cpuN,..[,STAGE]` seeds the VS mode the way the C build's scene
 //! launcher does (`SceneLaunch_SeedVs`: the first match starts at once), and after its results the retail CSS follows.
+/// The render tick an Unranked match ended on, while its results are up (0: none); `slippi_after_back` follows.
+static SLIPPI_AFTER_AT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 use melee_platform::gfx::{write_png, Presenter};
 use melee_platform::pad::*;
 use melee_platform::{Game, PadSystem};
 use std::path::PathBuf;
 use std::sync::Arc;
 use winit::window::Window;
+
+/// A pad script change asked from inside a step (the in-process online loop: the match had none, the select after it
+/// its own), applied at the next tick where the pads are: Some(None) drops the script, Some(Some(path)) loads one.
+/// (Host state: on the system heap, never rewound by a rollback load; see `melee_engine::arena::SysStatic`.)
+static PAD_SWAP: melee_engine::arena::SysStatic<Option<Option<String>>> = melee_engine::arena::SysStatic::new(|| None);
+/// The in-process online loop's scene changes (select -> match, match -> select): the render ticks of the 300 after
+/// each are timed; one over 16 ms is logged, and the window's worst when it closes (the zero-lag gate's figure).
+/// (Host state off the snapshot: a rollback load had rewound this static to a freed String, `free(): double free`.)
+static TRANSITION: melee_engine::arena::SysStatic<Option<(String, u64, std::time::Duration, u64)>> = melee_engine::arena::SysStatic::new(|| None);
+pub(crate) fn transition_begin(what: &str) {
+    TRANSITION.with(|g| *g = Some((what.to_string(), 0, std::time::Duration::ZERO, 0)));
+}
+fn transition_time(tick: u64, d: std::time::Duration) {
+    TRANSITION.with(|g| transition_step(g, tick, d));
+}
+fn transition_step(g: &mut Option<(String, u64, std::time::Duration, u64)>, tick: u64, d: std::time::Duration) {
+    let Some((what, n, worst, over)) = g.as_mut() else { return };
+    *n += 1;
+    *worst = (*worst).max(d);
+    if d.as_micros() > 16_000 {
+        *over += 1;
+        log(&format!("transition {what}: tick {tick} took {:.1} ms", d.as_secs_f64() * 1e3));
+    }
+    if *n >= 300 {
+        log(&format!("transition {what}: {n} ticks, worst {:.2} ms, {over} over 16 ms", worst.as_secs_f64() * 1e3));
+        *g = None;
+    }
+}
+
+/// Hero's in-match notices (mu_online.c hud_message): DISCONNECTED (red), DESYNC DETECTED and Desync Risk (amber),
+/// drawn over the frame until the given render tick (0: for as long as it is set).
+/// (Host state: on the system heap, never rewound by a rollback load.)
+static NOTICE: melee_engine::arena::SysStatic<Vec<(String, [u8; 4], u64)>> = melee_engine::arena::SysStatic::new(Vec::new);
+pub(crate) fn notice(text: &str, color: [u8; 4], until: u64) {
+    NOTICE.with(|n| {
+        if !n.iter().any(|l| l.0 == text) {
+            log(&format!("notice: {text}"));
+            n.push((text.to_string(), color, until));
+        }
+    });
+}
+pub(crate) fn clear_notices() {
+    NOTICE.with(|n| n.clear());
+}
+
+pub(crate) fn set_pad_swap(script: Option<String>) {
+    PAD_SWAP.with(|g| *g = Some(script));
+}
 
 /// The match scene's frames run before the session takes the engine.
 const ARM_FRAMES: u32 = 1;
@@ -88,6 +139,8 @@ pub struct RetailPlay {
     /// frame presents at once, and a tick its time left owing runs in the next frame instead of behind it in this
     /// one (pacing only; `present_now`).
     scene_tick: bool,
+    /// the last stage-select hover logged (`tick N: sss hover K` on each change)
+    sss_hover_logged: i32,
     quit: bool,
     pub failed: Option<String>,
     interp: bool,
@@ -157,6 +210,8 @@ pub struct RetailPlay {
     exit_req: Option<bool>,
     /// MELEE_BOOT_MENU=1 (a "Return to main menu" relaunch): leave the boot's opening / title for the main menu.
     boot_menu: bool,
+    /// Set while relaunching for a match whose YouGame room this process keeps (`room_keeper`): the report file.
+    pub(crate) room_report: Option<std::path::PathBuf>,
 }
 
 impl RetailPlay {
@@ -165,10 +220,10 @@ impl RetailPlay {
             iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, handed_tick: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
-            shot_pending: None, scene_tick: false, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
+            shot_pending: None, scene_tick: false, sss_hover_logged: -1, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
-            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
+            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, room_report: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
             envoy_fx: Default::default(),
             menu_cam: Default::default(),
             ui: match melee_modhost::ui::PresHost::from_env() {
@@ -191,6 +246,7 @@ impl RetailPlay {
         let t_disc = t_boot.elapsed();
         unsafe {
             melee_engine::engine::RENDER = !self.headless;
+            melee_engine::engine::PLAY_VIEW = true;
             // a scene's first frame runs in the tick that enters it, as the C build's scene loop (frame-exact vs its shots)
             melee_engine::engine::ENTRY_RUNS_FRAME = true;
         }
@@ -318,6 +374,12 @@ impl RetailPlay {
     fn step(&mut self, mut four: [melee_types::PADStatus; 4]) -> bool {
         use crate::play_net::*;
         if let Some(nd) = self.net.as_mut() {
+            // the test's results presses outlast the results: a START that reaches the stage select picked the stage under
+            // the cursor (Random), so match 2's stage changed from run to run. The scripts pick with A, so
+            // MELEE_NP_SCRIPT_NO_START=1 drops START there too (the local pad, before it is sent and recorded)
+            if self.cur.1 == melee_types::GS_SSS as u8 && std::env::var("MELEE_NP_SCRIPT_NO_START").map_or(false, |v| v == "1") {
+                four[0].button &= !0x1000;
+            }
             match nd.phase {
                 NetPhase::InMatch(_) => {
                     // test pad scripts (css_pair.sh) are timed in render ticks; a START meant for the results that lands in
@@ -326,6 +388,11 @@ impl RetailPlay {
                         four[0].button &= !0x1000;
                     }
                     nd.tick_match(&four[0], self.rec.as_mut().map(|r| &mut r.1));
+                    match nd.slippi_desyncs() {
+                        Some((_, h)) if h > 0 => notice("DESYNC DETECTED", melee_platform::overlay::WARN, 0),
+                        Some((sft, _)) if sft > 0 => notice("Desync Risk", melee_platform::overlay::WARN, 0),
+                        _ => {}
+                    }
                     if let NetPhase::InMatch(g) = &mut nd.phase {
                         if let Some(f) = g.take_frame() {
                             self.frame = Some(f);
@@ -335,12 +402,52 @@ impl RetailPlay {
                     if let Some(err) = nd.error.clone() {
                         log(&nd.summary());
                         nd.write_hashes();
+                        if crate::slippi_link::inprocess() && nd.slippi.is_some() {
+                            // the online loop in this window (Slippi Dolphin and Hero: DISCONNECTED, then the select):
+                            // the engine comes back from the session and the window goes on to the online select
+                            log(&format!("online select: the match ended early ({err}); back to the online select"));
+                            if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, NetPhase::Done) {
+                                self.e = Some(g.into_engine().0);
+                            }
+                            let mode = melee_modes::tu::slippi_css::with(|o| o.mode).to_string();
+                            if self.slippi_back_inprocess(("MELEE_SLIPPI_BACK", &mode), std::env::var("MELEE_SLIPPI_BACK_PAD_SCRIPT").ok()) {
+                                notice("DISCONNECTED", melee_platform::overlay::BAD, self.tick_no as u64 + 240);
+                                self.ui_status(1, "DISCONNECTED: the online match ended");
+                                return false;
+                            }
+                        }
                         self.failed = Some(err);
                         self.quit = true;
                     } else if nd.end_frame.is_some() && !nd.lingering() {
                         log(&format!("netplay {}: match over at game frame {}", nd.tag(), nd.end_frame.unwrap() - melee_net::session::FIRST));
                         log(&nd.summary());
                         nd.write_hashes();
+                        // P2P Direct with several games (mu_play.rs): the next match agreed over the same connection
+                        // starts in this engine at once (Engine::next_vs), as the C mode loop's next VS scene
+                        #[cfg(feature = "real-net")]
+                        if nd.mu.is_some() {
+                            if let NetPhase::InMatch(_) = &nd.phase {
+                                let g = std::mem::replace(&mut nd.phase, NetPhase::Done);
+                                if let Some(scn) = nd.mu_next_match() {
+                                    if let NetPhase::InMatch(g) = g {
+                                        let (mut e, _) = g.into_engine();
+                                        match e.next_vs(scn) {
+                                            Ok(()) => {
+                                                self.e = Some(e);
+                                                self.arm = true;
+                                                return false;
+                                            }
+                                            Err(er) => {
+                                                log(&format!("netplay: P2P: the next match did not load: {er}"));
+                                                self.e = Some(e);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    nd.phase = g;
+                                }
+                            }
+                        }
                         // --np-css: back to the menus in lockstep (results -> CSS -> the next match); else one match
                         let next = if nd.css() { NetPhase::PreMatch } else { NetPhase::Done };
                         if let Some(ls) = nd.ls.as_mut() {
@@ -355,7 +462,21 @@ impl RetailPlay {
                             self.e = Some(e);
                         }
                         if !nd.css() {
-                            self.quit = true;
+                            // an online-select set (Direct): back to the select with the same opponent
+                            let back = nd.slippi.is_some() && nd.error.is_none();
+                            // the link goes with it (kept for the next game's select when the set goes on, else
+                            // closed): its socket is released before the select's session binds the same port
+                            let link = nd.slippi.take().map(|sr| sr.link).filter(|_| crate::slippi_css_host::set_goes_on());
+                            if !(back && self.slippi_set_back(link)) {
+                                if back && std::env::var("MELEE_SLIPPI_AFTER").is_ok_and(|v| !v.is_empty()) {
+                                    // Unranked: this window shows the results (the game's own scene, played offline
+                                    // now), then goes back to the online select (`slippi_after_back`)
+                                    log("online select: the match is over; the results, then back to the online select");
+                                    SLIPPI_AFTER_AT.store(self.tick_no.max(1) as u64, std::sync::atomic::Ordering::Relaxed);
+                                } else {
+                                    self.quit = true;
+                                }
+                            }
                         }
                     }
                     return false;
@@ -412,7 +533,20 @@ impl RetailPlay {
                     }
                 }
                 NetPhase::PreMatch => four = neutral_pads(),
-                NetPhase::Done => {}
+                NetPhase::Done => {
+                    // tests (generated pads, MELEE_SLIPPI_NP_PADGEN; the match process has no pad script): a player
+                    // on the results: A through the winner card, then Start once on the stats (each port's ready
+                    // toggles on Start; a disconnected port is ready by itself). The pads are made connected.
+                    let at = SLIPPI_AFTER_AT.load(std::sync::atomic::Ordering::Relaxed);
+                    if at != 0 && std::env::var_os("MELEE_SLIPPI_NP_PADGEN").is_some() {
+                        let age = (self.tick_no as u64).saturating_sub(at);
+                        let b = if age < 240 && age % 45 < 2 { 0x0100 } else if (300..302).contains(&age) { 0x1000 } else { 0 };
+                        for p in four.iter_mut() {
+                            p.err = 0;
+                            p.button |= b;
+                        }
+                    }
+                }
             }
         }
         if self.lab.is_some() {
@@ -492,7 +626,7 @@ impl RetailPlay {
         if self.arm && !e.ended && e.mode_scene().1 == SCENE_VS && e.frames >= ARM_FRAMES {
             self.arm = false;
             if let Some(nd) = self.net.as_mut() {
-                if matches!(nd.phase, NetPhase::PreMatch) && nd.room.is_none() {
+                if matches!(nd.phase, NetPhase::PreMatch) && nd.room.is_none() && nd.slippi.is_none() && nd.mu.is_none() {
                     if let Err(er) = nd.next_room() {
                         log(&format!("netplay: {er}"));
                         self.failed = Some(er);
@@ -734,19 +868,34 @@ impl RetailPlay {
         }
         let zstep = melee_core::tracy::zone("sim (engine step)");
         let t_step = std::time::Instant::now();
+        // MELEE_BOOT_TIMES' slow-tick line counts the tick's page faults (one system call a tick, only then)
+        static BOOT_TIMES: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        let flt0 = if *BOOT_TIMES.get_or_init(|| std::env::var_os("MELEE_BOOT_TIMES").is_some()) { melee_engine::archive::page_faults() as u64 } else { 0 };
         let entered = if lab_hold { false } else { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 2000, "tick: step"); self.step(four) };
         self.scene_tick = entered && !self.headless;
         tick_log(self.tick_no, self.engine().map_or(0, |e| e.frames as u64), self.cur, &four);
+        melee_engine::asset::scene_prefetch(self.cur.1 as i32);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the stage under the cursor is hinted to the asset service (host side; the sim never sees it)
-            melee_engine::asset::sss_hover(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() });
-            // the SSE maps' textures go up while the stage select is open (a pick is ~14 frames before the match)
-            melee_modes::tu::explore::sss_preload();
+            let hover = unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverStKind() };
+            melee_engine::asset::sss_hover(hover);
+            melee_platform::script::HOVER.store(hover as i32, std::sync::atomic::Ordering::Relaxed);
+            if hover as i32 != self.sss_hover_logged {
+                self.sss_hover_logged = hover as i32;
+                log(&format!("tick {}: sss hover {}", self.tick_no, hover as i32));
+            }
+            melee_engine::asset::sss_random_pool(unsafe { melee_modes::tu::mnstagesel::mnStageSel_HoverRandomPool() });
+            melee_engine::asset::sss_confirm_tick();
+            // a hovered SSE map's textures go up a few per tick (vanilla stage select entry costs nothing)
+            melee_modes::tu::explore::sss_preload(hover);
         }
         if melee_core::frameprof::on() {
             self.profile_test_stage();
         }
         self.session_exit();
+        self.slippi_online_pick();
+        crate::slippi_css_host::poll();
+        self.slippi_online_match();
         if let Some(pr) = self.practice.as_mut() {
             let _h = SysHeap::enter();
             pr.observe();
@@ -771,12 +920,13 @@ impl RetailPlay {
             // a rollback run: the sound state is a static the load restores, so what it allocates must be in the arena too
             let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
             let t = std::time::Instant::now();
+            au.set_fight(matches!(self.cur.1, 2 | 3)); // vs, suddendeath (scene_name)
             { let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "tick: audio tick"); au.tick(); }
             if melee_core::frameprof::on() {
                 melee_core::frameprof::set_audio_underruns(au.underruns() as u64);
             }
             if std::env::var_os("MELEE_BOOT_TIMES").is_some() && (t_step + t.elapsed()).as_millis() >= 20 {
-                log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3));
+                log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms, {} page faults (archive::page_faults)", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3, (melee_engine::archive::page_faults() as u64).saturating_sub(flt0)));
             }
         }
         let zcap = melee_core::tracy::zone("capture / decode");
@@ -856,6 +1006,7 @@ impl RetailPlay {
         // a once-a-second heartbeat (tick, scene, draw commands of the last frame): a stall shows as a stopped tick,
         // a render-only fault as a running tick with no draws
         melee_platform::script::IN_MATCH.store(matches!(self.cur.1, 2 | 3), std::sync::atomic::Ordering::Relaxed);
+        melee_platform::script::SCENE.store(self.cur.1 as i32, std::sync::atomic::Ordering::Relaxed);
         if self.tick_no % 60 == 0 {
             let (dn, db, bn, bb, ev, cp) = melee_engine::gxbridge::data_cache_detail();
             log(&format!("heartbeat tick {} scene {} age {} draws {} gxcache ptr {}/{} KB blocks {}/{} KB evicted {} copied {} MB", self.tick_no, scene_name(self.cur.1), self.age, self.frame.as_ref().map_or(0, |f| f.len()), dn, db >> 10, bn, bb >> 10, ev, cp >> 20));
@@ -872,6 +1023,7 @@ impl RetailPlay {
         self.age += 1;
         let Some(e) = self.engine() else { return };
         let now = e.mode_scene();
+        crate::lobby_status::on_frame(now.1);
         if melee_core::frameprof::on() {
             use melee_core::frameprof as fp;
             if entered || now != self.cur {
@@ -913,6 +1065,11 @@ impl RetailPlay {
                     melee_modes::tu::envoy::LAB_TIME = [0; 2];
                 }
             }
+            if prev.1 == melee_types::GS_RESULTS as u8 && SLIPPI_AFTER_AT.swap(0, std::sync::atomic::Ordering::Relaxed) != 0 {
+                if !self.slippi_after_back() {
+                    self.quit = true;
+                }
+            }
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;
                 if self.quit_after.is_some_and(|n| self.matches >= n) {
@@ -923,6 +1080,15 @@ impl RetailPlay {
         }
         if self.net.is_none() && self.sync.is_none() && self.feed.is_none() && self.spec_client.is_none() {
             crate::envoy_store::sync();
+        }
+        // the results never came (or never ended): back to the online select after two minutes anyway
+        let after = SLIPPI_AFTER_AT.load(std::sync::atomic::Ordering::Relaxed);
+        if after != 0 && (self.tick_no as u64).saturating_sub(after) > 120 * 60 {
+            SLIPPI_AFTER_AT.store(0, std::sync::atomic::Ordering::Relaxed);
+            log(&format!("online select: no results after the match (scene {}); back to the online select", scene_name(self.cur.1)));
+            if !self.slippi_after_back() {
+                self.quit = true;
+            }
         }
         if self.max_frames.is_some_and(|n| self.tick_no >= n) {
             log(&format!("max frames reached in {}", scene_name(self.cur.1)));
@@ -946,6 +1112,20 @@ impl RetailPlay {
         }
         if self.shot_dir.is_some() && self.shot_ages.contains(&self.age) {
             self.shot_pending = Some(format!("{:02}_{}_{:04}", self.scene_no, scene_name(self.cur.1), self.age));
+        }
+        // MELEE_SHOT_MATCH_FRAMES="a,b,..": a match shot at the first tick whose game frame (gm_GetFrameCount) reaches each
+        // one, named by that frame: frame-exact captures across runs whose ticks differ (a rollback run's stalls, an
+        // in-process match's entry vs a relaunched one's)
+        if self.shot_dir.is_some() && self.cur.1 == 2 {
+            if let Ok(v) = std::env::var("MELEE_SHOT_MATCH_FRAMES") {
+                static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+                let f = melee_modes::tu_ext::gm_GetFrameCount();
+                let last = NEXT.load(std::sync::atomic::Ordering::Relaxed);
+                if let Some(t) = v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()).filter(|&t| t > last && f >= t).max() {
+                    NEXT.store(t, std::sync::atomic::Ordering::Relaxed);
+                    self.shot_pending = Some(format!("{:02}_vs_f{:05}_at{:05}", self.scene_no, t, f));
+                }
+            }
         }
     }
 
@@ -1003,6 +1183,14 @@ impl RetailPlay {
                         let _ = melee_audio::output::save_volume(v);
                     }
                 }
+                "music" | "sfx" => {
+                    let v: i32 = c.value.parse().unwrap_or(100);
+                    if c.key == "music" {
+                        melee_audio::ax::set_music_volume(v);
+                    } else {
+                        melee_audio::ax::set_sfx_volume(v);
+                    }
+                }
                 "action:menu" => self.exit_req = Some(true),
                 "action:quit" => self.exit_req = Some(false),
                 "overlay" => self.hud_request = Some(on),
@@ -1014,7 +1202,7 @@ impl RetailPlay {
                             self.video.push((c.key.clone(), c.value.clone()));
                         }
                         "fps_cap" => p.fps_cap = Some(c.value.parse().unwrap_or(0.0)),
-                        _ => p.interp = Some(match c.value.as_str() { "on" => Some(true), "off" => Some(false), _ => None }),
+                        _ => p.interp = Some(c.value == "on"),
                     }
                 }
                 "interp_mode" | "render_scale" => self.video.push((c.key.clone(), c.value.clone())),
@@ -1365,7 +1553,7 @@ impl RetailPlay {
                 "vsync" => p.set_vsync(v == "1"),
                 "render_scale" => p.set_render_scale(v.parse().ok()),
                 "interp_mode" => p.set_interp_mode(melee_gx::interp::Mode::parse(&v).unwrap_or_default()),
-                "widescreen" => p.set_true_widescreen(v == "1"),
+                "widescreen" => p.set_true_widescreen(melee_engine::view::renderer_widen()),
                 _ => {}
             }
             log(&format!("video: {k} = {v} (live)"));
@@ -1373,6 +1561,8 @@ impl RetailPlay {
         p.set_match_scene(melee_engine::view::scene_wide(melee_engine::view::scene()));
         // the decode thread's packing travels with its frame (the presenter may prepare it at a later present)
         let packed = if frame.is_some() { self.packed.take() } else { None };
+        // renderer-side widening only while the session's cameras are 4:3 (a camera-widescreen host's guest: none)
+        p.set_true_widescreen(melee_engine::view::renderer_widen());
         p.set_content_aspect(self.frame_aspect);
         if self.cur.1 == melee_types::GS_SSS as u8 {
             // the match's EFB shape is made while the stage select is open, not in the match's setup frame
@@ -1427,9 +1617,20 @@ impl RetailPlay {
 
 impl Game for RetailPlay {
     fn tick(&mut self, pads: &mut PadSystem) {
+        if let Some(swap) = PAD_SWAP.with(|g| g.take()) {
+            pads.script = swap.and_then(|p| {
+                std::env::set_var("MELEE_PAD_SCRIPT", &p);
+                melee_platform::script::PadScript::from_env()
+            });
+            if pads.script.is_none() {
+                std::env::remove_var("MELEE_PAD_SCRIPT");
+            }
+        }
         if self.feed.is_none() {
+            let t = std::time::Instant::now();
             self.tick_once(pads);
             self.spec_serve();
+            transition_time(self.tick_no as u64, t.elapsed());
             return;
         }
         self.tick_playback(pads);
@@ -1443,7 +1644,22 @@ impl Game for RetailPlay {
     fn present(&mut self, window: &Arc<Window>, alpha: f64) {
         self.scene_tick = false;
         let t_present = std::time::Instant::now();
+        // the online notices over whatever the HUD shows this frame
+        let t = self.tick_no as u64;
+        let notes: Vec<melee_platform::overlay::Line> = NOTICE.with(|n| {
+            n.retain(|l| l.2 == 0 || l.2 > t);
+            n.iter().map(|l| (l.0.clone(), l.1)).collect()
+        });
+        let base = if notes.is_empty() { None } else { self.presenter.as_mut().map(|p| p.hud.take()) };
+        if let (Some(b), Some(p)) = (base.as_ref(), self.presenter.as_mut()) {
+            let mut l = notes;
+            l.extend(b.iter().flatten().cloned());
+            p.hud = Some(l);
+        }
         self.present_inner(window, alpha);
+        if let (Some(b), Some(p)) = (base, self.presenter.as_mut()) {
+            p.hud = b;
+        }
         // MELEE_PRESENT_SPIKE=<ms>: one line per present at least that long, with the presenter's stages (frame-time tail)
         static SPIKE: std::sync::OnceLock<Option<f64>> = std::sync::OnceLock::new();
         if let (Some(ms), Some(p)) = (*SPIKE.get_or_init(|| std::env::var("MELEE_PRESENT_SPIKE").ok().and_then(|v| v.parse().ok())), self.presenter.as_ref()) {
@@ -1466,6 +1682,18 @@ impl Game for RetailPlay {
 
     fn present_now(&self) -> bool {
         self.shot_pending.is_some() || self.scene_tick
+    }
+    fn boot_ready(&mut self) -> bool {
+        // boot the engine here, before the first tick (it would boot inside it): its boot hints then get the hold's
+        // time on the worker, and tick 1's scene applies ready plans. The tick boots it as before if this fails.
+        if self.engine().is_none() && !self.quit && self.failed.is_none() {
+            match self.boot() {
+                Ok(e) => self.e = Some(e),
+                Err(_) => return true,
+            }
+            return false;
+        }
+        !melee_engine::asset::boot_hints_busy()
     }
 
     fn take_hud_request(&mut self) -> Option<bool> {

@@ -18,6 +18,13 @@
 //!   - SKIN_SET: `skin_<slot>=name` in settings.cfg, mounted live offline through `cosmetics::mount` (as the settings
 //!     overlay does), else at the next launch.
 use super::RetailPlay;
+
+/// The in-process match's mode, waiting for its files (ticks waited).
+/// The in-process match's own arguments (`--slippi-peer ...`): a relaunched match had them as its command line.
+/// (Host state: on the system heap, never rewound by a rollback load; see `melee_engine::arena::SysStatic`.)
+static MATCH_ARGS: melee_engine::arena::SysStatic<Vec<String>> = melee_engine::arena::SysStatic::new(Vec::new);
+
+static PENDING_GOTO: std::sync::Mutex<Option<(u8, u32)>> = std::sync::Mutex::new(None);
 use melee_modhost::ui::{self as mui, PresHost};
 
 #[derive(Default)]
@@ -366,9 +373,8 @@ impl RetailPlay {
             mui::REQ_REPLAY_PLAY => {
                 let i: usize = arg.parse().unwrap_or(0);
                 let Some((path, kind)) = self.browser.replays.get(i.wrapping_sub(1)).cloned() else { return st(self, 1, "no such replay") };
-                if kind != "mrpl" {
-                    return st(self, 1, "Slippi replays play through the sim's player: melee replays --play N.");
-                }
+                // .mrpl and .slp both go to `play --replay`, which picks the player by extension (play.rs, slp_play.rs)
+                let _ = kind;
                 let p = path.to_string_lossy().into_owned();
                 self.browser_relaunch(&["--replay".into(), p], None, "replay")
             }
@@ -476,7 +482,7 @@ impl RetailPlay {
         self.relaunch(extra, scene, false, what);
     }
 
-    fn ui_status(&mut self, code: u8, text: &str) {
+    pub(super) fn ui_status(&mut self, code: u8, text: &str) {
         match self.ui.as_mut() {
             Some(u) => status(u, code, text),
             None => log(text),
@@ -488,6 +494,404 @@ impl RetailPlay {
     /// relaunches to the menus (MELEE_BOOT_MENU=1, no boot-mode options, no MELEE_SCENE) from anything a scene launch,
     /// a browser relaunch, a replay, netplay, a spectate or a recording set up: those carry run-wide state (the LAB's
     /// rollback mode, a feed, a session) that a scene switch cannot undo.
+    /// The Slippi online submenu's pick (`melee_modes::tu::slippi_online`, plan step 8): hand the run to our Slippi
+    /// netplay client, paired through matchmaking (`melee slippi-netplay --mm`). The matchmaking URL must be a local
+    /// server (the client refuses any other without `--mm-real`, which this path never passes). The account is a local
+    /// test identity from MELEE_SLIPPI_TEST_CODE: no Slippi user.json is read here. Until the connect-code screen
+    /// (step 7) is ported, Direct's opponent code comes from MELEE_SLIPPI_DIRECT_CODE.
+    pub(super) fn slippi_online_pick(&mut self) {
+        const SLIPPI_MM_REAL: &str = "wss://matchmaking.slippi.gg/v1/queue";
+        // a set's next game: the match process relaunched this window into the menus; on to the online select
+        static REMATCH_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !REMATCH_DONE.load(std::sync::atomic::Ordering::Relaxed) && self.e.is_some() && self.cur.0 as u32 == melee_types::GM_MENU && melee_modes::tu::slippi_online::enabled() {
+            REMATCH_DONE.store(true, std::sync::atomic::Ordering::Relaxed);
+            if crate::slippi_css_host::start_rematch().is_some() {
+                log("online select: the set goes on, back to the online select");
+                self.e.as_mut().unwrap().goto_mode(melee_types::GM_HANYU_CSS as u8);
+                return;
+            }
+        }
+        // after an Unranked game: the match process relaunched this window into the menus; the same mode's online
+        // select, idle (Slippi / Hero: the results, then the CSS, where Start searches again)
+        static BACK_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !BACK_DONE.load(std::sync::atomic::Ordering::Relaxed) && self.e.is_some() && self.cur.0 as u32 == melee_types::GM_MENU && melee_modes::tu::slippi_online::enabled() {
+            BACK_DONE.store(true, std::sync::atomic::Ordering::Relaxed);
+            let back = std::env::var("MELEE_SLIPPI_BACK").ok().and_then(|v| v.parse::<i32>().ok());
+            std::env::remove_var("MELEE_SLIPPI_BACK");
+            if let Some(mode) = back.filter(|&m| m != melee_modes::tu::slippi_online::MODE_DIRECT && melee_modes::tu::slippi_online::row_unlocked(melee_modes::tu::slippi_online::row_of(m) as i32)) {
+                log(&format!("online select: back from the match, {} again (Start searches)", melee_modes::tu::slippi_online::mode_name(mode)));
+                melee_modes::tu::slippi_online::repick(mode);
+                melee_modes::tu::slippi_css::begin(mode, "");
+                self.e.as_mut().unwrap().goto_mode(melee_types::GM_HANYU_CSS as u8);
+            }
+        }
+        // `--online-mode <mode>` (Hero's launcher restarting the game for YouGame, launcher_compat: MELEE_ONLINE_MODE):
+        // straight into that mode's online select, once. Hero opens Ranked or Direct; we never play Ranked, so it
+        // lands on Unranked, as any other word does.
+        static MODE_ARG_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        if !MODE_ARG_DONE.load(std::sync::atomic::Ordering::Relaxed) && self.e.is_some() && self.cur.0 as u32 == melee_types::GM_MENU && melee_modes::tu::slippi_online::enabled() {
+            MODE_ARG_DONE.store(true, std::sync::atomic::Ordering::Relaxed);
+            if let Some(m) = std::env::var("MELEE_ONLINE_MODE").ok().filter(|v| !v.is_empty()) {
+                std::env::remove_var("MELEE_ONLINE_MODE");
+                use melee_modes::tu::slippi_online as so;
+                let mode = if m == "direct" { so::MODE_DIRECT } else { so::MODE_UNRANKED };
+                log(&format!("online menu: --online-mode {m}: straight to {}'s online select", so::mode_name(mode)));
+                so::repick(mode);
+                melee_modes::tu::slippi_css::begin(mode, "");
+                self.e.as_mut().unwrap().goto_mode(melee_types::GM_HANYU_CSS as u8);
+            }
+        }
+        let Some(mode) = melee_modes::tu::slippi_online::take_pick() else { return };
+        let name = melee_modes::tu::slippi_online::mode_name(mode);
+        let typed = melee_modes::tu::slippi_online::take_direct_code();
+        let env = |k: &str| if k == "MELEE_SLIPPI_DIRECT_CODE" && typed.is_some() { typed.clone() } else { std::env::var(k).ok().filter(|v| !v.is_empty()) };
+        // Slippi's real matchmaking only with a login the YouGame app granted (YOUGAME_SLIPPI_USER_JSON: the path of
+        // the player's Slippi sign-in file, Hero's `account::app_sign_in`), never in an agent or scripted run (hidden
+        // window, pad script, or a local mock named). Its fields are read by `establish` and never printed.
+        let agent = std::env::var_os("MELEE_PAD_SCRIPT").is_some() || env("MELEE_WINDOW_HIDDEN").is_some_and(|v| v == "1") || env("MELEE_SLIPPI_MM_URL").is_some();
+        if let Some(grant) = env("YOUGAME_SLIPPI_USER_JSON").filter(|_| !agent) {
+            let port = env("YOUGAME_SLIPPI_UDP_PORT").unwrap_or_else(|| "51441".into());
+            let mut args: Vec<String> = ["--slippi-mm", SLIPPI_MM_REAL, "--slippi-mm-real", "--slippi-user-json", &grant, "--slippi-port", &port].iter().map(|s| s.to_string()).collect();
+            match mode {
+                melee_modes::tu::slippi_online::MODE_DIRECT => match env("MELEE_SLIPPI_DIRECT_CODE") {
+                    Some(theirs) => args.extend(["--slippi-mm-mode".into(), "direct".into(), "--slippi-search".into(), theirs]),
+                    None => return self.ui_status(1, "online menu: Direct needs the code screen (not ported yet)"),
+                },
+                melee_modes::tu::slippi_online::MODE_UNRANKED => {
+                    args.extend(["--slippi-mm-mode".into(), "unranked".into()]);
+                    // Hero's yougame_mode_policy: in YouGame mode Unranked with a Slippi login searches both pools
+                    if melee_platform::yougame::active() && melee_platform::yougame_mm::matchmaking_route(mode, true, true, false, false, true) == melee_platform::yougame_mm::Route::Blend {
+                        args.extend(["--slippi-route".into(), "blend".into()]);
+                    }
+                }
+                _ => return self.ui_status(1, &format!("online menu: {name} is not offered yet")),
+            }
+            log(&format!("online menu: {name}: Slippi matchmaking with the granted login, the online select meanwhile"));
+            return crate::slippi_css_host::start(args, mode);
+        }
+        // Hero's yougame_mode_policy (melee_platform::yougame_mm::matchmaking_route): in YouGame mode without a granted
+        // login Direct / Teams / Party are Locked, and Unranked goes to YouGame's own queue (mpTicket through the app
+        // bridge, on a thread: the answer can take 30 s). Never Slippi's servers from here.
+        // Tests: MELEE_YOUGAME_TEST_SLIPPI_LOGIN=1 stands in for a granted login, with the local Slippi mock
+        // (MELEE_SLIPPI_MM_URL; loopback only) as Slippi's pool: an agent run may then take the YouGame route too, whose
+        // rooms URL must also be loopback (yougame_search::target).
+        let test_login = env("MELEE_YOUGAME_TEST_SLIPPI_LOGIN").is_some_and(|v| v == "1") && env("MELEE_SLIPPI_MM_URL").is_some();
+        let yg_route = if melee_platform::yougame::active() && (!agent || test_login) {
+            use melee_platform::yougame_mm as ym;
+            let route = ym::matchmaking_route(mode, true, test_login, false, false, true);
+            if route == ym::Route::Locked || (route == ym::Route::Slippi && !test_login) {
+                return self.ui_status(1, &format!("online menu: {name} needs your Slippi login (allow it on the game's page)"));
+            }
+            log(&format!("online menu: {name}: {:?} ({})", route, if route == ym::Route::Blend { ym::SEARCH_BOTH } else { ym::SEARCH_YOUGAME_ONLY }));
+            Some(match route {
+                ym::Route::Blend => "blend",
+                ym::Route::YouGame => "yougame",
+                _ => "slippi",
+            })
+        } else {
+            None
+        };
+        if let (Some(r), None) = (yg_route, env("MELEE_SLIPPI_MM_URL")) {
+            // YouGame's rooms alone: no Slippi pool to name
+            let port = env("YOUGAME_SLIPPI_UDP_PORT").or_else(|| env("MELEE_SLIPPI_NP_PORT")).unwrap_or_else(|| "51441".into());
+            let args: Vec<String> = ["--slippi-port", &port, "--slippi-route", r].iter().map(|s| s.to_string()).collect();
+            return crate::slippi_css_host::start(args, mode);
+        }
+        let (Some(url), Some(port), Some(code)) = (env("MELEE_SLIPPI_MM_URL"), env("MELEE_SLIPPI_NP_PORT"), env("MELEE_SLIPPI_TEST_CODE")) else {
+            return self.ui_status(1, &format!("online menu: {name} needs a matchmaking server (MELEE_SLIPPI_MM_URL, MELEE_SLIPPI_NP_PORT, MELEE_SLIPPI_TEST_CODE)"));
+        };
+        // the match runs in this game's window (play --slippi-mm: renderer, audio, pads), over the Slippi wire
+        let mut args: Vec<String> = ["--slippi-mm", &url, "--slippi-port", &port, "--slippi-code", &code].iter().map(|s| s.to_string()).collect();
+        match mode {
+            melee_modes::tu::slippi_online::MODE_DIRECT => {
+                let Some(theirs) = env("MELEE_SLIPPI_DIRECT_CODE") else {
+                    return self.ui_status(1, "online menu: Direct needs the opponent's code (MELEE_SLIPPI_DIRECT_CODE until the code screen is ported)");
+                };
+                args.extend(["--slippi-mm-mode".into(), "direct".into(), "--slippi-search".into(), theirs]);
+            }
+            // unranked: a loopback matchmaking server only (the client refuses any other address without --mm-real)
+            _ => args.extend(["--slippi-mm-mode".into(), "unranked".into()]),
+        }
+        if let Some(v) = env("MELEE_SLIPPI_NP_MAX_SECONDS") {
+            args.extend(["--slippi-max-seconds".to_string(), v]);
+        }
+        if let Some(r) = yg_route {
+            args.extend(["--slippi-route".into(), r.into()]);
+        }
+        log(&format!("online menu: {name}: the online select as {code}; Start with a fighter chosen searches"));
+        crate::slippi_css_host::start(args, mode);
+    }
+
+    /// The online select was left with both fighters locked in (`slippi_css::take_go`): the match runs in this game's
+    /// window (play --slippi-peer: renderer, audio, pads), against the opponent the select's session linked to.
+    pub(super) fn slippi_online_match(&mut self) {
+        // the in-process match's scene change, once its files are read (at most half a second)
+        let due = PENDING_GOTO.lock().ok().and_then(|mut g| {
+            let (mode, n) = g.as_mut()?;
+            *n += 1;
+            let m = *mode;
+            (!melee_engine::asset::hints_busy() || *n >= 30).then(|| (g.take(), m).1)
+        });
+        if let Some(mode) = due {
+            if let Some(e) = self.e.as_mut() {
+                e.goto_mode(mode);
+            }
+        }
+        // the select can leave a moment before the session has closed its link: wait for the handoff
+        static WAITING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        use std::sync::atomic::Ordering::Relaxed;
+        if melee_modes::tu::slippi_css::take_go() {
+            WAITING.store(true, Relaxed);
+        }
+        if !WAITING.load(Relaxed) {
+            return;
+        }
+        if melee_modes::tu::slippi_css::with(|o| o.conn == melee_modes::tu::slippi_css::CONN_ERROR) {
+            WAITING.store(false, Relaxed);
+            return self.ui_status(1, "online select: the opponent's link failed before the match");
+        }
+        let Some(mut args) = crate::slippi_css_host::take_handoff() else { return };
+        WAITING.store(false, Relaxed);
+        // test hooks: the match length, the per-frame checksum file, a hard time limit, generated pads
+        for (k, e) in [("--slippi-frames", "MELEE_SLIPPI_NP_FRAMES"), ("--slippi-out", "MELEE_SLIPPI_NP_OUT"), ("--slippi-max-seconds", "MELEE_SLIPPI_NP_MAX_SECONDS"), ("--slippi-padgen", "MELEE_SLIPPI_NP_PADGEN")] {
+            if let Ok(v) = std::env::var(e) {
+                if !v.is_empty() {
+                    args.extend([k.to_string(), v]);
+                }
+            }
+        }
+        // a set's later games write their own checksum file (<out>-g<n>.csv)
+        let game = crate::slippi_css_host::handoff_game();
+        if game > 0 {
+            if let Some(i) = args.iter().position(|a| a == "--slippi-out") {
+                if let Some(p) = args.get_mut(i + 1) {
+                    let pb = std::path::PathBuf::from(&*p);
+                    let stem = pb.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                    *p = pb.with_file_name(format!("{stem}-g{}.csv", game + 1)).to_string_lossy().into_owned();
+                }
+            }
+        }
+        if crate::slippi_link::inprocess() && !crate::room_keeper::active() {
+            return self.slippi_match_inprocess(args);
+        }
+        // a YouGame room's match in this window too: the keeper (this process's thread) hears the match in memory
+        if crate::slippi_link::inprocess() && crate::room_keeper::wants_inprocess() {
+            crate::room_keeper::attach_inprocess();
+            log("online select: the YouGame room's match in this window (MELEE_YOUGAME_INPROCESS=0 relaunches)");
+            return self.slippi_match_inprocess(args);
+        }
+        log("online select: both locked in, the match in the game window");
+        if crate::room_keeper::active() {
+            // a YouGame room: this process keeps it through the match, the match process reports to it
+            let report = crate::room_keeper::report_path();
+            let _ = std::fs::remove_file(&report);
+            self.room_report = Some(report.clone());
+            if let Some(child) = self.relaunch(&args, None, false, "the Slippi match") {
+                crate::room_keeper::attach(child, report);
+            } else {
+                crate::room_keeper::close();
+            }
+            self.room_report = None;
+            return;
+        }
+        self.relaunch(&args, None, false, "the Slippi match");
+    }
+
+    /// The match in this process and window (`slippi_link::inprocess`): the select's link is taken over here (from this
+    /// process's own keeper, `slippi_link::take`), the match scene is installed and the engine goes to it, as a scene
+    /// change; the session takes the engine on the match's first frame (`step`, `arm`). Nothing closes or reopens.
+    fn slippi_match_inprocess(&mut self, args: Vec<String>) {
+        let t0 = std::time::Instant::now();
+        crate::slippi_link::save_offline_codes();
+        MATCH_ARGS.with(|m| *m = args.clone());
+        match crate::play_net::NetDriver::connect_slippi(&args) {
+            Ok((n, scn)) => {
+                log(&format!("online select: both locked in, the match in this window (no relaunch; link taken in {:.1} ms)", t0.elapsed().as_secs_f64() * 1e3));
+                self.net = Some(n);
+                // the match's .slp (--slp): recorded live from the session's confirmed frames
+                crate::slp_export::arm_for_desync(Some(&self.iso));
+                crate::slp_export::live_rollback();
+                // the match process had no pad script (generated pads, MELEE_SLIPPI_NP_PADGEN, in tests) and no frame limit
+                super::set_pad_swap(None);
+                super::transition_begin("select->match");
+                self.max_frames = None;
+                let mode = melee_engine::scenario::boot_mode(&scn);
+                // the match's files to the asset worker first (the relaunched process had them at its boot): the
+                // select stays up a few ticks while they are read, so the match's first tick applies ready plans
+                let picks: Vec<(i32, u8)> = scn.players.iter().flatten().map(|p| (p.ckind, p.color.max(0) as u8)).collect();
+                melee_engine::asset::hint_vs_match(&picks, 0);
+                melee_engine::scenario::install(scn);
+                *PENDING_GOTO.lock().unwrap() = Some((mode, 0));
+            }
+            Err(e) => {
+                crate::room_keeper::match_done();
+                crate::slippi_link::restore_offline_codes();
+                crate::play_net::clear_name_tags();
+                crate::slippi_css_host::reset_for_select();
+                self.ui_status(1, &format!("online select: the match could not start: {e}"));
+                melee_modes::tu::slippi_css::with(|o| {
+                    o.conn = melee_modes::tu::slippi_css::CONN_ERROR;
+                    o.error = e;
+                });
+            }
+        }
+    }
+
+    /// The online match of this process is over (`slippi_link::inprocess`): the session, its codes, name tags and
+    /// scene launch go; the menus are the offline ones again.
+    fn slippi_match_cleanup(&mut self) {
+        self.net = None;
+        // a kept YouGame room: the match is over in this window (void unless it ended on its own)
+        crate::room_keeper::match_done();
+        // the menus' own (offline) matches record per tick again
+        crate::slp_export::live_end();
+        // the match's desync notices end with it (a DISCONNECTED set after this stays its few seconds)
+        super::clear_notices();
+        melee_core::slippi_online::disable();
+        crate::slippi_link::restore_offline_codes();
+        crate::play_net::clear_name_tags();
+        melee_engine::scenario::uninstall();
+        crate::slippi_css_host::reset_for_select();
+        std::env::remove_var("MELEE_SLIPPI_SET");
+        std::env::remove_var("MELEE_SLIPPI_AFTER");
+        std::env::remove_var("MELEE_SLIPPI_TAGS");
+    }
+
+    /// Back to the online select in this window (`slippi_relaunch_select`'s in-process form): `kv` is the environment
+    /// the relaunched menus would have read (`MELEE_SLIPPI_REMATCH`: the set's next game, `MELEE_SLIPPI_BACK`: the
+    /// mode's select, idle).
+    pub(super) fn slippi_back_inprocess(&mut self, kv: (&str, &str), pad: Option<String>) -> bool {
+        self.slippi_match_cleanup();
+        super::set_pad_swap(pad);
+        super::transition_begin("match->select");
+        if let Ok(n) = std::env::var("MELEE_SLIPPI_SET_MAX_FRAMES").map(|v| v.parse::<u64>()) {
+            if let Ok(n) = n {
+                self.max_frames = Some(self.tick_no as u64 + n);
+            }
+        }
+        let Some(e) = self.e.as_mut() else { return false };
+        if kv.0 == "MELEE_SLIPPI_REMATCH" {
+            std::env::set_var(kv.0, kv.1);
+            if crate::slippi_css_host::start_rematch().is_none() {
+                return false;
+            }
+            log("online select: the set goes on, back to the online select (this window)");
+            e.goto_mode(melee_types::GM_HANYU_CSS as u8);
+            return true;
+        }
+        let Ok(mode) = kv.1.parse::<i32>() else { return false };
+        log(&format!("online select: back from the match, {} again (Start searches; this window)", melee_modes::tu::slippi_online::mode_name(mode)));
+        melee_modes::tu::slippi_online::repick(mode);
+        melee_modes::tu::slippi_css::begin(mode, "");
+        e.goto_mode(melee_types::GM_HANYU_CSS as u8);
+        true
+    }
+
+    /// After a game of an online-select set (Hero: the select comes back, connected, for the next game; the loser
+    /// picks its stage): relaunch the window into the menus' online select with the same opponent. False when this
+    /// match is not part of one (the window quits as before). `link`: the match's link (its game ended, kept open by
+    /// `play_net` when `slippi_css_host::set_goes_on`), kept for the select to take over (`slippi_link::hand_back`).
+    pub(super) fn slippi_set_back(&mut self, link: Option<melee_net::slippi::Client>) -> bool {
+        // the match's arguments: this process's command line, or the in-process match's own
+        let cur: Vec<String> = if crate::slippi_link::inprocess() { MATCH_ARGS.with(|m| m.clone()) } else { std::env::args().skip(1).collect() };
+        let won = crate::play_net::LAST_WINNER.load(std::sync::atomic::Ordering::Relaxed);
+        if crate::slippi_css_host::rematch_env(&cur, won, "").is_none() {
+            return false;
+        }
+        if !crate::slippi_css_host::set_goes_on() {
+            log("online select: the set's games are played");
+            return false;
+        }
+        // the one link goes on into the next game's select (Slippi Dolphin takes no second connection)
+        let kept = match link.map(crate::slippi_link::hand_back) {
+            Some(Ok(spec)) => spec,
+            Some(Err(e)) => {
+                log(&format!("online select: the set's link could not be kept: {e}"));
+                return false;
+            }
+            None => String::new(),
+        };
+        let Some(env) = crate::slippi_css_host::rematch_env(&cur, won, &kept) else { return false };
+        // a kept YouGame room: it stays for the set's next game in this window
+        crate::room_keeper::next_game();
+        let game: u32 = env.split(';').nth(7).and_then(|g| g.parse().ok()).unwrap_or(1);
+        let pad = std::env::var(format!("MELEE_SLIPPI_SET_PAD_SCRIPT_G{}", game + 1)).ok();
+        if self.slippi_relaunch_select(("MELEE_SLIPPI_REMATCH", &env), pad, &format!("select-g{}", game + 1)) {
+            log(&format!("online select: game {game} over (winner port {won}), back to the select for game {}", game + 1));
+            true
+        } else {
+            false
+        }
+    }
+
+    /// After an Unranked game (its results shown): relaunch the window into the menus' online select of the same mode,
+    /// idle; Start searches again (Slippi Dolphin and Hero: the results, then the CSS). False when this match did not
+    /// come from the online select (`MELEE_SLIPPI_AFTER`, set at its handoff).
+    pub(super) fn slippi_after_back(&mut self) -> bool {
+        let Some(mode) = std::env::var("MELEE_SLIPPI_AFTER").ok().filter(|v| !v.is_empty()) else { return false };
+        // tests: the select's pad script after the match
+        let pad = std::env::var("MELEE_SLIPPI_BACK_PAD_SCRIPT").ok();
+        if self.slippi_relaunch_select(("MELEE_SLIPPI_BACK", &mode), pad, "select") {
+            log("online select: the results are over, back to the online select");
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Relaunch the window into the menus (`MELEE_BOOT_MENU=1`) with `kv` set, the match's own arguments dropped.
+    fn slippi_relaunch_select(&mut self, kv: (&str, &str), pad: Option<String>, title: &str) -> bool {
+        if crate::slippi_link::inprocess() {
+            return self.slippi_back_inprocess(kv, pad);
+        }
+        if melee_platform::yougame::refuse_child("online select relaunch") {
+            return false;
+        }
+        let cur: Vec<String> = std::env::args().skip(1).collect();
+        // the match's own arguments go; the menus' stay (`--slippi-menus on`)
+        let mut args: Vec<String> = Vec::new();
+        let mut i = 0;
+        while i < cur.len() {
+            let a = cur[i].as_str();
+            if a == "--slippi-host" || a == "--slippi-stage-unset" {
+                i += 1;
+                continue;
+            }
+            if a.starts_with("--slippi-") && a != "--slippi-menus" || a == "--max-frames" {
+                i += 2;
+                continue;
+            }
+            args.push(cur[i].clone());
+            i += 1;
+        }
+        if args.first().is_none_or(|a| a != "play") {
+            args.insert(0, "play".into());
+        }
+        if let Ok(n) = std::env::var("MELEE_SLIPPI_SET_MAX_FRAMES") {
+            args.extend(["--max-frames".into(), n]);
+        }
+        let Ok(exe) = std::env::current_exe() else { return false };
+        let mut cmd = std::process::Command::new(exe);
+        cmd.args(&args).env("MELEE_BOOT_MENU", "1").env(kv.0, kv.1).env_remove("MELEE_SCENE").env_remove("MELEE_SLIPPI_SET").env_remove("MELEE_SLIPPI_AFTER");
+        match pad {
+            Some(p) => cmd.env("MELEE_PAD_SCRIPT", p),
+            None => cmd.env_remove("MELEE_PAD_SCRIPT"),
+        };
+        if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
+            cmd.env("MELEE_WINDOW_TITLE", format!("{}:{title}", t.split(":select").next().unwrap_or(&t)));
+        }
+        match cmd.spawn() {
+            Ok(_) => {
+                self.quit = true;
+                true
+            }
+            Err(e) => {
+                log(&format!("online select: relaunch failed: {e}"));
+                false
+            }
+        }
+    }
+
     pub(super) fn session_exit(&mut self) {
         if self.boot_menu && self.e.is_some() && matches!(self.cur.0 as u32, melee_types::GM_TITLE | melee_types::GM_OPENING_MV) {
             self.boot_menu = false;
@@ -514,7 +918,11 @@ impl RetailPlay {
         self.relaunch(&[], None, true, "the main menu");
     }
 
-    fn relaunch(&mut self, extra: &[String], scene: Option<&str>, to_menu: bool, what: &str) {
+    fn relaunch(&mut self, extra: &[String], scene: Option<&str>, to_menu: bool, what: &str) -> Option<std::process::Child> {
+        if melee_platform::yougame::refuse_child(&format!("relaunch for {what}")) {
+            self.ui_status(1, "not available in the YouGame app");
+            return None;
+        }
         let mut args: Vec<String> = Vec::new();
         let cur: Vec<String> = std::env::args().skip(1).collect();
         let mut i = 0;
@@ -547,9 +955,12 @@ impl RetailPlay {
             if to_menu {
                 self.quit = true;
             }
-            return;
+            return None;
         }
-        let Ok(exe) = std::env::current_exe() else { return self.ui_status(1, "cannot find the game executable") };
+        let Ok(exe) = std::env::current_exe() else {
+            self.ui_status(1, "cannot find the game executable");
+            return None;
+        };
         let mut cmd = std::process::Command::new(exe);
         cmd.args(&args).env_remove("MELEE_PAD_SCRIPT");
         if to_menu {
@@ -561,16 +972,21 @@ impl RetailPlay {
             Some(s) => cmd.env("MELEE_SCENE", s),
             None => cmd.env_remove("MELEE_SCENE"),
         };
+        if let Some(r) = &self.room_report {
+            cmd.env("MELEE_ROOM_REPORT", r);
+        }
         match cmd.spawn() {
-            Ok(_) => {
+            Ok(c) => {
                 self.ui_status(2, &format!("relaunching for {what}:{env} melee {}", shown.join(" ")));
                 self.quit = true;
+                Some(c)
             }
             Err(e) => {
                 self.ui_status(1, &format!("relaunch failed: {e}"));
                 if to_menu {
                     self.quit = true;
                 }
+                None
             }
         }
     }

@@ -19,7 +19,9 @@ melee_runtime.workspace = true
 [features]
 # `slippi_mm` against Slippi's real matchmaking server (wss://, `--mm-real`): TLS. Off by default; the default build
 # only talks to a local mock on loopback.
-real-net = ["dep:rustls", "dep:webpki-roots"]
+real-net = ["dep:rustls", "dep:webpki-roots", "mu-net"]
+# mu_net (P2P Direct, src/mu_net): Ed25519 / X25519 / ChaCha20-Poly1305 from ring, which rustls already brings in.
+mu-net = ["dep:ring"]
 
 [dependencies.rustls]
 version = "0.23"
@@ -27,6 +29,13 @@ optional = true
 default-features = false
 features = ["ring", "std", "tls12", "logging"]
 
+[dependencies.ring]
+version = "0.17"
+optional = true
+
 [dependencies.webpki-roots]
 version = "1"
 optional = true
+
+[lints]
+workspace = true

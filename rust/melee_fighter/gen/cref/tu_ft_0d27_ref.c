@@ -85,8 +85,8 @@ int main(void)
             case 2: F.motion_id = 313 + (rnd() & 1) * 9; break;
             default: F.motion_id = rnd() % 400; break;
             }
-            F.x2070.x2071_b0_3 = rnd() & 15;
-            F.x2070.x2071_b4 = rnd() & 1;
+            F.x2070.x0.x2071_b0_3 = rnd() & 15;
+            F.x2070.x0.x2071_b4 = rnd() & 1;
             g_aflags = rnd() & 0x40000000u ? 0x40000000u : rnd() & 0x3FFFFFFFu;
             JO.scale.x = rg();
             F.mv.co.walk.middle_anim_frame = rg();

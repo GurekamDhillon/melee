@@ -32,8 +32,8 @@ display options (flag > MELEE_<KEY> env > settings.cfg key > default):
   --vrr auto|on|off                variable refresh (G-Sync / FreeSync): with vsync on, frames are capped a little
                                    under the refresh (144 Hz: 138). auto measures the swapchain for a few seconds.
                                    Key `vrr`, default auto.
-  --interp auto|on|off             frame interpolation between ticks (render-only): auto = on above 60 fps. Key
-                                   `interp`, default auto.
+  --interp on|off                  frame interpolation between ticks (render-only, for testing; one frame per tick
+                                   when off). Key `interp`, default off.
   --interp-mode interpolate|extrapolate
                                    interpolate between the last two ticks (exact, one tick behind) or extrapolate
                                    past the newest (no added latency). Key `interp_mode`, default interpolate.
@@ -57,7 +57,7 @@ pub struct Display {
     /// "auto" | "on" | "off".
     pub vrr: String,
     /// None: auto.
-    pub interp: Option<bool>,
+    pub interp: bool,
     pub extrapolate: bool,
     pub frame_latency: u32,
 }
@@ -174,9 +174,10 @@ impl Display {
         }
         .to_string();
         let interp = match get("--interp").or_else(|| lookup("interp")) {
-            Some(v) if v.trim().eq_ignore_ascii_case("auto") => None,
-            Some(v) => Some(parse_bool(&v).ok_or_else(|| bad("interp", &v))?),
-            None => None,
+            // "auto" (an old saved value) now means off: interpolation only runs when explicitly on
+            Some(v) if v.trim().eq_ignore_ascii_case("auto") => false,
+            Some(v) => parse_bool(&v).ok_or_else(|| bad("interp", &v))?,
+            None => false,
         };
         let extrapolate = match get("--interp-mode").or_else(|| lookup("interp_mode")) {
             Some(v) => melee_gx::interp::Mode::parse(&v).ok_or_else(|| bad("interp-mode", &v))? == melee_gx::interp::Mode::Extrapolate,
@@ -218,7 +219,7 @@ impl Display {
             ("widescreen_mode", if self.camera_widescreen { "camera" } else { "renderer" }.to_string()),
             ("fps_cap", if self.fps_cap == 0 { "off".to_string() } else { self.fps_cap.to_string() }),
             ("vrr", self.vrr.clone()),
-            ("interp", match self.interp { None => "auto", Some(true) => "on", Some(false) => "off" }.to_string()),
+            ("interp", if self.interp { "on" } else { "off" }.to_string()),
             ("interp_mode", if self.extrapolate { "extrapolate" } else { "interpolate" }.to_string()),
             ("frame_latency", self.frame_latency.to_string()),
         ]
@@ -236,15 +237,14 @@ impl Display {
         std::env::set_var("MELEE_WIDESCREEN_MODE", if self.camera_widescreen { "camera" } else { "renderer" });
         std::env::set_var("MELEE_FPS_CAP", self.fps_cap.to_string());
         std::env::set_var("MELEE_VRR", &self.vrr);
-        match self.interp {
-            Some(on) => std::env::set_var("MELEE_INTERP", if on { "1" } else { "0" }),
-            None => std::env::remove_var("MELEE_INTERP"),
-        }
+        std::env::set_var("MELEE_INTERP", if self.interp { "1" } else { "0" });
         std::env::set_var("MELEE_INTERP_MODE", if self.extrapolate { "extrapolate" } else { "interpolate" });
         std::env::set_var("MELEE_FRAME_LATENCY", self.frame_latency.to_string());
         melee_engine::view::set_camera_mode(self.camera_widescreen);
         melee_engine::view::set_widescreen(self.widescreen);
         melee_engine::view::set_window(self.window.0, self.window.1);
+        // the session's sim view, decided now from the options (not the live window); netplay / a replay may replace it
+        melee_engine::view::set_sim_view(melee_engine::view::local_sim_view());
     }
 
     /// `--save-display`: write [`Display::rows`] to settings.cfg.
@@ -303,9 +303,11 @@ mod tests {
     fn defaults_and_precedence() {
         let none = |_: &str| None;
         let d = Display::resolve(&a(&[]), &mut { none }).unwrap();
-        assert_eq!(d, Display { widescreen: false, fullscreen: FullscreenMode::Off, window: (1280, 960), render_scale: None, msaa: 1, vsync: true, camera_widescreen: false, fps_cap: 0, vrr: "auto".into(), interp: None, extrapolate: false, frame_latency: 2 });
+        assert_eq!(d, Display { widescreen: false, fullscreen: FullscreenMode::Off, window: (1280, 960), render_scale: None, msaa: 1, vsync: true, camera_widescreen: false, fps_cap: 0, vrr: "auto".into(), interp: false, extrapolate: false, frame_latency: 2 });
+        // an old saved "auto" reads as off
+        assert!(!Display::resolve(&a(&["--interp", "auto"]), &mut { none }).unwrap().interp);
         let d = Display::resolve(&a(&["--fps-cap", "144", "--vrr", "on", "--interp", "on", "--interp-mode", "extrapolate", "--widescreen-mode", "camera", "--frame-latency", "1"]), &mut { none }).unwrap();
-        assert!(d.fps_cap == 144 && d.vrr == "on" && d.interp == Some(true) && d.extrapolate && d.camera_widescreen && d.frame_latency == 1);
+        assert!(d.fps_cap == 144 && d.vrr == "on" && d.interp && d.extrapolate && d.camera_widescreen && d.frame_latency == 1);
         assert!(Display::resolve(&a(&["--fps-cap", "5"]), &mut { none }).is_err());
         // the file / env says wide + exclusive + 4x; the flags win
         let mut file = |k: &str| match k {
@@ -329,7 +331,7 @@ mod tests {
 
     #[test]
     fn rows_round_trip() {
-        let d = Display { widescreen: true, fullscreen: FullscreenMode::Borderless, window: (1600, 900), render_scale: Some(2), msaa: 4, vsync: false, camera_widescreen: false, fps_cap: 240, vrr: "off".into(), interp: Some(true), extrapolate: true, frame_latency: 1 };
+        let d = Display { widescreen: true, fullscreen: FullscreenMode::Borderless, window: (1600, 900), render_scale: Some(2), msaa: 4, vsync: false, camera_widescreen: false, fps_cap: 240, vrr: "off".into(), interp: true, extrapolate: true, frame_latency: 1 };
         let rows = d.rows();
         let mut lk = |k: &str| rows.iter().find(|(r, _)| *r == k).map(|(_, v)| v.clone());
         assert_eq!(Display::resolve(&[], &mut lk).unwrap(), d);

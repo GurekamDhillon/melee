@@ -428,7 +428,8 @@ def stub_c(name, fn):
     elif rk == "q":
         L.append(f"    {{ {ret.spelling} r = ({ret.spelling}) iv(0); lg_retu((u32) r); lg_c(';'); return r; }}")
     elif rk == "f":
-        L.append("    { float r = rf(); lg_retf(r); lg_c(';'); return r; }")
+        gen = FRETS[name][0] if name in FRETS else "rf()"
+        L.append(f"    {{ float r = {gen}; lg_retf(r); lg_c(';'); return r; }}")
     elif rk == "d":
         L.append("    { double r = (double) rf(); lg_retd(r); lg_c(';'); return r; }")
     elif rk in ("G", "FP", "p", "v3", "v2", "pf", "pi", "fn") or rk.startswith("ps:"):  # ps: a pointer to a small record
@@ -441,6 +442,9 @@ def stub_c(name, fn):
 OUTS = {}
 # stubs whose integer answer is not the generic gen_i()/gen_b(): name -> (C expression, Rust expression)
 RETS = {}
+# float-returning stubs whose value a spec sets (name -> (C expr, Rust expr)); others return rf(). Opt-in, so a spec's
+# float entries in `rets` (never read for floats) stay inert.
+FRETS = {}
 
 
 # ------------------------------------------------------------------ Rust hook closures
@@ -483,7 +487,8 @@ def rs_ret(rtype, ck, ret_t, boolish, name=None):
     if ck == "q":
         return f"{{ let r = iv(false) as {r}; lg_retu(r as u32); lg_c(';'); r }}"
     if ck == "f":
-        return "{ let r = rf(); lg_retf(r); lg_c(';'); r }"
+        gen = FRETS[name][1] if name in FRETS else "rf()"
+        return "{ let r = " + gen + "; lg_retf(r); lg_c(';'); r }"
     if ck == "d":
         return "{ let r = rf() as f64; lg_retd(r); lg_c(';'); r }"
     return f"{{ let r = gen_p() as {rtype}; lg_retp(r as usize); lg_c(';'); r }}"

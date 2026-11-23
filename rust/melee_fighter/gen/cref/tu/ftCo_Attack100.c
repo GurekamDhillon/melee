@@ -34,7 +34,7 @@ ItemKind itGetKind(Item_GObj* i) { T(21); T(af_item(i)); return SR(6) ? It_Kind_
 void pl_8003E854(int a, int b, Item_GObj* i) { T(22); T(a); T(b); T(af_item(i)); }
 void Item_8026AB54(HSD_GObj* i, HSD_GObj* o, Fighter_Part p) { T(23); T(af_item(i)); T(o == &GO); T(p); }
 bool ftpickupitem_8009447C(HSD_GObj* g, Item_GObj* i) { T(24); T(g == &GO); T(af_item(i)); return chk(24); }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 k, u32 id, HSD_JObj* j, ...) { T(25); T(g == &GO); T(q == (void*) &F.x60C); T(k); T(id); T(af_jobj(j)); }
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 k, u32 id, HSD_JObj* j, ...) { T(25); T(g == &GO); T(q == (void*) &F.x60C); T(k); T(id); T(af_jobj(j)); }
 Item_GObj* ftpickupitem_800942A0(Fighter_GObj* g, u32 fl) { T(26); T(g == &GO); T(fl); return SR(8) ? NULL : SR(24) ? (Item_GObj*) &IGO : (Item_GObj*) &IGO2; }
 int ftKb_MexKirbyLike(int k) { T(27); T(k); return chk(27); }
 int ftKb_SpecialN_800F1CD8(HSD_GObj* g) { T(28); T(g == &GO); return SRV[9] % 7; }

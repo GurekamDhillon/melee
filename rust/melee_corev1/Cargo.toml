@@ -49,3 +49,6 @@ png = "0.18"
 # the lab Geno test of melee/src (compiled here by path) builds its Lab mod from WAT text, as melee does
 [dev-dependencies]
 wat = "1"
+
+[lints]
+workspace = true

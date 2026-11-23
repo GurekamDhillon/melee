@@ -2085,7 +2085,9 @@ pub static mut lbl_8046B378: lbl_8046B378_t = unsafe { core::mem::zeroed() };
 pub static mut lbl_804D6598: i8 = 0;
 pub static mut lbl_804D659A: u16 = 0;
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_801652D8() -> *mut c_void {
+    core::hint::black_box(0x16CA5EC1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_801652D8");
     let vi = addr_of_mut!(HSD_VIData);
     let lines = addr_of_mut!(lbl_8046B378.line0);

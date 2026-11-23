@@ -204,7 +204,9 @@ pub fn spawnVeg(gobj: *mut HSD_GObj) {
     }
 }
 /// `spawnVeg` as the Accessory4 callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_spawnVeg(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFDB6C4BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_spawnVeg");
     spawnVeg(g);
 }

@@ -85,8 +85,10 @@ pub mod ext {
     }
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn hsd_8039D688(a0: *mut HSD_JObj, a1: *mut *mut f32, a2: i32) { super::hsd_8039D688(a0, a1, a2) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { core::hint::black_box(0xF0ED7A1Du32); /* fn identity */ super::HSD_GObj_JObjCallback(a0, a1) }
+        #[inline(never)]
+        pub unsafe extern "C" fn hsd_8039D688(a0: *mut HSD_JObj, a1: *mut *mut f32, a2: i32) { core::hint::black_box(0x49C4717Cu32); /* fn identity */ super::hsd_8039D688(a0, a1, a2) }
     }
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -99,7 +101,9 @@ pub static mut efLib_AnimQueue: [EF_ParamEntry; 16] = unsafe { core::mem::zeroed
 pub static mut efLib_ParamTable: [EF_ParamEntry; 8] = unsafe { core::mem::zeroed() };
 
 /// `eflib_create_generator_add_appsrt`
+#[inline(never)]
 pub unsafe extern "C" fn eflib_create_generator_add_appsrt(mut generator: *mut *mut HSD_Generator, mut gfx_id: i32, mut jobj: *mut HSD_JObj) {
+    core::hint::black_box(0x45EC366Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("eflib_create_generator_add_appsrt");
     *generator = ext::hsd_8039EFAC(0, gfx_id / 1000, gfx_id, jobj);
     if !(*generator).is_null() {
@@ -120,7 +124,9 @@ pub unsafe extern "C" fn eflib_create_generator_add_appsrt(mut generator: *mut *
 }
 
 /// `eflib_create_effect_and_attach`
+#[inline(never)]
 pub unsafe extern "C" fn eflib_create_effect_and_attach(mut gfx_id: i32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    core::hint::black_box(0x5384BAABu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("eflib_create_effect_and_attach");
     let mut effect: *mut EF_Effect = efLib_Create(gfx_id, gobj);
     if !effect.is_null() {
@@ -140,7 +146,9 @@ pub unsafe extern "C" fn eflib_create_effect_and_attach(mut gfx_id: i32, mut gob
 }
 
 /// `eflib_generator_add_appsrt`
+#[inline(never)]
 pub unsafe extern "C" fn eflib_generator_add_appsrt(mut generator: *mut HSD_Generator, mut status: i32) -> *mut HSD_Generator {
+    core::hint::black_box(0xB27F21F1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("eflib_generator_add_appsrt");
     let mut psAppSRT: *mut HSD_psAppSRT = null_mut();
     if !generator.is_null() {
@@ -156,7 +164,9 @@ pub unsafe extern "C" fn eflib_generator_add_appsrt(mut generator: *mut HSD_Gene
 }
 
 /// `efLib_Init`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Init() {
+    core::hint::black_box(0xBBF5B417u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Init");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut i: i32 = 0;
@@ -193,7 +203,9 @@ pub unsafe extern "C" fn efLib_Init() {
 }
 
 /// `efLib_SetFlags`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_SetFlags(mut gobj: *mut HSD_GObj, mut expire_flags: i32) {
+    core::hint::black_box(0x07A8BD16u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_SetFlags");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
@@ -218,7 +230,9 @@ pub unsafe extern "C" fn efLib_SetFlags(mut gobj: *mut HSD_GObj, mut expire_flag
 }
 
 /// `efLib_Destroy`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Destroy(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x2E6B8641u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Destroy");
     let mut effect: *mut EF_Effect = (*gobj).user_data as *mut EF_Effect;
     let mut jobj: *mut HSD_JObj = null_mut();
@@ -245,7 +259,9 @@ pub unsafe extern "C" fn efLib_Destroy(mut gobj: *mut HSD_GObj) {
 }
 
 /// `efLib_DestroyAll`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_DestroyAll(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x993E83B8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_DestroyAll");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
@@ -292,7 +308,9 @@ pub unsafe extern "C" fn efLib_DestroyAll(mut gobj: *mut HSD_GObj) {
 }
 
 /// `efLib_PauseAll`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_PauseAll(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x5CEE1630u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_PauseAll");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
@@ -317,7 +335,9 @@ pub unsafe extern "C" fn efLib_PauseAll(mut gobj: *mut HSD_GObj) {
 }
 
 /// `efLib_ResumeAll`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_ResumeAll(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xA4C3A4BDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_ResumeAll");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
@@ -342,7 +362,9 @@ pub unsafe extern "C" fn efLib_ResumeAll(mut gobj: *mut HSD_GObj) {
 }
 
 /// `efLib_remove_user_data`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_remove_user_data(mut user_data: *mut c_void) {
+    core::hint::black_box(0x6E552B9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_remove_user_data");
     let mut effect: *mut EF_Effect = null_mut();
     let mut effect_2: *mut EF_Effect = null_mut();
@@ -359,7 +381,9 @@ pub unsafe extern "C" fn efLib_remove_user_data(mut user_data: *mut c_void) {
 }
 
 /// `efLib_RemoveLast`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_RemoveLast() {
+    core::hint::black_box(0x67B1083Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_RemoveLast");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut next: *mut HSD_GObj = null_mut();
@@ -393,7 +417,9 @@ pub unsafe extern "C" fn efLib_RemoveLast() {
 }
 
 /// `efLib_Update`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Update(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x66136C88u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Update");
     let mut effect: *mut EF_Effect = null_mut();
     let mut jobj: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -443,7 +469,9 @@ pub unsafe extern "C" fn efLib_Update(mut gobj: *mut HSD_GObj) {
 }
 
 /// `efLib_Create`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Create(mut gfx_id: i32, mut parent_gobj: *mut HSD_GObj) -> *mut EF_Effect {
+    core::hint::black_box(0xCA7C8759u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Create");
     let mut effect: *mut EF_Effect = null_mut();
     let mut desc: *mut EF_EffectDesc = null_mut();
@@ -543,7 +571,9 @@ pub unsafe extern "C" fn efLib_Create(mut gfx_id: i32, mut parent_gobj: *mut HSD
 }
 
 /// `efLib_Create_Attach`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Create_Attach(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    core::hint::black_box(0x313AE20Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Create_Attach");
     let mut effect: *mut EF_Effect = efLib_Create(gfx_id as i32, gobj);
     if !effect.is_null() {
@@ -563,7 +593,9 @@ pub unsafe extern "C" fn efLib_Create_Attach(mut gfx_id: u32, mut gobj: *mut HSD
 }
 
 /// `efLib_Create_AttachChild`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Create_AttachChild(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    core::hint::black_box(0xAA525F03u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Create_AttachChild");
     let mut effect: *mut EF_Effect = null_mut();
     if !{ effect = eflib_create_effect_and_attach(gfx_id as i32, gobj, jobj); effect }.is_null() {
@@ -573,7 +605,9 @@ pub unsafe extern "C" fn efLib_Create_AttachChild(mut gfx_id: u32, mut gobj: *mu
 }
 
 /// `efLib_Create_Attach_Scale`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Create_Attach_Scale(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    core::hint::black_box(0xFE004776u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Create_Attach_Scale");
     let mut effect: *mut EF_Effect = null_mut();
     if !{ effect = eflib_create_effect_and_attach(gfx_id as i32, gobj, jobj); effect }.is_null() {
@@ -586,7 +620,9 @@ pub unsafe extern "C" fn efLib_Create_Attach_Scale(mut gfx_id: u32, mut gobj: *m
 }
 
 /// `efLib_Create_AttachChild_Scale`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Create_AttachChild_Scale(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    core::hint::black_box(0x976D226Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Create_AttachChild_Scale");
     let mut effect: *mut EF_Effect = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !effect.is_null() {
@@ -602,7 +638,9 @@ pub unsafe extern "C" fn efLib_Create_AttachChild_Scale(mut gfx_id: u32, mut gob
 }
 
 /// `efLib_Create_Attach_Scale_FacingDir`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Create_Attach_Scale_FacingDir(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    core::hint::black_box(0x336B3634u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Create_Attach_Scale_FacingDir");
     let mut effect: *mut EF_Effect = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !effect.is_null() {
@@ -618,7 +656,9 @@ pub unsafe extern "C" fn efLib_Create_Attach_Scale_FacingDir(mut gfx_id: u32, mu
 }
 
 /// `efLib_Create_Attach_Pos`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Create_Attach_Pos(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut position: *mut Vec) -> *mut EF_Effect {
+    core::hint::black_box(0x904BE326u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Create_Attach_Pos");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut effect: *mut EF_Effect = null_mut();
@@ -632,7 +672,9 @@ pub unsafe extern "C" fn efLib_Create_Attach_Pos(mut gfx_id: u32, mut gobj: *mut
 }
 
 /// `efLib_render_callback`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_render_callback(mut gobj: *mut HSD_GObj, mut code: isize) {
+    core::hint::black_box(0xEF957F4Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_render_callback");
     let mut particles_code: u32 = 0;
     's50: {
@@ -660,21 +702,27 @@ pub unsafe extern "C" fn efLib_render_callback(mut gobj: *mut HSD_GObj, mut code
 }
 
 /// `efLib_particles_proc_main`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_particles_proc_main(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xE477EE33u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_particles_proc_main");
     ext::hsd_8039CEAC((131072 | 262144) as u32);
     ext::hsd_8039EE24((131072 | 262144) as u32);
 }
 
 /// `efLib_particles_proc_aux`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_particles_proc_aux(mut gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x8962062Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_particles_proc_aux");
     ext::hsd_8039CEAC((65536 | 524288) as u32);
     ext::hsd_8039EE24((65536 | 524288) as u32);
 }
 
 /// `efLib_CreateGenerator`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator(mut gfx_id: i32, mut pos: *mut Vec) -> *mut HSD_Generator {
+    core::hint::black_box(0xE585AE1Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut linkNo: i32 = 0;
@@ -703,7 +751,9 @@ pub unsafe extern "C" fn efLib_CreateGenerator(mut gfx_id: i32, mut pos: *mut Ve
 }
 
 /// `efLib_CreateGenerator_AddAppSRT`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_AddAppSRT(mut gfx_id: i32) -> *mut HSD_Generator {
+    core::hint::black_box(0x0AFD5134u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_AddAppSRT");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut appsrt: *mut HSD_psAppSRT = null_mut();
@@ -721,7 +771,9 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AddAppSRT(mut gfx_id: i32) -> *mu
 }
 
 /// `efLib_CreateGenerator_Translate_FacingDir`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_Translate_FacingDir(mut gfx_id: i32, mut translation: *mut Vec, mut direction: f32) -> *mut HSD_Generator {
+    core::hint::black_box(0x97921DE5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_Translate_FacingDir");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut appsrt: *mut HSD_psAppSRT = null_mut();
@@ -750,7 +802,9 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Translate_FacingDir(mut gfx_id: i
 }
 
 /// `efLib_CreateGenerator_Attach`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_Attach(mut gfx_id: i32, mut jobj: *mut HSD_JObj) -> *mut HSD_Generator {
+    core::hint::black_box(0xC1D6FB3Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_Attach");
     let mut generator: *mut HSD_Generator = ext::hsd_8039EFAC(0, gfx_id / 1000, gfx_id, jobj);
     if !generator.is_null() {
@@ -760,7 +814,9 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Attach(mut gfx_id: i32, mut jobj:
 }
 
 /// `efLib_CreateGenerator_Attach_AddAppSRT`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_Attach_AddAppSRT(mut gfx_id: i32, mut jobj: *mut HSD_JObj) -> *mut HSD_Generator {
+    core::hint::black_box(0xE26DB354u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_Attach_AddAppSRT");
     let mut generator: *mut HSD_Generator = ext::hsd_8039EFAC(0, gfx_id / 1000, gfx_id, jobj);
     if !generator.is_null() {
@@ -781,7 +837,9 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Attach_AddAppSRT(mut gfx_id: i32,
 }
 
 /// `efLib_CreateGenerator_Attach_Scale`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_Attach_Scale(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va, mut gobj: *mut HSD_GObj) -> *mut HSD_Generator {
+    core::hint::black_box(0x3A8B5C6Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_Attach_Scale");
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
     let mut generator: *mut HSD_Generator = null_mut();
@@ -796,7 +854,9 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Attach_Scale(mut gfx_id: i32, mut
 }
 
 /// `efLib_CreateGenerator_AppSRT_SetScale`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetScale(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va) -> *mut HSD_Generator {
+    core::hint::black_box(0xC3C52CC8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_AppSRT_SetScale");
     let mut generator: *mut HSD_Generator = null_mut();
     eflib_create_generator_add_appsrt(core::ptr::addr_of_mut!(generator) as *mut *mut HSD_Generator, gfx_id, *((*vlist).arg(8_u32) as *mut *mut HSD_JObj));
@@ -807,20 +867,31 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetScale(mut gfx_id: i32, 
 }
 
 /// `efLib_CreateGenerator_AppSRT_SetFacingDir`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDir(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va) -> *mut HSD_Generator {
+    core::hint::black_box(0x8E9C7C43u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_AppSRT_SetFacingDir");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut direction: f32 = 0.0;
     eflib_create_generator_add_appsrt(core::ptr::addr_of_mut!(generator) as *mut *mut HSD_Generator, gfx_id, *((*vlist).arg(8_u32) as *mut *mut HSD_JObj));
     if !generator.is_null() {
-        direction = *(*((*vlist).arg(8_u32) as *mut *mut f32));
+        // an m-ex behaviour-6 effect spawned through efAsync kind 0 passes the jobj alone (efAsync_QueueProcessDeferred):
+        // the C's va_arg reads a stale register (only the generator's rotation, nothing the simulation reads); NULL here
+        // faulted (Akaneia's Dedede, effect 6007)
+        let dir = *((*vlist).arg(8_u32) as *mut *mut f32);
+        if dir.is_null() {
+            return generator;
+        }
+        direction = *dir;
         (*(*generator).appsrt).rot.y = (if direction < 0.0f32 { -(3.141592653589793f64 / (2 as f64)) } else { 3.141592653589793f64 / (2 as f64) }) as f32;
     }
     return generator;
 }
 
 /// `efLib_CreateGenerator_AppSRT_SetFacingDirScale`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va) -> *mut HSD_Generator {
+    core::hint::black_box(0x6EADD7BBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_AppSRT_SetFacingDirScale");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut direction: f32 = 0.0;
@@ -830,7 +901,14 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(mut gfx_
     jobj = *((*vlist).arg(8_u32) as *mut *mut HSD_JObj);
     eflib_create_generator_add_appsrt(core::ptr::addr_of_mut!(generator) as *mut *mut HSD_Generator, id, jobj);
     if !generator.is_null() {
-        direction = *(*((*vlist).arg(8_u32) as *mut *mut f32));
+        // an m-ex behaviour-6 effect spawned through efAsync kind 0 passes the jobj alone (efAsync_QueueProcessDeferred):
+        // the C's va_arg reads a stale register (only the generator's rotation, nothing the simulation reads); NULL here
+        // faulted (Akaneia's Dedede, effect 6007)
+        let dir = *((*vlist).arg(8_u32) as *mut *mut f32);
+        if dir.is_null() {
+            return generator;
+        }
+        direction = *dir;
         (*(*generator).appsrt).rot.y = (if direction < 0.0f32 { -(3.141592653589793f64 / (2 as f64)) } else { 3.141592653589793f64 / (2 as f64) }) as f32;
         (*(*generator).appsrt).scale.x = { (*(*generator).appsrt).scale.y = { (*(*generator).appsrt).scale.z = *(*((*vlist).arg(8_u32) as *mut *mut f32)); (*(*generator).appsrt).scale.z }; (*(*generator).appsrt).scale.y };
     }
@@ -838,7 +916,9 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(mut gfx_
 }
 
 /// `efLib_SpawnParticleEffect`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_SpawnParticleEffect(mut bank: i32, mut gfx_id: i32, mut jobj: *mut HSD_JObj, mut flag: i32) {
+    core::hint::black_box(0xF2115C0Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_SpawnParticleEffect");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut root: *mut HSD_JObj = jobj;
@@ -970,7 +1050,9 @@ pub unsafe extern "C" fn efLib_SpawnParticleEffect(mut bank: i32, mut gfx_id: i3
 }
 
 /// `efLib_Cb_SPtcl`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SPtcl(mut linkNo: i32, mut bank: i32, mut gfx_id: i32, mut jobj: *mut HSD_JObj) {
+    core::hint::black_box(0xF90E68EDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SPtcl");
     if bank == 30 {
         ext::grLib_801C99C0(bank, gfx_id, jobj, 0);
@@ -980,7 +1062,9 @@ pub unsafe extern "C" fn efLib_Cb_SPtcl(mut linkNo: i32, mut bank: i32, mut gfx_
 }
 
 /// `efLib_Cb_DPtcl`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_DPtcl(mut linkNo: i32, mut bank: i32, mut gfx_id: i32, mut jobj: *mut HSD_JObj) {
+    core::hint::black_box(0xC7A22C8Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_DPtcl");
     if bank == 30 {
         ext::grLib_801C99C0(bank, gfx_id, jobj, 1);
@@ -990,7 +1074,9 @@ pub unsafe extern "C" fn efLib_Cb_DPtcl(mut linkNo: i32, mut bank: i32, mut gfx_
 }
 
 /// `efLib_Cb_ParticleRender`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_ParticleRender(mut particle: *mut HSD_Particle) {
+    core::hint::black_box(0x60601127u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_ParticleRender");
     let mut translate: Vec3 = unsafe { core::mem::zeroed() };
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
@@ -1014,7 +1100,9 @@ pub unsafe extern "C" fn efLib_Cb_ParticleRender(mut particle: *mut HSD_Particle
 }
 
 /// `efLib_Cb_PtclAppSRTHook`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_PtclAppSRTHook(mut r#gen: *mut HSD_Generator) {
+    core::hint::black_box(0x74A6B07Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_PtclAppSRTHook");
     if (*r#gen).cmdList == ((*(*ext::ptclref_804D0E5C[0 as usize].offset(150 as isize))).cmdList.as_mut_ptr()) {
         ext::psSetUserFunc(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
@@ -1031,7 +1119,9 @@ pub unsafe extern "C" fn efLib_Cb_PtclAppSRTHook(mut r#gen: *mut HSD_Generator) 
 }
 
 /// `efLib_Cb_SetOffsetY_FromParamY`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetOffsetY_FromParamY(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x89248D18u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetOffsetY_FromParamY");
     let mut sp14: Vec3 = unsafe { core::mem::zeroed() };
     let mut eff_jobj: *mut HSD_JObj = null_mut();
@@ -1042,7 +1132,9 @@ pub unsafe extern "C" fn efLib_Cb_SetOffsetY_FromParamY(mut effect: *mut EF_Effe
 }
 
 /// `efLib_Cb_SetScale_FromParamX`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x60B95273u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetScale_FromParamX");
     let mut scale_x: f32 = 0.0;
     let mut scale_y: f32 = 0.0;
@@ -1057,7 +1149,9 @@ pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(mut effect: *mut EF_Effect
 }
 
 /// `efLib_Cb_SetRotYAndTransition`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x5C623A0Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetRotYAndTransition");
     let mut temp_d: f64 = 0.0;
     let mut rotate_y: f32 = 0.0;
@@ -1088,7 +1182,9 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(mut effect: *mut EF_Effec
 }
 
 /// `efLib_Cb_SetJObjOffsetZ`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x80190157u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetJObjOffsetZ");
     let mut eff_jobj_child: *mut HSD_JObj = null_mut();
     let mut translate_z: f32 = 0.0;
@@ -1104,7 +1200,9 @@ pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(mut effect: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_SetRotY_FromFighterDir`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetRotY_FromFighterDir(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0xA1A6BFE8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetRotY_FromFighterDir");
     let mut eff_jobj: *mut HSD_JObj = null_mut();
     let mut half_pi: f64 = 0.0;
@@ -1120,7 +1218,9 @@ pub unsafe extern "C" fn efLib_Cb_SetRotY_FromFighterDir(mut effect: *mut EF_Eff
 }
 
 /// `efLib_Cb_SetRotYZ_FromFighter`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0xC8830819u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetRotYZ_FromFighter");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut half_pi: f32 = 0.0;
@@ -1138,7 +1238,9 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(mut effect: *mut EF_Effec
 }
 
 /// `efLib_Cb_Fall_FromParamY`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x7A5AF26Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_Fall_FromParamY");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut rotate_y: f32 = 0.0;
@@ -1162,7 +1264,9 @@ pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(mut effect: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_SetOffset_FromParams`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetOffset_FromParams(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x078C5B17u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetOffset_FromParams");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut translate_z: f32 = 0.0;
@@ -1181,7 +1285,9 @@ pub unsafe extern "C" fn efLib_Cb_SetOffset_FromParams(mut effect: *mut EF_Effec
 }
 
 /// `efLib_Cb_LifetimeEndSpawn`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_LifetimeEndSpawn(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0xDE5EE8F2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_LifetimeEndSpawn");
     if ((*effect).lifetime as i32) == 1 {
         let _ = ext::hsd_8039EFAC(0, 0, 427, (*effect).attach_jobj);
@@ -1191,7 +1297,9 @@ pub unsafe extern "C" fn efLib_Cb_LifetimeEndSpawn(mut effect: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_SetScaleRotY_FromFighter`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0xD1618779u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetScaleRotY_FromFighter");
     let mut half_pi: f64 = 0.0;
     let mut scale_1: Vec3 = unsafe { core::mem::zeroed() };
@@ -1222,7 +1330,9 @@ pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(mut effect: *mut EF_E
 }
 
 /// `efLib_Cb_SetRotYZ_FromParamZ_FighterDir`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromParamZ_FighterDir(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0xF0192E82u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_SetRotYZ_FromParamZ_FighterDir");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut rotate_z: f32 = 0.0;
@@ -1239,7 +1349,9 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromParamZ_FighterDir(mut effect: *mu
 }
 
 /// `efLib_Cb_ftMr_SpecialLw`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x2CBC4459u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_ftMr_SpecialLw");
     let mut eff_jobj: *mut HSD_JObj = null_mut();
     let mut eff_child_jobj: *mut HSD_JObj = null_mut();
@@ -1263,7 +1375,9 @@ pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(mut effect: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_ftLg_SpecialLw`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_ftLg_SpecialLw(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x7FA8B29Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_ftLg_SpecialLw");
     let mut eff_jobj: *mut HSD_JObj = null_mut();
     let mut eff_child_jobj: *mut HSD_JObj = null_mut();
@@ -1287,7 +1401,9 @@ pub unsafe extern "C" fn efLib_Cb_ftLg_SpecialLw(mut effect: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_ftKp_SpecialHi`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_ftKp_SpecialHi(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x725400E3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_ftKp_SpecialHi");
     let mut rotate_z: f32 = 0.0;
     let mut fighter: *mut Fighter = null_mut();
@@ -1311,13 +1427,17 @@ pub unsafe extern "C" fn efLib_Cb_ftKp_SpecialHi(mut effect: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_ftCo_Bury`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_ftCo_Bury(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0xA62D5146u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_ftCo_Bury");
     ext::ftCo_800C0FCC((*effect).gobj, (*effect).parent_gobj);
 }
 
 /// `efLib_SetTevKonstColor`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_SetTevKonstColor(mut jobj: *mut HSD_JObj, mut count: i32, mut konst: u32, mut tev0: u32) {
+    core::hint::black_box(0x8B305850u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_SetTevKonstColor");
     let mut dobj: *mut HSD_DObj = ext::HSD_JObjGetDObj(jobj);
     let mut mobj: *mut HSD_MObj = if !dobj.is_null() { (*dobj).mobj } else { null_mut() };
@@ -1336,7 +1456,9 @@ pub unsafe extern "C" fn efLib_SetTevKonstColor(mut jobj: *mut HSD_JObj, mut cou
 }
 
 /// `efLib_SetParamAlpha`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_SetParamAlpha(mut gobj: *mut HSD_GObj, mut alpha: u8) {
+    core::hint::black_box(0xB79193D0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_SetParamAlpha");
     let mut idx: i32 = 0;
     let mut base: *mut EF_ParamEntry = efLib_ParamTable.as_mut_ptr();
@@ -1366,7 +1488,9 @@ pub unsafe extern "C" fn efLib_SetParamAlpha(mut gobj: *mut HSD_GObj, mut alpha:
 }
 
 /// `efLib_SetParamGfxId`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_SetParamGfxId(mut gobj: *mut HSD_GObj, mut gfx_id: i32) {
+    core::hint::black_box(0x4E19B8FAu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_SetParamGfxId");
     let mut idx: i32 = 0;
     let mut base: *mut EF_ParamEntry = efLib_ParamTable.as_mut_ptr();
@@ -1396,7 +1520,9 @@ pub unsafe extern "C" fn efLib_SetParamGfxId(mut gobj: *mut HSD_GObj, mut gfx_id
 }
 
 /// `efLib_Cb_ApplyStoredAlpha`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0xAE8EF1E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_ApplyStoredAlpha");
     let mut dobj: *mut HSD_DObj = null_mut();
     let mut jobj: *mut HSD_JObj = null_mut();
@@ -1444,7 +1570,9 @@ pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(mut effect: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_AccumOffset_FromParams`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_Cb_AccumOffset_FromParams(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x552EAFA6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_Cb_AccumOffset_FromParams");
     let mut translate: Vec3 = unsafe { core::mem::zeroed() };
     ext::lb_8000B1CC((*effect).attach_jobj, null_mut(), core::ptr::addr_of_mut!(translate) as *mut Vec);
@@ -1455,7 +1583,9 @@ pub unsafe extern "C" fn efLib_Cb_AccumOffset_FromParams(mut effect: *mut EF_Eff
 }
 
 /// `efLib_CreateGenerator_AppSRT_SetPos`
+#[inline(never)]
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetPos(mut gfx_id: i32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj, mut vec: *mut Vec) -> *mut EF_Effect {
+    core::hint::black_box(0x899BA768u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efLib_CreateGenerator_AppSRT_SetPos");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut effect: *mut EF_Effect = efLib_Create(0, gobj);

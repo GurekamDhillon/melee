@@ -566,3 +566,39 @@ It now hashes contents (`rust/melee_data/src/netid.rs`):
   (`geno_host::Reload` does). A file changed on disk mid-session is therefore not read until the session ends; it
   enters the next connect's forced hash.
 - **No mods**: the word stays 0 / "no mods", so vanilla peers and existing replays are unchanged.
+
+## --np-css multi-match sessions (2026-11-21, port/netfix)
+- **Held first room timed out after long menus.** The first match's room is opened at the connection and held
+  (`hold_start`) through the character and stage select; a held session sends nothing and is not polled then (the
+  lockstep checks liveness). On release its silence clock still counted from before the menus, so menus of 90 s
+  (`HOLD_TIMEOUT_MS`) or more killed match 1 at its first poll ("peer timed out" on both peers). `Net::release` now
+  restarts the clock. Seen with the stage-seek scripts (89.6 s of menus); real players at the CSS hit it the same way.
+- **The third-match drift was the test scripts.** css_pair's pad scripts were open loop: a results screen detour that
+  only some matches show (scene kind 39) shifted every later press, so START landed on the CSS, the SSS opened early,
+  the pick went to the wrong stage and the guest's script ended a match early (the host then lost the peer). The
+  fastpick SSS moves also missed Dreamland in netplay. Hashes stayed equal throughout (not an engine desync).
+  Pad scripts now take `until <scene> [buttons on period]` and `seek <stage_kind> sx sy [on period max]` lines
+  (melee_platform::script; the scene flow publishes the scene and the SSS hover); gen_css_scripts.py's NP_CSS_STAGES
+  scripts wait for the CSS and the match and seek each stage by its hover. `play: netplay ...: started (... match N,
+  stage ext K)` and `tick N: sss hover K` show what was picked.
+- The DL->FoD CSS hang itself was fixed in 9e070c9e4 (lbdvd preload waits fire the compaction alarm); no repro since.
+
+## Slippi spectating (port/slpspectate, 2026-11-22)
+- Broadcast: while a match is exported as `.slp` (`--slp`, the launcher's `--replay-dir`), melee/src/slippi_spectate.rs serves
+  Slippi Dolphin's spectator feed on 127.0.0.1 (settings `slippi_spectator` default on, off under YouGame; `slippi_spectator_port`
+  default 51441), as Hero's `slippi_spectate.cpp`: ENet, JSON `connect_request` / `connect_reply` / `start_game` /
+  `game_event` (base64 event groups) / `end_game` / `menu_event`, sorted keys, late clients caught up from the game's start.
+  Protocol state is `melee_net::slippi_spectate` (our own code, unit-tested). slp_export hands it each group it writes, so a rollback
+  run feeds only confirmed frames; the feed never touches the game.
+- melee_net ENet gained reliable fragments (SEND_FRAGMENT send + reassembly; tests/enet_fragments.rs, 70 KB packets): a 4-port
+  Ice Climbers frame is over one datagram.
+- Watch: `melee slp-spectate --connect 127.0.0.1:PORT --out FILE.slp` writes the feed as a `.slp` (raw length 0 while in progress,
+  replaced atomically every 100 ms). `melee play --replay FILE.slp` on a file still being written plays it as it grows (slp_play live
+  mode, `Player::reload_slp`), which is what Hero's launcher "Watch live" does with the Slippi Launcher's Spectate folder (it passes
+  the same `--replay` args, already mapped by launcher_compat).
+- Proof (loopback, scratch/specaudio/specrun.sh): CPU Fox v Marth, 2400 frames, broadcasting on a test port; our spectator and our live
+  viewer at the same time. Spectator raw == player's .slp raw (783191 bytes); the live viewer's per-frame hash CSV == `golden --slp`
+  on the player's file, 3001/3001 rows; the same match with the feed off gives a byte-identical .slp (no effect on the match).
+- Not done: the Slippi Launcher reading our feed (real Launcher / slippi-js against our ENet is untested here); watching a remote
+  player's broadcast needs the Slippi Launcher and Slippi's broadcast servers (real servers, real people), so our part is the
+  Spectate-folder file it writes. Menu frames are not fed (our export has no menu events).

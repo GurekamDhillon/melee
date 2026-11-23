@@ -73,12 +73,16 @@ unsafe fn Item_TickLifetime(ip: *mut Item) -> bool {
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroy(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9291C464u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_Destroy");
     ext::Item_8026A8EC(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroyed(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA7347BD5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).xDD4_itemVar.mdisable.owner.is_null() {
@@ -87,11 +91,13 @@ pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroyed(item_gobj: *mut Item_
     (*item).xDD4_itemVar.mdisable.owner = null_mut();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(
     fighter_gobj: *mut Fighter_GObj,
     offset: *mut Vec3,
     facing_dir: f32,
 ) -> *mut Item_GObj {
+    core::hint::black_box(0x5C096C9Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_SpawnMewtwoDisable");
     let mut spawnitem: SpawnItem = core::mem::zeroed();
 
@@ -123,7 +129,9 @@ pub unsafe extern "C" fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(
     item_gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C4B38(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x97FD5F89u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C4B38");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itMDisableAttributes;
@@ -138,7 +146,9 @@ pub unsafe extern "C" fn it_802C4B38(item_gobj: *mut Item_GObj) {
     it_802C4BB8(item_gobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn it_802C4BB8(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x9134A450u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802C4BB8");
     let item = GET_ITEM(item_gobj);
 
@@ -147,15 +157,20 @@ pub unsafe extern "C" fn it_802C4BB8(item_gobj: *mut Item_GObj) {
     ext::it_802755C0(item_gobj, y_scale);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x1623B64Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwodisable_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     Item_TickLifetime(item)
 }
 
-pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itMewtwodisable_UnkMotion0_Phys");}
+#[inline(never)]
+pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { core::hint::black_box(0x7FDD823Bu32); /* fn identity */ melee_core::ct!("itMewtwodisable_UnkMotion0_Phys");}
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> i32 {
+    core::hint::black_box(0x02220FE9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwodisable_UnkMotion0_Coll");
     let mut coll_flags: u32 = 0;
 
@@ -168,38 +183,52 @@ pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Coll(item_gobj: *mut Item_GO
     coll_flags as i32
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_DmgDealt(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x00725068u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_DmgDealt");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x17ABA7BEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_Reflected");
     // process being reflected
     ext::it_80273030(item_gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Clanked(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x14D1F236u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_Clanked");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_HitShield(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x06C74AC2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_HitShield");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Absorbed(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x5F0A3722u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_Absorbed");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_ShieldBounced(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xCAF15231u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_ShieldBounced");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_EvtUnk(item_gobj: *mut Item_GObj, ref_owner: *mut Fighter_GObj) {
+    core::hint::black_box(0x08B1AB81u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itMewtwoDisable_Logic67_EvtUnk");
     let item = GET_ITEM(item_gobj);
     if (*item).xDD4_itemVar.mdisable.owner == ref_owner {

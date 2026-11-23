@@ -122,12 +122,16 @@ unsafe fn set_hitlag_cbs(fp: *mut Fighter) {
 }
 
 /// Accessory callback entry for `fn_8010B1F4`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010B1F4(g: G) {
+    core::hint::black_box(0xF179630Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010B1F4");
     fn_8010B1F4(g);
 }
 /// In-state-change callback entry for `fn_8010B2E8`.
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_8010B2E8(g: G) {
+    core::hint::black_box(0x31632F4Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_8010B2E8");
     fn_8010B2E8(g);
 }

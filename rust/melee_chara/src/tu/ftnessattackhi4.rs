@@ -186,23 +186,33 @@ unsafe fn joint(fp: *mut Fighter, part: usize) -> *mut HSD_JObj {
 }
 
 /// C-ABI entries for the callbacks this TU stores in Fighter (`HSD_GObjEvent`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoStartTimedRehit(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC8BF0291u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftNs_AttackHi4_YoyoStartTimedRehit");
     ftNs_AttackHi4_YoyoStartTimedRehit(&mut *fpp(g))
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoUpdateHitPos(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFE82CAE2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftNs_AttackHi4_YoyoUpdateHitPos");
     ftNs_AttackHi4_YoyoUpdateHitPos(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftNs_Init_OnDamage(g: *mut HSD_GObj) {
+    core::hint::black_box(0x55155C53u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftNs_Init_OnDamage");
     crate::tu::ftness::ftNs_Init_OnDamage(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoItemSetUnk(g: *mut HSD_GObj) {
+    core::hint::black_box(0x05FC2565u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftNs_AttackHi4_YoyoItemSetUnk");
     ftNs_AttackHi4_YoyoItemSetUnk(g)
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoItemSetUnk2(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC2EEC7F5u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftNs_AttackHi4_YoyoItemSetUnk2");
     ftNs_AttackHi4_YoyoItemSetUnk2(g)
 }

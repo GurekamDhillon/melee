@@ -191,6 +191,11 @@ pub struct Replay {
     pub frozen_ps: bool,
     /// Game Start major scene 8: Slippi online, which forces the seed every frame.
     pub online: bool,
+    /// Online, and the Frame Start seeds are the console's forced seed itself rather than the "game seed + n * 0x10000"
+    /// form: slippi-ssbm-asm's FN_SyncRNG (Online/Core/InitOnlinePlay.asm, "improve rng seed generation", in 3.20 lists)
+    /// hashes that value (murmur3 finalizer, then the rolling players' bits in the top byte) before it writes the seed,
+    /// and the Frame Start event records the written value. Set from the file's own seeds after the parse.
+    pub fs_forced: bool,
     pub post: Option<Vec<Post>>,
     pub parity_expected: i64,
     /// "mode=vs;at=match;stage=ext:N;pP=ck:K/cC/hu|cpu..." (`rp_load`)
@@ -244,6 +249,7 @@ impl Replay {
             no_ucf_cardinals: false,
             frozen_ps: false,
             online: false,
+            fs_forced: false,
             post: None,
             parity_expected: 0,
             scene: String::new(),
@@ -472,7 +478,20 @@ pub fn parse_into(rp: &mut Replay, d: &[u8], want_post: bool) -> Result<(), Pars
         }
     }
     rp.scene = s;
+    rp.fs_forced = rp.online && fs_forced(rp);
     Ok(())
+}
+
+/// Whether most Frame Start seeds lack the old online form (the game seed's low half, frame number in the high half).
+fn fs_forced(rp: &Replay) -> bool {
+    let (mut n, mut old) = (0u32, 0u32);
+    for (k, &has) in rp.fs_has.iter().enumerate() {
+        if has {
+            n += 1;
+            old += (rp.fs_seed[k] & 0xFFFF == rp.seed & 0xFFFF) as u32;
+        }
+    }
+    n > 0 && old * 2 < n
 }
 
 /// FNV-1a 64 helpers for summary lines.

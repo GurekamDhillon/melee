@@ -21,11 +21,18 @@ pub const SLOT: usize = 1 << 30;
 pub const NSLOT: usize = 64;
 /// The slot's tail holds the block records (not recorded allocations).
 const META: usize = 64 << 20;
-const STEP: usize = 1 << 20;
+/// Commit granularity of the block area. Windows charges committed pages to the process's private bytes whether or not
+/// they are ever touched, and every slot a kept plan holds keeps its commit: a coarse step left ~0.5 MB per slot unused.
+const STEP: usize = 256 << 10;
+/// Commit granularity of the block records and the event log (most recordings write a few KB of each; a 1 MB step
+/// left ~2 MB committed and untouched per slot, ~85 MB over the 40-odd slots a match keeps).
+const META_STEP: usize = 64 << 10;
 
 struct State {
     base: usize,
     used: AtomicU64,
+    /// MELEE_ASSET_TRAP, read at init (a lazy static here was host state the snapshot check saw change).
+    trap: usize,
     /// Per slot: bytes from its start that the last user committed (and wrote). A released slot keeps its pages
     /// (a fresh page costs a fault per 4 KB on first touch, which made a prepare ~1.8x the old decode); the next
     /// taker zeroes this much instead, and pages past [`KEEP_COMMITTED`] are given back.
@@ -154,7 +161,7 @@ pub fn init() -> bool {
     }
     let base = (base + SLOT - 1) & !(SLOT - 1);
     let st = unsafe { std::alloc::GlobalAlloc::alloc(&std::alloc::System, Layout::new::<State>()) } as *mut State;
-    unsafe { st.write(State { base, used: AtomicU64::new(0), dirty: [const { core::sync::atomic::AtomicUsize::new(0) }; NSLOT] }) };
+    unsafe { st.write(State { base, used: AtomicU64::new(0), trap: std::env::var("MELEE_ASSET_TRAP").ok().and_then(|v| v.parse().ok()).unwrap_or(0), dirty: [const { core::sync::atomic::AtomicUsize::new(0) }; NSLOT] }) };
     STATE.store(st, Release);
     true
 }
@@ -201,15 +208,52 @@ pub fn take_slot() -> Option<usize> {
     }
 }
 
+/// Committed pages kept over all FREE slots (a reuse skips the 4 KB first-touch faults). Past it a released slot is
+/// decommitted whole, block records and event log included: before, every slot a plan had ever used kept up to
+/// [`KEEP_COMMITTED`] of pages after the plan went, so evicting plans freed nothing (perf.md "Plan cache cap").
+const KEEP_FREE_COMMITTED: usize = 64 << 20;
+
 /// Give a slot back: its pages are dropped (they read zero when committed again).
 pub fn release_slot(slot: usize) {
     let Some(s) = state() else { return };
     let d = s.dirty[slot].load(Acquire);
-    if d > KEEP_COMMITTED {
+    let used = s.used.load(Acquire);
+    let kept_free: usize = (0..NSLOT).filter(|&i| i != slot && used & (1 << i) == 0).map(|i| s.dirty[i].load(Acquire)).sum();
+    if kept_free + d.min(KEEP_COMMITTED) > KEEP_FREE_COMMITTED {
+        // Decommitting resident pages costs ms per 100 MB: never on the thread that dropped the plan (often the
+        // game's). The slot stays taken until the asset worker has given its pages back ([`drain_decommits`]).
+        if DRAINER.load(Acquire) {
+            DECOMMIT.fetch_or(1 << slot, AcqRel);
+            return;
+        }
+        unsafe { sys::decommit(s.base + slot * SLOT, SLOT) };
+        s.dirty[slot].store(0, Release);
+    } else if d > KEEP_COMMITTED {
         unsafe { sys::decommit(s.base + slot * SLOT + KEEP_COMMITTED, SLOT - META - KEEP_COMMITTED) };
         s.dirty[slot].store(KEEP_COMMITTED, Release);
     }
     s.used.fetch_and(!(1u64 << slot), AcqRel);
+}
+
+/// An asset worker calls [`drain_decommits`] (set by it at start); without one a release decommits in place.
+pub static DRAINER: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+/// Released slots waiting for [`drain_decommits`] (still marked used meanwhile).
+static DECOMMIT: AtomicU64 = AtomicU64::new(0);
+
+/// Whether released slots wait for their pages to be given back.
+pub fn decommits_pending() -> bool {
+    DECOMMIT.load(Acquire) != 0
+}
+
+/// Give back the pages of the slots [`release_slot`] queued, then free the slots. The asset worker's thread only.
+pub fn drain_decommits() {
+    let Some(s) = state() else { return };
+    let m = DECOMMIT.swap(0, AcqRel);
+    for slot in (0..NSLOT).filter(|&i| m & (1 << i) != 0) {
+        unsafe { sys::decommit(s.base + slot * SLOT, SLOT) };
+        s.dirty[slot].store(0, Release);
+        s.used.fetch_and(!(1u64 << slot), AcqRel);
+    }
 }
 
 /// Note how far slot `slot` was written (its taker zeroes that much on reuse).
@@ -253,10 +297,10 @@ impl Rec {
             return false;
         }
         if end > self.ev_committed {
-            if !sys::commit(self.ev_committed, STEP) {
+            if !sys::commit(self.ev_committed, META_STEP) {
                 return false;
             }
-            self.ev_committed += STEP;
+            self.ev_committed += META_STEP;
         }
         self.ev.add(self.nev).write(e);
         self.nev += 1;
@@ -351,10 +395,10 @@ unsafe fn alloc_block(l: Layout) -> *mut u8 {
         if mend > r.lo + SLOT - META / 2 {
             return core::ptr::null_mut();
         }
-        if !sys::commit(r.meta_committed, STEP) {
+        if !sys::commit(r.meta_committed, META_STEP) {
             return core::ptr::null_mut();
         }
-        r.meta_committed += STEP;
+        r.meta_committed += META_STEP;
     }
     r.meta.add(r.n).write(Blk { at: p, size: l.size(), align: l.align(), live: 1 });
     r.n += 1;
@@ -392,10 +436,13 @@ pub fn written_pages(a: usize, n: usize) -> Option<Vec<usize>> {
 
 /// `MELEE_ASSET_TRAP=<size>` (debug): print a backtrace for every recorded allocation of exactly that size.
 fn trap(n: usize) {
-    static T: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    let st = STATE.load(Acquire);
+    let t = if st.is_null() { 0 } else { unsafe { (*st).trap } };
+    if t == 0 || n != t {
+        return;
+    }
     let r = CUR.with(|c| c.replace(core::ptr::null_mut()));
-    let t = *T.get_or_init(|| std::env::var("MELEE_ASSET_TRAP").ok().and_then(|v| v.parse().ok()).unwrap_or(0));
-    if t != 0 && n == t {
+    {
         eprintln!("asset trap: recorded alloc of {n}:
 {}", std::backtrace::Backtrace::force_capture());
     }

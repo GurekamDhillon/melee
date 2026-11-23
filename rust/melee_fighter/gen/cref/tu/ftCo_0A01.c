@@ -31,7 +31,7 @@ int main(void)
             F.cpu.ltrigger = (u8) rnd(); F.cpu.rtrigger = (u8) rnd();
             F.cpu.buttons = rnd();
             F.cpu.kind = rnd() % 12;
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.is_sub_fighter = rnd() & 1;
             F.hurt_capsules_len = rnd() % 16;
             F.cur_pos.x = rw(); F.cur_pos.y = rw();

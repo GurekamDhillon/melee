@@ -15,6 +15,24 @@ inside Fighter_MotionVars (0xAC). GC offsets (gc_decode / GcLayout) are unchange
 import sys
 
 PATCHES = [
+    # ftCommon thrownkirby: the 8-byte thrower_gobj moved every later field 4 bytes on, so a guest store to the
+    # C's coll_box (fp+2368, an m-ex Kirby-style inhale: Akaneia's Dedede) landed one word off from where
+    # ftCo_800BDA74 reads it. The pointer moves past the C's 0x40 bytes; its GC word stays a 4-byte slot.
+    ("""pub struct ftCommon_MotionVars_thrownkirby {
+    pub thrower_gobj: *mut Fighter_GObj,
+    pub x4: f32,""", """pub struct ftCommon_MotionVars_thrownkirby {
+    /// native only (gen/native_unions.py): the C's thrower_gobj word; the pointer is the last field
+    pub _thrower_slot: u32,
+    pub x4: f32,"""),
+    ("""    pub scale: Vec,
+    pub coll_box: ftCollisionBox,
+}
+impl ftCommon_MotionVars_thrownkirby {""", """    pub scale: Vec,
+    pub coll_box: ftCollisionBox,
+    /// native only (gen/native_unions.py): past the C's 0x40 bytes, so x4..coll_box keep their GC offsets
+    pub thrower_gobj: *mut Fighter_GObj,
+}
+impl ftCommon_MotionVars_thrownkirby {"""),
     ("""pub struct itGamewatchchef_ItemVars {
     pub x0: i32,
     pub x4: i32,

@@ -98,21 +98,27 @@ pub mod ext {
                 }
             }
     pub static mut H_lbDvd_GetPreloadCacheScene: Option<unsafe extern "C" fn() -> *mut melee_types::PreloadedGameModeState> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_GetPreloadCacheScene() -> *mut melee_types::PreloadedGameModeState {
+                core::hint::black_box(0x0D352900u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_GetPreloadCacheScene {
                     Some(f) => f(),
                     None => { return unsafe { melee_runtime::tu::lbdvd::lbDvd_GetPreloadCacheScene() as _ }; },
                 }
             }
     pub static mut H_lbDvd_80018C6C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_80018C6C()  {
+                core::hint::black_box(0xB127E946u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_80018C6C {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018C6C(); } return; },
                 }
             }
     pub static mut H_lbDvd_80018254: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_80018254()  {
+                core::hint::black_box(0x8ECBDAFBu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_80018254 {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
@@ -280,21 +286,27 @@ pub mod ext {
                 }
             }
     pub static mut H_gm_801BEFA4: Option<unsafe extern "C" fn(i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn gm_801BEFA4(a0: i32)  {
+                core::hint::black_box(0xC45BFA76u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_gm_801BEFA4 {
                     Some(f) => f(a0),
                     None => { unsafe { crate::tu::gmgover::gm_801BEFA4(a0 as _); } return; },
                 }
             }
     pub static mut H_gm_801BEFC0: Option<unsafe extern "C" fn(i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn gm_801BEFC0(a0: i32)  {
+                core::hint::black_box(0x3C56A730u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_gm_801BEFC0 {
                     Some(f) => f(a0),
                     None => { unsafe { crate::tu::gmgover::gm_801BEFC0(a0 as _); } return; },
                 }
             }
     pub static mut H_lbDvd_SetupVsPreloadCache: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache()  {
+                core::hint::black_box(0x1D2B75B2u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_SetupVsPreloadCache {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } return; },
@@ -604,7 +616,9 @@ pub unsafe extern "C" fn gm_PreloadTitleDemo() {
     ext::lbAudioAx_80027168();
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
+    core::hint::black_box(0xFE1B585Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("onEnterVs");
     let temp_r30: *mut VsModeData = &mut (*ext::gmMainLib_804D3EE0).modes.table[GmVsMode_Opening as usize];
     let md = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;

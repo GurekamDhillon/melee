@@ -87,8 +87,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn mn_8022EB04(a0: *mut c_void) { super::mn_8022EB04(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { core::hint::black_box(0x3C8AF7CFu32); /* fn identity */ super::HSD_JObjSetMtxDirtySub(a0) }
+        #[inline(never)]
+        pub unsafe extern "C" fn mn_8022EB04(a0: *mut c_void) { core::hint::black_box(0x04177CA4u32); /* fn identity */ super::mn_8022EB04(a0) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -161,13 +163,43 @@ pub static mut un_804D6D78: *mut HSD_Text = null_mut();
 pub static mut un_804D6D7C: i32 = 0;
 
 /// `memzero` (lb_00B0.c): the real behaviour, used unless a test installs a hook.
+/// Slippi online's name tags: each port's display name over its fighter in place of its P1..P4 plate text (Slippi
+/// Dolphin and Hero show the players' names during an online match). NUL-terminated text for the SIS font; empty: none.
+/// Plain bytes (no heap): set before the match's first snapshot, so a rollback load puts back the same names.
+pub static mut ONLINE_TAGS: [[u8; 64]; 4] = [[0; 64]; 4];
+
+/// Name the port's tag (`""` clears it). Printable ASCII only (no `%`: the text is a format), at most 15 characters (Slippi's in-game name length);
+/// letters, digits and `.-:` and spaces as the font's ASCII forms, the rest as their fullwidth forms.
+pub fn set_online_tag(slot: usize, name: &str) {
+    let Some(t) = (unsafe { (*core::ptr::addr_of_mut!(ONLINE_TAGS)).get_mut(slot) }) else { return };
+    *t = [0; 64];
+    let mut o = 0;
+    for c in name.chars().filter(|c| (c.is_ascii_graphic() && *c != '%') || *c == ' ').take(15) {
+        let mut b = [0u8; 4];
+        let enc: &[u8] = if c.is_ascii_alphanumeric() || " .-:".contains(c) { c.encode_utf8(&mut b).as_bytes() } else { char::from_u32(c as u32 + 0xFEE0).unwrap_or('?').encode_utf8(&mut b).as_bytes() };
+        if o + enc.len() >= t.len() {
+            break;
+        }
+        t[o..o + enc.len()].copy_from_slice(enc);
+        o += enc.len();
+    }
+}
+
+/// The port's online tag, when it has one.
+pub fn online_tag(slot: i32) -> Option<*const u8> {
+    let t = unsafe { (*core::ptr::addr_of!(ONLINE_TAGS)).get(slot as usize)? };
+    (t[0] != 0).then_some(t.as_ptr())
+}
+
 pub fn memzero_default(mem: *mut c_void, size: i32) {
     melee_core::ct!("memzero_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
 /// 2FC9B4: texture frame of a plate model.
+#[inline(never)]
 pub unsafe extern "C" fn un_802FC9B4(slot: u8, arg1: u8, arg2: u8, arg3: u8) -> f32 {
+    core::hint::black_box(0x80275521u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FC9B4");
     let player_id: u8 = ext::Player_GetPlayerId(slot as i32) as u8;
     if arg2 != 0 {
@@ -185,7 +217,9 @@ pub unsafe extern "C" fn un_802FC9B4(slot: u8, arg1: u8, arg2: u8, arg3: u8) -> 
     18.0 // CP Gray
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn NameTag_RenderCallback(gobj: *mut HSD_GObj, pass: isize) {
+    core::hint::black_box(0x9924DD4Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("NameTag_RenderCallback");
     if ext::Ui_RetailHidden(AT_RE_HUD_NAMETAG) != 0 {
         return;
@@ -193,7 +227,9 @@ pub unsafe extern "C" fn NameTag_RenderCallback(gobj: *mut HSD_GObj, pass: isize
     ext::HSD_GObj_JObjCallback(gobj, pass);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FCAC4(gobj: *mut HSD_GObj, _pass: isize) {
+    core::hint::black_box(0x34301899u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FCAC4");
     // Do not move the live nametag text offscreen just to hide a capture.
     if ext::Wb_RenderActive() != 0 && ext::ifAll_IsHUDHidden() != 0 {
@@ -212,7 +248,9 @@ pub unsafe extern "C" fn fn_802FCAC4(gobj: *mut HSD_GObj, _pass: isize) {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FCBA0() {
+    core::hint::black_box(0x75C7A9CBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FCBA0");
     let mut x: *mut *mut DynamicModelDesc = null_mut();
     let archive = ext::ifAll_GetArchive();
@@ -230,12 +268,16 @@ pub unsafe extern "C" fn un_802FCBA0() {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn has_nametag(slot: i32) -> bool {
+    core::hint::black_box(0x3AE97141u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("has_nametag");
-    !(ext::Player_GetPlayerSlotType(slot) != Gm_PKind_Human || ext::Player_GetNametagSlotID(slot) == NAMETAG_DISABLED)
+    online_tag(slot).is_some() || !(ext::Player_GetPlayerSlotType(slot) != Gm_PKind_Human || ext::Player_GetNametagSlotID(slot) == NAMETAG_DISABLED)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD4470AC0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_802FCC44");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vec2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -261,6 +303,7 @@ pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
         && ext::Player_GetStocks(*slot as i32) != 0
         && (un_804D6D70[*slot as usize] != 0
             || ext::Player_GetNametagSlotID(*slot as i32) != b'x'
+            || online_tag(*slot as i32).is_some()
             || ext::Player_80036058(*slot as i32) != 0
             || ext::gm_8016B258(*slot as i32) != 0)
     {
@@ -284,7 +327,9 @@ pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn inlineA1(var_f31: f32) -> f32 {
+    core::hint::black_box(0x8D3C9CCEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("inlineA1");
     let q = melee_core::ppc::fctiwz_f32(var_f31);
     if q >= 16 {
@@ -294,7 +339,9 @@ pub unsafe extern "C" fn inlineA1(var_f31: f32) -> f32 {
     }
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn NameTag_Create(slot: i32) {
+    core::hint::black_box(0xFF6DF447u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("NameTag_Create");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_UI as u16, 15, 0);
     un_804A1EE0[slot as usize] = gobj;
@@ -313,8 +360,17 @@ pub unsafe extern "C" fn NameTag_Create(slot: i32) {
             let mut f = un_802FC9B4(slot as u8, team, a2, a3);
             if has_nametag(slot) {
                 f = inlineA1(f);
-                let name = ext::GetNameText(ext::Player_GetNametagSlotID(slot) as i32);
-                un_804A1EF8[slot as usize] = ext::HSD_SisLib_803A6B98(un_804D6D78, -5000.0, 0.0, name.cast());
+                un_804A1EF8[slot as usize] = match online_tag(slot) {
+                    // the text maker itself: the linked hook's argument cast does not take a byte pointer
+                    Some(t) => {
+                        let s = melee_runtime::cformat::c_format(t as *const i8, &[]);
+                        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98_bytes(un_804D6D78, -5000.0, 0.0, Some(&s))
+                    }
+                    None => {
+                        let name = ext::GetNameText(ext::Player_GetNametagSlotID(slot) as i32);
+                        ext::HSD_SisLib_803A6B98(un_804D6D78, -5000.0, 0.0, name.cast())
+                    }
+                };
                 ext::HSD_SisLib_803A7548(un_804D6D78, un_804A1EF8[slot as usize], 0.4, 0.55);
             }
             ext::HSD_JObjReqAnimAll(jobj, f);
@@ -329,7 +385,9 @@ pub unsafe extern "C" fn NameTag_Create(slot: i32) {
     ext::HSD_GObj_SetupProc(gobj, Some(fn_802FCC44), 17);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD28C(slot: i32) {
+    core::hint::black_box(0x214C2E20u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD28C");
     let jobj = (*un_804A1EE0[slot as usize]).hsd_obj as *mut HSD_JObj;
     let team = ext::Player_GetTeam(slot) as u8;
@@ -347,7 +405,9 @@ pub unsafe extern "C" fn un_802FD28C(slot: i32) {
     ext::HSD_JObjAnimAll(jobj);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD404() {
+    core::hint::black_box(0x3D8EB2FBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD404");
     un_804D6D70[0] = 1;
     un_804D6D70[1] = 1;
@@ -357,22 +417,30 @@ pub unsafe extern "C" fn un_802FD404() {
     un_804D6D70[5] = 1;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD428() {
+    core::hint::black_box(0xBD896C4Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD428");
     ext::memzero((&raw mut un_804D6D70).cast(), core::mem::size_of::<[u8; GM_PLAYER_NUM_MAX]>() as i32);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD450() {
+    core::hint::black_box(0x4381F07Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD450");
     un_804D6D6C = 1;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD45C() {
+    core::hint::black_box(0x1281A357u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD45C");
     un_804D6D6C = 0;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD468() {
+    core::hint::black_box(0x357F9BD9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD468");
     for i in 0..GM_PLAYER_NUM_MAX {
         if !un_804A1EE0[i].is_null() {
@@ -383,12 +451,16 @@ pub unsafe extern "C" fn un_802FD468() {
 }
 
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD4C8_inline(arg0: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0xB2633580u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD4C8_inline");
     ext::GObj_Create(0xE, arg0 as u8, 0)
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn un_802FD4C8() {
+    core::hint::black_box(0xB84D9774u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_802FD4C8");
     for i in 0..GM_PLAYER_NUM_MAX {
         un_804A1EE0[i] = null_mut();

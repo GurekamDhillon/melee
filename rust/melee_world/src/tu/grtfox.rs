@@ -213,7 +213,9 @@ pub unsafe extern "C" fn grTFox_80220C2C(arg0: i32) -> *mut HSD_GObj {
     gobj
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xEFA37007u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj0_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
@@ -228,13 +230,17 @@ pub unsafe extern "C" fn grTFox_80220D4C(gobj: *mut HSD_GObj) {
     
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x4FEE07E1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj2_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xAE1C7F08u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(gobj);
 }
@@ -244,13 +250,17 @@ pub unsafe extern "C" fn grTFox_80220DDC(gobj: *mut HSD_GObj) {
     
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x7ED2FAC6u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    core::hint::black_box(0xD8AF2AE7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }

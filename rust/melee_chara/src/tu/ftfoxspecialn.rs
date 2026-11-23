@@ -196,15 +196,21 @@ unsafe fn set_damage_callback(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) {
     (*fp).death2_cb = cb;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_Init_800E5588(g: *mut HSD_GObj) {
+    core::hint::black_box(0xB665CB39u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_Init_800E5588");
     ext::ftFx_Init_800E5588(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialN_OnChangeAction(g: *mut HSD_GObj) {
+    core::hint::black_box(0xC9382040u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialN_OnChangeAction");
     ftFx_SpecialN_OnChangeAction(g);
 }
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftFx_SpecialN_CreateBlasterShot(g: *mut HSD_GObj) {
+    core::hint::black_box(0xD870A2C8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftFx_SpecialN_CreateBlasterShot");
     ftFx_SpecialN_CreateBlasterShot(g);
 }

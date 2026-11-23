@@ -32,7 +32,7 @@ fn enet_ticket_flow_on_loopback() {
         }
         got
     });
-    let req = JoinRequest { uid: "u".into(), play_key: String::new(), lan_ip: String::new(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "3.6.4".into(), port: 0 };
+    let req = JoinRequest { uid: "u".into(), play_key: String::new(), lan_ip: String::new(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "3.6.4".into(), port: 0, reflexive: None, nat_type: String::new() };
     let m = join_enet(&format!("127.0.0.1:{sport}"), 0x7F00_0001, &req, Duration::from_secs(10), Target::Loopback, |_| {}, |_| false).unwrap();
     assert_eq!(m.local_index(), Some(1));
     assert_eq!(m.stages, vec![32]);

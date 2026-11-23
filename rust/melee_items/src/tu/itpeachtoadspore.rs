@@ -59,7 +59,9 @@ pub static mut it_803F7548: [ItemStateTable; 1] = [
 ];
 
 /// 2BE214
+#[inline(never)]
 pub unsafe extern "C" fn it_802BE214(item_gobj: *mut Item_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) -> *mut Item_GObj {
+    core::hint::black_box(0x1CD8AE30u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BE214");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -88,7 +90,9 @@ pub unsafe extern "C" fn it_802BE214(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
 }
 
 /// 2BE2E8
+#[inline(never)]
 pub unsafe extern "C" fn it_802BE2E8(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    core::hint::black_box(0x20A717B0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802BE2E8");
     let item_1 = GET_ITEM(item_gobj);
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
@@ -121,7 +125,9 @@ pub unsafe extern "C" fn it_802BE2E8(item_gobj: *mut Item_GObj, arg1: *mut HSD_G
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x580D0D76u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachtoadspore_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     if (*item).xDAC_itcmd_var0 != 0 {
@@ -136,7 +142,9 @@ pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Anim(item_gobj: *mut Item_G
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x2F1E7813u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachtoadspore_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPeachToadSporeAttributes;
@@ -144,36 +152,48 @@ pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Phys(item_gobj: *mut Item_G
     (*item).x40_vel.y *= (*attr).x8_speed_decay_rate;
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToadSpore_Logic92_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4ED344F8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToadSpore_Logic92_DmgDealt");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_Clanked(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x3A9F6C37u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToadSpore_Logic68_Clanked");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_HitShield(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x9CCDD45Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToadSpore_Logic68_HitShield");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_Absorbed(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xB62477EDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToadSpore_Logic68_Absorbed");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_ShieldBounced(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x97C0F1F8u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToadSpore_Logic68_ShieldBounced");
     ext::itColl_BounceOffShield(item_gobj) != 0
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x1BBCE577u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToadSpore_Logic68_Reflected");
     let item = GET_ITEM(item_gobj);
     let life_timer = (*item).xD44_lifeTimer;
@@ -182,7 +202,9 @@ pub unsafe extern "C" fn itPeachToadSpore_Logic68_Reflected(item_gobj: *mut Item
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itPeachToadSpore_Logic92_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x6141C511u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itPeachToadSpore_Logic92_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

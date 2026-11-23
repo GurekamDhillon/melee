@@ -77,7 +77,9 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftSk_Init_80110198` as a callback entry (the take-damage / death2 callback).
 #[inline(never)] // compared by address in ftSk_SpecialN: keep one copy
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftSk_Init_80110198(g: *mut HSD_GObj) {
+    core::hint::black_box(0xF51509DEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftSk_Init_80110198");
     ftSk_Init_80110198(g);
 }

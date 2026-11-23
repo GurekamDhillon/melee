@@ -3,16 +3,80 @@
 use crate::aurora::{NativeButton, RawGamepad};
 use crate::pad::PAD_CHANMAX;
 use crate::plog;
+use gilrs::ff::{BaseEffect, BaseEffectType, Effect, EffectBuilder, Replay, Ticks};
 use gilrs::{Axis, Button, GamepadId, Gilrs};
 
 pub struct Gamepads {
     gilrs: Option<Gilrs>,
     ports: [Option<GamepadId>; PAD_CHANMAX],
+    /// The force-feedback effect playing on each port (dropping one stops it).
+    motors: [Option<Effect>; PAD_CHANMAX],
 }
+
+/// The GameCube rumble motor is on or off; this is the same on a gamepad: both motors, the heavy one stronger.
+const RUMBLE_STRONG: u16 = 42_000;
+const RUMBLE_WEAK: u16 = 24_000;
+/// A rumble the game never stops (a crash, a quit mid-rumble) ends by itself after this.
+const RUMBLE_MAX_MS: u32 = 10_000;
 
 /// gilrs axis value (-1..1, +Y up) -> SDL Sint16.
 fn to_sdl(v: f32) -> i16 {
     (v * 32767.0).round().clamp(-32768.0, 32767.0) as i16
+}
+
+/// A raw controller's buttons and hat as his `hid<n>` mask reads them. Button N+1 is bit N: the WGI backend numbers
+/// its raw buttons from 0 (kind 0 in the code's high half); elsewhere the n-th button the device has. The hat is a
+/// switch (kind 2) as two axes, x then y, where gilrs gives WGI's y as down-positive. Not tried on a box.
+pub fn hid_mask(state: &gilrs::ev::state::GamepadState) -> u32 {
+    let mut m = 0u32;
+    for (n, (code, d)) in state.buttons().enumerate() {
+        if !d.is_pressed() {
+            continue;
+        }
+        let c = code.into_u32();
+        let idx = if cfg!(windows) {
+            if c >> 16 != 0 {
+                continue;
+            }
+            c as usize
+        } else {
+            n
+        };
+        if idx < 28 {
+            m |= 1 << idx;
+        }
+    }
+    let (mut hx, mut hy) = (0.0f32, 0.0f32);
+    for (code, a) in state.axes() {
+        let c = code.into_u32();
+        if cfg!(windows) && c >> 16 == 2 && c & 0xFFFF < 2 {
+            if c & 1 == 0 {
+                hx = a.value();
+            } else {
+                hy = a.value();
+            }
+        }
+    }
+    m | hat_bits(hx, hy)
+}
+
+/// The hat switch from its two axes (-1..1; y negative is Up).
+pub fn hat_bits(x: f32, y: f32) -> u32 {
+    use crate::bindings::{HID_HAT_DOWN, HID_HAT_LEFT, HID_HAT_RIGHT, HID_HAT_UP};
+    let mut m = 0;
+    if y < -0.5 {
+        m |= HID_HAT_UP;
+    }
+    if y > 0.5 {
+        m |= HID_HAT_DOWN;
+    }
+    if x < -0.5 {
+        m |= HID_HAT_LEFT;
+    }
+    if x > 0.5 {
+        m |= HID_HAT_RIGHT;
+    }
+    m
 }
 
 impl Gamepads {
@@ -28,23 +92,24 @@ impl Gamepads {
                 None
             }
         };
-        let mut me = Self { gilrs, ports: [None; PAD_CHANMAX] };
+        let mut me = Self { gilrs, ports: [None; PAD_CHANMAX], motors: Default::default() };
         me.reassign();
         me
     }
 
     /// No gamepads at all (headless).
     pub fn none() -> Self {
-        Self { gilrs: None, ports: [None; PAD_CHANMAX] }
+        Self { gilrs: None, ports: [None; PAD_CHANMAX], motors: Default::default() }
     }
 
     fn reassign(&mut self) {
         let Some(g) = self.gilrs.as_ref() else { return };
-        for p in self.ports.iter_mut() {
+        for (i, p) in self.ports.iter_mut().enumerate() {
             if let Some(id) = *p {
                 if g.connected_gamepad(id).is_none() {
                     plog!("gw: input: gamepad {id} disconnected");
                     *p = None;
+                    self.motors[i] = None;
                 }
             }
         }
@@ -60,6 +125,45 @@ impl Gamepads {
                     port + 1
                 );
                 self.ports[port] = Some(id);
+            }
+        }
+    }
+
+    /// Start (`on`) or stop the rumble of the pad on `port`. False when there is no such pad or it has no force
+    /// feedback. Output only: nothing here is read back by the game.
+    pub fn set_rumble(&mut self, port: usize, on: bool) -> bool {
+        if port >= PAD_CHANMAX {
+            return false;
+        }
+        if !on {
+            // dropping the effect stops it
+            return self.motors[port].take().is_some();
+        }
+        if self.motors[port].is_some() {
+            return true;
+        }
+        let (Some(g), Some(id)) = (self.gilrs.as_mut(), self.ports[port]) else { return false };
+        if !g.connected_gamepad(id).is_some_and(|gp| gp.is_ff_supported()) {
+            return false;
+        }
+        let play_for = Replay { play_for: Ticks::from_ms(RUMBLE_MAX_MS), ..Default::default() };
+        let built = EffectBuilder::new()
+            .add_effect(BaseEffect { kind: BaseEffectType::Strong { magnitude: RUMBLE_STRONG }, scheduling: play_for, ..Default::default() })
+            .add_effect(BaseEffect { kind: BaseEffectType::Weak { magnitude: RUMBLE_WEAK }, scheduling: play_for, ..Default::default() })
+            .gamepads(&[id])
+            .finish(g);
+        match built {
+            Ok(e) => {
+                if let Err(err) = e.play() {
+                    plog!("gw: input: rumble on port {} failed to start: {err}", port + 1);
+                    return false;
+                }
+                self.motors[port] = Some(e);
+                true
+            }
+            Err(err) => {
+                plog!("gw: input: rumble on port {} not available: {err}", port + 1);
+                false
             }
         }
     }
@@ -118,6 +222,11 @@ impl Gamepads {
             r.has_rumble = gp.is_ff_supported();
             r.name = gp.name().to_string();
             r.family = crate::profiles::Family::detect(gp.vendor_id(), gp.product_id(), gp.name());
+            // his "HID Pad": a generic / box device that is a raw controller, not an XInput-layout gamepad
+            if matches!(r.family, crate::profiles::Family::Generic | crate::profiles::Family::Box) && gp.mapping_source() != gilrs::MappingSource::Driver {
+                r.hid_raw = true;
+                r.hid_buttons = hid_mask(gp.state());
+            }
             out[i] = Some(r);
         }
         out

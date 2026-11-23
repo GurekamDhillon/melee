@@ -19,6 +19,24 @@ use melee_net::session::{RbGame, FIRST, SLOTS};
 use melee_types::PADStatus;
 use std::cell::RefCell;
 
+/// A hard checksum mismatch (`hard`: how many so far, this one included): the first 30 are logged, then a count every 60
+/// frames. The first also dumps the state (per fighter position, percent, action state; stocks per slot) with both
+/// checksums and the frame, and saves the match's live .slp (`slp_export`). Logging and saving only.
+pub(crate) fn desync_report(tag: &str, fr: i32, lv: u32, rv: u32, hard: u64, cur: i32) {
+    if hard <= 30 {
+        log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x} (the match goes on)"));
+    } else if fr % 60 == 0 {
+        log(&format!("netplay {tag}: DESYNC count {hard} (latest at online frame {fr}: local {lv:08x} remote {rv:08x})"));
+    }
+    if hard == 1 {
+        log(&format!("netplay {tag}: DESYNC state at online frame {fr} (session now at {cur}; local {lv:08x} remote {rv:08x}): {}", melee_fighter::slippi_online::state_dump()));
+        match crate::slp_export::save_on_desync() {
+            Some(p) => log(&format!("netplay {tag}: DESYNC: the match so far is saved to {p}")),
+            None => log(&format!("netplay {tag}: DESYNC: no .slp to save (recording is off{})", if crate::slp_export::active() { "; no confirmed frames yet" } else { "" })),
+        }
+    }
+}
+
 fn log(msg: &str) {
     eprintln!("play: {msg}");
 }
@@ -63,76 +81,17 @@ pub struct Detacher {
     frame: u64,
 }
 
-/// A 128-bit content hash (two independent multiply-xorshift lanes over 8-byte words).
-fn hash128(b: &[u8]) -> (u64, u64) {
-    let (mut h1, mut h2) = (0x9E37_79B9_7F4A_7C15u64 ^ b.len() as u64, 0xC2B2_AE3D_27D4_EB4Fu64);
-    let mut ch = b.chunks_exact(8);
-    for c in &mut ch {
-        let w = u64::from_le_bytes(c.try_into().unwrap());
-        h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD).rotate_left(29);
-        h2 = (h2 ^ w.rotate_left(32)).wrapping_mul(0xC4CE_B9FE_1A85_EC53).rotate_left(31);
-    }
-    let mut t = [0u8; 8];
-    t[..ch.remainder().len()].copy_from_slice(ch.remainder());
-    let w = u64::from_le_bytes(t);
-    h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD);
-    h2 = (h2 ^ w).wrapping_mul(0xC4CE_B9FE_1A85_EC53);
-    (h1 ^ (h1 >> 33), h2 ^ (h2 >> 29))
-}
-
-/// Detached copies not used for this many frames are dropped.
-const DETACH_KEEP: u64 = 120;
-
 impl Detacher {
     /// [`detach_frame`]. Call outside the game scope; the original is freed inside it.
     pub fn detach(&mut self, f: Vec<melee_gx::draw::DrawCmd>) -> Vec<melee_gx::draw::DrawCmd> {
-        use std::collections::HashMap;
-        use std::sync::Arc;
-        debug_assert!(!melee_engine::arena::contains(self as *const Self as *const u8), "Detacher must not live in the arena");
+        // The GX shim's state and its frames live on the system heap, outside the snapshot (gxbridge): a frame shares
+        // nothing a load rewrites, so it is handed over as it is (no copy). The cross-frame cache stays for its
+        // fields' sake (callers own a Detacher) but holds nothing.
         self.frame += 1;
-        let now = self.frame;
-        let mut cfgs: HashMap<usize, Arc<melee_gx::shader::PipelineConfig>> = HashMap::new();
-        // per frame by the arena Arc's address (stable within the frame), across frames by content
-        let mut seen: HashMap<usize, melee_gx::resources::GxData> = HashMap::new();
-        let datas = &mut self.datas;
-        let mut data = |d: &melee_gx::resources::GxData| -> melee_gx::resources::GxData {
-            seen.entry(Arc::as_ptr(d) as *const u8 as usize)
-                .or_insert_with(|| {
-                    let (a, b) = hash128(d);
-                    let e = datas.entry((a, b, d.len())).or_insert_with(|| (Arc::from(&d[..]), now));
-                    e.1 = now;
-                    e.0.clone()
-                })
-                .clone()
-        };
-        let out: Vec<melee_gx::draw::DrawCmd> = f
-            .iter()
-            .map(|c| {
-                let mut n = c.clone();
-                n.config = cfgs.entry(Arc::as_ptr(&c.config) as usize).or_insert_with(|| Arc::new((*c.config).clone())).clone();
-                for a in n.arrays.iter_mut().flatten() {
-                    a.data = data(&a.data);
-                }
-                for t in n.textures.iter_mut() {
-                    if let Some(d) = &t.data {
-                        t.data = Some(data(d));
-                    }
-                }
-                for t in n.tluts.iter_mut() {
-                    if let Some(d) = &t.data {
-                        t.data = Some(data(d));
-                    }
-                }
-                n
-            })
-            .collect();
-        if now % DETACH_KEEP == 0 {
-            self.datas.retain(|_, e| now - e.1 < DETACH_KEEP);
-        }
-        let _s = melee_engine::arena::GameScope::enter();
-        drop(f);
+        self.datas.clear();
+        let _s = melee_engine::arena::SysScope::enter();
         drop(melee_engine::gxbridge::shim().gx.packed.take());
-        out
+        f
     }
 }
 
@@ -193,6 +152,22 @@ pub struct ModesGame {
     /// a detached frame waiting for `take_frame` (a frozen redraw's)
     held: Option<Vec<melee_gx::draw::DrawCmd>>,
     detach: Detacher,
+    /// A Slippi-wire match (`play --slippi-mm`): the online seed-bit mix and desync checksum per frame, as
+    /// `netmatch::engine_game::EngineGame` keeps them for the headless `slippi-netplay`.
+    pub slippi: Option<Box<SlippiSim>>,
+}
+
+/// Slippi online state a [`ModesGame`] keeps per session frame (on the system heap: never rolled back).
+#[derive(Default)]
+pub struct SlippiSim {
+    /// the desync checksum of the state entering each online frame (online frame 1 = session `FIRST`)
+    pub ck: std::collections::BTreeMap<i32, u32>,
+    /// byte 8 of each port's pad per session frame (a missing or predicted pad counts 0)
+    pub bits: std::collections::BTreeMap<i32, [u8; 4]>,
+    /// each port's external character, for the seed-bit mix
+    pub chars: [u32; 4],
+    /// the frames whose seed-bit mix read pad bytes, with the bytes it read
+    pub mixed: std::collections::BTreeMap<i32, [u8; 4]>,
 }
 
 #[derive(Clone)]
@@ -211,7 +186,9 @@ impl ModesSnap {
 
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
-        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default() }
+        // the snapshot base is captured at the match's first frames: its copy buffers are made ahead (helper thread)
+        melee_engine::snapshot::prewarm();
+        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default(), slippi: None }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
         if self.base.borrow().is_none() {
@@ -237,7 +214,7 @@ impl ModesGame {
         if let Some(f) = f {
             // only the newest frame of a tick is shown: detach (copy) it lazily, at the end of the tick
             if let Some(old) = self.raw.replace(f) {
-                let _s = melee_engine::arena::GameScope::enter();
+                let _s = melee_engine::arena::SysScope::enter();
                 drop(old);
             }
         }
@@ -266,7 +243,7 @@ impl ModesGame {
     /// Lets go of the tick's newest frame without copying it (its blocks are the arena's, freed in the game scope).
     pub fn drop_frame(&mut self) {
         if let Some(f) = self.raw.take() {
-            let _s = melee_engine::arena::GameScope::enter();
+            let _s = melee_engine::arena::SysScope::enter();
             drop(f);
         }
     }
@@ -314,17 +291,23 @@ impl RbGame for ModesGame {
         None
     }
     fn save(&self) -> ModesSnap {
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot save");
         ModesSnap { mem: self.with_base(|b| b.save()), frames: self.e.frames, ended: self.e.ended }
     }
     fn load(&mut self, s: &ModesSnap) {
         let _z = melee_core::tracy::zone("netplay snapshot load (rollback)");
-        // the held frame's blocks belong to the timeline being discarded: the load decides what they are now
-        std::mem::forget(self.raw.take());
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: snapshot load");
+        // the held frame is render state on the system heap (gxbridge), outside the snapshot: freed as usual
+        {
+            let _s = melee_engine::arena::SysScope::enter();
+            drop(self.raw.take());
+        }
         self.with_base(|b| b.load(&s.mem));
         self.e.frames = s.frames;
         self.e.ended = s.ended;
     }
     fn state_hash(&self) -> u32 {
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 300, "netplay: state hash");
         self.with_base(|b| b.page_hash())
     }
     fn game_hash(&self) -> u32 {
@@ -342,6 +325,7 @@ impl RbGame for ModesGame {
     }
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool) {
         let _z = melee_core::tracy::zone(if resim { "netplay resim frame" } else { "netplay frame" });
+        let _zh = melee_core::frameprof::SlowSpan::new(melee_core::frameprof::Kind::Note, 500, if resim { "netplay: resim frame" } else { "netplay: frame" });
         if self.e.ended {
             return;
         }
@@ -363,7 +347,37 @@ impl RbGame for ModesGame {
         }
         // the define audio's start ledger (geno_host: real-time clips, keyed by start frame)
         melee_engine::geno_host::net_frame(self.frame() + 1, resim);
+        // Slippi online: the pads TriggerSendInput section 11 mixes for this frame (as EngineGame::run_frame)
+        if let (Some(sl), Some(st)) = (self.slippi.as_ref(), melee_core::slippi_online::state()) {
+            let bits = sl.bits.get(&(self.frame() + 1)).copied().unwrap_or([0; 4]);
+            for port in 0..4 {
+                st.pending[port] = melee_core::slippi_online::PadBits {
+                    buttons: p[port].button,
+                    stick_x: p[port].stickX,
+                    stick_y: p[port].stickY,
+                    rng_bits: bits[port],
+                    ext_char: sl.chars[port],
+                };
+            }
+        }
+        // a live .slp (the Slippi-wire match): this frame's events wait under its session frame until confirmed
+        crate::slp_export::begin_frame(self.frame() + 1, &p);
         self.step(p);
+        crate::slp_export::end_frame();
+        if self.slippi.is_some() && melee_core::slippi_online::state().is_some() {
+            let sf = self.frame();
+            let rolling = melee_core::slippi_online::state().is_some_and(|st| st.last_rolling != 0);
+            let ck = melee_fighter::slippi_online::checksum();
+            let _s = melee_engine::arena::SysScope::enter();
+            let sl = self.slippi.as_mut().unwrap();
+            if rolling {
+                let b = sl.bits.get(&sf).copied().unwrap_or([0; 4]);
+                sl.mixed.insert(sf, b);
+            } else {
+                sl.mixed.remove(&sf);
+            }
+            sl.ck.insert(sf + 1 - FIRST + 1, ck);
+        }
         melee_engine::gxbridge::shim().set_suppress_draws(false);
         unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = 0 };
     }
@@ -398,6 +412,18 @@ pub fn controls_meta() -> Option<(String, String)> {
         melee_engine::fighter_controls::Session::Netplay(w) => Some(("controls".into(), format!("netplay:{}:{}", w[0], w[1]))),
         _ => None,
     }
+}
+
+/// The `sim_view` entry of every recording: the session's sim view (melee_engine view.rs), which its playback adopts.
+pub fn view_meta() -> (String, String) {
+    ("sim_view".into(), melee_engine::view::encode_sim_view(melee_engine::view::sim_view().unwrap_or(0)))
+}
+
+/// Playback: the recorded sim view (a recording without the entry predates it: 4:3, what a play run then simulated
+/// unless it ran in the camera widescreen mode).
+pub fn apply_view_meta(r: &Replay) {
+    let v = r.meta("sim_view").and_then(melee_engine::view::parse_sim_view).unwrap_or(0);
+    melee_engine::view::set_sim_view(v);
 }
 
 /// Playback of a recording with a `controls` entry: the match freezes the recorded words.
@@ -519,6 +545,9 @@ thread_local! {
 /// exporter's hooks see each frame once) with `--slp`.
 pub fn slp_from_replay(mrpl: &str, iso: &str) {
     let Some(spec) = SLP_AFTER.with(|c| c.borrow_mut().take()) else { return };
+    if melee_platform::yougame::refuse_child("slp export") {
+        return;
+    }
     let Ok(exe) = std::env::current_exe() else { return };
     log(&format!("slp: exporting {mrpl} to {spec} (headless playback)"));
     let st = std::process::Command::new(exe)
@@ -843,6 +872,10 @@ pub struct HostRules {
     /// CPU seats on ports 3 and 4 (`--cpu fighter[/level][,fighter[/level]]`, level 1-9, default 9): (CharacterKind,
     /// level), resolved by the host; the guest takes them from the agreed scene like the rest of the rules
     pub cpus: Vec<(i32, i32)>,
+    /// The session's sim view (melee_engine view.rs: 0 = 4:3, else the wide content aspect's f32 bits): the host's,
+    /// which the guest adopts for the simulation whatever its own window or display options (`v<hex>`, only when wide;
+    /// no field = 4:3).
+    pub view: Option<u32>,
 }
 
 impl HostRules {
@@ -852,6 +885,7 @@ impl HostRules {
             time_secs: arg(args, "--time-secs").and_then(|s| s.parse().ok()),
             items: arg(args, "--items").map(|s| s.trim().replace(' ', "_")),
             cpus: Vec::new(),
+            view: None,
         }
     }
     pub fn encode(&self) -> String {
@@ -860,6 +894,10 @@ impl HostRules {
         // the CPU seats only when there are any, so a two-human scene string is what it always was
         if !self.cpus.is_empty() {
             e += &format!(",c{}", self.cpus.iter().map(|(ck, l)| format!("{ck}.{l}")).collect::<Vec<_>>().join("+"));
+        }
+        // the sim view only when wide, so a 4:3 scene string is what it always was
+        if let Some(v) = self.view.filter(|&v| v != 0) {
+            e += &format!(",v{v:08x}");
         }
         e
     }
@@ -875,6 +913,7 @@ impl HostRules {
                 "s" => r.stocks = x.parse().ok(),
                 "t" => r.time_secs = x.parse().ok(),
                 "i" => r.items = Some(x.to_string()),
+                "v" => r.view = u32::from_str_radix(x, 16).ok(),
                 "c" => {
                     r.cpus = x.split('+').map(|c| c.split_once('.').and_then(|(k, l)| Some((k.parse().ok()?, l.parse().ok()?)))).collect::<Option<Vec<_>>>()?;
                 }
@@ -887,8 +926,12 @@ impl HostRules {
         let cpus = if self.cpus.is_empty() { String::new() } else {
             format!(", CPUs {}", self.cpus.iter().map(|(ck, l)| format!("ck {ck} level {l}")).collect::<Vec<_>>().join(" + "))
         };
+        let view = match self.view {
+            Some(v) if v != 0 => format!(", sim view {}", melee_engine::view::encode_sim_view(v)),
+            _ => String::new(),
+        };
         format!(
-            "stocks {}, time {}, items {}{cpus}",
+            "stocks {}, time {}, items {}{cpus}{view}",
             self.stocks.map_or("default".into(), |x| x.to_string()),
             self.time_secs.map_or("default".into(), |x| format!("{x} s")),
             self.items.clone().unwrap_or_else(|| "default".into())
@@ -1068,6 +1111,14 @@ pub enum NetPhase {
     Done,
 }
 
+#[cfg(feature = "real-net")]
+#[path = "mu_play.rs"]
+mod mu_play;
+#[cfg(feature = "real-net")]
+pub type MuBox = Box<mu_play::MuRun>;
+#[cfg(not(feature = "real-net"))]
+pub type MuBox = Box<()>;
+
 pub struct NetDriver {
     /// holds the netplay content lock (melee_data::netid::freeze) for as long as this session exists
     _frozen: NetidThaw,
@@ -1099,7 +1150,13 @@ pub struct NetDriver {
     /// `--np-lab` (with --np-css): an online Lab session (`LabNetplay`). The match stays in lockstep too, and lab
     /// commands ride the lockstep stream (np_lockstep.rs MLS2).
     pub lab: bool,
-    params: RoomParams,
+    params: Option<RoomParams>,
+    /// `play --slippi-mm`: the match runs over the Slippi wire (slippi_np.rs) instead of a room
+    pub slippi: Option<Box<SlippiRun>>,
+    /// `play --p2p-*`: a P2P Direct match over mu_net (mu_play.rs)
+    pub mu: Option<MuBox>,
+    /// MELEE_INPUTLAT_CSV: the input-latency probe (inputlat.rs)
+    pub lat: Option<Box<crate::inputlat::LatProbe>>,
     /// matches played on this connection before the current one
     pub match_no: u32,
     /// the final hashes of the earlier matches
@@ -1227,6 +1284,8 @@ impl NetDriver {
             if let Some(c) = arg(args, "--cpu") {
                 rules.cpus = HostRules::parse_cpus(&c, ck_of)?;
             }
+            // the host's sim view (its display options, decided when `play` started) is the session's
+            rules.view = Some(melee_engine::view::sim_view().unwrap_or_else(melee_engine::view::local_sim_view));
         }
         let stocks = rules.stocks.unwrap_or(4);
         let minutes = rules.time_secs.map_or(8, |s| (s.max(1) + 59) / 60);
@@ -1344,8 +1403,16 @@ impl NetDriver {
         melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Netplay(room.sh.borrow().controls));
         log(&format!("netplay {tag}: match agreed after {:.2}s: \"{scene_str}\" (seed {seed}, delay {adelay}, rollback window {maxb})", t0.elapsed().as_secs_f32()));
         let host_rules = HostRules::from_scene(&scene).unwrap_or_default();
+        // the sim view: the host's (no field = 4:3), whatever this peer's window; the picture is fitted locally
+        let view = host_rules.view.unwrap_or(0);
+        if !host && melee_engine::view::sim_view().unwrap_or_else(melee_engine::view::local_sim_view) != view {
+            log(&format!("netplay guest: the host's sim view {} wins (yours: {}); the picture is fitted to your window", melee_engine::view::encode_sim_view(view), melee_engine::view::encode_sim_view(melee_engine::view::sim_view().unwrap_or(0))));
+        }
+        melee_engine::view::set_sim_view(view);
+        log(&format!("netplay {tag}: sim view {}", melee_engine::view::encode_sim_view(view)));
         if !host {
-            if rules != HostRules::default() && rules != host_rules {
+            let mine = HostRules { view: host_rules.view, ..rules.clone() };
+            if mine != HostRules::default() && (HostRules { view: None, ..mine.clone() }) != (HostRules { view: None, ..host_rules.clone() }) {
                 log(&format!("netplay guest: the host's rules win: {} (yours: {})", host_rules.describe(), rules.describe()));
             } else {
                 log(&format!("netplay guest: the host's rules: {}", host_rules.describe()));
@@ -1387,7 +1454,10 @@ impl NetDriver {
             held_ticks: 0,
             ls,
             lab,
-            params: rp,
+            params: Some(rp),
+            slippi: None,
+            mu: None,
+            lat: None,
             match_no: 0,
             all_finals: Vec::new(),
             early_on,
@@ -1413,11 +1483,12 @@ impl NetDriver {
             // --np-delay auto: this match's delay from the ping of the last one (the guest adopts the host's)
             let d = crate::np_hud::auto_delay(self.net.as_ref().map_or(0, |n| n.rtt_ms()));
             log(&format!("netplay host: auto delay {d} for match {}", self.match_no + 1));
-            self.params.settings.delay = d;
-            self.params.rcfg.delay = d;
+            let p = self.params.as_mut().ok_or("netplay: no room parameters")?;
+            p.settings.delay = d;
+            p.rcfg.delay = d;
         }
         let t0 = Instant::now();
-        let (room, sess, nlog) = open_room(&mut self.params, 2 + self.match_no, None)?;
+        let (room, sess, nlog) = open_room(self.params.as_mut().ok_or("netplay: no room parameters")?, 2 + self.match_no, None)?;
         let adelay = room.sh.borrow().s.delay;
         sess.borrow_mut().set_delay(adelay);
         log(&format!("netplay {}: match {} connected after {:.2}s", self.tag(), self.match_no + 1, t0.elapsed().as_secs_f32()));
@@ -1448,7 +1519,20 @@ impl NetDriver {
             self.net = room.net.take();
         }
         melee_engine::geno_host::net_begin();
-        self.phase = NetPhase::InMatch(Box::new(ModesGame::new(e)));
+        let mut g = ModesGame::new(e);
+        if let Some(sr) = self.slippi.as_mut() {
+            let mut s = self.sess.borrow_mut();
+            s.set_local_port(sr.local_port as usize);
+            s.set_delay(sr.delay);
+            g.slippi = Some(Box::new(SlippiSim { chars: sr.chars, ..Default::default() }));
+            sr.link.start_game();
+            sr.loop_t = Some(Instant::now());
+        }
+        #[cfg(feature = "real-net")]
+        if self.mu.is_some() {
+            self.begin_mu(&mut g);
+        }
+        self.phase = NetPhase::InMatch(Box::new(g));
         log(&format!("netplay {}: match scene, waiting for the peer", self.tag()));
     }
 
@@ -1466,6 +1550,21 @@ impl NetDriver {
     /// Right after the game read the controllers for a tick (retail_flow `tick`): start the early-inputs sampler
     /// once the match runs with a peer that announced them, and tell it this tick's poll.
     pub fn pre_tick(&mut self, pads: &melee_platform::PadSystem) {
+        if let Some(l) = self.lat.as_mut() {
+            l.sample_us = crate::inputlat::now_us(); // the controllers were read just before this call
+        }
+        #[cfg(feature = "real-net")]
+        if self.mu.is_some() {
+            self.pre_tick_mu(pads);
+            return;
+        }
+        if let Some(sr) = self.slippi.as_mut() {
+            // the scene boot: keep the ENet link serviced (acks, pings) until the match takes it
+            if !matches!(self.phase, NetPhase::InMatch(_)) {
+                sr.link.poll();
+            }
+            return;
+        }
         if !self.early_on || !matches!(self.phase, NetPhase::InMatch(_)) || self.end_frame.is_some() {
             return;
         }
@@ -1478,7 +1577,7 @@ impl NetDriver {
                 }
                 return;
             }
-            let Some(tx) = self.params.mux.borrow().thread_sender() else {
+            let Some(tx) = self.params.as_ref().and_then(|p| p.mux.borrow().thread_sender()) else {
                 if !self.early_logged {
                     self.early_logged = true;
                     log(&format!("netplay {}: early inputs off: no thread send path", self.tag()));
@@ -1510,7 +1609,8 @@ impl NetDriver {
         if !s.hints_on {
             return;
         }
-        while let Some(d) = self.params.mux.borrow_mut().take(crate::np_mux::EARLY_CH) {
+        let Some(p) = self.params.as_ref() else { return };
+        while let Some(d) = p.mux.borrow_mut().take(crate::np_mux::EARLY_CH) {
             if let Some((ch, target, port, pad)) = melee_net::early::decode(&d) {
                 if ch == self.match_no as u8 && port == remote {
                     s.submit_hint(remote as usize * 2, target, &pad);
@@ -1525,6 +1625,14 @@ impl NetDriver {
         self.ticks += 1;
         if !matches!(self.phase, NetPhase::InMatch(_)) {
             return false;
+        }
+        if self.slippi.is_some() {
+            let _ = rec;
+            return self.tick_slippi(local);
+        }
+        #[cfg(feature = "real-net")]
+        if self.mu.is_some() {
+            return self.tick_mu(local);
         }
         let Some(net) = self.net.as_mut() else {
             self.error = Some("no connection".into());
@@ -1549,7 +1657,7 @@ impl NetDriver {
                     self.sess.borrow_mut().set_delay(rc.input_delay as i32);
                 }
             }
-            log(&format!("netplay {}: started (delay {})", if self.host { "host" } else { "guest" }, self.sess.borrow().cfg.delay));
+            log(&format!("netplay {}: started (delay {}, match {}, stage ext {})", if self.host { "host" } else { "guest" }, self.sess.borrow().cfg.delay, self.match_no + 1, unsafe { melee_world::tu::stage::Stage_80225194() }));
         }
         self.take_hints();
         let NetPhase::InMatch(g) = &mut self.phase else { return false };
@@ -1674,7 +1782,7 @@ impl NetDriver {
         };
         crate::np_hud::NetHud {
             host: self.host,
-            ping_ms: net.map_or(0, |n| n.net_rtt_ms()),
+            ping_ms: self.slippi.as_ref().map_or_else(|| net.map_or(0, |n| n.net_rtt_ms()), |sr| (sr.link.net_ping_us() / 1000) as u32),
             auto_rtt_ms: net.map_or(0, |n| n.rtt_ms()),
             silent_ms: net.map_or(0, |n| n.silent_ms()),
             delay: s.cfg.delay,
@@ -1694,7 +1802,10 @@ impl NetDriver {
     pub fn status(&mut self) -> String {
         let s = self.sess.borrow();
         let st = s.stats;
-        let ping = self.net.as_ref().map_or(0, |n| n.net_rtt_ms());
+        let ping = match &self.slippi {
+            Some(sr) => (sr.link.net_ping_us() / 1000) as u64,
+            None => self.net.as_ref().map_or(0, |n| n.net_rtt_ms() as u64),
+        };
         let d = st.rollbacks - self.last_rb.0;
         self.last_rb = (st.rollbacks, d, st.depth_max);
         let state = if let Some(e) = &self.error {
@@ -1713,11 +1824,25 @@ impl NetDriver {
         let s = self.sess.borrow();
         let st = s.stats;
         let lg = self.log.borrow();
+        // a Slippi-wire match keeps its final checksums (by online frame) and its link in the SlippiRun, not in
+        // `finals` / `net` (empty there: the line said "0 final hashes ... ping 0 ms")
+        let (nfin, last_fin, ping_ms, sync) = match &self.slippi {
+            Some(sr) => (
+                sr.finals.len(),
+                sr.finals.keys().next_back().map_or(-1, |&k| k - 2),
+                (sr.link.net_ping_us() / 1000) as u64,
+                format!(
+                    "; Slippi: compared {} ({} soft, {} HARD); start hold {} ticks; time sync held {} advanced {} frames{}",
+                    sr.compared, sr.soft, sr.hard, st.start_hold, sr.ts.held, sr.ts.advanced, if sr.ts.old { " (old rule)" } else { "" }
+                ),
+            ),
+            None => (self.finals.len(), self.finals.last().map_or(-1, |x| x.0 - 1 - FIRST), self.net.as_ref().map_or(0, |n| n.net_rtt_ms() as u64), String::new()),
+        };
         format!(
-            "netplay {}: {} final hashes (through game frame {}), rollbacks {} (max depth {}, resim {}), stalls {}, waits {}, session desyncs {}, checksum desyncs {}, ping {} ms, input arrived {:.2} frames after due; net {:?}",
+            "netplay {}: {} final hashes (through game frame {}), rollbacks {} (max depth {}, resim {}), stalls {}, waits {}, session desyncs {}, checksum desyncs {}, ping {} ms, input arrived {:.2} frames after due; net {:?}{}",
             self.tag(),
-            self.finals.len(),
-            self.finals.last().map_or(-1, |x| x.0 - 1 - FIRST),
+            nfin,
+            last_fin,
             st.rollbacks,
             st.depth_max,
             st.resim,
@@ -1725,9 +1850,10 @@ impl NetDriver {
             st.waits,
             st.desyncs,
             lg.desyncs.len(),
-            self.net.as_ref().map_or(0, |n| n.net_rtt_ms()),
+            ping_ms,
             if st.arrive_n > 0 { st.arrive_sum as f64 / st.arrive_n as f64 } else { 0.0 },
-            self.net.as_ref().map(|n| n.stats())
+            self.net.as_ref().map(|n| n.stats()),
+            sync
         ) + &self.early_summary(&s)
     }
 
@@ -1758,6 +1884,457 @@ impl NetDriver {
                 log(&format!("{p}: {e}"));
             }
         }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------ Slippi wire
+
+/// A rendered match over the Slippi wire (`play --slippi-mm ...`): the headless `slippi-netplay` frame loop's network
+/// half, driven one render tick at a time by the retail flow (the window, renderer, audio and pads stay the game's).
+pub struct SlippiRun {
+    pub link: melee_net::slippi::Client,
+    pub local_port: u8,
+    pub remote_port: u8,
+    pub delay: i32,
+    pub chars: [u32; 4],
+    rnd: u32,
+    last_sent: i32,
+    last_local: i32,
+    finals: std::collections::BTreeMap<i32, u32>,
+    compared: u32,
+    compared_upto: i32,
+    soft: u32,
+    hard: u32,
+    /// time sync (melee_net::time_sync): holds when ahead, extra frames when behind; local pacing only
+    ts: melee_net::time_sync::TimeSync,
+    last_rx: Option<Instant>,
+    pub loop_t: Option<Instant>,
+    /// test hooks: stop after this many final checksums, write them here (`frame,checksum`, as slippi-netplay --out),
+    /// the session's pad generator instead of the local pad
+    frames: Option<i32>,
+    out: Option<String>,
+    padgen: Option<u32>,
+    /// test hook `MELEE_NP_START_AT=N`: Start held on online frames N..N+3, logged once (a field, not a static: the
+    /// rollback snapshot covers every static, so a static flag rewinds with the game and logs again)
+    start_at: Option<i32>,
+    start_logged: bool,
+    done_at: Option<Instant>,
+    /// tick work (poll + session frames + send): max, and ticks over 16 ms
+    work_max_us: u64,
+    work_slow: u32,
+    work_n: u64,
+}
+
+impl NetDriver {
+    /// A Slippi-wire match's checksum comparisons so far: (soft, hard) desyncs (Hero's "Desync Risk" / "DESYNC DETECTED").
+    pub fn slippi_desyncs(&self) -> Option<(u32, u32)> {
+        #[cfg(feature = "real-net")]
+        if self.mu.is_some() {
+            return self.mu_desyncs();
+        }
+        self.slippi.as_ref().map(|sr| (sr.soft, sr.hard))
+    }
+}
+
+impl NetDriver {
+    /// `play --slippi-mm URL --slippi-port P --slippi-code C [--slippi-mm-mode direct|unranked] [--slippi-search C]
+    /// [--slippi-delay D] [--slippi-frames N --slippi-out CSV] [--slippi-max-seconds S]`: matchmaking (a loopback
+    /// mock unless --slippi-mm-real), the Slippi connection and the selections, before the window. Returns the driver
+    /// and the match scenario the retail flow boots. Every `--slippi-K V` is `slippi-netplay`'s `--K V`.
+    pub fn connect_slippi(args: &[String]) -> Result<(NetDriver, melee_engine::scenario::Scenario), String> {
+        let mut sub: Vec<String> = vec!["slippi-netplay".into()];
+        let mut i = 0;
+        while i < args.len() {
+            if let Some(k) = args[i].strip_prefix("--slippi-").filter(|k| *k != "menus") {
+                sub.push(format!("--{k}"));
+                if k != "mm-real" && k != "mm-lan" && k != "host" && k != "stage-unset" {
+                    if let Some(v) = args.get(i + 1) {
+                        sub.push(v.clone());
+                        i += 1;
+                    }
+                }
+            }
+            i += 1;
+        }
+        let num = |k: &str, d: i64| arg(&sub, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+        let max_s = num("--max-seconds", 600) as u64;
+        let delay = num("--delay", 2) as i32;
+        let l = crate::slippi_np::establish(&sub, Instant::now(), max_s).map_err(|(_, m)| m)?;
+        let tag = if l.decider { "decider" } else { "guest" };
+        melee_core::slippi_online::enable(l.rng_offset);
+        apply_name_tags();
+        if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
+            crate::slippi_np::online_codes(l.by_port.iter().map(|s| s.alt_stage_mode).max().unwrap_or(0));
+        }
+        let mut chars = [u32::MAX; 4];
+        for (i, s) in l.by_port.iter().enumerate() {
+            chars[i] = s.character_id as u32;
+        }
+        if let Some(st) = melee_core::slippi_online::state() {
+            st.pending = Default::default();
+            for p in 0..4 {
+                st.pending[p].ext_char = chars[p];
+            }
+        }
+        let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{}", l.scene))?;
+        // the room-format scene (the HUD / replay meta only; the boot takes `scn`)
+        let room_scene = melee_net::app::scene::build_scene(
+            &format!("ck:{}", l.by_port[0].character_id),
+            l.by_port[0].character_color as i32,
+            &format!("ck:{}", l.by_port[1].character_id),
+            l.by_port[1].character_color as i32,
+            &format!("ext:{}", l.stage),
+            4,
+            8,
+            0,
+        );
+        let scene = parse_scene(&room_scene).ok_or("slippi: the match scene does not parse")?;
+        log(&format!("netplay {tag}: Slippi wire match: rng_offset {:#06x}, delay {delay}, scene {}", l.rng_offset, l.scene));
+        let local_port = l.local_port as usize;
+        let rcfg = RbConfig { net: true, local_port, delay, src: InputSource::Live, ..RbConfig::default() };
+        let sess: Rc<RefCell<Sess>> = Rc::new(RefCell::new(Sess::new(rcfg)));
+        melee_data::netid::freeze();
+        let run = SlippiRun {
+            rnd: l.rng_offset.wrapping_mul(2654435761) ^ (l.local_port as u32 + 1),
+            link: l.cl,
+            local_port: l.local_port,
+            remote_port: l.remote_port,
+            delay,
+            chars,
+            last_sent: FIRST - 1,
+            last_local: FIRST - 1,
+            finals: Default::default(),
+            compared: 0,
+            compared_upto: 0,
+            soft: 0,
+            hard: 0,
+            ts: melee_net::time_sync::TimeSync::new(melee_net::time_sync::slippi_old_rule()),
+            last_rx: None,
+            loop_t: None,
+            frames: arg(&sub, "--frames").and_then(|v| v.parse().ok()),
+            out: arg(&sub, "--out"),
+            padgen: arg(&sub, "--padgen").and_then(|v| v.parse().ok()),
+            start_at: std::env::var("MELEE_NP_START_AT").ok().and_then(|v| v.parse().ok()),
+            start_logged: false,
+            done_at: None,
+            work_max_us: 0,
+            work_slow: 0,
+            work_n: 0,
+        };
+        let nd = NetDriver {
+            _frozen: NetidThaw,
+            host: l.decider,
+            sess,
+            log: Rc::new(RefCell::new(NetLog::default())),
+            room: None,
+            net: None,
+            agreed: Agreed { scene, scene_str: room_scene, seed: l.rng_offset, delay, host: l.decider },
+            host_rules: HostRules::default(),
+            phase: NetPhase::PreMatch,
+            started_at: None,
+            finals: Vec::new(),
+            hash_out: None,
+            rec_next: FIRST,
+            end_frame: None,
+            linger: 0,
+            error: None,
+            last_rb: (0, 0, 0),
+            ticks: 0,
+            held_ticks: 0,
+            ls: None,
+            lab: false,
+            params: None,
+            slippi: Some(Box::new(run)),
+            mu: None,
+            lat: crate::inputlat::LatProbe::from_env(),
+            match_no: 0,
+            all_finals: Vec::new(),
+            early_on: false,
+            early: None,
+            early_logged: false,
+            late_send: false,
+        };
+        Ok((nd, scn))
+    }
+
+    /// One render tick of a Slippi-wire match: the link's notes, the local pad (sent with its seed byte), Slippi's
+    /// skip rule, the session's frames, the finalized checksums and the ASM's compare with the peer's.
+    fn tick_slippi(&mut self, local: &PADStatus) -> bool {
+        use melee_core::slippi_online::{compare, Compare};
+        use melee_net::slippi::{pad_bytes, pad_input, Note, Status, PAD_WIRE};
+        if self.end_frame.is_some() || self.error.is_some() {
+            return false;
+        }
+        let work = Instant::now();
+        let tag = self.tag();
+        let sess = |f: i32| f + FIRST - 1;
+        let online = |s: i32| s - FIRST + 1;
+        let NetPhase::InMatch(g) = &mut self.phase else { return false };
+        let sr = self.slippi.as_mut().unwrap();
+        let lat = &mut self.lat;
+        let mut s = self.sess.borrow_mut();
+        let (lp, rp) = (sr.local_port as usize, sr.remote_port as usize);
+        let mut err: Option<String> = None;
+        sr.link.poll();
+        while let Some(n) = sr.link.next_note() {
+            match n {
+                Note::Pad { frame, pad, .. } => {
+                    sr.last_rx = Some(Instant::now());
+                    let sf = sess(frame);
+                    let sl = g.slippi.as_mut().unwrap();
+                    {
+                        let _h = melee_engine::arena::SysScope::enter();
+                        sl.bits.entry(sf).or_default()[rp & 3] = pad[8];
+                    }
+                    s.submit_remote_input(rp * 2, sf, &pad_input(&pad));
+                    if let Some(l) = lat.as_mut() {
+                        l.push(b'R', frame, crate::inputlat::now_us(), online(s.current_frame()) as i64);
+                    }
+                    if sl.mixed.get(&sf).is_some_and(|b| b[rp & 3] != pad[8]) {
+                        s.force_resim_from(rp * 2, sf);
+                    }
+                }
+                Note::Disconnected { reason } => {
+                    if sr.done_at.is_none() {
+                        err = Some(format!("the peer disconnected (reason {reason})"));
+                    }
+                }
+                _ => {}
+            }
+        }
+        if err.is_none() && sr.done_at.is_none() && matches!(sr.link.status, Status::Failed | Status::Disconnected) {
+            err = Some(format!("link {:?}", sr.link.status));
+        }
+        // a peer still loading gets FIRST_PAD_S (the start hold waits for it); after its first pad, SILENCE_S
+        let (first_s, quiet_s) = if sr.ts.old { (120, 10) } else { (melee_net::time_sync::FIRST_PAD_S, melee_net::time_sync::SILENCE_S) };
+        let silent = match sr.last_rx {
+            Some(t) => t.elapsed() > Duration::from_secs(quiet_s),
+            None => sr.loop_t.is_some_and(|t| t.elapsed() > Duration::from_secs(first_s)),
+        };
+        if err.is_none() && silent && sr.done_at.is_none() {
+            err = Some("no pads from the peer".into());
+        }
+        if self.started_at.is_none() && sr.last_rx.is_some() {
+            self.started_at = Some(Instant::now());
+            log(&format!("netplay {tag}: Slippi match started (delay {})", sr.delay));
+            room_report("start");
+        }
+        // test hook: this side quits mid-match (the room's void case)
+        if let Some(q) = std::env::var("MELEE_SLIPPI_NP_QUIT_AT").ok().and_then(|v| v.parse::<i32>().ok()) {
+            if online(s.current_frame()) >= q {
+                log(&format!("netplay {tag}: MELEE_SLIPPI_NP_QUIT_AT {q}: quitting the match"));
+                std::process::exit(3);
+            }
+        }
+        let f = s.current_frame();
+        // start in step: online frame 2 waits for the peer's first pad (a peer still loading the stage)
+        s.start_hold = !sr.ts.old && sr.last_rx.is_none();
+        let step = {
+            let link = &sr.link;
+            sr.ts.step(online(f), || link.time_offset_us())
+        };
+        if step.hold > 0 {
+            s.request_wait(step.hold);
+        }
+        let extra = step.advance as i32;
+        for ff in (sr.last_local + 1).max(f)..=f + sr.delay + extra {
+            let mut i = match sr.padgen {
+                Some(gs) => melee_net::session::rb_gen(gs, lp * 2, ff),
+                None => input_of(local),
+            };
+            // test hook: MELEE_NP_START_AT=N holds Start (PAD_BUTTON_START 0x1000) on online frames N..N+3 (a stray
+            // Start: in Unranked the match must not pause; see slippi_np's online_scene pause_allowed)
+            if let Some(n) = sr.start_at.filter(|&n| (n..n + 4).contains(&online(ff))) {
+                i.buttons |= 0x1000;
+                if !std::mem::replace(&mut sr.start_logged, true) {
+                    log(&format!("netplay {tag}: MELEE_NP_START_AT: Start held on online frames {n}..{}", n + 3));
+                }
+            }
+            s.submit_local_input(lp * 2, ff, &i);
+            sr.last_local = ff;
+        }
+        let (ckf, ck) = sr.finals.iter().next_back().map_or((0, 0), |(a, b)| (*a, *b));
+        let sent_before = sr.last_sent;
+        for ff in (sr.last_sent + 1)..=(f + sr.delay + extra) {
+            let Some(i) = s.local_input_for_send(lp * 2, ff) else { break };
+            let mut p = [0u8; PAD_WIRE];
+            p[..8].copy_from_slice(&pad_bytes(&i));
+            sr.rnd ^= sr.rnd << 13;
+            sr.rnd ^= sr.rnd >> 17;
+            sr.rnd ^= sr.rnd << 5;
+            p[8] = sr.rnd as u8;
+            {
+                let _h = melee_engine::arena::SysScope::enter();
+                g.slippi.as_mut().unwrap().bits.entry(ff).or_default()[lp & 3] = p[8];
+            }
+            sr.link.send_pad(online(ff), p, ckf, ck);
+            sr.last_sent = ff;
+        }
+        // a stalled tick (no new local pad) sends the unacked pads again, as Slippi Dolphin's skipped frame does
+        // (`SendSlippiPad(nullptr)`): a lost newest packet is repaired by nothing else
+        if sr.last_sent == sent_before {
+            sr.link.resend_pads();
+        }
+        sr.link.flush();
+        if let Some(l) = lat.as_mut() {
+            let t = crate::inputlat::now_us();
+            for ff in (sent_before + 1)..=sr.last_sent {
+                l.push(b'S', online(ff), l.sample_us, t);
+            }
+            l.push(b'T', online(f), l.sample_us, t);
+        }
+        if sr.done_at.is_none() {
+            run_tick(&mut s, &mut **g, None);
+            // behind the peer: one extra frame this tick (only when this tick ran its new frame)
+            if extra > 0 && s.current_frame() > f {
+                run_tick(&mut s, &mut **g, None);
+            }
+        }
+        let conf = s.confirmed_frame();
+        let from = sr.finals.keys().next_back().map_or(2, |k| k + 1);
+        {
+            let sl = g.slippi.as_ref().unwrap();
+            let _h = melee_engine::arena::SysScope::enter();
+            for of in from..=online(conf) + 1 {
+                match sl.ck.get(&of) {
+                    Some(&v) if s.checksum(sess(of)) != 0 => {
+                        sr.finals.insert(of, v);
+                    }
+                    _ => break,
+                }
+            }
+        }
+        // the live .slp takes the frames whose every input is final
+        crate::slp_export::confirm(conf);
+        for (&fr, &rv) in sr.link.remote_checksums.range((sr.compared_upto + 1).max(2)..) {
+            let Some(&lv) = sr.finals.get(&fr) else { break };
+            sr.compared += 1;
+            sr.compared_upto = fr;
+            match compare(lv, rv) {
+                Compare::Same => {}
+                Compare::Soft => sr.soft += 1,
+                // Slippi Dolphin and Hero (slippi_online.cpp) log a mismatch and play on: the match is not ended
+                // for it; the summary reports it
+                Compare::Hard => {
+                    sr.hard += 1;
+                    crate::play_net::desync_report(&tag, fr, lv, rv, sr.hard as u64, online(s.current_frame()));
+                }
+            }
+        }
+        // a frame-capped match ends on a confirmed frame (no predicted input in the state the winner is read from)
+        let reached = sr.frames.is_some_and(|n| sr.finals.keys().next_back().is_some_and(|&k| k >= n)) && (conf >= s.current_frame() || sr.finals.len() as i32 > sr.frames.unwrap_or(0) + 120);
+        if (reached || g.e.ended) && sr.done_at.is_none() {
+            sr.done_at = Some(Instant::now());
+            // the live .slp ends here: the frames after it are the peer's linger, not the match
+            crate::slp_export::stop();
+        }
+        let us = work.elapsed().as_micros() as u64;
+        sr.work_n += 1;
+        sr.work_max_us = sr.work_max_us.max(us);
+        if us > 16_000 {
+            sr.work_slow += 1;
+            // which tick (the first few): the profile has no other trace of a single slow tick
+            if sr.work_slow <= 10 {
+                log(&format!("netplay {tag}: slow tick {} us at online frame {} (tick {} of the match)", us, s.current_frame(), sr.work_n));
+            }
+        }
+        let end_now = sr.done_at.is_some_and(|t| t.elapsed() > Duration::from_millis(1500));
+        let cur = s.current_frame();
+        drop(s);
+        if end_now || err.is_some() {
+            crate::slp_export::stop();
+            let sr = self.slippi.as_mut().unwrap();
+            if let Some(p) = &sr.out {
+                let mut t = String::from("frame,checksum\n");
+                for (f, v) in &sr.finals {
+                    t += &format!("{f},{v:08X}\n");
+                }
+                let _ = std::fs::write(p, t);
+            }
+            log(&format!(
+                "netplay {tag}: Slippi: {} final checksums, {} compared with the peer: {} soft, {} HARD desyncs; tick work max {} us, {} of {} ticks over 16 ms",
+                sr.finals.len(),
+                sr.compared,
+                sr.soft,
+                sr.hard,
+                sr.work_max_us,
+                sr.work_slow,
+                sr.work_n
+            ));
+            let compared = sr.compared;
+            // a Direct set's game: the link stays for the next game (Slippi Dolphin keeps one client through the set;
+            // retail_flow hands it back to the select), else it closes
+            if end_now && err.is_none() && compared > 0 && crate::slippi_css_host::set_goes_on() {
+                sr.link.end_game();
+            } else {
+                sr.link.disconnect(0);
+            }
+            sr.out = None;
+            let won = if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() };
+            LAST_WINNER.store(won, std::sync::atomic::Ordering::Relaxed);
+            room_report(&format!("end {won}"));
+            // the Melee Unlocked lobby's match history (a --lobby-direct game only)
+            crate::lobby_status::publish_result(won, sr.local_port as i32);
+            if let Some(e) = err.filter(|_| !end_now) {
+                self.fail(e);
+            } else if compared == 0 {
+                self.fail("Slippi: no clean compare".into());
+            } else {
+                self.end_frame = Some(cur);
+                self.linger = 90;
+            }
+        }
+        true
+    }
+}
+
+/// The last Slippi match's winning port (0-based; -1 none or not clean): the online select's next stage pick.
+/// Slippi online's name tags over the fighters (Slippi Dolphin and Hero show the players' names in an online match):
+/// the select's `MELEE_SLIPPI_TAGS` (port order, tab-separated), set before the match's first snapshot.
+pub fn apply_name_tags() {
+    let tags = std::env::var("MELEE_SLIPPI_TAGS").unwrap_or_default();
+    let mut f = tags.split(char::from(9));
+    for slot in 0..4 {
+        melee_world::tu::ifnametag::set_online_tag(slot, f.next().unwrap_or(""));
+    }
+}
+
+/// The name tags off (the online match is over; offline matches keep the retail plates).
+pub fn clear_name_tags() {
+    for slot in 0..4 {
+        melee_world::tu::ifnametag::set_online_tag(slot, "");
+    }
+}
+
+pub static LAST_WINNER: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(-1);
+
+/// The YouGame room this match plays for (`MELEE_ROOM_REPORT`, set by the menu process that keeps the room:
+/// `room_keeper`): one line per event, `start` and `end W`.
+fn room_report(line: &str) {
+    // the room kept by this process, the match in this window (room_keeper::attach_inprocess)
+    if crate::room_keeper::inprocess_attached() {
+        crate::room_keeper::report(line);
+        log(&format!("room report: {line} (in-process)"));
+        return;
+    }
+    let Some(p) = std::env::var_os("MELEE_ROOM_REPORT") else { return };
+    use std::io::Write;
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) {
+        let _ = writeln!(f, "{line}");
+    }
+    log(&format!("room report: {line}"));
+}
+
+/// The winner of a 1v1 by Melee's order: more stocks, then less damage; -1 when even (no single winner).
+fn match_winner() -> i32 {
+    let st = |p: i32| melee_fighter::stale::stocks(p);
+    let dmg = |p: i32| melee_fighter::player::get_damage(p);
+    let (a, b) = ((st(0), -dmg(0)), (st(1), -dmg(1)));
+    log(&format!("match end: P1 {} stocks {}%, P2 {} stocks {}%", a.0, -a.1, b.0, -b.1));
+    match a.cmp(&b) {
+        std::cmp::Ordering::Greater => 0,
+        std::cmp::Ordering::Less => 1,
+        std::cmp::Ordering::Equal => -1,
     }
 }
 

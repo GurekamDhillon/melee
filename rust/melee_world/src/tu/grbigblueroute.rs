@@ -256,7 +256,9 @@ pub mod ext {
         match unsafe { UN_802FD8E8 } { Some(f) => f(a0), None => { unsafe { crate::tu::ifhazard::un_802FD8E8(a0 as _); } return; } }
     }
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
+    #[inline(never)]
     pub unsafe extern "C" fn grDisplay_801C5DB0(_gobj: *mut HSD_GObj, _pass: isize) {
+        core::hint::black_box(0xB17060F8u32); // fn identity (tools/rust-port/fn_identity.py)
         { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(_gobj as _, _pass as _); } return; }
     }
 }

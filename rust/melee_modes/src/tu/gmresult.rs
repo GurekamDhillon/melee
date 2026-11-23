@@ -1459,9 +1459,16 @@ pub unsafe extern "C" fn gm_Scene_Results_OnEnter(arg0_: *mut c_void) {
             ext::lb_80014574((*d).x6, 3, 0x20, 0);
         }
     }
-    ext::un_802FF1B4();
-    gmResultLoadArchive(d);
-    fn_80176A6C();
+    // zero-hitch: named phases of the results' enter frame (frameprof spans; no behaviour change)
+    macro_rules! ph {
+        ($name:literal, $e:expr) => {{
+            let _p = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s(concat!("results enter: ", $name)));
+            $e
+        }};
+    }
+    ph!("un_802FF1B4", ext::un_802FF1B4());
+    ph!("load archive", gmResultLoadArchive(d));
+    ph!("fn_80176A6C", fn_80176A6C());
     let light_gobj = ext::GObj_Create(0xB, 3, 0);
     if light_gobj.is_null() {
         gmResultReportLightGObj();
@@ -1478,19 +1485,19 @@ pub unsafe extern "C" fn gm_Scene_Results_OnEnter(arg0_: *mut c_void) {
         gmResultReportModelGObj();
     }
     ext::HSD_GObj_SetupProc(model_gobj, Some(ext::fn_80179350), 0);
-    fn_80176F60();
-    ext::fn_8017AA78(addr_of!((*arg0).x1));
-    ext::fn_8017A004();
+    ph!("fn_80176F60", fn_80176F60());
+    ph!("fn_8017AA78", ext::fn_8017AA78(addr_of!((*arg0).x1)));
+    ph!("fn_8017A004", ext::fn_8017A004());
     if !gm_WasMatchCanceled((*match_end).outcome) {
-        ext::lbAudioAx_80023F28(ext::fn_80160400((*match_end).player_standings[(*d).x6 as usize].ckind as CharacterKind) as i32);
+        ph!("audio", ext::lbAudioAx_80023F28(ext::fn_80160400((*match_end).player_standings[(*d).x6 as usize].ckind as CharacterKind) as i32));
     }
 
     for i in 0..4usize {
         let ps = addr_of_mut!((*match_end).player_standings[i]);
         if (*ps).pkind != Gm_PKind_NA as u8 {
-            ext::fn_8017A9B4(i as i32);
-            (*d).player_data[i].fighter_gobj = ext::fn_8017A67C((*ps).ckind as CharacterKind, (*ps).x3_u.x0.x3_b0() as i32, i as i32);
-            (*d).player_data[i].camera = ext::fn_8017A318(i as i32);
+            ph!("fn_8017A9B4", ext::fn_8017A9B4(i as i32));
+            (*d).player_data[i].fighter_gobj = ph!("fighter fn_8017A67C", ext::fn_8017A67C((*ps).ckind as CharacterKind, (*ps).x3_u.x0.x3_b0() as i32, i as i32));
+            (*d).player_data[i].camera = ph!("camera", ext::fn_8017A318(i as i32));
         }
     }
 }

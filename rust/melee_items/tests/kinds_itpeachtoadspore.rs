@@ -129,14 +129,14 @@ fn itpeachtoadspore_matches_c() {
                 match op {
                     0 => { let v2: ItemKind = fv() as i32 as ItemKind; let v3: f32 = rw() as f32; ret = pi(m::it_802BE214(&raw mut GO[0], &raw mut VA[0], v2, v3)); } // it_802BE214
                     1 => {  m::it_802BE2E8(&raw mut GO[0], &raw mut GO[1]); } // it_802BE2E8
-                    2 => {  ret = m::itPeachtoadspore_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itPeachtoadspore_UnkMotion0_Anim
+                    2 => {  ret = ((m::itPeachtoadspore_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachtoadspore_UnkMotion0_Anim
                     3 => {  m::itPeachtoadspore_UnkMotion0_Phys(&raw mut GO[0]); } // itPeachtoadspore_UnkMotion0_Phys
-                    4 => {  ret = m::itPeachToadSpore_Logic92_DmgDealt(&raw mut GO[0]) as u32; } // itPeachToadSpore_Logic92_DmgDealt
-                    5 => {  ret = m::itPeachToadSpore_Logic68_Clanked(&raw mut GO[0]) as u32; } // itPeachToadSpore_Logic68_Clanked
-                    6 => {  ret = m::itPeachToadSpore_Logic68_HitShield(&raw mut GO[0]) as u32; } // itPeachToadSpore_Logic68_HitShield
-                    7 => {  ret = m::itPeachToadSpore_Logic68_Absorbed(&raw mut GO[0]) as u32; } // itPeachToadSpore_Logic68_Absorbed
-                    8 => {  ret = m::itPeachToadSpore_Logic68_ShieldBounced(&raw mut GO[0]) as u32; } // itPeachToadSpore_Logic68_ShieldBounced
-                    9 => {  ret = m::itPeachToadSpore_Logic68_Reflected(&raw mut GO[0]) as u32; } // itPeachToadSpore_Logic68_Reflected
+                    4 => {  ret = ((m::itPeachToadSpore_Logic92_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachToadSpore_Logic92_DmgDealt
+                    5 => {  ret = ((m::itPeachToadSpore_Logic68_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachToadSpore_Logic68_Clanked
+                    6 => {  ret = ((m::itPeachToadSpore_Logic68_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachToadSpore_Logic68_HitShield
+                    7 => {  ret = ((m::itPeachToadSpore_Logic68_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachToadSpore_Logic68_Absorbed
+                    8 => {  ret = ((m::itPeachToadSpore_Logic68_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachToadSpore_Logic68_ShieldBounced
+                    9 => {  ret = ((m::itPeachToadSpore_Logic68_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itPeachToadSpore_Logic68_Reflected
                     10 => {  m::itPeachToadSpore_Logic92_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itPeachToadSpore_Logic92_EvtUnk
                     11 => { for j in 0..1 { let row = &m::it_803F7548[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

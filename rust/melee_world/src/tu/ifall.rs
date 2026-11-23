@@ -40,98 +40,126 @@ pub mod ext {
     }
     // ---- callee hooks ----
     pub static mut H_ifStatus_802F6898: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStatus_802F6898()  {
+                core::hint::black_box(0x9BF9072Cu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStatus_802F6898 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstatus::ifStatus_802F6898(); } return; },
                 }
             }
     pub static mut H_ifTime_HideTimers: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifTime_HideTimers()  {
+                core::hint::black_box(0x2874AFD0u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifTime_HideTimers {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::iftime::ifTime_HideTimers(); } return; },
                 }
             }
     pub static mut H_un_802FD450: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD450()  {
+                core::hint::black_box(0xC2D951F0u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD450 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifnametag::un_802FD450(); } return; },
                 }
             }
     pub static mut H_ifMagnify_802FC8E8: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifMagnify_802FC8E8()  {
+                core::hint::black_box(0x4BAB643Au32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifMagnify_802FC8E8 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifmagnify::ifMagnify_802FC8E8(); } return; },
                 }
             }
     pub static mut H_un_802FD668: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD668()  {
+                core::hint::black_box(0x76BA4999u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD668 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifhazard::un_802FD668(); } return; },
                 }
             }
     pub static mut H_un_802FD910: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD910()  {
+                core::hint::black_box(0x23EB9767u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD910 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FD9::un_802FD910(); } return; },
                 }
             }
     pub static mut H_un_802FF570: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF570()  {
+                core::hint::black_box(0x22A8660Bu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF570 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FF2::un_802FF570(); } return; },
                 }
             }
     pub static mut H_ifStatus_802F68F0: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStatus_802F68F0()  {
+                core::hint::black_box(0x0CF4DEB3u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStatus_802F68F0 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstatus::ifStatus_802F68F0(); } return; },
                 }
             }
     pub static mut H_ifTime_ShowTimers: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifTime_ShowTimers()  {
+                core::hint::black_box(0x3AE7C1ADu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifTime_ShowTimers {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::iftime::ifTime_ShowTimers(); } return; },
                 }
             }
     pub static mut H_un_802FD45C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD45C()  {
+                core::hint::black_box(0x95D90B19u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD45C {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifnametag::un_802FD45C(); } return; },
                 }
             }
     pub static mut H_ifMagnify_802FC940: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifMagnify_802FC940()  {
+                core::hint::black_box(0xCAEF2A10u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifMagnify_802FC940 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifmagnify::ifMagnify_802FC940(); } return; },
                 }
             }
     pub static mut H_un_802FD674: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD674()  {
+                core::hint::black_box(0x7CB81474u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD674 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifhazard::un_802FD674(); } return; },
                 }
             }
     pub static mut H_un_802FD91C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD91C()  {
+                core::hint::black_box(0xF4EB4D6Au32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD91C {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FD9::un_802FD91C(); } return; },
                 }
             }
     pub static mut H_un_802FF620: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF620()  {
+                core::hint::black_box(0xF1B309E7u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF620 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FF2::un_802FF620(); } return; },
@@ -139,7 +167,9 @@ pub mod ext {
             }
     hook!(H_lb_80011E24, lb_80011E24, (a0: *mut melee_types::HSD_JObj, a1: *mut *mut melee_types::HSD_JObj, a2: i32, a3: i32) -> i32);
     pub static mut H_lb_8000B1CC: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, *mut melee_types::Vec, *mut melee_types::Vec) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lb_8000B1CC(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec)  {
+                core::hint::black_box(0x9AC5375Du32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lb_8000B1CC {
                     Some(f) => f(a0, a1, a2),
                     None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; },
@@ -158,7 +188,9 @@ pub mod ext {
     pub static mut H_GObj_Create: Option<unsafe extern "C" fn(u16, u8, u8) -> *mut melee_types::HSD_GObj> = None;
     pub unsafe extern "C" fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { match H_GObj_Create { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ } } }
     pub static mut H_lb_80013B14: Option<unsafe extern "C" fn(*mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lb_80013B14(a0: *mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj {
+                core::hint::black_box(0xFBEEBE91u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lb_80013B14 {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0 as _) as _ }; },
@@ -182,70 +214,90 @@ pub mod ext {
     pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u8, u32)> = None;
     pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
     pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: isize)  {
+                core::hint::black_box(0x2BD37F38u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_GObj_LObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_ifStatus_802F7134: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStatus_802F7134()  {
+                core::hint::black_box(0xF7751570u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStatus_802F7134 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2F6E::ifStatus_802F7134(); } return; },
                 }
             }
     pub static mut H_ifStatus_802F66A4: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStatus_802F66A4()  {
+                core::hint::black_box(0x9E595256u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStatus_802F66A4 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstatus::ifStatus_802F66A4(); } return; },
                 }
             }
     pub static mut H_ifStock_802FAEC4: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStock_802FAEC4()  {
+                core::hint::black_box(0xEB299AEAu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStock_802FAEC4 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstock::ifStock_802FAEC4(); } return; },
                 }
             }
     pub static mut H_ifTime_Reset: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifTime_Reset()  {
+                core::hint::black_box(0x0BF825E5u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifTime_Reset {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::iftime::ifTime_Reset(); } return; },
                 }
             }
     pub static mut H_if_802F7E24: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn if_802F7E24()  {
+                core::hint::black_box(0xE2990423u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_if_802F7E24 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2F72::if_802F7E24(); } return; },
                 }
             }
     pub static mut H_ifMagnify_802FC870: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifMagnify_802FC870()  {
+                core::hint::black_box(0xB8BC2320u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifMagnify_802FC870 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifmagnify::ifMagnify_802FC870(); } return; },
                 }
             }
     pub static mut H_un_802FE260: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FE260()  {
+                core::hint::black_box(0x580A7640u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FE260 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FD9::un_802FE260(); } return; },
                 }
             }
     pub static mut H_un_802FD704: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD704()  {
+                core::hint::black_box(0x0031FA90u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD704 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifhazard::un_802FD704(); } return; },
                 }
             }
     pub static mut H_un_802FD4C8: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD4C8()  {
+                core::hint::black_box(0xCF5F30AEu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD4C8 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifnametag::un_802FD4C8(); } return; },
@@ -259,70 +311,90 @@ pub mod ext {
                 }
             }
     pub static mut H_un_802FF498: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF498()  {
+                core::hint::black_box(0x89532E26u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF498 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FF2::un_802FF498(); } return; },
                 }
             }
     pub static mut H_un_802FE390: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FE390()  {
+                core::hint::black_box(0xC49B0450u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FE390 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FD9::un_802FE390(); } return; },
                 }
             }
     pub static mut H_ifStock_802FB390: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStock_802FB390()  {
+                core::hint::black_box(0x5843156Du32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStock_802FB390 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstock::ifStock_802FB390(); } return; },
                 }
             }
     pub static mut H_ifStock_802FB41C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStock_802FB41C()  {
+                core::hint::black_box(0xD0BAABA1u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStock_802FB41C {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstock::ifStock_802FB41C(); } return; },
                 }
             }
     pub static mut H_ifStock_802FB484: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStock_802FB484()  {
+                core::hint::black_box(0x57A8A405u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStock_802FB484 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstock::ifStock_802FB484(); } return; },
                 }
             }
     pub static mut H_ifMagnify_802FC750: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifMagnify_802FC750()  {
+                core::hint::black_box(0x1BEE0C6Bu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifMagnify_802FC750 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifmagnify::ifMagnify_802FC750(); } return; },
                 }
             }
     pub static mut H_if_802F7E7C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn if_802F7E7C()  {
+                core::hint::black_box(0x378CBDFFu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_if_802F7E7C {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2F72::if_802F7E7C(); } return; },
                 }
             }
     pub static mut H_ifTime_FreeTimers: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifTime_FreeTimers()  {
+                core::hint::black_box(0x3DA3BB2Eu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifTime_FreeTimers {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::iftime::ifTime_FreeTimers(); } return; },
                 }
             }
     pub static mut H_ifStatus_802F6804: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStatus_802F6804()  {
+                core::hint::black_box(0x160F8D89u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStatus_802F6804 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifstatus::ifStatus_802F6804(); } return; },
                 }
             }
     pub static mut H_ifStatus_802F7220: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn ifStatus_802F7220()  {
+                core::hint::black_box(0xE0FCE3B0u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_ifStatus_802F7220 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2F6E::ifStatus_802F7220(); } return; },
@@ -331,14 +403,18 @@ pub mod ext {
     pub static mut H_HSD_GObjFree: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)> = None;
     pub unsafe extern "C" fn HSD_GObjFree(a0: *mut melee_types::HSD_GObj) { match H_HSD_GObjFree { Some(f) => f(a0), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } } }
     pub static mut H_un_802FD468: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD468()  {
+                core::hint::black_box(0x4CE0E6F3u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD468 {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifnametag::un_802FD468(); } return; },
                 }
             }
     pub static mut H_un_802FD90C: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FD90C()  {
+                core::hint::black_box(0xCCE8CFDBu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FD90C {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::ifhazard::un_802FD90C(); } return; },
@@ -352,21 +428,27 @@ pub mod ext {
                 }
             }
     pub static mut H_un_802FF4FC: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn un_802FF4FC()  {
+                core::hint::black_box(0xF0F9EFD0u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_un_802FF4FC {
                     Some(f) => f(),
                     None => { unsafe { crate::tu::if_2FF2::un_802FF4FC(); } return; },
                 }
             }
     pub static mut H_HSD_JObjLoadJoint: Option<unsafe extern "C" fn(*mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj {
+                core::hint::black_box(0xEA154A18u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_JObjLoadJoint {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },
                 }
             }
     pub static mut H_HSD_CObjSetCurrent: Option<unsafe extern "C" fn(*mut melee_types::HSD_CObj) -> i32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_CObjSetCurrent(a0: *mut melee_types::HSD_CObj) -> i32 {
+                core::hint::black_box(0x0C6019ECu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_CObjSetCurrent {
                     Some(f) => f(a0),
                     None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ }; },
@@ -375,7 +457,9 @@ pub mod ext {
     pub static mut H_HSD_GObj_80390ED0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, u32)> = None;
     pub unsafe extern "C" fn HSD_GObj_80390ED0(a0: *mut melee_types::HSD_GObj, a1: u32) { match H_HSD_GObj_80390ED0 { Some(f) => f(a0, a1), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _); } } }
     pub static mut H_HSD_CObjEndCurrent: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn HSD_CObjEndCurrent()  {
+                core::hint::black_box(0xAC93462Bu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_HSD_CObjEndCurrent {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } return; },

@@ -121,9 +121,9 @@ fn itseakvanish_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => { let v2: f32 = rw() as f32; ret = pi(m::it_802B1C60(&raw mut GO[0], &raw mut VA[0], v2)); } // it_802B1C60
-                    1 => {  ret = m::itSeakVanish_Logic42_DmgDealt(&raw mut GO[0]) as u32; } // itSeakVanish_Logic42_DmgDealt
+                    1 => {  ret = ((m::itSeakVanish_Logic42_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakVanish_Logic42_DmgDealt
                     2 => {  m::it_802B1D40(&raw mut GO[0], &raw mut GO[1]); } // it_802B1D40
-                    3 => {  ret = m::itSeakvanish_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itSeakvanish_UnkMotion0_Anim
+                    3 => {  ret = ((m::itSeakvanish_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itSeakvanish_UnkMotion0_Anim
                     4 => {  m::it_802B1DCC(&raw mut GO[0], &raw mut GO[1]); } // it_802B1DCC
                     5 => { for j in 0..1 { let row = &m::it_803F70B8[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

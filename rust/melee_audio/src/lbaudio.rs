@@ -33,8 +33,22 @@ pub static BANK_INFO: [[i8; 4]; LBAX_CAP] = [
     [1, 5, 5, 0], [0, 0, 0, 0],
 ];
 
+/// An m-ex disc's stage sound rows (`Arch_Map.Audio`, {ssm, reverb, x2} per internal stage id, what lbAudioAx_MexStageAudio
+/// copies over `s32_arr_803BB6B0` in the C build): `Some(row)` for a row mexData has, set by the engine's mex_host.
+/// None (a vanilla disc) keeps the retail table. A row naming a bank past `LBAX_N` (an m-ex SSM) loads no stage bank.
+pub static mut MEX_STAGE_AUDIO: Option<fn(i32) -> Option<[u8; 3]>> = None;
+static MEX_STAGE_AUDIO_SAID: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// `s32_arr_803BB6B0` (retail 0x6F rows, GrKind-indexed): {ssm, echo, echo2}.
 pub fn stage_audio(grkind: i32) -> [u8; 3] {
+    if let Some(f) = unsafe { MEX_STAGE_AUDIO } {
+        if let Some(r) = f(grkind) {
+            if !MEX_STAGE_AUDIO_SAID.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                eprintln!("lbaudio: stage sound rows from mexData (grkind {grkind}: ssm {} reverb {} {})", r[0], r[1], r[2]);
+            }
+            return r;
+        }
+    }
     const SPECIAL: [(usize, [u8; 3]); 26] = [
         (2, [0x22, 1, 1]), (4, [0x25, 1, 1]), (5, [0x29, 1, 1]), (6, [0x24, 1, 1]),
         (7, [0x37, 0x18, 0x18]), (8, [0x28, 0x40, 0x40]), (9, [0x2A, 0x80, 0x80]),
@@ -338,7 +352,7 @@ pub fn lb_80026e84(ckind: i32) -> u64 {
 
 /// lbAudioAx_80026EBC on a GrKind (Stage_8022519C already applied).
 pub fn lb_80026ebc_grkind(grkind: i32) -> u64 {
-    if !(0..0x6F).contains(&grkind) {
+    if !(0..0x6F).contains(&grkind) && unsafe { MEX_STAGE_AUDIO }.and_then(|f| f(grkind)).is_none() {
         return 0;
     }
     let shift = stage_audio(grkind)[0] as u32;

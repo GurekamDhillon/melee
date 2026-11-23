@@ -593,11 +593,15 @@ pub unsafe fn ftAnim_8006F628(fp: &mut Fighter, part: i32, do_blending: bool) {
     let mut node = (*tree).nodes;
     let bits = x594_bits(fp);
     let mut track = (*tree).tracks;
-    let kind = ftAnim_AuthorKind(fp);
+    let kind = if mex_remap_family() {
+        if mex_thrown(fp) { PartsKind::Raw(mex_count(&melee_core::codes::MEX_FT_INTERNAL_COUNT)) } else { PartsKind::Port(fp.kind as i32) }
+    } else {
+        PartsKind::Port(ftAnim_AuthorKind(fp))
+    };
     let depth = xc(bone(fp, part));
     let mut i = 0;
     while i < part {
-        let r = p8007506c(kind, i);
+        let r = kind.bits(i);
         if r == 0 || r & bits != 0 {
             track = track.offset(*node as isize);
             node = node.add(1);
@@ -606,7 +610,7 @@ pub unsafe fn ftAnim_8006F628(fp: &mut Fighter, part: i32, do_blending: bool) {
     }
     while *node != -1 {
         loop {
-            let r = p8007506c(kind, i);
+            let r = kind.bits(i);
             if r == 0 || r & bits != 0 {
                 break;
             }
@@ -615,7 +619,7 @@ pub unsafe fn ftAnim_8006F628(fp: &mut Fighter, part: i32, do_blending: bool) {
         if xc(bone(fp, i)) <= depth && i != part {
             break;
         }
-        let tmp = ext::ftPartsRemap(fp.kind as u32, kind as u32, i as u32);
+        let tmp = kind.remap(fp.kind as u32, i as u32);
         if tmp as u32 != 0xFF {
             let b = bone(fp, tmp);
             if b1(b) && !b0(b) && !b5(b) {
@@ -691,7 +695,7 @@ pub unsafe fn ftAnim_8006F7C8(ft: &mut Fighter, part: i32, arg2: i32, tree: *mut
 /// `ftAnim_8006F954`.
 pub unsafe fn ftAnim_8006F954(fp: &mut Fighter, part: i32, do_blending: bool, _unused: *mut FigaTree) {
     melee_core::ct!("ftAnim_8006F954");
-    if fp.kind as i32 != ftAnim_AuthorKind(fp) {
+    if remap_path(fp) {
         ftAnim_8006F628(fp, part, do_blending);
     } else {
         let t = fp.x590;
@@ -756,6 +760,120 @@ pub unsafe fn ftAnim_8006FA58(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint
 /// `ftAnim_8006FB88`: same for the anim skeleton (x4_jobj2).
 pub unsafe fn ftAnim_8006FB88(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint) { melee_core::ct!("ftAnim_8006FB88"); copy_joint_tree(fp, part, joint, true) }
 
+/// m-ex's 0x8006FD08 patch family (codes.gct on ACE 2.0.1 and Akaneia; the 04 is the marker, the C2s ship with it):
+/// - C2 0x80069CE0 (`Fighter_ChangeMotionState`, before `ftData_80085CD8`): fp+0x23EC = (arg3 != NULL);
+/// - C2 0x8006FE20 / 0x8006F96C (`ftAnim_8006FE08` / `ftAnim_8006F954`): the remap path runs when fp+0x23EC != 0,
+///   instead of when fp->kind != the author kind (x597 & 63), so a same-kind throw remaps too;
+/// - 04 0x8006FD08 (`ftAnim_8006FCE4`): author kind = m-ex's external fighter count (r2+0x14C) & 63;
+/// - C2 0x8006F66C (`ftAnim_8006F628`): author kind = the internal count (r2+0x148, unmasked) when fp+0x23EC, else
+///   fp->kind.
+/// The kinds index PlCo's own tables (the disc's internal kinds). Index "internal count" is the extra parts table m-ex's
+/// PlCo carries past the fighters: Dolphin probe on Akaneia (41/41) Tails 230702 slippi 336, ftPartsRemap from-table
+/// = ftPartsTable[41], a table of its own. On ACE 2.0.1 (66 & 63 = 2) every victim decodes with Captain Falcon's tables
+/// (probe at 0x8006FD1C: r29 = 2, r2+0x14C = 0x42).
+fn mex_remap_family() -> bool { melee_core::codes::disc_writes(0x8006_FD08, 0x83A2_014C) }
+
+fn mex_count(c: &core::sync::atomic::AtomicU32) -> i32 { c.load(core::sync::atomic::Ordering::Relaxed) as i32 }
+
+/// fp+0x23EC (just past the retail Fighter, GC size 0x23EC): m-ex keeps the flag in an extension of the fighter block.
+/// The port does the same: on the m-ex discs the fighter allocator hands out `size_of::<Fighter>() + MEX_FT_EXT` bytes
+/// and the flag is the first word past the native struct, so it lives in the arena and rides savestates/rollback.
+pub const MEX_FT_EXT: usize = 8;
+
+/// Extra bytes the fighter allocator adds (`Fighter_800679B0`); 0 off the m-ex discs so vanilla layout is unchanged.
+/// Remembered so the flag is only touched when the live allocator really carries the extension.
+pub fn mex_ft_ext_bytes() -> usize {
+    let n = if mex_remap_family() { MEX_FT_EXT } else { 0 };
+    MEX_FT_EXT_LIVE.store(n != 0, core::sync::atomic::Ordering::Relaxed);
+    n
+}
+
+static MEX_FT_EXT_LIVE: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
+fn mex_ext_live() -> bool { MEX_FT_EXT_LIVE.load(core::sync::atomic::Ordering::Relaxed) }
+
+/// Reached through the gobj's user_data (the allocation's own pointer), not through `&Fighter`: a pointer derived from
+/// the reference may only touch the struct's bytes, and the optimiser dropped the store past them (seen on ACE 2.0.1).
+#[inline]
+fn mex_ext(fp: &Fighter) -> *mut u32 {
+    unsafe {
+        let base = if fp.gobj.is_null() { fp as *const Fighter as *mut u8 } else { (*fp.gobj).user_data as *mut u8 };
+        core::ptr::read_volatile(&base).add(core::mem::size_of::<Fighter>()) as *mut u32
+    }
+}
+
+/// Clears the extension of a fresh fighter block (`Fighter_Create`, beside the Slippi zeroing).
+pub fn mex_ext_clear(fp: *mut Fighter) {
+    if mex_ext_live() {
+        unsafe { core::ptr::write_bytes((fp as *mut u8).add(core::mem::size_of::<Fighter>()), 0, MEX_FT_EXT) }
+    }
+}
+
+/// `Fighter_ChangeMotionState`'s m-ex store (C2 0x80069CE0); a no-op off the m-ex discs.
+pub fn mex_set_thrown(fp: &Fighter, on: bool) {
+    if !mex_remap_family() {
+        return;
+    }
+    debug_assert!(mex_ext_live(), "m-ex fighter extension missing");
+    if !mex_ext_live() {
+        return;
+    }
+    unsafe { core::ptr::write_volatile(mex_ext(fp), on as u32) }
+}
+
+fn mex_thrown(fp: &Fighter) -> bool { mex_ext_live() && unsafe { core::ptr::read_volatile(mex_ext(fp)) } != 0 }
+
+/// Which branch `ftAnim_8006FE08` / `ftAnim_8006F954` take.
+unsafe fn remap_path(fp: &Fighter) -> bool {
+    if mex_remap_family() { mex_thrown(fp) } else { fp.kind as i32 != ftAnim_AuthorKind(fp) }
+}
+
+/// The author kind of a remap walk: a port kind (the engine's extended tables) or an index into PlCo's own tables.
+#[derive(Clone, Copy)]
+enum PartsKind {
+    Port(i32),
+    Raw(i32),
+}
+
+impl PartsKind {
+    fn bits(self, i: i32) -> u32 {
+        match self {
+            PartsKind::Port(k) => p8007506c(k, i),
+            PartsKind::Raw(k) => unsafe {
+                let tab = crate::hooks::FIGHTER_804D6540_RAW;
+                let t = if tab.is_null() { core::ptr::null_mut() } else { *tab.offset(k as isize) };
+                if t.is_null() || (*t).x4 == 0 {
+                    return 0;
+                }
+                let mut v = (*t).x0;
+                for b in 0..(*t).x4 {
+                    if (*v).x0 as i32 == i {
+                        return 1u32.wrapping_shl(b as u32);
+                    }
+                    v = v.add(1);
+                }
+                0
+            },
+        }
+    }
+
+    fn remap(self, to_kind: u32, joint: u32) -> i32 {
+        match self {
+            PartsKind::Port(k) => ext::ftPartsRemap(to_kind, k as u32, joint),
+            PartsKind::Raw(k) => unsafe {
+                let raw = crate::hooks::FT_PARTS_TABLE_RAW;
+                let from = if raw.is_null() { core::ptr::null_mut() } else { *raw.offset(k as isize) };
+                let to = *crate::hooks::ft_parts_table().offset(to_kind as isize);
+                if from.is_null() || to.is_null() || joint >= (*from).parts_num {
+                    return 0xFF;
+                }
+                let p = *(*from).joint_to_part.offset(joint as isize) as u32;
+                if p == 0xFF { 0xFF } else { *(*to).part_to_joint.offset(p as isize) as i32 }
+            },
+        }
+    }
+}
+
 /// `ftAnim_8006FCE4`.
 pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
     melee_core::ct!("ftAnim_8006FCE4");
@@ -763,17 +881,21 @@ pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
     let mut node = (*tree).nodes;
     let bits = x594_bits(fp);
     let mut track = (*tree).tracks;
-    let kind = ftAnim_AuthorKind(fp);
+    let kind = if mex_remap_family() {
+        PartsKind::Raw(mex_count(&melee_core::codes::MEX_FT_EXTERNAL_COUNT) & 63)
+    } else {
+        PartsKind::Port(ftAnim_AuthorKind(fp))
+    };
     let mut i = 0;
     while *node != -1 {
         loop {
-            let r = p8007506c(kind, i);
+            let r = kind.bits(i);
             if r == 0 || r & bits != 0 {
                 break;
             }
             i += 1;
         }
-        let part = ext::ftPartsRemap(fp.kind as u32, kind as u32, i as u32);
+        let part = kind.remap(fp.kind as u32, i as u32);
         if part as u32 != 0xFF {
             let b = bone(fp, part);
             if b1(b) && !b0(b) && !b5(b) {
@@ -794,7 +916,7 @@ pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
 /// `ftAnim_8006FE08`.
 pub unsafe fn ftAnim_8006FE08(fp: &mut Fighter, do_blending: bool) {
     melee_core::ct!("ftAnim_8006FE08");
-    if fp.kind as i32 != ftAnim_AuthorKind(fp) {
+    if remap_path(fp) {
         ftAnim_8006FCE4(fp, do_blending);
     } else {
         let t = fp.x590;

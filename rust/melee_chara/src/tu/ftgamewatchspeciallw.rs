@@ -128,17 +128,23 @@ pub fn panic_release_damage(panic_damage: i32, mul: f32, add: f32) -> u32 {
 }
 
 /// `ftGw_SpecialLw_ItemPanicSetup` as a Fighter callback entry (accessory4_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialLw_ItemPanicSetup(g: *mut HSD_GObj) {
+    core::hint::black_box(0xFEE8B162u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialLw_ItemPanicSetup");
     ftGw_SpecialLw_ItemPanicSetup(g);
 }
 /// `ftGw_SpecialLw_ItemPanicEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialLw_ItemPanicEnterHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0xCDB797FEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialLw_ItemPanicEnterHitlag");
     ftGw_SpecialLw_ItemPanicEnterHitlag(g);
 }
 /// `ftGw_SpecialLw_ItemPanicExitHitlag` as a Fighter callback entry (post_hitlag_cb).
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftGw_SpecialLw_ItemPanicExitHitlag(g: *mut HSD_GObj) {
+    core::hint::black_box(0x8D36839Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftGw_SpecialLw_ItemPanicExitHitlag");
     ftGw_SpecialLw_ItemPanicExitHitlag(g);
 }

@@ -57,21 +57,27 @@ pub mod ext {
                 }
             }
     pub static mut H_lbCardNew_AllocWorkArea: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbCardNew_AllocWorkArea()  {
+                core::hint::black_box(0xE95A56B4u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbCardNew_AllocWorkArea {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
                 }
             }
     pub static mut H_lbCardGame_LoadArchive: Option<unsafe extern "C" fn(i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbCardGame_LoadArchive(a0: i32)  {
+                core::hint::black_box(0x6A8CBF3Fu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbCardGame_LoadArchive {
                     Some(f) => f(a0),
                     None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a0 as _); } return; },
                 }
             }
     pub static mut H_lbCardGame_SaveChanges: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbCardGame_SaveChanges()  {
+                core::hint::black_box(0x2FFF765Fu32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbCardGame_SaveChanges {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
@@ -93,14 +99,18 @@ pub mod ext {
         }
     }
     pub static mut H_lbDvd_SetupVsPreloadCache: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache()  {
+                core::hint::black_box(0x27E046C8u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_SetupVsPreloadCache {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } return; },
                 }
             }
     pub static mut H_lbTime_8000AF74: Option<unsafe extern "C" fn(u32, i32) -> u32> = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbTime_8000AF74(a0: u32, a1: i32) -> u32 {
+                core::hint::black_box(0xB1F52F70u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbTime_8000AF74 {
                     Some(f) => f(a0, a1),
                     None => { return unsafe { crate::lb::lbTime_8000AF74(a0 as _, a1 as _) as _ }; },
@@ -139,7 +149,9 @@ pub mod ext {
     hook!(H_TestTargetTestCKind, TestTargetTestCKind, () -> i32);
     hook!(H_OSReport, OSReport, (a0: *mut i8, a1: i32));
     pub static mut H_gm_80165290: Option<unsafe extern "C" fn(i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn gm_80165290(a0: i32)  {
+                core::hint::black_box(0x2F4D6688u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_gm_80165290 {
                     Some(f) => f(a0),
                     None => { unsafe { crate::tu::gm_1601::gm_80165290(a0 as _); } return; },
@@ -177,7 +189,9 @@ pub mod ext {
         }
     }
     pub static mut H_lbDvd_80018254: Option<unsafe extern "C" fn() > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn lbDvd_80018254()  {
+                core::hint::black_box(0x60B65E65u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_lbDvd_80018254 {
                     Some(f) => f(),
                     None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
@@ -233,7 +247,9 @@ pub mod ext {
                 }
             }
     pub static mut H_Ground_801C1DE4: Option<unsafe extern "C" fn(*mut i32, *mut i32) > = None;
+            #[inline(never)]
             pub unsafe extern "C" fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32)  {
+                core::hint::black_box(0xB622D940u32); // fn identity (tools/rust-port/fn_identity.py)
                 match H_Ground_801C1DE4 {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_world::tu::ground::Ground_801C1DE4(a0 as _, a1 as _); } return; },

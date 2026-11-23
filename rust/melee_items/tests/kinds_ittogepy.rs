@@ -128,17 +128,17 @@ fn ittogepy_matches_c() {
                     0 => {  m::itTogepy_Logic21_Spawned(&raw mut GO[0]); } // itTogepy_Logic21_Spawned
                     1 => {  m::it_802D3728(&raw mut GO[0]); } // it_802D3728
                     2 => {  m::itTogepy_Logic21_EvtUnk(&raw mut GO[0], &raw mut GO[1]); } // itTogepy_Logic21_EvtUnk
-                    3 => {  ret = m::itTogepy_UnkMotion1_Anim(&raw mut GO[0]) as u32; } // itTogepy_UnkMotion1_Anim
+                    3 => {  ret = ((m::itTogepy_UnkMotion1_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTogepy_UnkMotion1_Anim
                     4 => {  m::itTogepy_UnkMotion1_Phys(&raw mut GO[0]); } // itTogepy_UnkMotion1_Phys
-                    5 => {  ret = m::itTogepy_UnkMotion1_Coll(&raw mut GO[0]) as u32; } // itTogepy_UnkMotion1_Coll
+                    5 => {  ret = ((m::itTogepy_UnkMotion1_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTogepy_UnkMotion1_Coll
                     6 => {  m::it_802D3848(&raw mut GO[0]); } // it_802D3848
-                    7 => {  ret = m::itTogepy_UnkMotion6_Anim(&raw mut GO[0]) as u32; } // itTogepy_UnkMotion6_Anim
+                    7 => {  ret = ((m::itTogepy_UnkMotion6_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTogepy_UnkMotion6_Anim
                     8 => {  m::itTogepy_UnkMotion6_Phys(&raw mut GO[0]); } // itTogepy_UnkMotion6_Phys
-                    9 => {  ret = m::itTogepy_UnkMotion6_Coll(&raw mut GO[0]) as u32; } // itTogepy_UnkMotion6_Coll
+                    9 => {  ret = ((m::itTogepy_UnkMotion6_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTogepy_UnkMotion6_Coll
                     10 => {  m::it_802D39F8(&raw mut GO[0]); } // it_802D39F8
-                    11 => {  ret = m::itTogepy_UnkMotion0_Anim(&raw mut GO[0]) as u32; } // itTogepy_UnkMotion0_Anim
+                    11 => {  ret = ((m::itTogepy_UnkMotion0_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTogepy_UnkMotion0_Anim
                     12 => {  m::itTogepy_UnkMotion0_Phys(&raw mut GO[0]); } // itTogepy_UnkMotion0_Phys
-                    13 => {  ret = m::itTogepy_UnkMotion0_Coll(&raw mut GO[0]) as u32; } // itTogepy_UnkMotion0_Coll
+                    13 => {  ret = ((m::itTogepy_UnkMotion0_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTogepy_UnkMotion0_Coll
                     14 => { for j in 0..7 { let row = &m::it_803F8058[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

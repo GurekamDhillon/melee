@@ -19,6 +19,13 @@ import gen_link as gl
 
 OUT = os.path.join(gl.RUST, 'melee_engine', 'src', 'mex_bridge.rs')
 NAMES = os.path.join(os.path.dirname(__file__), 'mex_bridge_names.txt')
+# Rust type aliases of a GC record (melee_types: `pub type Vec3 = Vec`). Unaliased, a `&Vec3` argument went over as
+# untyped plain memory: the callee read the guest's big-endian floats (Dedede's inhale, ftCo_800BD19C, got +inf).
+REC_ALIAS = {'Vec3': 'Vec'}
+# pointer args to plain words (an Mtx, an f32 / int out-param): marshalled word by word (Call::words), not handed over
+# as raw guest bytes (the callee read and wrote big-endian words). (function, arg index) -> word count.
+WORD_ARGS = {('HSD_MtxSRT', 0): 12, ('PSMTXConcat', 0): 12, ('PSMTXConcat', 1): 12, ('PSMTXConcat', 2): 12,
+             ('ftColl_80076640', 1): 1, ('ftColl_80078710', 2): 1, ('mpCheckAllRemap', 1): 1, ('mpCheckAllRemap', 2): 1}
 INTS = {'i8': 'i8', 'i16': 'i16', 'i32': 'i32', 'i64': 'i64', 'u8': 'u8', 'u16': 'u16', 'u32': 'u32', 'u64': 'u64',
         'isize': 'isize', 'usize': 'usize', 'c_int': 'i32', 'c_uint': 'u32', 'c_char': 'i8', 's32': 'i32', 's16': 'i16',
         's8': 'i8', 'BOOL': 'i32', 'bool': 'bool', 'enum_t': 'u32', 'c_long': 'i32', 'c_ulong': 'u32', 'c_uchar': 'u8'}
@@ -162,13 +169,17 @@ def main():
             elif ty.startswith('*'):
                 if ni > 7: ok = False; break
                 p = pointee(ty)
+                p = REC_ALIAS.get(p, p)
                 rec = f'Some("{p}")' if p in recs else 'None'
+                if (name, ni) in WORD_ARGS:
+                    args.append(f'(c.words({ni}, {WORD_ARGS[(name, ni)]}) as _)'); ni += 1; continue
                 args.append(f'(c.ptr({ni}, {rec}) as _)'); ni += 1
             elif re.match(r'^&(mut\s+)?[\w:]+$', ty):
                 # a reference: the same pointer, never null (a null one ends the callback instead of the call)
                 if ni > 7: ok = False; break
                 mut = 'mut ' if ty.startswith('&mut') else ''
                 p = re.sub(r'^&(mut\s+)?', '', ty).split('::')[-1]
+                p = REC_ALIAS.get(p, p)
                 rec = f'Some("{p}")' if p in recs else 'None'
                 pre.append(f'let p{ni} = c.ptr({ni}, {rec}); if p{ni}.is_null() {{ c.bad = true; return true; }}')
                 args.append(f'(&{mut}*(p{ni} as *{"mut" if mut else "const"} _))'); ni += 1
@@ -294,7 +305,11 @@ def main():
             fh.write(f'static {static}: &[(&str, {ty})] = &[\n')
             fh.write('\n'.join(f'    ("{n}", {e}),' for n, e in rows) + '\n];\n\n')
             fh.write(f'pub fn {fn}(name: &str) -> Option<{ty}> {{\n')
-            fh.write(f'    {static}.binary_search_by(|(n, _)| (*n).cmp(name)).ok().map(|i| {static}[i].1)\n}}\n\n')
+            # some rows carry the port's snake-case fn name (ftwalkcommon_800e0060), not the retail one vanilla_name
+            # gives (ftWalkCommon_800E0060): an exact miss falls back to a case-blind match (Dedede's walk-with-victim
+            # Phys bctrl'd ftWalkCommon_800E0060, missed, and never moved him)
+            fh.write(f'    {static}.binary_search_by(|(n, _)| (*n).cmp(name)).ok().map(|i| {static}[i].1)\n')
+            fh.write(f'        .or_else(|| {static}.iter().find(|(n, _)| n.eq_ignore_ascii_case(name)).map(|e| e.1))\n}}\n\n')
         fh.write('/// The native port of a one-argument gobj callback, by name.\n')
         table(gobj, 'GOBJ_FN', 'gobj_fn', 'unsafe extern "C" fn(G)')
         fh.write('/// The native port of a two-gobj callback (`HSD_GObjInteraction`), by name.\n')

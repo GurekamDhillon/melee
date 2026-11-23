@@ -384,6 +384,8 @@ pub struct RbStats {
     /// the mean is how many frames after it was due the peer's input arrived (the effective input lag)
     pub arrive_n: i32,
     pub arrive_sum: i64,
+    /// ticks held at the start (online frame 2) until the peer's first pad arrived ([`RbSession::start_hold`])
+    pub start_hold: i32,
 }
 
 /// The snapshot ring (gw_snap.c's session slots): `k + 2` slots, k = maxb + 1.
@@ -417,6 +419,10 @@ pub struct RbSession<G: RbGame> {
     in_match: bool,
     epoch: i32,
     wait_ticks: i32,
+    /// The stall run in progress: (first frame, ticks, why: 1 the rollback window is full, 2 the end waits for the
+    /// peer's last inputs), and how many runs were logged (the first 40).
+    stall_run: (i32, i32, u8),
+    stalls_logged: u32,
     hring: [(i32, u32); RING],
     hlog_next: i32,
     /// The final curated hashes, in order (MELEE_RB_HASHLOG's `frame,hash` rows).
@@ -453,6 +459,10 @@ pub struct RbSession<G: RbGame> {
     hint_used: Vec<[(i32, bool, RbInput); RING]>,
     pub hint_trust: [crate::early::Trust; SLOTS],
     pub hint_stats: HintStats,
+    /// Set by the caller each tick while the peer has sent no pad yet: online frame 2 (session `FIRST + 1`) is not
+    /// run until it clears, so the match starts in step with a peer still loading instead of running into the
+    /// rollback limit a few frames in (local pacing only; the pads sent are unchanged).
+    pub start_hold: bool,
 }
 
 /// Early-input prediction statistics (this match).
@@ -482,6 +492,8 @@ impl<G: RbGame> RbSession<G> {
             in_match: false,
             epoch: 0,
             wait_ticks: 0,
+            stall_run: (0, 0, 0),
+            stalls_logged: 0,
             hring: [(i32::MIN, 0); RING],
             hlog_next: FIRST,
             hash_log: Vec::new(),
@@ -512,6 +524,7 @@ impl<G: RbGame> RbSession<G> {
             hint_used: vec![[(i32::MIN, false, RbInput::default()); RING]; SLOTS],
             hint_trust: [crate::early::Trust::default(); SLOTS],
             hint_stats: HintStats::default(),
+            start_hold: false,
         }
     }
 
@@ -540,6 +553,7 @@ impl<G: RbGame> RbSession<G> {
         }
         self.epoch += 1;
         self.wait_ticks = 0;
+        self.stall_run = (0, 0, 0);
         self.in_match = scene_kind == 2;
         if self.in_match {
             self.opened = false;
@@ -1023,10 +1037,27 @@ impl<G: RbGame> RbSession<G> {
         if frame >= FIRST && (n - conf > self.cfg.maxb || (n > self.last && conf < self.last)) {
             self.plan.new_frame = false;
             self.stats.stall_ticks += 1;
+            let why = if n - conf > self.cfg.maxb { 1 } else { 2 };
+            if self.stall_run.1 == 0 {
+                self.stall_run = (frame, 0, why);
+            }
+            self.stall_run.1 += 1;
+        } else if self.start_hold && n == FIRST + 1 {
+            self.plan.new_frame = false;
+            self.stats.start_hold += 1;
         } else if self.wait_ticks > 0 && frame >= FIRST {
             self.wait_ticks -= 1;
             self.plan.new_frame = false;
             self.stats.waits += 1;
+        }
+        if self.plan.new_frame && self.stall_run.1 > 0 {
+            // a stall run ended: where, how long, and why (the first 40 runs; the count is in the stats)
+            if self.stalls_logged < 40 {
+                self.stalls_logged += 1;
+                let (f, k, why) = self.stall_run;
+                eprintln!("netplay: stall at frame {f}: {k} ticks, {}", if why == 1 { "no peer input within the rollback window" } else { "the end waits for the peer's last inputs" });
+            }
+            self.stall_run = (0, 0, 0);
         }
         self.plan.active = self.plan.rollback || self.plan.new_frame;
         self.prev_idle = frame >= FIRST && !self.plan.new_frame;

@@ -115,7 +115,8 @@ fn smoke() {
     assert_eq!(take(), ["ms 364 800 0 1 0"]);
 
     // Loop0: state 3 or the script flag ends the loop; a strike enters Loop1 with the cloud effect.
-    unsafe { f.mv.pk.specialhi.x4 = 3 };
+    // the hit flag where the SpecialLw states keep it (thunder_flag_set: natively speciallw.x4, outside the pointer)
+    unsafe { f.mv.pk.speciallw.x4 = 3 };
     t::ftPk_SpecialLwLoop0_Anim(gp);
     assert_eq!(take(), ["ms 362 0 0 1 0"]);
     assert!(f.take_dmg_cb.is_none());

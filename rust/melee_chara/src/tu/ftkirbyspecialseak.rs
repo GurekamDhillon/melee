@@ -107,10 +107,13 @@ pub fn ftKb_SpecialN_set_cbs(gobj: *mut HSD_GObj) {
 pub fn fn_80105FEC(_gobj: *mut HSD_GObj) { melee_core::ct!("fn_80105FEC");}
 
 /// `fn_80105FEC` as a Fighter / reflect callback entry.
-pub unsafe extern "C" fn cb_fn_80105FEC(_g: *mut HSD_GObj) { melee_core::ct!("cb_fn_80105FEC");}
+#[inline(never)]
+pub unsafe extern "C" fn cb_fn_80105FEC(_g: *mut HSD_GObj) { core::hint::black_box(0x20C312DBu32); /* fn identity */ melee_core::ct!("cb_fn_80105FEC");}
 
 /// `fn_80106DB0` as a Fighter callback entry (`accessory4_cb`).
+#[inline(never)]
 pub unsafe extern "C" fn cb_fn_80106DB0(g: *mut HSD_GObj) {
+    core::hint::black_box(0xCB02ACF0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_fn_80106DB0");
     fn_80106DB0(g);
 }

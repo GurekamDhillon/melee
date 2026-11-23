@@ -58,7 +58,7 @@ int main(void)
             zero(&FD, sizeof FD); zero(&SFX, sizeof SFX);
             SFX.x10 = rnd() % 1000; FD.x4C_sfx = &SFX; F.ft_data = &FD;
             F.x197C = (rnd() & 1) ? &X197C : NULL;
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.input.lstick[0].x = rg(); F.input.lstick[0].y = rg();
             F.active_timer.lstick.y = rnd() % 12;
             F.input.pressed_buttons = rnd() & 0xF00;

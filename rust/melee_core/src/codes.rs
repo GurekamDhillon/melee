@@ -62,6 +62,22 @@ static CONFIGURED: AtomicBool = AtomicBool::new(false);
 /// rollback or lab load rewrites it with the same value. Off: the game's own rules.
 static LAB_UNTIMED: AtomicBool = AtomicBool::new(false);
 
+/// A replay that says which codes its match ran (our own `.slp` export's `gameplayCodes` metadata) without Neutral
+/// Spawn: the spawn stays on the stage's joints instead of the Neutral Spawn every other replay is played with
+/// (Slippi's codesets all carry it). Set before the match boots.
+static REPLAY_NO_NEUTRAL_SPAWN: AtomicBool = AtomicBool::new(false);
+
+/// See [`REPLAY_NO_NEUTRAL_SPAWN`].
+pub fn set_replay_no_neutral_spawn(on: bool) {
+    REPLAY_NO_NEUTRAL_SPAWN.store(on, Ordering::Relaxed);
+}
+
+/// See [`REPLAY_NO_NEUTRAL_SPAWN`].
+#[inline]
+pub fn replay_no_neutral_spawn() -> bool {
+    REPLAY_NO_NEUTRAL_SPAWN.load(Ordering::Relaxed)
+}
+
 /// Make lab matches untimed (see [`LAB_UNTIMED`]).
 pub fn set_lab_untimed(on: bool) {
     LAB_UNTIMED.store(on, Ordering::Relaxed);
@@ -100,6 +116,19 @@ pub fn set(w: u32, lgl: u32) {
     WORD.store(w, Ordering::Relaxed);
     LGL_N.store(lgl, Ordering::Relaxed);
     CONFIGURED.store(true, Ordering::Relaxed);
+}
+
+/// The codes as they are now (word, LGL limit, configured, PS camera monitor), for [`restore_offline`].
+pub fn save_offline() -> (u32, u32, bool, bool) {
+    (WORD.load(Ordering::Relaxed), LGL_N.load(Ordering::Relaxed), CONFIGURED.load(Ordering::Relaxed), ps_camera_independent_monitor())
+}
+
+/// Put back a [`save_offline`] (an online match played in the menu process: its codes end with it).
+pub fn restore_offline(s: (u32, u32, bool, bool)) {
+    WORD.store(s.0, Ordering::Relaxed);
+    LGL_N.store(s.1, Ordering::Relaxed);
+    CONFIGURED.store(s.2, Ordering::Relaxed);
+    set_ps_camera_independent_monitor(s.3);
 }
 
 /// Turn `bit` on without marking the codes configured (slpcheck: a code found in the replay's own Gecko list).
@@ -315,3 +344,82 @@ pub fn replay_widescreen() -> Option<(u16, u16, f32, f32)> {
     }
     Some((b as u16, (b >> 16) as u16, f32::from_bits(WS_NUM.load(Ordering::Relaxed)), f32::from_bits(WS_DEN.load(Ordering::Relaxed))))
 }
+
+/// The mounted disc's own 32-bit writes (codes.gct type 04) to retail game code, for the few a ported function checks
+/// at the instruction they patch (an m-ex disc's codes.gct; ACE v2.0.1 nops two branches). Set once at mount from
+/// the disc ([`set_disc_writes`]), constant afterwards, so rollback and replays see the same value.
+static DISC_WRITES: std::sync::RwLock<Vec<(u32, u32)>> = std::sync::RwLock::new(Vec::new());
+
+/// The 04 writes of a codes.gct image (`00D0C0DE00D0C0DE` header; 04 / C2 / 00 / 02 / 06 skipped as
+/// tools/mex_port/dump_gct.py does). Stops at the terminator or the first unknown type.
+pub fn gct_writes(gct: &[u8]) -> Vec<(u32, u32)> {
+    let be = |o: usize| gct.get(o..o + 4).map(|b| u32::from_be_bytes([b[0], b[1], b[2], b[3]]));
+    let mut v = Vec::new();
+    if gct.get(..8) != Some(&[0x00, 0xD0, 0xC0, 0xDE, 0x00, 0xD0, 0xC0, 0xDE][..]) {
+        return v;
+    }
+    let mut off = 8;
+    while let (Some(w0), Some(w1)) = (be(off), be(off + 4)) {
+        if w0 == 0xF000_0000 {
+            break;
+        }
+        let addr = 0x8000_0000 | (w0 & 0x01FF_FFFF);
+        match (w0 >> 24) & 0xFE {
+            0xC2 => off += 8 + w1 as usize * 8,
+            0x04 => {
+                v.push((addr, w1));
+                off += 8;
+            }
+            0x00 | 0x02 => off += 8,
+            0x06 => off += 8 + ((w1 as usize + 7) & !7),
+            _ => break,
+        }
+    }
+    v
+}
+
+/// codes.gct 04 writes (ACE 2.0.1 / Akaneia) with a sim or data effect the port does not mirror yet;
+/// each one present on the disc is logged at load. The ported ones are gated at their site through
+/// `disc_writes` (ftswing, ftmewtwospecials, stale, ground Ground_801C24F8, gmMainLib defaults);
+/// the m-ex table redirects are read natively by mex_host; the rest are UI or platform-only.
+pub const UNHANDLED_WRITES: &[(u32, &str)] = &[
+    (0x8002_A124, "Camera_ApplyQuake: 1P-mode check forced false"),
+    (0x8002_B0F8, "Camera_8002B0E0: 1P-mode check forced false"),
+    (0x8006_AE00, "Fighter_procInput: debug-level branch removed"),
+    (0x8006_AE90, "Fighter_procInput: 1P-mode check forced false"),
+    (0x800C_09D0, "ftCo_800C09B4: +0x2324 < 30 check skipped"),
+    (0x800C_0AB4, "ftCo_800C0A98: +0x2324 < 30 check skipped"),
+    (0x8018_2FBC, "fn_80182F40: (r3&0xff)==3 path skipped"),
+    (0x804D_C49C, "@2315: float 26.0 -> 29.0"),
+    (0x801A_3F24, "gm_801A3EF4: major-scene stride 0x18 (m-ex scene table)"),
+    (0x801A_4560, "gm_801A4510: major-scene stride 0x18 (m-ex scene table)"),
+    (0x8017_A890, "1P per-fighter table 0x803D7058 from MxDt"),
+    (0x800C_2798, "per-fighter switch bounds for added kinds"),
+    (0x800C_30A4, "per-fighter switch bounds for added kinds"),
+    (0x8017_9DCC, "function entry overwritten (li r4,0)"),
+];
+
+/// Install the disc's 04 writes (empty for a vanilla disc).
+pub fn set_disc_writes(w: Vec<(u32, u32)>) {
+    for &(a, why) in UNHANDLED_WRITES {
+        if let Some(&(_, v)) = w.iter().find(|&&(x, _)| x == a) {
+            eprintln!("codes.gct: unhandled write {a:08X} = {v:08X} ({why})");
+        }
+    }
+    if let Ok(mut d) = DISC_WRITES.write() {
+        *d = w;
+    }
+}
+
+/// The disc's codes.gct writes `value` to retail address `addr`.
+pub fn disc_writes(addr: u32, value: u32) -> bool {
+    DISC_WRITES.read().map_or(false, |d| d.iter().any(|&(a, v)| a == addr && v == value))
+}
+
+/// m-ex's runtime copies of the mexData metadata counts it keeps beside `_SDA2_BASE_` (r2+0x148 internal fighters,
+/// r2+0x14C external fighters; 0 on a vanilla disc). Patched instructions read them as values (`ftAnim_8006FCE4`).
+pub static MEX_FT_INTERNAL_COUNT: AtomicU32 = AtomicU32::new(0);
+pub static MEX_FT_EXTERNAL_COUNT: AtomicU32 = AtomicU32::new(0);
+
+/// PowerPC `nop`, the value of a disc write that removes an instruction.
+pub const PPC_NOP: u32 = 0x6000_0000;

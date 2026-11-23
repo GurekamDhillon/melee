@@ -35,7 +35,10 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     scn.stage = info.stage() as i32;
     // Up-front domain checks (a malformed or synthetic Game Start must be refused, not reach the sim): the VS stage
     // range (external ids 2..=32), and per present player the team (0..=2 in a teams match; a real file's spawn point may be 255, unset)
-    if !(2..=32).contains(&info.stage()) {
+    // an m-ex replay (its disc's codes.gct in the Gecko list) may name the disc's added stages (ACE v2.0.1: up to 365);
+    // an id the mounted disc does not carry resolves to no stage as it mounts
+    let mex_stages = slp::akaneia_codeset(&s.gecko) && info.stage() >= 2;
+    if !(2..=32).contains(&info.stage()) && !mex_stages {
         return Err(format!("stage id {} is not a VS stage (2..=32)", info.stage()));
     }
     for i in 0..4 {
@@ -72,7 +75,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         // on an Akaneia replay (its codes.gct in the Gecko list) the ids past 25 are the disc's m-ex fighters: resolved
         // through MxDt.dat once the disc mounts (needs the Akaneia disc); anywhere else they are refused
         let ckind = if p.ckind > 25 {
-            if !akaneia || p.ckind > 32 {
+            // no fixed upper bound: Akaneia's external ids stop at 32, ACE v2.0.1's reach 65 (Sub-Zero); an id the
+            // mounted disc does not carry fails to resolve as the disc mounts
+            if !akaneia {
                 return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
             }
             melee_engine::scenario::pending_fighter_token(&format!("mexext:{}", p.ckind))
@@ -252,6 +257,8 @@ fn install_capture(at_proc_map: bool) {
 static mut SEED_FIRST: Option<(i32, i32, u32, u32)> = None;
 static mut SEED_PROBE: bool = false;
 static mut RESEED_PRE: bool = false;
+/// The file's UCF 0.7x tumble code is on (set before the engine boot, applied after it).
+static mut UCF07_TUMBLE: bool = false;
 static mut SLP_SEED: u32 = 0;
 static mut SEEDLOG_LAST: u32 = 0;
 /// Online replays: the console's forced frame seed minus the Frame Start event's (a multiple of 0x10000).
@@ -367,9 +374,13 @@ struct First {
 
 pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
+    // `--list`: many replays, N at a time (slpbatch.rs)
+    if args.iter().any(|a| a == "--list") {
+        return crate::slpbatch::batch(args);
+    }
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let Some(path) = get("--slp") else {
-        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai]");
+        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai] [--time [--time-csv FILE]] [--render [--render-scale N]]");
         return ExitCode::from(2);
     };
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
@@ -397,6 +408,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         (None, Ok(ak)) if slp::akaneia_codeset(&file.gecko) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype <= 1 && g.player(i).ckind > 25)) => ak,
         _ => iso,
     };
+    // which disc the replay is played on: Akaneia when the file carries its marker code (and is played on that disc)
+    let ak_disc = std::env::var("GW_ISO_AKANEIA").is_ok_and(|a| a == iso);
+    println!("slpcheck: {name}: disc={}", if ak_disc { "akaneia" } else if slp::akaneia_codeset(&file.gecko) { "akaneia-codes-on-other-disc" } else if std::env::var("GW_ISO_VANILLA").is_ok_and(|v| v == iso) { "vanilla" } else { "other" });
     let mut sm = Summary {
         version: file.version_str(),
         stage: file.info.as_ref().map_or(0, |g| g.stage() as i32),
@@ -467,8 +481,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         use melee_fighter::tu::ftCo_DamageFall::ext::hook as dfh;
         let on = no_card && slp::gecko_has(&file.gecko, 0x8009_08F4) && std::env::var("SLPCHECK_UCF07").is_err();
         dfh::Replay_UcfVersion = if on { Some(|p| match unsafe { crate::r_in() }.ucf_version(p) { 73 => 84, v => v }) } else { None };
-        // UCF's own raw history is only pushed with the 1.0 cardinals on: read the pad queue's raw x from the replay
-        dfh::ftUcf_PadRaw = if on { Some(|p, w, b| unsafe { crate::r_in() }.raw_stick_back(p, w, b)) } else { None };
+        UCF07_TUMBLE = on;
     }
     // The engine's seam answers 0 for Replay_ApplyMatch (the RNG was zeroed at the match start); answer the file's seed.
     unsafe {
@@ -502,11 +515,16 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             std::env::set_var("MELEE_MEX", "ucf_dbooc_squatrv_fix");
         }
     }
-    // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn (the port's own .slp exports, played without it)
+    // our own export says which codes its match ran (`gameplayCodes`): without Neutral Spawn the fighters stood on the
+    // stage's spawn joints, so the replay is played that way too (Battlefield and Dream Land move port 1 otherwise)
+    crate::apply_recorded_spawn(&data);
+    // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn at all (as if the replay were not one)
     if std::env::var_os("SLPCHECK_VANILLA_SPAWN").is_none() {
         crate::replay_modes_active(file.version[0] as i32 * 10000 + file.version[1] as i32 * 100 + file.version[2] as i32);
     }
     // the replay's own widescreen camera code (if its Gecko list has one) changes the logic's off-screen test
+    // the sim view this port's export recorded (metadata `simView`); a console replay names none (the fixed C view)
+    crate::slp_export::apply_sim_view(&data);
     let ws = slp::widescreen_code(&file.gecko);
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     // Slippi's "Disable Wobbling" (C2 800DB880 / C2 800DBBD4, CaptureWait/CaptureDamage, with C2 8008F090): the 4th Ice Climbers
@@ -521,6 +539,16 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if let Some(w) = ws {
         sm.notes = format!("{}{}widescreen code {}..{} x{}/{}", sm.notes, if sm.notes.is_empty() { "" } else { "; " }, w.left, w.right, w.num, w.den);
     }
+    // `--time` (or SLPCHECK_TIME=1): per-frame sim timing (thread CPU cycles and wall), summary below the status; `--time-csv FILE`
+    // writes every frame. `--render`: also draw each frame offscreen (melee_gx, no window, no readback, no pacing) and time that.
+    // Off: nothing below runs (no clock reads, no allocation). The replay's comparison is outside the timed span.
+    let want_render = args.iter().any(|a| a == "--render");
+    let want_time = want_render || args.iter().any(|a| a == "--time") || std::env::var_os("SLPCHECK_TIME").is_some_and(|v| v != "0");
+    // SAFETY: single-threaded start-up, before the engine reads it.
+    if want_render {
+        unsafe { melee_engine::engine::RENDER = true };
+    }
+    let mut timer = want_time.then(|| crate::frametime::FrameTimes::new(get("--time-csv").as_deref(), want_render));
     let booted = crate::engine_disc(&iso).and_then(|disc| melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), conv.scn.clone()));
     let mut e = match booted {
         Ok(e) => e,
@@ -531,6 +559,13 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     crate::install_replay(pl);
     install_capture(file.version[0] < 3);
+    // UCF's own raw history is only pushed with the 1.0 cardinals on: the 0.7x tumble check reads the pad queue's raw x
+    // from the replay. Set after the engine boot: `melee_link::install` (Engine::boot_vs) links this hook to the fighter's
+    // own `ftUcf_PadRaw` and overwrote the earlier assignment, so the check saw a zero stick move and never left tumble
+    // (Lunar set: DamageFall/DamageFly where the console went to Fall).
+    if unsafe { UCF07_TUMBLE } {
+        unsafe { melee_fighter::tu::ftCo_DamageFall::ext::hook::ftUcf_PadRaw = Some(|p, w, b| unsafe { crate::r_in() }.raw_stick_back(p, w, b)) };
+    }
     unsafe { RESEED_PRE = !args.iter().any(|a| a == "--no-pre-reseed"); SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None; FS_OFFSET = 0 };
     let ports: Vec<usize> = (0..4).filter(|&i| conv.scn.players[i].is_some()).collect();
     let posts: Vec<Vec<Option<slp::Post>>> = (0..4).map(|p| if ports.contains(&p) { file.post_by_port(p) } else { Vec::new() }).collect();
@@ -557,12 +592,39 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     // `--wide-from F --wide-to F`: only those slippi frames (a whole match is ~2 GB of lines)
     let wide_from: i32 = get("--wide-from").and_then(|v| v.parse().ok()).unwrap_or(i32::MIN);
     let wide_to: i32 = get("--wide-to").and_then(|v| v.parse().ok()).unwrap_or(i32::MAX);
+    let mut rend: Option<melee_gx::render::Renderer> = None;
+    if want_render {
+        match melee_gx::render::Renderer::new(640, 480) {
+            Ok(mut r) => {
+                if let Some(sc) = get("--render-scale").and_then(|v| v.parse::<u32>().ok()) {
+                    r.set_scale(sc.clamp(1, melee_gx::render::Renderer::MAX_SCALE));
+                }
+                // GX decode and draw packing on their own thread, as play.rs / retail_flow.rs do for a rendered match (the
+                // FIFO decode in GXCopyDisp was over half of the timed tick: ~0.6 ms of the 1.4). Render-only: no game code
+                // reads the decoded state, and slpcheck never snapshots the arena (the frames may hold its blocks).
+                // wait_frame: the render span takes exactly this tick's frame. MELEE_GX_SYNC=1 keeps decoding in the tick.
+                if std::env::var_os("MELEE_GX_SYNC").is_none() {
+                    let sh = melee_engine::gxbridge::shim();
+                    sh.gx.enable_async(melee_engine::arena::mark_foreign_thread);
+                    sh.gx.set_pipe_factory(r.pipe_factory());
+                    sh.wait_frame = true;
+                }
+                rend = Some(r);
+            }
+            Err(er) => {
+                sm.status = format!("boot-error: renderer: {er}");
+                return finish(args, &name, &sm);
+            }
+        }
+    }
+    crate::prof::set_gated(std::env::var_os("MELEE_SAMPLE_GATE").is_some_and(|v| v != "0"));
     let run = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mut ticks = 0usize;
         loop {
             if ticks >= max_ticks {
                 break;
             }
+            let t_a = timer.as_ref().map(|_| crate::frametime::mark());
             let pl = unsafe { crate::r_in() };
             pl.tick();
             let fr = pl.frame();
@@ -586,7 +648,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             // wrong values. The forced value is recovered from the recorded Pre-Frame seed by stepping the LCG back (up to 64 draws)
             // to the nearest value with the Frame Start low half, the frame offset kept from frame to frame.
             let pre = ports.iter().find_map(|&p| pl.input(p as i32, false).map(|i| i.seed).filter(|&s| s != 0));
-            if pl.r.online && sd != 0 {
+            if pl.r.online && sd != 0 && !pl.r.fs_forced {
                 let forced = pre.and_then(|rec| online_forced_seed(rec, sd, unsafe { &mut FS_OFFSET })).unwrap_or(sd.wrapping_add(unsafe { FS_OFFSET }));
                 if std::env::var_os("SLPCHECK_PREDBG").is_some() && forced != sd { eprintln!("PREDBG f{fr} sd={sd:08x} forced={forced:08x}"); }
                 melee_runtime::tu::random::global::state().set_logic_seed(forced);
@@ -616,8 +678,24 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
                 e.set_pads(Some(pads));
             }
-            if !e.tick() {
+            // MELEE_SAMPLE with MELEE_SAMPLE_GATE=1: the profiler samples the engine tick only (not the replay bookkeeping or the render)
+            crate::prof::gate(true);
+            let more = e.tick();
+            crate::prof::gate(false);
+            if !more {
                 break;
+            }
+            if let (Some(t), Some(a)) = (timer.as_mut(), t_a) {
+                let b = crate::frametime::mark();
+                if let Some(r) = rend.as_mut() {
+                    if let Some(f) = melee_engine::gxbridge::take_frame() {
+                        if let Some(pk) = melee_engine::gxbridge::shim().gx.packed.take() {
+                            r.set_packed(pk);
+                        }
+                        r.render_frame(&melee_engine::gxbridge::shim().gx.state, &f);
+                    }
+                }
+                t.push(fr, a, b, if rend.is_some() { crate::frametime::mark() } else { b });
             }
             ticks += 1;
             last_frame = fr;
@@ -668,7 +746,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
             }
             // the first divergent frame is the answer; keep going only to fill the per-field table when asked
-            if first.is_some() && !dump && !args.iter().any(|a| a == "--full") {
+            if first.is_some() && !dump && timer.is_none() && !args.iter().any(|a| a == "--full") {
                 break;
             }
         }
@@ -694,6 +772,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         sm.first = Some(f.clone());
     }
     sm.per_field = per_field;
+    if let Some(t) = timer.as_mut() {
+        print!("{}", t.summary());
+    }
     finish(args, &name, &sm)
 }
 

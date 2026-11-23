@@ -154,25 +154,33 @@ pub static mut efAsync_MexBhv: [*mut EfMexBehavior; 65] = [null_mut(); 65];
 pub static mut efAsync_MexReady: i32 = 0;
 
 /// `efAsync_GetEffectJObj`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_GetEffectJObj(mut effect: *mut EF_Effect) -> *mut HSD_JObj {
+    core::hint::black_box(0x7CEBFEB7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_GetEffectJObj");
     return HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj;
 }
 
 /// `efAsync_SetEffectRotationZFromPtr`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_SetEffectRotationZFromPtr(mut effect: *mut EF_Effect, mut rotation: *const f32) {
+    core::hint::black_box(0x93F5BF66u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_SetEffectRotationZFromPtr");
     HSD_JObjSetRotationZ(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, *rotation);
 }
 
 /// `efAsync_SetEffectRandomRotationZ`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_SetEffectRandomRotationZ(mut effect: *mut EF_Effect) {
+    core::hint::black_box(0x240000C9u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_SetEffectRandomRotationZ");
     HSD_JObjSetRotationZ(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, (6.283185307179586f64 * (ext::HSD_Randf() as f64)) as f32);
 }
 
 /// `efAsync_SetEffectScaleXYZ`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_SetEffectScaleXYZ(mut effect: *mut EF_Effect, mut scale: f32) {
+    core::hint::black_box(0x13F59EBDu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_SetEffectScaleXYZ");
     let mut jobj: *mut HSD_JObj = null_mut();
     jobj = (*(*effect).gobj).hsd_obj as *mut HSD_JObj;
@@ -186,13 +194,17 @@ pub unsafe extern "C" fn efAsync_SetEffectScaleXYZ(mut effect: *mut EF_Effect, m
 }
 
 /// `efAsync_SetEffectScale`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_SetEffectScale(mut effect: *mut EF_Effect, mut scale: *mut Vec) {
+    core::hint::black_box(0x99E33362u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_SetEffectScale");
     HSD_JObjSetScale(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, scale);
 }
 
 /// `efAsync_SetEffectFacingDir`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_SetEffectFacingDir(mut effect: *mut EF_Effect, mut facing_dir: f32) {
+    core::hint::black_box(0x5199AC99u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_SetEffectFacingDir");
     let mut rotation: f64 = 0.0;
     if facing_dir < 0.0f32 {
@@ -204,7 +216,9 @@ pub unsafe extern "C" fn efAsync_SetEffectFacingDir(mut effect: *mut EF_Effect, 
 }
 
 /// `efAsync_Dispatch`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_Dispatch(mut gfx_id: i32, mut gobj: *mut HSD_GObj, mut vlist: *mut crate::tu::va::Va) -> *mut c_void {
+    core::hint::black_box(0xE312C831u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_Dispatch");
     let mut translate: Vec3 = unsafe { core::mem::zeroed() };
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
@@ -1261,7 +1275,9 @@ pub unsafe extern "C" fn efAsync_Dispatch(mut gfx_id: i32, mut gobj: *mut HSD_GO
 }
 
 /// `efAsync_LoadAsync`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_LoadAsync(mut index: i32) {
+    core::hint::black_box(0x320E694Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_LoadAsync");
     let mut entry: *mut EF_DAT_Entry = core::ptr::addr_of_mut!(efAsync_DatEntries).cast::<EF_DAT_Entry>().wrapping_offset(index as isize) as *mut EF_DAT_Entry;
     efAsync_MexInit();
@@ -1275,7 +1291,9 @@ pub unsafe extern "C" fn efAsync_LoadAsync(mut index: i32) {
 }
 
 /// `efAsync_OnLoad`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_OnLoad(mut archive: *mut HSD_Archive, mut data: *mut u8, mut length: u32, mut index: i32) {
+    core::hint::black_box(0x89756336u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_OnLoad");
     let mut result: *mut EF_DAT_Entry = null_mut();
     ext::lbArchive_InitializeDAT(archive, data as *mut c_void, length);
@@ -1287,7 +1305,9 @@ pub unsafe extern "C" fn efAsync_OnLoad(mut archive: *mut HSD_Archive, mut data:
 }
 
 /// `efAsync_LoadSync`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_LoadSync(mut idx: i32) {
+    core::hint::black_box(0x87296F4Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_LoadSync");
     let mut spC: *mut EF_DAT_Entry = null_mut();
     let mut lookup: *mut EF_DAT_Entry = null_mut();
@@ -1318,7 +1338,9 @@ pub unsafe extern "C" fn efAsync_LoadSync(mut idx: i32) {
 }
 
 /// `efAsync_QueueProcessDeferred`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_QueueProcessDeferred(mut gobj: *mut HSD_GObj, mut queued_effect: *mut EF_QueuedEffect) {
+    core::hint::black_box(0x54F1C190u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_QueueProcessDeferred");
     let mut sp4C: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp40: Vec3 = unsafe { core::mem::zeroed() };
@@ -1379,7 +1401,9 @@ pub unsafe extern "C" fn efAsync_QueueProcessDeferred(mut gobj: *mut HSD_GObj, m
 }
 
 /// `efAsync_QueueFlush`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_QueueFlush(mut gobj: *mut HSD_GObj, mut arg_struct: *mut c_void) {
+    core::hint::black_box(0x81B3868Cu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_QueueFlush");
     let mut temp_r31: *mut EF_QueuedEffect = null_mut();
     let mut var_r4: *mut EF_QueuedEffect = null_mut();
@@ -1393,7 +1417,9 @@ pub unsafe extern "C" fn efAsync_QueueFlush(mut gobj: *mut HSD_GObj, mut arg_str
 }
 
 /// `efAsync_QueueClear`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_QueueClear(mut arg_struct: *mut c_void) {
+    core::hint::black_box(0x31CDBD73u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_QueueClear");
     let mut temp_r30: *mut EF_QueuedEffect = null_mut();
     let mut var_r4: *mut EF_QueuedEffect = null_mut();
@@ -1468,13 +1494,17 @@ pub unsafe fn efAsync_Spawn(mut gobj: *mut HSD_GObj, mut queue_head: *mut c_void
 }
 
 /// `efAsync_QueueInit`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_QueueInit() {
+    core::hint::black_box(0x9E3AC9E0u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_QueueInit");
     ext::HSD_ObjAllocInit(core::ptr::addr_of_mut!(efAsync_AllocData) as *mut _HSD_ObjAllocData, 48_u64 as u32, 8_u64 as u32);
 }
 
 /// `efAsync_MexInit`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_MexInit() {
+    core::hint::black_box(0xF8C5DD51u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_MexInit");
     let mut n: i32 = 0;
     let mut i: i32 = 0;
@@ -1508,7 +1538,9 @@ pub unsafe extern "C" fn efAsync_MexInit() {
 }
 
 /// `efAsync_MexNoteArchive`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_MexNoteArchive(mut bank: i32, mut archive: *mut HSD_Archive) {
+    core::hint::black_box(0x3E0119B7u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_MexNoteArchive");
     let mut bhv: *mut EfMexBehavior = null_mut();
     if ((bank < 0) || (bank >= 65)) || (archive.is_null()) {
@@ -1535,7 +1567,9 @@ pub unsafe extern "C" fn efAsync_MexNoteArchive(mut bank: i32, mut archive: *mut
 }
 
 /// `efAsync_MexMiss`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_MexMiss(mut kind: i32, mut gfx_id: i32, mut why: *const i8) {
+    core::hint::black_box(0x526EBAB3u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_MexMiss");
     let mut key: i32 = (((kind * 10000) + (gfx_id % 100000)) * 2) + ((gfx_id >= 100000) as i32);
     let mut i: i32 = 0;
@@ -1559,7 +1593,9 @@ pub unsafe extern "C" fn efAsync_MexMiss(mut kind: i32, mut gfx_id: i32, mut why
 }
 
 /// `efAsync_MexResolve`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_MexResolve(mut gobj: *mut HSD_GObj, mut gfx_id: i32, mut final_id: *mut i32, mut is_ptcl: *mut i32, mut owner: *mut *mut HSD_GObj) -> i32 {
+    core::hint::black_box(0x07CC7F11u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_MexResolve");
     let mut fp: *mut Fighter = null_mut();
     let mut kind: i32 = 0;
@@ -1631,7 +1667,9 @@ pub unsafe extern "C" fn efAsync_MexResolve(mut gobj: *mut HSD_GObj, mut gfx_id:
 }
 
 /// `efAsync_MexSpawn`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_MexSpawn(mut gobj: *mut HSD_GObj, mut queue_head: *mut c_void, mut gfx_id: i32, mut jobj: *mut HSD_JObj, mut offset: *mut Vec, mut facing: f32, mut orientation: f32) {
+    core::hint::black_box(0x64EB21C2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_MexSpawn");
     let mut q: *mut EF_QueuedEffect = null_mut();
     let mut final_id: i32 = 0;
@@ -1659,7 +1697,9 @@ pub unsafe extern "C" fn efAsync_MexSpawn(mut gobj: *mut HSD_GObj, mut queue_hea
 }
 
 /// `efAsync_MexProcessDeferred`
+#[inline(never)]
 pub unsafe extern "C" fn efAsync_MexProcessDeferred(mut gobj: *mut HSD_GObj, mut q: *mut EF_QueuedEffect) {
+    core::hint::black_box(0xD5AD88EFu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("efAsync_MexProcessDeferred");
     let mut pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut final_id: i32 = 0;

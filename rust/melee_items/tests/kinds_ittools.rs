@@ -134,22 +134,22 @@ fn ittools_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => { let v1: i32 = (rnd() % 4) as i32 as i32; let v2: f32 = rw() as f32; ret = pi(m::it_802EEFA8(&raw mut VA[0], v1, v2)); } // it_802EEFA8
-                    1 => {  ret = m::itTools_Logic22_DmgDealt(&raw mut GO[0]) as u32; } // itTools_Logic22_DmgDealt
+                    1 => {  ret = ((m::itTools_Logic22_DmgDealt(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_Logic22_DmgDealt
                     2 => { let v1: i32 = (rnd() % 4) as i32 as i32; m::it_802EF098(&raw mut GO[0], v1); } // it_802EF098
-                    3 => {  ret = m::itTools_UnkMotion4_Anim(&raw mut GO[0]) as u32; } // itTools_UnkMotion4_Anim
+                    3 => {  ret = ((m::itTools_UnkMotion4_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_UnkMotion4_Anim
                     4 => {  m::itTools_UnkMotion4_Phys(&raw mut GO[0]); } // itTools_UnkMotion4_Phys
-                    5 => {  ret = m::itTools_UnkMotion4_Coll(&raw mut GO[0]) as u32; } // itTools_UnkMotion4_Coll
+                    5 => {  ret = ((m::itTools_UnkMotion4_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_UnkMotion4_Coll
                     6 => {  m::it_802EF320(&raw mut GO[0]); } // it_802EF320
-                    7 => {  ret = m::itTools_UnkMotion9_Anim(&raw mut GO[0]) as u32; } // itTools_UnkMotion9_Anim
+                    7 => {  ret = ((m::itTools_UnkMotion9_Anim(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_UnkMotion9_Anim
                     8 => {  m::itTools_UnkMotion9_Phys(&raw mut GO[0]); } // itTools_UnkMotion9_Phys
-                    9 => {  ret = m::itTools_UnkMotion9_Coll(&raw mut GO[0]) as u32; } // itTools_UnkMotion9_Coll
+                    9 => {  ret = ((m::itTools_UnkMotion9_Coll(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_UnkMotion9_Coll
                     10 => {  m::it_802EF548(&raw mut GO[0]); } // it_802EF548
-                    11 => {  ret = m::itTools_Logic22_DmgReceived(&raw mut GO[0]) as u32; } // itTools_Logic22_DmgReceived
-                    12 => {  ret = m::it_2725_Logic22_Clanked(&raw mut GO[0]) as u32; } // it_2725_Logic22_Clanked
-                    13 => {  ret = m::it_2725_Logic22_HitShield(&raw mut GO[0]) as u32; } // it_2725_Logic22_HitShield
-                    14 => {  ret = m::it_2725_Logic22_Absorbed(&raw mut GO[0]) as u32; } // it_2725_Logic22_Absorbed
-                    15 => {  ret = m::itTools_Logic22_ShieldBounced(&raw mut GO[0]) as u32; } // itTools_Logic22_ShieldBounced
-                    16 => {  ret = m::itTools_Logic22_Reflected(&raw mut GO[0]) as u32; } // itTools_Logic22_Reflected
+                    11 => {  ret = ((m::itTools_Logic22_DmgReceived(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_Logic22_DmgReceived
+                    12 => {  ret = ((m::it_2725_Logic22_Clanked(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic22_Clanked
+                    13 => {  ret = ((m::it_2725_Logic22_HitShield(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic22_HitShield
+                    14 => {  ret = ((m::it_2725_Logic22_Absorbed(&raw mut GO[0])) as i32 != 0) as u32; } // it_2725_Logic22_Absorbed
+                    15 => {  ret = ((m::itTools_Logic22_ShieldBounced(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_Logic22_ShieldBounced
+                    16 => {  ret = ((m::itTools_Logic22_Reflected(&raw mut GO[0])) as i32 != 0) as u32; } // itTools_Logic22_Reflected
                     17 => {  m::it_802EFA24(&raw mut GO[0], &raw mut GO[1]); } // it_802EFA24
                     18 => { for j in 0..10 { let row = &m::it_803F9260[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),

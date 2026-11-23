@@ -47,7 +47,7 @@ int main(void)
             for (i = 0; i < 5; i++) X2D0.x14[i] = rw();
             X2D0.x28 = (int) (rnd() % 8) - 1; X2D0.x2C = rnd() % 400; X2D0.x30 = rnd() % 400;
             F.x2D0 = &X2D0;
-            F.player_id = rnd() % 6;
+            F.player_idx = rnd() % 6;
             F.x1968_jumpsUsed = rnd() % 7;
             F.motion_id = (rnd() & 3) == 0 ? 0x9B : rnd() % 400;
             F.input.lstick[0].x = rg(); F.input.lstick[0].y = rg();

@@ -84,7 +84,7 @@ static u32 state_hash(void)
     HM(B(a->x2124_frameSpeedMul)); HM((u32) a->x2128); HM(a->x212C); HM(a->x212D); HM((u32) a->x2130_sfxBool);
     HM(F.shield_hit.skip_update_pos); HM(F.reflect_hit.skip_update_pos); HM(F.absorb_hit.skip_update_pos);
     for (i = 0; i < 15; i++) HM(F.hurt_capsules[i].capsule.skip_update_pos);
-    HM(F.x1064_thrownHitbox.owner == &GG); HM(F.x1064_thrownHitbox.owner == NULL);
+    HM(F.x1064_thrownHitbox.x134.owner == &GG); HM(F.x1064_thrownHitbox.x134.owner == NULL);
     HM(F.x119C_teamUnk); HM(F.grabber_unk1);
     HM(HB.jobj == NULL); HM(B(HB.b_offset.x)); HM(B(HB.b_offset.y)); HM(B(HB.b_offset.z));
     for (i = 0; i < 12; i++) { HM((u32) (s32) F.x5F4_arr[i].prev); HM((u32) (s32) F.x5F4_arr[i].idx); }
@@ -126,8 +126,8 @@ int main(void)
             F.facing_dir = rg();
             F.item_gobj = (rnd() & 1) ? &IG : NULL;
             g_gm = rnd() & 1; g_it = rnd() % 3; g_p354 = rnd() & 1;
-            F.x221F_b3 = rnd() & 1; F.x2224_b2 = rnd() & 1;
-            F.x618_player_id = rnd() % 4; F.player_id = rnd() % 4; F.is_sub_fighter = rnd() & 1;
+            F.is_sleeping = rnd() & 1; F.stamina_dead = rnd() & 1;
+            F.pad_port = rnd() % 4; F.player_idx = rnd() % 4; F.is_sub_fighter = rnd() & 1;
             CD.dash_smash_stick_threshold = rg(); CD.xCC = rg(); CD.xD4 = rg(); CD.xDC = rg();
             CD.xE0 = rg(); CD.sdi_min_stick_mag = rg(); CD.x7F4 = rg(); CD.x248 = rg();
             CD.x20_radians = rg(); CD.x7F8 = rg(); CD.x7FC = rg(); CD.x494 = rg(); CD.x98 = rg();
@@ -142,7 +142,7 @@ int main(void)
             F.absorb_hit.skip_update_pos = rnd() & 1;
             F.hurt_capsules_len = rnd() % 16;
             for (i = 0; i < 15; i++) F.hurt_capsules[i].capsule.skip_update_pos = rnd() & 1;
-            GF.team = rnd(); GF.player_id = rnd();
+            GF.team = rnd(); GF.player_idx = rnd();
             HB.jobj = &JO;
             V.x = rg(); V.y = rg(); V.z = rg();
             F.x5AC.model_num = rnd() % 13;

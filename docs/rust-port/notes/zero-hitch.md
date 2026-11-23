@@ -505,6 +505,35 @@ at 16.8-17.5 ms from timer granularity: "pacing sleep" frames, ~5400 per run, no
   service (`MELEE_ASSETS=on`, still off by default) takes it to ~29 ms. Getting under 16.7 needs the setup split over
   ticks or the envoy hook's work moved earlier; both change the sim's frame layout and need NHV1/golden proof.
 
+### Warm workers, driver pipeline cache, boot-menu hang (2026-11-22, port/warmhang)
+- The owner's Slippi build "hung after the pipeline warm". The warm was not the cause: a "Return to main menu"
+  relaunch (MELEE_BOOT_MENU=1) leaves the opening from inside a tick (`Engine::goto_mode`), and the opening's exit
+  (`lbMthp_8001F800`) spins until the movie's read in flight completes. That completion is deferred to
+  `dvd::run_deferred_completions` (once per frame), so the spin never ended and the window stopped pumping (Windows
+  "Application Hang"). `goto_mode` now runs the owed completions first. Reproduced with MELEE_HANG_DUMP; also hangs
+  with MELEE_PIPE_WARM=0 on the old exe.
+- The warm itself: one thread compiled 1568 configs in 25-40 s every launch (`cache: None`: the list keeps configs,
+  not compiled pipelines). Now `PipeFactory::start_warm` shares the list over available_parallelism/4 (1-4)
+  below-normal workers, and a Vulkan `PipelineCache` (Features::PIPELINE_CACHE) is kept in
+  `gpucache/wgpu_pipeline_cache_vulkan_<vendor>_<device>.bin`: keyed by the GPU, not the exe, so a new build keeps
+  it; the driver rejects a blob from another driver version (fallback: empty cache). Written after the warm and
+  every 10 s while new pipelines appear (temp + rename). MELEE_PIPE_CACHE=0 turns off only that cache.
+- Owner's list (1568 configs), hidden agent runs, 2400 ticks: old exe 39.7 / 40.1 s warm, 9 and 7 clean frames over
+  16 ms; new exe 1.41 s (no driver cache file) / 0.95 s (with it), 0 frames over 16 ms, boot-menu relaunch reaches the
+  main menu at tick 5. The list is not needed before the menus: nothing waits on it (misses go to the async compile
+  workers), so it simply runs in the background.
+
+### First-run warm pass (2026-11-16, port/vanilla-zerolag)
+A fresh install's warm list is empty, so its first matches compile pipelines on the frame path. `melee/src/warm_pass.rs`:
+when `play` starts and the list holds fewer than 150 records, a background thread runs a hidden helper (`melee play
+--match a/cpu9,b/cpu9,STAGE --max-frames 900`, MELEE_WARM_CHILD=1, MELEE_WINDOW_HIDDEN=1, MELEE_TURBO=1, no audio,
+BELOW_NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, 120 s hard limit each) per match over the legal stages and the cast,
+from the player's own disc. The helpers append to the same `gpucache/` list (one `write_all` per record, append mode);
+the game thread only spawns the thread. The list is disc-derived local GPU state: never committed, never packaged
+(`launcher/package.sh`'s allow-list has no `gpucache/`). Off with MELEE_WARM_PASS=0 and for every agent/test run
+(MELEE_WINDOW_HIDDEN, MELEE_TURBO, MELEE_PROFILE, MELEE_PAD_SCRIPT, --headless, --max-frames, --replay, --record);
+MELEE_WARM_PASS=1 forces it on (to test it from a hidden run).
+
 ### Round 2 (2026-11-13, port/diverge1 98f8567e2)
 - First Envoy fight setup tick (no lead: camp door -> fight in 3 ticks): 34.7 -> 21.6 ms (shared machine), 19.4 ms quiet.
   - Petey's boss parameters (Brawl files) were read and decoded inside the first fight's tick (envoy_sim
@@ -650,3 +679,180 @@ triangles), the first draw's upload lands in the same present, and 3 pipelines c
 staying in the warm list). Next steps for that lane: upload the map's textures before the match (they are known
 when the map is loaded at boot; needs a pre-upload entry on the renderer keyed like `tex_key`), draw the map as a
 retained mesh, and find why its first tick runs two logic frames.
+
+## Netplay scene-entry ticks (2026-11-16, port/vanilla-zerolag; light-slot runs, `_build/.../npperf.sh`)
+
+### The test was not repeatable
+The css test's results presses were START; they outlast the results, and one that reached the stage select picked
+the stage under the cursor (Random). Match 2 landed on a different stage each run (stages 5, 7, 14, 29, 30 in the
+last five logs), so "match-2 start" measured a different, never-cached stage every time. `MELEE_NP_SCRIPT_NO_START`
+(set only by css_pair.sh) now also drops START from the local pad on the SSS, before it is sent and recorded (both
+peers and the replay see the same inputs); the scripts pick with A. Four runs since: stage 36 in both matches,
+hashes equal, replay equal. (A instead of START on the results does not work: A does not leave the results.)
+
+### Numbers (tick ms, host, light slot held; before = the old test at 78ba17ccf as briefed, after = fixed stage)
+| frame | before (random stage 2) | after run 1 | after run 2 |
+|---|---|---|---|
+| match-2 start (VS setup tick) | 21-24 | 7.8 | 12.4 (frame work 19: + draw 4.9, texture upload 2.2) |
+| CSS re-entry | 12-17 | 11.7 | 12.1 |
+| results (both) | ~12 | 9.6 / 9.7 | 10.0 / 11.3 |
+| frames over 16 ms | 4 | 0 | 1 (the match-2 start frame, by draw + upload, not by tick) |
+With the stage repeatable the earlier 21-24 ms is gone: it was the cost of a stage first seen in that run.
+
+### Where the time goes (new spans: `scene change: ...` in `Engine::tick_modes`, `slow proc` in `HSD_GObj_RunProcs`)
+- **Results (10 ms)**: previous scene end 0.75, OnEnter 3.0 (archive 0.8, fighters 1.2), then the results' FIRST
+  FRAME 5.8 ms. No single GObj proc in that frame reaches 0.3 ms (`slow proc` events, named by
+  `tools/rust-port/perf/procsym.py PROFILE.jsonl <target>/melee.exe`), and the render pass is 0.5: the 5.8 ms is
+  spread over many procs (first-frame setup of the results' fighters and HUD). Next: a lower `slow_proc` threshold
+  for that one tick, or the sampler (`MELEE_SAMPLE`) on a results-loop run.
+- **CSS re-entry (12 ms)**: OnEnter 6.5 (MnSlChr 3.7 MB and MnExtAll 1.3 MB are already plan HITS, 1.2 + 1.8 ms
+  apply; the rest is the CSS building its GObjs: the 15k allocations), first frame 5.2 (the picks' 8 fighter files
+  re-read for the preload, 1.3 ms of reads, PlMrAJ/PlFxAJ 0.9 of it; the rest spread over procs). Prefetching the
+  CSS files would gain nothing: the two big ones already hit.
+- **Match-2 start**: OnEnter 7.2 (players create 4.1: fighter create 2.5 + 1.4), first frame 3.9, then the frame's
+  draw 4.9 and texture upload 2.2 make the only over-16 frame.
+
+### Page faults of the plan applies: the snapshots' write watch
+Same replay (s1, Battlefield both matches), game-thread faults counted by `MELEE_FAULT_WATCH=1` over the 29 applies:
+| run | game-thread faults | in the arena |
+|---|---|---|
+| netplay host (snapshots every frame) | 5923 | 3722 (up to 431 in one apply) |
+| `melee play --replay` offline, no snapshots | 2277 | **0** |
+The arena faults exist only with snapshots: the arena is MEM_WRITE_WATCH and the per-frame `GetWriteWatch` reset
+makes the first write to each page after it fault again (soft). Not standby trimming, not copy-on-write. A fix
+must touch the pages after the frame's reset and before the apply, off the game thread: e.g. the worker does a
+`lock xadd 0` on one byte per page of the blocks the plan will land in (same value, coherent on x86) in the tick
+it is applied. Not done in this round; ~0.5 ms at most per apply.
+
+## Cold-stage match starts (2026-11-16, port/vanilla-zerolag)
+
+### The test
+- Solo: `zero_hitch_gate.sh vanilla_zerolag` already plays each legal stage in its own process (a stage never seen
+  in that session; real menus, `play/fastpick_<stage>.txt`). Baseline 2459b09a0: **0 frames over 16 ms on all six**;
+  heaviest start ticks fd 10.6, bf 8.3, ps 11.0, ys 9.4, dl 9.8, fod 13.4 (+ next frame 10.7 with 76 textures).
+  The 21-24 ms cold start is a **netplay** cost.
+- Netplay: `NP_CSS_STAGES=fd,bf bash tools/rust-port/netplay/css_pair.sh` plays one match per listed stage, picked
+  with the fastpick SSS moves. Reliable for two stages (fd,bf and ps,ys pass, hashes equal, replay equal); a third
+  pick drifts (mode 15) and **dl,fod hung both peers on the CSS after match 1 (tick 7560, heartbeats stop on both,
+  base exe too)**: not investigated, a script or netplay CSS hand-off problem to look at.
+- `NP_HOST_ENV="MELEE_SAMPLE=<path without spaces> MELEE_SAMPLE_SLOW_MS=14"`: the sampler on the host, keeping only
+  ticks of 14 ms or more. Symbols: the exe's image base is not printed; find it by symbolizing the stack frame just
+  under BaseThreadInitThunk at 64 KB steps until it reads `__scrt_common_main_seh` (procsym.py on fake events).
+
+### Found and fixed: VirtualQuery in the texture path
+Sampled Pokemon Stadium start (netplay): 9 of 16 slow-tick samples in `grpstadium fn_801D2ED0 -> SisLib ->
+GXInitTexObj -> gxbridge::data_at_ex -> readable() -> VirtualQuery`. Inside the snapshots' write-watched arena a
+query costs ~1 ms. `readable` now probes with `ReadProcessMemory` on this process (fails instead of faulting), and a
+texture already copied whole is returned without a probe. Presentation only (hashes, replays unchanged).
+
+### Numbers (netplay host tick ms at the match start, light slot held; other agents' short runs were on the machine)
+| stage (order in run) | base 2459b09a0 | fix |
+|---|---|---|
+| fd (match 1) | 13.4 | 11.3 |
+| bf (match 2, worst of its first frames) | 20.4 | 16.2 |
+| ps (match 1) | 18.4 (frame 25.7) | 14.9 (frame 22.3: prepare 6.5, 113 textures 3.7 ms) |
+| ps (match 3 of fd,bf,ps) | 41.7 / 30.1 | 30.5 (cache-only build; ReadProcessMemory build not rerun in that order) |
+| ys (match 2) | 16.3 (frame 17.8) | 17.2 (frame 18.8) |
+| dl, fod | netplay pair hangs (above) | solo only |
+
+### Still over 16 ms, where it goes
+- **Fighter data apply**: `ft create: data` -> `asset apply hit 190 KB` 2.4-4.2 ms: a 190 KB file whose plan holds
+  3535 blocks / 16 MB (fresh big 14 MB); game-thread faults only 80-160 (the 1100+ in the log line are the
+  pre-faulter's), so it is the alloc events (0.5-1.5) and the block writes, not faults. Fighter create slot 0 5.6 ms
+  in netplay vs ~1.1 solo.
+- **First frame of the match** (netplay PS 19 ms before the fix): render pass (display lists) 7.4 + the VirtualQuery.
+- **BF match 2, third tick (6241)**: `tick: step` 16-20 ms with no inner span: sample it next (`MELEE_SAMPLE_SLOW_MS`).
+- **First match's first frame**: prepare 6.5 + 113 texture uploads 3.7 ms (PS): stream or worker-stage uploads.
+
+## Gate at pub/rust-port 839886736, release, 16.0 ms budget (2026-11-22, branch port/nightbench-1122): FAILED, not yet a clean pass
+Command: `BUDGET=16.0 zero_hitch_gate.sh vanilla_bf vanilla_walk vanilla_fod envoy` (the default scenarios; vanilla_walk is in the
+default set) with the plain release exe of that tip (`cargo build --release -p melee --bin melee`, -j 2, private target), mods built
+with `build_mods.sh`, memory card copied from a scratch save, under buildlock + runlight, after a quiet check (no other game /
+cargo / rustc, machine CPU under 30 %). Other agents' sessions were running on the machine all night, so the CPU was not
+guaranteed quiet DURING a run: the gate's own contention detector fired in run 2.
+
+| scenario | run 1 | run 2 |
+|---|---|---|
+| vanilla_bf (9000 ticks) | 1 clean over: tick 4 (title load), 36.4 ms, pacing sleep after a 20 ms tick (file read+parse 8.8, engine step 11.3) | 1 clean over: tick 4 (title load), 24.3 ms (engine step 10.4, file read+parse 9.0) |
+| vanilla_walk (2600) | 1 clean over: tick 2338 (VS), 25.5 ms, draw 12.5 | PASS, 0 over |
+| vanilla_fod (3000) | 8 clean + 7 contended: all inside ticks 2535-2907 (one burst, machine over 85 % CPU in 1 sample), draw 8-16 ms, worst 39.4 | 113 clean + 229 contended, worst 196.6 ms: machine over 85 % CPU in 23 samples (another agent's game); the run is void |
+| envoy (9000) | 3 clean + 2 contended: ticks 1650 (28 ms), 7332 (29.1 ms engine step), worst clean 29.2 | 7 clean + 45 contended, worst clean 59.5 ms (tick 1863, engine step 44.1): machine over 85 % CPU in 20 samples |
+
+Reading:
+- Presents over 1.5x the display interval: 0 in every scenario of both runs.
+- Run 2's fod and envoy were not quiet and are void; run 1's vanilla_fod burst (ticks 2535-2907) is partly contended (7 of 15 frames) and not
+  judged either. So the failures that stand are the "clean" ones that appear in BOTH runs or in a run the detector did not flag:
+  the **title scene change at tick 4 of vanilla_bf (24 to 36 ms, both runs)** is repeatable and is the real offender; the single
+  walk frame (run 1 only, 25.5 ms draw in VS) and the envoy engine-step frames (run 1: 29.1 ms at tick 7332 with only 3 ms of game-thread CPU, system 16 %,
+  which reads as an OS stall) are one-offs not seen in the other run.
+- Not a pass at 16.0 ms, so **no release candidate was packaged** from this tip. Next: re-run all four scenarios on a machine nobody else
+  is using (the fod/envoy failures need that), and look at the tick-4 title load in vanilla_bf (the preload of EfCoData / ItCo /
+  IfAll plus a scene change in one tick).
+- Raw: `scratch/nightbench/zerohitch-run1/`, `scratch/nightbench/zerohitch/` (profile csv + jsonl per scenario), `gate-run1.log`, `gate.log`.
+
+## Live Slippi Unranked, rust-port 9f552c0d5 (Nov 22): one 19.7 ms tick
+- `tick work max 19695 us, 1 of 1115 ticks over 16 ms` (guest, 1-1115 the whole match). The log has no span for it; the
+  one unusual tick in that match is the stray Start at scene frame 968 (online 1093): `gm_DoPauseChecksAndRoutine`
+  built the pause HUD/camera and ducked audio inside the rollback tick, and the same tick ended in the HARD desync.
+- Fixed at the cause (port/livedesync): Unranked/Ranked matches now set `disable_pausing` as Slippi's match block
+  does, so that tick no longer exists online. Not re-measured live; if a 16 ms+ tick shows again in an online match,
+  sample it with `MELEE_SAMPLE_SLOW_MS`.
+
+## Fight scenes only (2026-11-22)
+
+The owner: over-16 ms frames before or outside fight scenes are fine. `zero_hitch_check.py` now fails only on frames in
+a fight scene (`vs`, `suddendeath`; rollback resimulations run inside them), not their match-start (load) frame. Title,
+menus, loads and the select <-> match transitions are listed as "outside fights (not failed)". `--all-scenes` restores
+the old rule. So vanilla_bf's title-load tick (24-36 ms) is reported, not a failure.
+
+## The title-load tick of vanilla_bf: what it is, and the host-side fixes (2026-11-22, port/titlehitch2)
+Laptop measurements (i7-1370P; shared game slots with other lanes' games and builds). The first lane (port/titlehitch,
+af8866a7e, not for merging) also carried the plan cache cap and matchload2; this branch is the same work alone on
+rust-port. Since gatescope the title tick is reported, not failed, so the gate below is read for fight frames only.
+
+### What the tick does (spans `preload: register`, `preload: read chain (80017CC4)`, `preload: Kirby hats`)
+The title's `on_enter` calls `gm_PreloadTitleDemo`: the demo's fighters and stage are registered with the preload cache
+and read at once (disc reads complete synchronously). The demo on this card is Fox, Kirby, Luigi and Link on Brinstar;
+with Kirby, `Player_80031D2C` loads every Kirby copy hat (~40 archives, `ftLib_LoadKirbyHats`) in the same tick. A 48 ms
+tick (plugged in): hats ~33, read chain 6-12, audio banks ~2, rest ~5. Mewtwo's hat (103 KB, 15-30 ms) and Link's /
+Young Link's (42 KB, 3-4 ms) decode ~1M `Vec` records past the end of their data block (`HSD_Spline.cv` garbage counts).
+On Linux without port/matchload2 there is no asset service, so every hat decodes in place.
+
+### Changes
+- `GcDecoder::array_zero_tail` (melee_core gcdecode.rs, from `GcDecoder::array` for arrays of 4096+ records): records
+  past the data block decode the first two as before; when they are byte-identical, allocate / memo / queue nothing and
+  add the same dropped-issue count (the issue list being full), the rest are copies of the first. Same single
+  allocation, same bytes. `MELEE_DECODE_ZERO_TAIL=off` keeps the old loop. Mewtwo's hat in place 25-32 -> ~10 ms, its
+  worker prepare 41 -> 30 ms. Platform-independent; helps the in-place path, the worker and the plan builder alike.
+- `asset::hint_entry_small`: boot hints of 40-64 KB files get plans too (`load` looks for a small file's plan only
+  while a hint of that length is held). Link's / Young Link's hats 3-4 -> ~0.5 ms where the service runs.
+- `BOOT_FILES` order: GmTtAll and the hats first, then EfCoData / ItCo and the menus, the other language's `.dat`
+  twins last. A slow worker spent the whole 600 ms boot hold on ItCo.usd + ItCo.dat and the title decoded every hat in
+  place (0 hits in 3 of 4 runs); with this order 20-26 hits every run.
+- Spans in `lbDvd_80018254` and `Player_80031D2C`; `MELEE_BOOT_TIMES`' slow-tick line adds `archive::page_faults`.
+
+### Title tick (port/titlehitch runs, power-saver on battery, so only the interleaved A/B compares)
+rust-port 119.6 / 96.7 / 121.5 ms; + matchload2 40.3 / 48.8 / 126.4; + matchload2 + these changes 40.5 / 34.0 / 56.4.
+Not under 16 ms on the laptop. Left in a good 34 ms run: ~40 hat applies / small in-place decodes (15 ms), the read
+chain (9 ms, two copies of every file), audio banks.
+
+### Fight-scene gate, vanilla_bf (Linux, AC + performance; gate script adapted: exe without .exe, `ps` busy check with
+GATE_ALLOW_BUSY=1, python3; other lanes' games on the machine), frames over 16 ms in fights:
+| base | rust-port 36b93c1d0 | this branch on it | rust-port d456c9380 | this branch on it |
+|---|---|---|---|---|
+| runs | 240, 247 | 620, 0 | 0, 0 | 1, 0 |
+The 36b93c1d0 runs came in bursts (ticks 1500-7500, at different times in each run; tick p50 2.75 ms in both builds,
+the game thread itself slow inside them: CPU frequency / core placement while other games ran), and the second pair
+overlapped each other. On d456c9380 the machine was quieter: the one over-16 frame (16.4 ms, tick 3676) was a slow gobj
+proc with 6.5 ms of game-thread CPU in the frame (the thread was off the CPU), no load in it. These changes run no
+code inside a fight unless a file is decoded there.
+
+### Proof (all on Linux)
+- NHV1 + tick log over retail_full, 6000 ticks (4292 match frames): rust-port vs this branch EQUAL, on 36b93c1d0 and
+  again on d456c9380; zero-tail on vs off EQUAL.
+- Arena digests (this branch + port/matchload2 merged locally for the Linux asset service, ASLR off, retail_full 4000
+  ticks): zero-tail on vs off 769/769 loads identical; service on vs `MELEE_ASSETS=off` 769/769 identical.
+- gate.sh: 4 goldens all frames, synctest depth 4 0 mismatches, audio = C (semantics lint and snapguard fail on the
+  laptop as always).
+- Two-peer rematch (`menu_slp_check.sh rematch`, this branch on 36b93c1d0): PASS, 0 soft / 0 HARD desyncs in every
+  game, both peers' .slp agree.

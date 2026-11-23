@@ -208,7 +208,9 @@ pub fn ftPk_SpecialHi_UpdateVel(gobj: G) {
     unsafe { crate::chars::ftPikachu::ftpikachuspecialhi::ftPk_SpecialHi_UpdateVel(&mut *fpp(gobj)) }
 }
 /// `ftPk_SpecialHi_UpdateVel` as the `x21F8` callback entry.
+#[inline(never)]
 pub unsafe extern "C" fn cb_ftPk_SpecialHi_UpdateVel(g: G) {
+    core::hint::black_box(0x0594FEE2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("cb_ftPk_SpecialHi_UpdateVel");
     ftPk_SpecialHi_UpdateVel(g);
 }

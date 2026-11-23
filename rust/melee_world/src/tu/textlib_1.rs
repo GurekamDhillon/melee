@@ -128,13 +128,17 @@ unsafe fn dispatch(x8: *mut un_80304138_objalloc_t_x8, code: u32) -> i32 {
 }
 
 /// `int un_80302E00(x8*, int)`: runs the entry's callback, then the menu's.
+#[inline(never)]
 pub unsafe extern "C" fn un_80302E00(arg0: *mut un_80304138_objalloc_t_x8, arg1: i32) -> i32 {
+    core::hint::black_box(0xE36A5B7Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80302E00");
     dispatch(arg0, arg1 as u32)
 }
 
 /// `int un_80302EA4(x8*)`: the width in characters a menu needs (entries end at `x0 == 9`).
+#[inline(never)]
 pub unsafe extern "C" fn un_80302EA4(mut arg0: *mut un_80304138_objalloc_t_x8) -> i32 {
+    core::hint::black_box(0xD98F1C96u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80302EA4");
     let mut x = 1i32;
     let mut y = 1i32;
@@ -214,7 +218,9 @@ pub unsafe fn un_80302FFC_maxlen(mut thing: *mut un_80304138_objalloc_t_x8) -> i
 }
 
 /// `void un_80302FFC(objalloc_t*)`: draws the rows of a menu into its text box.
+#[inline(never)]
 pub unsafe extern "C" fn un_80302FFC(arg0: *mut un_80304138_objalloc_t) {
+    core::hint::black_box(0x31692B49u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80302FFC");
     let mut x8 = (*arg0).x8;
     let cursor_x = un_80302FFC_maxlen((*arg0).x8);
@@ -264,7 +270,9 @@ pub unsafe extern "C" fn un_80302FFC(arg0: *mut un_80304138_objalloc_t) {
 }
 
 /// `bool un_80303444(objalloc_t*)`: steps the selected row's value up; true when it changed.
+#[inline(never)]
 pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
+    core::hint::black_box(0x2002C429u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80303444");
     let mut ret = false;
     let e = (*arg0).x8.add((*arg0).x0 as usize);
@@ -335,7 +343,9 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
 }
 
 /// `bool un_80303720(objalloc_t*)`: steps the selected row's value down; true when it changed.
+#[inline(never)]
 pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
+    core::hint::black_box(0x5AFA6EA2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80303720");
     let mut ret = false;
     let e = (*arg0).x8.add((*arg0).x0 as usize);
@@ -407,7 +417,9 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
 
 /// `int un_803039A4(u8 pad)`: stick direction bits (0x40000000 left, 0x80000000 right, 0x20000000
 /// down, 0x10000000 up) with a repeat delay held in `un_804D6E4C`.
+#[inline(never)]
 pub unsafe extern "C" fn un_803039A4(arg0: u8) -> i32 {
+    core::hint::black_box(0x4AAB568Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_803039A4");
     let pad = &HSD_PadCopyStatus_ref()[arg0 as usize];
     let mut ret: u32 = 0;
@@ -445,7 +457,9 @@ unsafe fn HSD_PadCopyStatus_ref() -> &'static mut [HSD_PadStatus; 4] {
 
 /// `void un_80303AC4(objalloc_t*)`: reads the pad and moves the cursor / steps the value / fires
 /// the entry callbacks (6 start, 3 right, 2 left, 1 A, 0 B).
+#[inline(never)]
 pub unsafe extern "C" fn un_80303AC4(arg0: *mut un_80304138_objalloc_t) {
+    core::hint::black_box(0xEF893395u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80303AC4");
     let trigger = HSD_PadCopyStatus_ref()[0].trigger as i32;
     let stick = un_803039A4(0);
@@ -510,7 +524,9 @@ pub unsafe extern "C" fn un_80303AC4(arg0: *mut un_80304138_objalloc_t) {
 }
 
 /// `void fn_80303EF4(HSD_GObj*)`: the menu proc, newest menu first.
+#[inline(never)]
 pub unsafe extern "C" fn fn_80303EF4(_gobj: *mut HSD_GObj) {
+    core::hint::black_box(0x24D7E63Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("fn_80303EF4");
     let mut q = un_804D6E40;
     while !q.is_null() {
@@ -572,6 +588,7 @@ pub unsafe fn un_80303FD4_count(mut p: *mut un_80304138_objalloc_t_x8) -> i32 {
 }
 
 /// `void un_80303FD4(HSD_GObj*, objalloc_t*, x8*, int, int, int)`: builds a menu at (arg4, arg5).
+#[inline(never)]
 pub unsafe extern "C" fn un_80303FD4(
     arg0: *mut HSD_GObj,
     arg1: *mut un_80304138_objalloc_t,
@@ -580,6 +597,7 @@ pub unsafe extern "C" fn un_80303FD4(
     arg4: i32,
     arg5: i32,
 ) {
+    core::hint::black_box(0x4B13D833u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80303FD4");
     let mut count2 = 0i32;
     (*arg1).x8 = arg2;
@@ -616,13 +634,17 @@ pub unsafe extern "C" fn un_80303FD4(
 }
 
 /// `void un_80304138(void)`: initialises the menu allocator.
+#[inline(never)]
 pub unsafe extern "C" fn un_80304138() {
+    core::hint::black_box(0x9496DE86u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80304138");
     ext::HSD_ObjAllocInit(&raw mut un_804A2688, core::mem::size_of::<un_80304138_objalloc_t>() as u32, 4);
 }
 
 /// `HSD_GObj* un_80304168(void*, int, int, int)`: a menu gobj under the DevText gobj's links.
+#[inline(never)]
 pub unsafe extern "C" fn un_80304168(arg0: *mut c_void, arg1: i32, arg2: i32, arg3: i32) -> *mut HSD_GObj {
+    core::hint::black_box(0x128F561Bu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80304168");
     let gobj = ext::DevText_GetGObj();
     let mut gobj2: *mut HSD_GObj = null_mut();
@@ -640,6 +662,7 @@ pub unsafe extern "C" fn un_80304168(arg0: *mut c_void, arg1: i32, arg2: i32, ar
 
 /// `objalloc_t* un_80304210(objalloc_t*, void*, int, int, int)`: a submenu to the right of a row.
 /// The position uses `scale_y * x0 + arg4` as an f32 fused multiply-add.
+#[inline(never)]
 pub unsafe extern "C" fn un_80304210(
     arg0: *mut un_80304138_objalloc_t,
     arg1: *mut c_void,
@@ -647,6 +670,7 @@ pub unsafe extern "C" fn un_80304210(
     arg3: i32,
     arg4: i32,
 ) -> *mut un_80304138_objalloc_t {
+    core::hint::black_box(0xDF931F5Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80304210");
     let obj = ext::HSD_ObjAlloc(&raw mut un_804A2688) as *mut un_80304138_objalloc_t;
     if !obj.is_null() {
@@ -671,13 +695,17 @@ pub unsafe extern "C" fn un_80304210(
 }
 
 /// `void un_80304334(objalloc_t*)`: marks the menu for removal.
+#[inline(never)]
 pub unsafe extern "C" fn un_80304334(arg0: *mut un_80304138_objalloc_t) {
+    core::hint::black_box(0xC2209598u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80304334");
     (*arg0).x1 |= 1 << 7;
 }
 
 /// `void un_80304344(objalloc_t*)`: closes the menu and every menu opened from it (callback 5 each).
+#[inline(never)]
 pub unsafe extern "C" fn un_80304344(mut arg0: *mut un_80304138_objalloc_t) {
+    core::hint::black_box(0xC41E5A27u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("un_80304344");
     let next = (*arg0).next;
     if !next.is_null() {

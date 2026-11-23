@@ -587,6 +587,10 @@ pub static mut FIGHTER_804D6530: *mut *mut Vec2 = core::ptr::null_mut();
 pub static mut FT_PARTS_TABLE: *mut *mut FighterPartsTable = core::ptr::null_mut();
 /// `Fighter_804D6540` (fighter.h): per-kind part bit tables. TODO(move-to-core): fighter loader.
 pub static mut FIGHTER_804D6540: *mut *mut Fighter_804D6540_t = core::ptr::null_mut();
+/// PlCo's own `ftPartsTable` / `Fighter_804D6540`, indexed by the disc's (m-ex internal) kind, before the port-kind
+/// extension. m-ex's thrown-remap path (`ftAnim_8006FCE4` / `ftAnim_8006F628`) indexes these with a fighter count.
+pub static mut FT_PARTS_TABLE_RAW: *mut *mut FighterPartsTable = core::ptr::null_mut();
+pub static mut FIGHTER_804D6540_RAW: *mut *mut Fighter_804D6540_t = core::ptr::null_mut();
 /// `Fighter_804D6530`. Panics if it has not been installed.
 pub fn fighter_804d6530() -> *mut *mut Vec2 {
     let p = unsafe { FIGHTER_804D6530 };

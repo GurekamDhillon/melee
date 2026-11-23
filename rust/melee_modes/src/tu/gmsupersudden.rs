@@ -40,11 +40,16 @@ pub mod ext {
     pub unsafe extern "C" fn gmVsMelee_ExitVs(p0: *mut GameModeState, p1: u8, p2: u8) { if let Some(h) = HOOK { h("gmVsMelee_ExitVs", &[A::P(p0 as usize), A::I(p1 as u8 as u64), A::I(p2 as u8 as u64)]); return; } { unsafe { crate::tu::gmvsmelee::gmVsMelee_ExitVs(p0 as _, p1 as _, p2 as _); } return; } }
     pub unsafe extern "C" fn gmVsMelee_ResetKOCounts() { if let Some(h) = HOOK { h("gmVsMelee_ResetKOCounts", &[]); return; } { unsafe { crate::tu::gmvsmelee::gmVsMelee_ResetKOCounts(); } return; } }
     pub unsafe extern "C" fn gm_InitVsMode(p0: *mut VsModeData) { if let Some(h) = HOOK { h("gm_InitVsMode", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1601::gm_InitVsMode(p0 as _); } return; } }
-    pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(p0: *mut GameModeState) { if let Some(h) = HOOK { h("gm_ModeState_ApproachVs_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1BFA::gm_ModeState_ApproachVs_OnEnter(p0 as _); } return; } }
-    pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(p0: *mut GameModeState) { if let Some(h) = HOOK { h("gm_ModeState_ApproachVs_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gmmovieend::gm_ModeState_ApproachVs_OnExit(p0 as _); } return; } }
-    pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(p0: *mut GameModeState) { if let Some(h) = HOOK { h("gm_ModeState_Approach_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1BFA::gm_ModeState_Approach_OnEnter(p0 as _); } return; } }
-    pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(p0: *mut GameModeState) { if let Some(h) = HOOK { h("gm_ModeState_Prize_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1BFA::gm_ModeState_Prize_OnEnter(p0 as _); } return; } }
-    pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(p0: *mut GameModeState) { if let Some(h) = HOOK { h("gm_ModeState_Prize_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gmmovieend::gm_ModeState_Prize_OnExit(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(p0: *mut GameModeState) { core::hint::black_box(0x8BE9E722u32); /* fn identity */ if let Some(h) = HOOK { h("gm_ModeState_ApproachVs_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1BFA::gm_ModeState_ApproachVs_OnEnter(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(p0: *mut GameModeState) { core::hint::black_box(0x2352E414u32); /* fn identity */ if let Some(h) = HOOK { h("gm_ModeState_ApproachVs_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gmmovieend::gm_ModeState_ApproachVs_OnExit(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(p0: *mut GameModeState) { core::hint::black_box(0x8501318Du32); /* fn identity */ if let Some(h) = HOOK { h("gm_ModeState_Approach_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1BFA::gm_ModeState_Approach_OnEnter(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(p0: *mut GameModeState) { core::hint::black_box(0xBA07AC4Fu32); /* fn identity */ if let Some(h) = HOOK { h("gm_ModeState_Prize_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1BFA::gm_ModeState_Prize_OnEnter(p0 as _); } return; } }
+    #[inline(never)]
+    pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(p0: *mut GameModeState) { core::hint::black_box(0x51DB68EBu32); /* fn identity */ if let Some(h) = HOOK { h("gm_ModeState_Prize_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gmmovieend::gm_ModeState_Prize_OnExit(p0 as _); } return; } }
     pub use melee_world::gmmain::gmMainLib_804D3EE0;
     pub use crate::tu::globals::gmVsMelee_ApproachData;
     pub use crate::tu::gmvsmelee::gmVsMelee_CssData;

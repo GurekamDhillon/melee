@@ -52,7 +52,9 @@ pub static mut it_803F57A0: [ItemStateTable; 1] = [
     st_row(0, pred_b!(itStar_UnkMotion0_Anim), Some(itStar_UnkMotion0_Phys), pred_b!(itStar_UnkMotion0_Coll)),
 ];
 
+#[inline(never)]
 pub unsafe extern "C" fn itStar_Logic10_Spawned(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x44C2A8D2u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itStar_Logic10_Spawned");
     let item = GET_ITEM(item_gobj);
     let star = (*(*item).xC4_article_data).x4_specialAttributes as *mut itStar_ItemVars;
@@ -65,24 +67,32 @@ pub unsafe extern "C" fn itStar_Logic10_Spawned(item_gobj: *mut Item_GObj) {
 }
 
 /// 2846D4
+#[inline(never)]
 pub unsafe extern "C" fn it_802846D4(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0x15DCB5CCu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("it_802846D4");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itStar_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x997C3C7Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itStar_UnkMotion0_Anim");
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itStar_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    core::hint::black_box(0xA2BA3CCBu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itStar_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*item).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itStar_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0x4A915859u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itStar_UnkMotion0_Coll");
     let item = GET_ITEM(item_gobj);
     let mut val = false;
@@ -112,12 +122,16 @@ pub unsafe extern "C" fn itStar_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bo
     false
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itStar_Logic10_DmgDealt(_item_gobj: *mut Item_GObj) -> bool {
+    core::hint::black_box(0xF79FE7AEu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itStar_Logic10_DmgDealt");
     true
 }
 
+#[inline(never)]
 pub unsafe extern "C" fn itStar_Logic10_EvtUnk(item_gobj: *mut Item_GObj, ref_: *mut HSD_GObj) {
+    core::hint::black_box(0xA3647C8Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("itStar_Logic10_EvtUnk");
     ext::it_8026B894(item_gobj, ref_);
 }

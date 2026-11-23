@@ -32,7 +32,9 @@ pub static mut HSD_SObjLib_8040C3A4: GObjFuncs = GObjFuncs {
         funcs: &raw const HSD_SObjLib_8040C3A0 as *mut GObjFunc,
 };
 pub static mut HSD_SObjLib_804D10E0: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A44A4() {
+    core::hint::black_box(0xC9438617u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A44A4");
     HSD_ObjAllocInit(
         &raw mut HSD_SObjLib_804D10E0,
@@ -40,11 +42,13 @@ pub unsafe extern "C" fn HSD_SObjLib_803A44A4() {
         4 as u32,
     );
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A44D4(
     mut gobj: *mut HSD_GObj,
     mut sobj: *mut HSD_SObj,
     mut priority: u8,
 ) {
+    core::hint::black_box(0x3B4AF552u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A44D4");
     let mut cur: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     let mut next: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
@@ -112,7 +116,9 @@ pub unsafe extern "C" fn HSD_SObjLib_803A44D4(
     }
     (*sobj).x44 = priority;
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A466C(mut sobj: *mut HSD_SObj) {
+    core::hint::black_box(0xE3589C87u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A466C");
     let _: [::core::ffi::c_uchar; 8] = [0; 8];
     if sobj.is_null() {
@@ -142,7 +148,9 @@ pub unsafe extern "C" fn HSD_SObjLib_803A466C(mut sobj: *mut HSD_SObj) {
     }
     HSD_ObjFree(&raw mut HSD_SObjLib_804D10E0, sobj as *mut ::core::ffi::c_void);
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A4740(mut sobj: *mut HSD_SObj) {
+    core::hint::black_box(0x48288F83u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A4740");
     let mut next: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     while !sobj.is_null() {
@@ -151,6 +159,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4740(mut sobj: *mut HSD_SObj) {
         sobj = next;
     }
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     mut gobj: *mut HSD_GObj,
     mut desc: *mut HSD_SObjDesc,
@@ -159,6 +168,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     mut priority: u8,
     mut use_secondary: u8,
 ) -> *mut HSD_SObj {
+    core::hint::black_box(0x2921A2F1u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A477C");
     let mut image: *mut HSD_ImageDesc = ::core::ptr::null_mut::<HSD_ImageDesc>();
     let mut tlut: *mut HSD_Tlut = ::core::ptr::null_mut::<HSD_Tlut>();
@@ -255,10 +265,12 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     HSD_SObjLib_803A44D4(gobj, sobj, priority);
     return sobj;
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A49E0(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    core::hint::black_box(0x6BCA2774u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A49E0");
     let mut sobj: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     let _: [::core::ffi::c_uchar; 8] = [0; 8];
@@ -281,12 +293,16 @@ pub unsafe extern "C" fn HSD_SObjLib_803A49E0(
     }
 }
 #[inline]
+#[inline(never)]
 pub unsafe extern "C" fn discard_color(mut color: GXColor) -> GXColor {
+    core::hint::black_box(0xB128340Eu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("discard_color");
     return color;
 }
 #[cfg_attr(fptrace, melee_fptrace::trace)]
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
+    core::hint::black_box(0x063C6C5Fu32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A4A68");
     let mut x_cos: f32 = 0.;
     let mut origin_x: f32 = 0.;
@@ -791,10 +807,12 @@ pub static mut lbl_8040C448: HSD_Chan = HSD_Chan {
     attn_fn: GX_AF_NONE,
     aobj: ::core::ptr::null::<HSD_AObj>() as *mut HSD_AObj,
 };
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A54EC(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    core::hint::black_box(0x3C683073u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A54EC");
     let mut viewmtx: Mtx = [[0.; 4]; 3];
     if HSD_CObjSetCurrent(HSD_GObjGetHSDObj(gobj) as *mut HSD_CObj) != 0 {
@@ -835,12 +853,14 @@ pub unsafe extern "C" fn HSD_SObjLib_803A54EC(
         1 as ::core::ffi::c_int,
     );
 }
+#[inline(never)]
 pub unsafe extern "C" fn HSD_SObjLib_803A55DC(
     mut gobj: *mut HSD_GObj,
     mut width: u16,
     mut height: u16,
     mut priority: ::core::ffi::c_int,
 ) {
+    core::hint::black_box(0xA784C75Du32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("HSD_SObjLib_803A55DC");
     let mut cobj: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
     let mut viewport: Scissor = _Scissor {

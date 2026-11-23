@@ -9,7 +9,8 @@ def raw(c, r):
     return (c, r)
 
 
-NNs = raw("NN = 1;", "NN = 1;")
+NNs = raw("NN = 1; CN_SCALE_BIG = 0;", "NN = 1; CN_SCALE_BIG = 0;")
+SCALE_BIG = raw("CN_SCALE_BIG = 1;", "CN_SCALE_BIG = 1;")
 NN_RND = raw("NN = (rnd() % 4) != 0;", "NN = (rnd() % 4 != 0) as i32;")
 
 
@@ -160,7 +161,10 @@ GOBJ_ARG = [G0]
 
 # ---- whole-stage functions
 F("grCorneria_801DCCFC", pre_parts=[])
-F("grCorneria_801DCE1C", pre_parts=[SHIP], n=500)
+# the map-kind lookups (grCorneria_801E0A74 / 801E08CC) check a point against the three map pieces, which tile the stage in the game;
+# random (or missing) pieces leave gaps and the C asserts (HSD_ASSERTREPORT 0x9CB, case 10): with CN_SCALE_BIG every map piece
+# exists and a large stage scale makes every point land in one
+F("grCorneria_801DCE1C", pre_parts=[SHIP, SCALE_BIG], n=500)
 F("grCorneria_801DD2C0", args=[("(int) AI[0]", "a.i[0] as i32")], pre_parts=[SHIP], n=300)
 F("grCorneria_801DD350", pre_parts=[SHIP], n=300)
 F("grCorneria_801DD478", pre_parts=[SHIP], n=300)
@@ -178,7 +182,7 @@ for nm in ["grCorneria_801DD620", "grCorneria_801DD64C", "grCorneria_801DD654", 
     F(nm, n=60, pre_parts=[])
 F("grCorneria_801DD65C", pre_parts=[SHIP])
 F("grCorneria_801DD674", pre_parts=[SHIP], n=300)
-F("grCorneria_801DD9A8", pre_parts=[SHIP], n=500)
+F("grCorneria_801DD9A8", pre_parts=[SCALE_BIG, SHIP], n=500)
 F("grCorneria_801DDAC4", pre_parts=[SHIP], n=300)
 F("grCorneria_801DDCF0", n=100)
 F("grCorneria_801DDD4C", n=100)
@@ -203,8 +207,8 @@ F("grCorneria_801E01A8", pre_parts=[SHIP], n=500)
 F("grCorneria_801E03C8", voidret=True, args=[G0, ("(int) AI[0]", "a.i[0] as i32")],
   pre_parts=[SHIP, raw("{ static const int I_[] = { 8, 9, 4, 5, 1 }; AI[0] = I_[rnd() % 5]; }", "{ const I_: [u32; 5] = [8, 9, 4, 5, 1]; a.i[0] = I_[(rnd() % 5) as usize]; }")], n=300)
 F("grCorneria_801E0678", pre_parts=[SHIP], n=200)
-F("grCorneria_801E08CC", pre_parts=[SHIP], n=300)
-F("grCorneria_801E0A74", n=300)
+F("grCorneria_801E08CC", pre_parts=[SCALE_BIG, SHIP], n=300)
+F("grCorneria_801E0A74", n=300, pre_parts=[SCALE_BIG])
 F("grCorneria_801E0C3C", pre_parts=[SHIP], n=200)
 F("grCorneria_801E0D30", n=100)
 F("grCorneria_801E0DE4", pre_parts=[SMASH], n=100)
@@ -221,8 +225,8 @@ F("grCorneria_801E1348", pre_parts=[SHIP], n=1500)
 F("grCorneria_801E1878", pre_parts=[SHIP], n=200)
 F("grCorneria_801E1970", pre_parts=[SHIP], n=500)
 F("grCorneria_801E1BF0", n=200)
-F("grCorneria_801E2110", pre_parts=[], n=200)
-F("grCorneria_801E2228", pre_parts=[SHIP], n=1000)
+F("grCorneria_801E2110", pre_parts=[SCALE_BIG, ], n=200)
+F("grCorneria_801E2228", pre_parts=[SCALE_BIG, SHIP], n=1000)
 F("grCorneria_801E2454", n=100)
 F("grCorneria_801E2480", n=100)
 F("smashTaunt_801E24AC", args=[G0, ("(int) AI[0]", "a.i[0] as i32")], pre_parts=[SMASH], n=300)
@@ -297,6 +301,7 @@ SPEC = dict(
         ("vec->x = gp2->u.arwing.xDC + (-pos.z + lbl_803E2068[idx].x);", "vec->x = gp2->u.corneria.offset_x + (-pos.z + lbl_803E2068[idx].x);"),
     ],
     data_c="""static int NN;
+static int CN_SCALE_BIG;
 static unsigned NIDM;
 static HSD_GObj* OPLH[HSD_GOBJ_PLINK_FIGHTER + 1];
 HSD_GObj** HSD_GObjPLinkHead = OPLH;
@@ -304,6 +309,7 @@ HSD_PadStatus HSD_PadMasterStatus[4];
 u8** HSD_SisLib_804D1124[5];
 typedef union ColorOverlay_x8_t ColorOverlay_x8_t; /* the oracle spells record tags bare; this one is a union now */""",
     use_rs="""static mut NN: i32 = 0;
+static mut CN_SCALE_BIG: i32 = 0;
 static mut NIDM: u32 = 0;
 static mut OPAD: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
 static mut OSIS: [*mut *mut u8; 5] = [core::ptr::null_mut(); 5];
@@ -336,6 +342,7 @@ use core::ptr::null_mut;""",
     melee_world::tu::grcorneria::ext::HSD_PADMASTERSTATUS = Some(|| addr_of_mut!(OPAD) as *mut HSD_PadStatus);
     melee_world::tu::grcorneria::ext::HSD_SISLIB_804D1124 = Some(|| addr_of_mut!(OSIS) as *mut *mut SIS);""",
     outs={"lb_8000B1CC": [2], "ftLib_GetPos": [1], "Camera_GetTransformInterest": [0], "Player_LoadPlayerCoords": [1]},
+    frets={"Ground_801C0498": ("(CN_SCALE_BIG ? 1000.0f : rf())", "(if CN_SCALE_BIG != 0 { 1000.0 } else { rf() })")},
     rets={
         "HSD_Randi": ("(int) (a0 > 0 ? rnd() % (u32) a0 : 0)", "(if a0 > 0 { rnd() % (a0 as u32) } else { 0 })"),
         "HSD_Randf": ("rf()", "rf()"),
@@ -343,8 +350,8 @@ use core::ptr::null_mut;""",
                             "(if NN != 0 || rnd() % 5 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _ } else { null_mut() })"),
         "Ground_GetStageGObj": ("((NN || rnd() % 4) ? (void*) &OGO[1 + rnd() % (NGO - 1)] : (void*) 0)",
                                 "(if NN != 0 || rnd() % 4 != 0 { addr_of_mut!(OGO[1 + (rnd() % (NGO as u32 - 1)) as usize]) as *mut _ } else { null_mut() })"),
-        "Ground_GetMapGObj": ("((!((NIDM >> a0) & 1u) || (rnd() % 2)) ? (void*) &OGO[rnd() % NGO] : (void*) 0)",
-                              "(if (NIDM >> a0) & 1 == 0 || rnd() % 2 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) as *mut _ } else { null_mut() })"),
+        "Ground_GetMapGObj": ("((CN_SCALE_BIG || !((NIDM >> a0) & 1u) || (rnd() % 2)) ? (void*) &OGO[rnd() % NGO] : (void*) 0)",
+                              "(if CN_SCALE_BIG != 0 || (NIDM >> a0) & 1 == 0 || rnd() % 2 != 0 { addr_of_mut!(OGO[(rnd() % NGO as u32) as usize]) as *mut _ } else { null_mut() })"),
         "Ground_GetYakumonoParam": ("(void*) OP_grCorneria_YakumonoParam[0]", "addr_of_mut!(OP_grCorneria_YakumonoParam[0]) as *mut c_void"),
         "grDatFiles_GetArchive": ("(void*) OP_UnkArchiveStruct[rnd() % 2]", "addr_of_mut!(OP_UnkArchiveStruct[(rnd() % 2) as usize]) as *mut c_void"),
         "HSD_SisLib_803A5ACC": ("(void*) OP_HSD_Text[rnd() % 2]", "addr_of_mut!(OP_HSD_Text[(rnd() % 2) as usize]) as *mut c_void"),

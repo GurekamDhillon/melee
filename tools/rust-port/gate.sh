@@ -12,8 +12,9 @@ export MELEE_WINDOW_HIDDEN=${MELEE_WINDOW_HIDDEN:-1}  # agents' game windows are
 #   2. baseline files tools/rust-port/diff/baseline/*.txt have not grown (baseline_max.tsv), and
 #      `melee diff --frames` shows no difference outside the baseline in the subsystems of docs/rust-port/migrated.txt
 #      at the sampled frames of tools/rust-port/diff/frames.tsv (capped at the engine's count);
-#   3. tools/rust-port/lint_logic.py introduces no new violations (when the script exists), and
-#      tools/rust-port/semantics_lint.py finds no console-arithmetic violation in the game crates.
+#   3. tools/rust-port/lint_logic.py introduces no new violations (when the script exists),
+#      tools/rust-port/semantics_lint.py finds no console-arithmetic violation in the game crates, and
+#      tools/rust-port/rbstatics_lint.py finds no unreviewed heap-owning static a rollback load could rewind.
 # --update-progress appends the measured counts (only when none went down) and lowers baseline_max.tsv.
 set -u
 # One cargo target dir per worktree (notes/buildspeed.md): a CARGO_TARGET_DIR shared by worktrees makes lanes overwrite each
@@ -48,9 +49,11 @@ export MELEE_WINDOW_UNFOCUSED=1
 case "$engine" in tu) ;; legacy) echo "gate: the legacy model was removed (consolidation step 19)" >&2; exit 2 ;; *) echo "gate: unknown engine '$engine' (tu)" >&2; exit 2 ;; esac
 profile="${PROFILE:-$([ -n "${RELEASE:-}" ] && echo release || echo fast)}"
 case "$profile" in release|fast|perf) ;; *) echo "gate: unknown PROFILE '$profile' (release|fast|perf)" >&2; exit 2 ;; esac
-exe="$repo/build/cargo/$profile/melee.exe"
+exe="${CARGO_TARGET_DIR:-$repo/build/cargo}/$profile/melee.exe"
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
-tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
+# the system temp may not be writable (a sandboxed agent shell: the checks below would compare empty files): probe it
+tmp="${TEMP:-${TMPDIR:-/tmp}}/gate.$$"
+mkdir -p "$tmp" 2>/dev/null && : > "$tmp/.probe" 2>/dev/null || { tmp="$repo/build/tmp/gate.$$"; mkdir -p "$tmp"; }
 fail=0
 if [ $build = 1 ]; then
   if [ "$profile" = release ]; then
@@ -59,6 +62,8 @@ if [ $build = 1 ]; then
     (set -o pipefail && bash tools/rust-port/cargo_fast.sh build -p melee --profile "$profile" 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
   fi
 fi
+# again after the build: on a fresh Linux tree neither name existed above, so `melee.exe` was kept
+[ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
 progress=docs/rust-port/engine_progress.tsv
 declare -A counts
 scenarios="pad_falcon_fox_fd pad_marth_sheik_bf cpu_fox_falco_dl cpu_peach_samus_ys_items"
@@ -142,11 +147,24 @@ fi
 if [ "${SEMLINT:-1}" = 1 ] && [ -z "$only" ]; then
   python tools/rust-port/semantics_lint.py || { echo "FAIL semantics lint"; fail=1; }
 fi
+# rollback statics (arena::SysStatic): every heap-owning static of the host crates outside SysStatic / thread_local is
+# reviewed in rbstatics_allow.tsv (a rewound one was a double free, retail_flow::transition_time). Source scan, instant.
+if [ -f tools/rust-port/rbstatics_lint.py ]; then
+  python tools/rust-port/rbstatics_lint.py || { echo "FAIL rbstatics lint"; fail=1; }
+fi
 # 4. rollback snapshot perf (tools/rust-port/perf/snapguard.sh, notes/perf.md "Snapshot perf guard"): depth-7 synctest
 #    save / load / total, min of 3 runs, within 25% of the committed baseline. Release only (the baseline's profile);
 #    SNAPGUARD=0 skips it.
 if [ "$profile" = release ] && [ "${SNAPGUARD:-1}" = 1 ] && [ -z "$only" ]; then
   bash tools/rust-port/perf/snapguard.sh --exe "$exe" || fail=1
+fi
+# 5. vanilla zero lag (optional, VANILLA_ZEROLAG=1; notes/zero-hitch.md): menu walk to a Final Destination match and
+#    fast-pick starts (play/fastpick_*.txt: A the frame after the cursor lands) on FD, BF, PS, YS, DL N64 and FoD with the Brawl
+#    files hidden; FAILS on any frame over 16 ms. Needs a quiet machine (zero_hitch_gate.sh refuses otherwise).
+if [ "${VANILLA_ZEROLAG:-0}" = 1 ] && [ -z "$only" ]; then
+  vc="${CARD:-$tmp/vzl-card}"
+  if [ -z "${CARD:-}" ]; then mkdir -p "$vc/USA/Card A"; [ -d "$ws/scratch/test-card-master" ] && cp -r "$ws/scratch/test-card-master/." "$vc/USA/Card A/"; fi
+  EXE="$exe" CARD="$vc" OUT="$tmp/zerolag" bash tools/rust-port/perf/zero_hitch_gate.sh vanilla_zerolag || { echo "FAIL vanilla zero lag"; fail=1; }
 fi
 if [ $update = 1 ] && [ $fail = 0 ]; then
   step=$(awk -F'\t' 'NR>1{s=$1} END{print s+0}' "$progress")

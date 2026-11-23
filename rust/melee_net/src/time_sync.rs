@@ -74,6 +74,15 @@ pub fn slippi_old_rule() -> bool {
     old_rule() || !std::env::var_os("MELEE_TIMESYNC_NEW").is_some_and(|v| v == "1")
 }
 
+/// `MELEE_TIMESYNC_FORCE_CATCHUP=N[:K]` -> (N, K); unset or malformed: (0, 0).
+fn force_catchup_env() -> (i32, i32) {
+    let Some(v) = std::env::var("MELEE_TIMESYNC_FORCE_CATCHUP").ok() else { return (0, 0) };
+    let mut it = v.split(':');
+    let n = it.next().and_then(|x| x.trim().parse::<i32>().ok()).filter(|&n| n > 0).unwrap_or(0);
+    let k = it.next().and_then(|x| x.trim().parse::<i32>().ok()).filter(|&k| k > 0).unwrap_or(MAX_ADVANCE);
+    if n > 0 { (n, k) } else { (0, 0) }
+}
+
 /// What a tick should do.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub struct Step {
@@ -94,11 +103,18 @@ pub struct TimeSync {
     pub held: i32,
     pub advanced: i32,
     pub offsets_seen: i32,
+    /// test hook `MELEE_TIMESYNC_FORCE_CATCHUP=N[:K]` (new rule only, read once per match in `new`): on every Nth
+    /// offset check after the opening, start a catch-up of K frames (default MAX_ADVANCE) whatever the offset, so
+    /// the extra-frame path runs against a peer on the same clock. 0: off.
+    pub force_every: i32,
+    pub force_frames: i32,
+    checks_after_opening: i32,
 }
 
 impl TimeSync {
     pub fn new(old: bool) -> Self {
-        TimeSync { old, checked: i32::MIN, advanced_on: i32::MIN, ..Default::default() }
+        let (force_every, force_frames) = if old { (0, 0) } else { force_catchup_env() };
+        TimeSync { old, checked: i32::MIN, advanced_on: i32::MIN, force_every, force_frames, ..Default::default() }
     }
 
     /// Call once per tick with the online frame about to run and the measured offset (read lazily: `offset` is
@@ -117,6 +133,12 @@ impl TimeSync {
             st.hold = if self.old { hold_frames_old(off) } else { hold_frames(off, frame) };
             if !self.old && st.hold == 0 && self.advance_left == 0 {
                 self.advance_left = advance_frames(off, frame);
+            }
+            if self.force_every > 0 && frame > OPENING {
+                self.checks_after_opening += 1;
+                if st.hold == 0 && self.advance_left == 0 && self.checks_after_opening % self.force_every == 0 {
+                    self.advance_left = self.force_frames;
+                }
             }
             self.held += st.hold;
         }
@@ -171,6 +193,21 @@ mod tests {
         if std::env::var_os("MELEE_TIMESYNC_NEW").is_none() {
             assert!(slippi_old_rule());
         }
+    }
+
+    #[test]
+    fn a_forced_catch_up_runs_on_every_nth_check_after_the_opening() {
+        let mut t = TimeSync::new(false);
+        t.force_every = 2;
+        t.force_frames = 3;
+        let mut adv = vec![];
+        for f in 1..=300 {
+            if t.step(f, || 0).advance {
+                adv.push(f);
+            }
+        }
+        // checks at 150 (1st), 180 (2nd: forced), 210, 240 (forced), 270, 300 (forced): 3 frames each on multiples of 5
+        assert_eq!(adv, vec![180, 185, 190, 240, 245, 250, 300]);
     }
 
     #[test]

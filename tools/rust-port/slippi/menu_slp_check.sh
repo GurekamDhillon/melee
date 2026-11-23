@@ -8,13 +8,13 @@
 #            (slp_agree.py: Game Start, every Pre-/Post-Frame event of the common frames)
 #   quit:    one Unranked game; B quits mid-match (MELEE_SLIPPI_NP_QUIT_AT=600); A's .slp must still be written, with a
 #            Game End, and play in `melee slpcheck` (parsed, not refused)
-# usage: menu_slp_check.sh OUTDIR rematch|quit [--mm-port P] [--lag-ms N] [--loss-pct N]   (EXE=<melee binary>;
-#   GW_ISO_VANILLA set by the caller; SLPCHECK_TITLE=<word> prefixes both window titles). --lag-ms / --loss-pct go to the mock's relay: many rollbacks (the stress run).
+# usage: menu_slp_check.sh OUTDIR rematch|quit [--mm-port P] [--lag-ms N] [--jitter-ms N] [--loss-pct N]   (EXE=<melee binary>;
+#   GW_ISO_VANILLA set by the caller; SLPCHECK_TITLE=<word> prefixes both window titles). --lag-ms / --jitter-ms / --loss-pct go to the mock's relay: many rollbacks (the stress run).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"
 B="${EXE:-$repo/rust/target/release/melee}"; O=$1; mode=$2; shift 2
 mmp=43470; relay=()
-while [ $# -gt 0 ]; do case "$1" in --mm-port) mmp=$2; shift ;; --lag-ms|--loss-pct) relay+=("$1" "$2"); shift ;; esac; shift; done
+while [ $# -gt 0 ]; do case "$1" in --mm-port) mmp=$2; shift ;; --lag-ms|--jitter-ms|--loss-pct) relay+=("$1" "$2"); shift ;; esac; shift; done
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "GW_ISO_VANILLA is not set"; exit 2; }
 export MELEE_INPUT=n MELEE_VOLUME=3 MELEE_WINDOW_HIDDEN=1 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_KEYBOARD=0
 M="$repo/tools/rust-port/menus"

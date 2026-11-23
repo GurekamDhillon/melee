@@ -196,6 +196,18 @@ impl Audio {
     /// Once per video frame: the game's own per-frame audio (`lbAudioAx_80027DF8`), then the 5 ms
     /// frames the device is owed.
     pub fn tick(&mut self) {
+        // MELEE_AUDIO_DBG: a gap between two ticks longer than the ring's cushion is an underrun on a real device
+        // (the producer runs only here, on the game thread); logged with or without a device.
+        if std::env::var_os("MELEE_AUDIO_DBG").is_some() {
+            thread_local!(static LAST: std::cell::Cell<Option<std::time::Instant>> = const { std::cell::Cell::new(None) });
+            let now = std::time::Instant::now();
+            if let Some(t) = LAST.with(|l| l.replace(Some(now))) {
+                let ms = now.duration_since(t).as_millis();
+                if ms >= 40 {
+                    eprintln!("audio: game thread gap {ms} ms between audio ticks");
+                }
+            }
+        }
         crate::engine_audio::petey_music(); // the live path (the golden one runs it from dsp_frame)
         // an engine scene runs `lbAudioAx_80027DF8` itself (gmscene's loop); the stand-in scenes get it here
         if !crate::engine_audio::take_frame_ran() {
@@ -304,6 +316,19 @@ impl Audio {
             }
             (None, Some(c)) => format!("audio: captured {} sub-frames, no device", c.len() / 320),
             (None, None) => "audio: virtual clock, no device".into(),
+        }
+    }
+
+    /// Fight or not, once per tick before `tick`. Outside fights (title, menus, results, the transitions between them)
+    /// the game thread blocks on file and sound-bank loads for up to ~100 ms (a YouGame first launch: more), and it is
+    /// the ring's only producer: there the ring keeps `LOAD_CUSHION_MS` buffered instead of the low-latency cushion, so
+    /// a load never starves the device. In a fight (no loads; the zero-lag gate) the usual cushion applies; the deeper
+    /// fill drains by itself, no sample dropped or added, so the mix is the same sample for sample.
+    pub fn set_fight(&mut self, fight: bool) {
+        const LOAD_CUSHION_MS: u32 = 160;
+        if let Some(o) = self.out.as_ref() {
+            let deep = !fight && !o.driver.cfg.low_latency;
+            o.driver.ring.set_floor(if deep { LOAD_CUSHION_MS / 5 } else { 0 });
         }
     }
 

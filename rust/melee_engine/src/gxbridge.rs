@@ -548,7 +548,24 @@ fn readable(p: usize, n: usize) -> bool {
         ok != 0 && got == n
     })
 }
+/// Linux: the same check with `process_vm_readv` on this process (it fails with EFAULT instead of faulting). It
+/// answered false before, so every array or texture outside the archive images and the heap was dropped: psdisp's
+/// texcoord table (`HSD_PSDisp_8040C340`, native static memory, `GXSetArray` above) among them, and every textured
+/// particle quad drew nothing (Battlefield's background sparkles, in a relaunched match as in the one-window one).
 #[cfg(not(windows))]
-fn readable(_p: usize, _n: usize) -> bool {
-    false
+fn readable(p: usize, n: usize) -> bool {
+    if p < 0x1_0000 || p.checked_add(n).is_none() {
+        return false;
+    }
+    thread_local! { static BUF: core::cell::RefCell<Vec<u8>> = const { core::cell::RefCell::new(Vec::new()) }; }
+    BUF.with(|b| {
+        let mut b = b.borrow_mut();
+        if b.len() < n {
+            b.resize(n, 0);
+        }
+        let local = libc::iovec { iov_base: b.as_mut_ptr() as *mut libc::c_void, iov_len: n };
+        let remote = libc::iovec { iov_base: p as *mut libc::c_void, iov_len: n };
+        let got = unsafe { libc::process_vm_readv(libc::getpid(), &local, 1, &remote, 1, 0) };
+        got >= 0 && got as usize == n
+    })
 }

@@ -106,7 +106,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 | PLAY: `--iso --threaded-renderer --settings-path [--sys-dir --user-dir --replay-dir --card-dir --sysgen-data-dir]` | yes | translated by launcher_compat.rs | OK |
 | Vanilla segment `--slippi-menus off --vanilla-only [--vanilla-game]` | yes | accepted; the Rust Port is always vanilla | OK |
 | Build tab / warm cache `--hidden --frames N --log-file F` | yes | headless N-frame run, log to F | OK |
-| Settings button `--settings-window [--settings-standby PID] [--settings-tab T]` | own panel | no panel; the PR opens the Source Port's panel (it writes the ini we read), else a message | PART |
+| Settings button `--settings-window [--settings-standby PID] [--settings-tab T]` | own panel | our overlay in its own window, reads/writes port-settings.ini (section 7); the PR starts it | OK |
 | port-settings.ini display / audio | all keys | fullscreen, exclusivefullscreen, widescreen, truewidescreen, window, scale, msaa, vsync, volume, music, backgroundinput; `fps` -> our fps cap (0 / unlocked = off, 30..2000 clamped to our 1000, -1 / monitor = follows the display, nothing set; a limit on presented frames only, no interpolation); `ssaa` 2..4 multiplies a numeric `scale` into our render scale (cap 8), with an automatic scale it is logged and left (auto already supersamples); `--fps` likewise; `audio_device` (WASAPI endpoint id) -> the output device by name: the id is resolved to its friendly name through MMDevice (`audio_endpoint.rs`), checked against the outputs we can open, else the system default, with a log line either way (a name already in our list is taken as is); not backend, dlss*, ASIO, HUD / overlay keys | PART |
 | bindings `key_*`, `pad<n>_*`, `gc<n>_*` | yes | yes | OK |
 | bindings `ds4<n>_*`, `swpro<n>_*` | yes | yes, by position through gilrs (this branch; a DualSense uses the DS4 table) | OK |
@@ -132,8 +132,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 
 **Not done here, with estimates:** P2P Direct / mu_net (1-2 weeks, notes/mu-net-feasibility.md); code mods with
 their own main.dol (the PPC interpreter, on hold for sc00p); TE packs / .gci loader (2-4 days once the interpreter
-exists, most TE content is PPC code); per-binding levels (0.5 day); a real `--settings-window` (our overlay in its own window writing
-port-settings.ini: 2-3 days); backend choice and DLSS (not planned: wgpu only); an update channel (1 day once Hero agrees on a feed).
+exists, most TE content is PPC code); per-binding levels (0.5 day); backend choice and DLSS (not planned: wgpu only); an update channel (1 day once Hero agrees on a feed).
 
 Launcher patch: one commit on his main 6c9472f, branch `rust-port-engine` (see the round-three report). The
 test-only network skip (no YouGame refresh, no lobby/DHT in `MELEE_LAUNCHER_TEST` runs) is a separate local commit
@@ -178,3 +177,30 @@ profiles; the current list is §4.
   worker `std::thread` was still joinable when statics were destroyed: `std::terminate`, CRT fail-fast, process exit
   `0xC0000409` (bash shows 127). Not a bug in his launcher (its close path goes through `WM_DESTROY`). The hooks now
   call `DestroyWindow`; the launcher exits 0 (LAUNCH OK and BUILD OK both print `launcher exit: 0`).
+
+## 7. Our own settings window (2026-11-22, port/musettings)
+
+`melee.exe --settings-window --settings-path <port-settings.ini> [--settings-tab <name>] [--settings-standby <pid>]`
+(`rust/melee/src/settings_window.rs`) opens the in-game settings overlay (settings_overlay.rs, same pages and look,
+panel centred) alone in an 800x600 window: no disc, no engine; text is the bundled fonts.
+
+- **Files:** on open his ini's display/audio values (port_ini.rs, the reverse of `map_settings`) are copied into
+  settings.cfg and audio.cfg; each change goes to settings.cfg (as in game) and the shared keys to his ini at once:
+  `widescreen` (+ `truewidescreen 0`), `fullscreen` + `exclusivefullscreen`, `vsync`, `scale` (0 = auto), `msaa`,
+  `volume`, `music`. Only those lines are rewritten; every other line (controls tables, unknown keys, comments, CRLF)
+  is kept byte for byte. The controls tables are not edited (no bindings page).
+- **Tabs:** his names; `video`, `audio`, `game`, `overlays`, `customize` match our pages, `mods` -> CUSTOMIZE (skins),
+  `controls` / `gecko` keep VIDEO. SESSION holds only "Close settings".
+- **Standby:** waits on `Local\MeleeUnlockedSettingsShow-<pid>` / `...Quit-<pid>` / the launcher's exit before any
+  window or GPU device exists (no cost while waiting; the window takes a moment to appear after the click). Show:
+  re-read the files, open; quit or launcher gone: exit 0. The GC adapter is not touched while waiting.
+- **Input:** controllers (D-pad / stick, A, B, L/R pages) and keyboard (arrows, Enter, Escape, Tab). Closing (B,
+  Escape, "Close settings", the title bar X) exits 0. Log `melee_settings.log` (never the game's `melee_port.log`).
+- **Launcher patch:** `pr/rust-port-engine` commit 2ab6d6f3 (and the squashed `scratch/ext/0001-...patch`): Settings
+  and its standby copy start `game_exe()`, i.e. `rust\melee.exe` with the Rust Port picked; the Source Port fallback
+  and the "no settings window" message are gone.
+- **Tests:** `cargo test -p melee --bin melee port_ini launcher_compat settings_overlay`;
+  `bash tools/rust-port/launcher/settings_window_test.sh <melee.exe> [shot dir]` (hidden: open + script changes the
+  volume + quit, the ini asserted; standby shown by the event; standby ended by the launcher's exit; with a shot dir,
+  720p/1080p pictures via `MELEE_SETTINGS_SHOT`). Hooks: `MELEE_SETTINGS_SCRIPT`, `MELEE_SETTINGS_SHOT`,
+  `MELEE_SETTINGS_MAX_TICKS`.

@@ -5,8 +5,11 @@
 # Pass: both exit 0 and the two signed result files agree (check_results.py). Run under the game slots:
 #   ~/melee_out/locks/game.sh 2 tools/rust-port/p2p/play_pair.sh OUT 1200
 # B_WRAP="timeout -s KILL 30": B dies mid-match (A must still exit 0 and write a "disconnected" result).
+# PADGEN="" with MELEE_PAD_SCRIPT=<file> (and MELEE_TEST_EARLY_LEAD_MS=N): the pad script drives both sides instead of
+# the generator (the early-input sampler reads the script, so SAMPLEs go out).
 # Never prints the disc path.
 set -u
+PADGEN=${PADGEN---mu-test-padgen 7}
 OUT=${1:?outdir}; FRAMES=${2:-1200}; shift; shift || true
 mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -29,11 +32,11 @@ line() { # slot port peer identity expect result
     --p2p-identity "$4" --p2p-expect "$5" --p2p-result "$6" --p2p-names "Alpha:Beta" --p2p-connect-seconds 45 --p2p-games 1
 }
 MELEE_WINDOW_TITLE="p2pdirect play A" "$MELEE" play --iso "$GW_ISO_VANILLA" --skip-intro --max-frames 20000 \
-  $(line 0 $PA $PB "$IA" "$KB" "$OUT/a/res.json") --mu-test-padgen 7 --mu-test-frames "$FRAMES" "$@" >"$OUT/a.out" 2>"$OUT/a.log" &
+  $(line 0 $PA $PB "$IA" "$KB" "$OUT/a/res.json") $PADGEN --mu-test-frames "$FRAMES" "$@" >"$OUT/a.out" 2>"$OUT/a.log" &
 A=$!
 sleep "${B_DELAY:-2}"
 MELEE_WINDOW_TITLE="p2pdirect play B" ${B_WRAP:-} "$MELEE" play --iso "$GW_ISO_VANILLA" --skip-intro --max-frames 20000 \
-  $(line 1 $PB $PA "$IB" "$KA" "$OUT/b/res.json") --mu-test-padgen 7 --mu-test-frames "$FRAMES" "$@" >"$OUT/b.out" 2>"$OUT/b.log" &
+  $(line 1 $PB $PA "$IB" "$KA" "$OUT/b/res.json") $PADGEN --mu-test-frames "$FRAMES" "$@" >"$OUT/b.out" 2>"$OUT/b.log" &
 B=$!
 wait $A; RA=$?
 wait $B; RB=$?

@@ -226,7 +226,7 @@ as his game does; the build needs `--features real-net` (the `mu-net` feature of
 | M5 `play --p2p-*` | done (`mu_play.rs`, `mu_result`, `play_pair.sh`, `check_results.py`) | two hidden windowed peers with his launcher's line: exit 0/0, 0 desyncs, both signed result files verify and agree; peer killed mid-match: exit 0, `disconnected: true`; no peer: exit 2 |
 | M6 several games | not started: INFO announces 1 game, so `--p2p-games 0` plays one game and ends cleanly | |
 | M7 SAMPLE | received and counted / kept (`Input::samples`), never sent; not used for prediction yet | |
-| M8 wire check vs his build | not started | |
+| M8 wire check vs his build | done (2026-11-22, his `d9448c66`) | see "M8 evidence" below |
 
 Known gaps: the result file's `mode`, `tiebreak_index`, `lras_initiator`, `synced_timer`, `damage_done`,
 `synced_damage` and `game_info_hash` are left at his defaults (0 / -1); `stocks` / `synced_stocks`, `winner`,
@@ -277,3 +277,36 @@ diagnosis is one sentence per stage reached, not his four-way NAT diagnosis.
 - **Q4** exact hex case and float formatting in the result body: confirm against his writer's helpers before M5.
 - **Q5** game-end report fields (mode, end_method, lras_initiator, synced_*): which of them our engine exposes
   today; missing ones written as his defaults (0 / -1) with `has_outcome` from the match end.
+
+## M8 evidence: our peer against his reference mu_net
+
+Harness (local only, never committed: his code is GPL): his `port/runtime/mu_net/*.cpp` (session_security,
+session_types, peer_identity, input_transport, peer_connector, rollback_session, result_outbox), his monocypher and
+ENet (incl. `yg_enet_socket.c`), built with g++ against his `port/linux/compat` headers plus a 3-function shim
+(BCryptGenRandom over getrandom, ASCII Multi/WideChar), and a small driver that builds the descriptor as his
+`build_descriptor` does, runs `RollbackSession::start`, then feeds `on_inputs` 60 times a second with synthetic pads
+(finalized = frame - 10, checksum 0), reports the game end (a zero 368-byte payload) and writes his result file.
+Build and logs: `~/melee_out/p2pdirect/harness`. Our side: `melee mu-netplay` (real engine), on loopback.
+
+1. His peer against itself: Ready, 300 frames, equal transcripts, agreement 1 (the harness works).
+2. **Ours vs his, different build ids** (the real-world case): his log `handshake done with a09aa5f47a675980` (our
+   identity), state Verifying, then `The two games do not agree on the match setup`; ours: `descriptor mismatch`, exit
+   2. HELLO both ways, the key schedule and the encrypted VERIFY all worked; the digest compare is where it stops, as
+   expected.
+3. **Ours vs his, same build id** (`MELEE_P2P_TEST_BUILD_ID` = his `--build-id`): both compute descriptor digest
+   `34f53c23...` (our canonical bytes and his are identical), `ready: both games hold match setup`, 400 frames of
+   COMMIT/ACK both ways: his `rejected 0 malformed 0`, ours `gaps 0, conflicts 0`; both transcripts
+   `e2288a4d19063e4b...` over 402 frames, RESULT agreement on both sides (his `agreement 1`, ours `peer agrees`). The
+   HARD checksum mismatches on our side are his harness's zero checksums (no game behind it), not a wire fault.
+4. Roles and a bad network: ours in slot 0, his in slot 1, 30 ms lag / 8 ms jitter / 5 % loss / 5 % reorder on our
+   socket, three runs (ours decider twice, follower once): every run Ready, 600 frames, transcripts agree on both
+   sides, his `rejected 0 malformed 0`. (A first try of run 3 failed only because his harness's 30 s connect window
+   ran out while ours waited for a game slot.)
+5. Result file: his written file verifies with our `verify_file` and with libsodium, has the same key sequence as
+   ours, and `mu_net::result` test `body_bytes_match_a_reference_file` (`MU_RESULT_CHECK=<file>`, ignored by
+   default) rebuilds its 1064-byte body byte for byte with our writer.
+
+So the wire (framing, nonces, AD, replay, key schedule, descriptor canonical form, COMMIT/ACK/RESULT, transcript) and
+the result signing interoperate with his implementation. What still separates a Rust peer from his Source Port in a
+real match is the build id (by design) and, behind it, the simulation.
+

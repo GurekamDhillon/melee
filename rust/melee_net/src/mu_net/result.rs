@@ -213,6 +213,66 @@ mod tests {
         assert!(!verify_file(&t.replace("\"winner\":1", "\"winner\":0")));
     }
 
+    /// `MU_RESULT_CHECK=<result file written by another implementation>`: rebuild the body from the file's values
+    /// with our writer and compare bytes (M8: his reference writer against ours). Ignored without the variable.
+    #[test]
+    #[ignore]
+    fn body_bytes_match_a_reference_file() {
+        let Ok(path) = std::env::var("MU_RESULT_CHECK") else { return };
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert!(verify_file(text.trim_end()), "the reference file's signature verifies with our reader");
+        let body = &text["{\"body\":".len()..text.rfind(",\"identity\":\"").unwrap()];
+        // the values in order of appearance: "key":value (strings unquoted)
+        let val = |key: &str, nth: usize| -> String {
+            let pat = format!("\"{key}\":");
+            let at = body.match_indices(&pat).nth(nth).unwrap().0 + pat.len();
+            let rest = &body[at..];
+            if let Some(r) = rest.strip_prefix('"') {
+                r[..r.find('"').unwrap()].to_string()
+            } else {
+                rest[..rest.find([',', '}']).unwrap()].to_string()
+            }
+        };
+        let hx = |key: &str, out: &mut [u8]| assert!(super::super::crypto::unhex(&val(key, 0), out));
+        let mut r = GameResult { build_id: val("build_id", 0), ..Default::default() };
+        r.route = if val("route", 0) == "p2p_unranked" { ROUTE_UNRANKED } else { 1 };
+        hx("descriptor_digest", &mut r.descriptor_digest);
+        hx("match_id", &mut r.match_id);
+        hx("peer_identity", &mut r.peer_identity);
+        hx("transcript_digest", &mut r.transcript_digest);
+        hx("game_info_hash", &mut r.game_info_hash);
+        r.local_slot = val("local_slot", 0).parse().unwrap();
+        r.transcript_frames = val("transcript_frames", 0).parse().unwrap();
+        r.transcript_complete = val("transcript_complete", 0) == "true";
+        r.peer_agreement = match val("peer_agreement", 0).as_str() {
+            "match" => Some(true),
+            "mismatch" => Some(false),
+            _ => None,
+        };
+        r.desync = val("desync", 0) == "true";
+        r.disconnected = val("disconnected", 0) == "true";
+        r.has_outcome = val("has_outcome", 0) == "true";
+        r.mode = val("mode", 0).parse().unwrap();
+        r.frame_length = val("frame_length", 0).parse().unwrap();
+        r.game_index = val("game_index", 0).parse().unwrap();
+        r.tiebreak_index = val("tiebreak_index", 0).parse().unwrap();
+        r.winner = val("winner", 0).parse().unwrap();
+        r.end_method = val("end_method", 0).parse().unwrap();
+        r.lras_initiator = val("lras_initiator", 0).parse().unwrap();
+        r.synced_timer = val("synced_timer", 0).parse().unwrap();
+        for (i, p) in r.players.iter_mut().enumerate() {
+            *p = PlayerResult {
+                slot_type: val("slot_type", i).parse().unwrap(),
+                stocks: val("stocks", i).parse().unwrap(),
+                damage_done: val("damage_done", i).parse().unwrap(),
+                synced_stocks: val("synced_stocks", i).parse().unwrap(),
+                synced_damage: val("synced_damage", i).parse().unwrap(),
+            };
+        }
+        assert_eq!(r.body(), body);
+        eprintln!("result body: our writer reproduces {path} byte for byte ({} bytes)", body.len());
+    }
+
     #[test]
     fn game_file_names() {
         assert_eq!(path_for_game("C:\\L\\p2p-results\\ab.json", 1), "C:\\L\\p2p-results\\ab.json");

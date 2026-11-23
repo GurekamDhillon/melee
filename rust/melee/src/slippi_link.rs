@@ -267,7 +267,8 @@ pub fn restore_offline_codes() {
     unsafe {
         melee_fighter::platform::hook::Slippi_Codes = None;
         // the fighter TUs' and Final Destination's tables: 0 offline (manual.rs)
-        melee_fighter::hooks::SLIPPI_CODES = Some(|| 0);
+        melee_core::codes::set_slippi_codeset(0);
+        melee_fighter::hooks::SLIPPI_CODES = Some(melee_core::codes::slippi_codeset);
         melee_world::tu::grlast::ext::SLIPPI_CODES = Some(|| 0);
     }
 }

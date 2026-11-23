@@ -856,53 +856,24 @@ mod tests {
 /// lock back as held with no holder, and the game thread's next allocation spun on it forever (the fight-3 synctest
 /// stall). A load while it held the lock also released it under it. So snapshot work runs under [`BgPause`]: it raises
 /// `BG_PAUSE` and waits until the background thread is outside its critical part (`BG_BUSY` false, the lock not held
-/// by it). Every save is then taken with `BG_PAUSE` true, which is what a load writes back; the pause's drop clears
-/// `BG_PAUSE` afterwards.
+/// by it). Every save is then taken with `BG_PAUSE` true and `BG_BUSY` false, which is what a load writes back; the
+/// pause's drop clears `BG_PAUSE` afterwards.
 static BG_PAUSE: AtomicBool = AtomicBool::new(false);
-/// `BG_BUSY` and `JOB_BUSY` live in a system-heap block, not in the statics: `bg_begin` / `bg_job_begin` raise their
-/// flag before they see `BG_PAUSE`, so a save could copy a transient `true` (the critical parts still exclude each
-/// other), and a load then wrote it back under the thread, which had already cleared it (MELEE_SNAP_CHECK on Linux:
-/// one byte of page (3, 110), live 00 want 01, ~1 in 13 coverage synctests under load). Only the block's address is a
-/// static; it is set by the first use (the pre-faulter's start or the first `BgPause`), before any snapshot is taken.
-static BG_FLAGS: core::sync::atomic::AtomicPtr<[AtomicBool; 2]> = core::sync::atomic::AtomicPtr::new(core::ptr::null_mut());
-fn bg_flags() -> &'static [AtomicBool; 2] {
-    let p = BG_FLAGS.load(Acquire);
-    if !p.is_null() {
-        return unsafe { &*p };
-    }
-    let b = {
-        let _s = SysScope::enter();
-        Box::into_raw(Box::new([AtomicBool::new(false), AtomicBool::new(false)]))
-    };
-    match BG_FLAGS.compare_exchange(core::ptr::null_mut(), b, AcqRel, Acquire) {
-        Ok(_) => unsafe { &*b },
-        Err(other) => {
-            let _s = SysScope::enter();
-            drop(unsafe { Box::from_raw(b) });
-            unsafe { &*other }
-        }
-    }
-}
-/// The pre-faulter is in its critical part (see [`BG_PAUSE`]).
-fn bg_busy() -> &'static AtomicBool {
-    &bg_flags()[0]
-}
-/// [`bg_busy`] of the GX decode thread (a rollback run's render-only decode, `gxbridge::enable_async`): a flag of its
+static BG_BUSY: AtomicBool = AtomicBool::new(false);
+/// [`BG_BUSY`] of the GX decode thread (a rollback run's render-only decode, `gxbridge::enable_async`): a flag of its
 /// own, so the two background threads never clear each other's.
-fn job_busy() -> &'static AtomicBool {
-    &bg_flags()[1]
-}
+static JOB_BUSY: AtomicBool = AtomicBool::new(false);
 
 /// The GX decode thread starts a job: waits while snapshot work runs (see [`BG_PAUSE`]), then holds it off until
 /// [`bg_job_end`]. The job runs on the system heap and touches no game memory, but it writes statics (the allocator's
 /// counters, std's locks) that a save copies and a load writes back.
 pub fn bg_job_begin() {
     loop {
-        job_busy().store(true, SeqCst);
+        JOB_BUSY.store(true, SeqCst);
         if !BG_PAUSE.load(SeqCst) {
             return;
         }
-        job_busy().store(false, SeqCst);
+        JOB_BUSY.store(false, SeqCst);
         while BG_PAUSE.load(SeqCst) {
             std::thread::yield_now();
         }
@@ -910,19 +881,19 @@ pub fn bg_job_begin() {
 }
 /// See [`bg_job_begin`].
 pub fn bg_job_end() {
-    job_busy().store(false, SeqCst);
+    JOB_BUSY.store(false, SeqCst);
 }
 
 fn bg_begin() -> bool {
-    bg_busy().store(true, SeqCst);
+    BG_BUSY.store(true, SeqCst);
     if BG_PAUSE.load(SeqCst) {
-        bg_busy().store(false, SeqCst);
+        BG_BUSY.store(false, SeqCst);
         return false;
     }
     true
 }
 fn bg_end() {
-    bg_busy().store(false, SeqCst);
+    BG_BUSY.store(false, SeqCst);
 }
 fn bg_paused() -> bool {
     BG_PAUSE.load(Relaxed)
@@ -933,7 +904,7 @@ pub struct BgPause(());
 impl BgPause {
     pub fn enter() -> BgPause {
         BG_PAUSE.store(true, SeqCst);
-        while bg_busy().load(SeqCst) || job_busy().load(SeqCst) {
+        while BG_BUSY.load(SeqCst) || JOB_BUSY.load(SeqCst) {
             std::thread::yield_now();
         }
         BgPause(())

@@ -117,6 +117,37 @@ pub fn on_state_load() {
     }
 }
 
+/// The load is done: `changed` (sorted page addresses, `page` bytes each) lists every page it rewrote. A doubted copy
+/// that overlaps none of them holds the same bytes as before the load, so it is taken out of doubt here without the
+/// byte compare (`check_suspect` compared whole archive-image blocks at every rollback: ~8% of a rolling-back peer's
+/// game thread). Copies that overlap a rewritten page stay in doubt and are compared at their next lookup, as before.
+pub fn on_state_loaded(changed: &[usize], page: usize) {
+    let _s = SysScope::enter();
+    unsafe {
+        let Some(o) = OBJS.as_mut() else { return };
+        if o.suspect.is_empty() {
+            return;
+        }
+        let touched = |a: usize, n: usize| {
+            // the first rewritten page that ends after `a`
+            let i = changed.partition_point(|&p| p + page <= a);
+            i < changed.len() && changed[i] < a + n
+        };
+        let epoch = o.epoch;
+        let (blocks, data, recent) = (&o.blocks, &o.data, &mut o.recent);
+        o.suspect.retain(|&(key, block)| {
+            let m = if block { blocks } else { data };
+            match m.get(&key) {
+                Some((d, _)) if !touched(key.0, d.len()) => {
+                    recent.push((epoch, key, block));
+                    false
+                }
+                _ => true,
+            }
+        });
+    }
+}
+
 /// A cached copy found by a lookup: when a load put it in doubt, compare it with the live bytes at its address (`len`
 /// of them, the copy's length). True = use it (it matched, and is recent again: a later load may go back past this
 /// check); false = it was removed, make a new one.

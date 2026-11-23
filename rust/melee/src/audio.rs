@@ -132,7 +132,16 @@ pub fn apply_mix_settings() {
 fn driver_config() -> melee_audio::output::DriverConfig {
     let mut cfg = melee_audio::output::DriverConfig::from_env(false);
     if cfg.device_name.is_none() {
-        cfg.device_name = crate::cfg::text("audio_device");
+        // the launcher's port-settings.ini `audio_device` (a WASAPI endpoint id) beats our own settings.cfg name; an
+        // id we cannot find falls back to the system default, with a log line either way
+        if let Some(id) = std::env::var("MELEE_AUDIO_DEVICE_ID").ok().filter(|v| !v.trim().is_empty()) {
+            let names = melee_audio::output::list_devices();
+            let (name, why) = melee_platform::audio_endpoint::choose_device(&id, &names, &melee_platform::audio_endpoint::friendly_name);
+            eprintln!("audio: {why}");
+            cfg.device_name = name;
+        } else {
+            cfg.device_name = crate::cfg::text("audio_device");
+        }
     }
     cfg
 }

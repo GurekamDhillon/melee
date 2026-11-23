@@ -51,6 +51,12 @@ pub struct RawGamepad {
     pub trigger_l: i16,
     pub trigger_r: i16,
     pub has_rumble: bool,
+    /// A generic HID pad's own buttons as his `hid<n>` masks read them: bit N = button N+1, bits 28..31 the hat
+    /// (bindings::HID_HAT_*). Filled for generic and box family pads only.
+    pub hid_buttons: u32,
+    /// `hid_buttons` is real: a generic or box family pad gilrs gives as a raw controller (not an XInput-layout one),
+    /// his "HID Pad". Only such a pad reads through a `hid<n>` table.
+    pub hid_raw: bool,
     /// What the device is (profiles.rs), from its USB ids and name; read only by controller profiles.
     pub family: crate::profiles::Family,
     pub name: String,

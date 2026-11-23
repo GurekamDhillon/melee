@@ -28,7 +28,7 @@
 use std::path::{Path, PathBuf};
 
 /// Launcher options that take a value and are accepted without effect.
-const IGNORED_VALUE: &[&str] = &["--sys-dir", "--sysgen-data-dir", "--slippi-menus", "--online-delay", "--language", "--backend", "--fps", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
+const IGNORED_VALUE: &[&str] = &["--sys-dir", "--sysgen-data-dir", "--slippi-menus", "--online-delay", "--language", "--backend", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
 /// Launcher switches accepted without effect.
 const IGNORED_SWITCH: &[&str] = &["--as-experienced", "--threaded-renderer", "--vanilla-only", "--vanilla-game", "--no-mod-autodetect", "--quiet"];
 /// Options that would start a different game than an offline vanilla one; refused.
@@ -77,6 +77,54 @@ fn on(v: &str) -> bool {
 
 /// The launcher's settings mapped onto our `MELEE_<KEY>` names (display.rs, melee_audio output.rs).
 pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
+    map_settings_notes(kv).0
+}
+
+/// His `fps` (the ini key, `--fps`): `-1` / `monitor` follows the display, `0` / `unlocked` is no cap, 30 and up is a
+/// cap (his limit 2000); the ini ignores anything else. Ours is the presenter's `fps_cap` (20..=1000, `off`): a limit on
+/// presented frames only, the simulation stays at 60 Hz and nothing is interpolated. `Ok(None)` = leave ours alone.
+pub fn fps_cap_value(v: &str) -> Result<Option<String>, String> {
+    let w = v.trim().to_ascii_lowercase();
+    match w.as_str() {
+        "unlocked" | "0" => return Ok(Some("off".into())),
+        // our presenter already follows the display while vsync is on; there is no separate cap to set
+        "monitor" | "-1" => return Err("follows the display (vsync); no separate cap here".into()),
+        _ => {}
+    }
+    let Ok(rate) = w.parse::<f64>() else { return Err("not a number: ignored".into()) };
+    if rate < 30.0 {
+        return Err("below 30: ignored, as his settings reader does".into());
+    }
+    let n = rate.round().min(2000.0) as u32;
+    if n > 1000 {
+        return Ok(Some("1000".into()));
+    }
+    Ok(Some(n.to_string()))
+}
+
+/// His `ssaa` (1..4, supersampling of the whole picture on top of `scale`, the internal resolution multiplier). Our
+/// render scale is that multiplier and the window is a downsample of it, so a numeric scale is multiplied by it (capped
+/// at our 8). Returns the render scale to use and a note; None = no change (ssaa 1, unreadable, or an automatic scale,
+/// which already supersamples a small window).
+pub fn ssaa_render_scale(ssaa: &str, scale: Option<i64>) -> (Option<u32>, Option<String>) {
+    let Some(a) = ssaa.trim().parse::<i64>().ok().filter(|a| (1..=4).contains(a)) else {
+        return (None, Some(format!("ssaa {}: not 1..4, ignored (his reader does the same)", ssaa.trim())));
+    };
+    if a == 1 {
+        return (None, None);
+    }
+    match scale.filter(|&s| s > 0) {
+        Some(s) => {
+            let r = (s * a).min(8) as u32;
+            (Some(r), Some(format!("ssaa {a} x scale {s} -> render scale {r}{}", if s * a > 8 { " (capped at 8)" } else { "" })))
+        }
+        None => (None, Some(format!("ssaa {a}: the render scale is automatic here (it already supersamples a small window), nothing to do"))),
+    }
+}
+
+/// [`map_settings`] with what was accepted, changed or ignored on the way (for the log).
+pub fn map_settings_notes(kv: &[(String, String)]) -> (Vec<(String, String)>, Vec<String>) {
+    let mut notes = Vec::new();
     let get = |k: &str| kv.iter().rev().find(|(a, _)| a == k).map(|(_, v)| v.as_str());
     let mut out = Vec::new();
     if let Some(fs) = get("fullscreen") {
@@ -91,8 +139,27 @@ pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
         out.push(("MELEE_WINDOW".into(), w.to_string()));
     }
     // the Source Port's internal resolution multiplier (efb_scale); 0 or below is its automatic choice
-    if let Some(s) = get("scale").and_then(|s| s.trim().parse::<i64>().ok()) {
+    let scale = get("scale").and_then(|s| s.trim().parse::<i64>().ok());
+    if let Some(s) = scale {
         out.push(("MELEE_RENDER_SCALE".into(), if s <= 0 { "auto".into() } else { s.min(8).to_string() }));
+    }
+    if let Some(a) = get("ssaa") {
+        let (r, note) = ssaa_render_scale(a, scale);
+        notes.extend(note);
+        if let Some(r) = r {
+            out.retain(|(k, _)| k != "MELEE_RENDER_SCALE");
+            out.push(("MELEE_RENDER_SCALE".into(), r.to_string()));
+        }
+    }
+    if let Some(f) = get("fps") {
+        match fps_cap_value(f) {
+            Ok(Some(c)) => {
+                notes.push(format!("fps {} -> fps cap {c} (presented frames only; the game stays at 60 Hz, no interpolation)", f.trim()));
+                out.push(("MELEE_FPS_CAP".into(), c));
+            }
+            Ok(None) => {}
+            Err(why) => notes.push(format!("fps {}: {why}", f.trim())),
+        }
     }
     if let Some(m) = get("msaa").and_then(|s| s.trim().parse::<u32>().ok()) {
         let m = [8, 4, 2, 1].into_iter().find(|&n| m >= n).unwrap_or(1);
@@ -104,8 +171,12 @@ pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
     if let Some(v) = get("volume").and_then(|s| s.trim().parse::<i32>().ok()) {
         out.push(("MELEE_VOLUME".into(), v.clamp(0, 100).to_string()));
     }
-    // Hero's "Music" slider (pc_settings `music`, 0..100). His `audio_device` is a WASAPI endpoint id, not a name
-    // our output can open, so it is not mapped: the device is picked in our own settings overlay.
+    // His `audio_device` is a WASAPI endpoint id (empty = the system default), not a name our output can open: it goes
+    // on as MELEE_AUDIO_DEVICE_ID and the audio boot turns it into a device name (audio.rs, audio_endpoint::choose_device).
+    if let Some(d) = get("audio_device").filter(|d| !d.trim().is_empty()) {
+        out.push(("MELEE_AUDIO_DEVICE_ID".into(), d.trim().to_string()));
+    }
+    // Hero's "Music" slider (pc_settings `music`, 0..100).
     if let Some(v) = get("music").and_then(|s| s.trim().parse::<i32>().ok()) {
         out.push(("MELEE_MUSIC".into(), v.clamp(0, 100).to_string()));
     }
@@ -113,7 +184,7 @@ pub fn map_settings(kv: &[(String, String)]) -> Vec<(String, String)> {
     if let Some(v) = get("backgroundinput") {
         out.push(("MELEE_BACKGROUND_INPUT".into(), (on(v) as u8).to_string()));
     }
-    out
+    (out, notes)
 }
 
 fn push_env(env: &mut Vec<(String, String)>, k: &str, v: String) {
@@ -258,7 +329,8 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
                     match read(Path::new(&path)) {
                         Some(text) => {
                             push_env(&mut p.env, "MELEE_PORT_SETTINGS", path.clone());
-                            let m = map_settings(&parse_settings(&text));
+                            let (m, extra) = map_settings_notes(&parse_settings(&text));
+                            p.notes.extend(extra);
                             p.notes.push(format!("settings {} -> {}", path, m.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join(" ")));
                             for (k, v) in m {
                                 push_env(&mut p.env, &k, v);
@@ -280,6 +352,17 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
             "--volume" => {
                 if let Some(v) = take(&mut i).and_then(|v| v.parse::<i32>().ok()) {
                     push_env(&mut cli_env, "MELEE_VOLUME", v.clamp(0, 100).to_string());
+                }
+            }
+            "--fps" => {
+                let v = take(&mut i).unwrap_or_default();
+                match fps_cap_value(&v) {
+                    Ok(Some(c)) => {
+                        p.notes.push(format!("--fps {v} -> fps cap {c}"));
+                        push_env(&mut cli_env, "MELEE_FPS_CAP", c);
+                    }
+                    Ok(None) => {}
+                    Err(why) => p.notes.push(format!("--fps {v}: {why}")),
                 }
             }
             "--music" | "--log-file" | "--scale" | "--frame-times" => {
@@ -493,15 +576,21 @@ pub fn apply_input(pads: &mut melee_platform::PadSystem) {
         return;
     }
     let pads_n = b.xinput.iter().chain(&b.ds4).chain(&b.swpro).filter(|m| m.is_some()).count();
+    let hid_n = b.hid.iter().filter(|m| m.is_some()).count();
+    let box_kb = b.keyboard_extra.as_ref().is_some_and(|e| e.box_mode);
     let gc_n = b.gc.iter().filter(|m| m.is_some()).count();
-    eprintln!("launcher-compat: controls from port-settings.ini: keyboard {}, {pads_n} gamepad table(s), {gc_n} adapter remap(s)", if b.keyboard.is_some() { "remapped" } else { "default" });
+    eprintln!("launcher-compat: controls from port-settings.ini: keyboard {}{}, {pads_n} gamepad table(s), {hid_n} HID table(s), {gc_n} adapter remap(s), stick modifier {}%", if b.keyboard.is_some() { "remapped" } else { "default" }, if box_kb { " (box mode)" } else { "" }, b.stick_mod_pct.unwrap_or(melee_platform::bindings::STICK_MOD_DEFAULT));
     if let Some(kb) = b.keyboard.clone() {
         pads.keyboard[0] = kb;
     }
     pads.pad_maps = melee_platform::bindings::PortMaps::from_bindings(&b);
-    if let Some(r) = b.rumble {
+    pads.keyboard_extra = b.keyboard_extra.clone();
+    pads.stick_mod_pct = b.stick_mod_pct.unwrap_or(melee_platform::bindings::STICK_MOD_DEFAULT);
+    // the launcher's Rumble switch (an explicit MELEE_RUMBLE wins)
+    if let (Some(r), None) = (b.rumble, std::env::var_os("MELEE_RUMBLE")) {
         pads.rumble = r;
     }
+    eprintln!("launcher-compat: rumble {} (gamepad force feedback and the adapter's motors)", if pads.rumble { "on" } else { "off" });
     pads.gc_maps = b.gc;
 }
 
@@ -587,6 +676,68 @@ vsync 0
         assert_eq!(env("MELEE_VOLUME"), None, "the panel's values never become overrides");
         assert_eq!(env("MELEE_VSYNC"), None);
         assert!(env("MELEE_LOG_FILE").unwrap().ends_with("melee_settings.log"));
+    }
+
+    #[test]
+    fn fps_key_maps_to_our_cap() {
+        assert_eq!(fps_cap_value("60"), Ok(Some("60".into())));
+        assert_eq!(fps_cap_value("143.9"), Ok(Some("144".into())));
+        assert_eq!(fps_cap_value("0"), Ok(Some("off".into())));
+        assert_eq!(fps_cap_value("unlocked"), Ok(Some("off".into())));
+        assert_eq!(fps_cap_value("2000"), Ok(Some("1000".into())), "his limit is 2000, ours 1000");
+        assert!(fps_cap_value("-1").is_err() && fps_cap_value("monitor").is_err(), "follows the display: nothing to set");
+        assert!(fps_cap_value("29").is_err() && fps_cap_value("abc").is_err(), "his reader ignores these");
+        let m = |ini: &str| map_settings_notes(&parse_settings(ini));
+        let (env, notes) = m("fps 240\n");
+        assert_eq!(env, vec![("MELEE_FPS_CAP".to_string(), "240".to_string())]);
+        assert!(notes[0].contains("no interpolation"), "{notes:?}");
+        let (env, notes) = m("fps -1\n");
+        assert!(env.is_empty() && notes[0].contains("follows the display"), "{notes:?}");
+        // the command line: `--fps` (value) overrides the file, `monitor` / `unlocked` are his words
+        let p = plan(&s(&["--iso", "a", "--settings-path", "s", "--fps", "120"]), Path::new("."), &|_| Some("fps 60\n".into()));
+        assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_FPS_CAP").unwrap().1, "120");
+        let p = plan(&s(&["--iso", "a", "--fps", "unlocked"]), Path::new("."), &|_| None);
+        assert_eq!(p.env.iter().find(|(k, _)| k == "MELEE_FPS_CAP").unwrap().1, "off");
+        assert!(p.refused.is_empty());
+    }
+
+    #[test]
+    fn fps_reaches_the_display_cap() {
+        // the env the plan sets is what display.rs reads for `fps_cap`
+        let d = crate::display::Display::resolve(&[], &mut |k| (k == "fps_cap").then(|| "144".to_string())).unwrap();
+        assert_eq!(d.fps_cap, 144);
+    }
+
+    #[test]
+    fn ssaa_multiplies_a_numeric_render_scale() {
+        assert_eq!(ssaa_render_scale("2", Some(2)).0, Some(4));
+        assert_eq!(ssaa_render_scale("4", Some(3)).0, Some(8), "capped at our 8");
+        assert_eq!(ssaa_render_scale("1", Some(3)), (None, None));
+        // an automatic scale (0 or absent) already supersamples a small window: accepted, logged, nothing to do
+        let (r, note) = ssaa_render_scale("3", Some(0));
+        assert_eq!(r, None);
+        assert!(note.unwrap().contains("automatic"));
+        assert_eq!(ssaa_render_scale("3", None).0, None);
+        // out of his 1..4: ignored
+        assert_eq!(ssaa_render_scale("9", Some(2)).0, None);
+        let (env, notes) = map_settings_notes(&parse_settings("scale 2\nssaa 2\n"));
+        assert_eq!(env.iter().filter(|(k, _)| k == "MELEE_RENDER_SCALE").map(|(_, v)| v.as_str()).collect::<Vec<_>>(), ["4"]);
+        assert!(notes[0].contains("render scale 4"), "{notes:?}");
+        let (env, _) = map_settings_notes(&parse_settings("ssaa 4\nscale 0\n"));
+        assert_eq!(env.iter().find(|(k, _)| k == "MELEE_RENDER_SCALE").unwrap().1, "auto");
+    }
+
+    #[test]
+    fn audio_device_id_goes_to_the_audio_boot() {
+        let (env, _) = map_settings_notes(&parse_settings("audio_device {0.0.0.00000000}.{abc}
+volume 5
+"));
+        assert!(env.contains(&("MELEE_AUDIO_DEVICE_ID".to_string(), "{0.0.0.00000000}.{abc}".to_string())));
+        // empty = the system default: nothing set
+        let (env, _) = map_settings_notes(&parse_settings("audio_device 
+volume 5
+"));
+        assert!(!env.iter().any(|(k, _)| k == "MELEE_AUDIO_DEVICE_ID"));
     }
 
     #[test]

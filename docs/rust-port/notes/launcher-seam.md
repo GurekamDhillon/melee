@@ -107,11 +107,13 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 | Vanilla segment `--slippi-menus off --vanilla-only [--vanilla-game]` | yes | accepted; the Rust Port is always vanilla | OK |
 | Build tab / warm cache `--hidden --frames N --log-file F` | yes | headless N-frame run, log to F | OK |
 | Settings button `--settings-window [--settings-standby PID] [--settings-tab T]` | own panel | our overlay in its own window, reads/writes port-settings.ini (section 7); the PR starts it | OK |
-| port-settings.ini display / audio | all keys | fullscreen, exclusivefullscreen, widescreen, truewidescreen, window, scale, msaa, vsync, volume, music, backgroundinput; not fps, backend, ssaa, dlss*, audio_device / ASIO, HUD / overlay keys | PART |
+| port-settings.ini display / audio | all keys | fullscreen, exclusivefullscreen, widescreen, truewidescreen, window, scale, msaa, vsync, volume, music, backgroundinput; `fps` -> our fps cap (0 / unlocked = off, 30..2000 clamped to our 1000, -1 / monitor = follows the display, nothing set; a limit on presented frames only, no interpolation); `ssaa` 2..4 multiplies a numeric `scale` into our render scale (cap 8), with an automatic scale it is logged and left (auto already supersamples); `--fps` likewise; `audio_device` (WASAPI endpoint id) -> the output device by name: the id is resolved to its friendly name through MMDevice (`audio_endpoint.rs`), checked against the outputs we can open, else the system default, with a log line either way (a name already in our list is taken as is); not backend, dlss*, ASIO, HUD / overlay keys | PART |
 | bindings `key_*`, `pad<n>_*`, `gc<n>_*` | yes | yes | OK |
 | bindings `ds4<n>_*`, `swpro<n>_*` | yes | yes, by position through gilrs (this branch; a DualSense uses the DS4 table) | OK |
-| bindings `hid<n>_*`, box mode, stick modifier, per-binding levels | yes | no | MISSING |
-| `rumble` | gamepads and adapter | `rumble 0` stops adapter rumble (this branch); gamepad rumble not implemented at all | PART |
+| bindings `hid<n>_*`, `hid<n>_invert` (generic HID pads, box controllers in DInput) | yes | yes: 32-bit masks (bit N = button N+1, hat on bits 28..31, a signed spelling of bit 31 read back unsigned) for a generic / box pad that gilrs gives as a raw controller (Windows WGI; Linux evdev by button order); an XInput-layout pad keeps `pad<n>`. Not tried on real hardware (no box here) | PART |
+| box mode (a keyboard or HID table with Mod X / Mod Y bound), `stick_modifier_percent` + StickMod | yes | yes, through `profiles::box_sticks` (the port's `box_values` and SOCD 2IP-without-reactivation, so the coordinates are coarser than his B0XX angle table: no shield / B angle variants); Mod X + Mod Y = D-pad layer; light / mid shield = R travel; the modifier on keyboard, pad and HID stick buttons | PART |
+| per-binding levels `<table>_<Action>_level` | yes | no (every analog source clicks at 200 / 255) | MISSING |
+| `rumble` | gamepads and adapter | the game's motor commands (`PADControlMotor`, hooked in melee_engine) go to the pad that port is read from: gilrs force feedback (WGI `SetVibration` on Windows) on a gamepad, the adapter's motors on an adapter port. `rumble 0` stops it (a stop is always honoured); `MELEE_RUMBLE=0` and `MELEE_RUMBLE_PORTS=1,3` do the same from the environment; silent in a rollback re-simulation; capped at 10 s if the game never stops it. Output only: pad bytes, game state and checksums never see it. Before this the hook was a no-op, so no pad rumbled at all. Not felt on real hardware (no pad here), only the decision logic, the hook and the launch are tested | OK |
 | `MELEE_NO_GC_ADAPTER` (his test runs) | yes | `MELEE_PAD_IGNORE_ADAPTER=1` | OK |
 | replays into `--replay-dir` (his viewer lists `.slp`) | `.slp` | one `.slp` per match, plus `.mrpl` in `RustPort\` | OK |
 | Replays page `--replay <slp> [--as-experienced]` | plays | plays (slp_play.rs); the PR routes the page to the Rust Port when picked; `--as-experienced` ignored | PART |
@@ -130,9 +132,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 
 **Not done here, with estimates:** P2P Direct / mu_net (1-2 weeks, notes/mu-net-feasibility.md); code mods with
 their own main.dol (the PPC interpreter, on hold for sc00p); TE packs / .gci loader (2-4 days once the interpreter
-exists, most TE content is PPC code); `hid<n>` tables, box mode and the stick modifier (1 day); gamepad rumble
-through gilrs force feedback (half a day); fps / ssaa keys (1 day); backend choice and DLSS (not planned: wgpu only); audio
-device selection (1 day); an update channel (1 day once Hero agrees on a feed).
+exists, most TE content is PPC code); per-binding levels (0.5 day); backend choice and DLSS (not planned: wgpu only); an update channel (1 day once Hero agrees on a feed).
 
 Launcher patch: one commit on his main 6c9472f, branch `rust-port-engine` (see the round-three report). The
 test-only network skip (no YouGame refresh, no lobby/DHT in `MELEE_LAUNCHER_TEST` runs) is a separate local commit

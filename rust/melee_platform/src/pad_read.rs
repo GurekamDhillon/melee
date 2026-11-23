@@ -64,8 +64,17 @@ pub struct PadSystem {
     /// Remapped gilrs pads / adapter controllers per port (`bindings`, the launcher's tables); None = default.
     pub pad_maps: [crate::bindings::PortMaps; PAD_CHANMAX],
     pub gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    /// The keyboard's box mode / stick modifier keys (port 1) and the stick modifier's push, percent (`bindings`).
+    pub keyboard_extra: Option<crate::bindings::KeyboardExtra>,
+    pub stick_mod_pct: u8,
+    /// Box-mode (SOCD) history per port's HID pad and for the keyboard.
+    bind_state: [crate::profiles::PortState; PAD_CHANMAX],
+    kb_state: crate::profiles::PortState,
     /// The launcher's Rumble switch (`rumble 0` in port-settings.ini turns the motors off); on by default.
     pub rumble: bool,
+    /// Which ports may rumble (`MELEE_RUMBLE_PORTS`, the launcher's Rumble switch is `rumble` above); all by default.
+    pub rumble_ports: [bool; PAD_CHANMAX],
+    rumble_logged: u8,
     /// Controller profiles (profiles.rs: `--controllers`, `controllers.ini`); None = Aurora default.
     pub profiles: Option<crate::profiles::ProfileSet>,
     profile_state: [crate::profiles::PortState; PAD_CHANMAX],
@@ -101,6 +110,10 @@ pub struct PadSampler {
     dead_zones: DeadZones,
     pad_maps: [crate::bindings::PortMaps; PAD_CHANMAX],
     gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    keyboard_extra: Option<crate::bindings::KeyboardExtra>,
+    stick_mod_pct: u8,
+    bind_state: [crate::profiles::PortState; PAD_CHANMAX],
+    kb_state: crate::profiles::PortState,
     profiles: Option<crate::profiles::ProfileSet>,
     profile_state: [crate::profiles::PortState; PAD_CHANMAX],
     keys: Arc<Mutex<(HashSet<KeyCode>, bool)>>,
@@ -119,9 +132,12 @@ impl PadSampler {
         };
         aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
         for i in 0..PAD_CHANMAX {
-            if let Some((m, p)) = pads[i].as_ref().and_then(|p| Some((self.pad_maps[i].for_family(p.family)?, p))) {
-                crate::bindings::apply_xinput(m, p, &mut st[i]);
+            if let Some(p) = pads[i].as_ref() {
+                self.pad_maps[i].apply(p, &mut self.bind_state[i], self.stick_mod_pct, &mut st[i]);
             }
+        }
+        if let (Some(e), true) = (self.keyboard_extra.as_ref(), st[0].err == 0) {
+            crate::bindings::apply_keyboard(e, &keys, &mut self.kb_state, &mut st[0]);
         }
         if let Some(set) = self.profiles.as_ref() {
             set.apply(&pads, &mut self.profile_state, st);
@@ -138,7 +154,7 @@ impl PadSampler {
                 for i in 0..PAD_CHANMAX {
                     if adp[i].err == 0 {
                         if let Some(m) = self.gc_maps[i].as_ref() {
-                            crate::bindings::apply_gc(m, &mut adp[i]);
+                            crate::bindings::apply_gc(m, self.stick_mod_pct, &mut adp[i]);
                         }
                         st[i] = adp[i];
                     }
@@ -188,7 +204,13 @@ impl PadSystem {
             dead_zones: DeadZones::default(),
             pad_maps: Default::default(),
             gc_maps: Default::default(),
-            rumble: true,
+            keyboard_extra: None,
+            stick_mod_pct: crate::bindings::STICK_MOD_DEFAULT,
+            bind_state: Default::default(),
+            kb_state: Default::default(),
+            rumble: !matches!(std::env::var("MELEE_RUMBLE").as_deref(), Ok("0" | "off" | "false")),
+            rumble_ports: rumble_ports_from(std::env::var("MELEE_RUMBLE_PORTS").ok().as_deref()),
+            rumble_logged: 0,
             profiles: None,
             profile_state: Default::default(),
             background_input: false,
@@ -218,6 +240,10 @@ impl PadSystem {
             dead_zones: self.dead_zones,
             pad_maps: self.pad_maps.clone(),
             gc_maps: self.gc_maps.clone(),
+            keyboard_extra: self.keyboard_extra.clone(),
+            stick_mod_pct: self.stick_mod_pct,
+            bind_state: Default::default(),
+            kb_state: Default::default(),
             profiles: self.profiles.clone(),
             profile_state: Default::default(),
             keys: self.shared_keys.clone(),
@@ -265,9 +291,12 @@ impl PadSystem {
         self.sync_keys();
         let ret = aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
         for i in 0..PAD_CHANMAX {
-            if let Some((m, p)) = pads[i].as_ref().and_then(|p| Some((self.pad_maps[i].for_family(p.family)?, p))) {
-                crate::bindings::apply_xinput(m, p, &mut st[i]);
+            if let Some(p) = pads[i].as_ref() {
+                self.pad_maps[i].apply(p, &mut self.bind_state[i], self.stick_mod_pct, &mut st[i]);
             }
+        }
+        if let (Some(e), true) = (self.keyboard_extra.as_ref(), st[0].err == 0) {
+            crate::bindings::apply_keyboard(e, &keys, &mut self.kb_state, &mut st[0]);
         }
         // profiles replace Aurora's mapping for their ports; the result is plain PADStatus from here on
         if let Some(set) = self.profiles.as_ref() {
@@ -302,7 +331,7 @@ impl PadSystem {
                 for i in 0..PAD_CHANMAX {
                     if adp[i].err == 0 {
                         if let Some(m) = self.gc_maps[i].as_ref() {
-                            crate::bindings::apply_gc(m, &mut adp[i]);
+                            crate::bindings::apply_gc(m, self.stick_mod_pct, &mut adp[i]);
                         }
                         st[i] = adp[i];
                         src[i] = Source::Adapter;
@@ -355,15 +384,67 @@ impl PadSystem {
         }
     }
 
-    /// `PADControlMotor`: adapter ports rumble through the adapter; gamepad rumble is not
-    /// implemented yet (Aurora drives SDL rumble).
-    pub fn control_motor(&self, chan: usize, cmd: u32) {
-        if chan < PAD_CHANMAX && self.sources[chan] == Source::Adapter && (self.rumble || cmd != PAD_MOTOR_RUMBLE) {
+    /// `PADControlMotor`: a rumble command from the game (`PAD_MOTOR_*`), delivered to the device that port is read
+    /// from: the adapter's motor, or the gamepad's force feedback. Output only: it never touches the game's state,
+    /// the pad bytes or a checksum, and `resim` (a rollback re-simulation, a tick that already ran) is silent.
+    pub fn control_motor(&mut self, chan: usize, cmd: u32, resim: bool) {
+        if chan >= PAD_CHANMAX {
+            return;
+        }
+        let Some(on) = motor_decision(cmd, self.rumble, self.rumble_ports[chan], resim) else { return };
+        if self.rumble_logged < 6 {
+            self.rumble_logged += 1;
+            plog!("gw: rumble: port {} {} ({:?})", chan + 1, if on { "start" } else { "stop" }, self.sources[chan]);
+        }
+        match self.sources[chan] {
+            Source::Adapter => {
+                if let Some(a) = self.adapter.as_ref() {
+                    a.rumble(chan, on);
+                }
+            }
+            Source::Gamepad => {
+                if let GamepadSource::Gilrs(g) = &mut self.gamepads {
+                    g.set_rumble(chan, on);
+                }
+            }
+            _ => {}
+        }
+        if !on {
+            // a stop reaches both, whatever the port was last read from (a pad unplugged or swapped mid-rumble)
             if let Some(a) = self.adapter.as_ref() {
-                a.rumble(chan, cmd == PAD_MOTOR_RUMBLE);
+                a.rumble(chan, false);
+            }
+            if let GamepadSource::Gilrs(g) = &mut self.gamepads {
+                g.set_rumble(chan, false);
             }
         }
     }
+}
+
+/// What a motor command does: `Some(true)` start, `Some(false)` stop, `None` nothing. A start needs the Rumble switch
+/// and the port's own permission; a stop always goes through (turning Rumble off must silence a motor that runs);
+/// nothing happens in a re-simulated tick.
+pub fn motor_decision(cmd: u32, enabled: bool, port_ok: bool, resim: bool) -> Option<bool> {
+    if resim {
+        return None;
+    }
+    if cmd == PAD_MOTOR_RUMBLE {
+        (enabled && port_ok).then_some(true)
+    } else {
+        Some(false)
+    }
+}
+
+/// `MELEE_RUMBLE_PORTS`: the ports (1-4, comma or space separated) allowed to rumble; unset = all four.
+pub fn rumble_ports_from(v: Option<&str>) -> [bool; PAD_CHANMAX] {
+    let Some(v) = v.map(str::trim).filter(|v| !v.is_empty()) else { return [true; PAD_CHANMAX] };
+    let mut out = [false; PAD_CHANMAX];
+    for n in v.split(|c: char| c == ',' || c.is_whitespace()).filter_map(|s| s.parse::<usize>().ok()) {
+        if (1..=PAD_CHANMAX).contains(&n) {
+            out[n - 1] = true;
+        }
+    }
+    out
 }
 
 /// Aurora `PADRecalibrate`: returns true, does nothing.
@@ -378,3 +459,52 @@ pub fn pad_reset(_mask: u32) -> bool {
 /// Core v1 (feature `corev1`): the host's `pad_read`, replacing every device layer when set.
 #[cfg(feature = "corev1")]
 pub static HOST_PADS: std::sync::OnceLock<fn(&mut [PADStatus; PAD_CHANMAX])> = std::sync::OnceLock::new();
+
+#[cfg(test)]
+mod rumble_tests {
+    use super::*;
+
+    #[test]
+    fn motor_commands_follow_the_switch_the_port_and_resim() {
+        assert_eq!(motor_decision(PAD_MOTOR_RUMBLE, true, true, false), Some(true));
+        assert_eq!(motor_decision(PAD_MOTOR_RUMBLE, false, true, false), None, "Rumble off: no start");
+        assert_eq!(motor_decision(PAD_MOTOR_RUMBLE, true, false, false), None, "port not allowed");
+        // a stop always goes through, so turning the switch off silences a motor that runs
+        assert_eq!(motor_decision(PAD_MOTOR_STOP, false, false, false), Some(false));
+        assert_eq!(motor_decision(PAD_MOTOR_STOP_HARD, true, true, false), Some(false));
+        // a re-simulated tick is silent either way
+        assert_eq!(motor_decision(PAD_MOTOR_RUMBLE, true, true, true), None);
+        assert_eq!(motor_decision(PAD_MOTOR_STOP, true, true, true), None);
+    }
+
+    #[test]
+    fn rumble_port_list() {
+        assert_eq!(rumble_ports_from(None), [true; 4]);
+        assert_eq!(rumble_ports_from(Some("")), [true; 4]);
+        assert_eq!(rumble_ports_from(Some("1,3")), [true, false, true, false]);
+        assert_eq!(rumble_ports_from(Some("2 4 9 x")), [false, true, false, true]);
+        assert_eq!(rumble_ports_from(Some("0")), [false; 4]);
+    }
+
+    #[test]
+    fn rumble_never_changes_what_the_game_reads() {
+        // headless / fixed pads (no device): every rumble command is accepted and nothing about the pads moves
+        let mut gp: [Option<RawGamepad>; PAD_CHANMAX] = Default::default();
+        gp[0] = Some(RawGamepad { left_x: 20000, has_rumble: true, ..Default::default() });
+        let mut p = PadSystem::build(InputMode::Devices, None, GamepadSource::Fixed(gp), None);
+        p.set_ignore_adapter(true);
+        let mut a = [pad_disconnected(); PAD_CHANMAX];
+        p.read(&mut a);
+        for (chan, cmd, resim) in [(0, PAD_MOTOR_RUMBLE, false), (0, PAD_MOTOR_STOP, false), (1, PAD_MOTOR_RUMBLE, true), (9, PAD_MOTOR_RUMBLE, false), (0, PAD_MOTOR_STOP_HARD, false)] {
+            p.control_motor(chan, cmd, resim);
+        }
+        p.rumble = false;
+        p.control_motor(0, PAD_MOTOR_RUMBLE, false);
+        let mut b = [pad_disconnected(); PAD_CHANMAX];
+        p.read(&mut b);
+        for i in 0..PAD_CHANMAX {
+            assert!(pad_eq(&a[i], &b[i]), "port {i}");
+        }
+        assert_eq!(a[0].stickX, b[0].stickX);
+    }
+}

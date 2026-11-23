@@ -324,6 +324,49 @@ pub struct PortState {
     socd: [Socd; 4],
 }
 
+/// What one box-mode poll gives (the control stick and C-stick made of buttons, the shield buttons' R travel).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BoxOut {
+    pub stick: (i8, i8),
+    pub c: (i8, i8),
+    /// R travel for the light / mid shield buttons (0 when neither is held).
+    pub shield: u8,
+    /// Each axis after SOCD: -1, 0, 1 (stick x, y, C x, C y).
+    pub dir: [i8; 4],
+    /// A control stick / C-stick button is held (a caller with an analog stick of its own then replaces it).
+    pub any_stick: bool,
+    pub any_c: bool,
+}
+
+/// Box mode: `held` is indexed by [`BoxAction`]. The values are `box_values`; opposing directions go through `socd`.
+pub fn box_sticks(socd: SocdMode, held: &[bool; 12], state: &mut PortState) -> BoxOut {
+    use box_values::*;
+    use BoxAction as A;
+    let h = |a: A| held[a as usize];
+    let x = state.socd[0].resolve(socd, h(A::Left), h(A::Right));
+    let y = state.socd[1].resolve(socd, h(A::Down), h(A::Up));
+    let cx = state.socd[2].resolve(socd, h(A::CLeft), h(A::CRight));
+    let cy = state.socd[3].resolve(socd, h(A::CDown), h(A::CUp));
+    let (mx, my) = (h(A::ModX), h(A::ModY));
+    let (ax, ay) = match (x != 0, y != 0, mx && !my, my && !mx) {
+        (true, false, true, _) => (MODX_X, 0),
+        (false, true, _, true) => (0, MODY_Y),
+        (true, true, true, _) => MODX_DIAG,
+        (true, true, _, true) => MODY_DIAG,
+        (true, true, _, _) => (DIAG, DIAG),
+        _ => (FULL, FULL),
+    };
+    let shield = if h(A::MidShield) { MID_SHIELD } else if h(A::LightShield) { LIGHT_SHIELD } else { 0 };
+    BoxOut {
+        stick: (x * ax, y * ay),
+        c: (cx * FULL, cy * FULL),
+        shield,
+        dir: [x, y, cx, cy],
+        any_stick: h(A::Left) || h(A::Right) || h(A::Down) || h(A::Up),
+        any_c: h(A::CLeft) || h(A::CRight) || h(A::CDown) || h(A::CUp),
+    }
+}
+
 /// Map one gamepad through a profile.
 pub fn map(p: &Profile, pad: &RawGamepad, state: &mut PortState) -> PADStatus {
     let mut s = PADStatus::zeroed();
@@ -361,32 +404,12 @@ pub fn map(p: &Profile, pad: &RawGamepad, state: &mut PortState) -> PADStatus {
             s.substickY = y;
         }
         Mode::Box => {
-            use box_values::*;
-            use BoxAction as A;
-            let h = |a: A| held[a as usize];
-            let x = state.socd[0].resolve(p.socd, h(A::Left), h(A::Right));
-            let y = state.socd[1].resolve(p.socd, h(A::Down), h(A::Up));
-            let cx = state.socd[2].resolve(p.socd, h(A::CLeft), h(A::CRight));
-            let cy = state.socd[3].resolve(p.socd, h(A::CDown), h(A::CUp));
-            let (mx, my) = (h(A::ModX), h(A::ModY));
-            let (ax, ay) = match (x != 0, y != 0, mx && !my, my && !mx) {
-                (true, false, true, _) => (MODX_X, 0),
-                (false, true, _, true) => (0, MODY_Y),
-                (true, true, true, _) => MODX_DIAG,
-                (true, true, _, true) => MODY_DIAG,
-                (true, true, _, _) => (DIAG, DIAG),
-                _ => (FULL, FULL),
-            };
-            s.stickX = x * ax;
-            s.stickY = y * ay;
-            s.substickX = cx * FULL;
-            s.substickY = cy * FULL;
-            if h(A::LightShield) {
-                s.triggerRight = s.triggerRight.max(LIGHT_SHIELD);
-            }
-            if h(A::MidShield) {
-                s.triggerRight = s.triggerRight.max(MID_SHIELD);
-            }
+            let b = box_sticks(p.socd, &held, state);
+            s.stickX = b.stick.0;
+            s.stickY = b.stick.1;
+            s.substickX = b.c.0;
+            s.substickY = b.c.1;
+            s.triggerRight = s.triggerRight.max(b.shield);
         }
     }
     s

@@ -1248,6 +1248,7 @@ impl Base {
         let was = arena::active();
         let (abase, alen_now) = arena::used_range();
         let mut zeroed: Option<(usize, usize)> = None;
+        let mut changed: Vec<usize> = Vec::new();
         {
             let since = self.since.borrow();
             let stamp = self.stamp.borrow();
@@ -1280,6 +1281,12 @@ impl Base {
                 st.load_cand += cand.len() as u64;
                 cands.push(cand);
             }
+            // the pages this load rewrites, for the render cache (gxbridge::on_state_loaded); sized before the copies
+            // and on the system heap: the arena is what the copies rewrite
+            {
+                let _sys = crate::arena::SysScope::enter();
+                changed.reserve(cands.iter().map(|c| c.len()).sum::<usize>());
+            }
             for (ri, r) in s.ranges.iter().enumerate() {
                 let live = unsafe { core::slice::from_raw_parts_mut(r.addr as *mut u8, r.len) };
                 let mut k = 0usize;
@@ -1305,6 +1312,7 @@ impl Base {
                             if dst != src {
                                 dst.copy_from_slice(src);
                                 st.load_copied += 1;
+                                changed.push(r.addr + pi * PAGE);
                             }
                         }
                         Some(sp) => {
@@ -1317,6 +1325,9 @@ impl Base {
                                 }
                             }
                             st.load_copied += any as u64;
+                            if any {
+                                changed.push(r.addr + pi * PAGE);
+                            }
                         }
                     }
                 }
@@ -1343,6 +1354,16 @@ impl Base {
         }
         // the live state is `s` now (the load's own writes show up as written in the next epoch: compared once)
         self.close(s.id, s.me.clone());
+        {
+            // render cache: copies the load did not touch stay valid (the zeroed arena tail counts as rewritten)
+            let _sys = crate::arena::SysScope::enter();
+            if let Some((p0, p1)) = zeroed {
+                changed.extend((p0..p1).map(|pi| abase + pi * PAGE));
+            }
+            changed.sort_unstable();
+            crate::gxbridge::on_state_loaded(&changed, PAGE);
+            drop(changed);
+        }
         if let Some((p0, p1)) = zeroed {
             let mut since = self.since.borrow_mut();
             for pi in p0..p1 {

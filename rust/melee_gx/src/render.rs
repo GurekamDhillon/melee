@@ -1003,6 +1003,13 @@ impl PipeFactory {
             .as_ref()
     }
 
+    /// Create every pipeline on the calling thread from now on (no compile workers): for one-shot renders (tests,
+    /// screenshot tools) whose single frame must not lose its draws to the async skip, and which must not exit
+    /// while a detached worker is still inside the driver. Has no effect once the workers have started.
+    pub fn set_sync(&self) -> bool {
+        self.asyncq.set(None).is_ok()
+    }
+
     /// The pipeline of `pc` if it exists; otherwise queued on the compile workers and None (the draw is skipped
     /// until it is made). Falls back to [`Self::get`] when async creation is off.
     pub fn get_or_queue(self: &std::sync::Arc<Self>, pc: &crate::shader::PipelineConfig) -> Result<Option<wgpu::RenderPipeline>, String> {

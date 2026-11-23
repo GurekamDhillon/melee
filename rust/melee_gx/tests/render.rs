@@ -194,7 +194,9 @@ fn scene_matches_aurora_screenshot() {
     let (aw, ah, aurora) = read_png(&format!("{dir}/tests/data/render_aurora.png"));
     assert_eq!((aw, ah), (640, 480));
     let mut r = match Renderer::new(640, 480) {
-        Ok(r) => r,
+        // one frame is rendered and read back: pipelines are made at the draw, not queued past it (async skip)
+        Ok(r) if r.pipe_factory().set_sync() => r,
+        Ok(_) => panic!("pipeline workers already running"),
         Err(e) if std::env::var("MELEE_GX_REQUIRE_GPU").as_deref() != Ok("1") => {
             eprintln!("SKIPPED: no GPU renderer ({e})");
             return;
@@ -247,7 +249,8 @@ fn scene_matches_aurora_screenshot() {
 
 fn fx_renderer() -> Option<Renderer> {
     match Renderer::new(640, 480) {
-        Ok(r) => Some(r),
+        Ok(r) if r.pipe_factory().set_sync() => Some(r),
+        Ok(_) => panic!("pipeline workers already running"),
         Err(e) if std::env::var("MELEE_GX_REQUIRE_GPU").as_deref() != Ok("1") => {
             eprintln!("SKIPPED: no GPU renderer ({e})");
             None

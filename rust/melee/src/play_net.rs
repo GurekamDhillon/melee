@@ -2184,6 +2184,7 @@ impl NetDriver {
             l.push(b'T', online(f), l.sample_us, t);
         }
         if sr.done_at.is_none() {
+            s.link_ping_ms = (sr.link.net_ping_us() / 1000) as u32;
             run_tick(&mut s, &mut **g, None);
             // behind the peer: one extra frame this tick (only when this tick ran its new frame)
             if extra > 0 && s.current_frame() > f {

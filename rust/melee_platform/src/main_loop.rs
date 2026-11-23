@@ -68,6 +68,10 @@ pub trait Game {
     }
     /// The swapchain's frame statistics (frames shown, display refreshes, seconds), for VRR detection
     /// (`Presenter::frame_stats`).
+    /// A short note on the presenter's state for the present-gap log (skipped acquires, the last acquire error).
+    fn present_note(&mut self) -> String {
+        String::new()
+    }
     fn display_stats(&mut self) -> Option<(u64, u64, f64)> {
         None
     }
@@ -434,6 +438,13 @@ struct App<G: Game> {
     stale: u64,
     /// Once-per-tick mode: the sim tick the last present showed (no redraw until a newer one exists).
     presented_tick: u64,
+    /// When the pending redraw request was made (its RedrawRequested clears it): the present-gap log says how late
+    /// the window's WM_PAINT answered (an adopted child window of another process can have it starved).
+    redraw_asked: Option<Instant>,
+    /// The last present's end and the ticks run since (the present-gap log: a gap over 100 ms names its cause).
+    last_present_end: Option<Instant>,
+    ticks_at_present: u64,
+    gaps_logged: u32,
     /// YouGame bridge: the Tab press was taken as Shift+Tab, so its release is ours too.
     yg_tab: bool,
     /// The YouGame player box (YOUGAME_EMBED=1): adoption state and the box commands held until then.
@@ -553,6 +564,7 @@ impl<G: Game> App<G> {
             let at = self.present_at.take().unwrap_or_else(Instant::now);
             let extra = self.last.map(|l| at.saturating_duration_since(l)).unwrap_or_default();
             let t = Instant::now();
+            let asked = self.redraw_asked.take();
             self.presented_tick = self.clock.ticks;
             let zp = melee_core::tracy::zone("present phase (prepare + draw + acquire + present)");
             self.game.present(&w, self.clock.alpha_after(extra));
@@ -562,6 +574,28 @@ impl<G: Game> App<G> {
             }
             let d = t.elapsed();
             self.present_time += d;
+            let end = Instant::now();
+            if let Some(prev) = self.last_present_end.replace(end) {
+                // a present gap over 100 ms after boot: name its cause (ticks run meanwhile, how late the redraw
+                // request was answered, how long this present took, acquires the presenter skipped) so a staging log
+                // says why the screen froze
+                let gap = end - prev;
+                let ticks = self.clock.ticks.saturating_sub(self.ticks_at_present);
+                if gap >= Duration::from_millis(100) && self.boot_done && self.gaps_logged < 200 {
+                    self.gaps_logged += 1;
+                    let late = asked.map_or(-1.0, |a| t.saturating_duration_since(a).as_secs_f64() * 1e3);
+                    plog!(
+                        "gw: present gap {:.0} ms: {} ticks ran, redraw answered after {:.1} ms, present took {:.1} ms, {}",
+                        gap.as_secs_f64() * 1e3,
+                        ticks,
+                        late,
+                        d.as_secs_f64() * 1e3,
+                        self.game.present_note()
+                    );
+                }
+            }
+            self.ticks_at_present = self.clock.ticks;
+            crate::script::PRESENTS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             if !self.clock_started {
                 self.clock_started = true;
                 self.last = Some(Instant::now());
@@ -598,6 +632,7 @@ impl<G: Game> App<G> {
         if self.hidden {
             self.redraw(el);
         } else if let Some(w) = self.window.as_ref() {
+            self.redraw_asked.get_or_insert_with(Instant::now);
             w.request_redraw();
         }
     }
@@ -1300,6 +1335,10 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         vrr_last: None,
         vrr_votes: (None, 0),
         stale: 0,
+        redraw_asked: None,
+        last_present_end: None,
+        ticks_at_present: 0,
+        gaps_logged: 0,
         yg_tab: false,
         ygbox: YgBox::default(),
         profile_line: String::new(),

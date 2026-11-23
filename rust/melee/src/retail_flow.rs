@@ -1003,13 +1003,15 @@ impl RetailPlay {
                 }
             }
         }
-        // a once-a-second heartbeat (tick, scene, draw commands of the last frame): a stall shows as a stopped tick,
-        // a render-only fault as a running tick with no draws
+        // a once-a-second heartbeat (tick, scene, presents since the last heartbeat, draw commands of the newest sim frame
+        // still unpresented, 0 when this tick made none, e.g. a netplay stall): a stall shows as a stopped tick, a
+        // render-only fault as a running tick with few presents
         melee_platform::script::IN_MATCH.store(matches!(self.cur.1, 2 | 3), std::sync::atomic::Ordering::Relaxed);
         melee_platform::script::SCENE.store(self.cur.1 as i32, std::sync::atomic::Ordering::Relaxed);
         if self.tick_no % 60 == 0 {
             let (dn, db, bn, bb, ev, cp) = melee_engine::gxbridge::data_cache_detail();
-            log(&format!("heartbeat tick {} scene {} age {} draws {} gxcache ptr {}/{} KB blocks {}/{} KB evicted {} copied {} MB", self.tick_no, scene_name(self.cur.1), self.age, self.frame.as_ref().map_or(0, |f| f.len()), dn, db >> 10, bn, bb >> 10, ev, cp >> 20));
+            let presents = melee_platform::script::PRESENTS.swap(0, std::sync::atomic::Ordering::Relaxed);
+            log(&format!("heartbeat tick {} scene {} age {} presents/s {presents} draws/frame {} gxcache ptr {}/{} KB blocks {}/{} KB evicted {} copied {} MB", self.tick_no, scene_name(self.cur.1), self.age, self.frame.as_ref().map_or(0, |f| f.len()), dn, db >> 10, bn, bb >> 10, ev, cp >> 20));
             if std::env::var_os("MELEE_RETAIL_DRAWDBG").is_some() {
                 if let Some(f) = self.frame.as_ref() {
                     for (i, d) in f.iter().take(6).enumerate() {
@@ -1706,6 +1708,12 @@ impl Game for RetailPlay {
 
     fn status_line(&mut self) -> Option<String> {
         self.net.as_mut().map(|n| n.status())
+    }
+
+    fn present_note(&mut self) -> String {
+        // ticks since the sim last handed a frame: a netplay stall (no new game frame) shows here, not as a present fault
+        let p = self.presenter.as_ref().map_or_else(|| "no presenter".to_string(), |p| p.present_note());
+        format!("sim frame {} ticks old, {p}", self.tick_no.saturating_sub(self.handed_tick))
     }
 
     fn display_stats(&mut self) -> Option<(u64, u64, f64)> {

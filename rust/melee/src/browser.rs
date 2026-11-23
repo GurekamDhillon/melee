@@ -709,6 +709,7 @@ impl RetailPlay {
                 log(&format!("online select: both locked in, the match in this window (no relaunch; link taken in {:.1} ms)", t0.elapsed().as_secs_f64() * 1e3));
                 self.net = Some(n);
                 // the match's .slp (--slp): recorded live from the session's confirmed frames
+                crate::slp_export::arm_for_desync(Some(&self.iso));
                 crate::slp_export::live_rollback();
                 // the match process had no pad script (generated pads, MELEE_SLIPPI_NP_PADGEN, in tests) and no frame limit
                 super::set_pad_swap(None);

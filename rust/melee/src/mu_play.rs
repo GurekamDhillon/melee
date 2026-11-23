@@ -351,9 +351,7 @@ impl NetDriver {
                 Compare::Soft => mr.soft += 1,
                 Compare::Hard => {
                     mr.hard += 1;
-                    if mr.hard < 4 {
-                        log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x} (the match goes on)"));
-                    }
+                    crate::play_net::desync_report(&tag, fr, lv, rv, mr.hard as u64, 0);
                 }
             }
         }

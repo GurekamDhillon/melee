@@ -127,6 +127,8 @@ CONFIGS["gm_1832"] = dict(
     custom=["lbArchive_80016DBC", "lb_80011E24", "HSD_SisLib_803A6B98", "HSD_SisLib_803A70A0",
             "GXLoadPosMtxImm", "GXSetProjection", "MTXOrtho"],
     ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D",
-           "HSD_SObjLib_804D7960": "0x2E", "HSD_GObj_804D783C": "2"},
+           "HSD_SObjLib_804D7960": "0x2E", "HSD_GObj_804D783C": "2",
+           # util.c's identity (the port links the real one since 395798491; a zero stub loaded a null matrix)
+           "HSD_identityMtx": "{ { 1.0f, 0, 0, 0 }, { 0, 1.0f, 0, 0 }, { 0, 0, 1.0f, 0 } }"},
     patch=[("img_idx = (u8*) lbl_804735E8.x40;", "img_idx = lbl_804735E8.xD0 - 0x90;")],
 )

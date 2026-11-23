@@ -16,7 +16,7 @@ use melee_gx::shim::{get_tex_buffer_size, GxShim};
 use melee_gx::state::{TexObj, TlutObj};
 use melee_gx::GxData;
 use melee_types::{_GXColor, _GXColorS10};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use crate::arena::SysScope;
 
 #[derive(Default)]
@@ -41,6 +41,12 @@ struct Objs {
     /// Frames finished (`finish_frame`), and the copies made in the last [`RECENT`] of them: (frame, key, is a block).
     epoch: u64,
     recent: Vec<(u64, (usize, usize), bool)>,
+    /// Copies a rollback load put in doubt (they were among `recent`): each is compared with the live memory at its
+    /// next lookup and kept when equal, re-made when not (`check_suspect`). Keys of `data` / `blocks`.
+    suspect: HashSet<((usize, usize), bool)>,
+    /// Diagnostics: suspect copies kept after the compare, and re-made.
+    kept: u64,
+    remade: u64,
 }
 
 /// How many frames back a rollback load can go (the deepest rollback is 7-8 frames; margin).
@@ -93,21 +99,43 @@ unsafe fn objs_ptr() -> *mut Objs {
 }
 
 /// A snapshot was loaded (rollback): game memory went back, so a copy made since (in the discarded frames) may not
-/// match what is at its address now. The copies of the last [`RECENT`] frames are dropped (re-made at their next
-/// draw); older ones are of data that was already there before the loaded state. The GX state itself is re-set by
-/// the frames that follow, as on any frame.
+/// match what is at its address now. The copies of the last [`RECENT`] frames are put in doubt: the next lookup of
+/// each compares it with the live bytes and keeps it when they are equal (almost always: archive images and vertex
+/// arrays the game does not rewrite), else re-makes it. Older copies are of data that was already there before the
+/// loaded state. The GX state itself is re-set by the frames that follow, as on any frame.
+/// Before, the recent copies were dropped outright: every rollback re-copied the archive-image blocks first drawn in
+/// the last 32 frames (megabytes early in a match) on its first resimulated frame, and each re-copy was recent again,
+/// so the drop repeated at every rollback (resimcost: 2-4 ms first resim frames, fight ticks over 16 ms at 45 ms lag).
 pub fn on_state_load() {
     let _s = SysScope::enter();
     unsafe {
         if let Some(o) = OBJS.as_mut() {
             for (_, k, block) in std::mem::take(&mut o.recent) {
-                let (m, bytes) = if block { (&mut o.blocks, &mut o.blocks_bytes) } else { (&mut o.data, &mut o.data_bytes) };
-                if let Some((d, _)) = m.remove(&k) {
-                    *bytes -= d.len();
-                }
+                o.suspect.insert((k, block));
             }
         }
     }
+}
+
+/// A cached copy found by a lookup: when a load put it in doubt, compare it with the live bytes at its address (`len`
+/// of them, the copy's length). True = use it (it matched, and is recent again: a later load may go back past this
+/// check); false = it was removed, make a new one.
+unsafe fn check_suspect(o: &mut Objs, key: (usize, usize), block: bool) -> bool {
+    if o.suspect.is_empty() || !o.suspect.remove(&(key, block)) {
+        return true;
+    }
+    let (m, bytes) = if block { (&mut o.blocks, &mut o.blocks_bytes) } else { (&mut o.data, &mut o.data_bytes) };
+    let Some((d, _)) = m.get(&key) else { return false };
+    if &d[..] == core::slice::from_raw_parts(key.0 as *const u8, d.len()) {
+        o.kept += 1;
+        o.recent.push((o.epoch, key, block));
+        return true;
+    }
+    if let Some((d, _)) = m.remove(&key) {
+        *bytes -= d.len();
+    }
+    o.remade += 1;
+    false
 }
 
 /// A GXBegin is open (the game's GXEnd is a macro that vanished in the port: the bridge ends the primitive itself).
@@ -216,7 +244,8 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
     // the check below would return; zero-hitch, see `readable`)
     if n < want && trust {
         let o = objs();
-        if let Some((d, t)) = o.data.get_mut(&(p as usize, want)) {
+        let k = (p as usize, want);
+        if let Some((d, t)) = o.data.get_mut(&k).filter(|_| !o.suspect.contains(&(k, false))) {
             o.clock += 1;
             *t = o.clock;
             return Some(d.clone());
@@ -233,7 +262,8 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
     let o = objs();
     o.clock += 1;
     let now = o.clock;
-    if let Some((d, t)) = o.data.get_mut(&key) {
+    if o.data.contains_key(&key) && check_suspect(o, key, false) {
+        let (d, t) = o.data.get_mut(&key).unwrap();
         *t = now;
         return Some(d.clone());
     }
@@ -241,6 +271,7 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
     evict_lru(&mut o.data, &mut o.data_bytes, n, DATA_CAP, &mut o.evictions);
     o.data_bytes += n;
     o.copied += n as u64;
+    o.suspect.remove(&(key, false));
     o.data.insert(key, (d.clone(), now));
     o.recent.push((o.epoch, key, false));
     Some(d)
@@ -269,7 +300,8 @@ unsafe fn block_data_at(p: usize) -> Option<(GxData, u32)> {
     let o = objs();
     o.clock += 1;
     let now = o.clock;
-    if let Some((d, t)) = o.blocks.get_mut(&(b, n)) {
+    if o.blocks.contains_key(&(b, n)) && check_suspect(o, (b, n), true) {
+        let (d, t) = o.blocks.get_mut(&(b, n)).unwrap();
         *t = now;
         return Some((d.clone(), off));
     }
@@ -277,6 +309,7 @@ unsafe fn block_data_at(p: usize) -> Option<(GxData, u32)> {
     evict_lru(&mut o.blocks, &mut o.blocks_bytes, n, BLOCK_CAP, &mut o.evictions);
     o.blocks_bytes += n;
     o.copied += n as u64;
+    o.suspect.remove(&((b, n), true));
     o.blocks.insert((b, n), (d.clone(), now));
     o.recent.push((o.epoch, (b, n), true));
     Some((d, off))

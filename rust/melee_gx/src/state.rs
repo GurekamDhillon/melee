@@ -518,6 +518,8 @@ pub struct GxState {
 
     /// Draws decoded since the last [`GxState::take_draws`].
     pub draws: Vec<crate::draw::DrawCmd>,
+    /// The draw count the next frame's list is sized for: the high-water mark of recent frames, decaying slowly.
+    pub draws_hint: usize,
     /// The last draw's pipeline config and its shader info (see `DrawCmd::config`).
     pub last_config: Option<(std::sync::Arc<crate::shader::PipelineConfig>, crate::shader::ShaderInfo)>,
     /// Warnings worth surfacing (unknown subcommands, unsupported features).
@@ -616,6 +618,7 @@ impl Default for GxState {
             xf_reg_cache: [0; XF_REG_COUNT],
             xf_reg_valid: [false; XF_REG_COUNT],
             draws: Vec::new(),
+            draws_hint: 0,
             last_config: None,
             palette: None,
             warnings: Vec::new(),
@@ -1763,7 +1766,12 @@ impl GxState {
     pub fn take_draws(&mut self) -> Vec<crate::draw::DrawCmd> {
         // the next frame starts with this one's capacity (a growing Vec of these big records re-copied every draw
         // list it doubled through: ~15% of a Temple 4-CPU tick)
-        let cap = self.draws.len();
+        // Sized by a slowly decaying high-water mark, not the last frame alone: a netplay rollback's resimulated
+        // frames draw almost nothing (display lists suppressed), and the shown frame after them grew its list from a
+        // handful again (resimcost: grow_one<DrawCmd> ~17% of a shown netplay frame).
+        // (an eighth of headroom: consecutive shown frames differ by a few draws, and one over the capacity doubles it)
+        self.draws_hint = self.draws.len().max(self.draws_hint - self.draws_hint / 256);
+        let cap = self.draws_hint + self.draws_hint / 8;
         self.palette = None; // a palette never outlives the frame
         self.pose_tags = [0; 10];
         self.pose_cam = 0;

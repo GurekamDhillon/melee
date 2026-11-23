@@ -858,11 +858,11 @@ mod tests {
 /// `BG_PAUSE` and waits until the background thread is outside its critical part (`BG_BUSY` false, the lock not held
 /// by it). Every save is then taken with `BG_PAUSE` true and `BG_BUSY` false, which is what a load writes back; the
 /// pause's drop clears `BG_PAUSE` afterwards.
-static BG_PAUSE: AtomicBool = AtomicBool::new(false);
-static BG_BUSY: AtomicBool = AtomicBool::new(false);
-/// [`BG_BUSY`] of the GX decode thread (a rollback run's render-only decode, `gxbridge::enable_async`): a flag of its
+/// The three flags live in melee_platform (host-only statics): they are written by the background threads at any time,
+/// also while a load runs, so a load must not write them back nor MELEE_SNAP_CHECK compare them.
+/// [`JOB_BUSY`] is the GX decode thread's (a rollback run's render-only decode, `gxbridge::enable_async`): a flag of its
 /// own, so the two background threads never clear each other's.
-static JOB_BUSY: AtomicBool = AtomicBool::new(false);
+use melee_platform::hostflags::{BG_BUSY, BG_PAUSE, JOB_BUSY};
 
 /// The GX decode thread starts a job: waits while snapshot work runs (see [`BG_PAUSE`]), then holds it off until
 /// [`bg_job_end`]. The job runs on the system heap and touches no game memory, but it writes statics (the allocator's

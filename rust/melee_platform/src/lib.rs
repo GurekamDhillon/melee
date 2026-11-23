@@ -26,6 +26,7 @@ pub mod gfx;
 pub mod overlay;
 pub mod yougame;
 pub mod yougame_mm;
+pub mod hostflags;
 
 pub use main_loop::{run_headless, run_windowed, window_hidden, FixedStep, FullscreenMode, Game, WindowConfig};
 pub use pad::PADStatus;

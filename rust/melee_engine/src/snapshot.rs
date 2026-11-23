@@ -1417,6 +1417,9 @@ impl Base {
         let mut bad = [(0usize, 0u32); 8];
         let mut nbad = 0usize;
         let mut n = 0u64;
+        // the live bytes of the first bad pages as the compare saw them (another thread may rewrite them before the report)
+        let mut seen = [[0u8; PAGE]; 2];
+        let mut quick = [[(0u16, 0u8, 0u8); 8]; 2];
         let dirty = self.dirty.borrow();
         for (ri, r) in s.ranges.iter().enumerate() {
             let live = unsafe { bytes(r.addr, r.len) };
@@ -1434,6 +1437,18 @@ impl Base {
                     None => have != want,
                 };
                 if differs {
+                    if nbad < seen.len() {
+                        seen[nbad].copy_from_slice(have);
+                        // a value that flips back at once (a busy flag, a lock word): note its offsets straight away
+                        let mut k = 0;
+                        for i in 0..PAGE {
+                            let h = unsafe { core::ptr::read_volatile(have.as_ptr().add(i)) };
+                            if h != want[i] && k < 8 {
+                                quick[nbad][k] = (i as u16, h, want[i]);
+                                k += 1;
+                            }
+                        }
+                    }
                     if nbad < bad.len() {
                         bad[nbad] = (ri, pi);
                     }
@@ -1465,9 +1480,15 @@ impl Base {
         st.checks += 1;
         st.checked_pages += n;
         drop(st);
-        for &(ri, pi) in &bad[..nbad.min(bad.len())] {
+        for (bi, &(ri, pi)) in bad[..nbad.min(bad.len())].iter().enumerate() {
             let r = &s.ranges[ri];
-            let live = unsafe { bytes(r.addr + pi as usize * PAGE, PAGE) };
+            let now = unsafe { bytes(r.addr + pi as usize * PAGE, PAGE) };
+            let live: &[u8] = if bi < seen.len() { &seen[bi][..] } else { now };
+            if bi < quick.len() {
+                let img = { #[cfg(windows)] { extern "system" { fn GetModuleHandleW(n: *const u16) -> usize; } unsafe { GetModuleHandleW(core::ptr::null()) } } #[cfg(not(windows))] { 0usize } };
+                let at = r.addr + pi as usize * PAGE - img;
+                eprintln!("MELEE_SNAP_CHECK: at compare range {ri} page {pi} (rva {at:#x}): (offset, live, want) {:x?}", &quick[bi]);
+            }
             let want = r.page(pi).unwrap_or_else(|| self.base_page(ri, pi as usize));
             let offs: Vec<usize> = (0..PAGE).filter(|&i| live[i] != want[i]).collect();
             if let (Some(&a), Some(&b)) = (offs.first(), offs.last()) {
@@ -1479,6 +1500,7 @@ impl Base {
                 eprintln!("MELEE_SNAP_CHECK: first differing byte at rva {:#x} (image base {img:#x})", at + a - img);
                 eprintln!("MELEE_SNAP_CHECK: range {ri} page {pi}: {} bytes differ in {:#x}..={:#x} (range offset {:#x}); live {:02x?} want {:02x?}",
                     offs.len(), at + a, at + b, pi as usize * PAGE + a, &live[a..=b.min(a + 31)], &want[a..=b.min(a + 31)]);
+                eprintln!("MELEE_SNAP_CHECK: now {:02x?}; differing offsets {:?}", &now[a..=b.min(a + 31)], &offs[..offs.len().min(32)]);
             }
         }
         assert!(nbad == 0, "MELEE_SNAP_CHECK: after {what} of snapshot {} the live state differs from it in {nbad} pages, first (range, page) {:?}", s.id, &bad[..nbad.min(8)]);

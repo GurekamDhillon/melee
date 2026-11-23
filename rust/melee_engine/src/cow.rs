@@ -29,6 +29,16 @@ mod imp {
     static mut BITS: *mut u64 = core::ptr::null_mut();
     static mut HANDLER: *mut c_void = core::ptr::null_mut();
     static mut FAULTS: u64 = 0;
+    /// The store's reserved size and the bitmap's length in words: both are kept from one `protect` to the next
+    /// (each rollback base, i.e. each match, protects the arena again; a fresh store per base, never freed, was the
+    /// ~70 MB-per-match growth of a long session: the pages the match wrote stayed committed in the old store).
+    static mut STORE_CAP: usize = 0;
+    static mut BITS_WORDS: usize = 0;
+    const MEM_DECOMMIT: u32 = 0x4000;
+    const MEM_RELEASE: u32 = 0x8000;
+    extern "system" {
+        fn VirtualFree(addr: *mut c_void, size: usize, ty: u32) -> i32;
+    }
 
     unsafe extern "system" fn handler(info: *mut c_void) -> i32 {
         let rec = *(info as *const *const u8);
@@ -70,14 +80,27 @@ mod imp {
         if START != 0 {
             return Err("a copy-on-write range is already active".into());
         }
-        let pages = len / PAGE;
-        let bits = vec![0u64; pages.div_ceil(64)].leak();
-        let store = VirtualAlloc(core::ptr::null_mut(), len, MEM_RESERVE, PAGE_READWRITE);
-        if store.is_null() {
-            return Err("cannot reserve the copy-on-write store".into());
+        let words = (len / PAGE).div_ceil(64);
+        if BITS.is_null() || BITS_WORDS < words {
+            // grows only with the arena; the old bitmap (a few hundred KB at most) is left as it was
+            BITS = Box::leak(vec![0u64; words].into_boxed_slice()).as_mut_ptr();
+            BITS_WORDS = words;
+        } else {
+            core::ptr::write_bytes(BITS, 0, words);
         }
-        STORE = store as usize;
-        BITS = bits.as_mut_ptr();
+        if STORE == 0 || STORE_CAP < len {
+            if STORE != 0 {
+                VirtualFree(STORE as *mut c_void, 0, MEM_RELEASE);
+            }
+            let store = VirtualAlloc(core::ptr::null_mut(), len, MEM_RESERVE, PAGE_READWRITE);
+            if store.is_null() {
+                STORE = 0;
+                STORE_CAP = 0;
+                return Err("cannot reserve the copy-on-write store".into());
+            }
+            STORE = store as usize;
+            STORE_CAP = len;
+        }
         START = start;
         LEN = len;
         HANDLER = AddVectoredExceptionHandler(1, handler);
@@ -88,7 +111,8 @@ mod imp {
         Ok(())
     }
 
-    /// Undo `protect` (the range becomes writable; the store stays reserved).
+    /// Undo `protect` (the range becomes writable; the store's pages are decommitted, its reservation kept for the
+    /// next `protect`).
     pub unsafe fn release() {
         if START == 0 {
             return;
@@ -99,6 +123,8 @@ mod imp {
             RemoveVectoredExceptionHandler(HANDLER);
             HANDLER = core::ptr::null_mut();
         }
+        // the saved pages are of no use once the base is gone: give them back (the reservation is reused)
+        VirtualFree(STORE as *mut c_void, LEN, MEM_DECOMMIT);
         START = 0;
     }
 
@@ -317,6 +343,10 @@ mod imp_unix {
     static mut BITS: *mut u64 = core::ptr::null_mut();
     static mut FAULTS: u64 = 0;
     static mut OLD: core::mem::MaybeUninit<libc::sigaction> = core::mem::MaybeUninit::uninit();
+    /// The store's mapped size and the bitmap's length in words, kept from one `protect` to the next (see the Windows
+    /// side: a fresh store per rollback base, never unmapped, grew the process by the pages each match wrote).
+    static mut STORE_CAP: usize = 0;
+    static mut BITS_WORDS: usize = 0;
     static mut INSTALLED: bool = false;
 
     unsafe extern "C" fn handler(_sig: i32, info: *mut libc::siginfo_t, _ctx: *mut c_void) {
@@ -343,21 +373,34 @@ mod imp_unix {
         if START != 0 {
             return Err("a copy-on-write range is already active".into());
         }
-        let pages = len / PAGE;
-        let bits = vec![0u64; pages.div_ceil(64)].leak();
-        let store = libc::mmap(
-            core::ptr::null_mut(),
-            len,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE,
-            -1,
-            0,
-        );
-        if store == libc::MAP_FAILED {
-            return Err("cannot reserve the copy-on-write store".into());
+        let words = (len / PAGE).div_ceil(64);
+        if BITS.is_null() || BITS_WORDS < words {
+            // grows only with the arena; the old bitmap (a few hundred KB at most) is left as it was
+            BITS = Box::leak(vec![0u64; words].into_boxed_slice()).as_mut_ptr();
+            BITS_WORDS = words;
+        } else {
+            core::ptr::write_bytes(BITS, 0, words);
         }
-        STORE = store as usize;
-        BITS = bits.as_mut_ptr();
+        if STORE == 0 || STORE_CAP < len {
+            if STORE != 0 {
+                libc::munmap(STORE as *mut c_void, STORE_CAP);
+            }
+            let store = libc::mmap(
+                core::ptr::null_mut(),
+                len,
+                libc::PROT_READ | libc::PROT_WRITE,
+                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE,
+                -1,
+                0,
+            );
+            if store == libc::MAP_FAILED {
+                STORE = 0;
+                STORE_CAP = 0;
+                return Err("cannot reserve the copy-on-write store".into());
+            }
+            STORE = store as usize;
+            STORE_CAP = len;
+        }
         START = start;
         LEN = len;
         if !INSTALLED {
@@ -376,7 +419,8 @@ mod imp_unix {
         Ok(())
     }
 
-    /// Undo `protect` (the range becomes writable; the store stays mapped).
+    /// Undo `protect` (the range becomes writable; the store's pages are dropped, its mapping kept for the next
+    /// `protect`).
     pub unsafe fn release() {
         if START == 0 {
             return;
@@ -386,6 +430,8 @@ mod imp_unix {
             libc::sigaction(libc::SIGSEGV, OLD.as_ptr(), core::ptr::null_mut());
             INSTALLED = false;
         }
+        // the saved pages are of no use once the base is gone: give them back (the mapping is reused)
+        libc::madvise(STORE as *mut c_void, LEN, libc::MADV_DONTNEED);
         START = 0;
     }
 

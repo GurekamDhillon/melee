@@ -180,6 +180,7 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
     let mut cli_env: Vec<(String, String)> = Vec::new();
     let mut base_iso: Option<String> = None;
     let mut mod_iso: Option<String> = None;
+    let mut settings_path: Option<String> = None;
     let (mut lobby_code, mut lobby_char, mut user_dir): (Option<String>, Option<u8>, Option<String>) = (None, None, None);
     let mut i = 0;
     while i < args.len() {
@@ -234,9 +235,10 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
                 }
             }
             "--settings-window" => p.play_args[0] = SETTINGS_WINDOW.into(),
+            // our settings window (settings_window.rs) reads them itself
             "--settings-standby" | "--settings-tab" => {
                 let v = take(&mut i).unwrap_or_default();
-                p.notes.push(format!("{flag} {v}: no settings panel in the Rust engine"));
+                p.play_args.extend([flag.to_string(), v]);
             }
             "--replay-dir" => {
                 // our own replays (.mrpl) in a folder of their own, so his .slp viewer never meets them
@@ -252,6 +254,7 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
             }
             "--settings-path" => {
                 if let Some(path) = take(&mut i) {
+                    settings_path = Some(path.clone());
                     match read(Path::new(&path)) {
                         Some(text) => {
                             push_env(&mut p.env, "MELEE_PORT_SETTINGS", path.clone());
@@ -368,7 +371,24 @@ pub fn plan_env(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<Stri
         }
     }
     if p.play_args[0] == SETTINGS_WINDOW {
+        // the panel edits the file itself: none of its values become MELEE_* overrides (they would pin the rows), and
+        // its log is its own, so a standby copy never rotates the game's melee_port.log (his main.cpp does the same)
+        let mut keep: Vec<String> = Vec::new();
+        for w in p.play_args[1..].windows(2) {
+            if w[0] == "--settings-standby" || w[0] == "--settings-tab" {
+                keep.extend(w.iter().cloned());
+            }
+        }
         p.play_args.truncate(1);
+        p.play_args.extend(keep);
+        if let Some(sp) = settings_path {
+            p.play_args.extend(["--settings-path".to_string(), sp]);
+        }
+        p.env.retain(|(k, _)| k == "MELEE_CARD_PATH");
+        if !cli_env.iter().any(|(k, _)| k == "MELEE_LOG_FILE") {
+            push_env(&mut cli_env, "MELEE_LOG_FILE", "melee_settings.log".into());
+        }
+        cli_env.retain(|(k, _)| k == "MELEE_LOG_FILE");
     }
     for (k, v) in cli_env {
         push_env(&mut p.env, &k, v);
@@ -559,8 +579,14 @@ mod tests {
         assert_eq!(env("MELEE_BACKGROUND_INPUT").as_deref(), Some("1"));
         assert!(env("MELEE_LOG_FILE").unwrap().ends_with("launcher_build.log"));
         assert!(detect(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x"])));
-        let p = plan(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x"]), Path::new("."), &|_| None);
-        assert_eq!(p.play_args, s(&[SETTINGS_WINDOW]));
+        let p = plan(&s(&["--settings-window", "--settings-standby", "12", "--settings-path", "x", "--settings-tab", "audio"]), Path::new("."), &|_| Some("volume 40
+vsync 0
+".into()));
+        assert_eq!(p.play_args, s(&[SETTINGS_WINDOW, "--settings-standby", "12", "--settings-tab", "audio", "--settings-path", "x"]));
+        let env = |k: &str| p.env.iter().find(|(a, _)| a == k).map(|(_, v)| v.clone());
+        assert_eq!(env("MELEE_VOLUME"), None, "the panel's values never become overrides");
+        assert_eq!(env("MELEE_VSYNC"), None);
+        assert!(env("MELEE_LOG_FILE").unwrap().ends_with("melee_settings.log"));
     }
 
     #[test]

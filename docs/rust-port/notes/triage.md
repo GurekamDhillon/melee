@@ -354,9 +354,9 @@ Still failing in melee_modes (at the start 20 of 108 test binaries failed and th
 | tuo_gmmultiman | stale (known) | gm_801B6428 38 of 2060, the same set as on Windows (port/regen1); the C side cannot be regenerated against the current headers there |
 | tu_gmfrontend, tu_gmregclear, tu_gmregenddisp, tu_gmresult | stale expectation (probable) | every mismatching case has equal return and call log and a different state hash: the hashed records changed since the data (upstream-sync renames / layout) |
 | tu_gmvs | port extension (probable) | op 94 fn_8016E2BC: same state, different trace; gmvs.rs carries the Slippi 1.x Neutral Spawn / replay paths (eddd7a4e0, 43ca69c20) the C TU does not |
-| tu_gmscenelaunch | not established | op 0 case 2: same trace, different state hash |
+| tu_gmscenelaunch | stale expectation (probable) | op 0 SceneLaunch_SeedPlayers case 2: same trace, different state; a6ad28729 (2026-11-07) changed the missing-costume rule in both gmscenelaunch.h and the port, after the data (2026-10-24) |
 | tu_lb_020A | environment (probable) | op 3 lbBgFlash_80021410: state hash differs in bit 31 only, the trace carries NaNs (0xFFC00000): host NaN sign propagation through `-(a + b)` |
-| tu_gmvsmode | harness gap | aborts: the test reaches HSD_GetHeap, whose hook only the melee_link table installs ("TODO: not ported" panic in an extern "C" fn) |
+| tu_gmvsmode | harness gap | aborts: walking the VS mode-state table runs gm_ModeState_Approach_OnEnter (gm_1BFA), whose lbCardNew_AllocWorkArea reaches HSD_GetHeap; only the melee_link table installs that hook ("TODO: not ported" panic in an extern "C" fn) |
 | tu_script_game | harness gap | SIGSEGV in script_echo_live_owner: HSD_GObjPLinkHead is null in the harness (ScriptGame_EchoCapture walks the fighter plink) |
 | tu_script_game_t, tu_geno_game, tu_geno_game_g | stale expectation (probable) | 4 / 6 / 8 script / Geno functions differ in all 40 cases (pc/ tooling TUs, not game code) |
 

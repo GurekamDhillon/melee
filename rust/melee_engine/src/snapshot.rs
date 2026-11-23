@@ -365,6 +365,35 @@ fn small_pages(ranges: &[(usize, usize)]) {
 /// ~5 GB), to learn which were written since the previous save or load.
 fn written_runs(cum: &[u64], limit: usize, addr: usize, out: &mut Vec<u64>) {
     let bit = |i: usize| cum.get(i / 64).copied().unwrap_or(0) >> (i % 64) & 1 != 0;
+    // Linux: one PAGEMAP_SCAN over the span from the first to the last run instead of one per run (a refresh read
+    // ~20-40 short runs, each an ioctl; the kernel skips the unpopulated page tables between them). The span reports
+    // only pages written since the last read, and outside the runs nothing can have been written (a write to an arena
+    // page the cow store does not hold yet faults into it first and sets its bit), so the bits are the same.
+    #[cfg(target_os = "linux")]
+    {
+        let words = limit.div_ceil(64).min(cum.len());
+        let first = cum[..words].iter().position(|&w| w != 0);
+        let last = cum[..words].iter().rposition(|&w| w != 0);
+        let (Some(fw), Some(lw)) = (first, last) else { return };
+        let lo = fw * 64 + cum[fw].trailing_zeros() as usize;
+        let hi = (lw * 64 + 64 - cum[lw].leading_zeros() as usize).min(limit);
+        if lo < hi {
+            let mut span = Vec::new();
+            written_pages(addr + lo * PAGE, (hi - lo) * PAGE, addr, &mut span);
+            // keep the result to the runs, as the per-run reads did
+            for (i, w) in span.iter().enumerate() {
+                let m = w & cum.get(i).copied().unwrap_or(0);
+                if m != 0 {
+                    if out.len() <= i {
+                        out.resize(i + 1, 0);
+                    }
+                    out[i] |= m;
+                }
+            }
+        }
+        return;
+    }
+    #[allow(unreachable_code)]
     let mut i = 0usize;
     while i < limit {
         if i % 64 == 0 && cum.get(i / 64).copied().unwrap_or(0) == 0 {

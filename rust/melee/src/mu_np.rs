@@ -17,7 +17,7 @@ use melee_core::slippi_online::{compare, Compare};
 use melee_net::mu_net::conn::{Connector, DEFAULT_LIMIT};
 use melee_net::mu_net::crypto::{hex, random, unhex, Bytes32, Identity};
 use melee_net::mu_net::desc::{Descriptor, Slot, MAX_DELAY, MAX_GAMES, MAX_NAME, MIN_DELAY, STAGE_POOL};
-use melee_net::mu_net::link::Link;
+use melee_net::mu_net::link::{Link, NextGame};
 use melee_net::session::{run_tick, InputSource, RbConfig, RbGame, RbSession, FIRST};
 use melee_net::slippi::{pad_bytes, pad_input};
 use melee_net::transport::{Addr, Transport, UdpTransport};
@@ -270,12 +270,7 @@ pub fn establish(o: &P2pOptions, tag: &str, args: &[String]) -> Result<Link, Str
         Box::new(crate::play_net::Degraded::new(Box::new(tp), &n, 0x5eed ^ o.slot as u32))
     };
     let conn = Connector::start(tp, identity, desc, o.slot, &o.peers, o.expect, limit, now)?;
-    // several games over one connection (INFO / NEXT, plan M6) are not played yet: INFO says one game, so a peer of
-    // any revision ends the session after it (no NEXT is sent)
-    if o.games != 1 {
-        eprintln!("p2p: {tag}: --p2p-games {} asked; this build plays one game per session", o.games);
-    }
-    let mut link = Link::new(conn, o.slot, 1, now);
+    let mut link = Link::new(conn, o.slot, o.games.min(u16::MAX as u32) as u16, now);
     loop {
         link.poll();
         if link.ready() {
@@ -336,13 +331,76 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
         }
     };
     eprintln!("p2p: {tag}: ready after {:.2}s", t0.elapsed().as_secs_f32());
-    let d = link.conn.descriptor().clone();
-    let scene = match scene_of(&d) {
+    let mut game: Option<EngineGame> = None;
+    let mut all_ok = true;
+    let mut games_played = 0;
+    loop {
+        let d = link.descriptor().cloned().unwrap_or_else(|| link.conn.descriptor().clone());
+        let r = play_one(args, &o, tag, t0, frames, &mut link, &d, game.take());
+        games_played += 1;
+        all_ok &= r.ok;
+        if r.failed {
+            break;
+        }
+        // several games over the connection (plan 2.12): NEXT, and the next game once both agree
+        // test hook MELEE_P2P_TEST_NO_CHECKSUMS=1: a peer with no game behind it (the reference-harness test, M8) sends
+        // checksum 0, so our compare counts every frame; the next game is offered anyway
+        let ignore_ck = std::env::var_os("MELEE_P2P_TEST_NO_CHECKSUMS").is_some_and(|v| v == "1");
+        link.offer_next(r.ended, r.hard > 0 && !ignore_ck);
+        let wait = Instant::now();
+        while link.next == NextGame::Waiting && wait.elapsed() < Duration::from_secs(25) {
+            link.poll();
+            link.send_commit();
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        if !link.begin_next_game() {
+            if let NextGame::Over(w) = &link.next {
+                eprintln!("p2p: {tag}: no further game: {w}");
+            }
+            break;
+        }
+        let nd = link.descriptor().unwrap();
+        eprintln!("p2p: {tag}: game {} of the session: stage {}, seed {:08X}", link.game, nd.stage, nd.rng_seed);
+        game = r.game;
+    }
+    eprintln!("p2p: {tag}: session over after {games_played} game(s)");
+    link.close();
+    if all_ok {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    }
+}
+
+/// A SAMPLE's 8 pad bytes as the session's hint pad (analog A / B and err 0, as a committed pad carries them).
+pub fn hint_of(p: &[u8; 8]) -> melee_net::early::Pad {
+    let mut h = [0u8; melee_net::NP_PAYLOAD];
+    h[..8].copy_from_slice(p);
+    h
+}
+
+/// One game's outcome in `mu_netplay`.
+struct GameRun {
+    ok: bool,
+    /// the session cannot go on (a timeout, the peer gone, a boot failure)
+    failed: bool,
+    /// the game ended by itself (GAME!, or the test's frame count)
+    ended: bool,
+    hard: u32,
+    game: Option<EngineGame>,
+}
+
+/// One game of a `mu_netplay` session: the scene (booted, or the previous game's engine on to its next VS match),
+/// the frame loop, the end report. `prev`: the engine of the game before (None for the first).
+#[allow(clippy::too_many_arguments)]
+fn play_one(args: &[String], o: &P2pOptions, tag: &str, t0: Instant, frames: i32, link: &mut Link, d: &Descriptor, prev: Option<EngineGame>) -> GameRun {
+    let fail = |game| GameRun { ok: false, failed: true, ended: false, hard: 0, game };
+    let n = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
+    let scene = match scene_of(d) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("p2p: {tag}: {e}");
-            link.close();
-            return ExitCode::from(EXIT_NO_GAME);
+            return fail(None);
         }
     };
     melee_core::slippi_online::enable(d.rng_seed);
@@ -354,7 +412,7 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
         struct Pump(*mut Link);
         // SAFETY: the main thread does not touch `link` until the pump thread is joined (end of the scope)
         unsafe impl Send for Pump {}
-        let pump = Pump(&mut link as *mut Link);
+        let pump = Pump(link as *mut Link);
         let stop = std::sync::atomic::AtomicBool::new(false);
         std::thread::scope(|sc| {
             let stop = &stop;
@@ -365,7 +423,16 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
                     std::thread::sleep(Duration::from_millis(2));
                 }
             });
-            let g = EngineGame::open_scene(args, &scene, d.rng_seed);
+            let g = match prev {
+                None => EngineGame::open_scene(args, &scene, d.rng_seed),
+                Some(p) => {
+                    // the next match in the same engine (the C mode loop's next VS scene)
+                    melee_modes::tu::envoy::set_net_salt(d.rng_seed);
+                    std::env::set_var("MELEE_TEST_SEED", d.rng_seed.to_string());
+                    let EngineGame { mut e, .. } = p;
+                    melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).and_then(|scn| e.next_vs(scn)).map(|()| EngineGame::new(e))
+                }
+            };
             stop.store(true, std::sync::atomic::Ordering::Release);
             g
         })
@@ -374,13 +441,12 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
         Ok(g) => g,
         Err(e) => {
             eprintln!("p2p: {tag}: {e}");
-            link.close();
-            return ExitCode::from(EXIT_NO_GAME);
+            return fail(None);
         }
     };
     if let Some(w) = link.down() {
         eprintln!("p2p: {tag}: the link went down during the boot: {w}");
-        return ExitCode::from(EXIT_NO_GAME);
+        return fail(Some(game));
     }
     for (i, p) in d.players.iter().take(2).enumerate() {
         game.slippi_chars[i] = p.character as u32;
@@ -395,6 +461,14 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
     s.set_local_port(local);
     s.set_delay(delay);
     let padgen = arg(args, "--padgen").and_then(|v| v.parse::<u32>().ok());
+    // early inputs (rev 2, plan M7): the peer's SAMPLEs predict its unconfirmed frames (RbSession hints)
+    let early = crate::np_early::enabled(args);
+    link.input.samples_on = early;
+    s.hints_on = early;
+    // test hook --mu-test-early-lead: send the generated pad of the frame after the newest committed one as a SAMPLE
+    // (a scripted controller never changes between polls; this stands in for the sampler's early read)
+    let early_lead = early && padgen.is_some() && args.iter().any(|a| a == "--mu-test-early-lead");
+    let mut samples_sent = 0u64;
     let tick = Duration::from_micros(16683);
     let mut next_tick = Instant::now();
     let mut last_sent = FIRST - 1;
@@ -421,6 +495,9 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
         link.poll();
         for (f, pad) in link.input.take_fresh() {
             s.submit_remote_input(remote * 2, sess(f), &pad_input(&pad));
+        }
+        for (t, pad) in link.input.take_samples() {
+            s.submit_hint(remote * 2, sess(t), &hint_of(&pad));
         }
         if let Some(w) = link.down() {
             eprintln!("p2p: {tag}: {w} at online frame {}", online(s.current_frame()));
@@ -462,9 +539,18 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
             link.input.set_checksum(ckf, ck);
         }
         link.send_commit();
-        run_tick(&mut s, &mut game, None);
-        if extra > 0 && s.current_frame() > f {
+        if early_lead {
+            let nf = last_sent + 1;
+            if online(nf) > delay {
+                let i = melee_net::session::rb_gen(padgen.unwrap(), local * 2, nf);
+                samples_sent += link.send_sample(online(nf), pad_bytes(&i)) as u64;
+            }
+        }
+        if done_at.is_none() {
             run_tick(&mut s, &mut game, None);
+            if extra > 0 && s.current_frame() > f {
+                run_tick(&mut s, &mut game, None);
+            }
         }
         let conf = s.confirmed_frame();
         link.input.set_floor(online(conf));
@@ -508,6 +594,7 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
             );
         }
         if finals.keys().next_back().is_some_and(|&k| k >= frames) || ended {
+            ended = true;
             link.report_end();
             let t = done_at.get_or_insert_with(Instant::now);
             if (link.peer_agreement().is_some() && t.elapsed() > Duration::from_millis(300)) || t.elapsed() > Duration::from_millis(3000) {
@@ -518,6 +605,7 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
     link.report_end();
     let agree = link.peer_agreement();
     if let Some(p) = arg(args, "--out") {
+        let p = if link.game > 1 { format!("{p}.g{}", link.game) } else { p };
         let mut t = String::from("frame,checksum\n");
         for (f, v) in &finals {
             t += &format!("{f},{v:08X}\n");
@@ -526,8 +614,13 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
     }
     let tr = link.transcript.as_ref().map_or((0, String::new()), |t| (t.frames, hex(&t.digest()[..8])));
     let st = &link.input.stats;
+    if early {
+        let h = s.hint_stats;
+        eprintln!("p2p: {tag}: game {}: early inputs: {samples_sent} samples sent, {} received ({} ignored), hints {h:?}", link.game, st.samples_received, st.samples_ignored);
+    }
     eprintln!(
-        "p2p: {tag}: {} final checksums, {compared} compared: {soft} soft, {hard} HARD desyncs; transcript {} frames {} (peer {}); rollbacks {}, stalls {}, waits {}, time sync held {} advanced {}; ping {} us; commits sent {} received {}, gaps {}, conflicts {}",
+        "p2p: {tag}: game {}: {} final checksums, {compared} compared: {soft} soft, {hard} HARD desyncs; transcript {} frames {} (peer {}); rollbacks {}, stalls {}, waits {}, time sync held {} advanced {}; ping {} us; commits sent {} received {}, gaps {}, conflicts {}, other game {}",
+        link.game,
         finals.len(),
         tr.0,
         tr.1,
@@ -545,14 +638,11 @@ pub fn mu_netplay(args: &[String]) -> ExitCode {
         st.commits_sent,
         st.commits_received,
         st.gaps,
-        st.conflicts
+        st.conflicts,
+        st.other_game
     );
-    link.close();
-    if !failed && hard == 0 && soft == 0 && compared > 0 && agree == Some(true) {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::FAILURE
-    }
+    let ok = !failed && hard == 0 && soft == 0 && compared > 0 && agree == Some(true);
+    GameRun { ok, failed, ended: ended && !failed, hard, game: Some(game) }
 }
 
 #[cfg(test)]

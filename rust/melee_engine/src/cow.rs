@@ -82,7 +82,10 @@ mod imp {
         }
         let words = (len / PAGE).div_ceil(64);
         if BITS.is_null() || BITS_WORDS < words {
-            // grows only with the arena; the old bitmap (a few hundred KB at most) is left as it was
+            // grows only with the arena; the old bitmap is freed (no handler is installed while START == 0)
+            if !BITS.is_null() {
+                drop(Box::from_raw(core::ptr::slice_from_raw_parts_mut(BITS, BITS_WORDS)));
+            }
             BITS = Box::leak(vec![0u64; words].into_boxed_slice()).as_mut_ptr();
             BITS_WORDS = words;
         } else {
@@ -106,6 +109,7 @@ mod imp {
         HANDLER = AddVectoredExceptionHandler(1, handler);
         let mut old = 0u32;
         if VirtualProtect(start as *mut c_void, len, PAGE_READONLY, &mut old) == 0 {
+            release();
             return Err("VirtualProtect failed".into());
         }
         Ok(())
@@ -124,7 +128,8 @@ mod imp {
             HANDLER = core::ptr::null_mut();
         }
         // the saved pages are of no use once the base is gone: give them back (the reservation is reused)
-        VirtualFree(STORE as *mut c_void, LEN, MEM_DECOMMIT);
+        // (the whole reservation: a reserved-but-uncommitted page decommits as a no-op)
+        VirtualFree(STORE as *mut c_void, STORE_CAP, MEM_DECOMMIT);
         START = 0;
     }
 
@@ -198,6 +203,7 @@ pub mod bg {
     static FAULTS: AtomicUsize = AtomicUsize::new(0);
     static mut HANDLER: *mut c_void = core::ptr::null_mut();
     static mut THREAD: Option<std::thread::JoinHandle<()>> = None;
+    static mut STATE_BUF: Vec<AtomicU8> = Vec::new();
 
     unsafe fn state(i: usize) -> &'static AtomicU8 {
         &*(STATE.load(Relaxed) as *const AtomicU8).add(i)
@@ -247,8 +253,15 @@ pub mod bg {
             return Err("a background base copy is already active".into());
         }
         let pages = len / PAGE;
-        let st: &'static mut [AtomicU8] = Vec::from_iter((0..pages).map(|_| AtomicU8::new(0))).leak();
-        STATE.store(st.as_ptr() as usize, Relaxed);
+        // one per-page state buffer, kept and cleared from one base to the next (a fresh leaked one per begin was
+        // ~16 KB per match); no helper or handler touches it while START == 0
+        let buf = &mut *core::ptr::addr_of_mut!(STATE_BUF);
+        if buf.len() < pages {
+            *buf = Vec::from_iter((0..pages).map(|_| AtomicU8::new(0)));
+        } else {
+            buf[..pages].iter().for_each(|a| a.store(0, Relaxed));
+        }
+        STATE.store(buf.as_ptr() as usize, Relaxed);
         DST.store(dst as usize, Relaxed);
         LEN.store(len, Relaxed);
         STOP.store(false, Relaxed);

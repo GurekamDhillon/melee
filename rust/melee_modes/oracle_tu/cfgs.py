@@ -388,6 +388,10 @@ CFGS["script_game"] = dict(src="pc/gameworld/script_game.c", module="script_game
                           # (functions whose C side faults on the synthetic state are dropped by tuoracle.py --build and reported)
                           # particle.c's `u32 hsd_804D78F4` is a native `*mut HSD_SList` in melee_runtime (shared static)
                           rust_ptr_globals=["hsd_804D78F4"],
+                          # the upstream sync named particle.c's hsd_804D78E2 numActiveParticles; the Rust port keeps the address name
+                          rust_vars={"numActiveParticles": "hsd_804D78E2"},
+                          # grpushon.rs keeps grPushOn_803E7CCC as an immutable static table
+                          rust_immutable=["grPushOn_803E7CCC"],
                           noext=["memcpy", "memset", "memmove", "strcpy", "strlen", "strcmp", "strncpy", "strncmp", "strcat"],
                           # the owned-object lists hold object pointers a seeded fill leaves NULL; a random count walks past the 512 entries
                           fixups=[("script_slot_owned.count = 0; script_retail_owned.count = 0;",
@@ -397,7 +401,17 @@ CFGS["script_game"] = dict(src="pc/gameworld/script_game.c", module="script_game
                                    "(*core::ptr::addr_of_mut!(m::script_skill_head)) = ((*core::ptr::addr_of_mut!(m::script_skill_head)) as u32 % 100000) as _;"),
                                   # size_t is 32 bits in the C compile (gc_size_t) and usize in the native port: keep the filled byte count in 32 bits
                                   ("{ int i; for (i = 0; i < SCRIPT_STAGE_ARCHIVES; i++) script_stage.archives[i].bytes = (unsigned) script_stage.archives[i].bytes; }",
-                                   "for i in 0..8 { let a = &mut (*core::ptr::addr_of_mut!(m::script_stage)).archives[i]; a.bytes = (a.bytes as u32) as usize; }")])
+                                   "for i in 0..8 { let a = &mut (*core::ptr::addr_of_mut!(m::script_stage)).archives[i]; a.bytes = (a.bytes as u32) as usize; }"),
+                                  # sm_emit appends at queue[nq] after an nq >= SM_QUEUE check only: a negative filled nq writes before the queue
+                                  ("script_mods.nq = (int) ((unsigned) script_mods.nq % 129u);",
+                                   "(*core::ptr::addr_of_mut!(m::script_mods)).nq = ((*core::ptr::addr_of_mut!(m::script_mods)).nq as u32 % 129) as _;"),
+                                  # the stage slots walk models[0..ngroups) (64 entries): keep a filled ngroups inside the array
+                                  ("{ int i; for (i = 0; i < ST_SLOT_COUNT; i++) script_slots[i].ngroups = (int) ((unsigned) script_slots[i].ngroups % 65u); }",
+                                   "for s in (*core::ptr::addr_of_mut!(m::script_slots)).iter_mut() { s.ngroups = (s.ngroups as u32 % 65) as _; }"),
+                                  # the echo capture (script_echo_live_owner, script_echo_body_actor) walks HSD_GObjPLinkHead[FIGHTER]
+                                  # unguarded, as the game may (the list always exists there): give it empty p-link lists
+                                  ("{ static HSD_GObj* tuo_plink[64]; HSD_GObjPLinkHead = tuo_plink; }",
+                                   "{ static mut TUO_PLINK: [usize; 64] = [0; 64]; (*core::ptr::addr_of_mut!(m::ext::HSD_GObjPLinkHead)) = core::ptr::addr_of_mut!(TUO_PLINK) as _; }")])
 
 
 def _sg_clamp(cvar, rvar, n):

@@ -26,7 +26,8 @@ pub struct Found {
 }
 
 pub fn compat() -> &'static str {
-    concat!("gd-melee-rust/", env!("CARGO_PKG_VERSION"))
+    // YouGame's lobby rule: [A-Za-z0-9._:-] only (a `/` got every public search refused)
+    concat!("gd-melee-rust:", env!("CARGO_PKG_VERSION"))
 }
 
 fn log(s: &str) {

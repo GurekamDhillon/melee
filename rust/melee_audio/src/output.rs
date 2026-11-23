@@ -71,6 +71,11 @@ pub struct Ring {
     pub lat_n: AtomicU64,
     pub lat_max_us: AtomicU64,
     pub lat_min_us: AtomicU64,
+    /// The same, for the current segment only (the game thread takes it at each fight/menu change: per-scene numbers).
+    seg_sum_us: AtomicU64,
+    seg_n: AtomicU64,
+    seg_max_us: AtomicU64,
+    seg_min_us: AtomicU64,
     /// Largest device callback seen (frames at the device rate) and the device rate.
     pub cb_frames_max: AtomicU32,
     /// The latest device callback's length (frames at the device rate).
@@ -115,6 +120,10 @@ impl Ring {
             lat_n: AtomicU64::new(0),
             lat_max_us: AtomicU64::new(0),
             lat_min_us: AtomicU64::new(u64::MAX),
+            seg_sum_us: AtomicU64::new(0),
+            seg_n: AtomicU64::new(0),
+            seg_max_us: AtomicU64::new(0),
+            seg_min_us: AtomicU64::new(u64::MAX),
             cb_frames_max: AtomicU32::new(0),
             cb_frames_last: AtomicU32::new(0),
             dev_rate: AtomicU32::new(0),
@@ -170,6 +179,19 @@ impl Ring {
         self.lat_n.fetch_add(1, Ordering::Relaxed);
         self.lat_max_us.fetch_max(us, Ordering::Relaxed);
         self.lat_min_us.fetch_min(us, Ordering::Relaxed);
+        self.seg_sum_us.fetch_add(us, Ordering::Relaxed);
+        self.seg_n.fetch_add(1, Ordering::Relaxed);
+        self.seg_max_us.fetch_max(us, Ordering::Relaxed);
+        self.seg_min_us.fetch_min(us, Ordering::Relaxed);
+    }
+    /// The current segment's latency (mean, min, max in ms; samples), and with `reset` a new segment from now.
+    pub fn segment(&self, reset: bool) -> (f64, f64, f64, u64) {
+        let get = |a: &AtomicU64, z: u64| if reset { a.swap(z, Ordering::Relaxed) } else { a.load(Ordering::Relaxed) };
+        let (sum, n, max, min) = (get(&self.seg_sum_us, 0), get(&self.seg_n, 0), get(&self.seg_max_us, 0), get(&self.seg_min_us, u64::MAX));
+        if n == 0 {
+            return (0.0, 0.0, 0.0, 0);
+        }
+        (sum as f64 / 1000.0 / n as f64, min as f64 / 1000.0, max as f64 / 1000.0, n)
     }
     /// Forget the latency stats (after a warm-up).
     pub fn reset_latency(&self) {

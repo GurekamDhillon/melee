@@ -170,6 +170,12 @@ const SHARED_SLACK: usize = 65536;
 /// Issues a decoder keeps (see [`GcDecoder::issue`]).
 pub const MAX_ISSUES: usize = 256;
 
+/// [`GcDecoder::array`] takes [`GcDecoder::array_zero_tail`] for arrays this long (shorter ones: the plain loop).
+const ZERO_TAIL_MIN: usize = 4096;
+/// The zero-tail path on (default). Set once before any decode (an env read allocates: the asset service's init reads
+/// `MELEE_DECODE_ZERO_TAIL` and stores it here).
+pub static ZERO_TAIL: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(true);
+
 fn reloc_bits(r: &RelocSet) -> Vec<u64> {
     let Some(&max) = r.iter().max() else { return Vec::new() };
     let mut v = vec![0u64; (max as usize >> 6) + 1];
@@ -651,13 +657,78 @@ impl<'a> GcDecoder<'a> {
     /// `n` consecutive `T`s at `target` (GC stride `T::GC_BYTES`) as one native array.
     pub fn array<T: GcDecode>(&mut self, target: u32, n: usize) -> *mut T {
         let tprof = (n >= 64 && PROF.load(core::sync::atomic::Ordering::Relaxed)).then(std::time::Instant::now);
-        let v: Vec<T> = (0..n).map(|i| T::gc_decode(self, target + i as u32 * T::GC_BYTES)).collect();
+        let v: Vec<T> = if n >= ZERO_TAIL_MIN && ZERO_TAIL.load(core::sync::atomic::Ordering::Relaxed) {
+            self.array_zero_tail::<T>(target, n)
+        } else {
+            (0..n).map(|i| T::gc_decode(self, target + i as u32 * T::GC_BYTES)).collect()
+        };
         let p = Box::into_raw(v.into_boxed_slice()) as *mut T as *mut u8;
         self.arena.owned.push(Owned { ptr: p, len: n, free: free_slice::<T>, ty: core::any::type_name::<T>(), bytes: core::mem::size_of::<T>() * n });
         if let Some(t0) = tprof {
             prof_note(core::any::type_name::<T>(), "array", n, t0);
         }
         p as *mut T
+    }
+
+    /// [`GcDecoder::array`]'s values for a long array, the same ones its plain loop gives, quicker where the array runs
+    /// past the end of the data block. There every read is zero and, once the issue list is full ([`MAX_ISSUES`]),
+    /// only counts a dropped issue, so every element there decodes to the same value. Garbage counts make such
+    /// arrays big: a spline's `cv` (`numcv` read as ~30k) is 80-95k `Vec` records past the data, 1M per Kirby copy
+    /// hat (Mewtwo's: 15-30 ms of the title demo's preload tick on a laptop, nearly all of it these reads).
+    /// The first two elements past the end are decoded as before and must be byte-identical, add the same count of
+    /// dropped issues and touch nothing else (no allocation, memo entry or queued object); then the rest are copies of
+    /// the first and the dropped count grows by the same per-element number. Otherwise the plain loop goes on. One
+    /// `Vec` of `n` either way: the allocation sequence is the plain loop's. `MELEE_DECODE_ZERO_TAIL=off` (read at
+    /// the asset service's start, [`ZERO_TAIL`]) keeps the plain loop for an A/B.
+    fn array_zero_tail<T: GcDecode>(&mut self, target: u32, n: usize) -> Vec<T> {
+        let stride = T::GC_BYTES;
+        let size = core::mem::size_of::<T>();
+        let mut v: Vec<T> = Vec::with_capacity(n);
+        let bytes = |x: &T| unsafe { core::slice::from_raw_parts(x as *const T as *const u8, size) };
+        // the plain loop's offsets are u32 sums: a range that wraps is left to it
+        let fits = (target as u64) + (n as u64) * (stride as u64) <= u32::MAX as u64;
+        let can = fits && !self.raw && stride > 0 && size > 0 && !core::mem::needs_drop::<T>();
+        let mut i = 0usize;
+        while i < n {
+            let at = target + i as u32 * stride;
+            if can && at as usize >= self.data.len() && i + 2 < n && self.issues.len() >= MAX_ISSUES {
+                let before = (self.arena.owned.len(), self.memo.len(), self.arr_memo.len(), self.queue.len(), self.shared.len(), self.scans.len());
+                let d0 = self.dropped_issues;
+                let e0 = T::gc_decode(self, at);
+                let d1 = self.dropped_issues;
+                let e1 = T::gc_decode(self, at + stride);
+                let d2 = self.dropped_issues;
+                let after = (self.arena.owned.len(), self.memo.len(), self.arr_memo.len(), self.queue.len(), self.shared.len(), self.scans.len());
+                let same = before == after && d1 - d0 == d2 - d1 && self.issues.len() >= MAX_ISSUES && bytes(&e0) == bytes(&e1);
+                v.push(e0);
+                v.push(e1);
+                if same {
+                    let rest = n - i - 2;
+                    // elements i.. are all element i's bytes: copy the run in doubling steps
+                    let total = n - i;
+                    let mut have = 2usize;
+                    // SAFETY: T needs no drop (checked), so a bitwise copy is a value of its own; every copy stays
+                    // inside the capacity of n reserved above (nothing reallocates), and n elements are written
+                    // before the length is set
+                    unsafe {
+                        let run = v.as_mut_ptr().add(i);
+                        while have < total {
+                            let c = have.min(total - have);
+                            core::ptr::copy_nonoverlapping(run, run.add(have), c);
+                            have += c;
+                        }
+                        v.set_len(n);
+                    }
+                    self.dropped_issues += (d1 - d0) * rest as u64;
+                    return v;
+                }
+                i += 2;
+                continue;
+            }
+            v.push(T::gc_decode(self, at));
+            i += 1;
+        }
+        v
     }
 
     /// The pointer word at `at` read as a pointer to an ARRAY of `n` `T`s (the length is another field of the

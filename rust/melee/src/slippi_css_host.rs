@@ -421,6 +421,10 @@ fn lock_in(mut cl: Client, p: &crate::slippi_np::Paired, port: u16, max_s: u64) 
         std::env::set_var("MELEE_SLIPPI_AFTER", mode.to_string());
     }
     eprintln!("online css: session: both locked in, the match next");
+    // the rollback snapshot's base copy buffers (~80 MB, every page touched) are made now, on a helper thread, while
+    // the match loads: made at the match's first tick (ModesGame::new) they were not ready in time, and the capture
+    // took ~9-12 ms of fresh-page faults in the first online tick instead of ~3-4 ms (snapshot::prewarm)
+    melee_engine::snapshot::prewarm();
     // one link into the match (Slippi Dolphin takes no second connection): kept polled on this thread until the match
     // process takes it over (slippi_link.rs); the handoff is set once the keeper listens
     crate::slippi_link::keep(cl, mine_sel, theirs, "match process", |link| {

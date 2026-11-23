@@ -969,6 +969,10 @@ impl Host {
     pub fn has_outgoing(&self, peer: usize) -> bool {
         self.peers.get(peer).map_or(false, |p| p.has_outgoing())
     }
+    /// Reliable commands queued or in flight (not yet acked) for a peer: a sender's back-pressure measure.
+    pub fn backlog(&self, peer: usize) -> usize {
+        self.peers.get(peer).map_or(0, |p| p.sent.len() + p.out_reliable.len())
+    }
 
     /// The whole host state but its socket, for another process to go on with the same links (`import`): queued
     /// events are carried, host times are carried as they are (the importing host's clock continues from `now`).

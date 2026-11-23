@@ -62,8 +62,10 @@ pub struct PadSystem {
     pub keys_down: HashSet<KeyCode>,
     pub dead_zones: DeadZones,
     /// Remapped gilrs pads / adapter controllers per port (`bindings`, the launcher's tables); None = default.
-    pub pad_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    pub pad_maps: [crate::bindings::PortMaps; PAD_CHANMAX],
     pub gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    /// The launcher's Rumble switch (`rumble 0` in port-settings.ini turns the motors off); on by default.
+    pub rumble: bool,
     /// Controller profiles (profiles.rs: `--controllers`, `controllers.ini`); None = Aurora default.
     pub profiles: Option<crate::profiles::ProfileSet>,
     profile_state: [crate::profiles::PortState; PAD_CHANMAX],
@@ -97,7 +99,7 @@ pub struct PadSampler {
     use_gilrs: bool,
     keyboard: [KeyboardBindings; PAD_CHANMAX],
     dead_zones: DeadZones,
-    pad_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    pad_maps: [crate::bindings::PortMaps; PAD_CHANMAX],
     gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
     profiles: Option<crate::profiles::ProfileSet>,
     profile_state: [crate::profiles::PortState; PAD_CHANMAX],
@@ -117,7 +119,7 @@ impl PadSampler {
         };
         aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
         for i in 0..PAD_CHANMAX {
-            if let (Some(m), Some(p)) = (self.pad_maps[i].as_ref(), pads[i].as_ref()) {
+            if let Some((m, p)) = pads[i].as_ref().and_then(|p| Some((self.pad_maps[i].for_family(p.family)?, p))) {
                 crate::bindings::apply_xinput(m, p, &mut st[i]);
             }
         }
@@ -186,6 +188,7 @@ impl PadSystem {
             dead_zones: DeadZones::default(),
             pad_maps: Default::default(),
             gc_maps: Default::default(),
+            rumble: true,
             profiles: None,
             profile_state: Default::default(),
             background_input: false,
@@ -262,7 +265,7 @@ impl PadSystem {
         self.sync_keys();
         let ret = aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
         for i in 0..PAD_CHANMAX {
-            if let (Some(m), Some(p)) = (self.pad_maps[i].as_ref(), pads[i].as_ref()) {
+            if let Some((m, p)) = pads[i].as_ref().and_then(|p| Some((self.pad_maps[i].for_family(p.family)?, p))) {
                 crate::bindings::apply_xinput(m, p, &mut st[i]);
             }
         }
@@ -355,7 +358,7 @@ impl PadSystem {
     /// `PADControlMotor`: adapter ports rumble through the adapter; gamepad rumble is not
     /// implemented yet (Aurora drives SDL rumble).
     pub fn control_motor(&self, chan: usize, cmd: u32) {
-        if chan < PAD_CHANMAX && self.sources[chan] == Source::Adapter {
+        if chan < PAD_CHANMAX && self.sources[chan] == Source::Adapter && (self.rumble || cmd != PAD_MOTOR_RUMBLE) {
             if let Some(a) = self.adapter.as_ref() {
                 a.rumble(chan, cmd == PAD_MOTOR_RUMBLE);
             }

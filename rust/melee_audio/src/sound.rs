@@ -1216,9 +1216,17 @@ impl AudioFs for DiscFs {
         Some((e.entrynum, self.disc.read(path).ok()?))
     }
     fn open_stream(&mut self, path: &str) -> Option<(i32, Box<dyn StreamSource>)> {
+        // The whole file now, on the game thread: the stream's refills run on the device's mixer thread under the sound's
+        // lock, and a disc read there (a cold cache: the YouGame app had just unpacked a 7 GB disc) starved the device.
+        // The same bytes either way (a read past the end is zeros in both), so the mix is unchanged.
         let e = self.disc.find(path)?;
-        let disc = crate::disc::Disc::open(&self.iso).ok()?;
-        Some((e.entrynum, Box::new(crate::disc::DiscStream { disc, entry: e })))
+        match self.disc.read(path) {
+            Ok(v) => Some((e.entrynum, Box::new(v))),
+            Err(_) => {
+                let disc = crate::disc::Disc::open(&self.iso).ok()?;
+                Some((e.entrynum, Box::new(crate::disc::DiscStream { disc, entry: e })))
+            }
+        }
     }
 }
 

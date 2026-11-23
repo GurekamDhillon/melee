@@ -527,6 +527,9 @@ thread_local! {
 /// exporter's hooks see each frame once) with `--slp`.
 pub fn slp_from_replay(mrpl: &str, iso: &str) {
     let Some(spec) = SLP_AFTER.with(|c| c.borrow_mut().take()) else { return };
+    if melee_platform::yougame::refuse_child("slp export") {
+        return;
+    }
     let Ok(exe) = std::env::current_exe() else { return };
     log(&format!("slp: exporting {mrpl} to {spec} (headless playback)"));
     let st = std::process::Command::new(exe)
@@ -2180,6 +2183,8 @@ impl NetDriver {
             let won = if (err.is_some() && !end_now) || sr.hard > 0 { -1 } else { match_winner() };
             LAST_WINNER.store(won, std::sync::atomic::Ordering::Relaxed);
             room_report(&format!("end {won}"));
+            // the Melee Unlocked lobby's match history (a --lobby-direct game only)
+            crate::lobby_status::publish_result(won, sr.local_port as i32);
             if let Some(e) = err.filter(|_| !end_now) {
                 self.fail(e);
             } else if compared == 0 {

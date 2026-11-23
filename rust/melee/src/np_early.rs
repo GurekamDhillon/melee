@@ -74,7 +74,13 @@ pub struct EarlySender {
 impl EarlySender {
     /// Start the sampler: `ch` the room's number (the receiver ignores other rooms' pads), `port` the local in-game
     /// port.
-    pub fn start(mut sampler: PadSampler, tx: ThreadSender, peer: Addr, ch: u8, port: u8) -> EarlySender {
+    pub fn start(sampler: PadSampler, tx: ThreadSender, peer: Addr, ch: u8, port: u8) -> EarlySender {
+        Self::start_with(sampler, Box::new(move |t, bytes| tx.send(&peer, &early::encode(ch, t, port, bytes))))
+    }
+
+    /// The sampler with its own way out: `send(target session frame, pad)` runs on the sampler thread for every
+    /// change worth sending (P2P Direct: a mu_net SAMPLE through the session's locked link, mu_play.rs).
+    pub fn start_with(mut sampler: PadSampler, mut send: Box<dyn FnMut(i32, &Pad) -> bool + Send>) -> EarlySender {
         let state = Arc::new(Mutex::new(SenderState::new(rules())));
         let lead: Arc<Mutex<Option<Lead>>> = Arc::new(Mutex::new(None));
         let run = Arc::new(AtomicBool::new(true));
@@ -114,7 +120,7 @@ impl EarlySender {
                         if lie {
                             bytes[0] ^= 0x1F;
                         }
-                        if tx.send(&peer, &early::encode(ch, t, port, &bytes)) {
+                        if send(t, &bytes) {
                             st2.lock().unwrap().stats.packets += 1;
                         }
                     }

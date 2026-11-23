@@ -1530,11 +1530,8 @@ impl NetDriver {
     /// once the match runs with a peer that announced them, and tell it this tick's poll.
     pub fn pre_tick(&mut self, pads: &melee_platform::PadSystem) {
         #[cfg(feature = "real-net")]
-        if let Some(mr) = self.mu.as_mut() {
-            // the scene boot: keep the link serviced (pings, the peer's commits) until the match takes it
-            if !matches!(self.phase, NetPhase::InMatch(_)) {
-                mr.link.poll();
-            }
+        if self.mu.is_some() {
+            self.pre_tick_mu(pads);
             return;
         }
         if let Some(sr) = self.slippi.as_mut() {

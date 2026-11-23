@@ -211,6 +211,10 @@ const CP_REG_ARRAYSTRIDE_ID: u8 = 0xB0;
 const BP_REG_DRAWDONE: u32 = 0x45;
 pub const GX_AUTO: u16 = 0xFFFF;
 
+/// The decode thread tops its spare Vecs up to SPARE_TOP when fewer than SPARE_LOW are left (see `Spares`).
+const SPARE_LOW: usize = 256;
+const SPARE_TOP: usize = 2048;
+
 /// A frame decoded on the [`Gx::enable_async`] worker: its draws and the copy-clear the presenter needs.
 pub struct AsyncFrame {
     pub draws: Vec<crate::draw::DrawCmd>,
@@ -224,6 +228,8 @@ pub struct AsyncFrame {
 enum Job {
     /// FIFO bytes and the handle table they refer to.
     Process(Vec<u8>, Resources),
+    /// A frame nobody shows (a rollback's resimulated one): its Vecs become the decoder's spares, the rest is freed here.
+    Recycle(Vec<crate::draw::DrawCmd>),
     /// GXCopyDisp: hand the draws decoded so far over as a frame.
     End(Option<std::sync::Arc<melee_core::pose::PoseFrame>>),
 }
@@ -376,21 +382,40 @@ impl Gx {
                     gate();
                     let go = match job {
                         Job::Process(mut buf, res) => {
+                            // spare Vecs of retired frames for this job's draws (one lock per pool, when low)
+                            if st.spares.bytes.len() < SPARE_LOW || st.spares.idx.len() < SPARE_LOW / 2 {
+                                if let Some(f) = pipes.lock().unwrap().as_ref() {
+                                    f.recycle.take_spares(&mut st.spares.bytes, SPARE_TOP, &mut st.spares.idx, SPARE_TOP / 2);
+                                }
+                            }
                             st.process(&buf, &res);
                             drop(res);
                             buf.clear();
                             let _ = ptx.send(buf);
                             true
                         }
+                        Job::Recycle(f) => {
+                            st.spares.harvest(f);
+                            true
+                        }
                         Job::End(pose) => {
                             if warn { for w in &st.warnings { eprintln!("gx warn: {w}"); } }
                             st.warnings.clear();
-                            let draws = st.take_draws();
                             let f = pipes.lock().unwrap().clone();
-                            if let Some(f) = f {
-                                f.warm(&draws);
+                            if let Some(f) = &f {
+                                // the next frame's draw list: a retired one with room enough, when spare
+                                if st.spares.list.is_none() {
+                                    st.spares.list = f.recycle.take_list(st.draws_hint + st.draws_hint / 8);
+                                }
                             }
-                            let packed = crate::render::pack(&draws);
+                            let draws = st.take_draws();
+                            let packed = match f {
+                                Some(f) => {
+                                    f.warm(&draws);
+                                    crate::render::pack_with(&draws, f.recycle.take_pack())
+                                }
+                                None => crate::render::pack(&draws),
+                            };
                             let f = AsyncFrame { draws, clear_color: st.clear_color, clear_depth: st.clear_depth, packed, pose };
                             ftx.send(f).is_ok()
                         }
@@ -413,6 +438,18 @@ impl Gx {
     }
     pub fn is_async(&self) -> bool {
         self.worker.is_some()
+    }
+    /// Free a frame that will not be shown: async, on the decode thread, whose next draws reuse its Vecs (a rollback
+    /// tick freed every resimulated frame's draws on the game thread); otherwise here. Call on the system heap scope.
+    pub fn recycle_frame(&mut self, f: Vec<crate::draw::DrawCmd>) {
+        match &self.worker {
+            Some(w) if f.capacity() != 0 => {
+                if let Err(e) = w.tx.send(Job::Recycle(f)) {
+                    drop(e.0);
+                }
+            }
+            _ => drop(f),
+        }
     }
     /// Async mode: close the current frame (see [`Gx::enable_async`]).
     pub fn end_frame(&mut self) {

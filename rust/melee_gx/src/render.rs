@@ -611,7 +611,18 @@ pub struct Packed {
 
 /// Pack every draw's vertices, array snapshots, indices and uniform layout (no GPU access: any thread).
 pub fn pack(draws: &[DrawCmd]) -> Packed {
-    let mut pk = Packed { key: (draws.as_ptr() as usize, draws.len()), draws: Vec::with_capacity(draws.len()), vbuf: Vec::new(), abuf: Vec::new(), ibuf: Vec::new(), uoff: 0, max_uniform: 16 };
+    pack_with(draws, PackBufs::default())
+}
+
+/// [`pack`] into the (emptied) buffers `b` of an earlier packing ([`Recycle::take_pack`]).
+pub fn pack_with(draws: &[DrawCmd], b: PackBufs) -> Packed {
+    let PackBufs { draws: mut pdraws, vbuf, abuf, ibuf } = b;
+    pdraws.clear();
+    pdraws.reserve(draws.len());
+    let mut pk = Packed { key: (draws.as_ptr() as usize, draws.len()), draws: pdraws, vbuf, abuf, ibuf, uoff: 0, max_uniform: 16 };
+    pk.vbuf.clear();
+    pk.abuf.clear();
+    pk.ibuf.clear();
     let mut arr_max: FxMap<usize, usize> = FxMap::default();
     let mut arr_off: FxMap<usize, u32> = FxMap::default();
     // Draws share array snapshots (a model's vertex arrays): upload each one once per frame.
@@ -898,6 +909,114 @@ pub struct PipeFactory {
     cache_path: Option<std::path::PathBuf>,
     /// Pipelines created since the driver cache was last written.
     unsaved: std::sync::atomic::AtomicUsize,
+    /// Per-frame buffers handed back for the next frames (see [`Recycle`]).
+    pub recycle: std::sync::Arc<Recycle>,
+}
+
+/// Spare per-frame buffers on their way back to the thread that fills them: the packing's vertex / array / index / draw
+/// buffers (from [`Renderer::prepare`] to [`pack_with`]) and a retired frame's draw list, vertex, uniform and index
+/// Vecs (from the presenter's frame drop to the GX decode thread). Allocating them anew every frame was ~8% of an
+/// online fight tick's samples (system allocations). Shared through [`PipeFactory`], an `Arc` on the system heap,
+/// never a static (a rollback load rewrites statics). Bounded: a pool holds a few frames' worth at most.
+#[derive(Default)]
+pub struct Recycle {
+    packs: std::sync::Mutex<Vec<PackBufs>>,
+    bytes: std::sync::Mutex<Vec<Vec<u8>>>,
+    idx: std::sync::Mutex<Vec<Vec<u16>>>,
+    lists: std::sync::Mutex<Vec<Vec<DrawCmd>>>,
+}
+
+/// The buffers of one [`Packed`], emptied.
+#[derive(Default)]
+pub struct PackBufs {
+    draws: Vec<PackedDraw>,
+    vbuf: Vec<u8>,
+    abuf: Vec<u8>,
+    ibuf: Vec<u8>,
+}
+
+const RECYCLE_PACKS: usize = 4;
+const RECYCLE_LISTS: usize = 3;
+const RECYCLE_BYTES: usize = 16384;
+const RECYCLE_IDX: usize = 8192;
+/// A spare Vec larger than this is freed, not kept (one huge frame must not pin its memory).
+const RECYCLE_MAX_BYTES: usize = 1 << 20;
+
+impl Recycle {
+    pub fn take_pack(&self) -> PackBufs {
+        self.packs.lock().unwrap().pop().unwrap_or_default()
+    }
+    pub fn put_pack(&self, mut b: PackBufs) {
+        b.draws.clear();
+        b.vbuf.clear();
+        b.abuf.clear();
+        b.ibuf.clear();
+        let mut p = self.packs.lock().unwrap();
+        if p.len() < RECYCLE_PACKS {
+            p.push(b);
+        }
+    }
+    /// Move up to `want` spare byte / index Vecs (emptied) into `bytes` / `idx` (one lock each).
+    pub fn take_spares(&self, bytes: &mut Vec<Vec<u8>>, want_bytes: usize, idx: &mut Vec<Vec<u16>>, want_idx: usize) {
+        if bytes.len() < want_bytes {
+            let mut p = self.bytes.lock().unwrap();
+            let n = (want_bytes - bytes.len()).min(p.len());
+            let at = p.len() - n;
+            bytes.extend(p.drain(at..));
+        }
+        if idx.len() < want_idx {
+            let mut p = self.idx.lock().unwrap();
+            let n = (want_idx - idx.len()).min(p.len());
+            let at = p.len() - n;
+            idx.extend(p.drain(at..));
+        }
+    }
+    /// An empty draw list with room for `cap` draws, if one is spare.
+    pub fn take_list(&self, cap: usize) -> Option<Vec<DrawCmd>> {
+        let mut p = self.lists.lock().unwrap();
+        let i = p.iter().position(|l| l.capacity() >= cap)?;
+        Some(p.swap_remove(i))
+    }
+    /// Take a retired frame apart: its draw list and every draw's vertex, uniform and index Vecs become spares; the rest
+    /// (Arcs of configs, arrays, textures) is dropped here. Call on a thread off the game's path (the frame drop thread).
+    pub fn frame(&self, mut draws: Vec<DrawCmd>) {
+        let mut bytes = Vec::with_capacity(draws.len() * 2);
+        let mut idx = Vec::with_capacity(draws.len());
+        for d in draws.iter_mut() {
+            for v in [std::mem::take(&mut d.verts), std::mem::take(&mut d.uniform)] {
+                if v.capacity() != 0 && v.capacity() <= RECYCLE_MAX_BYTES {
+                    bytes.push(v);
+                }
+            }
+            let i = std::mem::take(&mut d.indices);
+            if i.capacity() != 0 && i.capacity() * 2 <= RECYCLE_MAX_BYTES {
+                idx.push(i);
+            }
+        }
+        draws.clear();
+        for v in bytes.iter_mut() {
+            v.clear();
+        }
+        for v in idx.iter_mut() {
+            v.clear();
+        }
+        {
+            let mut p = self.bytes.lock().unwrap();
+            let n = RECYCLE_BYTES.saturating_sub(p.len()).min(bytes.len());
+            p.extend(bytes.drain(..n));
+        }
+        {
+            let mut p = self.idx.lock().unwrap();
+            let n = RECYCLE_IDX.saturating_sub(p.len()).min(idx.len());
+            p.extend(idx.drain(..n));
+        }
+        if draws.capacity() != 0 {
+            let mut p = self.lists.lock().unwrap();
+            if p.len() < RECYCLE_LISTS {
+                p.push(draws);
+            }
+        }
+    }
 }
 
 impl PipeFactory {
@@ -1563,7 +1682,7 @@ impl Renderer {
         let empty_view = empty.create_view(&Default::default());
         let empty_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
         let (cache, cache_path) = warmlist::open_driver_cache(&device, &adapter_info);
-        let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default(), asyncq: Default::default(), pending: Default::default(), cache, cache_path, unsaved: Default::default() });
+        let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default(), asyncq: Default::default(), pending: Default::default(), cache, cache_path, unsaved: Default::default(), recycle: Default::default() });
         // compile every pipeline earlier runs needed, off the frame path, while the game boots
         pipes.start_warm();
         let mut r = Self {
@@ -2234,14 +2353,19 @@ impl Renderer {
             Some(p) if p.key == key => p,
             _ => {
                 main_packs(1);
-                pack(draws)
+                pack_with(draws, self.pipes.recycle.take_pack())
             }
         };
-        fc.vbuf = pk.vbuf;
-        fc.abuf = pk.abuf;
-        fc.ibuf = pk.ibuf;
+        // the slot's buffers of its last frame go back for a later packing (no per-frame allocation of them)
+        let old = PackBufs {
+            draws: pk.draws,
+            vbuf: std::mem::replace(&mut fc.vbuf, pk.vbuf),
+            abuf: std::mem::replace(&mut fc.abuf, pk.abuf),
+            ibuf: std::mem::replace(&mut fc.ibuf, pk.ibuf),
+        };
         fc.draws.clear();
-        fc.draws.extend(pk.draws.iter().map(|c| PreparedDraw { pipeline: None, tex_bg: None, imm: c.imm, uoff: c.uoff, first_index: c.first_index, owner: c.owner, count: c.count, merged: c.merged }));
+        fc.draws.extend(old.draws.iter().map(|c| PreparedDraw { pipeline: None, tex_bg: None, imm: c.imm, uoff: c.uoff, first_index: c.first_index, owner: c.owner, count: c.count, merged: c.merged }));
+        self.pipes.recycle.put_pack(old);
         let uoff = pk.uoff;
         let max_uniform = pk.max_uniform;
         fc.max_uniform = (max_uniform as u64).next_multiple_of(16);

@@ -447,11 +447,13 @@ impl Presenter {
         let melee_gx::interp::Frame { draws, pose, packed } = f;
         drop(pose);
         drop(packed);
+        let recycle = self.renderer.pipe_factory().recycle.clone();
         let tx = self.dropper.get_or_insert_with(|| {
             let (tx, rx) = std::sync::mpsc::channel::<Vec<DrawCmd>>();
             let _ = std::thread::Builder::new().name("gx frame drop".into()).spawn(move || {
+                // the frame's Vecs go back to the GX decode thread for later frames (melee_gx::render::Recycle)
                 while let Ok(v) = rx.recv() {
-                    drop(v);
+                    recycle.frame(v);
                 }
             });
             tx

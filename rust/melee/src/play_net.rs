@@ -219,7 +219,8 @@ impl ModesGame {
             // only the newest frame of a tick is shown: detach (copy) it lazily, at the end of the tick
             if let Some(old) = self.raw.replace(f) {
                 let _s = melee_engine::arena::SysScope::enter();
-                drop(old);
+                // freed (and its Vecs reused) on the GX decode thread, off the rollback tick
+                melee_engine::gxbridge::shim().gx.recycle_frame(old);
             }
         }
     }
@@ -248,7 +249,7 @@ impl ModesGame {
     pub fn drop_frame(&mut self) {
         if let Some(f) = self.raw.take() {
             let _s = melee_engine::arena::SysScope::enter();
-            drop(f);
+            melee_engine::gxbridge::shim().gx.recycle_frame(f);
         }
     }
 

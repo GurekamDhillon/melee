@@ -106,6 +106,11 @@ impl SpecServer {
         Ok(s)
     }
 
+    /// The UDP port spectators dial.
+    pub fn local_port(&self) -> u16 {
+        self.sock.local_addr().map_or(0, |a| a.port())
+    }
+
     fn send(&self, to: Key, body: &[u8]) {
         let mut b = Vec::with_capacity(body.len() + 12);
         match to {

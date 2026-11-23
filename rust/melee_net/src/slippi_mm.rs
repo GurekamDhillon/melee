@@ -430,6 +430,17 @@ impl Ws {
 
     /// With [`Target::Real`]: `ws://` or `wss://` to any host (a name is resolved; `wss://` defaults to port 443).
     pub fn connect_to(url: &str, timeout: Duration, target: Target) -> Result<Ws, String> {
+        Self::connect_with(url, timeout, target, "")
+    }
+
+    /// The request target (path and query) of a `ws://` / `wss://` URL, exactly as [`Ws::connect_with`] sends it.
+    pub fn request_target(url: &str) -> String {
+        let rest = url.strip_prefix("wss://").or_else(|| url.strip_prefix("ws://")).unwrap_or(url);
+        rest.split_once('/').map(|(_, b)| format!("/{b}")).unwrap_or_else(|| "/".into())
+    }
+
+    /// [`Ws::connect_to`] with extra request header lines (`extra`: each line ending in `\r\n`).
+    pub fn connect_with(url: &str, timeout: Duration, target: Target, extra: &str) -> Result<Ws, String> {
         let (tls, rest) = match (url.strip_prefix("ws://"), url.strip_prefix("wss://")) {
             (Some(r), _) => (false, r),
             (_, Some(r)) => (true, r),
@@ -469,7 +480,7 @@ impl Ws {
         s.set_read_timeout(Some(timeout)).ok();
         let s = if tls { Self::tls(host, s)? } else { Stream::Plain(s) };
         let key = "R0QtbWVsZWUtc2xpcHBpMw=="; // any 16 bytes, base64
-        let req = format!("GET {path} HTTP/1.1\r\nHost: {host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n");
+        let req = format!("GET {path} HTTP/1.1\r\nHost: {host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n{extra}\r\n");
         let mut ws = Ws { s, buf: Vec::new(), mask: 0x5EED_1234 };
         ws.s.write_all(req.as_bytes()).map_err(|e| e.to_string())?;
         loop {
@@ -501,6 +512,17 @@ impl Ws {
     #[cfg(not(feature = "real-net"))]
     fn tls(_host: &str, _s: TcpStream) -> Result<Stream, String> {
         Err("wss:// needs a build with the melee_net `real-net` feature".into())
+    }
+
+    /// Socket read / write timeouts after the handshake (None = block).
+    pub fn set_timeouts(&self, read: Option<Duration>, write: Option<Duration>) {
+        let tcp = match &self.s {
+            Stream::Plain(s) => s,
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => &s.sock,
+        };
+        tcp.set_read_timeout(read).ok();
+        tcp.set_write_timeout(write).ok();
     }
 
     /// How long one read may block (`recv_text` then returns a "timed out" error; buffered data is kept).

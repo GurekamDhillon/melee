@@ -21,6 +21,9 @@ pub struct Presenter {
     /// Frames presented / swapchain images that could not be acquired (skipped).
     pub presented: u64,
     pub skipped: u64,
+    /// Acquires that failed or took 50 ms or more, and the last one's description.
+    acquire_issues: u64,
+    last_acquire: String,
     /// The internal scale follows the window (no `MELEE_RENDER_SCALE`).
     auto_scale: bool,
     /// The content aspect of the frames being presented (4:3, or the window's with widescreen in a wide scene).
@@ -191,7 +194,7 @@ impl Presenter {
             melee_core::frameprof::info("gpu", &format!("{} ({:?}, driver {})", ai.name, ai.backend, ai.driver_info));
             melee_core::frameprof::info("swapchain", &format!("present mode {:?}, frame latency {}, {}x{}, render scale {}, MSAA {}x", config.present_mode, config.desired_maximum_frame_latency, config.width, config.height, renderer.scale, renderer.samples));
         }
-        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, pending_fx: None, pending_cut: false, arrive_gap: 1, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, shot: false, last: [0; 3], last_fresh: false, adopt_us: 0, drop_us: 0, offthread_drop: None, dropper: None, modes: caps.present_modes.clone(), last_present: None, interval_ms: 16.7, split: std::env::var("MELEE_PRESENT_SPLIT").map_or(true, |v| !matches!(v.trim(), "0" | "off" | "false" | "no")), deferred: 0, fresh: 0, undrawn: false })
+        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, acquire_issues: 0, last_acquire: String::new(), prev: None, cur: None, prepared: false, blended: false, pending: None, pending_fx: None, pending_cut: false, arrive_gap: 1, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, shot: false, last: [0; 3], last_fresh: false, adopt_us: 0, drop_us: 0, offthread_drop: None, dropper: None, modes: caps.present_modes.clone(), last_present: None, interval_ms: 16.7, split: std::env::var("MELEE_PRESENT_SPLIT").map_or(true, |v| !matches!(v.trim(), "0" | "off" | "false" | "no")), deferred: 0, fresh: 0, undrawn: false })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -501,23 +504,31 @@ impl Presenter {
     fn swap_present(&mut self) {
         let za = melee_core::tracy::zone("acquire (get_current_texture)");
         let prof = melee_core::frameprof::on().then(std::time::Instant::now);
+        let ta = std::time::Instant::now();
         let tex = match self.surface.get_current_texture() {
             Ok(t) => t,
-            Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+            Err(e @ (wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated)) => {
+                self.note_acquire(&format!("{e:?}"), ta.elapsed(), "reconfigured");
                 self.surface.configure(&self.renderer.device, &self.config);
                 match self.surface.get_current_texture() {
                     Ok(t) => t,
-                    Err(_) => {
+                    Err(e2) => {
                         self.skipped += 1;
+                        self.note_acquire(&format!("{e:?} then {e2:?}"), ta.elapsed(), "frame skipped");
                         return;
                     }
                 }
             }
-            Err(_) => {
+            Err(e) => {
                 self.skipped += 1;
+                self.note_acquire(&format!("{e:?}"), ta.elapsed(), "frame skipped");
                 return;
             }
         };
+        let acq = ta.elapsed();
+        if acq >= std::time::Duration::from_millis(50) {
+            self.note_acquire("slow", acq, "presented");
+        }
         drop(za);
         let _zp = melee_core::tracy::zone("present (blit + overlay + submit + present)");
         let acquired = prof.map(|t| {
@@ -536,6 +547,20 @@ impl Presenter {
         if let Some(t) = acquired {
             melee_core::frameprof::add(melee_core::frameprof::C::PresentNs, t.elapsed().as_nanos() as u64);
         }
+    }
+
+    /// An acquire that failed or blocked: logged (the first 40, then every 600th) and kept for the present-gap log.
+    fn note_acquire(&mut self, what: &str, took: std::time::Duration, outcome: &str) {
+        self.acquire_issues += 1;
+        self.last_acquire = format!("acquire {what} after {:.1} ms ({outcome})", took.as_secs_f64() * 1e3);
+        if self.acquire_issues <= 40 || self.acquire_issues % 600 == 0 {
+            crate::plog!("gw: video: {} [{} so far]", self.last_acquire, self.acquire_issues);
+        }
+    }
+
+    /// The present-gap log's note: skipped acquires so far and the last acquire problem.
+    pub fn present_note(&self) -> String {
+        format!("{} presented, {} acquires skipped, last acquire issue: {}", self.presented, self.skipped, if self.last_acquire.is_empty() { "none" } else { &self.last_acquire })
     }
 
     /// DXGI's frame statistics of the swapchain (D3D12 backend only): frames shown (PresentCount), refreshes

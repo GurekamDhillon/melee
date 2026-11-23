@@ -84,6 +84,7 @@ mod yougame_search;
 mod room_keeper;
 mod play_net;
 mod slp_export;
+mod live_out;
 mod spectate;
 mod replay_ctl;
 mod slp_play;

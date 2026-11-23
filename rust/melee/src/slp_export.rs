@@ -83,6 +83,9 @@ pub struct Exporter {
     rb: bool,
     cur: i32,
     stopped: bool,
+    /// armed only for desync diagnostics (`arm_for_desync`): the match is written only if a hard desync was seen
+    desync_only: bool,
+    desynced: bool,
 }
 
 /// The exporter, made once on the system heap: a rollback load rewinds the statics and the game arena (the snapshot), so
@@ -267,6 +270,8 @@ impl Exporter {
             crate::slippi_spectate::write(&b);
             raw.extend_from_slice(&b);
         }
+        // live relay output (live_out.rs): every byte `raw` gets goes out as it is appended (Gecko List included)
+        crate::live_out::game_start(&raw);
         let mut present = [false; 4];
         for (i, p) in present.iter_mut().enumerate() {
             *p = gi[0x61 + 0x24 * i] != 3;
@@ -275,12 +280,8 @@ impl Exporter {
         self.m = Some(Match { raw, frame: -124, present, timer_secs: sm.rules.time_limit, timed, start_at: iso_now(), started: false, seed_at_tick: 0, pads: [melee_types::PADStatus::zeroed(); 4], pre: Vec::new(), post: Vec::new(), chars: Default::default(), last: [None; 4], frames: 0, start_frame: self.cur, pending: Default::default(), seen: Vec::new() });
     }
 
-    fn end_match(&mut self, quit: bool) {
-        let Some(mut m) = self.m.take() else { return };
-        if !m.started {
-            crate::slippi_spectate::end_game(false);
-            return;
-        }
+    /// The file's bytes for the match `m` (Game End appended to `m.raw`; `spectate`: also tells the spectator feed).
+    fn encode(&self, m: &mut Match, quit: bool, spectate: bool) -> Vec<u8> {
         // Game End: GAME! when one fighter (or none) has stocks left, TIME! when a timed match ran its clock, else no contest
         let alive: Vec<usize> = (0..4).filter(|&p| m.present[p] && m.last[p].map_or(false, |l| l.0 > 0)).collect();
         let method = if alive.len() <= 1 {
@@ -302,8 +303,11 @@ impl Exporter {
         }
         let end = [0x39, method, 0xFF, place[0] as u8, place[1] as u8, place[2] as u8, place[3] as u8];
         m.raw.extend_from_slice(&end);
-        crate::slippi_spectate::write(&end);
-        crate::slippi_spectate::end_game(false);
+        if spectate {
+            crate::live_out::game_end(&end);
+            crate::slippi_spectate::write(&end);
+            crate::slippi_spectate::end_game(false);
+        }
         let mut o = b"{U\x03raw[$U#l".to_vec();
         o.extend_from_slice(&(m.raw.len() as u32).to_be_bytes());
         o.extend_from_slice(&m.raw);
@@ -351,6 +355,25 @@ impl Exporter {
         ub_str(&mut o, &self.played_on);
         o.push(b'}');
         o.push(b'}');
+        o
+    }
+
+    fn end_match(&mut self, quit: bool) {
+        let Some(mut m) = self.m.take() else { return };
+        if !m.started {
+            crate::slippi_spectate::end_game(false);
+            return;
+        }
+        // an exporter armed only for desync diagnostics keeps the match when a hard desync was seen, else drops it
+        if self.desync_only && !self.desynced {
+            crate::slippi_spectate::end_game(false);
+            return;
+        }
+        let o = self.encode(&mut m, quit, true);
+        if self.spec.is_empty() {
+            // the live relay output's exporter (live_out.rs) with no --slp: nothing to write
+            return;
+        }
         let path = self.path_for();
         if let Some(d) = std::path::Path::new(&path).parent().filter(|d| !d.as_os_str().is_empty()) {
             let _ = std::fs::create_dir_all(d);
@@ -370,7 +393,7 @@ pub fn install(spec: &str, played_on: &str, names: [String; 4]) {
     use melee_fighter::platform::hook as h;
     unsafe {
         let _s = melee_engine::arena::SysScope::enter();
-        EXP = Box::into_raw(Box::new(Exporter { spec: spec.to_string(), played_on: played_on.to_string(), names, m: None, count: 0, written: Vec::new(), gecko: Vec::new(), rb: false, cur: 0, stopped: false }));
+        EXP = Box::into_raw(Box::new(Exporter { spec: spec.to_string(), played_on: played_on.to_string(), names, m: None, count: 0, written: Vec::new(), gecko: Vec::new(), rb: false, cur: 0, stopped: false, desync_only: false, desynced: false }));
         melee_modes::tu::gmvs::ext::hook::Replay_RecordMatch = Some(record_match);
         h::Replay_RecordInput = Some(record_input);
         h::Replay_Tracing = Some(|| exp().map_or(0, |x| x.m.is_some() as i32));
@@ -651,6 +674,7 @@ fn flush_frame(m: &mut Match) {
     put32(&mut bk, 1, f);
     put32(&mut bk, 5, f);
     m.raw.extend_from_slice(&bk);
+    crate::live_out::frame_events(&m.raw[at..]);
     crate::slippi_spectate::write(&m.raw[at..]);
 }
 
@@ -679,5 +703,50 @@ pub fn finish() -> Vec<String> {
             x.written.clone()
         }
         None => Vec::new(),
+    }
+}
+
+/// A Slippi-wire match with no `--slp`: record it live anyway (the frames stay in memory) so a hard desync can save
+/// the .slp. Written only if a desync was seen. Does nothing when an exporter is installed already. Under YouGame the
+/// file goes to MELEE_SLP_DIR (YOUGAME_DATA\Replays); outside it only when MELEE_DESYNC_SLP is set.
+pub fn arm_for_desync(iso: Option<&str>) {
+    if active() || !(melee_platform::yougame::sandboxed() || std::env::var_os("MELEE_DESYNC_SLP").is_some()) {
+        return;
+    }
+    install("auto", "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+    if let Some(i) = iso {
+        set_disc(i);
+    }
+    live_rollback();
+    if let Some(x) = exp() {
+        x.desync_only = true;
+    }
+}
+
+/// The first hard desync: the match so far (confirmed frames) is written to a `Desync_<time>.slp` beside the normal
+/// replays, the recording goes on, and the final file is written at the match's end. Returns the path, if written.
+pub fn save_on_desync() -> Option<String> {
+    let _s = melee_engine::arena::SysScope::enter();
+    let x = exp()?;
+    x.desynced = true;
+    let mut m = x.m.take()?;
+    if !m.started {
+        x.m = Some(m);
+        return None;
+    }
+    let keep = m.raw.len();
+    let o = x.encode(&mut m, true, false);
+    m.raw.truncate(keep);
+    x.m = Some(m);
+    let t = iso_now().replace([':', '-'], "");
+    let dir = std::env::var("MELEE_SLP_DIR").ok().filter(|d| !d.is_empty()).unwrap_or_else(|| "Replays".into());
+    let path = format!("{dir}/Desync_{}.slp", t.trim_end_matches('Z'));
+    let _ = std::fs::create_dir_all(&dir);
+    match std::fs::write(&path, &o) {
+        Ok(()) => Some(path),
+        Err(e) => {
+            eprintln!("gw: slp: {path}: {e}");
+            None
+        }
     }
 }

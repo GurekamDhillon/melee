@@ -1137,6 +1137,8 @@ pub struct NetDriver {
     pub slippi: Option<Box<SlippiRun>>,
     /// `play --p2p-*`: a P2P Direct match over mu_net (mu_play.rs)
     pub mu: Option<MuBox>,
+    /// MELEE_INPUTLAT_CSV: the input-latency probe (inputlat.rs)
+    pub lat: Option<Box<crate::inputlat::LatProbe>>,
     /// matches played on this connection before the current one
     pub match_no: u32,
     /// the final hashes of the earlier matches
@@ -1437,6 +1439,7 @@ impl NetDriver {
             params: Some(rp),
             slippi: None,
             mu: None,
+            lat: None,
             match_no: 0,
             all_finals: Vec::new(),
             early_on,
@@ -1529,6 +1532,9 @@ impl NetDriver {
     /// Right after the game read the controllers for a tick (retail_flow `tick`): start the early-inputs sampler
     /// once the match runs with a peer that announced them, and tell it this tick's poll.
     pub fn pre_tick(&mut self, pads: &melee_platform::PadSystem) {
+        if let Some(l) = self.lat.as_mut() {
+            l.sample_us = crate::inputlat::now_us(); // the controllers were read just before this call
+        }
         #[cfg(feature = "real-net")]
         if self.mu.is_some() {
             self.pre_tick_mu(pads);
@@ -2022,6 +2028,7 @@ impl NetDriver {
             params: None,
             slippi: Some(Box::new(run)),
             mu: None,
+            lat: crate::inputlat::LatProbe::from_env(),
             match_no: 0,
             all_finals: Vec::new(),
             early_on: false,
@@ -2046,6 +2053,7 @@ impl NetDriver {
         let online = |s: i32| s - FIRST + 1;
         let NetPhase::InMatch(g) = &mut self.phase else { return false };
         let sr = self.slippi.as_mut().unwrap();
+        let lat = &mut self.lat;
         let mut s = self.sess.borrow_mut();
         let (lp, rp) = (sr.local_port as usize, sr.remote_port as usize);
         let mut err: Option<String> = None;
@@ -2061,6 +2069,9 @@ impl NetDriver {
                         sl.bits.entry(sf).or_default()[rp & 3] = pad[8];
                     }
                     s.submit_remote_input(rp * 2, sf, &pad_input(&pad));
+                    if let Some(l) = lat.as_mut() {
+                        l.push(b'R', frame, crate::inputlat::now_us(), online(s.current_frame()) as i64);
+                    }
                     if sl.mixed.get(&sf).is_some_and(|b| b[rp & 3] != pad[8]) {
                         s.force_resim_from(rp * 2, sf);
                     }
@@ -2147,6 +2158,13 @@ impl NetDriver {
             sr.link.resend_pads();
         }
         sr.link.flush();
+        if let Some(l) = lat.as_mut() {
+            let t = crate::inputlat::now_us();
+            for ff in (sent_before + 1)..=sr.last_sent {
+                l.push(b'S', online(ff), l.sample_us, t);
+            }
+            l.push(b'T', online(f), l.sample_us, t);
+        }
         if sr.done_at.is_none() {
             run_tick(&mut s, &mut **g, None);
             // behind the peer: one extra frame this tick (only when this tick ran its new frame)

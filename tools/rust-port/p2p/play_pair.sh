@@ -7,6 +7,7 @@
 # B_WRAP="timeout -s KILL 30": B dies mid-match (A must still exit 0 and write a "disconnected" result).
 # PADGEN="" with MELEE_PAD_SCRIPT=<file> (and MELEE_TEST_EARLY_LEAD_MS=N): the pad script drives both sides instead of
 # the generator (the early-input sampler reads the script, so SAMPLEs go out).
+# LAT=1: the input-latency probe (MELEE_INPUTLAT_CSV) to OUT/lat_a.csv and lat_b.csv (tools/rust-port/inputlat/join.py).
 # Never prints the disc path.
 set -u
 PADGEN=${PADGEN---mu-test-padgen 7}
@@ -31,11 +32,11 @@ line() { # slot port peer identity expect result
   echo --p2p-port "$2" --p2p-peer "127.0.0.1:$3" --p2p-slot "$1" --p2p-chars 2/0:9/1 --p2p-stage 31 --p2p-seed "$SEED" --p2p-delay 2 \
     --p2p-identity "$4" --p2p-expect "$5" --p2p-result "$6" --p2p-names "Alpha:Beta" --p2p-connect-seconds 45 --p2p-games 1
 }
-MELEE_WINDOW_TITLE="p2pdirect play A" "$MELEE" play --iso "$GW_ISO_VANILLA" --skip-intro --max-frames 20000 \
+MELEE_INPUTLAT_CSV="${LAT:+$OUT/lat_a.csv}" MELEE_WINDOW_TITLE="p2pdirect play A" "$MELEE" play --iso "$GW_ISO_VANILLA" --skip-intro --max-frames 20000 \
   $(line 0 $PA $PB "$IA" "$KB" "$OUT/a/res.json") $PADGEN --mu-test-frames "$FRAMES" "$@" >"$OUT/a.out" 2>"$OUT/a.log" &
 A=$!
 sleep "${B_DELAY:-2}"
-MELEE_WINDOW_TITLE="p2pdirect play B" ${B_WRAP:-} "$MELEE" play --iso "$GW_ISO_VANILLA" --skip-intro --max-frames 20000 \
+MELEE_INPUTLAT_CSV="${LAT:+$OUT/lat_b.csv}" MELEE_WINDOW_TITLE="p2pdirect play B" ${B_WRAP:-} "$MELEE" play --iso "$GW_ISO_VANILLA" --skip-intro --max-frames 20000 \
   $(line 1 $PB $PA "$IB" "$KA" "$OUT/b/res.json") $PADGEN --mu-test-frames "$FRAMES" "$@" >"$OUT/b.out" 2>"$OUT/b.log" &
 B=$!
 wait $A; RA=$?

@@ -1956,6 +1956,10 @@ pub fn play(args: &[String]) -> ExitCode {
         // the Slippi spectator feed of the exported match (slippi_spectate.rs): read-only, loopback, off under YouGame
         if crate::slp_export::active() {
             crate::slippi_spectate::start();
+        } else if slippi_wire && net.is_some() {
+            // no --slp: the Slippi-wire match is still kept in memory and written only if a hard desync is seen (YouGame
+            // sandbox, or MELEE_DESYNC_SLP); after the spectator feed's check so that feed stays off
+            crate::slp_export::arm_for_desync(Some(&game.iso));
         }
         rp.net = net;
         let code = crate::retail_flow::run(rp, has("--headless"));

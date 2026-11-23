@@ -19,6 +19,24 @@ use melee_net::session::{RbGame, FIRST, SLOTS};
 use melee_types::PADStatus;
 use std::cell::RefCell;
 
+/// A hard checksum mismatch (`hard`: how many so far, this one included): the first 30 are logged, then a count every 60
+/// frames. The first also dumps the state (per fighter position, percent, action state; stocks per slot) with both
+/// checksums and the frame, and saves the match's live .slp (`slp_export`). Logging and saving only.
+pub(crate) fn desync_report(tag: &str, fr: i32, lv: u32, rv: u32, hard: u64, cur: i32) {
+    if hard <= 30 {
+        log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x} (the match goes on)"));
+    } else if fr % 60 == 0 {
+        log(&format!("netplay {tag}: DESYNC count {hard} (latest at online frame {fr}: local {lv:08x} remote {rv:08x})"));
+    }
+    if hard == 1 {
+        log(&format!("netplay {tag}: DESYNC state at online frame {fr} (session now at {cur}; local {lv:08x} remote {rv:08x}): {}", melee_fighter::slippi_online::state_dump()));
+        match crate::slp_export::save_on_desync() {
+            Some(p) => log(&format!("netplay {tag}: DESYNC: the match so far is saved to {p}")),
+            None => log(&format!("netplay {tag}: DESYNC: no .slp to save (recording is off{})", if crate::slp_export::active() { "; no confirmed frames yet" } else { "" })),
+        }
+    }
+}
+
 fn log(msg: &str) {
     eprintln!("play: {msg}");
 }
@@ -2199,9 +2217,7 @@ impl NetDriver {
                 // for it; the summary reports it
                 Compare::Hard => {
                     sr.hard += 1;
-                    if sr.hard < 4 {
-                        log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x} (the match goes on)"));
-                    }
+                    crate::play_net::desync_report(&tag, fr, lv, rv, sr.hard as u64, online(s.current_frame()));
                 }
             }
         }

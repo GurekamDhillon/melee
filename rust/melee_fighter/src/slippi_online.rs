@@ -22,6 +22,28 @@ pub fn trace_line() -> String {
     t
 }
 
+/// The current state as one line per present fighter (slot, position, percent, action state) and each slot's stocks:
+/// the desync report's dump (not the state of the compared frame: the session may be ahead of it).
+pub fn state_dump() -> String {
+    let mut t = String::new();
+    for slot in 0..4 {
+        let p = unsafe { &*core::ptr::addr_of!(crate::stale::PLAYER_SLOTS[slot]) };
+        let mut any = false;
+        for (i, g) in p.player_entity.into_iter().enumerate() {
+            if g.is_null() {
+                continue;
+            }
+            any = true;
+            let fp = unsafe { &*((*g).user_data as *const Fighter) };
+            t += &format!("p{slot}.{i} x {:.3} y {:.3} pct {:.1} action {:#x}; ", fp.cur_pos.x, fp.cur_pos.y, fp.dmg.x1830_percent, fp.motion_id);
+        }
+        if any {
+            t += &format!("p{slot} stocks {}; ", p.stocks);
+        }
+    }
+    t
+}
+
 pub fn checksum() -> u32 {
     let mut c = Checksum::new();
     for slot in 0..4 {

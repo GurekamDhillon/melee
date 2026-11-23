@@ -145,6 +145,27 @@ and statics in full, every ever-written arena page): pad and cpu, 600 frames, 11
 compared) and `MELEE_SNAP_STATIC_SCAN=1` (statics compared in full) are the fallbacks. The Lab ring save went from
 1314-1427 us to 333 us each (`lab-check` lab perf line).
 
+## Linux: huge pages and the write watch (2026-11-22, port/kohitch)
+Two-peer netplay (the in-process online loop, `menu_slp_check.sh rematch`) on the laptop (i7-1370P, kernel 7.2, THP
+`always`): every fight tick cost 10-14 ms, so a one-frame rollback or a catch-up after a late peer input went over 16 ms
+(the slow ticks seen around the last KO / GAME!, where more effects write more pages). Measured per save: ~2470 pages
+copied, 1530 host pages digested per state hash, `/proc/self/clear_refs` 1.6-4 ms. Two causes, both host-side:
+1. Transparent huge pages: soft-dirty marks a whole 2 MB huge page written on one write, so the statics' .data/.bss
+   (~1000 pages a save), the host block and the arena read as 8x the pages the game wrote. `snapshot::small_pages` (at
+   `Base::capture`) advises the ranges MADV_NOHUGEPAGE and splits huge pages already there (MADV_COLD on 4 KB of each);
+   the arena reserve (`arena.rs sys::reserve`) and the host block (`lowmem.rs alloc_low`) are advised at their mmap.
+   Copied per save 2470 -> 297, digested per hash 1530 -> 223.
+2. Soft-dirty's clear is process-wide: it walks every page table of the process and makes every thread's next write
+   to any page fault (that fault cost sat inside the game step too). `snapshot::wpwatch` uses userfaultfd's
+   asynchronous write protection instead (kernel 6.7+, UFFD_FEATURE_WP_ASYNC, unprivileged with UFFD_USER_MODE_ONLY):
+   the ranges are registered once and the PAGEMAP_SCAN ioctl reads-and-rearms one range at a time, the Windows
+   write watch's semantics. Soft-dirty stays as the fallback (old kernel, MELEE_SNAP_NO_UFFD=1), and its clear runs
+   only when a range used it.
+Result (fight ticks, profiler on, interleaved runs): avg 9.8-11.3 ms -> 3.4-3.6 ms (THP fix alone: 7.2-8.3 ms); fight
+frames over 16 ms per profile 10-230 -> 0 (and 0 with the mock relay's --lag-ms 30, 354 rollbacks). Pages copied per
+save are the same with either watch (the same writes are seen), so the state is unchanged; MELEE_SNAP_CHECK still
+compares every save and load with the full state.
+
 ## Snapshot perf guard
 `tools/rust-port/perf/snapguard.sh` (run by `gate.sh` for the release profile; `SNAPGUARD=0` skips it) runs the cpu_fox_falco_dl
 depth-7 synctest 3 times (`--runs N`), takes the minimum of save, load and total ms per tick, and fails when one is more than

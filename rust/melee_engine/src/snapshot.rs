@@ -11,7 +11,8 @@
 //! load restores only the pages written since its snapshot was taken (notes/perf.md "Rollback snapshots").
 //! MELEE_SNAP_STATS=1 prints the page counters, MELEE_SNAP_CHECK=N checks every Nth save and load against the full
 //! state, MELEE_SNAP_NOINC=1 compares every dirty page (the old way), MELEE_SNAP_STATIC_SCAN=1 compares the statics
-//! in full instead of watching them.
+//! in full instead of watching them. Linux tracks the writes with userfaultfd's async write protection (`wpwatch`),
+//! soft-dirty when that is missing or MELEE_SNAP_NO_UFFD=1 is set.
 
 use crate::arena;
 use crate::host::Host;
@@ -61,7 +62,7 @@ fn written_pages(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) {
 #[cfg(not(windows))]
 fn written_pages(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) {
     #[cfg(target_os = "linux")]
-    if softdirty::read(addr, len, base, out) {
+    if wpwatch::read(addr, len, base, out) || softdirty::read(addr, len, base, out) {
         return;
     }
     for p in (addr - base) / PAGE..(addr - base + len) / PAGE {
@@ -82,6 +83,10 @@ mod softdirty {
     /// Set by the first clear at the end of a `refresh`: only from then on do the bits cover everything written since
     /// the previous refresh (the self-test's own clear dropped the bits of earlier writes).
     static mut ARMED: bool = false;
+    /// A range was read through soft-dirty since the last [`clear`] (or tried to: the first clear arms it). With every
+    /// range on the userfaultfd watch (`wpwatch`) nothing is, and the process-wide clear (a walk of every page table
+    /// of the process, ~1.6 ms a save on the laptop, plus a write fault on every page any thread writes next) is skipped.
+    static mut NEEDED: bool = false;
 
     fn clear_refs() -> bool {
         std::fs::OpenOptions::new().write(true).open("/proc/self/clear_refs").and_then(|mut f| f.write_all(b"4")).is_ok()
@@ -128,6 +133,7 @@ mod softdirty {
     /// soft-dirty cannot be used (the caller then counts every page).
     pub fn read(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) -> bool {
         let Some(f) = pagemap() else { return false };
+        unsafe { NEEDED = true };
         if unsafe { !ARMED } || crate::arena::trim() {
             return false;
         }
@@ -149,8 +155,204 @@ mod softdirty {
 
     /// End of a refresh: every range was read, start the next interval.
     pub fn clear() {
-        if pagemap().is_some() {
-            unsafe { ARMED = clear_refs() };
+        if unsafe { NEEDED } && pagemap().is_some() {
+            unsafe {
+                NEEDED = false;
+                ARMED = clear_refs();
+            }
+        }
+    }
+}
+
+/// Linux: the snapshot ranges' write tracking through userfaultfd's asynchronous write protection (kernel 6.7+:
+/// UFFD_FEATURE_WP_ASYNC + the PAGEMAP_SCAN ioctl). Each range is registered once (write-protect mode, resolved in
+/// the kernel: no fault thread, nothing blocks); `read` asks which of its pages were written and write-protects them
+/// again in one ioctl, for that range only. That is the Windows write watch's semantics (GetWriteWatch with reset),
+/// and unlike soft-dirty it needs no process-wide clear: `/proc/self/clear_refs` walks every page table of the
+/// process (GPU driver, audio, heaps; ~1.6 ms a save measured) and makes every thread's next write to any page fault.
+/// A page dropped and refaulted, and anything written before the registration, reads as written (a superset, safe).
+/// Unprivileged (UFFD_USER_MODE_ONLY; a kernel-mode write, e.g. a read(2) into the range, still resolves and marks
+/// the page). Without the kernel support, or with MELEE_SNAP_NO_UFFD, `read` says no and soft-dirty takes over.
+#[cfg(target_os = "linux")]
+mod wpwatch {
+    use super::{set_bit, PAGE};
+    use std::os::fd::AsRawFd;
+
+    const UFFD_USER_MODE_ONLY: i32 = 1;
+    const UFFD_API: u64 = 0xAA;
+    const UFFD_FEATURE_WP_UNPOPULATED: u64 = 1 << 13;
+    const UFFD_FEATURE_WP_ASYNC: u64 = 1 << 15;
+    const UFFDIO_API: u64 = 0xC018_AA3F;
+    const UFFDIO_REGISTER: u64 = 0xC020_AA00;
+    const UFFDIO_REGISTER_MODE_WP: u64 = 2;
+    const PAGEMAP_SCAN: u64 = 0xC060_6610;
+    const PM_SCAN_WP_MATCHING: u64 = 1;
+    const PM_SCAN_CHECK_WPASYNC: u64 = 2;
+    const PAGE_IS_WRITTEN: u64 = 1 << 1;
+
+    #[repr(C)]
+    struct UffdioApi {
+        api: u64,
+        features: u64,
+        ioctls: u64,
+    }
+    #[repr(C)]
+    struct UffdioRegister {
+        start: u64,
+        len: u64,
+        mode: u64,
+        ioctls: u64,
+    }
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    struct PageRegion {
+        start: u64,
+        end: u64,
+        categories: u64,
+    }
+    #[repr(C)]
+    #[derive(Default)]
+    struct PmScanArg {
+        size: u64,
+        flags: u64,
+        start: u64,
+        end: u64,
+        walk_end: u64,
+        vec: u64,
+        vec_len: u64,
+        max_pages: u64,
+        category_inverted: u64,
+        category_mask: u64,
+        category_anyof_mask: u64,
+        return_mask: u64,
+    }
+
+    struct Watch {
+        /// None: no userfaultfd here (old kernel, no WP_ASYNC, disabled)
+        fds: Option<(std::fs::File, std::fs::File)>,
+        /// the registered ranges
+        regs: Vec<(usize, usize)>,
+        /// the scan's output buffer (kept: a read allocates nothing)
+        buf: Vec<PageRegion>,
+    }
+
+    // on the system heap (SysStatic): a rollback load rewinds the statics, and this one owns heap memory
+    static W: crate::arena::SysStatic<Watch> = crate::arena::SysStatic::new(|| Watch { fds: open(), regs: Vec::new(), buf: vec![PageRegion::default(); 512] });
+
+    fn open() -> Option<(std::fs::File, std::fs::File)> {
+        use std::os::fd::FromRawFd;
+        if std::env::var_os("MELEE_SNAP_NO_UFFD").is_some() {
+            return None;
+        }
+        unsafe {
+            let fd = libc::syscall(libc::SYS_userfaultfd, libc::O_CLOEXEC | libc::O_NONBLOCK | UFFD_USER_MODE_ONLY) as i32;
+            if fd < 0 {
+                return None;
+            }
+            let u = std::fs::File::from_raw_fd(fd);
+            let mut api = UffdioApi { api: UFFD_API, features: UFFD_FEATURE_WP_ASYNC | UFFD_FEATURE_WP_UNPOPULATED, ioctls: 0 };
+            if libc::ioctl(fd, UFFDIO_API as _, &mut api) != 0 {
+                return None;
+            }
+            let pm = std::fs::File::open("/proc/self/pagemap").ok()?;
+            Some((u, pm))
+        }
+    }
+
+    /// Register the ranges not registered yet (page aligned; a range that fails stays on soft-dirty).
+    pub fn arm(ranges: &[(usize, usize)]) {
+        W.with(|w| {
+            let Some((u, _)) = &w.fds else { return };
+            let fd = u.as_raw_fd();
+            for &(a, l) in ranges {
+                if l == 0 || a % PAGE != 0 || l % PAGE != 0 || w.regs.iter().any(|&(ra, rl)| a >= ra && a + l <= ra + rl) {
+                    continue;
+                }
+                let mut r = UffdioRegister { start: a as u64, len: l as u64, mode: UFFDIO_REGISTER_MODE_WP, ioctls: 0 };
+                if unsafe { libc::ioctl(fd, UFFDIO_REGISTER as _, &mut r) } == 0 {
+                    w.regs.push((a, l));
+                } else if std::env::var_os("MELEE_SNAP_STATS").is_some() {
+                    eprintln!("snapshot: write watch: range {:#x}+{:#x} not registered ({}), soft-dirty there", a, l, std::io::Error::last_os_error());
+                }
+            }
+        })
+    }
+
+    /// Set the bits of the pages of `[addr, addr+len)` written since the last read of them, and protect them again;
+    /// false when the range is not on the watch (the caller then asks soft-dirty).
+    pub fn read(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) -> bool {
+        if len == 0 {
+            return true;
+        }
+        if crate::arena::trim() {
+            return false;
+        }
+        W.with(|w| {
+            let Some((_, pm)) = &w.fds else { return false };
+            if !w.regs.iter().any(|&(ra, rl)| addr >= ra && addr + len <= ra + rl) {
+                return false;
+            }
+            let end = (addr + len) as u64;
+            let mut at = addr as u64;
+            while at < end {
+                let mut arg = PmScanArg {
+                    size: core::mem::size_of::<PmScanArg>() as u64,
+                    flags: PM_SCAN_WP_MATCHING | PM_SCAN_CHECK_WPASYNC,
+                    start: at,
+                    end,
+                    vec: w.buf.as_mut_ptr() as u64,
+                    vec_len: w.buf.len() as u64,
+                    category_mask: PAGE_IS_WRITTEN,
+                    return_mask: PAGE_IS_WRITTEN,
+                    ..Default::default()
+                };
+                let n = unsafe { libc::ioctl(pm.as_raw_fd(), PAGEMAP_SCAN as _, &mut arg) };
+                if n < 0 {
+                    // a failed scan mid-range: every page of the rest counts as written (the pages before were set)
+                    for p in (at as usize - base) / PAGE..(end as usize - base) / PAGE {
+                        set_bit(out, p);
+                    }
+                    return true;
+                }
+                for r in &w.buf[..n as usize] {
+                    for p in (r.start as usize - base) / PAGE..(r.end as usize - base) / PAGE {
+                        set_bit(out, p);
+                    }
+                }
+                if arg.walk_end <= at {
+                    break;
+                }
+                at = arg.walk_end;
+            }
+            true
+        })
+    }
+}
+
+/// Linux: keep the snapshot ranges on 4 KB pages. With transparent huge pages on (`always`, a common default), a 2 MB
+/// huge page is one soft-dirty unit: one write in it marks all 512 of its pages written, so each save copied and each
+/// state hash digested ~8x the pages the game wrote (measured: a two-peer netplay match, 2470 pages copied per save,
+/// ~1000 of them in the statics' .data/.bss alone; 300 on 4 KB pages). MADV_NOHUGEPAGE stops new huge pages there (the
+/// arena reserve and the host block are advised so at their mmap, before the first touch); a huge page already in
+/// place (the statics are touched long before a match) is split by MADV_COLD on 4 KB of it (the kernel splits a huge
+/// page a cold hint covers only in part; the contents and the mapping stay, only the page's LRU age changes). Best
+/// effort: an unsplit page only costs time, never correctness (soft-dirty then reports a superset).
+#[cfg(target_os = "linux")]
+fn small_pages(ranges: &[(usize, usize)]) {
+    const HUGE: usize = 2 << 20;
+    for &(a, l) in ranges {
+        let (s, e) = (a & !(PAGE - 1), (a + l + PAGE - 1) & !(PAGE - 1));
+        if e <= s {
+            continue;
+        }
+        unsafe {
+            libc::madvise(s as *mut _, e - s, libc::MADV_NOHUGEPAGE);
+            let mut h = s & !(HUGE - 1);
+            while h < e {
+                let p = h.max(s);
+                libc::madvise(p as *mut _, PAGE, libc::MADV_COLD);
+                h += HUGE;
+            }
         }
     }
 }
@@ -559,6 +761,14 @@ impl Base {
         let _bg = crate::arena::BgPause::enter();
         crate::arena::note_snapshot();
         let ranges = ranges();
+        #[cfg(target_os = "linux")]
+        {
+            small_pages(&ranges);
+            // the arena by its whole reservation (it grows inside it); the refresh below takes the first, full report
+            let mut w = vec![arena::reserved_range()];
+            w.extend(ranges[HOST..].iter().copied());
+            wpwatch::arm(&w);
+        }
         // the copies are taken last, once every write is tracked (a write between a copy and the start of tracking
         // would leave a page that differs from its base copy without being dirty)
         let data: Vec<Vec<u8>> = vec![Vec::new(); ranges.len()];
@@ -675,7 +885,9 @@ impl Base {
             } else {
                 // Linux: no fault-based static watch, but the kernel's soft-dirty bits cover the statics too
                 #[cfg(target_os = "linux")]
-                if std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_none() && softdirty::read(cur[ri].0, cur[ri].1, cur[ri].0, &mut since[ri]) {
+                if std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_none()
+                    && (wpwatch::read(cur[ri].0, cur[ri].1, cur[ri].0, &mut since[ri]) || softdirty::read(cur[ri].0, cur[ri].1, cur[ri].0, &mut since[ri]))
+                {
                     continue;
                 }
                 for pi in 0..np {

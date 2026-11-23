@@ -69,6 +69,12 @@ mod sys {
             let p = unsafe { mmap(hint as *mut c_void, len, PROT_RW, FLAGS, -1, 0) };
             if p as isize != -1 {
                 if p as usize == hint {
+                    // 4 KB pages only, before the first touch: the snapshot tracks writes per page (soft-dirty), and
+                    // a transparent huge page reads as 512 pages written (see arena.rs `reserve`)
+                    #[cfg(target_os = "linux")]
+                    unsafe {
+                        libc::madvise(p.cast(), len, libc::MADV_NOHUGEPAGE);
+                    }
                     return Some(p as *mut u8);
                 }
                 unsafe { munmap(p, len) };

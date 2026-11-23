@@ -133,8 +133,7 @@ MISSING = not there; REFUSED = we exit 3 on purpose rather than start a differen
 **Not done here, with estimates:** P2P Direct / mu_net (1-2 weeks, notes/mu-net-feasibility.md); code mods with
 their own main.dol (the PPC interpreter, on hold for sc00p); TE packs / .gci loader (2-4 days once the interpreter
 exists, most TE content is PPC code); per-binding levels (0.5 day); a real `--settings-window` (our overlay in its own window writing
-port-settings.ini: 2-3 days); backend choice and DLSS (not planned: wgpu only); audio
-device selection (1 day); an update channel (1 day once Hero agrees on a feed).
+port-settings.ini: 2-3 days); backend choice and DLSS (not planned: wgpu only); an update channel (1 day once Hero agrees on a feed).
 
 Launcher patch: one commit on his main 6c9472f, branch `rust-port-engine` (see the round-three report). The
 test-only network skip (no YouGame refresh, no lobby/DHT in `MELEE_LAUNCHER_TEST` runs) is a separate local commit

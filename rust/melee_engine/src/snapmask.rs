@@ -1,48 +1,106 @@
-//! MELEE_SNAP_CHECK's host-only page mask: the statics pages that hold no game crate's data, read from the image's
-//! PDB (its section contributions name the object file each byte of `.data` / `.bss` came from). Those pages are
-//! std's, the runtime libraries' and the platform crates' (allocator counters, once-flags, driver state): host state
-//! a rollback load leaves alone by design, so the check skips them. Every page with any byte of a `melee*` / game crate
-//! is still compared. The spans come from `<exe>.snapmask` when present (written from the PDB at package time by
-//! `melee --write-snapmask`, so a packaged exe needs no PDB), else from `<exe>.pdb`; with neither the mask is empty
-//! and nothing is skipped. The sidecar carries the exe's size and is ignored when it does not match. Windows;
-//! elsewhere `None`.
+//! The statics' host-only bytes: those that hold no game crate's data, read from the image's PDB (its section
+//! contributions name the object file each byte of `.data` / `.bss` came from). They are std's, the runtime
+//! libraries' and the platform crates' (allocator counters, once-flags, hash seeds, driver and render-thread state):
+//! host state that other threads write at any time. A rollback load leaves them alone (it copies only game bytes back:
+//! pages with no game byte are skipped, mixed pages are copied span by span), and MELEE_SNAP_CHECK compares only game
+//! bytes. The spans come from `<exe>.snapmask` when present (written from the PDB at package time by
+//! `melee --write-snapmask`, so a packaged exe needs no PDB), else from `<exe>.pdb`; with neither there is no mask and
+//! loads restore every statics byte. The sidecar carries the exe's size and is ignored when it does not match.
+//! MELEE_SNAP_CHECK_NOMASK turns the mask off. Windows; elsewhere `None`.
 
 /// Crates whose objects are host-only even though their names match the game prefix.
 const HOST_CRATES: &[&str] = &["melee_platform", "melee_audio", "melee_gx", "melee_fptrace"];
 
-/// One bitmask per range (bit set = skip that page), aligned with `ranges`; ranges before `first` are never masked.
+/// The host-only bytes of the static ranges, as a rollback load and MELEE_SNAP_CHECK see them: pages with no game
+/// byte are skipped whole, pages that mix game and host objects are visited only in their game spans. Indexed like
+/// `ranges`; ranges before `first` are never masked.
+pub struct HostMask {
+    /// One bitmask per range: bit set = the page holds no game byte.
+    pub skip: Vec<Vec<u64>>,
+    /// Per range, sorted by page: the pages that mix game and host bytes, with their game spans (page offsets, end
+    /// exclusive, sorted, disjoint).
+    pub mixed: Vec<Vec<(u32, Vec<(u16, u16)>)>>,
+}
+
+impl HostMask {
+    /// The game spans of a mixed page, or None for a page that is all game (or all host: see `skip`).
+    pub fn spans(&self, ri: usize, pi: u32) -> Option<&[(u16, u16)]> {
+        let m = self.mixed.get(ri)?;
+        m.binary_search_by_key(&pi, |e| e.0).ok().map(|k| &m[k].1[..])
+    }
+    pub fn skipped(&self, ri: usize, pi: u32) -> bool {
+        self.skip.get(ri).and_then(|v| v.get(pi as usize / 64)).is_some_and(|w| w >> (pi % 64) & 1 != 0)
+    }
+}
+
+/// The game spans (RVAs), read once per process: a 100+ MB PDB is not parsed again for every snapshot base. Kept on
+/// the system heap (`SysStatic`), not in a plain static a rollback load would rewind.
+static GAME_SPANS: crate::arena::SysStatic<Option<Option<std::sync::Arc<Vec<(usize, usize)>>>>> = crate::arena::SysStatic::new(|| None);
+
 #[cfg(windows)]
-pub fn host_only(ranges: &[(usize, usize)], first: usize) -> Option<Vec<Vec<u64>>> {
-    let exe = std::env::current_exe().ok()?;
+fn game_spans_cached() -> Option<std::sync::Arc<Vec<(usize, usize)>>> {
+    GAME_SPANS.with(|c| {
+        c.get_or_insert_with(|| {
+            let exe = std::env::current_exe().ok()?;
+            let mut g = match read_sidecar(&exe) {
+                Some(g) => g,
+                None => game_spans(&std::fs::read(exe.with_extension("pdb")).ok()?)?,
+            };
+            g.sort_unstable();
+            Some(std::sync::Arc::new(g))
+        })
+        .clone()
+    })
+}
+
+#[cfg(windows)]
+pub fn host_only(ranges: &[(usize, usize)], first: usize) -> Option<HostMask> {
+    let game = game_spans_cached()?;
     let img = image_base(ranges, first)?;
-    let game = match read_sidecar(&exe) {
-        Some(g) => g,
-        None => game_spans(&std::fs::read(exe.with_extension("pdb")).ok()?)?,
-    };
-    let mut out: Vec<Vec<u64>> = ranges.iter().map(|r| vec![0u64; (r.1 / 4096).div_ceil(64)]).collect();
-    let (mut host, mut total) = (0usize, 0usize);
+    let mut skip: Vec<Vec<u64>> = ranges.iter().map(|r| vec![0u64; (r.1 / 4096).div_ceil(64)]).collect();
+    let mut mixed: Vec<Vec<(u32, Vec<(u16, u16)>)>> = ranges.iter().map(|_| Vec::new()).collect();
+    let (mut host, mut nmixed, mut total) = (0usize, 0usize, 0usize);
     for (ri, &(a, len)) in ranges.iter().enumerate().skip(first) {
         let np = len / 4096;
-        let mut keep = vec![false; np];
-        for &(lo, hi) in &game {
+        // per page, its game spans (page offsets)
+        let mut per: Vec<Vec<(u16, u16)>> = vec![Vec::new(); np];
+        for &(lo, hi) in game.iter() {
             let (lo, hi) = (img + lo, img + hi);
             if hi <= a || lo >= a + len {
                 continue;
             }
-            let p0 = (lo.max(a) - a) / 4096;
-            let p1 = (hi.min(a + len) - a).div_ceil(4096);
-            keep[p0..p1].iter_mut().for_each(|k| *k = true);
+            let (lo, hi) = (lo.max(a) - a, hi.min(a + len) - a);
+            for pi in lo / 4096..hi.div_ceil(4096) {
+                let (s, e) = (lo.max(pi * 4096) - pi * 4096, hi.min(pi * 4096 + 4096) - pi * 4096);
+                per[pi].push((s as u16, e as u16));
+            }
         }
-        for (pi, k) in keep.iter().enumerate() {
+        for (pi, sp) in per.iter_mut().enumerate() {
             total += 1;
-            if !k {
+            if sp.is_empty() {
                 host += 1;
-                out[ri][pi / 64] |= 1 << (pi % 64);
+                skip[ri][pi / 64] |= 1 << (pi % 64);
+                continue;
+            }
+            // merged exactly (never widened: a host object can sit in the next byte)
+            sp.sort_unstable();
+            let mut m: Vec<(u16, u16)> = Vec::with_capacity(sp.len());
+            for &(s, e) in sp.iter() {
+                match m.last_mut() {
+                    Some(l) if s <= l.1 => l.1 = l.1.max(e),
+                    _ => m.push((s, e)),
+                }
+            }
+            if !(m.len() == 1 && m[0] == (0, 4096)) {
+                nmixed += 1;
+                mixed[ri].push((pi as u32, m));
             }
         }
     }
-    eprintln!("MELEE_SNAP_CHECK: host-only mask {host} of {total} statics pages ({} game contributions)", game.len());
-    Some(out)
+    if std::env::var_os("MELEE_SNAP_CHECK").is_some() {
+        eprintln!("MELEE_SNAP_CHECK: host-only mask {host} of {total} statics pages, {nmixed} mixed pages ({} game contributions)", game.len());
+    }
+    Some(HostMask { skip, mixed })
 }
 
 const SIDECAR_MAGIC: &[u8; 8] = b"MSNPMSK1";
@@ -74,7 +132,7 @@ pub fn write_sidecar(exe: &std::path::Path) -> Result<usize, String> {
 }
 
 #[cfg(not(windows))]
-pub fn host_only(_ranges: &[(usize, usize)], _first: usize) -> Option<Vec<Vec<u64>>> {
+pub fn host_only(_ranges: &[(usize, usize)], _first: usize) -> Option<HostMask> {
     None
 }
 

@@ -163,7 +163,10 @@ impl RxThreads {
                 while !stop.load(Ordering::Relaxed) {
                     let r = s.recv_from(&mut buf);
                     let at = Instant::now();
-                    let timed_out = matches!(&r, Err(e) if matches!(e.kind(), std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut));
+                    // Interrupted: on Linux a read with SO_RCVTIMEO fails with EINTR after a stop signal and SIGCONT
+                    // (a debugger, Ctrl-Z, a SIGSTOP'd process), with no handler installed; it is not a socket error,
+                    // and ending this thread on it left the link deaf (sending, never receiving) until it timed out
+                    let timed_out = matches!(&r, Err(e) if matches!(e.kind(), std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut | std::io::ErrorKind::Interrupted));
                     if timed_out {
                         continue;
                     }
@@ -203,7 +206,7 @@ fn recv_kind(r: std::io::Result<(usize, SocketAddr)>, from: &mut Addr) -> i32 {
             use std::io::ErrorKind;
             match e.kind() {
                 // WSAECONNRESET on UDP is an ICMP port-unreachable for an earlier send
-                ErrorKind::WouldBlock | ErrorKind::ConnectionReset => 0,
+                ErrorKind::WouldBlock | ErrorKind::ConnectionReset | ErrorKind::Interrupted => 0,
                 // WSAEMSGSIZE (10040) / EMSGSIZE: an oversized datagram, dropped like the C
                 _ if matches!(e.raw_os_error(), Some(10040) | Some(90)) => 0,
                 _ => -1,

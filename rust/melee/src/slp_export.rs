@@ -270,6 +270,8 @@ impl Exporter {
             crate::slippi_spectate::write(&b);
             raw.extend_from_slice(&b);
         }
+        // live relay output (live_out.rs): every byte `raw` gets goes out as it is appended (Gecko List included)
+        crate::live_out::game_start(&raw);
         let mut present = [false; 4];
         for (i, p) in present.iter_mut().enumerate() {
             *p = gi[0x61 + 0x24 * i] != 3;
@@ -302,6 +304,7 @@ impl Exporter {
         let end = [0x39, method, 0xFF, place[0] as u8, place[1] as u8, place[2] as u8, place[3] as u8];
         m.raw.extend_from_slice(&end);
         if spectate {
+            crate::live_out::game_end(&end);
             crate::slippi_spectate::write(&end);
             crate::slippi_spectate::end_game(false);
         }
@@ -367,6 +370,10 @@ impl Exporter {
             return;
         }
         let o = self.encode(&mut m, quit, true);
+        if self.spec.is_empty() {
+            // the live relay output's exporter (live_out.rs) with no --slp: nothing to write
+            return;
+        }
         let path = self.path_for();
         if let Some(d) = std::path::Path::new(&path).parent().filter(|d| !d.as_os_str().is_empty()) {
             let _ = std::fs::create_dir_all(d);
@@ -667,6 +674,7 @@ fn flush_frame(m: &mut Match) {
     put32(&mut bk, 1, f);
     put32(&mut bk, 5, f);
     m.raw.extend_from_slice(&bk);
+    crate::live_out::frame_events(&m.raw[at..]);
     crate::slippi_spectate::write(&m.raw[at..]);
 }
 

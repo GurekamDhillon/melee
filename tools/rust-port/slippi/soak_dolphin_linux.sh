@@ -5,6 +5,7 @@
 # throwaway profiles, the disc from GW_ISO_VANILLA, never printed). After every match both go back to the online CSS
 # and search again (engine: MELEE_SLIPPI_BACK_PAD_SCRIPT; Dolphin: dolphin_drive.py --mode unranked --games N).
 #   soak_dolphin_linux.sh OUTDIR [--minutes M] [--lag-ms N] [--jitter-ms N] [--stage S] [--mm-port P]
+# The engine logs its `mem after` line (arena, system heap, caches) every MELEE_MEM_EVERY ticks (default 3600).
 # OUTDIR/matches.tsv: per match (engine log order) the engine's RSS / PSS / private dirty right after the match, its
 # Slippi line (compared, soft, HARD, ticks over 16 ms) and rollbacks; OUTDIR/rss.tsv: a sample every 30 s.
 # The engine's window title starts with "soak:" and the mock runs with MELEE_SOAK=1 (the lane watchdog's 3 h limit).
@@ -44,6 +45,7 @@ for g in $(seq 2 400); do export MELEE_SLIPPI_SET_PAD_SCRIPT_G$g="$M/slippi_back
   MELEE_PAD_SCRIPT="$M/slippi_online_unranked_css_1start.txt" MELEE_SLIPPI_BACK_PAD_SCRIPT="$M/slippi_back_a.txt" \
   MELEE_SLIPPI_MM_URL="ws://127.0.0.1:$mmp/v1/queue" MELEE_SLIPPI_NP_PORT=$((mmp + 100)) MELEE_SLIPPI_TEST_CODE="TSTB#001" \
   MELEE_SLIPPI_NP_OUT="$O/engine.csv" MELEE_SLIPPI_NP_MAX_SECONDS=900 MELEE_SLIPPI_NP_PADGEN=7 \
+  MELEE_MEM_EVERY=${MELEE_MEM_EVERY:-3600} MELEE_ARENA_STATS=1 \
   exec "$MELEE" play --iso "$GW_ISO_VANILLA" --skip-intro --slippi-menus on > "$O/engine.log" 2>&1 < /dev/null ) &
 epid=$!; pids+=($epid)
 dpid=$(bash "$here/run_np_dolphin.sh" P3A "$O" $mmp TSTA#001 TSTB#001)
@@ -57,7 +59,7 @@ mem() { # rss pss private_dirty (kB) of the engine
   read -r p d < <(awk '/^Pss:/{p=$2} /^Private_Dirty:/{d=$2} END{print p, d}' /proc/$epid/smaps_rollup 2>/dev/null)
   echo "${r:-0} ${p:-0} ${d:-0}"
 }
-printf 'match\tt_s\trss_kB\tpss_kB\tprivate_dirty_kB\tslippi_line\trollbacks_line\n' > "$O/matches.tsv"
+printf 'match\tt_s\trss_kB\tpss_kB\tprivate_dirty_kB\tload1\tslippi_line\trollbacks_line\n' > "$O/matches.tsv"
 printf 't_s\trss_kB\tpss_kB\tprivate_dirty_kB\n' > "$O/rss.tsv"
 t0=$(date +%s); seen=0; last=0
 while kill -0 $epid 2>/dev/null && [ $(( $(date +%s) - t0 )) -lt $((mins * 60)) ]; do
@@ -69,7 +71,7 @@ while kill -0 $epid 2>/dev/null && [ $(( $(date +%s) - t0 )) -lt $((mins * 60)) 
     seen=$n
     sl=$(grep "Slippi: [0-9]* final checksums" "$O/engine.log" | sed -n "${n}p" | sed 's/.*Slippi: //' | cut -c1-200)
     rl=$(grep "final hashes (through" "$O/engine.log" | sed -n "${n}p" | grep -o "rollbacks [0-9]* (max depth [0-9]*" )
-    echo -e "$n\t$(( $(date +%s) - t0 ))\t$(mem | tr ' ' '\t')\t$sl\t$rl" >> "$O/matches.tsv"
+    echo -e "$n\t$(( $(date +%s) - t0 ))\t$(mem | tr ' ' '\t')\t$(cut -d' ' -f1 /proc/loadavg)\t$sl\t$rl" >> "$O/matches.tsv"
   fi
   sleep 2
 done

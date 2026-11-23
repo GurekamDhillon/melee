@@ -1747,7 +1747,28 @@ pub fn play(args: &[String]) -> ExitCode {
         // `--slippi-mm URL ...` (the online menu's pick): a Slippi-wire match in this window. Matchmaking, the
         // connection and the selections happen here, before the window, like --netplay; the boot goes straight to it.
         let mut slippi_scn = None;
-        if !netplay && (get("--slippi-mm").is_some() || get("--slippi-peer").is_some()) {
+        // `--p2p-port P --p2p-peer A:P ...` (Hero's launcher lobby, P2P Direct): a mu_net match in this window, agreed in
+        // the lobby; connect and handshake here, before the window. No game played: exit 2, as his game does.
+        if !netplay && args.iter().any(|a| a.starts_with("--p2p-")) {
+            #[cfg(feature = "real-net")]
+            match crate::play_net::NetDriver::connect_mu(args) {
+                Ok((n, scn)) => {
+                    seed = Some(n.agreed.seed);
+                    slippi_scn = Some(scn);
+                    net = Some(n);
+                }
+                Err(e) => {
+                    crate::disc::tell_player(&format!("p2p: the P2P Direct match could not start: {e}"));
+                    return ExitCode::from(2);
+                }
+            }
+            #[cfg(not(feature = "real-net"))]
+            {
+                crate::disc::tell_player("p2p: P2P Direct needs a build with --features real-net");
+                return ExitCode::from(2);
+            }
+        }
+        if !netplay && slippi_scn.is_none() && (get("--slippi-mm").is_some() || get("--slippi-peer").is_some()) {
             match crate::play_net::NetDriver::connect_slippi(args) {
                 Ok((n, scn)) => {
                     seed = Some(n.agreed.seed);

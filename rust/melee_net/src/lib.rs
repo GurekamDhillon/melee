@@ -21,6 +21,8 @@ pub mod blob;
 pub mod early;
 pub mod enet;
 pub mod hash;
+#[cfg(feature = "mu-net")]
+pub mod mu_net;
 pub mod net;
 pub mod pad;
 pub mod rollback;

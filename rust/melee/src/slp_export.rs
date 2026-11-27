@@ -153,7 +153,7 @@ pub fn game_info(sm: &melee_types::StartMeleeData) -> Vec<u8> {
 }
 
 /// ISO 8601 UTC from the system clock.
-fn iso_now() -> String {
+pub(crate) fn iso_now() -> String {
     let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs() as i64);
     let (days, s) = (t.div_euclid(86400), t.rem_euclid(86400));
     // civil from days (H. Hinnant)
@@ -706,11 +706,11 @@ pub fn finish() -> Vec<String> {
     }
 }
 
-/// A Slippi-wire match with no `--slp`: record it live anyway (the frames stay in memory) so a hard desync can save
-/// the .slp. Written only if a desync was seen. Does nothing when an exporter is installed already. Under YouGame the
-/// file goes to MELEE_SLP_DIR (YOUGAME_DATA\Replays); outside it only when MELEE_DESYNC_SLP is set.
+/// A Slippi-wire match with no `--slp`: record it live anyway (the frames stay in memory) so a desync can be captured
+/// (`desynccap`: `snapshot_bytes`). Nothing is written by the exporter itself unless `save_on_desync` is used. On by
+/// default; `MELEE_DESYNC_CAPTURE=0` turns it off. Does nothing when an exporter is installed already.
 pub fn arm_for_desync(iso: Option<&str>) {
-    if active() || !(melee_platform::yougame::sandboxed() || std::env::var_os("MELEE_DESYNC_SLP").is_some()) {
+    if active() || !crate::desynccap::enabled() {
         return;
     }
     install("auto", "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
@@ -723,12 +723,17 @@ pub fn arm_for_desync(iso: Option<&str>) {
     }
 }
 
-/// The first hard desync: the match so far (confirmed frames) is written to a `Desync_<time>.slp` beside the normal
-/// replays, the recording goes on, and the final file is written at the match's end. Returns the path, if written.
-pub fn save_on_desync() -> Option<String> {
+/// True while a rollback run records live (`live_rollback`): the loops that drive `begin_frame` / `end_frame` /
+/// `confirm` check it.
+pub fn rb_active() -> bool {
+    exp().is_some_and(|x| x.rb && !x.stopped)
+}
+
+/// The match so far (the frames confirmed up to now, Game End appended) as .slp bytes, built in memory: no file, no
+/// effect on the recording, which goes on. None when nothing was recorded yet.
+pub fn snapshot_bytes() -> Option<Vec<u8>> {
     let _s = melee_engine::arena::SysScope::enter();
     let x = exp()?;
-    x.desynced = true;
     let mut m = x.m.take()?;
     if !m.started {
         x.m = Some(m);
@@ -738,15 +743,10 @@ pub fn save_on_desync() -> Option<String> {
     let o = x.encode(&mut m, true, false);
     m.raw.truncate(keep);
     x.m = Some(m);
-    let t = iso_now().replace([':', '-'], "");
-    let dir = std::env::var("MELEE_SLP_DIR").ok().filter(|d| !d.is_empty()).unwrap_or_else(|| "Replays".into());
-    let path = format!("{dir}/Desync_{}.slp", t.trim_end_matches('Z'));
-    let _ = std::fs::create_dir_all(&dir);
-    match std::fs::write(&path, &o) {
-        Ok(()) => Some(path),
-        Err(e) => {
-            eprintln!("gw: slp: {path}: {e}");
-            None
-        }
-    }
+    Some(o)
+}
+
+/// The frames the live recording holds so far (confirmed), for the report: (frames written, last Slippi frame number).
+pub fn recorded_frames() -> Option<(u32, i32)> {
+    exp()?.m.as_ref().map(|m| (m.frames, m.frame))
 }

@@ -63,6 +63,8 @@ mod audio;
 mod stage_anim;
 mod frametime;
 mod slpcheck;
+mod desynccap;
+mod desync_replay;
 mod slpbatch;
 mod snap;
 mod fighter_fields;
@@ -652,6 +654,7 @@ fn main_inner() -> ExitCode {
         Some("geno-tests") => geno_suite::run(&args),
         Some("mexid") => geno_suite::mexid(&args),
         Some("slpcheck") => slpcheck::slpcheck(&args),
+        Some("desync-replay") => desync_replay::desync_replay(&args),
         Some("dolphin-wide") => dolphin_oracle::dolphin_wide(&args),
         Some("diff") => diff::diff(&args),
         Some("synctest") => netmatch::engine_game::synctest(&args),

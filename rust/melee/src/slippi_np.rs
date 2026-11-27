@@ -251,6 +251,7 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));
         let app_version = arg(args, "--app-version").unwrap_or_else(|| melee_net::slippi_mm::SLIPPI_SEMVER.into());
+        crate::desynccap::note_app_version(&app_version);
         if real {
             let Some(path) = arg(args, "--user-json") else {
                 return Err((2, format!("--mm-real needs --user-json (a copy of the account's Slippi user.json)")));
@@ -391,6 +392,12 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
 }
 
 pub fn establish(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
+    let l = establish_inner(args, t0, max_s)?;
+    crate::desynccap::set_match(crate::desynccap::MatchInfo { decider: l.decider, local_port: l.local_port, remote_port: l.remote_port, by_port: l.by_port, rng_offset: l.rng_offset, scene: l.scene.clone(), stage: l.stage });
+    Ok(l)
+}
+
+fn establish_inner(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, LinkErr> {
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
     // --link (the online select's handoff): the select's link goes on, as one Slippi client from the select into the
     // match; no new connection (Slippi Dolphin takes none after its first link drops) and no selections sent again
@@ -510,6 +517,11 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     // the scene load blocks this thread: keep servicing the ENet host meanwhile (Slippi's netplay thread does), or a
     // boot longer than the peer's ENet timeout (30 s) loses the link, and the peer's early pads and pings go unacked
     let boot_t = Instant::now();
+    // desync capture: the match is recorded in memory (the live exporter) so a desync's inputs can be replayed
+    {
+        let iso = arg(args, "--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
+        crate::slp_export::arm_for_desync(iso.as_deref());
+    }
     let booted = {
         struct Pump(*mut Client);
         // SAFETY: the main thread does not touch `cl` until the pump thread is joined (end of the scope)
@@ -597,12 +609,23 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let mut failed = false;
     let (mut late_sum, mut late_max) = (0u64, 0u64);
     let (mut work_t, mut work_sum, mut work_max) = (None::<Instant>, 0u64, 0u64);
+    let (mut fight_max, mut fight_slow) = (0u64, 0u32);
     eprintln!("melee: {tag}: frame loop: frame {} link {:?} ping {} us (pad acks {} us); waiting for the peer's pads", online(s.current_frame()), cl.status, cl.net_ping_us(), cl.ping_us());
     loop {
         if let Some(w) = work_t {
             let us = w.elapsed().as_micros() as u64;
             work_sum += us;
             work_max = work_max.max(us);
+            // the intro's scene work (the first ticks) is not a fight tick
+            if ticks > 200 {
+                fight_max = fight_max.max(us);
+                if us > 16_000 {
+                    fight_slow += 1;
+                    if fight_slow <= 5 {
+                        eprintln!("melee: {tag}: slow tick {us} us at online frame {}", online(s.current_frame()));
+                    }
+                }
+            }
         }
         let now = Instant::now();
         if next_tick > now {
@@ -728,6 +751,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         // newly finalized local checksums: the session's own finality rule (the state entering the frame is final once
         // the frame before it is confirmed and no rollback below it is pending), after this tick's resimulation
         let conf = s.confirmed_frame();
+        crate::slp_export::confirm(conf);
         let from = finals.keys().next_back().map_or(2, |k| k + 1); // online frame 1 is the state before any frame: never logged
         for of in from..=online(conf) + 1 {
             match game.slippi_ck.get(&of) {
@@ -754,9 +778,13 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             compared_upto = fr;
             match compare(lv, rv) {
                 Compare::Same => {}
-                Compare::Soft => soft += 1,
+                Compare::Soft => {
+                    soft += 1;
+                    crate::desynccap::on_compare(Compare::Soft, tag, fr, lv, rv, online(s.current_frame()), &s.stats, &|| crate::desynccap::bits_text(game.slippi_mixed.iter().map(|(a, b)| (*a, *b))));
+                }
                 Compare::Hard => {
                     hard += 1;
+                    crate::desynccap::on_compare(Compare::Hard, tag, fr, lv, rv, online(s.current_frame()), &s.stats, &|| crate::desynccap::bits_text(game.slippi_mixed.iter().map(|(a, b)| (*a, *b))));
                     if hard < 4 {
                         eprintln!("melee: {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x}");
                     }
@@ -773,6 +801,8 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             }
         }
     }
+    crate::desynccap::end_game(&|| crate::desynccap::bits_text(game.slippi_mixed.iter().map(|(a, b)| (*a, *b))));
+    crate::slp_export::stop();
     let st = s.stats;
     if let Some(p) = arg(args, "--out") {
         let mut t = String::from("frame,checksum\n");
@@ -799,7 +829,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     }
     cl.disconnect(0);
     eprintln!("melee: {tag}: tick wake lateness mean {} us, max {} us over {ticks} ticks", late_sum / ticks.max(1) as u64, late_max);
-    eprintln!("melee: {tag}: tick work (poll + sim + send) mean {} us, max {} us", work_sum / ticks.max(1), work_max);
+    eprintln!("melee: {tag}: tick work (poll + sim + send) mean {} us, max {} us; after the first 200 ticks max {fight_max} us, {fight_slow} over 16 ms", work_sum / ticks.max(1), work_max);
     let last = finals.keys().next_back().copied().unwrap_or(0);
     eprintln!(
         "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; start hold {} ticks; time sync held {} advanced {}{}; ping {} us (pad acks {} us); pads sent {} received {}; enet resent {}",

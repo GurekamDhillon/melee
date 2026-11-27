@@ -22,7 +22,8 @@ use std::cell::RefCell;
 /// A hard checksum mismatch (`hard`: how many so far, this one included): the first 30 are logged, then a count every 60
 /// frames. The first also dumps the state (per fighter position, percent, action state; stocks per slot) with both
 /// checksums and the frame, and saves the match's live .slp (`slp_export`). Logging and saving only.
-pub(crate) fn desync_report(tag: &str, fr: i32, lv: u32, rv: u32, hard: u64, cur: i32) {
+pub(crate) fn desync_report(tag: &str, fr: i32, lv: u32, rv: u32, hard: u64, cur: i32, stats: &melee_net::session::RbStats, bits: &dyn Fn() -> String) {
+    crate::desynccap::on_compare(melee_core::slippi_online::Compare::Hard, tag, fr, lv, rv, cur, stats, bits);
     if hard <= 30 {
         log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x} (the match goes on)"));
     } else if fr % 60 == 0 {
@@ -30,10 +31,6 @@ pub(crate) fn desync_report(tag: &str, fr: i32, lv: u32, rv: u32, hard: u64, cur
     }
     if hard == 1 {
         log(&format!("netplay {tag}: DESYNC state at online frame {fr} (session now at {cur}; local {lv:08x} remote {rv:08x}): {}", melee_fighter::slippi_online::state_dump()));
-        match crate::slp_export::save_on_desync() {
-            Some(p) => log(&format!("netplay {tag}: DESYNC: the match so far is saved to {p}")),
-            None => log(&format!("netplay {tag}: DESYNC: no .slp to save (recording is off{})", if crate::slp_export::active() { "; no confirmed frames yet" } else { "" })),
-        }
     }
 }
 
@@ -2227,12 +2224,15 @@ impl NetDriver {
             sr.compared_upto = fr;
             match compare(lv, rv) {
                 Compare::Same => {}
-                Compare::Soft => sr.soft += 1,
+                Compare::Soft => {
+                    sr.soft += 1;
+                    crate::desynccap::on_compare(Compare::Soft, &tag, fr, lv, rv, online(s.current_frame()), &s.stats, &|| g.slippi.as_ref().map_or(String::new(), |sl| crate::desynccap::bits_text(sl.mixed.iter().map(|(a, b)| (*a, *b)))));
+                }
                 // Slippi Dolphin and Hero (slippi_online.cpp) log a mismatch and play on: the match is not ended
                 // for it; the summary reports it
                 Compare::Hard => {
                     sr.hard += 1;
-                    crate::play_net::desync_report(&tag, fr, lv, rv, sr.hard as u64, online(s.current_frame()));
+                    crate::play_net::desync_report(&tag, fr, lv, rv, sr.hard as u64, online(s.current_frame()), &s.stats, &|| g.slippi.as_ref().map_or(String::new(), |sl| crate::desynccap::bits_text(sl.mixed.iter().map(|(a, b)| (*a, *b)))));
                 }
             }
         }
@@ -2240,6 +2240,7 @@ impl NetDriver {
         let reached = sr.frames.is_some_and(|n| sr.finals.keys().next_back().is_some_and(|&k| k >= n)) && (conf >= s.current_frame() || sr.finals.len() as i32 > sr.frames.unwrap_or(0) + 120);
         if (reached || g.e.ended) && sr.done_at.is_none() {
             sr.done_at = Some(Instant::now());
+            crate::desynccap::end_game(&|| g.slippi.as_ref().map_or(String::new(), |sl| crate::desynccap::bits_text(sl.mixed.iter().map(|(a, b)| (*a, *b)))));
             // the live .slp ends here: the frames after it are the peer's linger, not the match
             crate::slp_export::stop();
         }
@@ -2257,6 +2258,7 @@ impl NetDriver {
         let cur = s.current_frame();
         drop(s);
         if end_now || err.is_some() {
+            crate::desynccap::end_game(&|| String::new());
             crate::slp_export::stop();
             let sr = self.slippi.as_mut().unwrap();
             if let Some(p) = &sr.out {

@@ -751,3 +751,70 @@ it is not what desynced live, and needs no fix. Slippi Dolphin mainline catches 
 due to time sync" in its log), so both sides running extra frames is normal play. The engine's .slp numbers frames
 one lower than Dolphin's and records its own stick a frame or two early before frame -39 (the game state is unaffected);
 `slp_inputs_diff.py` finds the shift itself and counts those apart.
+
+## 18. Desync capture (2026-11-27, port/desynccap)
+
+Every Soft or Hard checksum mismatch seen in an online match is written to disk so it can be replayed offline. Code:
+`rust/melee/src/desynccap.rs` (capture), `desync_replay.rs` (`melee desync-replay`), hooks in `slippi_np.rs`
+(`slippi-netplay`), `play_net.rs` (the rendered `play --slippi-mm` / online select loop), `netmatch.rs`
+(`EngineGame`), `slp_export.rs` (`snapshot_bytes`, `arm_for_desync`).
+
+**What is written.** `<root>/<timestamp>/` with `report.json`, `desync.slp` and `bits.txt`. Root: `MELEE_DESYNC_DIR`, else
+`$YOUGAME_DATA/desyncs`, else `./desyncs`. The first Soft or Hard of a game gets a directory, and the first Hard gets
+another one when the first was a Soft (so at most two per game and side). No player names, connect codes or account
+data: only character ids, colours, team, stage, rng_offset and the like.
+
+- `report.json`: `kind` (soft / hard), `tag` (decider / guest), `online_frame` (the compare's frame number),
+  `slippi_frame` (= online frame - 125, the .slp's frame number of the same state), `session_online_frame_at_detection`,
+  `local_checksum`, `remote_checksum`, `build_id`, `slippi_app_version` (what the matchmaking join sent; null on a direct
+  link), `match` (stage, players with character / colour / team, rng_offset, alt_stage_mode, decider, local port, rules,
+  the scene string), `codes` (the gameplay codes word, LGL limit, codeset), `rollback` (session stats at detection),
+  `state_dump` (`melee_fighter::slippi_online::state_dump()` at detection; the session is a few frames ahead of the
+  compared frame), `slp`, `slp_last_frame_at_detection`, `slp_through`.
+- `desync.slp`: the engine's own recording of the match (the live exporter's confirmed frames, -123 on). A Hard's file runs
+  through the last confirmed frame at detection. A Soft's is written at detection as well and rewritten at the game's end
+  with every confirmed frame (`slp_through: game_end`; a peer that left early leaves the tail unconfirmed, so the file ends
+  there). It plays with `melee slpcheck --slp` like any engine .slp.
+- `bits.txt`: the seed-bit bytes (`<tick> <b0> <b1> <b2> <b3>` hex, tick 0 = Slippi frame -123) of the frames where a port
+  rolled a random special (Peach, Luigi, G&W): the .slp has no such byte and the replay needs it to draw the same seeds.
+  Empty when nobody rolled.
+
+**Cost.** The match is recorded in memory by the live exporter (`slp_export::arm_for_desync`, on for every online match; no
+.slp unless a desync happens, `MELEE_DESYNC_CAPTURE=0` turns it off). At detection (once or twice per game) the .slp is
+encoded in memory and a worker thread writes the files; the game thread does no file I/O. The state lives on the system
+heap behind a pointer made once, because a rollback load rewinds statics and the arena. Loopback, 1700-frame matches, 30 ms
+lag each way, two peers: tick work (poll + sim + send) mean 1.87 / 1.98 ms with capture, 2.27 / 2.14 ms with it off (machine
+noise is larger than the difference); max tick after the first 200 ticks 12.3 / 15.9 ms with capture, 0 ticks over 16 ms.
+The capture-off run had 7 ticks over 16 ms (up to 104 ms) on the same busy machine, so the loopback numbers say "no
+measurable cost", not "faster". The detection ticks themselves (online frames 416 and 419) were not slow.
+
+**Hard keeps going as before.** `slippi-netplay` and the rendered loop count a Hard, log it and play on (Slippi Dolphin and
+Hero log and continue too); capture does not change that.
+
+**`melee desync-replay DIR [--iso DISC]`.** Boots the match as the online match it was (online mode on with the report's
+rng_offset, the online codeset, the scene string, `bits.txt`), feeds it the Pre-Frame pads of `desync.slp` (the pads the
+simulation saw, raw sticks and buttons) straight with no rollback, and prints the engine's checksum at the detection frame
+beside the two recorded ones. Reproducing the local one means this side's state follows from the recorded inputs; reproducing
+the remote one means this side differs from a clean re-run. Neither means the .slp inputs do not account for the state.
+Run it without `MELEE_NP_TEST_DESYNC` set. A field desync that is a simulation difference shows as one side matching and
+the other not; a case where the two sides saw different inputs shows as each side matching itself.
+
+**Test hook.** `MELEE_NP_TEST_DESYNC=<game frame>[:<count>]` (headless `slippi-netplay`, `EngineGame`): from that tick, for
+`count` ticks (30), this side's simulation sees both ports' sticks reversed and Y pressed while the pads it sent are
+unchanged. The recorded .slp holds the pads the sim saw, so a replay reproduces this side's own checksums. (The
+`play_net` hook of the same name perturbs the logic RNG and has no effect under Slippi's SyncRNG.)
+
+**Results** (loopback, host with `MELEE_NP_TEST_DESYNC=400`, 900 frames, `--lag-ms 30`, Falcon vs Fox on Final Destination):
+both sides logged a Soft at online frame 416 and a Hard at 419; four directories, `desync-replay` on each:
+
+| side | kind | online frame | local | remote | replay |
+|---|---|---|---|---|---|
+| decider (perturbed) | soft | 416 | 917d0010 | ffcd0010 | 917d0010 |
+| decider | hard | 419 | 9183000a | ab690008 | 9183000a |
+| guest | soft | 416 | ffcd0010 | 917d0010 | ffcd0010 |
+| guest | hard | 419 | ab690008 | 9183000a | ab690008 |
+
+Each side's replay reproduces its own checksum. A clean 900-frame and a 1700-frame match (both lag 30 ms, with rollbacks)
+wrote no directory. Not covered: the `play` loops were only compiled (the capture calls are the same), a Slippi Dolphin peer
+(its checksum is recorded as received; the replay then says whether our side or its side differs), and the Direct set's
+second game (the state resets per game in `set_match`).

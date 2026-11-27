@@ -90,6 +90,16 @@ pub mod engine_game {
         r
     }
 
+    /// `MELEE_NP_TEST_DESYNC=<game frame>[:<count>]`, read once.
+    fn test_desync() -> Option<(i32, i32)> {
+        static V: std::sync::OnceLock<Option<(i32, i32)>> = std::sync::OnceLock::new();
+        *V.get_or_init(|| {
+            let v = std::env::var("MELEE_NP_TEST_DESYNC").ok()?;
+            let mut it = v.split(':');
+            Some((it.next()?.parse().ok()?, it.next().and_then(|n| n.parse().ok()).unwrap_or(30)))
+        })
+    }
+
     pub struct EngineGame {
         pub e: Engine,
         base: RefCell<Option<Base>>,
@@ -226,6 +236,19 @@ pub mod engine_game {
             for (port, slot) in p.iter_mut().enumerate() {
                 *slot = pad_of(&inputs[port * 2]);
             }
+            // MELEE_NP_TEST_DESYNC=<game frame>[:<count>] (slippi-netplay's desync-capture test): from that frame, for
+            // <count> frames (30), this side's simulation sees both ports' sticks reversed and Y pressed, while the
+            // pads it sent are unchanged: the peer and this side diverge. The recorded .slp holds the pads the sim
+            // saw, so a replay of it reproduces this side's own checksums.
+            if let Some((f0, n)) = test_desync() {
+                let g = self.frame() + 1 - FIRST;
+                if g >= f0 && g < f0 + n {
+                    for q in p.iter_mut().take(2) {
+                        q.stickX = if q.stickX >= 0 { -100 } else { 100 };
+                        q.button |= 0x0800;
+                    }
+                }
+            }
             self.e.set_pads(Some(p));
             // Slippi online: the pads TriggerSendInput section 11 mixes for this frame (SyncRNG takes them at its
             // frame, so a resimulated frame mixes its confirmed pads again)
@@ -253,12 +276,14 @@ pub mod engine_game {
             let slp = crate::slp_export::active();
             if slp {
                 crate::slp_export::begin_tick(&p);
+                crate::slp_export::begin_frame(self.frame() + 1, &p);
             }
             timed(4, || self.e.tick());
             // the hang watchdog's frame counter (synctest / rollback runs never reach the play loops' beat)
             crate::hang::pulse();
             if slp {
                 crate::slp_export::end_tick(!self.e.ended);
+                crate::slp_export::end_frame();
             }
             let r = self.e.neutral_row();
             let mut t = format!("{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]);

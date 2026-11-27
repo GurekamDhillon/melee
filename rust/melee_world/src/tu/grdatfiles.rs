@@ -272,6 +272,25 @@ pub unsafe fn grDatFiles_801C6478(data: *mut c_void, length: s32) -> *mut UnkArc
     arc
 }
 
+/// Slippi "StadiumFileLoad" (online set, C2 0x800165AC in lbFile_80016580, whose only retail caller is the Stadium
+/// transformation load at 0x801D4754): after the file is in `data`, the archive is set up the way grDatFiles_801C6478
+/// does it (68-byte block of heap 0, lbArchive_InitializeDAT, "map_head", a free grDatFiles_8049EE10 slot, unk8 = 1).
+/// The one difference: the code hands 801C6228 the address of the slot's `unk4` field instead of its value
+/// (`addi r3, REG_MDATA, OFST_HEAD`), so on the console the RENDER_SHADOW pass reads past the slot table and does not
+/// flag the transformation's materials. Render only; not reproducible on this host's layout, so the pass is left out.
+pub unsafe fn grDatFiles_SlippiStadiumArchive(data: *mut c_void, length: s32) -> *mut UnkArchiveStruct {
+    melee_core::ct!("grDatFiles_SlippiStadiumArchive");
+    let archive = ext::lbHeap_80015BD0(0, core::mem::size_of::<HSD_Archive>() as u32) as *mut HSD_Archive;
+    ext::lbArchive_InitializeDAT(archive, data, length as u32);
+    let head = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"map_head ")) as *mut UnkStageDat;
+    let arc = grDatFiles_801C62B4();
+    assert_(!arc.is_null(), 290, "arc");
+    (*arc).unk0 = archive;
+    (*arc).unk4 = head;
+    (*arc).unk8 = 1;
+    arc
+}
+
 /// grdatfiles_stage_slot_retail.inc: the same archive publication as `grDatFiles_801C6038` from a cached visit.
 pub unsafe fn grDatFiles_StageSlotInstall(archive: *mut HSD_Archive) {
     melee_core::ct!("grDatFiles_StageSlotInstall");

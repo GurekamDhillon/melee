@@ -972,6 +972,14 @@ pub unsafe extern "C" fn grKongo_801D69AC(_arg: *mut HSD_GObj) { melee_core::ct!
 
 pub unsafe extern "C" fn grKongo_801D69B0(gobj: *mut HSD_GObj) {
     melee_core::ct!("grKongo_801D69B0");
+    // Slippi "Reset Kongo Log Bridge" (Slippi Recording set, C2 0x801D69B0, the function's first instruction): the loop
+    // below resets each log's angle but not its velocity (+0x10), which the first physics step applies, and the side
+    // platforms (spawn points) ride the logs. All 15 velocities to 0.0 first.
+    if melee_core::codes::slippi_stage_on(melee_core::codes::STAGE_KONGO_LOG) {
+        for i in 0..15usize {
+            grKg_803E188C[i].unk10 = 0.0;
+        }
+    }
     for i in 0..15usize {
         grKg_803E188C[i].unk4 = ext::Ground_801C3FA4(gobj, grKg_803E188C[i].unk0 as s32);
         grKg_803E188C[i].unkC = grKg_803E188C[i].unk8;

@@ -335,6 +335,36 @@ pub fn set_ps_freeze_at_entry(on: bool) {
     }
 }
 
+/// Slippi's stage determinism codes that the codes word has no bit for (docs/rust-port/notes/slippi-codes.md), as bits
+/// of [`SLIPPI_STAGE`]. Armed from a replay's own Gecko list (the C2 at the code's address) and for Slippi online play
+/// (`slippi_np::online_codes`); 0 offline, where every site runs the game's own code.
+/// - [`STAGE_CASTLE_WIND`]: "Reset Castle Wind" (Slippi Recording, C2 0x801CD37C at the start of grCastle_801CD37C):
+///   the wind step `grCs_804D45E0` = 0x3C8EFA35 and the wind mode `grCs_804D45E4` = 1, their boot values.
+/// - [`STAGE_KONGO_LOG`]: "Reset Kongo Log Bridge" (Slippi Recording, C2 0x801D69B0 at the start of grKongo_801D69B0):
+///   the 15 log velocities (`grKg_803E188C[i]` + 0x10) = 0.0.
+/// - [`STAGE_PS_FILES`]: the Stadium file hooks of the online set (StadiumFileLoad C2 0x800165AC, GrPsxIsValid C2
+///   0x801D4760, CustomZeroBuffer C2 0x801C65C8): a transformation file is read and its archive set up inside the
+///   load call, case 1 of the transformation machine asks "is the archive there" instead of "has the read finished",
+///   and grAnime_801C65B0 never calls lbArchive_80016EFC.
+pub const STAGE_CASTLE_WIND: u32 = 1 << 0;
+pub const STAGE_KONGO_LOG: u32 = 1 << 1;
+pub const STAGE_PS_FILES: u32 = 1 << 2;
+static SLIPPI_STAGE: AtomicU32 = AtomicU32::new(0);
+/// Set the whole [`SLIPPI_STAGE`] word (before the match boots).
+pub fn set_slippi_stage(w: u32) {
+    SLIPPI_STAGE.store(w, Ordering::Relaxed);
+}
+/// The [`SLIPPI_STAGE`] word.
+#[inline]
+pub fn slippi_stage() -> u32 {
+    SLIPPI_STAGE.load(Ordering::Relaxed)
+}
+/// Is [`SLIPPI_STAGE`] bit `bit` on?
+#[inline]
+pub fn slippi_stage_on(bit: u32) -> bool {
+    slippi_stage() & bit != 0
+}
+
 /// A replay's widescreen camera code (melee_data::slp::widescreen_code), active only while that replay plays: set before
 /// the match boots from the replay's own Gecko list (slpcheck, `golden --slp`), cleared (all 0) otherwise. Packed as
 /// left | right << 16 in [`WS_BOUNDS`], the aspect ratio's numerator/denominator as f32 bits.

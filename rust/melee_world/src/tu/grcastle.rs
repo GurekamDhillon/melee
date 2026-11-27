@@ -465,6 +465,13 @@ pub unsafe extern "C" fn grCastle_801CD338(_arg0: i32) {
 
 pub unsafe extern "C" fn grCastle_801CD37C() {
     melee_core::ct!("grCastle_801CD37C");
+    // Slippi "Reset Castle Wind" (Slippi Recording set, C2 0x801CD37C, the function's first instruction): the wind's two
+    // statics outlive a game, and the mode decides whether grCastle_801D0BBC draws an extra HSD_Randf every 300 frames,
+    // so a client that played here before would run another seed. Back to their boot values (0x3C8EFA35, 1).
+    if melee_core::codes::slippi_stage_on(melee_core::codes::STAGE_CASTLE_WIND) {
+        grCs_804D45E0 = f32::from_bits(0x3C8E_FA35);
+        grCs_804D45E4 = 1;
+    }
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grCastle_YakumonoParam;
 
     let si = ext::stage_info();

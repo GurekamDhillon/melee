@@ -395,6 +395,25 @@ pub fn ps_freeze_at_entry_code(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x801D_457C)
 }
 
+/// The `melee_core::codes::SLIPPI_STAGE` word a replay's own Gecko list arms (C2 inserts of Reset Castle Wind
+/// 0x801CD37C, Reset Kongo Log Bridge 0x801D69B0, and the Stadium file hooks StadiumFileLoad 0x800165AC +
+/// GrPsxIsValid 0x801D4760 + CustomZeroBuffer 0x801C65C8, all three needed). Bit values as in melee_core::codes.
+pub fn slippi_stage_word(g: &[u8]) -> u32 {
+    let c = gecko_codes(g);
+    let has = |a: u32| c.iter().any(|x| x.kind == 0xC2 && x.addr == a);
+    let mut w = 0;
+    if has(0x801C_D37C) {
+        w |= 1;
+    }
+    if has(0x801D_69B0) {
+        w |= 2;
+    }
+    if has(0x8001_65AC) && has(0x801D_4760) && has(0x801C_65C8) {
+        w |= 4;
+    }
+    w
+}
+
 /// True when the list carries the online codeset (its offscreen-damage insert at 0x8006A880).
 pub fn online_codeset(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x8006_A880)

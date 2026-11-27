@@ -2043,6 +2043,23 @@ pub unsafe extern "C" fn grStadium_801D4354(gobj: *mut HSD_GObj) -> *mut Ground 
     (*gobj).user_data as *mut Ground
 }
 
+/// Slippi "GrPsxIsValid" (online set, C2 0x801D4760, in place of case 1's `bl grStadium_801D42B8`): 1 when the archive
+/// slot of map gobj 2's map id (grDatFiles_801C6330(gp->map_id)) holds an archive whose first word (the DAT header's
+/// file size) is not 0. It does not test xC4_b1 and does not set xD0 (StadiumFileLoad did).
+pub unsafe fn grStadium_SlippiPsxIsValid() -> i32 {
+    melee_core::ct!("grStadium_SlippiPsxIsValid");
+    let g = ext::Ground_GetMapGObj(2);
+    let gp = (*g).user_data as *mut Ground;
+    let slot = ext::grDatFiles_801C6330((*gp).map_id as i32);
+    // the console reads address 0 for a missing slot (the disc id, non-zero) and then that address; no slot is a fault
+    assert!(!slot.is_null(), "GrPsxIsValid: no archive slot for map id {}", (*gp).map_id as i32);
+    let archive = (*slot).unk0;
+    if archive.is_null() || (*archive).header.file_size == 0 {
+        return 0;
+    }
+    1
+}
+
 /// `char* datfiles[]`
 pub static mut datfiles: [*const i8; 4] = [
     b"GrPs1.dat\0".as_ptr() as *const i8,
@@ -2234,13 +2251,27 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
                     return;
                 }
                 (*gp).u.stadium.set_xC4_b1(1);
+                if melee_core::codes::slippi_stage_on(melee_core::codes::STAGE_PS_FILES) {
+                    // Slippi "StadiumFileLoad" (C2 0x800165AC): the file is read inside the call (File_GetLength to
+                    // xC8, File_Read into xCC) and its archive set up at once (xD0); the DVD callback fn_801D4220 never
+                    // runs, so xC4_b1 stays set, and case 1 asks GrPsxIsValid instead of grStadium_801D42B8
+                    let path = datfiles[var_r29];
+                    let mut size = melee_runtime::tu::lbfile::lbFileGetSize(path as _);
+                    (*gp).u.stadium.xC8 = size as _;
+                    melee_runtime::tu::lbfile::lbFile_8001668C(path as _, (*gp).u.stadium.xCC as *mut c_void, &mut size);
+                    (*gp).u.stadium.xC8 = size as _;
+                    (*gp).u.stadium.xD0 = crate::tu::grdatfiles::grDatFiles_SlippiStadiumArchive((*gp).u.stadium.xCC as *mut c_void, (*gp).u.stadium.xC8 as i32);
+                    (*temp_r31).u.stadium.xDC = 1;
+                    return;
+                }
                 ext::lbFile_80016580(datfiles[var_r29], (*gp).u.stadium.xCC as *mut c_void, &raw mut (*gp).u.stadium.xC8 as *mut u32, Some(fn_801D4220), 0);
                 (*temp_r31).u.stadium.xDC = 1;
                 return;
             }
         }
         1 => {
-            if grStadium_801D42B8() != 0 {
+            let ready = if melee_core::codes::slippi_stage_on(melee_core::codes::STAGE_PS_FILES) { grStadium_SlippiPsxIsValid() } else { grStadium_801D42B8() };
+            if ready != 0 {
                 (*temp_r31).u.stadium.xDC = 2;
                 return;
             }

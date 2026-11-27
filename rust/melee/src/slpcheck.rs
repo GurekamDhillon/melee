@@ -536,6 +536,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     melee_core::codes::set_ps_camera_independent_monitor(slp::ps_camera_independent_monitor_code(&file.gecko));
     melee_core::codes::set_ps_preload_transformations(slp::ps_preload_transformations(&file));
     melee_core::codes::set_ps_freeze_at_entry(slp::ps_freeze_at_entry_code(&file.gecko));
+    // SLPCHECK_SLIPPI_STAGE=off: run without the Castle wind / Kongo log / Stadium file hooks of the list
+    melee_core::codes::set_slippi_stage(if std::env::var("SLPCHECK_SLIPPI_STAGE").as_deref() == Ok("off") { 0 } else { slp::slippi_stage_word(&file.gecko) });
     if let Some(w) = ws {
         sm.notes = format!("{}{}widescreen code {}..{} x{}/{}", sm.notes, if sm.notes.is_empty() { "" } else { "; " }, w.left, w.right, w.num, w.den);
     }

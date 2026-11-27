@@ -74,12 +74,32 @@ pub fn online_codes(alt_stage_mode: u8) {
     }
 }
 
+/// The recovery game's starting percent per slot (`apply` after the scene boots, before its first frame).
+pub fn apply_recovery_percent(r: &melee_core::slippi_online::SyncedState) {
+    melee_fighter::slippi_online::set_start_seconds(r.seconds);
+    for (i, f) in r.fighters.iter().enumerate() {
+        melee_fighter::slippi_online::set_start_percent(i as i32, f.percent);
+    }
+}
+
+/// `--recovery-in "secs;stocks,percent;..."`: this game is a desync recovery game (ranked) starting at that state.
+fn recovery_in(args: &[String]) -> Option<melee_core::slippi_online::SyncedState> {
+    arg(args, "--recovery-in").and_then(|a| melee_core::slippi_online::SyncedState::from_arg(&a))
+}
+
 pub const LEGAL_STAGES: [u16; 6] = [0x02, 0x03, 0x08, 0x1C, 0x1F, 0x20];
 
 /// `pause_allowed`: Dolphin's match block byte 2 bit 0x8 (`disable_pausing`) is set in every mode but Direct
 /// (`prepareOnlineMatchState`; Hero's slippi_online.cpp does the same). A pause the peer's game does not take is a
 /// HARD desync at once (the live Unranked test of 9f552c0d5: a stray Start at online frame 1093).
 pub fn online_scene(sel: &[Selections; 2], pause_allowed: bool) -> Result<(String, u16), String> {
+    online_scene_from(sel, pause_allowed, None)
+}
+
+/// [`online_scene`] for a desync recovery game: `prepareOnlineMatchState` puts the synced stocks and percent into each
+/// slot of the match block and the synced seconds into its timer word. (The percent is not a scene token: the caller
+/// sets it before the first frame, `apply_recovery_percent`.)
+pub fn online_scene_from(sel: &[Selections; 2], pause_allowed: bool, recover: Option<&melee_core::slippi_online::SyncedState>) -> Result<(String, u16), String> {
     let stage = sel.iter().find(|s| s.is_stage_selected).map_or(0x1F, |s| s.stage_id);
     // internal stage ids (`stage=ext:N`): the legal set of Slippi's online modes (Fountain of Dreams, Pokemon Stadium,
     // Yoshi's Story, Dreamland, Battlefield, Final Destination); others are not tested on the engine
@@ -92,12 +112,16 @@ pub fn online_scene(sel: &[Selections; 2], pause_allowed: bool) -> Result<(Strin
     let mirror = sel[0].character_id == sel[1].character_id && sel[0].character_color == sel[1].character_color;
     for (i, s) in sel.iter().enumerate() {
         let shade = if mirror && i == 1 { "/shade1" } else { "" };
-        t += &format!("p{}=ck:{}/human/c{}{shade};", i + 1, s.character_id, s.character_color);
+        let stocks = recover.map_or(String::new(), |r| format!("/stocks{}", r.fighters[i].stocks));
+        t += &format!("p{}=ck:{}/human/c{}{shade}{stocks};", i + 1, s.character_id, s.character_color);
     }
     // tests against the local mock only (MELEE_SLIPPI_MM_URL): MELEE_SLIPPI_TEST_STOCKS shortens a match that must
     // end on stocks (both sides set the same); never with Slippi's servers or a real opponent
     let stocks = std::env::var("MELEE_SLIPPI_TEST_STOCKS").ok().filter(|_| std::env::var_os("MELEE_SLIPPI_MM_URL").is_some()).and_then(|v| v.parse::<u8>().ok()).filter(|n| (1..=4).contains(n)).unwrap_or(4);
     t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks={stocks};minutes=8;items=off;pause={}", pause_allowed as u8);
+    if let Some(r) = recover {
+        t += &format!(";seconds={}", r.seconds);
+    }
     Ok((t, stage))
 }
 
@@ -417,7 +441,7 @@ fn establish_inner(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, L
         let mut by_port = [t.mine; 2];
         by_port[remote_port as usize & 1] = t.theirs;
         let rng_offset = if decider { t.mine.rng_offset } else { t.theirs.rng_offset };
-        let (scene, stage) = online_scene(&by_port, pause_allowed(args, true)).map_err(|e| (1, format!("{e}")))?;
+        let (scene, stage) = online_scene_from(&by_port, pause_allowed(args, true), recovery_in(args).as_ref()).map_err(|e| (1, format!("{e}")))?;
         eprintln!("melee: {tag}: the select's link taken over after {:.2}s, rng_offset {rng_offset:#06x}, stage {stage:#x}, scene {scene}", t0.elapsed().as_secs_f32());
         return Ok(Linked { cl: t.cl, decider, local_port, remote_port, by_port, rng_offset, scene, stage });
     }
@@ -486,7 +510,7 @@ fn establish_inner(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, L
     let mut by_port = [mine; 2];
     by_port[remote_port as usize & 1] = theirs;
     let rng_offset = if decider { mine.rng_offset } else { theirs.rng_offset };
-    let (scene, stage) = match online_scene(&by_port, pause_allowed(args, false)) {
+    let (scene, stage) = match online_scene_from(&by_port, pause_allowed(args, false), recovery_in(args).as_ref()) {
         Ok(v) => v,
         Err(e) => {
             return Err((1, format!("{e}")));
@@ -562,6 +586,10 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     for (i, s) in by_port.iter().enumerate() {
         game.slippi_chars[i] = s.character_id as u32;
     }
+    if let Some(r) = recovery_in(args) {
+        apply_recovery_percent(&r);
+        eprintln!("melee: {tag}: desync recovery game: starting at {} (the game reads back {})", r.to_arg(), melee_fighter::slippi_online::synced_state().to_arg());
+    }
     if arg(args, "--trace").is_some() {
         game.slippi_trace = Some(Default::default());
     }
@@ -589,6 +617,15 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let mut finals: BTreeMap<i32, u32> = BTreeMap::new();
     let (mut compared, mut soft, mut hard) = (0u32, 0u32, 0u32);
     let mut compared_upto = 0;
+    // StartEngineLoop.asm's desync check: frames > 84 only; a Hard ends the game (FN_END_GAME) and stops the check
+    let mut watch = melee_core::slippi_online::DesyncWatch::default();
+    let mut hard_ending = false;
+    let recovery = recovery_in(args);
+    let mut recovery_logged = false;
+    let test_soft = std::env::var("MELEE_NP_TEST_SOFT").ok().and_then(|v| {
+        let mut it = v.split(':');
+        Some((it.next()?.parse::<i32>().ok()?, it.next().and_then(|n| n.parse().ok()).unwrap_or(3)))
+    });
     let tick = Duration::from_micros(16683);
     let mut next_tick = Instant::now();
     let mut done_at: Option<Instant> = None;
@@ -748,6 +785,10 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         if extra > 0 && s.current_frame() > f {
             run_tick(&mut s, &mut game, None);
         }
+        if recovery.is_some() && online(s.current_frame()) >= 150 && !recovery_logged {
+            recovery_logged = true;
+            eprintln!("melee: {tag}: desync recovery game at online frame 150: {}", melee_fighter::slippi_online::synced_state().to_arg());
+        }
         // newly finalized local checksums: the session's own finality rule (the state entering the frame is final once
         // the frame before it is confirmed and no rollback below it is pending), after this tick's resimulation
         let conf = s.confirmed_frame();
@@ -756,6 +797,12 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         for of in from..=online(conf) + 1 {
             match game.slippi_ck.get(&of) {
                 Some(&v) if s.checksum(sess(of)) != 0 => {
+                    // test hook MELEE_NP_TEST_SOFT=<online frame>[:count] (default 3): this side's checksum for those frames has its
+                    // high half flipped, so the peers' compare sees a Soft (the float sums agree) and never a Hard
+                    let v = match test_soft {
+                        Some((f0, n)) if of >= f0 && of < f0 + n => v ^ 0x0001_0000,
+                        _ => v,
+                    };
                     finals.insert(of, v);
                 }
                 _ => break,
@@ -774,20 +821,27 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         // from online frame 2: frame 1 (the state before any frame) is never in `finals`, and Slippi Dolphin does send it
         for (&fr, &rv) in cl.remote_checksums.range((compared_upto + 1).max(2)..) {
             let Some(&lv) = finals.get(&fr) else { break };
+            if watch.hard_at.is_some() {
+                break;
+            }
             compared += 1;
             compared_upto = fr;
-            match compare(lv, rv) {
-                Compare::Same => {}
-                Compare::Soft => {
+            if watch.synced.is_none() {
+                watch.set_initial(game.slippi_rec.values().next().copied().unwrap_or_default());
+            }
+            match watch.check(fr, lv, rv, game.slippi_rec.get(&fr).copied()) {
+                None | Some(Compare::Same) => {}
+                Some(Compare::Soft) => {
                     soft += 1;
                     crate::desynccap::on_compare(Compare::Soft, tag, fr, lv, rv, online(s.current_frame()), &s.stats, &|| crate::desynccap::bits_text(game.slippi_mixed.iter().map(|(a, b)| (*a, *b))));
                 }
-                Compare::Hard => {
+                Some(Compare::Hard) => {
                     hard += 1;
                     crate::desynccap::on_compare(Compare::Hard, tag, fr, lv, rv, online(s.current_frame()), &s.stats, &|| crate::desynccap::bits_text(game.slippi_mixed.iter().map(|(a, b)| (*a, *b))));
-                    if hard < 4 {
-                        eprintln!("melee: {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x}");
-                    }
+                    eprintln!("melee: {tag}: DESYNC DETECTED at online frame {fr}: local {lv:08x} remote {rv:08x}; ending the game as Slippi does (quit-out by port {local_port}, GAME! {} frames) at online frame {}", melee_core::slippi_online::END_GAME_THINK_FRAMES, online(s.current_frame()));
+                    // FN_END_GAME: the match struct's end-of-game writes, repeated by the game on every frame it runs
+                    game.hard_end = Some(local_port as i8);
+                    hard_ending = true;
                 }
             }
         }
@@ -826,6 +880,41 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         let rolled: Vec<_> = game.slippi_mixed.range(..=lastf).collect();
         let forced = rolled.len();
         eprintln!("melee: {tag}: seed-bit rolls on {forced} finalized frames (first {:?}), forced resims {}", rolled.first().map(|(f, _)| online(**f)), forced_resims);
+    }
+    // `handleReportGame` (EXI_DeviceSlippi.cpp): only a RANKED game that ended on a quit-out (game end method 7: a Hard
+    // desync, or an LRAS) sends its synced state to the peer, and both sides then restart the game from the merged state
+    // (`GetDesyncRecoveryState`). Unranked, Direct and Teams send nothing: the next game starts from the defaults.
+    // (Ranked is refused by `pair`; MELEE_NP_TEST_RANKED_RECOVERY=1 is the loopback test of this exchange.)
+    if hard_ending && !failed && (arg(args, "--mm-mode").as_deref() == Some("ranked") || std::env::var_os("MELEE_NP_TEST_RANKED_RECOVERY").is_some_and(|v| v == "1")) {
+        let local = watch.recovery();
+        let m = melee_net::slippi::SyncedMsg { port: local_port, match_id: arg(args, "--match-id").unwrap_or_default(), game_idx: num("--game-idx", 0) as u32, tiebreak_idx: 0, state: local };
+        cl.send_synced_state(m);
+        eprintln!("melee: {tag}: ranked desync recovery: sent synced state {}", local.to_arg());
+        let w = Instant::now();
+        let merged = loop {
+            cl.poll();
+            match cl.recovery_state() {
+                Ok(Some(m)) => break Ok(m),
+                Err(e) => break Err(e.to_string()),
+                Ok(None) if w.elapsed() > Duration::from_secs(10) => break Err("the peer's synced state did not arrive".to_string()),
+                Ok(None) => std::thread::sleep(Duration::from_millis(5)),
+            }
+        };
+        match merged {
+            Ok(m) => {
+                eprintln!("melee: {tag}: ranked desync recovery: merged state {}", m.to_arg());
+                if let Some(p) = arg(args, "--recovery-out") {
+                    let _ = std::fs::write(p, m.to_arg());
+                }
+            }
+            Err(e) => eprintln!("melee: {tag}: ranked desync recovery failed ({e}): Slippi drops the connection"),
+        }
+        // let the peer's own wait see our message and finish before the link closes
+        let w = Instant::now();
+        while w.elapsed() < Duration::from_millis(600) {
+            cl.poll();
+            std::thread::sleep(Duration::from_millis(5));
+        }
     }
     cl.disconnect(0);
     eprintln!("melee: {tag}: tick wake lateness mean {} us, max {} us over {ticks} ticks", late_sum / ticks.max(1) as u64, late_max);

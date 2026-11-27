@@ -142,6 +142,12 @@ impl Scenario {
                 "difficulty" => s.onep_level = v.parse().map_err(|_| "difficulty")?,
                 "match" => s.rule_match = if v == "stock" { 1 } else { 0 },
                 "minutes" => s.rule_minutes = v.parse().map_err(|_| "minutes")?,
+                // the timer in seconds (a desync recovery game starts at the synced timer: Slippi's match block timer word)
+                "seconds" => {
+                    let n: i32 = v.parse().map_err(|_| "seconds")?;
+                    s.time_limit = n;
+                    s.rule_minutes = (n + 59) / 60;
+                }
                 "items" => s.item_freq = if v == "off" { -2 } else { v.parse().map_err(|_| "items")? },
                 _ if k.len() == 2 && k.starts_with('p') => {
                     let n = (k.as_bytes()[1] - b'1') as usize;

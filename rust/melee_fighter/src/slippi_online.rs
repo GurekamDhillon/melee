@@ -97,3 +97,43 @@ pub fn checksum() -> u32 {
     }
     c.finish()
 }
+
+/// The desync-recovery record of the current frame (StartEngineLoop.asm: `0x8046B6C8` seconds remaining, then per slot
+/// `PlayerBlock_LoadStocksLeft` and `PlayerBlock_LoadDamage`).
+pub fn synced_state() -> melee_core::slippi_online::SyncedState {
+    use melee_core::slippi_online::{SyncedFighter, SyncedState};
+    let mut s = SyncedState { seconds: unsafe { (*core::ptr::addr_of!(melee_runtime::tu::gmvs_state::controller)).state.timer_seconds }, ..Default::default() };
+    for slot in 0..4 {
+        s.fighters[slot] = SyncedFighter { stocks: crate::stale::stocks(slot as i32).clamp(0, 255) as u8, percent: crate::player::get_damage(slot as i32).clamp(0, 0xFFFF) as u16 };
+    }
+    s
+}
+
+/// `FN_END_GAME` (StartEngineLoop.asm): the writes that make the game's own end-of-match check end the game as a
+/// quit-out (LRAS) by player `pauser`, with a 90-frame GAME! screen. Idempotent; the caller repeats it every frame
+/// while the game is ending (a rollback load rewinds these statics).
+pub fn end_game_now(pauser: i8) {
+    unsafe {
+        let c = &mut *core::ptr::addr_of_mut!(melee_runtime::tu::gmvs_state::controller);
+        c.state.pauser = pauser;
+        c.state.match_result = melee_core::slippi_online::END_GAME_EXIT_LRAS;
+        c.start.xD = melee_core::slippi_online::END_GAME_THINK_FRAMES;
+    }
+}
+
+/// A recovery game's starting state (`prepareOnlineMatchState`: the match block's per-slot percent): the slots' damage
+/// and their fighters' percent, before the first frame.
+pub fn set_start_percent(slot: i32, percent: u16) {
+    crate::player::set_hud_damage(slot, percent as i32);
+}
+
+/// A recovery game's timer: the match block's timer word is `StartMeleeRules::time_limit` (seconds); the scene's rules
+/// are whole minutes and the scene's start copied them already, so the synced seconds are written over the copy (and the
+/// running timer) before the first frame.
+pub fn set_start_seconds(seconds: u32) {
+    unsafe {
+        let c = &mut *core::ptr::addr_of_mut!(melee_runtime::tu::gmvs_state::controller);
+        c.start.time_limit = seconds;
+        c.state.timer_seconds = seconds;
+    }
+}

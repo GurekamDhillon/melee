@@ -108,6 +108,11 @@ pub mod engine_game {
         pub rows: std::collections::BTreeMap<i32, String>,
         /// Slippi online mode: the desync checksum of the state entering each online frame (frame 1 = session `FIRST`).
         pub slippi_ck: std::collections::BTreeMap<i32, u32>,
+        /// Slippi online: the desync-recovery record (timer, stocks, percent) of the same states.
+        pub slippi_rec: std::collections::BTreeMap<i32, melee_core::slippi_online::SyncedState>,
+        /// Slippi online: a Hard desync was detected; the game ends as a quit-out by this player (`FN_END_GAME`), the
+        /// writes repeated on every frame run (a rollback load rewinds them).
+        pub hard_end: Option<i8>,
         /// Slippi online mode: byte 8 of each port's pad per session frame (the random bits its owner sent with it;
         /// a frame not here, or a predicted pad, counts 0) and each port's external character, for the seed-bit mix.
         pub slippi_bits: std::collections::BTreeMap<i32, [u8; 4]>,
@@ -129,7 +134,7 @@ pub mod engine_game {
 
     impl EngineGame {
         pub fn new(e: Engine) -> Self {
-            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default(), slippi_ck: Default::default(), slippi_bits: Default::default(), slippi_chars: [u32::MAX; 4], slippi_trace: None, slippi_mixed: Default::default() }
+            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default(), slippi_ck: Default::default(), slippi_rec: Default::default(), hard_end: None, slippi_bits: Default::default(), slippi_chars: [u32::MAX; 4], slippi_trace: None, slippi_mixed: Default::default() }
         }
         fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
             if self.base.borrow().is_none() {
@@ -278,6 +283,9 @@ pub mod engine_game {
                 crate::slp_export::begin_tick(&p);
                 crate::slp_export::begin_frame(self.frame() + 1, &p);
             }
+            if let Some(pauser) = self.hard_end {
+                melee_fighter::slippi_online::end_game_now(pauser);
+            }
             timed(4, || self.e.tick());
             // the hang watchdog's frame counter (synctest / rollback runs never reach the play loops' beat)
             crate::hang::pulse();
@@ -303,6 +311,7 @@ pub mod engine_game {
                 let ck = melee_fighter::slippi_online::checksum();
                 let of = self.frame() + 1 - FIRST + 1;
                 self.slippi_ck.insert(of, ck);
+                self.slippi_rec.insert(of, melee_fighter::slippi_online::synced_state());
                 if let (Some(tr), Some(tp)) = (self.slippi_trace.as_mut(), trace_pads) {
                     tr.insert(of - 1, format!("{tp} | ck {ck:08X} | {}", melee_fighter::slippi_online::trace_line()));
                 }

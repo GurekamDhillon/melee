@@ -165,6 +165,129 @@ pub fn compare(local: u32, remote: u32) -> Compare {
     }
 }
 
+/// One fighter's part of Slippi's desync-recovery record (`DFRE`: stocks u8, percent u16).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SyncedFighter {
+    pub stocks: u8,
+    pub percent: u16,
+}
+
+/// The state Slippi keeps per checksum frame for a desync recovery (`DDLE_RECOVERY_*` in StartEngineLoop.asm: the
+/// timer's seconds, then stocks and percent of all four slots) and sends to the peer in `SLIPPI_SYNCED_STATE`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SyncedState {
+    pub seconds: u32,
+    pub fighters: [SyncedFighter; 4],
+}
+
+impl Default for SyncedState {
+    /// `SlippiDesyncRecoveryResp`'s default (4 stocks, 0 percent, the 8:00 timer): what a game that is not a recovery
+    /// starts from.
+    fn default() -> Self {
+        SyncedState { seconds: 8 * 60, fighters: [SyncedFighter { stocks: 4, percent: 0 }; 4] }
+    }
+}
+
+impl SyncedState {
+    /// `seconds;stocks,percent;...` (four slots): how a recovery state travels between processes and into a test.
+    pub fn to_arg(&self) -> String {
+        let mut t = self.seconds.to_string();
+        for f in &self.fighters {
+            t += &format!(";{},{}", f.stocks, f.percent);
+        }
+        t
+    }
+    pub fn from_arg(a: &str) -> Option<SyncedState> {
+        let mut it = a.trim().split(';');
+        let mut s = SyncedState { seconds: it.next()?.parse().ok()?, ..Default::default() };
+        for f in &mut s.fighters {
+            let (st, pc) = it.next()?.split_once(',')?;
+            *f = SyncedFighter { stocks: st.parse().ok()?, percent: pc.parse().ok()? };
+        }
+        it.next().is_none().then_some(s)
+    }
+}
+
+/// `SlippiNetplayClient::GetDesyncRecoveryState`'s reconciliation of the local and the remote synced states (their
+/// last synced frames can differ by a few frames): the timers must be within 1 s (the larger is used), every slot's
+/// stocks must be equal, percents within 25 (the lower is used). Err = "is_error": Slippi drops the connection.
+pub fn merge_recovery(local: &SyncedState, remotes: &[SyncedState]) -> Result<SyncedState, &'static str> {
+    let mut m = *local;
+    for r in remotes {
+        if (m.seconds as i64 - r.seconds as i64).abs() > 1 {
+            return Err("timer values for desync recovery too different");
+        }
+        m.seconds = m.seconds.max(r.seconds);
+        for j in 0..4 {
+            if m.fighters[j].stocks != r.fighters[j].stocks {
+                return Err("stocks remaining for desync recovery do not match");
+            }
+            if (m.fighters[j].percent as i32 - r.fighters[j].percent as i32).abs() > 25 {
+                return Err("current health for desync recovery too different");
+            }
+            m.fighters[j].percent = m.fighters[j].percent.min(r.fighters[j].percent);
+        }
+    }
+    Ok(m)
+}
+
+/// StartEngineLoop.asm's per-frame desync check, for one peer: which compares count, when the game ends, and which
+/// state the recovery keeps.
+///
+/// * a compare is only made for a frame the peer reported that is finalized here (`<= ODB_STABLE_FINALIZED_FRAME`; the
+///   caller passes only such frames) and `> UNFREEZE_INPUTS_FRAME`;
+/// * a Hard (`compare`) sets `ODB_IS_DESYNC_STATE_DISPLAYED`: the game ends (`FN_END_GAME`) and no frame is compared
+///   after it; the recovery state is not updated by the Hard pass;
+/// * a Soft shows "Desync Risk" (once) and the check goes on;
+/// * every other pass copies the compared frame's timer, stocks and percent into `ODB_DESYNC_RECOVERY_*`.
+#[derive(Clone, Debug, Default)]
+pub struct DesyncWatch {
+    /// the Hard happened (the game is ending)
+    pub hard_at: Option<i32>,
+    /// the first Soft's frame
+    pub soft_at: Option<i32>,
+    /// the state of the last frame compared without a Hard (or the frame-0 state until one is)
+    pub synced: Option<SyncedState>,
+}
+
+impl DesyncWatch {
+    /// The frame-0 fallback (`SKIP_TAKE_CHECKSUM`: a game whose peer never reports still has a state that is not zeros).
+    pub fn set_initial(&mut self, s: SyncedState) {
+        if self.synced.is_none() {
+            self.synced = Some(s);
+        }
+    }
+
+    /// One compare of online frame `fr`; `state` is this side's state at that frame. `None`: the frame is not
+    /// compared (the countdown, or after a Hard).
+    pub fn check(&mut self, fr: i32, local: u32, remote: u32, state: Option<SyncedState>) -> Option<Compare> {
+        if self.hard_at.is_some() || fr <= UNFREEZE_INPUTS_FRAME {
+            return None;
+        }
+        let c = compare(local, remote);
+        match c {
+            Compare::Hard => self.hard_at = Some(fr),
+            Compare::Soft => {
+                self.soft_at.get_or_insert(fr);
+                self.synced = state.or(self.synced);
+            }
+            Compare::Same => self.synced = state.or(self.synced),
+        }
+        Some(c)
+    }
+
+    /// What Slippi sends at the end of a game that ended on the Hard (ranked only).
+    pub fn recovery(&self) -> SyncedState {
+        self.synced.unwrap_or_default()
+    }
+}
+
+/// The match struct writes of `FN_END_GAME` (StartEngineLoop.asm, `ssbm-asm` 9817968 + the later 55 -> 90 change):
+/// `0x1` the "pauser" (the local player's index), `0x8` the exit type 7 (LRAS: `OUTCOME_NO_CONTEST`), `0x24D5` the
+/// GAME! think's maximum time, 90 frames. The game's own end-of-match check does the rest.
+pub const END_GAME_EXIT_LRAS: u8 = 7;
+pub const END_GAME_THINK_FRAMES: u8 = 90;
+
 /// Per-game state (the ODB fields the seed uses).
 #[derive(Clone, Copy, Debug, Default)]
 pub struct State {
@@ -219,6 +342,57 @@ pub fn state() -> Option<&'static mut State> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn synced(sec: u32, st: [u8; 4], pc: [u16; 4]) -> SyncedState {
+        let mut s = SyncedState { seconds: sec, ..Default::default() };
+        for j in 0..4 {
+            s.fighters[j] = SyncedFighter { stocks: st[j], percent: pc[j] };
+        }
+        s
+    }
+
+    #[test]
+    fn recovery_merge_is_slippis() {
+        let a = synced(300, [3, 2, 0, 0], [40, 90, 0, 0]);
+        // timer: the larger within 1 s; percent: the lower within 25; stocks equal
+        let b = synced(301, [3, 2, 0, 0], [60, 80, 0, 0]);
+        let m = merge_recovery(&a, &[b]).unwrap();
+        assert_eq!((m.seconds, m.fighters[0].percent, m.fighters[1].percent), (301, 40, 80));
+        assert!(merge_recovery(&a, &[synced(303, [3, 2, 0, 0], [40, 90, 0, 0])]).is_err());
+        assert!(merge_recovery(&a, &[synced(300, [3, 1, 0, 0], [40, 90, 0, 0])]).is_err());
+        assert!(merge_recovery(&a, &[synced(300, [3, 2, 0, 0], [66, 90, 0, 0])]).is_err());
+        assert!(merge_recovery(&a, &[synced(300, [3, 2, 0, 0], [65, 90, 0, 0])]).is_ok());
+    }
+
+    #[test]
+    fn recovery_arg_round_trips() {
+        let a = synced(301, [3, 2, 0, 0], [40, 80, 0, 0]);
+        assert_eq!(SyncedState::from_arg(&a.to_arg()), Some(a));
+        assert_eq!(SyncedState::from_arg("1;2"), None);
+    }
+
+    #[test]
+    fn watch_follows_the_asm() {
+        let mut w = DesyncWatch::default();
+        w.set_initial(SyncedState::default());
+        let s1 = synced(470, [4, 4, 0, 0], [10, 0, 0, 0]);
+        let s2 = synced(469, [4, 4, 0, 0], [20, 0, 0, 0]);
+        // the countdown is never compared
+        assert_eq!(w.check(84, 1, 0x10000, Some(s1)), None);
+        assert_eq!(w.recovery(), SyncedState::default());
+        assert_eq!(w.check(85, 7, 7, Some(s1)), Some(Compare::Same));
+        // a Soft (high halves differ) keeps going and keeps the state
+        assert_eq!(w.check(86, 0x0001_0005, 0x0002_0005, Some(s2)), Some(Compare::Soft));
+        assert_eq!(w.soft_at, Some(86));
+        assert_eq!(w.recovery(), s2);
+        // a Hard ends it: its own frame's state is not kept, and nothing is compared after it
+        let s3 = synced(468, [4, 3, 0, 0], [30, 0, 0, 0]);
+        assert_eq!(w.check(87, 0x0000_0005, 0x0000_0009, Some(s3)), Some(Compare::Hard));
+        assert_eq!(w.hard_at, Some(87));
+        assert_eq!(w.recovery(), s2);
+        assert_eq!(w.check(88, 1, 1, Some(s3)), None);
+        assert_eq!(w.recovery(), s2);
+    }
 
     #[test]
     fn fmix_reference() {

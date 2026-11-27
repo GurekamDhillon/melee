@@ -25,7 +25,7 @@ use std::cell::RefCell;
 pub(crate) fn desync_report(tag: &str, fr: i32, lv: u32, rv: u32, hard: u64, cur: i32, stats: &melee_net::session::RbStats, bits: &dyn Fn() -> String) {
     crate::desynccap::on_compare(melee_core::slippi_online::Compare::Hard, tag, fr, lv, rv, cur, stats, bits);
     if hard <= 30 {
-        log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x} (the match goes on)"));
+        log(&format!("netplay {tag}: DESYNC at online frame {fr}: local {lv:08x} remote {rv:08x}"));
     } else if fr % 60 == 0 {
         log(&format!("netplay {tag}: DESYNC count {hard} (latest at online frame {fr}: local {lv:08x} remote {rv:08x})"));
     }
@@ -162,6 +162,11 @@ pub struct ModesGame {
 pub struct SlippiSim {
     /// the desync checksum of the state entering each online frame (online frame 1 = session `FIRST`)
     pub ck: std::collections::BTreeMap<i32, u32>,
+    /// the desync-recovery record (timer, stocks, percent) of the same states
+    pub rec: std::collections::BTreeMap<i32, melee_core::slippi_online::SyncedState>,
+    /// a Hard desync was detected: the game ends as a quit-out by this player (`FN_END_GAME`), the writes repeated on
+    /// every frame run (a rollback load rewinds them)
+    pub hard_end: Option<i8>,
     /// byte 8 of each port's pad per session frame (a missing or predicted pad counts 0)
     pub bits: std::collections::BTreeMap<i32, [u8; 4]>,
     /// each port's external character, for the seed-bit mix
@@ -356,6 +361,24 @@ impl RbGame for ModesGame {
                 rs.set_logic_seed(0x0BAD_5EED);
             }
         }
+        // a Slippi-wire match: MELEE_NP_TEST_DESYNC=<game frame>[:<count>] is `slippi-netplay`'s test (netmatch.rs): the sim
+        // sees both ports' sticks reversed and Y pressed for <count> (30) frames while the pads sent are unchanged
+        if self.slippi.is_some() {
+            static TEST_PADS: std::sync::OnceLock<Option<(i32, i32)>> = std::sync::OnceLock::new();
+            if let Some((f0, n)) = *TEST_PADS.get_or_init(|| {
+                let v = std::env::var("MELEE_NP_TEST_DESYNC").ok()?;
+                let mut it = v.split(':');
+                Some((it.next()?.parse().ok()?, it.next().and_then(|n| n.parse().ok()).unwrap_or(30)))
+            }) {
+                let g = self.frame() + 1 - FIRST;
+                if g >= f0 && g < f0 + n {
+                    for q in p.iter_mut().take(2) {
+                        q.stickX = if q.stickX >= 0 { -100 } else { 100 };
+                        q.button |= 0x0800;
+                    }
+                }
+            }
+        }
         // the define audio's start ledger (geno_host: real-time clips, keyed by start frame)
         melee_engine::geno_host::net_frame(self.frame() + 1, resim);
         // Slippi online: the pads TriggerSendInput section 11 mixes for this frame (as EngineGame::run_frame)
@@ -373,12 +396,16 @@ impl RbGame for ModesGame {
         }
         // a live .slp (the Slippi-wire match): this frame's events wait under its session frame until confirmed
         crate::slp_export::begin_frame(self.frame() + 1, &p);
+        if let Some(pauser) = self.slippi.as_ref().and_then(|sl| sl.hard_end) {
+            melee_fighter::slippi_online::end_game_now(pauser);
+        }
         self.step(p);
         crate::slp_export::end_frame();
         if self.slippi.is_some() && melee_core::slippi_online::state().is_some() {
             let sf = self.frame();
             let rolling = melee_core::slippi_online::state().is_some_and(|st| st.last_rolling != 0);
             let ck = melee_fighter::slippi_online::checksum();
+            let rec = melee_fighter::slippi_online::synced_state();
             let _s = melee_engine::arena::SysScope::enter();
             let sl = self.slippi.as_mut().unwrap();
             if rolling {
@@ -388,6 +415,7 @@ impl RbGame for ModesGame {
                 sl.mixed.remove(&sf);
             }
             sl.ck.insert(sf + 1 - FIRST + 1, ck);
+            sl.rec.insert(sf + 1 - FIRST + 1, rec);
         }
         melee_engine::gxbridge::shim().set_suppress_draws(false);
         unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = 0 };
@@ -1916,6 +1944,8 @@ pub struct SlippiRun {
     compared_upto: i32,
     soft: u32,
     hard: u32,
+    /// StartEngineLoop.asm's desync check (frames > 84 only; a Hard ends the game and stops the check)
+    watch: melee_core::slippi_online::DesyncWatch,
     /// time sync (melee_net::time_sync): holds when ahead, extra frames when behind; local pacing only
     ts: melee_net::time_sync::TimeSync,
     last_rx: Option<Instant>,
@@ -2030,6 +2060,7 @@ impl NetDriver {
             done_at: None,
             work_max_us: 0,
             work_slow: 0,
+            watch: Default::default(),
             work_n: 0,
         };
         let nd = NetDriver {
@@ -2220,19 +2251,30 @@ impl NetDriver {
         crate::slp_export::confirm(conf);
         for (&fr, &rv) in sr.link.remote_checksums.range((sr.compared_upto + 1).max(2)..) {
             let Some(&lv) = sr.finals.get(&fr) else { break };
+            if sr.watch.hard_at.is_some() {
+                break;
+            }
             sr.compared += 1;
             sr.compared_upto = fr;
-            match compare(lv, rv) {
-                Compare::Same => {}
-                Compare::Soft => {
+            let sl = g.slippi.as_ref().unwrap();
+            if sr.watch.synced.is_none() {
+                sr.watch.set_initial(sl.rec.values().next().copied().unwrap_or_default());
+            }
+            let rec = sl.rec.get(&fr).copied();
+            match sr.watch.check(fr, lv, rv, rec) {
+                None | Some(Compare::Same) => {}
+                Some(Compare::Soft) => {
                     sr.soft += 1;
                     crate::desynccap::on_compare(Compare::Soft, &tag, fr, lv, rv, online(s.current_frame()), &s.stats, &|| g.slippi.as_ref().map_or(String::new(), |sl| crate::desynccap::bits_text(sl.mixed.iter().map(|(a, b)| (*a, *b)))));
                 }
-                // Slippi Dolphin and Hero (slippi_online.cpp) log a mismatch and play on: the match is not ended
-                // for it; the summary reports it
-                Compare::Hard => {
+                // Slippi (StartEngineLoop.asm HARD_DESYNC_DETECTED, in every mode since ssbm-asm 9817968): "DESYNC DETECTED"
+                // (the retail_flow notice), the error sound, and FN_END_GAME: the game ends as a quit-out by the local
+                // player with a 90-frame GAME! screen; nothing is compared after it
+                Some(Compare::Hard) => {
                     sr.hard += 1;
                     crate::play_net::desync_report(&tag, fr, lv, rv, sr.hard as u64, online(s.current_frame()), &s.stats, &|| g.slippi.as_ref().map_or(String::new(), |sl| crate::desynccap::bits_text(sl.mixed.iter().map(|(a, b)| (*a, *b)))));
+                    log(&format!("netplay {tag}: DESYNC DETECTED at online frame {fr}: the game ends (quit-out by port {}, GAME! {} frames)", sr.local_port, melee_core::slippi_online::END_GAME_THINK_FRAMES));
+                    g.slippi.as_mut().unwrap().hard_end = Some(sr.local_port as i8);
                 }
             }
         }

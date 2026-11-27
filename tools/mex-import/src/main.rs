@@ -5,6 +5,8 @@
 //!                     [--no-split] [--dry-run] [--enable id,id] [--no-code]
 //!   mex-import code   --mod M.iso [--vanilla V.iso] [--out DIR --name N]
 //!   mex-import tables --mod M.iso
+//!   mex-import referee --capture F[,F..] [--dol main.dol] [--out DIR] [--fns a,b]   (notes/referee.md)
+//!   mex-import referee-plan --fns a,b [--dol main.dol]
 //!
 //! Disc paths may also come from the environment: --vanilla defaults to $GW_ISO_VANILLA.
 //! Everything written is disc-derived: keep --out outside any repository.
@@ -239,7 +241,9 @@ fn main() -> ExitCode {
         "import" => cmd_import(&a),
         "code" => cmd_code(&a),
         "tables" => cmd_tables(&a),
-        c => Err(format!("unknown command {c} (import | code | tables)")),
+        "referee" => mex_import::referee_cli::run(&a.kv),
+        "referee-plan" => mex_import::referee_cli::plan(&a.kv),
+        c => Err(format!("unknown command {c} (import | code | tables | referee | referee-plan)")),
     });
     match r {
         Ok(()) => ExitCode::SUCCESS,

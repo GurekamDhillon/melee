@@ -146,6 +146,7 @@ pub unsafe fn lbVector_Len_xy_accurate(v: *const Vec) -> f32 {
 
 pub unsafe fn lbVector_Normalize(vec: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_Normalize");
+    melee_core::referee_hook!(lbVector_Normalize, [P(vec, 12)], f, lbVector_Normalize(vec));
     let len = lbVector_Len(vec);
     if len == 0.0 {
         return 0.0;
@@ -159,6 +160,7 @@ pub unsafe fn lbVector_Normalize(vec: *mut Vec) -> f32 {
 
 pub unsafe fn lbVector_NormalizeXY(a: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_NormalizeXY");
+    melee_core::referee_hook!(lbVector_NormalizeXY, [P(a, 12)], f, lbVector_NormalizeXY(a));
     let len = sqrtf_accurate(sq2_mem((*a).x, (*a).y));
     if len == 0.0 {
         return 0.0;
@@ -171,6 +173,7 @@ pub unsafe fn lbVector_NormalizeXY(a: *mut Vec) -> f32 {
 
 pub unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
     melee_core::ct!("lbVector_Add");
+    melee_core::referee_hook!(lbVector_Add, [P(a, 12), P(b, 12)], p, lbVector_Add(a, b));
     (*a).x += (*b).x;
     (*a).y += (*b).y;
     (*a).z += (*b).z;
@@ -179,6 +182,7 @@ pub unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
 
 pub unsafe fn lbVector_Add_xy(a: *mut Vec, b: *mut Vec) -> *mut Vec {
     melee_core::ct!("lbVector_Add_xy");
+    melee_core::referee_hook!(lbVector_Add_xy, [P(a, 12), P(b, 12)], p, lbVector_Add_xy(a, b));
     (*a).x += (*b).x;
     (*a).y += (*b).y;
     a
@@ -186,6 +190,7 @@ pub unsafe fn lbVector_Add_xy(a: *mut Vec, b: *mut Vec) -> *mut Vec {
 
 pub unsafe fn lbVector_Sub(a: *mut Vec, b: *mut Vec) -> *mut Vec {
     melee_core::ct!("lbVector_Sub");
+    melee_core::referee_hook!(lbVector_Sub, [P(a, 12), P(b, 12)], p, lbVector_Sub(a, b));
     (*a).x -= (*b).x;
     (*a).y -= (*b).y;
     (*a).z -= (*b).z;
@@ -194,6 +199,7 @@ pub unsafe fn lbVector_Sub(a: *mut Vec, b: *mut Vec) -> *mut Vec {
 
 pub unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, result: *mut Vec) -> *mut Vec {
     melee_core::ct!("lbVector_Diff");
+    melee_core::referee_hook!(lbVector_Diff, [P(a, 12), P(b, 12), P(result, 12)], p, lbVector_Diff(a, b, result));
     (*result).x = (*a).x - (*b).x;
     (*result).y = (*a).y - (*b).y;
     (*result).z = (*a).z - (*b).z;
@@ -221,6 +227,7 @@ fn clamp_cos(c: f32) -> f32 {
 /// 8000D620: the angle between a and b.
 pub unsafe fn lbVector_Angle(a: *mut Vec, b: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_Angle");
+    melee_core::referee_hook!(lbVector_Angle, [P(a, 12), P(b, 12)], f, lbVector_Angle(a, b));
     let lena_lenb = lbVector_Len(a) * lbVector_Len(b);
     if lena_lenb > 0.0000000001f32 {
         let cosine = dot3(&*a, &*b) / lena_lenb;
@@ -232,6 +239,7 @@ pub unsafe fn lbVector_Angle(a: *mut Vec, b: *mut Vec) -> f32 {
 /// 8000D790: the angle between a and b in the xy plane.
 pub unsafe fn lbVector_AngleXY(a: *mut Vec, b: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_AngleXY");
+    melee_core::referee_hook!(lbVector_AngleXY, [P(a, 12), P(b, 12)], f, lbVector_AngleXY(a, b));
     let lena_lenb = lbVector_Len_xy_accurate(a) * lbVector_Len_xy_accurate(b);
     if lena_lenb != 0.0 {
         let cosine = dot2(&*a, &*b) / lena_lenb;
@@ -273,6 +281,7 @@ pub fn lbvector_cos(angle: f32) -> f32 {
 /// 8000D8F4: rotates v by angle about the unit axis.
 pub unsafe fn lbVector_RotateAboutUnitAxis(v: *mut Vec, axis: *mut Vec, angle: f32) {
     melee_core::ct!("lbVector_RotateAboutUnitAxis");
+    melee_core::referee_hook!(lbVector_RotateAboutUnitAxis, [P(v, 12), P(axis, 12), F(angle)], v, lbVector_RotateAboutUnitAxis(v, axis, angle));
     let (v, axis) = (&mut *v, &*axis);
     let len_yz = sqrtf(sq2_mem(axis.y, axis.z));
     let s = lbvector_sin(angle);
@@ -312,6 +321,7 @@ pub unsafe fn lbVector_RotateAboutUnitAxis(v: *mut Vec, axis: *mut Vec, angle: f
 /// build's `-ftrivial-auto-var-init=zero` makes 0).
 pub unsafe fn lbVector_Rotate(v: *mut Vec, axis: i32, angle: f32) {
     melee_core::ct!("lbVector_Rotate");
+    melee_core::referee_hook!(lbVector_Rotate, [P(v, 12), I(axis), F(angle)], v, lbVector_Rotate(v, axis, angle));
     let s = lbvector_sin(angle);
     let c = lbvector_cos(angle);
     let vv = &mut *v;
@@ -329,6 +339,7 @@ pub unsafe fn lbVector_Rotate(v: *mut Vec, axis: i32, angle: f32) {
 /// 8000DC6C: a -= 2<a,b>b in xy.
 pub unsafe fn lbVector_Mirror(a: *mut Vec, unit_mirror_axis: *mut Vec) {
     melee_core::ct!("lbVector_Mirror");
+    melee_core::referee_hook!(lbVector_Mirror, [P(a, 12), P(unit_mirror_axis, 12)], v, lbVector_Mirror(a, unit_mirror_axis));
     let (a, m) = (&mut *a, &*unit_mirror_axis);
     let f = fmadds(m.x, a.x, m.y * a.y) * -2.0f32;
     a.x = fmadds(m.x, f, a.x);
@@ -338,12 +349,14 @@ pub unsafe fn lbVector_Mirror(a: *mut Vec, unit_mirror_axis: *mut Vec) {
 /// 8000DCA8
 pub unsafe fn lbVector_CosAngle(a: *mut Vec, b: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_CosAngle");
+    melee_core::referee_hook!(lbVector_CosAngle, [P(a, 12), P(b, 12)], f, lbVector_CosAngle(a, b));
     dot2(&*a, &*b) / (sqrtf(sq2_mem((*a).x, (*a).y)) * sqrtf(sq2_mem((*b).x, (*b).y)))
 }
 
 /// 8000DDAC: a + f*(b-a).
 pub unsafe fn lbVector_Lerp(a: *mut Vec, b: *mut Vec, result: *mut Vec, f: f32) -> *mut Vec {
     melee_core::ct!("lbVector_Lerp");
+    melee_core::referee_hook!(lbVector_Lerp, [P(a, 12), P(b, 12), P(result, 12), F(f)], p, lbVector_Lerp(a, b, result, f));
     lbVector_Diff(b, a, result);
     (*result).x *= f;
     (*result).y *= f;
@@ -355,6 +368,7 @@ pub unsafe fn lbVector_Lerp(a: *mut Vec, b: *mut Vec, result: *mut Vec, f: f32) 
 /// `Mtx m` is a `float[3][4]`.
 pub unsafe fn lbVector_8000DE38(m: *mut [f32; 4], v: *mut Vec, c: f32) -> *mut Vec {
     melee_core::ct!("lbVector_8000DE38");
+    melee_core::referee_hook!(lbVector_8000DE38, [P(m, 48), P(v, 12), F(c)], p, lbVector_8000DE38(m, v, c));
     let mut c = c;
     if c > 1.0 {
         c = 1.0;
@@ -376,6 +390,7 @@ pub unsafe fn lbVector_8000DE38(m: *mut [f32; 4], v: *mut Vec, c: f32) -> *mut V
 /// 8000DF0C
 pub unsafe fn lbVector_EulerAnglesFromONB(result_angles: *mut Vec, a: *mut Vec, b: *mut Vec, c: *mut Vec) -> *mut Vec {
     melee_core::ct!("lbVector_EulerAnglesFromONB");
+    melee_core::referee_hook!(lbVector_EulerAnglesFromONB, [P(result_angles, 12), P(a, 12), P(b, 12), P(c, 12)], p, lbVector_EulerAnglesFromONB(result_angles, a, b, c));
     let (a, b, c) = (&*a, &*b, &*c);
     let r = &mut *result_angles;
     if b.z == -1.0 || b.z == 1.0 {
@@ -408,6 +423,7 @@ pub unsafe fn lbVector_EulerAnglesFromPartialONB(result_angles: *mut Vec, a: *mu
 /// 8000E138
 pub unsafe fn lbVector_ApplyEulerRotation(v: *mut Vec, angles: *mut Vec) -> *mut Vec {
     melee_core::ct!("lbVector_ApplyEulerRotation");
+    melee_core::referee_hook!(lbVector_ApplyEulerRotation, [P(v, 12), P(angles, 12)], p, lbVector_ApplyEulerRotation(v, angles));
     lbVector_Rotate(v, 1, (*angles).x);
     lbVector_Rotate(v, 2, (*angles).y);
     lbVector_Rotate(v, 4, (*angles).z);
@@ -417,6 +433,7 @@ pub unsafe fn lbVector_ApplyEulerRotation(v: *mut Vec, angles: *mut Vec) -> *mut
 /// 8000E19C
 pub fn lbVector_sqrtf_accurate(x: f32) -> f32 {
     melee_core::ct!("lbVector_sqrtf_accurate");
+    melee_core::referee_hook!(lbVector_sqrtf_accurate, [F(x)], f, lbVector_sqrtf_accurate(x));
     sqrtf_accurate(x)
 }
 
@@ -495,6 +512,7 @@ pub unsafe fn lbVector_WorldToScreen(cobj: *mut HSD_CObj, pos3d: *const Vec, scr
 /// 8000E530: the 3x3 euler matrix from angles.x/y/z (column 4 zero).
 pub unsafe fn lbVector_CreateEulerMatrix(m: *mut [f32; 4], angles: *mut Quaternion) {
     melee_core::ct!("lbVector_CreateEulerMatrix");
+    melee_core::referee_hook!(lbVector_CreateEulerMatrix, [P(m, 48), P(angles, 12)], v, lbVector_CreateEulerMatrix(m, angles));
     let m = core::slice::from_raw_parts_mut(m, 3);
     let a = &*angles;
     let sx = lbvector_sin(a.x);
@@ -522,6 +540,7 @@ pub unsafe fn lbVector_CreateEulerMatrix(m: *mut [f32; 4], angles: *mut Quaterni
 /// 8000E838: project c onto the line a->b into d; returns |c - d|.
 pub unsafe fn lbVector_8000E838(a: *mut Vec, b: *mut Vec, c: *mut Vec, d: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_8000E838");
+    melee_core::referee_hook!(lbVector_8000E838, [P(a, 12), P(b, 12), P(c, 12), P(d, 12)], f, lbVector_8000E838(a, b, c, d));
     let mut b_a = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let mut c_a = Vec { x: 0.0, y: 0.0, z: 0.0 };
     lbVector_Diff(b, a, &mut b_a);

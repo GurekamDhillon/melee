@@ -53,6 +53,7 @@ pub fn gk_fmadds(a: f32, c: f32, b: f32) -> f32 {
 /// MSL `sinf` as the retail binary computes it.
 pub fn sinf(x: f32) -> f32 {
     melee_core::ct!("sinf");
+    melee_core::referee_hook!(sinf, [F(x)], f, sinf(x));
     let (y, n) = sincos_reduce_gekko(x);
     let n = n as usize;
     if fabs_lt(y) {
@@ -70,6 +71,7 @@ pub fn sinf(x: f32) -> f32 {
 /// MSL `cosf` as the retail binary computes it.
 pub fn cosf(x: f32) -> f32 {
     melee_core::ct!("cosf");
+    melee_core::referee_hook!(cosf, [F(x)], f, cosf(x));
     let (y, n) = sincos_reduce_gekko(x);
     let n = n as usize;
     if fabs_lt(y) {

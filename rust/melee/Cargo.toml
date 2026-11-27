@@ -9,6 +9,8 @@ publish.workspace = true
 calltrace = ["melee_core/calltrace"]
 # covtest discrimination bits (melee_core/src/disc.rs): only build_cov.sh enables it
 disc = ["melee_core/disc"]
+# DOL referee capture (notes/referee.md): `--features referee`, a scratch build only
+referee = ["melee_core/referee"]
 # Tracy instrumentation (docs/rust-port/notes/profiling.md): `--features profile-tracy`
 profile-tracy = ["melee_core/profile-tracy"]
 # slippi-netplay --mm-real (wss:// to Slippi's real matchmaking): TLS in melee_net

@@ -1,0 +1,217 @@
+# DOL referee: Rust functions checked against retail main.dol (2026-11-27, branch port/referee-mvp)
+
+Vanilla Melee NTSC 1.02 only (no m-ex, mods, Akaneia, ACE). No disc bytes, instruction words, dumps or replays are in
+this note or in git: main.dol is read at run time from the user's own checkout (`REFEREE_DOL`, never printed), and the
+captures (engine values from replay runs) stay in the workspace `_build/referee-mvp/`.
+
+The correctness reference of the Rust port is the retail `main.dol` (STATUS.md, "The C build is legacy"). The referee runs
+the retail function itself in the Gekko-exact PowerPC interpreter of `tools/mex-import` on the inputs the engine's Rust
+port saw on a real game state, and compares the return value and every byte the function wrote, bit for bit. This is
+coverage-testing.md's phase C, done in-process with no Dolphin per call.
+
+## 1. Interpreter trust check (`tools/mex-import/tests/gekko_trust.rs`, `dol_census.rs`)
+
+**Scope.** `dol_census` decodes every symbols.txt function of the DOL (19,827 functions, 968,511 words) and counts each
+decoded form. Outside the interpreter: 88 paired-single forms (opcode 4, plus psq_l/psq_st 56/60/61: 1,013 words, all in
+the SDK PSMTX/PSVEC routines, THP video, `WriteMTXPS*` and one `fn_80166A8C`), OS/TRK SPRs and `mffs`/`mtfsf`
+(`__OSSaveFPUContext`, `setjmp`), cache/sync ops. No game FP instruction sets Rc. That fixes the set the check covers.
+
+**Method.** An independent model of Dolphin's interpreter written in the test from Dolphin's semantics
+(Interpreter_Integer/FloatingPoint/LoadStore/Branch.cpp, Interpreter_FPUtils.h, Common/FloatUtils.cpp, read in
+`_build/dolphin-oracle/src`): its own decoder, the NI_* NaN rules (frA, then frB, then frC; default NaN positive),
+Force25Bit with the denormal case, ForceSingle (NI = 0), ConvertToSingle/ConvertToDouble for stfs/lfs, the fres/frsqrte
+tables, fctiw/fctiwz with Dolphin's -0 bit, FPCC compares, XER masking, the bc/bclr/bcctr rules. Its fused multiply-add is
+an exact software fma on integer mantissas (not the host `mul_add`, which the interpreter uses), so the host fma is checked
+too. Each of 162 instruction forms (every form the census lists, every Rc variant) gets fuzzed operands with the corner
+classes weighted in: +-0, double and single-range denormals, quiet/signalling NaNs with payloads, infinities, the single
+overflow edge, Force25 rounding-bit ties, fctiw range edges (+-2^31, +-0.5, ...), shift amounts 0..129, INT_MIN/-1, x/0,
+r0 as an operand, aliasing registers, random CR/CTR/LR. Assumed FPSCR: RN = 0, NI = 0, no exception enables.
+
+**Disagreements found** (20,000 sets per form, before the fixes), all fixed in Gekko mode only (`Machine::new_gekko`,
+used by the referee and the m-ex guest; the plain mode stays gw_ppc.c op for op for tests/ppc_oracle.rs):
+
+| form | interpreter did | Dolphin |
+|---|---|---|
+| addic / addic. | Rc taken from bit 0 of the immediate (gw_ppc.c's bug, mirrored by the decoder): `addic` with an odd immediate wrote CR0, `addic.` with an even one did not | addic. is opcode 13 |
+| subfic, addic | rA = r0 read as 0 | the register's value |
+| slw, srw | amount masked to 5 bits | bit 5 shifts everything out (as notes/semantics.md already has for melee_core) |
+| divw | x/0 -> 0, INT_MIN/-1 -> INT_MIN | -1 for a negative dividend, else 0 |
+| fadd/fsub/fmul/fdiv(s), fmadd/fmsub(s) | x86's NaN choice and its negative default NaN; fmsub negated frB's NaN | NaN of frA, frB, frC in that order, quieted; default NaN 7FF8... |
+| fnmadd/fnmsub(s) | negated a NaN result | a NaN is not negated |
+| fmuls/fmadds... frC | Force25 without the denormal branch (melee_core::fp::force25) | a denormal frC is normalised before rounding |
+| fres | result rounded to single (truncating a NaN payload) | stored as computed |
+| fsel | NaN frA selected frC | selects frB |
+| fabs, fnabs | arithmetic compare (fabs(-0) = -0, NaN sign kept) | sign-bit operations |
+| fctiw, fctiwz | a zero result of a negative operand had bit 32 clear | set (Dolphin's hardware-tested rule) |
+| fcmpu, fcmpo | NaN gave CR field = XER.SO | FU (1); SO not involved |
+| lfs | host float->double (quiets a signalling NaN) | exact bit conversion |
+| stfs | host double->float, rounding | truncating ConvertToSingle; doubles in the single denormal range shifted |
+| bclr, bcctr | target used as is | target & ~3 |
+| mtxer | all 32 bits kept | SO, OV, CA, byte count and compare byte only |
+| dcbz | effective address used as is | aligned down to 32 bytes |
+
+Kept on purpose (listed as known in the test): **addme / subfme carry**. Dolphin's interpreter computes it as
+`Helper_Carry(a, carry - 1)`, which gives CA = 0 when CA was 1; the architecture and Dolphin's JIT (host adc/sbb, what
+played the online replays) give CA = 1. The interpreter keeps the architected carry. Neither form is used by the game's
+gameplay code (census: no addme/subfme in the DOL at all).
+
+The model had two bugs of its own on the way (subfc's carry, frsqrte's exponent halving), found by the disagreements and
+fixed in the model against Dolphin's source.
+
+**Result after the fixes:** 162 forms x 2,000,000 operand sets = 324,000,000 sets, **0 disagreements** outside the kept
+addme/subfme carry (REFEREE_FUZZ=2000000, see the run line in section 6). Default `cargo test` runs 20,000 per form (~11 s).
+
+**m-ex guest.** `mex_guest.rs` runs the same Gekko machine, unchanged. Its results change only in the corner cases of the
+table (NaN propagation, a shift by 32..63, x/0, r0 in addic/subfic, addic Rc, stfs of an over-precise double, denormal
+frC): every one of them was wrong before (it did not match Dolphin). Not re-run on m-ex mods here (vanilla scope).
+
+`tests/ppc_oracle.rs` (plain mode vs gw_ppc.c) fails 4 of 6,000 cases both before and after this branch (checked by
+building the unmodified interp.rs): pre-existing, not touched.
+
+## 2. The referee harness
+
+| piece | where |
+|---|---|
+| DOL + symbols | `tools/mex-import/src/dol.rs` (header parse, `symbols.txt`, `Dol::find`: `$REFEREE_DOL`, else `orig/` of this checkout or the workspace's main `melee/`) |
+| retail runner | `tools/mex-import/src/referee.rs` (`Referee::check`) |
+| CLI | `mex-import referee --capture F[,F..] [--fns a,b] [--out DIR] [--cov-in C --cov-out C]`, `mex-import referee-plan --fns a,b` |
+| capture | `rust/melee_core/src/referee.rs` (`referee_hook!`, feature `referee`; `melee --features referee`) |
+
+**Guest memory.** Every DOL section at its retail address, read-only, kinds named from symbols.txt (text, constants,
+.data/.sdata, .bss/.sbss as zeros). r2 = `_SDA2_BASE_` 0x804DF9E0, r13 = `_SDA_BASE_` 0x804DB6A0, so .sdata2 constants load
+as the game loads them. At setup the DOL's static initialisers (`_ctors`, as `__init_cpp` runs them at boot) run once
+with .data/.bss writable: MSL's `__sinit_trigf_c` fills `__four_over_pi_m1`, which sinf/cosf read (without it the first run
+had 209 false sinf/cosf mismatches). A stack (0x81700000) and one region per group of the call's pointer arguments
+(native addresses grouped by overlap, so aliasing such as `lbVector_Diff(a, b, a)` stays aliasing).
+
+**A run.** Integer and pointer arguments go to r3.. in order, floats to f1.., LR = 0 (returning there ends the run). Code
+is fetched from the text only; every callee inside the text is interpreted too (the retail tree, not the Rust one), and the
+report names them; a call out of the text faults. A store outside the stack and the argument regions ends the run as "not a
+leaf of the checked class" (not compared); a read of .data/.sdata/.bss/.sbss is listed per function ("mutable globals":
+image values after the static initialisers, not the engine's). Budget 2,000,000 instructions.
+
+**Compare.** Return value (r3, f1 as a single, or the returned pointer mapped back to the argument it names) and every
+32-bit word of every argument group, bit-exact; a mismatch names the argument, the offset, both values and the frame.
+Negative control: flipping one bit of a captured output or return value is reported as a mismatch (checked).
+
+**Capture.** `referee_hook!(name, [P(ptr, bytes), I(int), F(float)...], v|i|f|p, call)` at the top of a Rust function
+records the inputs (the bytes of every pointed-to f32 record before the call), calls the function itself (the nested entry
+is not captured, nor are hooked callees of a captured call), then the bytes after and the return. Env:
+`MELEE_REFEREE_OUT=<file>`, `MELEE_REFEREE_FNS=a,b`, `MELEE_REFEREE_MAX` (calls kept per function, default 400),
+`MELEE_REFEREE_EVERY`. Without the feature the macro expands to nothing (normal builds unchanged). Captured replays still
+match the console frame for frame (slpcheck "match" on all five below), so capturing does not disturb the run.
+
+Hooked (30): lbVector_Normalize, NormalizeXY, Add, Add_xy, Sub, Diff, Angle, AngleXY, RotateAboutUnitAxis, Rotate,
+Mirror, CosAngle, Lerp, 8000DE38, EulerAnglesFromONB, ApplyEulerRotation, sqrtf_accurate, CreateEulerMatrix, 8000E838;
+atan2f, acosf, asinf, atanf, sinf, cosf; lbColl_80005C44, 80005EBC, 80005FC0, 80006094, 800067F8 (the capsule
+distance / closest-point math of hit detection). Chosen with `referee-plan`: inputs are registers plus f32 records, and
+the retail callee tree is pure and has no paired singles. Not hookable yet in this class: lbVector_CrossprodNormalized and
+EulerAnglesFromPartialONB (retail calls PSVECCrossProduct, paired singles), lbColl_800077A0 / 80006E58 (PSMTXMultVec,
+PSVECNormalize, PSMTXCopy).
+
+## 3. Retail branch coverage
+
+Every conditional branch (BO not "always") the interpreter executes is counted by outcome (taken / not taken). Per
+checked function the report gives its own body's outcomes hit / total and its interpreted callees' outcomes;
+`uncovered.tsv` lists each missing (address, outcome); `--cov-out` writes the cumulative counts and `--cov-in` reads them
+back, so a run reports the outcomes it adds. "Done" for a function = every reachable outcome hit with 0 mismatches.
+
+## 4. Numbers (5 online replays of the hero set, fast build)
+
+Replays: Game_20251031T213013, 20260411T224941, 20260613T000702, 20260801T234358, 20260912T233947 (all `slpcheck`
+"match" with capture on). Up to 2,000 calls kept per function per replay. 18 of the 30 hooked functions were reached.
+
+| function | calls compared | mismatches | own outcomes | callee outcomes (interpreted) |
+|---|---|---|---|---|
+| lbVector_Normalize | 10,000 | 0 | 2/4 | - |
+| lbVector_Add | 10,000 | 0 | 0/0 | - |
+| lbVector_Sub | 536 | 0 | 0/0 | - |
+| lbVector_Diff | 10,000 | 0 | 0/0 | - |
+| lbVector_Angle | 5,343 | 0 | 6/10 | 26/28 (acosf, atanf) |
+| lbVector_AngleXY | 1,555 | 0 | 5/10 | 26/28 (acosf, atanf) |
+| lbVector_Rotate | 10,000 | 0 | 9/18 | - |
+| lbVector_RotateAboutUnitAxis | 10,000 | 0 | 8/14 | - |
+| lbVector_CreateEulerMatrix | 2,065 | 0 | 14/24 | - |
+| lbVector_EulerAnglesFromONB | 268 | 0 | 2/6 | 33/40 (atan2f, asinf, lb_sqrtf, atanf) |
+| lbColl_80005EBC | 5,538 | 0 | 4/4 | - |
+| lbColl_80006094 | 156 | 0 | 40/102 | - |
+| atan2f | 10,000 | 0 | 9/12 | 23/24 (atanf) |
+| acosf | 10,000 | 0 | 3/4 | 23/24 (atanf) |
+| asinf | 1,972 | 0 | 0/0 | 24/28 (lb_sqrtf, atanf) |
+| atanf | 10,000 | 0 | 23/24 | - |
+| sinf | 10,000 | 0 | 6/6 | (fabsf) |
+| cosf | 10,000 | 0 | 6/6 | (fabsf) |
+| **total** | **117,433** | **0** | 137/244 (+ "done": lbColl_80005EBC, sinf, cosf) | |
+
+Not reached by these replays: lbVector_NormalizeXY, Add_xy, Mirror, CosAngle, Lerp, 8000DE38, ApplyEulerRotation,
+sqrtf_accurate, 8000E838, lbColl_80005C44, 80005FC0, 800067F8 (some are reached only nested inside a captured call).
+108 outcomes uncovered (62 of them in lbColl_80006094); "done" functions: lbColl_80005EBC, sinf, cosf (all outcomes, 0
+mismatches), and the branch-free lbVector_Add/Sub/Diff. Referee time for the 117k calls: under 1 s.
+
+**Mismatches: none.** The engine's Rust port of these 18 functions gave the retail result bit for bit on every compared
+call.
+
+## 5. Picking replays that reach code (layers 2 and 3; layer 1 not run in this round)
+
+1. Server-side search (Lunar Melee filters: matchup, stage, characters) chooses what to download:
+   `tools/rust-port/slp/lunar_fetch.py` (polite: searches under the rate limit, one bulk job per batch, back-off, no player
+   names, git-ignored dirs). Not run in this round.
+2. `tools/rust-port/referee/slpscan.py EXPR FILES|DIRS [--list]`: a local scan of the Post-Frame records (action, state
+   frame, last attack landed, last hit by, percent change, position, ...) with a Python predicate per fighter and frame
+   (`a`, the other port `o`, the previous frame `pa`), e.g. Zelda f-tilt connecting on a running Link:
+   `"a.char==0x13 and a.last_attack==9 and pa and pa.last_attack!=9 and o and o.action==0x15"`. ~0.12 s a file
+   (428 files in 50 s). Prints matching files and frames; `--list` feeds layer 3.
+3. `tools/rust-port/referee/pick.py --melee <capture build> --mex <mex-import> --fns ... --work DIR REPLAYS`: per replay, the
+   capture run (`slpcheck`, hidden, no input, adapter ignored, volume 3, below-normal) then the referee with
+   `--cov-in/--cov-out`; a replay is kept only if it adds retail branch outcomes of the functions under check. The five
+   replays above went through it: +88, +4, +14, +23, +8 outcomes, all kept.
+
+The exact "what the target code saw" hook is the capture itself (the function's inputs at the call); the uncovered list of
+section 3 is the target list.
+
+## 6. How to run
+
+```
+# step 1 (light):
+REFEREE_FUZZ=2000000 bash tools/rust-port/cargo_fast.sh test --profile fast -p mex_import --test gekko_trust -- --nocapture --test-threads 1
+bash tools/rust-port/cargo_fast.sh test --profile fast -p mex_import --test dol_census -- --nocapture
+# capture build (heavy):
+bash tools/rust-port/cargo_fast.sh build --profile fast -p melee -p mex_import --features melee/referee
+# one replay:
+MELEE_REFEREE_OUT=_build/referee-mvp/cap.txt melee slpcheck --slp R.slp --full
+mex-import referee --capture _build/referee-mvp/cap.txt --out _build/referee-mvp/report
+# or the picker over many: python tools/rust-port/referee/pick.py --melee ... --mex ... --fns ... --work DIR R1.slp R2.slp ...
+```
+`REFEREE_TRACE=1` prints every retail instruction of a referee run (debugging the referee).
+
+## 7. Limits
+
+- Records: f32 records behind pointers only (Vec, Mtx, f32 out-params); native records with pointers (Fighter, Item,
+  HSD_GObj, HitCapsule) need the in-process mode (next steps). So the audit's suspects (pub/port/dol-audit) are not
+  reachable yet: ftCo_8008E9D0 / ftCo_8008DA4C, ftColl_8007A06C, ftCo_800A229C (Fighter / gobj records, many callees),
+  grCorneria_801E08CC / 801E0A74, mpLib_80055E9C (stage gobjs, globals, HSD callees), HSD_MtxInverse / InverseConcat /
+  InverseTranspose (Mtx-only arguments, but their retail tree calls PSMTXCopy / PSMTXIdentity: paired singles).
+  Verdict for all: **unchecked** in this round.
+- Paired singles are not in the interpreter: PSMTX*/PSVEC* callers are excluded.
+- Mutable globals read by a checked function come from the boot image (after the static initialisers), not from the
+  engine's state at the call; listed per function (here only MSL constants filled by `__sinit_trigf_c`, and
+  `MSL_TrigF_80400774`, an initialised .data float).
+- Rust writes outside the captured records are not seen; retail writes outside them end the run (counted, not compared).
+- FPSCR assumed RN = 0, NI = 0.
+- Slippi netplay codes (owner's step after this one): the 29 [affects-gameplay] injections of `list_netplay.json`
+  (ssbm-asm d0ce23a) hook fighter, stage and player-init functions (UCF x8, NeutralSpawn, FreezeGlitchFix, Init Stage /
+  Player Data, Castle wind, Kongo log, BrawlOffscreenDamage, FreezeDeadUpFallPhysics x3, FD DesyncProofBGTransformations,
+  Stadium x4, WhispyBlowDirFix, NanaDeterminism, PSCameraIndependentMonitor, PreventWobbling x3). None is inside a function
+  this harness can check yet, so applying them to the guest image is not built in this round: **all 29 unchecked**.
+
+## 8. Next steps
+
+1. Paired singles in Gekko mode (ps_* + psq_l/psq_st with GQR 0, Dolphin semantics, the same trust test): unlocks
+   PSMTX/PSVEC, HSD_Mtx*, lbColl_800077A0 / 80006E58, lbVector_CrossprodNormalized.
+2. In-process mode for native records: snapshot the records a call touches, run retail on the live objects through
+   `remap::GuestSpace` (handles for pointers), restore, run Rust, compare field by field through the GC tables; plus a
+   sync table of engine globals (p_ftCommonData etc., as mex_guest's `sync_globals`). That reaches ftCommon physics,
+   ftColl, mpLib and the dol-audit suspects.
+3. Slippi codes: apply the netplay list (04 writes, C2 hooks: a branch from the hooked address to the inserted block,
+   which branches back; per Dolphin's GeckoCode.cpp) to the guest image, then gate against `slippi_np::online_codes`.
+4. Use `uncovered.tsv` + slpscan + a small Lunar bulk job to find replays for the 108 missing outcomes.

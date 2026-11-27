@@ -362,6 +362,7 @@ pub unsafe extern "C" fn lbColl_80005BB0(arg0: *mut HitCapsule, arg1: i32) -> i3
 
 pub unsafe extern "C" fn lbColl_80005C44(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *mut Vec3, arg8: f32, arg9: f32) -> bool {
     melee_core::ct!("lbColl_80005C44");
+    melee_core::referee_hook!(lbColl_80005C44, [P(arg0, 12), P(arg1, 12), P(arg2, 12), P(arg3, 12), F(arg8), F(arg9)], i, lbColl_80005C44(arg0, arg1, arg2, arg3, arg8, arg9));
     let temp_f2 = arg8 + arg9;
     let sp38 = *arg0;
     let sp2c = *arg2;
@@ -433,6 +434,7 @@ pub unsafe extern "C" fn lbColl_80005C44(arg0: *const Vec3, arg1: *const Vec3, a
 
 pub unsafe extern "C" fn lbColl_80005EBC(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *mut f32) -> f32 {
     melee_core::ct!("lbColl_80005EBC");
+    melee_core::referee_hook!(lbColl_80005EBC, [P(arg0, 12), P(arg1, 12), P(arg2, 12), P(arg3, 4)], f, lbColl_80005EBC(arg0, arg1, arg2, arg3));
     let sp50 = *arg0;
     let d1 = Vec3 { x: (*arg1).x - (*arg0).x, y: (*arg1).y - (*arg0).y, z: (*arg1).z - (*arg0).z };
     let sp38 = *arg2;
@@ -449,6 +451,7 @@ pub unsafe extern "C" fn lbColl_80005EBC(arg0: *const Vec3, arg1: *const Vec3, a
 
 pub unsafe extern "C" fn lbColl_80005FC0(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *mut f32) -> f32 {
     melee_core::ct!("lbColl_80005FC0");
+    melee_core::referee_hook!(lbColl_80005FC0, [P(arg0, 12), P(arg1, 12), P(arg2, 12), P(arg3, 4)], f, lbColl_80005FC0(arg0, arg1, arg2, arg3));
     let sp50 = *arg0;
     let d1x = (*arg1).x - (*arg0).x;
     let d1y = (*arg1).y - (*arg0).y;
@@ -474,6 +477,7 @@ unsafe fn end(a: *const Vec3, b: *const Vec3, unk_sum: f32) -> bool {
 
 pub unsafe extern "C" fn lbColl_80006094(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *const Vec3, arg4: *mut Vec3, arg5: *mut Vec3, arg6: f32, arg7: f32) -> bool {
     melee_core::ct!("lbColl_80006094");
+    melee_core::referee_hook!(lbColl_80006094, [P(arg0, 12), P(arg1, 12), P(arg2, 12), P(arg3, 12), P(arg4, 12), P(arg5, 12), F(arg6), F(arg7)], i, lbColl_80006094(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7));
     let unk_sum = arg6 + arg7;
     let vec4 = *arg0;
     let arg4_offset = vec4;
@@ -586,6 +590,7 @@ pub unsafe extern "C" fn lbColl_80006094(arg0: *const Vec3, arg1: *const Vec3, a
 
 pub unsafe extern "C" fn lbColl_800067F8(a: *const Vec3, b: *const Vec3, c: *const Vec3, d: *const Vec3, e: *mut Vec3, f: *mut Vec3, p: f32, q: f32) -> bool {
     melee_core::ct!("lbColl_800067F8");
+    melee_core::referee_hook!(lbColl_800067F8, [P(a, 12), P(b, 12), P(c, 12), P(d, 12), P(e, 12), P(f, 12), F(p), F(q)], i, lbColl_800067F8(a, b, c, d, e, f, p, q));
     let sum_pq = p + q;
     let a0 = *a;
     let a1 = a0;

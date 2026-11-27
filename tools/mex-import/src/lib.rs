@@ -2,10 +2,13 @@
 //! field rewriting directly. The binary is src/main.rs.
 pub mod analyze;
 pub mod disc;
+pub mod dol;
 pub mod hsd;
 pub mod layout;
 pub mod mexfn;
 pub mod pack;
+pub mod referee;
+pub mod referee_cli;
 pub mod ppc;
 pub mod remap;
 pub mod report;

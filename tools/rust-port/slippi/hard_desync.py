@@ -45,6 +45,9 @@ def recorded_lo(path):
         # the last copy of a frame wins (a rolled-back frame is recorded more than once)
         frames.setdefault(f, {})[(port, follower)] = (x, y, pct, act)
     FINAL = final
+    global GAP
+    fs = sorted(frames)
+    GAP = max((b - a - 1 for a, b in zip(fs, fs[1:])), default=0)
     out = {}
     for f, fighters in frames.items():
         if final is not None and f > final:
@@ -75,6 +78,7 @@ def recorded_lo(path):
 # it, so those replays do not hold the end-of-frame state the checksum is taken from. They are reported as "old".
 VERSION = "?"
 FINAL = None
+GAP = 0  # the largest run of frames missing from the replay (a damaged file: not scored)
 
 
 def s16(v):
@@ -116,6 +120,8 @@ def main():
             first = str(f)
     if VERSION[0].isdigit() and int(VERSION.split(".")[0]) < 3:
         first = "old"
+    elif GAP > 0:
+        first = "gap"
     print(f"{frames},{first},{worst},{VERSION},{other_set}")
 
 

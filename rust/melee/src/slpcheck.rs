@@ -617,6 +617,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
         }
     }
+    let nudge = Nudge::from_env();
     crate::prof::set_gated(std::env::var_os("MELEE_SAMPLE_GATE").is_some_and(|v| v != "0"));
     let run = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mut ticks = 0usize;
@@ -679,6 +680,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 e.set_pads(Some(pads));
             }
             // MELEE_SAMPLE with MELEE_SAMPLE_GATE=1: the profiler samples the engine tick only (not the replay bookkeeping or the render)
+            if let Some(n) = nudge.as_ref() { n.apply(fr); }
             crate::prof::gate(true);
             let more = e.tick();
             crate::prof::gate(false);
@@ -850,5 +852,67 @@ fn finish(args: &[String], name: &str, s: &Summary) -> std::process::ExitCode {
         std::process::ExitCode::SUCCESS
     } else {
         std::process::ExitCode::from(1)
+    }
+}
+
+/// `SLPCHECK_NUDGE=<frame>:<slot>:<field>:<amount>` (notes/nudge.md): once, before the tick that follows slpcheck frame
+/// `<frame>`, change one field of the active fighter in slot `<slot>` (0-based, the checksum's slot order). Fields: `x` `y`
+/// (cur_pos and the collision position), `percent`, `kb_vel.x` `kb_vel.y` `self_vel.x` `self_vel.y`. Amount: `16u` = 16 ULPs
+/// away from zero (bits +- 16 on the magnitude), `0.01` = that value added. Unset: no hook, no cost. Prints one
+/// `NUDGE applied ... old=<bits> new=<bits>` line on stderr (an ULP step on an exact 0 is a denormal: the sweep flags those).
+struct Nudge {
+    frame: i32,
+    slot: i32,
+    field: String,
+    ulps: Option<i64>,
+    add: f32,
+    done: std::cell::Cell<bool>,
+}
+
+impl Nudge {
+    fn from_env() -> Option<Nudge> {
+        let v = std::env::var("SLPCHECK_NUDGE").ok()?;
+        let p: Vec<&str> = v.split(':').collect();
+        if p.len() != 4 {
+            eprintln!("slpcheck: SLPCHECK_NUDGE wants frame:slot:field:amount, got {v:?}");
+            return None;
+        }
+        let (ulps, add) = match p[3].strip_suffix('u') {
+            Some(n) => (Some(n.parse().ok()?), 0.0),
+            None => (None, p[3].parse().ok()?),
+        };
+        Some(Nudge { frame: p[0].parse().ok()?, slot: p[1].parse().ok()?, field: p[2].to_string(), ulps, add, done: std::cell::Cell::new(false) })
+    }
+
+    fn step(&self, v: f32) -> f32 {
+        match self.ulps {
+            // away from zero for n > 0 (a +1 ULP step on a negative f32 is bits - 1)
+            Some(n) => f32::from_bits((v.to_bits() as i64 + if v.is_sign_negative() { -n } else { n }) as u32),
+            None => v + self.add,
+        }
+    }
+
+    fn apply(&self, fr: i32) {
+        if self.done.get() || fr != self.frame {
+            return;
+        }
+        let g = melee_fighter::player::get_entity(self.slot);
+        if g.is_null() || unsafe { (*g).user_data.is_null() } {
+            eprintln!("slpcheck: nudge: no fighter in slot {} at frame {fr}", self.slot);
+            return;
+        }
+        self.done.set(true);
+        let fp = unsafe { &mut *((*g).user_data as *mut melee_types::Fighter) };
+        let (old, new) = match self.field.as_str() {
+            "x" => { let o = fp.cur_pos.x; fp.cur_pos.x = self.step(o); fp.coll_data.cur_pos.x = fp.cur_pos.x; (o, fp.cur_pos.x) }
+            "y" => { let o = fp.cur_pos.y; fp.cur_pos.y = self.step(o); fp.coll_data.cur_pos.y = fp.cur_pos.y; (o, fp.cur_pos.y) }
+            "percent" => { let o = fp.dmg.x1830_percent; fp.dmg.x1830_percent = self.step(o); (o, fp.dmg.x1830_percent) }
+            "kb_vel.x" => { let o = fp.x8c_kb_vel.x; fp.x8c_kb_vel.x = self.step(o); (o, fp.x8c_kb_vel.x) }
+            "kb_vel.y" => { let o = fp.x8c_kb_vel.y; fp.x8c_kb_vel.y = self.step(o); (o, fp.x8c_kb_vel.y) }
+            "self_vel.x" => { let o = fp.self_vel.x; fp.self_vel.x = self.step(o); (o, fp.self_vel.x) }
+            "self_vel.y" => { let o = fp.self_vel.y; fp.self_vel.y = self.step(o); (o, fp.self_vel.y) }
+            f => { eprintln!("slpcheck: nudge: unknown field {f}"); return; }
+        };
+        eprintln!("NUDGE applied frame {fr} slot {} {} old={:08x} new={:08x} act={}", self.slot, self.field, old.to_bits(), new.to_bits(), fp.motion_id);
     }
 }

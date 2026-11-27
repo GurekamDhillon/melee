@@ -301,7 +301,7 @@ impl Referee {
             cpu.gpr[2] = R2;
             cpu.gpr[13] = R13;
             cpu.pc = f;
-            let mut m = Machine::new_gekko(cpu);
+            let mut m = Machine::new_gekko(boot_gqr(cpu));
             let mut br = TextOnly { text: self.text.clone() };
             let ok = m.run(&mut mem, &mut br, BUDGET).is_ok();
             let name = self.func_at(f).map(|s| s.name.clone()).unwrap_or(format!("{f:08X}"));
@@ -345,9 +345,9 @@ impl Referee {
         v.into_iter().collect()
     }
 
-    /// Instructions of a function the interpreter cannot run (paired singles, OS SPRs, ...), counted.
+    /// Instructions of a function the Gekko interpreter cannot run (OS SPRs such as the GQRs, mffs/mtfsf, ...), counted.
     pub fn unsupported(&self, f: &Sym) -> usize {
-        (f.addr..f.addr + f.size).step_by(4).filter(|&a| self.dol.word(a).is_some_and(|w| !decode(w, a).executable())).count()
+        (f.addr..f.addr + f.size).step_by(4).filter(|&a| self.dol.word(a).is_some_and(|w| !decode(w, a).gekko_executable())).count()
     }
 
     /// Run the retail function `call.name` on the call's inputs and compare with what the Rust port did.
@@ -417,7 +417,7 @@ impl Referee {
         cpu.gpr[13] = R13;
         cpu.lr = 0; // returning to 0 (outside the text) ends the run
         cpu.pc = f.addr;
-        let mut m = Machine::new_gekko(cpu);
+        let mut m = Machine::new_gekko(boot_gqr(cpu));
         let mut br = TextOnly { text: self.text.clone() };
         let mut n = 0u64;
         // REFEREE_TRACE=1: print every instruction of the run (debugging the referee itself)
@@ -529,4 +529,11 @@ pub fn conditional(op: &Op) -> bool {
         Op::Bc { bo, .. } | Op::Bclr { bo, .. } | Op::Bcctr { bo, .. } => bo & 0x14 != 0x14,
         _ => false,
     }
+}
+
+/// The GQRs as the game leaves them: `__OSPSInit` clears GQR0, and `main` (inlined OSInitFastCast) sets GQR2..5 to
+/// u8 / u16 / s8 / s16 with no scale for both load and store (read from the DOL: mtspr 914..917 in `main`).
+pub fn boot_gqr(mut cpu: Cpu) -> Cpu {
+    cpu.gqr = [0, 0, 0x0004_0004, 0x0005_0005, 0x0006_0006, 0x0007_0007, 0, 0];
+    cpu
 }

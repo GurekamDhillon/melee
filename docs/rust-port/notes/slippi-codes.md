@@ -111,3 +111,33 @@ match, the only online Peach's Castle file (lunar), 6 online FD files (one diver
 the same status, first frame, port, field and engine value as the sweep2 row (exe 15faeb741): **41 same, 0 changed**.
 No online 3.x Kongo Jungle replay exists in the sets (the three Kongo files are pre-3.0), so the Kongo reset is
 checked by reading only. Loopback: not run for these codes (they cannot move a fresh-process match; see above).
+
+## 3. Slippi 3.20.0 Dream Land (2026-11-27): the first frame's seed
+
+**Symptom.** 130 Slippi 3.20.0 online replays (`_build/replays/lunar-2026-11-27/v320`): 19 of 20 Dream Land files
+diverged (fighter x, frames 564-1061) and went hard; every other stage matched (Big Blue: section 4).
+
+**Cause.** ssbm-asm `e03af7f` ("improve rng seed generation", 2026-11-01, first released in 3.20.0) changed SyncRNG
+(Online/Core/InitOnlinePlay.asm): the per-frame seed is now murmur3 fmix32(rotl(F, 16) + rng_offset), XOR the seed
+bits << 24. Before it the seed was rotl(F, 16) + rng_offset, so at global frame 0 (replay frame -123) it equalled
+rng_offset, which is the Game Start block's seed. The replay player forced the Game Start seed on the first frame
+(`Player::resync_seed`, FIRST_FRAME) and the Frame Start seed on every later one. From 3.20.0 the two differ on the
+first frame (example file: Game Start 0x0000FD66, Frame Start -123 0xA07D18B8 = fmix32(0xFD66)). The seed is forced
+again from frame -122 on, so fighters never saw it. Dream Land's Whispy does: grOldPupupu_802113E0 draws the first
+wait of its wind cycle (state 0, `randrange(yp.xC, yp.x8)`) on that first frame and counts it down. With the wrong
+draw, the wind started at a different frame (example: console first wind event at frame 938, recorded by
+SendDreamlandInfo; the engine's push showed at 695, 0.2 in x). Fountain, Yoshi's Story, Stadium and the other stages
+make no lasting draw on frame -123, so they matched.
+
+**Fix** (`melee_data/src/player.rs`, `resync_seed`): an online replay that has a Frame Start seed for its first frame
+uses it there. For 3.0-3.19 online files that value equals the Game Start seed (rotl(0,16) + offset), so nothing changes
+for them. This is replay playback only; live online play was already right (`slippi_online` computes the seed for
+frame 0 the same way as for every other frame).
+
+**Checks** (fast build, `slpcheck --full`, headless):
+- the 130 v320 files: Dream Land 20 / 20 match (19 were diverged), the other 110 stay as before (108 match on 12 other
+  stages, Big Blue 2 still diverged). Re-scored with `hard_desync.py` (`--slippi-checksum-out`): 128 no hard desync, the 2 Big Blue
+  files hard (frames 2231, 2332).
+- gate: 125 replays (60 hero, 40 lunar2, 25 Dream Land 3.17-3.19 from both) give the sweep2 row unchanged (status,
+  first frame / port / field / value, frames compared): **125 same, 0 changed**. Goldens and synctest: not run (the
+  change is in replay playback of online files; offline scenarios and the synctest never read a replay seed).

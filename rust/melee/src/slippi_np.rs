@@ -65,6 +65,8 @@ pub fn online_codes(alt_stage_mode: u8) {
     c::set_ps_freeze_at_entry(alt_stage_mode != 0);
     let w = std::env::var("MELEE_SLIPPI_ONLINE_BITS").ok().and_then(|v| u32::from_str_radix(&v, 16).ok());
     c::set_ps_camera_independent_monitor(true);
+    // Reset Castle Wind, Reset Kongo Log Bridge (Slippi Recording set) and the Stadium file hooks (online set)
+    c::set_slippi_stage(c::STAGE_CASTLE_WIND | c::STAGE_KONGO_LOG | c::STAGE_PS_FILES);
     c::set(w.unwrap_or(c::UCF | c::NEUTRAL_SPAWN | c::FREEZE_FIX | c::NO_WOBBLE | c::LGL | frozen), 45);
     c::set_slippi_codeset(2);
     unsafe {

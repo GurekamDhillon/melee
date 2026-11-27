@@ -490,6 +490,14 @@ impl Player {
             return self.checksum_seed(0, self.frame);
         }
         if self.active && self.frame == FIRST_FRAME {
+            // Online: SyncRNG has already overwritten the seed on the first frame too. Before Slippi 3.20.0 its value at
+            // global frame 0 was rotl(0, 16) + rng_offset = rng_offset, the Game Start seed, so either worked; from 3.20.0
+            // (ssbm-asm e03af7f) it is murmur3 fmix32 of that (^ the seed bits), which only the Frame Start event carries.
+            // Dream Land's Whispy draws its first wait (grOldPupupu_802113E0, state 0) on this frame: with the Game Start
+            // seed its wind started ~250 frames early (19 of 20 3.20.0 Dream Land files diverged).
+            if self.r.online && self.r.fs_has.first() == Some(&true) && self.r.fs_seed[0] != 0 {
+                return self.r.fs_seed[0];
+            }
             let mut r0 = self.rp_cur(0, false);
             let mut p = 0;
             while p < 4 && r0.is_none() {

@@ -264,6 +264,7 @@ pub fn save_offline_codes() {
 pub fn restore_offline_codes() {
     let Some(s) = SAVED.lock().ok().and_then(|mut g| g.take()) else { return };
     melee_core::codes::restore_offline(s);
+    melee_core::codes::set_slippi_stage(0);
     unsafe {
         melee_fighter::platform::hook::Slippi_Codes = None;
         // the fighter TUs' and Final Destination's tables: 0 offline (manual.rs)

@@ -172,6 +172,21 @@ pub unsafe fn grAnime_801C65B0(arg0: *mut UnkArchiveStruct) {
     if arg0.is_null() {
         return;
     }
+    if melee_core::codes::slippi_stage_on(melee_core::codes::STAGE_PS_FILES) {
+        // Slippi "CustomZeroBuffer" (online set, C2 0x801C65C8, after the null test): unk0 == -1 -> zero; all three
+        // words 0 -> nothing (zeroed already: a rollback); unk8 == 1 -> free unk0 to heap 0, then zero; otherwise zero.
+        // lbArchive_80016EFC is never called
+        if (*arg0).unk0 as usize != usize::MAX {
+            if (*arg0).unk0.is_null() && (*arg0).unk4.is_null() && (*arg0).unk8 == 0 {
+                return;
+            }
+            if (*arg0).unk8 == 1 {
+                ext::lbHeap_80015CA8(0, (*arg0).unk0 as *mut c_void);
+            }
+        }
+        ext::memzero(arg0 as *mut c_void, core::mem::size_of::<UnkArchiveStruct>() as ssize_t);
+        return;
+    }
     if (*arg0).unk0 as usize != usize::MAX {
         if (*arg0).unk8 == 0 {
             ext::lbArchive_80016EFC((*arg0).unk0);

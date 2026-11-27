@@ -711,7 +711,13 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             if let Some(f) = slc_out.as_mut() {
                 use std::io::Write;
-                let _ = writeln!(f, "{} {:08X}", fr, melee_fighter::slippi_online::checksum());
+                // third column: the same checksum over the fighters the replay records (hard_desync.py); fourth: which
+                // fighters it covered (bit slot * 2 + entity), so frames where the replay records a different set
+                // (e.g. a dead Nana the engine still holds) can be told apart
+                // fifth/sixth: the same without Nana (a replay stops recording a dead Nana)
+                let (rc, mask) = melee_fighter::slippi_online::checksum_recorded_with_mask(true);
+                let (rn, mask_n) = melee_fighter::slippi_online::checksum_recorded_with_mask(false);
+                let _ = writeln!(f, "{} {:08X} {:08X} {:02X} {:08X} {:02X}", fr, melee_fighter::slippi_online::checksum(), rc, mask, rn, mask_n);
             }
             if let Some(f) = wide_out.as_mut().filter(|_| fr >= wide_from && fr <= wide_to) {
                 use std::io::Write;

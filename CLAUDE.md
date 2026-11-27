@@ -1,5 +1,11 @@
 # melee (pc-port): notes for agents
 
+> **The C / PPC-retarget build is legacy and deprecated (owner, 2026-11-27).** Everything under `pc/`, the
+> retargeted game TUs, gwtool and `melee-pc.exe` is out of service: do not update, fix, maintain or rebuild it for
+> changes, and do not merge doldecomp upstream changes into it. You may read it and run existing binaries as a
+> reference. All work goes into the Rust rewrite (`rust/`, start at `docs/rust-port/STATUS.md`). The correctness
+> reference is the retail `main.dol`, not the C build. The rest of this file describes the legacy build.
+
 A fork of `doldecomp/melee` (the matching decompilation of Melee NTSC 1.02). Branch **`pc-port`**
 adds a native Windows port under `pc/`. The build system, tools, research and releases live in the
 **workspace repo** (`GurekamDhillon/gd-melee-workspace`), which expects this checkout at

@@ -192,3 +192,13 @@ draw-order difference inside a frame, not a seed one. Not fixed in this round.
 4. NeutralSpawn: its hooks are at fn_8016E2BC (match start) only; it writes the player blocks' initial coordinates and
    facing (PlayerBlock_StoreInitialCoords, UpdateFacingDirection). It does not touch the respawn slot table or
    fn_80167638, so it does not explain the respawn-slot case or one-ULP respawn heights.
+
+## 6. Step 5 verdicts: the netplay list on the guest image
+
+`tests/gecko_apply.rs` applies Slippi's `Output/Netplay/GALE01r2.ini` (d0ce23a, 6 enabled groups) to main.dol: 86
+writes, 198 inserts, 0 unsupported types, 5 .bss writes skipped (0x80452F54..64), 1 hook overridden by a later code
+(0x8016EA30). Per [affects-gameplay] code (section 1.1's 29): **all 29 hooks patched and structurally checked** (hook
+branch, return branch). **None executed against the engine**: each hooked function takes Fighter / Ground / GObj
+records or engine globals, which needs the native-records mode (step 4), not built. Verdict for every one of the 29:
+"applied to the image, not run". The engine-side verdicts stay those of section 1.1 (24 hand ports before this branch,
+5 added here) and the replay checks of sections 2.1 and 3.

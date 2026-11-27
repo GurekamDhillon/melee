@@ -751,3 +751,143 @@ it is not what desynced live, and needs no fix. Slippi Dolphin mainline catches 
 due to time sync" in its log), so both sides running extra frames is normal play. The engine's .slp numbers frames
 one lower than Dolphin's and records its own stick a frame or two early before frame -39 (the game state is unaffected);
 `slp_inputs_diff.py` finds the shift itself and counts those apart.
+
+## 18. Desync capture (2026-11-27, port/desynccap)
+
+Every Soft or Hard checksum mismatch seen in an online match is written to disk so it can be replayed offline. Code:
+`rust/melee/src/desynccap.rs` (capture), `desync_replay.rs` (`melee desync-replay`), hooks in `slippi_np.rs`
+(`slippi-netplay`), `play_net.rs` (the rendered `play --slippi-mm` / online select loop), `netmatch.rs`
+(`EngineGame`), `slp_export.rs` (`snapshot_bytes`, `arm_for_desync`).
+
+**What is written.** `<root>/<timestamp>/` with `report.json`, `desync.slp` and `bits.txt`. Root: `MELEE_DESYNC_DIR`, else
+`$YOUGAME_DATA/desyncs`, else `./desyncs`. The first Soft or Hard of a game gets a directory, and the first Hard gets
+another one when the first was a Soft (so at most two per game and side). No player names, connect codes or account
+data: only character ids, colours, team, stage, rng_offset and the like.
+
+- `report.json`: `kind` (soft / hard), `tag` (decider / guest), `online_frame` (the compare's frame number),
+  `slippi_frame` (= online frame - 125, the .slp's frame number of the same state), `session_online_frame_at_detection`,
+  `local_checksum`, `remote_checksum`, `build_id`, `slippi_app_version` (what the matchmaking join sent; null on a direct
+  link), `match` (stage, players with character / colour / team, rng_offset, alt_stage_mode, decider, local port, rules,
+  the scene string), `codes` (the gameplay codes word, LGL limit, codeset), `rollback` (session stats at detection),
+  `state_dump` (`melee_fighter::slippi_online::state_dump()` at detection; the session is a few frames ahead of the
+  compared frame), `slp`, `slp_last_frame_at_detection`, `slp_through`.
+- `desync.slp`: the engine's own recording of the match (the live exporter's confirmed frames, -123 on). A Hard's file runs
+  through the last confirmed frame at detection. A Soft's is written at detection as well and rewritten at the game's end
+  with every confirmed frame (`slp_through: game_end`; a peer that left early leaves the tail unconfirmed, so the file ends
+  there). It plays with `melee slpcheck --slp` like any engine .slp.
+- `bits.txt`: the seed-bit bytes (`<tick> <b0> <b1> <b2> <b3>` hex, tick 0 = Slippi frame -123) of the frames where a port
+  rolled a random special (Peach, Luigi, G&W): the .slp has no such byte and the replay needs it to draw the same seeds.
+  Empty when nobody rolled.
+
+**Cost.** The match is recorded in memory by the live exporter (`slp_export::arm_for_desync`, on for every online match; no
+.slp unless a desync happens, `MELEE_DESYNC_CAPTURE=0` turns it off). At detection (once or twice per game) the .slp is
+encoded in memory and a worker thread writes the files; the game thread does no file I/O. The state lives on the system
+heap behind a pointer made once, because a rollback load rewinds statics and the arena. Loopback, 1700-frame matches, 30 ms
+lag each way, two peers: tick work (poll + sim + send) mean 1.87 / 1.98 ms with capture, 2.27 / 2.14 ms with it off (machine
+noise is larger than the difference); max tick after the first 200 ticks 12.3 / 15.9 ms with capture, 0 ticks over 16 ms.
+The capture-off run had 7 ticks over 16 ms (up to 104 ms) on the same busy machine, so the loopback numbers say "no
+measurable cost", not "faster". The detection ticks themselves (online frames 416 and 419) were not slow.
+
+**A Hard now ends the game, as Slippi's does** (section 18.1). Capture is unchanged: the report is written at detection,
+before the game ends.
+
+**`melee desync-replay DIR [--iso DISC]`.** Boots the match as the online match it was (online mode on with the report's
+rng_offset, the online codeset, the scene string, `bits.txt`), feeds it the Pre-Frame pads of `desync.slp` (the pads the
+simulation saw, raw sticks and buttons) straight with no rollback, and prints the engine's checksum at the detection frame
+beside the two recorded ones. Reproducing the local one means this side's state follows from the recorded inputs; reproducing
+the remote one means this side differs from a clean re-run. Neither means the .slp inputs do not account for the state.
+Run it without `MELEE_NP_TEST_DESYNC` set. A field desync that is a simulation difference shows as one side matching and
+the other not; a case where the two sides saw different inputs shows as each side matching itself.
+
+**Test hook.** `MELEE_NP_TEST_DESYNC=<game frame>[:<count>]` (headless `slippi-netplay`, `EngineGame`): from that tick, for
+`count` ticks (30), this side's simulation sees both ports' sticks reversed and Y pressed while the pads it sent are
+unchanged. The recorded .slp holds the pads the sim saw, so a replay reproduces this side's own checksums. (The
+`play_net` hook of the same name perturbs the logic RNG and has no effect under Slippi's SyncRNG.)
+
+**Results** (loopback, host with `MELEE_NP_TEST_DESYNC=400`, 900 frames, `--lag-ms 30`, Falcon vs Fox on Final Destination):
+both sides logged a Soft at online frame 416 and a Hard at 419; four directories, `desync-replay` on each:
+
+| side | kind | online frame | local | remote | replay |
+|---|---|---|---|---|---|
+| decider (perturbed) | soft | 416 | 917d0010 | ffcd0010 | 917d0010 |
+| decider | hard | 419 | 9183000a | ab690008 | 9183000a |
+| guest | soft | 416 | ffcd0010 | 917d0010 | ffcd0010 |
+| guest | hard | 419 | ab690008 | 9183000a | ab690008 |
+
+Each side's replay reproduces its own checksum. A clean 900-frame and a 1700-frame match (both lag 30 ms, with rollbacks)
+wrote no directory. Not covered: the `play` loops were only compiled (the capture calls are the same), a Slippi Dolphin peer
+(its checksum is recorded as received; the replay then says whether our side or its side differs), and the Direct set's
+second game (the state resets per game in `set_match`).
+
+### 18.1 A Hard desync ends the game (2026-11-27, owner: "It should follow slippi")
+
+**Slippi's behaviour, as read.** Sources: `slippi-ssbm-asm` d0ce23a (`_build/slippi-src/ssbm-asm`: `Online/Core/StartEngineLoop.asm`,
+`InitOnlinePlay.asm`, `Online.s`) and Slippi Dolphin `project-slippi/dolphin` branch `slippi` (`EXI_DeviceSlippi.cpp`,
+`SlippiNetplay.cpp`). The workspace has only the ASM tree, so the two Dolphin files were read from GitHub's raw files.
+
+- *What is compared.* Every engine frame the game writes its own checksum for the frame and a recovery record (timer
+  `0x8046B6C8`, stocks and percent of 4 slots; StartEngineLoop.asm 446-495). Then, for each remote entry: skipped while the entry's
+  frame is greater than `ODB_STABLE_FINALIZED_FRAME` (line 529) or `<= UNFREEZE_INPUTS_FRAME` = 84 (line 530). The peer reports one
+  (frame, checksum) per pad packet, so the compared frame is the newest one the peer sent that is finalized here. Once a Hard is
+  displayed (`ODB_IS_DESYNC_STATE_DISPLAYED`, checked at 516, set at 583) nothing is compared again.
+- *Hard.* The low 16 bits (the truncated float sum of position x/y and percent) of the two checksums, as s16, differ by more than 1
+  (lines 559-568). Soft: only the high 16 bits (XOR of action state, position and percent bits, spawn count, stocks) differ: the
+  "Desync Risk" text once (after 592), the game goes on.
+- *What a Hard does* (lines 569-587): error sound (`SFX_Menu_CommonSound` 3), HUD text "DESYNC DETECTED", then `FN_END_GAME`
+  (lines 224-246): `match[+1]` = the local player's index ("pauser"), `match[+8]` = 7 (exit type LRAS: the game's own end-of-match
+  check takes over, `OUTCOME_NO_CONTEST`), `match[+0x24D5]` = 90 (the GAME! screen's maximum length; 110 in vanilla, 55 in 9817968,
+  90 now). The game then runs its normal LRAS ending: GAME!, then the scene exits to the online menu flow; no result screen of its
+  own. Each side detects on its own: both see the same two checksums, so both end (a few frames apart), each with itself as
+  the quitter.
+- *All modes.* ssbm-asm 9817968 ("always end game on disconnect or desync, previously would only happen in ranked") removed the
+  ranked-only guard: Unranked, Ranked, Direct and Teams all end the game. The disconnect path (line 325) does the same.
+- *Reporting.* `InitOnlinePlay.asm` 397-455 hands Dolphin the report: winner index -2 (desync; -3 disconnect), game end method
+  (`match[+8]`, 7), the LRAS initiator, the synced timer, and per slot the synced stocks and damage.
+- *Recovery state kept.* Every compare pass that is not a Hard copies the compared frame's timer, stocks and percent into
+  `ODB_DESYNC_RECOVERY_*` (lines 626-640); the Hard pass jumps over the copy (line 587 to the exit); frame 0's own state seeds
+  it (line 505ff.). So the kept state is that of the last frame compared before the Hard.
+- *How it is applied: ranked only.* `CEXISlippi::handleReportGame` (EXI_DeviceSlippi.cpp:3149): only when `online_mode == Ranked
+  && game_end_method == 7` does Dolphin send `SLIPPI_SYNCED_STATE` (0x86) to the peer and set `is_desync_recovery`. For the next
+  game `GetDesyncRecoveryState` (SlippiNetplay.cpp:2127-2203) waits until the peer's state for the same game and tiebreak index
+  arrived, then reconciles: timers within 1 s (the larger is used), stocks of every slot equal, percent within 25 (the lower);
+  any failure drops the connection. `prepareOnlineMatchState` (EXI_DeviceSlippi.cpp:2560-2590) writes the merged stocks and
+  percent into the match block and the merged seconds into its timer word; without a recovery it writes the defaults (4 stocks,
+  0 %, 8:00). **Unranked, Direct and Teams send nothing: the next game of a Direct set starts at 4 stocks, 0 %, 8:00 as always.**
+  (`is_desync_recovery` is cleared when the next selections go out, SlippiNetplay.cpp:1433.)
+
+**Implemented** (`melee_core::slippi_online`: `DesyncWatch`, `merge_recovery`, `SyncedState`; `melee_fighter::slippi_online`:
+`synced_state`, `end_game_now`, `set_start_percent`, `set_start_seconds`; `melee_net::slippi`: `SyncedMsg`,
+`Client::send_synced_state`, `recovery_state`; both loops):
+
+- Frames <= 84 are not compared. A Hard sets `hard_end` on the game (`EngineGame` for `slippi-netplay`, `SlippiSim` for the
+  rendered `play` loop) and stops the compare. The game then writes `FN_END_GAME`'s three fields (`state.pauser` = local port,
+  `state.match_result` = 7, `start.xD` = 90) before every frame it runs, resimulated frames included (a rollback load rewinds those
+  statics), and the game's own end-of-match code does the rest. The rendered loop shows the existing "DESYNC DETECTED" notice
+  (retail_flow, from `slippi_desyncs`); the capture report is written first; the link closes, or goes on to the next game of a
+  set, as for any ended game. Soft is a warning only, as before. The winner reported to the select is -1 for a Hard (already so).
+- Not done: the error sound (3).
+- Recovery (ranked only; never reachable in our client, `--mm-mode ranked` is refused): `DesyncWatch` keeps the last non-Hard
+  compared frame's record; a game that ended on a Hard in ranked sends `SYNCED_STATE`, waits for the peer's, merges as Slippi does
+  and writes the result (`--recovery-out FILE`); `--recovery-in "secs;stocks,pct;x4"` starts a game from it (scene tokens
+  `/stocksN` and `seconds=`; the percent and the exact timer are written before frame 1). Only `slippi-netplay` has this. The
+  rendered loop has no ranked mode, so a Direct set's next game there starts from the defaults, which is Slippi's behaviour.
+  Test hook for the exchange: `MELEE_NP_TEST_RANKED_RECOVERY=1`.
+- New test hooks: `MELEE_NP_TEST_SOFT=<online frame>[:count]` (flips the high half of this side's checksums: a pure Soft);
+  `MELEE_NP_TEST_DESYNC` now also perturbs the rendered loop (the same stick reversal as in `slippi-netplay`).
+
+**Tests run** (loopback, hidden windows, `MELEE_INPUT=n MELEE_PAD_IGNORE_ADAPTER=1 MELEE_VOLUME=3`, fast profile; Falcon vs Fox on
+Final Destination, `--frames 900 --lag-ms 30`):
+
+| run | result |
+|---|---|
+| `slippi-netplay`, host `MELEE_NP_TEST_DESYNC=400` | Soft at online frame 416, Hard at 419 on both sides; each side ends the game (detected at session frame 423 / 424, game over at 517 / 518: 94 frames later); the reports were written first |
+| `slippi-netplay`, host `MELEE_NP_TEST_SOFT=300:3` | 3 Softs on both sides, no Hard; the game ran on to frame 990 |
+| `slippi-netplay`, clean | 0 soft, 0 hard, 990 frames, rc 0, no capture directory |
+| ranked exchange (`MELEE_NP_TEST_RANKED_RECOVERY=1`, `--recovery-out`) | both sides sent `475;3,0;4,0;4,0;4,0` (the state of the last frame before the Hard) and merged the same |
+| recovery game (`--recovery-in` that state, 900 frames) | the game read back the same state at frame 0 and 474 s at frame 150; 0 soft, 0 hard, both rc 0. With `475;3,45;4,20;...` the checksum trace showed 45 and 20 percent from frame 1 |
+| rendered `play --slippi-mm` (loopback mock, Direct, hidden windows), host `MELEE_NP_TEST_DESYNC=300`, 1200 frames | Soft 324, Hard 325 on both; both log DESYNC DETECTED and end after about 95 frames (420 / 421 final checksums), exit 0. A clean 600-frame run: 0 soft, 0 hard |
+| 16 ms rule | `slippi-netplay` after the first 200 ticks: max 2.3 - 4.3 ms, 0 ticks over 16 ms (hard, recovery and clean runs); rendered: the only tick over 16 ms is the intro's tick 1 (clean runs have it too) |
+
+Unit tests: `DesyncWatch` (the 84 skip, Soft goes on, Hard stops and keeps the previous state), `merge_recovery` (the 1 s / 25 % /
+equal-stocks rules), the 0x86 codec, the recovery argument codec. Not covered: a Slippi Dolphin peer; a two-game Direct set through
+the rendered select (the next game needs nothing: it starts from the defaults); the error sound.

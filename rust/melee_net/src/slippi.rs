@@ -178,6 +178,40 @@ impl PadMsg {
     }
 }
 
+/// `SLIPPI_SYNCED_STATE` (0x86): `u8 player port, string match_id, u32 game_idx, u32 tiebreak_idx, u32 seconds_remaining,
+/// 4 x (u8 stocks, u16 current_health)`: what a client sends after a game that ended on a desync (ranked), so both
+/// restart the game from the same state.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SyncedMsg {
+    pub port: u8,
+    pub match_id: String,
+    pub game_idx: u32,
+    pub tiebreak_idx: u32,
+    pub state: melee_core::slippi_online::SyncedState,
+}
+
+impl SyncedMsg {
+    pub fn encode(&self) -> Vec<u8> {
+        let mut w = PacketW::default().u8(MSG_SYNCED_STATE).u8(self.port).string(&self.match_id).u32(self.game_idx).u32(self.tiebreak_idx).u32(self.state.seconds);
+        for f in &self.state.fighters {
+            w = w.u8(f.stocks).u16(f.percent);
+        }
+        w.0
+    }
+    pub fn decode(b: &[u8]) -> Option<SyncedMsg> {
+        let mut r = PacketR::new(b);
+        if r.u8()? != MSG_SYNCED_STATE {
+            return None;
+        }
+        let (port, match_id, game_idx, tiebreak_idx, seconds) = (r.u8()?, r.string()?, r.u32()?, r.u32()?, r.u32()?);
+        let mut state = melee_core::slippi_online::SyncedState { seconds, ..Default::default() };
+        for f in &mut state.fighters {
+            *f = melee_core::slippi_online::SyncedFighter { stocks: r.u8()?, percent: r.u16()? };
+        }
+        Some(SyncedMsg { port, match_id, game_idx, tiebreak_idx, state })
+    }
+}
+
 pub fn encode_ack(frame: i32, port: u8) -> Vec<u8> {
     PacketW::default().u8(MSG_PAD_ACK).i32(frame).u8(port).0
 }
@@ -252,6 +286,9 @@ pub struct Client {
     pub connect_timeout_ms: i64,
     /// Every remote (frame, checksum) seen, for the owner's frame-by-frame compare.
     pub remote_checksums: BTreeMap<i32, u32>,
+    /// The peer's `SLIPPI_SYNCED_STATE` (desync recovery, ranked): the latest one received, and the one this side sent.
+    pub remote_synced: Option<SyncedMsg>,
+    pub local_synced: Option<SyncedMsg>,
     pub stats: ClientStats,
     /// When the last ENet ping for the displayed round trip went out (see [`Client::net_ping_us`]).
     last_probe_us: i64,
@@ -302,6 +339,8 @@ impl Client {
             started_at_us: 0,
             connect_timeout_ms: 8000,
             remote_checksums: BTreeMap::new(),
+            remote_synced: None,
+            local_synced: None,
             stats: ClientStats::default(),
             last_probe_us: 0,
         };
@@ -522,6 +561,8 @@ impl Client {
             started_at_us,
             connect_timeout_ms,
             remote_checksums,
+            remote_synced: None,
+            local_synced: None,
             stats,
             last_probe_us,
         })
@@ -595,6 +636,23 @@ impl Client {
     /// down is no longer the match's.
     pub fn end_game(&mut self) {
         self.in_game = false;
+    }
+
+    /// `SendSyncedGameState`: remember and send this side's recovery state (reliable, channel 0).
+    pub fn send_synced_state(&mut self, m: SyncedMsg) {
+        let b = m.encode();
+        self.local_synced = Some(m);
+        self.send(&b);
+    }
+
+    /// `GetDesyncRecoveryState`: the merged state once the peer's synced state for the same game has arrived
+    /// (`Ok(None)`: still waiting), `Err` when the two cannot be reconciled (Slippi drops the connection).
+    pub fn recovery_state(&self) -> Result<Option<melee_core::slippi_online::SyncedState>, &'static str> {
+        let Some(l) = &self.local_synced else { return Ok(None) };
+        match &self.remote_synced {
+            Some(r) if r.game_idx == l.game_idx && r.tiebreak_idx == l.tiebreak_idx => melee_core::slippi_online::merge_recovery(&l.state, &[r.state]).map(Some),
+            _ => Ok(None),
+        }
     }
 
     /// `SendSlippiPad`: queue the local pad for `frame` (with the finalized checksum it carries) and send every
@@ -860,7 +918,12 @@ impl Client {
                     self.notes.push_back(Note::Chat { port, id });
                 }
             }
-            _ => {} // CONN_SELECTED, game-prep steps, synced state, suggestions, drops: not used in a direct 1v1
+            MSG_SYNCED_STATE => {
+                if let Some(m) = SyncedMsg::decode(b).filter(|m| m.port == self.remote.port) {
+                    self.remote_synced = Some(m);
+                }
+            }
+            _ => {} // CONN_SELECTED, game-prep steps, suggestions, drops: not used in a direct 1v1
         }
     }
 
@@ -905,6 +968,19 @@ mod tests {
         let mut r = PacketR::new(&b);
         r.o = 1;
         assert_eq!(Selections::decode(&mut r), Some(s));
+    }
+
+    #[test]
+    fn synced_state_layout() {
+        let mut state = melee_core::slippi_online::SyncedState { seconds: 0x0102_0304, ..Default::default() };
+        state.fighters[1] = melee_core::slippi_online::SyncedFighter { stocks: 2, percent: 0x0A0B };
+        let m = SyncedMsg { port: 1, match_id: "ab".into(), game_idx: 2, tiebreak_idx: 0, state };
+        let b = m.encode();
+        // id, port, string (u32 len + bytes), game, tiebreak, seconds, 4 x (u8, u16)
+        assert_eq!(&b[..12], &[0x86, 1, 0, 0, 0, 2, b'a', b'b', 0, 0, 0, 2]);
+        assert_eq!(b.len(), 1 + 1 + 6 + 4 + 4 + 4 + 12);
+        assert_eq!(&b[b.len() - 9..b.len() - 6], &[2, 0x0A, 0x0B]);
+        assert_eq!(SyncedMsg::decode(&b), Some(m));
     }
 
     #[test]

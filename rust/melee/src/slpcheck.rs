@@ -711,7 +711,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             if let Some(f) = slc_out.as_mut() {
                 use std::io::Write;
-                let _ = writeln!(f, "{} {:08X}", fr, melee_fighter::slippi_online::checksum());
+                // third column: the same checksum over the fighters the replay records (hard_desync.py)
+                let _ = writeln!(f, "{} {:08X} {:08X}", fr, melee_fighter::slippi_online::checksum(), melee_fighter::slippi_online::checksum_recorded());
             }
             if let Some(f) = wide_out.as_mut().filter(|_| fr >= wide_from && fr <= wide_to) {
                 use std::io::Write;

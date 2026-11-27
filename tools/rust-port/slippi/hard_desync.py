@@ -31,14 +31,20 @@ def recorded_lo(path):
             continue
         f = struct.unpack(">i", p[0:4])[0]
         port, follower = p[4], p[5]
+        act = struct.unpack(">H", p[7:9])[0]
         x, y, _fc, pct = struct.unpack(">ffff", p[9:25])
         # the last copy of a frame wins (a rolled-back frame is recorded more than once)
-        frames.setdefault(f, {})[(port, follower)] = (x, y, pct)
+        frames.setdefault(f, {})[(port, follower)] = (x, y, pct, act)
     out = {}
     for f, fighters in frames.items():
+        # DeadUp* (actions 3-10, the star / screen KO): the draw callback moves the fighter after the Post-Frame point
+        # the replay records, and the checksum is taken after the frame's render (engine: its logic-side stand-in), so
+        # those frames are not comparable here
+        if any(3 <= v[3] <= 10 for v in fighters.values()):
+            continue
         s = 0.0
         for key in sorted(fighters):
-            x, y, pct = fighters[key]
+            x, y, pct, _act = fighters[key]
             s = f32(s + x)
             s = f32(s + y)
             s = f32(s + pct)
@@ -61,9 +67,10 @@ def main():
     worst = 0
     for line in open(sys.argv[2], encoding="ascii", errors="replace"):
         parts = line.split()
-        if len(parts) != 2:
+        if len(parts) < 2:
             continue
-        f, ck = int(parts[0]), int(parts[1], 16)
+        # column 3 (when present): the checksum over the recorded fighters only (no inactive Zelda/Sheik form)
+        f, ck = int(parts[0]), int(parts[-1], 16)
         r = rec.get(f)
         if r is None:
             continue

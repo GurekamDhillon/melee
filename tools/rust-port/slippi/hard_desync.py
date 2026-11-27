@@ -26,10 +26,16 @@ def recorded_lo(path):
     k = d.find(b"raw[$U#l")
     ln = struct.unpack(">I", d[k + 8:k + 12])[0]
     frames = {}
-    global VERSION
+    global VERSION, FINAL
+    final = None
     for c, p in events(d[k + 12:k + 12 + ln]):
         if c == 0x36:
             VERSION = "%d.%d.%d" % (p[0], p[1], p[2])
+        if c == 0x3C and len(p) >= 8:
+            # Frame Bookend (3.7.0+): the latest finalized frame. Frames past the highest one were never confirmed
+            # (a game that ends while a rollback is open keeps only their predicted copies)
+            lf = struct.unpack(">i", p[4:8])[0]
+            final = lf if final is None else max(final, lf)
         if c != 0x38:
             continue
         f = struct.unpack(">i", p[0:4])[0]
@@ -38,8 +44,11 @@ def recorded_lo(path):
         x, y, _fc, pct = struct.unpack(">ffff", p[9:25])
         # the last copy of a frame wins (a rolled-back frame is recorded more than once)
         frames.setdefault(f, {})[(port, follower)] = (x, y, pct, act)
+    FINAL = final
     out = {}
     for f, fighters in frames.items():
+        if final is not None and f > final:
+            continue
         # DeadUp* (actions 3-10, the star / screen KO): the draw callback moves the fighter after the Post-Frame point
         # the replay records, and the checksum is taken after the frame's render (engine: its logic-side stand-in), so
         # those frames are not comparable here
@@ -65,6 +74,7 @@ def recorded_lo(path):
 # Slippi before 3.0 took Post-Frame at Fighter_procMap, partway through the frame: some actions move the fighter after
 # it, so those replays do not hold the end-of-frame state the checksum is taken from. They are reported as "old".
 VERSION = "?"
+FINAL = None
 
 
 def s16(v):

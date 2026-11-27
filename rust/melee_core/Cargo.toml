@@ -18,6 +18,8 @@ disc = []
 profile-tracy = ["dep:tracy-client"]
 # Union-drift checker (mvshadow.rs, tools/rust-port/mvshadow/instrument.py): an instrumented scratch build only.
 mvshadow = []
+# DOL referee capture (referee.rs, notes/referee.md): a scratch build only. Off = referee_hook! expands to nothing.
+referee = []
 
 [lints.rust]
 # workspace.lints is not inherited where a crate has its own table (rust/Cargo.toml: function identity)

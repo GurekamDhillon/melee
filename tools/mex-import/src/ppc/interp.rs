@@ -157,7 +157,79 @@ fn ctiw_gekko(b: f64, nearest: bool) -> u64 {
     } else {
         r as i32
     };
-    0xFFF8_0000_0000_0000 | (iv as u32 as u64)
+    // a zero result of a negative operand (-0, -0.3 toward zero) sets bit 32 (Dolphin, from hardware tests)
+    let neg_zero = if iv == 0 && b.is_sign_negative() { 0x1_0000_0000 } else { 0 };
+    0xFFF8_0000_0000_0000 | neg_zero | (iv as u32 as u64)
+}
+
+/// Dolphin's interpreter float semantics (Interpreter_FPUtils.h, Interpreter_FloatingPoint.cpp), used in Gekko
+/// mode; checked against an independent model by tests/gekko_trust.rs (notes/referee.md section 1).
+mod dol {
+    const EXP: u64 = 0x7FF0_0000_0000_0000;
+    const FRAC: u64 = 0x000F_FFFF_FFFF_FFFF;
+    const QBIT: u64 = 0x0008_0000_0000_0000;
+    pub const SIGN: u64 = 1 << 63;
+    /// The default NaN of an invalid operation: positive, payload 0 (the x86 host's default NaN is negative).
+    pub const PPC_NAN: u64 = 0x7FF8_0000_0000_0000;
+    pub fn is_nan(x: u64) -> bool {
+        x & EXP == EXP && x & FRAC != 0
+    }
+    /// NI_add / NI_sub / NI_mul / NI_div: a NaN result is frA's NaN (quieted), else frB's, else the default NaN.
+    pub fn ni2(a: u64, b: u64, r: f64) -> u64 {
+        if r.is_nan() {
+            if is_nan(a) {
+                return a | QBIT;
+            }
+            if is_nan(b) {
+                return b | QBIT;
+            }
+            return PPC_NAN;
+        }
+        r.to_bits()
+    }
+    /// NI_madd / NI_msub: fma(a, c, +-b), NaN operands checked in the order a, b, c (b as given, not negated).
+    pub fn ni_fma(a: u64, c: u64, b: u64, sub: bool) -> u64 {
+        for x in [a, b, c] {
+            if is_nan(x) {
+                return x | QBIT;
+            }
+        }
+        let bb = if sub { -f64::from_bits(b) } else { f64::from_bits(b) };
+        let r = f64::from_bits(a).mul_add(f64::from_bits(c), bb);
+        if r.is_nan() { PPC_NAN } else { r.to_bits() }
+    }
+    /// Force25Bit: frC of a single multiply keeps 25 mantissa bits, rounded; a denormal is normalised first.
+    pub fn force25(x: u64) -> u64 {
+        let (e, f) = (x & EXP, x & FRAC);
+        if e == 0 && f != 0 {
+            let shift = f.leading_zeros() - 11;
+            let keep = ((0xFFFF_FFFF_F800_0000u64 as i64) >> shift) as u64;
+            (x & keep).wrapping_add(x & (0x800_0000u64 >> shift))
+        } else {
+            (x & 0xFFFF_FFFF_F800_0000).wrapping_add(x & 0x800_0000)
+        }
+    }
+    /// stfs (ConvertToSingle): truncating; a double in the single denormal range is shifted, not rounded.
+    pub fn to_single(x: u64) -> u32 {
+        let e = ((x >> 52) & 0x7FF) as u32;
+        if (874..=896).contains(&e) && x & !SIGN != 0 {
+            let t = (0x8000_0000u32 | ((x & FRAC) >> 21) as u32) >> (905 - e);
+            t | ((x >> 32) & 0x8000_0000) as u32
+        } else {
+            (((x >> 32) & 0xC000_0000) | ((x >> 29) & 0x3FFF_FFFF)) as u32
+        }
+    }
+    /// lfs (ConvertToDouble): exact; a signalling NaN stays signalling.
+    pub fn from_single(v: u32) -> u64 {
+        let x = v as u64;
+        let (e, f) = ((x >> 23) & 0xFF, x & 0x7F_FFFF);
+        if e == 0 && f != 0 {
+            (f32::from_bits(v) as f64).to_bits() // a denormal single is a normal double: exact either way
+        } else {
+            let y = if e > 0 && e < 255 { ((e >> 7) ^ 1) & 1 } else { e >> 7 };
+            ((x & 0xC000_0000) << 32) | (y << 61) | (y << 60) | (y << 59) | ((x & 0x3FFF_FFFF) << 29)
+        }
+    }
 }
 
 pub struct Machine {
@@ -243,12 +315,16 @@ impl Machine {
             Op::AddI { d, a, imm } => c.gpr[d as usize] = c.r0(a).wrapping_add(imm),
             Op::MulI { d, a, imm } => c.gpr[d as usize] = (c.r(a) as i32).wrapping_mul(imm) as u32,
             Op::SubfIc { d, a, imm } => {
-                let b = c.r0(a);
+                // subfic / addic read rA even when it is r0 (gw_ppc.c reads 0 there)
+                let b = if gekko { c.r(a) } else { c.r0(a) };
                 c.set_ca(imm >= b);
                 c.gpr[d as usize] = imm.wrapping_sub(b);
             }
             Op::AddIc { d, a, imm, rc } => {
-                let b = c.r0(a);
+                let b = if gekko { c.r(a) } else { c.r0(a) };
+                // addic. is primary opcode 13; gw_ppc.c (and the decoder, which mirrors it) takes Rc from bit 0 of
+                // the immediate, so `addic` with an odd immediate wrote CR0 and `addic.` with an even one did not
+                let rc = if gekko { w >> 26 == 13 } else { rc };
                 let (sum, carry) = b.overflowing_add(imm);
                 c.set_ca(carry);
                 c.gpr[d as usize] = sum;
@@ -301,6 +377,10 @@ impl Machine {
                     ArithOp::Mullw => (av as i32).wrapping_mul(bv as i32) as u32,
                     ArithOp::Mulhw => ((av as i32 as i64 * bv as i32 as i64) >> 32) as u32,
                     ArithOp::Mulhwu => ((av as u64 * bv as u64) >> 32) as u32,
+                    ArithOp::Divw if gekko && (bv == 0 || (av == 0x8000_0000 && bv == 0xFFFF_FFFF)) => {
+                        // the undefined results as the hardware gives them: -1 for a negative dividend, else 0
+                        if (av as i32) < 0 { 0xFFFF_FFFF } else { 0 }
+                    }
                     ArithOp::Divw => {
                         if bv == 0 {
                             0
@@ -369,6 +449,8 @@ impl Machine {
                     LogicOp::Nor => !(sv | bv),
                     LogicOp::Nand => !(sv & bv),
                     LogicOp::Eqv => !(sv ^ bv),
+                    // bit 5 of the amount shifts everything out (gw_ppc.c masks the amount to 5 bits)
+                    LogicOp::Slw | LogicOp::Srw if gekko && bv & 0x20 != 0 => 0,
                     LogicOp::Slw => sv << (bv & 31),
                     LogicOp::Srw => sv >> (bv & 31),
                     LogicOp::Sraw => {
@@ -449,7 +531,12 @@ impl Machine {
             }
             Op::LoadF { d, a, ea, single, update } => {
                 let addr = self.ea(a, ea, update);
-                let bits = if single { (f32::from_bits(mem.ld32(addr)?) as f64).to_bits() } else { mem.ld64(addr)? };
+                let bits = if single {
+                    let v = mem.ld32(addr)?;
+                    if self.gekko { dol::from_single(v) } else { (f32::from_bits(v) as f64).to_bits() }
+                } else {
+                    mem.ld64(addr)?
+                };
                 self.cpu.fpr[d as usize] = bits;
                 if update {
                     self.cpu.gpr[a as usize] = addr;
@@ -458,7 +545,8 @@ impl Machine {
             Op::StoreF { s, a, ea, single, update } => {
                 let addr = self.ea(a, ea, update);
                 if single {
-                    mem.st32(addr, (self.cpu.f(s) as f32).to_bits())?;
+                    let v = if self.gekko { dol::to_single(self.cpu.fpr[s as usize]) } else { (self.cpu.f(s) as f32).to_bits() };
+                    mem.st32(addr, v)?;
                 } else {
                     mem.st64(addr, self.cpu.fpr[s as usize])?;
                 }
@@ -483,7 +571,7 @@ impl Machine {
                 }
             }
             Op::Dcbz { a, b } => {
-                let addr = self.ea(a, Ea::Idx(b), false);
+                let addr = self.ea(a, Ea::Idx(b), false) & if self.gekko { !31 } else { !0 };
                 for i in (0..32).step_by(4) {
                     mem.st32(addr.wrapping_add(i), 0)?;
                 }
@@ -498,7 +586,7 @@ impl Machine {
             Op::Bclr { bo, bi, lk } | Op::Bcctr { bo, bi, lk } => {
                 let is_ctr = matches!(op, Op::Bcctr { .. });
                 if self.cpu.cond(bo, bi) {
-                    let target = if is_ctr { self.cpu.ctr } else { self.cpu.lr };
+                    let target = (if is_ctr { self.cpu.ctr } else { self.cpu.lr }) & if self.gekko { !3 } else { !0 };
                     if lk {
                         self.cpu.lr = self.cpu.pc;
                     }
@@ -543,12 +631,34 @@ impl Machine {
             Op::Mtspr { spr, s } => {
                 let v = c.r(s);
                 match spr {
-                    Spr::Xer => c.xer = v,
+                    // SetXER keeps SO, OV, CA, the byte count and the compare byte
+                    Spr::Xer => c.xer = if gekko { v & 0xE000_FF7F } else { v },
                     Spr::Lr => c.lr = v,
                     Spr::Ctr => c.ctr = v,
                 }
             }
             Op::BadSpr { .. } => return Err(Fault::Panic(ip)),
+            Op::FArith { op, d, a, b, c: fc, single } if gekko => {
+                let (x, y, z) = (c.fpr[a as usize], c.fpr[b as usize], c.fpr[fc as usize]);
+                let z = if single && matches!(op, FOp::Mul | FOp::Msub | FOp::Madd | FOp::Nmsub | FOp::Nmadd) { dol::force25(z) } else { z };
+                let f = f64::from_bits;
+                let r = match op {
+                    FOp::Div => dol::ni2(x, y, f(x) / f(y)),
+                    FOp::Sub => dol::ni2(x, y, f(x) - f(y)),
+                    FOp::Add => dol::ni2(x, y, f(x) + f(y)),
+                    FOp::Mul => dol::ni2(x, z, f(x) * f(z)),
+                    FOp::Sqrt => f(y).sqrt().to_bits(),
+                    // the estimates are stored as computed (Fill / SetPS0 of the double), never rounded to single
+                    FOp::Res => melee_core::fp::fres(f(y)).to_bits(),
+                    FOp::Rsqrte => melee_core::fp::frsqrte(f(y)).to_bits(),
+                    FOp::Madd | FOp::Nmadd => dol::ni_fma(x, z, y, false),
+                    FOp::Msub | FOp::Nmsub => dol::ni_fma(x, z, y, true),
+                };
+                let r = if single && !matches!(op, FOp::Res | FOp::Rsqrte) { ((f(r) as f32) as f64).to_bits() } else { r };
+                // fnmadd / fnmsub negate the (rounded) result unless it is a NaN
+                let r = if matches!(op, FOp::Nmadd | FOp::Nmsub) && !dol::is_nan(r) { r ^ dol::SIGN } else { r };
+                c.fpr[d as usize] = r;
+            }
             Op::FArith { op, d, a, b, c: fc, single } => {
                 let (x, y, mut z) = (c.f(a), c.f(b), c.f(fc));
                 // Gekko (Dolphin's Force25Bit): a single-precision multiply (fmuls, fmadds...) takes frC with 25
@@ -580,7 +690,8 @@ impl Machine {
             }
             Op::Fsel { d, a, b, c: fc } => {
                 let x = c.f(a);
-                let v = if x >= 0.0 || x.is_nan() { c.fpr[fc as usize] } else { c.fpr[b as usize] };
+                // Dolphin: frA >= -0.0 ? frC : frB (a NaN selects frB)
+                let v = if x >= 0.0 || (!gekko && x.is_nan()) { c.fpr[fc as usize] } else { c.fpr[b as usize] };
                 c.fpr[d as usize] = v;
             }
             Op::FUnary { op, d, b } => {
@@ -588,6 +699,9 @@ impl Machine {
                 match op {
                     FUn::Mr => c.fpr[d as usize] = c.fpr[b as usize],
                     FUn::Neg => c.set_f(d, -y),
+                    // sign-bit operations (fabs of -0 / -NaN clears the sign)
+                    FUn::Abs if gekko => c.fpr[d as usize] = c.fpr[b as usize] & !dol::SIGN,
+                    FUn::Nabs if gekko => c.fpr[d as usize] = c.fpr[b as usize] | dol::SIGN,
                     FUn::Abs => c.set_f(d, if y < 0.0 { -y } else { y }),
                     FUn::Nabs => c.set_f(d, if y < 0.0 { y } else { -y }),
                     FUn::Rsp => c.set_f(d, y as f32 as f64),
@@ -599,7 +713,8 @@ impl Machine {
             }
             Op::Fcmp { crf, a, b } => {
                 let (x, y) = (c.f(a), c.f(b));
-                let so = c.xer >> 31;
+                // Gekko: the field is FPCC (FL FG FE FU); unordered sets FU, XER's SO is not involved
+                let so = if gekko { (x.is_nan() || y.is_nan()) as u32 } else { c.xer >> 31 };
                 let field = if x.is_nan() || y.is_nan() {
                     so
                 } else if x > y {

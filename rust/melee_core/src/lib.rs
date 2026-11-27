@@ -19,6 +19,7 @@ pub mod host_volume;
 pub mod heaptrace;
 pub mod modhook;
 pub mod pose;
+pub mod referee;
 pub mod slippi_online;
 pub mod tracy;
 pub mod ppc;

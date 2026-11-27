@@ -75,6 +75,7 @@ pub fn lb_sqrtf(x: f32) -> f32 {
 /// `atanf_fp` (TARGET_PC branch of lbtrigf.c).
 pub fn atanf_fp(x: f32) -> f32 {
     melee_core::ct!("atanf_fp");
+    melee_core::referee_hook!(atanf, [F(x)], f, atanf_fp(x));
     let silver_ratio = 2.4142136573791504f32;
     let silver_ratio_conjugate = 0.4142135679721832f32;
     let mut lookup_index: i32 = -1;
@@ -140,6 +141,7 @@ pub fn atanf_fp(x: f32) -> f32 {
 /// `atan2f_fp`.
 pub fn atan2f_fp(y: f32, x: f32) -> f32 {
     melee_core::ct!("atan2f_fp");
+    melee_core::referee_hook!(atan2f, [F(y), F(x)], f, atan2f_fp(y, x));
     let sx = x.to_bits() & SIGN_BIT;
     let sy = y.to_bits() & SIGN_BIT;
     if sx == sy {
@@ -160,6 +162,7 @@ pub fn atan2f_fp(y: f32, x: f32) -> f32 {
 /// `acosf`.
 pub fn acosf(x: f32) -> f32 {
     melee_core::ct!("acosf");
+    melee_core::referee_hook!(acosf, [F(x)], f, acosf(x));
     let mut result = fnmsubs(x, x, 1.0); // 1.0F - x * x, fused
     if result > 0.0 {
         let mut guess = frsqrte_lbtrigf(result as f64) as f32;
@@ -194,5 +197,6 @@ pub fn lb_sqrtf_fp(x: f32) -> f32 {
 /// `asinf_fp`: `atanf_fp(x * lb_sqrtf_fp(-(x * x - 1.0f)))`, the inner `x*x - 1` fused.
 pub fn asinf_fp(x: f32) -> f32 {
     melee_core::ct!("asinf_fp");
+    melee_core::referee_hook!(asinf, [F(x)], f, asinf_fp(x));
     atanf_fp(x * lb_sqrtf_fp(-fmadds(x, x, -1.0)))
 }

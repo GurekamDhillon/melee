@@ -680,6 +680,17 @@ pub unsafe extern "C" fn grOldPupupu_802113E0(gobj: *mut HSD_GObj) {
     let yp = yakumono_param;
 
     if (grOp_804D6A9C as usize as i32) == 0 {
+        // MELEE_WHISPY_LOG=1: the stage frame (xE0) of each wind start (xDC set on the frame before), to compare Whispy's
+        // timing between runs; Slippi's SendDreamlandInfo (cmd 0x40) records the same change
+        static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        if (*gp).u.oldpupupu.xDC != 0 && *ON.get_or_init(|| std::env::var_os("MELEE_WHISPY_LOG").is_some()) {
+            static mut LAST: u32 = u32::MAX;
+            let f = (*gp).u.oldpupupu.xE0 as u32;
+            if LAST.wrapping_add(1) != f {
+                eprintln!("whispy: wind {} from stage frame {f}", (*gp).u.oldpupupu.xDC);
+            }
+            LAST = f;
+        }
         (*gp).u.oldpupupu.xE0 = (*gp).u.oldpupupu.xE0.wrapping_add(1);
         (*gp).u.oldpupupu.xDC = 0;
 

@@ -141,3 +141,26 @@ frame 0 the same way as for every other frame).
 - gate: 125 replays (60 hero, 40 lunar2, 25 Dream Land 3.17-3.19 from both) give the sweep2 row unchanged (status,
   first frame / port / field / value, frames compared): **125 same, 0 changed**. Goldens and synctest: not run (the
   change is in replay playback of online files; offline scenarios and the synctest never read a replay seed).
+
+### 3.1 The live online path and our own online replays (2026-11-27)
+
+- Live SyncRNG (`slippi_online::seed_for_frame`, the proc `gmvs::slippi_sync_rng` at InitOnlinePlay's hook) already
+  is e03af7f's `fmix32(rotl(g, 16) + rng_offset) ^ (seed_bits << 24)` on every frame, global frame 0 included. Proof
+  from a loopback Dream Land match (rng_offset 0x6e40, 1390 frames, 0 desyncs): the engine's RNG state at the start of
+  frames -122.. is exactly fmix32(rotl(g,16)+0x6e40) for g = 0, 1, 2 ... plus that frame's draws, i.e. frame -123 ran
+  on the hashed g = 0 seed, as a 3.20.0 console does (console 0xFD66 file: -123 = 0xA07D18B8 = fmix32(0xFD66)).
+- Bug found in the exporter, not the sim: `slp_export` wrote each frame's Frame Start seed as the tick-start RNG
+  state (the previous frame's last draw) and the Game Start major scene as 2 (offline), so an online .slp the engine
+  wrote (live `--slp`, `slippi-replay --slp`) did not play back as online and diverged (frame 886 in the loopback
+  file). Fixed: in Slippi online mode Frame Start carries the SyncRNG seed of that frame and the major scene is 8.
+  After the fix the re-exported loopback file has 1391/1391 seeds equal to the formula and `slpcheck --full` plays
+  it back as online: match, 2782 fighter-frames. Checksums of the run are unchanged (export only).
+- Whispy, direct: the trace replayed through `slippi-replay` (the live sim path) with the rng_offset and roster of
+  console file 6b050266...9a4 (0x4B75, Fox vs Falcon): first wind side 2 at stage frame 1100, the console's (event
+  0x40 at frame 976 = stage frame 1100; engine playback of the console file: the same). With 0xFD66 (Falco dittos)
+  the live run gave side 2 at 1029 against the console's side 1 at 1062, and zero inputs move 0x4B75 too: the first
+  wait is drawn after inputs reach the RNG, so only a run on the console's own inputs is comparable; the online-mode
+  playback above is that comparison for our own match. `MELEE_WHISPY_LOG=1` prints each wind start.
+- lunar2's 106 3.20.0 files (`_build/replays/lunar-2026-11-20`, incl. the 6 Dream Land hard desyncs of the
+  pre-fix sweep: 6afd2e79..bb2/bb6, 6affeb47..bbc/bc8/bcc/bde): `slpcheck --full`, 106/106 match (DL 6, stages
+  2/3/8/31/32 the rest); hard_desync.py: 0 hard.

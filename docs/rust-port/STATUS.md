@@ -27,6 +27,12 @@
   user-only checks (visuals, audio by ear, real controllers, online across machines).
 
 ## Decisions and hard rules
+- **The C build is legacy (2026-11-27).** The C / PPC-retarget build (`pc/`, gwtool, `melee-pc.exe`) is deprecated
+  and out of service: no fixes, no features, no doldecomp upstream syncs. Read it, run existing binaries as a
+  reference, never change it. The C goldens stay as frozen regression baselines: when a Rust change moves the engine
+  toward the console and away from a golden, say so with the console evidence and re-baseline the golden from the
+  engine. The correctness reference is the retail `main.dol` (and Slippi's own code lists), checked by the DOL referee
+  (vanilla Melee only; notes/referee.md).
 - Native little-endian Rust, no emulation. Game logic is bit-exact against the C build, which is compiled with
   clang's shipping float contraction (`-ffp-contract=on`): fused sites are ported as `fmadds`/`fmsubs` (f64 then f32),
   never `f32::mul_add`. Oracles are built the same way. Detail: notes/fma.md.

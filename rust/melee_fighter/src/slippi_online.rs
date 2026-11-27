@@ -44,6 +44,44 @@ pub fn state_dump() -> String {
     t
 }
 
+/// [`checksum`] over the fighters a replay records only: each slot's active entity (`player_entity[transformed[0]]`)
+/// and an Ice Climbers' Nana. Zelda/Sheik's inactive form is in Slippi's checksum but has no Post-Frame event, so
+/// tools that rebuild the checksum from a .slp (tools/rust-port/slippi/hard_desync.py) compare against this one.
+pub fn checksum_recorded() -> u32 {
+    checksum_recorded_with_mask(true).0
+}
+
+/// [`checksum_recorded`] and the fighters it covered: bit `slot * 2 + entity` (entity 1 = Nana / the sub entity).
+/// `with_nana = false` leaves Nana out: a replay stops recording her once she is dead, while her entity lives on.
+pub fn checksum_recorded_with_mask(with_nana: bool) -> (u32, u8) {
+    let mut c = Checksum::new();
+    let mut mask = 0u8;
+    for slot in 0..4 {
+        let p = unsafe { &*core::ptr::addr_of!(crate::stale::PLAYER_SLOTS[slot]) };
+        let active = p.transformed[0] as usize;
+        for (i, g) in p.player_entity.into_iter().enumerate() {
+            if g.is_null() {
+                continue;
+            }
+            let fp = unsafe { &*((*g).user_data as *const Fighter) };
+            let nana = fp.kind == crate::types::Ft_Kind_Nana as _;
+            if (i != active && !nana) || (nana && !with_nana) {
+                continue;
+            }
+            mask |= 1 << (slot * 2 + i);
+            c.fighter(&FighterSample {
+                motion_id: fp.motion_id as u32,
+                pos_x: fp.cur_pos.x,
+                pos_y: fp.cur_pos.y,
+                percent: fp.dmg.x1830_percent,
+                spawn_num: fp.x8_spawnNum as u32,
+            });
+        }
+        c.slot_end(p.stocks as u8);
+    }
+    (c.finish(), mask)
+}
+
 pub fn checksum() -> u32 {
     let mut c = Checksum::new();
     for slot in 0..4 {

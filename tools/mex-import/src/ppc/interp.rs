@@ -29,6 +29,11 @@ pub struct Cpu {
     pub gpr: [u32; 32],
     /// Raw 64-bit FPR contents (the C's `gw_ppc_fpr.u64`; `.d` is f64::from_bits).
     pub fpr: [u64; 32],
+    /// Gekko mode: each FPR's second paired-single slot (ps1), raw double bits as Dolphin keeps them. A single
+    /// precision scalar op writes both slots (Dolphin's `Fill`), a double one only ps0 (`SetPS0`).
+    pub ps1: [u64; 32],
+    /// GQR0..7 (psq_l / psq_st quantisation; 0 = float, no scale).
+    pub gqr: [u32; 8],
     pub lr: u32,
     pub ctr: u32,
     pub xer: u32,
@@ -160,6 +165,139 @@ fn ctiw_gekko(b: f64, nearest: bool) -> u64 {
     // a zero result of a negative operand (-0, -0.3 toward zero) sets bit 32 (Dolphin, from hardware tests)
     let neg_zero = if iv == 0 && b.is_sign_negative() { 0x1_0000_0000 } else { 0 };
     0xFFF8_0000_0000_0000 | neg_zero | (iv as u32 as u64)
+}
+
+/// ForceSingle with FPSCR NI = 0: round to single, held as a double (Dolphin's `SetBoth(float, float)`).
+fn fsingle(x: u64) -> u64 {
+    ((f64::from_bits(x) as f32) as f64).to_bits()
+}
+
+/// One paired-single op (Interpreter_Paired.cpp): (ps0, ps1) of frD from frA, frB, frC's slots. FPSCR is not kept.
+fn ps_exec(op: PsOp, a0: u64, a1: u64, b0: u64, b1: u64, c0: u64, c1: u64) -> (u64, u64) {
+    let f = f64::from_bits;
+    let add = |x: u64, y: u64| fsingle(dol::ni2(x, y, f(x) + f(y)));
+    let sub = |x: u64, y: u64| fsingle(dol::ni2(x, y, f(x) - f(y)));
+    let div = |x: u64, y: u64| fsingle(dol::ni2(x, y, f(x) / f(y)));
+    let mul = |x: u64, z: u64| fsingle(dol::ni2(x, z, f(x) * f(z)));
+    let madd = |x: u64, z: u64, y: u64| fsingle(dol::ni_fma(x, z, y, false));
+    let msub = |x: u64, z: u64, y: u64| fsingle(dol::ni_fma(x, z, y, true));
+    let neg = |r: u64| if dol::is_nan(r) { r } else { r ^ dol::SIGN };
+    let sel = |x: u64, cc: u64, bb: u64| if f(x) >= -0.0 { cc } else { bb };
+    let (q0, q1) = (dol::force25(c0), dol::force25(c1));
+    match op {
+        PsOp::Sum0 => (add(a0, b1), fsingle(c1)),
+        PsOp::Sum1 => (fsingle(c0), add(a0, b1)),
+        PsOp::Muls0 => (mul(a0, q0), mul(a1, q0)),
+        PsOp::Muls1 => (mul(a0, q1), mul(a1, q1)),
+        PsOp::Madds0 => (madd(a0, q0, b0), madd(a1, q0, b1)),
+        PsOp::Madds1 => (madd(a0, q1, b0), madd(a1, q1, b1)),
+        PsOp::Div => (div(a0, b0), div(a1, b1)),
+        PsOp::Sub => (sub(a0, b0), sub(a1, b1)),
+        PsOp::Add => (add(a0, b0), add(a1, b1)),
+        PsOp::Sel => (sel(a0, c0, b0), sel(a1, c1, b1)),
+        // the estimate stored as computed (SetBoth of the doubles)
+        PsOp::Res => (melee_core::fp::fres(f(b0)).to_bits(), melee_core::fp::fres(f(b1)).to_bits()),
+        // ps_rsqrte rounds its estimate to single (frsqrte does not)
+        PsOp::Rsqrte => (fsingle(melee_core::fp::frsqrte(f(b0)).to_bits()), fsingle(melee_core::fp::frsqrte(f(b1)).to_bits())),
+        PsOp::Mul => (mul(a0, q0), mul(a1, q1)),
+        PsOp::Msub => (msub(a0, q0, b0), msub(a1, q1, b1)),
+        PsOp::Madd => (madd(a0, q0, b0), madd(a1, q1, b1)),
+        PsOp::Nmsub => (neg(msub(a0, q0, b0)), neg(msub(a1, q1, b1))),
+        PsOp::Nmadd => (neg(madd(a0, q0, b0)), neg(madd(a1, q1, b1))),
+        PsOp::Neg => (b0 ^ dol::SIGN, b1 ^ dol::SIGN),
+        PsOp::Mr => (b0, b1),
+        PsOp::Nabs => (b0 | dol::SIGN, b1 | dol::SIGN),
+        PsOp::Abs => (b0 & !dol::SIGN, b1 & !dol::SIGN),
+        PsOp::Merge00 => (a0, b0),
+        PsOp::Merge01 => (a0, b1),
+        PsOp::Merge10 => (a1, b0),
+        PsOp::Merge11 => (a1, b1),
+    }
+}
+
+/// The scale of a GQR field as Dolphin's (de)quantize tables have it: 2^-s for s < 32, 2^(64-s) from 32 up.
+fn dequant_scale(s: u32) -> f32 {
+    if s < 32 { 1.0 / (1u64 << s) as f32 } else { (1u64 << (64 - s)) as f32 }
+}
+fn quant_scale(s: u32) -> f32 {
+    if s < 32 { (1u64 << s) as f32 } else { 1.0 / (1u64 << (64 - s)) as f32 }
+}
+
+/// psq_l (Helper_Dequantize): type 0 float (ConvertToDouble), 4 u8, 5 u16, 6 s8, 7 s16; `one` loads ps0 only and
+/// sets ps1 = 1.0. The invalid types 1..3 fault (Dolphin asserts).
+fn psq_load<M: Mem>(mem: &mut M, ea: u32, ty: u32, sc: u32, one: bool) -> Result<(u64, u64), Fault> {
+    let one_d = 1.0f64.to_bits();
+    if ty == 0 {
+        if one {
+            return Ok((dol::from_single(mem.ld32(ea)?), one_d));
+        }
+        let v = mem.ld64(ea)?;
+        return Ok((dol::from_single((v >> 32) as u32), dol::from_single(v as u32)));
+    }
+    let k = dequant_scale(sc);
+    let conv = |v: u32| -> u64 {
+        let x = match ty {
+            4 => v as u8 as f32,
+            5 => v as u16 as f32,
+            6 => v as u8 as i8 as f32,
+            _ => v as u16 as i16 as f32,
+        };
+        ((x * k) as f64).to_bits()
+    };
+    let (p0, p1) = match (ty, one) {
+        (1..=3, _) => return Err(Fault::BadOpcode(ea, ty)),
+        (4 | 6, true) => (conv(mem.ld8(ea)? as u32), one_d),
+        (4 | 6, false) => {
+            let v = mem.ld16(ea)? as u32;
+            (conv(v >> 8), conv(v & 0xFF))
+        }
+        (_, true) => (conv(mem.ld16(ea)? as u32), one_d),
+        (_, false) => {
+            let v = mem.ld32(ea)?;
+            (conv(v >> 16), conv(v & 0xFFFF))
+        }
+    };
+    Ok((p0, p1))
+}
+
+/// psq_st (Helper_Quantize): float = ConvertToSingleFTZ (a value in the single denormal range stores as a signed
+/// zero, unlike stfs); integers = float(ps) * scale, clamped to the type's range, truncated (a NaN stores as 0: x86's
+/// cvttss2si gives 0x80000000, whose low 8 / 16 bits are 0).
+fn psq_store<M: Mem>(mem: &mut M, ea: u32, ty: u32, sc: u32, one: bool, p0: u64, p1: u64) -> Result<(), Fault> {
+    let ftz = |x: u64| -> u32 {
+        let e = ((x >> 52) & 0x7FF) as u32;
+        if e > 896 || x & !dol::SIGN == 0 {
+            (((x >> 32) & 0xC000_0000) | ((x >> 29) & 0x3FFF_FFFF)) as u32
+        } else {
+            ((x >> 32) & 0x8000_0000) as u32
+        }
+    };
+    if ty == 0 {
+        if one {
+            return mem.st32(ea, ftz(p0));
+        }
+        return mem.st64(ea, ((ftz(p0) as u64) << 32) | ftz(p1) as u64);
+    }
+    let k = quant_scale(sc);
+    let q = |x: u64| -> u32 {
+        let v = (f64::from_bits(x) as f32) * k;
+        let (lo, hi): (f32, f32) = match ty {
+            4 => (0.0, 255.0),
+            5 => (0.0, 65535.0),
+            6 => (-128.0, 127.0),
+            _ => (-32768.0, 32767.0),
+        };
+        // std::clamp(v, lo, hi): a NaN passes through
+        let v = if v < lo { lo } else if hi < v { hi } else { v };
+        if v.is_nan() { 0 } else { v as i32 as u32 }
+    };
+    match (ty, one) {
+        (1..=3, _) => Err(Fault::BadOpcode(ea, ty)),
+        (4 | 6, true) => mem.st8(ea, q(p0) as u8),
+        (4 | 6, false) => mem.st16(ea, ((q(p0) as u8 as u16) << 8) | q(p1) as u8 as u16),
+        (_, true) => mem.st16(ea, q(p0) as u16),
+        (_, false) => mem.st32(ea, ((q(p0) as u16 as u32) << 16) | q(p1) as u16 as u32),
+    }
 }
 
 /// Dolphin's interpreter float semantics (Interpreter_FPUtils.h, Interpreter_FloatingPoint.cpp), used in Gekko
@@ -538,6 +676,9 @@ impl Machine {
                     mem.ld64(addr)?
                 };
                 self.cpu.fpr[d as usize] = bits;
+                if self.gekko && single {
+                    self.cpu.ps1[d as usize] = bits;
+                }
                 if update {
                     self.cpu.gpr[a as usize] = addr;
                 }
@@ -658,6 +799,9 @@ impl Machine {
                 // fnmadd / fnmsub negate the (rounded) result unless it is a NaN
                 let r = if matches!(op, FOp::Nmadd | FOp::Nmsub) && !dol::is_nan(r) { r ^ dol::SIGN } else { r };
                 c.fpr[d as usize] = r;
+                if single {
+                    c.ps1[d as usize] = r;
+                }
             }
             Op::FArith { op, d, a, b, c: fc, single } => {
                 let (x, y, mut z) = (c.f(a), c.f(b), c.f(fc));
@@ -704,7 +848,12 @@ impl Machine {
                     FUn::Nabs if gekko => c.fpr[d as usize] = c.fpr[b as usize] | dol::SIGN,
                     FUn::Abs => c.set_f(d, if y < 0.0 { -y } else { y }),
                     FUn::Nabs => c.set_f(d, if y < 0.0 { y } else { -y }),
-                    FUn::Rsp => c.set_f(d, y as f32 as f64),
+                    FUn::Rsp => {
+                        c.set_f(d, y as f32 as f64);
+                        if gekko {
+                            c.ps1[d as usize] = c.fpr[d as usize];
+                        }
+                    }
                     FUn::Ctiwz if gekko => c.fpr[d as usize] = ctiw_gekko(y, false),
                     FUn::Ctiw if gekko => c.fpr[d as usize] = ctiw_gekko(y, true),
                     FUn::Ctiwz => c.fpr[d as usize] = ctiw(y),
@@ -725,6 +874,45 @@ impl Machine {
                     2 | so
                 };
                 c.cr_set_field(crf, field);
+            }
+            Op::Ps { .. } | Op::PsCmp { .. } | Op::Psq { .. } if !gekko => return Err(Fault::BadOpcode(ip, w)),
+            Op::Ps { op, d, a, b, c: fc } => {
+                let (a0, a1, b0, b1, c0, c1) = (c.fpr[a as usize], c.ps1[a as usize], c.fpr[b as usize], c.ps1[b as usize], c.fpr[fc as usize], c.ps1[fc as usize]);
+                let (r0, r1) = ps_exec(op, a0, a1, b0, b1, c0, c1);
+                c.fpr[d as usize] = r0;
+                c.ps1[d as usize] = r1;
+            }
+            Op::PsCmp { crf, a, b, hi } => {
+                let (x, y) = if hi { (c.ps1[a as usize], c.ps1[b as usize]) } else { (c.fpr[a as usize], c.fpr[b as usize]) };
+                let (x, y) = (f64::from_bits(x), f64::from_bits(y));
+                // FPCC as fcmpu / fcmpo (Helper_FloatCompare*): FL FG FE FU
+                let field = if x.is_nan() || y.is_nan() {
+                    1
+                } else if x < y {
+                    8
+                } else if x > y {
+                    4
+                } else {
+                    2
+                };
+                c.cr_set_field(crf, field);
+            }
+            Op::Psq { load, r, a, ea, w: one, i, update } => {
+                let addr = self.ea(a, ea, update);
+                let g = self.cpu.gqr[i as usize];
+                if load {
+                    let (ty, sc) = ((g >> 16) & 7, (g >> 24) & 0x3F);
+                    let (p0, p1) = psq_load(mem, addr, ty, sc, one)?;
+                    self.cpu.fpr[r as usize] = p0;
+                    self.cpu.ps1[r as usize] = p1;
+                } else {
+                    let (ty, sc) = (g & 7, (g >> 8) & 0x3F);
+                    let (p0, p1) = (self.cpu.fpr[r as usize], self.cpu.ps1[r as usize]);
+                    psq_store(mem, addr, ty, sc, one, p0, p1)?;
+                }
+                if update {
+                    self.cpu.gpr[a as usize] = addr;
+                }
             }
             Op::Bad => return Err(Fault::BadOpcode(ip, w)),
         }

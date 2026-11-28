@@ -483,6 +483,9 @@ fn fctiw(b: u64, toward_zero: bool) -> u64 {
 struct M {
     gpr: [u32; 32],
     fpr: [u64; 32],
+    /// ps1 of each FPR (Dolphin's PairedSingle second slot)
+    ps1: [u64; 32],
+    gqr: [u32; 8],
     cr: u32,
     xer: u32,
     lr: u32,
@@ -683,7 +686,9 @@ impl M {
                     44 | 45 => self.st(ea, 2, g(self, rd) as u16 as u64)?,
                     48 | 49 => {
                         let v = self.ld(ea, 4)? as u32;
+                        // lfs: PairedSingle::Fill
                         self.fpr[rd as usize] = from_single_bits(v);
+                        self.ps1[rd as usize] = from_single_bits(v);
                     }
                     50 | 51 => self.fpr[rd as usize] = self.ld(ea, 8)?,
                     52 | 53 => {
@@ -716,6 +721,18 @@ impl M {
                 }
             }
             59 | 63 => return self.exec_fp(w, opcd == 59, rd, ra, rb, rc_),
+            4 => return self.exec_ps(w, rd, ra, rb, rc_),
+            56 | 57 | 60 | 61 => {
+                // psq_l / psq_lu / psq_st / psq_stu: 12-bit displacement, W at bit 16 (from the MSB), I at bits 17-19
+                let disp = ((w & 0xFFF) ^ 0x800).wrapping_sub(0x800);
+                let upd = opcd & 1 == 1;
+                let ea = (if upd || ra != 0 { g(self, ra) } else { 0 }).wrapping_add(disp);
+                let (wb, i) = ((w >> 15) & 1, (w >> 12) & 7);
+                if opcd < 60 { self.psq_ld(ea, rd, i, wb)? } else { self.psq_st(ea, rd, i, wb)? }
+                if upd {
+                    self.gpr[ra as usize] = ea;
+                }
+            }
             _ => return None,
         }
         Some(())
@@ -906,6 +923,9 @@ impl M {
                     'f' => {
                         let v = self.ld(ea, n)?;
                         self.fpr[rd as usize] = if n == 4 { from_single_bits(v as u32) } else { v };
+                        if n == 4 {
+                            self.ps1[rd as usize] = from_single_bits(v as u32);
+                        }
                     }
                     _ => {
                         let f = self.fpr[rd as usize];
@@ -978,7 +998,165 @@ impl M {
             _ => return None,
         };
         self.fpr[fd as usize] = r;
+        // the `s` forms and frsp: Fill (both slots); the double forms: SetPS0
+        if s || (w >> 1) & 0x3FF == 12 {
+            self.ps1[fd as usize] = r;
+        }
         Some(())
+    }
+
+    /// Opcode 4, written from Interpreter_Paired.cpp / Interpreter_LoadStorePaired.cpp (Dolphin's table4).
+    fn exec_ps(&mut self, w: u32, fd: u32, fa: u32, fb: u32, fc: u32) -> Option<()> {
+        if w & 1 != 0 {
+            return None; // Rc forms: not modelled (no FPSCR; the game has none)
+        }
+        let (a0, a1) = (self.fpr[fa as usize], self.ps1[fa as usize]);
+        let (b0, b1) = (self.fpr[fb as usize], self.ps1[fb as usize]);
+        let (c0, c1) = (self.fpr[fc as usize], self.ps1[fc as usize]);
+        let xo5 = (w >> 1) & 31;
+        let xo6 = (w >> 1) & 63;
+        let xo10 = (w >> 1) & 0x3FF;
+        let neg_unless_nan = |x: u64| if is_nan(x) { x } else { x ^ SIGN };
+        let add = |x: u64, y: u64| single(ni2(x, y, d(x) + d(y)));
+        let set = match xo5 {
+            10 => Some((add(a0, b1), single(c1))),
+            11 => Some((single(c0), add(a0, b1))),
+            12 | 13 => {
+                let k = force25(if xo5 == 12 { c0 } else { c1 });
+                Some((single(ni2(a0, k, d(a0) * d(k))), single(ni2(a1, k, d(a1) * d(k)))))
+            }
+            14 | 15 => {
+                let k = force25(if xo5 == 14 { c0 } else { c1 });
+                Some((single(ni_fma(a0, k, b0, false)), single(ni_fma(a1, k, b1, false))))
+            }
+            18 => Some((single(ni2(a0, b0, d(a0) / d(b0))), single(ni2(a1, b1, d(a1) / d(b1))))),
+            20 => Some((single(ni2(a0, b0, d(a0) - d(b0))), single(ni2(a1, b1, d(a1) - d(b1))))),
+            21 => Some((add(a0, b0), add(a1, b1))),
+            23 => Some((if d(a0) >= -0.0 { c0 } else { b0 }, if d(a1) >= -0.0 { c1 } else { b1 })),
+            24 => Some((fres(b0), fres(b1))),
+            26 => Some((single(frsqrte(b0)), single(frsqrte(b1)))),
+            25 => {
+                let (k0, k1) = (force25(c0), force25(c1));
+                Some((single(ni2(a0, k0, d(a0) * d(k0))), single(ni2(a1, k1, d(a1) * d(k1)))))
+            }
+            28..=31 => {
+                let (k0, k1) = (force25(c0), force25(c1));
+                let sub = xo5 == 28 || xo5 == 30;
+                let (r0, r1) = (single(ni_fma(a0, k0, b0, sub)), single(ni_fma(a1, k1, b1, sub)));
+                Some(if xo5 >= 30 { (neg_unless_nan(r0), neg_unless_nan(r1)) } else { (r0, r1) })
+            }
+            _ => None,
+        };
+        if let Some((r0, r1)) = set {
+            self.fpr[fd as usize] = r0;
+            self.ps1[fd as usize] = r1;
+            return Some(());
+        }
+        if matches!(xo6, 6 | 7 | 38 | 39) {
+            let upd = xo6 >= 38;
+            let ea = (if upd || fa != 0 { self.gpr[fa as usize] } else { 0 }).wrapping_add(self.gpr[fb as usize]);
+            let (wb, i) = ((w >> 10) & 1, (w >> 7) & 7);
+            if xo6 & 1 == 0 { self.psq_ld(ea, fd, i, wb)? } else { self.psq_st(ea, fd, i, wb)? }
+            if upd {
+                self.gpr[fa as usize] = ea;
+            }
+            return Some(());
+        }
+        let (r0, r1) = match xo10 {
+            0 | 32 | 64 | 96 => {
+                let (x, y) = if xo10 >= 64 { (d(a1), d(b1)) } else { (d(a0), d(b0)) };
+                let v = if x.is_nan() || y.is_nan() { 1 } else if x < y { 8 } else if x > y { 4 } else { 2 };
+                self.field((w >> 23) & 7, v);
+                return Some(());
+            }
+            40 => (b0 ^ SIGN, b1 ^ SIGN),
+            72 => (b0, b1),
+            136 => (b0 | SIGN, b1 | SIGN),
+            264 => (b0 & !SIGN, b1 & !SIGN),
+            528 => (a0, b0),
+            560 => (a0, b1),
+            592 => (a1, b0),
+            624 => (a1, b1),
+            _ => return None,
+        };
+        self.fpr[fd as usize] = r0;
+        self.ps1[fd as usize] = r1;
+        Some(())
+    }
+
+    fn psq_ld(&mut self, ea: u32, rd: u32, i: u32, wb: u32) -> Option<()> {
+        let q = self.gqr[i as usize];
+        let (ty, sc) = ((q >> 16) & 7, (q >> 24) & 63);
+        let k: f32 = if sc < 32 { (0.5f64).powi(sc as i32) as f32 } else { 2f64.powi(64 - sc as i32) as f32 };
+        let one = 1.0f64.to_bits();
+        let (r0, r1) = match ty {
+            0 if wb == 1 => (from_single_bits(self.ld(ea, 4)? as u32), one),
+            0 => {
+                let v = self.ld(ea, 8)?;
+                (from_single_bits((v >> 32) as u32), from_single_bits(v as u32))
+            }
+            4..=7 => {
+                let n = if ty == 4 || ty == 6 { 1 } else { 2 };
+                let val = |raw: u64| -> u64 {
+                    let x = match ty {
+                        4 => raw as u8 as f32,
+                        6 => raw as u8 as i8 as f32,
+                        5 => raw as u16 as f32,
+                        _ => raw as u16 as i16 as f32,
+                    };
+                    ((x * k) as f64).to_bits()
+                };
+                if wb == 1 {
+                    (val(self.ld(ea, n)?), one)
+                } else {
+                    let v = self.ld(ea, 2 * n)?;
+                    (val(v >> (8 * n)), val(v))
+                }
+            }
+            _ => return None,
+        };
+        self.fpr[rd as usize] = r0;
+        self.ps1[rd as usize] = r1;
+        Some(())
+    }
+
+    fn psq_st(&mut self, ea: u32, rs: u32, i: u32, wb: u32) -> Option<()> {
+        let q = self.gqr[i as usize];
+        let (ty, sc) = (q & 7, (q >> 8) & 63);
+        let k: f32 = if sc < 32 { 2f64.powi(sc as i32) as f32 } else { (0.5f64).powi(64 - sc as i32) as f32 };
+        let (p0, p1) = (self.fpr[rs as usize], self.ps1[rs as usize]);
+        // ConvertToSingleFTZ: like stfs for normals, but a value below the single normal range (exponent <= 896) is a
+        // signed zero
+        let ftz = |x: u64| -> u64 {
+            let e = (x >> 52) & 0x7FF;
+            if e > 896 || x << 1 == 0 { (((x >> 32) & 0xC000_0000) | ((x >> 29) & 0x3FFF_FFFF)) & 0xFFFF_FFFF } else { (x >> 32) & 0x8000_0000 }
+        };
+        match ty {
+            0 if wb == 1 => self.st(ea, 4, ftz(p0)),
+            0 => self.st(ea, 8, (ftz(p0) << 32) | ftz(p1)),
+            4..=7 => {
+                let n = if ty == 4 || ty == 6 { 1 } else { 2 };
+                let (lo, hi) = match ty {
+                    4 => (0f32, 255f32),
+                    5 => (0f32, 65535f32),
+                    6 => (-128f32, 127f32),
+                    _ => (-32768f32, 32767f32),
+                };
+                let cv = |x: u64| -> u64 {
+                    let v = (d(x) as f32) * k;
+                    let v = if v < lo { lo } else if hi < v { hi } else { v };
+                    // SType(float): truncation; NaN as x86 cvttss2si (0x80000000, low bits 0)
+                    let iv = if v.is_nan() { i32::MIN } else { v as i32 };
+                    (iv as u32 as u64) & ((1u64 << (8 * n)) - 1)
+                };
+                if wb == 1 {
+                    self.st(ea, n, cv(p0))
+                } else {
+                    self.st(ea, 2 * n, (cv(p0) << (8 * n)) | cv(p1))
+                }
+            }
+            _ => None,
+        }
     }
 }
 
@@ -1003,11 +1181,11 @@ fn run_interp(cpu: &Cpu, mem: &[u8], w: u32) -> M {
     m.cpu.pc = ip.wrapping_add(4);
     let r = m.exec(&mut fm, &mut br, mex_import::ppc::ir::decode(w, ip), ip, w);
     let c = m.cpu;
-    M { gpr: c.gpr, fpr: c.fpr, cr: c.cr, xer: c.xer, lr: c.lr, ctr: c.ctr, pc: c.pc, mem: fm.bytes, fault: r.is_err() }
+    M { gpr: c.gpr, fpr: c.fpr, ps1: c.ps1, gqr: c.gqr, cr: c.cr, xer: c.xer, lr: c.lr, ctr: c.ctr, pc: c.pc, mem: fm.bytes, fault: r.is_err() }
 }
 
 fn run_model(cpu: &Cpu, mem: &[u8], w: u32) -> M {
-    let mut m = M { gpr: cpu.gpr, fpr: cpu.fpr, cr: cpu.cr, xer: cpu.xer, lr: cpu.lr, ctr: cpu.ctr, pc: cpu.pc, mem: mem.to_vec(), fault: false };
+    let mut m = M { gpr: cpu.gpr, fpr: cpu.fpr, ps1: cpu.ps1, gqr: cpu.gqr, cr: cpu.cr, xer: cpu.xer, lr: cpu.lr, ctr: cpu.ctr, pc: cpu.pc, mem: mem.to_vec(), fault: false };
     let snap = m.clone();
     if m.exec(w).is_none() {
         // a fault leaves the architected state as it was (the interpreter's partial update is compared as a fault)
@@ -1030,6 +1208,10 @@ enum K {
     Fp,
     Mem,
     Branch,
+    /// paired-single arithmetic (opcode 4)
+    Ps,
+    /// psq_l / psq_st (opcodes 56, 57, 60, 61 and opcode 4's psq_*x)
+    PsMem,
 }
 
 fn x31(xo: u32, rc: bool) -> impl Fn(&mut Rng) -> u32 {
@@ -1185,6 +1367,50 @@ fn all_forms() -> Vec<Form> {
         "fcmpu" Fp |g| (63 << 26) | ((g.below(8) as u32) << 23) | (r(g) << 16) | (r(g) << 11);
         "fcmpo" Fp |g| (63 << 26) | ((g.below(8) as u32) << 23) | (r(g) << 16) | (r(g) << 11) | (32 << 1);
     ];
+    // paired singles: every A-form and X-form of opcode 4 (Rc = 0) and the quantised loads / stores
+    let psa: &[(&'static str, u32)] = &[
+        ("ps_sum0", 10), ("ps_sum1", 11), ("ps_muls0", 12), ("ps_muls1", 13), ("ps_madds0", 14), ("ps_madds1", 15),
+        ("ps_div", 18), ("ps_sub", 20), ("ps_add", 21), ("ps_sel", 23), ("ps_res", 24), ("ps_mul", 25), ("ps_rsqrte", 26),
+        ("ps_msub", 28), ("ps_madd", 29), ("ps_nmsub", 30), ("ps_nmadd", 31),
+    ];
+    for &(name, xo5) in psa {
+        v.push(Form { name, kind: K::Ps, build: Box::new(move |g: &mut Rng| fa(4, xo5, g)) });
+    }
+    let psx: &[(&'static str, u32)] = &[
+        ("ps_cmpu0", 0), ("ps_cmpo0", 32), ("ps_neg", 40), ("ps_cmpu1", 64), ("ps_mr", 72), ("ps_cmpo1", 96), ("ps_nabs", 136),
+        ("ps_abs", 264), ("ps_merge00", 528), ("ps_merge01", 560), ("ps_merge10", 592), ("ps_merge11", 624),
+    ];
+    for &(name, xo) in psx {
+        v.push(Form { name, kind: K::Ps, build: Box::new(move |g: &mut Rng| (4 << 26) | ((g.below(8) as u32) << 23) | (r(g) << 21) | (r(g) << 16) | (r(g) << 11) | (xo << 1)) });
+    }
+    // the D-forms: rA a base register (not r0), a displacement in the 12-bit range, W and I random
+    let psd = |op: u32| {
+        move |g: &mut Rng| {
+            let d = r(g);
+            let a = 1 + g.below(31) as u32;
+            let disp = ((g.below(0x100) as u32) * 4).wrapping_sub(0x200) & 0xFFF;
+            (op << 26) | (d << 21) | (a << 16) | ((g.below(2) as u32) << 15) | ((g.below(8) as u32) << 12) | disp
+        }
+    };
+    v.push(Form { name: "psq_l", kind: K::PsMem, build: Box::new(psd(56)) });
+    v.push(Form { name: "psq_lu", kind: K::PsMem, build: Box::new(psd(57)) });
+    v.push(Form { name: "psq_st", kind: K::PsMem, build: Box::new(psd(60)) });
+    v.push(Form { name: "psq_stu", kind: K::PsMem, build: Box::new(psd(61)) });
+    let psxm = |xo6: u32| {
+        move |g: &mut Rng| {
+            let d = r(g);
+            let a = 1 + g.below(31) as u32;
+            let mut b = r(g);
+            if b == a {
+                b = (a + 7) % 32;
+            }
+            (4 << 26) | (d << 21) | (a << 16) | (b << 11) | ((g.below(2) as u32) << 10) | ((g.below(8) as u32) << 7) | (xo6 << 1)
+        }
+    };
+    v.push(Form { name: "psq_lx", kind: K::PsMem, build: Box::new(psxm(6)) });
+    v.push(Form { name: "psq_stx", kind: K::PsMem, build: Box::new(psxm(7)) });
+    v.push(Form { name: "psq_lux", kind: K::PsMem, build: Box::new(psxm(38)) });
+    v.push(Form { name: "psq_stux", kind: K::PsMem, build: Box::new(psxm(39)) });
     // the X-form integer arithmetic and logic, with and without Rc
     let x: &[(&'static str, &'static str, u32)] = &[
         ("add", "add.", 266), ("subf", "subf.", 40), ("neg", "neg.", 104), ("mullw", "mullw.", 235), ("mulhw", "mulhw.", 75),
@@ -1212,9 +1438,30 @@ fn setup(g: &mut Rng, kind: K, w: u32) -> (Cpu, Vec<u8>) {
     for i in 0..32 {
         c.gpr[i] = g.int();
         c.fpr[i] = g.fp();
+        c.ps1[i] = g.fp();
+    }
+    // GQRs: valid ld/st types (0 float, 4..7 integers) and scales 0..63; GQR0 = 0 half the time (the PSMTX case)
+    for i in 0..8 {
+        let ty = |g: &mut Rng| [0u32, 4, 5, 6, 7][g.below(5) as usize];
+        c.gqr[i] = ty(g) | ((g.below(64) as u32) << 8) | (ty(g) << 16) | ((g.below(64) as u32) << 24);
+    }
+    if g.coin(2) {
+        c.gqr[0] = 0;
+    }
+    // paired arithmetic: related operands in ps1 too, and ps values that are singles (what psq_l / lfs leave)
+    if kind == K::Ps {
+        for i in 0..32 {
+            if g.coin(2) {
+                c.fpr[i] = ((f64::from_bits(c.fpr[i]) as f32) as f64).to_bits();
+                c.ps1[i] = ((f64::from_bits(c.ps1[i]) as f32) as f64).to_bits();
+            }
+        }
+        let (a, b) = g.fp_pair();
+        c.ps1[((w >> 16) & 31) as usize] = a;
+        c.ps1[((w >> 11) & 31) as usize] = b;
     }
     // FP forms: sometimes related operands (cancellation, equal values)
-    if kind == K::Fp {
+    if kind == K::Fp || kind == K::Ps {
         let (a, b) = g.fp_pair();
         c.fpr[((w >> 16) & 31) as usize] = a;
         c.fpr[((w >> 11) & 31) as usize] = b;
@@ -1230,7 +1477,7 @@ fn setup(g: &mut Rng, kind: K, w: u32) -> (Cpu, Vec<u8>) {
         _ => g.next() as u32,
     };
     c.pc = 0x8000_3000 + 4 * g.below(0x100) as u32;
-    let mut mem = vec![0u8; if kind == K::Mem { MEM_SIZE } else { 0 }];
+    let mut mem = vec![0u8; if kind == K::Mem || kind == K::PsMem { MEM_SIZE } else { 0 }];
     for k in (0..mem.len()).step_by(8) {
         let v = match g.below(3) {
             0 => g.fp(),
@@ -1239,12 +1486,12 @@ fn setup(g: &mut Rng, kind: K, w: u32) -> (Cpu, Vec<u8>) {
         };
         mem[k..k + 8].copy_from_slice(&v.to_be_bytes());
     }
-    if kind == K::Mem {
+    if kind == K::Mem || kind == K::PsMem {
         // base / index registers into the test memory
         let ra = ((w >> 16) & 31) as usize;
         let rb = ((w >> 11) & 31) as usize;
         c.gpr[ra] = MEM_BASE + 0x800;
-        if ra != rb && w >> 26 == 31 {
+        if ra != rb && (w >> 26 == 31 || w >> 26 == 4) {
             c.gpr[rb] = (8 * g.below(0x200) as u32).wrapping_sub(0x800);
         }
     }
@@ -1271,6 +1518,9 @@ fn describe(c: &Cpu, w: u32, a: &M, b: &M) -> String {
         }
         if a.fpr[i] != b.fpr[i] {
             s += &format!(" f{i}: in {:016X} interp {:016X} model {:016X};", c.fpr[i], a.fpr[i], b.fpr[i]);
+        }
+        if a.ps1[i] != b.ps1[i] {
+            s += &format!(" ps1 f{i}: in {:016X} interp {:016X} model {:016X};", c.ps1[i], a.ps1[i], b.ps1[i]);
         }
     }
     let regs = |w: u32| -> String {

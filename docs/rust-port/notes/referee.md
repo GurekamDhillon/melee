@@ -68,6 +68,29 @@ frC): every one of them was wrong before (it did not match Dolphin). Not re-run 
 `tests/ppc_oracle.rs` (plain mode vs gw_ppc.c) fails 4 of 6,000 cases both before and after this branch (checked by
 building the unmodified interp.rs): pre-existing, not touched.
 
+### 1.1 Paired singles (2026-11-27, port/slipcodes)
+
+Gekko mode now runs opcode 4 and psq_l/psq_lu/psq_st/psq_stu (56, 57, 60, 61) and psq_lx/stx/lux/stux, as Dolphin's
+Interpreter_Paired.cpp / Interpreter_LoadStorePaired.cpp have them: `Cpu::ps1` (each FPR's second slot, raw double bits)
+and `Cpu::gqr` (GQR0..7). Every single-precision scalar op (lfs, the `s` arithmetic forms, fres, frsp) now also writes
+ps1 (Dolphin's `Fill`), the double ones only ps0 (`SetPS0`); ps0 results are unchanged. ps_* arithmetic: NI_* NaN rules
+and Force25Bit frC as the scalar forms, both results rounded to single; ps_res stored as computed, ps_rsqrte rounded to
+single; ps_sel / merges / moves bit-exact. psq: GQR type 0 float (ConvertToDouble on load, **ConvertToSingleFTZ** on
+store: a value below the single normal range stores as a signed zero, unlike stfs), 4/5/6/7 u8/u16/s8/s16 with the
+dequantize/quantize scale tables, clamp then truncate; W = 1 loads ps1 = 1.0. Rc = 1 paired forms and the invalid GQR
+types 1..3 decode / run as faults (no FPSCR is kept; the game has neither). The plain (gw_ppc.c) machine still faults on
+all of them, and `Op::executable()` stays false for them (m-ex translation unchanged); the referee counts with
+`gekko_executable()`.
+
+Trust test (`tests/gekko_trust.rs`, extended): the Dolphin model got its own ps1 / GQR state and an opcode-4 executor
+written from the Dolphin source (not from the interpreter), ps1 Fill/SetPS0 for the scalar forms, and 37 new forms (17
+A-form, 12 X-form, 8 psq) with random ps1 values (single-valued half the time, related pairs), random valid GQRs (GQR0 =
+0 half the time). Run: default 20,000 sets per form, **199 forms (162 + 37), 3,980,000 sets, 0 disagreements** outside
+the kept addme/subfme carry (the scalar forms, now also compared on ps1, included). Not run at 2,000,000 per form in this
+round. Census after the change: 1,767 Ps + 1 PsCmp + 1,013 Psq words decode as paired ops (PSMTX*/PSVEC*, THP, WriteMTXPS*, fn_80166A8C); dcbz_l (one word,
+`__LCEnable`) stays Bad. The referee starts every run with the game's GQRs (`boot_gqr`: GQR2..5 = 0x00040004..0x00070007,
+as `main`'s inlined OSInitFastCast sets them; GQR0 = 0).
+
 ## 2. The referee harness
 
 | piece | where |
@@ -215,3 +238,24 @@ mex-import referee --capture _build/referee-mvp/cap.txt --out _build/referee-mvp
 3. Slippi codes: apply the netplay list (04 writes, C2 hooks: a branch from the hooked address to the inserted block,
    which branches back; per Dolphin's GeckoCode.cpp) to the guest image, then gate against `slippi_np::online_codes`.
 4. Use `uncovered.tsv` + slpscan + a small Lunar bulk job to find replays for the 108 missing outcomes.
+
+## 9. Slippi codes on the guest image (2026-11-27, port/slipcodes; next-steps item 3, first half)
+
+`tools/mex-import/src/gecko.rs`: a Dolphin game INI's enabled codes (`parse_ini`: `[Gecko_Enabled]` names, `[Gecko]`
+bodies) applied to the DOL image (`apply`) as the Gecko handler does at boot: 00/02/04 writes, 06 strings, C2 inserts
+(block copied to a new text section at 0x81600000, hook word = `b block`, block's last word = `b hook+4`; a hook
+inserted twice keeps the later block). C0 / 08 / po-relative / conditional types are listed, not applied. Code bytes
+are read at run time from the local ssbm-asm checkout; nothing is committed. `Referee::new(dol, syms)` takes the
+patched image as it takes the plain one.
+
+`tests/gecko_apply.rs` (local; skips without main.dol or ssbm-asm): Slippi's `Output/Netplay/GALE01r2.ini` at d0ce23a,
+6 enabled groups (Required General / Recording / Online, Recommended Normal Lag Reduction / Apply Delay / Lagless FoD):
+86 writes, 198 inserts, 0 skipped types, 5 writes outside the DOL sections (0x80452F54..64, in .bss: not applied, the
+referee's .bss starts zero), 1 hook inserted twice (0x8016EA30, gm_Scene_Vs_OnExit). Every insert's hook branch and
+return branch check out; all 29 [affects-gameplay] hooks are patched. 275 words inside the blocks do not decode (the
+`blrl` data tables and strings Slippi's asm keeps inline).
+
+Not done: running the patched functions against the engine. Every [affects-gameplay] hook sits in a function that takes
+Fighter / Ground / gobj records or reads engine globals (ftCo_Turn_IASA, Fighter_procInput, grStadium_801D4548, ...),
+which needs the native-records mode (section 8 item 2), not built in this round. Per-code verdicts: slippi-codes.md.
+

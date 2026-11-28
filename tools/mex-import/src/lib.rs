@@ -3,6 +3,7 @@
 pub mod analyze;
 pub mod disc;
 pub mod dol;
+pub mod gecko;
 pub mod hsd;
 pub mod layout;
 pub mod mexfn;

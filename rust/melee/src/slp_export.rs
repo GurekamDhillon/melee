@@ -98,6 +98,15 @@ fn exp() -> Option<&'static mut Exporter> {
     unsafe { EXP.as_mut() }
 }
 
+/// Slippi online mode: the seed SyncRNG gave the frame that just ran (Slippi's Frame Start event records the seed after
+/// SyncRNG, ahead of every draw of the frame: a 3.20.0 console replay's first frame holds fmix32(rotl(0, 16) +
+/// rng_offset)). The tick-start seed is the previous frame's last draw, not that. None offline.
+fn online_frame_seed() -> Option<u32> {
+    let st = melee_core::slippi_online::state()?;
+    let g = unsafe { melee_modes::tu::gmscene::gm_80479D58.unk_8 } as u32;
+    Some(st.seed(g.wrapping_sub(1)))
+}
+
 fn seed_now() -> u32 {
     let st = melee_runtime::tu::random::global::state();
     unsafe { *melee_runtime::tu::random::HSD_RandCurrentSeed(st) }
@@ -252,7 +261,9 @@ impl Exporter {
         }
         ev[0x1A2] = melee_core::codes::on(melee_core::codes::FROZEN_PS | melee_core::codes::FROZEN_STAGES) as u8;
         ev[0x1A3] = 2; // minor scene
-        ev[0x1A4] = 2; // major scene: VS mode
+        // major scene: VS mode, or 8 (online) in Slippi online mode, so playback overwrites each frame's seed from its
+        // Frame Start event as SyncRNG did
+        ev[0x1A4] = if melee_core::slippi_online::state().is_some() { 8 } else { 2 };
         ev[0x2BD] = 1; // English
         raw.extend_from_slice(&ev);
         // the Slippi spectator feed (slippi_spectate.rs): the game's start, then each group as the file gets it
@@ -585,7 +596,7 @@ pub fn end_frame() {
     if m.pre.is_empty() {
         return;
     }
-    let p = Pending { seed: m.seed_at_tick, pre: std::mem::take(&mut m.pre), post: std::mem::take(&mut m.post), seen: std::mem::take(&mut m.seen) };
+    let p = Pending { seed: online_frame_seed().unwrap_or(m.seed_at_tick), pre: std::mem::take(&mut m.pre), post: std::mem::take(&mut m.post), seen: std::mem::take(&mut m.seen) };
     m.pending.insert(cur, p);
 }
 
@@ -636,6 +647,9 @@ pub fn end_tick(in_match: bool) {
             x.end_match(false);
         }
         return;
+    }
+    if let Some(s) = online_frame_seed() {
+        m.seed_at_tick = s;
     }
     flush_frame(m);
 }

@@ -46,6 +46,13 @@ pub enum FUn {
     Mr, Neg, Abs, Nabs, Rsp, Ctiwz, Ctiw,
 }
 
+/// Paired-single arithmetic and moves (opcode 4; Dolphin's Interpreter_Paired.cpp names). Gekko mode only.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PsOp {
+    Sum0, Sum1, Muls0, Muls1, Madds0, Madds1, Div, Sub, Add, Sel, Res, Mul, Rsqrte, Msub, Madd, Nmsub, Nmadd,
+    Neg, Mr, Nabs, Abs, Merge00, Merge01, Merge10, Merge11,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Spr {
     Xer,
@@ -103,6 +110,12 @@ pub enum Op {
     Fsel { d: u8, a: u8, b: u8, c: u8 },
     FUnary { op: FUn, d: u8, b: u8 },
     Fcmp { crf: u8, a: u8, b: u8 },
+    /// Paired singles (Gekko mode only; plain mode faults as gw_ppc.c does).
+    Ps { op: PsOp, d: u8, a: u8, b: u8, c: u8 },
+    /// ps_cmpu0/1, ps_cmpo0/1: compare ps0 (`hi` false) or ps1.
+    PsCmp { crf: u8, a: u8, b: u8, hi: bool },
+    /// psq_l / psq_lu / psq_lx / psq_lux (`load`) and the psq_st forms: GQR `i`, one value (`w`) or a pair.
+    Psq { load: bool, r: u8, a: u8, ea: Ea, w: bool, i: u8, update: bool },
     /// Outside the subset: gw_ppc_bad_opcode.
     Bad,
 }
@@ -207,6 +220,11 @@ pub fn decode(w: u32, ip: u32) -> Op {
                 449 => Op::CrLog { op: CrOp::Or, t: rd, a: ra, b: rb },
                 _ => Op::Bad,
             }
+        }
+        4 => decode_ps(w, rd, ra, rb, rc),
+        56 | 57 | 60 | 61 => {
+            let d12 = ((w << 20) as i32) >> 20;
+            Op::Psq { load: op < 60, r: rd, a: ra, ea: Ea::Disp(d12), w: (w >> 15) & 1 != 0, i: ((w >> 12) & 7) as u8, update: op & 1 != 0 }
         }
         31 => decode_x(w, rd, ra, rb, rc),
         59 | 63 => decode_fp(w, op == 59, rd, ra, rb),
@@ -349,6 +367,55 @@ fn decode_fp(w: u32, single: bool, d: u8, a: u8, b: u8) -> Op {
     }
 }
 
+/// Opcode 4 (Dolphin's table4: the A-form 5-bit XO first, then the 6-bit psq_*x forms, then the 10-bit X-form).
+/// An Rc = 1 form decodes as Bad: the interpreter keeps no FPSCR to copy into CR1, and the game has none (census).
+fn decode_ps(w: u32, d: u8, a: u8, b: u8, rc: bool) -> Op {
+    let c = ((w >> 6) & 31) as u8;
+    let ps = |op| if rc { Op::Bad } else { Op::Ps { op, d, a, b, c } };
+    let xo5 = (w >> 1) & 31;
+    let f = match xo5 {
+        10 => Some(PsOp::Sum0),
+        11 => Some(PsOp::Sum1),
+        12 => Some(PsOp::Muls0),
+        13 => Some(PsOp::Muls1),
+        14 => Some(PsOp::Madds0),
+        15 => Some(PsOp::Madds1),
+        18 => Some(PsOp::Div),
+        20 => Some(PsOp::Sub),
+        21 => Some(PsOp::Add),
+        23 => Some(PsOp::Sel),
+        24 => Some(PsOp::Res),
+        25 => Some(PsOp::Mul),
+        26 => Some(PsOp::Rsqrte),
+        28 => Some(PsOp::Msub),
+        29 => Some(PsOp::Madd),
+        30 => Some(PsOp::Nmsub),
+        31 => Some(PsOp::Nmadd),
+        _ => None,
+    };
+    if let Some(op) = f {
+        return ps(op);
+    }
+    let xo6 = (w >> 1) & 63;
+    if matches!(xo6, 6 | 7 | 38 | 39) {
+        return Op::Psq { load: xo6 & 1 == 0, r: d, a, ea: Ea::Idx(b), w: (w >> 10) & 1 != 0, i: ((w >> 7) & 7) as u8, update: xo6 >= 38 };
+    }
+    let crf = ((w >> 23) & 7) as u8;
+    match (w >> 1) & 0x3FF {
+        0 | 32 => Op::PsCmp { crf, a, b, hi: false },
+        64 | 96 => Op::PsCmp { crf, a, b, hi: true },
+        40 => ps(PsOp::Neg),
+        72 => ps(PsOp::Mr),
+        136 => ps(PsOp::Nabs),
+        264 => ps(PsOp::Abs),
+        528 => ps(PsOp::Merge00),
+        560 => ps(PsOp::Merge01),
+        592 => ps(PsOp::Merge10),
+        624 => ps(PsOp::Merge11),
+        _ => Op::Bad,
+    }
+}
+
 impl Op {
     /// Mnemonic family, for coverage tables.
     pub fn family(&self) -> &'static str {
@@ -365,11 +432,21 @@ impl Op {
             Op::Mcrf { .. } | Op::CrLog { .. } | Op::Mfcr { .. } | Op::Mtcrf { .. } => "cr",
             Op::Mfspr { .. } | Op::Mtspr { .. } => "spr",
             Op::FArith { .. } | Op::Fsel { .. } | Op::FUnary { .. } => "fp",
+            Op::Ps { .. } | Op::PsCmp { .. } => "ps",
+            Op::Psq { .. } => "ps-mem",
             Op::BadSpr { .. } => "bad-spr",
             Op::Bad => "bad",
         }
     }
+    /// gw_ppc.c would execute it (the plain machine; m-ex translation).
     pub fn executable(&self) -> bool {
+        !matches!(self, Op::Bad | Op::BadSpr { .. }) && !self.paired()
+    }
+    /// The Gekko machine executes it (the referee): `executable` plus the paired singles.
+    pub fn gekko_executable(&self) -> bool {
         !matches!(self, Op::Bad | Op::BadSpr { .. })
+    }
+    pub fn paired(&self) -> bool {
+        matches!(self, Op::Ps { .. } | Op::PsCmp { .. } | Op::Psq { .. })
     }
 }

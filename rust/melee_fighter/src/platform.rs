@@ -295,6 +295,8 @@ plat! {
     Replay_UcfVersion(port: i32) -> i32 = if (0..=3).contains(&port) { Ucf_OfflineMode() } else { 0 };
     Replay_RawStick(port: i32, which: i32) -> i32 = ucf_pad_back(port, which, 0);
     Replay_RawStickBack(port: i32, which: i32, back: i32) -> i32 = ucf_pad_back(port, which, back);
+    /// The replay's 0.7x dashback code is UCF 0.8's (`Replay::ucf08_dashback`); 0 offline.
+    Replay_Ucf08Dashback(port: i32) -> i32 = 0;
     /// `rp.live` is false and `Replay_Active()` is false: `MELEE_SLIPPI_CODES` decides (`o` online = 2,
     /// `t`/`T`/`c` tournament = 1, anything else 0), else 0.
     Slippi_Codes() -> i32 = match std::env::var("MELEE_SLIPPI_CODES") {

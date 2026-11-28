@@ -480,6 +480,37 @@ pub struct Widescreen {
 ///   `fmuls f1,f1,f2; fdivs f1,f1,f3` with f2/f3 the two floats the code keeps after its `blrl` (bl-over-data).
 /// All three must be present; anything else in the list (name tags, dev text, menus, the magnifier's own constants)
 /// does not change logic. Returns None when the list has no such code.
+/// True when the list's dashback insert (C2 800C9A44, ftCo_Turn_IASA+0x4C) is UCF 0.8's `UCF DB.asm` form: it reads
+/// the animation frame as a float (`lfs fX, 0x894(r31)`, compared with 2.0) and takes the stick's magnitude (`fabs`),
+/// where UCF 0.73 compared the command-script frame's upper half (`lhz 0x3E8`) and multiplied the stick by
+/// facing_after. Read from the instruction fields of the replay's own code (no code bytes here).
+pub fn ucf08_dashback_code(g: &[u8]) -> bool {
+    let mut o = 0;
+    while o + 8 <= g.len() {
+        let (Some(w0), Some(w1)) = (be32(g, o), be32(g, o + 4)) else { break };
+        let kind = (w0 >> 24) as u8;
+        if kind == 0xF0 || (w0 == 0 && w1 == 0) {
+            break;
+        }
+        let extra = match kind & 0xFE {
+            0xC0 | 0xC2 | 0xF2 | 0xF4 => w1 as usize,
+            0x06 => (w1 as usize).div_ceil(8),
+            0x08 => 1,
+            _ => 0,
+        };
+        if kind & 0xFE == 0xC2 && 0x8000_0000 | (w0 & 0x01FF_FFFF) == 0x800C_9A44 {
+            let body = &g[(o + 8).min(g.len())..(o + 8 + 8 * extra).min(g.len())];
+            let words: Vec<u32> = body.chunks_exact(4).map(|c| u32::from_be_bytes([c[0], c[1], c[2], c[3]])).collect();
+            // lfs: opcode 48, rA = 31, d = 0x894; fabs: opcode 63, xo 264
+            let lfs_anim = words.iter().any(|&w| w >> 26 == 48 && (w >> 16) & 31 == 31 && w & 0xFFFF == 0x894);
+            let fabs = words.iter().any(|&w| w >> 26 == 63 && (w >> 1) & 0x3FF == 264);
+            return lfs_anim && fabs;
+        }
+        o += 8 * (1 + extra);
+    }
+    false
+}
+
 /// True when the Gecko list has a code (any type) whose target address is `addr`.
 pub fn gecko_has(g: &[u8], addr: u32) -> bool {
     let mut o = 0;

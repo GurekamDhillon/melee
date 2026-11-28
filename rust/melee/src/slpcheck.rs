@@ -475,7 +475,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     match std::env::var("SLPCHECK_UCF07").as_deref() {
         Ok("off") => {}
         Ok("card") => pl.r.no_ucf_cardinals = no_card,
-        _ => pl.r.ucf_073_list = no_card,
+        _ => {
+            pl.r.ucf_073_list = no_card;
+            pl.r.ucf08_dashback = no_card && slp::ucf08_dashback_code(&file.gecko);
+        }
     }
     // The 0.7x list's tumble code (C2 800908F4, ftCo_DamageFall_IASA+0xCC, 23 lines) is UCF 0.84's tumble rule (timer 1
     // counts when |prev x| < x210 and the raw x moved > 75 over two polls) reading the HSD pad queue (804C1F78, entries

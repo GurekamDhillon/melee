@@ -891,3 +891,40 @@ Final Destination, `--frames 900 --lag-ms 30`):
 Unit tests: `DesyncWatch` (the 84 skip, Soft goes on, Hard stops and keeps the previous state), `merge_recovery` (the 1 s / 25 % /
 equal-stocks rules), the 0x86 codec, the recovery argument codec. Not covered: a Slippi Dolphin peer; a two-game Direct set through
 the rendered select (the next game needs nothing: it starts from the defaults); the error sound.
+
+## Sets against Slippi Dolphin: the next lock-in before our match is over (Nov 27)
+
+Owner bug: three Unranked games against real Slippi Dolphin peers, and each set ended after game 1 ("the set's link taken
+over (Disconnected)" or "the opponent's link is down" on the rematch select). The cause was our client, not Dolphin:
+
+- Slippi Dolphin keeps the link through an Unranked or Direct set. ssbm-asm `Online/Slippi Online Scene/main.asm`
+  `VSSceneDecide` sends `CleanupConnections` only for Ranked set ends, Party, and disconnects. Unranked and Direct go
+  straight to `VSSceneDecide_GoToNextScene` (the CSS) the frame the VS scene ends.
+- On that CSS, Start locks in at once (`Online/Menus/CSS/HandleInputsOnCSS.asm` `HANDLE_CONNECTED_UNRANKED` ->
+  `FN_TX_LOCK_IN` -> EXI `setMatchSelections` -> `SlippiNetplayClient::SetMatchSelections`). Only the CSS's first frame
+  is skipped, so a player who mashes Start through GAME! sends `SLIPPI_MATCH_SELECTIONS` almost as soon as Dolphin's VS
+  scene ends. Dolphin merges selections whenever they come (`SlippiNetplay.cpp` `OnData`,
+  `case SLIPPI_MATCH_SELECTIONS`) and never drops a link over them.
+- Our match lingers after its end for the last confirmed frames (`play_net.rs`, 1.5 s after `done_at`), and only then
+  calls `Client::end_game`. Meanwhile `melee_net::slippi::Client::on_data` took any `MSG_MATCH_SELECTIONS` that came
+  while `in_game` for a restarted peer process. It sent DISCONNECT on every link and set `Disconnected` without a log
+  line, so the next select took a dead link and the Dolphin side saw its opponent leave.
+
+The fix: selections on the match's own (active) link while `in_game` are the opponent's next lock-in. They are held
+(`next_selections`, logged once: "the opponent locked in for the next game before this match was over") and delivered by
+`end_game` like any lock-in on the select. Selections on another link in a match (a new connection from a restarted
+process) still end the match as before.
+
+Tests: `melee_net/tests/slippi.rs` `three_games_when_the_dolphin_peer_locks_in_before_our_match_is_over` (the peer
+locks in while ours lingers 1.5 s, three games on one link; it fails without the fix, at the first early lock-in).
+`tools/rust-port/slippi/menu_rematch_three.sh OUT` runs two of our builds through mock_mm, one window each. A lingers
+5 s (`MELEE_SLIPPI_TEST_LINGER_MS`), so B is back on its select and locks in first, as Dolphin does. It plays three
+games, through GAME! and the select each time, on one link, and is back on the select for game 4 still linked. Nov 27:
+PASS with the fix (one mock join per side, the early lock-in held twice, 0 desyncs). The exe without the fix failed it
+with the owner's log lines exactly: A "taken over (Disconnected)", B "taken over (Connected)", then "link is down
+(reason 0)", and both on the idle select after game 1.
+
+Not proven against real Slippi Dolphin: no Dolphin peer was run (only the Rust pair and a Dolphin-like protocol test).
+This covers the silent `(Disconnected)` case. A peer DISCONNECT while our match still lingers ("link is down (reason 0,
+in a match)") can also be a Dolphin player backing out. That sends `CleanupConnections` too, and nothing in our log
+tells the two apart.

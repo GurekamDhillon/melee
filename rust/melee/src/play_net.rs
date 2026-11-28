@@ -2296,7 +2296,7 @@ impl NetDriver {
                 log(&format!("netplay {tag}: slow tick {} us at online frame {} (tick {} of the match)", us, s.current_frame(), sr.work_n));
             }
         }
-        let end_now = sr.done_at.is_some_and(|t| t.elapsed() > Duration::from_millis(1500));
+        let end_now = sr.done_at.is_some_and(|t| t.elapsed() > Duration::from_millis(slippi_linger_ms()));
         let cur = s.current_frame();
         drop(s);
         if end_now || err.is_some() {
@@ -2395,6 +2395,14 @@ fn match_winner() -> i32 {
         std::cmp::Ordering::Less => 1,
         std::cmp::Ordering::Equal => -1,
     }
+}
+
+/// How long a Slippi match lingers after its end for the peer's last frames (1.5 s). Tests:
+/// `MELEE_SLIPPI_TEST_LINGER_MS` stretches one side's so the other is back on its select and locks in while this side
+/// is still in its match, as a Slippi Dolphin peer does (its VSSceneDecide returns to the CSS at once).
+fn slippi_linger_ms() -> u64 {
+    static MS: std::sync::OnceLock<u64> = std::sync::OnceLock::new();
+    *MS.get_or_init(|| std::env::var("MELEE_SLIPPI_TEST_LINGER_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(1500))
 }
 
 // ------------------------------------------------------------------------------------------------ synctest

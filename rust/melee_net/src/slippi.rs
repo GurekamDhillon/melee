@@ -279,6 +279,10 @@ pub struct Client {
     has_game_started: bool,
     /// Between `start_game` and the end of the match: the link set is fixed (see `on_disconnect`, `on_data`).
     in_game: bool,
+    /// The opponent's next lock-in, sent on the match's own link before this side's match was over (Slippi Dolphin
+    /// goes back to its select the frame its VS scene ends and locks in on Start; this side lingers for the last
+    /// confirmed frames). Held until `end_game`, then taken like any lock-in on the select.
+    next_selections: Option<Selections>,
     notes: VecDeque<Note>,
     t0: Instant,
     clock_us: Option<Box<dyn Fn() -> i64>>,
@@ -333,6 +337,7 @@ impl Client {
             local_queue: VecDeque::new(),
             has_game_started: false,
             in_game: false,
+            next_selections: None,
             notes: VecDeque::new(),
             t0: Instant::now(),
             clock_us: None,
@@ -554,6 +559,7 @@ impl Client {
             local_queue,
             has_game_started,
             in_game,
+            next_selections: None,
             notes,
             // the client clock continues from the exporter's
             t0: Instant::now().checked_sub(std::time::Duration::from_micros(now_us.max(0) as u64))?,
@@ -624,6 +630,7 @@ impl Client {
     pub fn start_game(&mut self) {
         self.has_game_started = false;
         self.in_game = true;
+        self.next_selections = None;
         self.local_queue.clear();
         let now = self.now_us();
         self.remote.last_timing = Timing { frame: 0, time_us: now };
@@ -636,6 +643,20 @@ impl Client {
     /// down is no longer the match's.
     pub fn end_game(&mut self) {
         self.in_game = false;
+        if let Some(s) = self.next_selections.take() {
+            self.accept_selections(s);
+        }
+    }
+
+    /// The opponent's selections on the select (`SLIPPI_MATCH_SELECTIONS` in `OnData`: merged, the pad state reset
+    /// for the next game).
+    fn accept_selections(&mut self, s: Selections) {
+        self.remote.selections = Some(s);
+        self.has_game_started = false;
+        self.remote.head_frame = 0;
+        // a set's next game: the last game's checksums are not this one's (its frames start again at 1)
+        self.remote_checksums.clear();
+        self.notes.push_back(Note::Selections(s));
     }
 
     /// `SendSyncedGameState`: remember and send this side's recovery state (reliable, channel 0).
@@ -893,9 +914,20 @@ impl Client {
                 if s.player_idx != self.remote.port {
                     return;
                 }
+                if self.in_game && self.remote.active == Some(peer) {
+                    // the opponent's next lock-in on this match's link: its match is over and it is back on its select
+                    // (Slippi Dolphin merges selections whenever they come, SlippiNetplay.cpp OnData
+                    // SLIPPI_MATCH_SELECTIONS, and its Unranked/Direct VSSceneDecide goes straight back to the CSS with
+                    // the link kept). Not a restarted peer: held for the end of this side's match
+                    if self.next_selections.is_none() {
+                        eprintln!("slippi: the opponent locked in for the next game before this match was over; held for the select");
+                    }
+                    self.next_selections = Some(s);
+                    return;
+                }
                 if self.in_game {
-                    // selections in a match: the remote is a new process starting its own match (a restart on the same
-                    // address); this match's peer is gone
+                    // selections in a match on another link: the remote is a new process starting its own match (a
+                    // restart on the same address, a new ENet connection); this match's peer is gone
                     for l in self.remote.links.clone() {
                         self.host.disconnect(l, 0);
                     }
@@ -906,12 +938,7 @@ impl Client {
                     }
                     return;
                 }
-                self.remote.selections = Some(s);
-                self.has_game_started = false;
-                self.remote.head_frame = 0;
-                // a set's next game: the last game's checksums are not this one's (its frames start again at 1)
-                self.remote_checksums.clear();
-                self.notes.push_back(Note::Selections(s));
+                self.accept_selections(s);
             }
             MSG_CHAT_MESSAGE => {
                 if let (Some(id), Some(port)) = (r.i32(), r.u8()) {

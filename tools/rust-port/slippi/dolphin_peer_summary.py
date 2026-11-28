@@ -142,6 +142,18 @@ def slp_rollbacks(path):
         return None
 
 
+def slp_diff(dolphin_slp, ours_slp):
+    """slp_inputs_diff.py (it finds the one-frame numbering shift itself): (pre-frame differing, post-frame text)."""
+    try:
+        r = subprocess.run([sys.executable, "-I", os.path.join(HERE, "slp_inputs_diff.py"), dolphin_slp, ours_slp],
+                           capture_output=True, text=True, timeout=300)
+        pre = re.search(r"pre-frame: common port-frames (\d+), differing (\d+)", r.stdout)
+        post = re.search(r"post-frame: (.*)", r.stdout)
+        return (int(pre.group(1)), int(pre.group(2))) if pre else None, (post.group(1).strip() if post else r.stdout.strip()[-120:])
+    except Exception as e:
+        return None, f"slp_inputs_diff failed: {e}"
+
+
 def netcheck(path, dolphin_pid):
     """(rows, problems, wildcard UDP binds of our build). A TCP peer must be loopback (a connected socket's extra
     "0.0.0.0:0 Bound" row is Windows bookkeeping); every Dolphin UDP endpoint must be bound to 127.0.0.1, so it cannot
@@ -201,6 +213,8 @@ def main():
         offv = [verdict(d["tx"][f], ours[f]) for f in common]
         offbad = [f for f, v in zip(common, offv) if v != "eq"]
         rb = slp_rollbacks(dslp[i]) if i < len(dslp) else None
+        oslp = os.path.join(o, "ours.slp" if i == 0 else f"ours-{i + 1}.slp")
+        sd = slp_diff(dslp[i], oslp) if i < len(dslp) and os.path.exists(oslp) else (None, "no pair of .slp files")
         rep = pl.get("report") or {}
         print(f"  game {i + 1}: scene \"{g.get('scene', '-')}\"")
         print(f"    ours: {g.get('finals')} finals, {g.get('compared')} compared live, soft {g.get('soft')}, hard {g.get('hard')}, "
@@ -208,6 +222,10 @@ def main():
         print(f"    dolphin: {len(dv)} compared (RX vs TX), soft {ds}, hard {dh}; savestate loads {pl.get('loads')}; "
               f".slp rollbacks {rb[0] if rb else '-'} (max {rb[1] if rb else '-'}); report end_method {rep.get('end_method', '-')} "
               f"winner {rep.get('winner', '-')} frames {rep.get('frames', '-')}")
+        pre, post = sd
+        slp_bad = (pre is None) or pre[1] > 0 or post != "no difference"
+        tot["slp_bad"] = tot.get("slp_bad", 0) + (1 if slp_bad else 0)
+        print(f"    .slp vs .slp: pre-frame {('%d/%d differing' % (pre[1], pre[0])) if pre else '-'}, post-frame {post}")
         print(f"    offline: {len(common) - len(offbad)}/{len(common)} of our finals equal Dolphin's"
               + (f"; first differing frames {offbad[:5]}" if offbad else ""))
         tot["games"] += 1 if g.get("finals") is not None or d["tx"] else 0
@@ -234,10 +252,10 @@ def main():
     print(f"  network: {nn} socket rows, {len(bad)} not loopback" + ("".join(f"\n    {b}" for b in bad[:5]))
           + (f"; our build's wildcard UDP binds: {', '.join(sorted(wild))}" if wild else ""))
     ok = (want is None or tot["games"] >= want) and tot["o_hard"] == 0 and tot["d_hard"] == 0 and tot["off_bad"] == 0 \
-        and not disc and not bad and tot["o_soft"] == 0 and tot["d_soft"] == 0
+        and not disc and not bad and tot["o_soft"] == 0 and tot["d_soft"] == 0 and tot.get("slp_bad", 0) == 0
     row = (f"ROW\tgames {tot['games']}/{want if want else '-'}\tframes compared {tot['compared']}\t"
            f"ours soft {tot['o_soft']} hard {tot['o_hard']} stale {tot['o_stale']}\tdolphin soft {tot['d_soft']} hard {tot['d_hard']}\t"
-           f"offline differing {tot['off_bad']}\trollbacks ours {tot['o_rb']} dolphin {tot['d_rb']}\tdisconnects {len(disc)}\t"
+           f"offline differing {tot['off_bad']}\tslp games differing {tot.get('slp_bad', 0)}\trollbacks ours {tot['o_rb']} dolphin {tot['d_rb']}\tdisconnects {len(disc)}\t"
            f"non-loopback sockets {len(bad)}\t{'PASS' if ok else 'FAIL'}")
     print(row)
     return 0 if ok else 1

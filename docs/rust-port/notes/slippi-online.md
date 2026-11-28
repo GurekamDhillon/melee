@@ -966,3 +966,123 @@ Not proven against real Slippi Dolphin: no Dolphin peer was run (only the Rust p
 This covers the silent `(Disconnected)` case. A peer DISCONNECT while our match still lingers ("link is down (reason 0,
 in a match)") can also be a Dolphin player backing out. That sends `CleanupConnections` too, and nothing in our log
 tells the two apart.
+
+## 19. Real Slippi Dolphin peer on Windows: sets through the CSS (2026-11-27, port/dolphinpeer)
+
+Our build (`play --slippi-menus on`, the owner's path: online select, in-process match, the set's link kept between
+games) against a local Slippi Dolphin on the desktop, Unranked, several games per set, paired by `mock_mm.py`, with lag
+and jitter from the mock's relay. Nothing reached a Slippi service or any address off the machine (below).
+
+**The Dolphin.** The mainline-based Slippi Dolphin of sections 9-16 (`_build/dolphin-oracle/src`, project-slippi/dolphin
+`0653df8`), built a second time in its own tree with `-DGD_DOLPHINPEER=ON` (`_build/dolphin-oracle/build-peer.bat`,
+under the build lock, 8 jobs). The patch is local only (Dolphin is GPL): branch `gd/dolphinpeer` in that clone (on top of
+`gd/oracle-localtest-base`, the oracle + `SLIPPI_LOCAL_TEST` working tree as it was found, recorded without touching the
+working tree), and `_build/dolphin-oracle/dolphinpeer.patch` (this build's change only) and `dolphinpeer-full.patch`
+(against upstream, Rust extensions included). With the define on and the oracle build unchanged (the define is off there):
+- `MainNoGUI` forces `SLIPPI_LOCAL_TEST=1` whatever the caller's environment (the Rust web API, rank fetch and game
+  reports are refused before DNS, no STUN, no browser pages, every netplay socket bound to 127.0.0.1), and any
+  `SLIPPI_MM_URL` that is not `ws://127.0.0.1:` becomes `ws://127.0.0.1:9/v1/queue`; `SLIPPI_MM_ENET`/`SLIPPI_REAL_NET` are
+  cleared.
+- `Common::HttpRequest` refuses every request (analytics, updates, achievements, code downloads).
+- `SLIPPI_PEER_LOG=<file>`: `GAME_START`, one `LOAD frame F` per savestate load (a rollback), and the game report
+  (`REPORT ... end_method E winner W`; Slippi's Hard-desync end is end method 7 with winner -2).
+- the binaries go to `build-peer/Binaries`, so the oracle's `src/Binary/x64` is untouched.
+The run copy is `_build/dolphin-peer/` (exe, Rust DLL, the online `Sys`; 27 MB): the only Dolphin path the harness runs.
+Input is the existing per-instance named pipe (`SLIPPI_PIPE_PREFIX`, `\.\pipe\<tag>slippibot1`: the Windows pipe
+backend already existed in this Dolphin, so no new controller backend was needed), driven closed-loop on the state log
+by `dolphin_drive.py`. Each run makes a fresh user dir: only the pipe as a device (`GCPad1`, pads 2-4 empty), SI device
+6 (standard controller, not the adapter), no audio, Null video, no window, a fake `user.json` (`DPEER#001`, fake uid,
+no play key). No real user.json or Slippi Launcher file was read.
+
+**The harness** (`tools/rust-port/slippi/`):
+- `dolphin_peer.sh OUT --ours C --theirs C --stage S --rtt-ms N --jitter-ms N --games N --game-frames N [--end sd|lras]
+  [--decider engine|dolphin]`: one set. Our side: `MELEE_PAD_SCRIPT` to the Unranked select and the pick
+  (`dolphin_peer_pads.py`: the hand starts at (-31, -21.5) and moves 1.24 a frame at full deflection, measured with
+  `MELEE_SLIPPI_CSS_TRACE`), Start only on the set's later selects (the fighter is kept), generated in-game pads
+  (`MELEE_SLIPPI_NP_PADGEN`), `--slp`, `MELEE_SLIPPI_NP_OUT`, `MELEE_DESYNC_DIR`, and the agent env (`MELEE_INPUT=n`,
+  `MELEE_PAD_IGNORE_ADAPTER=1`, hidden, unfocused, volume 3, a titled window). Dolphin's player plays random pads for
+  `--game-frames`, then runs off the stage until it is out of stocks (`--sd`: a normal stock end in seconds), or quits
+  with L+R+A+Start (`--lras`). The relay adds half the round trip each way plus 0..jitter ms per datagram (reordering).
+- `dolphin_peer_summary.py OUT`: per game our live verdict (soft/hard/stale), Dolphin's verdict recomputed from its
+  checksum log by the ASM rule (frames 85.. up to its game's end), the offline compare of every common finalized frame,
+  `.slp` against `.slp` (`slp_inputs_diff.py`: pre-frame inputs and post-frame state), rollbacks (ours from the session
+  line; Dolphin's from `LOAD` lines and its `.slp`), disconnect lines, and the socket check. One `ROW` per set.
+- `dolphin_peer_batch.sh ROOT`: 6 legal stages x RTT 0/60/120 ms (jitter 4/10/20), character pairs from Young Link,
+  Falco, Ice Climbers and Fox, deciders alternating, sets of 3, 2 pairs at most, waiting while any
+  `melee-slippi*.exe` / `Slippi Dolphin.exe` runs or an owner-play lock is held, stopping under 20 GB free.
+- `dolphin_peer_stop.sh DIR` stops one run's processes only.
+
+**Network proof.** `netwatch.txt` (every 2 s, every TCP connection and UDP endpoint owned by the run's Dolphin and game
+processes, `Get-NetTCPConnection` / `Get-NetUDPEndpoint`): Dolphin's sockets were all bound to 127.0.0.1 in every run
+(its only TCP peer the mock at 127.0.0.1), ours had TCP only to 127.0.0.1, and our log says `STUN not asked`. The batch
+also lists the DNS client cache's Slippi / STUN / Google names before and after (`dns_before.txt`, `dns_after.txt`).
+Packet capture (pktmon) needs admin, which this session does not have. One gap found: our UDP netplay socket was bound
+to 0.0.0.0 / [::] a few seconds after pairing on 127.0.0.1: the in-process match's link takeover (`slippi_link::take`
+from `slippi_np` `--link` and from the select's rematch) and the set's hand-back (`slippi_link::hand_back`) re-opened the
+socket with bind IP 0. All three now bind at the address the pairing chose (`slippi_np::pair` records it with
+`slippi_link::set_bind_ip`: 127.0.0.1 unless `--mm-real` / `--mm-lan`; 0, the old behaviour, when no pairing ran in the
+process). It only ever sent to the relay at 127.0.0.1, but a wildcard bind raises the Windows Firewall prompt (for
+`_build/dolphinpeer/melee.exe`, the one fixed exe path these runs used) and listens on the LAN. Checked after the fix: a
+2-game set had every socket of both processes on 127.0.0.1.
+
+**Batch 1** (`dolphin_peer_batch.sh`, build 976a7b995 + this branch's harness; 3-game Unranked sets; Dolphin's player
+plays random pads for 1500 frames, then runs off the stage; ours plays generated pads throughout; "frames equal" = our
+finalized checksums equal to Dolphin's own on every common frame up to its game's end; "Dolphin" verdict = our reported
+checksums against its own by the ASM rule; `.slp` = `slp_inputs_diff.py` pre-frame inputs and post-frame state, all games;
+rollbacks = ours (session) / Dolphin (savestate loads); every row had 0 non-loopback sockets):
+
+| set | ours vs Dolphin | stage | RTT / jitter ms | decider | games | frames equal | ours soft/hard/stale | Dolphin soft/hard | .slp | rollbacks ours / Dolphin | disconnects |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 01 | Young Link vs Falco | FD | 0 / 4 | Dolphin | 3/3 | 21204/21204 | 0/0/0 | 0/0 | equal | 2 / 1463 | 0 |
+| 02 | Falco vs Young Link | Battlefield | 0 / 4 | engine | 3/3 (rerun) | 10355/10355 | 0/0/0 | 0/0 | equal | 0 / 0 | 0 |
+| 03 | Ice Climbers vs Fox | Yoshi's Story | 0 / 4 | Dolphin | 3/3 | 9909/9909 | 0/0/0 | 0/0 | equal | 6 / 1797 | 0 |
+| 04 | Fox vs Ice Climbers | Dream Land | 0 / 4 | engine | 3/3 | 10049/10049 | 0/0/0 | 0/0 | equal | 0 / 1 | 0 |
+| 05 | Falco vs Ice Climbers | Fountain | 0 / 4 | Dolphin | 3/3 | 4653/4653 | 0/0/0 | 0/0 | equal | 0 / 0 | 0 |
+| 06 | Ice Climbers vs Young Link | Stadium | 0 / 4 | engine | 3/3 | 24908/24908 | 0/0/0 | 0/0 | equal | 0 / 628 | 0 |
+| 07 | Falco vs Young Link | FD | 60 / 10 | Dolphin | 3/3 | 10869/10869 | 0/0/0 | 0/0 | equal | 551 / 9512 | 0 |
+| 08 | Ice Climbers vs Fox | Battlefield | 60 / 10 | engine | 3/3 | 11062/11062 | 0/0/0 | 0/0 | equal | 572 / 9590 | 0 |
+| 09 | Fox vs Ice Climbers | Yoshi's Story | 60 / 10 | Dolphin | 3/3 | 5246/5246 | 0/0/0 | 0/0 | equal | 486 / 4508 | 0 |
+| 10 | Falco vs Ice Climbers | Dream Land | 60 / 10 | engine | 3/3, game 3 ended "no pads from the peer" | 2939/2939 | 0/0/0 | 0/0 | equal | 281 / 2524 | 1 (finding 2) |
+| 11 | Ice Climbers vs Young Link | Fountain | 60 / 10 | Dolphin | 1/3; rerun 3/3 | 2512/2512; rerun 8980/8980 | 0/0/0 | 0/0 | equal | 133 / 2169; rerun 523 / 7637 | 1 (finding 2); rerun 0 |
+| 12 | Young Link vs Falco | Stadium | 60 / 10 | engine | 3/3 | 16472/16472 | 0/0/0 | 0/0 | equal | 526 / 14365 | 0 |
+| 13 | Ice Climbers vs Fox | FD | 120 / 20 | Dolphin | 3/3 | 10988/10988 | 0/0/0 | 0/0 | equal | 694 / 10689 | 0 |
+| 14 | Fox vs Ice Climbers | Battlefield | 120 / 20 | engine | 3/3 | 4113/4113 | 0/0/0 | 0/0 | equal | 642 / 3860 | 0 |
+| 15 | Falco vs Ice Climbers | Yoshi's Story | 120 / 20 | Dolphin | 3/3 | 3409/3409 | 0/0/0 | 0/0 | equal | 636 / 3163 | 0 |
+| 16 | Ice Climbers vs Young Link | Dream Land | 120 / 20 | engine | 3/3 | 7762/7762 | 0/0/0 | 0/0 | equal | 673 / 7492 | 0 |
+| 17 | Young Link vs Falco | Fountain | 120 / 20 | Dolphin | 3/3 | 16508/16508 | 0/0/0 | 0/0 | equal | 689 / 16163 | 0 |
+| 18 | Falco vs Young Link | Stadium | 120 / 20 | engine | 3/3 | 8610/8610 | 0/0/0 | 0/0 | equal | 663 / 8323 | 0 |
+
+55 games, 190,548 frames compared: no desync on either side, and no differing frame offline or in the `.slp` files. Set
+02's first attempt never started: the Dolphin driver could not put its hand on Young Link (centre x 27.3; the hand stops at
+26). That is fixed in `dolphin_drive.py`. At 60 and 120 ms Dolphin rolls back on most frames and we rarely do. Our
+generated pads change every frame (`rb_gen`'s per-frame hash), so its repeat-the-last-pad prediction misses, while its
+driver holds a pad for 3-12 frames. Also run: a 2-game set (Young Link vs Falco, Battlefield, 60/10: 8519 frames equal) and
+the bind check (Marth vs Fox, Dream Land, 30/6, 2 games: 16526 equal).
+
+**Findings for triage (not fixed here):**
+1. *A Slippi Dolphin player's quit-out (client pause, then L+R+A+Start) desyncs us.* Slippi's Unranked enables a client
+   pause (`InitPause.asm`; not in ranked), and LRAS from it ends the game on both sides. Dolphin vs Dolphin control
+   (scratch `dvd.sh`, the local-only build, FD, Falco vs Fox): both froze at online frame 1508 with the same checksum
+   (5462004B), both reported end method 7 with LRAS initiator 0 at 1517 frames, and there was no desync. Ours vs Dolphin
+   (smoke run, Fox vs Falco, FD, 0 ms): both sims froze identically through 1815 (15CFFFD9) and Dolphin stayed frozen, reporting
+   end method 7 at 1814. Ours started moving again at 1816 (B383FFD9 ...). Then came 3 "stale remote checksum" skips, a Soft
+   at 1819, a Hard at 1820, "DESYNC DETECTED", "no pads from the peer" and DISCONNECTED. Offline, 1813/1813 frames were equal
+   before the quit. Our match scene runs with `pause=0`, and the client pause / LRAS rule of `InitPause.asm` (`ClientPause`,
+   `ODB_IS_LEAVING`) is not in our engine. Capture: `_build/dolphinpeer/runs/smoke1/desyncs/` (two report dirs).
+2. *Dolphin's GAME! ended early and our set died.* In 2 of 57 games (set 10 game 3 and set 11 game 1, both at 60 ms), Dolphin
+   left the game scene 76 / 28 frames after the last KO. In every other game (55) it sent pads for 105-106 frames after the
+   KO, and our match ends on that same frame. In the 2 games, our session waited for pads to finish its own GAME! tail and
+   stalled ("no peer input within the rollback window"). After `SILENCE_S` (7 s) it ended the match with "ERROR: no pads from
+   the peer", showed DISCONNECTED and went back to an idle select, so the set was over. In set 11 the opponent's next lock-in
+   had already arrived and was being held ("the opponent locked in for the next game before this match was over"). The
+   checksums agreed to the end (set 11: 2515 compared, 0 differing), and the rerun of set 11 did not repeat it. What shortens
+   Dolphin's GAME! is not known (its player was holding the stick to one side, no buttons). Two things to look at: the GAME!
+   tail's exit condition in our engine against the console's, and treating a held next lock-in (or the peer's pads ending once
+   our confirmed state is past the last KO) as the end of the match instead of an error. Evidence: `batch1/10-*/` and
+   `batch1/11-*/` (`ours.log`; `d_checksums.txt`, last TX frame, against the `REPORT` frames in `d_peer.txt`).
+3. *Fixed here:* the in-process link takeover and the set's hand-back re-bound on 0.0.0.0 / [::] (see the network proof).
+
+**Not done.** The Ishiiruka-based 3.x Dolphin (what most players run): there is no clone of it here with a nogui or
+state-log build, only the installed 3.6.4, which this harness does not drive (no OS input; its pipes have fixed global names,
+section 13). This batch did not cover Direct mode, teams, Peach/Luigi/G&W seed bits or items. Packet capture was not
+possible (no admin), so the socket watch and the loopback-only binds are the evidence.

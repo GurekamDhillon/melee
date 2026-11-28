@@ -15,6 +15,29 @@ inside Fighter_MotionVars (0xAC). GC offsets (gc_decode / GcLayout) are unchange
 import sys
 
 PATCHES = [
+    # it Peach turnip vars: the 8-byte xDE4_owner moved xDE8_scl 4 bytes on, off the slot itBombhei's xDE8 (the
+    # bomb's thrown scale) has at the same GC offset. itPeachTurnip's spawn of a Bob-omb stores the scale through
+    # peachturnip.xDE8_scl and it_3F14_Logic6_Thrown reads bombhei.xDE8 (both item+0xDE8 in the C): natively the bomb
+    # kept 1.0 and its throw skipped it_80274484 (lunar2 Peach ditto, slippi 3050: hit scale 4.006 vs the console's
+    # 3.1248). The pointer moves past the C's 0x18 bytes; its GC word stays a 4-byte slot.
+    ("""pub struct itPeachTurnip_ItemVars {
+    pub xDD4: UnkFlagStruct,
+    pub xDD8: i32,
+    pub xDDC_damage: i32,
+    pub xDE0_scl: f32,
+    pub xDE4_owner: *mut HSD_GObj,
+    pub xDE8_scl: f32,
+}""", """pub struct itPeachTurnip_ItemVars {
+    pub xDD4: UnkFlagStruct,
+    pub xDD8: i32,
+    pub xDDC_damage: i32,
+    pub xDE0_scl: f32,
+    /// native only (gen/native_unions.py): the C's xDE4_owner word; the pointer is the last field
+    pub _owner_slot: u32,
+    pub xDE8_scl: f32,
+    /// native only (gen/native_unions.py): past the C's 0x18 bytes, so xDE8_scl keeps its GC offset (bombhei.xDE8)
+    pub xDE4_owner: *mut HSD_GObj,
+}"""),
     # ftCommon thrownkirby: the 8-byte thrower_gobj moved every later field 4 bytes on, so a guest store to the
     # C's coll_box (fp+2368, an m-ex Kirby-style inhale: Akaneia's Dedede) landed one word off from where
     # ftCo_800BDA74 reads it. The pointer moves past the C's 0x40 bytes; its GC word stays a 4-byte slot.

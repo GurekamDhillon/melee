@@ -363,6 +363,7 @@ fn void_pointee(rec: &'static str, off: u32, obj: *mut u8, _p: usize) -> Option<
         0x2C => match unsafe { (*g).classifier } as i32 {
             melee_types::HSD_GOBJ_CLASS_FIGHTER => Some("Fighter"),
             melee_types::HSD_GOBJ_CLASS_ITEM => Some("Item"),
+            melee_types::HSD_GOBJ_CLASS_STAGE | melee_types::HSD_GOBJ_CLASS_GROUND => Some("Ground"),
             _ => None,
         },
         _ => None,
@@ -484,6 +485,26 @@ unsafe fn sync(s: &mut St) {
         };
         sp.add_bytes(a, h.to_be_bytes().to_vec());
         s.ro.push((a, 4, name));
+    }
+    // Ground_804D6950 (the per-map "joints off" flags, a 64-byte heap buffer: ground.rs buffer_size): the buffer in
+    // place (raw bytes, journaled), the pointer word read-only
+    {
+        let p = melee_world::tu::ground::Ground_804D6950;
+        if !p.is_null() {
+            let a = s.copy_next;
+            s.copy_next += 0x100;
+            sp.add_raw(a, p, 64);
+            s.synced.push((a, 64, "Ground_804D6950[]"));
+            sp.add_bytes(0x804D_6950, a.to_be_bytes().to_vec());
+            s.ro.push((0x804D_6950, 4, "Ground_804D6950"));
+        }
+        // Big Blue's yakumono_param (grbigblue.rs; .sbss 0x804D69C8)
+        let y = melee_world::tu::grbigblue::yakumono_param as usize;
+        if y != 0 {
+            let h = sp.handle(y, Some("grBb_YakumonoParam")).unwrap_or(0);
+            sp.add_bytes(0x804D_69C8, h.to_be_bytes().to_vec());
+            s.ro.push((0x804D_69C8, 4, "grBigBlue yakumono_param"));
+        }
     }
     // HSD_GObjPLinkHead (0x804D782C): a guest table of the list heads' handles (read-only)
     {

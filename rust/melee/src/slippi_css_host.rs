@@ -151,7 +151,7 @@ pub fn start_rematch() -> Option<i32> {
             match &kept {
                 Some(spec) => {
                     sc::with(|o| o.opp_code = p.opp_code.clone());
-                    let t = crate::slippi_link::take(spec, 0, port, |udp| Box::new(udp))?;
+                    let t = crate::slippi_link::take(spec, crate::slippi_link::bind_ip(), port, |udp| Box::new(udp))?;
                     eprintln!("online css: rematch: the set's link taken over ({:?}), no new connection", t.cl.status);
                     lock_in(t.cl, &p, port, max_s).map(|_| ())
                 }

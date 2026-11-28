@@ -14,7 +14,7 @@ R=$1; shift; mkdir -p "$R"; R="$(cd "$R" && pwd)"
 games=3; gframes=2400; par=2; only=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --games) games=$2; shift ;; --game-frames) gframes=$2; shift ;; --parallel) par=$2; shift ;; --only) only=",$2," ;;
+    --games) games=$2; shift ;; --game-frames) gframes=$2; shift ;; --parallel) par=$2; shift ;; --only) only=",$2,"; shift ;;
     *) echo "dolphin_peer_batch: unknown option $1" >&2; exit 2 ;;
   esac; shift
 done

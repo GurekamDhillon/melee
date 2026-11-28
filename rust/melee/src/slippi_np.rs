@@ -432,7 +432,7 @@ fn establish_inner(args: &[String], t0: Instant, max_s: u64) -> Result<Linked, L
         let local_port: u8 = arg(args, "--local-port").and_then(|v| v.parse().ok()).filter(|&p: &u8| p < 2).unwrap_or(0);
         let decider = args.iter().any(|a| a == "--host");
         let (lag, loss) = (Duration::from_millis(num("--lag-ms", 0) as u64), num("--loss-pct", 0) as u32);
-        let t = crate::slippi_link::take(&spec, 0, num("--port", 0) as u16, |udp| {
+        let t = crate::slippi_link::take(&spec, crate::slippi_link::bind_ip(), num("--port", 0) as u16, |udp| {
             Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, jitter: Duration::from_millis(num("--jitter-ms", 0) as u64), rng: 0x5150_0000 ^ local_port as u32, q: VecDeque::new() })
         })
         .map_err(|e| (1, e))?;

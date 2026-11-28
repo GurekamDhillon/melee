@@ -29,6 +29,11 @@ pub fn set_bind_ip(ip: u32) {
     BIND_IP.store(ip, Ordering::SeqCst);
 }
 
+/// The address to bind a taken-over or handed-back link at ([`set_bind_ip`]; 0 when no pairing ran here).
+pub fn bind_ip() -> u32 {
+    BIND_IP.load(Ordering::SeqCst)
+}
+
 /// How long the menu process keeps the link for the match process to take it.
 const KEEP_SECONDS: u64 = 120;
 

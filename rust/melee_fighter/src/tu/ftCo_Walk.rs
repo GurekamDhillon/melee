@@ -109,6 +109,7 @@ pub fn ftCo_Walk_Anim(g: G) {
 
 pub fn ftCo_Walk_IASA(g: G) {
     melee_core::ct!("ftCo_Walk_IASA");
+    melee_core::referee_native!(ftCo_Walk_IASA, [R(g, "HSD_GObj")], v, ftCo_Walk_IASA(g));
     if ext::ftCo_Catch_CheckInput(g) {
         return;
     }
@@ -168,6 +169,7 @@ pub fn ftCo_Walk_IASA(g: G) {
 
 pub fn ftCo_Walk_Phys(g: G) {
     melee_core::ct!("ftCo_Walk_Phys");
+    melee_core::referee_native!(ftCo_Walk_Phys, [R(g, "HSD_GObj")], v, ftCo_Walk_Phys(g));
     ext::ftWalkCommon_800E0060(g);
 }
 

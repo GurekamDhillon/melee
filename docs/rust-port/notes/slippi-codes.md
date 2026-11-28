@@ -164,3 +164,114 @@ frame 0 the same way as for every other frame).
 - lunar2's 106 3.20.0 files (`_build/replays/lunar-2026-11-20`, incl. the 6 Dream Land hard desyncs of the
   pre-fix sweep: 6afd2e79..bb2/bb6, 6affeb47..bbc/bc8/bcc/bde): `slpcheck --full`, 106/106 match (DL 6, stages
   2/3/8/31/32 the rest); hard_desync.py: 0 hard.
+
+## 4. Big Blue (ext stage 24): the 3 failures classified (2026-11-27)
+
+Engine `cur_pos` (slpcheck `--wide-out`) against the replay's post-frame x/y, per frame, port 1 (the only one off):
+
+| file | Slippi | first frame | class | what the frames show |
+|---|---|---|---|---|
+| lunar2 6ab6c163...72a57258 | 3.19.1 | 459 y | **drift** | grounded Wait (motion 14) on floor line 216, whose normal turns every frame (a tilting / moving surface). x exact; y off by 138 ULP at 459, then 400, 788, 1440, 2498 ... ULP, smooth and growing, no action change. The surface's own geometry (the animated joint that line 216 follows) drifts, not the fighter. Candidate: float contraction / matrix order in the line's animated joint (the JObj fast-matrix path and the HSD_MtxInverse fusion mismatches in dol-audit.md, owner lead 1 is the same class). |
+| v320 6b07dda9...daec8 | 3.20.0 | 2229 x | **jump** | action 191 to Fall (29) on frame 2229 in both, leaving floor line 263. The console's fighter is carried on: x -0.063, then -1.12, -1.46 per frame; the engine's keeps only its own -0.06 / -0.08. A moving surface's velocity handed to the fighter as it leaves (or the line moving under it on the release frame) is missing. Not RNG. |
+| v320 6b09281d...12d593 | 3.20.0 | 2332 y | **jump** | the fighter falls (29) at 0.68 / -1.6 per frame in both; on 2332 the engine's lands on floor line 156 (motion 42, y snapped up 5.78) while the console's keeps falling. A surface is where the console has none at that frame: a car (spawn timing / position, the RNG candidate) or a moving line's position. |
+
+So no shared cause: one drift on a tilting surface, two jumps on moving surfaces (velocity carry; a line present
+where the console has none). Online files force the RNG seed each frame, so a car-spawn RNG difference would need a
+draw-order difference inside a frame, not a seed one. Not fixed in this round.
+
+## 5. Owner leads (recorded; not worked this round except 4)
+
+1. Hurtboxes follow animated bones: check hurtbox bone world matrices on frames 3051-3053 of the lunar2 Peach vs
+   Peach Bob-omb case (Mewtwo's tail is the same class). Suspects: the JObj fast_matrix path
+   (`melee_runtime/src/tu/jobj.rs`) and the HSD_MtxInverse fusion mismatches in dol-audit.md. Big Blue file 1 above
+   may be the same class.
+2. UCF is public code: apply its real implementation (the replay's own Gecko bytes, `tools/mex-import/src/gecko.rs`
+   applies a list to the guest image), never a hand rule.
+3. Variants in the corpora (Hax$'s 1.03, newer UCF): listed per replay by the Gecko list hash in slpcheck's CSV
+   (`gecko_codes`, `gecko_hash`); step 6 (each replay's own list in slpcheck) is where they would be run.
+4. NeutralSpawn: its hooks are at fn_8016E2BC (match start) only; it writes the player blocks' initial coordinates and
+   facing (PlayerBlock_StoreInitialCoords, UpdateFacingDirection). It does not touch the respawn slot table or
+   fn_80167638, so it does not explain the respawn-slot case or one-ULP respawn heights.
+
+## 6. Step 5 verdicts: the netplay list on the guest image
+
+`tests/gecko_apply.rs` applies Slippi's `Output/Netplay/GALE01r2.ini` (d0ce23a, 6 enabled groups) to main.dol: 86
+writes, 198 inserts, 0 unsupported types, 5 .bss writes skipped (0x80452F54..64), 1 hook overridden by a later code
+(0x8016EA30). Per [affects-gameplay] code (section 1.1's 29): **all 29 hooks patched and structurally checked** (hook
+branch, return branch). **None executed against the engine**: each hooked function takes Fighter / Ground / GObj
+records or engine globals, which needs the native-records mode (step 4), not built. Verdict for every one of the 29:
+"applied to the image, not run". The engine-side verdicts stay those of section 1.1 (24 hand ports before this branch,
+5 added here) and the replay checks of sections 2.1 and 3.
+
+## 7. The 29 codes run against the engine (2026-11-27, port/livereferee; referee.md section 10)
+
+**How these were run.** Slippi's `Output/Netplay/GALE01r2.ini` (d0ce23a) was applied to the guest image
+(`MELEE_REFEREE_GECKO=ini:...`). The referee then checked each hooked function with that patched code, in Slippi online
+mode, on the states of six hero online replays: PS (3), FD (32), DL (28), FoD (2), BF (31), and an
+IC game on FD. All six play as "match". The counts below are compared calls; "matches" means 0 mismatches.
+
+| # | code | hooked function | verdict |
+|---|---|---|---|
+| 1 | NeutralSpawn | fn_8016E2BC (match start) | not reachable: match setup (creates players, allocates) |
+| 2 | UCF 0.84 DBOOC SquatRv | ftCo_SquatRv_CheckInput | matches (482; 5 not checkable: the code stores into its own block) |
+| 3 | UCF 0.84 Dashback | ftCo_Turn_IASA | matches (678 + 175 on lunar2 ...f1243f34; 203 not checkable: ftData_SpecialS .data read in SpecialS_CheckInput) |
+| 4 | UCF 0.84 Pad Buffer + 1.0 Cardinals | Fighter_procInput | not run (not hooked: the function is large). Its buffer is handed to codes 2/3/5/6/8/9 from the engine's ftUcf_Pad, so their matches include it |
+| 5 | UCF 0.84 SDI | ftCo_Damage_OnEveryHitlag | matches (11,417) |
+| 6 | UCF 0.84 Shield Drop Extended | ftCo_8009A080 | matches (255) |
+| 7 | UCF 0.84 Shield Drop | ftCo_80099894 | matches (4) |
+| 8 | UCF 0.84 Shield SDI | ftCo_80093240 | matches (407) |
+| 9 | UCF 0.84 Tumble | ftCo_DamageFall_IASA | matches (2,139; 9 not checkable: Fighter.dat_attrs) |
+| 10 | FreezeGlitchFix | ftNn_Init_80123954 | not checkable (7 calls: Fighter.dat_attrs, a void*) |
+| 11 | Init Stage Data | Ground_GetStageGObj | not reachable: allocation at stage setup |
+| 12 | Reset Castle Wind | grCastle_801CD37C (stage init) | not reachable: stage setup; no 3.x Castle game in the run |
+| 13 | Reset Kongo Log Bridge | grKongo_801D69B0 (stage init) | not reachable: stage setup; no 3.x Kongo replay exists |
+| 14 | Init Player Data | Fighter_Create | not reachable: allocation |
+| 15 | BrawlOffscreenDamage | Fighter_procAnim | matches on 1,333; 20,903 not checkable (camera .bss 0x80452F24) |
+| 16 | FreezeDeadUpFallPhysics InitHitVelocity | ftCo_DeadUpFall_Anim | matches (93; 1 not checkable) |
+| 17 | FreezeDeadUpFallPhysics UpdateFallVelocity | ftCo_DeadUpFall_Phys | **differed**: fp+0x2348 1 ULP over on 3 frames of hero Game_20260321T214020 (5 of 94 calls before the fix). stfs truncates the double; the port rounded. **Fixed** (f6a7f2166): 94/94 |
+| 18 | FreezeDeadUpFallPhysics UpdateModelPos | ftDrawCommon_80080E18 | matches on 1,333; 22,667 not checkable (camera .bss 0x80452C68) |
+| 19 | FD DesyncProofBGTransformations | grLast_8021AAB0 | not checkable (`selected_stage` .data read through Stage_80225194) |
+| 20 | Stadium CustomZeroBuffer | grAnime_801C65B0 | not run (archive release: file layer) |
+| 21 | Stadium GrPsxIsValid | grStadium_801D4548 | not checkable (gm_GetCurrentGameMode .bss 0x80479D30) |
+| 22 | Stadium IngameCheckIfFrozen | grStadium_801D4548 | same as 21 |
+| 23 | Stadium StadiumFileLoad | lbFile_80016580 | not run (DVD / file layer) |
+| 24 | WhispyBlowDirFix | ftLib_GetOpponentsDir | not run (no hook: the Rust function sits under another name in ftlib.rs) |
+| 25 | NanaDeterminism | ftCo_800AC5A0 | not checkable (126 calls: a store into Fighter+0x1FDC in ftCo_800B46B8, a field without a native counterpart) |
+| 26 | PSCameraIndependentMonitor | grStadium_801D2344 | matches (2,000 on hero PS Game_20251031T214231) |
+| 27 | PreventWobbling Init Air | fn_800DB790 | not reached (0 calls in these replays) |
+| 28 | PreventWobbling Init Ground | fn_800DBAE4 | matches (19) |
+| 29 | PreventWobbling Wobble Check | ftCo_8008EC90 | matches on 6; 358 not checkable (audio driver .bss through HSD_AudioSFXKeyOffTrack) |
+
+**Totals.** Of the 29 codes:
+- 13 match, counting partial coverage: 2, 3, 5, 6, 7, 8, 9, 15, 16, 18, 26, 28, 29;
+- 1 differed and is now fixed: 17;
+- 6 not checkable yet: 10, 19, 21, 22, 25, and most of 15, 18 and 29;
+- 9 not run or not reachable: 1, 4, 11, 12, 13, 14, 20, 23, 24 (plus 27, which got no calls).
+
+### 7.1 The UCF versions replays carry
+
+Survey: `geckoscan` (scratch only) over the regress set, hashing each replay's C2 800C9A44 block. Hashes are listed, no
+bytes.
+
+| variant | where | count |
+|---|---|---|
+| 0.84 (block 40c7d5d7c5, with 8006B460) | 3.19 / 3.20 | 974 |
+| 0.84-era (c2939c27ba, with 8006B460) | 3.17 | 341 |
+| **UCF 0.8 `DB.asm`** (ba5f4a85dc, no 8006B460) | 3.17 lunar / lunar2 | 27 |
+| other (513936be9f) | 3.17 | 1 |
+| no list | pre-3.0 | 192 |
+
+0.73 / 0.74 (pre-3.0 files, no Gecko list) cannot be run from the replay's own bytes. Hax$'s 1.03 is not in this corpus
+as a separate list.
+
+**lunar2 Fox ditto ...f1239a6e (3.17.0, Fountain)**, run with its own list: at slippi 3795, retail plus its UCF 0.8
+insert grants the smash turn, and the engine's 0.73 rule did not. The difference is not in the threshold:
+- 0.8 tests the animation frame (fp+0x894) == 2.0, where the 0.73 rule used the command-script frame's upper half;
+- 0.8 uses |stick x|, where the 0.73 rule used stick x * facing_after;
+- 0.8 reads the raw stick of fp+0x618, the controller port.
+
+**Fixed** (de86fec54): `slp::ucf08_dashback_code` recognises the insert's form from its own instructions. After the
+fix the replay matches the console to its end, and 276/276 Turn_IASA checks match.
+
+The 0.84 lists (lunar2 Peach ditto, own list): all 175 Turn_IASA calls match, and the other UCF hooks match too
+(section 10.1 of referee.md).

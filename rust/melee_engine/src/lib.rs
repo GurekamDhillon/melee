@@ -21,6 +21,8 @@ pub mod mex_host;
 pub mod fighter_art;
 pub mod mexid;
 pub mod mex_guest;
+#[cfg(feature = "referee")]
+pub mod live_referee;
 pub mod mex_bridge;
 pub mod archive;
 pub mod card;

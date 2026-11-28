@@ -69,6 +69,7 @@ pub fn ftCo_Wait_Anim(g: G) {
 
 pub fn ftCo_Wait_IASA(g: G) {
     melee_core::ct!("ftCo_Wait_IASA");
+    melee_core::referee_native!(ftCo_Wait_IASA, [R(g, "HSD_GObj")], v, ftCo_Wait_IASA(g));
     if ext::ftCo_SpecialS_CheckInput(g) {
         return;
     }
@@ -136,6 +137,7 @@ pub fn ftCo_Wait_IASA(g: G) {
 
 pub fn ftCo_Wait_Phys(g: G) {
     melee_core::ct!("ftCo_Wait_Phys");
+    melee_core::referee_native!(ftCo_Wait_Phys, [R(g, "HSD_GObj")], v, ftCo_Wait_Phys(g));
     ext::ft_80084F3C(g);
     ext::ftColl_8007AEE0(g);
 }

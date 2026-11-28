@@ -37,6 +37,8 @@ libc = "0.2"
 # core v1 (melee_corev1): the disc read through the host (gcm.rs HOST_READ) and the GX transcoder
 corev1 = ["melee_gx/corev1"]
 guard = []
+# DOL referee native-records mode (live_referee.rs, notes/referee.md section 10): a scratch build only
+referee = ["melee_core/referee"]
 # builds the layout walker example only (it includes a generated table, see tools/rust-port/layout)
 layout-walk = []
 

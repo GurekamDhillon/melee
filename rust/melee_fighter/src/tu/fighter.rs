@@ -1226,6 +1226,7 @@ fn blend_arg(anim_blend: f32, row: u8) -> f32 {
 /// `Fighter_ChangeMotionState`: enter motion state `msid`.
 pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_start: f32, mut anim_speed: f32, anim_blend: f32, mut arg3: G) {
     melee_core::ct!("Fighter_ChangeMotionState");
+    melee_core::referee_boundary!(Fighter_ChangeMotionState, [R(g, "HSD_GObj"), I(msid), I(flags), F(anim_start), F(anim_speed), F(anim_blend), R(arg3, "HSD_GObj")]);
     use ext as e;
     let jobj = jobj_of(g);
     let fp = fpm(g);
@@ -1662,6 +1663,7 @@ pub unsafe fn ftSlippi_IsOffscreen(fp: &Fighter) -> bool {
 /// `Fighter_procAnim` (proc 1): per-frame timers, animation advance, anim callback.
 pub unsafe fn Fighter_procAnim(g: G) {
     melee_core::ct!("Fighter_procAnim");
+    melee_core::referee_native!(Fighter_procAnim, [R(g, "HSD_GObj")], v, Fighter_procAnim(g));
     // mod host site (hooks-v1 0x8006A360, melee_core::modhook): one None check when no mod hooks it
     melee_core::mod_hook!(0x8006A360, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_procAnim__orig(g));
     #[allow(unused_unsafe)] unsafe { Fighter_procAnim__orig(g) }

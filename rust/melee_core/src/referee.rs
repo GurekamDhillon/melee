@@ -19,6 +19,9 @@ pub enum Arg {
     /// A pointer argument to `len` bytes of f32 words (Vec, Mtx): the integer register gets a guest address of a
     /// big-endian copy of them.
     P(*const u8, usize),
+    /// A native record pointer (native-records mode, `referee_native!`): the record's GC name, e.g. `HSD_GObj`; the
+    /// integer register gets its guest handle (`remap::GuestSpace`).
+    R(*mut u8, &'static str),
 }
 
 /// The return of a captured call.
@@ -116,6 +119,7 @@ mod imp {
                 match a {
                     Arg::I(v) => line += &format!(" i:{v:08x}"),
                     Arg::F(v) => line += &format!(" f:{:08x}", v.to_bits()),
+                    Arg::R(p, r) => line += &format!(" r:{r}:{:x}", *p as usize),
                     Arg::P(p, n) => {
                         line += &format!(" p:{:x}:{n}:{}:{}", *p as usize, hex(&self.before[k]), hex(&read(*p, *n)));
                         k += 1;
@@ -141,6 +145,73 @@ mod imp {
 #[cfg(feature = "referee")]
 pub use imp::{begin, Cap};
 
+/// Native-records mode (notes/referee.md section 10): the in-process checker, registered by `melee_engine::live_referee`.
+/// `pre` runs the retail function on the live records (and undoes its writes) before the Rust call and returns a token,
+/// `post` compares after it; `boundary` is called at the top of a Rust function retail's run may stop at.
+#[derive(Clone, Copy)]
+pub struct NativeHooks {
+    pub wants: fn(&'static str) -> bool,
+    pub pre: fn(&'static str, &[Arg]) -> Option<usize>,
+    pub post: fn(usize, Ret),
+    pub boundary: fn(&'static str, &[Arg]),
+}
+
+#[cfg(feature = "referee")]
+static NATIVE: std::sync::OnceLock<NativeHooks> = std::sync::OnceLock::new();
+
+/// Register the native-records checker (once per process).
+#[cfg(feature = "referee")]
+pub fn set_native(h: NativeHooks) {
+    let _ = NATIVE.set(h);
+}
+
+#[cfg(feature = "referee")]
+#[doc(hidden)]
+pub fn native() -> Option<&'static NativeHooks> {
+    NATIVE.get()
+}
+
+/// Check a call of the enclosing function in native-records mode: `referee_native!(name, [R(gobj, "HSD_GObj"),
+/// I(x), F(y)], v|i|f, call)` at the top of the function, `call` re-invoking it (nested checks are not taken: the
+/// checker refuses a `pre` while one is open).
+#[cfg(feature = "referee")]
+#[macro_export]
+macro_rules! referee_native {
+    ($name:ident, [$($kind:ident($($a:expr),*)),*], $ret:ident, $call:expr) => {
+        if let Some(h) = $crate::referee::native() {
+            if (h.wants)(stringify!($name)) {
+                if let Some(t) = (h.pre)(stringify!($name), &[$($crate::referee_hook!(@arg $kind($($a),*))),*]) {
+                    #[allow(unused_unsafe)]
+                    let r = unsafe { $call };
+                    (h.post)(t, $crate::referee_hook!(@ret $ret, r));
+                    return r;
+                }
+            }
+        }
+    };
+}
+#[cfg(not(feature = "referee"))]
+#[macro_export]
+macro_rules! referee_native {
+    ($($t:tt)*) => {};
+}
+
+/// A boundary callee of native-records mode: `referee_boundary!(name, [args])` at the top of the Rust function.
+#[cfg(feature = "referee")]
+#[macro_export]
+macro_rules! referee_boundary {
+    ($name:ident, [$($kind:ident($($a:expr),*)),*]) => {
+        if let Some(h) = $crate::referee::native() {
+            (h.boundary)(stringify!($name), &[$($crate::referee_hook!(@arg $kind($($a),*))),*]);
+        }
+    };
+}
+#[cfg(not(feature = "referee"))]
+#[macro_export]
+macro_rules! referee_boundary {
+    ($($t:tt)*) => {};
+}
+
 /// Capture a call of the enclosing function: `referee_hook!(name, [args], ret_kind, call)` at the top of the
 /// function, where `call` re-invokes the function itself (the nested entry is not captured) and `ret_kind` is one of
 /// `v`, `i`, `f`, `p`. Arguments: `I(expr)`, `F(expr)`, `P(ptr, bytes)`.
@@ -158,6 +229,7 @@ macro_rules! referee_hook {
     (@arg I($a:expr)) => { $crate::referee::Arg::I($a as u32) };
     (@arg F($a:expr)) => { $crate::referee::Arg::F($a as f32) };
     (@arg P($a:expr, $n:expr)) => { $crate::referee::Arg::P($a as *const u8, $n) };
+    (@arg R($a:expr, $r:expr)) => { $crate::referee::Arg::R($a as *mut u8, $r) };
     (@ret v, $r:expr) => { { let _ = &$r; $crate::referee::Ret::Void } };
     (@ret i, $r:expr) => { $crate::referee::Ret::I($r as u32) };
     (@ret f, $r:expr) => { $crate::referee::Ret::F($r as f32) };

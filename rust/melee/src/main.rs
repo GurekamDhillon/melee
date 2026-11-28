@@ -961,6 +961,7 @@ pub(crate) fn install_replay(mut pl: melee_data::player::Player) {
         h::Replay_Buttons = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0, |i| i.buttons) });
         h::Replay_UcfCardinals = Some(|p| unsafe { r_in().ucf_cardinals(p) as i32 });
         h::Replay_UcfVersion = Some(|p| unsafe { r_in().ucf_version(p) });
+        h::Replay_Ucf08Dashback = Some(|_| unsafe { r_in().r.ucf08_dashback as i32 });
         h::Replay_RawStick = Some(|p, w| unsafe { r_in().raw_stick(p, w) });
         h::Replay_RawStickBack = Some(|p, w, b| unsafe { r_in().raw_stick_back(p, w, b) });
         h::Replay_ChecksumSeed = Some(|arrived, frame| unsafe { r_in().checksum_seed(arrived, frame) });

@@ -119,6 +119,7 @@ fn ftCo_Squat_IASA_inline(g: G) -> bool {
 
 pub fn ftCo_Squat_IASA(g: G) {
     melee_core::ct!("ftCo_Squat_IASA");
+    melee_core::referee_native!(ftCo_Squat_IASA, [R(g, "HSD_GObj")], v, ftCo_Squat_IASA(g));
     let _ = ext::ftCo_SpecialS_CheckInput(g)
         || ext::ftCo_Attack100_CheckInput(g)
         || ext::ftCo_800D6824(g)

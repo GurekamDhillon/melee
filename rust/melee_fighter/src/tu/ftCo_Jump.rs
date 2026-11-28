@@ -87,6 +87,7 @@ pub fn ftCo_Jump_GetInput(g: G) -> ftCo_JumpInput {
 
 pub fn ftCo_Jump_CheckInput(g: G) -> bool {
     melee_core::ct!("ftCo_Jump_CheckInput");
+    melee_core::referee_native!(ftCo_Jump_CheckInput, [R(g, "HSD_GObj")], i, ftCo_Jump_CheckInput(g));
     if ext::ftCo_800C5240(g) {
         return ext::ftCo_800C5A50(g);
     }

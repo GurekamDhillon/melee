@@ -459,6 +459,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         sm.status = "refused: the replay player refused the file".into();
         return finish(args, &name, &sm);
     }
+    // DOL referee native-records mode (MELEE_REFEREE_NATIVE): retail functions on the live records, the replay's own
+    // Gecko list applied to the guest image
+    #[cfg(feature = "referee")]
+    melee_engine::live_referee::init(&file.gecko);
     pl.frame = -124; // gw_Replay_ApplyMatch arms the counter: the first Replay_Tick makes it -123
     let seed = file.seed;
     // gw_Replay_ApplyMatch returns r.seed as the match's RNG seed: the Game Start block's Random Seed
@@ -471,7 +475,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     match std::env::var("SLPCHECK_UCF07").as_deref() {
         Ok("off") => {}
         Ok("card") => pl.r.no_ucf_cardinals = no_card,
-        _ => pl.r.ucf_073_list = no_card,
+        _ => {
+            pl.r.ucf_073_list = no_card;
+            pl.r.ucf08_dashback = no_card && slp::ucf08_dashback_code(&file.gecko);
+        }
     }
     // The 0.7x list's tumble code (C2 800908F4, ftCo_DamageFall_IASA+0xCC, 23 lines) is UCF 0.84's tumble rule (timer 1
     // counts when |prev x| < x210 and the raw x moved > 75 over two polls) reading the HSD pad queue (804C1F78, entries
@@ -821,6 +828,8 @@ struct Summary {
 }
 
 fn finish(args: &[String], name: &str, s: &Summary) -> std::process::ExitCode {
+    #[cfg(feature = "referee")]
+    melee_engine::live_referee::report();
     let csvq = |t: &str| t.replace(['\n', '\r', ','], " ");
     let (ff, fp, fl, fe, fr) = match &s.first {
         Some(f) => (f.frame.to_string(), (f.port + 1).to_string(), f.field.to_string(), f.engine.clone(), f.replay.clone()),

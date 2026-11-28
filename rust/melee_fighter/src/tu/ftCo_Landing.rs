@@ -162,6 +162,7 @@ pub fn ftCo_Landing_Anim(g: G) {
 
 pub fn ftCo_Landing_IASA(g: G) {
     melee_core::ct!("ftCo_Landing_IASA");
+    melee_core::referee_native!(ftCo_Landing_IASA, [R(g, "HSD_GObj")], v, ftCo_Landing_IASA(g));
     if fp(g).cur_anim_frame < fp(g).co_attrs.normal_landing_lag { return; }
     if unsafe { fp(g).mv.co.landing.allow_interrupt } == 0 { return; }
     if ext::ftCo_SpecialS_CheckInput(g) { return; }

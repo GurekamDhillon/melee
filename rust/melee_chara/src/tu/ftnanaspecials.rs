@@ -136,6 +136,7 @@ pub fn ftNn_Init_801238E4(gobj: *mut HSD_GObj) {
 /// whether Nana is still free (false once she was snapped back to Popo).
 pub fn ftNn_Init_80123954(nana_gobj: *mut HSD_GObj, pp_ga: GroundOrAir) -> bool {
     melee_core::ct!("ftNn_Init_80123954");
+    melee_core::referee_native!(ftNn_Init_80123954, [R(nana_gobj, "HSD_GObj"), I(pp_ga as i32)], i, ftNn_Init_80123954(nana_gobj, pp_ga));
     unsafe {
         if nana_gobj.is_null() {
             return true;

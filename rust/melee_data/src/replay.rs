@@ -186,6 +186,9 @@ pub struct Replay {
     /// UCF SDI, shield SDI, extended shield drop or DBOOC fix (some 3.17 tournament lists of 66/86 codes). Its UCF ports
     /// then run as 0.73, not 0.84. Set by slpcheck from the Gecko list.
     pub ucf_073_list: bool,
+    /// The 0.7x list's dashback insert is UCF 0.8's (`slp::ucf08_dashback_code`): the 0.73 dashback port runs that
+    /// code's rule (animation frame 2.0, |stick x|, the controller port's raw stick). Set by slpcheck.
+    pub ucf08_dashback: bool,
     /// Only the 1.0 cardinals are off (UCF 0.84 otherwise); `SLPCHECK_UCF07=card`.
     pub no_ucf_cardinals: bool,
     pub frozen_ps: bool,
@@ -246,6 +249,7 @@ impl Replay {
             ucf_dashback: [0; 4],
             ucf_shield: [0; 4],
             ucf_073_list: false,
+            ucf08_dashback: false,
             no_ucf_cardinals: false,
             frozen_ps: false,
             online: false,

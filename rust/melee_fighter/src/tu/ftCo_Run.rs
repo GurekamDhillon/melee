@@ -141,6 +141,7 @@ pub fn ftCo_Run_Anim(g: G) {
 
 pub fn ftCo_Run_IASA(g: G) {
     melee_core::ct!("ftCo_Run_IASA");
+    melee_core::referee_native!(ftCo_Run_IASA, [R(g, "HSD_GObj")], v, ftCo_Run_IASA(g));
     if ext::ftCo_SpecialS_CheckInput(g)
         || ext::ftCo_Attack100_CheckInput(g)
         || ext::ftCo_800D6824(g)
@@ -183,6 +184,7 @@ fn getAccelAndTarget(f: &mut Fighter) -> (f32, f32) {
 
 pub fn ftCo_Run_Phys(g: G) {
     melee_core::ct!("ftCo_Run_Phys");
+    melee_core::referee_native!(ftCo_Run_Phys, [R(g, "HSD_GObj")], v, ftCo_Run_Phys(g));
     let (mut accel, target_vel) = getAccelAndTarget(fp(g));
     let f = fp(g);
     if target_vel != 0.0 {

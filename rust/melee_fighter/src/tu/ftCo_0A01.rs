@@ -5169,6 +5169,7 @@ pub unsafe fn ftCo_800AC434(mut fp: *mut Fighter) {
 /// `ftCo_800AC5A0`
 pub unsafe fn ftCo_800AC5A0(mut fp: *mut Fighter) {
     melee_core::ct!("ftCo_800AC5A0");
+    melee_core::referee_native!(ftCo_800AC5A0, [R(fp, "Fighter")], v, ftCo_800AC5A0(fp));
     let mut data: *mut CpuFighter = null_mut();
     let mut var_r0: i32 = 0;
     let mut stick_x: i8 = 0;

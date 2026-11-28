@@ -109,6 +109,7 @@ fn ftCo_Dash_Enter__orig(g: G, arg1: i32) {
 
 pub fn ftCo_Dash_Anim(g: G) {
     melee_core::ct!("ftCo_Dash_Anim");
+    melee_core::referee_native!(ftCo_Dash_Anim, [R(g, "HSD_GObj")], v, ftCo_Dash_Anim(g));
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
@@ -131,6 +132,7 @@ fn block_42(g: G) -> bool {
 
 pub fn ftCo_Dash_IASA(g: G) {
     melee_core::ct!("ftCo_Dash_IASA");
+    melee_core::referee_native!(ftCo_Dash_IASA, [R(g, "HSD_GObj")], v, ftCo_Dash_IASA(g));
     let x4 = unsafe { fp(g).mv.co.dash.x4 };
     if x4 != 0 && fp(g).cur_anim_frame <= cd().x44 {
         if !ext::ftCo_SpecialS_CheckInput(g) {
@@ -199,6 +201,7 @@ pub fn getAccelAndTarget(f: &mut Fighter) -> (f32, f32) {
 
 pub fn ftCo_Dash_Phys(g: G) {
     melee_core::ct!("ftCo_Dash_Phys");
+    melee_core::referee_native!(ftCo_Dash_Phys, [R(g, "HSD_GObj")], v, ftCo_Dash_Phys(g));
     let f = fp(g);
     if unsafe { f.mv.co.dash.x0 } != 0.0 {
         unsafe { f.mv.co.dash.x0 = 0.0 };

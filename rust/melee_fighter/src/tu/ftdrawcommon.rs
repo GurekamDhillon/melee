@@ -400,6 +400,7 @@ pub fn script_motion_draw_begin(g: G) -> i32 {
 /// `ftDrawCommon_80080E18` (TARGET_PC wrapper: motion draw, Geno toon, per-port surface).
 pub fn ftDrawCommon_80080E18(g: G, arg1: i32) {
     melee_core::ct!("ftDrawCommon_80080E18");
+    melee_core::referee_native!(ftDrawCommon_80080E18, [R(g, "HSD_GObj"), I(arg1)], v, ftDrawCommon_80080E18(g, arg1));
     let motion = ext::script_motion_draw_begin(g);
     let (pid, kind) = (fp(g).player_idx as i32, fp(g).kind as i32);
     ext::GenoToonEnsure(pid + 1, kind);

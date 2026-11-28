@@ -56,6 +56,7 @@ pub mod ext {
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` = `ScriptGame_CapsActionAllowed`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
+        Replay_Ucf08Dashback(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_Ucf08Dashback(port) } };
         Replay_RawStickBack(port: i32, which: i32, back: i32) -> i32 = |port: i32, which: i32, back: i32| -> i32 { unsafe { crate::platform::Replay_RawStickBack(port, which, back) } };
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
         Player_GetEntityAtIndex(slot: i32, index: i32) -> G = crate::player::get_entity_at_index;
@@ -123,6 +124,7 @@ pub fn ftCo_Turn_Anim_Inner(g: G) {
 
 pub fn ftCo_Turn_Anim(g: G) {
     melee_core::ct!("ftCo_Turn_Anim");
+    melee_core::referee_native!(ftCo_Turn_Anim, [R(g, "HSD_GObj")], v, ftCo_Turn_Anim(g));
     ftCo_Turn_Anim_Inner(g);
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
@@ -136,12 +138,27 @@ pub fn ftCo_Turn_Ucf073Dashback(f: &mut Fighter) {
     if ext::Replay_UcfVersion(f.pad_port as i32) != 73 {
         return;
     }
-    if (f.x3E4_fighterCmdScript.frame_count.to_bits() >> 16) != 0x4000 {
-        return;
-    }
-    let fa = unsafe { f.mv.co.turn.facing_after };
-    if !(f.input.lstick[0].x * fa >= cd().dash_smash_stick_threshold) {
-        return;
+    // UCF 0.8 (`UCF DB.asm`, the dashback insert of some 3.17 lists): the animation frame (fp+0x894) exactly 2.0, the
+    // stick's magnitude past the threshold whatever the turn's direction, the raw stick of the controller port
+    // (fp+0x618). Found by the DOL referee running the replay's own insert on the engine's state (notes/referee.md
+    // section 10: lunar2 Fox ditto ...f1239a6e, frame 3795: the console's smash turn the 0.73 rule refused).
+    let v08 = ext::Replay_Ucf08Dashback(f.pad_port as i32) != 0;
+    let port = if v08 { f.pad_port as i32 } else { port };
+    if v08 {
+        if f.cur_anim_frame != 2.0 {
+            return;
+        }
+        if !(f.input.lstick[0].x.abs() >= cd().dash_smash_stick_threshold) {
+            return;
+        }
+    } else {
+        if (f.x3E4_fighterCmdScript.frame_count.to_bits() >> 16) != 0x4000 {
+            return;
+        }
+        let fa = unsafe { f.mv.co.turn.facing_after };
+        if !(f.input.lstick[0].x * fa >= cd().dash_smash_stick_threshold) {
+            return;
+        }
     }
     if f.active_timer.lstick.x >= 2 || f.is_sub_fighter() != 0 {
         return;
@@ -206,6 +223,7 @@ pub fn ftCo_Turn_Ucf084Dashback(f: &mut Fighter) {
 
 pub fn ftCo_Turn_IASA(g: G) {
     melee_core::ct!("ftCo_Turn_IASA");
+    melee_core::referee_native!(ftCo_Turn_IASA, [R(g, "HSD_GObj")], v, ftCo_Turn_IASA(g));
     {
         let f = fp(g);
         let (just, has, x1c) = unsafe { (f.mv.co.turn.just_turned, f.mv.co.turn.has_turned, f.mv.co.turn.x1C) };
@@ -253,6 +271,7 @@ pub fn ftCo_Turn_IASA(g: G) {
 
 pub fn ftCo_Turn_Phys(g: G) {
     melee_core::ct!("ftCo_Turn_Phys");
+    melee_core::referee_native!(ftCo_Turn_Phys, [R(g, "HSD_GObj")], v, ftCo_Turn_Phys(g));
     ext::ft_80084F3C(g);
 }
 

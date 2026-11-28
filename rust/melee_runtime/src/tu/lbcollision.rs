@@ -1038,6 +1038,7 @@ unsafe fn update_hurt_pos(arg1: *mut HurtCapsule, has_mtx: bool, z: f32) {
 
 pub unsafe extern "C" fn lbColl_80007ECC(arg0: *mut HitCapsule, arg1: *mut HurtCapsule, arg2: *const Mtx, hit_scl_y: f32, hurt_scl_y: f32, hurt_pos_z: f32) -> bool {
     melee_core::ct!("lbColl_80007ECC");
+    melee_core::referee_native!(lbColl_80007ECC, [R(arg0, "HitCapsule"), R(arg1, "HurtCapsule"), P(arg2, 48), F(hit_scl_y), F(hurt_scl_y), F(hurt_pos_z)], i, lbColl_80007ECC(arg0, arg1, arg2, hit_scl_y, hurt_scl_y, hurt_pos_z));
     let mut sp70 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp64 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp34: Mtx = [[0.0; 4]; 3];
@@ -1069,6 +1070,7 @@ pub unsafe extern "C" fn lbColl_80007ECC(arg0: *mut HitCapsule, arg1: *mut HurtC
 
 pub unsafe extern "C" fn lbColl_8000805C(arg0: *mut HitCapsule, arg1: *mut HurtCapsule, arg2: *const Mtx, arg3: i32, arg4: f32, arg5: f32, arg6: f32) -> bool {
     melee_core::ct!("lbColl_8000805C");
+    melee_core::referee_native!(lbColl_8000805C, [R(arg0, "HitCapsule"), R(arg1, "HurtCapsule"), P(arg2, 48), I(arg3), F(arg4), F(arg5), F(arg6)], i, lbColl_8000805C(arg0, arg1, arg2, arg3, arg4, arg5, arg6));
     let mut sp74 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp68 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp38: Mtx = [[0.0; 4]; 3];

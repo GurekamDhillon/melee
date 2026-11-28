@@ -318,6 +318,7 @@ pub fn ftCo_8009980C(g: G) -> bool {
 /// static `ftCo_80099894`.
 pub fn ftCo_80099894(g: G) {
     melee_core::ct!("ftCo_80099894");
+    melee_core::referee_native!(ftCo_80099894, [R(g, "HSD_GObj")], v, ftCo_80099894(g));
     match fp(g).kind {
         Ft_Kind_Yoshi => ftCo_80099954(g),
         _ => ftCo_800998EC(g),

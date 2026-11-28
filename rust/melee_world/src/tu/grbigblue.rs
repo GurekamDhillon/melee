@@ -1887,6 +1887,7 @@ pub unsafe extern "C" fn grBigBlue_801E9F3C(gobj: *mut HSD_GObj) {
 #[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grBigBlue_801EA05C(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801EA05C");
+    melee_core::referee_native!(grBigBlue_801EA05C, [R(gobj, "HSD_GObj")], v, grBigBlue_801EA05C(gobj));
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     let plat = addr_of_mut!((*gp).u.bigblue.x0_u.platform);
@@ -2598,6 +2599,7 @@ pub unsafe extern "C" fn grBigBlue_801EB4AC(gobj: *mut HSD_GObj) {
 /// single rounding either way).
 pub unsafe extern "C" fn grBigBlue_801EBAF8(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801EBAF8");
+    melee_core::referee_native!(grBigBlue_801EBAF8, [R(gobj, "HSD_GObj")], v, grBigBlue_801EBAF8(gobj));
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
     let road = addr_of_mut!((*gp).u.bigblue.x0_u.road);

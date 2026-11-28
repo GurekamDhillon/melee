@@ -116,6 +116,7 @@ pub fn fn_800DB6C8(g: G) {
 /// `fn_800DB790`.
 pub fn fn_800DB790(g: G) {
     melee_core::ct!("fn_800DB790");
+    melee_core::referee_native!(fn_800DB790, [R(g, "HSD_GObj")], v, fn_800DB790(g));
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitHi as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     yoshi_hurtbox(g);
     // Slippi PreventWobbling Init Wobble Count (800DB880 / 800DBBD4)
@@ -192,6 +193,7 @@ pub unsafe extern "C" fn fn_800DBAC4(g: G) {
 /// `fn_800DBAE4`.
 pub fn fn_800DBAE4(g: G) {
     melee_core::ct!("fn_800DBAE4");
+    melee_core::referee_native!(fn_800DBAE4, [R(g, "HSD_GObj")], v, fn_800DBAE4(g));
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitLw as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     yoshi_hurtbox(g);
     // Slippi PreventWobbling Init Wobble Count (800DB880 / 800DBBD4)

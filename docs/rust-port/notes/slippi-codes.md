@@ -275,3 +275,110 @@ fix the replay matches the console to its end, and 276/276 Turn_IASA checks matc
 
 The 0.84 lists (lunar2 Peach ditto, own list): all 175 Turn_IASA calls match, and the other UCF hooks match too
 (section 10.1 of referee.md).
+
+### 7.2 Verdict table with versions, evidence and score (2026-11-28, port/codesreview)
+
+Written from sections 1.1, 2, 6, 7 above, `referee.md` section 10, and the git history of `_build/slippi-src/ssbm-asm`
+(1,355 commits, HEAD `d0ce23a`). No run was made for this section.
+
+**Versions.** The replay spec number is `CURRENT_VERSION` in ssbm-asm `Recording/Recording.s`. Its bumps:
+3.18 = bb01e0e (2025-01-27), 3.19.0 = aac7d76 (2025-08-11), 3.19.1 = 30ca204 (2026-04-29), 3.20.0 = 4497d56
+(2026-10-20); 3.17 is the spec from 2024-06-30 (c852afa). The Ishiiruka release that shipped each code variant was
+read from each tag's `Data/Sys/GameSettings/GALE01r2.ini` (blocks hashed per hooked address, tags 3.4.1 to 3.7.0):
+
+| spec | Ishiiruka releases | what differs in the tagged gameplay codes |
+|---|---|---|
+| 3.17 | 3.4.1 (2024-07-09), 3.4.2, 3.4.3 | 22 codes common to all versions + FreezeStadium + 6 Preload Stadium Transformations hooks (legacy set) |
+| 3.18 | 3.4.4 (2025-01-27), 3.4.5, 3.4.6 | same set as 3.17 (bytes identical) |
+| 3.19.0 | 3.5.0 (2025-08-12), 3.5.1 (08-13), 3.5.2 (2026-01-14) | legacy 7 gone; Stadium GrPsxIsValid, IngameCheckIfFrozen, StadiumFileLoad from 3.5.0; CustomZeroBuffer and the FD DesyncProofBGTransformations C2 from 3.5.1 (3.5.0 still has the FD 04 nop); Nana v2 from 3.5.2 |
+| 3.19.1 | 3.6.0 (2026-04-29) to 3.6.4 | same as 3.5.2 |
+| 3.20.0 | 3.7.0 (2026-11-17) | + Reset Castle Wind, Reset Kongo Log Bridge (d0ce23a, 2026-11-02) |
+
+"Variants" below: **S** = compiled bytes identical in every Ishiiruka tag from 3.4.1 to 3.7.0 (every version). The
+replay block hash for UCF differs between 3.17 (c2939c27ba) and 3.19/3.20 (40c7d5d7c5), see 7.1, yet the compiled
+netplay C2 at 800C9A44 is the same in every tag, so that hash difference is not a change of the netplay code. Why the
+corpora hash differently is not explained (open item O12).
+
+Verdict words: **checked-match** (referee, calls compared with 0 mismatches, on the 3.20 codeset d0ce23a against the
+states of the six hero online replays), **checked-mismatch** (found, fixed, rechecked), **not checkable**, **not run**.
+
+| # | code | what it does | port | referee verdict | evidence | variants |
+|---|---|---|---|---|---|---|
+| 1 | NeutralSpawn | spawn points from a per-stage table | hand port (`NEUTRAL_SPAWN`) | not run (match setup) | referee cannot reach fn_8016E2BC; indirectly, start positions agree on every matching replay | S |
+| 2 | UCF 0.84 DBOOC SquatRv | squat-reverse on 0.84 axis | hand port | checked-match | 482 calls, 0 mismatches; 5 not checkable | S |
+| 3 | UCF 0.84 Dashback | dashback out of Turn on fast flick | hand port (+ 0.8 `DB.asm` recogniser) | checked-match (a 0.8-form mismatch fixed in de86fec54) | 678 + 175 (lunar2 ...f1243f34) calls, 0 mismatches; 203 not checkable. Fox ...f1239a6e (UCF 0.8): 1 mismatch, 276/276 after the fix | S |
+| 4 | UCF 0.84 Pad Buffer + 1.0 Cardinals | raw stick history, 1.0 on cardinals | hand port | not run (Fighter_procInput not hooked) | its buffer feeds 2, 3, 5, 6, 8, 9, whose matches include it (indirect only) | S |
+| 5 | UCF 0.84 SDI | SDI from pad history | hand port | checked-match | 11,417 calls, 0 mismatches | S |
+| 6 | UCF 0.84 Shield Drop Extended | longer shield-drop window | hand port | checked-match | 255 calls | S |
+| 7 | UCF 0.84 Shield Drop | shield drop on down notch | hand port | checked-match (thin) | 4 calls | S |
+| 8 | UCF 0.84 Shield SDI | shield SDI from pad history | hand port | checked-match | 407 calls | S |
+| 9 | UCF 0.84 Tumble | tumble wiggle-out | hand port | checked-match | 2,139 calls; 9 not checkable (Fighter.dat_attrs) | S |
+| 10 | FreezeGlitchFix | IC freeze glitch (one nop) | hand port (`FREEZE_FIX`) | not checkable | 7 calls, all touch Fighter.dat_attrs (void*) | S |
+| 11 | Init Stage Data | zero 516 bytes of the Ground after alloc | hand port | not run (allocation at stage setup) | none | S |
+| 12 | Reset Castle Wind | reset two stage statics | ported 2026-11-27 | not run (stage setup) | no 3.x Castle game in the run | 3.20 only (absent 3.17 to 3.19) |
+| 13 | Reset Kongo Log Bridge | zero 15 log velocities | ported 2026-11-27 | not run (stage setup) | no 3.x Kongo replay exists | 3.20 only |
+| 14 | Init Player Data | zero the Fighter after alloc | hand port | not run (allocation) | none | S |
+| 15 | BrawlOffscreenDamage | offscreen = outside camera bounds | hand port | checked-match (thin) | 1,333 calls, 0 mismatches; 20,903 not checkable (camera .bss) | S |
+| 16 | FreezeDeadUpFall InitHitVelocity | star-KO fall velocity | hand port | checked-match | 93 calls; 1 not checkable | S |
+| 17 | FreezeDeadUpFall UpdateFallVelocity | gravity on mv | hand port | checked-mismatch, fixed f6a7f2166, rechecked: checked-match | 5 of 94 differed (stfs truncates the double, port rounded); 94/94 after | S |
+| 18 | FreezeDeadUpFall UpdateModelPos | camera-space point to the jobj | hand port | checked-match (thin) | 1,333 calls; 22,667 not checkable (camera .bss) | S |
+| 19 | DesyncProofBGTransformations | FD backdrop think between seed save / restore | hand port (`Slippi_Codes()==2`) | not checkable | `selected_stage` .data read via Stage_80225194 | 3 variants: 3.17, 3.18 and Ishiiruka 3.5.0: plain 04 nop of the call (backdrop frozen, no RNG draw); 3.5.1 and later: the save / restore wrapper |
+| 20 | Stadium CustomZeroBuffer | archive-slot release, skip zero slot | ported 2026-11-27 | not run (file layer) | replay checks only (section 2.1: 41 same, 0 changed) | 3.5.1 and later; absent before |
+| 21 | Stadium GrPsxIsValid | case 1: archive present | ported 2026-11-27 | not checkable | gm_GetCurrentGameMode .bss | 3.5.0 and later |
+| 22 | Stadium IngameCheckIfFrozen | frozen toggle | hand port | not checkable (same as 21) | same | 3.5.0 and later; 3.17/3.18 have FreezeStadium instead (always frozen online) |
+| 23 | Stadium StadiumFileLoad | read + set up the archive inside the call | ported 2026-11-27 | not run (DVD layer) | replay checks only | 3.5.0 and later |
+| 24 | WhispyBlowDirFix | dead fighters ignored by Whispy | hand port | not run (no hook: Rust fn under another name) | none | S |
+| 25 | NanaDeterminism | r5 / r30 = 0 at entry | implicit, unconditional (the v2 behaviour) | not checkable | 126 calls, store into Fighter+0x1FDC | 2 variants: v1 (only r30 = 0) in 3.4.1 to 3.5.1; v2 (r5 and r30 = 0, 95fb888 2025-09-11) from 3.5.2 |
+| 26 | PSCameraIndependentMonitor | monitor test on fixed x / y box | hand port | checked-match | 2,000 calls (hero PS Game_20251031T214231) | S |
+| 27 | PreventWobbling Init Air | wobble counter reset | hand port (`NO_WOBBLE`) | not run (0 calls reached) | none | S |
+| 28 | PreventWobbling Init Ground | wobble counter reset | hand port | checked-match (thin) | 19 calls | S |
+| 29 | PreventWobbling Wobble Check | 4th distinct partner hit breaks the grab | hand port | checked-match (thin) | 6 calls; 358 not checkable (audio .bss) | S |
+
+**Legacy gameplay set of Slippi 3.17 / 3.18** (7 more `[affects-gameplay]` hooks in Ishiiruka 3.4.1 to 3.4.6, gone
+from 3.5.0; not among the 29 of HEAD, and no referee run used them, since the run used d0ce23a's list):
+
+| code | address | what it does | port | verdict | evidence |
+|---|---|---|---|---|---|
+| FreezeStadium (`Online/Core/PreventFileAlarms/FreezeStadium.asm`) | 801D4578 | online PS never transforms (skips the decision) | `frozen-ps` from the replay's Game Start byte; nothing keys on this C2 | not run | replay checks only |
+| Preload Stadium Transformations (Init isLoaded Bool, Load Transformation, GetPreloadedTransition, SkipNormalDecision1, SkipNormalDecision2, Reset isLoaded) | 801D14C8, 801D45EC, 801D460C, 801D4610, 801D4724, 801D4F14 | preload the transformation files at boot | `grpstadium.rs` `PS_PRELOAD_*`, armed from the replay's list | not run | replay checks only |
+
+**Variant gaps in the port.** The engine runs one variant per code: the 3.20 one. Two cases where an older version's
+code is different and the port's equality with it is argued, not checked:
+- FD (19): 3.17, 3.18 and 3.5.0 skip the backdrop think (no RNG use); the port runs it and restores the seed. Equal if
+  the think changes nothing gameplay-relevant besides the seed (it animates the backdrop). Not run on a 3.17 / 3.18 FD
+  replay in this review.
+- Nana (25): v1 leaves r5 as the retail code left it. The port's zero is v2. They differ only in an uninitialised
+  register, which is the bug the code fixes.
+
+**Not in the 29 but gameplay and untagged:** SyncRNG / InitOnlinePlay (e03af7f: 3.20.0 changes the seed to
+fmix32(rotl(F,16) + offset); 3.19.x uses rotl(F,16) + offset). The port has both: the live path 3.20 only, the replay
+path both (section 3). Checked by replay (130 v320 files, 128 no hard desync), not by the referee.
+
+**Score (tier 1 = Slippi 3.x: 3.17, 3.18, 3.19.x, 3.20).**
+- A code counts only with a checked-match referee verdict and one variant across every version that carries it.
+- Counting 2, 3, 5, 6, 7, 8, 9, 15, 16, 17, 18, 26, 28, 29: **14 of 29 = 48%**. All 14 are variant S (same bytes in
+  every Ishiiruka tag), so the check on the 3.20 list covers all versions.
+- Thin cover, counted but flagged: 7 (4 calls), 15 (1,333 of 22,236 calls), 18 (1,333 of 24,000), 28 (19), 29 (6 of
+  364). Without those five: **9 of 29 = 31%**.
+- Over the 36 distinct codes any supported version applies (29 + 7 legacy): 14 of 36 = 39%.
+- The codes with a version-dependent variant (19, 20 to 23, 25, plus 12 and 13 by absence): 0 of 8 checked on any
+  variant.
+
+### 7.3 Open items (every code without a checked-match verdict)
+
+| # | codes | status now | what it would take to check |
+|---|---|---|---|
+| O1 | 1 NeutralSpawn | not run | a referee hook on fn_8016E2BC with the player blocks and spawn tables in the sync table; or a Dolphin-oracle run comparing frame -123 positions with `--codes neutral-spawn` on and off (replays agree indirectly already) |
+| O2 | 4 Pad Buffer + Cardinals | not run | hook Fighter_procInput (large): native-records for the Fighter pad block plus the 0x8046B108 PAD ring; or compare `ftUcf_Pad` with the retail block's output on replay stick streams in a unit harness |
+| O3 | 10 FreezeGlitchFix, 25 Nana (and part of 3, 9) | not checkable (`dat_attrs` void*, a field with no native counterpart) | map Fighter.dat_attrs to the kind's attribute record in remap; give Fighter+0x1FDC a shadow word (referee.md 10.3 per-kind unions) |
+| O4 | 19 FD DesyncProof (3 variants) | not checkable | sync `selected_stage` (.data through Stage_80225194) so the grLast hook runs; then run the nop variant (Ishiiruka 3.4.6 ini via `MELEE_REFEREE_GECKO=ini:`) and the 3.5.1+ wrapper on an FD replay of each version |
+| O5 | 21, 22 Stadium | not checkable | sync gm_GetCurrentGameMode (.bss 0x80479D30) and the gm scene block |
+| O6 | 11, 14 Init Stage / Player Data; 12, 13 Castle / Kongo | not run, not reachable | allocation and stage setup: a loopback run of two games in one process (the codes matter for the second game), comparing the zeroed Ground / Fighter bytes with retail's after the call; needs a Kongo and a Castle 3.20 replay (none in the sets) |
+| O7 | 20, 23 Stadium file hooks | not run | the DVD / lbFile layer is synchronous in the port: compare archive slot state after the call in a harness, or accept replay evidence |
+| O8 | 24 WhispyBlowDirFix | not run | register `ftLib_GetOpponentsDir` under its Rust name in `referee_native!` (the hook is missing, not the function) |
+| O9 | 27 PreventWobbling Init Air | not reached | pick replays with an air chain-grab; count calls of 800DB880 in the slpcheck report |
+| O10 | thin: 7, 15, 18, 28, 29 | thin | sync the camera .bss (0x80452C68, 0x80452F24) and the audio driver; then 15 and 18 gain about 20,000 calls each |
+| O11 | legacy 7 (FreezeStadium + 6 Preload) | not run | run the referee with Ishiiruka 3.4.6's ini on a 3.17 / 3.18 PS replay (same Stadium syncs as O5); also confirm that a 3.17 / 3.18 replay's frozen PS reads as 1 (the engine reads Game Start byte 0x1A2 and ignores C2 801D4578) |
+| O12 | UCF replay block hash 3.17 vs 3.19 | open | decode one 3.17 C2 800C9A44 block (c2939c27ba) and compare with the 3.4.6 ini bytes |
+| O13 | Nana v1, FD nop variants | open | find 3.17 to 3.5.1 replays that hit the Nana situation (Nana DI of a near-zero-knockback throw); FD replays of 3.17 / 3.18 for O4 |
+

@@ -6,10 +6,42 @@ Slippi Dolphin, with the Rust extensions in `Externals/SlippiRustExtensions`). T
 `Data/Sys/GameSettings/GALE01r2.ini` there (generated from `slippi-ssbm-asm`; the ASM sources are **not** in the
 workspace, so the INI is compiled PPC with one `#source.asm` name per entry). Probe tools: `tools/rust-port/slippi/`.
 
-**Caveat on versions.** Most players in late 2026 may still run the Ishiiruka-based Slippi Dolphin 3.x. This clone
-is the mainline client, whose matchmaking is a WebSocket service (`wss://matchmaking.slippi.gg/v1/queue`). The 3.x
-client used an ENet connection to the matchmaking server instead. The server pairs clients by `appVersion`, so we
-have to match whatever version the server accepts on the day. Item 1 of the build plan checks this.
+**Which Dolphin players run (checked 2026-11-28, primary sources).** Players on the stable channel run the
+**Ishiiruka-based Slippi Dolphin 3.x**, not the mainline client this clone is. Evidence:
+- The launcher (`project-slippi/slippi-launcher`, v2.15.2, 2026-10-19; `src/dolphin/manager.ts`,
+  `install/fetch_latest_version.ts`) does not hold a Dolphin URL. It asks Slippi's backend (GraphQL `getLatestDolphin`
+  with `includeBeta`) for the version and the per-OS download URLs. `includeBeta` comes from the `useNetplayBeta`
+  setting, whose default is `false` (`src/settings/default_settings.ts`). Only if the stable URL points into
+  `project-slippi/dolphin` does the launcher treat mainline as "promoted to stable" and install it into `netplay`;
+  until then a mainline beta lives in a separate `netplay-beta` folder. The code for the switch exists; the switch has
+  not been thrown.
+- `project-slippi/dolphin` releases carry this comment in their notes template: "RELEASES FROM DOLPHIN ARE ALWAYS
+  CONSIDERED BETA TO THE BACKEND". Its newest release is `4.0.0-mainline-beta.21` (2026-11-17); the support link is the
+  Discord `#dolphin-beta-support` channel. Beta 1-21 has been out since 2025 (beta 7 is 2025-01-23).
+- `project-slippi/Ishiiruka` newest release: **v3.7.0, 2026-11-17** (before it v3.6.4 2026-06-15, v3.6.0 2026-04-29,
+  v3.5.2 2026-01-14, v3.5.0 2025-08-12, v3.4.4 2025-01-27). Each Ishiiruka release has a mainline beta twin built the
+  same minute (3.7.0 = beta.20, 3.6.4 = beta.19, 3.6.0 = beta.15, 3.5.0 = beta.12). Same features, two channels.
+- I found no official announcement of a switch of the stable channel to mainline (GitHub notes, launcher release notes
+  v2.14.0 to v2.15.2, a web search). Only the stable `getLatestDolphin` answer from Slippi's server would show it
+  directly; I did not query it (no contact with Slippi services).
+- Local install (`...\Slippi Launcher
+etplay\Slippi Dolphin.exe`): the exe has no version resource (empty
+  FileVersion / ProductVersion). It was written 2026-11-17 21:31 local, the day of Ishiiruka 3.7.0; there is no
+  `netplay-beta` folder next to it. So this PC runs the stable channel, which is the Ishiiruka 3.7.0 install. The
+  exact version is inferred from date and channel, not read from the file.
+- Replay spec versions seen in our corpora map to Ishiiruka releases like this (from the `GALE01r2.ini` of each tag,
+  compared with the replay version in ssbm-asm `Recording/Recording.s`): spec 3.17 = Ishiiruka 3.4.1-3.4.3, 3.18 =
+  3.4.4-3.4.6, 3.19.0 = 3.5.0-3.5.2, 3.19.1 = 3.6.0-3.6.4, 3.20.0 = 3.7.0. Matchmaking is by `appVersion`, so players
+  on 3.7.0 only meet players on 3.7.0 (the 3.7.0 notes: "users need to update before they can play").
+
+**Answer for the plan.** Players today (since 2026-11-17) are on Ishiiruka 3.7.0, with the mainline beta.20/21 as an
+opt-in beta twin of the same code. The clone in `_build/dolphin-oracle` (0653df819) is mainline of the same family.
+Both speak the same protocol and run the same ssbm-asm codes, so a **second harness peer based on Ishiiruka is not
+needed for correctness**; the mainline-based peer is the right oracle, as long as its ssbm-asm / appVersion is the
+3.7.0 one (d0ce23a). It is worth one live Ishiiruka 3.7.0 check before the first public match, since that is what the
+stable-channel players run (its transport and matchmaking are the same as beta.20 per the 3.7.0 notes; I did not read
+Ishiiruka's source). The old line "ENet matchmaking in 3.x" no longer holds for 3.7.0: its notes list "New
+websocket-based matchmaking service", the same as the mainline client.
 
 ## Summary: the answer in five lines
 

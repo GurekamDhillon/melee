@@ -351,7 +351,7 @@ impl NetDriver {
                 Compare::Soft => mr.soft += 1,
                 Compare::Hard => {
                     mr.hard += 1;
-                    crate::play_net::desync_report(&tag, fr, lv, rv, mr.hard as u64, 0);
+                    crate::play_net::desync_report(&tag, fr, lv, rv, mr.hard as u64, online(s.current_frame()), &s.stats, &|| g.slippi.as_ref().map_or(String::new(), |sl| crate::desynccap::bits_text(sl.mixed.iter().map(|(a, b)| (*a, *b)))));
                 }
             }
         }

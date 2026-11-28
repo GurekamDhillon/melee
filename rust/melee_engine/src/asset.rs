@@ -230,15 +230,14 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Result<Plan, NoPlan> {
     let t0 = std::time::Instant::now();
     let _sys = crate::arena::SysScope::enter();
     let slot = recheap::take_slot().ok_or(NoPlan::NoSlot)?;
-    let lo = recheap::slot_base(slot);
-    let raw = lo + 0x1000;
     let len = file.len();
-    if !recheap::commit(raw, len) {
+    // the image, and every page up to the first block byte, committed (recheap::place_image)
+    let Some((raw, data_lo)) = recheap::place_image(slot, len) else {
         recheap::release_slot(slot);
         return Err(NoPlan::NoSlot);
-    }
+    };
     unsafe { core::ptr::copy_nonoverlapping(file.as_ptr(), raw as *mut u8, len) };
-    let mut rec = Box::new(Rec::new(slot, raw + len + 0x1000));
+    let mut rec = Box::new(Rec::new(slot, data_lo));
     let outp;
     let resolved;
     let grkind_used;

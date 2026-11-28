@@ -47,8 +47,14 @@ pub const SCENE_VS: u8 = 2;
 /// Allocator / renderer modes a run that snapshots the engine needs (and a replay of such a run repeats).
 pub fn prepare_rollback_run() {
     melee_engine::arena::set_trim(false);
-    // GX decode may run on its thread (Nov 23): the render state is off the snapshot since Nov 16 (gxbridge), and the
-    // thread's jobs wait out each save / load (arena::bg_job_begin). MELEE_GX_SYNC=1 still keeps it in the tick.
+    // GX decode stays in the tick in rollback runs. The Nov 23 off-thread decode (05170ab54, committed as "NOT
+    // merge-ready": a snapshot check failed after a load) flickered in the owner's online fights only (2026-11-27;
+    // offline clean, MELEE_GX_SYNC=1 online clean). Kept off until that blocker is solved; MELEE_GX_SYNC=0 opts back in.
+    if std::env::var_os("MELEE_GX_SYNC").map_or(true, |v| v != "0") {
+        std::env::set_var("MELEE_GX_SYNC", "1");
+    } else {
+        std::env::remove_var("MELEE_GX_SYNC");
+    }
     // the sound is game state (a static, its buffers in the arena) a load restores: the mix stays on the game thread
     // (the mixer thread would hold the sound's lock while a snapshot copies it)
     std::env::set_var("MELEE_AUDIO_GAME_THREAD", "1");

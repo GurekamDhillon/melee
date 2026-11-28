@@ -51,6 +51,8 @@ struct State {
     ended: bool,
     /// the first Soft's directory and its report, waiting for the game's end (to write the whole match)
     soft: Option<Event>,
+    /// the remote player's Melee Unlocked build message (0xE0): (one-line text, `peer_build` JSON). None: none came
+    peer_build: Option<(String, String)>,
     jobs: Vec<std::thread::JoinHandle<()>>,
     /// directory names claimed in this process but maybe not yet written by their worker. Kept here (system heap behind
     /// `ST`) and not in a static of its own: a rollback load rewinds every writable static, and a rewound Vec header is a
@@ -79,6 +81,39 @@ fn st() -> &'static Mutex<State> {
             drop(unsafe { Box::from_raw(b) });
             unsafe { &*p }
         }
+    }
+}
+
+/// Make the netplay client report a peer's 0xE0 build message here (once per process, from `main`).
+pub fn install_hook() {
+    let _ = melee_net::slippi::BUILD_HOOK.set(note_peer_build);
+}
+
+fn note_peer_build(port: u8, pb: &melee_net::slippi::PeerBuild) {
+    let _sys = melee_engine::arena::SysScope::enter();
+    let text = pb.describe();
+    eprintln!("slippi: opponent (port {port}): {text}");
+    let caps = pb.capability_names().iter().map(|c| format!("\"{c}\"")).collect::<Vec<_>>().join(", ");
+    let json = format!(
+        "{{\"engine\": \"{}\", \"message_version\": {}, \"mod_view\": {}, \"mod\": {}, \"fingerprint_prefix\": {}, \"capabilities\": [{caps}], \"truncated\": {}, \"text\": \"{}\"}}",
+        if pb.static_engine() { "static_recomp" } else { "source_port" },
+        pb.version,
+        pb.mod_view,
+        if pb.mod_view { format!("\"{}\"", esc(&pb.name)) } else { "null".into() },
+        if pb.mod_view { format!("\"{}\"", esc(&pb.fingerprint.chars().take(16).collect::<String>())) } else { "null".into() },
+        pb.truncated,
+        esc(&text)
+    );
+    if let Ok(mut s) = st().lock() {
+        s.peer_build = Some((text, json));
+    }
+}
+
+/// The peer's build as one line for the netplay summary: its 0xE0 message, or a note that none came.
+pub fn peer_build_line() -> String {
+    match st().lock().ok().and_then(|s| s.peer_build.clone()) {
+        Some((t, _)) => t,
+        None => "no Melee Unlocked build message (stock Slippi Dolphin or another client)".into(),
     }
 }
 
@@ -202,6 +237,7 @@ fn build_report(s: &State, kind: Compare, tag: &str, fr: i32, lv: u32, rv: u32, 
     put("remote_checksum", format!("\"{rv:08x}\""));
     put("build_id", format!("\"{}\"", esc(&format!("melee-rust {} {:015x}", melee_core::VERSION, crate::play_net::build_hash()))));
     put("engine_version", format!("\"{}\"", esc(melee_core::VERSION)));
+    put("peer_build", s.peer_build.as_ref().map_or("null".into(), |p| p.1.clone()));
     put("slippi_app_version", if s.app_version.is_empty() { "null".into() } else { format!("\"{}\"", esc(&s.app_version)) });
     if let Some(m) = &s.info {
         let mut p = String::from("[");

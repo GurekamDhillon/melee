@@ -921,6 +921,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     cl.disconnect(0);
     eprintln!("melee: {tag}: tick wake lateness mean {} us, max {} us over {ticks} ticks", late_sum / ticks.max(1) as u64, late_max);
     eprintln!("melee: {tag}: tick work (poll + sim + send) mean {} us, max {} us; after the first 200 ticks max {fight_max} us, {fight_slow} over 16 ms", work_sum / ticks.max(1), work_max);
+    eprintln!("melee: {tag}: peer: {}", crate::desynccap::peer_build_line());
     let last = finals.keys().next_back().copied().unwrap_or(0);
     eprintln!(
         "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; start hold {} ticks; time sync held {} advanced {}{}; ping {} us (pad acks {} us); pads sent {} received {}; enet resent {}",

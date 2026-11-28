@@ -525,6 +525,7 @@ fn main() -> ExitCode {
     code
 }
 fn main_inner() -> ExitCode {
+    crate::desynccap::install_hook();
     // Packaging: `melee --write-snapmask` writes MELEE_SNAP_CHECK's host-only span list beside the exe from its PDB
     // (snapmask.rs), so a packaged exe carries the mask without shipping the PDB. Nothing else runs.
     if std::env::args().nth(1).as_deref() == Some("--write-snapmask") {

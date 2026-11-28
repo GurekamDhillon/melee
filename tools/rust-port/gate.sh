@@ -55,12 +55,22 @@ exe="${CARGO_TARGET_DIR:-$repo/build/cargo}/$profile/melee.exe"
 tmp="${TEMP:-${TMPDIR:-/tmp}}/gate.$$"
 mkdir -p "$tmp" 2>/dev/null && : > "$tmp/.probe" 2>/dev/null || { tmp="$repo/build/tmp/gate.$$"; mkdir -p "$tmp"; }
 fail=0
+# A commit whose subject says it is not ready (WIP / "NOT merge-ready") must not reach rust-port: 05170ab54 did
+# (2026-11-23) and made online fights flicker. Checked against the upstream rust-port when it is known.
+base=$(git rev-parse -q --verify pub/rust-port 2>/dev/null || git rev-parse -q --verify origin/rust-port 2>/dev/null)
+if [ -n "$base" ]; then
+  wip=$(git log --format='%h %s' "$base"..HEAD 2>/dev/null | grep -i -E 'not merge-ready|not merge ready|^[0-9a-f]+ (WIP|DO NOT MERGE)' || true)
+  if [ -n "$wip" ]; then echo "FAIL wip: commits marked not merge-ready are on this branch:"; echo "$wip"; fail=1; fi
+fi
 if [ $build = 1 ]; then
   if [ "$profile" = release ]; then
     (cd rust && set -o pipefail && CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 cargo build -p melee --release 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
   else
     (set -o pipefail && bash tools/rust-port/cargo_fast.sh build -p melee --profile "$profile" 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
   fi
+  # Owner and release builds use `--features real-net` (Slippi's wss matchmaking, P2P); code behind it compiles only
+  # with it, so a signature change can break it unseen (2026-11-27, mu_play.rs). Type-check it on every gate.
+  (cd rust && set -o pipefail && cargo check -p melee --features real-net 2>&1 | tail -2) || { echo "FAIL build: cargo check -p melee --features real-net failed"; fail=1; }
 fi
 # again after the build: on a fresh Linux tree neither name existed above, so `melee.exe` was kept
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"

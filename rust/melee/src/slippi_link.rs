@@ -19,6 +19,15 @@ use std::time::{Duration, Instant};
 
 /// The menu process is keeping a link for the match process.
 static KEEPING: AtomicBool = AtomicBool::new(false);
+/// The IPv4 address the Slippi pairing bound its netplay socket to (`slippi_np::pair`: 127.0.0.1 unless `--mm-real` /
+/// `--mm-lan`, then 0.0.0.0). A set's link is re-bound at this address when it is handed back between games, so a
+/// loopback set never opens a socket on every interface (the Windows Firewall prompt, Nov 27 dolphinpeer). 0 until a
+/// pairing ran in this process (the old behaviour).
+static BIND_IP: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+pub fn set_bind_ip(ip: u32) {
+    BIND_IP.store(ip, Ordering::SeqCst);
+}
 
 /// How long the menu process keeps the link for the match process to take it.
 const KEEP_SECONDS: u64 = 120;
@@ -81,7 +90,7 @@ pub fn hand_back(cl: Client) -> Result<String, String> {
     std::thread::spawn(move || {
         let t0 = Instant::now();
         let udp = loop {
-            match melee_net::transport::UdpTransport::open(0, port) {
+            match melee_net::transport::UdpTransport::open(BIND_IP.load(Ordering::SeqCst), port) {
                 Ok(u) => break u,
                 Err(e) if t0.elapsed() > Duration::from_secs(5) => return drop(tx.send(Err(format!("bind: {e}")))),
                 Err(_) => std::thread::sleep(Duration::from_millis(5)),

@@ -273,6 +273,7 @@ fn pair_with(args: &[String], max_s: u64, stop: Option<&std::sync::atomic::Atomi
     // Windows host, two LAN boxes): ws:// to a private literal IPv4, sockets bound to every interface
     let lan = !real && args.iter().any(|a| a == "--mm-lan");
     let bind_ip: u32 = if real || lan { 0 } else { 0x7F000001 };
+    crate::slippi_link::set_bind_ip(bind_ip);
     let (decider, local_port, remote_port, peer, opp_code, fallback) = if let Some(url) = arg(args, "--mm") {
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));

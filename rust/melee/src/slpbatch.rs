@@ -32,7 +32,7 @@ fn out_name(root: Option<&str>, f: &str) -> (String, String) {
         None => fs.clone(),
     };
     let b = rel.replace('/', "_");
-    let b = b.strip_suffix(".slp").map(str::to_string).unwrap_or(b);
+    let b = b.strip_suffix(".slp").or_else(|| b.strip_suffix(".slpz")).map(str::to_string).unwrap_or(b);
     (rel, b)
 }
 

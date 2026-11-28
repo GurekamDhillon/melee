@@ -621,3 +621,73 @@ mod tests {
         assert!(s.post[0].state_frame.is_none() && s.post[0].hitlag.is_none() && s.post[0].airborne.is_none());
     }
 }
+
+/// Whether `d` is a compressed `.slpz` (slpz crate, format version 0), judged by its 24-byte header and not the
+/// extension: a `.slp` starts with the UBJSON `{U`, an `.slpz` with version 0 and six ascending section offsets
+/// (event sizes, game start, metadata, compressed events) inside the file.
+pub fn is_slpz(d: &[u8]) -> bool {
+    if d.len() < 24 || d.starts_with(b"{U") {
+        return false;
+    }
+    let w = |i: usize| u32::from_be_bytes([d[i], d[i + 1], d[i + 2], d[i + 3]]) as usize;
+    w(0) == 0 && 24 <= w(4) && w(4) <= w(8) && w(8) <= w(12) && w(12) <= w(16) && w(16) <= d.len()
+}
+
+/// Replay file bytes as `.slp` bytes: an `.slpz` is decompressed, anything else is returned unchanged. Every reader
+/// of a replay file goes through this (or `read_replay`), so `.slpz` works wherever `.slp` does.
+pub fn to_slp(d: Vec<u8>) -> Result<Vec<u8>, String> {
+    if !is_slpz(&d) {
+        return Ok(d);
+    }
+    let mut dc = slpz::Decompressor::new().ok_or("slpz: no decompressor")?;
+    slpz::decompress(&mut dc, &d).map_err(|e| format!("slpz: {e:?}"))
+}
+
+/// Reads a replay file (`.slp` or `.slpz`, by content) as `.slp` bytes.
+pub fn read_replay(path: impl AsRef<std::path::Path>) -> std::io::Result<Vec<u8>> {
+    let path = path.as_ref();
+    to_slp(std::fs::read(path)?).map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{}: {e}", path.display())))
+}
+
+/// `.slp` bytes as `.slpz` (compression level 3, the crate's default). Tests and the pack example; the engine only writes `.slp`.
+pub fn compress_slp(slp: &[u8]) -> Result<Vec<u8>, String> {
+    let mut c = slpz::Compressor::new(3).ok_or("slpz: no compressor")?;
+    slpz::compress(&mut c, slp).map_err(|e| format!("slpz: {e:?}"))
+}
+
+#[cfg(test)]
+mod slpz_tests {
+    use super::*;
+
+    /// A minimal valid .slp: header, event payloads (0x35: 3 events), Game Start, one Pre-frame, Game End, metadata.
+    fn tiny() -> Vec<u8> {
+        let mut raw = vec![0x35, 10];
+        for (c, n) in [(0x36u8, 4u16), (0x38, 3), (0x39, 1)] {
+            raw.push(c);
+            raw.extend_from_slice(&n.to_be_bytes());
+        }
+        raw.extend_from_slice(&[0x36, 1, 2, 3, 4, 0x38, 9, 8, 7, 0x39, 2]);
+        let mut d = b"{U\x03raw[$U#l".to_vec();
+        d.extend_from_slice(&(raw.len() as u32).to_be_bytes());
+        d.extend_from_slice(&raw);
+        d.extend_from_slice(b"U\x08metadata{U\x07startAtSU\x141970-01-01T00:00:00Z}}");
+        d
+    }
+
+    #[test]
+    fn slpz_round_trip() {
+        let slp = tiny();
+        assert!(!is_slpz(&slp));
+        let z = compress_slp(&slp).expect("compress");
+        assert!(is_slpz(&z));
+        assert_eq!(to_slp(z).expect("decompress"), slp);
+        assert_eq!(to_slp(slp.clone()).unwrap(), slp);
+    }
+
+    #[test]
+    fn slpz_garbage_is_not_slpz() {
+        assert!(!is_slpz(&[0u8; 10]));
+        assert!(!is_slpz(&[0u8; 40])); // version 0 but offsets below the header
+        assert!(to_slp(b"not a replay".to_vec()).is_ok());
+    }
+}

@@ -101,7 +101,7 @@ def main():
 
     with ThreadPoolExecutor(jobs) as ex:
         res = list(ex.map(scenario, runs))
-        reps = sorted(Path(arg("--replays")).glob("*.slp")) if arg("--replays") else []
+        reps = sorted([*Path(arg("--replays")).glob("*.slp"), *Path(arg("--replays")).glob("*.slpz")]) if arg("--replays") else []
         res += list(ex.map(replay, reps))
     failed = [n for n, rc in res if rc]
 

@@ -70,7 +70,7 @@ pub fn desync_replay(args: &[String]) -> ExitCode {
         eprintln!("desync-replay: {}: no readable report.json", dir.display());
         return ExitCode::from(2);
     };
-    let Ok(slp) = std::fs::read(dir.join("desync.slp")) else {
+    let Ok(slp) = melee_data::slp::read_replay(dir.join("desync.slp")) else {
         eprintln!("desync-replay: {}: no desync.slp (the capture had no recording)", dir.display());
         return ExitCode::from(2);
     };

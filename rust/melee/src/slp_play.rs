@@ -26,14 +26,20 @@ fn log(m: &str) {
     eprintln!("slpplay: {m}");
 }
 
-/// A Slippi replay: the `.slp` extension, else the file's UBJSON start (`{U\x03raw[$U#l`).
+/// A Slippi replay: the `.slp` / `.slpz` extension, else the file's UBJSON start (`{U\x03raw[$U#l`) or an `.slpz` header.
 pub fn is_slp(path: &str) -> bool {
-    if std::path::Path::new(path).extension().is_some_and(|e| e.eq_ignore_ascii_case("slp")) {
+    if std::path::Path::new(path).extension().is_some_and(|e| e.eq_ignore_ascii_case("slp") || e.eq_ignore_ascii_case("slpz")) {
         return true;
     }
     use std::io::Read;
-    let mut head = [0u8; 6];
-    std::fs::File::open(path).and_then(|mut f| f.read_exact(&mut head)).is_ok() && &head == b"{U\x03raw"
+    let mut head = [0u8; 24];
+    let n = std::fs::File::open(path).and_then(|mut f| f.read(&mut head)).unwrap_or(0);
+    head[..n].starts_with(b"{U\x03raw")
+        || (n == 24 && {
+            let w = |i: usize| u32::from_be_bytes([head[i], head[i + 1], head[i + 2], head[i + 3]]);
+            // the slpz header (melee_data::slp::is_slpz) without the file length: version 0, ascending offsets
+            w(0) == 0 && 24 <= w(4) && w(4) <= w(8) && w(8) <= w(12) && w(12) <= w(16)
+        })
 }
 
 /// golden's CSV header (main.rs `golden_engine`).
@@ -109,7 +115,7 @@ impl SlpPlay {
             return true;
         }
         l.checked = Instant::now();
-        let data = std::fs::read(&l.path).unwrap_or_default();
+        let data = melee_data::slp::read_replay(&l.path).unwrap_or_default();
         if data.len() != l.len {
             l.len = data.len();
             l.changed = Instant::now();
@@ -315,7 +321,7 @@ pub fn play(args: &[String], path: &str) -> ExitCode {
         }
     };
     let last_frame = pl.r.last;
-    let live = std::fs::read(path).ok().filter(|d| in_progress(d)).map(|d| {
+    let live = melee_data::slp::read_replay(path).ok().filter(|d| in_progress(d)).map(|d| {
         log("live: the file is still being written; it plays as it grows (Watch live)");
         Live { path: path.to_string(), len: d.len(), changed: Instant::now(), checked: Instant::now() }
     });

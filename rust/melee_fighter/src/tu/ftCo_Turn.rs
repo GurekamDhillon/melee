@@ -206,6 +206,7 @@ pub fn ftCo_Turn_Ucf084Dashback(f: &mut Fighter) {
 
 pub fn ftCo_Turn_IASA(g: G) {
     melee_core::ct!("ftCo_Turn_IASA");
+    melee_core::referee_native!(ftCo_Turn_IASA, [R(g, "HSD_GObj")], v, ftCo_Turn_IASA(g));
     {
         let f = fp(g);
         let (just, has, x1c) = unsafe { (f.mv.co.turn.just_turned, f.mv.co.turn.has_turned, f.mv.co.turn.x1C) };

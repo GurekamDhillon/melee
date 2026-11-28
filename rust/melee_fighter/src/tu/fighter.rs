@@ -1226,6 +1226,7 @@ fn blend_arg(anim_blend: f32, row: u8) -> f32 {
 /// `Fighter_ChangeMotionState`: enter motion state `msid`.
 pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_start: f32, mut anim_speed: f32, anim_blend: f32, mut arg3: G) {
     melee_core::ct!("Fighter_ChangeMotionState");
+    melee_core::referee_boundary!(Fighter_ChangeMotionState, [R(g, "HSD_GObj"), I(msid), I(flags), F(anim_start), F(anim_speed), F(anim_blend), R(arg3, "HSD_GObj")]);
     use ext as e;
     let jobj = jobj_of(g);
     let fp = fpm(g);

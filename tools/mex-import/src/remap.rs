@@ -248,11 +248,41 @@ pub struct GuestSpace {
     pub ptr_native: Option<fn(&GuestSpace, u32, &'static str) -> Option<usize>>,
     /// Native objects the space made itself (`materialize`).
     owned: Vec<Box<[u64]>>,
+    /// Undo journal (the DOL referee's native-records mode): every host byte a store changes, (native address, the
+    /// byte before, guest address), in store order. None (the default): stores are not journaled.
+    pub journal: Option<Vec<(usize, u8, u32)>>,
+    /// Stores that landed in a native region's padding shadow (no native byte): counted, not journaled.
+    pub pad_stores: u32,
 }
 
 impl GuestSpace {
     pub fn new() -> GuestSpace {
-        GuestSpace { layouts: Layouts::new(), regions: vec![], next: AUTO_BASE, trace: None, ptr_override: HashMap::new(), fn_native: None, fn_guest: None, void_pointee: None, ptr_native: None, owned: Vec::new() }
+        GuestSpace { layouts: Layouts::new(), regions: vec![], next: AUTO_BASE, trace: None, ptr_override: HashMap::new(), fn_native: None, fn_guest: None, void_pointee: None, ptr_native: None, owned: Vec::new(), journal: None, pad_stores: 0 }
+    }
+
+    /// Drop every region and override (the hooks and the layouts stay): a fresh space for the next run.
+    pub fn clear(&mut self) {
+        self.regions.clear();
+        self.ptr_override.clear();
+        self.next = AUTO_BASE;
+        self.owned.clear();
+        self.journal = None;
+        self.pad_stores = 0;
+    }
+
+    /// Is `ea..ea+n` inside a registered region (no auto-registration)?
+    pub fn covers(&self, ea: u32, n: u32) -> bool {
+        self.find(ea, n).is_ok()
+    }
+
+    /// Journal `n` host bytes at `p` (guest address `ea`) before a store changes them.
+    fn note(&mut self, p: *const u8, n: usize, ea: u32) {
+        if let Some(j) = &mut self.journal {
+            for k in 0..n {
+                // SAFETY: the caller is about to write these bytes (a live host object or buffer).
+                j.push((p as usize + k, unsafe { *p.add(k) }, ea.wrapping_add(k as u32)));
+            }
+        }
     }
 
     /// Plain guest memory at `base` (code, stack, mod data).
@@ -584,13 +614,18 @@ impl GuestSpace {
                 return Ok(());
             }
             Backing::Words { ptr } => {
+                let ptr = *ptr;
                 for k in 0..n {
+                    let q = unsafe { ptr.add(((o + k) ^ 3) as usize) };
+                    self.note(q, 1, ea + k);
                     // SAFETY: add_words' contract.
-                    unsafe { *ptr.add(((o + k) ^ 3) as usize) = (v >> (8 * (n - 1 - k))) as u8 };
+                    unsafe { *q = (v >> (8 * (n - 1 - k))) as u8 };
                 }
                 return Ok(());
             }
             Backing::Raw { ptr } => {
+                let ptr = *ptr;
+                self.note(unsafe { ptr.add(o as usize) }, n as usize, ea);
                 for k in 0..n {
                     // SAFETY: add_raw's contract.
                     unsafe { *ptr.add((o + k) as usize) = (v >> (8 * (n - 1 - k))) as u8 };
@@ -625,6 +660,7 @@ impl GuestSpace {
             };
             let base = self.regions[i].base;
             self.ptr_override.remove(&(base, o));
+            self.note(unsafe { ptr.add(nat) }, core::mem::size_of::<usize>(), ea);
             // SAFETY: add_native's contract.
             unsafe { (ptr.add(nat) as *mut usize).write_unaligned(p) };
             return Ok(());
@@ -638,9 +674,16 @@ impl GuestSpace {
             let byte = (v >> (8 * (n as usize - 1 - k))) as u8;
             match l {
                 // SAFETY: add_native's contract.
-                Loc::Byte(b) => unsafe { *ptr.add(b) = byte },
-                Loc::Bool(b) => unsafe { *ptr.add(b) = (byte != 0) as u8 },
+                Loc::Byte(b) => {
+                    self.note(unsafe { ptr.add(b) }, 1, ea + k as u32);
+                    unsafe { *ptr.add(b) = byte }
+                }
+                Loc::Bool(b) => {
+                    self.note(unsafe { ptr.add(b) }, 1, ea + k as u32);
+                    unsafe { *ptr.add(b) = (byte != 0) as u8 }
+                }
                 Loc::Pad => {
+                    self.pad_stores += 1;
                     if let Backing::Native { shadow, .. } = &mut self.regions[i].backing {
                         shadow[o as usize + k] = byte;
                     }

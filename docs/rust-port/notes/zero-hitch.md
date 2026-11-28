@@ -874,3 +874,23 @@ where every remaining offender is match start (tick 1) or the pre-GO ticks under
 rollback window; 30 and 60 ms clean in the rollback window both ways. Left: the shown netplay frame still decodes GX on
 the game thread (~60% of it; `prepare_rollback_run` keeps MELEE_GX_SYNC since 2026-11-03, before the GX state moved to the
 system heap on 2026-11-16, so the decode thread may now be safe for rollback runs: unverified).
+
+### Recording-heap gap page and warm-pass helpers (2026-11-27, port/crashfix)
+- Owner crash 18:50 (attract demo loop, offline, tick 41381, asset-worker thread): access violation writing slot 21
+  +0x80000 of the recording heap. Symbolised against a1cfbaf89 rebuilt `--release --features real-net` (same size as the
+  crashed exe, 46 860 288 bytes; every frame resolves coherently): `asset::worker_main` -> `asset::prepare` ->
+  `recheap::take_slot` -> `sys::zero_slot_range` (memset; the report's "memmove" was the nearest vcruntime export).
+- Cause: `prepare` committed the raw image only to the 256 KB step after it (`commit(raw, len)`), while the blocks began
+  one page past the image (`Rec::new(slot, raw + len + 0x1000)`). An image ending within 4 KB below a step (len
+  0x7E001..=0x7F000 for the step at +0x80000) left the page at the step uncommitted, but the recording's dirty mark
+  (`committed - lo`) covered it; the slot's next taker zeroed `[0, dirty)` and faulted on that page. Windows only (Linux
+  zeroes by dropping pages).
+- Fix: `recheap::place_image` commits everything below the first block byte; `take_slot` commits `[0, dirty)` before
+  zeroing (a no-op on committed pages), so no dirty-mark error can fault again. Tests: `recheap::tests` (the old layout
+  faults with exit 139 without the take_slot guard). Crash reports now name the faulting thread and, for an address in
+  the recording heap, its slot and offset.
+- Warm pass: helpers inherited MELEE_LOG_FILE (their whole sessions landed in the player's log) and opened the GC adapter
+  whenever the game window was in the background (the adapter is released there); the game's reclaim on focus then
+  failed "CreateFile failed (error 5)" until the helper's match ended (twice on Nov 27). Helpers now get
+  MELEE_PAD_IGNORE_ADAPTER=1, MELEE_INPUT=n, MELEE_WINDOW_UNFOCUSED=1 and their own log (`<log stem>-warm.log`, emptied
+  per pass, or none without a parent log); the parent logs each helper's start (pid) and exit.

@@ -279,6 +279,15 @@ pub fn take_slot() -> Option<usize> {
             let d = s.dirty[free].swap(0, AcqRel);
             if d > 0 {
                 let t0 = std::time::Instant::now();
+                // Commit before zeroing: `dirty` is a high-water mark, not a page map, and a page under it can be
+                // uncommitted (the page between a prepare's raw image and its first block when the image's commit
+                // ended on the 256 KB step just below it: the zeroing wrote into it and faulted, Nov 27 crash at slot
+                // +0x80000). Committing pages that already are is a no-op; a newly committed one reads zero.
+                if !unsafe { sys::commit(s.base + free * SLOT, d) } {
+                    s.dirty[free].fetch_max(d, AcqRel);
+                    s.used.fetch_and(!(1u64 << free), AcqRel);
+                    return None;
+                }
                 unsafe { sys::zero_slot_range(s.base + free * SLOT, d) };
                 if crate::arena::rb_diag() {
                     crate::arena::rb_diag_log("recheap take_slot zero (KB)", d >> 10, t0.elapsed().as_micros() as u64);
@@ -379,11 +388,35 @@ pub fn commit(at: usize, n: usize) -> bool {
     unsafe { sys::commit(a, b - a) }
 }
 
+/// Place a raw file image of `len` bytes in `slot`: commits the slot from its start up to the first block byte and
+/// returns (image start, first block byte) for [`Rec::new`]. Every page below the second value is committed, so the
+/// recording's dirty mark ([`end_recording`]) never covers an uncommitted page. Before, the image's commit ended at the
+/// 256 KB step after the image while the blocks began one page past the image: for an image ending within 4 KB below
+/// a step, the page at the step was never committed, and the slot's next taker faulted zeroing it ([`take_slot`]).
+pub fn place_image(slot: usize, len: usize) -> Option<(usize, usize)> {
+    let lo = slot_base(slot);
+    if lo == 0 {
+        return None;
+    }
+    let raw = lo + 0x1000;
+    let data_lo = Rec::data_start(raw + len + 0x1000);
+    if data_lo > lo + SLOT - META || !commit(lo, data_lo - lo) {
+        return None;
+    }
+    Some((raw, data_lo))
+}
+
 impl Rec {
     /// A recording into `slot` whose blocks start at `data_lo` (inside the slot, already past whatever the caller put there).
+    /// The page-aligned first block byte [`Rec::new`] makes of `data_lo`.
+    pub fn data_start(data_lo: usize) -> usize {
+        (data_lo + 0xFFF) & !0xFFF
+    }
+    /// The recording's dirty mark starts at `data_lo`: the caller has committed every page of the slot below it
+    /// ([`place_image`]).
     pub fn new(slot: usize, data_lo: usize) -> Rec {
         let lo = slot_base(slot);
-        let data_lo = (data_lo + 0xFFF) & !0xFFF;
+        let data_lo = Rec::data_start(data_lo);
         let ev = lo + SLOT - META / 2;
         Rec { slot, lo, data_lo, bump: data_lo, committed: data_lo, meta: (lo + SLOT - META) as *mut Blk, n: 0, meta_committed: lo + SLOT - META, ev: ev as *mut u64, nev: 0, ev_committed: ev }
     }
@@ -610,4 +643,74 @@ pub fn poisoned_writes(r: &Rec) -> Vec<(usize, usize, usize, [u8; 8])> {
         }
     }
     v
+}
+
+/// The slot and offset of `p` when it lies in the recording range (crash reports).
+pub fn locate(p: usize) -> Option<(usize, usize)> {
+    let s = state()?;
+    (p >= s.base && p < s.base + SLOT * NSLOT).then(|| ((p - s.base) / SLOT, (p - s.base) % SLOT))
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+
+    static ONE_AT_A_TIME: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    /// The Nov 27 crash. The old prepare layout (image commit rounded to 256 KB, blocks from one page past the image)
+    /// left the page at the step uncommitted under the dirty mark when the image ended within 4 KB below a step; the
+    /// next `take_slot` of that slot zeroed it and faulted (write to slot +0x80000 for a 0x7E001..=0x7F000 byte image).
+    #[test]
+    fn slot_reuse_after_an_image_ending_below_a_commit_step() {
+        let _g = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
+        assert!(init());
+        for len in [0x7E001usize, 0x7E800, 0x7F000, 0x3E400, 0x40000, 0x1234] {
+            // the old layout on purpose: take_slot must survive the dirty mark it leaves
+            let slot = take_slot().expect("slot");
+            let lo = slot_base(slot);
+            let raw = lo + 0x1000;
+            assert!(commit(raw, len));
+            unsafe { core::ptr::write_bytes(raw as *mut u8, 0xA5, len) };
+            let mut rec = Box::new(Rec::new(slot, raw + len + 0x1000));
+            unsafe { begin_recording(&mut *rec) };
+            let p = unsafe { alloc(Layout::from_size_align(64, 8).unwrap()) };
+            assert!(!p.is_null());
+            unsafe { p.write_bytes(0x5A, 64) };
+            end_recording();
+            let end = rec.committed;
+            release_slot(slot);
+            // lowest free slot first: the same one, its dirty range zeroed (gap page included)
+            let again = take_slot().expect("slot");
+            assert_eq!(again, slot, "len {len:#x}");
+            let z = unsafe { core::slice::from_raw_parts(lo as *const u8, end - lo) };
+            assert!(z.iter().all(|&b| b == 0), "len {len:#x}: slot not zero after reuse");
+            release_slot(again);
+        }
+    }
+
+    /// [`place_image`] commits every byte below the first block byte.
+    #[test]
+    fn place_image_commits_through_the_first_block() {
+        let _g = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
+        assert!(init());
+        for len in [0x7E001usize, 0x7F000, 0x3EFFF, 0x3F000, 0x40000, 1] {
+            let slot = take_slot().expect("slot");
+            let lo = slot_base(slot);
+            let (raw, data_lo) = place_image(slot, len).expect("place");
+            assert_eq!(raw, lo + 0x1000);
+            assert!(data_lo >= raw + len + 0x1000 && data_lo & 0xFFF == 0);
+            // faults on an uncommitted page
+            unsafe { core::ptr::write_bytes(lo as *mut u8, 0x11, data_lo - lo) };
+            let mut rec = Box::new(Rec::new(slot, data_lo));
+            assert_eq!(rec.data_lo, data_lo);
+            unsafe { begin_recording(&mut *rec) };
+            end_recording();
+            release_slot(slot);
+            let again = take_slot().expect("slot");
+            release_slot(again);
+        }
+        let b = slot_base(3);
+        assert_eq!(locate(b + 0x80000), Some((3, 0x80000)));
+        assert_eq!(locate(0x1000), None);
+    }
 }

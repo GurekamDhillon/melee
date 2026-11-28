@@ -577,6 +577,7 @@ fn install_fault_handler() {
         fn SetUnhandledExceptionFilter(f: Option<unsafe extern "system" fn(*mut ExceptionPointers) -> i32>) -> *mut core::ffi::c_void;
         fn RtlCaptureStackBackTrace(skip: u32, count: u32, frames: *mut *mut core::ffi::c_void, hash: *mut u32) -> u16;
         fn GetCurrentThreadStackLimits(low: *mut usize, high: *mut usize);
+        fn GetCurrentThreadId() -> u32;
     }
     unsafe extern "system" fn filter(p: *mut ExceptionPointers) -> i32 {
         use core::fmt::Write as _;
@@ -609,6 +610,14 @@ fn install_fault_handler() {
         };
         let fault = &mut *core::ptr::addr_of_mut!(FAULT);
         let _ = write!(fault, "exception code:  0x{:08X}\nexception addr:  0x{:X} (melee.exe+0x{:X})\n", rec.code, addr, addr.wrapping_sub(base));
+        // which thread faulted, and whether the faulting address is the asset service's recording heap (the Nov 27
+        // crash wrote to slot +0x80000 there; the report then had neither)
+        let _ = writeln!(fault, "thread:          {} (id {})", std::thread::current().name().unwrap_or("<unnamed>"), GetCurrentThreadId());
+        if rec.code == 0xC0000005 {
+            if let Some((slot, off)) = melee_engine::recheap::locate(rec.info[1]) {
+                let _ = writeln!(fault, "fault address:   asset recording heap slot {slot} +0x{off:X}");
+            }
+        }
         // A call through a null pointer faults at rip 0 and the unwinder cannot walk from there, so the backtrace
         // below is empty. List the code addresses on the top of the faulting stack instead (x64 CONTEXT.Rsp at
         // 0x98): the first is the return address into the caller of the null pointer.

@@ -179,3 +179,40 @@ Result: on the desktop the pin is no faster than 1.96 (the laptop's 30% was agai
 | Cranelift (`-Zcodegen-backend=cranelift`, component `rustc-codegen-cranelift-preview`) | compiles in 290 s (195 s with `-Zshare-generics=n`) but the exe does not link: LNK1120, 8,601 unresolved externals (the generic `cabi` closure instances of `melee_link_abi` used by `melee_link` and its part crates). Hashes therefore not testable | not adopted |
 | `rust-lld` (`CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=rust-lld`) | edit rebuild 43 s vs 42 / 43 s with link.exe | no signal; not kept |
 | `-Zthreads=8` (laptop) | no gain | not kept |
+
+## Fresh timings and the verdict on steps 2 and 3 (port/modessplit, Nov 28, at 96519221a)
+Desktop, `-j 8`, own target dir, no sccache, other lanes possibly building (noisy; one run per clean case, three per edit case).
+Raw timing html: `build/cargo/cargo-timings/` in the worktree (deleted on hand-back).
+
+| case | result |
+|---|---|
+| clean `cargo build --release -p melee` | 3 m 36 s (246 units, 217 s of unit time on the critical path) |
+| clean `--profile fast` | 3 m 47 s |
+| fast, edit `melee_modes/src/tu/gmtitle.rs` (3 runs) | 55 / 43 / 42 s, median 43 s |
+| fast, edit `melee_chara/src/adapt.rs` (3 runs) | 51 / 45 / 44 s, median 45 s |
+
+Release, top units by time (s): melee_link 66, melee_types 56, naga 53, melee_fighter 46, melee_items 45, wgpu-core 45,
+melee_modes 45, melee_world 39, melee_runtime 35, melee (bin) 34. Fast: melee_link 77, melee_types 59, melee_fighter 51,
+naga 51, melee_modes 51, melee_items 45, wgpu-core 45, mex_import 41, melee_world 39, melee 36.
+Peak rustc working set (fast clean, MB): melee 4,198, melee_engine 4,064, melee_fighter 3,004, melee_items 2,970,
+melee_link_p2 2,764, melee_link 2,381, melee_modes 1,957, melee_chara 1,732, p3 1,658, p1 1,635.
+
+Critical path (release): melee_types/fighter/chara -> melee_link_p0..p5 (finish about 120 s) -> **melee_link (116 -> 183 s, 66 s)** ->
+melee (183 -> 217 s). melee_modes (86 -> 131 s) and melee_engine (153 -> 174 s) both finish before melee_link does: neither is on
+the critical path. Same shape in fast (melee_link 115 -> 192 s of 228).
+
+**Step 3 (melee_script_game / melee_geno) was not done**, for two reasons:
+1. melee_modes is off the critical path; it only matters for the edit loop (43 s median), and the exe link plus melee_link's
+   relink are a good part of that already.
+2. The split is not a move of files but a cycle break. `tu/script_game.rs` (36k lines) and `geno_*.rs` use `crate::tu::adapt`
+   (203 and 153 references), `crate::oracle::Va` and about 370 `ext_fns!` declarations whose defaults are
+   `crate::tu::adapt::<fn>__<hash>`; in the other direction `adapt.rs`, `envoy.rs`, `gmscene.rs`, `gmvs.rs`, `gm_1601.rs`,
+   `petey.rs`, `stage_hop.rs`, `ext_hook.rs` and others call into `script_game` / `geno_game` / `geno_lab_mode`. A new crate
+   needs the adapt hub, `ext_fns!` and `oracle` pulled down into a lower crate and the reverse calls turned into registered
+   hooks; hook defaults are function pointers compared by identity (`unpredictable_function_pointer_comparisons = deny`), so
+   this needs its own gate round. 80k lines of churn for no critical-path gain.
+Where the time is now: the serial tail is **melee_link itself (66 s, 36% of the build)**. Its `retail*.rs` (33k lines,
+`retail_ms` 12.9k) do not use the part crates; only `gen_table.rs::install_all` does. Moving `manual/retail/retail_ms/retail_it/strs`
+into a `melee_link_retail` crate would let them compile alongside p0..p5 instead of after them (the gain is bounded by the
+retail share of the 66 s; measure `-Z time-passes` on melee_link first). That is the cheapest next step, ahead of steps 2 and 3.
+Step 2 (melee_engine, 21 s, off the path in release) also has no critical-path gain; it is only worth it for the 4.1 GB peak.

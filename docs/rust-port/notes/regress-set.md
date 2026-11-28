@@ -15,6 +15,17 @@ regression on the same files every time. New failures found in fresh batches get
   and every non-tournament stage (29), more than two players (44), teams (30), the longest games (30); a baseline
   of up to 8 matching games per Slippi version x stage (210); 60 pre-3.0 games for the old format paths.
 
+## Replay tiers (owner, 2026-11-27)
+
+- **Tier 1, must match exactly:** Slippi 3.x replays (current era 3.17-3.20 first) and every replay recorded from now
+  on, by Slippi or by us. Sweep counts, the endgame score and fix work count tier 1 only.
+- **Tier 2, pinned:** pre-3.0 replays (the scorer's `old`: Post-Frame taken mid-frame, not exactly checkable) and odd
+  old Gecko variants. They stay in the set as "must not get worse": a tier-2 replay that changes from match to
+  diverged still blocks a merge, but a tier-2 divergence is not opened as fix work unless the owner asks.
+- A row counts as hard only when `first_hard` is numeric (`old`, `gap`, `error` are scorer markers; referee.md 10.4).
+- Playback routing: pre-3.0 replays are candidates for the original-code player (Hero's static recomp) in his
+  launcher; that routing is his launcher's side.
+
 Scorer (`tools/rust-port/slippi/hard_desync.py`) results that are not desyncs: `old` (Slippi < 3.0: Post-Frame
 taken mid-frame), `gap` (the replay is missing frames, e.g. lunar2 ...6325d9385: 5267-8149), `error` (unreadable).
 It scores only finalized frames (Frame Bookend) and compares like with like for Zelda/Sheik and a dead Nana.

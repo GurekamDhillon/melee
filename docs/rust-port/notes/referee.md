@@ -433,6 +433,10 @@ in any column. Of the 26 UCF 0.8 replays, 23 now match; 3 still diverge (lunar m
 6ab9717e...ba55 at 6045, ...baeb at 4040), cause not looked at. Fix 2 (DeadUpFall stfs) moved no replay in this set; its proof is the
 referee's 94/94 calls (10.1).
 
+Tiers (regress-set.md, "Replay tiers"): the 192 `old` rows (all gang, pre-3.0) are tier 2, pinned; they are not
+open bugs. Tier-1 hard rows after port/hardfix (e44ef86cf): 4, of which Yoshi's Story hero Game_20251114T233428 is a
+recording artifact (retail Dolphin reproduces the engine) and 3 are Big Blue (open).
+
 ### 10.3 Limits and next steps
 
 - **Per-kind unions** (Fighter_FighterVars / MotionVars / ItemVars, ECBSource_x4): the word mapping is right only for

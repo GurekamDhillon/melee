@@ -891,3 +891,24 @@ Final Destination, `--frames 900 --lag-ms 30`):
 Unit tests: `DesyncWatch` (the 84 skip, Soft goes on, Hard stops and keeps the previous state), `merge_recovery` (the 1 s / 25 % /
 equal-stocks rules), the 0x86 codec, the recovery argument codec. Not covered: a Slippi Dolphin peer; a two-game Direct set through
 the rendered select (the next game needs nothing: it starts from the defaults); the error sound.
+
+## Peer build message (Hero's 0xE0), receive only
+
+Melee Unlocked clients send `NP_MSG_MU_BUILD` (0xE0) to their peer (his `slippi_net.cpp` `SendBuild`): `'M' 'U' 'B'`, version 1, player
+port, mod_view, fingerprint len + bytes, name len + bytes, then optional capabilities (bit 0 early inputs, 1 answers pre-match pings,
+2 Static engine, 3 ranked rules digest follows), optional shield colour (1 + RGB, or 0), optional 64-byte rules digest.
+`melee_net::slippi::PeerBuild::parse` reads it tolerantly (any field after the tag may be missing; a bad tag, an unknown version or a
+truncated message never fails anything; control bytes in strings become `?`). We send nothing and answer nothing (no reply to his
+pre-match pings), and no game behaviour changes. Stock Slippi Dolphin and other clients send no 0xE0.
+
+- Log line when it arrives: `slippi: opponent (port N): Melee Unlocked build: Source Port | Static Recomp; retail | mod <name> <fingerprint 16>; capabilities ...`.
+- `slippi-netplay` summary: `melee: <tag>: peer: <same text>`, or `no Melee Unlocked build message (stock Slippi Dolphin or another client)`.
+- `report.json` (desynccap): `peer_build`, null when no 0xE0 came, else `{engine, message_version, mod_view, mod, fingerprint_prefix, capabilities[], truncated, text}`.
+- A link handed over from the select to the match process carries the message with it (`Client::export` trailer).
+- Test hook, off by default: `MELEE_NP_TEST_SEND_BUILD=1|mod|static|<hex of a whole packet>` makes that side send one synthetic 0xE0 when
+  it sends its selections.
+
+Tests: unit test `slippi::tests::peer_build_parse` (full, older build, truncated, unknown version, garbage). Loopback (`np_pair`-style, 900
+frames, `MELEE_NP_TEST_DESYNC=400` on the host): a normal pair logs "no Melee Unlocked build message" and every report has
+`"peer_build": null`; with `MELEE_NP_TEST_SEND_BUILD=static` on the host the guest logs the build line and its reports carry the
+object, the host's stay null.

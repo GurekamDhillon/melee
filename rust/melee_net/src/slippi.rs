@@ -23,6 +23,9 @@ pub const MSG_COMPLETE_STEP: u8 = 0x85;
 pub const MSG_SYNCED_STATE: u8 = 0x86;
 pub const MSG_PAD_SUGGESTION: u8 = 0x87;
 pub const MSG_PLAYER_DROP: u8 = 0x88;
+/// Hero's Melee Unlocked build announcement (`NP_MSG_MU_BUILD`). Receive only here: we never send it (bar the test
+/// hook), and never answer the pre-match ping a peer that announces capability bit 1 expects.
+pub const MSG_MU_BUILD: u8 = 0xE0;
 
 /// `SLIPPI_PAD_WIRE_SIZE`: the game's 8 pad bytes plus the owner's random byte.
 pub const PAD_WIRE: usize = 9;
@@ -243,6 +246,125 @@ pub enum Note {
     Disconnected { reason: u32 },
 }
 
+/// What a peer's `NP_MSG_MU_BUILD` (0xE0) said, parsed tolerantly: every field after the 'MUB' tag may be missing.
+/// Layout: 'M' 'U' 'B', version (1), player port, mod_view, fingerprint len + bytes, name len + bytes, then optionally
+/// capabilities (bit 0 early inputs, 1 answers pre-match pings, 2 Static engine, 3 ranked rules digest follows),
+/// shield colour (1 + RGB, or 0), 64-byte rules digest (only with bit 3; not read here).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct PeerBuild {
+    pub version: u8,
+    pub port: Option<u8>,
+    /// the peer runs a mod (`mod_view`); false: the retail game
+    pub mod_view: bool,
+    pub fingerprint: String,
+    pub name: String,
+    /// None: the byte was absent (a build before capabilities)
+    pub caps: Option<u8>,
+    pub shield: Option<u32>,
+    /// the message ended before a field the layout always has
+    pub truncated: bool,
+    /// the packet as received (carried over a link hand-off)
+    pub raw: Vec<u8>,
+}
+
+fn printable(b: &[u8]) -> String {
+    b.iter().map(|&c| if (0x20..0x7f).contains(&c) { c as char } else { '?' }).collect()
+}
+
+impl PeerBuild {
+    /// `b` is the whole packet including the 0xE0 id byte. None when it is not a build message (no 'MUB' tag).
+    pub fn parse(b: &[u8]) -> Option<PeerBuild> {
+        let mut r = PacketR::new(b);
+        if r.u8()? != MSG_MU_BUILD || r.u8()? != b'M' || r.u8()? != b'U' || r.u8()? != b'B' {
+            return None;
+        }
+        let mut o = PeerBuild { raw: b.to_vec(), ..Default::default() };
+        let Some(v) = r.u8() else {
+            o.truncated = true;
+            return Some(o);
+        };
+        o.version = v;
+        if v != 1 {
+            return Some(o); // an unknown layout: noted, not read
+        }
+        macro_rules! need {
+            ($e:expr) => {
+                match $e {
+                    Some(x) => x,
+                    None => {
+                        o.truncated = true;
+                        return Some(o);
+                    }
+                }
+            };
+        }
+        o.port = Some(need!(r.u8()));
+        o.mod_view = need!(r.u8()) != 0;
+        let n = need!(r.u8()) as usize;
+        o.fingerprint = printable(need!(r.take(n)));
+        let n = need!(r.u8()) as usize;
+        o.name = printable(need!(r.take(n)));
+        // from here on absence is normal (older builds stop earlier)
+        o.caps = r.u8();
+        if r.u8() == Some(1) {
+            if let (Some(a), Some(b), Some(c)) = (r.u8(), r.u8(), r.u8()) {
+                o.shield = Some(((a as u32) << 16) | ((b as u32) << 8) | c as u32);
+            }
+        }
+        Some(o)
+    }
+
+    /// Hero's Static recomp engine (capability bit 2); else the native Source Port.
+    pub fn static_engine(&self) -> bool {
+        self.caps.is_some_and(|c| c & 4 != 0)
+    }
+
+    pub fn capability_names(&self) -> Vec<&'static str> {
+        let c = self.caps.unwrap_or(0);
+        let mut v = vec![];
+        if c & 1 != 0 {
+            v.push("early inputs");
+        }
+        if c & 2 != 0 {
+            v.push("answers pre-match pings");
+        }
+        if c & 4 != 0 {
+            v.push("static engine");
+        }
+        if c & 8 != 0 {
+            v.push("ranked rules digest");
+        }
+        v
+    }
+
+    /// "Melee Unlocked build: Source Port; mod <name> <fingerprint prefix>; capabilities ..."
+    pub fn describe(&self) -> String {
+        if self.version != 1 {
+            return format!("Melee Unlocked build: unknown message version {}{}", self.version, if self.truncated { " (truncated)" } else { "" });
+        }
+        let kind = if self.static_engine() { "Static Recomp" } else { "Source Port" };
+        let game = if self.mod_view {
+            let fp: String = self.fingerprint.chars().take(16).collect();
+            format!("mod {} {}", self.name, fp).trim_end().to_string()
+        } else {
+            "retail".to_string()
+        };
+        let caps = self.capability_names();
+        let caps = if self.caps.is_none() {
+            "unknown (older build)".to_string()
+        } else if caps.is_empty() {
+            "none".to_string()
+        } else {
+            caps.join(", ")
+        };
+        format!("Melee Unlocked build: {kind}; {game}; capabilities {caps}{}", if self.truncated { " (message truncated)" } else { "" })
+    }
+}
+
+/// Called from the netplay thread when a peer's build message is first seen or changes: the remote player's port and
+/// what it said.
+pub static BUILD_HOOK: std::sync::OnceLock<fn(u8, &PeerBuild)> = std::sync::OnceLock::new();
+
 #[derive(Clone, Copy)]
 struct Timing {
     frame: i32,
@@ -267,6 +389,7 @@ struct Remote {
     offsets: Vec<i32>,
     offset_idx: usize,
     selections: Option<Selections>,
+    build: Option<PeerBuild>,
 }
 
 /// The netplay client (`SlippiNetplayClient`) for a direct 1v1: ENet host + Slippi messages.
@@ -290,6 +413,8 @@ pub struct Client {
     pub remote_synced: Option<SyncedMsg>,
     pub local_synced: Option<SyncedMsg>,
     pub stats: ClientStats,
+    /// Test hook (`MELEE_NP_TEST_SEND_BUILD`) already sent.
+    test_build_sent: bool,
     /// When the last ENet ping for the displayed round trip went out (see [`Client::net_ping_us`]).
     last_probe_us: i64,
 }
@@ -329,6 +454,7 @@ impl Client {
                 offsets: Vec::new(),
                 offset_idx: 0,
                 selections: None,
+                build: None,
             },
             local_queue: VecDeque::new(),
             has_game_started: false,
@@ -342,6 +468,7 @@ impl Client {
             remote_synced: None,
             local_synced: None,
             stats: ClientStats::default(),
+            test_build_sent: false,
             last_probe_us: 0,
         };
         c.started_at_us = c.now_us();
@@ -457,6 +584,14 @@ impl Client {
             w.u64(v);
         }
         w.i64(self.last_probe_us);
+        // the peer's build message (0xE0), when one came: the match process starts from the select's link
+        match &self.remote.build {
+            Some(pb) => {
+                w.u8(1);
+                w.bytes(&pb.raw);
+            }
+            None => w.u8(0),
+        }
         w.0
     }
 
@@ -543,14 +678,21 @@ impl Client {
         }
         let stats = ClientStats { pads_sent: r.u64()?, pads_received: r.u64()?, acks_sent: r.u64()?, acks_received: r.u64()?, max_queue: r.u64()? as usize, pads_resent: r.u64()? };
         let last_probe_us = r.i64()?;
+        let mut build = None;
+        if !r.done() && r.u8()? == 1 {
+            build = PeerBuild::parse(&r.bytes()?);
+        }
         if !r.done() {
             return None;
+        }
+        if let (Some(pb), Some(h)) = (&build, BUILD_HOOK.get()) {
+            h(port, pb);
         }
         Some(Client {
             host,
             local_port,
             status,
-            remote: Remote { addr, fallback: has_fb.then_some(fb), fallback_started, port, links, active, head_frame, last_acked, ack_timers, ping_us, last_timing, offsets, offset_idx, selections },
+            remote: Remote { addr, fallback: has_fb.then_some(fb), fallback_started, port, links, active, head_frame, last_acked, ack_timers, ping_us, last_timing, offsets, offset_idx, selections, build },
             local_queue,
             has_game_started,
             in_game,
@@ -564,6 +706,7 @@ impl Client {
             remote_synced: None,
             local_synced: None,
             stats,
+            test_build_sent: true,
             last_probe_us,
         })
     }
@@ -609,8 +752,42 @@ impl Client {
         self.send_to_active(data, if unseq { 1 } else { 0 }, !unseq);
     }
 
+    /// The peer's parsed build message, if one came (None: stock Slippi Dolphin or another client).
+    pub fn remote_build(&self) -> Option<&PeerBuild> {
+        self.remote.build.as_ref()
+    }
+
+    /// Test only, off unless `MELEE_NP_TEST_SEND_BUILD` is set: once, send a synthetic 0xE0 as Hero's build would
+    /// (`1`: a Source Port, retail; `mod`: a Source Port running a mod; `static`: a Static Recomp; any other value: hex
+    /// bytes of the whole packet).
+    fn test_send_build(&mut self) {
+        let Ok(v) = std::env::var("MELEE_NP_TEST_SEND_BUILD") else { return };
+        if self.test_build_sent || v.is_empty() {
+            return;
+        }
+        self.test_build_sent = true;
+        let mk = |mod_view: bool, caps: u8| {
+            let (fp, name) = if mod_view { ("0123456789abcdef0123456789abcdef", "TestMod") } else { ("", "") };
+            let mut p = vec![MSG_MU_BUILD, b'M', b'U', b'B', 1, self.local_port, mod_view as u8, fp.len() as u8];
+            p.extend_from_slice(fp.as_bytes());
+            p.push(name.len() as u8);
+            p.extend_from_slice(name.as_bytes());
+            p.extend_from_slice(&[caps, 0]);
+            p
+        };
+        let p = match v.as_str() {
+            "1" => mk(false, 3),
+            "mod" => mk(true, 3),
+            "static" => mk(false, 6),
+            h => (0..h.len() / 2).filter_map(|i| u8::from_str_radix(h.get(i * 2..i * 2 + 2)?, 16).ok()).collect(),
+        };
+        eprintln!("slippi: TEST: sending a synthetic build message ({} bytes)", p.len());
+        self.send(&p);
+    }
+
     /// `SetMatchSelections`.
     pub fn set_match_selections(&mut self, mut s: Selections) {
+        self.test_send_build();
         s.player_idx = self.local_port;
         let b = s.encode();
         self.send(&b);
@@ -923,6 +1100,17 @@ impl Client {
                     self.remote_synced = Some(m);
                 }
             }
+            MSG_MU_BUILD => {
+                // receive only; a bad or unknown message is ignored, never an error
+                if let Some(pb) = PeerBuild::parse(b) {
+                    if self.remote.build.as_ref() != Some(&pb) {
+                        if let Some(h) = BUILD_HOOK.get() {
+                            h(self.remote.port, &pb);
+                        }
+                        self.remote.build = Some(pb);
+                    }
+                }
+            }
             _ => {} // CONN_SELECTED, game-prep steps, suggestions, drops: not used in a direct 1v1
         }
     }
@@ -959,6 +1147,37 @@ pub fn pad_input(b: &[u8]) -> crate::pad::RbInput {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn peer_build_parse() {
+        // full: retail-less mod, early inputs + pings + static, a shield colour
+        let mut p = vec![0xE0, b'M', b'U', b'B', 1, 1, 1, 4];
+        p.extend_from_slice(b"abcd");
+        p.push(3);
+        p.extend_from_slice(b"Mod");
+        p.extend_from_slice(&[7, 1, 0x11, 0x22, 0x33]);
+        let b = PeerBuild::parse(&p).unwrap();
+        assert!(b.mod_view && b.static_engine() && !b.truncated);
+        assert_eq!((b.name.as_str(), b.fingerprint.as_str(), b.caps, b.shield), ("Mod", "abcd", Some(7), Some(0x112233)));
+        assert_eq!(b.describe(), "Melee Unlocked build: Static Recomp; mod Mod abcd; capabilities early inputs, answers pre-match pings, static engine");
+        // an older build: stops after the name, retail
+        let b = PeerBuild::parse(&[0xE0, b'M', b'U', b'B', 1, 0, 0, 0, 0]).unwrap();
+        assert_eq!(b.describe(), "Melee Unlocked build: Source Port; retail; capabilities unknown (older build)");
+        // truncated mid fingerprint, and right after the tag
+        let b = PeerBuild::parse(&[0xE0, b'M', b'U', b'B', 1, 0, 1, 9, b'a']).unwrap();
+        assert!(b.truncated && b.describe().contains("truncated"));
+        assert!(PeerBuild::parse(&[0xE0, b'M', b'U', b'B']).unwrap().truncated);
+        // an unknown version is noted, not read
+        assert!(PeerBuild::parse(&[0xE0, b'M', b'U', b'B', 9, 1, 2]).unwrap().describe().contains("unknown message version 9"));
+        // garbage: not a build message
+        assert!(PeerBuild::parse(&[]).is_none());
+        assert!(PeerBuild::parse(&[0xE0]).is_none());
+        assert!(PeerBuild::parse(&[0xE0, 1, 2, 3, 4, 5]).is_none());
+        assert!(PeerBuild::parse(&[0x80, b'M', b'U', b'B', 1]).is_none());
+        // control bytes in a name are masked
+        let b = PeerBuild::parse(&[0xE0, b'M', b'U', b'B', 1, 0, 1, 0, 2, 0x1b, b'x', 0]).unwrap();
+        assert_eq!(b.name, "?x");
+    }
 
     #[test]
     fn selections_layout() {

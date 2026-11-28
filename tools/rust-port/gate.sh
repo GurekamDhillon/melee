@@ -61,6 +61,9 @@ if [ $build = 1 ]; then
   else
     (set -o pipefail && bash tools/rust-port/cargo_fast.sh build -p melee --profile "$profile" 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
   fi
+  # Owner and release builds use `--features real-net` (Slippi's wss matchmaking, P2P); code behind it compiles only
+  # with it, so a signature change can break it unseen (2026-11-27, mu_play.rs). Type-check it on every gate.
+  (cd rust && set -o pipefail && cargo check -p melee --features real-net 2>&1 | tail -2) || { echo "FAIL build: cargo check -p melee --features real-net failed"; fail=1; }
 fi
 # again after the build: on a fresh Linux tree neither name existed above, so `melee.exe` was kept
 [ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"

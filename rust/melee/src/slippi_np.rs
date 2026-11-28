@@ -831,7 +831,13 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             if watch.synced.is_none() {
                 watch.set_initial(game.slippi_rec.values().next().copied().unwrap_or_default());
             }
-            match watch.check(fr, lv, rv, game.slippi_rec.get(&fr).copied()) {
+            let earlier: Vec<u32> = finals.range(fr - 3..fr).map(|(_, &v)| v).collect();
+            let stale_before = watch.stale;
+            let c = watch.check_with_earlier(fr, lv, rv, &earlier, game.slippi_rec.get(&fr).copied());
+            if watch.stale != stale_before {
+                eprintln!("melee: {tag}: stale remote checksum at online frame {fr}: remote {rv:08x} is our checksum of an earlier frame (local {lv:08x}); not compared ({} so far)", watch.stale);
+            }
+            match c {
                 None | Some(Compare::Same) => {}
                 Some(Compare::Soft) => {
                     soft += 1;

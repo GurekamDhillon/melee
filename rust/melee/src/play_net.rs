@@ -2267,7 +2267,13 @@ impl NetDriver {
                 sr.watch.set_initial(sl.rec.values().next().copied().unwrap_or_default());
             }
             let rec = sl.rec.get(&fr).copied();
-            match sr.watch.check(fr, lv, rv, rec) {
+            let earlier: Vec<u32> = sr.finals.range(fr - 3..fr).map(|(_, &v)| v).collect();
+            let stale_before = sr.watch.stale;
+            let c = sr.watch.check_with_earlier(fr, lv, rv, &earlier, rec);
+            if sr.watch.stale != stale_before {
+                log(&format!("netplay {tag}: stale remote checksum at online frame {fr}: remote {rv:08x} is our checksum of an earlier frame (local {lv:08x}); not compared ({} so far)", sr.watch.stale));
+            }
+            match c {
                 None | Some(Compare::Same) => {}
                 Some(Compare::Soft) => {
                     sr.soft += 1;
@@ -2278,6 +2284,10 @@ impl NetDriver {
                 // player with a 90-frame GAME! screen; nothing is compared after it
                 Some(Compare::Hard) => {
                     sr.hard += 1;
+                    // the peer's last reports next to ours: a stale report (an older frame's value under a newer frame) or a
+                    // one-frame offset shows here
+                    let recent: String = sr.link.remote_checksums.range(..=fr).rev().take(6).map(|(&f, &r)| format!(" {f}: remote {r:08x} local {}", sr.finals.get(&f).map_or("-".to_string(), |v| format!("{v:08x}")))).collect::<Vec<_>>().join(";");
+                    log(&format!("netplay {tag}: DESYNC remote reports up to online frame {fr}:{recent}"));
                     crate::play_net::desync_report(&tag, fr, lv, rv, sr.hard as u64, online(s.current_frame()), &s.stats, &|| g.slippi.as_ref().map_or(String::new(), |sl| crate::desynccap::bits_text(sl.mixed.iter().map(|(a, b)| (*a, *b)))));
                     log(&format!("netplay {tag}: DESYNC DETECTED at online frame {fr}: the game ends (quit-out by port {}, GAME! {} frames)", sr.local_port, melee_core::slippi_online::END_GAME_THINK_FRAMES));
                     g.slippi.as_mut().unwrap().hard_end = Some(sr.local_port as i8);

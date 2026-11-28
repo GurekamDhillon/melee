@@ -248,6 +248,9 @@ pub struct DesyncWatch {
     pub soft_at: Option<i32>,
     /// the state of the last frame compared without a Hard (or the frame-0 state until one is)
     pub synced: Option<SyncedState>,
+    /// remote reports passed over as stale (see [`DesyncWatch::check_with_earlier`]), and the first one's frame
+    pub stale: u32,
+    pub stale_at: Option<i32>,
 }
 
 impl DesyncWatch {
@@ -261,10 +264,28 @@ impl DesyncWatch {
     /// One compare of online frame `fr`; `state` is this side's state at that frame. `None`: the frame is not
     /// compared (the countdown, or after a Hard).
     pub fn check(&mut self, fr: i32, local: u32, remote: u32, state: Option<SyncedState>) -> Option<Compare> {
+        self.check_with_earlier(fr, local, remote, &[], state)
+    }
+
+    /// [`check`](Self::check), where `earlier` holds this side's checksums of the few frames before `fr`. A mismatching
+    /// remote value that is bit-for-bit one of them is a stale report, not a desync, and is passed over (`None`, counted
+    /// in `stale`): the peer labelled an older frame's checksum with a newer frame. Seen live (2026-11-28, online frame
+    /// 5782: the remote's whole 32-bit value was our frame 5781's). A likely path on the peer (read from the ASM, not
+    /// proven): TriggerSendInput.asm's FIND_CHECKSUM_LOOP writes TXB_FINALIZED_FRAME_CHECKSUM only when its desync ring
+    /// holds an entry for the stable finalized frame and leaves the previous packet's value there otherwise, while
+    /// TXB_FINALIZED_FRAME always carries the new frame. A real
+    /// one-frame lag on the peer would still be caught on the next compare, because every later frame differs too.
+    /// Slippi's own compare has no such check, so a Slippi peer would end the game here.
+    pub fn check_with_earlier(&mut self, fr: i32, local: u32, remote: u32, earlier: &[u32], state: Option<SyncedState>) -> Option<Compare> {
         if self.hard_at.is_some() || fr <= UNFREEZE_INPUTS_FRAME {
             return None;
         }
         let c = compare(local, remote);
+        if c != Compare::Same && earlier.contains(&remote) {
+            self.stale += 1;
+            self.stale_at.get_or_insert(fr);
+            return None;
+        }
         match c {
             Compare::Hard => self.hard_at = Some(fr),
             Compare::Soft => {
@@ -392,6 +413,20 @@ mod tests {
         assert_eq!(w.recovery(), s2);
         assert_eq!(w.check(88, 1, 1, Some(s3)), None);
         assert_eq!(w.recovery(), s2);
+    }
+
+    #[test]
+    fn watch_passes_over_a_stale_report() {
+        let mut w = DesyncWatch::default();
+        // the 2026-11-28 capture: remote 5782 = our 5781 (4079004e), our 5782 is d11a004a: a Hard by the low halves
+        assert_eq!(compare(0xd11a004a, 0x4079004e), Compare::Hard);
+        assert_eq!(w.check_with_earlier(5782, 0xd11a004a, 0x4079004e, &[0x4079004e, 0x99430051], None), None);
+        assert_eq!((w.stale, w.stale_at, w.hard_at), (1, Some(5782), None));
+        // the next frame's real report compares as usual
+        assert_eq!(w.check_with_earlier(5783, 0x1234_0047, 0x1234_0047, &[0xd11a004a], None), Some(Compare::Same));
+        // a value that is not one of ours is a desync as before
+        assert_eq!(w.check_with_earlier(5784, 0x1234_0040, 0x1234_0050, &[0x1234_0047], None), Some(Compare::Hard));
+        assert_eq!(w.hard_at, Some(5784));
     }
 
     #[test]

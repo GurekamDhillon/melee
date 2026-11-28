@@ -140,6 +140,14 @@ pub fn desync_replay(args: &[String]) -> ExitCode {
             break;
         }
     }
+    // `--ck-out TXT`: every online frame's engine checksum, "<online frame> <slippi frame> <checksum hex>", to find the
+    // frame whose state a remote checksum matches (a remote that ran a frame behind or ahead of us)
+    if let Some(p) = args.iter().position(|a| a == "--ck-out").and_then(|i| args.get(i + 1)) {
+        let t: String = game.slippi_ck.iter().map(|(f, c)| format!("{f} {} {c:08x}\n", crate::desynccap::slippi_frame(*f))).collect();
+        if let Err(e) = std::fs::write(p, t) {
+            eprintln!("desync-replay: --ck-out {p}: {e}");
+        }
+    }
     println!("desync-replay: {} ({kind}, {tag} side): online frame {of}, Slippi frame {}", dir.display(), crate::desynccap::slippi_frame(of));
     println!("  recorded local  {lv:08x}");
     println!("  recorded remote {rv:08x}");

@@ -912,3 +912,20 @@ Tests: unit test `slippi::tests::peer_build_parse` (full, older build, truncated
 frames, `MELEE_NP_TEST_DESYNC=400` on the host): a normal pair logs "no Melee Unlocked build message" and every report has
 `"peer_build": null`; with `MELEE_NP_TEST_SEND_BUILD=static` on the host the guest logs the build line and its reports carry the
 object, the host's stay null.
+
+### 18.2 A stale remote checksum (live, 2026-11-28, port/desync-fd)
+
+A real Slippi Dolphin peer (unranked, FoD, Falco vs Marth, build 8e974c2fd) ended our game with a Hard at online frame 5782:
+local `d11a004a`, remote `4079004e`. `melee desync-replay DIR --ck-out ck.txt` reproduces the local value (the capture is
+self-consistent), and the remote value is, all 32 bits, our own checksum of online frame **5781**. So both halves of the peer's report
+match our previous frame: Falco (DeadDown, last stock) and Marth were the same on both sides. The low halves differ by 4 only because
+Marth moved (-1.08, -2.5) during 5782. The 5643 compares before it had 0 Softs, so the two simulations agreed throughout. The peer
+put an older frame's value under a newer frame. A likely path, read from the ASM and not proven:
+`TriggerSendInput.asm` FIND_CHECKSUM_LOOP writes `TXB_FINALIZED_FRAME_CHECKSUM` only when the desync ring has an entry for
+`ODB_STABLE_FINALIZED_FRAME`. Otherwise it leaves the previous packet's value in the buffer, while `TXB_FINALIZED_FRAME` always
+carries the new frame.
+
+Handling: `DesyncWatch::check_with_earlier` passes over a mismatching remote value that equals one of our own checksums for the 3
+frames before. It logs "stale remote checksum", counts it in `stale`, and the frame is not compared. A real one-frame lag on the peer
+still ends the game on the next compare, because every later frame differs too. This is a deviation from Slippi, whose compare has no
+such check. At a Hard, the log now also lists the peer's last 6 reports next to our values.

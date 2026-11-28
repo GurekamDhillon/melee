@@ -586,13 +586,17 @@ unsafe fn table_copy(sp: &mut GuestSpace, next: &mut u32, ro: &mut Vec<(u32, u32
 }
 
 fn once(msg: &str) {
-    static SEEN: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
-    if let Ok(mut v) = SEEN.lock() {
+    // thread_local, not a static: a log de-dup never belongs in a rollback snapshot (tools/rust-port/rbstatics_lint.py)
+    thread_local! {
+        static SEEN: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+    }
+    SEEN.with(|v| {
+        let mut v = v.borrow_mut();
         if !v.iter().any(|m| m == msg) {
             eprintln!("livereferee: {msg}");
             v.push(msg.to_string());
         }
-    }
+    });
 }
 
 /// .data objects read as constants (filled at build time, never written by the game during a match): the stage
@@ -843,7 +847,7 @@ impl<M: Mem> Bridge<M> for TextOnly {
 
 // ---- the hooks ---------------------------------------------------------------------------------------------------
 
-fn frame() -> i32 {
+fn cur_frame() -> i32 {
     melee_core::ct::DBG_FRAME.load(std::sync::atomic::Ordering::Relaxed)
 }
 
@@ -852,7 +856,7 @@ fn wants(name: &'static str) -> bool {
     if s.open.is_some() {
         return false;
     }
-    let f = frame();
+    let f = cur_frame();
     if f < s.from || f > s.to {
         return false;
     }
@@ -870,7 +874,7 @@ fn pre(name: &'static str, args: &[Arg]) -> Option<usize> {
     if s.open.is_some() {
         return None;
     }
-    let fr = frame();
+    let fr = cur_frame();
     let Some(&addr) = s.by_name.get(name) else {
         let e = s.stats.entry(name).or_default();
         e.calls += 1;

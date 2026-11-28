@@ -59,7 +59,7 @@ fail=0
 # (2026-11-23) and made online fights flicker. Checked against the upstream rust-port when it is known.
 base=$(git rev-parse -q --verify pub/rust-port 2>/dev/null || git rev-parse -q --verify origin/rust-port 2>/dev/null)
 if [ -n "$base" ]; then
-  wip=$(git log --format='%h %s' "$base"..HEAD 2>/dev/null | grep -i -E 'not merge-ready|not merge ready|^[0-9a-f]+ (WIP|DO NOT MERGE)' || true)
+  wip=$(git log --format='%h %s' "$base"..HEAD 2>/dev/null | grep -E '\(NOT merge-ready\)|NOT MERGE-READY|^[0-9a-f]+ (WIP|DO NOT MERGE)( |:|$)' || true)
   if [ -n "$wip" ]; then echo "FAIL wip: commits marked not merge-ready are on this branch:"; echo "$wip"; fail=1; fi
 fi
 if [ $build = 1 ]; then

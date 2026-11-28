@@ -367,6 +367,93 @@ fn two_game_set_on_one_link_against_a_dolphin_like_peer() {
     assert_eq!((0..cb.host.peers.len()).filter(|&i| cb.host.peers[i].connected()).count(), 1, "one link at the peer");
 }
 
+/// The Slippi Dolphin order at the end of an Unranked or Direct game (owner bug Nov 27: three sets against real
+/// Dolphin peers each ended after one game). Dolphin's VSSceneDecide goes straight back to its CSS the frame the VS
+/// scene ends, with the link kept, and a player who presses Start there locks in at once: SLIPPI_MATCH_SELECTIONS
+/// arrives on the match's link while this side is still in its match (lingering for the last confirmed frames, ~1.5 s,
+/// then the match -> select handover). Those selections are the next game's lock-in, not a restarted peer: the link
+/// stays up through three games, and each early lock-in reaches this side's select once its match is over.
+#[test]
+fn three_games_when_the_dolphin_peer_locks_in_before_our_match_is_over() {
+    let (ca, mut cb, pa, mut first) = linked_pair();
+    let armed = first.clone().unwrap();
+    let mut ca = hand_over(ca, pa, &mut cb, &mut first);
+    for game in 0..3u32 {
+        let tag = 0x1000 * (game + 1);
+        ca.start_game();
+        cb.start_game();
+        let (mut got_a, mut got_b, mut fa, mut fb) = (0i32, 0i32, 0i32, 0i32);
+        let n = 240;
+        let t0 = Instant::now();
+        while got_a < n || got_b < n {
+            assert!(t0.elapsed() < Duration::from_secs(60), "game {}: pads stalled at {got_a}/{got_b}", game + 1);
+            ca.poll();
+            dolphin_poll(&mut cb, &mut first);
+            for (c, got) in [(&mut ca, &mut got_a), (&mut cb, &mut got_b)] {
+                while let Some(m) = c.next_note() {
+                    if let Note::Pad { frame, .. } = m {
+                        *got = frame;
+                    }
+                    assert!(!matches!(m, Note::Disconnected { .. }), "game {}: link dropped in the match", game + 1);
+                }
+            }
+            for (c, f, got) in [(&mut ca, &mut fa, got_b), (&mut cb, &mut fb, got_a)] {
+                if *f < n && *f - got < 7 {
+                    *f += 1;
+                    c.send_pad(*f, [*f as u8; 9], *f, *f as u32 ^ tag);
+                } else {
+                    c.resend_pads();
+                }
+            }
+            std::thread::sleep(Duration::from_micros(500));
+        }
+        // the peer's game is over first: back on its select, Start locks in (Unranked: random stage)
+        cb.end_game();
+        let rng = 500 + game;
+        cb.set_match_selections(Selections { character_id: 2, is_character_selected: true, player_idx: 0, rng_offset: rng, ..Default::default() });
+        // this side lingers in its match meanwhile (polling, resending its last pads as a stalled frame does)
+        let t0 = Instant::now();
+        while t0.elapsed() < Duration::from_millis(1500) {
+            ca.poll();
+            ca.resend_pads();
+            dolphin_poll(&mut cb, &mut first);
+            while let Some(m) = ca.next_note() {
+                assert!(!matches!(m, Note::Disconnected { .. }), "game {}: the peer's early lock-in dropped the link", game + 1);
+                assert!(!matches!(m, Note::Selections(_)), "game {}: the next lock-in surfaced inside the match", game + 1);
+            }
+            assert_eq!(ca.status, Status::Connected, "game {}: the link went down while lingering", game + 1);
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        // the match is over here too: the held lock-in is the select's
+        ca.end_game();
+        let mut seen = false;
+        while let Some(m) = ca.next_note() {
+            seen |= matches!(m, Note::Selections(s) if s.rng_offset == rng);
+        }
+        assert!(seen, "game {}: the peer's early lock-in never reached the select", game + 1);
+        assert!(ca.remote_checksums.is_empty(), "game {}: its checksums carried into the next game", game + 1);
+        // match -> select handover, this side locks in, select -> match handover
+        let mut a2 = hand_over(ca, pa, &mut cb, &mut first);
+        a2.set_match_selections(Selections { character_id: 20, is_character_selected: true, player_idx: 1, ..Default::default() });
+        let t0 = Instant::now();
+        let mut got = false;
+        while !got {
+            assert!(t0.elapsed() < Duration::from_secs(5), "game {}: the peer never got this side's lock-in", game + 2);
+            a2.poll();
+            dolphin_poll(&mut cb, &mut first);
+            while let Some(m) = cb.next_note() {
+                got |= matches!(m, Note::Selections(s) if s.character_id == 20);
+                assert!(!matches!(m, Note::Disconnected { .. }), "the peer: link dropped at the lock-in");
+            }
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        ca = hand_over(a2, pa, &mut cb, &mut first);
+        assert_eq!((ca.status, cb.status), (Status::Connected, Status::Connected), "after game {}", game + 1);
+    }
+    assert!(first.as_ref().is_some_and(|f| !f.is_empty() && f.iter().all(|i| armed.contains(i))), "the peer's first link carried the whole set");
+    assert_eq!((0..cb.host.peers.len()).filter(|&i| cb.host.peers[i].connected()).count(), 1, "one link at the peer");
+}
+
 /// The old set path: game 1 over, the match closes its link and the next game's select connects again from the same
 /// port. A Dolphin-like peer turns that connection away.
 #[test]

@@ -40,11 +40,13 @@ unsafe fn put(p: *mut Vec, v: Option<crate::mtx::Vec3>) {
 #[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn splGetSplinePoint(p: *mut Vec, s: *mut HSD_Spline, u: f32) {
     melee_core::ct!("splGetSplinePoint");
+    melee_core::referee_native!(splGetSplinePoint, [P(p, 12), R(s, "HSD_Spline"), F(u)], v, splGetSplinePoint(p, s, u));
     put(p, spline::get_spline_point(&view(s), u));
 }
 
 /// `splArcLengthPoint(p, spline, s)`: the point at arc length `s`.
 pub unsafe fn splArcLengthPoint(p: *mut Vec, s: *mut HSD_Spline, len: f32) {
     melee_core::ct!("splArcLengthPoint");
+    melee_core::referee_native!(splArcLengthPoint, [P(p, 12), R(s, "HSD_Spline"), F(len)], v, splArcLengthPoint(p, s, len));
     put(p, spline::arc_length_point(&view(s), len));
 }

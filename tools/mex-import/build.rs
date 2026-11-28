@@ -62,6 +62,38 @@ fn native(gen: &Path) -> String {
             fields.push((field.to_string(), ty.to_string(), off));
         }
     }
+    // A union's other members follow its decoded one, at GC offset 0 (`remap::Layouts::locate` takes the first that
+    // covers an offset, so the default is unchanged; `locate_at` picks another by its record name when the host or
+    // a tag names one: Ground.u by stage, ECBSource.x4 by its kind).
+    {
+        let mut members: HashMap<String, Vec<(String, String)>> = HashMap::new();
+        let mut cur_u: Option<String> = None;
+        for l in src.lines() {
+            if let Some(r) = l.strip_prefix("pub union ") {
+                cur_u = Some(r.trim_end_matches(" {").trim().to_string());
+                continue;
+            }
+            if l.starts_with('}') {
+                cur_u = None;
+                continue;
+            }
+            let Some(u) = &cur_u else { continue };
+            if let Some((f, t)) = l.trim().strip_prefix("pub ").and_then(|r| r.trim_end_matches(',').split_once(": ")) {
+                members.entry(u.clone()).or_default().push((f.trim().to_string(), t.trim().to_string()));
+            }
+        }
+        for (id, fields) in recs.iter_mut() {
+            let (Some(ms), Some(first)) = (members.get(id.as_str()), fields.first().cloned()) else { continue };
+            if fields.len() != 1 || first.2 != 0 {
+                continue;
+            }
+            for (f, t) in ms {
+                if *f != first.0 {
+                    fields.push((f.clone(), t.clone(), 0));
+                }
+            }
+        }
+    }
     let names: std::collections::HashSet<String> = recs.iter().map(|r| r.0.clone()).collect();
     // `pub type Mtx = [[f32; 4]; 3];`: a field typed by an alias is classified by what the alias
     // names (else an array alias would read as one big scalar and be byte-reversed whole).

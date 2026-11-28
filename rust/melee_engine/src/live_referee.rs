@@ -202,6 +202,7 @@ pub fn init(gecko: &[u8]) {
     let num = |k: &str, d: i64| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
     let mut space = GuestSpace::new();
     space.void_pointee = Some(void_pointee);
+    space.layouts.union_pick = Some(union_pick);
     unsafe {
         ST = Some(St {
             img,
@@ -370,6 +371,30 @@ fn void_pointee(rec: &'static str, off: u32, obj: *mut u8, _p: usize) -> Option<
     }
 }
 
+/// A per-stage union's member, by what the engine knows: Ground.u is the stage's own vars (the first member,
+/// grArwing's, has other words at the same offsets). Only Big Blue is named so far. Its vars are a union by gobj
+/// (grbigblue.rs): the road (map id 34), the platform manager (32), the car manager (33) and the platforms (35, 36), except the first word,
+/// which every gobj reads through x0_s's lane bitfield (GC byte order; x0_w only ever zeroes it).
+fn union_pick(rec: &str, off: u32, obj: *const u8) -> Option<&'static str> {
+    match rec {
+        "GroundVars" if unsafe { melee_world::tu::ground::stage_info.grkind } == melee_types::Gr_Kind_BigBlue => Some("grBigBlue_GroundVars"),
+        "grBigBlue_GroundVars_x0" if off < 4 => Some("grBigBlue_GroundVars_x0_x0"),
+        "grBigBlue_GroundVars_x0" => {
+            // obj is Ground.u (bigblue.x0_u is at its start)
+            let gp = unsafe { obj.sub(core::mem::offset_of!(melee_types::Ground, u)) } as *const melee_types::Ground;
+            match unsafe { (*gp).map_id } {
+                34 => Some("grBigBlue_RoadVars"),
+                32 => Some("grBigBlue_ManagerVars"),
+                33 => Some("grBigBlue_CarVars"),
+                35 | 36 => Some("grBigBlue_PlatformVars"),
+                _ => None,
+            }
+        }
+        "grBigBlue_GroundVars_x0_x0_x0" => Some("grBigBlue_GroundVars_x0_x0_x0_x0_2"),
+        _ => None,
+    }
+}
+
 fn sym_at(s: &St, a: u32) -> String {
     let i = s.syms.partition_point(|x| x.addr <= a);
     if let Some(x) = i.checked_sub(1).map(|i| &s.syms[i]) {
@@ -420,6 +445,53 @@ unsafe fn sync(s: &mut St) {
             Ok(_) => s.synced.push((0x8049_E6C8, sp.layouts.gc_size("StageInfo").unwrap_or(0x748), "stage_info")),
             Err(e) => once(&format!("stage_info: {e}")),
         }
+        // the game camera (Camera, .bss 0x80452C68: Camera_80030A50 / Camera_80031144 read it for the KO and
+        // offscreen checks of Fighter_procAnim and ftDrawCommon_80080E18): the native record in place
+        let gc = core::ptr::addr_of_mut!(melee_world::tu::camera::game_camera) as *mut u8;
+        match sp.add_native(Some(0x8045_2C68), "Camera", gc) {
+            Ok(_) => s.synced.push((0x8045_2C68, sp.layouts.gc_size("Camera").unwrap_or(0x39C), "game_camera")),
+            Err(e) => once(&format!("game_camera: {e}")),
+        }
+        // the magnifying-glass HUD state (ifMagnify, .bss 0x804A1DE0: Fighter_procAnim's offscreen check reads it
+        // through ifMagnify_802FC998): the native record in place
+        let im = core::ptr::addr_of_mut!(melee_world::tu::ifmagnify::ifMagnify_804A1DE0) as *mut u8;
+        match sp.add_native(Some(0x804A_1DE0), "ifMagnify", im) {
+            Ok(_) => s.synced.push((0x804A_1DE0, sp.layouts.gc_size("ifMagnify").unwrap_or(0xF0), "ifMagnify_804A1DE0")),
+            Err(e) => once(&format!("ifMagnify_804A1DE0: {e}")),
+        }
+        // the four stage archive slots (grDatFiles_8049EE10, UnkArchiveStruct[4]: Ground_UpdateMapColl finds a map's
+        // archive through grDatFiles_801C6330): the native records in place
+        {
+            let a = core::ptr::addr_of_mut!(melee_world::tu::grdatfiles::grDatFiles_8049EE10) as *mut melee_types::UnkArchiveStruct;
+            let gs = sp.layouts.gc_size("UnkArchiveStruct").unwrap_or(0xC);
+            for i in 0..4u32 {
+                if let Err(e) = sp.add_native(Some(0x8049_EE10 + i * gs), "UnkArchiveStruct", a.add(i as usize) as *mut u8) {
+                    once(&format!("grDatFiles_8049EE10: {e}"));
+                }
+            }
+            s.synced.push((0x8049_EE10, 4 * gs, "grDatFiles_8049EE10"));
+        }
+        // Big Blue's track pieces (grBb_TrackEntries, .data 0x803E2ED8, 12 x 0x14: four s16 then the Vec3 `delta`
+        // grBigBlue_801EB004 measures at stage init): the engine's table in place, halves then words
+        {
+            let t = core::ptr::addr_of_mut!(melee_world::tu::grbigblue::grBb_TrackEntries) as *mut melee_world::tu::grbigblue::grBb_TrackEntry;
+            for i in 0..12usize {
+                let e = t.add(i);
+                let a = 0x803E_2ED8 + 0x14 * i as u32;
+                sp.add_halves(a, e as *mut u8, 8);
+                sp.add_words(a + 8, core::ptr::addr_of_mut!((*e).delta) as *mut u8, 12);
+            }
+            s.synced.push((0x803E_2ED8, 12 * 0x14, "grBb_TrackEntries"));
+        }
+        // ftColl_804D6560 (.sbss, 8 bytes: ftColl_8007925C's per-hitbox "can clank" flags): raw bytes in place
+        {
+            let p = core::ptr::addr_of_mut!(melee_fighter::tu::ftcoll::ftColl_804D6560) as *mut u8;
+            sp.add_raw(0x804D_6560, p, 8);
+            s.synced.push((0x804D_6560, 8, "ftColl_804D6560"));
+        }
+        // DbLevel (.sdata 0x804D4A08, the debug level; mpCollPrev reads it): the engine's word, read-only
+        sp.add_bytes(0x804D_4A08, (melee_runtime::shared::DbLevel as u32).to_be_bytes().to_vec());
+        s.ro.push((0x804D_4A08, 4, "DbLevel"));
         // the match rules (StartMeleeRules, inside gm's `controller` block at 0x8046DB68: gm_8016B0FC reads +2)
         let r = melee_modes::tu::gmvs::gm_GetStartMeleeRules() as *mut u8;
         if !r.is_null() {
@@ -464,7 +536,9 @@ unsafe fn sync(s: &mut St) {
     }
     // pointer globals: guest words holding the native record's handle (read-only)
     use melee_world::tu::mplib as l;
-    let ptrs: [(u32, usize, &'static str, &'static str); 10] = [
+    let ptrs: [(u32, usize, &'static str, &'static str); 12] = [
+        (0x804D_653C, melee_fighter::tu::fighter::Fighter_804D653C as usize, "Fighter_804D653C_t", "Fighter_804D653C"),
+        (0x804D_6470, melee_fighter::tu::player::pl_804D6470 as usize, "pl_804D6470_t", "pl_804D6470"),
         (0x804D_6554, melee_runtime::shared::p_ftCommonData as usize, "ftCommonData", "p_ftCommonData"),
         (0x804D_64FC, melee_runtime::shared::Fighter_804D64FC as usize, "Fighter_804D64FC_t", "Fighter_804D64FC"),
         (0x804D_6D28, melee_items::tu::it_3F14::it_804D6D28 as usize, "ItemCommonData", "it_804D6D28"),
@@ -498,11 +572,24 @@ unsafe fn sync(s: &mut St) {
             sp.add_bytes(0x804D_6950, a.to_be_bytes().to_vec());
             s.ro.push((0x804D_6950, 4, "Ground_804D6950"));
         }
+        // Ground_804D6954 (s16, the map-collision pass counter Ground_UpdateMapColl bumps): the native halfword in
+        // place (journaled)
+        {
+            let p = core::ptr::addr_of_mut!(melee_world::tu::ground::Ground_804D6954) as *mut u8;
+            sp.add_halves(0x804D_6954, p, 2);
+            s.synced.push((0x804D_6954, 2, "Ground_804D6954"));
+        }
         // Big Blue's yakumono_param (grbigblue.rs; .sbss 0x804D69C8)
-        let y = melee_world::tu::grbigblue::yakumono_param as usize;
-        if y != 0 {
-            let h = sp.handle(y, Some("grBb_YakumonoParam")).unwrap_or(0);
-            sp.add_bytes(0x804D_69C8, h.to_be_bytes().to_vec());
+        // grBb_YakumonoParam is grbigblue.rs's own record (no generated layout, so no handle): every field is a 4-byte
+        // scalar, so it maps as native words at a copy-area address; the pointer word read-only
+        let y = melee_world::tu::grbigblue::yakumono_param as *mut u8;
+        if !y.is_null() {
+            let n = core::mem::size_of::<melee_world::tu::grbigblue::grBb_YakumonoParam>() as u32;
+            let a = s.copy_next;
+            s.copy_next += (n + 0xFF) & !0xFF;
+            sp.add_words(a, y, n);
+            s.synced.push((a, n, "grBb_YakumonoParam"));
+            sp.add_bytes(0x804D_69C8, a.to_be_bytes().to_vec());
             s.ro.push((0x804D_69C8, 4, "grBigBlue yakumono_param"));
         }
     }
@@ -601,7 +688,10 @@ fn once(msg: &str) {
 
 /// .data objects read as constants (filled at build time, never written by the game during a match): the stage
 /// collision parameter tables mpLib_800569EC looks up by stage kind.
-const CONST_DATA: [&str; 2] = ["mpLib_803B", "Unit01"];
+/// `stage_datas` (the StageData pointer table Ground_UpdateMapColl indexes by map kind) and the per-stage
+/// `*_StageData` records it names, and the ftData_ motion tables Fighter_procAnim reads: built at link time
+/// (callbacks and flags), never written in a match.
+const CONST_DATA: [&str; 4] = ["mpLib_803B", "Unit01", "stage_datas", "ftData_"];
 
 /// The boot initialisers the referee runs once on the image, .data/.bss writable: the static ctors (`_ctors`, MSL's
 /// trig tables) and the HSD class infos the retail code calls through (JObjInfoInit -> hsdJObj's methods). Every
@@ -615,7 +705,7 @@ fn boot_init(s: &mut St) {
             a += 4;
         }
     }
-    for n in ["JObjInfoInit"] {
+    for n in ["JObjInfoInit", "ftParts_JObjInfoInit", "ftParts_IntpJObjInfoInit"] {
         if let Some(&a) = s.by_name.get(n) {
             entries.push(a);
         }
@@ -634,9 +724,19 @@ fn boot_init(s: &mut St) {
             eprintln!("livereferee: boot initialiser {f:08X} did not finish: {r:?}");
         }
     }
-    // the native JObj class info is the retail hsdJObj (its methods are the retail functions JObjInfoInit set)
-    if let Some(a) = s.syms.iter().find(|x| x.name == "hsdJObj").map(|x| x.addr) {
-        s.retail_fn.insert(unsafe { core::ptr::addr_of_mut!(melee_runtime::tu::jobj::hsdJObj) } as usize, a);
+    // the native JObj class infos are the retail ones (their methods are the retail functions JObjInfoInit and
+    // ftParts' two InfoInits set): hsdJObj, and the fighters' ftJObj / ftIntpJObj
+    let classes: [(&str, usize); 3] = unsafe {
+        [
+            ("hsdJObj", core::ptr::addr_of_mut!(melee_runtime::tu::jobj::hsdJObj) as usize),
+            ("ftJObj", core::ptr::addr_of_mut!(melee_fighter::tu::ftparts_render::ftJObj) as usize),
+            ("ftIntpJObj", core::ptr::addr_of_mut!(melee_fighter::tu::ftparts_render::ftIntpJObj) as usize),
+        ]
+    };
+    for (n, p) in classes {
+        if let Some(a) = s.syms.iter().find(|x| x.name == n).map(|x| x.addr) {
+            s.retail_fn.insert(p, a);
+        }
     }
     eprintln!("livereferee: boot initialisers wrote {} image bytes", s.init_written.len());
 }
@@ -750,7 +850,7 @@ impl Live<'_> {
                     let w = sym_at(self.s, ea);
                     let is_text = n == 4 && self.s.text.iter().any(|&(lo, hi)| (v as u32) >= lo && (v as u32) < hi);
                     let init = (0..n).all(|k| self.s.init_written.contains(&(ea + k)));
-                    if w.starts_with('@') || w.contains("assert_msg") || w.contains("...data") || is_text || init || CONST_DATA.iter().any(|c| w.starts_with(c)) {
+                    if w.starts_with('@') || w.contains("assert_msg") || w.contains("...data") || is_text || init || CONST_DATA.iter().any(|c| w.starts_with(c)) || w.split('+').next().is_some_and(|n| n.ends_with("_StageData")) {
                         self.data_reads.insert(w.split('+').next().unwrap_or("").to_string());
                     } else {
                         return Err(self.fail(format!("read .data {ea:08X} ({w})")));
@@ -1266,7 +1366,7 @@ fn post(_t: usize, ret: Ret) {
     }
     if std::env::var_os("MELEE_REFEREE_LOG").is_some() {
         let k = match &o.out {
-            ROut::Ret { .. } => "ret".to_string(),
+            ROut::Ret { r3, f1 } => format!("ret r3 {r3:08X} f1 {}", f64::from_bits(*f1) as f32),
             ROut::Boundary { name, gpr, .. } => format!("{name}({:#x})", gpr[1]),
             ROut::NotCheckable(w) => w.clone(),
         };

@@ -70845,8 +70845,11 @@ pub struct itPeachTurnip_ItemVars {
     pub xDD8: i32,
     pub xDDC_damage: i32,
     pub xDE0_scl: f32,
-    pub xDE4_owner: *mut HSD_GObj,
+    /// native only (gen/native_unions.py): the C's xDE4_owner word; the pointer is the last field
+    pub _owner_slot: u32,
     pub xDE8_scl: f32,
+    /// native only (gen/native_unions.py): past the C's 0x18 bytes, so xDE8_scl keeps its GC offset (bombhei.xDE8)
+    pub xDE4_owner: *mut HSD_GObj,
 }
 impl itPeachTurnip_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }

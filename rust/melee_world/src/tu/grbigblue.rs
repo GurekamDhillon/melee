@@ -2844,6 +2844,7 @@ pub unsafe extern "C" fn grBigBlue_801EBAF8(gobj: *mut HSD_GObj) {
 /// `grBigBlue_801EC58C`: the highest ground hit by a vertical probe through `pos` (±`half_height`), over the 32 lines.
 pub unsafe extern "C" fn grBigBlue_801EC58C(pos: *mut Vec3, normal_out: *mut Vec3, half_height: f32) -> f32 {
     melee_core::ct!("grBigBlue_801EC58C");
+    melee_core::referee_native!(grBigBlue_801EC58C, [P(pos, 12), P(normal_out, 12), F(half_height)], f, grBigBlue_801EC58C(pos, normal_out, half_height));
     let mut hit_pos = Z3;
     let mut hit_normal = Z3;
     let local_ids = grBb_803B8134;

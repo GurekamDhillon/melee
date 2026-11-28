@@ -1545,6 +1545,7 @@ pub fn ftcoll_80078c70(this_gobj: G) {
 /// `ftColl_8007925C`: this fighter against every item's hitboxes.
 pub fn ftcoll_8007925c(gobj: G) {
     melee_core::ct!("ftcoll_8007925c");
+    melee_core::referee_native!(ftColl_8007925C, [R(gobj, "HSD_GObj")], v, ftcoll_8007925c(gobj));
     unsafe {
         let fp = fpg(gobj);
         let mut coll_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

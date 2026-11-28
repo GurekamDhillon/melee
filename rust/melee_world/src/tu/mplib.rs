@@ -2708,6 +2708,7 @@ pub unsafe fn mpLib_80051BA8_Floor(mut out_vec: *mut Vec, mut line_id_skip: i32,
 /// `mpCheckMultiple`
 pub unsafe fn mpCheckMultiple(mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32, mut pos_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut checks: u32, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
     melee_core::ct!("mpCheckMultiple");
+    melee_core::referee_native!(mpCheckMultiple, [F(x0), F(y0), F(x1), F(y1), P(pos_out, 12), P(line_id_out, 4), P(flags_out, 4), P(normal_out, 12), I(checks), I(joint_id_skip as u32), I(joint_id_only as u32)], i, mpCheckMultiple(x0, y0, x1, y1, pos_out, line_id_out, flags_out, normal_out, checks, joint_id_skip, joint_id_only));
     let mut dx: f32 = 0.0;
     let mut dy: f32 = 0.0;
     let mut min_dist2: f32 = 0.0;
@@ -4134,6 +4135,7 @@ pub unsafe fn mpLib_80055E24(mut joint_id: i32) {
 #[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
     melee_core::ct!("mpLib_80055E9C");
+    melee_core::referee_native!(mpLib_80055E9C, [I(joint_id as u32)], v, mpLib_80055E9C(joint_id));
     if ext::ScriptGame_StageSlotJointUpdate(joint_id) != 0 {
         return;
     }
@@ -5320,6 +5322,7 @@ pub unsafe fn mpCheckedBounding() -> i32 {
 /// `mpBoundingCheck`
 pub unsafe fn mpBoundingCheck(mut left: f32, mut bottom: f32, mut right: f32, mut top: f32) {
     melee_core::ct!("mpBoundingCheck");
+    melee_core::referee_native!(mpBoundingCheck, [F(left), F(bottom), F(right), F(top)], v, mpBoundingCheck(left, bottom, right, top));
     let mut curr: *mut CollJoint = jointListStart;
     'l317: while !curr.is_null() {
         if ((ext::ScriptGame_StageJointActive((curr.offset_from(groundCollJoint) as i64) as i32) != 0) && (((*curr).flags & ((CollJoint_Enabled as i32) as u32)) != 0)) && (!(((*curr).flags & ((CollJoint_Hidden as i32) as u32)) != 0)) {

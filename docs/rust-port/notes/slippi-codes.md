@@ -164,3 +164,41 @@ frame 0 the same way as for every other frame).
 - lunar2's 106 3.20.0 files (`_build/replays/lunar-2026-11-20`, incl. the 6 Dream Land hard desyncs of the
   pre-fix sweep: 6afd2e79..bb2/bb6, 6affeb47..bbc/bc8/bcc/bde): `slpcheck --full`, 106/106 match (DL 6, stages
   2/3/8/31/32 the rest); hard_desync.py: 0 hard.
+
+## 4. Big Blue (ext stage 24): the 3 failures classified (2026-11-27)
+
+Engine `cur_pos` (slpcheck `--wide-out`) against the replay's post-frame x/y, per frame, port 1 (the only one off):
+
+| file | Slippi | first frame | class | what the frames show |
+|---|---|---|---|---|
+| lunar2 6ab6c163...72a57258 | 3.19.1 | 459 y | **drift** | grounded Wait (motion 14) on floor line 216, whose normal turns every frame (a tilting / moving surface). x exact; y off by 138 ULP at 459, then 400, 788, 1440, 2498 ... ULP, smooth and growing, no action change. The surface's own geometry (the animated joint that line 216 follows) drifts, not the fighter. Candidate: float contraction / matrix order in the line's animated joint (the JObj fast-matrix path and the HSD_MtxInverse fusion mismatches in dol-audit.md, owner lead 1 is the same class). |
+| v320 6b07dda9...daec8 | 3.20.0 | 2229 x | **jump** | action 191 to Fall (29) on frame 2229 in both, leaving floor line 263. The console's fighter is carried on: x -0.063, then -1.12, -1.46 per frame; the engine's keeps only its own -0.06 / -0.08. A moving surface's velocity handed to the fighter as it leaves (or the line moving under it on the release frame) is missing. Not RNG. |
+| v320 6b09281d...12d593 | 3.20.0 | 2332 y | **jump** | the fighter falls (29) at 0.68 / -1.6 per frame in both; on 2332 the engine's lands on floor line 156 (motion 42, y snapped up 5.78) while the console's keeps falling. A surface is where the console has none at that frame: a car (spawn timing / position, the RNG candidate) or a moving line's position. |
+
+So no shared cause: one drift on a tilting surface, two jumps on moving surfaces (velocity carry; a line present
+where the console has none). Online files force the RNG seed each frame, so a car-spawn RNG difference would need a
+draw-order difference inside a frame, not a seed one. Not fixed in this round.
+
+## 5. Owner leads (recorded; not worked this round except 4)
+
+1. Hurtboxes follow animated bones: check hurtbox bone world matrices on frames 3051-3053 of the lunar2 Peach vs
+   Peach Bob-omb case (Mewtwo's tail is the same class). Suspects: the JObj fast_matrix path
+   (`melee_runtime/src/tu/jobj.rs`) and the HSD_MtxInverse fusion mismatches in dol-audit.md. Big Blue file 1 above
+   may be the same class.
+2. UCF is public code: apply its real implementation (the replay's own Gecko bytes, `tools/mex-import/src/gecko.rs`
+   applies a list to the guest image), never a hand rule.
+3. Variants in the corpora (Hax$'s 1.03, newer UCF): listed per replay by the Gecko list hash in slpcheck's CSV
+   (`gecko_codes`, `gecko_hash`); step 6 (each replay's own list in slpcheck) is where they would be run.
+4. NeutralSpawn: its hooks are at fn_8016E2BC (match start) only; it writes the player blocks' initial coordinates and
+   facing (PlayerBlock_StoreInitialCoords, UpdateFacingDirection). It does not touch the respawn slot table or
+   fn_80167638, so it does not explain the respawn-slot case or one-ULP respawn heights.
+
+## 6. Step 5 verdicts: the netplay list on the guest image
+
+`tests/gecko_apply.rs` applies Slippi's `Output/Netplay/GALE01r2.ini` (d0ce23a, 6 enabled groups) to main.dol: 86
+writes, 198 inserts, 0 unsupported types, 5 .bss writes skipped (0x80452F54..64), 1 hook overridden by a later code
+(0x8016EA30). Per [affects-gameplay] code (section 1.1's 29): **all 29 hooks patched and structurally checked** (hook
+branch, return branch). **None executed against the engine**: each hooked function takes Fighter / Ground / GObj
+records or engine globals, which needs the native-records mode (step 4), not built. Verdict for every one of the 29:
+"applied to the image, not run". The engine-side verdicts stay those of section 1.1 (24 hand ports before this branch,
+5 added here) and the replay checks of sections 2.1 and 3.

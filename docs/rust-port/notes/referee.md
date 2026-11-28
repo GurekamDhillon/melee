@@ -231,7 +231,7 @@ mex-import referee --capture _build/referee-mvp/cap.txt --out _build/referee-mvp
 
 1. Paired singles in Gekko mode (ps_* + psq_l/psq_st with GQR 0, Dolphin semantics, the same trust test): unlocks
    PSMTX/PSVEC, HSD_Mtx*, lbColl_800077A0 / 80006E58, lbVector_CrossprodNormalized.
-2. In-process mode for native records: snapshot the records a call touches, run retail on the live objects through
+2. (Built 2026-11-27, section 10.) In-process mode for native records: snapshot the records a call touches, run retail on the live objects through
    `remap::GuestSpace` (handles for pointers), restore, run Rust, compare field by field through the GC tables; plus a
    sync table of engine globals (p_ftCommonData etc., as mex_guest's `sync_globals`). That reaches ftCommon physics,
    ftColl, mpLib and the dol-audit suspects.
@@ -259,3 +259,159 @@ Not done: running the patched functions against the engine. Every [affects-gamep
 Fighter / Ground / gobj records or reads engine globals (ftCo_Turn_IASA, Fighter_procInput, grStadium_801D4548, ...),
 which needs the native-records mode (section 8 item 2), not built in this round. Per-code verdicts: slippi-codes.md.
 
+
+## 10. Native-records mode (2026-11-27, port/livereferee; next-steps item 2)
+
+`rust/melee_engine/src/live_referee.rs`, feature `referee` (`melee --features referee`), on with
+`MELEE_REFEREE_NATIVE=<report>`. A Rust function with `melee_core::referee_native!(name, [R(gobj, "HSD_GObj"), I(..),
+F(..), P(mtx, 48)], v|i|f, call)` is checked inside the running match (slpcheck). Before the Rust call, the retail
+function of the same name runs in the Gekko interpreter on the engine's live records. Then the Rust function runs and the
+two are compared. In normal builds the macros expand to nothing.
+
+**Guest image.** main.dol plus a Gecko list, applied the way Dolphin's handler applies it (`gecko::apply`). The default
+list is the replay's own; `MELEE_REFEREE_GECKO=ini:<path>` takes a Dolphin INI (Slippi's netplay list), and `none`
+gives vanilla. The boot initialisers run once on the image with .data/.bss writable: the static ctors (MSL's trig
+tables) and `JObjInfoInit` (hsdJObj's methods). The bytes they write can then be read as constants.
+
+**Records** are reached through `remap::GuestSpace`. The arguments get handles. Every pointer the retail code follows
+registers the native object it names:
+- gobj user_data by class: Fighter, Item, Ground;
+- hsd_obj: the root JObj;
+- native callbacks: by their retail address;
+- the native hsdJObj: the retail one.
+
+**Sync table.** Engine globals at their retail addresses, rebuilt before each check:
+- Native records in place: player_slots (`_StaticPlayer`[6]), stage_info, StartMeleeRules (0x8046DB68).
+- Native words, journaled: the RNG seed (0x804D5F90, the engine's current seed word) and the mpLib / mpColl scalar
+  statics.
+- Raw bytes in place: the 64 flags of Ground_804D6950.
+- Read-only guest words: HSD_RandSeedPtr, and the record pointers p_ftCommonData, Fighter_804D64FC, it_804D6D28,
+  mpLib_804D64B4, groundCollVtx/Line/Joint, jointListStart/End and Big Blue's yakumono_param.
+- Read-only guest tables: ftPartsTable, HSD_GObjPLinkHead.
+- Read-only, built from replay data:
+  - the HSD pad queue (HSD_PadLibData plus the PADStatus ring at 0x8046B108), made from the replay's raw sticks; the
+    UCF 0.7x/0.8 codes read it;
+  - UCF 0.84's pad buffer: the engine's ftUcf_Pad, placed in the block of C2 8006B460.
+
+**Compare.** `GuestSpace.journal` records every host byte that a store changes. After the retail run, the journal gives
+what retail wrote, and it is then undone in reverse order. The Rust function then runs, and these are compared:
+- the return value;
+- every byte retail wrote;
+- every byte Rust changed in an object retail reached, where retail did not write that byte;
+- at a boundary callee (default `Fighter_ChangeMotionState`; set with `MELEE_REFEREE_BOUNDARY=a,b`), the call itself
+  and its arguments. Retail's run ends at the callee's entry; Rust's state is taken at its own `referee_boundary!`.
+
+**Not checkable.** Counted per function with the address and symbol; never counted as a pass:
+- a read of .bss;
+- a read of a .data object that is neither compiler-constant (@NNN, strings, words holding code addresses,
+  `CONST_DATA`) nor written by the boot initialisers;
+- a store to the image or to a read-only copy;
+- an unmapped address, or a field with no native counterpart;
+- an unsupported instruction, or running out of budget.
+
+OS interrupt masking is stubbed, since it touches no game state. `MELEE_REFEREE_NATIVE_CALLEES=HSD_Randi,HSD_Randf` runs
+those two as the engine's functions, with their seed writes journaled.
+
+**Tools.**
+- `MELEE_REFEREE_FNS`; `_MAX` (checks per function, default 2000); `_FROM` / `_TO` (frame window; referee frames are
+  slippi + 123).
+- `_LOG` prints one line per check.
+- `_TRACE=<frame>` prints every retail instruction on that frame.
+- `_NEGCTL` flips one retail byte (negative control). On the Fox replay it gave 143/168 mismatches: every call in which
+  retail wrote a byte.
+
+**Report lines.**
+- `S`: one line per function: calls, compared, match, mismatch, notcheck, and own retail branch outcomes hit/total.
+- `B`: boundary.
+- `N`: not-checkable reasons.
+- `M`: mismatches.
+- `D`: .data read as constant.
+- `G`: Gecko-area loads.
+- `C`: per-branch counts.
+
+**Hooked functions** (about 60):
+- 25 ftCommon state functions: the Wait / Walk / Dash / Run / Squat / Turn / Fall / Landing / Guard / GuardOn IASAs,
+  their Phys / Anim, Damage_OnEveryHitlag, DamageFall_IASA, 8008EC90, 80093240, 80099894, 8009A080, SquatRv_CheckInput,
+  Jump_CheckInput;
+- the Bob-omb's 24 state callbacks;
+- lbColl_8000805C and lbColl_80007ECC (hurtbox bone positions plus the capsule test);
+- HSD_JObjSetupMatrixSub and HSD_JObjMakeMatrix (the jobj fast_matrix path);
+- grBigBlue_801EA05C and grBigBlue_801EBAF8;
+- the functions Slippi's gameplay codes hook (slippi-codes.md section 7).
+
+### 10.1 Numbers (fast build, `slpcheck --full`, headless; literal report output)
+
+| run | functions | calls compared | mismatches | not checkable |
+|---|---|---|---|---|
+| lunar2 Peach ditto ...f1243f34 (its own 0.84 list), all hooks | 34 | 13,736 | 0 | 406 |
+| six hero online replays, Slippi netplay INI (d0ce23a) | 39 | about 103,000 | 6 (5 DeadUpFall, 1 Walk) | about 87,000 (mostly camera .bss, stage, audio) |
+| lunar2 Fox ditto ...f1239a6e (its own 0.8 list), Turn_IASA only, before / after fix 1 | 1 | 168 / 276 | 1 / 0 | 0 |
+
+Every mismatch:
+
+1. **Fox Turn_IASA**, frame 3918 (slippi 3795, the replay's hard desync). Retail, with the replay's UCF 0.8 dashback
+   insert, sets fp+0x2340 = 1 and facing -1. The engine's 0.73 rule did neither. The engine was wrong. **Fixed in
+   de86fec54.**
+2. **ftCo_DeadUpFall_Phys** with the netplay list (FreezeDeadUpFallPhysics UpdateFallVelocity), hero
+   Game_20260321T214020, frames 9994-9996. fp+0x2348 was 1 ULP over (0x3F4CCCCD against retail's 0x3F4CCCCC): the code
+   stores a double with stfs, which truncates. **Fixed in f6a7f2166**; 94/94 calls match after the fix.
+3. **ftCo_Walk_IASA**, hero Game_20251114T234228, frame 10526 (Samus). Retail calls ChangeMotionState(0x35) where Rust
+   calls (0xD4). The trace shows retail's fn_800D952C reading fp->u.ss.x223C as non-null. This is a **referee
+   artifact**, not an engine bug: Fighter_FighterVars is mapped as native 32-bit words at GC offsets, but Samus's
+   variant has an 8-byte pointer at that place natively. The replay matches the console.
+
+Earlier mismatches removed by sync fixes, not engine bugs:
+- the Fall_IASA airdodge velocity, which came from sinf/cosf reading zeroed trig tables before the ctors ran;
+- 0.84 Turn_IASA, before the pad buffer was synced;
+- a wrong player_slots record name.
+
+### 10.2 Hard-desync suspects
+
+**(a) Bob-omb one frame early** (lunar2 ...f1243f34, slippi 3049-3053).
+
+In the window, retail agrees with the engine on:
+- all 42 lbColl_8000805C calls (item hitbox against fighter hurtbox: lb_8000B1CC bone positions from the hurtbox
+  joints' matrices, then the capsule test);
+- every compared HSD_JObjSetupMatrixSub call (1,354 in the window; 1,717 of the first 2,000 of the replay);
+- the bomb's Anim / Phys callbacks.
+
+So on the engine's state, neither the hurtbox math, nor the jobj fast_matrix path, nor the hit test disagrees with
+retail.
+
+Not checkable here:
+- the thrown state's Coll (itBombhei_UnkMotion10_Coll). It stores into ECBSource's union, which is laid out natively as
+  its first member, and that member holds pointers;
+- 270 of the window's SetupMatrixSub calls: joints whose class method has no retail address (not hsdJObj).
+
+Remaining candidates:
+- the inputs to the bone matrices (the animation interpolation that feeds the joints' TRS);
+- the thrown state's collision;
+- the unchecked joints.
+
+No fix.
+
+**(b) Big Blue.** Only the drift case (3.19.1 ...72a57258) was run, and grBigBlue_801EA05C / 801EBAF8 are not
+checkable yet:
+- 801EA05C reaches Ground_804D6954 and other Ground .sbss statics through Ground_UpdateMapColl;
+- 801EBAF8 hits a null at +0x44, even after yakumono_param was mapped.
+
+The jump cases (...daec8, ...12d593) were not run. No verdict.
+
+**(c) Yoshi's Story respawn slot** (hero Game_20251114T233428): not run. fn_8016758C / fn_80167638 work on gm's
+`controller` block (0x8046B6A0); a sync entry for VsSceneState is needed first.
+
+### 10.3 Limits and next steps
+
+- **Per-kind unions** (Fighter_FighterVars / MotionVars / ItemVars, ECBSource_x4): the word mapping is right only for
+  members without pointers. Next step: a union-member hook in remap that picks the variant record by the owner's kind or
+  tag.
+- **Unsynced globals** cause most not-checkable checks:
+  - the camera (0x80452C68, 0x80452F24);
+  - Fighter_804D653C;
+  - the audio driver;
+  - ftData_SpecialS (.data read through the kind table);
+  - Fighter.dat_attrs (a void*: needs the kind's attribute record);
+  - the gm scene block;
+  - Ground's .sbss.
+- Rust-only writes are seen only in objects that retail reached.
+- Writes after a boundary are not compared.

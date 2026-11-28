@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run `melee slpcheck` over a directory of .slp files, one process per file (a crash only loses that file).
+# Run `melee slpcheck` over a directory of .slp / .slpz files, one process per file (a crash only loses that file).
 # usage: run_all.sh REPLAY_DIR OUT_DIR [extra slpcheck args...]   (env: JOBS=4, TIMEOUT=900, MELEE_EXE)
 # OUT_DIR gets one <file>.csv (summary row) and <file>.log per replay; all.csv concatenates the rows.
 # Headless: no window is opened by the engine; nothing here sends OS input.
@@ -12,7 +12,7 @@ mkdir -p "$OUT"
 export MELEE_WINDOW_UNFOCUSED=1
 set -a; [ -f "../../.env" ] && . ../../.env; [ -f ".env" ] && . ./.env; set +a
 one() {
-  f=$1; shift; b=$(basename "$f" .slp)
+  f=$1; shift; b=$(basename "$f"); b=${b%.slpz}; b=${b%.slp}
   rm -f "$OUT/$b.csv"
   timeout "$TIMEOUT" "$EXE" slpcheck --slp "$f" --csv "$OUT/$b.csv" "$@" > "$OUT/$b.log" 2>&1
   rc=$?
@@ -22,7 +22,7 @@ one() {
   fi
 }
 export -f one; export OUT EXE TIMEOUT
-ls "$DIR"/*.slp | xargs -P "$JOBS" -I{} bash -c 'one "$@"' _ {} "$@"
+ls "$DIR"/*.slp "$DIR"/*.slpz 2>/dev/null | xargs -P "$JOBS" -I{} bash -c 'one "$@"' _ {} "$@"
 first=1
 : > "$OUT/all.csv"
 for c in "$OUT"/*.csv; do

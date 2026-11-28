@@ -389,7 +389,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         return ExitCode::from(2);
     };
     let name = std::path::Path::new(&path).file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
-    let data = match std::fs::read(&path) {
+    let data = match melee_data::slp::read_replay(&path) {
         Ok(d) => d,
         Err(e) => {
             eprintln!("melee slpcheck: {name}: {e}");

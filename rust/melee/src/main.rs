@@ -1310,7 +1310,7 @@ pub(crate) fn apply_recorded_spawn(data: &[u8]) {
 }
 
 pub(crate) fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
-    let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
+    let data = melee_data::slp::read_replay(path).map_err(|e| format!("{path}: {e}"))?;
     // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
     let parsed = melee_data::slp::parse(&data, false).ok();
     crate::slp_export::apply_sim_view(&data);

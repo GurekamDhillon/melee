@@ -138,7 +138,7 @@ def main():
     if a.files:
         names = [l.strip() for l in open(a.files) if l.strip()]
     else:
-        c = sorted(f for f in os.listdir(a.dir) if f.endswith(".slp") and a.min_size <= os.path.getsize(os.path.join(a.dir, f)) <= a.max_size)
+        c = sorted(f for f in os.listdir(a.dir) if f.endswith((".slp", ".slpz")) and a.min_size <= os.path.getsize(os.path.join(a.dir, f)) <= a.max_size)
         step = max(1, len(c) // a.n)
         names = c[::step][: a.n]
     amounts = a.amounts.split(",")

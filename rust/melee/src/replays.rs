@@ -1,6 +1,6 @@
 //! `melee replays [DIR] [--json] [--play N [play options]]`: the replay browser (docs/rust-port/notes/spectate-replay.md).
 //!
-//! Lists the `.slp` (Slippi, read with melee_data::slp) and `.mrpl` (this engine's replay, play_net::Replay) files of a
+//! Lists the `.slp` / `.slpz` (Slippi, read with melee_data::slp) and `.mrpl` (this engine's replay, play_net::Replay) files of a
 //! folder (default `MELEE_SLP_DIR`, else `Replays`), newest first, with characters, stage, date and duration. `--play N`
 //! plays entry N through `melee play --replay` in the window: a `.mrpl` (pause / step / seek / speed / camera:
 //! replay_ctl.rs), a `.slp` through the sim's Slippi player (slp_play.rs; it plays only what the sim covers). A `.slp`
@@ -64,6 +64,8 @@ pub fn read_entry(path: &Path) -> Option<Entry> {
     let ext = path.extension()?.to_str()?.to_ascii_lowercase();
     let mtime = std::fs::metadata(path).ok()?.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
     let d = std::fs::read(path).ok()?;
+    // an .slpz is listed as the .slp it decompresses to
+    let (ext, d) = if ext == "slpz" { ("slp".to_string(), melee_data::slp::to_slp(d).ok()?) } else { (ext, d) };
     let mut e = Entry { path: path.to_path_buf(), kind: "", chars: Vec::new(), stage: "?".into(), date: date_of(mtime), secs: 0.0, note: String::new(), mtime };
     match ext.as_str() {
         "slp" => {

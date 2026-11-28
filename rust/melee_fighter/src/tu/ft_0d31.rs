@@ -706,12 +706,12 @@ pub fn ftCo_DeadUpFall_Phys(g: G) {
                     let m = &mut f.mv.co.unk_deadup as *mut _ as *mut u8;
                     let vy = m.add(8) as *mut f32;
                     let vz = m.add(0xC) as *mut f32;
-                    let mut v = ((*vy as f64) - (ca.x554 as f64)) as f32;
+                    // fsub (double) and the compare on the double, then stfs: the store truncates (Gekko
+                    // ConvertToSingle). `as f32` rounded and was 1 ULP over on 3 of 5 frames (DOL referee, hero
+                    // Game_20260321T214020 frames 9994-9996 with the netplay list; notes/referee.md section 10)
+                    let d = (*vy as f64) - (ca.x554 as f64);
                     let lim = -ca.x558;
-                    if !(v > lim) {
-                        v = lim;
-                    }
-                    *vy = v;
+                    *vy = if d > lim as f64 { melee_core::ppc::stfs(d) } else { lim };
                     f.mv.co.unk_deadup.x5C.y = f.mv.co.unk_deadup.x5C.y + *vy;
                     f.mv.co.unk_deadup.x5C.z = *vz + f.mv.co.unk_deadup.x5C.z;
                 } else {

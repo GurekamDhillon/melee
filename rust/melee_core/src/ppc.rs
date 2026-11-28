@@ -172,6 +172,22 @@ pub fn fctiwz(x: f64) -> i32 {
     r
 }
 /// `(s32) f` / `(int) f` for an f32.
+/// `stfs` of a double that is not a single (Gekko / Dolphin ConvertToSingle): the mantissa is truncated, not rounded;
+/// a value in the single denormal range is shifted. Hand-written asm that keeps a double result (`fsub` then `stfs`)
+/// stores this, not `as f32`.
+#[inline]
+pub fn stfs(x: f64) -> f32 {
+    let b = x.to_bits();
+    let e = ((b >> 52) & 0x7FF) as u32;
+    let r = if (874..=896).contains(&e) && b & !(1u64 << 63) != 0 {
+        let t = (0x8000_0000u32 | ((b & 0x000F_FFFF_FFFF_FFFF) >> 21) as u32) >> (905 - e);
+        t | ((b >> 32) & 0x8000_0000) as u32
+    } else {
+        (((b >> 32) & 0xC000_0000) | ((b >> 29) & 0x3FFF_FFFF)) as u32
+    };
+    f32::from_bits(r)
+}
+
 #[inline]
 #[cfg_attr(feature = "disc", track_caller)]
 pub fn fctiwz_f32(x: f32) -> i32 {

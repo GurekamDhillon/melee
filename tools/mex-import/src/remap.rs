@@ -59,10 +59,24 @@ mod gen {
 const BYTE_UNIONS: [&str; 1] = ["Fighter_x2210"];
 const WORD_UNIONS: [&str; 3] = ["Fighter_MotionVars", "Fighter_FighterVars", "Item_ItemVars"];
 
+/// Unions whose member is named by a tag in their owner: (union record, native bytes from the tag to the union,
+/// member record for a tag value, None for the default member). `ECBSource.x4` holds the joints of an
+/// `ECBSource_JObj` source (x0, pointers: the default) or the fixed box of an `ECBSource_Fixed` one (x0_1, floats;
+/// mpColl_80042374 sets it, the items' thrown-state collision reads it); `kind` is ECBSource's first word.
+pub const TAGGED_UNIONS: [(&str, usize, fn(i32) -> Option<&'static str>); 1] = [(
+    "ECBSource_x4",
+    core::mem::offset_of!(melee_types::ECBSource, x4) - core::mem::offset_of!(melee_types::ECBSource, kind),
+    |k| (k == melee_types::ECBSource_Fixed as i32).then_some("ECBSource_x4_x0_1"),
+)];
+
 /// Native layout tables by GC record name.
 pub struct Layouts {
     by_name: HashMap<&'static str, (usize, &'static [NField])>,
     gc_size: HashMap<&'static str, u32>,
+    /// The host's answer for a union's member: (union record, GC offset in it, the union's native address) -> the
+    /// member's record name (a per-stage / per-kind union whose tag the host knows, e.g. Ground.u by the stage).
+    /// Asked by [`Layouts::locate_at`] before [`TAGGED_UNIONS`].
+    pub union_pick: Option<fn(&str, u32, *const u8) -> Option<&'static str>>,
 }
 
 /// Where one GameCube byte of a record lives natively.
@@ -92,7 +106,7 @@ impl Layouts {
             by_name.entry(n).or_insert((sz, f));
         }
         let gc_size = melee_types::GC_RECORDS.iter().map(|r| (r.0, r.1)).collect();
-        Layouts { by_name, gc_size }
+        Layouts { by_name, gc_size, union_pick: None }
     }
     pub fn records(&self) -> usize {
         self.by_name.len()
@@ -137,6 +151,13 @@ impl Layouts {
 
     /// Native location of GC byte `off` of record `rec`.
     pub fn locate(&self, rec: &str, off: u32) -> Loc {
+        self.locate_at(rec, off, None)
+    }
+
+    /// As [`Layouts::locate`], with the native object at `obj` (its first byte) when the caller has one: a tagged
+    /// union inside it (see [`TAGGED_UNIONS`]) then resolves to the member its owner's tag names, instead of the
+    /// first member.
+    pub fn locate_at(&self, rec: &str, off: u32, obj: Option<*const u8>) -> Loc {
         let Some(&(nsz, fields)) = self.by_name.get(rec) else { return Loc::Mismatch };
         // The per-character variable unions: their meaning is the owner's (an m-ex fighter's own layout), so they
         // are kept as native little-endian 32-bit words. A guest float or int there reads back as stored, and a native
@@ -152,20 +173,36 @@ impl Layouts {
         if BYTE_UNIONS.contains(&rec) {
             return if (off as usize) < nsz { Loc::Byte(off as usize) } else { Loc::Pad };
         }
-        match fields.iter().find(|f| off >= f.gc && off < f.gc + f.ty.gc.max(1)) {
-            Some(f) => self.ty_locate(f.ty, off - f.gc, f.nat),
+        // a tagged union: the member the owner's tag names (`obj` is the union's own native address here; the tag
+        // sits in the owner record, `tag_back` bytes before it natively)
+        let mut pick = 0usize;
+        if let Some(o) = obj {
+            let m = self.union_pick.and_then(|f| f(rec, off, o)).or_else(|| {
+                let t = TAGGED_UNIONS.iter().find(|t| t.0 == rec)?;
+                // SAFETY: `obj` points at a live native `rec` inside its owner (locate_at's contract).
+                (t.2)(unsafe { (o.sub(t.1) as *const i32).read_unaligned() })
+            });
+            if let Some(m) = m {
+                if let Some(i) = fields.iter().filter(|f| off >= f.gc && off < f.gc + f.ty.gc.max(1)).position(|f| matches!(f.ty.kind, Kind::Rec(r) if r == m)) {
+                    pick = i;
+                }
+            }
+        }
+        match fields.iter().filter(|f| off >= f.gc && off < f.gc + f.ty.gc.max(1)).nth(pick) {
+            Some(f) => self.ty_locate(f.ty, off - f.gc, f.nat, obj),
             None => Loc::Pad,
         }
     }
 
-    fn ty_locate(&self, ty: &'static Ty, rel: u32, nat: usize) -> Loc {
+    fn ty_locate(&self, ty: &'static Ty, rel: u32, nat: usize, obj: Option<*const u8>) -> Loc {
         match ty.kind {
             Kind::Scalar if ty.gc as usize == ty.nat => Loc::Byte(nat + (ty.nat - 1 - rel as usize)),
             Kind::Scalar => Loc::Mismatch,
             Kind::Bool => Loc::Bool(nat),
             Kind::Ptr => Loc::Ptr(nat, rel, None),
             Kind::PtrTo(r) => Loc::Ptr(nat, rel, Some(r)),
-            Kind::Rec(r) => match self.locate(r, rel) {
+            // SAFETY: `nat` is inside the native object `obj` starts (locate_at's contract).
+            Kind::Rec(r) => match self.locate_at(r, rel, obj.map(|o| unsafe { o.add(nat) })) {
                 Loc::Byte(b) => Loc::Byte(nat + b),
                 Loc::Bool(b) => Loc::Bool(nat + b),
                 Loc::Ptr(b, k, p) => Loc::Ptr(nat + b, k, p),
@@ -173,7 +210,7 @@ impl Layouts {
             },
             Kind::Arr(e, _) => {
                 let i = (rel / e.gc.max(1)) as usize;
-                self.ty_locate(e, rel % e.gc.max(1), nat + i * e.nat)
+                self.ty_locate(e, rel % e.gc.max(1), nat + i * e.nat, obj)
             }
         }
     }
@@ -191,6 +228,8 @@ pub enum Backing {
     /// `o ^ 3`. A buffer both the guest and native code read as words of attributes (Fighter.dat_attrs_backup: an
     /// m-ex onLoad copies its attributes in big-endian, and the clone base's native specials read them as f32).
     Words { ptr: *mut u8 },
+    /// As `Words`, for native (little-endian) 16-bit words: guest byte `o` is native byte `o ^ 1` (an `s16` static).
+    Halves { ptr: *mut u8 },
 }
 
 pub struct Region {
@@ -329,6 +368,14 @@ impl GuestSpace {
         self.regions.push(Region { base, size: len, backing: Backing::Words { ptr } });
     }
 
+    /// As [`GuestSpace::add_words`], for native 16-bit words (`len` bytes, even).
+    ///
+    /// # Safety
+    /// As add_words.
+    pub unsafe fn add_halves(&mut self, base: u32, ptr: *mut u8, len: u32) {
+        self.regions.push(Region { base, size: len, backing: Backing::Halves { ptr } });
+    }
+
     /// Drop every region registered for the native object at `ptr` (it is about to be freed).
     pub fn forget_native(&mut self, ptr: *mut u8) {
         let gone: Vec<u32> = self.regions.iter().filter(|r| matches!(r.backing, Backing::Native { ptr: q, .. } if q == ptr)).map(|r| r.base).collect();
@@ -449,7 +496,7 @@ impl GuestSpace {
                 Backing::Bytes(b) if p >= b.as_ptr() as usize && p < b.as_ptr() as usize + b.len() => {
                     return Ok(r.base + (p - b.as_ptr() as usize) as u32);
                 }
-                Backing::Raw { ptr } | Backing::Words { ptr } if p >= *ptr as usize && p < *ptr as usize + r.size as usize => {
+                Backing::Raw { ptr } | Backing::Words { ptr } | Backing::Halves { ptr } if p >= *ptr as usize && p < *ptr as usize + r.size as usize => {
                     return Ok(r.base + (p - *ptr as usize) as u32);
                 }
                 _ => {}
@@ -491,7 +538,7 @@ impl GuestSpace {
         // heap buffer; regions never resize).
         self.regions.iter().find(|r| h >= r.base && h < r.base + r.size).and_then(|r| match &r.backing {
             Backing::Bytes(b) => Some(b.as_ptr() as usize + (h - r.base) as usize),
-            Backing::Raw { ptr } | Backing::Words { ptr } => Some(*ptr as usize + (h - r.base) as usize),
+            Backing::Raw { ptr } | Backing::Words { ptr } | Backing::Halves { ptr } => Some(*ptr as usize + (h - r.base) as usize),
             _ => None,
         })
     }
@@ -506,12 +553,14 @@ impl GuestSpace {
             Backing::Raw { ptr } => Ok((0..n).fold(0u64, |v, k| v << 8 | unsafe { *ptr.add((o + k) as usize) } as u64)),
             // SAFETY: add_words' contract.
             Backing::Words { ptr } => Ok((0..n).fold(0u64, |v, k| v << 8 | unsafe { *ptr.add(((o + k) ^ 3) as usize) } as u64)),
+            // SAFETY: add_halves' contract.
+            Backing::Halves { ptr } => Ok((0..n).fold(0u64, |v, k| v << 8 | unsafe { *ptr.add(((o + k) ^ 1) as usize) } as u64)),
             Backing::Native { rec, ptr, shadow } => {
                 let (rec, ptr) = (*rec, *ptr);
                 if let Some(t) = &mut self.trace {
                     t.push(Rewrite { rec, gc_off: o, size: n, store: false, ea });
                 }
-                if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate(rec, o) {
+                if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate_at(rec, o, Some(ptr)) {
                     if n != 4 {
                         return Err(Fault::Mem(ea));
                     }
@@ -526,7 +575,7 @@ impl GuestSpace {
                 }
                 let mut v = 0u64;
                 for k in 0..n {
-                    let byte = match self.layouts.locate(rec, o + k) {
+                    let byte = match self.layouts.locate_at(rec, o + k, Some(ptr)) {
                         // SAFETY: as above.
                         Loc::Byte(b) => unsafe { *ptr.add(b) },
                         Loc::Bool(b) => unsafe { (*ptr.add(b) != 0) as u8 },
@@ -547,7 +596,7 @@ impl GuestSpace {
             return false;
         }
         match self.find(h, 1) {
-            Ok(i) => matches!(self.regions[i].backing, Backing::Bytes(_) | Backing::Raw { .. } | Backing::Words { .. }),
+            Ok(i) => matches!(self.regions[i].backing, Backing::Bytes(_) | Backing::Raw { .. } | Backing::Words { .. } | Backing::Halves { .. }),
             Err(_) => false,
         }
     }
@@ -606,6 +655,7 @@ impl GuestSpace {
     fn store(&mut self, ea: u32, n: u32, v: u64) -> Result<(), Fault> {
         let i = self.find_mut(ea, n)?;
         let o = ea - self.regions[i].base;
+        let halves = matches!(self.regions[i].backing, Backing::Halves { .. });
         let (rec, ptr) = match &mut self.regions[i].backing {
             Backing::Bytes(b) => {
                 for k in 0..n {
@@ -613,10 +663,11 @@ impl GuestSpace {
                 }
                 return Ok(());
             }
-            Backing::Words { ptr } => {
+            Backing::Words { ptr } | Backing::Halves { ptr } => {
+                let x = if halves { 1 } else { 3 };
                 let ptr = *ptr;
                 for k in 0..n {
-                    let q = unsafe { ptr.add(((o + k) ^ 3) as usize) };
+                    let q = unsafe { ptr.add(((o + k) ^ x) as usize) };
                     self.note(q, 1, ea + k);
                     // SAFETY: add_words' contract.
                     unsafe { *q = (v >> (8 * (n - 1 - k))) as u8 };
@@ -637,7 +688,7 @@ impl GuestSpace {
         if let Some(t) = &mut self.trace {
             t.push(Rewrite { rec, gc_off: o, size: n, store: true, ea });
         }
-        if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate(rec, o) {
+        if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate_at(rec, o, Some(ptr)) {
             if n != 4 {
                 return Err(Fault::Mem(ea));
             }
@@ -666,7 +717,7 @@ impl GuestSpace {
             return Ok(());
         }
         // Check every byte first so a faulting store writes nothing.
-        let locs: Vec<Loc> = (0..n).map(|k| self.layouts.locate(rec, o + k)).collect();
+        let locs: Vec<Loc> = (0..n).map(|k| self.layouts.locate_at(rec, o + k, Some(ptr))).collect();
         if locs.iter().any(|l| matches!(l, Loc::Ptr(..) | Loc::Mismatch)) {
             return Err(Fault::Mem(ea));
         }

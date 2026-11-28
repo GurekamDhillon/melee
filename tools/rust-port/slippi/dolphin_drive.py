@@ -133,7 +133,10 @@ def main():
     ap.add_argument("--frames", type=int, default=3600, help="in-game frames to play (the game may end first)")
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("--mode", default="direct", choices=["direct", "unranked"])
-    ap.add_argument("--games", type=int, default=1, help="games in a row (unranked: search again after each)")
+    ap.add_argument("--games", type=int, default=1, help="games in a row (unranked/direct: the CSS comes back on the same link, START locks in again)")
+    ap.add_argument("--lras", action="store_true", help="after --frames in-game frames, hold L+R+A+START until the game ends (LRAS: ends the game for both sides)")
+    ap.add_argument("--sd", action="store_true", help="after --frames in-game frames, run off the stage (stick held to one side, no buttons; the side flips every 6 s) until the game ends on stocks")
+    ap.add_argument("--css-timeout", type=int, default=180, help="seconds to wait for the CSS after a game")
     a = ap.parse_args()
     d = Dolphin(a.name, a.state, a.pipe)
     d.open()
@@ -180,7 +183,8 @@ for _row, _names in _LAYOUT.items():
         if _n:
             _l, _r = _EDGE.get(_n, (_COLS[_i], _COLS[_i + 1]))
             _t, _b = _ROWS[_row]
-            CSS[_n] = (round((_l + _r) / 2, 1), round((_t + _b) / 2 + 5.5, 1))
+            # the hand stops at x = 26 on the right (measured: Young Link's centre 27.3 is out of its reach)
+            CSS[_n] = (min(round((_l + _r) / 2, 1), 25.8), round((_t + _b) / 2 + 5.5, 1))
 
 
 def f32(w):
@@ -236,7 +240,7 @@ def play(d, a):
     for game in range(1, a.games + 1):
         if game > 1:
             # Slippi online: after a game the CSS comes back (unranked: idle, the fighter kept); START searches again
-            d.until(lambda s: major(s) == 8 and not in_game(s) and (s[3] >> 24) in (1, 2), "the online CSS again", timeout=180)
+            d.until(lambda s: major(s) == 8 and not in_game(s) and (s[3] >> 24) in (1, 2), "the online CSS again", timeout=a.css_timeout)
             d.frames(90)
             log(f"game {game}: back at the CSS: {d.fmt()}")
         n = len(d.poll())
@@ -279,6 +283,36 @@ def play_game(d, a, s, seed):
             break
         if s[0] - start >= a.frames:
             log(f"played {a.frames} frames")
+            if a.sd and not a.lras:
+                for b in list(held):
+                    d.cmd(f"RELEASE {b}")
+                held.clear()
+                d.cmd("SET C 0.5 0.5")
+                log("running off the stage until the game ends")
+                side, t0 = 0.0, time.time()
+                while in_game(d.poll()):
+                    if time.time() - t0 > 400:
+                        raise SystemExit("drive: the game did not end while running off the stage")
+                    d.cmd(f"SET MAIN {side:.2f} 0.5")
+                    for _ in range(360):
+                        if not in_game(d.poll()):
+                            break
+                        d.frames(1)
+                    side = 1.0 - side
+                s = d.poll()
+                log(f"left the game at log frame {s[0]} (stocks out): {d.fmt()}")
+            if a.lras:
+                for b in list(held):
+                    d.cmd(f"RELEASE {b}")
+                held.clear()
+                d.cmd("SET MAIN 0.5 0.5")
+                d.cmd("SET C 0.5 0.5")
+                for b in ("L", "R", "A", "START"):
+                    d.cmd(f"PRESS {b}")
+                    held.add(b)
+                log("LRAS held")
+                s = d.until(lambda s: not in_game(s), "the game's end after LRAS", timeout=60)
+                log(f"left the game at log frame {s[0]} after LRAS: {d.fmt()}")
             break
         for b in list(held):
             d.cmd(f"RELEASE {b}")

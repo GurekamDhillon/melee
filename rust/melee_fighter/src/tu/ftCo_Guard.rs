@@ -565,6 +565,7 @@ fn inlineC0(g: G) -> bool {
 
 pub fn ftCo_GuardOn_IASA(g: G) {
     melee_core::ct!("ftCo_GuardOn_IASA");
+    melee_core::referee_native!(ftCo_GuardOn_IASA, [R(g, "HSD_GObj")], v, ftCo_GuardOn_IASA(g));
     let _ = inlineC0(g)
         || ftCo_80093694(g)
         || ext::ftCo_8009515C(g)
@@ -617,6 +618,7 @@ pub fn ftCo_Guard_Anim(g: G) {
 
 pub fn ftCo_Guard_IASA(g: G) {
     melee_core::ct!("ftCo_Guard_IASA");
+    melee_core::referee_native!(ftCo_Guard_IASA, [R(g, "HSD_GObj")], v, ftCo_Guard_IASA(g));
     let _ = inlineC0(g)
         || ext::ftCo_8009515C(g)
         || ext::ftCo_8009980C(g)
@@ -783,6 +785,7 @@ fn ftCo_Ucf084ShieldSdi(f: &Fighter) -> bool {
 /// `ftCo_80093240`: GuardSetOff hitlag callback (shield SDI).
 pub unsafe extern "C" fn ftCo_80093240(g: G) {
     melee_core::ct!("ftCo_80093240");
+    melee_core::referee_native!(ftCo_80093240, [R(g, "HSD_GObj")], v, ftCo_80093240(g));
     let f = fp(g);
     let c = cd();
     if f.allow_sdi() != 0 && f.ground_or_air == GA_Ground as _ {

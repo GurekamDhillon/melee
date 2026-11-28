@@ -608,6 +608,7 @@ pub fn ftCo_800D481C(g: G, arg1: i32) {
 
 pub fn ftCo_DeadUpFall_Anim(g: G) {
     melee_core::ct!("ftCo_DeadUpFall_Anim");
+    melee_core::referee_native!(ftCo_DeadUpFall_Anim, [R(g, "HSD_GObj")], v, ftCo_DeadUpFall_Anim(g));
     let fc = &cd().fall_common;
     let f = fp(g);
     unsafe {
@@ -686,6 +687,7 @@ fn to_rt(v: &Vec3) -> melee_core::vec::Vec3 { melee_core::vec::Vec3 { x: v.x, y:
 
 pub fn ftCo_DeadUpFall_Phys(g: G) {
     melee_core::ct!("ftCo_DeadUpFall_Phys");
+    melee_core::referee_native!(ftCo_DeadUpFall_Phys, [R(g, "HSD_GObj")], v, ftCo_DeadUpFall_Phys(g));
     let ca = &cd().fall_common;
     let f = fp(g);
     unsafe {

@@ -65,6 +65,7 @@ fn ucf_axis(v: f32) -> i32 {
 #[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftCo_SquatRv_CheckInput(g: G) -> bool {
     melee_core::ct!("ftCo_SquatRv_CheckInput");
+    melee_core::referee_native!(ftCo_SquatRv_CheckInput, [R(g, "HSD_GObj")], i, ftCo_SquatRv_CheckInput(g));
     // TARGET_PC: m-ex UCF 0.84 DBOOC SquatRv fix (opt-in).
     if ext::Mex_Enabled("ucf_dbooc_squatrv_fix") != 0 {
         let f = fp(g);

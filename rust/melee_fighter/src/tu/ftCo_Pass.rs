@@ -93,6 +93,7 @@ fn ftCo_8009A080_Check(g: G) -> bool {
 
 pub fn ftCo_8009A080(g: G) -> bool {
     melee_core::ct!("ftCo_8009A080");
+    melee_core::referee_native!(ftCo_8009A080, [R(g, "HSD_GObj")], i, ftCo_8009A080(g));
     if fp(g).input.held_buttons[0] & HSD_PAD_LR != 0 && ftCo_8009A080_Check(g) {
         ftCo_8009A228(g);
         return true;

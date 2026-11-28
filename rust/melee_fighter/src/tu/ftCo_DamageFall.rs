@@ -126,6 +126,7 @@ pub fn ftCo_Ucf084Tumble(f: &Fighter) -> bool {
 
 pub fn ftCo_DamageFall_IASA(g: G) {
     melee_core::ct!("ftCo_DamageFall_IASA");
+    melee_core::referee_native!(ftCo_DamageFall_IASA, [R(g, "HSD_GObj")], v, ftCo_DamageFall_IASA(g));
     if !ext::ftCo_800C5240(g) {
         if ext::ftCo_SpecialAir_CheckInput(g) {
             return;

@@ -479,6 +479,7 @@ pub unsafe extern "C" fn grLast_8021A9C4(gobj: *mut HSD_GObj) {
 
 pub unsafe extern "C" fn grLast_8021AAB0(gobj: *mut HSD_GObj) {
     melee_core::ct!("grLast_8021AAB0");
+    melee_core::referee_native!(grLast_8021AAB0, [R(gobj, "HSD_GObj")], v, grLast_8021AAB0(gobj));
     let gp = GET_GROUND(gobj);
     if (*gp).u.map.xC4_b1() == 0 && (*gp).u.map.xC4_b0() == 0 {
         // TARGET_PC: Slippi online wraps the backdrop think in a save / restore of the RNG seed

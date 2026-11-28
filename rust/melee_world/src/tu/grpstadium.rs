@@ -989,6 +989,7 @@ pub unsafe extern "C" fn grStadium_801D2278(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn grStadium_801D2344(g: *mut HSD_GObj) {
     core::hint::black_box(0x73A8F286u32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D2344");
+    melee_core::referee_native!(grStadium_801D2344, [R(g, "HSD_GObj")], v, grStadium_801D2344(g));
     let gobj = g;
     let gp = (*gobj).user_data as *mut Ground;
     let temp_r0 = (*gp).u.display.xE4;
@@ -2139,6 +2140,7 @@ pub unsafe extern "C" fn grStadium_801D435C(arg0: *mut HSD_GObj) {
 pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
     core::hint::black_box(0xA0E4580Au32); // fn identity (tools/rust-port/fn_identity.py)
     melee_core::ct!("grStadium_801D4548");
+    melee_core::referee_native!(grStadium_801D4548, [R(gobj, "HSD_GObj")], v, grStadium_801D4548(gobj));
     let temp_r31 = (*gobj).user_data as *mut Ground;
     let temp_f31 = ext::Ground_801C0498();
     let yp = yakumono_param;

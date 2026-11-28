@@ -1663,6 +1663,7 @@ pub unsafe fn ftSlippi_IsOffscreen(fp: &Fighter) -> bool {
 /// `Fighter_procAnim` (proc 1): per-frame timers, animation advance, anim callback.
 pub unsafe fn Fighter_procAnim(g: G) {
     melee_core::ct!("Fighter_procAnim");
+    melee_core::referee_native!(Fighter_procAnim, [R(g, "HSD_GObj")], v, Fighter_procAnim(g));
     // mod host site (hooks-v1 0x8006A360, melee_core::modhook): one None check when no mod hooks it
     melee_core::mod_hook!(0x8006A360, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_procAnim__orig(g));
     #[allow(unused_unsafe)] unsafe { Fighter_procAnim__orig(g) }

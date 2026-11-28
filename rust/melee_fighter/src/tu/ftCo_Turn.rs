@@ -123,6 +123,7 @@ pub fn ftCo_Turn_Anim_Inner(g: G) {
 
 pub fn ftCo_Turn_Anim(g: G) {
     melee_core::ct!("ftCo_Turn_Anim");
+    melee_core::referee_native!(ftCo_Turn_Anim, [R(g, "HSD_GObj")], v, ftCo_Turn_Anim(g));
     ftCo_Turn_Anim_Inner(g);
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
@@ -254,6 +255,7 @@ pub fn ftCo_Turn_IASA(g: G) {
 
 pub fn ftCo_Turn_Phys(g: G) {
     melee_core::ct!("ftCo_Turn_Phys");
+    melee_core::referee_native!(ftCo_Turn_Phys, [R(g, "HSD_GObj")], v, ftCo_Turn_Phys(g));
     ext::ft_80084F3C(g);
 }
 

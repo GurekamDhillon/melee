@@ -206,11 +206,13 @@ pub fn ftCo_Fall_Anim_Inner(g: G, mv_x4: *mut f32, neutral_smid: i32, forwards_s
 
 pub fn ftCo_Fall_IASA(g: G) {
     melee_core::ct!("ftCo_Fall_IASA");
+    melee_core::referee_native!(ftCo_Fall_IASA, [R(g, "HSD_GObj")], v, ftCo_Fall_IASA(g));
     ftCo_Fall_IASA_Inner(g);
 }
 
 pub fn ftCo_Fall_Phys(g: G) {
     melee_core::ct!("ftCo_Fall_Phys");
+    melee_core::referee_native!(ftCo_Fall_Phys, [R(g, "HSD_GObj")], v, ftCo_Fall_Phys(g));
     ext::ft_80084DB0(g);
 }
 

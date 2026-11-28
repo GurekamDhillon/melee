@@ -395,8 +395,8 @@ unsafe fn finish(t:&NativeTree,h:NativeHost){flush(t,&h.0);for j in h.1{HSD_JObj
 unsafe fn native_remove_all(j:*mut HSD_JObj){if !j.is_null(){let(mut t,mut h)=snapshot(&[j]);t.remove_all(&mut h,Some(JObjId(0)));finish(&t,h);}}
 unsafe fn native_reparent(j:*mut HSD_JObj,p:*mut HSD_JObj){let(mut t,h)=snapshot(&[j,p]);let pi=h.0.iter().position(|&x|x==p).map(|i|JObjId(i as u32));t.reparent(Some(JObjId(0)),pi);finish(&t,h);}
 unsafe extern "C" fn native_make_matrix(j:*mut HSD_JObj){if fast_matrix(j,false){return;}let(mut t,mut h)=snapshot(&[j]);t.make_matrix(&mut h,JObjId(0));finish(&t,h);}
-pub(crate) unsafe fn native_setup_sub(j:*mut HSD_JObj){ melee_core::ct!("native_setup_sub");if !j.is_null(){if fast_matrix(j,true){return;}let(mut t,mut h)=snapshot(&[j]);t.setup_matrix_sub(&mut h,JObjId(0));finish(&t,h);}}
-pub(crate) unsafe fn native_make_matrix_pub(j:*mut HSD_JObj){ melee_core::ct!("native_make_matrix_pub");native_make_matrix(j)}
+pub(crate) unsafe fn native_setup_sub(j:*mut HSD_JObj){ melee_core::ct!("native_setup_sub");melee_core::referee_native!(HSD_JObjSetupMatrixSub, [R(j, "HSD_JObj")], v, native_setup_sub(j));if !j.is_null(){if fast_matrix(j,true){return;}let(mut t,mut h)=snapshot(&[j]);t.setup_matrix_sub(&mut h,JObjId(0));finish(&t,h);}}
+pub(crate) unsafe fn native_make_matrix_pub(j:*mut HSD_JObj){ melee_core::ct!("native_make_matrix_pub");melee_core::referee_native!(HSD_JObjMakeMatrix, [R(j, "HSD_JObj")], v, native_make_matrix_pub(j));native_make_matrix(j)}
 unsafe fn native_setup(j:*mut HSD_JObj){if !j.is_null()&&raw_dirty(j){let(mut t,mut h)=snapshot(&[j]);t.setup_matrix(&mut h,Some(JObjId(0)));finish(&t,h);}}
 /// `v` may be NULL (C: use the current CObj view), so it is a raw pointer, never `&Mtx`:
 /// a NULL reference is UB and fat LTO folds the callee's `vmtx.is_null()` check away.

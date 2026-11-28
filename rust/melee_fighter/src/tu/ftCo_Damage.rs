@@ -585,6 +585,7 @@ pub fn ftCo_Ucf084Sdi(f: &Fighter) -> bool {
 
 pub fn ftCo_Damage_OnEveryHitlag(g: G) {
     melee_core::ct!("ftCo_Damage_OnEveryHitlag");
+    melee_core::referee_native!(ftCo_Damage_OnEveryHitlag, [R(g, "HSD_GObj")], v, ftCo_Damage_OnEveryHitlag(g));
     let f = fp(g);
     let c = cd();
     if f.allow_sdi() != 0
@@ -907,6 +908,7 @@ fn capturecut_trace(where_: &str, g: G) {
 
 pub fn ftCo_8008EC90(g: G) {
     melee_core::ct!("ftCo_8008EC90");
+    melee_core::referee_native!(ftCo_8008EC90, [R(g, "HSD_GObj")], v, ftCo_8008EC90(g));
     let mut ret0 = false;
     let f = fp(g);
     let mut facing_dir = 0.0f32;

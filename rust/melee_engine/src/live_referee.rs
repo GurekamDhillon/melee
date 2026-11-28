@@ -126,6 +126,10 @@ struct St {
     inv: HashMap<&'static str, Vec<Option<u32>>>,
     retail_fn: HashMap<usize, u32>,
     copy_next: u32,
+    /// UCF 0.84's pad buffer in the Gecko area (block of the C2 at 0x8006B460, + 4)
+    ucf084_buf: Option<u32>,
+    /// image bytes the boot initialisers wrote (static ctors, class info inits): readable as constants
+    init_written: std::collections::HashSet<u32>,
 }
 
 static mut ST: Option<St> = None;
@@ -225,12 +229,15 @@ pub fn init(gecko: &[u8]) {
             inv: HashMap::new(),
             retail_fn: HashMap::new(),
             copy_next: COPY_BASE,
+            ucf084_buf: rep.inserts.iter().find(|i| i.0 == 0x8006_B460).map(|i| i.1 + 4),
+            init_written: Default::default(),
         });
     }
     let s = st().unwrap();
     s.space.fn_guest = Some(fn_guest);
     s.space.fn_native = Some(fn_native);
     build_retail_fn_map(s, &dol);
+    boot_init(s);
     melee_core::referee::set_native(NativeHooks { wants, pre, post, boundary });
     eprintln!("livereferee: on ({}); boundaries {:?}", s.gecko_desc, s.boundary_names);
 }
@@ -400,14 +407,50 @@ unsafe fn sync(s: &mut St) {
     // player slots (StaticPlayer[6], 0x80453080) and the stage (StageInfo, 0x8049E6C8): native records in place
     {
         let ps = core::ptr::addr_of_mut!(melee_world::pl::player_slots) as *mut melee_types::StaticPlayer;
-        let gs = sp.layouts.gc_size("StaticPlayer").unwrap_or(0xE90);
+        let gs = sp.layouts.gc_size("_StaticPlayer").unwrap_or(0xE90);
         for i in 0..6u32 {
-            let _ = sp.add_native(Some(0x8045_3080 + i * gs), "StaticPlayer", ps.add(i as usize) as *mut u8);
+            if let Err(e) = sp.add_native(Some(0x8045_3080 + i * gs), "_StaticPlayer", ps.add(i as usize) as *mut u8) {
+                once(&format!("player_slots: {e}"));
+            }
         }
         s.synced.push((0x8045_3080, 6 * gs, "player_slots"));
         let si = core::ptr::addr_of_mut!(melee_world::tu::ground::stage_info) as *mut u8;
-        if sp.add_native(Some(0x8049_E6C8), "StageInfo", si).is_ok() {
-            s.synced.push((0x8049_E6C8, sp.layouts.gc_size("StageInfo").unwrap_or(0x748), "stage_info"));
+        match sp.add_native(Some(0x8049_E6C8), "StageInfo", si) {
+            Ok(_) => s.synced.push((0x8049_E6C8, sp.layouts.gc_size("StageInfo").unwrap_or(0x748), "stage_info")),
+            Err(e) => once(&format!("stage_info: {e}")),
+        }
+        // the match rules (StartMeleeRules, inside gm's `controller` block at 0x8046DB68: gm_8016B0FC reads +2)
+        let r = melee_modes::tu::gmvs::gm_GetStartMeleeRules() as *mut u8;
+        if !r.is_null() {
+            match sp.add_native(Some(0x8046_DB68), "StartMeleeRules", r) {
+                Ok(_) => s.synced.push((0x8046_DB68, 0x60, "StartMeleeRules")),
+                Err(e) => once(&format!("StartMeleeRules: {e}")),
+            }
+        }
+    }
+    // scalar statics of mpLib / mpColl the collision code reads and writes: native words in place (journaled)
+    {
+        use melee_world::tu::{mpcoll as c, mplib as l};
+        let words: [(u32, *mut u8, u32, &'static str); 15] = [
+            (0x804D_6490, core::ptr::addr_of_mut!(c::mpColl_804D6490_max_x) as *mut u8, 4, "mpColl_804D6490_max_x"),
+            (0x804D_6494, core::ptr::addr_of_mut!(c::mpColl_804D6494_line_id) as *mut u8, 4, "mpColl_804D6494_line_id"),
+            (0x804D_6498, core::ptr::addr_of_mut!(c::mpColl_804D6498_flags) as *mut u8, 4, "mpColl_804D6498_flags"),
+            (0x804D_649C, core::ptr::addr_of_mut!(c::mpColl_IsEcbTiny) as *mut u8, 4, "mpColl_IsEcbTiny"),
+            (0x804D_64AC, core::ptr::addr_of_mut!(c::mpColl_804D64AC) as *mut u8, 4, "mpColl_804D64AC"),
+            (0x804D_64B0, core::ptr::addr_of_mut!(l::didCheckBounding) as *mut u8, 4, "didCheckBounding"),
+            (0x804D_64CC, core::ptr::addr_of_mut!(l::mpLib_804D64CC) as *mut u8, 4, "mpLib_804D64CC"),
+            (0x804D_64D0, core::ptr::addr_of_mut!(l::mpLib_804D64D0) as *mut u8, 4, "mpLib_804D64D0"),
+            (0x804D_64D4, core::ptr::addr_of_mut!(l::mpLib_804D64D4) as *mut u8, 4, "mpLib_804D64D4"),
+            (0x804D_64D8, core::ptr::addr_of_mut!(l::mpLib_804D64D8) as *mut u8, 4, "mpLib_804D64D8"),
+            (0x804D_64DC, core::ptr::addr_of_mut!(l::mpLib_804D64DC) as *mut u8, 4, "mpLib_804D64DC"),
+            (0x804D_64E0, core::ptr::addr_of_mut!(l::mpLib_804D64E0) as *mut u8, 4, "mpLib_804D64E0"),
+            (0x804D_64E4, core::ptr::addr_of_mut!(l::mpLib_804D64E4) as *mut u8, 4, "mpLib_804D64E4"),
+            (0x8045_8868, core::ptr::addr_of_mut!(l::mpLib_80458868) as *mut u8, 0x20, "mpLib_80458868"),
+            (0x8045_8888, core::ptr::addr_of_mut!(l::mpLib_80458888) as *mut u8, 0x600, "mpLib_80458888"),
+        ];
+        for (a, p, n, name) in words {
+            sp.add_words(a, p, n);
+            s.synced.push((a, n, name));
         }
     }
     // the RNG: `seed` (0x804D5F90) is the engine's current seed word, HSD_RandSeedPtr (0x804D5F94) points at it
@@ -419,13 +462,26 @@ unsafe fn sync(s: &mut St) {
         s.ro.push((0x804D_5F94, 4, "HSD_RandSeedPtr"));
     }
     // pointer globals: guest words holding the native record's handle (read-only)
-    let ptrs: [(u32, usize, &'static str, &'static str); 3] = [
+    use melee_world::tu::mplib as l;
+    let ptrs: [(u32, usize, &'static str, &'static str); 10] = [
         (0x804D_6554, melee_runtime::shared::p_ftCommonData as usize, "ftCommonData", "p_ftCommonData"),
         (0x804D_64FC, melee_runtime::shared::Fighter_804D64FC as usize, "Fighter_804D64FC_t", "Fighter_804D64FC"),
         (0x804D_6D28, melee_items::tu::it_3F14::it_804D6D28 as usize, "ItemCommonData", "it_804D6D28"),
+        (0x804D_64B4, l::mpLib_804D64B4 as usize, "MapCollData", "mpLib_804D64B4"),
+        (0x804D_64B8, l::groundCollVtx as usize, "CollVtx", "groundCollVtx"),
+        (0x804D_64BC, l::groundCollLine as usize, "CollLine", "groundCollLine"),
+        (0x804D_64C0, l::groundCollJoint as usize, "CollJoint", "groundCollJoint"),
+        (0x804D_64C4, l::jointListStart as usize, "CollJoint", "jointListStart"),
+        (0x804D_64C8, l::jointListEnd as usize, "CollJoint", "jointListEnd"),
+        (0x804D_6544, melee_fighter::hooks::FT_PARTS_TABLE as usize, "", "ftPartsTable"),
     ];
     for (a, p, rec, name) in ptrs {
-        let h = sp.handle(p, Some(rec)).unwrap_or(0);
+        let h = if rec.is_empty() {
+            // a table of record pointers (ftPartsTable: FighterPartsTable*[kind]): a guest copy of handles
+            table_copy(sp, &mut s.copy_next, &mut s.ro, p, "FighterPartsTable", melee_types::Ft_Kind_Max as usize, name)
+        } else {
+            sp.handle(p, Some(rec)).unwrap_or(0)
+        };
         sp.add_bytes(a, h.to_be_bytes().to_vec());
         s.ro.push((a, 4, name));
     }
@@ -471,6 +527,164 @@ unsafe fn sync(s: &mut St) {
         sp.add_bytes(0x8046_B108, q);
         s.ro.push((0x8046_B108, 5 * 48, "HSD_PadLibData.queue"));
     }
+    // UCF 0.84's pad buffer, kept by "Pad Buffer + 1.0 Cardinals" in its own inserted block (C2 8006B460, block + 4,
+    // 4 ports x 12 bytes: (x, y) pairs of a 4-deep ring, the ring index at +8, the flick counter at +9; the other
+    // 0.84 codes find it through the hook's branch word): the engine's ftUcf_Pad. Read-only.
+    if let Some(b) = s.ucf084_buf {
+        let pads = &*core::ptr::addr_of!(melee_fighter::fighter::UCF_PAD);
+        let mut q = vec![0u8; 48];
+        for (p, u) in pads.iter().enumerate() {
+            for i in 0..4 {
+                q[p * 12 + 2 * i] = u.x[i] as u8;
+                q[p * 12 + 2 * i + 1] = u.y[i] as u8;
+            }
+            q[p * 12 + 8] = u.idx;
+            q[p * 12 + 9] = u.counter;
+        }
+        s.space.add_bytes(b, q);
+        s.ro.push((b, 48, "UCF 0.84 pad buffer"));
+    }
+}
+
+/// A guest copy of a native table of `n` record pointers: their handles (read-only); returns its guest address.
+unsafe fn table_copy(sp: &mut GuestSpace, next: &mut u32, ro: &mut Vec<(u32, u32, &'static str)>, p: usize, rec: &'static str, n: usize, name: &'static str) -> u32 {
+    if p == 0 {
+        return 0;
+    }
+    let t = p as *const usize;
+    let mut b = vec![0u8; 4 * n];
+    for i in 0..n {
+        let h = sp.handle(*t.add(i), Some(rec)).unwrap_or(0);
+        b[4 * i..4 * i + 4].copy_from_slice(&h.to_be_bytes());
+    }
+    let a = *next;
+    *next += ((4 * n as u32) + 0xFF) & !0xFF;
+    sp.add_bytes(a, b);
+    ro.push((a, 4 * n as u32, name));
+    a
+}
+
+fn once(msg: &str) {
+    static SEEN: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+    if let Ok(mut v) = SEEN.lock() {
+        if !v.iter().any(|m| m == msg) {
+            eprintln!("livereferee: {msg}");
+            v.push(msg.to_string());
+        }
+    }
+}
+
+/// .data objects read as constants (filled at build time, never written by the game during a match): the stage
+/// collision parameter tables mpLib_800569EC looks up by stage kind.
+const CONST_DATA: [&str; 2] = ["mpLib_803B", "Unit01"];
+
+/// The boot initialisers the referee runs once on the image, .data/.bss writable: the static ctors (`_ctors`, MSL's
+/// trig tables) and the HSD class infos the retail code calls through (JObjInfoInit -> hsdJObj's methods). Every
+/// byte they write is then readable as a constant (`init_written`).
+fn boot_init(s: &mut St) {
+    let mut entries: Vec<u32> = vec![];
+    if let Some(t) = s.syms.iter().find(|x| x.name == "_ctors").map(|x| x.addr) {
+        let mut a = t;
+        while let Some(f) = img_word(s, a).filter(|&f| f != 0) {
+            entries.push(f);
+            a += 4;
+        }
+    }
+    for n in ["JObjInfoInit"] {
+        if let Some(&a) = s.by_name.get(n) {
+            entries.push(a);
+        }
+    }
+    for f in entries {
+        let mut mem = InitMem { img: &mut s.img, written: &mut s.init_written, stack: vec![0; STACK_SIZE as usize] };
+        let mut cpu = Cpu::default();
+        cpu.gpr[1] = STACK_BASE + STACK_SIZE - 0x100;
+        cpu.gpr[2] = R2;
+        cpu.gpr[13] = R13;
+        cpu.pc = f;
+        let mut m = Machine::new_gekko(boot_gqr(cpu));
+        let mut br = TextOnly(s.text.clone());
+        let r = m.run(&mut mem, &mut br, BUDGET as u32);
+        if r.is_err() {
+            eprintln!("livereferee: boot initialiser {f:08X} did not finish: {r:?}");
+        }
+    }
+    // the native JObj class info is the retail hsdJObj (its methods are the retail functions JObjInfoInit set)
+    if let Some(a) = s.syms.iter().find(|x| x.name == "hsdJObj").map(|x| x.addr) {
+        s.retail_fn.insert(unsafe { core::ptr::addr_of_mut!(melee_runtime::tu::jobj::hsdJObj) } as usize, a);
+    }
+    eprintln!("livereferee: boot initialisers wrote {} image bytes", s.init_written.len());
+}
+
+struct InitMem<'a> {
+    img: &'a mut Vec<Img>,
+    written: &'a mut std::collections::HashSet<u32>,
+    stack: Vec<u8>,
+}
+
+impl InitMem<'_> {
+    fn at(&mut self, ea: u32, n: u32) -> Result<(&mut [u8], bool), Fault> {
+        if ea >= STACK_BASE && ea + n <= STACK_BASE + STACK_SIZE {
+            let o = (ea - STACK_BASE) as usize;
+            return Ok((&mut self.stack[o..o + n as usize], true));
+        }
+        let r = self.img.iter_mut().find(|r| ea >= r.base && ea as u64 + n as u64 <= r.base as u64 + r.bytes.len() as u64).ok_or(Fault::Mem(ea))?;
+        let w = matches!(r.kind, IKind::Data | IKind::Bss);
+        let o = (ea - r.base) as usize;
+        Ok((&mut r.bytes[o..o + n as usize], w))
+    }
+    fn ld(&mut self, ea: u32, n: u32) -> Result<u64, Fault> {
+        let (b, _) = self.at(ea, n)?;
+        Ok(b.iter().fold(0u64, |v, x| (v << 8) | *x as u64))
+    }
+    fn st(&mut self, ea: u32, n: u32, v: u64) -> Result<(), Fault> {
+        let stack = ea >= STACK_BASE && ea < STACK_BASE + STACK_SIZE;
+        let (b, w) = self.at(ea, n)?;
+        if !w {
+            return Err(Fault::Mem(ea));
+        }
+        for k in 0..n as usize {
+            b[k] = (v >> (8 * (n as usize - 1 - k))) as u8;
+        }
+        if !stack {
+            for k in 0..n {
+                self.written.insert(ea + k);
+            }
+        }
+        Ok(())
+    }
+}
+
+impl Mem for InitMem<'_> {
+    fn ld8(&mut self, ea: u32) -> Result<u8, Fault> {
+        self.ld(ea, 1).map(|v| v as u8)
+    }
+    fn ld16(&mut self, ea: u32) -> Result<u16, Fault> {
+        self.ld(ea, 2).map(|v| v as u16)
+    }
+    fn ld32(&mut self, ea: u32) -> Result<u32, Fault> {
+        self.ld(ea, 4).map(|v| v as u32)
+    }
+    fn ld64(&mut self, ea: u32) -> Result<u64, Fault> {
+        self.ld(ea, 8)
+    }
+    fn st8(&mut self, ea: u32, v: u8) -> Result<(), Fault> {
+        self.st(ea, 1, v as u64)
+    }
+    fn st16(&mut self, ea: u32, v: u16) -> Result<(), Fault> {
+        self.st(ea, 2, v as u64)
+    }
+    fn st32(&mut self, ea: u32, v: u32) -> Result<(), Fault> {
+        self.st(ea, 4, v as u64)
+    }
+    fn st64(&mut self, ea: u32, v: u64) -> Result<(), Fault> {
+        self.st(ea, 8, v)
+    }
+    fn fetch(&mut self, ea: u32) -> Result<u32, Fault> {
+        let r = self.img.iter().find(|r| r.kind == IKind::Text && ea >= r.base && ea + 4 <= r.base + r.bytes.len() as u32).ok_or(Fault::Fetch(ea))?;
+        let o = (ea - r.base) as usize;
+        Ok(u32::from_be_bytes(r.bytes[o..o + 4].try_into().unwrap()))
+    }
 }
 
 // ---- guest memory ---------------------------------------------------------------------------------------------
@@ -510,12 +724,14 @@ impl Live<'_> {
                     // holding code addresses (callback tables); anything else is a mutable global
                     let w = sym_at(self.s, ea);
                     let is_text = n == 4 && self.s.text.iter().any(|&(lo, hi)| (v as u32) >= lo && (v as u32) < hi);
-                    if w.starts_with('@') || w.contains("assert_msg") || w.contains("...data") || is_text {
+                    let init = (0..n).all(|k| self.s.init_written.contains(&(ea + k)));
+                    if w.starts_with('@') || w.contains("assert_msg") || w.contains("...data") || is_text || init || CONST_DATA.iter().any(|c| w.starts_with(c)) {
                         self.data_reads.insert(w.split('+').next().unwrap_or("").to_string());
                     } else {
                         return Err(self.fail(format!("read .data {ea:08X} ({w})")));
                     }
                 }
+                IKind::Bss if (0..n).all(|k| self.s.init_written.contains(&(ea + k))) => {}
                 IKind::Bss => {
                     let w = sym_at(self.s, ea);
                     return Err(self.fail(format!("read .bss {ea:08X} ({w})")));
@@ -678,7 +894,17 @@ fn pre(name: &'static str, args: &[Arg]) -> Option<usize> {
                 }
                 gi += 1;
             }
-            Arg::P(..) => bad = Some("f32-record argument in native mode".into()),
+            // a pointer to native f32 words (Mtx, Vec): mapped in place as native words (journaled like a record)
+            Arg::P(p, len) => {
+                if p.is_null() {
+                    cpu.gpr[gi] = 0;
+                } else {
+                    let base = 0x8590_0000 + gi as u32 * 0x1000;
+                    unsafe { s.space.add_words(base, p as *mut u8, len as u32) };
+                    cpu.gpr[gi] = base;
+                }
+                gi += 1;
+            }
         }
     }
     cpu.gpr[1] = STACK_BASE + STACK_SIZE - 0x100;
@@ -714,6 +940,16 @@ fn pre(name: &'static str, args: &[Arg]) -> Option<usize> {
                 let fpr = [c.fpr[1], c.fpr[2], c.fpr[3], c.fpr[4]];
                 out = Some(ROut::Boundary { name: b, gpr, fpr });
                 break;
+            }
+            if let Some(stub) = os_stub(s, ip) {
+                m.cpu.gpr[3] = stub;
+                m.cpu.pc = m.cpu.lr;
+                if m.cpu.pc == 0 {
+                    out = Some(ROut::Ret { r3: m.cpu.gpr[3], f1: m.cpu.fpr[1] });
+                    break;
+                }
+                n += 1;
+                continue;
             }
             if let Some(&nc) = native_at.get(&ip) {
                 if let Err(e) = unsafe { native_callee(s, nc, &mut m.cpu) } {
@@ -819,6 +1055,16 @@ fn pre(name: &'static str, args: &[Arg]) -> Option<usize> {
     let boundaries = s.boundary_names.clone();
     s.open = Some(Open { name, frame: fr, out, wrote, watched, before, rust_b: None, boundaries });
     Some(1)
+}
+
+/// OS interrupt masking (supervisor SPRs the interpreter does not run; no game state): OSDisableInterrupts returns
+/// "were enabled" (1), OSRestoreInterrupts / OSEnableInterrupts the same; the caller's state is untouched.
+fn os_stub(s: &St, ip: u32) -> Option<u32> {
+    let f = func_at(s, ip)?;
+    if f.addr != ip {
+        return None;
+    }
+    matches!(f.name.as_str(), "OSDisableInterrupts" | "OSRestoreInterrupts" | "OSEnableInterrupts").then_some(1)
 }
 
 /// A native callee: the engine's function on the registers, its sync-table effects journaled.

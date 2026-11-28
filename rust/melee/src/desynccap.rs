@@ -52,6 +52,10 @@ struct State {
     /// the first Soft's directory and its report, waiting for the game's end (to write the whole match)
     soft: Option<Event>,
     jobs: Vec<std::thread::JoinHandle<()>>,
+    /// directory names claimed in this process but maybe not yet written by their worker. Kept here (system heap behind
+    /// `ST`) and not in a static of its own: a rollback load rewinds every writable static, and a rewound Vec header is a
+    /// double free (rbstatics_lint.py)
+    claimed: Vec<std::path::PathBuf>,
 }
 
 struct Event {
@@ -144,7 +148,7 @@ pub fn on_compare(kind: Compare, tag: &str, fr: i32, lv: u32, rv: u32, cur: i32,
     let first = !s.seen_first;
     s.seen_first = true;
     s.seen_hard |= hard;
-    let dir = new_dir();
+    let dir = new_dir(&mut s.claimed);
     let report = build_report(&s, kind, tag, fr, lv, rv, cur, stats, hard);
     let slp = crate::slp_export::snapshot_bytes();
     eprintln!(
@@ -160,7 +164,7 @@ pub fn on_compare(kind: Compare, tag: &str, fr: i32, lv: u32, rv: u32, cur: i32,
     write_async(&mut s, dir, report, slp, bits());
 }
 
-fn new_dir() -> std::path::PathBuf {
+fn new_dir(claimed: &mut Vec<std::path::PathBuf>) -> std::path::PathBuf {
     let t = crate::slp_export::iso_now().replace([':', '-'], "");
     let t = t.trim_end_matches('Z').to_string();
     let r = root();
@@ -171,17 +175,13 @@ fn new_dir() -> std::path::PathBuf {
         k += 1;
     }
     // a name claimed in this process but not yet written by its worker
-    if let Ok(g) = CLAIMED.lock() {
-        let mut g = g;
-        while g.contains(&d) {
-            d = r.join(format!("{t}-{k}"));
-            k += 1;
-        }
-        g.push(d.clone());
+    while claimed.contains(&d) {
+        d = r.join(format!("{t}-{k}"));
+        k += 1;
     }
+    claimed.push(d.clone());
     d
 }
-static CLAIMED: Mutex<Vec<std::path::PathBuf>> = Mutex::new(Vec::new());
 
 #[allow(clippy::too_many_arguments)]
 fn build_report(s: &State, kind: Compare, tag: &str, fr: i32, lv: u32, rv: u32, cur: i32, st: &RbStats, hard: bool) -> String {

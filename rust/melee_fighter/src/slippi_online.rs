@@ -68,7 +68,7 @@ pub fn checksum_recorded_with_mask(with_nana: bool) -> (u32, u8) {
             if (i != active && !nana) || (nana && !with_nana) {
                 continue;
             }
-            mask |= 1 << (slot * 2 + i);
+            mask |= 1 << (slot * 2 + i); // semantics: allow(host: replay-check port mask, not game arithmetic)
             c.fighter(&FighterSample {
                 motion_id: fp.motion_id as u32,
                 pos_x: fp.cur_pos.x,

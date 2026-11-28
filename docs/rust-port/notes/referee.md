@@ -400,6 +400,39 @@ The jump cases (...daec8, ...12d593) were not run. No verdict.
 **(c) Yoshi's Story respawn slot** (hero Game_20251114T233428): not run. fn_8016758C / fn_80167638 work on gm's
 `controller` block (0x8046B6A0); a sync entry for VsSceneState is needed first.
 
+### 10.4 Regression set before and after the fixes (1556 replays, `hard_desync_sweep.sh`, JOBS 3-4)
+
+`exe-base` is rust-port before de86fec54; `exe-after` has both fixes. Columns: `slpcheck` status and
+`hard_desync.py`'s `first_hard` verdict. Only a frame number in `first_hard` is a real hard desync (Slippi would have
+ended the game). `old` (below Slippi 3.0, or no end-of-frame state), `gap` (frames missing) and `error` (unreadable
+raw block) are scorer markers, not desyncs.
+
+| set | status | first_hard | before | after |
+|---|---|---|---|---|
+| ext | match | none | 125 | 125 |
+| gang | match / diverged | old | 60 / 132 | 60 / 132 |
+| gang | match / diverged | error | 14 / 1 | 14 / 1 |
+| hero | match | none | 420 | 420 |
+| hero | match / diverged | error | 6 / 1 | 6 / 1 |
+| hero | diverged | real hard | 1 | 1 |
+| lunar | match / diverged | none | 119 / 2 | 119 / 2 |
+| lunar | diverged | gap | 1 | 1 |
+| lunar2 | match / diverged | none | 457 / 83 | 467 / 74 |
+| lunar2 | diverged | gap | 1 | 1 |
+| lunar2 | diverged | real hard | 3 | 2 |
+| v320 | match | none | 128 | 128 |
+| v320 | diverged | real hard | 2 | 2 |
+
+Totals: match 1329 -> 1339, diverged 227 -> 217. Real hard desyncs 6 -> 5. The other 216 rows with a non-empty
+`first_hard` before (192 `old`, 22 `error`, 2 `gap`) are scorer markers, so "rows with first_hard set" is not a
+hard-desync count; count only numeric `first_hard`.
+
+Moved: 10 replays, all lunar2, all carrying the UCF 0.8 `DB.asm` insert (26 such replays in the set), all
+diverged -> match, including Fox ...f1239a6e (real hard at 3800 -> matches its 8796 frames). Nothing else moved
+in any column. Of the 26 UCF 0.8 replays, 23 now match; 3 still diverge (lunar mewtwo/...1245f0c at 8965, lunar2
+6ab9717e...ba55 at 6045, ...baeb at 4040), cause not looked at. Fix 2 (DeadUpFall stfs) moved no replay in this set; its proof is the
+referee's 94/94 calls (10.1).
+
 ### 10.3 Limits and next steps
 
 - **Per-kind unions** (Fighter_FighterVars / MotionVars / ItemVars, ECBSource_x4): the word mapping is right only for
